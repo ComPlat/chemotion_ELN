@@ -1,0 +1,23 @@
+development:
+  adapter: postgresql
+  encoding: unicode
+  database: chemotion_dev
+  pool: 5
+  username: fh
+  password:
+
+test:
+  adapter: postgresql
+  encoding: unicode
+  database: chemotion_test
+  pool: 5
+  username: fh
+  password:
+
+production:
+  adapter: postgresql
+  encoding: unicode
+  database: chemotion_production
+  pool: 5
+  username: fh
+  password:
