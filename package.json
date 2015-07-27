@@ -1,0 +1,39 @@
+{
+  "name": "chemotion",
+  "dependencies" : {
+    "alt": "0.17.1",
+    "babelify": "6.1.3",
+    "browserify": "~> 10.2.4",
+    "browserify-incremental": "^3.0.1",
+    "immutable": "3.7.4",
+    "react": "0.13.3",
+    "react-router": "0.13.3",
+    "react-tools": "0.13.3",
+    "react-bootstrap": "0.24.2",
+    "whatwg-fetch": "0.9.0"
+  },
+  "browserify": {
+    "transform": ["babelify"]
+  },
+  "devDependencies": {
+    "babel-jest": "*",
+    "jest-cli": "*"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "rootDir": ".",
+    "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",
+    "moduleFileExtensions": [ "js", "json", "es6"],
+    "unmockedModulePathPatterns": [
+      "<rootDir>/node_modules/react",
+      "<rootDir>/node_modules/react-tools"
+    ],
+    "testFileExtensions": ["js", "es6"]
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">= 0.10"
+  }
+}
