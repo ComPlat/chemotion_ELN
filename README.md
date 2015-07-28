@@ -17,3 +17,11 @@
 # Available Seeds
 
 A user is seeded with email `test@ninjaconcept.com` and password `ninjaconcept`.
+
+# API (v1)
+
+## Collections
+
+* Get serialized collection roots
+
+  `/api/v1/collections/roots`

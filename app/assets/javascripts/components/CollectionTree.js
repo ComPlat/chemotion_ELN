@@ -1,11 +1,12 @@
-// Example component for collection stores,...
 import React from 'react';
 import {Button} from 'react-bootstrap';
 
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 
-class Test extends React.Component {
+import CollectionSubtree from './CollectionSubtree';
+
+class CollectionTree extends React.Component {
   constructor() {
     super();
     this.state = CollectionStore.getState();
@@ -24,13 +25,25 @@ class Test extends React.Component {
     this.setState(state);
   }
 
+  subtrees() {
+    var roots = this.state.collections;
+
+    if(roots.length > 0) {
+      return roots.map((root, index) => {
+        return <CollectionSubtree key={index} root={root} />
+      });
+    } else {
+      return <div></div>;
+    }
+  }
+
   render() {
-    return(
-      <Button bsStyle="success" bsSize="small">
-        Something
-      </Button>
-    );
+    return (
+      <div className="tree-wrapper">
+        {this.subtrees()}
+      </div>
+    )
   }
 }
 
-module.exports = Test;
+module.exports = CollectionTree;
