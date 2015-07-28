@@ -8,7 +8,7 @@
 
 # JS Setup & Testing
 
-* Install `nvm` from https://github.com/creationix/nvm.
+* Install `nvm`: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
 * Execute `nvm install 0.10` (in order to work with jest).
 * Switch to newly installed node version (`nvm use`) if not already happened.
 * Execute `npm install`.
