@@ -9,8 +9,8 @@
 # JS Setup & Testing
 
 * Install `nvm`: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
-* Execute `nvm install 0.10` (in order to work with jest).
-* Switch to newly installed node version (`nvm use`) if not already happened.
+* Copy `.nvmrc.example` to `.nvmrc`.
+* Execute `nvm install` nvm will automatically use node 0.10.40 (in order to work with current jest-version)
 * Execute `npm install`.
 * Execute `npm test`.
 
