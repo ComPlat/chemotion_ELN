@@ -3,6 +3,7 @@ import {Button} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
+import ElementActions from './actions/ElementActions';
 
 class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -23,10 +24,15 @@ class CollectionSubtree extends React.Component {
     UIStore.unlisten(this.onChange.bind(this));
   }
 
+  componentWillUpdate(nextProps, nextState) {
+    if(nextState.selected) {
+      // TODO updateElements for reactions and so on
+      ElementActions.updateElements({samples: this.state.root.samples, type: 'sample'});
+    }
+  }
+
   onChange(state) {
     if(state.selectedCollectionIds[0] == this.state.root.id) {
-      // TODO trigger associated elements
-      // selectAssociatedSamples(collection_id)
       this.setState({selected: true});
     } else {
       this.setState({selected: false});

@@ -7,5 +7,16 @@ class CreateCollections < ActiveRecord::Migration
 
       t.timestamps null: false
     end
+
+    create_table :samples do |t|
+      t.string :name
+
+      t.timestamps null: false
+    end
+
+    create_join_table :collections, :samples do |t|
+      t.index :collection_id
+      t.index :sample_id
+    end
   end
 end
