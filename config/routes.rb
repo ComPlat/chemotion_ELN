@@ -5,5 +5,7 @@ Rails.application.routes.draw do
     root to: 'pages#welcome', as: :authenticated_root
   end
 
+  mount API => '/'
+  
   root :to => redirect("/users/sign_in")
 end

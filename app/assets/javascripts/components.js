@@ -1,21 +1,7 @@
 //= require_self
 //= require react_ujs
 
-React = require('react');
-Test = require('./components/test');
+// see https://github.com/rackt/react-router/issues/1067
+var React = require('react');
 
-// fetch example
-fetch('/').then(function(response) {
-    return response.text()
-  }).then(function(body) {
-    console.log(body)
-  });
-
-// Immutable example
-const Immutable = require('immutable');
-var map = Immutable.Map({foo: 'bar'});
-console.log(map.get('foo'));
-
-// alt initialization
-const Alt = require('alt');
-const alt = new Alt();
+App = require('./components/App');

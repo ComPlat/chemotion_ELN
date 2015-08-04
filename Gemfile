@@ -28,6 +28,14 @@ gem 'browserify-rails'
 # react specific gems
 gem 'react-rails', '~> 1.1.0'
 
+# for collection tree structure
+gem 'ancestry'
+
+# API
+gem 'grape'
+gem 'hashie-forbidden_attributes'
+gem 'grape-active_model_serializers'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug'

@@ -1,0 +1,9 @@
+.sample-details {
+  margin-left: 357px !important;
+  margin-top: 71px !important;
+  width: calc(100vw - 357px) !important;
+}
+
+.modal-backdrop {
+  opacity: 0 !important;
+}

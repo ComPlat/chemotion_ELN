@@ -1,0 +1,35 @@
+#tree-view {
+  border-right: 1px solid;
+}
+
+.tree-wrapper {
+  height: 100vh;
+  display: block;
+  position: relative;
+}
+
+.tree-view {
+
+}
+
+.title {
+  background: #eee;
+  font-size: 14px;
+  padding: 7px;
+  margin-bottom: 1px;
+}
+
+.tree-view li {
+  margin-left: 3px;
+  list-style-type: none;
+  margin-bottom: -9px;
+}
+
+.tree-view button {
+  margin-right: 5px;
+}
+
+.selected {
+  background: #333;
+  color: #fff;
+}
