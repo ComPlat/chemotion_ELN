@@ -1,16 +1,45 @@
 import React from 'react';
-import {Modal} from 'react-bootstrap';
+import {FormControls, Input, Modal} from 'react-bootstrap';
+
+import ElementActions from './actions/ElementActions';
+import ElementStore from './stores/ElementStore';
 
 class SampleDetails extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
+      sample: null,
       id: props.params.id
     }
   }
 
+  componentDidMount() {
+    ElementStore.listen(this.onChange.bind(this));
+    ElementActions.fetchSampleById(this.state.id);
+  }
+
+  componentWillUnmount() {
+    ElementStore.unlisten(this.onChange.bind(this));
+  }
+
+  onChange(state) {
+    this.setState({sample: state.samples[0]});
+  }
+
   hideModal() {
     this.context.router.transitionTo('/');
+  }
+
+  sampleName() {
+    var sample = this.state.sample;
+
+    return sample ? sample.name : '';
+  }
+
+  createdAt() {
+    var sample = this.state.sample;
+
+    return sample ? sample.created_at : '';
   }
 
   render() {
@@ -18,12 +47,13 @@ class SampleDetails extends React.Component {
       <div>
         <Modal animation show={true} dialogClassName="sample-details" onHide={this.hideModal.bind(this)}>
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.id}</Modal.Title>
+            <Modal.Title>{this.sampleName()}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            Details<br/>
-            Details<br/>
-            Details<br/>
+            <form>
+              <Input type="text" label="Name" placeholder={this.sampleName()} />
+              <FormControls.Static label="Created at" value={this.createdAt()} />
+            </form>
           </Modal.Body>
         </Modal>
       </div>

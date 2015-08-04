@@ -8,8 +8,13 @@ class ElementStore {
     };
 
     this.bindListeners({
+      handleFetchSampleById: ElementActions.fetchSampleById,
       handleUpdateElements: ElementActions.updateElements
     })
+  }
+
+  handleFetchSampleById(result) {
+    this.state.samples = [result];
   }
 
   handleUpdateElements(elements) {
