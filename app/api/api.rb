@@ -4,4 +4,5 @@ class API < Grape::API
   formatter :json, Grape::Formatter::ActiveModelSerializers
 
   mount Chemotion::CollectionAPI
+  mount Chemotion::SampleAPI
 end
