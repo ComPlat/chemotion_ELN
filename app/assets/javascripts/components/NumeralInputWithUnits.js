@@ -8,16 +8,16 @@ export default class NumeralInputWithUnits extends Component {
 
     let {value, units} = props;
     this.state = {
-      selectedUnit: units[0],
+      unit: units[0],
       value: value
     };
   }
 
-  _handleUnitSelect(unit) {
-    let {value, selectedUnit} = this.state;
-    let convertedValue = this.props._convertValueFromUnitToNextUnit(selectedUnit, unit, value);
+  _handleUnitSelect(nextUnit) {
+    let {value, unit} = this.state;
+    let convertedValue = this.props.convertValueFromUnitToNextUnit(unit, nextUnit, value);
     this.setState({
-      selectedUnit: unit,
+      unit: nextUnit,
       value: convertedValue
     });
   }
@@ -50,9 +50,9 @@ export default class NumeralInputWithUnits extends Component {
 // TODO fix css-issue with wrong z-index
   render() {
     let {units, bsSize, bsStyle, numeralFormat} = this.props;
-    let {selectedUnit, value} = this.state;
-    let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(selectedUnit) : '';
-    let addonAfter = (units.length == 1) ? selectedUnit : '';
+    let {unit, value} = this.state;
+    let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(unit) : '';
+    let addonAfter = (units.length == 1) ? unit : '';
     return (
       <NumeralInput buttonAfter={buttonAfter} addonAfter={addonAfter} onChange={(value) => this._handleValueChange(value)}
         value={value} bsSize={bsSize} bsStyle={bsStyle} numeralFormat={numeralFormat}/>
@@ -63,27 +63,5 @@ export default class NumeralInputWithUnits extends Component {
 NumeralInputWithUnits.defaultProps = {
   value: 0,
   numeralFormat: '0,0.0[000]',
-  units: ['g', 'mol'],
-  _convertValueFromUnitToNextUnit: (unit, nextUnit, value) => {
-
-    console.log("ajax call with unit: " + unit + " nextUnit: " + nextUnit + " and value: " + value);
-    // will be in backend
-    let convertedValue = value;
-    if (unit && nextUnit && unit != nextUnit) {
-      switch (unit) {
-        case 'g':
-          if (nextUnit == 'mol') {
-            convertedValue = value * 2;
-          }
-          break;
-        case 'mol':
-          if (nextUnit == 'g') {
-            convertedValue = value / 2;
-          }
-          break;
-      }
-    }
-    console.log("result:" + convertedValue);
-    return convertedValue;
-  }
+  units: ['']
 };

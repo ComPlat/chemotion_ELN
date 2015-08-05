@@ -32,19 +32,13 @@ export default class NumeralInput extends Component {
     let inputField = event.target;
     let caretPosition = $(inputField).caret();
     let {value} = inputField;
-    let numeralValue = this._convertValueToNumeralValue(value);
+    let unformatedValue = Numeral().unformat(value);
     let {onChange} = this.props;
-    //console.log("carret-pos: " + caretPosition);
-    //console.log("input-value: " + value);
-    //console.log("numeral-value:" + numeralValue);
 
     this.setState({
-        numeralValue: numeralValue
+        numeralValue: this._convertValueToNumeralValue(value)
       }, () => {
-        if (onChange) {
-          let unformatedValue = Numeral().unformat(value);
-          onChange(unformatedValue);
-        }
+        onChange(unformatedValue);
         $(inputField).caret(caretPosition);
       }
     );
@@ -62,5 +56,7 @@ export default class NumeralInput extends Component {
 
 NumeralInput.defaultProps = {
   numeralFormat: '0,0',
-  value: 0
+  value: 0,
+  onChange: () => {
+  }
 };
