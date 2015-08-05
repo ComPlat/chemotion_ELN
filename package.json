@@ -21,7 +21,8 @@
   },
   "devDependencies": {
     "babel-jest": "*",
-    "jest-cli": "*"
+    "jest-cli": "*",
+    "numeral": "^1.5.3"
   },
   "scripts": {
     "test": "jest"
