@@ -2,30 +2,31 @@ import React, {Component} from 'react';
 import {DropdownButton, MenuItem} from 'react-bootstrap';
 import NumeralInput from './NumeralInput';
 
-export default class NumberInput extends Component {
+export default class NumeralInputWithUnits extends Component {
   constructor(props) {
     super(props);
 
     let {defaultValue, units} = props;
     this.state = {
-      selectedUnitName: units[0].name,
+      selectedUnit: units[0].name,
       value: defaultValue
     };
   }
 
   _handleUnitSelect(unit) {
     this.setState({
-      selectedUnitName: unit.name
+      selectedUnit: unit.name
     });
 
-    // jquery, findDomNode, flux-store, callback
     let {value} = this.state;
     unit.callback(value);
   }
 
-  //_handleValueChange(){
-  //  console.log(42);
-  //}
+  _handleValueChange(value) {
+    this.setState({
+      value: value
+    });
+  }
 
   _renderUnitsAsMenuItems() {
     let {units} = this.props;
@@ -38,30 +39,32 @@ export default class NumberInput extends Component {
     });
   }
 
-  _renderInnerDropdown() {
+  _renderDropdownButtonAddon(title) {
     return (
-        <DropdownButton title='unit'>
+        <DropdownButton title={title}>
           {this._renderUnitsAsMenuItems()}
         </DropdownButton>
     );
   }
 
+// TODO fix css-issue with wrong z-index
   render() {
-    let {selectedUnitName} = this.state;
-    let {units} = this.props;
-    let innerDropdown = (units.length > 1) ? this._renderInnerDropdown() : '';
+    //extract value from props so it is not passed down
+    let {value, units, ...other} = this.props;
+    let {selectedUnit} = this.state;
+    let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(selectedUnit) : '';
+    let addonAfter = (units.length == 1) ? selectedUnit : '';
     return (
-        <NumeralInput addonBefore={selectedUnitName} addonAfter={innerDropdown}
-                      //onChange={this._handleValueChange.bind(this)}
-                      {...this.props} />
+        <NumeralInput buttonAfter={buttonAfter} addonAfter={addonAfter}
+                      onChange={this._handleValueChange.bind(this)} {...other} />
     );
   }
 }
 
-NumberInput.defaultProps = {
-  defaultValue: '0.000',
-  numeralFormat: '0,0.000',
-  bsSize: 'large',
+NumeralInputWithUnits.defaultProps = {
+  defaultValue: 0,
+  numeralFormat: '[0],0.0[000]',
+  bsSize: 'medium',
   units: [{
     name: 'g',
     callback: value => {

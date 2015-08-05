@@ -50,6 +50,22 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
+    let units = [{
+      name: 't',
+      callback: value => {
+        console.log('unit t selected');
+        console.log("value: " + value);
+      }
+    },
+      {
+        name: 'l',
+        callback: value => {
+          console.log('unit l selected');
+          console.log("value: " + value);
+        }
+      }
+    ];
+
     return (
       <div>
         <Modal animation show={true} dialogClassName="sample-details" onHide={this.hideModal.bind(this)}>

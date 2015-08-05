@@ -15,9 +15,9 @@
     "whatwg-fetch": "0.9.0"
   },
   "browserify": {
-    "transform": [
-      "babelify"
-    ]
+    "transform": [[
+      "babelify", { "optional": ["es7.objectRestSpread"] }
+    ]]
   },
   "devDependencies": {
     "babel-jest": "*",

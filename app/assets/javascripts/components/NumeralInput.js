@@ -8,7 +8,8 @@ export default class NumeralInput extends Component {
 
     let {defaultValue} = props;
     this.state = {
-      value: this._getNumeralValue(defaultValue)
+      numeralValue: this._getNumeralValue(defaultValue),
+      value: defaultValue
     };
   }
 
@@ -21,24 +22,33 @@ export default class NumeralInput extends Component {
   // containing comas need to be compared to previous amount
   _handleInputValueChange(event) {
     let inputField = event.target;
-    let inputValue = inputField.value;
     let caretPosition = $(inputField).caret();
-    let numeralValue = this._getNumeralValue(inputValue);
-
-    console.log("carret-pos: " + caretPosition);
-    console.log("input-value: " + inputValue);
-    console.log("numeral-value:" + numeralValue);
+    let {value} = inputField;
+    let numeralValue = this._getNumeralValue(value);
+    let {onChange} = this.props;
+    //console.log("carret-pos: " + caretPosition);
+    //console.log("input-value: " + value);
+    //console.log("numeral-value:" + numeralValue);
 
     this.setState({
-          value: numeralValue
-        }, () => $(inputField).caret(caretPosition)
+          numeralValue: numeralValue,
+          value: value
+        }, () => {
+          if (onChange) {
+            let unformatedValue = Numeral().unformat(value);
+            onChange(unformatedValue);
+          }
+          $(inputField).caret(caretPosition);
+        }
     );
   }
 
   render() {
-    let {value} = this.state;
+    let {numeralValue} = this.state;
+    //extract onChange from props so it is not passed down
+    let {onChange, ...other} = this.props;
     return (
-        <Input type='text' value={value} onChange={this._handleInputValueChange.bind(this)} {...this.props} />
+        <Input type='text' value={numeralValue} onChange={this._handleInputValueChange.bind(this)} {...other} />
     );
   }
 }
