@@ -16,7 +16,7 @@
   },
   "browserify": {
     "transform": [[
-      "babelify", { "optional": ["es7.objectRestSpread"] }
+      "babelify"
     ]]
   },
   "devDependencies": {

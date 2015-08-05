@@ -6,20 +6,20 @@ export default class NumeralInputWithUnits extends Component {
   constructor(props) {
     super(props);
 
-    let {defaultValue, units} = props;
+    let {value, units} = props;
     this.state = {
-      selectedUnit: units[0].name,
-      value: defaultValue
+      selectedUnit: units[0],
+      value: value
     };
   }
 
   _handleUnitSelect(unit) {
+    let {value, selectedUnit} = this.state;
+    let convertedValue = this.props._convertValueFromUnitToNextUnit(selectedUnit, unit, value);
     this.setState({
-      selectedUnit: unit.name
+      selectedUnit: unit,
+      value: convertedValue
     });
-
-    let {value} = this.state;
-    unit.callback(value);
   }
 
   _handleValueChange(value) {
@@ -32,59 +32,58 @@ export default class NumeralInputWithUnits extends Component {
     let {units} = this.props;
     return units.map((unit, index) => {
       return (
-          <MenuItem key={'unit_' + index} onSelect={this._handleUnitSelect.bind(this, unit)}>
-            {unit.name}
-          </MenuItem>
+        <MenuItem key={'unit_' + index} onSelect={() => this._handleUnitSelect(unit)}>
+          {unit}
+        </MenuItem>
       );
     });
   }
 
   _renderDropdownButtonAddon(title) {
     return (
-        <DropdownButton title={title}>
-          {this._renderUnitsAsMenuItems()}
-        </DropdownButton>
+      <DropdownButton title={title}>
+        {this._renderUnitsAsMenuItems()}
+      </DropdownButton>
     );
   }
 
 // TODO fix css-issue with wrong z-index
   render() {
-    //extract value from props so it is not passed down
-    let {value, units, ...other} = this.props;
-    let {selectedUnit} = this.state;
+    let {units, bsSize, bsStyle, numeralFormat} = this.props;
+    let {selectedUnit, value} = this.state;
     let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(selectedUnit) : '';
     let addonAfter = (units.length == 1) ? selectedUnit : '';
     return (
-        <NumeralInput buttonAfter={buttonAfter} addonAfter={addonAfter}
-                      onChange={this._handleValueChange.bind(this)} {...other} />
+      <NumeralInput buttonAfter={buttonAfter} addonAfter={addonAfter} onChange={(value) => this._handleValueChange(value)}
+        value={value} bsSize={bsSize} bsStyle={bsStyle} numeralFormat={numeralFormat}/>
     );
   }
 }
 
 NumeralInputWithUnits.defaultProps = {
-  defaultValue: 0,
-  numeralFormat: '[0],0.0[000]',
-  bsSize: 'medium',
-  units: [{
-    name: 'g',
-    callback: value => {
-      console.log('unit g selected');
-      console.log("value: " + value);
-    }
-  },
-    {
-      name: 'ml',
-      callback: value => {
-        console.log('unit ml selected');
-        console.log("value: " + value);
-      }
-    },
-    {
-      name: 'mol',
-      callback: value => {
-        console.log('unit mol selected');
-        console.log("value: " + value);
+  value: 0,
+  numeralFormat: '0,0.0[000]',
+  units: ['g', 'mol'],
+  _convertValueFromUnitToNextUnit: (unit, nextUnit, value) => {
+
+    console.log("ajax call with unit: " + unit + " nextUnit: " + nextUnit + " and value: " + value);
+    // will be in backend
+    let convertedValue = value;
+    if (unit && nextUnit && unit != nextUnit) {
+      switch (unit) {
+        case 'g':
+          if (nextUnit == 'mol') {
+            convertedValue = value * 2;
+          }
+          break;
+        case 'mol':
+          if (nextUnit == 'g') {
+            convertedValue = value / 2;
+          }
+          break;
       }
     }
-  ]
+    console.log("result:" + convertedValue);
+    return convertedValue;
+  }
 };
