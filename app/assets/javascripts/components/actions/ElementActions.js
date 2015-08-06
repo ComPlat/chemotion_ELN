@@ -11,6 +11,25 @@ class ElementActions {
       });
   }
 
+  fetchSamplesByCollectionId(id) {
+    SamplesFetcher.fetchByCollectionId(id)
+      .then((result) => {
+        // TODO adjust when CollectionAPI fixed
+        this.dispatch(result[':id']);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  updateSample(paramObj) {
+    SamplesFetcher.update(paramObj)
+      .then((result) => {
+        this.dispatch(paramObj.id)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   updateElements(elements) {
     this.dispatch(elements);
   }

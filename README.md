@@ -26,6 +26,10 @@ A user is seeded with email `test@ninjaconcept.com` and password `ninjaconcept`.
 
   `/api/v1/collections/roots`
 
+* Get serialized samples by collection id
+
+  `/api/v1/collections/:collection_id/samples`
+  
 * Get serialized sample by id
 
   `/api/v1/samples/:id`

@@ -1,5 +1,5 @@
 import React from 'react';
-import {FormControls, Input, Modal} from 'react-bootstrap';
+import {Button, FormControls, Input, Modal} from 'react-bootstrap';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -42,6 +42,13 @@ class SampleDetails extends React.Component {
     return sample ? sample.created_at : '';
   }
 
+  updateSample() {
+    ElementActions.updateSample({
+      id: this.state.id,
+      name: this.refs.nameInput.getValue() || this.state.sample.name
+    })
+  }
+
   render() {
     return (
       <div>
@@ -51,8 +58,9 @@ class SampleDetails extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <form>
-              <Input type="text" label="Name" placeholder={this.sampleName()} />
+              <Input type="text" label="Name" ref="nameInput" placeholder={this.sampleName()} />
               <FormControls.Static label="Created at" value={this.createdAt()} />
+              <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
             </form>
           </Modal.Body>
         </Modal>

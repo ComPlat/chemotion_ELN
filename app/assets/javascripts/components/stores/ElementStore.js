@@ -9,7 +9,8 @@ class ElementStore {
 
     this.bindListeners({
       handleFetchSampleById: ElementActions.fetchSampleById,
-      handleUpdateElements: ElementActions.updateElements
+      handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
+      handleUpdateSample: ElementActions.updateSample
     })
   }
 
@@ -17,12 +18,13 @@ class ElementStore {
     this.state.samples = [result];
   }
 
-  handleUpdateElements(elements) {
-    switch(elements.type) {
-      case 'sample':
-        this.state.samples = elements.samples;
-        break;
-    }
+  handleFetchSamplesByCollectionId(result) {
+    this.state.samples = result;
+  }
+
+  // update stored sample if it has been updated
+  handleUpdateSample(sampleId) {
+    ElementActions.fetchSampleById(sampleId);
   }
 }
 
