@@ -8,16 +8,23 @@ class ElementStore {
     };
 
     this.bindListeners({
-      handleUpdateElements: ElementActions.updateElements
+      handleFetchSampleById: ElementActions.fetchSampleById,
+      handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
+      handleUpdateSample: ElementActions.updateSample
     })
   }
 
-  handleUpdateElements(elements) {
-    switch(elements.type) {
-      case 'sample':
-        this.state.samples = elements.samples;
-        break;
-    }
+  handleFetchSampleById(result) {
+    this.state.samples = [result];
+  }
+
+  handleFetchSamplesByCollectionId(result) {
+    this.state.samples = result;
+  }
+
+  // update stored sample if it has been updated
+  handleUpdateSample(sampleId) {
+    ElementActions.fetchSampleById(sampleId);
   }
 }
 
