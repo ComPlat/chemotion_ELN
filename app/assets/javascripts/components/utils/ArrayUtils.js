@@ -1,24 +1,24 @@
 const Immutable = require('immutable');
 
-var ArrayUtils = {
-  pushUniq(list, value) {
+export default class ArrayUtils {
+  static pushUniq(list, value) {
     if(!list.includes(value)) {
       return list.push(value);
     }
-  },
+  }
 
-  removeFromListByValue(list, value) {
-    var index = list.indexOf(value);
+  static removeFromListByValue(list, value) {
+    let index = list.indexOf(value);
 
     if(index != -1) {
       return list.delete(index);
     } else {
       return list;
     }
-  },
+  }
 
-  isValInArray(array, value) {
-    var index = array.indexOf(value);
+  static isValInArray(array, value) {
+    let index = array.indexOf(value);
 
     if(index != -1) {
       return true;
@@ -27,5 +27,3 @@ var ArrayUtils = {
     }
   }
 }
-
-module.exports = ArrayUtils;

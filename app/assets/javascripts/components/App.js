@@ -10,9 +10,9 @@ import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 
-class App extends React.Component {
+export default class App extends React.Component {
   constructor(props) {
-    super();
+    super(props);
   }
 
   render() {
@@ -46,10 +46,8 @@ class App extends React.Component {
   }
 }
 
-module.exports = App;
-
 // Configure React Routing
-var routes = (
+let routes = (
   <Route name="app" path="/" handler={App}>
     <Route name="sample-details" path="/sample/:id" handler={SampleDetails}/>
   </Route>

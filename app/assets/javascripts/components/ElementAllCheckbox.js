@@ -2,9 +2,9 @@ import React from 'react';
 
 import UIActions from './actions/UIActions';
 
-class ElementAllCheckbox extends React.Component {
+export default class ElementAllCheckbox extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       checked: false,
       type: props.type
@@ -12,7 +12,7 @@ class ElementAllCheckbox extends React.Component {
   }
 
   toggleCheckbox() {
-    var newChecked = !this.state.checked;
+    let newChecked = !this.state.checked;
 
     if(newChecked) {
       UIActions.checkAllElements(this.state.type);
@@ -29,5 +29,3 @@ class ElementAllCheckbox extends React.Component {
     )
   }
 }
-
-module.exports = ElementAllCheckbox;

@@ -5,7 +5,7 @@ import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
 
-class ElementsTable extends React.Component {
+export default class ElementsTable extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -29,7 +29,7 @@ class ElementsTable extends React.Component {
 
   onChange(state) {
     // TODO switch based on type
-    var numberOfPages = Math.ceil(state.samples.length / this.state.pageSize);
+    let numberOfPages = Math.ceil(state.samples.length / this.state.pageSize);
 
     this.setState({
       elements: state.samples,
@@ -56,13 +56,13 @@ class ElementsTable extends React.Component {
   entries() {
     // Pagination: startAt...Arrayindex to start with...
     // TODO Move to PaginationUtils?
-    var pageSize = this.state.pageSize;
-    var startAt = (this.state.activePage - 1) * pageSize;
-    var endAt = startAt + pageSize;
-    var elementsOnActivePage = this.state.elements.slice(startAt, endAt);
+    let pageSize = this.state.pageSize;
+    let startAt = (this.state.activePage - 1) * pageSize;
+    let endAt = startAt + pageSize;
+    let elementsOnActivePage = this.state.elements.slice(startAt, endAt);
 
     return elementsOnActivePage.map((element, index) => {
-      var elementRepresentationForUIAction = {type: this.props.type, id: element.id}
+      let elementRepresentationForUIAction = {type: this.props.type, id: element.id}
       // TODO: switch(this.state.type)...case 'sample'...SampleRow
       return (
         <tr key={index}>
@@ -130,5 +130,3 @@ class ElementsTable extends React.Component {
 ElementsTable.contextTypes = {
   router: React.PropTypes.func.isRequired
 };
-
-module.exports = ElementsTable;
