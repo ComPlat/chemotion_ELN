@@ -6,9 +6,9 @@ import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
 
-class CollectionSubtree extends React.Component {
+export default class CollectionSubtree extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       label: props.root.label,
       selected: false,
@@ -53,7 +53,7 @@ class CollectionSubtree extends React.Component {
   }
 
   subtrees() {
-    var children = this.children();
+    let children = this.children();
 
     if(this.hasChildren()) {
       return children.map((child, index) => {
@@ -69,7 +69,7 @@ class CollectionSubtree extends React.Component {
   }
 
   expandButton() {
-    var label = this.state.visible ? '-' : '+';
+    let label = this.state.visible ? '-' : '+';
 
     if(this.hasChildren()) {
       return (
@@ -91,7 +91,7 @@ class CollectionSubtree extends React.Component {
   }
 
   render() {
-    var style;
+    let style;
 
     if (!this.state.visible) {
       style = {display: "none"};
@@ -110,5 +110,3 @@ class CollectionSubtree extends React.Component {
     )
   }
 }
-
-module.exports = CollectionSubtree;

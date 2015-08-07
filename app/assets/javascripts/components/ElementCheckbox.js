@@ -5,9 +5,9 @@ import UIStore from './stores/UIStore';
 
 import ArrayUtils from './utils/ArrayUtils';
 
-class ElementCheckbox extends React.Component {
+export default class ElementCheckbox extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       checked: false,
       element: props.element
@@ -15,8 +15,8 @@ class ElementCheckbox extends React.Component {
   }
 
   updateCheckedStatus(element) {
-    var checkedSampleIds = UIStore.getState().checkedSampleIds;
-    
+    let checkedSampleIds = UIStore.getState().checkedSampleIds;
+
     switch(element.type) {
       case 'sample':
         if(ArrayUtils.isValInArray(checkedSampleIds, element.id)) {
@@ -29,7 +29,7 @@ class ElementCheckbox extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     // TODO based on type
-    var element =  nextProps.element;
+    let element =  nextProps.element;
 
     this.setState({
       element: element
@@ -48,8 +48,8 @@ class ElementCheckbox extends React.Component {
   }
 
   onChange(state) {
-    var thisType = this.state.element.type;
-    var thisId = this.state.element.id;
+    let thisType = this.state.element.type;
+    let thisId = this.state.element.id;
 
     switch(thisType) {
       case 'sample':
@@ -62,7 +62,7 @@ class ElementCheckbox extends React.Component {
   }
 
   toggleCheckbox() {
-    var newChecked = !this.state.checked;
+    let newChecked = !this.state.checked;
 
     if(newChecked) {
       UIActions.checkElement(this.state.element);
@@ -77,5 +77,3 @@ class ElementCheckbox extends React.Component {
     )
   }
 }
-
-module.exports = ElementCheckbox;

@@ -1,9 +1,9 @@
 import React from 'react';
 import {Nav, Navbar, NavItem} from 'react-bootstrap';
 
-class Navigation extends React.Component {
+export default class Navigation extends React.Component {
   constructor(props) {
-    super();
+    super(props);
   }
 
   render() {
@@ -16,5 +16,3 @@ class Navigation extends React.Component {
     )
   }
 }
-
-module.exports = Navigation;

@@ -6,9 +6,9 @@ import CollectionActions from './actions/CollectionActions';
 
 import CollectionSubtree from './CollectionSubtree';
 
-class CollectionTree extends React.Component {
-  constructor() {
-    super();
+export default class CollectionTree extends React.Component {
+  constructor(props) {
+    super(props);
     this.state = CollectionStore.getState();
   }
 
@@ -26,7 +26,7 @@ class CollectionTree extends React.Component {
   }
 
   subtrees() {
-    var roots = this.state.collections;
+    let roots = this.state.collections;
 
     if(roots.length > 0) {
       return roots.map((root, index) => {
@@ -45,5 +45,3 @@ class CollectionTree extends React.Component {
     )
   }
 }
-
-module.exports = CollectionTree;

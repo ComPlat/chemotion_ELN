@@ -1,6 +1,8 @@
-var CollectionsFetcher = {
-  fetchRoots() {
-    var promise = fetch('/api/v1/collections/roots.json')
+import 'whatwg-fetch';
+
+export default class CollectionsFetcher {
+  static fetchRoots() {
+    let promise = fetch('/api/v1/collections/roots.json')
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -12,5 +14,3 @@ var CollectionsFetcher = {
     return promise;
   }
 }
-
-module.exports = CollectionsFetcher;

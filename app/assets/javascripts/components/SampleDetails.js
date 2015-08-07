@@ -4,7 +4,7 @@ import {Button, FormControls, Input, Modal} from 'react-bootstrap';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 
-class SampleDetails extends React.Component {
+export default class SampleDetails extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -31,13 +31,13 @@ class SampleDetails extends React.Component {
   }
 
   sampleName() {
-    var sample = this.state.sample;
+    let sample = this.state.sample;
 
     return sample ? sample.name : '';
   }
 
   createdAt() {
-    var sample = this.state.sample;
+    let sample = this.state.sample;
 
     return sample ? sample.created_at : '';
   }
@@ -74,5 +74,3 @@ class SampleDetails extends React.Component {
 SampleDetails.contextTypes = {
   router: React.PropTypes.func.isRequired
 };
-
-module.exports = SampleDetails;

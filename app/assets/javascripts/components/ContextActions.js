@@ -3,9 +3,9 @@ import {Button, ButtonGroup} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 
-class ContextActions extends React.Component {
+export default class ContextActions extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = UIStore.getState();
   }
 
@@ -50,5 +50,3 @@ class ContextActions extends React.Component {
     )
   }
 }
-
-module.exports = ContextActions;

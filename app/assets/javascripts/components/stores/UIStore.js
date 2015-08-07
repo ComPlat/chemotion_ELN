@@ -23,11 +23,11 @@ class UIStore {
   }
 
   handleCheckAllElements(type) {
-    var elements = ElementStore.getState();
+    let elements = ElementStore.getState();
 
     switch(type) {
       case 'sample':
-        var sampleIds = elements.samples.map(sample => sample.id);
+        let sampleIds = elements.samples.map(sample => sample.id);
         this.state.checkedSampleIds = this.state.checkedSampleIds.concat(sampleIds);
         break;
     }

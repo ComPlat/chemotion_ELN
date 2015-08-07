@@ -2,9 +2,9 @@ import React from 'react';
 
 import ElementsTable from './ElementsTable';
 
-class MainContent extends React.Component {
+export default class MainContent extends React.Component {
   constructor(props) {
-    super();
+    super(props);
   }
 
   render() {
@@ -13,5 +13,3 @@ class MainContent extends React.Component {
     )
   }
 }
-
-module.exports = MainContent;
