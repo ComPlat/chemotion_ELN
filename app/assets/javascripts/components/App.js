@@ -1,11 +1,10 @@
 import React from 'react';
 import {Col, Grid, Row} from 'react-bootstrap';
-import Router from 'react-router';
-import { DefaultRoute, Link, Route, RouteHandler } from 'react-router';
+import Router, { DefaultRoute, Link, Route, RouteHandler } from 'react-router';
 
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
-import MainContent from './MainContent';
+import List from './List';
 import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
@@ -22,25 +21,21 @@ export default class App extends React.Component {
           <Navigation />
         </Row>
         <Row>
-          <Col md={3}>
-            <ElementFilter />
+          <Col sm={3} md={3} lg={3}>
+            <Row>
+              <ElementFilter />
+            </Row>
+            <Row>
+              <CollectionTree />
+            </Row>
           </Col>
-          <Col md={9}>
-            ...
+          <Col sm={7} md={7} lg={7}>
+            <RouteHandler />
           </Col>
-        </Row>
-        <Row>
-          <Col md={3}>
-            <CollectionTree />
-          </Col>
-          <Col md={7}>
-            <MainContent />
-          </Col>
-          <Col md={2}>
+          <Col sm={2} md={2} lg={2}>
             <ContextActions />
           </Col>
         </Row>
-        <RouteHandler />
       </Grid>
     )
   }
@@ -49,14 +44,17 @@ export default class App extends React.Component {
 // Configure React Routing
 let routes = (
   <Route name="app" path="/" handler={App}>
-    <Route name="sample-details" path="/sample/:id" handler={SampleDetails}/>
+    <DefaultRoute handler={List}/>
+    <Route name="list" path="/list" handler={List}/>
+    <Route name="sample" path="/sample/:id" handler={SampleDetails}/>
   </Route>
 );
 
 // see, e.g.,
-// http://stackoverflow.com/questions/26566317/invariant-violation-registercomponent-target-container-is-not-a-dom-elem
-$(document).ready(function () {
-  Router.run(routes, function (Handler) {
-    React.render(<Handler/>, document.getElementById('router'));
+//
+http://stackoverflow.com/questions/26566317/invariant-violation-registercomponent-target-container-is-not-a-dom-elem
+  $(document).ready(function () {
+    Router.run(routes, function (Handler) {
+      React.render(<Handler/>, document.getElementById('router'));
+    });
   });
-});
