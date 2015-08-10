@@ -15,13 +15,14 @@
     "whatwg-fetch": "0.9.0"
   },
   "browserify": {
-    "transform": [
+    "transform": [[
       "babelify"
-    ]
+    ]]
   },
   "devDependencies": {
     "babel-jest": "*",
-    "jest-cli": "*"
+    "jest-cli": "*",
+    "numeral": "^1.5.3"
   },
   "scripts": {
     "test": "jest"

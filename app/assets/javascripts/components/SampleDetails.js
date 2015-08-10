@@ -50,6 +50,27 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
+    let ajaxCall = (unit, nextUnit, value) => {
+      console.log("ajax call with unit: " + unit + " nextUnit: " + nextUnit + " and value: " + value);
+      let convertedValue = value;
+      if (unit && nextUnit && unit != nextUnit) {
+        switch (unit) {
+          case 'g':
+            if (nextUnit == 'mol') {
+              convertedValue = value * 2;
+            }
+            break;
+          case 'mol':
+            if (nextUnit == 'g') {
+              convertedValue = value / 2;
+            }
+            break;
+        }
+      }
+      console.log("result:" + convertedValue);
+      return convertedValue;
+    };
+
     return (
       <div>
         <Modal animation show={true} dialogClassName="sample-details" onHide={this.hideModal.bind(this)}>
