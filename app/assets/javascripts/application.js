@@ -14,4 +14,5 @@
 //= require jquery.caret
 //= require jquery_ujs
 //= //require turbolinks
+//= require polyfill
 //= require components
