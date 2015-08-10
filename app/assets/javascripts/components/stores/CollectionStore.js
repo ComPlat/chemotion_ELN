@@ -8,7 +8,7 @@ class CollectionStore {
     };
 
     this.bindListeners({
-      handleFetchCollections: CollectionActions.fetchCollections
+      handleFetchCollections: CollectionActions.fetchUnsharedCollectionRoots
     })
   }
 

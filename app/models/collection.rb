@@ -5,6 +5,7 @@ class Collection < ActiveRecord::Base
   has_many :collections_samples
   has_many :samples, through: :collections_samples
 
+  scope :unshared, -> { where(is_shared: false) }
   scope :shared, -> { where(is_shared: true) }
 
   def is_all_collection?

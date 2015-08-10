@@ -3,7 +3,9 @@ import 'whatwg-fetch';
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class SamplesFetcher {
   static fetchById(id) {
-    let promise = fetch('/api/v1/samples/' + id + '.json')
+    let promise = fetch('/api/v1/samples/' + id + '.json', {
+        credentials: 'same-origin'
+      })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -16,7 +18,9 @@ export default class SamplesFetcher {
   }
 
   static fetchByCollectionId(id) {
-    let promise = fetch('/api/v1/collections/' + id + '/samples.json')
+    let promise = fetch('/api/v1/collections/' + id + '/samples.json', {
+        credentials: 'same-origin'
+      })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -30,6 +34,7 @@ export default class SamplesFetcher {
 
   static update(paramObj) {
     let promise = fetch('/api/v1/samples/' + paramObj.id, {
+      credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',

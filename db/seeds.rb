@@ -1,5 +1,7 @@
 # create initial test user
 u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
+hattori = User.create!(email: 'hattori@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
+momochi = User.create!(email: 'momochi@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
 
 # create some collections
 all_collection = Collection.create!(label: 'All', user_id: u.id)
@@ -14,6 +16,10 @@ reaction_3 = Reaction.create(name: 'Reaction 3')
 reaction_4 = Reaction.create(name: 'Reaction 4')
 reaction_5 = Reaction.create(name: 'Reaction 5')
 reaction_6 = Reaction.create(name: 'Reaction 6')
+
+# create some shared collections
+shared_collection_1 = Collection.create!(is_shared: true, label: 'My project with Hattori', user_id: hattori.id)
+shared_collection_2 = Collection.create!(is_shared: true, label: 'My project with Momochi', user_id: momochi.id)
 
 # create some samples
 sample_1 = Sample.create!(name: 'Sample 1')
@@ -46,6 +52,10 @@ CollectionsSample.create!(sample: sample_1, collection: grand_child)
 CollectionsSample.create!(sample: sample_7, collection: grand_child)
 CollectionsSample.create!(sample: sample_8, collection: grand_child)
 
+CollectionsSample.create!(sample: sample_1, collection: shared_collection_1)
+CollectionsSample.create!(sample: sample_2, collection: shared_collection_2)
+CollectionsSample.create!(sample: sample_3, collection: shared_collection_2)
+
 # associate samples with reactions
 CollectionsReaction.create!(reaction: reaction_1, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_2, collection: collection_1)
@@ -53,3 +63,4 @@ CollectionsReaction.create!(reaction: reaction_3, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_4, collection: grand_child)
 CollectionsReaction.create!(reaction: reaction_5, collection: subcollection_1)
 CollectionsReaction.create!(reaction: reaction_6, collection: subcollection_1)
+

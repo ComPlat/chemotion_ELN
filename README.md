@@ -16,20 +16,24 @@
 
 # Available Seeds
 
-A user is seeded with email `test@ninjaconcept.com` and password `ninjaconcept`.
+Currently 3 users are seeded with respective email `test@ninjaconcept.com`, `hattori@ninjaconcept.com`, `momochi@ninjaconcept.com`, and password `ninjaconcept` (for all 3 the same).
 
 # API (v1)
 
 ## Collections
 
-* Get serialized collection roots
+* Get serialized, unshared collection roots for current user
 
   `/api/v1/collections/roots`
+
+* Get serialized, shared collection roots for current user
+
+  `/api/v1/collections/shared_roots`
 
 * Get serialized samples by collection id
 
   `/api/v1/collections/:collection_id/samples`
-  
+
 * Get serialized sample by id
 
   `/api/v1/samples/:id`

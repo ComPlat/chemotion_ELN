@@ -14,7 +14,7 @@ export default class CollectionTree extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onChange.bind(this));
-    CollectionActions.fetchCollections();
+    CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {
@@ -39,8 +39,14 @@ export default class CollectionTree extends React.Component {
 
   render() {
     return (
-      <div className="tree-wrapper">
-        {this.subtrees()}
+      <div>
+        <div className="tree-wrapper">
+          {this.subtrees()}
+        </div>
+        Shared
+        <div className="tree-wrapper">
+          {this.subtrees()}
+        </div>
       </div>
     )
   }

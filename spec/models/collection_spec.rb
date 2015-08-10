@@ -10,12 +10,18 @@ RSpec.describe Collection, type: :model do
   end
 
   describe 'scopes' do
-    describe 'shared scope' do
-      let(:collection_1) { create(:collection, is_shared: false) }
-      let(:collection_2) { create(:collection, is_shared: true) }
+    let(:collection_1) { create(:collection, is_shared: false) }
+    let(:collection_2) { create(:collection, is_shared: true) }
 
+    describe 'shared scope' do
       it 'returns shared collections' do
         expect(Collection.shared).to match_array [collection_2]
+      end
+    end
+
+    describe 'unshared scope' do
+      it 'returns unshared collections' do
+        expect(Collection.unshared).to match_array [collection_1]
       end
     end
   end
