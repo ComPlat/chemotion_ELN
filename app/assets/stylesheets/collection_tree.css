@@ -7,6 +7,10 @@
   position: relative;
 }
 
+.tree-view .title {
+  cursor: pointer;
+}
+
 .tree-view {
 
 }

@@ -69,7 +69,7 @@ export default class ElementsTable extends React.Component {
           <td width="40">
             <ElementCheckbox element={elementRepresentationForUIAction}/>
           </td>
-          <td onClick={this.showDetails.bind(this, element)} width="120">
+          <td onClick={this.showDetails.bind(this, element)} width="120" style={{cursor: 'pointer'}}>
             {element.name}
           </td>
           <td>
@@ -83,7 +83,10 @@ export default class ElementsTable extends React.Component {
   collectionLabels(element) {
     return element.collection_labels.map((label, index) => {
       return (
-        <Label bsStyle="primary" key={index}>{label}</Label>
+        <span>
+          <Label bsStyle="primary" key={index}>{label}</Label>
+          &nbsp;
+        </span>
       )
     });
   }

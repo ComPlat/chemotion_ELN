@@ -1,11 +1,13 @@
 import React from 'react';
-import {Button, FormControls, Input, Modal} from 'react-bootstrap';
+import {Button, ButtonToolbar, FormControls, Input, Modal} from 'react-bootstrap';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 
 export default class SampleDetails extends React.Component {
   constructor(props, context) {
+    console.log("constructor");
+
     super(props, context);
     this.state = {
       sample: null,
@@ -14,19 +16,31 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
+    console.log("componentDidMount");
     ElementStore.listen(this.onChange.bind(this));
     ElementActions.fetchSampleById(this.state.id);
   }
 
   componentWillUnmount() {
+    console.log("componentWillUnmount");
     ElementStore.unlisten(this.onChange.bind(this));
   }
 
-  onChange(state) {
-    this.setState({sample: state.samples[0]});
+  componentWillReceiveProps(nextProps) {
+    console.log("componentWillReceiveProps");
+
+    if(nextProps.params && nextProps.params.id) {
+      ElementActions.fetchSampleById(nextProps.params.id);
+    }
   }
 
-  hideModal() {
+  onChange(state) {
+    console.log("onChange");
+    console.log(state);
+    this.setState({sample: state.currentSample});
+  }
+
+  closeDetails() {
     this.context.router.transitionTo('/');
   }
 
@@ -73,18 +87,16 @@ export default class SampleDetails extends React.Component {
 
     return (
       <div>
-        <Modal animation show={true} dialogClassName="sample-details" onHide={this.hideModal.bind(this)}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.sampleName()}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form>
-              <Input type="text" label="Name" ref="nameInput" placeholder={this.sampleName()} />
-              <FormControls.Static label="Created at" value={this.createdAt()} />
-              <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
-            </form>
-          </Modal.Body>
-        </Modal>
+
+        <h2>{this.sampleName()}</h2>
+        <form>
+          <Input type="text" label="Name" ref="nameInput" placeholder={this.sampleName()} />
+          <FormControls.Static label="Created at" value={this.createdAt()} />
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
+            <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
+          </ButtonToolbar>
+        </form>
       </div>
     )
   }

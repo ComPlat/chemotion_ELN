@@ -4,7 +4,8 @@ import ElementActions from '../actions/ElementActions';
 class ElementStore {
   constructor() {
     this.state = {
-      samples: []
+      samples: [],
+      currentSample: null
     };
 
     this.bindListeners({
@@ -15,7 +16,7 @@ class ElementStore {
   }
 
   handleFetchSampleById(result) {
-    this.state.samples = [result];
+    this.state.currentSample = result;
   }
 
   handleFetchSamplesByCollectionId(result) {
