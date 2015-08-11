@@ -13,7 +13,8 @@
     "react-router": "0.13.3",
     "react-select": "0.6.1",
     "react-tools": "0.13.3",
-    "whatwg-fetch": "0.9.0"
+    "whatwg-fetch": "0.9.0",
+    "react-inlinesvg": "0.4.2"
   },
   "browserify": {
     "transform": [[

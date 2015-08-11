@@ -5,6 +5,8 @@ import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
 
+import SVG from 'react-inlinesvg';
+
 export default class ElementsTable extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -48,7 +50,7 @@ export default class ElementsTable extends React.Component {
         <th width="40">
           <ElementAllCheckbox type={this.state.type} />
         </th>
-        <th colSpan="2">All {this.state.type}s</th>
+        <th colSpan="3">All {this.state.type}s</th>
       </thead>
     )
   }
@@ -69,11 +71,14 @@ export default class ElementsTable extends React.Component {
           <td width="40">
             <ElementCheckbox element={elementRepresentationForUIAction}/>
           </td>
-          <td onClick={this.showDetails.bind(this, element)} width="120" style={{cursor: 'pointer'}}>
+          <td width="120" onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
             {element.name}
           </td>
           <td>
             {this.collectionLabels(element)}
+          </td>
+          <td>
+            <SVG src="/assets/361.svg" className="molecule" />
           </td>
         </tr>
       )

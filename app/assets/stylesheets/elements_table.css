@@ -1,3 +1,15 @@
 .pagination {
   margin-top: 0 !important;
 }
+
+.molecule svg {
+  width: 100px;
+  height: 100px;
+  margin-left: 10px;
+}
+
+.molecule rect {
+  fill: none;
+  fill-opacity: 0.0;
+}
+
