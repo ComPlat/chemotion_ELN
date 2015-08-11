@@ -4,7 +4,7 @@ import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 class CollectionActions {
   // TODO #2...centralized error handling maybe ErrorActions?
   fetchUnsharedCollectionRoots() {
-    CollectionsFetcher.fetchRoots()
+    CollectionsFetcher.fetchUnsharedRoots()
       .then((roots) => {
         this.dispatch(roots);
       }).catch((errorMessage) => {
@@ -13,7 +13,7 @@ class CollectionActions {
   }
 
   fetchSharedCollectionRoots() {
-    CollectionsFetcher.fetchRoots()
+    CollectionsFetcher.fetchSharedRoots()
       .then((roots) => {
         this.dispatch(roots);
       }).catch((errorMessage) => {

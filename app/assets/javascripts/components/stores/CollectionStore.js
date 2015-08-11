@@ -4,16 +4,22 @@ import CollectionActions from '../actions/CollectionActions';
 class CollectionStore {
   constructor() {
     this.state = {
-      collections: []
+      unsharedRoots: [],
+      sharedRoots: []
     };
 
     this.bindListeners({
-      handleFetchCollections: CollectionActions.fetchUnsharedCollectionRoots
+      handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
+      handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots
     })
   }
 
-  handleFetchCollections(results) {
-    this.state.collections = results.collections;
+  handleFetchUnsharedCollectionRoots(results) {
+    this.state.unsharedRoots = results.collections;
+  }
+
+  handleFetchSharedCollectionRoots(results) {
+    this.state.sharedRoots = results.collections;
   }
 }
 
