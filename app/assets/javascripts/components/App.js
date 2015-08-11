@@ -9,6 +9,7 @@ import ManagingActions from './ManagingActions';
 import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
+import ShareModal from './managing_actions/ShareModal';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -50,6 +51,7 @@ let routes = (
   <Route name="app" path="/" handler={App}>
     <DefaultRoute handler={List}/>
     <Route name="list" path="/list" handler={List}/>
+    <Route name="sharing" path="/sharing" handler={ShareModal}/>
     <Route name="sample" path="/sample/:id" handler={SampleDetails}/>
   </Route>
 );

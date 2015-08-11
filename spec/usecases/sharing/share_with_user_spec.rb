@@ -7,6 +7,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       collection_attributes: {
         user_id: 7,
         label: 'test',
+        shared_by_id: 10,
         is_shared: true,
         permission_level: 1,
         sample_detail_level: 2,
@@ -27,6 +28,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
       expect(c).to_not be_nil
       expect(c.user_id).to eq(7)
+      expect(c.shared_by_id).to eq(10)
       expect(c.is_shared).to eq(true)
       expect(c.permission_level).to eq(1)
       expect(c.sample_detail_level).to eq(2)

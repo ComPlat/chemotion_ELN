@@ -20,6 +20,24 @@ class CollectionActions {
         console.log(errorMessage);
       });
   }
+
+  fetchRemoteCollectionRoots() {
+    CollectionsFetcher.fetchRemoteRoots()
+      .then((roots) => {
+        this.dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  createSharedCollections(paramObj) {
+    CollectionsFetcher.createSharedCollections(paramObj)
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
 
 export default alt.createActions(CollectionActions);

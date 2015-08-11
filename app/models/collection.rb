@@ -6,7 +6,8 @@ class Collection < ActiveRecord::Base
   has_many :samples, through: :collections_samples
 
   scope :unshared, -> { where(is_shared: false) }
-  scope :shared, -> { where(is_shared: true) }
+  scope :shared, ->(user_id) { where(shared_by_id: user_id) }
+  scope :remote, ->(user_id) { where(is_shared: true) && where.not(shared_by_id: user_id) }
 
   def is_all_collection?
     label == 'All'

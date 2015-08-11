@@ -20,11 +20,12 @@ ActiveRecord::Schema.define(version: 20150728120436) do
     t.integer  "user_id",                                null: false
     t.string   "ancestry"
     t.text     "label",                                  null: false
+    t.integer  "shared_by_id"
     t.boolean  "is_shared",              default: false
-    t.integer  "permission_level"
-    t.integer  "sample_detail_level"
-    t.integer  "reaction_detail_level"
-    t.integer  "wellplate_detail_level"
+    t.integer  "permission_level",       default: 0
+    t.integer  "sample_detail_level",    default: 0
+    t.integer  "reaction_detail_level",  default: 0
+    t.integer  "wellplate_detail_level", default: 0
     t.datetime "created_at",                             null: false
     t.datetime "updated_at",                             null: false
   end

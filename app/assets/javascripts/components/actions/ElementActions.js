@@ -29,10 +29,6 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
-
-  updateElements(elements) {
-    this.dispatch(elements);
-  }
 }
 
 export default alt.createActions(ElementActions);

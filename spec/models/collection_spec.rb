@@ -11,11 +11,18 @@ RSpec.describe Collection, type: :model do
 
   describe 'scopes' do
     let(:collection_1) { create(:collection, is_shared: false) }
-    let(:collection_2) { create(:collection, is_shared: true) }
+    let(:collection_2) { create(:collection, shared_by_id: 2, is_shared: true) }
+    let(:collection_3) { create(:collection, shared_by_id: 3, is_shared: true) }
 
     describe 'shared scope' do
-      it 'returns shared collections' do
-        expect(Collection.shared).to match_array [collection_2]
+      it 'returns collections the specified user has shared' do
+        expect(Collection.shared(2)).to match_array [collection_2]
+      end
+    end
+
+    describe 'remote scope' do
+      it 'returns collections that have been shared with specified user' do
+        expect(Collection.remote(2)).to match_array [collection_3]
       end
     end
 

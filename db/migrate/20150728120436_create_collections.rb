@@ -6,6 +6,7 @@ class CreateCollections < ActiveRecord::Migration
       t.text :label, null: false
 
       # permission/sharing specific attributes
+      t.integer :shared_by_id
       t.boolean :is_shared,               default: false
       t.integer :permission_level,        default: 0
       t.integer :sample_detail_level,     default: 0

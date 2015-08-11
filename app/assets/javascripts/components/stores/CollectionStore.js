@@ -5,12 +5,15 @@ class CollectionStore {
   constructor() {
     this.state = {
       unsharedRoots: [],
-      sharedRoots: []
+      sharedRoots: [],
+      remoteRoots: []
     };
 
     this.bindListeners({
       handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
-      handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots
+      handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
+      handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
+      handleCreateSharedCollections: CollectionActions.createSharedCollections
     })
   }
 
@@ -20,6 +23,15 @@ class CollectionStore {
 
   handleFetchSharedCollectionRoots(results) {
     this.state.sharedRoots = results.collections;
+  }
+
+  handleFetchRemoteCollectionRoots(results) {
+    this.state.remoteRoots = results.collections;
+  }
+
+  handleCreateSharedCollections() {
+    CollectionActions.fetchSharedCollectionRoots();
+    CollectionActions.fetchRemoteCollectionRoots();
   }
 }
 
