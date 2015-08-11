@@ -1,4 +1,4 @@
-# create initial test user
+# create initial test users
 u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
 hattori = User.create!(email: 'hattori@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
 momochi = User.create!(email: 'momochi@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
@@ -63,4 +63,3 @@ CollectionsReaction.create!(reaction: reaction_3, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_4, collection: grand_child)
 CollectionsReaction.create!(reaction: reaction_5, collection: subcollection_1)
 CollectionsReaction.create!(reaction: reaction_6, collection: subcollection_1)
-
