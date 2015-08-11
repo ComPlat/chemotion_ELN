@@ -1,6 +1,6 @@
 FactoryGirl.define do
   factory :collection do
-    user_id 1
+    user_id 10000
     sequence(:label) { |i| "Collection #{i}" }
 
     is_shared false

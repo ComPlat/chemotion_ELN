@@ -1,3 +1,5 @@
+require_relative './authentication'
+
 class API < Grape::API
   prefix 'api'
   version 'v1'
@@ -7,12 +9,8 @@ class API < Grape::API
   # TODO needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
-    def warden
-      env['warden']
-    end
-
     def current_user
-      @current_user = warden.user
+      @current_user = Authentication.new(env).current_user
     end
 
     def authenticate!
