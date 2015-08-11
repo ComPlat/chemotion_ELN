@@ -1,17 +1,16 @@
-class CollectionsSample < ActiveRecord::Base
+class CollectionsReaction < ActiveRecord::Base
   belongs_to :collection
-  belongs_to :sample
+  belongs_to :reaction
 
   after_create :add_to_all_collection
 
-  private
-
+  # TODO maybe not the best way to handle the 'all' collection
   def add_to_all_collection
     unless Collection.find(collection_id).is_all_collection?
       user_id = Collection.find(collection_id).user_id
       all_collection = Collection.find_by(label: 'All', user_id: user_id)
 
-      CollectionsSample.create!(collection_id: all_collection.id, sample_id: sample_id)
+      CollectionsReaction.create!(collection_id: all_collection.id, reaction_id: reaction_id)
     end
   end
 end

@@ -8,6 +8,17 @@ class CreateCollections < ActiveRecord::Migration
       t.timestamps null: false
     end
 
+    create_table :reactions do |t|
+      t.string :name
+
+      t.timestamps null: false
+    end
+
+    create_join_table :collections, :reactions do |t|
+      t.index :collection_id
+      t.index :reaction_id
+    end
+
     create_table :samples do |t|
       t.string :name
 
@@ -16,6 +27,21 @@ class CreateCollections < ActiveRecord::Migration
 
     create_join_table :collections, :samples do |t|
       t.index :collection_id
+      t.index :sample_id
+    end
+
+    create_join_table :reactions, :samples, table_name: 'reactions_starting_material_samples' do |t|
+      t.index :reaction_id
+      t.index :sample_id
+    end
+
+    create_join_table :reactions, :samples, table_name: 'reactions_reactant_samples' do |t|
+      t.index :reaction_id
+      t.index :sample_id
+    end
+
+    create_join_table :reactions, :samples, table_name: 'reactions_product_samples' do |t|
+      t.index :reaction_id
       t.index :sample_id
     end
   end

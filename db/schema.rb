@@ -27,6 +27,14 @@ ActiveRecord::Schema.define(version: 20150728120436) do
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
   add_index "collections", ["user_id"], name: "index_collections_on_user_id", using: :btree
 
+  create_table "collections_reactions", id: false, force: :cascade do |t|
+    t.integer "collection_id", null: false
+    t.integer "reaction_id",   null: false
+  end
+
+  add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
+  add_index "collections_reactions", ["reaction_id"], name: "index_collections_reactions_on_reaction_id", using: :btree
+
   create_table "collections_samples", id: false, force: :cascade do |t|
     t.integer "collection_id", null: false
     t.integer "sample_id",     null: false
@@ -34,6 +42,36 @@ ActiveRecord::Schema.define(version: 20150728120436) do
 
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
+
+  create_table "reactions", force: :cascade do |t|
+    t.string   "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "reactions_product_samples", id: false, force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "sample_id",   null: false
+  end
+
+  add_index "reactions_product_samples", ["reaction_id"], name: "index_reactions_product_samples_on_reaction_id", using: :btree
+  add_index "reactions_product_samples", ["sample_id"], name: "index_reactions_product_samples_on_sample_id", using: :btree
+
+  create_table "reactions_reactant_samples", id: false, force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "sample_id",   null: false
+  end
+
+  add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
+  add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
+
+  create_table "reactions_starting_material_samples", id: false, force: :cascade do |t|
+    t.integer "reaction_id", null: false
+    t.integer "sample_id",   null: false
+  end
+
+  add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
+  add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
   create_table "samples", force: :cascade do |t|
     t.string   "name"
