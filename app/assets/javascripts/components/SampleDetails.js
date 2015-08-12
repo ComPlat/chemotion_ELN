@@ -29,15 +29,20 @@ export default class SampleDetails extends React.Component {
   componentWillReceiveProps(nextProps) {
     console.log("componentWillReceiveProps");
 
-    if(nextProps.params && nextProps.params.id) {
+    if(nextProps.params && nextProps.params.id && nextProps.params.id != this.state.id) {
       ElementActions.fetchSampleById(nextProps.params.id);
     }
   }
 
   onChange(state) {
     console.log("onChange");
-    console.log(state);
-    this.setState({sample: state.currentSample});
+    console.log(state.currentSample);
+    if(state.currentSample) {
+      this.setState({
+        sample: state.currentSample,
+        id: state.currentSample.id
+      });
+    }
   }
 
   closeDetails() {
@@ -87,7 +92,6 @@ export default class SampleDetails extends React.Component {
 
     return (
       <div>
-
         <h2>{this.sampleName()}</h2>
         <form>
           <Input type="text" label="Name" ref="nameInput" placeholder={this.sampleName()} />
