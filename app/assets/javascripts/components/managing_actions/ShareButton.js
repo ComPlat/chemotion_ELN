@@ -2,8 +2,8 @@ import React from 'react';
 import {Button} from 'react-bootstrap';
 
 export default class ShareButton extends React.Component {
-  constructor(props, context) {
-    super(props, context);
+  constructor(props) {
+    super(props);
   }
 
   showShareModal() {
@@ -16,7 +16,3 @@ export default class ShareButton extends React.Component {
     )
   }
 }
-
-ShareButton.contextTypes = {
-  router: React.PropTypes.func.isRequired
-};

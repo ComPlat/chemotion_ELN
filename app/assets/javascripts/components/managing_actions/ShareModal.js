@@ -6,8 +6,8 @@ import UIStore from '../stores/UIStore';
 import CollectionActions from '../actions/CollectionActions';
 
 export default class ShareModal extends React.Component {
-  constructor(props, context) {
-    super(props, context);
+  constructor(props) {
+    super(props);
 
     // TODO the same for reactions and so on
     this.state = {
@@ -31,7 +31,7 @@ export default class ShareModal extends React.Component {
   }
 
   hideModal() {
-    this.context.router.transitionTo('/');
+    //this.context.router.transitionTo('/');
   }
 
   handleSharing() {
@@ -110,6 +110,3 @@ export default class ShareModal extends React.Component {
   }
 }
 
-ShareModal.contextTypes = {
-  router: React.PropTypes.func.isRequired
-};

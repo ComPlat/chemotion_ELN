@@ -5,20 +5,22 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 
 export default class SampleDetails extends React.Component {
-  constructor(props, context) {
+  constructor(props) {
     console.log("constructor");
 
-    super(props, context);
+    super(props);
     this.state = {
       sample: null,
-      id: props.params.id
+      id: props.id
     }
   }
 
   componentDidMount() {
     console.log("componentDidMount");
     ElementStore.listen(this.onChange.bind(this));
-    ElementActions.fetchSampleById(this.state.id);
+    if(this.state.id) {
+      ElementActions.fetchSampleById(this.state.id);
+    }
   }
 
   componentWillUnmount() {
@@ -29,8 +31,8 @@ export default class SampleDetails extends React.Component {
   componentWillReceiveProps(nextProps) {
     console.log("componentWillReceiveProps");
 
-    if(nextProps.params && nextProps.params.id && nextProps.params.id != this.state.id) {
-      ElementActions.fetchSampleById(nextProps.params.id);
+    if(nextProps.id && nextProps.id != this.state.id) {
+      ElementActions.fetchSampleById(nextProps.id);
     }
   }
 
@@ -46,7 +48,7 @@ export default class SampleDetails extends React.Component {
   }
 
   closeDetails() {
-    this.context.router.transitionTo('/');
+    //this.context.router.transitionTo('/');
   }
 
   sampleName() {
@@ -106,8 +108,3 @@ export default class SampleDetails extends React.Component {
   }
 }
 
-// see http://stackoverflow.com/questions/31539349/how-to-emulate-window-location-with-react-router-and-es6-classes
-// for usage of transitionTo with es6
-SampleDetails.contextTypes = {
-  router: React.PropTypes.func.isRequired
-};

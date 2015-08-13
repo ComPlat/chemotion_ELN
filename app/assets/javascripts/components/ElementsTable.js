@@ -8,8 +8,8 @@ import ElementCheckbox from './ElementCheckbox';
 import SVG from 'react-inlinesvg';
 
 export default class ElementsTable extends React.Component {
-  constructor(props, context) {
-    super(props, context);
+  constructor(props) {
+    super(props);
     this.state = {
       elements: [],
       type: props.type,
@@ -116,7 +116,7 @@ export default class ElementsTable extends React.Component {
   showDetails(element) {
     switch(this.state.type) {
       case 'sample':
-        this.context.router.transitionTo('/sample/' + element.id);
+        //this.context.router.transitionTo('/sample/' + element.id);
         break;
     }
   }
@@ -166,6 +166,3 @@ export default class ElementsTable extends React.Component {
   }
 }
 
-ElementsTable.contextTypes = {
-  router: React.PropTypes.func.isRequired
-};
