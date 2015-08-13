@@ -2,6 +2,11 @@ import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 
 class ElementActions {
+
+  unloadSample() {
+    this.dispatch();
+  }
+
   fetchSampleById(id) {
     SamplesFetcher.fetchById(id)
       .then((result) => {

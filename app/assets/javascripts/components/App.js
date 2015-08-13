@@ -1,7 +1,5 @@
 import React from 'react';
 import {Col, Grid, Row, Table} from 'react-bootstrap';
-//import Router, { DefaultRoute, Link, Route, RouteHandler } from 'react-router';
-
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import List from './List';
@@ -10,6 +8,44 @@ import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 import ShareModal from './managing_actions/ShareModal';
+
+import ElementActions from './actions/ElementActions';
+
+import Aviator from 'aviator'
+Aviator.root = '/';
+Aviator.pushStateEnabled = false;
+Aviator.setRoutes({
+  '/': 'root',
+  target: {
+    root: function(e) {
+      ElementActions.unloadSample();
+
+      let modalDomNode = document.getElementById('modal');
+      if(modalDomNode) {
+        React.unmountComponentAtNode(modalDomNode);
+      }
+    }
+  },
+  '/sample': {
+    target: {
+      show: function(e) {
+        let sample_id = e['params']['id'];
+        ElementActions.fetchSampleById(sample_id)
+      }
+    },
+    '/:id': 'show'
+  },
+  '/sharing': {
+    '/*': 'showShareModal',
+    target: {
+      showShareModal: function(e) {
+        React.render(<ShareModal/>, document.getElementById('modal'));
+      }
+    }
+  }
+});
+Aviator.dispatch();
+
 
 export default class App extends React.Component {
   constructor(props) {
@@ -75,7 +111,7 @@ export default class Elements extends React.Component {
     let elementDetails;
 
     if(this.state.currentElement) {
-      elementDetails = <SampleDetails />
+      elementDetails = <SampleDetails id={this.state.currentElement.id}/>
     }
 
     return (
@@ -95,25 +131,6 @@ export default class Elements extends React.Component {
   }
 }
 
-// // Configure React Routing
-// let routes = (
-//   <Route name="app" path="/" handler={App}>
-//     <DefaultRoute handler={Elements}/>
-//     <Route name="elements" handler={Elements}>
-//       <Route name="sample" path="/sample/:id" handler={SampleDetails}/>
-//     </Route>
-//     <Route name="sharing" path="/sharing" handler={ShareModal}/>
-//   </Route>
-// );
-
-// // see, e.g.,
-// //
-// http://stackoverflow.com/questions/26566317/invariant-violation-registercomponent-target-container-is-not-a-dom-elem
-//   $(document).ready(function () {
-//     Router.run(routes, function (Handler) {
-//       React.render(<Handler/>, document.getElementById('router'));
-//     });
-//   });
 
 $(document).ready(function () {
   React.render(<App />, document.getElementById('app'));

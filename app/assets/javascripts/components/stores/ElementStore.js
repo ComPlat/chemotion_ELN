@@ -11,7 +11,8 @@ class ElementStore {
     this.bindListeners({
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
-      handleUpdateSample: ElementActions.updateSample
+      handleUpdateSample: ElementActions.updateSample,
+      handleUnloadSample: ElementActions.unloadSample
     })
   }
 
@@ -21,12 +22,16 @@ class ElementStore {
 
   handleFetchSamplesByCollectionId(result) {
     this.state.samples = result;
-    this.state.currentSample = null; //todo should not be handled here
   }
 
   // update stored sample if it has been updated
   handleUpdateSample(sampleId) {
     ElementActions.fetchSampleById(sampleId);
+  }
+
+  handleUnloadSample() {
+    console.log("handleUnloadSample");
+    this.state.currentSample = null;
   }
 }
 

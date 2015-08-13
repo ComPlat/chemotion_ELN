@@ -5,6 +5,8 @@ import Select from 'react-select';
 import UIStore from '../stores/UIStore';
 import CollectionActions from '../actions/CollectionActions';
 
+import Aviator from 'aviator';
+
 export default class ShareModal extends React.Component {
   constructor(props) {
     super(props);
@@ -20,6 +22,7 @@ export default class ShareModal extends React.Component {
   }
 
   componentWillUnmount() {
+    console.log("componentWillUnmount");
     UIStore.unlisten(this.onChange.bind(this));
   }
 
@@ -31,7 +34,7 @@ export default class ShareModal extends React.Component {
   }
 
   hideModal() {
-    //this.context.router.transitionTo('/');
+    Aviator.navigate('/');
   }
 
   handleSharing() {

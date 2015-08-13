@@ -4,10 +4,11 @@ import {Button, ButtonToolbar, FormControls, Input, Modal} from 'react-bootstrap
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 
+import Aviator from 'aviator';
+
+
 export default class SampleDetails extends React.Component {
   constructor(props) {
-    console.log("constructor");
-
     super(props);
     this.state = {
       sample: null,
@@ -16,7 +17,6 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
-    console.log("componentDidMount");
     ElementStore.listen(this.onChange.bind(this));
     if(this.state.id) {
       ElementActions.fetchSampleById(this.state.id);
@@ -24,21 +24,10 @@ export default class SampleDetails extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log("componentWillUnmount");
     ElementStore.unlisten(this.onChange.bind(this));
   }
 
-  componentWillReceiveProps(nextProps) {
-    console.log("componentWillReceiveProps");
-
-    if(nextProps.id && nextProps.id != this.state.id) {
-      ElementActions.fetchSampleById(nextProps.id);
-    }
-  }
-
   onChange(state) {
-    console.log("onChange");
-    console.log(state.currentSample);
     if(state.currentSample) {
       this.setState({
         sample: state.currentSample,
@@ -48,7 +37,7 @@ export default class SampleDetails extends React.Component {
   }
 
   closeDetails() {
-    //this.context.router.transitionTo('/');
+    Aviator.navigate('/');
   }
 
   sampleName() {

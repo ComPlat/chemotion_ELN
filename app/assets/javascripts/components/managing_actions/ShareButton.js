@@ -1,5 +1,6 @@
 import React from 'react';
 import {Button} from 'react-bootstrap';
+import Aviator from 'aviator';
 
 export default class ShareButton extends React.Component {
   constructor(props) {
@@ -7,7 +8,7 @@ export default class ShareButton extends React.Component {
   }
 
   showShareModal() {
-    this.context.router.transitionTo('/sharing');
+    Aviator.navigate('/sharing');
   }
 
   render() {

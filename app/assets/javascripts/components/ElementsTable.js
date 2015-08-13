@@ -6,6 +6,7 @@ import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
 
 import SVG from 'react-inlinesvg';
+import Aviator from 'aviator';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -116,7 +117,7 @@ export default class ElementsTable extends React.Component {
   showDetails(element) {
     switch(this.state.type) {
       case 'sample':
-        //this.context.router.transitionTo('/sample/' + element.id);
+        Aviator.navigate('/sample/' + element.id);
         break;
     }
   }
