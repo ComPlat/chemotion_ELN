@@ -7,7 +7,7 @@ import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
 
 export default class CollectionSubtree extends React.Component {
-  constructor(props) {
+  constructor(props, context) {
     super(props);
     this.state = {
       label: props.root.label,
@@ -83,6 +83,7 @@ export default class CollectionSubtree extends React.Component {
   handleClick() {
     UIActions.deselectAllElements('collection');
     UIActions.selectElement({type: 'collection', id: this.state.root.id});
+    this.context.router.transitionTo('/')
   }
 
   toggleExpansion(e) {
@@ -110,3 +111,7 @@ export default class CollectionSubtree extends React.Component {
     )
   }
 }
+
+CollectionSubtree.contextTypes = {
+  router: React.PropTypes.func.isRequired
+};
