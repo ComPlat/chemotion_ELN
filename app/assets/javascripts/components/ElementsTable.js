@@ -5,6 +5,8 @@ import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
 
+import SVG from 'react-inlinesvg';
+
 export default class ElementsTable extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -33,6 +35,7 @@ export default class ElementsTable extends React.Component {
 
     this.setState({
       elements: state.samples,
+      currentElement: state.currentSample,
       numberOfPages: numberOfPages
     });
 
@@ -40,17 +43,6 @@ export default class ElementsTable extends React.Component {
     if(state.samples != this.state.elements) {
       this.setState({activePage: 1});
     }
-  }
-
-  header() {
-    return (
-      <thead>
-        <th width="40">
-          <ElementAllCheckbox type={this.state.type} />
-        </th>
-        <th colSpan="2">All {this.state.type}s</th>
-      </thead>
-    )
   }
 
   entries() {
@@ -64,26 +56,59 @@ export default class ElementsTable extends React.Component {
     return elementsOnActivePage.map((element, index) => {
       let elementRepresentationForUIAction = {type: this.props.type, id: element.id}
       // TODO: switch(this.state.type)...case 'sample'...SampleRow
-      return (
-        <tr key={index}>
-          <td width="40">
-            <ElementCheckbox element={elementRepresentationForUIAction}/>
-          </td>
-          <td onClick={this.showDetails.bind(this, element)} width="120">
-            {element.name}
-          </td>
-          <td>
+
+      let optionalLabelColumn
+      let optionalMoleculeColumn
+
+      if(this.showElementDetailsColumns()) {
+
+        optionalLabelColumn = (
+          <td className="labels">
             {this.collectionLabels(element)}
           </td>
+        )
+
+        optionalMoleculeColumn = (
+          <td className="molecule" margin="0" padding="0">
+            <SVG src="/assets/361.svg" className="molecule" />
+          </td>
+        )
+
+      }
+
+      let style = {}
+      if(this.state.currentElement && element.id == this.state.currentElement.id) {
+        style = {
+          background: '#eee'
+        }
+      }
+
+      return (
+        <tr key={index} height="100" style={style}>
+          <td className="check">
+            <ElementCheckbox element={elementRepresentationForUIAction}/>
+          </td>
+          <td className="name" onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
+            {element.name}
+          </td>
+         {optionalLabelColumn}
+         {optionalMoleculeColumn}
         </tr>
       )
     });
   }
 
+  showElementDetailsColumns() {
+    return !(this.state.currentElement);
+  }
+
   collectionLabels(element) {
     return element.collection_labels.map((label, index) => {
       return (
-        <Label bsStyle="primary" key={index}>{label}</Label>
+        <span>
+          <Label bsStyle="primary" key={index}>{label}</Label>
+          &nbsp;
+        </span>
       )
     });
   }
@@ -112,10 +137,24 @@ export default class ElementsTable extends React.Component {
     }
   }
 
+  header() {
+    let colSpan = this.state.currentElement ? "1" : "3";
+    return (
+      <thead>
+        <th className="check">
+          <ElementAllCheckbox type={this.state.type} />
+        </th>
+        <th colSpan={colSpan}>
+          All {this.state.type}s
+        </th>
+      </thead>
+    )
+  }
+
   render() {
     return (
       <div>
-        <Table bordered hover>
+        <Table className="elements" bordered hover>
           {this.header()}
           <tbody>
             {this.entries()}

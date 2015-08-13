@@ -1,5 +1,5 @@
 import React from 'react';
-import {Col, Grid, Row} from 'react-bootstrap';
+import {Col, Grid, Row, Table} from 'react-bootstrap';
 import Router, { DefaultRoute, Link, Route, RouteHandler } from 'react-router';
 
 import Navigation from './Navigation';
@@ -18,7 +18,7 @@ export default class App extends React.Component {
 
   render() {
     return (
-      <Grid fluid>
+      <Grid border fluid>
         <Row>
           <Navigation />
         </Row>
@@ -46,13 +46,59 @@ export default class App extends React.Component {
   }
 }
 
+import ElementStore from './stores/ElementStore';
+
+export default class Elements extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      currentElement: null
+    }
+  }
+
+  componentDidMount() {
+    ElementStore.listen(this.onChange.bind(this));
+  }
+
+  componentWillUnmount() {
+    ElementStore.unlisten(this.onChange.bind(this));
+  }
+
+  onChange(state) {
+    this.setState({
+      currentElement: state.currentSample
+    })
+  }
+
+  render() {
+    let width = this.state.currentElement ? "75%" : 0
+    return (
+      <Table>
+        <tbody>
+        <tr valign="top" className="borderless">
+          <td className="borderless">
+            <List/>
+          </td>
+          <td className="borderless" width={width}>
+            <RouteHandler />
+          </td>
+        </tr>
+        </tbody>
+      </Table>
+    )
+  }
+}
+
+<Route name="list" path="/list" handler={List}/>
+
 // Configure React Routing
 let routes = (
   <Route name="app" path="/" handler={App}>
-    <DefaultRoute handler={List}/>
-    <Route name="list" path="/list" handler={List}/>
+    <DefaultRoute handler={Elements}/>
+    <Route name="elements" handler={Elements}>
+      <Route name="sample" path="/sample/:id" handler={SampleDetails}/>
+    </Route>
     <Route name="sharing" path="/sharing" handler={ShareModal}/>
-    <Route name="sample" path="/sample/:id" handler={SampleDetails}/>
   </Route>
 );
 
