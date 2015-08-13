@@ -14,7 +14,9 @@ export default class CollectionTree extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onChange.bind(this));
-    CollectionActions.fetchCollections();
+    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchSharedCollectionRoots();
+    CollectionActions.fetchRemoteCollectionRoots();
   }
 
   componentWillUnmount() {
@@ -25,13 +27,36 @@ export default class CollectionTree extends React.Component {
     this.setState(state);
   }
 
-  subtrees() {
-    let roots = this.state.collections;
+  unsharedSubtrees() {
+    let roots = this.state.unsharedRoots;
 
+    return this.subtrees(roots, null);
+  }
+
+  sharedSubtrees() {
+    let roots = this.state.sharedRoots;
+
+    return this.subtrees(roots, 'My shared projects');
+  }
+
+  remoteSubtrees() {
+    let roots = this.state.remoteRoots;
+
+    return this.subtrees(roots, 'Shared with me')
+  }
+
+  subtrees(roots, label) {
     if(roots.length > 0) {
-      return roots.map((root, index) => {
+      let subtrees = roots.map((root, index) => {
         return <CollectionSubtree key={index} root={root} />
       });
+
+      return (
+        <div>
+          {label}
+          {subtrees}
+        </div>
+      )
     } else {
       return <div></div>;
     }
@@ -39,8 +64,16 @@ export default class CollectionTree extends React.Component {
 
   render() {
     return (
-      <div className="tree-wrapper">
-        {this.subtrees()}
+      <div>
+        <div className="tree-wrapper">
+          {this.unsharedSubtrees()}
+        </div>
+        <div className="tree-wrapper">
+          {this.sharedSubtrees()}
+        </div>
+        <div className="tree-wrapper">
+          {this.remoteSubtrees()}
+        </div>
       </div>
     )
   }

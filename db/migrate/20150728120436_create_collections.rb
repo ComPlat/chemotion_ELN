@@ -5,6 +5,14 @@ class CreateCollections < ActiveRecord::Migration
       t.string :ancestry, index: true
       t.text :label, null: false
 
+      # permission/sharing specific attributes
+      t.integer :shared_by_id
+      t.boolean :is_shared,               default: false
+      t.integer :permission_level,        default: 0
+      t.integer :sample_detail_level,     default: 0
+      t.integer :reaction_detail_level,   default: 0
+      t.integer :wellplate_detail_level,  default: 0
+
       t.timestamps null: false
     end
 

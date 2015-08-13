@@ -1,11 +1,16 @@
-# create initial test user
+# create initial test users
 u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
+hattori = User.create!(email: 'hattori@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
+momochi = User.create!(email: 'momochi@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
 
 # create some collections
 all_collection = Collection.create!(label: 'All', user_id: u.id)
 collection_1 = Collection.create!(label: 'Collection #1', user_id: u.id)
 subcollection_1 = Collection.create!(label: 'Subcollection of #1', user_id: u.id, parent: collection_1)
 grand_child = Collection.create!(label: 'Grandchild', user_id: u.id, parent: subcollection_1)
+collection_2 = Collection.create!(label: 'Collection #2', user_id: u.id)
+collection_3 = Collection.create!(label: 'Collection #3', user_id: u.id)
+collection_4 = Collection.create!(label: 'Collection #4', user_id: u.id)
 
 # create some reactions
 reaction_1 = Reaction.create(name: 'Reaction 1')
@@ -14,6 +19,10 @@ reaction_3 = Reaction.create(name: 'Reaction 3')
 reaction_4 = Reaction.create(name: 'Reaction 4')
 reaction_5 = Reaction.create(name: 'Reaction 5')
 reaction_6 = Reaction.create(name: 'Reaction 6')
+
+# create some shared collections
+# shared_collection_1 = Collection.create!(is_shared: true, label: 'My project with Hattori', user_id: hattori.id, shared_by_id: u.id)
+# shared_collection_2 = Collection.create!(is_shared: true, label: 'My project with Momochi', user_id: momochi.id, shared_by_id: u.id)
 
 # create some samples
 sample_1 = Sample.create!(name: 'Sample 1')
@@ -45,6 +54,10 @@ CollectionsSample.create!(sample: sample_6, collection: subcollection_1)
 CollectionsSample.create!(sample: sample_1, collection: grand_child)
 CollectionsSample.create!(sample: sample_7, collection: grand_child)
 CollectionsSample.create!(sample: sample_8, collection: grand_child)
+
+# CollectionsSample.create!(sample: sample_1, collection: shared_collection_1)
+# CollectionsSample.create!(sample: sample_2, collection: shared_collection_2)
+# CollectionsSample.create!(sample: sample_3, collection: shared_collection_2)
 
 # associate samples with reactions
 CollectionsReaction.create!(reaction: reaction_1, collection: collection_1)

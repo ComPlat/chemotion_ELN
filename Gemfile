@@ -54,6 +54,6 @@ group :development, :test do
 end
 
 group :test do
-  # Factories for testing
   gem 'factory_girl_rails'
+  gem 'database_cleaner'
 end
