@@ -7,6 +7,7 @@ import ElementCheckbox from './ElementCheckbox';
 
 import SVG from 'react-inlinesvg';
 import Aviator from 'aviator';
+import deepEqual from 'deep-equal';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -30,21 +31,30 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    let elements = state.samples;
-    let numberOfPages = Math.ceil(elements.length / this.state.pageSize);
-    let activePage = elements === this.state.elements ? this.state.activePage : 1;
+    const elements = state.samples;
 
     let currentElement;
     if(state.currentElement && state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
-    this.setState({
-      elements: elements,
-      currentElement: currentElement,
-      numberOfPages: numberOfPages,
-      activePage: activePage
-    });
+    let elementsDidChange = !deepEqual(elements, this.state.elements);
+    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
+
+    if(elementsDidChange) {
+      let numberOfPages = Math.ceil(elements.length / this.state.pageSize);
+      this.setState({
+        elements: elements,
+        currentElement: currentElement,
+        numberOfPages: numberOfPages,
+        activePage: 1
+      });
+    }
+    else if (currentElementDidChange) {
+      this.setState({
+        currentElement: currentElement
+      });
+    }
   }
 
   entries() {
