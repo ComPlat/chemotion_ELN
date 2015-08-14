@@ -49,7 +49,7 @@ export default class NumeralInput extends Component {
     let {numeralValue} = this.state;
     return (
       <Input type='text' value={numeralValue} bsSize={bsSize} bsStyle={bsStyle}
-             addonAfter={addonAfter} buttonAfter={buttonAfter} onChange={() => this._handleInputValueChange(event)}/>
+             addonAfter={addonAfter} buttonAfter={buttonAfter} onChange={ event => this._handleInputValueChange(event)}/>
     );
   }
 }

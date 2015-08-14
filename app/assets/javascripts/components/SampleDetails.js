@@ -3,6 +3,7 @@ import {Button, ButtonToolbar, FormControls, Input, Modal} from 'react-bootstrap
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
+import NumeralInputWithUnits from './NumeralInputWithUnits'
 
 import Aviator from 'aviator';
 
@@ -54,7 +55,9 @@ export default class SampleDetails extends React.Component {
   updateSample() {
     ElementActions.updateSample({
       id: this.state.id,
-      name: this.refs.nameInput.getValue() || this.state.sample.name
+      name: this.refs.nameInput.getValue() || this.state.sample.name,
+      amount_value: this.state.value || this.state.sample.value,
+      amount_unit: this.state.unit || this.state.sample.amount_unit
     })
   }
 
@@ -85,7 +88,8 @@ export default class SampleDetails extends React.Component {
         <h2>{this.sampleName()}</h2>
         <form>
           <Input type="text" label="Name" ref="nameInput" placeholder={this.sampleName()} />
-          <FormControls.Static label="Created at" value={this.createdAt()} />
+          <NumeralInputWithUnits label="Amount" units={['g', 'mol']}
+             convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}/>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
             <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
