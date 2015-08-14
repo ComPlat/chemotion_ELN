@@ -1,5 +1,5 @@
 class CollectionSerializer < ActiveModel::Serializer
-  attributes :id, :label, :type
+  attributes :id, :label
 
   has_many :children
 
@@ -7,7 +7,4 @@ class CollectionSerializer < ActiveModel::Serializer
     object.children
   end
 
-  def type
-    'collection'
-  end
 end
