@@ -6,7 +6,6 @@ import ElementStore from './stores/ElementStore';
 
 import Aviator from 'aviator';
 
-
 export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
@@ -28,10 +27,10 @@ export default class SampleDetails extends React.Component {
   }
 
   onChange(state) {
-    if(state.currentSample) {
+    if(state.currentElement) {
       this.setState({
-        sample: state.currentSample,
-        id: state.currentSample.id
+        sample: state.currentElement,
+        id: state.currentElement.id
       });
     }
   }

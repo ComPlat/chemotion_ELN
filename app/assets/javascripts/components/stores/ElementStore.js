@@ -5,7 +5,7 @@ class ElementStore {
   constructor() {
     this.state = {
       samples: [],
-      currentSample: null
+      currentElement: null
     };
 
     this.bindListeners({
@@ -17,7 +17,7 @@ class ElementStore {
   }
 
   handleFetchSampleById(result) {
-    this.state.currentSample = result; //todo should not be handled here
+    this.state.currentElement = result; //todo should not be handled here
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -30,8 +30,7 @@ class ElementStore {
   }
 
   handleUnloadSample() {
-    console.log("handleUnloadSample");
-    this.state.currentSample = null;
+    this.state.currentElement = null;
   }
 }
 

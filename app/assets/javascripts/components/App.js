@@ -102,7 +102,7 @@ export default class Elements extends React.Component {
 
   onChange(state) {
     this.setState({
-      currentElement: state.currentSample
+      currentElement: state.currentElement
     })
   }
 
@@ -111,6 +111,7 @@ export default class Elements extends React.Component {
     let elementDetails;
 
     if(this.state.currentElement) {
+      //todo: switch component by element.type
       elementDetails = <SampleDetails id={this.state.currentElement.id}/>
     }
 

@@ -13,7 +13,6 @@ export default class ElementsTable extends React.Component {
     super(props);
     this.state = {
       elements: [],
-      type: props.type,
 
       // Pagination
       activePage: 1,
@@ -31,19 +30,21 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    // TODO switch based on type
-    let numberOfPages = Math.ceil(state.samples.length / this.state.pageSize);
+    let elements = state.samples;
+    let numberOfPages = Math.ceil(elements.length / this.state.pageSize);
+    let activePage = elements === this.state.elements ? this.state.activePage : 1;
+
+    let currentElement;
+    if(state.currentElement && state.currentElement.type == this.props.type) {
+      currentElement = state.currentElement
+    }
 
     this.setState({
-      elements: state.samples,
-      currentElement: state.currentSample,
-      numberOfPages: numberOfPages
+      elements: elements,
+      currentElement: currentElement,
+      numberOfPages: numberOfPages,
+      activePage: activePage
     });
-
-    // reset pagination if element state changes
-    if(state.samples != this.state.elements) {
-      this.setState({activePage: 1});
-    }
   }
 
   entries() {
@@ -55,9 +56,6 @@ export default class ElementsTable extends React.Component {
     let elementsOnActivePage = this.state.elements.slice(startAt, endAt);
 
     return elementsOnActivePage.map((element, index) => {
-      let elementRepresentationForUIAction = {type: this.props.type, id: element.id}
-      // TODO: switch(this.state.type)...case 'sample'...SampleRow
-
       let optionalLabelColumn
       let optionalMoleculeColumn
 
@@ -78,7 +76,8 @@ export default class ElementsTable extends React.Component {
       }
 
       let style = {}
-      if(this.state.currentElement && element.id == this.state.currentElement.id) {
+      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
+      if(isSelected) {
         style = {
           background: '#eee'
         }
@@ -87,7 +86,7 @@ export default class ElementsTable extends React.Component {
       return (
         <tr key={index} height="100" style={style}>
           <td className="check">
-            <ElementCheckbox element={elementRepresentationForUIAction}/>
+            <ElementCheckbox element={element}/>
           </td>
           <td className="name" onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
             {element.name}
@@ -115,11 +114,7 @@ export default class ElementsTable extends React.Component {
   }
 
   showDetails(element) {
-    switch(this.state.type) {
-      case 'sample':
-        Aviator.navigate('/sample/' + element.id);
-        break;
-    }
+    Aviator.navigate(`/${element.type}/${element.id}`);
   }
 
   handlePaginationSelect(event, selectedEvent) {
@@ -139,14 +134,14 @@ export default class ElementsTable extends React.Component {
   }
 
   header() {
-    let colSpan = this.state.currentElement ? "1" : "3";
+    let colSpan = this.showElementDetailsColumns() ? "3" : "1";
     return (
       <thead>
         <th className="check">
-          <ElementAllCheckbox type={this.state.type} />
+          <ElementAllCheckbox type={this.props.type} />
         </th>
         <th colSpan={colSpan}>
-          All {this.state.type}s
+          All {this.props.type}s
         </th>
       </thead>
     )
