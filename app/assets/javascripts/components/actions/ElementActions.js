@@ -3,7 +3,7 @@ import SamplesFetcher from '../fetchers/SamplesFetcher';
 
 class ElementActions {
 
-  unloadSample() {
+  unselectCurrentElement() {
     this.dispatch();
   }
 

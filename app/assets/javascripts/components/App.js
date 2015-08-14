@@ -18,7 +18,7 @@ Aviator.setRoutes({
   '/': 'root',
   target: {
     root: function(e) {
-      ElementActions.unloadSample();
+      ElementActions.unselectCurrentElement();
 
       let modalDomNode = document.getElementById('modal');
       if(modalDomNode) {

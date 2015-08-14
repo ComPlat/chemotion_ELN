@@ -12,7 +12,7 @@ class ElementStore {
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
-      handleUnloadSample: ElementActions.unloadSample
+      handleUnselectCurrentElement: ElementActions.unselectCurrentElement
     })
   }
 
@@ -29,7 +29,7 @@ class ElementStore {
     ElementActions.fetchSampleById(sampleId);
   }
 
-  handleUnloadSample() {
+  handleUnselectCurrentElement() {
     this.state.currentElement = null;
   }
 }
