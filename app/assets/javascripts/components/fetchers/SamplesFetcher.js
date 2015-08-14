@@ -41,7 +41,9 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: paramObj.name
+        name: paramObj.name,
+        amount_value: paramObj.amount_value,
+        amount_unit: paramObj.amount_unit
       })
     })
 

@@ -29,7 +29,8 @@ class CreateCollections < ActiveRecord::Migration
 
     create_table :samples do |t|
       t.string :name
-
+      t.float :amount_value
+      t.string :amount_unit
       t.timestamps null: false
     end
 

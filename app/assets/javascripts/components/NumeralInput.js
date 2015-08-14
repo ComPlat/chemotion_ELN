@@ -14,11 +14,10 @@ export default class NumeralInput extends Component {
 
   componentWillReceiveProps(nextProps) {
     let {value} = nextProps;
-    if (value) {
-      this.setState({
-        numeralValue: this._convertValueToNumeralValue(value)
-      });
-    }
+
+    this.setState({
+      numeralValue: this._convertValueToNumeralValue(value)
+    });
   }
 
   _convertValueToNumeralValue(value) {
@@ -32,30 +31,31 @@ export default class NumeralInput extends Component {
     let inputField = event.target;
     let caretPosition = $(inputField).caret();
     let {value} = inputField;
-    let unformatedValue = Numeral().unformat(value);
+    let formatedValue = this._convertValueToNumeralValue(value);
+    let unformatedValue = Numeral().unformat(formatedValue);
     let {onChange} = this.props;
 
     this.setState({
-        numeralValue: this._convertValueToNumeralValue(value)
+        numeralValue: formatedValue
       }, () => {
-        onChange(unformatedValue);
         $(inputField).caret(caretPosition);
       }
     );
+    onChange(unformatedValue);
   }
 
   render() {
-    let {bsSize, bsStyle, addonAfter, buttonAfter} = this.props;
+    let {bsSize, bsStyle, addonAfter, buttonAfter, label} = this.props;
     let {numeralValue} = this.state;
     return (
-      <Input type='text' value={numeralValue} bsSize={bsSize} bsStyle={bsStyle}
-             addonAfter={addonAfter} buttonAfter={buttonAfter} onChange={() => this._handleInputValueChange(event)}/>
+      <Input type='text' label={label} value={numeralValue} bsSize={bsSize} bsStyle={bsStyle}
+             addonAfter={addonAfter} buttonAfter={buttonAfter} onChange={ event => this._handleInputValueChange(event)}/>
     );
   }
 }
 
 NumeralInput.defaultProps = {
-  numeralFormat: '0,0',
+  numeralFormat: '',
   value: 0,
   onChange: () => {
   }

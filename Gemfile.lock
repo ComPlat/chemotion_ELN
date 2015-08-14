@@ -44,6 +44,7 @@ GEM
     autoprefixer-rails (5.2.0.1)
       execjs
       json
+    awesome_print (1.6.1)
     axiom-types (0.1.1)
       descendants_tracker (~> 0.0.4)
       ice_nine (~> 0.11.0)
@@ -242,6 +243,7 @@ PLATFORMS
 
 DEPENDENCIES
   ancestry
+  awesome_print
   bootstrap-sass (~> 3.3.5)
   browserify-rails
   byebug

@@ -17,10 +17,14 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Sample id"
         requires :name, type: String, desc: "Sample name"
+        requires :amount_value, type: Float, desc: "Sample amount_value"
+        requires :amount_unit, type: String, desc: "Sample amount_unit"
       end
       put ':id' do
         Sample.find(params[:id]).update({
-          name: params[:name]
+          name: params[:name],
+          amount_value: params[:amount_value],
+          amount_unit: params[:amount_unit]
         })
       end
     end
