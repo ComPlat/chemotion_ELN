@@ -1,5 +1,6 @@
 import React from 'react';
-import {Button, ButtonToolbar, FormControls, Input, Modal} from 'react-bootstrap';
+import {Button, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem} from 'react-bootstrap';
+import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -89,30 +90,44 @@ export default class SampleDetails extends React.Component {
     };
 
     let sample = this.state.sample || {}
-
+    let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     return (
       <div>
-        <h2>{sample.name}</h2>
-        <form>
-          <Input type="text" label="Name" ref="nameInput"
-            placeholder={sample.name}
-            value={sample.name}
-            onChange={(e) => this.handleNameChanged(e)}
-          />
-          <NumeralInputWithUnits
-             value={sample.amount_value}
-             unit={sample.amount_unit || 'g'}
-             label="Amount"
-             units={['g', 'ml', 'mol']}
-             numeralFormat='0,0.00'
-             convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
-             onChange={(amount) => this.handleAmountChanged(amount)}
-          />
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
-            <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
-          </ButtonToolbar>
-        </form>
+        <Panel header="Sample Details" bsStyle='primary'>
+          <table width="100%"><tr>
+            <td width="70%">
+              <h3>{sample.name}</h3>
+              <h4>{sampleAmount}</h4>
+            </td>
+            <td width="30%">
+              <SVG src="/assets/168.svg" className="molecule-mid"/>
+            </td>
+          </tr></table>
+          <ListGroup fill>
+            <ListGroupItem>
+              <form>
+                <Input type="text" label="Name" ref="nameInput"
+                  placeholder={sample.name}
+                  value={sample.name}
+                  onChange={(e) => this.handleNameChanged(e)}
+                />
+                <NumeralInputWithUnits
+                   value={sample.amount_value}
+                   unit={sample.amount_unit || 'g'}
+                   label="Amount"
+                   units={['g', 'ml', 'mol']}
+                   numeralFormat='0,0.00'
+                   convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
+                   onChange={(amount) => this.handleAmountChanged(amount)}
+                />
+                <ButtonToolbar>
+                  <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
+                  <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
+                </ButtonToolbar>
+              </form>
+            </ListGroupItem>
+          </ListGroup>
+        </Panel>
       </div>
     )
   }

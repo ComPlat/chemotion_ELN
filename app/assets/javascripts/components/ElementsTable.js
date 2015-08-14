@@ -79,7 +79,7 @@ export default class ElementsTable extends React.Component {
 
         optionalMoleculeColumn = (
           <td className="molecule" margin="0" padding="0">
-            <SVG src="/assets/361.svg" className="molecule" />
+            <SVG src="/assets/168.svg" className="molecule" />
           </td>
         )
 
@@ -89,7 +89,8 @@ export default class ElementsTable extends React.Component {
       let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
       if(isSelected) {
         style = {
-          background: '#eee'
+          color: '#fff',
+          background: '#337ab7'
         }
       }
 

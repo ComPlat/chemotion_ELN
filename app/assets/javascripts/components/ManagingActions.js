@@ -1,5 +1,6 @@
 import React from 'react';
 import ShareButton from './managing_actions/ShareButton';
+import {ButtonToolbar} from 'react-bootstrap';
 
 export default class ManagingActions extends React.Component {
   constructor(props) {
@@ -8,9 +9,9 @@ export default class ManagingActions extends React.Component {
 
   render() {
     return (
-      <div>
+      <ButtonToolbar>
         <ShareButton />
-      </div>
+      </ButtonToolbar>
     )
   }
 }

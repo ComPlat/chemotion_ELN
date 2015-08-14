@@ -8,6 +8,12 @@
   margin-left: 10px;
 }
 
+.molecule-mid svg {
+  width: 180px;
+  height:180px;
+  margin-left: 10px;
+}
+
 .molecule rect {
   fill: none;
   fill-opacity: 0.0;
