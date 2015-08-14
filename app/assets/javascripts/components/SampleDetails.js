@@ -91,6 +91,8 @@ export default class SampleDetails extends React.Component {
 
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
+    let svg = sample.molecule_svg ? (<SVG src={`/assets/${sample.molecule_svg}`} className="molecule-mid"/>) : '';
+
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>
@@ -100,7 +102,7 @@ export default class SampleDetails extends React.Component {
               <h4>{sampleAmount}</h4>
             </td>
             <td width="30%">
-              <SVG src="/assets/168.svg" className="molecule-mid"/>
+              {svg}
             </td>
           </tr></table>
           <ListGroup fill>
@@ -120,6 +122,7 @@ export default class SampleDetails extends React.Component {
                    convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
                    onChange={(amount) => this.handleAmountChanged(amount)}
                 />
+                <Input type='textarea' label='Description' rows={3} />
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
                   <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
