@@ -91,12 +91,12 @@ export default class SampleDetails extends React.Component {
 
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
-    let svg = sample.molecule_svg ? (<SVG src={`/assets/${sample.molecule_svg}`} className="molecule-mid"/>) : '';
+    let svg = sample.molecule_svg ? (<SVG key={sample.id} src={`/assets/${sample.molecule_svg}`} className="molecule-mid"/>) : '';
 
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>
-          <table width="100%"><tr>
+          <table width="100%" height="190px"><tr>
             <td width="70%">
               <h3>{sample.name}</h3>
               <h4>{sampleAmount}</h4>
