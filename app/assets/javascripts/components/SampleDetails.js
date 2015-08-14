@@ -40,25 +40,22 @@ export default class SampleDetails extends React.Component {
     Aviator.navigate('/');
   }
 
-  sampleName() {
-    let sample = this.state.sample;
-
-    return sample ? sample.name : '';
-  }
-
-  createdAt() {
-    let sample = this.state.sample;
-
-    return sample ? sample.created_at : '';
-  }
-
   updateSample() {
     ElementActions.updateSample({
       id: this.state.id,
       name: this.refs.nameInput.getValue() || this.state.sample.name,
-      amount_value: this.state.value || this.state.sample.value,
-      amount_unit: this.state.unit || this.state.sample.amount_unit
+      amount_value: this.state.amount_value || this.state.sample.amount_value,
+      amount_unit: this.state.amount_unit || this.state.sample.amount_unit
     })
+  }
+
+  handleAmountChanged(amount) {
+    let sample = this.state.sample;
+    sample.amount_unit = amount.unit;
+    sample.amount_value = amount.value;
+    this.setState({
+      sample: sample
+    });
   }
 
   render() {
@@ -83,13 +80,22 @@ export default class SampleDetails extends React.Component {
       return convertedValue;
     };
 
+    let sample = this.state.sample || {}
+
     return (
       <div>
-        <h2>{this.sampleName()}</h2>
+        <h2>{sample.name}</h2>
         <form>
-          <Input type="text" label="Name" ref="nameInput" placeholder={this.sampleName()} />
-          <NumeralInputWithUnits label="Amount" units={['g', 'mol']}
-             convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}/>
+          <Input type="text" label="Name" ref="nameInput" placeholder={sample.name}/>
+          <NumeralInputWithUnits
+             value={sample.amount_value}
+             unit={sample.amount_unit || 'g'}
+             label="Amount"
+             units={['g', 'ml', 'mol']}
+             numeralFormat='0,0.00'
+             convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
+             onChange={amount => this.handleAmountChanged(amount)}
+          />
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
             <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>

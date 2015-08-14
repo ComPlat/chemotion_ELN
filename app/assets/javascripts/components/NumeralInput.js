@@ -14,11 +14,10 @@ export default class NumeralInput extends Component {
 
   componentWillReceiveProps(nextProps) {
     let {value} = nextProps;
-    if (value) {
-      this.setState({
-        numeralValue: this._convertValueToNumeralValue(value)
-      });
-    }
+
+    this.setState({
+      numeralValue: this._convertValueToNumeralValue(value)
+    });
   }
 
   _convertValueToNumeralValue(value) {
@@ -32,16 +31,17 @@ export default class NumeralInput extends Component {
     let inputField = event.target;
     let caretPosition = $(inputField).caret();
     let {value} = inputField;
-    let unformatedValue = Numeral().unformat(value);
+    let formatedValue = this._convertValueToNumeralValue(value);
+    let unformatedValue = Numeral().unformat(formatedValue);
     let {onChange} = this.props;
 
     this.setState({
-        numeralValue: this._convertValueToNumeralValue(value)
+        numeralValue: formatedValue
       }, () => {
-        onChange(unformatedValue);
         $(inputField).caret(caretPosition);
       }
     );
+    onChange(unformatedValue);
   }
 
   render() {
@@ -55,7 +55,7 @@ export default class NumeralInput extends Component {
 }
 
 NumeralInput.defaultProps = {
-  numeralFormat: '0,0',
+  numeralFormat: '',
   value: 0,
   onChange: () => {
   }

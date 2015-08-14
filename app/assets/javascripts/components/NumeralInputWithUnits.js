@@ -6,26 +6,40 @@ export default class NumeralInputWithUnits extends Component {
   constructor(props) {
     super(props);
 
-    let {value, units} = props;
-    this.state = {
-      unit: units[0],
+    let {value, unit} = props;
+    this.state ={
+      unit: unit,
       value: value
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    let {value, unit} = nextProps;
+    this.setState({
+      unit: unit,
+      value: value
+    });
+
+    this.forceUpdate()
+  }
+
   _handleUnitSelect(nextUnit) {
     let {value, unit} = this.state;
-    let convertedValue = this.props.convertValueFromUnitToNextUnit(unit, nextUnit, value);
+    let convertedValue = value;
+    if(this.props.convertValueFromUnitToNextUnit) {
+      convertedValue = this.props.convertValueFromUnitToNextUnit(unit, nextUnit, value);
+    }
+
     this.setState({
       unit: nextUnit,
       value: convertedValue
-    });
+    }, () => this._onChangeCallback());
   }
 
   _handleValueChange(value) {
     this.setState({
       value: value
-    });
+    }, () => this._onChangeCallback());
   }
 
   _renderUnitsAsMenuItems() {
@@ -47,10 +61,17 @@ export default class NumeralInputWithUnits extends Component {
     );
   }
 
+  _onChangeCallback() {
+    if(this.props.onChange) {
+      this.props.onChange(this.state);
+    }
+  }
+
 // TODO fix css-issue with wrong z-index
   render() {
     let {units, bsSize, bsStyle, numeralFormat} = this.props;
     let {unit, value} = this.state;
+
     let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(unit) : '';
     let addonAfter = (units.length == 1) ? unit : '';
     return (
@@ -62,6 +83,6 @@ export default class NumeralInputWithUnits extends Component {
 
 NumeralInputWithUnits.defaultProps = {
   value: 0,
-  numeralFormat: '0,0.0[000]',
+  numeralFormat: '',
   units: ['']
 };
