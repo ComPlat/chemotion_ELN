@@ -43,10 +43,18 @@ export default class SampleDetails extends React.Component {
   updateSample() {
     ElementActions.updateSample({
       id: this.state.id,
-      name: this.refs.nameInput.getValue() || this.state.sample.name,
-      amount_value: this.state.amount_value || this.state.sample.amount_value,
-      amount_unit: this.state.amount_unit || this.state.sample.amount_unit
+      name: this.state.sample.name,
+      amount_value: this.state.sample.amount_value,
+      amount_unit: this.state.sample.amount_unit
     })
+  }
+
+  handleNameChanged(e) {
+    let sample = this.state.sample;
+    sample.name = this.refs.nameInput.getValue();
+    this.setState({
+      sample: sample
+    });
   }
 
   handleAmountChanged(amount) {
@@ -86,7 +94,11 @@ export default class SampleDetails extends React.Component {
       <div>
         <h2>{sample.name}</h2>
         <form>
-          <Input type="text" label="Name" ref="nameInput" placeholder={sample.name}/>
+          <Input type="text" label="Name" ref="nameInput"
+            placeholder={sample.name}
+            value={sample.name}
+            onChange={(e) => this.handleNameChanged(e)}
+          />
           <NumeralInputWithUnits
              value={sample.amount_value}
              unit={sample.amount_unit || 'g'}
@@ -94,7 +106,7 @@ export default class SampleDetails extends React.Component {
              units={['g', 'ml', 'mol']}
              numeralFormat='0,0.00'
              convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
-             onChange={amount => this.handleAmountChanged(amount)}
+             onChange={(amount) => this.handleAmountChanged(amount)}
           />
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>

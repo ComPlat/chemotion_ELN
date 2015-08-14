@@ -45,10 +45,10 @@ export default class NumeralInput extends Component {
   }
 
   render() {
-    let {bsSize, bsStyle, addonAfter, buttonAfter} = this.props;
+    let {bsSize, bsStyle, addonAfter, buttonAfter, label} = this.props;
     let {numeralValue} = this.state;
     return (
-      <Input type='text' value={numeralValue} bsSize={bsSize} bsStyle={bsStyle}
+      <Input type='text' label={label} value={numeralValue} bsSize={bsSize} bsStyle={bsStyle}
              addonAfter={addonAfter} buttonAfter={buttonAfter} onChange={ event => this._handleInputValueChange(event)}/>
     );
   }

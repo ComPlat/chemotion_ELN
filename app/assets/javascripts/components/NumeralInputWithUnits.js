@@ -69,14 +69,14 @@ export default class NumeralInputWithUnits extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let {units, bsSize, bsStyle, numeralFormat} = this.props;
+    let {units, bsSize, bsStyle, label, numeralFormat} = this.props;
     let {unit, value} = this.state;
 
     let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(unit) : '';
     let addonAfter = (units.length == 1) ? unit : '';
     return (
       <NumeralInput buttonAfter={buttonAfter} addonAfter={addonAfter} onChange={(value) => this._handleValueChange(value)}
-        value={value} bsSize={bsSize} bsStyle={bsStyle} numeralFormat={numeralFormat}/>
+        value={value} bsSize={bsSize} bsStyle={bsStyle} label={label} numeralFormat={numeralFormat}/>
     );
   }
 }
