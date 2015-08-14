@@ -29,8 +29,8 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       show: function(e) {
-        let sample_id = e['params']['id'];
-        ElementActions.fetchSampleById(sample_id)
+        let sampleId = e['params']['id'];
+        ElementActions.fetchSampleById(sampleId)
       }
     },
     '/:id': 'show'
