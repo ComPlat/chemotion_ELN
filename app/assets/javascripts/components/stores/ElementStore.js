@@ -5,28 +5,32 @@ class ElementStore {
   constructor() {
     this.state = {
       samples: [],
-      currentSample: null
+      currentElement: null
     };
 
     this.bindListeners({
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
-      handleUpdateSample: ElementActions.updateSample
+      handleUpdateSample: ElementActions.updateSample,
+      handleUnselectCurrentElement: ElementActions.unselectCurrentElement
     })
   }
 
   handleFetchSampleById(result) {
-    this.state.currentSample = result; //todo should not be handled here
+    this.state.currentElement = result; //todo should not be handled here
   }
 
   handleFetchSamplesByCollectionId(result) {
     this.state.samples = result;
-    this.state.currentSample = null; //todo should not be handled here
   }
 
   // update stored sample if it has been updated
   handleUpdateSample(sampleId) {
     ElementActions.fetchSampleById(sampleId);
+  }
+
+  handleUnselectCurrentElement() {
+    this.state.currentElement = null;
   }
 }
 

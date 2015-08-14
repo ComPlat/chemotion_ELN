@@ -6,6 +6,6 @@ Rails.application.routes.draw do
   end
 
   mount API => '/'
-  
+
   root :to => redirect("/users/sign_in")
 end

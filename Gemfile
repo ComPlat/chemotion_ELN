@@ -25,9 +25,6 @@ gem 'devise'
 
 gem 'browserify-rails'
 
-# react specific gems
-gem 'react-rails', '~> 1.1.0'
-
 # for collection tree structure
 gem 'ancestry'
 

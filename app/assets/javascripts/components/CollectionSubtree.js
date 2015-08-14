@@ -6,6 +6,8 @@ import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
 
+import Aviator from 'aviator';
+
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
     super(props);
@@ -83,6 +85,7 @@ export default class CollectionSubtree extends React.Component {
   handleClick() {
     UIActions.deselectAllElements('collection');
     UIActions.selectElement({type: 'collection', id: this.state.root.id});
+    Aviator.navigate('/');
   }
 
   toggleExpansion(e) {

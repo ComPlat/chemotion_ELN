@@ -2,6 +2,11 @@ import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 
 class ElementActions {
+
+  unselectCurrentElement() {
+    this.dispatch();
+  }
+
   fetchSampleById(id) {
     SamplesFetcher.fetchById(id)
       .then((result) => {
@@ -15,6 +20,7 @@ class ElementActions {
     SamplesFetcher.fetchByCollectionId(id)
       .then((result) => {
         // TODO adjust when CollectionAPI fixed
+        // (serializer nests results within :id)
         this.dispatch(result[':id']);
       }).catch((errorMessage) => {
         console.log(errorMessage);

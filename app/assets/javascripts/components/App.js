@@ -1,7 +1,5 @@
 import React from 'react';
 import {Col, Grid, Row, Table} from 'react-bootstrap';
-import Router, { DefaultRoute, Link, Route, RouteHandler } from 'react-router';
-
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import List from './List';
@@ -10,6 +8,44 @@ import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 import ShareModal from './managing_actions/ShareModal';
+
+import ElementActions from './actions/ElementActions';
+
+import Aviator from 'aviator'
+Aviator.root = '/';
+Aviator.pushStateEnabled = false;
+Aviator.setRoutes({
+  '/': 'root',
+  target: {
+    root: function(e) {
+      ElementActions.unselectCurrentElement();
+
+      let modalDomNode = document.getElementById('modal');
+      if(modalDomNode) {
+        React.unmountComponentAtNode(modalDomNode);
+      }
+    }
+  },
+  '/sample': {
+    target: {
+      show: function(e) {
+        let sampleId = e['params']['id'];
+        ElementActions.fetchSampleById(sampleId)
+      }
+    },
+    '/:id': 'show'
+  },
+  '/sharing': {
+    '/*': 'showShareModal',
+    target: {
+      showShareModal: function(e) {
+        React.render(<ShareModal/>, document.getElementById('modal'));
+      }
+    }
+  }
+});
+Aviator.dispatch();
+
 
 export default class App extends React.Component {
   constructor(props) {
@@ -35,7 +71,7 @@ export default class App extends React.Component {
             <CollectionTree />
           </Col>
           <Col sm={7} md={7} lg={7}>
-            <RouteHandler />
+            <Elements />
           </Col>
           <Col sm={2} md={2} lg={2}>
             <ContextActions />
@@ -66,12 +102,19 @@ export default class Elements extends React.Component {
 
   onChange(state) {
     this.setState({
-      currentElement: state.currentSample
+      currentElement: state.currentElement
     })
   }
 
   render() {
     let width = this.state.currentElement ? "75%" : 0
+    let elementDetails;
+
+    if(this.state.currentElement) {
+      //todo: switch component by element.type
+      elementDetails = <SampleDetails id={this.state.currentElement.id}/>
+    }
+
     return (
       <Table>
         <tbody>
@@ -80,7 +123,7 @@ export default class Elements extends React.Component {
             <List/>
           </td>
           <td className="borderless" width={width}>
-            <RouteHandler />
+            {elementDetails}
           </td>
         </tr>
         </tbody>
@@ -89,24 +132,7 @@ export default class Elements extends React.Component {
   }
 }
 
-<Route name="list" path="/list" handler={List}/>
 
-// Configure React Routing
-let routes = (
-  <Route name="app" path="/" handler={App}>
-    <DefaultRoute handler={Elements}/>
-    <Route name="elements" handler={Elements}>
-      <Route name="sample" path="/sample/:id" handler={SampleDetails}/>
-    </Route>
-    <Route name="sharing" path="/sharing" handler={ShareModal}/>
-  </Route>
-);
-
-// see, e.g.,
-//
-http://stackoverflow.com/questions/26566317/invariant-violation-registercomponent-target-container-is-not-a-dom-elem
-  $(document).ready(function () {
-    Router.run(routes, function (Handler) {
-      React.render(<Handler/>, document.getElementById('router'));
-    });
-  });
+$(document).ready(function () {
+  React.render(<App />, document.getElementById('app'));
+});
