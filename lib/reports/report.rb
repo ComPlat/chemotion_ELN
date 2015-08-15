@@ -26,26 +26,25 @@ class Report
     add_to_report(paragraph)
   end
 
-	def line_break
-		nl = TextBlock.new
-		add_to_report(nl)
-	end
+  def line_break
+    nl = TextBlock.new
+    add_to_report(nl)
+  end
 
-	def image
-		if block_given?
-			image = Image.new
-			yield image
-			@image = image
-		end
-	end
+  def image
+    if block_given?
+      image = Image.new
+      yield image
+      @image = image
+    end
+  end
 
-	def generate_report
-		raise 'Error: Function not implemented'
-	end
+  def generate_report
+    raise 'Error: Function not implemented'
+  end
 
-	private
-
-		def add_to_report (text)
-			@text_data.push(text)
-		end
+  private
+    def add_to_report (text)
+      @text_data.push(text)
+    end
 end
