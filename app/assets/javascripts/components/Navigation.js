@@ -9,13 +9,14 @@ export default class Navigation extends React.Component {
 
   render() {
     return (
-      <Navbar brand="Chemotion" inverse>
+      <Navbar brand={<a href="#">Chemotion</a>} inverse fluid>
         <Nav>
           <NavItem>#1</NavItem>
         </Nav>
-        <div className='navbar-right'>
+        <Nav navbar right>
           <UserAuth currentUser={'Bernd Thomas'}/>
-        </div>
+          &nbsp;
+        </Nav>
       </Navbar>
     )
   }
