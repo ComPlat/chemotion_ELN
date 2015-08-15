@@ -1,0 +1,16 @@
+.molecule svg {
+  width: 90px;
+  height: 90px;
+  margin-left: 10px;
+}
+
+.molecule rect {
+  fill: none;
+  fill-opacity: 0.0;
+}
+
+.molecule-mid svg {
+  width: 180px;
+  height:180px;
+  margin-left: 10px;
+}
