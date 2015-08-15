@@ -7,7 +7,7 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   def collection_labels
-    object.collections.flat_map(&:label)
+    object.collections.flat_map(&:label).uniq
   end
 
   def type

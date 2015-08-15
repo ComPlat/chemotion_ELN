@@ -19,14 +19,17 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   collectionLabels(element) {
-    return element.collection_labels.map((label, index) => {
-      return (
-        <span>
-          <Label bsStyle="primary" key={index}>{label}</Label>
-          &nbsp;
-        </span>
-      )
-    });
+    if(element.collection_labels) {
+      return element.collection_labels.map((label, index) => {
+        return (
+          <span key={index}>
+            <Label bsStyle="primary">{label}</Label>
+            &nbsp;
+          </span>
+        )
+      });
+    }
+
   }
 }
 
