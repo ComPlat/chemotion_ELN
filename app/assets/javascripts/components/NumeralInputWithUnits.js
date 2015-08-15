@@ -13,16 +13,6 @@ export default class NumeralInputWithUnits extends Component {
     };
   }
 
-  componentWillReceiveProps(nextProps) {
-    let {value, unit} = nextProps;
-    this.setState({
-      unit: unit,
-      value: value
-    });
-
-    this.forceUpdate()
-  }
-
   _handleUnitSelect(nextUnit) {
     let {value, unit} = this.state;
     let convertedValue = value;
@@ -69,13 +59,13 @@ export default class NumeralInputWithUnits extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let {units, bsSize, bsStyle, label, numeralFormat} = this.props;
+    let {units, bsSize, bsStyle, label, numeralFormat, key} = this.props;
     let {unit, value} = this.state;
 
     let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(unit) : '';
     let addonAfter = (units.length == 1) ? unit : '';
     return (
-      <NumeralInput buttonAfter={buttonAfter} addonAfter={addonAfter} onChange={(value) => this._handleValueChange(value)}
+      <NumeralInput key={key} buttonAfter={buttonAfter} addonAfter={addonAfter} onChange={(value) => this._handleValueChange(value)}
         value={value} bsSize={bsSize} bsStyle={bsStyle} label={label} numeralFormat={numeralFormat}/>
     );
   }

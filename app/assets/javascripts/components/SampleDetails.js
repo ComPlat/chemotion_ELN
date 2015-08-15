@@ -114,6 +114,7 @@ export default class SampleDetails extends React.Component {
                   onChange={(e) => this.handleNameChanged(e)}
                 />
                 <NumeralInputWithUnits
+                   key={sample.id}
                    value={sample.amount_value}
                    unit={sample.amount_unit || 'g'}
                    label="Amount"
