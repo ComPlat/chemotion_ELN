@@ -91,7 +91,7 @@ export default class SampleDetails extends React.Component {
 
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
-    let svg = sample.molecule_svg ? (<SVG key={sample.id} src={`/assets/${sample.molecule_svg}`} className="molecule-mid"/>) : '';
+    let svgPath = sample.molecule_svg ? `/assets/${sample.molecule_svg}`  : '';
 
     return (
       <div>
@@ -102,7 +102,7 @@ export default class SampleDetails extends React.Component {
               <h4>{sampleAmount}</h4>
             </td>
             <td width="30%">
-              {svg}
+              <SVG key={sample.id} src={svgPath} className="molecule-mid"/>
             </td>
           </tr></table>
           <ListGroup fill>
