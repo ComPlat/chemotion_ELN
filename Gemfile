@@ -36,13 +36,16 @@ gem 'nokogiri'
 gem 'grape'
 gem 'hashie-forbidden_attributes'
 gem 'grape-active_model_serializers'
-
 gem 'kaminari'
 gem 'grape-kaminari'
 
 gem 'pundit'
 
 gem 'awesome_print'
+
+# Report Generator
+gem 'rtf'
+gem 'rmagick'
 
 # Chemrails
 gem 'httparty'
