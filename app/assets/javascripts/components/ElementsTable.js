@@ -4,6 +4,7 @@ import {Label, Pagination, Table} from 'react-bootstrap';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
+import ElementCollectionLabels from './ElementCollectionLabels';
 
 import SVG from 'react-inlinesvg';
 import Aviator from 'aviator';
@@ -73,14 +74,14 @@ export default class ElementsTable extends React.Component {
 
         optionalLabelColumn = (
           <td className="labels">
-            {this.collectionLabels(element)}
+            <ElementCollectionLabels element={element} key={element.id}/>
           </td>
         )
 
         let svgPath = `/assets/${element.molecule_svg}`;
         optionalMoleculeColumn = (
           <td className="molecule" margin="0" padding="0">
-            <SVG src={svgPath} className="molecule" />
+            <SVG src={svgPath} className="molecule" key={element.id}/>
           </td>
         )
 
@@ -98,7 +99,7 @@ export default class ElementsTable extends React.Component {
       return (
         <tr key={index} height="100" style={style}>
           <td className="check">
-            <ElementCheckbox element={element}/>
+            <ElementCheckbox element={element} key={element.id}/>
           </td>
           <td className="name" onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
             {element.name}
@@ -112,17 +113,6 @@ export default class ElementsTable extends React.Component {
 
   showElementDetailsColumns() {
     return !(this.state.currentElement);
-  }
-
-  collectionLabels(element) {
-    return element.collection_labels.map((label, index) => {
-      return (
-        <span>
-          <Label bsStyle="primary" key={index}>{label}</Label>
-          &nbsp;
-        </span>
-      )
-    });
   }
 
   showDetails(element) {
