@@ -9,7 +9,4 @@ class Collection < ActiveRecord::Base
   scope :shared, ->(user_id) { where(shared_by_id: user_id) }
   scope :remote, ->(user_id) { where(is_shared: true) && where.not(shared_by_id: user_id) }
 
-  def is_all_collection?
-    label == 'All'
-  end
 end

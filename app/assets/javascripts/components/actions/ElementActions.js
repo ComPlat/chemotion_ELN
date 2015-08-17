@@ -19,9 +19,7 @@ class ElementActions {
   fetchSamplesByCollectionId(id) {
     SamplesFetcher.fetchByCollectionId(id)
       .then((result) => {
-        // TODO adjust when CollectionAPI fixed
-        // (serializer nests results within :id)
-        this.dispatch(result[':id']);
+        this.dispatch(result['samples']);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

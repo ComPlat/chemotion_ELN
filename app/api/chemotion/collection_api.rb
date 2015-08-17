@@ -47,6 +47,7 @@ module Chemotion
           Collection.find(params[:id]).samples
         end
       end
+
     end
   end
 end

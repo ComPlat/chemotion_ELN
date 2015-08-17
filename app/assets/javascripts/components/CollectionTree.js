@@ -63,8 +63,15 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
+    let allCollection = {
+      label: 'All *',
+      id: 'all',
+      children: []
+    };
+
     return (
       <div>
+        <CollectionSubtree key='all' root={allCollection}/>
         <div className="tree-wrapper">
           {this.unsharedSubtrees()}
         </div>

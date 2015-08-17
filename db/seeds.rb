@@ -3,8 +3,6 @@ u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', passw
 hattori = User.create!(email: 'hattori@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
 momochi = User.create!(email: 'momochi@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept')
 
-# create some collections
-all_collection = Collection.create!(label: 'All', user_id: u.id)
 collection_1 = Collection.create!(label: 'Collection #1', user_id: u.id)
 subcollection_1 = Collection.create!(label: 'Subcollection of #1', user_id: u.id, parent: collection_1)
 grand_child = Collection.create!(label: 'Grandchild', user_id: u.id, parent: subcollection_1)
