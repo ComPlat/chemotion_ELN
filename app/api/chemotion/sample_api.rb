@@ -34,12 +34,14 @@ module Chemotion
         requires :name, type: String, desc: "Sample name"
         requires :amount_value, type: Float, desc: "Sample amount_value"
         requires :amount_unit, type: String, desc: "Sample amount_unit"
+        requires :description, type: String, desc: "Sample description"
       end
       put ':id' do
         Sample.find(params[:id]).update({
           name: params[:name],
           amount_value: params[:amount_value],
-          amount_unit: params[:amount_unit]
+          amount_unit: params[:amount_unit],
+          description: params[:description]
         })
       end
 
