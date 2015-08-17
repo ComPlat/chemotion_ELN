@@ -19,10 +19,10 @@ Aviator.setRoutes({
 
   target: {
     root: function(e) {
-      let modalDomNode = document.getElementById('modal');
-      if(modalDomNode) {
-        React.unmountComponentAtNode(modalDomNode);
-      }
+      // let modalDomNode = document.getElementById('modal');
+      // if(modalDomNode) {
+      //   React.unmountComponentAtNode(modalDomNode);
+      // }
     }
   },
 
@@ -49,10 +49,18 @@ Aviator.setRoutes({
   },
 
   '/sharing': {
-    '/*': 'showShareModal',
+    '/': 'show',
+    '/hide': 'hide',
     target: {
-      showShareModal: function(e) {
+      show: function(e) {
         React.render(<ShareModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide',''))
       }
     }
   }

@@ -8,7 +8,7 @@ export default class ShareButton extends React.Component {
   }
 
   showShareModal() {
-    Aviator.navigate('/sharing');
+    Aviator.navigate(Aviator.getCurrentURI()+'/sharing');
   }
 
   render() {

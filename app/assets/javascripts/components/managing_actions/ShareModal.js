@@ -34,7 +34,8 @@ export default class ShareModal extends React.Component {
   }
 
   hideModal() {
-    Aviator.navigate('/');
+    //window.history.back();
+    Aviator.navigate(Aviator.getCurrentURI()+'/hide');
   }
 
   handleSharing() {
