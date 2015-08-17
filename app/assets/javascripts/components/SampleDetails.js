@@ -103,8 +103,6 @@ export default class SampleDetails extends React.Component {
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule_svg ? `/assets/${sample.molecule_svg}`  : '';
 
-    let MarkdownTextarea = require('react-markdown-textarea');
-
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>
@@ -140,7 +138,7 @@ export default class SampleDetails extends React.Component {
                   placeholder={sample.description}
                   value={sample.description}
                   onChange={(e) => this.handleDescriptionChanged(e)}
-                  rows={3} 
+                  rows={3}
                 />
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
