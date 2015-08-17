@@ -1,5 +1,7 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
+import UIActions from '../actions/UIActions';
+import UIStore from './UIStore';
 
 class ElementStore {
   constructor() {
@@ -12,7 +14,7 @@ class ElementStore {
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
-      handleUnselectCurrentElement: ElementActions.unselectCurrentElement
+      handleUnselectCurrentElement: UIActions.deselectAllElements
     })
   }
 
@@ -30,6 +32,7 @@ class ElementStore {
   }
 
   handleUnselectCurrentElement() {
+    //this.waitFor(UIStore.dispatchToken);
     this.state.currentElement = null;
   }
 }

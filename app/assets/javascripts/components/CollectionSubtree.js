@@ -76,8 +76,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleClick() {
-    UIActions.deselectAllElements('collection');
-    UIActions.selectElement({type: 'collection', id: this.state.root.id});
+    UIActions.selectCollection(this.state.root);
     Aviator.navigate('/');
   }
 

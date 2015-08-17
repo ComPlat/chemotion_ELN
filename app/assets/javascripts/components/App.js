@@ -9,7 +9,7 @@ import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 import ShareModal from './managing_actions/ShareModal';
 
-import ElementActions from './actions/ElementActions';
+import UIActions from './actions/UIActions';
 
 import Aviator from 'aviator'
 Aviator.root = '/';
@@ -18,7 +18,8 @@ Aviator.setRoutes({
   '/': 'root',
   target: {
     root: function(e) {
-      ElementActions.unselectCurrentElement();
+      //UIActions.selectCollection({id: 'all'});
+      UIActions.deselectAllElements('sample');
 
       let modalDomNode = document.getElementById('modal');
       if(modalDomNode) {
@@ -29,8 +30,7 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       show: function(e) {
-        let sampleId = e['params']['id'];
-        ElementActions.fetchSampleById(sampleId)
+        UIActions.selectElement({type: 'sample', id: e['params']['id']})
       }
     },
     '/:id': 'show'
