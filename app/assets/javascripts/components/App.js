@@ -16,6 +16,7 @@ Aviator.root = '/';
 Aviator.pushStateEnabled = false;
 Aviator.setRoutes({
   '/': 'root',
+
   target: {
     root: function(e) {
       let modalDomNode = document.getElementById('modal');
@@ -24,10 +25,15 @@ Aviator.setRoutes({
       }
     }
   },
+
   '/collection': {
     target: {
       show: function(e) {
-        UIActions.selectCollection({id: e['params']['id']});
+        UIActions.selectCollection({id: e.params['id']});
+        if(!e.params['sampleID'])
+        {
+          UIActions.deselectAllElements('sample');
+        }
       }
     },
     '/:id': 'show'
@@ -36,11 +42,12 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       show: function(e) {
-        UIActions.selectElement({type: 'sample', id: e['params']['sampleID']})
+        UIActions.selectElement({type: 'sample', id: e.params['sampleID']})
       }
     },
     '/:sampleID': 'show'
   },
+
   '/sharing': {
     '/*': 'showShareModal',
     target: {
