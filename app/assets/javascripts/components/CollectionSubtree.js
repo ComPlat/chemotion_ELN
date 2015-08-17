@@ -11,11 +11,16 @@ import Aviator from 'aviator';
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
     super(props);
+    let uiStoreState = UIStore.getState();
+    let selected = uiStoreState.currentCollectionId == props.root.id;
+    let childIds = props.root.children.map(c => c.id);
+    let visible = childIds.indexOf(parseInt(uiStoreState.currentCollectionId)) > -1
+
     this.state = {
       label: props.root.label,
-      selected: false,
+      selected: selected,
       root: props.root,
-      visible: false
+      visible: visible
     }
   }
 
@@ -76,8 +81,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleClick() {
-    UIActions.selectCollection(this.state.root);
-    Aviator.navigate('/');
+    Aviator.navigate('/collection/'+this.state.root.id);
   }
 
   toggleExpansion(e) {
@@ -93,7 +97,7 @@ export default class CollectionSubtree extends React.Component {
     }
 
     return (
-      <div className="tree-view">
+      <div className="tree-view" key={this.state.root.id}>
         <div className={"title " + this.selectedCssClass()} onClick={this.handleClick.bind(this)}>
           {this.expandButton()}
           {this.state.label}

@@ -18,8 +18,8 @@ Aviator.setRoutes({
   '/': 'root',
   target: {
     root: function(e) {
-      //UIActions.selectCollection({id: 'all'});
       UIActions.deselectAllElements('sample');
+      //UIActions.selectCollection({id: 'all'});
 
       let modalDomNode = document.getElementById('modal');
       if(modalDomNode) {
@@ -27,6 +27,16 @@ Aviator.setRoutes({
       }
     }
   },
+
+  '/collection': {
+    target: {
+      show: function(e) {
+        UIActions.selectCollection({id: e['params']['id']});
+      }
+    },
+    '/:id': 'show'
+  },
+
   '/sample': {
     target: {
       show: function(e) {
