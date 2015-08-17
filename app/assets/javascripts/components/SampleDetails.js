@@ -47,13 +47,22 @@ export default class SampleDetails extends React.Component {
       id: this.state.id,
       name: this.state.sample.name,
       amount_value: this.state.sample.amount_value,
-      amount_unit: this.state.sample.amount_unit
+      amount_unit: this.state.sample.amount_unit,
+      description: this.state.sample.description
     })
   }
 
   handleNameChanged(e) {
     let sample = this.state.sample;
     sample.name = this.refs.nameInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handleDescriptionChanged(e) {
+    let sample = this.state.sample;
+    sample.description = this.refs.descriptionInput.getValue();
     this.setState({
       sample: sample
     });
@@ -94,6 +103,8 @@ export default class SampleDetails extends React.Component {
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule_svg ? `/assets/${sample.molecule_svg}`  : '';
 
+    let MarkdownTextarea = require('react-markdown-textarea');
+
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>
@@ -125,7 +136,12 @@ export default class SampleDetails extends React.Component {
                    convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
                    onChange={(amount) => this.handleAmountChanged(amount)}
                 />
-                <Input type='textarea' label='Description' rows={3} />
+                <Input type="textarea" label="Description" ref="descriptionInput"
+                  placeholder={sample.description}
+                  value={sample.description}
+                  onChange={(e) => this.handleDescriptionChanged(e)}
+                  rows={3} 
+                />
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
                   <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>

@@ -83,9 +83,9 @@ ActiveRecord::Schema.define(version: 20150817085601) do
     t.string   "name"
     t.float    "amount_value"
     t.string   "amount_unit"
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
-    t.text     "description"
+    t.datetime "created_at",                null: false
+    t.datetime "updated_at",                null: false
+    t.text     "description",  default: ""
   end
 
   create_table "users", force: :cascade do |t|
