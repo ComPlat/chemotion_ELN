@@ -2,23 +2,6 @@
   margin-top: 0 !important;
 }
 
-.molecule svg {
-  width: 90px;
-  height: 90px;
-  margin-left: 10px;
-}
-
-.molecule-mid svg {
-  width: 180px;
-  height:180px;
-  margin-left: 10px;
-}
-
-.molecule rect {
-  fill: none;
-  fill-opacity: 0.0;
-}
-
 .borderless {
     border: none !important;
     padding-top: 0px !important;
@@ -27,7 +10,6 @@
 table.elements {
   table-layout: fixed;
 }
-
 
 th.check, td.check {
   width: 40px !important;

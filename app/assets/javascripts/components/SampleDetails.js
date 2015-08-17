@@ -5,6 +5,7 @@ import SVG from 'react-inlinesvg';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import NumeralInputWithUnits from './NumeralInputWithUnits'
+import ElementCollectionLabels from './ElementCollectionLabels';
 
 import Aviator from 'aviator';
 
@@ -91,7 +92,7 @@ export default class SampleDetails extends React.Component {
 
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
-    let svg = sample.molecule_svg ? (<SVG key={sample.id} src={`/assets/${sample.molecule_svg}`} className="molecule-mid"/>) : '';
+    let svgPath = sample.molecule_svg ? `/assets/${sample.molecule_svg}`  : '';
 
     return (
       <div>
@@ -100,9 +101,10 @@ export default class SampleDetails extends React.Component {
             <td width="70%">
               <h3>{sample.name}</h3>
               <h4>{sampleAmount}</h4>
+              <ElementCollectionLabels element={sample} key={sample.id} />
             </td>
             <td width="30%">
-              {svg}
+              <SVG key={sample.id} src={svgPath} className="molecule-mid"/>
             </td>
           </tr></table>
           <ListGroup fill>
@@ -114,6 +116,7 @@ export default class SampleDetails extends React.Component {
                   onChange={(e) => this.handleNameChanged(e)}
                 />
                 <NumeralInputWithUnits
+                   key={sample.id}
                    value={sample.amount_value}
                    unit={sample.amount_unit || 'g'}
                    label="Amount"

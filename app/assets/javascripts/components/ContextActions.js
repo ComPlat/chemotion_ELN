@@ -25,7 +25,7 @@ export default class ContextActions extends React.Component {
     // TODO später auch für reaktionen usw
     if(this.state.checkedSampleIds.size == 0) {
       return (
-        <ButtonGroup vertical>
+        <ButtonGroup vertical block>
           <Button>Create Sample</Button>
           <Button>Create Reaction</Button>
           <Button>Create Wellplate</Button>
@@ -33,7 +33,7 @@ export default class ContextActions extends React.Component {
       )
     } else {
       return (
-        <ButtonGroup vertical>
+        <ButtonGroup vertical block>
           <Button>Split as Subsample(s)</Button>
           <Button>Create Reaction</Button>
           <Button>Create Wellplate</Button>
