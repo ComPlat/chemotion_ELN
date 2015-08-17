@@ -25,6 +25,7 @@ Aviator.setRoutes({
   '/collection': {
     target: {
       show: function(e) {
+        UIActions.setPagination({page: e.params.page});
         UIActions.selectCollection({id: e.params['id']});
         if(!e.params['sampleID'])
         {
@@ -41,7 +42,7 @@ Aviator.setRoutes({
         UIActions.selectElement({type: 'sample', id: e.params['sampleID']})
       }
     },
-    '/:sampleID': 'show'
+    '/:sampleID': 'show',
   },
 
   '/sharing': {
