@@ -18,16 +18,12 @@ Aviator.setRoutes({
   '/': 'root',
   target: {
     root: function(e) {
-      UIActions.deselectAllElements('sample');
-      //UIActions.selectCollection({id: 'all'});
-
       let modalDomNode = document.getElementById('modal');
       if(modalDomNode) {
         React.unmountComponentAtNode(modalDomNode);
       }
     }
   },
-
   '/collection': {
     target: {
       show: function(e) {
@@ -40,10 +36,10 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       show: function(e) {
-        UIActions.selectElement({type: 'sample', id: e['params']['id']})
+        UIActions.selectElement({type: 'sample', id: e['params']['sampleID']})
       }
     },
-    '/:id': 'show'
+    '/:sampleID': 'show'
   },
   '/sharing': {
     '/*': 'showShareModal',

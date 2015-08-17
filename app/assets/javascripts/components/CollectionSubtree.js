@@ -11,10 +11,10 @@ import Aviator from 'aviator';
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
     super(props);
-    let uiStoreState = UIStore.getState();
-    let selected = uiStoreState.currentCollectionId == props.root.id;
-    let childIds = props.root.children.map(c => c.id);
-    let visible = childIds.indexOf(parseInt(uiStoreState.currentCollectionId)) > -1
+
+    let uiState = UIStore.getState();
+    let selected = uiState.currentCollectionId == props.root.id;
+    let visible = props.root.descendant_ids.indexOf(parseInt(uiState.currentCollectionId)) > -1
 
     this.state = {
       label: props.root.label,
