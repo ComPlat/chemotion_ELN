@@ -1,5 +1,6 @@
 import alt from '../alt';
 import UIActions from '../actions/UIActions';
+import ElementActions from '../actions/ElementActions';
 import ElementStore from './ElementStore';
 
 import ArrayUtils from '../utils/ArrayUtils';
@@ -9,7 +10,7 @@ class UIStore {
   constructor() {
     this.state = {
       checkedSampleIds: Immutable.List(),
-      selectedCollectionIds: []
+      currentCollectionId: null
     };
 
     this.bindListeners({
@@ -60,7 +61,7 @@ class UIStore {
   handleDeselectAllElements(type) {
     switch(type) {
       case 'collection':
-        this.state.selectedCollectionIds = [];
+        this.state.currentCollectionId = null;
         break;
     }
   }
@@ -68,7 +69,9 @@ class UIStore {
   handleSelectElement(element) {
     switch(element.type) {
       case 'collection':
-        this.state.selectedCollectionIds.push(element.id);
+        this.state.currentCollectionId = element.id;
+        // TODO also for reactions and so on
+        ElementActions.fetchSamplesByCollectionId(element.id)
         break;
     }
   }

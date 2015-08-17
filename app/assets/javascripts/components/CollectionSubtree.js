@@ -27,15 +27,8 @@ export default class CollectionSubtree extends React.Component {
     UIStore.unlisten(this.onChange.bind(this));
   }
 
-  componentWillUpdate(nextProps, nextState) {
-    if(nextState.selected) {
-      // TODO also for reactions and so on
-      ElementActions.fetchSamplesByCollectionId(this.state.root.id)
-    }
-  }
-
   onChange(state) {
-    if(state.selectedCollectionIds[0] == this.state.root.id) {
+    if(state.currentCollectionId == this.state.root.id) {
       this.setState({selected: true});
     } else {
       this.setState({selected: false});
