@@ -18,7 +18,8 @@ export default class SamplesFetcher {
   }
 
   static fetchByCollectionId(id) {
-    let promise = fetch('/api/v1/collections/' + id + '/samples.json', {
+    let api = id == 'all' ? '/api/v1/samples.json' : '/api/v1/samples.json?collection_id=' + id
+    let promise = fetch(api, {
         credentials: 'same-origin'
       })
       .then((response) => {

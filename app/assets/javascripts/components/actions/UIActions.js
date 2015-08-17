@@ -19,6 +19,7 @@ class UIActions {
   }
 
   selectElement(element) {
+    console.log("selectElement:" + element.id + " type: " + element.type)
     this.dispatch(element);
   }
 
