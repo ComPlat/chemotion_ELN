@@ -44,7 +44,11 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    const elements = state.samples;
+    console.log("onChange")
+    console.log(state.elements.samples)
+
+    const elements = state.elements.samples.elements;
+    const totalElements = state.elements.samples.totalElements;
 
     let currentElement;
     if(state.currentElement && state.currentElement.type == this.props.type) {
@@ -56,7 +60,7 @@ export default class ElementsTable extends React.Component {
 
     let pagination = UIStore.getState().pagination;
     let page = pagination.page && parseInt(pagination.page) || 1;
-    let numberOfPages = Math.ceil(elements.length / this.state.pageSize);
+    let numberOfPages = Math.ceil(totalElements / this.state.pageSize);
     if(page > numberOfPages) {
       page = 1
     }
@@ -81,11 +85,9 @@ export default class ElementsTable extends React.Component {
     // Pagination: startAt...Arrayindex to start with...
     // TODO Move to PaginationUtils?
     let pageSize = this.state.pageSize;
-    let startAt = (this.state.activePage - 1) * pageSize;
-    let endAt = startAt + pageSize;
-    let elementsOnActivePage = this.state.elements.slice(startAt, endAt);
+    let elements = this.state.elements;
 
-    return elementsOnActivePage.map((element, index) => {
+    return elements.map((element, index) => {
       let optionalLabelColumn
       let optionalMoleculeColumn
 

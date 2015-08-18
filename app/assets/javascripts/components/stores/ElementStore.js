@@ -6,7 +6,15 @@ import UIStore from './UIStore';
 class ElementStore {
   constructor() {
     this.state = {
-      samples: [],
+      elements: {
+        samples: {
+          elements: [],
+          totalElements: [],
+          page: null,
+          pages: null,
+          per_page: null
+        }
+      },
       currentElement: null
     };
 
@@ -23,7 +31,7 @@ class ElementStore {
   }
 
   handleFetchSamplesByCollectionId(result) {
-    this.state.samples = result;
+    this.state.elements.samples = result;
   }
 
   // update stored sample if it has been updated

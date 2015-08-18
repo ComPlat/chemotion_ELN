@@ -12,10 +12,10 @@ class ElementActions {
       });
   }
 
-  fetchSamplesByCollectionId(id) {
-    SamplesFetcher.fetchByCollectionId(id)
+  fetchSamplesByCollectionId(id, queryParams={}) {
+    SamplesFetcher.fetchByCollectionId(id, queryParams)
       .then((result) => {
-        this.dispatch(result['samples']);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

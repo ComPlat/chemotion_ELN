@@ -33,6 +33,9 @@ gem 'grape'
 gem 'hashie-forbidden_attributes'
 gem 'grape-active_model_serializers'
 
+gem 'kaminari'
+gem 'grape-kaminari'
+
 gem 'awesome_print'
 
 group :development, :test do
