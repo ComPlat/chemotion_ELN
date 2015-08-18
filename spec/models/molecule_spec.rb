@@ -27,14 +27,16 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'should persist the binary molfile' do
-      molecule.molfile = 
-        (Digest::SHA256.new << "Example Binary Molefile Content").hexdigest
+      molfile_example = File.open("spec/models/molecule_spec.rb", "rb")
+      molecule.molfile = molfile_example.read
+      molfile_example.close
       molecule.save
       persisted_molecule = Molecule.last
-      expect(persisted_molecule.molfile).to be === (molecule.molfile)
+      persisted_molfile_SHA =
+        (Digest::SHA256.new << persisted_molecule.molfile).hexdigest
+      molfile_SHA =
+        (Digest::SHA256.new << molecule.molfile).hexdigest
+      expect(persisted_molfile_SHA).to be === (molfile_SHA)
     end
   end
-
-  # concern "with sample"
-    # it should belong to a sample
 end

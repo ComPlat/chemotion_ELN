@@ -1,5 +1,5 @@
 class Molecule < ActiveRecord::Base
-  belongs_to :sample
+  has_many :samples
 
   validates_uniqueness_of :inchikey
 end
