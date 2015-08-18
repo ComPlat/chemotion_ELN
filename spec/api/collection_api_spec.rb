@@ -4,7 +4,7 @@ describe Chemotion::CollectionAPI do
   let(:json_options) {
     {
       only: [:id, :label],
-      include: :children
+      include: [:children, :descendant_ids]
     }
   }
 

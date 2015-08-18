@@ -4,6 +4,9 @@ import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
+
+import UIStore from './stores/UIStore';
+
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
 
@@ -39,7 +42,8 @@ export default class SampleDetails extends React.Component {
   }
 
   closeDetails() {
-    Aviator.navigate('/');
+    let uiState = UIStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   updateSample() {

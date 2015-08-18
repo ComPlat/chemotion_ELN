@@ -11,7 +11,7 @@ module Chemotion
       end
       get do
         if(params[:collection_id])
-          current_user.collections.find(params[:collection_id]).samples
+          Collection.where("user_id = ? OR shared_by_id = ?", current_user.id, current_user.id).find(params[:collection_id]).samples
         else
           Sample.all
         end

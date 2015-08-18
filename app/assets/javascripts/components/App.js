@@ -9,7 +9,7 @@ import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 import ShareModal from './managing_actions/ShareModal';
 
-import ElementActions from './actions/ElementActions';
+import UIActions from './actions/UIActions';
 
 import Aviator from 'aviator'
 Aviator.root = '/';
@@ -18,28 +18,45 @@ Aviator.setRoutes({
   '/': 'root',
   target: {
     root: function(e) {
-      ElementActions.unselectCurrentElement();
-
-      let modalDomNode = document.getElementById('modal');
-      if(modalDomNode) {
-        React.unmountComponentAtNode(modalDomNode);
-      }
+      Aviator.navigate('/collections/all');
     }
   },
-  '/sample': {
+
+  '/collection': {
     target: {
       show: function(e) {
-        let sampleId = e['params']['id'];
-        ElementActions.fetchSampleById(sampleId)
+        UIActions.selectCollection({id: e.params['id']});
+        if(!e.params['sampleID'])
+        {
+          UIActions.deselectAllElements('sample');
+        }
       }
     },
     '/:id': 'show'
   },
-  '/sharing': {
-    '/*': 'showShareModal',
+
+  '/sample': {
     target: {
-      showShareModal: function(e) {
+      show: function(e) {
+        UIActions.selectElement({type: 'sample', id: e.params['sampleID']})
+      }
+    },
+    '/:sampleID': 'show'
+  },
+
+  '/sharing': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
         React.render(<ShareModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide',''))
       }
     }
   }

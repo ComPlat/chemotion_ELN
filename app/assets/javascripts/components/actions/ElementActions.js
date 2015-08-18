@@ -3,10 +3,6 @@ import SamplesFetcher from '../fetchers/SamplesFetcher';
 
 class ElementActions {
 
-  unselectCurrentElement() {
-    this.dispatch();
-  }
-
   fetchSampleById(id) {
     SamplesFetcher.fetchById(id)
       .then((result) => {

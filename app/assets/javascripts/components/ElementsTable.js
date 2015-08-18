@@ -1,6 +1,7 @@
 import React from 'react';
 import {Label, Pagination, Table} from 'react-bootstrap';
 
+import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
@@ -116,7 +117,8 @@ export default class ElementsTable extends React.Component {
   }
 
   showDetails(element) {
-    Aviator.navigate(`/${element.type}/${element.id}`);
+    let uiState = UIStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/${element.type}/${element.id}`);
   }
 
   handlePaginationSelect(event, selectedEvent) {

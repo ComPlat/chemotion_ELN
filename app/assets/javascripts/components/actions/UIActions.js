@@ -2,6 +2,10 @@ import alt from '../alt';
 
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {
+  selectCollection(collection) {
+    this.dispatch(collection)
+  }
+
   checkAllElements(type) {
     this.dispatch(type);
   }
@@ -19,7 +23,6 @@ class UIActions {
   }
 
   selectElement(element) {
-    console.log("selectElement:" + element.id + " type: " + element.type)
     this.dispatch(element);
   }
 
