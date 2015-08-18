@@ -55,7 +55,7 @@ export default class ElementsTable extends React.Component {
       currentElement = state.currentElement
     }
 
-    let elementsDidChange = !deepEqual(elements, this.state.elements);
+    let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
     let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
     let pagination = UIStore.getState().pagination;
