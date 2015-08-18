@@ -28,11 +28,11 @@ class UIStore {
   }
 
   handleCheckAllElements(type) {
-    let elements = ElementStore.getState();
+    let {elements} = ElementStore.getState();
 
     switch(type) {
       case 'sample':
-        let sampleIds = elements.samples.map(sample => sample.id);
+        let sampleIds = elements.samples.elements.map(sample => sample.id);
         this.state.checkedSampleIds = this.state.checkedSampleIds.concat(sampleIds);
         break;
     }
@@ -83,7 +83,7 @@ class UIStore {
   handleSelectCollection(collection) {
     this.state.currentCollectionId = collection.id;
     // TODO also for reactions and so on
-    ElementActions.fetchSamplesByCollectionId(collection.id)
+    ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
   }
 
   handleSetPagination(pagination) {

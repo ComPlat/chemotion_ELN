@@ -17,15 +17,21 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id) {
-    let api = id == 'all' ? '/api/v1/samples.json' : '/api/v1/samples.json?collection_id=' + id
+  static fetchByCollectionId(id, queryParams={}) {
+    let page = queryParams.page || 1
+    let api = id == 'all' ? `/api/v1/samples.json?page=${page}` : `/api/v1/samples.json?collection_id=${id}&page=${page}`
     let promise = fetch(api, {
         credentials: 'same-origin'
       })
       .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
+        return response.json().then((json) => {
+          return {
+            elements: json.samples,
+            totalElements: response.headers.get('X-Total'),
+            page: response.headers.get('X-Page'),
+            pages: response.headers.get('X-Total-Pages')
+          }
+        })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

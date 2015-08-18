@@ -2,6 +2,8 @@ module Chemotion
   class SampleAPI < Grape::API
     # TODO ensure user is authenticated
 
+    include Grape::Kaminari
+
     resource :samples do
 
       #todo: more general search api
@@ -9,12 +11,15 @@ module Chemotion
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
       end
+      paginate per_page: 5, max_per_page: 25, offset: 0
+
       get do
-        if(params[:collection_id])
+        scope = if params[:collection_id]
           Collection.where("user_id = ? OR shared_by_id = ?", current_user.id, current_user.id).find(params[:collection_id]).samples
         else
-          Sample.all
+          Sample
         end
+        paginate(scope)
       end
 
       desc "Return serialized sample by id"
