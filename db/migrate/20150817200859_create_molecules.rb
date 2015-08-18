@@ -1,7 +1,6 @@
 class CreateMolecules < ActiveRecord::Migration
   def change
     create_table :molecules do |t|
-      t.integer :sample_id
       t.string :inchikey
       t.string :inchistring
       t.float :density

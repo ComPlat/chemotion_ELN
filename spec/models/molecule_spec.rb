@@ -35,6 +35,8 @@ RSpec.describe Molecule, type: :model do
     end
   end
 
+  
+
   # concern "with sample"
     # it should belong to a sample
 end
