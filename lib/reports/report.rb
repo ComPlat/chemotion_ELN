@@ -2,7 +2,7 @@ require 'tempfile'
 
 class Report
 	def initialize
-		@text_data = Array.new
+		@report_data = Array.new
 		@image = nil
 
 		yield self
@@ -31,11 +31,17 @@ class Report
     add_to_report(nl)
   end
 
-  def image
+	def add_table(dimension_x, dimension_y)
+		table = Table.new(dimension_x, dimension_y)
+		yield table
+		add_to_report(table)
+	end
+
+  def add_image
     if block_given?
       image = Image.new
       yield image
-      @image = image
+      add_to_report(image)
     end
   end
 
@@ -44,7 +50,7 @@ class Report
   end
 
   private
-    def add_to_report (text)
-      @text_data.push(text)
+    def add_to_report (data)
+      @report_data.push(data)
     end
 end

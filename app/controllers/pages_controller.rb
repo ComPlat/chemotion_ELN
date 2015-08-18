@@ -16,7 +16,7 @@ class PagesController < ApplicationController
         s.add_text 'This is a subtitle text (h2)'
       end
       r.line_break
-      r.image do |i|
+      r.add_image do |i|
         i.set_path 'data/example.svg'
         i.size x: 10, y: 10
       end
@@ -26,6 +26,19 @@ class PagesController < ApplicationController
         p.add_text ' to demonstrate the power of the Report Generator library'
         p.line_break
         p.add_text 'This block of text is a paragraph (p)'
+      end
+      r.add_table(2, 3) do |t|
+        # Header
+        t.add_line 'adsd', 'sadsfsf', 'safdasf'
+
+        # Table elements
+        2.times do
+          t.add_line 'aa', 'bb', 'cc'
+        end
+
+        t.add_line do |l|
+          l.font_style = bold
+        end
       end
       r.line_break
     end
