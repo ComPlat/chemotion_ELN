@@ -29,6 +29,10 @@ class UIActions {
   deselectAllElements(type) {
     this.dispatch(type);
   }
+
+  setPagination(pagination) {
+    this.dispatch(pagination);
+  }
 }
 
 export default alt.createActions(UIActions);

@@ -11,7 +11,8 @@ class UIStore {
     this.state = {
       checkedSampleIds: Immutable.List(),
       currentCollectionId: null,
-      currentSampleId: null
+      currentSampleId: null,
+      pagination: null
     };
 
     this.bindListeners({
@@ -21,7 +22,8 @@ class UIStore {
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
       handleDeselectAllElements: UIActions.deselectAllElements,
-      handleSelectElement: UIActions.selectElement
+      handleSelectElement: UIActions.selectElement,
+      handleSetPagination: UIActions.setPagination
     });
   }
 
@@ -82,6 +84,10 @@ class UIStore {
     this.state.currentCollectionId = collection.id;
     // TODO also for reactions and so on
     ElementActions.fetchSamplesByCollectionId(collection.id)
+  }
+
+  handleSetPagination(pagination) {
+    this.state.pagination = pagination;
   }
 }
 

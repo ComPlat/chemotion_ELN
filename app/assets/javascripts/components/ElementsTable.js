@@ -18,7 +18,7 @@ export default class ElementsTable extends React.Component {
       elements: [],
 
       // Pagination
-      activePage: 1,
+      activePage: this.props.activePage || 1,
       numberOfPages: 0,
       pageSize: 5
     }
@@ -26,10 +26,21 @@ export default class ElementsTable extends React.Component {
 
   componentDidMount() {
     ElementStore.listen(this.onChange.bind(this));
+    UIStore.listen(this.onChangeUI.bind(this));
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
+    UIStore.unlisten(this.onChangeUI.bind(this));
+  }
+
+  onChangeUI(state) {
+    let page = state.pagination && state.pagination.page;
+    if(page) {
+      this.setState({
+        activePage: parseInt(page)
+      });
+    }
   }
 
   onChange(state) {
@@ -43,18 +54,25 @@ export default class ElementsTable extends React.Component {
     let elementsDidChange = !deepEqual(elements, this.state.elements);
     let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
+    let pagination = UIStore.getState().pagination;
+    let page = pagination.page && parseInt(pagination.page) || 1;
+    let numberOfPages = Math.ceil(elements.length / this.state.pageSize);
+    if(page > numberOfPages) {
+      page = 1
+    }
+
     if(elementsDidChange) {
-      let numberOfPages = Math.ceil(elements.length / this.state.pageSize);
       this.setState({
         elements: elements,
         currentElement: currentElement,
         numberOfPages: numberOfPages,
-        activePage: 1
+        activePage: page
       });
     }
     else if (currentElementDidChange) {
       this.setState({
-        currentElement: currentElement
+        currentElement: currentElement,
+        activePage: page
       });
     }
   }
@@ -117,14 +135,33 @@ export default class ElementsTable extends React.Component {
   }
 
   showDetails(element) {
-    let uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}/${element.type}/${element.id}`);
+    Aviator.navigate(this._elementDetailsUrl(element), this._queryParams());
   }
 
   handlePaginationSelect(event, selectedEvent) {
     this.setState({
       activePage: selectedEvent.eventKey
-    });
+    }, () => {
+      if(this.state.currentElement) {
+        Aviator.navigate(this._elementDetailsUrl(this.state.currentElement), this._queryParams())
+      }
+      else {
+        Aviator.navigate(this._collectionUrl(), this._queryParams())
+      }
+    })
+  }
+
+  _elementDetailsUrl(element) {
+    return `${this._collectionUrl()}/${element.type}/${element.id}`
+  }
+
+  _collectionUrl() {
+    let uiState = UIStore.getState();
+    return `/collection/${uiState.currentCollectionId}`
+  }
+
+  _queryParams() {
+    return {queryParams: { page: this.state.activePage }};
   }
 
   pagination() {
