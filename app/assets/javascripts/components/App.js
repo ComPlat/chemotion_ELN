@@ -76,14 +76,16 @@ export default class App extends React.Component {
         <Row>
           <Navigation />
         </Row>
-        <Row>
-          <Col sm={3} md={3} lg={3}>
-            <ElementFilter />
-          </Col>
-          <Col sm={9} md={9} lg={9}>
-            <ManagingActions />
-          </Col>
-        </Row>
+        {
+          // <Row>
+          //   <Col sm={3} md={3} lg={3}>
+          //     <ElementFilter />
+          //   </Col>
+          //   <Col sm={9} md={9} lg={9}>
+          //     <ManagingActions />
+          //   </Col>
+          // </Row>
+        }
         <Row>
           <Col sm={3} md={3} lg={3}>
             <CollectionTree />
@@ -92,6 +94,8 @@ export default class App extends React.Component {
             <Elements />
           </Col>
           <Col sm={2} md={2} lg={2}>
+            <ManagingActions />
+            <br/>
             <ContextActions />
           </Col>
         </Row>

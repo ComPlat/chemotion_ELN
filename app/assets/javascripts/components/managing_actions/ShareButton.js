@@ -8,12 +8,13 @@ export default class ShareButton extends React.Component {
   }
 
   showShareModal() {
-    Aviator.navigate(Aviator.getCurrentURI()+'/sharing');
+    let [url, query] = Aviator.getCurrentURI().split('?')
+    Aviator.navigate(url+'/sharing?'+query);
   }
 
   render() {
     return (
-      <Button onClick={this.showShareModal.bind(this)}>Share</Button>
+      <Button block onClick={this.showShareModal.bind(this)}>Share</Button>
     )
   }
 }
