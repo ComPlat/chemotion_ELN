@@ -16,13 +16,9 @@ Aviator.root = '/';
 Aviator.pushStateEnabled = false;
 Aviator.setRoutes({
   '/': 'root',
-
   target: {
     root: function(e) {
-      // let modalDomNode = document.getElementById('modal');
-      // if(modalDomNode) {
-      //   React.unmountComponentAtNode(modalDomNode);
-      // }
+      Aviator.navigate('/collections/all');
     }
   },
 

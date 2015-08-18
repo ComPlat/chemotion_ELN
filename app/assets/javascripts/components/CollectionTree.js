@@ -65,7 +65,7 @@ export default class CollectionTree extends React.Component {
   render() {
     //Fake All-Collection
     let allCollection = {
-      label: 'All *',
+      label: 'All',
       id: 'all',
       children: [],
       descendant_ids: []
