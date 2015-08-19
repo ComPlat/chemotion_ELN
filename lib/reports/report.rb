@@ -4,8 +4,15 @@ class Report
 	def initialize
 		@report_data = Array.new
 		@image = nil
+		@header = nil
 
 		yield self
+	end
+
+	def header
+		header = Header.new
+		yield header
+		@header = header
 	end
 
 	def add_title

@@ -7,6 +7,9 @@ class RTFReport < Report
   end
 
   def generate_report
+    # Render header
+    # TODO -> Je nachdem wie der Bericht aussehen soll
+
     @report_data.each do |report_element|
       case report_element.class.name
       when 'Paragraph', 'Subtitle', 'Title', 'TextBlock'
@@ -33,7 +36,10 @@ class RTFReport < Report
         style.bold        = true
         style.underline   = true
 
-        table = @document.table(3, 3, 2000, 4000, 2000)
+        report_element.set_table_dimensions
+
+        dim = report_element.table_dimensions
+        table = @document.table(report_element.table_size[:x], report_element.table_size[:y], *dim)
         table.border_width = 5
 
         report_element.table_data.each_with_index do |line, li|
