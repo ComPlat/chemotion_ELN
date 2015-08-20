@@ -23,7 +23,8 @@ class UIStore {
       handleUncheckAllElements: UIActions.uncheckAllElements,
       handleDeselectAllElements: UIActions.deselectAllElements,
       handleSelectElement: UIActions.selectElement,
-      handleSetPagination: UIActions.setPagination
+      handleSetPagination: UIActions.setPagination,
+      handleRefreshSamples: ElementActions.updateSample
     });
   }
 
@@ -88,6 +89,10 @@ class UIStore {
 
   handleSetPagination(pagination) {
     this.state.pagination = pagination;
+  }
+
+  handleRefreshSamples() {
+    ElementActions.fetchSamplesByCollectionId(this.state.currentCollectionId, this.state.pagination)
   }
 }
 

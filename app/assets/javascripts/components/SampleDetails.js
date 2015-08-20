@@ -84,32 +84,31 @@ export default class SampleDetails extends React.Component {
     });
   }
 
-  render() {
-    let ajaxCall = (unit, nextUnit, value) => {
-      console.log("ajax call with unit: " + unit + " nextUnit: " + nextUnit + " and value: " + value);
-      let convertedValue = value;
-      if (unit && nextUnit && unit != nextUnit) {
-        switch (unit) {
-          case 'g':
-            if (nextUnit == 'mol') {
-              convertedValue = value * 2;
-            }
-            break;
-          case 'mol':
-            if (nextUnit == 'g') {
-              convertedValue = value / 2;
-            }
-            break;
-        }
+  handleUnitChanged(unit, nextUnit, value) {
+    console.log("ajax call with unit: " + unit + " nextUnit: " + nextUnit + " and value: " + value);
+    let convertedValue = value;
+    if (unit && nextUnit && unit != nextUnit) {
+      switch (unit) {
+        case 'g':
+          if (nextUnit == 'mol') {
+            convertedValue = value * 2;
+          }
+          break;
+        case 'mol':
+          if (nextUnit == 'g') {
+            convertedValue = value / 2;
+          }
+          break;
       }
-      console.log("result:" + convertedValue);
-      return convertedValue;
-    };
+    }
+    console.log("result:" + convertedValue);
+    return convertedValue;
+  }
 
+  render() {
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule_svg ? `/assets/${sample.molecule_svg}`  : '';
-
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>
@@ -138,7 +137,7 @@ export default class SampleDetails extends React.Component {
                    label="Amount"
                    units={['g', 'ml', 'mol']}
                    numeralFormat='0,0.00'
-                   convertValueFromUnitToNextUnit={(unit, nextUnit, value) => ajaxCall(unit, nextUnit, value)}
+                   convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
                    onChange={(amount) => this.handleAmountChanged(amount)}
                 />
                 <Input type="textarea" label="Description" ref="descriptionInput"

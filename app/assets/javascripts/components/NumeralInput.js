@@ -12,6 +12,13 @@ export default class NumeralInput extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    let {value} = nextProps;
+    this.setState({
+      numeralValue: this._convertValueToNumeralValue(value)
+    });
+  }
+
   _convertValueToNumeralValue(value) {
     let {numeralFormat} = this.props;
     return Numeral(value).format(numeralFormat);
