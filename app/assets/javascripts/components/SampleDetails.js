@@ -108,7 +108,8 @@ export default class SampleDetails extends React.Component {
   render() {
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
-    let svgPath = sample.molecule_svg ? `/assets/${sample.molecule_svg}`  : '';
+    let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
+
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>

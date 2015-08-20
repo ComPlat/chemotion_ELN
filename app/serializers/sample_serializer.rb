@@ -2,6 +2,8 @@ class SampleSerializer < ActiveModel::Serializer
 
   attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molecule_svg
 
+  has_one :molecule
+
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
   end
@@ -15,7 +17,7 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   def molecule_svg
-    ['168.svg','171.svg','361.svg'][id % 3]
+    molecule.molecule_svg_file
   end
 
 end
