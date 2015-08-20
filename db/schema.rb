@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150817085601) do
+ActiveRecord::Schema.define(version: 20150818100730) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -48,6 +48,25 @@ ActiveRecord::Schema.define(version: 20150817085601) do
 
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
+
+  create_table "molecules", force: :cascade do |t|
+    t.integer  "sample_id"
+    t.string   "inchikey"
+    t.string   "inchistring"
+    t.float    "density"
+    t.float    "molecular_weight"
+    t.binary   "molfile"
+    t.float    "melting_point"
+    t.float    "boiling_point"
+    t.string   "sum_formular"
+    t.string   "names",             default: [],              array: true
+    t.string   "iupac_name"
+    t.string   "molecule_svg_file"
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+  end
+
+  add_index "molecules", ["inchikey"], name: "index_molecules_on_inchikey", unique: true, using: :btree
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"
@@ -86,6 +105,7 @@ ActiveRecord::Schema.define(version: 20150817085601) do
     t.datetime "created_at",                null: false
     t.datetime "updated_at",                null: false
     t.text     "description",  default: ""
+    t.integer  "molecule_id"
   end
 
   create_table "users", force: :cascade do |t|
