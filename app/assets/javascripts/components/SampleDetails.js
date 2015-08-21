@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -105,11 +105,21 @@ export default class SampleDetails extends React.Component {
     return convertedValue;
   }
 
+  showStructureEditor() {
+    let [url, query] = Aviator.getCurrentURI().split('?')
+    Aviator.navigate(url+'/molecule_structure_editor?'+query)
+  }
+
   render() {
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
 
+    let structureEditorButton = (
+      <Button onClick={this.showStructureEditor.bind(this)}>
+        <Glyphicon glyph='pencil'/>
+      </Button>
+    )
     return (
       <div>
         <Panel header="Sample Details" bsStyle='primary'>
@@ -124,8 +134,15 @@ export default class SampleDetails extends React.Component {
             </td>
           </tr></table>
           <ListGroup fill>
-            <ListGroupItem>
-              <form>
+
+            <form>
+              <ListGroupItem>
+                <Input type="text" label="Molecule" ref="moleculeInput"
+                  buttonAfter={structureEditorButton}
+                  value={sample.molecule && sample.molecule.iupac_name}
+                />
+              </ListGroupItem>
+              <ListGroupItem>
                 <Input type="text" label="Name" ref="nameInput"
                   placeholder={sample.name}
                   value={sample.name}
@@ -147,12 +164,15 @@ export default class SampleDetails extends React.Component {
                   onChange={(e) => this.handleDescriptionChanged(e)}
                   rows={3}
                 />
+
+              </ListGroupItem>
+              <ListGroupItem>
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
                   <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
                 </ButtonToolbar>
-              </form>
-            </ListGroupItem>
+              </ListGroupItem>
+            </form>
           </ListGroup>
         </Panel>
       </div>

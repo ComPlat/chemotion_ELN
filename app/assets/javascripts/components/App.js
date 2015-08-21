@@ -8,6 +8,7 @@ import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 import ShareModal from './managing_actions/ShareModal';
+import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import UIActions from './actions/UIActions';
 
@@ -58,6 +59,23 @@ Aviator.setRoutes({
           React.unmountComponentAtNode(modalDomNode);
         }
         Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide',''))
+      }
+    }
+  },
+
+  '/molecule_structure_editor': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<StructureEditorModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/molecule_structure_editor/hide',''))
       }
     }
   }
