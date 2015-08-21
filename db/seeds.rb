@@ -22,15 +22,21 @@ reaction_6 = Reaction.create(name: 'Reaction 6')
 # shared_collection_1 = Collection.create!(is_shared: true, label: 'My project with Hattori', user_id: hattori.id, shared_by_id: u.id)
 # shared_collection_2 = Collection.create!(is_shared: true, label: 'My project with Momochi', user_id: momochi.id, shared_by_id: u.id)
 
+# create some molecules
+molecule_1 = Molecule.create!(inchikey: '1', iupac_name: 'MOL 168', molecule_svg_file: '168.svg')
+molecule_2 = Molecule.create!(inchikey: '2', iupac_name: 'MOL 171', molecule_svg_file: '171.svg')
+molecule_3 = Molecule.create!(inchikey: '3', iupac_name: 'MOL 361', molecule_svg_file: '361.svg')
+
+
 # create some samples
-sample_1 = Sample.create!(name: 'Sample 1')
-sample_2 = Sample.create!(name: 'Sample 2')
-sample_3 = Sample.create!(name: 'Sample 3')
-sample_4 = Sample.create!(name: 'Sample 4')
-sample_5 = Sample.create!(name: 'Sample 5')
-sample_6 = Sample.create!(name: 'Sample 6')
-sample_7 = Sample.create!(name: 'Sample 7')
-sample_8 = Sample.create!(name: 'Sample 8')
+sample_1 = Sample.create!(name: 'Sample 1', molecule: molecule_1)
+sample_2 = Sample.create!(name: 'Sample 2', molecule: molecule_2)
+sample_3 = Sample.create!(name: 'Sample 3', molecule: molecule_3)
+sample_4 = Sample.create!(name: 'Sample 4', molecule: molecule_1)
+sample_5 = Sample.create!(name: 'Sample 5', molecule: molecule_2)
+sample_6 = Sample.create!(name: 'Sample 6', molecule: molecule_3)
+sample_7 = Sample.create!(name: 'Sample 7', molecule: molecule_1)
+sample_8 = Sample.create!(name: 'Sample 8', molecule: molecule_2)
 
 # associate samples with reactions
 ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1)
