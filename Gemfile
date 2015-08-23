@@ -38,9 +38,11 @@ gem 'grape-kaminari'
 
 gem 'awesome_print'
 
+# Chemrails
 gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
-
 gem 'httparty'
+gem 'chemrails', git: 'git://github.com/cominch/chemrails'
+
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

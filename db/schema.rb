@@ -50,7 +50,6 @@ ActiveRecord::Schema.define(version: 20150818100730) do
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
 
   create_table "molecules", force: :cascade do |t|
-    t.integer  "sample_id"
     t.string   "inchikey"
     t.string   "inchistring"
     t.float    "density"
