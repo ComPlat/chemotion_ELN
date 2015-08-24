@@ -62,6 +62,7 @@ M  END
       {
         charge: m.get_total_charge,
         mol_wt: m.get_mol_wt,
+        mass: m.get_exact_mass,
         title_legacy: m.get_title,
         spin: m.get_total_spin_multiplicity,
         smiles: smiles,
