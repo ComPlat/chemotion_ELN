@@ -8,8 +8,23 @@ class Report::RTFReport < Report::Report
 
   def generate_report
     # Render header
-    # TODO -> Je nachdem wie der Bericht aussehen soll
+    unless @header.nil?
+      right_justification = RTF::CharacterStyle.new
+      header = RTF::HeaderNode.new(@document)
+      table = header.table(3, 2, 4100, 4100)
+      table.border_width = 0
+      table[0][0] << 'Chemistry Experiment: ' + @header.experiment
+      table[1][0] << 'Owner: ' + @header.owner
+      table[0][1].apply(right_justification) << 'Created: ' + @header.created_date.to_s
+      table[1][1].apply(right_justification) << 'Printed: ' + @header.printed_date.to_s
+      table[2][1].apply(right_justification) << 'Status: ' + @header.status
 
+      header.line_break
+
+      @document.header = header
+    end
+
+    # Render text blocks in the document
     @report_data.each do |report_element|
       case report_element.class.name
       when 'Report::Paragraph', 'Report::Subtitle', 'Report::Title', 'Report::TextBlock'
