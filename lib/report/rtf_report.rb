@@ -1,6 +1,6 @@
 require 'rtf'
 
-class RTFReport < Report
+class Report::RTFReport < Report::Report
   def initialize
     super
     @document = RTF::Document.new(RTF::Font.new(RTF::Font::ROMAN, 'Times New Roman'))
@@ -12,7 +12,7 @@ class RTFReport < Report
 
     @report_data.each do |report_element|
       case report_element.class.name
-      when 'Paragraph', 'Subtitle', 'Title', 'TextBlock'
+      when 'Report::Paragraph', 'Report::Subtitle', 'Report::Title', 'Report::TextBlock'
         paragraph_style = RTF::ParagraphStyle.new
         paragraph_style.justification = justification report_element.justification
         @document.paragraph(paragraph_style) do |p|
@@ -31,7 +31,7 @@ class RTFReport < Report
             end
           end
         end
-      when 'Table'
+      when 'Report::Table'
         style             = RTF::CharacterStyle.new
         style.bold        = true
         style.underline   = true
@@ -48,14 +48,14 @@ class RTFReport < Report
             table[li][ci] << text
           end
         end
-      when 'Image'
+      when 'Report::Image'
         @document.paragraph do |p|
           image = p.image(report_element.obtain_png_file)
           image.x_scaling = report_element.size[:x]
           image.y_scaling = report_element.size[:y]
         end
       else
-        raise 'Fehler: unbeachtetes Objekt im Report Data Objekt'
+        raise "Fehler: unbeachtetes Objekt im Report Data Objekt (Class: #{report_element.class.name})"
       end
     end
 

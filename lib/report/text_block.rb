@@ -1,4 +1,4 @@
-class TextBlock
+class Report::TextBlock
   attr_accessor :font, :font_style, :font_size, :justification
 
   def initialize
@@ -23,7 +23,7 @@ class TextBlock
   # Logic
 
   def add_text string, style = []
-    report_text = ReportText.new
+    report_text = Report::ReportText.new
     report_text.text = string
 
     report_text.font_style = @font_style
@@ -36,7 +36,7 @@ class TextBlock
   end
 
   def line_break
-    lb = ReportText.new(:line_break)
+    lb = Report::ReportText.new(:line_break)
     @text.push(lb)
   end
 end

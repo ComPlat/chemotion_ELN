@@ -1,4 +1,4 @@
-class Paragraph < TextBlock
+class Report::Paragraph < Report::TextBlock
   # Default settings for a paragraph
 
   def initialize

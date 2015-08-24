@@ -1,4 +1,4 @@
-class Table
+class Report::Table
   attr_accessor :table_data, :table_size, :table_dimensions
 
   def initialize(dimension_x, dimension_y)

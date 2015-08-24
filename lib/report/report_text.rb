@@ -1,4 +1,4 @@
-class ReportText
+class Report::ReportText
   attr_accessor :font, :font_style, :font_size, :text
 
   def initialize category = nil

@@ -1,4 +1,4 @@
-class Subtitle < TextBlock
+class Report::Subtitle < Report::TextBlock
   # Default settings for a subtitle
 
   def initialize

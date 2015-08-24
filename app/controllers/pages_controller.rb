@@ -4,7 +4,7 @@ class PagesController < ApplicationController
   end
 
   def test
-    report = RTFReport.new do |r|
+    report = Report::RTFReport.new do |r|
       r.header do |h|
         h.experiment = 'Simone_18-100'
         h.owner = 'ELNdmin'
@@ -25,15 +25,16 @@ class PagesController < ApplicationController
         t.add_line 'Reaction Molarity', '0,056 molar'
         t.add_line 'Pressure', 'Temperature'
       end
+      r.line_break
       r.add_paragraph do |p|
         p.add_text 'Reactants:', font_style: :bold
       end
-      #Problematisch
       r.add_table(3, 14) do |t|
         t.add_line '', 'Reactant', 'MF', 'Limit?', 'MW', 'Eq', 'Moles (mmol)', 'Sample Mass (g)', 'Vol', 'Molarity', 'd', '% Wt', 'FM', 'Reactant Mass (g)'
         t.add_line '1', 'Harz SG-V1892', 'C92H89F3 NO4', 'true', '1329,6 91', '1,00 0', '0,226', '0,300', '', '', '', '', '1329,6 91', '0,300'
         t.add_line '2', '2-amino-4-(tert-butyl)phenol', 'C10H15NO', 'false', '165,23 2', '3,00 0', '0,677', '0,112', '', '', '', '', '165,23 2', '0,112'
       end
+      r.line_break
       r.add_paragraph do |p|
         p.add_text 'Solvents:', font_style: :bold
       end
@@ -41,6 +42,7 @@ class PagesController < ApplicationController
         t.add_line '', 'Name', 'Ratio', 'Volume (ml)'
         t.add_line '1', 'Methanol', '', '4'
       end
+      r.line_break
       r.add_paragraph do |p|
         p.add_text 'Products', font_style: :bold
       end
@@ -48,6 +50,7 @@ class PagesController < ApplicationController
         t.add_line '', 'Product', 'MF', 'Actual Mass', 'Actual Mol', 'Yiel d', 'Purit y', 'MW', 'Eq', 'Theo Mol (mmol)', 'Theo Mass (g)', 'FM'
         t.add_line '1', '6-(tert-butyl)-3-phenyl-2H-benzo[b][1,4]-2-one', 'C18H17N O2', '', '', '', '', '279,3 33', '1,00 0', '0,226', '0,063', '279,3 33'
       end
+      r.line_break
       r.add_paragraph do |p|
         p.add_text 'Preparation', font_style: :bold
         p.line_break

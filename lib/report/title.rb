@@ -1,4 +1,4 @@
-class Title < TextBlock
+class Report::Title < Report::TextBlock
   # Default settings for a title
 
   def initialize
