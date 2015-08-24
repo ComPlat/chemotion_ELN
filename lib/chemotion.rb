@@ -10,12 +10,31 @@ module Chemotion
   module OpenBabelService
 
     def self.molecule_info_from_molfile molfile
+
       {
         inchikey: '14AE8FC2B',
         inchistring: '1S/CH4/h1H4',
         formular: 'CH4',
-        svg: '<SVG>..</SVG>'
+        svg: svg_from_molfile(molfile)
       }
+    end
+
+    private
+
+    def svg_from_molfile molfile
+      c = OpenBabel::OBConversion.new
+      c.set_in_format 'mol'
+      c.set_out_format 'svg'
+
+      if !highlight.blank? then
+        c.add_option 's', OpenBabel::OBConversion::GENOPTIONS, highlight+" green"
+      end
+      c.set_options 'd u', OpenBabel::OBConversion::OUTOPTIONS
+   
+      m = OpenBabel::OBMol.new
+      c.read_string m, self.molfile
+      #m.do_transformations c.get_options(OpenBabel::OBConversion::GENOPTIONS), c
+      c.write_string(m, false)
     end
 
   end
