@@ -17,16 +17,16 @@ class Report::Image
   end
 
   def obtain_png_file
-		blob = obtain_png_blob
+    blob = obtain_png_blob
 
-		file = Tempfile.new('image')
-		file.binmode
-		file.write blob
-		file.flush
-		file.close
+    file = Tempfile.new('image')
+    file.binmode
+    file.write blob
+    file.flush
+    file.close
 
-		return file.path
-	end
+    return file.path
+  end
 
   private
 
