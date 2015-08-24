@@ -10,6 +10,8 @@ import UIStore from './stores/UIStore';
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
 
+import StructureEditorModal from './structure_editor/StructureEditorModal';
+
 import Aviator from 'aviator';
 
 export default class SampleDetails extends React.Component {
@@ -17,7 +19,8 @@ export default class SampleDetails extends React.Component {
     super(props);
     this.state = {
       sample: null,
-      id: props.id
+      id: props.id,
+      showStructureEditor: false
     }
   }
 
@@ -106,11 +109,33 @@ export default class SampleDetails extends React.Component {
   }
 
   showStructureEditor() {
-    let [url, query] = Aviator.getCurrentURI().split('?')
-    Aviator.navigate(url+'/molecule_structure_editor?'+query)
+    this.setState({
+      showStructureEditor: true
+    })
+  }
+
+  hideStructureEditor() {
+    this.setState({
+      showStructureEditor: false
+    })
+  }
+
+  handleStructureEditorSave(molfile) {
+    // TODO: handle the resulting molfile and submit it
+    console.log("Molecule MOL-file:");
+    console.log(molfile);
+    this.hideStructureEditor()
+  }
+
+  handleStructureEditorCancel() {
+    this.hideStructureEditor()
   }
 
   render() {
+    console.log("RENDER")
+    console.log(this.state);
+
+
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
@@ -122,6 +147,12 @@ export default class SampleDetails extends React.Component {
     )
     return (
       <div>
+        <StructureEditorModal
+          key={sample.id}
+          showModal={this.state.showStructureEditor}
+          onSave={this.handleStructureEditorSave.bind(this)}
+          onCancel={this.handleStructureEditorCancel.bind(this)}
+        />
         <Panel header="Sample Details" bsStyle='primary'>
           <table width="100%" height="190px"><tr>
             <td width="70%">

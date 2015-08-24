@@ -7,6 +7,15 @@ import Aviator from 'aviator';
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      showModal: props.showModal
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      showModal: nextProps.showModal
+    })
   }
 
   initializeEditor() {
@@ -17,7 +26,6 @@ export default class StructureEditorModal extends React.Component {
       ketcher = ketcherFrame.contentWindow.ketcher;
     else
       ketcher = document.frames['ifKetcher'].window.ketcher;
-
 
     // TODO: load existing molfile to show in editor
     let initialMolecule =
@@ -53,17 +61,29 @@ export default class StructureEditorModal extends React.Component {
     else
       ketcher = document.frames['ifKetcher'].window.ketcher;
 
-    // TODO: handle the resulting molfile and submit it
-    console.log("Molecule MOL-file:");
-    console.log(ketcher.getMolfile());
+    return ketcher.getMolfile();
+  }
+
+  handleCancel() {
     this.hideModal();
+    if(this.props.onCancel) {
+      this.props.onCancel()
+    }
+  }
+
+  handleSave() {
+    let molfile = this.getMolfileFromEditor()
+    this.hideModal();
+    if(this.props.onSave) {
+      this.props.onSave(molfile)
+    }
   }
 
   hideModal() {
-    let [url, query] = Aviator.getCurrentURI().split('?')
-    Aviator.navigate(url+'/hide?'+query);
+    this.setState({
+      showModal: false
+    })
   }
-
 
   // TODO: can we catch the ketcher on draw event, instead on close button click?
   // This woul allow us to show molecule information to the user while he draws, e.g. the IUPAC name
@@ -72,7 +92,7 @@ export default class StructureEditorModal extends React.Component {
   render() {
     return (
       <div>
-        <Modal dialogClassName="structure-editor" animation show={true} onLoad={this.initializeEditor.bind(this)}>
+        <Modal dialogClassName="structure-editor" animation show={this.state.showModal} onLoad={this.initializeEditor.bind(this)} onHide={this.handleCancel.bind(this)}>
           <Modal.Header closeButton>
             <Modal.Title>Structure Editor</Modal.Title>
           </Modal.Header>
@@ -81,8 +101,8 @@ export default class StructureEditorModal extends React.Component {
               <iframe id="ifKetcher" src="/assets/ketcher/ketcher.html"></iframe>
             </div>
             <ButtonToolbar>
-              <Button bsStyle="warning" onClick={this.hideModal.bind(this)}>Cancel</Button>
-              <Button bsStyle="primary" onClick={this.getMolfileFromEditor.bind(this)}>Save</Button>
+              <Button bsStyle="warning" onClick={this.handleCancel.bind(this)}>Cancel</Button>
+              <Button bsStyle="primary" onClick={this.handleSave.bind(this)}>Save</Button>
             </ButtonToolbar>
           </Modal.Body>
         </Modal>
