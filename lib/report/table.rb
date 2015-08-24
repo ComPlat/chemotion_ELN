@@ -1,5 +1,5 @@
 class Report::Table
-  attr_accessor :table_data, :table_size, :table_dimensions
+  attr_accessor :table_data, :table_size, :table_dimensions, :font
 
   def initialize(dimension_x, dimension_y)
     @table_size = {x: dimension_x, y: dimension_y}

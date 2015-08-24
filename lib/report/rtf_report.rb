@@ -36,7 +36,7 @@ class Report::RTFReport < Report::Report
               p.line_break
             else
               character_style = RTF::CharacterStyle.new
-              character_style.font = RTF::Font.new(RTF::Font::MODERN, 'Courier')
+              character_style.font = font(report_element.font)
               character_style.font_size = report_element.font_size*2 #Probably bug in the library
               character_style.bold = report_text.font_style == :bold ? true : false
 
@@ -48,9 +48,7 @@ class Report::RTFReport < Report::Report
         end
       when 'Report::Table'
         style             = RTF::CharacterStyle.new
-        style.bold        = true
-        style.underline   = true
-
+        style.font = font(report_element.font)
         report_element.set_table_dimensions
 
         dim = report_element.table_dimensions
@@ -89,6 +87,17 @@ class Report::RTFReport < Report::Report
       RTF::ParagraphStyle::RIGHT_JUSTIFY
     when :justify
       RTF::ParagraphStyle::FULL_JUSTIFY
+    end
+  end
+
+  def font font_style
+    case font_style
+    when :courier
+      RTF::Font.new(RTF::Font::MODERN, 'Courier')
+    when :times_new_roman
+      RTF::Font.new(RTF::Font::ROMAN, 'Times New Roman')
+    when :arial
+      RTF::Font.new(RTF::Font::ROMAN, 'Arial')
     end
   end
 end

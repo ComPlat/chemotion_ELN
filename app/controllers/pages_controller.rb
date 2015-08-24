@@ -15,7 +15,7 @@ class PagesController < ApplicationController
       2.times {r.line_break}
       r.add_image do |i|
         i.set_path 'data/example.svg'
-        i.size x: 10, y: 10
+        i.size x: 70, y: 10
       end
       r.line_break
       r.add_paragraph do |p|
