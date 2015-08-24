@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Input, Modal} from 'react-bootstrap';
+import {Button, ButtonToolbar, Input, Modal} from 'react-bootstrap';
 import Select from 'react-select';
 
 import Aviator from 'aviator';
@@ -7,13 +7,11 @@ import Aviator from 'aviator';
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
-
   }
 
-  showModal() {
-
-    var ketcherFrame = document.getElementById("ifKetcher");
-    var ketcher = null;
+  initializeEditor() {
+    let ketcherFrame = document.getElementById("ifKetcher");
+    let ketcher = null;
 
     if (ketcherFrame && ("contentDocument" in ketcherFrame))
       ketcher = ketcherFrame.contentWindow.ketcher;
@@ -22,7 +20,7 @@ export default class StructureEditorModal extends React.Component {
 
 
     // TODO: load existing molfile to show in editor
-     var initialMolecule = 
+    let initialMolecule =
     [
       "",
       "  Ketcher 02151213522D 1   1.00000     0.00000     0",
@@ -44,12 +42,11 @@ export default class StructureEditorModal extends React.Component {
     ].join("\n");
 
     ketcher.setMolecule(initialMolecule);
-
   }
 
-  hideModal() {
-    var ketcherFrame = document.getElementById("ifKetcher");
-    var ketcher = null;
+  getMolfileFromEditor() {
+    let ketcherFrame = document.getElementById("ifKetcher");
+    let ketcher = null;
 
     if (ketcherFrame && ("contentDocument" in ketcherFrame))
       ketcher = ketcherFrame.contentWindow.ketcher;
@@ -59,8 +56,10 @@ export default class StructureEditorModal extends React.Component {
     // TODO: handle the resulting molfile and submit it
     console.log("Molecule MOL-file:");
     console.log(ketcher.getMolfile());
+    this.hideModal();
+  }
 
-
+  hideModal() {
     let [url, query] = Aviator.getCurrentURI().split('?')
     Aviator.navigate(url+'/hide?'+query);
   }
@@ -70,21 +69,21 @@ export default class StructureEditorModal extends React.Component {
   // This woul allow us to show molecule information to the user while he draws, e.g. the IUPAC name
   // and would give a feedback if the structure is valid or not
 
-
   render() {
     return (
       <div>
-        <Modal dialogClassName="structure-editor" animation show={true} onLoad={this.showModal.bind(this)} onHide={this.hideModal.bind(this)}>
+        <Modal dialogClassName="structure-editor" animation show={true} onLoad={this.initializeEditor.bind(this)}>
           <Modal.Header closeButton>
             <Modal.Title>Structure Editor</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div>
-
               <iframe id="ifKetcher" src="/assets/ketcher/ketcher.html"></iframe>
-
             </div>
-            <Button bsStyle="warning" onClick={this.hideModal.bind(this)}>Close</Button>
+            <ButtonToolbar>
+              <Button bsStyle="warning" onClick={this.hideModal.bind(this)}>Cancel</Button>
+              <Button bsStyle="primary" onClick={this.getMolfileFromEditor.bind(this)}>Save</Button>
+            </ButtonToolbar>
           </Modal.Body>
         </Modal>
       </div>
