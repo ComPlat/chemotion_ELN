@@ -132,9 +132,6 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
-    console.log("RENDER")
-    console.log(this.state);
-
 
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';

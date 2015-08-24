@@ -44,9 +44,6 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    console.log("onChange")
-    console.log(state.elements.samples)
-
     const elements = state.elements.samples.elements;
     const totalElements = state.elements.samples.totalElements;
 
