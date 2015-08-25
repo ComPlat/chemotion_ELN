@@ -54,11 +54,12 @@ export default class SampleDetails extends React.Component {
 
   updateSample() {
     ElementActions.updateSample({
-      id: this.state.id,
+      id: this.state.sample.id,
       name: this.state.sample.name,
       amount_value: this.state.sample.amount_value,
       amount_unit: this.state.sample.amount_unit,
-      description: this.state.sample.description
+      description: this.state.sample.description,
+      molfile: this.state.sample.molfile
     })
   }
 
@@ -124,6 +125,14 @@ export default class SampleDetails extends React.Component {
     // TODO: handle the resulting molfile and submit it
     console.log("Molecule MOL-file:");
     console.log(molfile);
+
+    // TODO: optimize
+    let sample = this.state.sample;
+    if(sample) {
+      sample.molfile = molfile
+    }
+    this.setState({sample: sample})
+
     this.hideStructureEditor()
   }
 
@@ -136,7 +145,9 @@ export default class SampleDetails extends React.Component {
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
-    let molfile = sample.molecule && sample.molecule.molfile;
+    let molfile = sample.molfile;
+
+    console.log(molfile);
 
     let structureEditorButton = (
       <Button onClick={this.showStructureEditor.bind(this)}>

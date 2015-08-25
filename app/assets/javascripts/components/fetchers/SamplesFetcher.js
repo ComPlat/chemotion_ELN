@@ -51,7 +51,8 @@ export default class SamplesFetcher {
         name: paramObj.name,
         amount_value: paramObj.amount_value,
         amount_unit: paramObj.amount_unit,
-        description: paramObj.description
+        description: paramObj.description,
+        molfile: paramObj.molfile
       })
     })
 

@@ -1,6 +1,6 @@
 class SampleSerializer < ActiveModel::Serializer
 
-  attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molecule_svg
+  attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molfile
 
   has_one :molecule
 

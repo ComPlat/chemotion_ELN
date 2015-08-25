@@ -15,7 +15,8 @@ export default class StructureEditorModal extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      showModal: nextProps.showModal
+      showModal: nextProps.showModal,
+      molfile: nextProps.molfile
     })
   }
 

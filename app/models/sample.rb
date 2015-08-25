@@ -11,6 +11,15 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   belongs_to :molecule
-  
+
   composed_of :amount, mapping: %w(amount_value, amount_unit)
+
+  before_save :auto_set_molfile_to_molecules_molfile
+
+  #todo: find_or_create_molecule_based_on_inchikey
+  def auto_set_molfile_to_molecules_molfile
+    if molecule && molecule.molfile
+      self.molfile ||= molecule.molfile
+    end
+  end
 end
