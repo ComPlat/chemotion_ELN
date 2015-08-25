@@ -38,7 +38,7 @@ gem 'grape-kaminari'
 
 gem 'awesome_print'
 
-gem 'openbabel', '2.3.2.1'
+gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
 
 gem 'httparty'
 
