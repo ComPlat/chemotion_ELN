@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<svg version="1.1" id="topsvg"
+xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:cml="http://www.xml-cml.org/schema" x="0" y="0" width="200px" height="200px" viewBox="0 0 100 100">
+<title>C6H4 (E)-Hexa-1,5-diyne-3-ene 16668681 - Open Babel Depiction</title>
+<rect x="0" y="0" width="100" height="100" fill="white"/>
+<g transform="translate(0,0)">
+<svg width="100" height="100" x="0" y="0" viewBox="0 0 173.637 336.084"
+font-family="sans-serif" stroke="rgb(0,0,0)" stroke-width="2"  stroke-linecap="round">
+<line x1="78.5" y1="147.5" x2="100.3" y2="185.6" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="73.3" y1="150.5" x2="95.1" y2="188.6" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="75.9" y1="149.0" x2="97.7" y2="106.1" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="75.9" y1="149.0" x2="53.0" y2="148.8" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="97.7" y1="187.1" x2="75.9" y2="230.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="97.7" y1="187.1" x2="120.6" y2="187.3" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="97.7" y1="106.1" x2="115.2" y2="71.5" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="94.0" y1="104.2" x2="111.4" y2="69.6" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="101.5" y1="108.0" x2="118.9" y2="73.4" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="75.9" y1="230.0" x2="58.5" y2="264.6" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="79.7" y1="231.8" x2="62.2" y2="266.5" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="72.2" y1="228.1" x2="54.7" y2="262.7" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="115.2" y1="71.5" x2="125.2" y2="51.6" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="58.5" y1="264.6" x2="48.5" y2="284.5" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<text x="34.000000" y="156.615741" fill="rgb(0,0,0)"  stroke="rgb(0,0,0)" stroke-width="1" font-size="16" >H</text>
+<text x="127.637227" y="195.468538" fill="rgb(0,0,0)"  stroke="rgb(0,0,0)" stroke-width="1" font-size="16" >H</text>
+<text x="125.022771" y="48.000000" fill="rgb(0,0,0)"  stroke="rgb(0,0,0)" stroke-width="1" font-size="16" >H</text>
+<text x="36.614456" y="304.084280" fill="rgb(0,0,0)"  stroke="rgb(0,0,0)" stroke-width="1" font-size="16" >H</text>
+</svg>
+</g>
+</svg>

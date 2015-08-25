@@ -171,7 +171,7 @@ export default class SampleDetails extends React.Component {
               <ElementCollectionLabels element={sample} key={sample.id} />
             </td>
             <td width="30%">
-              <SVG key={sample.id} src={svgPath} className="molecule-mid"/>
+              <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
             </td>
           </tr></table>
           <ListGroup fill>
@@ -180,7 +180,7 @@ export default class SampleDetails extends React.Component {
               <ListGroupItem>
                 <Input type="text" label="Molecule" ref="moleculeInput"
                   buttonAfter={structureEditorButton}
-                  value={sample.molecule && sample.molecule.iupac_name}
+                  value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
                 />
               </ListGroupItem>
               <ListGroupItem>
