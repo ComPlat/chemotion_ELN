@@ -14,7 +14,7 @@ module Chemotion
     def self.samplemolfile
 
       <<-MOLFILE
-Molecule Name
+
   TheRing 0   0.00000     0.00000     0
 [Insert Comment Here]
  10 11  0  0  0  0  0  0  0  0  1 V2000
@@ -53,13 +53,13 @@ M  END
       c.read_string m, molfile
 
       c.set_out_format 'smi'
-      smiles = c.write_string(m, false)
+      smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
       c.set_out_format 'inchi'
-      inchi = c.write_string(m, false)
+      inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
       c.set_out_format 'inchikey'
-      inchikey = c.write_string(m, false)
+      inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
       {
         charge: m.get_total_charge,

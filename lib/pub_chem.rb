@@ -4,7 +4,6 @@ module PubChem
   include HTTParty
 
   debug_output $stderr
-  base_uri 'http://pubchem.ncbi.nlm.nih.gov/rest/pug'
 
   def self.get_record_from_molfile(molfile)
 
