@@ -136,6 +136,7 @@ export default class SampleDetails extends React.Component {
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
+    let molfile = sample.molecule && sample.molecule.molfile;
 
     let structureEditorButton = (
       <Button onClick={this.showStructureEditor.bind(this)}>
@@ -149,6 +150,7 @@ export default class SampleDetails extends React.Component {
           showModal={this.state.showStructureEditor}
           onSave={this.handleStructureEditorSave.bind(this)}
           onCancel={this.handleStructureEditorCancel.bind(this)}
+          molfile={molfile}
         />
         <Panel header="Sample Details" bsStyle='primary'>
           <table width="100%" height="190px"><tr>
