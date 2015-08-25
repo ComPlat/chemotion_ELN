@@ -1,6 +1,5 @@
 FactoryGirl.define do
   factory :molecule do
-  	sample_id         "1"
     inchikey          "inchikey"
     inchistring       "inchistring"
     density           0.12345

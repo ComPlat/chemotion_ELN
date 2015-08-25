@@ -107,6 +107,8 @@ ActiveRecord::Schema.define(version: 20150818100730) do
     t.integer  "molecule_id"
   end
 
+  add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
+
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false
     t.string   "encrypted_password",     default: "", null: false
