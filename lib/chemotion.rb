@@ -45,10 +45,9 @@ M  END
     end
 
     def self.molecule_info_from_molfile molfile
-
       c = OpenBabel::OBConversion.new
       c.set_in_format 'mol'
-   
+
       m = OpenBabel::OBMol.new
       c.read_string m, molfile
 
@@ -71,27 +70,28 @@ M  END
         inchikey: inchikey,
         inchi: inchi,
         formula: m.get_formula,
-        svg: self.svg_from_molfile(molfile)
+        svg: svg_from_molfile(molfile)
       }
     end
 
     private
 
-    def self.svg_from_molfile molfile
+    def self.svg_from_molfile molfile, options={}
       c = OpenBabel::OBConversion.new
       c.set_in_format 'mol'
       c.set_out_format 'svg'
 
-      highlight = ""
-
-      if !highlight.blank? then
-        c.add_option 's', OpenBabel::OBConversion::GENOPTIONS, highlight+" green"
+      unless options[:highlight].blank?
+        c.add_option 's', OpenBabel::OBConversion::GENOPTIONS, "#{options[:highlight]} green"
       end
       c.set_options 'd u', OpenBabel::OBConversion::OUTOPTIONS
-   
+
       m = OpenBabel::OBMol.new
       c.read_string m, molfile
+
+      #please keep
       #m.do_transformations c.get_options(OpenBabel::OBConversion::GENOPTIONS), c
+
       c.write_string(m, false)
     end
 
@@ -112,14 +112,13 @@ M  END
     def self.interpret_record record
       result = {
         cid: nil,         # optional
-        iupac_name: nil, 
+        iupac_name: nil,
         names: [],
         topological: nil, # optional
         log_p: nil        # optional
-
       }
 
-      if !record.nil? && !record['PC_Compounds'].nil?
+      if record && record['PC_Compounds']
         result[:cid] = record['PC_Compounds'][0]['id']['id']['cid']
 
         record['PC_Compounds'][0]['props'].each do |prop|
@@ -129,6 +128,7 @@ M  END
 
           if (prop['urn']['label'] == 'IUPAC Name')
             result[:names] << prop['value']['sval'].to_s
+            result[:names].uniq!
           end
 
           if (prop['urn']['label'] == 'Topoligical')
@@ -138,18 +138,13 @@ M  END
           if (prop['urn']['label'] == 'Log P')
             result[:log_p] = prop['value']['fval'].to_s
           end
-
         end
-
       end
-
       result
     end
 
     def self.molfile_from_inchikey inchikey
-
       PubChem.get_molfile_by_inchikey(inchikey)
-
     end
 
   end
