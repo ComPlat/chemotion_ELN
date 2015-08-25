@@ -1,3 +1,9 @@
+GIT
+  remote: git://github.com/cubuslab/openbabel-gem.git
+  revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
+  specs:
+    openbabel (2.3.2.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -120,6 +126,9 @@ GEM
       haml (~> 4.0.0)
       nokogiri (~> 1.6.0)
       ruby_parser (~> 3.5)
+    httparty (0.13.5)
+      json (~> 1.8)
+      multi_xml (>= 0.5.2)
     i18n (0.7.0)
     ice_nine (0.11.1)
     jbuilder (2.3.0)
@@ -261,9 +270,11 @@ DEPENDENCIES
   grape-kaminari
   haml-rails (~> 0.9)
   hashie-forbidden_attributes
+  httparty
   jbuilder (~> 2.0)
   jquery-rails
   kaminari
+  openbabel (= 2.3.2.1)!
   pg
   rails (= 4.2.0)
   rspec-rails
@@ -275,4 +286,4 @@ DEPENDENCIES
   web-console (~> 2.0)
 
 BUNDLED WITH
-   1.10.4
+   1.10.6
