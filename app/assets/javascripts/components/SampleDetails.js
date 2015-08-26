@@ -144,10 +144,8 @@ export default class SampleDetails extends React.Component {
 
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
-    let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
+    let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}`  : '';
     let molfile = sample.molfile;
-
-    console.log(molfile);
 
     let structureEditorButton = (
       <Button onClick={this.showStructureEditor.bind(this)}>

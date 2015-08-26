@@ -71,7 +71,7 @@ MOLFILE
     end
 
     it 'should create the molecule svg file' do
-      expect(File).to receive(:new).with('app/assets/images/XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg','w+')
+      expect(File).to receive(:new).with('public/images/molecules/XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg','w+').and_call_original
       sample.save
     end
 

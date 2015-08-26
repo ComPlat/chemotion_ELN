@@ -96,7 +96,7 @@ export default class ElementsTable extends React.Component {
           </td>
         )
 
-        let svgPath = `/assets/${element.molecule.molecule_svg_file}`;
+        let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
         optionalMoleculeColumn = (
           <td className="molecule" margin="0" padding="0">
             <SVG src={svgPath} className="molecule" key={element.id}/>

@@ -34,7 +34,8 @@ class Sample < ActiveRecord::Base
       unless inchikey.blank?
         unless molecule && molecule.inchikey == inchikey
           svg_file_name = "#{inchikey}.svg"
-          svg_file_path = "app/assets/images/#{svg_file_name}"
+          svg_file_path = "public/images/molecules/#{svg_file_name}"
+
           svg_file = File.new(svg_file_path, 'w+')
           svg_file.write(babel_info[:svg])
           svg_file.close
@@ -54,7 +55,6 @@ class Sample < ActiveRecord::Base
 
             molecule.molecule_svg_file = svg_file_name
           end
-          ap molecule
         end
       end
     end
