@@ -22,21 +22,103 @@ reaction_6 = Reaction.create(name: 'Reaction 6')
 # shared_collection_1 = Collection.create!(is_shared: true, label: 'My project with Hattori', user_id: hattori.id, shared_by_id: u.id)
 # shared_collection_2 = Collection.create!(is_shared: true, label: 'My project with Momochi', user_id: momochi.id, shared_by_id: u.id)
 
-# create some molecules
-molecule_1 = Molecule.create!(inchikey: '1', iupac_name: 'MOL 168', molecule_svg_file: '168.svg')
-molecule_2 = Molecule.create!(inchikey: '2', iupac_name: 'MOL 171', molecule_svg_file: '171.svg')
-molecule_3 = Molecule.create!(inchikey: '3', iupac_name: 'MOL 361', molecule_svg_file: '361.svg')
+molfiles = []
+molfiles << <<-MOLFILE
+C6H14 Pentane, 2-methyl- 107835
+##CCCBDB 8251515:55
+Geometry Optimized at HF/STO-3G
+ 20 19  0  0  0  0  0  0  0  0    V2000
+    2.8532   -0.2145    0.1475 C  0000000000000000000
+    3.6724    0.4012   -0.2119 H  0000000000000000000
+    2.9078   -0.2535    1.2315 H  0000000000000000000
+    2.9915   -1.2214   -0.2350 H  0000000000000000000
+   -1.4584    1.3854    0.1985 C  0000000000000000000
+   -0.7510    2.1407   -0.1267 H  0000000000000000000
+   -2.4421    1.6695   -0.1629 H  0000000000000000000
+   -1.4834    1.3857    1.2842 H  0000000000000000000
+    1.4994    0.3634   -0.3103 C  0000000000000000000
+    1.4076    1.3822    0.0583 H  0000000000000000000
+    1.4789    0.4107   -1.3976 H  0000000000000000000
+    0.3080   -0.4864    0.1870 C  0000000000000000000
+    0.2965   -0.4882    1.2754 H  0000000000000000000
+   -1.0735   -0.0122   -0.3383 C  0000000000000000000
+   -1.0198    0.0461   -1.4261 H  0000000000000000000
+   -2.1644   -1.0449    0.0291 C  0000000000000000000
+   -1.9239   -2.0203   -0.3830 H  0000000000000000000
+   -2.2520   -1.1436    1.1070 H  0000000000000000000
+   -3.1293   -0.7384   -0.3633 H  0000000000000000000
+    0.4612   -1.5158   -0.1312 H  0000000000000000000
+  1  2  1  0     0  0
+  1  3  1  0     0  0
+  1  4  1  0     0  0
+  1  9  1  0     0  0
+  5  6  1  0     0  0
+  5  7  1  0     0  0
+  5  8  1  0     0  0
+  5 14  1  0     0  0
+  9 10  1  0     0  0
+  9 11  1  0     0  0
+  9 12  1  0     0  0
+ 12 13  1  0     0  0
+ 12 14  1  0     0  0
+ 12 20  1  0     0  0
+ 14 15  1  0     0  0
+ 14 16  1  0     0  0
+ 16 17  1  0     0  0
+ 16 18  1  0     0  0
+ 16 19  1  0     0  0
 
+
+MOLFILE
+
+molfiles << <<-MOLFILE
+H2O Water 7732185
+##CCCBDB 8251509:58
+Geometry Optimized at HF/STO-3G
+  3  2  0  0  0  0  0  0  0  0    V2000
+    0.0000    0.0000    0.1271 O  0000000000000000000
+    0.0000    0.7580   -0.5085 H  0000000000000000000
+    0.0000   -0.7580   -0.5085 H  0000000000000000000
+  1  2  1  0     0  0
+  1  3  1  0     0  0
+M  END
+MOLFILE
+
+molfiles << <<-MOLFILE
+C6H4 (E)-Hexa-1,5-diyne-3-ene 16668681
+##CCCBDB 8251510:05
+Geometry Optimized at HF/STO-3G
+ 10  9  0  0  0  0  0  0  0  0    V2000
+   -0.3290    0.5751    0.0000 C  0000000000000000000
+    0.3290   -0.5751    0.0000 C  0000000000000000000
+    0.3290    1.8708    0.0000 C  0000000000000000000
+   -0.3290   -1.8708    0.0000 C  0000000000000000000
+   -1.4147    0.5870    0.0000 H  0000000000000000000
+    1.4147   -0.5870    0.0000 H  0000000000000000000
+    0.8570    2.9180    0.0000 C  0000000000000000000
+   -0.8570   -2.9180    0.0000 C  0000000000000000000
+    1.3357    3.8690    0.0000 H  0000000000000000000
+   -1.3357   -3.8690    0.0000 H  0000000000000000000
+  1  2  2  0     0  0
+  1  3  1  0     0  0
+  1  5  1  0     0  0
+  2  4  1  0     0  0
+  2  6  1  0     0  0
+  3  7  3  0     0  0
+  4  8  3  0     0  0
+  7  9  1  0     0  0
+  8 10  1  0     0  0
+MOLFILE
 
 # create some samples
-sample_1 = Sample.create!(name: 'Sample 1', molecule: molecule_1)
-sample_2 = Sample.create!(name: 'Sample 2', molecule: molecule_2)
-sample_3 = Sample.create!(name: 'Sample 3', molecule: molecule_3)
-sample_4 = Sample.create!(name: 'Sample 4', molecule: molecule_1)
-sample_5 = Sample.create!(name: 'Sample 5', molecule: molecule_2)
-sample_6 = Sample.create!(name: 'Sample 6', molecule: molecule_3)
-sample_7 = Sample.create!(name: 'Sample 7', molecule: molecule_1)
-sample_8 = Sample.create!(name: 'Sample 8', molecule: molecule_2)
+sample_1 = Sample.create!(name: 'Sample 1', molfile: molfiles[0])
+sample_2 = Sample.create!(name: 'Sample 2', molfile: molfiles[1])
+sample_3 = Sample.create!(name: 'Sample 3', molfile: molfiles[2])
+sample_4 = Sample.create!(name: 'Sample 4', molfile: molfiles[0])
+sample_5 = Sample.create!(name: 'Sample 5', molfile: molfiles[1])
+sample_6 = Sample.create!(name: 'Sample 6', molfile: molfiles[2])
+sample_7 = Sample.create!(name: 'Sample 7', molfile: molfiles[0])
+sample_8 = Sample.create!(name: 'Sample 8', molfile: molfiles[1])
 
 # associate samples with reactions
 ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1)

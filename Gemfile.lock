@@ -1,4 +1,10 @@
 GIT
+  remote: git://github.com/cominch/chemrails
+  revision: d595fc995c96a07a6146534c3fdc53830f6ecb02
+  specs:
+    chemrails (0.0.34)
+
+GIT
   remote: git://github.com/cubuslab/openbabel-gem.git
   revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
   specs:
@@ -262,6 +268,7 @@ DEPENDENCIES
   bootstrap-sass (~> 3.3.5)
   browserify-rails
   byebug
+  chemrails!
   database_cleaner
   devise
   factory_girl_rails

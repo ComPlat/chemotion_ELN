@@ -17,3 +17,6 @@
 .nvmrc
 /config/database.yml
 /node_modules
+
+/public/images/molecules/*
+!/public/images/molecules/.keep

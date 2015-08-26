@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -10,6 +10,8 @@ import UIStore from './stores/UIStore';
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
 
+import StructureEditorModal from './structure_editor/StructureEditorModal';
+
 import Aviator from 'aviator';
 
 export default class SampleDetails extends React.Component {
@@ -17,7 +19,8 @@ export default class SampleDetails extends React.Component {
     super(props);
     this.state = {
       sample: null,
-      id: props.id
+      id: props.id,
+      showStructureEditor: false
     }
   }
 
@@ -51,11 +54,12 @@ export default class SampleDetails extends React.Component {
 
   updateSample() {
     ElementActions.updateSample({
-      id: this.state.id,
+      id: this.state.sample.id,
       name: this.state.sample.name,
       amount_value: this.state.sample.amount_value,
       amount_unit: this.state.sample.amount_unit,
-      description: this.state.sample.description
+      description: this.state.sample.description,
+      molfile: this.state.sample.molfile
     })
   }
 
@@ -105,13 +109,58 @@ export default class SampleDetails extends React.Component {
     return convertedValue;
   }
 
+  showStructureEditor() {
+    this.setState({
+      showStructureEditor: true
+    })
+  }
+
+  hideStructureEditor() {
+    this.setState({
+      showStructureEditor: false
+    })
+  }
+
+  handleStructureEditorSave(molfile) {
+    // TODO: handle the resulting molfile and submit it
+    console.log("Molecule MOL-file:");
+    console.log(molfile);
+
+    // TODO: optimize
+    let sample = this.state.sample;
+    if(sample) {
+      sample.molfile = molfile
+    }
+    this.setState({sample: sample})
+
+    this.hideStructureEditor()
+  }
+
+  handleStructureEditorCancel() {
+    this.hideStructureEditor()
+  }
+
   render() {
+
     let sample = this.state.sample || {}
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
-    let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/assets/${sample.molecule.molecule_svg_file}`  : '';
+    let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}`  : '';
+    let molfile = sample.molfile;
 
+    let structureEditorButton = (
+      <Button onClick={this.showStructureEditor.bind(this)}>
+        <Glyphicon glyph='pencil'/>
+      </Button>
+    )
     return (
       <div>
+        <StructureEditorModal
+          key={sample.id}
+          showModal={this.state.showStructureEditor}
+          onSave={this.handleStructureEditorSave.bind(this)}
+          onCancel={this.handleStructureEditorCancel.bind(this)}
+          molfile={molfile}
+        />
         <Panel header="Sample Details" bsStyle='primary'>
           <table width="100%" height="190px"><tr>
             <td width="70%">
@@ -120,12 +169,19 @@ export default class SampleDetails extends React.Component {
               <ElementCollectionLabels element={sample} key={sample.id} />
             </td>
             <td width="30%">
-              <SVG key={sample.id} src={svgPath} className="molecule-mid"/>
+              <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
             </td>
           </tr></table>
           <ListGroup fill>
-            <ListGroupItem>
-              <form>
+
+            <form>
+              <ListGroupItem>
+                <Input type="text" label="Molecule" ref="moleculeInput"
+                  buttonAfter={structureEditorButton}
+                  value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+                />
+              </ListGroupItem>
+              <ListGroupItem>
                 <Input type="text" label="Name" ref="nameInput"
                   placeholder={sample.name}
                   value={sample.name}
@@ -147,12 +203,15 @@ export default class SampleDetails extends React.Component {
                   onChange={(e) => this.handleDescriptionChanged(e)}
                   rows={3}
                 />
+
+              </ListGroupItem>
+              <ListGroupItem>
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
                   <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
                 </ButtonToolbar>
-              </form>
-            </ListGroupItem>
+              </ListGroupItem>
+            </form>
           </ListGroup>
         </Panel>
       </div>
