@@ -18,7 +18,8 @@ module Chemotion
           Collection.where("user_id = ? OR shared_by_id = ?", current_user.id, current_user.id).find(params[:collection_id]).samples.includes(:molecule)
         else
           Sample.includes(:molecule)
-        end
+        end.order("created_at DESC")
+
         paginate(scope)
       end
 
