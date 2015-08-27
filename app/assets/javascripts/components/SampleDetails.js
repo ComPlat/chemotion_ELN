@@ -182,7 +182,7 @@ export default class SampleDetails extends React.Component {
                 />
                 <table width="100%">
                   <tr>
-                    <td width="70%">
+                    <td width="70%" className="padding-right">
                       <Input type="text" label="InChI"
                         value={sample.molecule && (sample.molecule.inchistring) }
                         disabled
@@ -196,7 +196,7 @@ export default class SampleDetails extends React.Component {
                     </td>
                   </tr>
                   <tr>
-                    <td>
+                    <td className="padding-right">
                       <Input type="text" label="Formula"
                         value={sample.molecule && (sample.molecule.sum_formular) }
                         disabled
