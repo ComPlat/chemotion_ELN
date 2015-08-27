@@ -11,7 +11,7 @@ class Report::ReportText
 
   def apply_style style
     style.each do |key, value|
-      instance_variable_set("@" + key.to_s, value)
+      instance_variable_set("@" + key.to_s, value.to_sym)
     end
   end
 end

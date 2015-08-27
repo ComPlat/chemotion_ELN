@@ -57,7 +57,6 @@ class Report::RTFReport < Report::Report
 
         report_element.table_data.each_with_index do |line, li|
           line.each_with_index do |text, ci|
-            puts li
             table[li][ci] << text
           end
         end
