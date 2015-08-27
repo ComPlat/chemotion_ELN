@@ -86,7 +86,9 @@ export default class ElementsTable extends React.Component {
 
     return elements.map((element, index) => {
       let optionalLabelColumn
-      let optionalMoleculeColumn
+      let moleculeColumn
+      let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
+      let svgImage = <SVG src={svgPath} className="molecule" key={element.id}/>
 
       if(this.showElementDetailsColumns()) {
 
@@ -96,14 +98,11 @@ export default class ElementsTable extends React.Component {
           </td>
         )
 
-        let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
-        optionalMoleculeColumn = (
-          <td className="molecule" margin="0" padding="0">
-            <SVG src={svgPath} className="molecule" key={element.id}/>
-          </td>
-        )
-
       }
+
+      moleculeColumn = (
+        <td className="molecule" margin="0" padding="0">{svgImage}</td>
+      )
 
       let style = {}
       let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
@@ -123,7 +122,7 @@ export default class ElementsTable extends React.Component {
             {element.name}
           </td>
          {optionalLabelColumn}
-         {optionalMoleculeColumn}
+         {moleculeColumn}
         </tr>
       )
     });
@@ -174,7 +173,7 @@ export default class ElementsTable extends React.Component {
   }
 
   header() {
-    let colSpan = this.showElementDetailsColumns() ? "3" : "1";
+    let colSpan = this.showElementDetailsColumns() ? "3" : "2";
     return (
       <thead>
         <th className="check">
