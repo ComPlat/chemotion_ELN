@@ -180,6 +180,37 @@ export default class SampleDetails extends React.Component {
                   buttonAfter={structureEditorButton}
                   value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
                 />
+                <table width="100%">
+                  <tr>
+                    <td width="70%" className="padding-right">
+                      <Input type="text" label="InChI"
+                        value={sample.molecule && (sample.molecule.inchistring) }
+                        disabled
+                      />
+                    </td>
+                    <td>
+                      <Input type="text" label="Density"
+                        value={sample.molecule && (sample.molecule.density) }
+                        disabled
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="padding-right">
+                      <Input type="text" label="Formula"
+                        value={sample.molecule && (sample.molecule.sum_formular) }
+                        disabled
+                      />
+                    </td>
+                    <td>
+                      <Input type="text" label="Molecular Weight"
+                        value={sample.molecule && (sample.molecule.molecular_weight) }
+                        disabled
+                      />
+
+                    </td>
+                  </tr>
+                </table>
               </ListGroupItem>
               <ListGroupItem>
                 <Input type="text" label="Name" ref="nameInput"
