@@ -88,7 +88,7 @@ export default class ElementsTable extends React.Component {
       let optionalLabelColumn
       let moleculeColumn
       let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
-      let svgImage = <SVG src={svgPath} className="molecule" key={element.id}/>
+      let svgImage = <SVG src={svgPath} className="molecule" key={element.molecule.id}/>
 
       if(this.showElementDetailsColumns()) {
 
