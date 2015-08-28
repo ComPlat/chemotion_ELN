@@ -63,7 +63,8 @@ export default class SampleDetails extends React.Component {
       solvent: this.state.sample.solvent,
       impurities: this.state.sample.impurities,
       location: this.state.sample.location,
-      molfile: this.state.sample.molfile
+      molfile: this.state.sample.molfile,
+      molecule: this.state.sample.molecule
     })
   }
 
@@ -92,6 +93,7 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+
   handlePurityChanged(e) {
     let sample = this.state.sample;
     sample.purity = this.refs.purityInput.getValue();
@@ -100,9 +102,24 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+  handleDensityChanged(e) {
+    let sample = this.state.sample;
+    sample.molecule.density = this.refs.densityInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
   handleImpuritiesChanged(e) {
     let sample = this.state.sample;
     sample.impurities = this.refs.impuritiesInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+  handleBoilingPointChanged(e) {
+    let sample = this.state.sample;
+    sample.molecule.boiling_point = this.refs.boilingPointInput.getValue();
     this.setState({
       sample: sample
     });
@@ -119,6 +136,14 @@ export default class SampleDetails extends React.Component {
   handleSolventChanged(e) {
     let sample = this.state.sample;
     sample.solvent = this.refs.solventInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handleMeltingPointChanged(e) {
+    let sample = this.state.sample;
+    sample.molecule.melting_point = this.refs.meltingPointInput.getValue();
     this.setState({
       sample: sample
     });
@@ -183,8 +208,6 @@ export default class SampleDetails extends React.Component {
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}`  : '';
     let molfile = sample.molfile;
 
-    console.log("solvent: "+sample.solvent);
-
     let structureEditorButton = (
       <Button onClick={this.showStructureEditor.bind(this)}>
         <Glyphicon glyph='pencil'/>
@@ -227,8 +250,8 @@ export default class SampleDetails extends React.Component {
                       />
                     </td>
                     <td>
-                      <Input type="text" label="Density"
-                        value={sample.molecule && (sample.molecule.density) }
+                      <Input type="text" label="Molecular Weight"
+                        value={sample.molecule && (sample.molecule.molecular_weight) }
                         disabled
                       />
                     </td>
@@ -241,32 +264,51 @@ export default class SampleDetails extends React.Component {
                       />
                     </td>
                     <td>
-                      <Input type="text" label="Molecular Weight"
-                        value={sample.molecule && (sample.molecule.molecular_weight) }
-                        disabled
+                      <Input type="text" label="Density" ref="densityInput"
+                        value={sample.molecule && (sample.molecule.density) }
+                        onChange={(e) => this.handleDensityChanged(e)}
                       />
-
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="padding-right">
+                      <Input type="text" label="Boiling Point" ref="boilingPointInput"
+                        value={sample.molecule && (sample.molecule.boiling_point) }
+                        onChange={(e) => this.handleBoilingPointChanged(e)}
+                      />
+                    </td>
+                    <td>
+                      <Input type="text" label="Melting Point" ref="meltingPointInput"
+                       value={sample.molecule && (sample.molecule.melting_point) }
+                       onChange={(e) => this.handleMeltingPointChanged(e)}
+                      />
                     </td>
                   </tr>
                 </table>
               </ListGroupItem>
               <ListGroupItem>
-                <Input type="text" label="Name" ref="nameInput"
-                  placeholder={sample.name}
-                  value={sample.name}
-                  onChange={(e) => this.handleNameChanged(e)}
-                />
-                <NumeralInputWithUnits
-                   key={sample.id}
-                   value={sample.amount_value}
-                   unit={sample.amount_unit || 'g'}
-                   label="Amount"
-                   units={['g', 'ml', 'mol']}
-                   numeralFormat='0,0.00'
-                   convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
-                   onChange={(amount) => this.handleAmountChanged(amount)}
-                />
                 <table width="100%">
+                  <tr>
+                    <td width="50%" className="padding-right">
+                      <Input type="text" label="Name" ref="nameInput"
+                        placeholder={sample.name}
+                        value={sample.name}
+                        onChange={(e) => this.handleNameChanged(e)}
+                      />
+                    </td>
+                    <td>
+                      <NumeralInputWithUnits
+                         key={sample.id}
+                         value={sample.amount_value}
+                         unit={sample.amount_unit || 'g'}
+                         label="Amount"
+                         units={['g', 'ml', 'mol']}
+                         numeralFormat='0,0.00'
+                         convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
+                         onChange={(amount) => this.handleAmountChanged(amount)}
+                      />
+                    </td>
+                  </tr>
                   <tr>
                     <td width="50%" className="padding-right">
                       <Input type="text" label="Impurities"

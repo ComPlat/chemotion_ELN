@@ -46,9 +46,11 @@ module Chemotion
         requires :impurities, type: String, desc: "Sample impurities"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
+        optional :molecule, type: Hash, desc: "Sample molecule"
       end
       put ':id' do
-        Sample.find(params[:id]).update({
+
+        attributes = {
           name: params[:name],
           amount_value: params[:amount_value],
           amount_unit: params[:amount_unit],
@@ -58,7 +60,13 @@ module Chemotion
           impurities: params[:impurities],
           location: params[:location],
           molfile: params[:molfile]
-        })
+        }
+
+        attributes.merge!(
+          molecule_attributes: params[:molecule]
+        ) unless params[:molecule].blank?
+
+        Sample.find(params[:id]).update(attributes)
       end
 
 
