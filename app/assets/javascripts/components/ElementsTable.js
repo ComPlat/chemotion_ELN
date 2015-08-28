@@ -85,10 +85,12 @@ export default class ElementsTable extends React.Component {
     let elements = this.state.elements;
 
     return elements.map((element, index) => {
+      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
+
       let optionalLabelColumn
       let moleculeColumn
       let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
-      let svgImage = <SVG src={svgPath} className="molecule" key={element.molecule.id}/>
+      let svgImage = <SVG src={svgPath} className={isSelected ? 'molecule-selected' : 'molecule'} key={element.molecule.id}/>
 
       if(this.showElementDetailsColumns()) {
 
@@ -105,7 +107,6 @@ export default class ElementsTable extends React.Component {
       )
 
       let style = {}
-      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
       if(isSelected) {
         style = {
           color: '#fff',
