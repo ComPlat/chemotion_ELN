@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150825144929) do
+ActiveRecord::Schema.define(version: 20150828072626) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -106,6 +106,10 @@ ActiveRecord::Schema.define(version: 20150825144929) do
     t.text     "description",  default: ""
     t.integer  "molecule_id"
     t.binary   "molfile"
+    t.float    "purity"
+    t.string   "solvent",      default: ""
+    t.string   "impurities",   default: ""
+    t.string   "location",     default: ""
   end
 
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
