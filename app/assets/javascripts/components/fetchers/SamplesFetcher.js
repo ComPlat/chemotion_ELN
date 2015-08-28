@@ -52,6 +52,10 @@ export default class SamplesFetcher {
         amount_value: paramObj.amount_value,
         amount_unit: paramObj.amount_unit,
         description: paramObj.description,
+        purity: paramObj.purity,
+        solvent: paramObj.solvent,
+        impurities: paramObj.impurities,
+        location: paramObj.location,
         molfile: paramObj.molfile
       })
     })

@@ -41,6 +41,10 @@ module Chemotion
         requires :amount_value, type: Float, desc: "Sample amount_value"
         requires :amount_unit, type: String, desc: "Sample amount_unit"
         requires :description, type: String, desc: "Sample description"
+        requires :purity, type: Float, desc: "Sample purity"
+        requires :solvent, type: String, desc: "Sample solvent"
+        requires :impurities, type: String, desc: "Sample impurities"
+        requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
       end
       put ':id' do
@@ -49,6 +53,10 @@ module Chemotion
           amount_value: params[:amount_value],
           amount_unit: params[:amount_unit],
           description: params[:description],
+          purity: params[:purity],
+          solvent: params[:solvent],
+          impurities: params[:impurities],
+          location: params[:location],
           molfile: params[:molfile]
         })
       end

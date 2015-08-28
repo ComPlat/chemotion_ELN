@@ -59,6 +59,10 @@ export default class SampleDetails extends React.Component {
       amount_value: this.state.sample.amount_value,
       amount_unit: this.state.sample.amount_unit,
       description: this.state.sample.description,
+      purity: this.state.sample.purity,
+      solvent: this.state.sample.solvent,
+      impurities: this.state.sample.impurities,
+      location: this.state.sample.location,
       molfile: this.state.sample.molfile
     })
   }
@@ -83,6 +87,38 @@ export default class SampleDetails extends React.Component {
     let sample = this.state.sample;
     sample.amount_unit = amount.unit;
     sample.amount_value = amount.value;
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handlePurityChanged(e) {
+    let sample = this.state.sample;
+    sample.purity = this.refs.purityInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handleImpuritiesChanged(e) {
+    let sample = this.state.sample;
+    sample.impurities = this.refs.impuritiesInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handleLocationChanged(e) {
+    let sample = this.state.sample;
+    sample.location = this.refs.locationInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handleSolventChanged(e) {
+    let sample = this.state.sample;
+    sample.solvent = this.refs.solventInput.getValue();
     this.setState({
       sample: sample
     });
@@ -147,6 +183,8 @@ export default class SampleDetails extends React.Component {
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}`  : '';
     let molfile = sample.molfile;
 
+    console.log("solvent: "+sample.solvent);
+
     let structureEditorButton = (
       <Button onClick={this.showStructureEditor.bind(this)}>
         <Glyphicon glyph='pencil'/>
@@ -182,7 +220,7 @@ export default class SampleDetails extends React.Component {
                 />
                 <table width="100%">
                   <tr>
-                    <td width="70%" className="padding-right">
+                    <td width="50%" className="padding-right">
                       <Input type="text" label="InChI"
                         value={sample.molecule && (sample.molecule.inchistring) }
                         disabled
@@ -228,6 +266,58 @@ export default class SampleDetails extends React.Component {
                    convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
                    onChange={(amount) => this.handleAmountChanged(amount)}
                 />
+                <table width="100%">
+                  <tr>
+                    <td width="50%" className="padding-right">
+                      <Input type="text" label="Impurities"
+                        ref="impuritiesInput"
+                        value={sample.impurities}
+                        onChange={(e) => this.handleImpuritiesChanged(e)}
+                      />
+                    </td>
+                    <td>
+                      <Input type="text" label="Purity"
+                        ref="purityInput"
+                        value={sample.purity}
+                        onChange={(e) => this.handlePurityChanged(e)}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="padding-right">
+                      <Input type="text" label="Weight"
+                        value={sample.weight}
+                        disabled
+                      />
+                    </td>
+                    <td>
+                      <Input type="text" label="Volume"
+                        value={sample.volume}
+                        disabled
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2}>
+                      <Input type='select' label='Solvent' ref="solventInput" onChange={(e) => this.handleSolventChanged(e)} value={sample.solvent}>
+                        <option value=''>-- Please Select --</option>
+                        <option value='Solvent1'>Solvent1</option>
+                        <option value='Solvent2'>Solvent2</option>
+                        <option value='Solvent3'>Solvent3</option>
+                      </Input>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td colSpan={2}>
+                      <Input type="textarea" label="Location"
+                        ref="locationInput"
+                        value={sample.location}
+                        onChange={(e) => this.handleLocationChanged(e)}
+                        rows={3}
+                      />
+                    </td>
+                  </tr>
+                </table>
                 <Input type="textarea" label="Description" ref="descriptionInput"
                   placeholder={sample.description}
                   value={sample.description}

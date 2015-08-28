@@ -19,6 +19,8 @@ class Sample < ActiveRecord::Base
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
 
+  validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
+
   #todo: find_or_create_molecule_based_on_inchikey
   def auto_set_molfile_to_molecules_molfile
     if molecule && molecule.molfile
@@ -58,6 +60,16 @@ class Sample < ActiveRecord::Base
         end
       end
     end
+  end
+
+  def weight
+    #TODO: Calculate weight of sample
+    3.1416
+  end
+
+  def volume
+    #TODO: Calculate volume of sample
+    6141.3
   end
 
 end
