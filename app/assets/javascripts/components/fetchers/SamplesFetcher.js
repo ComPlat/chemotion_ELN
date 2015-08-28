@@ -40,6 +40,7 @@ export default class SamplesFetcher {
   }
 
   static update(paramObj) {
+    let { density, boiling_point, melting_point } = paramObj.molecule;
     let promise = fetch('/api/v1/samples/' + paramObj.id, {
       credentials: 'same-origin',
       method: 'put',
@@ -56,7 +57,8 @@ export default class SamplesFetcher {
         solvent: paramObj.solvent,
         impurities: paramObj.impurities,
         location: paramObj.location,
-        molfile: paramObj.molfile
+        molfile: paramObj.molfile,
+        molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
       })
     })
 
