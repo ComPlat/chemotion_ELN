@@ -8,15 +8,17 @@ export default class List extends React.Component {
   }
 
   render() {
+    var samples = <i className="icon-sample"></i>,
+        reactions = <i className="icon-reaction"></i>,
+        wellplates = <i className="icon-wellplate"></i>;
     return (
       <TabbedArea defaultActiveKey={1}>
-        <TabPane eventKey={1} tab='Samples'>
+        <TabPane eventKey={1} tab={samples}>
           <ElementsTable type='sample'/>
         </TabPane>
-        <TabPane eventKey={2} tab='Reactions' disabled>TabPane 2 content</TabPane>
-        <TabPane eventKey={3} tab='Wellplates' disabled>TabPane 3 content</TabPane>
+        <TabPane eventKey={2} tab={reactions} disabled>TabPane 2 content</TabPane>
+        <TabPane eventKey={3} tab={wellplates} disabled>TabPane 3 content</TabPane>
       </TabbedArea>
-
     )
   }
 }
