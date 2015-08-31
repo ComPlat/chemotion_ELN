@@ -4,7 +4,7 @@ import UserActions from '../actions/UserActions';
 class UserStore {
   constructor() {
     this.state = {
-      visibleUsers: [],
+      users: [],
       currentUser: null
     };
 
@@ -15,7 +15,7 @@ class UserStore {
   }
 
   handleFetchUsers(result) {
-    this.state.visibleUsers = result;
+    this.state.users = result;
   }
 
   handleFetchCurrentUser(result) {
