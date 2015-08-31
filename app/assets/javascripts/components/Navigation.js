@@ -14,7 +14,7 @@ export default class Navigation extends React.Component {
           <NavItem>#1</NavItem>
         </Nav>
         <Nav navbar right>
-          <UserAuth currentUser={'Bernd Thomas'}/>
+          <UserAuth/>
         </Nav>
       </Navbar>
     )
