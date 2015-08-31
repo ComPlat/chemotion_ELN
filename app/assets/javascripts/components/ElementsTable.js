@@ -35,6 +35,14 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
+    let {checkedSampleIds, uncheckedSampleIds, checkedAllSamples} = state;
+
+    console.log('checkedAllSamples ' + checkedAllSamples);
+    console.log('checkedSampleIds ' + checkedSampleIds.toArray());
+    console.log('uncheckedSampleIds ' + uncheckedSampleIds.toArray());
+
+    //console.log(state);
+
     let page = state.pagination && state.pagination.page;
     if(page) {
       this.setState({
@@ -201,4 +209,3 @@ export default class ElementsTable extends React.Component {
     )
   }
 }
-

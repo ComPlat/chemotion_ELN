@@ -15,11 +15,14 @@ export default class ElementCheckbox extends React.Component {
   }
 
   updateCheckedStatus(element) {
+
+    let checkedAllSamples = UIStore.getState().checkedAllSamples;
     let checkedSampleIds = UIStore.getState().checkedSampleIds;
+    let uncheckedSampleIds = UIStore.getState().uncheckedSampleIds;
 
     switch(element.type) {
       case 'sample':
-        if(ArrayUtils.isValInArray(checkedSampleIds, element.id)) {
+        if((checkedAllSamples && ArrayUtils.isValNotInArray(uncheckedSampleIds, element.id)) || ArrayUtils.isValInArray(checkedSampleIds, element.id)) {
           this.setState({checked: true});
         } else {
           this.setState({checked: false});

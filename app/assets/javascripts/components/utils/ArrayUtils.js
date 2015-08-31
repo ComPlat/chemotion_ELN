@@ -26,4 +26,8 @@ export default class ArrayUtils {
       return false;
     }
   }
+
+  static isValNotInArray(array, value) {
+    return !ArrayUtils.isValInArray(array, value)
+  }
 }

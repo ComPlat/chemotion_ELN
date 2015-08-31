@@ -9,7 +9,9 @@ const Immutable = require('immutable');
 class UIStore {
   constructor() {
     this.state = {
+      checkedAllSamples: false,
       checkedSampleIds: Immutable.List(),
+      uncheckedSampleIds: Immutable.List(),
       currentCollectionId: null,
       currentSampleId: null,
       pagination: null
@@ -33,8 +35,9 @@ class UIStore {
 
     switch(type) {
       case 'sample':
-        let sampleIds = elements.samples.elements.map(sample => sample.id);
-        this.state.checkedSampleIds = this.state.checkedSampleIds.concat(sampleIds);
+        this.state.checkedAllSamples = true;
+        this.state.checkedSampleIds = Immutable.List();
+        this.state.uncheckedSampleIds = Immutable.List();
         break;
     }
   }
@@ -42,7 +45,9 @@ class UIStore {
   handleUncheckAllElements(type) {
     switch(type) {
       case 'sample':
+        this.state.checkedAllSamples = false;
         this.state.checkedSampleIds = Immutable.List();
+        this.state.uncheckedSampleIds = Immutable.List();
         break;
     }
   }
@@ -58,7 +63,13 @@ class UIStore {
   handleUncheckElement(element) {
     switch(element.type) {
       case 'sample':
-        this.state.checkedSampleIds = ArrayUtils.removeFromListByValue(this.state.checkedSampleIds, element.id);
+        if(this.state.checkedAllSamples)
+        {
+          this.state.uncheckedSampleIds = ArrayUtils.pushUniq(this.state.uncheckedSampleIds, element.id);
+        }
+        else {
+          this.state.checkedSampleIds = ArrayUtils.removeFromListByValue(this.state.checkedSampleIds, element.id);
+        }
         break;
     }
   }
