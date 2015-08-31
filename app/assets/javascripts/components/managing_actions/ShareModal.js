@@ -12,8 +12,9 @@ export default class ShareModal extends React.Component {
     super(props);
 
     // TODO the same for reactions and so on
+    // TODO update for new check/uncheck info
     this.state = {
-      checkedSampleIds: UIStore.getState().checkedSampleIds
+      checkedSampleIds: UIStore.getState().sample.checkedIds
     }
   }
 
@@ -113,4 +114,3 @@ export default class ShareModal extends React.Component {
     )
   }
 }
-

@@ -14,32 +14,34 @@ export default class ElementCheckbox extends React.Component {
     }
   }
 
-  updateCheckedStatus(element) {
-    let checkedSampleIds = UIStore.getState().checkedSampleIds;
+  updateCheckedStatus(element, state) {
+    let checked = this.isChecked(element, state);
+    this.setState({checked: checked});
+  }
 
-    switch(element.type) {
-      case 'sample':
-        if(ArrayUtils.isValInArray(checkedSampleIds, element.id)) {
-          this.setState({checked: true});
-        } else {
-          this.setState({checked: false});
-        }
-    }
+  isChecked(element, state) {
+    let type = element.type;
+    let uiCheckState = state[type];
+
+    let checkedAll = uiCheckState.checkedAll;
+    let checkedIds = uiCheckState.checkedIds;
+    let uncheckedIds = uiCheckState.uncheckedIds;
+
+    let checked = (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds, element.id))
+                  || ArrayUtils.isValInArray(checkedIds, element.id);
+
+    return checked;
   }
 
   componentWillReceiveProps(nextProps) {
-    // TODO based on type
     let element =  nextProps.element;
-
     this.setState({
       element: element
     });
-
-    this.updateCheckedStatus(element);
+    this.updateCheckedStatus(element, UIStore.getState());
   }
 
   componentDidMount() {
-    this.updateCheckedStatus(this.state.element);
     UIStore.listen(this.onChange.bind(this));
   }
 
@@ -48,17 +50,7 @@ export default class ElementCheckbox extends React.Component {
   }
 
   onChange(state) {
-    let thisType = this.state.element.type;
-    let thisId = this.state.element.id;
-
-    switch(thisType) {
-      case 'sample':
-        if(ArrayUtils.isValInArray(state.checkedSampleIds, thisId)) {
-          this.setState({checked: true});
-        } else {
-          this.setState({checked: false});
-        }
-    }
+    this.updateCheckedStatus(this.state.element, state);
   }
 
   toggleCheckbox() {
@@ -73,7 +65,9 @@ export default class ElementCheckbox extends React.Component {
 
   render() {
     return (
-      <input type="checkbox" onChange={this.toggleCheckbox.bind(this)} checked={this.state.checked}/>
+      <input  type="checkbox"
+              onChange={this.toggleCheckbox.bind(this)}
+              checked={this.state.checked} />
     )
   }
 }

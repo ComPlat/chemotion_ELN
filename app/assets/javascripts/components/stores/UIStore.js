@@ -9,9 +9,13 @@ const Immutable = require('immutable');
 class UIStore {
   constructor() {
     this.state = {
-      checkedSampleIds: Immutable.List(),
+      sample: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null
+      },
       currentCollectionId: null,
-      currentSampleId: null,
       pagination: null
     };
 
@@ -31,51 +35,51 @@ class UIStore {
   handleCheckAllElements(type) {
     let {elements} = ElementStore.getState();
 
-    switch(type) {
-      case 'sample':
-        let sampleIds = elements.samples.elements.map(sample => sample.id);
-        this.state.checkedSampleIds = this.state.checkedSampleIds.concat(sampleIds);
-        break;
-    }
+    this.state[type].checkedAll = true;
+    this.state[type].checkedIds = Immutable.List();
+    this.state[type].uncheckedIds = Immutable.List();
   }
 
   handleUncheckAllElements(type) {
-    switch(type) {
-      case 'sample':
-        this.state.checkedSampleIds = Immutable.List();
-        break;
-    }
+    this.state[type].checkedAll = false;
+    this.state[type].checkedIds = Immutable.List();
+    this.state[type].uncheckedIds = Immutable.List();
   }
 
   handleCheckElement(element) {
-    switch(element.type) {
-      case 'sample':
-        this.state.checkedSampleIds = ArrayUtils.pushUniq(this.state.checkedSampleIds, element.id);
-        break;
+    let type = element.type;
+
+    if(this.state[type].checkedAll) {
+      this.state[type].uncheckedIds = ArrayUtils.removeFromListByValue(this.state[type].uncheckedIds, element.id);
     }
+    else {
+      this.state[type].checkedIds = ArrayUtils.pushUniq(this.state[type].checkedIds, element.id);
+    }
+
   }
 
   handleUncheckElement(element) {
-    switch(element.type) {
-      case 'sample':
-        this.state.checkedSampleIds = ArrayUtils.removeFromListByValue(this.state.checkedSampleIds, element.id);
-        break;
+    let type = element.type;
+
+    if(this.state[type].checkedAll)
+    {
+      this.state[type].uncheckedIds = ArrayUtils.pushUniq(this.state[type].uncheckedIds, element.id);
+    }
+    else {
+      this.state[type].checkedIds = ArrayUtils.removeFromListByValue(this.state[type].checkedIds, element.id);
     }
   }
 
   handleDeselectAllElements(type) {
-    switch(type) {
-      case 'sample':
-        this.state.currentSampleId = null;
-        break;
-    }
+    this.state[type].currentId = null;
   }
 
   handleSelectElement(element) {
+    this.state[element.type].currentId = element.id;
+
+    // TODO also for reactions and so on
     switch(element.type) {
       case 'sample':
-        this.state.currentSampleId = element.id;
-        // TODO also for reactions and so on
         ElementActions.fetchSampleById(element.id)
         break;
     }

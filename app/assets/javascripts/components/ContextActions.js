@@ -23,7 +23,8 @@ export default class ContextActions extends React.Component {
 
   availableActions() {
     // TODO später auch für reaktionen usw
-    if(this.state.checkedSampleIds.size == 0) {
+    // TODO replace dummy implementation
+    if(this.state.sample.checkedIds.size == 0) {
       return (
         <ButtonGroup vertical block>
           <Button>Create Sample</Button>
