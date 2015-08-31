@@ -35,11 +35,11 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
-    let {checkedSampleIds, uncheckedSampleIds, checkedAllSamples} = state;
+    let {checkedIds, uncheckedIds, checkedAll} = state.sample;
 
-    console.log('checkedAllSamples ' + checkedAllSamples);
-    console.log('checkedSampleIds ' + checkedSampleIds.toArray());
-    console.log('uncheckedSampleIds ' + uncheckedSampleIds.toArray());
+    console.log('checkedAllSamples ' + checkedAll);
+    console.log('checkedSampleIds ' + checkedIds && checkedIds.toArray());
+    console.log('uncheckedSampleIds ' + uncheckedIds && uncheckedIds.toArray());
 
     //console.log(state);
 
