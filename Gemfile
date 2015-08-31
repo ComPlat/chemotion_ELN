@@ -53,6 +53,9 @@ group :development, :test do
 
   # Use thin as dev webserver
   gem 'thin'
+
+  # generate icon fonts
+  gem 'fontcustom'
 end
 
 group :test do

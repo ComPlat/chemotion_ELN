@@ -1,0 +1,56 @@
+{
+  "checksum": {
+    "previous": "099d15f200dc601faae95ccb0ffb2c5a6eaf2a22448d716bbd666ce12ce82c25",
+    "current": "099d15f200dc601faae95ccb0ffb2c5a6eaf2a22448d716bbd666ce12ce82c25"
+  },
+  "fonts": [
+    "app/assets/fonts/icons.ttf",
+    "app/assets/fonts/icons.svg",
+    "app/assets/fonts/icons.woff",
+    "app/assets/fonts/icons.eot"
+  ],
+  "glyphs": {
+    "reaction": {
+      "codepoint": 61696,
+      "source": "app/assets/images/svg_icons/reaction.svg"
+    },
+    "sample": {
+      "codepoint": 61697,
+      "source": "app/assets/images/svg_icons/sample.svg"
+    },
+    "wellplate": {
+      "codepoint": 61698,
+      "source": "app/assets/images/svg_icons/wellplate.svg"
+    }
+  },
+  "options": {
+    "autowidth": false,
+    "config": "fontcustom.yml",
+    "css_selector": ".icon-{{glyph}}",
+    "debug": false,
+    "font_ascent": 448,
+    "font_descent": 64,
+    "font_design_size": 16,
+    "font_em": 512,
+    "font_name": "icons",
+    "force": true,
+    "input": {
+      "templates": "app/assets/images/svg_icons",
+      "vectors": "app/assets/images/svg_icons"
+    },
+    "no_hash": true,
+    "output": {
+      "css": "app/assets/stylesheets",
+      "fonts": "app/assets/fonts",
+      "preview": "app/assets/fonts"
+    },
+    "preprocessor_path": "",
+    "quiet": false,
+    "templates": [
+      "scss"
+    ]
+  },
+  "templates": [
+    "app/assets/stylesheets/_icons.scss"
+  ]
+}

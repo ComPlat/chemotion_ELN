@@ -37,3 +37,15 @@ Currently 3 users are seeded with respective email `test@ninjaconcept.com`, `hat
 * Get serialized sample by id
 
   `/api/v1/samples/:id`
+
+# Icon Font
+
+* put new icons as SVG files (e.g. '<ICON_NAME>.svg') in `app/assets/images/svg_icons`
+* run `rake icons:compile`
+
+Icons are now available as css classes: '.icon-<ICON_NAME'
+
+## FontCustom Dependencies
+
+* `brew install fontforge --with-python`
+* `brew install eot-utils`
