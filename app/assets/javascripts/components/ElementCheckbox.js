@@ -1,9 +1,5 @@
 import React from 'react';
-
 import UIActions from './actions/UIActions';
-import UIStore from './stores/UIStore';
-
-import ArrayUtils from './utils/ArrayUtils';
 
 export default class ElementCheckbox extends React.Component {
   constructor(props) {
@@ -19,38 +15,12 @@ export default class ElementCheckbox extends React.Component {
     this.setState({checked: checked});
   }
 
-  isChecked(element, state) {
-    let type = element.type;
-    let uiCheckState = state[type];
-
-    let checkedAll = uiCheckState.checkedAll;
-    let checkedIds = uiCheckState.checkedIds;
-    let uncheckedIds = uiCheckState.uncheckedIds;
-
-    let checked = (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds, element.id))
-                  || ArrayUtils.isValInArray(checkedIds, element.id);
-
-    return checked;
-  }
-
   componentWillReceiveProps(nextProps) {
-    let element =  nextProps.element;
+    let {element, checked} =  nextProps;
     this.setState({
-      element: element
+      element: element,
+      checked: checked
     });
-    this.updateCheckedStatus(element, UIStore.getState());
-  }
-
-  componentDidMount() {
-    UIStore.listen(this.onChange.bind(this));
-  }
-
-  componentWillUnmount() {
-    UIStore.unlisten(this.onChange.bind(this));
-  }
-
-  onChange(state) {
-    this.updateCheckedStatus(this.state.element, state);
   }
 
   toggleCheckbox() {

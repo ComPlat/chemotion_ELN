@@ -11,12 +11,14 @@ import SVG from 'react-inlinesvg';
 import Aviator from 'aviator';
 import deepEqual from 'deep-equal';
 
+import ArrayUtils from './utils/ArrayUtils';
+
 export default class ElementsTable extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       elements: [],
-
+      ui: {},
       // Pagination
       activePage: this.props.activePage || 1,
       numberOfPages: 0,
@@ -35,12 +37,6 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
-    let {checkedIds, uncheckedIds, checkedAll} = state.sample;
-
-    console.log('checkedAllSamples ' + checkedAll);
-    console.log('checkedSampleIds ' + checkedIds && checkedIds.toArray());
-    console.log('uncheckedSampleIds ' + uncheckedIds && uncheckedIds.toArray());
-
     //console.log(state);
 
     let page = state.pagination && state.pagination.page;
@@ -49,6 +45,23 @@ export default class ElementsTable extends React.Component {
         activePage: parseInt(page)
       });
     }
+
+    let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
+
+    console.log('checkedAllSamples ' + checkedAll);
+    console.log('checkedSampleIds ' + checkedIds && checkedIds.toArray());
+    console.log('uncheckedSampleIds ' + uncheckedIds && uncheckedIds.toArray());
+
+    if(checkedIds || uncheckedIds || checkedAll) {
+      this.setState({
+        ui: {
+          checkedIds: checkedIds,
+          uncheckedIds: uncheckedIds,
+          checkedAll: checkedAll
+        }
+      });
+    }
+
   }
 
   onChange(state) {
@@ -100,6 +113,8 @@ export default class ElementsTable extends React.Component {
       let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
       let svgImage = <SVG src={svgPath} className={isSelected ? 'molecule-selected' : 'molecule'} key={element.molecule.id}/>
 
+      let checked = this.isElementChecked(element);
+
       if(this.showElementDetailsColumns()) {
 
         optionalLabelColumn = (
@@ -125,7 +140,7 @@ export default class ElementsTable extends React.Component {
       return (
         <tr key={index} height="100" style={style}>
           <td className="check">
-            <ElementCheckbox element={element} key={element.id}/>
+            <ElementCheckbox element={element} key={element.id} checked={checked}/>
           </td>
           <td className="name" onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
             {element.name}
@@ -156,6 +171,15 @@ export default class ElementsTable extends React.Component {
         Aviator.navigate(this._collectionUrl(), this._queryParams())
       }
     })
+  }
+
+  isElementChecked(element) {
+    let {checkedIds, uncheckedIds, checkedAll} = this.state.ui
+
+    let checked = (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
+                  || ArrayUtils.isValInArray(checkedIds || [], element.id);
+
+    return checked;
   }
 
   _elementDetailsUrl(element) {
