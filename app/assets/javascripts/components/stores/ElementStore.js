@@ -9,7 +9,7 @@ class ElementStore {
       elements: {
         samples: {
           elements: [],
-          totalElements: [],
+          totalElements: 0,
           page: null,
           pages: null,
           per_page: null
