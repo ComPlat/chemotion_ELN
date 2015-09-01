@@ -12,6 +12,11 @@ module Chemotion
         current_user
       end
 
+      desc "Log out current_user"
+      delete 'sign_out' do
+        status 204
+      end
+
     end
   end
 end
