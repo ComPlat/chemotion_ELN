@@ -5,6 +5,9 @@ import Select from 'react-select';
 import UIStore from '../stores/UIStore';
 import CollectionActions from '../actions/CollectionActions';
 
+import UserActions from '../actions/UserActions';
+import UserStore from '../stores/UserStore';
+
 import Aviator from 'aviator';
 
 export default class ShareModal extends React.Component {
@@ -14,23 +17,36 @@ export default class ShareModal extends React.Component {
     // TODO the same for reactions and so on
     // TODO update for new check/uncheck info
     this.state = {
-      checkedSampleIds: UIStore.getState().sample.checkedIds
+      checkedSampleIds: UIStore.getState().sample.checkedIds,
+      currentUser: UserStore.getState().currentUser,
+      users: UserStore.getState().users
     }
   }
 
   componentDidMount() {
-    UIStore.listen(this.onChange.bind(this));
+    UIStore.listen(this.onUIChange.bind(this));
+    UserStore.listen(this.onUserChange.bind(this));
+
+    UserActions.fetchCurrentUser();
+    UserActions.fetchUsers();
   }
 
   componentWillUnmount() {
-    console.log("componentWillUnmount");
-    UIStore.unlisten(this.onChange.bind(this));
+    UIStore.unlisten(this.onUIChange.bind(this));
+    UserStore.unlisten(this.onUserChange.bind(this));
   }
 
-  onChange(state) {
+  onUserChange(state) {
+    this.setState({
+      currentUser: state.currentUser,
+      users: state.users
+    })
+  }
+
+  onUIChange(state) {
     // TODO see constructor
     this.setState({
-      checkedSampleIds: state.checkedSampleIds
+      checkedSampleIds: state.checkedSampleIds,
     })
   }
 
@@ -63,6 +79,15 @@ export default class ShareModal extends React.Component {
 
     CollectionActions.createSharedCollections(paramObj);
     this.hideModal();
+  }
+
+  usersEntries() {
+    let users = this.state.users.filter((u)=> u.id != this.state.currentUser.id);
+    return users.map(
+      (user) => {
+        return { value: user.id, label: user.name }
+      }
+    );
   }
 
   render() {
@@ -102,10 +127,7 @@ export default class ShareModal extends React.Component {
 
             <b>Select Users to share with</b>
             <Select ref='userSelect' name='users' multi={true}
-                    options={[
-                      { value: '2', label: 'Hattori' },
-                      { value: '3', label: 'Momochi' }
-                    ]} />
+                    options={this.usersEntries()} />
             <br/>
             <Button bsStyle="warning" onClick={this.handleSharing.bind(this)}>Share</Button>
           </Modal.Body>
