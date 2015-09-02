@@ -249,21 +249,13 @@ export default class SampleDetails extends React.Component {
                         disabled
                       />
                     </td>
-                    <td>
-                      <Input type="text" label="Molecular Weight"
+                    <td width="25%" className="padding-right">
+                      <Input type="text" label="M. Weight"
                         value={sample.molecule && (sample.molecule.molecular_weight) }
                         disabled
                       />
                     </td>
-                  </tr>
-                  <tr>
-                    <td className="padding-right">
-                      <Input type="text" label="Formula"
-                        value={sample.molecule && (sample.molecule.sum_formular) }
-                        disabled
-                      />
-                    </td>
-                    <td>
+                    <td width="25%">
                       <Input type="text" label="Density" ref="densityInput"
                         value={sample.molecule && (sample.molecule.density) }
                         onChange={(e) => this.handleDensityChanged(e)}
@@ -271,13 +263,19 @@ export default class SampleDetails extends React.Component {
                     </td>
                   </tr>
                   <tr>
-                    <td className="padding-right">
+                    <td width="50%" className="padding-right">
+                      <Input type="text" label="Formula"
+                        value={sample.molecule && (sample.molecule.sum_formular) }
+                        disabled
+                      />
+                    </td>
+                    <td width="25%" className="padding-right">
                       <Input type="text" label="Boiling Point" ref="boilingPointInput"
                         value={sample.molecule && (sample.molecule.boiling_point) }
                         onChange={(e) => this.handleBoilingPointChanged(e)}
                       />
                     </td>
-                    <td>
+                    <td width="25%">
                       <Input type="text" label="Melting Point" ref="meltingPointInput"
                        value={sample.molecule && (sample.molecule.melting_point) }
                        onChange={(e) => this.handleMeltingPointChanged(e)}
@@ -289,14 +287,43 @@ export default class SampleDetails extends React.Component {
               <ListGroupItem>
                 <table width="100%">
                   <tr>
-                    <td width="50%" className="padding-right">
+                    <td width="50%" className="padding-right" colSpan={2}>
                       <Input type="text" label="Name" ref="nameInput"
                         placeholder={sample.name}
                         value={sample.name}
                         onChange={(e) => this.handleNameChanged(e)}
                       />
                     </td>
-                    <td>
+                    <td width="25%" className="padding-right">
+                      <Input type="text" label="Impurities"
+                        ref="impuritiesInput"
+                        value={sample.impurities}
+                        onChange={(e) => this.handleImpuritiesChanged(e)}
+                      />
+                    </td>
+                    <td width="25%">
+                      <Input type='select' label='Solvent' ref="solventInput" onChange={(e) => this.handleSolventChanged(e)} value={sample.solvent}>
+                        <option value=''>-- Please Select --</option>
+                        <option value='Solvent1'>Solvent1</option>
+                        <option value='Solvent2'>Solvent2</option>
+                        <option value='Solvent3'>Solvent3</option>
+                      </Input>
+                    </td>     
+                  </tr>
+                  <tr>
+                    <td width="25%" className="padding-right">
+                      <Input type="text" label="Weight"
+                        value={sample.weight}
+                        disabled
+                      />
+                    </td>
+                    <td width="25%" className="padding-right">
+                      <Input type="text" label="Volume"
+                        value={sample.volume}
+                        disabled
+                      />
+                    </td>
+                    <td width="25%" className="padding-right">
                       <NumeralInputWithUnits
                          key={sample.id}
                          value={sample.amount_value}
@@ -308,16 +335,7 @@ export default class SampleDetails extends React.Component {
                          onChange={(amount) => this.handleAmountChanged(amount)}
                       />
                     </td>
-                  </tr>
-                  <tr>
-                    <td width="50%" className="padding-right">
-                      <Input type="text" label="Impurities"
-                        ref="impuritiesInput"
-                        value={sample.impurities}
-                        onChange={(e) => this.handleImpuritiesChanged(e)}
-                      />
-                    </td>
-                    <td>
+                    <td width="25%">
                       <Input type="text" label="Purity"
                         ref="purityInput"
                         value={sample.purity}
@@ -326,46 +344,24 @@ export default class SampleDetails extends React.Component {
                     </td>
                   </tr>
                   <tr>
-                    <td className="padding-right">
-                      <Input type="text" label="Weight"
-                        value={sample.weight}
-                        disabled
-                      />
-                    </td>
-                    <td>
-                      <Input type="text" label="Volume"
-                        value={sample.volume}
-                        disabled
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={2}>
-                      <Input type='select' label='Solvent' ref="solventInput" onChange={(e) => this.handleSolventChanged(e)} value={sample.solvent}>
-                        <option value=''>-- Please Select --</option>
-                        <option value='Solvent1'>Solvent1</option>
-                        <option value='Solvent2'>Solvent2</option>
-                        <option value='Solvent3'>Solvent3</option>
-                      </Input>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={2}>
+                    <td width="50%" colSpan={2} className="padding-right">
                       <Input type="textarea" label="Location"
                         ref="locationInput"
                         value={sample.location}
                         onChange={(e) => this.handleLocationChanged(e)}
-                        rows={3}
+                        rows={2}
+                      />
+                    </td>
+                    <td width="50%" colSpan={2}>
+                      <Input type="textarea" label="Description" ref="descriptionInput"
+                        placeholder={sample.description}
+                        value={sample.description}
+                        onChange={(e) => this.handleDescriptionChanged(e)}
+                        rows={2}
                       />
                     </td>
                   </tr>
                 </table>
-                <Input type="textarea" label="Description" ref="descriptionInput"
-                  placeholder={sample.description}
-                  value={sample.description}
-                  onChange={(e) => this.handleDescriptionChanged(e)}
-                  rows={3}
-                />
 
               </ListGroupItem>
               <ListGroupItem>
