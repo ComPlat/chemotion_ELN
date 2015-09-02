@@ -13,15 +13,26 @@ class ElementStore {
           page: null,
           pages: null,
           per_page: null
+        },
+        reactions: {
+          elements: [],
+          totalElements: 0,
+          page: null,
+          pages: null,
+          per_page: null
         }
       },
       currentElement: null
     };
 
     this.bindListeners({
+
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
+
+      handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+
       handleUnselectCurrentElement: UIActions.deselectAllElements
     })
   }
@@ -38,6 +49,13 @@ class ElementStore {
   handleUpdateSample(sampleId) {
     ElementActions.fetchSampleById(sampleId);
   }
+
+  handleFetchReactionsByCollectionId(result) {
+    console.log('handleFetchReactionsByCollectionId');
+    console.log(result);
+    this.state.elements.reactions = result;
+  }
+
 
   handleUnselectCurrentElement() {
     //this.waitFor(UIStore.dispatchToken);

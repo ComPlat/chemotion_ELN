@@ -1,5 +1,6 @@
 import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
+import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 
 class ElementActions {
 
@@ -25,6 +26,15 @@ class ElementActions {
     SamplesFetcher.update(paramObj)
       .then((result) => {
         this.dispatch(paramObj.id)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchReactionsByCollectionId(id, queryParams={}) {
+    ReactionsFetcher.fetchByCollectionId(id, queryParams)
+      .then((result) => {
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

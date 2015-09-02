@@ -87,8 +87,9 @@ class UIStore {
 
   handleSelectCollection(collection) {
     this.state.currentCollectionId = collection.id;
-    // TODO also for reactions and so on
+    // TODO also for wellplates and so on
     ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
+    ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination)
   }
 
   handleSetPagination(pagination) {
