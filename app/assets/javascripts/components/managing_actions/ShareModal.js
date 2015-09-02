@@ -16,10 +16,11 @@ export default class ShareModal extends React.Component {
 
     // TODO the same for reactions and so on
     // TODO update for new check/uncheck info
+    let {currentUser, users} = UserStore.getState();
     this.state = {
       checkedSampleIds: UIStore.getState().sample.checkedIds,
-      currentUser: UserStore.getState().currentUser,
-      users: UserStore.getState().users
+      currentUser: currentUser,
+      users: users
     }
   }
 
