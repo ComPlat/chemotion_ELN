@@ -3,7 +3,9 @@ class Collection < ActiveRecord::Base
   has_ancestry
 
   has_many :collections_samples
+  has_many :collections_reactions
   has_many :samples, through: :collections_samples
+  has_many :reactions, through: :collections_reactions
 
   scope :unshared, -> { where(is_shared: false) }
   scope :shared, ->(user_id) { where(shared_by_id: user_id) }
