@@ -48,6 +48,10 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
+
+  refreshElements(type) {
+    this.dispatch(type)
+  }
 }
 
 export default alt.createActions(ElementActions);

@@ -34,7 +34,9 @@ class ElementStore {
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
 
-      handleUnselectCurrentElement: UIActions.deselectAllElements
+      handleUnselectCurrentElement: UIActions.deselectAllElements,
+      handleSetPagination: UIActions.setPagination,
+      handleRefreshElements: ElementActions.refreshElements
     })
   }
 
@@ -52,20 +54,17 @@ class ElementStore {
   // update stored sample if it has been updated
   handleUpdateSample(sampleId) {
     ElementActions.fetchSampleById(sampleId);
+    this.handleRefreshElements('sample');
   }
 
 
   // -- Reactions --
 
   handleFetchReactionById(result) {
-    console.log('handleFetchReactionById');
-    //console.log(result);
     this.state.currentElement = result;
   }
 
   handleFetchReactionsByCollectionId(result) {
-    console.log('handleFetchReactionsByCollectionId');
-    //console.log(result);
     this.state.elements.reactions = result;
   }
 
@@ -73,8 +72,24 @@ class ElementStore {
   // -- Generic --
 
   handleUnselectCurrentElement() {
-    //this.waitFor(UIStore.dispatchToken);
     this.state.currentElement = null;
+  }
+
+  handleSetPagination(pagination) {
+    this.waitFor(UIStore.dispatchToken);
+    this.handleRefreshElements(pagination.type);
+  }
+
+  handleRefreshElements(type) {
+    let uiState = UIStore.getState()
+    switch (type) {
+      case 'sample':
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, uiState.pagination['sample'])
+        break;
+      case 'reaction':
+        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, uiState.pagination['reaction'])
+        break;
+    }
   }
 }
 

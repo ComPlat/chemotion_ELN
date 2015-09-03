@@ -27,7 +27,6 @@ Aviator.setRoutes({
   '/collection': {
     target: {
       show: function(e) {
-        UIActions.setPagination({page: e.params.page});
         UIActions.selectCollection({id: e.params['id']});
         if(!e.params['sampleID'] && !e.params['reactionID'])
         {

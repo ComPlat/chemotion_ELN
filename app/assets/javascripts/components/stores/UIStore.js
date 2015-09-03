@@ -23,7 +23,15 @@ class UIStore {
       },
       currentCollectionId: null,
       currentTab: 1,
-      pagination: null
+
+      pagination: {
+        sample: {
+          page: 1
+        },
+        reaction: {
+          page: 1
+        }
+      }
     };
 
     this.bindListeners({
@@ -35,8 +43,7 @@ class UIStore {
       handleUncheckAllElements: UIActions.uncheckAllElements,
       handleDeselectAllElements: UIActions.deselectAllElements,
       handleSelectElement: UIActions.selectElement,
-      handleSetPagination: UIActions.setPagination,
-      handleRefreshSamples: ElementActions.updateSample
+      handleSetPagination: UIActions.setPagination
     });
   }
 
@@ -102,19 +109,21 @@ class UIStore {
   }
 
   handleSelectCollection(collection) {
+    let hasChanged = this.state.currentCollectionId != collection.id;
     this.state.currentCollectionId = collection.id;
+
     // TODO also for wellplates and so on
-    ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
-    ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination)
+    if(hasChanged) {
+      ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
+      ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination)
+    }
   }
 
   handleSetPagination(pagination) {
-    this.state.pagination = pagination;
+    let {type, page} = pagination
+    this.state.pagination[pagination.type] = {page: page};
   }
 
-  handleRefreshSamples() {
-    ElementActions.fetchSamplesByCollectionId(this.state.currentCollectionId, this.state.pagination)
-  }
 }
 
 export default alt.createStore(UIStore, 'UIStore');

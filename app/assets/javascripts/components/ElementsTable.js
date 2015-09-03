@@ -2,6 +2,8 @@ import React from 'react';
 import {Label, Pagination, Table} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
+
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
@@ -39,19 +41,22 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
-    let page = state.pagination && state.pagination.page;
+    let type = this.props.type;
+    let page = state.pagination && state.pagination[type] && state.pagination[type].page;
     if(page) {
       this.setState({
         activePage: parseInt(page)
       });
     }
 
+    //console.log('ElementsType: ' + type + '#activePage ' + page);
+
     let {checkedIds, uncheckedIds, checkedAll, currentId} = state[this.props.type];
 
-    console.log('currentId ' + currentId);
-    console.log('checkedAll ' + checkedAll);
-    console.log('checkedIds ' + checkedIds && checkedIds.toArray());
-    console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
+    // console.log('currentId ' + currentId);
+    // console.log('checkedAll ' + checkedAll);
+    // console.log('checkedIds ' + checkedIds && checkedIds.toArray());
+    // console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
 
     if(checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
@@ -67,7 +72,6 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    console.log("onChange: "+this.props.type)
     let type = this.props.type+'s';
 
     const elements = state.elements[type].elements;
@@ -81,8 +85,8 @@ export default class ElementsTable extends React.Component {
     let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
     let currentElementDidChange = currentElement && !deepEqual(currentElement, this.state.currentElement);
 
-    let pagination = UIStore.getState().pagination;
-    let page = pagination.page && parseInt(pagination.page) || 1;
+    let page = this.state.activePage;
+
     let numberOfPages = Math.ceil(totalElements / this.state.pageSize);
     if(page > numberOfPages) {
       page = 1
@@ -174,19 +178,16 @@ export default class ElementsTable extends React.Component {
   }
 
   showDetails(element) {
-    Aviator.navigate(this._elementDetailsUrl(element), this._queryParams());
+    Aviator.navigate(this._elementDetailsUrl(element));
   }
 
   handlePaginationSelect(event, selectedEvent) {
     this.setState({
       activePage: selectedEvent.eventKey
     }, () => {
-      if(this.state.currentElement) {
-        Aviator.navigate(this._elementDetailsUrl(this.state.currentElement), this._queryParams())
-      }
-      else {
-        Aviator.navigate(this._collectionUrl(), this._queryParams())
-      }
+      let type = this.props.type;
+      let pagination = {type: type, page: this.state.activePage};
+      UIActions.setPagination(pagination)
     })
   }
 
@@ -206,10 +207,6 @@ export default class ElementsTable extends React.Component {
   _collectionUrl() {
     let uiState = UIStore.getState();
     return `/collection/${uiState.currentCollectionId}`
-  }
-
-  _queryParams() {
-    return {queryParams: { page: this.state.activePage }};
   }
 
   pagination() {

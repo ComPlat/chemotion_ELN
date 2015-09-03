@@ -37,10 +37,6 @@ class UIActions {
   setPagination(pagination) {
     this.dispatch(pagination);
   }
-
-  refreshSamples() {
-    this.dispatch(type)
-  }
 }
 
 export default alt.createActions(UIActions);
