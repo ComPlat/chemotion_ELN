@@ -1,4 +1,4 @@
-var Functions = {
+var DocumentHelper = {
   getMetaContent: function(name) {
     var metas = document.getElementsByTagName('meta');
  
@@ -12,4 +12,4 @@ var Functions = {
   }
 }
  
-module.exports = Functions;
+module.exports = DocumentHelper;
