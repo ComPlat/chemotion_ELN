@@ -29,6 +29,8 @@ export default class ElementsTable extends React.Component {
   componentDidMount() {
     ElementStore.listen(this.onChange.bind(this));
     UIStore.listen(this.onChangeUI.bind(this));
+
+    this.onChangeUI(UIStore.getState());
   }
 
   componentWillUnmount() {
@@ -37,8 +39,6 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
-    //console.log(state);
-
     let page = state.pagination && state.pagination.page;
     if(page) {
       this.setState({
@@ -46,18 +46,20 @@ export default class ElementsTable extends React.Component {
       });
     }
 
-    let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
+    let {checkedIds, uncheckedIds, checkedAll, currentId} = state[this.props.type];
 
-    console.log('checkedAllSamples ' + checkedAll);
-    console.log('checkedSampleIds ' + checkedIds && checkedIds.toArray());
-    console.log('uncheckedSampleIds ' + uncheckedIds && uncheckedIds.toArray());
+    console.log('currentId ' + currentId);
+    console.log('checkedAll ' + checkedAll);
+    console.log('checkedIds ' + checkedIds && checkedIds.toArray());
+    console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
 
-    if(checkedIds || uncheckedIds || checkedAll) {
+    if(checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
         ui: {
           checkedIds: checkedIds,
           uncheckedIds: uncheckedIds,
-          checkedAll: checkedAll
+          checkedAll: checkedAll,
+          currentId: currentId
         }
       });
     }
@@ -65,16 +67,19 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    const elements = state.elements.samples.elements;
-    const totalElements = state.elements.samples.totalElements;
+    console.log("onChange: "+this.props.type)
+    let type = this.props.type+'s';
+
+    const elements = state.elements[type].elements;
+    const totalElements = state.elements[type].totalElements;
 
     let currentElement;
-    if(state.currentElement && state.currentElement.type == this.props.type) {
+    if(!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
     let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
-    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
+    let currentElementDidChange = currentElement && !deepEqual(currentElement, this.state.currentElement);
 
     let pagination = UIStore.getState().pagination;
     let page = pagination.page && parseInt(pagination.page) || 1;
@@ -106,28 +111,23 @@ export default class ElementsTable extends React.Component {
     let elements = this.state.elements;
 
     return elements.map((element, index) => {
-      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
-
-      let optionalLabelColumn
-      let moleculeColumn
-      let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
-      let svgImage = <SVG src={svgPath} className={isSelected ? 'molecule-selected' : 'molecule'} key={element.molecule.id}/>
-
+      let isSelected = this.state.ui.currentId == element.id;
       let checked = this.isElementChecked(element);
 
+      let optionalLabelColumn;
       if(this.showElementDetailsColumns()) {
-
         optionalLabelColumn = (
           <td className="labels">
             <ElementCollectionLabels element={element} key={element.id}/>
           </td>
         )
-
       }
 
-      moleculeColumn = (
-        <td className="molecule" margin="0" padding="0">{svgImage}</td>
-      )
+      let moleculeColumn;
+      let molecule = element.molecule ? element.molecule : { molecule_svg_file: 'AFABGHUZZDYHJO-UHFFFAOYSA-N.svg' }
+      if(molecule) {
+        moleculeColumn = this.moleculeColumn(molecule, {selected: isSelected});
+      }
 
       let style = {}
       if(isSelected) {
@@ -152,8 +152,25 @@ export default class ElementsTable extends React.Component {
     });
   }
 
+  moleculeColumn(molecule, options={}) {
+    let className = options.selected ? 'molecule-selected' : 'molecule';
+    let moleculeSVG = this.moleculeSVG(molecule, className);
+    return (
+      <td className="molecule" margin="0" padding="0">
+        {moleculeSVG}
+      </td>
+    );
+  }
+
+  moleculeSVG(molecule, className) {
+    let svgPath = `/images/molecules/${molecule.molecule_svg_file}`;
+    return (
+      <SVG src={svgPath} className={className} key={molecule.id}/>
+    );
+  }
+
   showElementDetailsColumns() {
-    return !(this.state.currentElement);
+    return !(this.state.ui.currentId);
   }
 
   showDetails(element) {
@@ -220,15 +237,29 @@ export default class ElementsTable extends React.Component {
   }
 
   render() {
+    let entries = this.entries();
+    let result;
+    if(entries) {
+      result = (
+        <div>
+          <Table className="elements" bordered hover>
+            {this.header()}
+            <tbody>
+              {entries}
+            </tbody>
+          </Table>
+          {this.pagination()}
+        </div>
+      )
+    } else {
+      result = (
+        'Nothing found.'
+      )
+    }
+
     return (
       <div>
-        <Table className="elements" bordered hover>
-          {this.header()}
-          <tbody>
-            {this.entries()}
-          </tbody>
-        </Table>
-        {this.pagination()}
+        {result}
       </div>
     )
   }

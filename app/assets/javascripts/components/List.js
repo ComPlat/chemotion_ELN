@@ -34,7 +34,9 @@ export default class List extends React.Component {
         <TabPane eventKey={1} tab={samples}>
           <ElementsTable type='sample'/>
         </TabPane>
-        <TabPane eventKey={2} tab={reactions} disabled>TabPane 2 content</TabPane>
+        <TabPane eventKey={2} tab={reactions}>
+          <ElementsTable type='reaction'/>
+        </TabPane>
         <TabPane eventKey={3} tab={wellplates} disabled>TabPane 3 content</TabPane>
       </TabbedArea>
     )

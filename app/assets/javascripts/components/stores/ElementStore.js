@@ -31,14 +31,18 @@ class ElementStore {
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
 
+      handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements
     })
   }
 
+
+  // -- Samples --
+
   handleFetchSampleById(result) {
-    this.state.currentElement = result; //todo should not be handled here
+    this.state.currentElement = result;
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -50,12 +54,23 @@ class ElementStore {
     ElementActions.fetchSampleById(sampleId);
   }
 
+
+  // -- Reactions --
+
+  handleFetchReactionById(result) {
+    console.log('handleFetchReactionById');
+    //console.log(result);
+    this.state.currentElement = result;
+  }
+
   handleFetchReactionsByCollectionId(result) {
     console.log('handleFetchReactionsByCollectionId');
-    console.log(result);
+    //console.log(result);
     this.state.elements.reactions = result;
   }
 
+
+  // -- Generic --
 
   handleUnselectCurrentElement() {
     //this.waitFor(UIStore.dispatchToken);

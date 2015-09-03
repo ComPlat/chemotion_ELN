@@ -15,6 +15,12 @@ class UIStore {
         uncheckedIds: Immutable.List(),
         currentId: null
       },
+      reaction: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null
+      },
       currentCollectionId: null,
       pagination: null
     };
@@ -77,15 +83,19 @@ class UIStore {
   handleSelectElement(element) {
     this.state[element.type].currentId = element.id;
 
-    // TODO also for reactions and so on
+    // TODO also for wellplates
     switch(element.type) {
       case 'sample':
         ElementActions.fetchSampleById(element.id)
+        break;
+      case 'reaction':
+        ElementActions.fetchReactionById(element.id)
         break;
     }
   }
 
   handleSelectCollection(collection) {
+    console.log("!!!!!! handleSelectCollection !!!!!!!")
     this.state.currentCollectionId = collection.id;
     // TODO also for wellplates and so on
     ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)

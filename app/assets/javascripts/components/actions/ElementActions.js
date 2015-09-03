@@ -39,6 +39,15 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
+
+  fetchReactionById(id) {
+    ReactionsFetcher.fetchById(id)
+      .then((result) => {
+        this.dispatch(result.reaction);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
 
 export default alt.createActions(ElementActions);

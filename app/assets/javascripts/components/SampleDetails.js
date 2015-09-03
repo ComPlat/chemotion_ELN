@@ -18,17 +18,13 @@ export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      sample: null,
-      id: props.id,
+      sample: props.sample,
       showStructureEditor: false
     }
   }
 
   componentDidMount() {
     ElementStore.listen(this.onChange.bind(this));
-    if(this.state.id) {
-      ElementActions.fetchSampleById(this.state.id);
-    }
   }
 
   componentWillUnmount() {
@@ -36,10 +32,9 @@ export default class SampleDetails extends React.Component {
   }
 
   onChange(state) {
-    if(state.currentElement) {
+    if(!state.currentElement || state.currentElement.type == 'sample') {
       this.setState({
-        sample: state.currentElement,
-        id: state.currentElement.id
+        sample: state.currentElement
       });
     }
   }
@@ -308,7 +303,7 @@ export default class SampleDetails extends React.Component {
                         <option value='Solvent2'>Solvent2</option>
                         <option value='Solvent3'>Solvent3</option>
                       </Input>
-                    </td>     
+                    </td>
                   </tr>
                   <tr>
                     <td width="25%" className="padding-right">
@@ -377,4 +372,3 @@ export default class SampleDetails extends React.Component {
     )
   }
 }
-
