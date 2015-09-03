@@ -41,10 +41,7 @@ export default class SampleDetails extends React.Component {
 
   closeDetails() {
     let uiState = UIStore.getState();
-    let pagination = uiState.pagination;
-    let page = pagination.page && parseInt(pagination.page) || 1;
-    let queryParams = page ? {queryParams: { page: page }} : {}
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}`, queryParams);
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   updateSample() {

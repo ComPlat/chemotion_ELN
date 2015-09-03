@@ -13,25 +13,18 @@ class UIStore {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
-        currentId: null
+        currentId: null,
+        page: 1
       },
       reaction: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
-        currentId: null
+        currentId: null,
+        page: 1
       },
       currentCollectionId: null,
       currentTab: 1,
-
-      pagination: {
-        sample: {
-          page: 1
-        },
-        reaction: {
-          page: 1
-        }
-      }
     };
 
     this.bindListeners({
@@ -120,8 +113,8 @@ class UIStore {
   }
 
   handleSetPagination(pagination) {
-    let {type, page} = pagination
-    this.state.pagination[pagination.type] = {page: page};
+    let {type, page} = pagination;
+    this.state[type].page = page;
   }
 
 }

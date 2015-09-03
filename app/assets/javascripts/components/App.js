@@ -41,6 +41,7 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       show: function(e) {
+        //UIActions.selectTab(1);
         UIActions.selectElement({type: 'sample', id: e.params['sampleID']})
       }
     },
@@ -50,6 +51,7 @@ Aviator.setRoutes({
   '/reaction': {
     target: {
       show: function(e) {
+        //UIActions.selectTab(2);
         UIActions.selectElement({type: 'reaction', id: e.params['reactionID']})
       }
     },

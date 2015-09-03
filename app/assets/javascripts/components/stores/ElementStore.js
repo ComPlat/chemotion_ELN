@@ -81,13 +81,15 @@ class ElementStore {
   }
 
   handleRefreshElements(type) {
-    let uiState = UIStore.getState()
+    this.waitFor(UIStore.dispatchToken);
+    let uiState = UIStore.getState();
+    let page = uiState[type].page
     switch (type) {
       case 'sample':
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, uiState.pagination['sample'])
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, {page: page})
         break;
       case 'reaction':
-        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, uiState.pagination['reaction'])
+        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, {page: page})
         break;
     }
   }
