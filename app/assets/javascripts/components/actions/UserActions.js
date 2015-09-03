@@ -23,12 +23,10 @@ class UserActions {
   }
 
   logout() {
-    console.log("LOGGING OUT");
     fetch('/api/v1/users/sign_out', {method: 'delete', credentials: 'same-origin'})
       .then(response => {
         console.log(response);
         if (response.status == 204) {
-          console.log("DELETING COOKIE");
           cookie.remove('_chemotion_session');
           window.location = '/users/sign_in';
         }
