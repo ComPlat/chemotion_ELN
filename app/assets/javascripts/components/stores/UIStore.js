@@ -22,10 +22,12 @@ class UIStore {
         currentId: null
       },
       currentCollectionId: null,
+      currentTab: 1,
       pagination: null
     };
 
     this.bindListeners({
+      handleSelectTab: UIActions.selectTab,
       handleSelectCollection: UIActions.selectCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleCheckElement: UIActions.checkElement,
@@ -36,6 +38,11 @@ class UIStore {
       handleSetPagination: UIActions.setPagination,
       handleRefreshSamples: ElementActions.updateSample
     });
+  }
+
+  handleSelectTab(tab) {
+    console.log('handleSelectTab: ' + tab)
+    this.state.currentTab = tab;
   }
 
   handleCheckAllElements(type) {
@@ -95,7 +102,6 @@ class UIStore {
   }
 
   handleSelectCollection(collection) {
-    console.log("!!!!!! handleSelectCollection !!!!!!!")
     this.state.currentCollectionId = collection.id;
     // TODO also for wellplates and so on
     ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
