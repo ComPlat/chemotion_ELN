@@ -48,8 +48,11 @@ export default class ShareModal extends React.Component {
 
   filterParamsFromUIState(uiState) {
     let filterParams = {
-      //TODO: Case when checkedall is true
-      sample_ids: uiState.sample.checkedIds
+      sample: {
+        all: uiState.sample.checkedAll,
+        included_ids: uiState.sample.checkedIds,
+        excluded_ids: uiState.sample.uncheckedIds
+      }
       //TODO: Reactions Ids
     };
     return filterParams;
