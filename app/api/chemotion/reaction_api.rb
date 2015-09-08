@@ -1,7 +1,5 @@
 module Chemotion
   class ReactionAPI < Grape::API
-    # TODO ensure user is authenticated
-
     include Grape::Kaminari
 
     resource :reactions do
@@ -23,7 +21,7 @@ module Chemotion
         paginate(scope)
       end
 
-      desc "Return serialized sample by id"
+      desc "Return serialized reaction by id"
       params do
         requires :id, type: Integer, desc: "Reaction id"
       end

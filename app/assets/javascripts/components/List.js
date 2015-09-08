@@ -41,7 +41,7 @@ export default class List extends React.Component {
   }
 
   render() {
-    var samples = <i className="icon-sample"> {this.state.totalSampleElements} </i>,
+    let samples = <i className="icon-sample"> {this.state.totalSampleElements} </i>,
         reactions = <i className="icon-reaction"></i>,
         wellplates = <i className="icon-wellplate"></i>;
 

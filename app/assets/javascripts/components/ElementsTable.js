@@ -250,14 +250,12 @@ export default class ElementsTable extends React.Component {
       )
     } else {
       result = (
-        'Nothing found.'
+        <div>
+          'Nothing found.'
+        </div>
       )
     }
 
-    return (
-      <div>
-        {result}
-      </div>
-    )
+    return result;
   }
 }
