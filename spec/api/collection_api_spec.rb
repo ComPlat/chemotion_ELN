@@ -50,7 +50,18 @@ describe Chemotion::CollectionAPI do
           {
             collection_attributes: attributes_for(:collection, label: 'New'),
             user_ids: [user.id],
-            sample_ids: []
+            elements_filter: {
+              sample: {
+                all: false,
+                included_ids: [],
+                excluded_ids: []
+              },
+              reaction: {
+                all: false,
+                included_ids: [],
+                excluded_ids: []
+              }
+            }
           }
         }
 

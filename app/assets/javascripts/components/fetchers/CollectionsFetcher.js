@@ -56,7 +56,7 @@ export default class CollectionsFetcher {
       },
       body: JSON.stringify({
         collection_attributes: paramObj.collection_attributes,
-        sample_ids: paramObj.sample_ids,
+        elements_filter: paramObj.elements_filter,
         user_ids: paramObj.user_ids
       })
     })

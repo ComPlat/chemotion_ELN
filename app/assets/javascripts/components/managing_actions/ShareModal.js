@@ -18,14 +18,12 @@ export default class ShareModal extends React.Component {
     // TODO update for new check/uncheck info
     let {currentUser, users} = UserStore.getState();
     this.state = {
-      checkedSampleIds: UIStore.getState().sample.checkedIds,
       currentUser: currentUser,
       users: users
     }
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange.bind(this));
     UserStore.listen(this.onUserChange.bind(this));
 
     UserActions.fetchCurrentUser();
@@ -33,7 +31,6 @@ export default class ShareModal extends React.Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIChange.bind(this));
     UserStore.unlisten(this.onUserChange.bind(this));
   }
 
@@ -44,25 +41,34 @@ export default class ShareModal extends React.Component {
     })
   }
 
-  onUIChange(state) {
-    // TODO see constructor
-    this.setState({
-      checkedSampleIds: state.checkedSampleIds,
-    })
-  }
-
   hideModal() {
     let [url, query] = Aviator.getCurrentURI().split('?')
     Aviator.navigate(url+'/hide?'+query);
   }
 
+  filterParamsFromUIState(uiState) {
+    let filterParams = {
+      sample: {
+        all: uiState.sample.checkedAll,
+        included_ids: uiState.sample.checkedIds,
+        excluded_ids: uiState.sample.uncheckedIds
+      }
+      //TODO: Reactions Ids
+    };
+    return filterParams;
+  }
+
   handleSharing() {
+
     let permissionLevel = this.refs.permissionLevelSelect.getValue();
     let sampleDetailLevel = this.refs.sampleDetailLevelSelect.getValue();
     let reactionDetailLevel = this.refs.reactionDetailLevelSelect.getValue();
     let wellplateDetailLevel = this.refs.wellplateDetailLevelSelect.getValue();
     // TODO beautify
     let userIds = this.refs.userSelect.state.values.map(o => o.value);
+
+    let uiState = UIStore.getState();
+    let filterParams = this.filterParamsFromUIState(uiState);
 
     let paramObj = {
       collection_attributes: {
@@ -74,7 +80,7 @@ export default class ShareModal extends React.Component {
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel
       },
-      sample_ids: this.state.checkedSampleIds,
+      elements_filter: filterParams,
       user_ids: userIds
     }
 

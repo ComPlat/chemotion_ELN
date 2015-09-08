@@ -19,6 +19,7 @@ module Chemotion
       namespace :shared do
         desc "Create shared collections"
         params do
+          requires :elements_filter, type: Hash
           requires :collection_attributes, type: Hash do
             requires :permission_level, type: Integer
             requires :sample_detail_level, type: Integer
@@ -30,7 +31,6 @@ module Chemotion
         post do
           # TODO better way to do this?
           params[:collection_attributes][:shared_by_id] = current_user.id
-
           Usecases::Sharing::ShareWithUsers.new(params).execute!
         end
       end
