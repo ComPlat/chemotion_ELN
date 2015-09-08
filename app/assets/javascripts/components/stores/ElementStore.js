@@ -13,21 +13,38 @@ class ElementStore {
           page: null,
           pages: null,
           per_page: null
+        },
+        reactions: {
+          elements: [],
+          totalElements: 0,
+          page: null,
+          pages: null,
+          per_page: null
         }
       },
       currentElement: null
     };
 
     this.bindListeners({
+
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
-      handleUnselectCurrentElement: UIActions.deselectAllElements
+
+      handleFetchReactionById: ElementActions.fetchReactionById,
+      handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+
+      handleUnselectCurrentElement: UIActions.deselectAllElements,
+      handleSetPagination: UIActions.setPagination,
+      handleRefreshElements: ElementActions.refreshElements
     })
   }
 
+
+  // -- Samples --
+
   handleFetchSampleById(result) {
-    this.state.currentElement = result; //todo should not be handled here
+    this.state.currentElement = result;
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -37,11 +54,44 @@ class ElementStore {
   // update stored sample if it has been updated
   handleUpdateSample(sampleId) {
     ElementActions.fetchSampleById(sampleId);
+    this.handleRefreshElements('sample');
   }
 
+
+  // -- Reactions --
+
+  handleFetchReactionById(result) {
+    this.state.currentElement = result;
+  }
+
+  handleFetchReactionsByCollectionId(result) {
+    this.state.elements.reactions = result;
+  }
+
+
+  // -- Generic --
+
   handleUnselectCurrentElement() {
-    //this.waitFor(UIStore.dispatchToken);
     this.state.currentElement = null;
+  }
+
+  handleSetPagination(pagination) {
+    this.waitFor(UIStore.dispatchToken);
+    this.handleRefreshElements(pagination.type);
+  }
+
+  handleRefreshElements(type) {
+    this.waitFor(UIStore.dispatchToken);
+    let uiState = UIStore.getState();
+    let page = uiState[type].page
+    switch (type) {
+      case 'sample':
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, {page: page})
+        break;
+      case 'reaction':
+        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, {page: page})
+        break;
+    }
   }
 }
 

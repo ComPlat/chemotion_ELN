@@ -24,5 +24,6 @@ class API < Grape::API
 
   mount Chemotion::CollectionAPI
   mount Chemotion::SampleAPI
+  mount Chemotion::ReactionAPI
   mount Chemotion::UserAPI
 end

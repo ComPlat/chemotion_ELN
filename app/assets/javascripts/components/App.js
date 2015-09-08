@@ -7,6 +7,8 @@ import ManagingActions from './ManagingActions';
 import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
+import ReactionDetails from './ReactionDetails';
+
 import ShareModal from './managing_actions/ShareModal';
 
 import UIActions from './actions/UIActions';
@@ -25,11 +27,11 @@ Aviator.setRoutes({
   '/collection': {
     target: {
       show: function(e) {
-        UIActions.setPagination({page: e.params.page});
         UIActions.selectCollection({id: e.params['id']});
-        if(!e.params['sampleID'])
+        if(!e.params['sampleID'] && !e.params['reactionID'])
         {
           UIActions.deselectAllElements('sample');
+          UIActions.deselectAllElements('reaction');
         }
       }
     },
@@ -39,10 +41,21 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       show: function(e) {
+        //UIActions.selectTab(1);
         UIActions.selectElement({type: 'sample', id: e.params['sampleID']})
       }
     },
     '/:sampleID': 'show',
+  },
+
+  '/reaction': {
+    target: {
+      show: function(e) {
+        //UIActions.selectTab(2);
+        UIActions.selectElement({type: 'reaction', id: e.params['reactionID']})
+      }
+    },
+    '/:reactionID': 'show',
   },
 
   '/sharing': {
@@ -135,7 +148,17 @@ export default class Elements extends React.Component {
 
     if(this.state.currentElement) {
       //todo: switch component by element.type
-      elementDetails = <SampleDetails id={this.state.currentElement.id}/>
+      switch (this.state.currentElement.type) {
+        case 'sample':
+          elementDetails = <SampleDetails sample={this.state.currentElement}/>
+          break;
+        case 'reaction':
+          elementDetails = <ReactionDetails reaction={this.state.currentElement}/>
+          break;
+        default:
+
+      }
+
     }
 
     return (

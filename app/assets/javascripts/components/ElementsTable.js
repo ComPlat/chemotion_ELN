@@ -2,6 +2,8 @@ import React from 'react';
 import {Label, Pagination, Table} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
+
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
@@ -29,6 +31,8 @@ export default class ElementsTable extends React.Component {
   componentDidMount() {
     ElementStore.listen(this.onChange.bind(this));
     UIStore.listen(this.onChangeUI.bind(this));
+
+    this.onChangeUI(UIStore.getState());
   }
 
   componentWillUnmount() {
@@ -37,27 +41,30 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
-    //console.log(state);
-
-    let page = state.pagination && state.pagination.page;
+    let type = this.props.type;
+    let page = state.pagination && state.pagination[type] && state.pagination[type].page;
     if(page) {
       this.setState({
         activePage: parseInt(page)
       });
     }
 
-    let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
+    //console.log('ElementsType: ' + type + '#activePage ' + page);
 
-    console.log('checkedAllSamples ' + checkedAll);
-    console.log('checkedSampleIds ' + checkedIds && checkedIds.toArray());
-    console.log('uncheckedSampleIds ' + uncheckedIds && uncheckedIds.toArray());
+    let {checkedIds, uncheckedIds, checkedAll, currentId} = state[this.props.type];
 
-    if(checkedIds || uncheckedIds || checkedAll) {
+    // console.log('currentId ' + currentId);
+    // console.log('checkedAll ' + checkedAll);
+    // console.log('checkedIds ' + checkedIds && checkedIds.toArray());
+    // console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
+
+    if(checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
         ui: {
           checkedIds: checkedIds,
           uncheckedIds: uncheckedIds,
-          checkedAll: checkedAll
+          checkedAll: checkedAll,
+          currentId: currentId
         }
       });
     }
@@ -65,19 +72,21 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    const elements = state.elements.samples.elements;
-    const totalElements = state.elements.samples.totalElements;
+    let type = this.props.type+'s';
+
+    const elements = state.elements[type].elements;
+    const totalElements = state.elements[type].totalElements;
 
     let currentElement;
-    if(state.currentElement && state.currentElement.type == this.props.type) {
+    if(!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
     let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
-    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
+    let currentElementDidChange = currentElement && !deepEqual(currentElement, this.state.currentElement);
 
-    let pagination = UIStore.getState().pagination;
-    let page = pagination.page && parseInt(pagination.page) || 1;
+    let page = this.state.activePage;
+
     let numberOfPages = Math.ceil(totalElements / this.state.pageSize);
     if(page > numberOfPages) {
       page = 1
@@ -106,28 +115,23 @@ export default class ElementsTable extends React.Component {
     let elements = this.state.elements;
 
     return elements.map((element, index) => {
-      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
-
-      let optionalLabelColumn
-      let moleculeColumn
-      let svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
-      let svgImage = <SVG src={svgPath} className={isSelected ? 'molecule-selected' : 'molecule'} key={element.molecule.id}/>
-
+      let isSelected = this.state.ui.currentId == element.id;
       let checked = this.isElementChecked(element);
 
+      let optionalLabelColumn;
       if(this.showElementDetailsColumns()) {
-
         optionalLabelColumn = (
           <td className="labels">
             <ElementCollectionLabels element={element} key={element.id}/>
           </td>
         )
-
       }
 
-      moleculeColumn = (
-        <td className="molecule" margin="0" padding="0">{svgImage}</td>
-      )
+      let moleculeColumn;
+      let molecule = element.molecule ? element.molecule : { molecule_svg_file: 'AFABGHUZZDYHJO-UHFFFAOYSA-N.svg' }
+      if(molecule) {
+        moleculeColumn = this.moleculeColumn(molecule, {selected: isSelected});
+      }
 
       let style = {}
       if(isSelected) {
@@ -152,24 +156,38 @@ export default class ElementsTable extends React.Component {
     });
   }
 
+  moleculeColumn(molecule, options={}) {
+    let className = options.selected ? 'molecule-selected' : 'molecule';
+    let moleculeSVG = this.moleculeSVG(molecule, className);
+    return (
+      <td className="molecule" margin="0" padding="0">
+        {moleculeSVG}
+      </td>
+    );
+  }
+
+  moleculeSVG(molecule, className) {
+    let svgPath = `/images/molecules/${molecule.molecule_svg_file}`;
+    return (
+      <SVG src={svgPath} className={className} key={molecule.id}/>
+    );
+  }
+
   showElementDetailsColumns() {
-    return !(this.state.currentElement);
+    return !(this.state.ui.currentId);
   }
 
   showDetails(element) {
-    Aviator.navigate(this._elementDetailsUrl(element), this._queryParams());
+    Aviator.navigate(this._elementDetailsUrl(element));
   }
 
   handlePaginationSelect(event, selectedEvent) {
     this.setState({
       activePage: selectedEvent.eventKey
     }, () => {
-      if(this.state.currentElement) {
-        Aviator.navigate(this._elementDetailsUrl(this.state.currentElement), this._queryParams())
-      }
-      else {
-        Aviator.navigate(this._collectionUrl(), this._queryParams())
-      }
+      let type = this.props.type;
+      let pagination = {type: type, page: this.state.activePage};
+      UIActions.setPagination(pagination)
     })
   }
 
@@ -189,10 +207,6 @@ export default class ElementsTable extends React.Component {
   _collectionUrl() {
     let uiState = UIStore.getState();
     return `/collection/${uiState.currentCollectionId}`
-  }
-
-  _queryParams() {
-    return {queryParams: { page: this.state.activePage }};
   }
 
   pagination() {
@@ -220,16 +234,28 @@ export default class ElementsTable extends React.Component {
   }
 
   render() {
-    return (
-      <div>
-        <Table className="elements" bordered hover>
-          {this.header()}
-          <tbody>
-            {this.entries()}
-          </tbody>
-        </Table>
-        {this.pagination()}
-      </div>
-    )
+    let entries = this.entries();
+    let result;
+    if(entries) {
+      result = (
+        <div>
+          <Table className="elements" bordered hover>
+            {this.header()}
+            <tbody>
+              {entries}
+            </tbody>
+          </Table>
+          {this.pagination()}
+        </div>
+      )
+    } else {
+      result = (
+        <div>
+          'Nothing found.'
+        </div>
+      )
+    }
+
+    return result;
   }
 }

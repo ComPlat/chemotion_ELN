@@ -2,6 +2,10 @@ import alt from '../alt';
 
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {
+  selectTab(tab) {
+    this.dispatch(tab);
+  }
+
   selectCollection(collection) {
     this.dispatch(collection)
   }
@@ -32,10 +36,6 @@ class UIActions {
 
   setPagination(pagination) {
     this.dispatch(pagination);
-  }
-
-  refreshSamples() {
-    this.dispatch(type)
   }
 }
 

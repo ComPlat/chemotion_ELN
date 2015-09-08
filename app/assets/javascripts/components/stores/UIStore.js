@@ -13,13 +13,22 @@ class UIStore {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
-        currentId: null
+        currentId: null,
+        page: 1
+      },
+      reaction: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null,
+        page: 1
       },
       currentCollectionId: null,
-      pagination: null
+      currentTab: 1,
     };
 
     this.bindListeners({
+      handleSelectTab: UIActions.selectTab,
       handleSelectCollection: UIActions.selectCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleCheckElement: UIActions.checkElement,
@@ -27,9 +36,13 @@ class UIStore {
       handleUncheckAllElements: UIActions.uncheckAllElements,
       handleDeselectAllElements: UIActions.deselectAllElements,
       handleSelectElement: UIActions.selectElement,
-      handleSetPagination: UIActions.setPagination,
-      handleRefreshSamples: ElementActions.updateSample
+      handleSetPagination: UIActions.setPagination
     });
+  }
+
+  handleSelectTab(tab) {
+    console.log('handleSelectTab: ' + tab)
+    this.state.currentTab = tab;
   }
 
   handleCheckAllElements(type) {
@@ -77,27 +90,33 @@ class UIStore {
   handleSelectElement(element) {
     this.state[element.type].currentId = element.id;
 
-    // TODO also for reactions and so on
+    // TODO also for wellplates
     switch(element.type) {
       case 'sample':
         ElementActions.fetchSampleById(element.id)
+        break;
+      case 'reaction':
+        ElementActions.fetchReactionById(element.id)
         break;
     }
   }
 
   handleSelectCollection(collection) {
+    let hasChanged = this.state.currentCollectionId != collection.id;
     this.state.currentCollectionId = collection.id;
-    // TODO also for reactions and so on
-    ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
+
+    // TODO also for wellplates and so on
+    if(hasChanged) {
+      ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
+      ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination)
+    }
   }
 
   handleSetPagination(pagination) {
-    this.state.pagination = pagination;
+    let {type, page} = pagination;
+    this.state[type].page = page;
   }
 
-  handleRefreshSamples() {
-    ElementActions.fetchSamplesByCollectionId(this.state.currentCollectionId, this.state.pagination)
-  }
 }
 
 export default alt.createStore(UIStore, 'UIStore');
