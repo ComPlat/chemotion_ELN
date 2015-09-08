@@ -1,6 +1,8 @@
 import React from 'react';
 
 import UIActions from './actions/UIActions';
+import UIStore from './stores/UIStore';
+
 
 export default class ElementAllCheckbox extends React.Component {
   constructor(props) {
@@ -9,6 +11,21 @@ export default class ElementAllCheckbox extends React.Component {
       checked: false,
       type: props.type
     }
+  }
+  
+  componentDidMount() {
+    UIStore.listen(this.onChangeUI.bind(this));
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onChangeUI.bind(this));
+  }
+
+  onChangeUI(state) {
+    let element = state[this.state.type];
+    this.setState({
+      checked: element.checkedAll
+    })
   }
 
   toggleCheckbox() {

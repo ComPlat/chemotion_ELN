@@ -32,6 +32,8 @@ Aviator.setRoutes({
         {
           UIActions.deselectAllElements('sample');
           UIActions.deselectAllElements('reaction');
+          UIActions.uncheckAllElements('sample');
+          UIActions.uncheckAllElements('reaction');
         }
       }
     },
