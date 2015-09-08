@@ -57,15 +57,12 @@ MOLFILE
           "inchistring" => "InChI=1S/H2O/h1H2",
               "density" => nil,
      "molecular_weight" => 18.01528,
-              "molfile" => "H2O Water 7732185\n##CCCBDB 8251509:58\nGeometry Optimized at HF/STO-3G\n  3  2  0  0  0  0  0  0  0  0    V2000\n    0.0000    0.0000    0.1271 O  0000000000000000000\n    0.0000    0.7580   -0.5085 H  0000000000000000000\n    0.0000   -0.7580   -0.5085 H  0000000000000000000\n  1  2  1  0     0  0\n  1  3  1  0     0  0\nM  END\n",
+              "molfile" => molfile,
         "melting_point" => nil,
         "boiling_point" => nil,
          "sum_formular" => "H2O",
-                "names" => [
-        "water",
-        "oxidane"
-    ],
-           "iupac_name" => "oxidane",
+                "names" => ["hydron;hydroxide"],
+           "iupac_name" => "hydron;hydroxide",
     "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg"
       )
     end
