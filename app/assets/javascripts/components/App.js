@@ -20,7 +20,7 @@ Aviator.setRoutes({
   '/': 'root',
   target: {
     root: function(e) {
-      Aviator.navigate('/collections/all');
+      Aviator.navigate('/collection/all');
     }
   },
 
