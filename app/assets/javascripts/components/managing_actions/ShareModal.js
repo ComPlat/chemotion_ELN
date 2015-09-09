@@ -42,8 +42,7 @@ export default class ShareModal extends React.Component {
   }
 
   hideModal() {
-    let [url, query] = Aviator.getCurrentURI().split('?')
-    Aviator.navigate(url+'/hide?'+query);
+    Aviator.navigate(Aviator.getCurrentURI()+'/hide');
   }
 
   filterParamsFromUIState(uiState) {
