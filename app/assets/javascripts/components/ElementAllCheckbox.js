@@ -8,25 +8,18 @@ export default class ElementAllCheckbox extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checked: false,
+      checked: props.checked,
       type: props.type
     }
   }
-  
-  componentDidMount() {
-    UIStore.listen(this.onChangeUI.bind(this));
-  }
 
-  componentWillUnmount() {
-    UIStore.unlisten(this.onChangeUI.bind(this));
-  }
-
-  onChangeUI(state) {
-    let element = state[this.state.type];
+  componentWillReceiveProps(nextProps) {
     this.setState({
-      checked: element.checkedAll
+      checked: nextProps.checked,
+      type: nextProps.type
     })
   }
+  
 
   toggleCheckbox() {
     let newChecked = !this.state.checked;

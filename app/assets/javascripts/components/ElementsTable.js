@@ -221,10 +221,13 @@ export default class ElementsTable extends React.Component {
 
   header() {
     let colSpan = this.showElementDetailsColumns() ? "3" : "2";
+    let checkedAll = this.state.ui.checkedAll;
+
+    console.log("checkedAll: "+checkedAll)
     return (
       <thead>
         <th className="check">
-          <ElementAllCheckbox type={this.props.type} />
+          <ElementAllCheckbox type={this.props.type} checked={checkedAll}/>
         </th>
         <th colSpan={colSpan}>
           All {this.props.type}s
