@@ -31,8 +31,16 @@ module Chemotion
             requires :reaction_detail_level, type: Integer
             requires :wellplate_detail_level, type: Integer
           end
+          optional :sample_ids, type: Array
+          optional :reaction_ids, type: Array
           requires :user_ids, type: Array
         end
+
+        before do
+          sample_ids = params[:sample_ids]
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Sample.where(id: sample_ids)).share?
+        end
+
         post do
           # TODO better way to do this?
           params[:collection_attributes][:shared_by_id] = current_user.id

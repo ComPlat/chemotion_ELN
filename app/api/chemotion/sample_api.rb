@@ -1,13 +1,10 @@
 module Chemotion
   class SampleAPI < Grape::API
-    # TODO ensure user is authenticated
-
     include Grape::Kaminari
 
     resource :samples do
-
-      #todo: more general search api
-      desc "Return serialized samples"
+      # TODO more general search api
+      desc "Return serialized samples of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
       end
@@ -29,11 +26,14 @@ module Chemotion
         requires :id, type: Integer, desc: "Sample id"
       end
       route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Sample.find(params[:id])).read?
+        end
+
         get do
           Sample.find(params[:id])
         end
       end
-
 
       desc "Update sample by id"
       params do
@@ -50,6 +50,9 @@ module Chemotion
         optional :molecule, type: Hash, desc: "Sample molecule"
       end
       put ':id' do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Sample.find(params[:id])).update?
+        end
 
         attributes = {
           name: params[:name],
@@ -106,8 +109,6 @@ module Chemotion
         end
         sample
       end
-
-
     end
   end
 end

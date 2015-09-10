@@ -16,15 +16,10 @@ class API < Grape::API
     def authenticate!
       error!('401 Unauthorized', 401) unless current_user
     end
-
-    def authorize!
-      error!('401 Unauthorized', 401) unless Authorization.new(current_user, env, params).request_valid?
-    end
   end
 
   before do
     authenticate!
-    authorize!
   end
 
   mount Chemotion::LiteratureAPI

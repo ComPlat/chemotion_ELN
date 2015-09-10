@@ -17,6 +17,44 @@ describe Chemotion::SampleAPI do
       allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
     end
 
+    # Permission related are reading and updating of a sample
+    describe 'GET /api/v1/samples/:id' do
+      context 'with appropriate permissions' do
+        let!(:c)      { create(:collection, user_id: user.id) }
+        let!(:sample) { create(:sample) }
+
+        before do
+          CollectionsSample.create!(sample: sample, collection: c)
+
+          get "/api/v1/samples/#{sample.id}"
+        end
+
+        it 'returns 200 status code' do
+          expect(response.status).to eq 200
+        end
+
+        it 'returns serialized sample' do
+          expect(JSON.parse(response.body)['sample']['name']).to eq sample.name
+        end
+      end
+
+      context 'with inappropriate permissions' do
+        let!(:c)      { create(:collection, user_id: user.id + 1) }
+        let!(:sample) { create(:sample) }
+
+        before do
+          CollectionsSample.create!(sample: sample, collection: c)
+
+          get "/api/v1/samples/#{sample.id}"
+        end
+
+        it 'returns 401 unauthorized status code' do
+          expect(response.status).to eq 401
+        end
+      end
+    end
+
+    # not permission related endpoints
     describe 'GET /api/v1/samples' do
       it 'returns serialized (unshared) samples roots of logged in user' do
         get '/api/v1/samples'
@@ -39,8 +77,7 @@ describe Chemotion::SampleAPI do
 
     describe 'POST /api/v1/samples' do
       context 'with valid parameters' do
-
-        let!(:params) {
+        let(:params) {
           {
             name: 'test',
             amount_value: 0,
@@ -54,15 +91,16 @@ describe Chemotion::SampleAPI do
           }
         }
 
+        before { post '/api/v1/samples', params }
+
         it 'should be able to create a new sample' do
-          post '/api/v1/samples', params
           s = Sample.find_by(name: 'test')
           expect(s).to_not be_nil
+
           params.each do |k, v|
             expect(s.attributes.symbolize_keys[k]).to eq(v)
           end
         end
-
       end
     end
 
