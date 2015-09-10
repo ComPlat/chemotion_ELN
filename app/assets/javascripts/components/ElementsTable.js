@@ -83,7 +83,7 @@ export default class ElementsTable extends React.Component {
     }
 
     let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
-    let currentElementDidChange = currentElement && !deepEqual(currentElement, this.state.currentElement);
+    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
     let page = this.state.activePage;
 
@@ -115,7 +115,7 @@ export default class ElementsTable extends React.Component {
     let elements = this.state.elements;
 
     return elements.map((element, index) => {
-      let isSelected = this.state.ui.currentId == element.id;
+      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
       let checked = this.isElementChecked(element);
 
       let optionalLabelColumn;
