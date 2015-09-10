@@ -14,7 +14,6 @@ export default class ShareModal extends React.Component {
   constructor(props) {
     super(props);
 
-    // TODO the same for reactions and so on
     // TODO update for new check/uncheck info
     let {currentUser, users} = UserStore.getState();
     this.state = {
@@ -51,8 +50,12 @@ export default class ShareModal extends React.Component {
         all: uiState.sample.checkedAll,
         included_ids: uiState.sample.checkedIds,
         excluded_ids: uiState.sample.uncheckedIds
+      },
+      reaction: {
+        all: uiState.reaction.checkedAll,
+        included_ids: uiState.reaction.checkedIds,
+        excluded_ids: uiState.reaction.uncheckedIds
       }
-      //TODO: Reactions Ids
     };
     return filterParams;
   }
@@ -82,7 +85,6 @@ export default class ShareModal extends React.Component {
       elements_filter: filterParams,
       user_ids: userIds
     }
-
     CollectionActions.createSharedCollections(paramObj);
     this.hideModal();
   }

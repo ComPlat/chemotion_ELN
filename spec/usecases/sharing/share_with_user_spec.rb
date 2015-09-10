@@ -1,6 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::Sharing::ShareWithUser do
+
+  let(:sample_1) { create(:sample) }
+  let(:sample_2) { create(:sample) }
+  let(:reaction_1) { create(:reaction) }
+  let(:reaction_2) { create(:reaction) } 
+
   let(:params) {
     {
       # TODO parent of collection?
@@ -14,7 +20,8 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
         reaction_detail_level: 3,
         wellplate_detail_level: 4
       },
-      sample_ids: [1, 10]
+      sample_ids: [sample_1.id, sample_2.id],
+      reaction_ids: [reaction_1.id, reaction_2.id]
     }
   }
 
@@ -37,10 +44,14 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
     end
 
     it 'creates sample associations according to given params' do
-      c = Collection.find_by(label: 'test')
-      associated_sample_ids = CollectionsSample.where(collection_id: c.id).pluck(:sample_id)
-
-      expect(associated_sample_ids).to match_array([1,10])
+      associated_sample_ids = Collection.find_by(label: 'test').sample_ids
+      expect(associated_sample_ids).to match_array([sample_1.id,sample_2.id])
     end
+
+    it 'creates reaction associations according to given params' do
+      associated_reaction_ids = Collection.find_by(label: 'test').reaction_ids
+      expect(associated_reaction_ids).to match_array([reaction_1.id, reaction_2.id])
+    end
+    
   end
 end
