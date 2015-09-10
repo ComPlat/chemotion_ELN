@@ -6,10 +6,18 @@ export default class ElementAllCheckbox extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checked: false,
+      checked: props.checked,
       type: props.type
     }
   }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      checked: nextProps.checked,
+      type: nextProps.type
+    })
+  }
+  
 
   toggleCheckbox() {
     let newChecked = !this.state.checked;
