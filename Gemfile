@@ -43,6 +43,8 @@ gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
 gem 'httparty'
 gem 'chemrails', git: 'git://github.com/cominch/chemrails'
 
+# Free font icons
+gem "font-awesome-rails"
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

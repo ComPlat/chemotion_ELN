@@ -224,7 +224,6 @@ export default class ElementsTable extends React.Component {
     let colSpan = this.showElementDetailsColumns() ? "3" : "2";
     let checkedAll = this.state.ui.checkedAll;
 
-    console.log("checkedAll: "+checkedAll)
     return (
       <thead>
         <th className="check">

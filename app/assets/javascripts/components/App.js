@@ -8,6 +8,7 @@ import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
+import CollectionManagement from './CollectionManagement';
 
 import ShareModal from './managing_actions/ShareModal';
 
@@ -28,6 +29,18 @@ Aviator.setRoutes({
   '/collection': {
     target: {
       show: function(e) {
+        let mainContentDomNode = document.getElementById('main-content');
+
+        if(mainContentDomNode) {
+          // nothing rendered in main-content div
+          if(!mainContentDomNode.firstChild) {
+            React.render(<Elements />, mainContentDomNode);
+          } else if (document.getElementById('collection-management')) {
+            React.unmountComponentAtNode(mainContentDomNode);
+            React.render(<Elements />, mainContentDomNode);
+          }
+        }
+
         UIActions.selectCollection({id: e.params['id']});
         if(!e.params['sampleID'] && !e.params['reactionID'])
         {
@@ -36,8 +49,24 @@ Aviator.setRoutes({
           UIActions.uncheckAllElements('sample');
           UIActions.uncheckAllElements('reaction');
         }
+      },
+
+      showCollectionManagement: function(e) {
+        let mainContentDomNode = document.getElementById('main-content');
+        let rightColumnDomNode = document.getElementById('right-column');
+
+        if(mainContentDomNode) {
+          // nothing rendered in main-content div
+          if(!mainContentDomNode.firstChild) {
+            React.render(<CollectionManagement />, mainContentDomNode);
+          } else if (document.getElementById('elements')) {
+            React.unmountComponentAtNode(mainContentDomNode);
+            React.render(<CollectionManagement />, mainContentDomNode);
+          }
+        }
       }
     },
+    '/management': 'showCollectionManagement',
     '/:id': 'show'
   },
 
@@ -84,10 +113,8 @@ Aviator.setRoutes({
   }
 
 });
-Aviator.dispatch();
 
-
-export default class App extends React.Component {
+class App extends React.Component {
   constructor(props) {
     super(props);
   }
@@ -113,12 +140,11 @@ export default class App extends React.Component {
             <CollectionTree />
           </Col>
           <Col sm={8} md={8} lg={8}>
-            <Elements />
+            <div id="main-content">
+            </div>
           </Col>
           <Col sm={2} md={2} lg={2}>
-            <ManagingActions />
-            <br/>
-            <ContextActions />
+            <ManagingActions /><br/><ContextActions />
           </Col>
         </Row>
       </Grid>
@@ -164,29 +190,29 @@ export default class Elements extends React.Component {
           elementDetails = <ReactionDetails reaction={this.state.currentElement}/>
           break;
         default:
-
       }
-
     }
 
     return (
-      <Table>
-        <tbody>
-        <tr valign="top" className="borderless">
-          <td className="borderless">
-            <List/>
-          </td>
-          <td className="borderless" width={width}>
-            {elementDetails}
-          </td>
-        </tr>
-        </tbody>
-      </Table>
+      <div id="elements">
+        <Table>
+          <tbody>
+          <tr valign="top" className="borderless">
+            <td className="borderless">
+              <List/>
+            </td>
+            <td className="borderless" width={width}>
+              {elementDetails}
+            </td>
+          </tr>
+          </tbody>
+        </Table>
+      </div>
     )
   }
 }
 
-
 $(document).ready(function () {
   React.render(<App />, document.getElementById('app'));
+  Aviator.dispatch();
 });

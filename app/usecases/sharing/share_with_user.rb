@@ -12,6 +12,7 @@ module Usecases
           @params.fetch(:sample_ids, []).each do |sample_id|
             CollectionsSample.create(collection_id: c.id, sample_id: sample_id)
           end
+
           @params.fetch(:reaction_ids, []).each do |reaction_id|
             CollectionsReaction.create(collection_id: c.id, reaction_id: reaction_id)
           end

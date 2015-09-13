@@ -12,6 +12,7 @@
     "react-bootstrap": "0.24.2",
     "react-select": "0.6.1",
     "react-tools": "0.13.3",
+    "react-ui-tree": "2.2.1",
     "react-inlinesvg": "0.4.2",
     "aviator": "v0.5.0",
     "whatwg-fetch": "0.9.0",

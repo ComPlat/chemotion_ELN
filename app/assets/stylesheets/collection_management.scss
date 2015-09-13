@@ -1,0 +1,117 @@
+#collection-management {
+  .nav-tabs {
+    font-size: 13px;
+  }
+}
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.f-no-select {
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.m-tree {
+  position: relative;
+  overflow: hidden;
+  @extend .f-no-select;
+}
+
+.m-draggable {
+  position: absolute;
+  opacity: 0.8;
+  @extend .f-no-select;
+}
+
+.tree {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: #21252B;
+}
+
+.m-node {
+  &.placeholder > * {
+    visibility: hidden;
+  }
+
+  &.placeholder {
+    border: 1px dashed #1385e5;
+  }
+
+  .inner {
+    color: #9DA5B4;
+    font-size: 12px;
+    font-family: Menlo;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .node {
+    display: inline-block;
+    width: 100%;
+    padding: 0px 5px;
+
+    .collection-label {
+      @extend .inner;
+      font-size: 10px;
+      background-color: #31363F;
+      color: #9DA5B4 !important;
+      width: 200px;
+      height: 22px;
+      float: left;
+      margin-left: 15px;
+    }
+
+    .root-label {
+      @extend .inner;
+      margin-left: 15px;
+      float: left;
+      padding-top: 4px;
+      height: 26px;
+    }
+
+    .form-group {
+      margin-bottom: 0px;
+    }
+
+    &.is-active {
+      background-color: #31363F;
+    }
+  }
+
+  .root-actions {
+    float: right;
+    padding-top: 4px;
+  }
+
+  .actions {
+    float: right;
+    padding-top: 0px;
+  }
+
+  .collapse {
+    position: absolute;
+    left: 0;
+    cursor: pointer;
+    display: block;
+  }
+
+  .caret-right:before {
+    content: '\25B8';
+    font-size: 15px;
+  }
+
+  .caret-down:before {
+    content: '\25BE';
+    font-size: 15px;
+  }
+
+}

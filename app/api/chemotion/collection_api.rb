@@ -3,7 +3,7 @@ module Chemotion
     resource :collections do
       desc "Return all unshared serialized collection roots of current user"
       get :roots do
-        current_user.collections.unshared.roots
+        current_user.collections.ordered.unshared.roots
       end
 
       desc "Return all shared serialized collection roots"
@@ -14,6 +14,11 @@ module Chemotion
       desc "Return all remote serialized collection roots"
       get :remote_roots do
         current_user.collections.remote(current_user.id).roots
+      end
+
+      desc "Bulk update and/or create new collections"
+      patch '/' do
+        Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
       end
 
       namespace :shared do
@@ -32,6 +37,23 @@ module Chemotion
           # TODO better way to do this?
           params[:collection_attributes][:shared_by_id] = current_user.id
           Usecases::Sharing::ShareWithUsers.new(params).execute!
+        end
+
+        desc "Update shared collection"
+        params do
+          requires :id, type: Integer
+          requires :permission_level, type: Integer
+          requires :sample_detail_level, type: Integer
+          requires :reaction_detail_level, type: Integer
+          requires :wellplate_detail_level, type: Integer
+        end
+        put ':id' do
+          Collection.find(params[:id]).update({
+            permission_level: params[:permission_level],
+            sample_detail_level: params[:sample_detail_level],
+            reaction_detail_level: params[:reaction_detail_level],
+            wellplate_detail_level: params[:wellplate_detail_level]
+          })
         end
       end
 

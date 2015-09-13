@@ -38,6 +38,24 @@ class CollectionActions {
         console.log(errorMessage);
       });
   }
+
+  bulkUpdateUnsharedCollections(paramObj) {
+    CollectionsFetcher.bulkUpdateUnsharedCollections(paramObj)
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  updateSharedCollection(paramObj) {
+    CollectionsFetcher.updateSharedCollection(paramObj)
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
 
 export default alt.createActions(CollectionActions);
