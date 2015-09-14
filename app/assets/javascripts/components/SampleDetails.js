@@ -219,6 +219,11 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  sampleIsValid() {
+    let sample = this.state.sample;
+    return sample && sample.molfile
+  }
+
   render() {
 
     let sample = this.state.sample || {}
@@ -231,6 +236,9 @@ export default class SampleDetails extends React.Component {
         <Glyphicon glyph='pencil'/>
       </Button>
     )
+
+    let sampleIsValid = this.sampleIsValid();
+
     return (
       <div>
         <StructureEditorModal
@@ -385,7 +393,7 @@ export default class SampleDetails extends React.Component {
               <ListGroupItem>
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
-                  <Button bsStyle="warning" onClick={this._submitFunction.bind(this)}>{this._submitLabel()}</Button>
+                  <Button bsStyle="warning" onClick={this._submitFunction.bind(this)} disabled={!sampleIsValid}>{this._submitLabel()}</Button>
                 </ButtonToolbar>
               </ListGroupItem>
             </form>
