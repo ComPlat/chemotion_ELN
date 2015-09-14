@@ -45,6 +45,7 @@ export default class SampleDetails extends React.Component {
   }
 
   createSampleObject() {
+    let uiState = UIStore.getState();
     return {
       id: this.state.sample.id,
       name: this.state.sample.name,
@@ -56,7 +57,8 @@ export default class SampleDetails extends React.Component {
       impurities: this.state.sample.impurities,
       location: this.state.sample.location,
       molfile: this.state.sample.molfile,
-      molecule: this.state.sample.molecule
+      molecule: this.state.sample.molecule,
+      collection_id: uiState.currentCollectionId
     }
   }
 

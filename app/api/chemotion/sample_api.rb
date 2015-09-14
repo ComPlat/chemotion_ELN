@@ -81,6 +81,7 @@ module Chemotion
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :molecule, type: Hash, desc: "Sample molecule"
+        optional :collection_id, type: Integer, desc: "Collection id"
       end
       post do
         attributes = {
@@ -97,7 +98,12 @@ module Chemotion
         attributes.merge!(
           molecule_attributes: params[:molecule]
         ) unless params[:molecule].blank?
-        Sample.create(attributes)
+        sample = Sample.create(attributes)
+        if collection_id = params[:collection_id]
+          collection = Collection.find(collection_id)
+          CollectionsSample.create!(sample: sample, collection: collection)
+        end
+        sample
       end
 
 
