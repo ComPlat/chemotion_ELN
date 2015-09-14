@@ -22,7 +22,7 @@ export default class ReactionDetailsMaterials extends React.Component {
     let rows = this.state.samples.map((sample)=> (
       <tr key={sample.id}>
         <td width="5%">
-          <input type="checkbox" />
+          <input type="radio" name="reference" />
         </td>
         <td width="25%">{sample.name}</td>
         <td width="25%">{sample.molecule.sum_formular}</td>
