@@ -3,7 +3,8 @@
 * Copy `.ruby-gemset.example` to `.ruby-gemset`.
 * Copy `.ruby-version.example` to `.ruby-version`.
 * Reload directory to create rvm gemset.
-# `brew install cmake for` Mac OS X
+* `brew install cmake` for Mac OS X
+* install openbabel as described in its [documentation](https://github.com/cubuslab/openbabel/blob/master/INSTALL)
 * Execute `bundle install`.
 * Execute `rake db:reset` (this creates and seeds the database).
 
