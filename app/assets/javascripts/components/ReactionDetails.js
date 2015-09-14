@@ -32,10 +32,40 @@ export default class ReactionDetails extends React.Component {
     }
   }
 
+  handleMaterialsChange(change) {
+    switch (change.type) {
+      case 'referenceChanged':
+        this.setState({
+          reaction: this.updatedReactionForReferenceChange(change)
+        })
+        break;
+    }
+  }
+
+  updatedReactionForReferenceChange(change) {
+    let {reaction} = this.state;
+    let {sampleID} = change;
+
+    reaction.starting_materials = this.updatedSamplesForReferenceChange(reaction.starting_materials, sampleID);
+    reaction.reactants = this.updatedSamplesForReferenceChange(reaction.reactants, sampleID);
+    reaction.products = this.updatedSamplesForReferenceChange(reaction.products, sampleID);
+    return reaction;
+  }
+
+  updatedSamplesForReferenceChange(samples, sampleID) {
+    return samples.map((sample)=>{
+     if(sample.id == sampleID) {
+       sample.equivalent = 1.0;
+     } else {
+       //TODO replace dummmy calculation
+       sample.equivalent = 2.0;
+     }
+     return sample;
+   });
+  }
+
   render() {
     let reaction = this.state.reaction
-    console.log(reaction.starting_materials[0]);
-
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
@@ -52,13 +82,13 @@ export default class ReactionDetails extends React.Component {
           </table>
           <ListGroup fill>
             <ListGroupItem header='Starting Materials'>
-              <ReactionDetailsMaterials materialGroup="starting" samples={reaction.starting_materials}/>
+              <ReactionDetailsMaterials materialGroup="starting_materials" samples={reaction.starting_materials} onChange={this.handleMaterialsChange.bind(this)}/>
             </ListGroupItem>
             <ListGroupItem header='Reactants'>
-              <ReactionDetailsMaterials materialGroup="reactants" samples={reaction.reactants}/>
+              <ReactionDetailsMaterials materialGroup="reactants" samples={reaction.reactants} onChange={this.handleMaterialsChange.bind(this)}/>
             </ListGroupItem>
             <ListGroupItem header='Products'>
-              <ReactionDetailsMaterials materialGroup="products" samples={reaction.products}/>
+              <ReactionDetailsMaterials materialGroup="products" samples={reaction.products} onChange={this.handleMaterialsChange.bind(this)}/>
             </ListGroupItem>
           </ListGroup>
         </Panel>

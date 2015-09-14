@@ -18,11 +18,27 @@ export default class ReactionDetailsMaterials extends React.Component {
     })
   }
 
+  handleReferenceChange(event, sampleID) {
+    let value = event.target.value;
+    this.props.onChange(
+      {
+        type: 'referenceChanged',
+        materialGroup: this.state.materialGroup,
+        sampleID: sampleID,
+        value: value
+      }
+    )
+  }
+
   render() {
     let rows = this.state.samples.map((sample)=> (
       <tr key={sample.id}>
         <td width="5%">
-          <input type="radio" name="reference" />
+          <input
+            type="radio"
+            name="reference"
+            onClick={(e) => this.handleReferenceChange(e, sample.id)}
+          />
         </td>
         <td width="25%">{sample.name}</td>
         <td width="25%">{sample.molecule.sum_formular}</td>
@@ -38,7 +54,7 @@ export default class ReactionDetailsMaterials extends React.Component {
           />
         </td>
         <td width="20%">
-          <Input type="text" value={1.0} disabled />
+          <Input type="text" key={sample.id} value={sample.equivalent} disabled />
         </td>
       </tr>
     ));
