@@ -21,13 +21,26 @@ export default class ContextActions extends React.Component {
     this.setState(state);
   }
 
+  _createSample() {
+    Aviator.navigate(this._createSampleUrl());
+  }
+
+  _createSampleUrl() {
+    return `${this._collectionUrl()}/sample/new`
+  }
+
+  _collectionUrl() {
+    let uiState = UIStore.getState();
+    return `/collection/${uiState.currentCollectionId}`
+  }
+
   availableActions() {
     // TODO später auch für reaktionen usw
     // TODO replace dummy implementation
     if(this.state.sample.checkedIds.size == 0) {
       return (
         <ButtonGroup vertical block>
-          <Button>Create Sample</Button>
+          <Button onClick={e => this._createSample()}>Create Sample</Button>
           <Button>Create Reaction</Button>
           <Button>Create Wellplate</Button>
         </ButtonGroup>

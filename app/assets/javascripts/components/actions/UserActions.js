@@ -27,16 +27,16 @@ class UserActions {
 
   logout() {
     fetch('/users/sign_out', {
-        method: 'delete', 
-        credentials: 'same-origin', 
-        data: {authenticity_token: DocumentHelper.getMetaContent("csrf-token")}
-      })
-      .then(response => {
-        console.log(response);
-        if (response.status == 204) {
-          location.reload();
-        }
-      });
+      method: 'delete',
+      credentials: 'same-origin',
+      data: {authenticity_token: DocumentHelper.getMetaContent("csrf-token")}
+    })
+    .then(response => {
+      console.log(response);
+      if (response.status == 204) {
+        location.reload();
+      }
+    });
   }
 
 }

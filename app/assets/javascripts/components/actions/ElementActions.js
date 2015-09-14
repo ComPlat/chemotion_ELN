@@ -22,6 +22,14 @@ class ElementActions {
       });
   }
 
+  createSample(paramObj) {
+    delete paramObj['id'];
+    SamplesFetcher.create(paramObj)
+      .then((result) => {
+        this.dispatch(result.sample.id)
+      });
+  }
+
   updateSample(paramObj) {
     SamplesFetcher.update(paramObj)
       .then((result) => {
@@ -51,6 +59,24 @@ class ElementActions {
 
   refreshElements(type) {
     this.dispatch(type)
+  }
+
+  generateEmptySample() {
+    let sample = {
+      id: '_new_',
+      type: 'sample',
+      name: 'New Sample',
+      amount_value: 0,
+      amount_unit: 'g',
+      description: '',
+      purity: 0,
+      solvent: '',
+      impurities: '',
+      location: '',
+      molfile: '',
+      molecule: {}
+    }
+    this.dispatch(sample)
   }
 }
 

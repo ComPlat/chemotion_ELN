@@ -64,4 +64,36 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static create(paramObj) {
+    let { density, boiling_point, melting_point } = paramObj.molecule;
+    let promise = fetch('/api/v1/samples', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: paramObj.name,
+        amount_value: paramObj.amount_value,
+        amount_unit: paramObj.amount_unit,
+        description: paramObj.description,
+        purity: paramObj.purity,
+        solvent: paramObj.solvent,
+        impurities: paramObj.impurities,
+        location: paramObj.location,
+        molfile: paramObj.molfile,
+        molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

@@ -30,13 +30,15 @@ class ElementStore {
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
+      handleCreateSample: ElementActions.createSample,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
-      handleRefreshElements: ElementActions.refreshElements
+      handleRefreshElements: ElementActions.refreshElements,
+      handleGenerateEmptySample: ElementActions.generateEmptySample
     })
   }
 
@@ -47,6 +49,10 @@ class ElementStore {
     this.state.currentElement = result;
   }
 
+  handleGenerateEmptySample(result) {
+    this.state.currentElement = result;
+  }
+
   handleFetchSamplesByCollectionId(result) {
     this.state.elements.samples = result;
   }
@@ -54,6 +60,13 @@ class ElementStore {
   // update stored sample if it has been updated
   handleUpdateSample(sampleId) {
     ElementActions.fetchSampleById(sampleId);
+    this.handleRefreshElements('sample');
+  }
+
+  // Update Stored Sample if it has been created
+  handleCreateSample(sampleId) {
+    ElementActions.fetchSampleById(sampleId);
+    this.state.currentElement.id = sampleId;
     this.handleRefreshElements('sample');
   }
 

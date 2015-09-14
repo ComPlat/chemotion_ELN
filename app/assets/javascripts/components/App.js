@@ -12,6 +12,7 @@ import ReactionDetails from './ReactionDetails';
 import ShareModal from './managing_actions/ShareModal';
 
 import UIActions from './actions/UIActions';
+import ElementActions from './actions/ElementActions';
 
 import Aviator from 'aviator'
 Aviator.root = '/';
@@ -42,12 +43,17 @@ Aviator.setRoutes({
 
   '/sample': {
     target: {
-      show: function(e) {
+      showOrNew: function(e) {
         //UIActions.selectTab(1);
-        UIActions.selectElement({type: 'sample', id: e.params['sampleID']})
+        let sampleID = e.params['sampleID']
+        if (sampleID != 'new') {
+          UIActions.selectElement({type: 'sample', id: sampleID})
+        } else {
+          ElementActions.generateEmptySample()
+        }
       }
     },
-    '/:sampleID': 'show',
+    '/:sampleID': 'showOrNew',
   },
 
   '/reaction': {
