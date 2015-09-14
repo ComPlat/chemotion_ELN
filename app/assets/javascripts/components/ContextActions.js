@@ -37,20 +37,24 @@ export default class ContextActions extends React.Component {
   availableActions() {
     // TODO später auch für reaktionen usw
     // TODO replace dummy implementation
+
+    let uiState = UIStore.getState();
+
+    let isAllCollection = uiState.currentCollectionId == 'all'
     if(this.state.sample.checkedIds.size == 0) {
       return (
         <ButtonGroup vertical block>
-          <Button onClick={e => this._createSample()}>Create Sample</Button>
-          <Button>Create Reaction</Button>
-          <Button>Create Wellplate</Button>
+          <Button onClick={e => this._createSample()} disabled={isAllCollection}>Create Sample</Button>
+          <Button disabled={isAllCollection}>Create Reaction</Button>
+          <Button disabled={isAllCollection}>Create Wellplate</Button>
         </ButtonGroup>
       )
     } else {
       return (
         <ButtonGroup vertical block>
-          <Button>Split as Subsample(s)</Button>
-          <Button>Create Reaction</Button>
-          <Button>Create Wellplate</Button>
+          <Button >Split as Subsample(s)</Button>
+          <Button disabled={isAllCollection}>Create Reaction</Button>
+          <Button disabled={isAllCollection}>Create Wellplate</Button>
         </ButtonGroup>
       )
     }
