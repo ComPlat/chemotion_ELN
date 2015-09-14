@@ -19,6 +19,7 @@ class Sample < ActiveRecord::Base
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
 
+
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
 

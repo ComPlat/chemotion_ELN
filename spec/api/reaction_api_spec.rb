@@ -7,6 +7,7 @@ describe Chemotion::ReactionAPI do
     let!(:c1)   { create(:collection, label: 'C1', user: user, is_shared: false) }
 
     before do
+      Reaction.destroy_all
       r1 = create(:reaction)
       r2 = create(:reaction)
 

@@ -3,6 +3,7 @@ import 'whatwg-fetch';
 
 import UserActions from './actions/UserActions';
 import UserStore from './stores/UserStore';
+import Functions from './utils/Functions';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -26,6 +27,19 @@ export default class UserAuth extends Component {
       currentUser: state.currentUser
     });
   }
+ 
+  logout(){
+    $.ajax({
+      method: "DELETE",
+      url: "/users/sign_out.json",
+      data: {
+        authenticity_token: Functions.getMetaContent("csrf-token")
+      }
+    }).done(function(){
+      location.reload();
+    });
+    UserActions.logout();
+  }
 
   render() {
     return (
@@ -33,7 +47,7 @@ export default class UserAuth extends Component {
         <p className='navbar-text'>
           {`Logged in as ${this.state.currentUser.name}.`}
         </p>
-        <a onClick={() => UserActions.logout()} className='btn btn-primary navbar-btn'>Logout</a>
+        <a onClick={() => this.logout()} className='btn btn-primary navbar-btn'>Logout</a>
       </span>
     );
   }

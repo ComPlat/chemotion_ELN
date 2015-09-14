@@ -44,8 +44,9 @@ export default class SampleDetails extends React.Component {
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
-  updateSample() {
-    ElementActions.updateSample({
+  createSampleObject() {
+    let uiState = UIStore.getState();
+    return {
       id: this.state.sample.id,
       name: this.state.sample.name,
       amount_value: this.state.sample.amount_value,
@@ -56,8 +57,17 @@ export default class SampleDetails extends React.Component {
       impurities: this.state.sample.impurities,
       location: this.state.sample.location,
       molfile: this.state.sample.molfile,
-      molecule: this.state.sample.molecule
-    })
+      molecule: this.state.sample.molecule,
+      collection_id: uiState.currentCollectionId
+    }
+  }
+
+  updateSample() {
+    ElementActions.updateSample(this.createSampleObject());
+  }
+
+  createSample() {
+    ElementActions.createSample(this.createSampleObject());
   }
 
   handleNameChanged(e) {
@@ -193,6 +203,27 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
+  _submitFunction() {
+    if (this.state.sample.id == '_new_') {
+      this.createSample();
+    } else {
+      this.updateSample();
+    }
+  }
+
+  _submitLabel() {
+    if (this.state.sample.id == '_new_') {
+      return "Save Sample";
+    } else {
+      return "Update Sample";
+    }
+  }
+
+  sampleIsValid() {
+    let sample = this.state.sample;
+    return sample && sample.molfile
+  }
+
   render() {
 
     let sample = this.state.sample || {}
@@ -205,6 +236,9 @@ export default class SampleDetails extends React.Component {
         <Glyphicon glyph='pencil'/>
       </Button>
     )
+
+    let sampleIsValid = this.sampleIsValid();
+
     return (
       <div>
         <StructureEditorModal
@@ -359,7 +393,7 @@ export default class SampleDetails extends React.Component {
               <ListGroupItem>
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
-                  <Button bsStyle="warning" onClick={this.updateSample.bind(this)}>Update Sample</Button>
+                  <Button bsStyle="warning" onClick={this._submitFunction.bind(this)} disabled={!sampleIsValid}>{this._submitLabel()}</Button>
                 </ButtonToolbar>
               </ListGroupItem>
             </form>
