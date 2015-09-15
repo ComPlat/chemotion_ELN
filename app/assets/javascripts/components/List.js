@@ -11,7 +11,7 @@ export default class List extends React.Component {
     super(props);
     this.state = {
       totalSampleElements: 0,
-      currentTab: 3
+      currentTab: 1
     }
   }
 
