@@ -2,7 +2,52 @@ import React from 'react'
 import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon, Table} from 'react-bootstrap';
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 
-export default class ReactionDetailsMaterials extends React.Component {
+import { PropTypes } from 'react';
+import { DragSource, DragDropContext } from 'react-dnd';
+
+import HTML5Backend from 'react-dnd/modules/backends/HTML5';
+class Board {
+  /* ... */
+}
+export default DragDropContext(HTML5Backend)(Board);
+
+
+// import { ItemTypes } from './Constants';
+
+let ItemTypes = {
+  REACTION_MATERIALS: 'REACTION_MATERIALS'
+}
+
+/**
+ * Implements the drag source contract.
+ */
+const cardSource = {
+  beginDrag(props) {
+    return {
+      text: props.text
+    };
+  }
+};
+
+/**
+ * Specifies the props to inject into your component.
+ */
+function collect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging()
+  };
+}
+
+const propTypes = {
+  text: PropTypes.string.isRequired,
+
+  // Injected by React DnD:
+  isDragging: PropTypes.bool.isRequired,
+  connectDragSource: PropTypes.func.isRequired
+};
+
+class ReactionDetailsMaterials extends React.Component {
 
   constructor(props) {
     super(props);
@@ -31,6 +76,8 @@ export default class ReactionDetailsMaterials extends React.Component {
   }
 
   render() {
+    const { isDragging, connectDragSource, text } = this.props;
+
     let rows = this.state.samples.map((sample)=> (
       <tr key={sample.id}>
         <td width="5%">
@@ -59,7 +106,7 @@ export default class ReactionDetailsMaterials extends React.Component {
       </tr>
     ));
 
-    return (
+    return connectDragSource(
       <Table width="100%">
         <thead>
           <th>Ref</th>
@@ -75,3 +122,8 @@ export default class ReactionDetailsMaterials extends React.Component {
     )
   }
 }
+
+ReactionDetailsMaterials.propTypes = propTypes;
+
+// Export the wrapped component:
+export default DragSource(ItemTypes.REACTION_MATERIALS, cardSource, collect)(ReactionDetailsMaterials);
