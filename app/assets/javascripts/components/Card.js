@@ -2,21 +2,6 @@ import React, { PropTypes } from 'react';
 import ItemTypes from './ItemTypes';
 import { DragSource, DropTarget } from 'react-dnd';
 
-const cardStyle = {
-  height: 50,
-  width: 50,
-  borderRadius: 25,
-  textAlign: 'center',
-  verticalAlign: 'middle',
-  lineHeight: 2,
-  paddingTop: 7,
-  marginLeft: 5,
-  marginBottom: 5,
-  cursor: 'move',
-  float: 'left',
-  border: '3px solid gray'
-};
-
 const cardSource = {
   beginDrag(props) {
     return {id: props.id};
@@ -48,7 +33,7 @@ class Card {
     const borderStyle = isDragging ? 'dashed' : 'solid';
     const label = isDragging ? '' : text;
 
-    return connectDragSource(connectDropTarget(<div style={{ ...style, ...cardStyle, borderStyle }}>
+    return connectDragSource(connectDropTarget(<div style={{ ...style, borderStyle }}>
         {label}
       </div>));
   }
