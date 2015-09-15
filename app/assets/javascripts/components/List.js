@@ -4,13 +4,14 @@ import {TabbedArea, TabPane} from 'react-bootstrap';
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
+import Wellplate from './Wellplate';
 
 export default class List extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       totalSampleElements: 0,
-      currentTab: 1
+      currentTab: 3
     }
   }
 
@@ -53,7 +54,9 @@ export default class List extends React.Component {
         <TabPane eventKey={2} tab={reactions}>
           <ElementsTable type='reaction'/>
         </TabPane>
-        <TabPane eventKey={3} tab={wellplates} disabled>TabPane 3 content</TabPane>
+        <TabPane eventKey={3} tab={wellplates}>
+          <Wellplate />
+        </TabPane>
       </TabbedArea>
     )
   }
