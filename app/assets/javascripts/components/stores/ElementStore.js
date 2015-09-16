@@ -20,6 +20,13 @@ class ElementStore {
           page: null,
           pages: null,
           per_page: null
+        },
+        wellplates: {
+          elements: [],
+          totalElements: 0,
+          page: null,
+          pages: null,
+          per_page: null
         }
       },
       currentElement: null
@@ -34,6 +41,9 @@ class ElementStore {
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+
+      handleFetchWellplateById: ElementActions.fetchWellplateById,
+      handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -71,6 +81,16 @@ class ElementStore {
   }
 
 
+  // -- Wellplates --
+
+  handleFetchWellplateById(result) {
+    this.state.currentElement = result;
+  }
+
+  handleFetchWellplatesByCollectionId(result) {
+    this.state.elements.reactions = result;
+  }
+
   // -- Reactions --
 
   handleFetchReactionById(result) {
@@ -80,7 +100,6 @@ class ElementStore {
   handleFetchReactionsByCollectionId(result) {
     this.state.elements.reactions = result;
   }
-
 
   // -- Generic --
 
@@ -96,13 +115,16 @@ class ElementStore {
   handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
     let uiState = UIStore.getState();
-    let page = uiState[type].page
+    let page = uiState[type].page;
     switch (type) {
       case 'sample':
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, {page: page})
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, {page: page});
         break;
       case 'reaction':
-        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, {page: page})
+        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, {page: page});
+        break;
+      case 'wellplate':
+        ElementActions.fetchWellplatesByCollectionId(uiState.currentCollectionId, {page: page});
         break;
     }
   }

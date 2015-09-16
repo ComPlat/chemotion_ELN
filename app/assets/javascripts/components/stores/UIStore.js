@@ -23,6 +23,13 @@ class UIStore {
         currentId: null,
         page: 1
       },
+      wellplate: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null,
+        page: 1
+      },
       currentCollectionId: null,
       currentTab: 1,
     };
@@ -90,13 +97,15 @@ class UIStore {
   handleSelectElement(element) {
     this.state[element.type].currentId = element.id;
 
-    // TODO also for wellplates
     switch(element.type) {
       case 'sample':
-        ElementActions.fetchSampleById(element.id)
+        ElementActions.fetchSampleById(element.id);
         break;
       case 'reaction':
-        ElementActions.fetchReactionById(element.id)
+        ElementActions.fetchReactionById(element.id);
+        break;
+      case 'wellplate':
+        ElementActions.fetchWellplateById(element.id);
         break;
     }
   }
@@ -105,10 +114,10 @@ class UIStore {
     let hasChanged = this.state.currentCollectionId != collection.id;
     this.state.currentCollectionId = collection.id;
 
-    // TODO also for wellplates and so on
     if(hasChanged) {
-      ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination)
-      ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination)
+      ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination);
+      ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination);
+      ElementActions.fetchWellplatesByCollectionId(collection.id, this.state.pagination);
     }
   }
 

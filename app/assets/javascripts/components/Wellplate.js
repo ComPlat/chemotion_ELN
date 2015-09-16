@@ -1,22 +1,27 @@
 import React, {Component} from 'react';
-import Container from './Container';
+import Well from './Well';
+import update from 'react/lib/update';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd/modules/backends/HTML5';
+import Sample from './Sample';
+import DragDropItemTypes from './DragDropItemTypes';
 
-export default class Wellplate extends Component {
+class Wellplate extends Component {
   constructor(props) {
     super(props);
     let {wells} = props;
     this.state = {
-      wells: this.calculatePositions(wells)
+      wells
     };
     //console.log(this.state.wells);
   }
 
-  calculatePositions(cards) {
+  calculateWellPositions(wells) {
     const {cols} = this.props;
-    return cards.map((card, key) => {
+    return wells.map((well, key) => {
       let remainder = (key + 1) % cols;
       return {
-        ...card,
+        ...well,
         position: {
           x: (remainder == 0) ? cols : remainder,
           y: Math.floor(key / cols) + 1
@@ -25,54 +30,61 @@ export default class Wellplate extends Component {
     });
   }
 
-  handleDataChange(wells) {
-    let {handleDataChange} = this.props;
+  moveWell(id, afterId) {
+    const {wells} = this.state;
+    const {handleWellplateChange} = this.props;
+    const well = wells.filter(well => well.id === id)[0];
+    const afterWell = wells.filter(well => well.id === afterId)[0];
+    const wellIndex = wells.indexOf(well);
+    const afterIndex = wells.indexOf(afterWell);
+
+    wells.splice(wellIndex, 1);
+    wells.splice(afterIndex, 0, well);
     this.setState({
-      wells: this.calculatePositions(wells)
+      //wells: this.calculateWellPositions(wells)
+      wells
     });
-    //console.log(this.state.wells);
-    handleDataChange(this.state.wells);
+    handleWellplateChange(this.state.wells);
+  }
+
+  dropSample(sampleId, wellId) {
+    const {wells} = this.state;
+    const {handleWellplateChange} = this.props;
+    const well = wells.filter(well => well.id === wellId)[0];
+
+    well.sampleId = sampleId;
+    well.text = sampleId + '';
+    this.setState({
+      //wells: this.calculateWellPositions(wells)
+      wells
+    });
+    handleWellplateChange(this.state.wells);
   }
 
   render() {
-    let {rows, cols, wells} = this.props;
-    let numberOfPlaceholders = cols * rows - wells.length;
+    let {cols, wells} = this.props;
     const style = {
-      width: (size + margin) * cols
+      width: (50 + 5) * cols
     };
     return (
-      <div style={style}>
-        <Container
-          rows={rows}
-          cols={cols}
-          cards={wells}
-          handleDataChange={wells => this.handleDataChange(wells)}
-          numberOfPlaceholders={numberOfPlaceholders}
-          styles={{cardStyle, placeholderStyle}}/>
+      <div>
+        <div style={style}>
+          {wells.map(well => {
+            return (
+              <Well key={well.id}
+                    id={well.id}
+                    moveWell={(id, afterId) => this.moveWell(id, afterId)}
+                    dropSample={(sampleId, wellId) => this.dropSample(sampleId, wellId)}
+                    text={well.text}
+                    sampleId={well.sampleId}/>
+            );
+          })}
+        </div>
+        <br style={{clear:'left'}}/>
+        <Sample id={42} name="Sample 42"/>
       </div>
     );
   }
 }
 
-const size = 50;
-const margin = 5;
-
-const placeholderStyle = {
-  height: size,
-  width: size,
-  borderRadius: size / 2,
-  paddingTop: 7,
-  marginLeft: margin,
-  marginBottom: margin,
-  float: 'left',
-  border: '3px solid lightgray'
-};
-
-const cardStyle = {
-  ...placeholderStyle,
-  textAlign: 'center',
-  verticalAlign: 'middle',
-  lineHeight: 2,
-  cursor: 'move',
-  borderColor: 'gray'
-};
+export default DragDropContext(HTML5Backend)(Wellplate);

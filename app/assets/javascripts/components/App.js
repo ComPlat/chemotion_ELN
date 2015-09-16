@@ -42,12 +42,13 @@ Aviator.setRoutes({
         }
 
         UIActions.selectCollection({id: e.params['id']});
-        if(!e.params['sampleID'] && !e.params['reactionID'])
-        {
+        if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID']) {
           UIActions.deselectAllElements('sample');
           UIActions.deselectAllElements('reaction');
+          UIActions.deselectAllElements('wellplate');
           UIActions.uncheckAllElements('sample');
           UIActions.uncheckAllElements('reaction');
+          UIActions.uncheckAllElements('wellplate');
         }
       },
 
@@ -89,10 +90,24 @@ Aviator.setRoutes({
     target: {
       show: function(e) {
         //UIActions.selectTab(2);
-        UIActions.selectElement({type: 'reaction', id: e.params['reactionID']})
+        UIActions.selectElement({
+          type: 'reaction',
+          id: e.params['reactionID']
+        })
       }
     },
     '/:reactionID': 'show',
+  },
+  '/wellplate': {
+    target: {
+      show: function(e) {
+        UIActions.selectElement({
+          type: 'wellplate',
+          id: e.params['wellplateID']
+        })
+      }
+    },
+    '/:wellplateID': 'show',
   },
 
   '/sharing': {
@@ -107,7 +122,7 @@ Aviator.setRoutes({
         if(modalDomNode) {
           React.unmountComponentAtNode(modalDomNode);
         }
-        Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide',''))
+        Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide', ''))
       }
     }
   }
@@ -177,18 +192,20 @@ export default class Elements extends React.Component {
   }
 
   render() {
-    let width = this.state.currentElement ? "65%" : 0
+    let width = this.state.currentElement ? "65%" : 0;
     let elementDetails;
 
     if(this.state.currentElement) {
       //todo: switch component by element.type
-      switch (this.state.currentElement.type) {
+      switch(this.state.currentElement.type) {
         case 'sample':
-          elementDetails = <SampleDetails sample={this.state.currentElement}/>
+          elementDetails = <SampleDetails sample={this.state.currentElement}/>;
           break;
         case 'reaction':
-          elementDetails = <ReactionDetails reaction={this.state.currentElement}/>
+          elementDetails = <ReactionDetails reaction={this.state.currentElement}/>;
           break;
+        case 'wellplate':
+          elementDetails = <WellplateDetails wellplate={this.state.currentElement}/>;
         default:
       }
     }
