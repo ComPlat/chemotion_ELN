@@ -83,7 +83,7 @@ export default class ElementsTable extends React.Component {
     }
 
     let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
-    let currentElementDidChange = currentElement && !deepEqual(currentElement, this.state.currentElement);
+    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
     let page = this.state.activePage;
 
@@ -115,7 +115,7 @@ export default class ElementsTable extends React.Component {
     let elements = this.state.elements;
 
     return elements.map((element, index) => {
-      let isSelected = this.state.ui.currentId == element.id;
+      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
       let checked = this.isElementChecked(element);
 
       let optionalLabelColumn;
@@ -127,10 +127,11 @@ export default class ElementsTable extends React.Component {
         )
       }
 
-      let moleculeColumn;
-      let molecule = element.molecule ? element.molecule : { molecule_svg_file: 'AFABGHUZZDYHJO-UHFFFAOYSA-N.svg' }
-      if(molecule) {
-        moleculeColumn = this.moleculeColumn(molecule, {selected: isSelected});
+      let svgColumn;
+      if(element.molecule) {
+        svgColumn = this.moleculeSVGColumn(element.molecule, {selected: isSelected});
+      } else {
+        svgColumn = (<td className="molecule" margin="0" padding="0">SVG ..</td>);
       }
 
       let style = {}
@@ -150,13 +151,13 @@ export default class ElementsTable extends React.Component {
             {element.name}
           </td>
          {optionalLabelColumn}
-         {moleculeColumn}
+         {svgColumn}
         </tr>
       )
     });
   }
 
-  moleculeColumn(molecule, options={}) {
+  moleculeSVGColumn(molecule, options={}) {
     let className = options.selected ? 'molecule-selected' : 'molecule';
     let moleculeSVG = this.moleculeSVG(molecule, className);
     return (

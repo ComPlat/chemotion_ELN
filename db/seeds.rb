@@ -10,14 +10,6 @@ collection_2 = Collection.create!(label: 'Collection #2', user_id: u.id)
 collection_3 = Collection.create!(label: 'Collection #3', user_id: u.id)
 collection_4 = Collection.create!(label: 'Collection #4', user_id: u.id)
 
-# create some reactions
-reaction_1 = Reaction.create(name: 'Reaction 1')
-reaction_2 = Reaction.create(name: 'Reaction 2')
-reaction_3 = Reaction.create(name: 'Reaction 3')
-reaction_4 = Reaction.create(name: 'Reaction 4')
-reaction_5 = Reaction.create(name: 'Reaction 5')
-reaction_6 = Reaction.create(name: 'Reaction 6')
-
 # create some shared collections
 # shared_collection_1 = Collection.create!(is_shared: true, label: 'My project with Hattori', user_id: hattori.id, shared_by_id: u.id)
 # shared_collection_2 = Collection.create!(is_shared: true, label: 'My project with Momochi', user_id: momochi.id, shared_by_id: u.id)
@@ -120,14 +112,6 @@ sample_6 = Sample.create!(name: 'Sample 6', molfile: molfiles[2])
 sample_7 = Sample.create!(name: 'Sample 7', molfile: molfiles[0])
 sample_8 = Sample.create!(name: 'Sample 8', molfile: molfiles[1])
 
-# associate samples with reactions
-ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1)
-ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2)
-ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3)
-
-ReactionsStartingMaterialSample.create!(reaction: reaction_2, sample: sample_3)
-ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_2)
-ReactionsProductSample.create!(reaction: reaction_2, sample: sample_1)
 
 # associate samples with collections
 CollectionsSample.create!(sample: sample_1, collection: collection_1)
@@ -144,6 +128,27 @@ CollectionsSample.create!(sample: sample_8, collection: grand_child)
 # CollectionsSample.create!(sample: sample_1, collection: shared_collection_1)
 # CollectionsSample.create!(sample: sample_2, collection: shared_collection_2)
 # CollectionsSample.create!(sample: sample_3, collection: shared_collection_2)
+
+# --- Reactions ---
+
+# create some reactions
+reaction_1 = Reaction.create(name: 'Reaction 1')
+reaction_2 = Reaction.create(name: 'Reaction 2')
+reaction_3 = Reaction.create(name: 'Reaction 3')
+reaction_4 = Reaction.create(name: 'Reaction 4')
+reaction_5 = Reaction.create(name: 'Reaction 5')
+reaction_6 = Reaction.create(name: 'Reaction 6')
+
+# associate samples with reactions
+ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1)
+ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2)
+ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3)
+
+ReactionsStartingMaterialSample.create!(reaction: reaction_2, sample: sample_3)
+ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_2)
+ReactionsProductSample.create!(reaction: reaction_2, sample: sample_1)
+
+
 
 # associate samples with reactions
 CollectionsReaction.create!(reaction: reaction_1, collection: collection_1)

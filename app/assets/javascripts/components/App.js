@@ -53,7 +53,7 @@ Aviator.setRoutes({
         }
       }
     },
-    '/:sampleID': 'showOrNew',
+    '/:sampleID': 'showOrNew'
   },
 
   '/reaction': {
