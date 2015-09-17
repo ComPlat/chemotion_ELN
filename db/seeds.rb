@@ -10,6 +10,26 @@ collection_2 = Collection.create!(label: 'Collection #2', user_id: u.id)
 collection_3 = Collection.create!(label: 'Collection #3', user_id: u.id)
 collection_4 = Collection.create!(label: 'Collection #4', user_id: u.id)
 
+<<<<<<< HEAD
+=======
+# create some reactions
+reaction_1 = Reaction.create(name: 'Reaction 1')
+reaction_2 = Reaction.create(name: 'Reaction 2')
+reaction_3 = Reaction.create(name: 'Reaction 3')
+reaction_4 = Reaction.create(name: 'Reaction 4')
+reaction_5 = Reaction.create(name: 'Reaction 5')
+reaction_6 = Reaction.create(name: 'Reaction 6')
+
+# create some wellplates
+wellplate_1 = Wellplate.create(name: 'Wellplate 1')
+wellplate_2 = Wellplate.create(name: 'Wellplate 2')
+wellplate_3 = Wellplate.create(name: 'Wellplate 3')
+wellplate_4 = Wellplate.create(name: 'Wellplate 4')
+wellplate_5 = Wellplate.create(name: 'Wellplate 5')
+wellplate_6 = Wellplate.create(name: 'Wellplate 6')
+
+
+>>>>>>> add seeds
 # create some shared collections
 # shared_collection_1 = Collection.create!(is_shared: true, label: 'My project with Hattori', user_id: hattori.id, shared_by_id: u.id)
 # shared_collection_2 = Collection.create!(is_shared: true, label: 'My project with Momochi', user_id: momochi.id, shared_by_id: u.id)
@@ -129,6 +149,7 @@ CollectionsSample.create!(sample: sample_8, collection: grand_child)
 # CollectionsSample.create!(sample: sample_2, collection: shared_collection_2)
 # CollectionsSample.create!(sample: sample_3, collection: shared_collection_2)
 
+<<<<<<< HEAD
 # --- Reactions ---
 
 # create some reactions
@@ -148,12 +169,26 @@ ReactionsStartingMaterialSample.create!(reaction: reaction_2, sample: sample_3)
 ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_2)
 ReactionsProductSample.create!(reaction: reaction_2, sample: sample_1)
 
-
-
-# associate samples with reactions
+# associate reactions with collections
 CollectionsReaction.create!(reaction: reaction_1, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_2, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_3, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_4, collection: grand_child)
 CollectionsReaction.create!(reaction: reaction_5, collection: subcollection_1)
 CollectionsReaction.create!(reaction: reaction_6, collection: subcollection_1)
+
+# associate wellplates with collections
+CollectionsWellplate.create!(wellplate: wellplate_1, collection: collection_1)
+CollectionsWellplate.create!(wellplate: wellplate_2, collection: collection_1)
+CollectionsWellplate.create!(wellplate: wellplate_3, collection: collection_1)
+CollectionsWellplate.create!(wellplate: wellplate_4, collection: grand_child)
+CollectionsWellplate.create!(wellplate: wellplate_5, collection: subcollection_1)
+CollectionsWellplate.create!(wellplate: wellplate_6, collection: subcollection_1)
+
+# associate samples with wellplates
+WellplatesSample.create!(wellplate: wellplate_1, sample: sample_1)
+WellplatesSample.create!(wellplate: wellplate_2, sample: sample_1)
+WellplatesSample.create!(wellplate: wellplate_3, sample: sample_2)
+WellplatesSample.create!(wellplate: wellplate_4, sample: sample_3)
+WellplatesSample.create!(wellplate: wellplate_5, sample: sample_4)
+WellplatesSample.create!(wellplate: wellplate_6, sample: sample_5)

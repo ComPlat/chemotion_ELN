@@ -98,6 +98,26 @@ ActiveRecord::Schema.define(version: 20150916161541) do
   add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
   add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
+  create_table "wellplates", force: :cascade do |t|
+    t.string   "name"
+    t.integer "size"
+    t.string  "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "well", force: :cascade do |t|
+    t.integer "position_x"
+    t.integer "position_y"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "wellplates_samples", id: false, force: :cascade do |t|
+    t.integer "welplate_id", null: false
+    t.integer "sample_id",   null: false
+  end
+
   create_table "samples", force: :cascade do |t|
     t.string   "name"
     t.float    "amount_value"
