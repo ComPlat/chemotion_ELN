@@ -57,11 +57,13 @@ export default class List extends React.Component {
         </TabPane>
         <TabPane eventKey={3} tab={wellplates}>
           {
-            //<ElementsTable type='wellplate'/>
+            <ElementsTable type='wellplate'/>
           }
+          {/*
           <h3>{wellplate.name}</h3>
           <Wellplate {...wellplate}
             handleWellplateChange={(wells) => {console.log(wells)}}/>
+            */}
         </TabPane>
       </TabbedArea>
     )

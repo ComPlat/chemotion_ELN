@@ -1,8 +1,8 @@
 class WellplateSerializer < ActiveModel::Serializer
 
-  attributes :id, :type, :name, :description, :position, :created_at, :collection_labels,
+  attributes :id, :type, :size, :name, :description, :created_at, :collection_labels, :wells
 
-  #wrap position_x and y to position object
+  has_many :wells
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
@@ -15,5 +15,4 @@ class WellplateSerializer < ActiveModel::Serializer
   def type
     'wellplate'
   end
-
 end

@@ -14,6 +14,8 @@ class Sample < ActiveRecord::Base
 
   belongs_to :molecule
 
+  has_one :well
+
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile

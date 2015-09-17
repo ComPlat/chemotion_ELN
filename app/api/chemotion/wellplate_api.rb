@@ -14,7 +14,7 @@ module Chemotion
         scope = if params[:collection_id]
           Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).wellplates
         else
-          Wellplates.all
+          Wellplate.all
         end.order("created_at DESC")
 
         paginate(scope)

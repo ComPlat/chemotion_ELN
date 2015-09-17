@@ -12,7 +12,6 @@ export default class WellplatesFetcher {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
     return promise;
   }
 
@@ -34,7 +33,6 @@ export default class WellplatesFetcher {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
     return promise;
   }
 

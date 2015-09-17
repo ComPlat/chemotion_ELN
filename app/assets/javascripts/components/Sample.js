@@ -11,7 +11,10 @@ let style = {
 
 const sampleSource = {
   beginDrag(props) {
-    return {id: props.id};
+    return {sample: {
+      "id": 1,
+      "name": "Sample 1"
+    }};
   }
 };
 

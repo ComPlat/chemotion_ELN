@@ -4,8 +4,10 @@ class Collection < ActiveRecord::Base
 
   has_many :collections_samples
   has_many :collections_reactions
+
   has_many :samples, through: :collections_samples, dependent: :destroy
   has_many :reactions, through: :collections_reactions, dependent: :destroy
+  has_many :wellplates, through: :collections_wellplates, dependent: :destroy
 
   scope :ordered, -> { order("position ASC") }
   scope :unshared, -> { where(is_shared: false) }

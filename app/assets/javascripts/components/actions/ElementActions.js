@@ -1,7 +1,7 @@
 import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
-import WellplatesFetcher from '../fetchers/ReactionsFetcher';
+import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 
 class ElementActions {
 
@@ -70,7 +70,7 @@ class ElementActions {
   fetchWellplateById(id) {
     WellplatesFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result.reaction);
+        this.dispatch(result.wellplate);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
