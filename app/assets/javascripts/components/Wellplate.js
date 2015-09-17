@@ -81,6 +81,7 @@ class Wellplate extends Component {
           })}
         </div>
         <br style={{clear:'left'}}/>
+        <br/>
         <Sample id={42} name="Sample 42"/>
       </div>
     );

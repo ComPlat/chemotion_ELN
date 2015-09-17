@@ -10,7 +10,7 @@ const style = {
   marginLeft: 5,
   marginBottom: 5,
   float: 'left',
-  border: '3px solid gray',
+  borderWidth: 4,
   textAlign: 'center',
   verticalAlign: 'middle',
   lineHeight: 2,
@@ -61,17 +61,30 @@ const collectSource = (connect, monitor) => ({
 class Well extends Component{
   render() {
     const {text, isDragging, connectDragSource, connectDropTarget, sampleId, isOver, canDrop} = this.props;
-    let borderStyle = (isDragging) ? 'dashed' : 'solid';
-    let borderColor = (sampleId) ? 'gray' : 'lightgray';
-    const label = isDragging ? '' : text;
+    const active = '#337ab7';
+    const info = '#5bc0de';
+    let borderStyle = 'solid';
+    let opacity = 1;
+    let borderColor = 'gray';
+    let label = text;
+    if(isDragging){
+      borderStyle = 'dashed';
+      label = '';
+      opacity = 0;
+    }
+    if(!sampleId){
+      borderColor = 'lightgray';
+    }
     if (isOver && canDrop) {
       borderStyle = 'dashed';
-      borderColor = 'gray';
-    } else if (canDrop && !isDragging) {
-      borderColor = 'lightblue';
+      borderColor = active;
+      opacity = 1;
+    } else if (canDrop) {
+      //borderColor = 'lightgray';
+      borderStyle = 'dotted';
     }
 
-    return connectDragSource(connectDropTarget(<div style={{ ...style, borderStyle, borderColor }}>{label}</div>));
+    return connectDragSource(connectDropTarget(<div style={{ ...style, borderStyle, borderColor, opacity}}>{label}</div>));
   }
 }
 
