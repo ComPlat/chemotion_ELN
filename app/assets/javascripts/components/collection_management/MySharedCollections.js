@@ -74,6 +74,11 @@ export default class MySharedCollections extends React.Component {
 
   // TODO: confirmation before start the updating process?
   bulkUpdate() {
+    // filter empty objects
+    let collections = this.state.tree.children.filter((child) => {
+      return child.label
+    });
+    
     let paramObj = {
       collections: this.state.tree.children,
       deleted_ids: this.state.deleted_ids
@@ -105,12 +110,14 @@ export default class MySharedCollections extends React.Component {
   }
 
   renderNode(node) {
-    return (
-      <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
-        {this.label(node)}
-        {this.actions(node)}
-      </span>
-    );
+    if(!Object.keys(node).length == 0) {
+      return (
+        <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+          {this.label(node)}
+          {this.actions(node)}
+        </span>
+      );
+    }
   }
 
   onClickNode(node) {
