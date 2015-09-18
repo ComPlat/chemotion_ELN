@@ -64,8 +64,35 @@ export default class ReactionDetails extends React.Component {
    });
   }
 
+  _displayLiteratureRows() {
+    let {reaction} = this.state;
+    return reaction.literatures.map((element) => {
+      return (
+        <tr>
+          <td> {element.title} </td>
+          <td> {element.url} </td>
+        </tr>
+      )
+    });
+  }
+
+  _displayReactionLiteratures() {
+    return (
+      <Table width="100%">
+        <thead>
+          <th> Title </th>
+          <th> URL </th>
+        </thead>
+        <tbody>
+          {this._displayLiteratureRows()}
+        </tbody>
+      </Table>
+    );
+  }
+
   render() {
-    let reaction = this.state.reaction
+    let reaction = this.state.reaction;
+    let literatures = this._displayReactionLiteratures();
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
@@ -89,6 +116,9 @@ export default class ReactionDetails extends React.Component {
             </ListGroupItem>
             <ListGroupItem header='Products'>
               <ReactionDetailsMaterials materialGroup="products" samples={reaction.products} onChange={this.handleMaterialsChange.bind(this)}/>
+            </ListGroupItem>
+            <ListGroupItem header='Literatures'>
+              {literatures}
             </ListGroupItem>
           </ListGroup>
         </Panel>

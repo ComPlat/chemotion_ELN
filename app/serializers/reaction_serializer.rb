@@ -5,6 +5,7 @@ class ReactionSerializer < ActiveModel::Serializer
   has_many :starting_materials
   has_many :reactants
   has_many :products
+  has_many :literatures
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
