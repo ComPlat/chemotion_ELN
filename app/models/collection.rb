@@ -35,6 +35,8 @@ class Collection < ActiveRecord::Base
       position += 1
       if(attr['isNew'])
         collection = create({label: attr['label'], user_id: user_id, position: position})
+        # Replace fake id by real id
+        attr['id'] = collection.id
       else
         collection = find(attr['id']).update({label: attr['label'], position: position})
       end
@@ -46,7 +48,7 @@ class Collection < ActiveRecord::Base
     return unless collection_attributes
 
     collection_attributes.each do |attr|
-      parent = Collection.find_by(label: attr['label'])
+      parent = Collection.find(attr['id'])
 
       # collection is a new root collection
       unless(grand_parent)
@@ -55,7 +57,7 @@ class Collection < ActiveRecord::Base
 
       if(attr['children'])
         attr['children'].each do |attr_child|
-          child = Collection.find_by(label: attr_child['label'])
+          child = Collection.find(attr_child['id'])
           child.update(parent: parent)
         end
       end

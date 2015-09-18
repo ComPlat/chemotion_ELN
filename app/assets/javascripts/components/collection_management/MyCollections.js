@@ -99,11 +99,6 @@ export default class MyCollections extends React.Component {
     } else {
       return (
         <ButtonGroup className="actions">
-          {
-            // Add subcollection
-            // Edit name
-            // Delete
-          }
           {this.addButton(node)}
           <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
             <i className="fa fa-trash-o"></i>
@@ -150,10 +145,9 @@ export default class MyCollections extends React.Component {
 
   deleteCollection(node) {
     let children = node.children || [];
-    // TODO Name nicht eindeutig! Probleme beim Löschen
-    let parent = this.findParentByName(this.state.tree, node.label);
+    let parent = this.findParentById(this.state.tree, node.id);
 
-    this.removeNodeByName(parent, node.label)
+    this.removeNodeById(parent, node.id)
     this.appendChildrenToParent(parent, children)
 
     if(!node.isNew) {
@@ -171,7 +165,7 @@ export default class MyCollections extends React.Component {
     });
   }
 
-  findParentByName(root, name) {
+  findParentById(root, id) {
     if(!root.children) {
       return null
       root.children = [];
@@ -180,11 +174,11 @@ export default class MyCollections extends React.Component {
     let children = root.children;
 
     for(let i = 0; i < children.length; i++) {
-      if(children[i].label == name) {
+      if(children[i].id == id) {
         return root;
         break;
       } else {
-        let parent = this.findParentByName(children[i], name);
+        let parent = this.findParentById(children[i], id);
         if(parent) {
           return parent
         }
@@ -192,9 +186,9 @@ export default class MyCollections extends React.Component {
     }
   }
 
-  removeNodeByName(parent, name) {
+  removeNodeById(parent, id) {
     parent.children = parent.children.filter((child) => {
-      return child.label != name
+      return child.id != id
     });
   }
 
