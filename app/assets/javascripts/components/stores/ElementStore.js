@@ -88,7 +88,7 @@ class ElementStore {
   }
 
   handleFetchWellplatesByCollectionId(result) {
-    this.state.elements.reactions = result;
+    this.state.elements.wellplates = result;
   }
 
   // -- Reactions --

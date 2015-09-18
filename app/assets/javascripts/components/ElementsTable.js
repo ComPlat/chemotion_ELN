@@ -8,6 +8,7 @@ import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
+import SampleContainer from './SampleContainer'
 
 import SVG from 'react-inlinesvg';
 import Aviator from 'aviator';
@@ -141,14 +142,15 @@ export default class ElementsTable extends React.Component {
           background: '#337ab7'
         }
       }
-
       return (
         <tr key={index} height="100" style={style}>
           <td className="check">
             <ElementCheckbox element={element} key={element.id} checked={checked}/>
           </td>
-          <td className="name" onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
-            {element.name}
+          <td className="name"
+              onClick={e => this.showDetails(element)}
+              style={{cursor: 'pointer'}}>
+            {(element.type == 'sample') ? <SampleContainer sample={element}/> : element.name}
           </td>
          {optionalLabelColumn}
          {svgColumn}

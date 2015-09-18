@@ -24,7 +24,7 @@ export default class WellplatesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.samples,
+            elements: json.wellplates,
             totalElements: response.headers.get('X-Total'),
             page: response.headers.get('X-Page'),
             pages: response.headers.get('X-Total-Pages')

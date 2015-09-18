@@ -1,6 +1,8 @@
 class WellSerializer < ActiveModel::Serializer
 
-  attributes :id, :position, :sample
+  attributes :id, :position
+
+  has_one :sample
 
   def position
     #wrap position_x and y to position object

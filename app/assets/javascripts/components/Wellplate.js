@@ -1,12 +1,8 @@
 import React, {Component} from 'react';
-import WellContainer from './WellContainer';
 import update from 'react/lib/update';
-import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd/modules/backends/HTML5';
-import Sample from './Sample';
-import DragDropItemTypes from './DragDropItemTypes';
+import WellContainer from './WellContainer';
 
-class Wellplate extends Component {
+export default class Wellplate extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -49,9 +45,9 @@ class Wellplate extends Component {
     const {wellContainers} = this.state;
     const {handleWellplateChange} = this.props;
     const wellContainer = wellContainers.filter(container => container.id === wellContainerId)[0];
-
+    // TODO request new well object in backend
     wellContainer.well = {
-      id: -1,
+      id: - 1,
       position: {},
       sample
     };
@@ -60,8 +56,6 @@ class Wellplate extends Component {
     });
     handleWellplateChange(this.state.wellContainers);
   }
-
-
 
   calculateWellPositions(wells) {
     const {cols} = this.props;
@@ -82,29 +76,27 @@ class Wellplate extends Component {
     const {size} = this.props;
     //calc cols & rows of size
     const style = {
-      width: (50 + 5) * 4
+      width: 120 * 4
+    };
+    const containerStyle = {
+      width: 120,
+      height: 120
     };
     return (
-      <div>
-        <div style={style}>
-          {wellContainers.map(container => {
-            return (
-              <WellContainer
-                key={container.id}
-                id={container.id}
-                well={container.well}
-                switchWellContainers={(id, afterId) => this.switchWellContainers(id, afterId)}
-                dropSample={(sampleId, wellId) => this.dropSample(sampleId, wellId)}
-                />
-            );
-          })}
-        </div>
-        <br style={{clear:'left'}}/>
-        <br/>
-        <Sample id={42} name="Sample 42"/>
+      <div style={style}>
+        {wellContainers.map(container => {
+          return (
+            <WellContainer
+              key={container.id}
+              id={container.id}
+              well={container.well}
+              style={containerStyle}
+              switchWellContainers={(id, afterId) => this.switchWellContainers(id, afterId)}
+              dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
+              />
+          );
+        })}
       </div>
     );
   }
 }
-
-export default DragDropContext(HTML5Backend)(Wellplate);

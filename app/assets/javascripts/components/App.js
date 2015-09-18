@@ -2,14 +2,11 @@ import React from 'react';
 import {Col, Grid, Row, Table} from 'react-bootstrap';
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
-import List from './List';
 import ManagingActions from './ManagingActions';
 import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
-import SampleDetails from './SampleDetails';
-import ReactionDetails from './ReactionDetails';
 import CollectionManagement from './CollectionManagement';
-
+import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';
 
 import UIActions from './actions/UIActions';
@@ -167,6 +164,7 @@ class App extends React.Component {
   }
 }
 
+<<<<<<< HEAD
 import ElementStore from './stores/ElementStore';
 
 export default class Elements extends React.Component {
@@ -230,6 +228,9 @@ export default class Elements extends React.Component {
 }
 
 $(document).ready(function () {
+=======
+$(document).ready(function() {
+>>>>>>> implement dnd between samples and wellplate
   React.render(<App />, document.getElementById('app'));
   Aviator.dispatch();
 });

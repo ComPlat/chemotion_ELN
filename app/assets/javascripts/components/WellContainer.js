@@ -3,21 +3,6 @@ import { DragSource, DropTarget } from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import Well from './Well';
 
-const style = {
-  height: 50,
-  width: 50,
-  borderRadius: 25,
-  paddingTop: 7,
-  marginLeft: 5,
-  marginBottom: 5,
-  float: 'left',
-  borderWidth: 4,
-  textAlign: 'center',
-  verticalAlign: 'middle',
-  lineHeight: 2,
-  cursor: 'move'
-};
-
 const wellSource = {
   beginDrag(props) {
     return {id: props.id};
@@ -60,30 +45,39 @@ const collectSource = (connect, monitor) => ({
 
 class WellContainer extends Component {
   render() {
-    const {isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop} = this.props;
+    const {style, isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop} = this.props;
+    const containerStyle = {
+      paddingTop: 9,
+      borderRadius: '50%',
+      float: 'left',
+      borderWidth: 4,
+      borderStyle: 'solid',
+      borderColor: 'lightgray',
+      textAlign: 'center',
+      verticalAlign: 'middle',
+      lineHeight: 2,
+      cursor: 'move'
+    };
     let hasLabel = false;
-    let borderStyle = 'solid';
-    let borderColor = 'lightgray';
-    let opacity = 1;
     if (isDragging) {
-      borderStyle = 'dashed';
-      opacity = 0;
+      containerStyle.borderStyle = 'dashed';
+      containerStyle.opacity = 0;
     }
     if (well) {
-      borderColor = 'gray';
+      containerStyle.borderColor = 'gray';
       hasLabel = true;
     }
     if (isOver && canDrop) {
-      borderStyle = 'dashed';
-      borderColor = '#337ab7';
-      opacity = 1;
+      containerStyle.borderStyle = 'dashed';
+      containerStyle.borderColor = '#337ab7';
+      containerStyle.opacity = 1;
       hasLabel = false;
     } else if (canDrop) {
-      borderStyle = 'dotted';
+      containerStyle.borderStyle = 'dotted';
     }
     return (
       connectDragSource(connectDropTarget(
-        <div style={{ ...style, borderStyle, borderColor, opacity}}>
+        <div style={{ ...containerStyle, ...style}}>
           <Well well={well} hasLabel={hasLabel}/>
         </div>
       ))
