@@ -6,6 +6,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 
 import ElementStore from './stores/ElementStore';
 import ReactionDetailsMaterials from './ReactionDetailsMaterials';
+import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 
 export default class ReactionDetails extends React.Component {
 
@@ -64,32 +65,6 @@ export default class ReactionDetails extends React.Component {
    });
   }
 
-  _displayLiteratureRows() {
-    let {reaction} = this.state;
-    return reaction.literatures.map((element) => {
-      return (
-        <tr>
-          <td> {element.title} </td>
-          <td> {element.url} </td>
-        </tr>
-      )
-    });
-  }
-
-  _displayReactionLiteratures() {
-    return (
-      <Table width="100%">
-        <thead>
-          <th> Title </th>
-          <th> URL </th>
-        </thead>
-        <tbody>
-          {this._displayLiteratureRows()}
-        </tbody>
-      </Table>
-    );
-  }
-
   render() {
     let reaction = this.state.reaction;
     let literatures = this._displayReactionLiteratures();
@@ -118,7 +93,7 @@ export default class ReactionDetails extends React.Component {
               <ReactionDetailsMaterials materialGroup="products" samples={reaction.products} onChange={this.handleMaterialsChange.bind(this)}/>
             </ListGroupItem>
             <ListGroupItem header='Literatures'>
-              {literatures}
+              <ReactionDetailsLiteratures reaction_id={reaction.id} literatures={reaction.literatures}/>
             </ListGroupItem>
           </ListGroup>
         </Panel>
