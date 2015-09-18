@@ -15,7 +15,7 @@ module Chemotion
         scope = if params[:collection_id]
           Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).reactions
         else
-          Reaction.all
+          Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).references(:collections)
         end.order("created_at DESC")
 
         paginate(scope)

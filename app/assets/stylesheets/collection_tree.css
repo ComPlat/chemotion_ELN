@@ -11,10 +11,6 @@
   cursor: pointer;
 }
 
-.tree-view {
-
-}
-
 .title {
   background: #eee;
   font-size: 14px;
@@ -25,7 +21,6 @@
 .tree-view li {
   margin-left: -13px;
   list-style-type: none;
-  margin-bottom: -9px;
 }
 
 .tree-view button {

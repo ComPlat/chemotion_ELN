@@ -17,6 +17,7 @@
  @import "bootstrap-sprockets";
  @import "bootstrap";
  @import "icons";
+ @import "font-awesome";
 /*
 Show Bootstrap Grid as overlay for debugging
 
@@ -28,4 +29,6 @@ div[class^="col-"] {
     background-color: rgba(255, 0, 0, 0.2);
 }
 */
-
+.navbar {
+  border-radius: 0;
+}

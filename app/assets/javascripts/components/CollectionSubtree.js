@@ -14,8 +14,8 @@ export default class CollectionSubtree extends React.Component {
 
     let uiState = UIStore.getState();
     let selected = uiState.currentCollectionId == props.root.id;
-    let visible = props.root.descendant_ids.indexOf(parseInt(uiState.currentCollectionId)) > -1
-
+    let visible = this.isVisible(props.root, uiState);
+    
     this.state = {
       label: props.root.label,
       selected: selected,
@@ -24,8 +24,23 @@ export default class CollectionSubtree extends React.Component {
     }
   }
 
+  isVisible(node, uiState) {
+    if(node.descendant_ids) {
+      node.descendant_ids.indexOf(parseInt(uiState.currentCollectionId)) > -1
+    } else {
+      false
+    }
+  }
+
   componentDidMount() {
     UIStore.listen(this.onChange.bind(this));
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      root: nextProps.root,
+      label: nextProps.root.label
+    });
   }
 
   componentWillUnmount() {
@@ -45,7 +60,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   children() {
-    return this.state.root.children;
+    return this.state.root.children || [];
   }
 
   hasChildren() {
