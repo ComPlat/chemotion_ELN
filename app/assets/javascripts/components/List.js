@@ -42,18 +42,20 @@ export default class List extends React.Component {
 
   render() {
     let samples = <i className="icon-sample"> {this.state.totalSampleElements} </i>,
-        reactions = <i className="icon-reaction"></i>,
-        wellplates = <i className="icon-wellplate"></i>;
-
+      reactions = <i className="icon-reaction"></i>,
+      wellplates = <i className="icon-wellplate"></i>;
     return (
-      <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab} onSelect={(e) => this.handleTabSelect(e)}>
+      <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
+                  onSelect={(e) => this.handleTabSelect(e)}>
         <TabPane eventKey={1} tab={samples}>
           <ElementsTable type='sample'/>
         </TabPane>
         <TabPane eventKey={2} tab={reactions}>
           <ElementsTable type='reaction'/>
         </TabPane>
-        <TabPane eventKey={3} tab={wellplates} disabled>TabPane 3 content</TabPane>
+        <TabPane eventKey={3} tab={wellplates}>
+          <ElementsTable type='wellplate'/>
+        </TabPane>
       </TabbedArea>
     )
   }

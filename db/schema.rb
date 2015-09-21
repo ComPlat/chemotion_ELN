@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150916161541) do
+ActiveRecord::Schema.define(version: 20150917124536) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -49,6 +49,14 @@ ActiveRecord::Schema.define(version: 20150916161541) do
 
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
+
+  create_table "collections_wellplates", id: false, force: :cascade do |t|
+    t.integer "collection_id", null: false
+    t.integer "wellplate_id",  null: false
+  end
+
+  add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
+  add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
 
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
@@ -133,5 +141,25 @@ ActiveRecord::Schema.define(version: 20150916161541) do
 
   add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
+
+  create_table "wellplates", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "size"
+    t.string   "description"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  create_table "wells", force: :cascade do |t|
+    t.integer  "sample_id",    null: false
+    t.integer  "wellplate_id", null: false
+    t.integer  "position_x"
+    t.integer  "position_y"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
+
+  add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
+  add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
 
 end

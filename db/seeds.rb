@@ -148,12 +148,30 @@ ReactionsStartingMaterialSample.create!(reaction: reaction_2, sample: sample_3)
 ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_2)
 ReactionsProductSample.create!(reaction: reaction_2, sample: sample_1)
 
-
-
-# associate samples with reactions
+# associate reactions with collections
 CollectionsReaction.create!(reaction: reaction_1, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_2, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_3, collection: collection_1)
 CollectionsReaction.create!(reaction: reaction_4, collection: grand_child)
 CollectionsReaction.create!(reaction: reaction_5, collection: subcollection_1)
 CollectionsReaction.create!(reaction: reaction_6, collection: subcollection_1)
+
+# --- Wellplates ---
+
+# create some wellplates
+wellplate_1 = Wellplate.create(name: 'Wellplate 1', size: 16)
+wellplate_2 = Wellplate.create(name: 'Wellplate 2', size: 16)
+
+well_1 = Well.create!(sample: sample_1, wellplate: wellplate_1)
+well_2 = Well.create(sample: sample_1, wellplate: wellplate_1)
+well_3 = Well.create(sample: sample_2, wellplate: wellplate_1)
+well_4 = Well.create(sample: sample_3, wellplate: wellplate_1)
+well_5 = Well.create(sample: sample_4, wellplate: wellplate_1)
+well_6 = Well.create(sample: sample_5, wellplate: wellplate_1)
+
+# associate wellplates with collections
+CollectionsWellplate.create!(wellplate: wellplate_1, collection: collection_1)
+CollectionsWellplate.create!(wellplate: wellplate_2, collection: collection_1)
+CollectionsWellplate.create!(wellplate: wellplate_1, collection: grand_child)
+CollectionsWellplate.create!(wellplate: wellplate_1, collection: subcollection_1)
+CollectionsWellplate.create!(wellplate: wellplate_1, collection: subcollection_1)

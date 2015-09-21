@@ -1,6 +1,7 @@
 import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
+import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 
 class ElementActions {
 
@@ -52,6 +53,24 @@ class ElementActions {
     ReactionsFetcher.fetchById(id)
       .then((result) => {
         this.dispatch(result.reaction);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchWellplatesByCollectionId(id, queryParams={}) {
+    WellplatesFetcher.fetchByCollectionId(id, queryParams)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchWellplateById(id) {
+    WellplatesFetcher.fetchById(id)
+      .then((result) => {
+        this.dispatch(result.wellplate);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
