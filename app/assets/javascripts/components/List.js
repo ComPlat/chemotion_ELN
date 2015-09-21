@@ -10,6 +10,8 @@ export default class List extends React.Component {
     super(props);
     this.state = {
       totalSampleElements: 0,
+      totalReactionElements: 0,
+      totalWellplatesElements: 0,
       currentTab: 1
     }
   }
@@ -26,7 +28,9 @@ export default class List extends React.Component {
 
   onChange(state) {
     this.setState({
-      totalSampleElements: state.elements.samples.totalElements
+      totalSampleElements: state.elements.samples.totalElements,
+      totalReactionElements: state.elements.reactions.totalElements,
+      totalWellplatesElements: state.elements.wellplates.totalElements
     });
   }
 
@@ -42,8 +46,8 @@ export default class List extends React.Component {
 
   render() {
     let samples = <i className="icon-sample"> {this.state.totalSampleElements} </i>,
-      reactions = <i className="icon-reaction"></i>,
-      wellplates = <i className="icon-wellplate"></i>;
+      reactions = <i className="icon-reaction"> {this.state.totalReactionElements} </i>,
+      wellplates = <i className="icon-wellplate"> {this.state.totalWellplatesElements} </i>;
     return (
       <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
                   onSelect={(e) => this.handleTabSelect(e)}>
