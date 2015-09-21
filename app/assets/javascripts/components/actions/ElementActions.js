@@ -132,9 +132,7 @@ class ElementActions {
   fetchMoleculeByMolfile(molfile) {
   MoleculesFetcher.fetchByMolfile(molfile)
     .then((result) => {
-      console.log("MOLECULE");
-      console.log(result);
-      this.dispatch(result.molecule);
+      this.dispatch(result);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

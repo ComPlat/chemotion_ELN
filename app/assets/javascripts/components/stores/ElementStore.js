@@ -50,7 +50,8 @@ class ElementStore {
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
-      handleGenerateEmptySample: ElementActions.generateEmptySample
+      handleGenerateEmptySample: ElementActions.generateEmptySample,
+      handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile
     })
   }
 
@@ -86,6 +87,7 @@ class ElementStore {
   handleFetchMoleculeByMolfile(result) {
     // Attention: This is intended to update SampleDetails
     this.state.currentElement.molecule = result;
+    this.handleRefreshElements('sample');
   }
 
   // -- Wellplates --

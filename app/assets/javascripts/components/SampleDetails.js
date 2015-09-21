@@ -195,13 +195,12 @@ export default class SampleDetails extends React.Component {
     console.log(molfile);
 
     // TODO: optimize
-    this.updateMolecule(molfile);
     let sample = this.state.sample;
     if(sample) {
       sample.molfile = molfile
     }
-    this.setState({sample: sample})
-
+    this.setState({sample: sample});
+    this.updateMolecule(molfile);
     this.hideStructureEditor()
   }
 
