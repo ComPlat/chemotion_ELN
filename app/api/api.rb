@@ -23,6 +23,7 @@ class API < Grape::API
   end
 
   mount Chemotion::LiteratureAPI
+  mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI

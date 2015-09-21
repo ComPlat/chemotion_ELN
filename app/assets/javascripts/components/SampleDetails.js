@@ -185,12 +185,17 @@ export default class SampleDetails extends React.Component {
     })
   }
 
+  updateMolecule(molfile) {
+    ElementActions.fetchMoleculeByMolfile(molfile);
+  }
+
   handleStructureEditorSave(molfile) {
     // TODO: handle the resulting molfile and submit it
     console.log("Molecule MOL-file:");
     console.log(molfile);
 
     // TODO: optimize
+    this.updateMolecule(molfile);
     let sample = this.state.sample;
     if(sample) {
       sample.molfile = molfile

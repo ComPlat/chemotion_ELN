@@ -82,6 +82,11 @@ class ElementStore {
     this.handleRefreshElements('sample');
   }
 
+  // Molecules
+  handleFetchMoleculeByMolfile(result) {
+    // Attention: This is intended to update SampleDetails
+    this.state.currentElement.molecule = result;
+  }
 
   // -- Wellplates --
 
