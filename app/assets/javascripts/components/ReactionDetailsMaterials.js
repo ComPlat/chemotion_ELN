@@ -1,129 +1,87 @@
-import React from 'react'
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon, Table} from 'react-bootstrap';
-import NumeralInputWithUnits from './NumeralInputWithUnits'
+import React, {Component, PropTypes} from 'react'
+import {Table} from 'react-bootstrap';
+import MaterialContainer from './MaterialContainer';
 
-import { PropTypes } from 'react';
-import { DragSource, DragDropContext } from 'react-dnd';
-
-import HTML5Backend from 'react-dnd/modules/backends/HTML5';
-class Board {
-  /* ... */
-}
-export default DragDropContext(HTML5Backend)(Board);
-
-
-// import { ItemTypes } from './Constants';
-
-let ItemTypes = {
-  REACTION_MATERIALS: 'REACTION_MATERIALS'
-}
-
-/**
- * Implements the drag source contract.
- */
-const cardSource = {
-  beginDrag(props) {
-    return {
-      text: props.text
-    };
-  }
-};
-
-/**
- * Specifies the props to inject into your component.
- */
-function collect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging()
-  };
-}
-
-const propTypes = {
-  text: PropTypes.string.isRequired,
-
-  // Injected by React DnD:
-  isDragging: PropTypes.bool.isRequired,
-  connectDragSource: PropTypes.func.isRequired
-};
-
-class ReactionDetailsMaterials extends React.Component {
-
+export default class ReactionDetailsMaterials extends Component {
   constructor(props) {
     super(props);
+    const {samples} = props;
     this.state = {
-      samples: props.samples || [],
+      materialContainers: this.getMaterialContainers(samples),
       materialGroup: props.materialGroup
-    }
+    };
+    console.log(this.state.materialContainers);
+  }
+
+  getMaterialContainers(samples) {
+    let materialContainers = [];
+    samples.forEach((sample, key) => {
+      materialContainers.push({
+        id: key,
+        sample
+      });
+    });
+    //create temp object for dropping
+    materialContainers.push({
+      id: materialContainers.length,
+      sample: null
+    });
+    return materialContainers;
   }
 
   componentWillReceiveProps(nextProps) {
+    const {samples} = nextProps;
     this.setState({
-      samples: nextProps.samples
-    })
+      materialContainers: this.getMaterialContainers(samples)
+    });
   }
 
-  handleReferenceChange(event, sampleID) {
-    let value = event.target.value;
-    this.props.onChange(
-      {
-        type: 'referenceChanged',
-        materialGroup: this.state.materialGroup,
-        sampleID: sampleID,
-        value: value
-      }
-    )
+  dropSample(sample, materialContainerId) {
+    const {materialContainers} = this.state;
+    const {handleMaterialsChange} = this.props;
+    const materialContainer = materialContainers.filter(container => container.id === materialContainerId)[0];
+    if(materialContainer.sample === null) {
+      //create new temp object for dropping
+      materialContainers.push({
+        id: materialContainers.length,
+        sample: null
+      });
+    }  
+    materialContainer.sample = sample;
+    this.setState({
+      materialContainers
+    });
+    handleMaterialsChange(this.state.materialContainers);
   }
 
   render() {
-    const { isDragging, connectDragSource, text } = this.props;
 
-    let rows = this.state.samples.map((sample)=> (
-      <tr key={sample.id}>
-        <td width="5%">
-          <input
-            type="radio"
-            name="reference"
-            onClick={(e) => this.handleReferenceChange(e, sample.id)}
-          />
-        </td>
-        <td width="25%">{sample.name}</td>
-        <td width="25%">{sample.molecule.sum_formular}</td>
-        <td width="25%">
-          <NumeralInputWithUnits
-             key={sample.id}
-             value={sample.amount_value}
-             unit={sample.amount_unit || 'g'}
-             units={['g', 'ml', 'mol']}
-             numeralFormat='0,0.00'
-             convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
-             onChange={(amount) => this.handleAmountChanged(amount)}
-          />
-        </td>
-        <td width="20%">
-          <Input type="text" key={sample.id} value={sample.equivalent} disabled />
-        </td>
-      </tr>
-    ));
-
-    return connectDragSource(
-      <Table width="100%">
+    const {materialContainers} = this.state;
+    return (
+      <table width="100%">
         <thead>
-          <th>Ref</th>
-          <th>Name</th>
-          <th>Molecule</th>
-          <th>Amount</th>
-          <th>Equi</th>
+        <th width="5%">Ref</th>
+        <th width="25%">Name</th>
+        <th width="25%">Molecule</th>
+        <th width="25%">Amount</th>
+        <th width="20%">Equi</th>
         </thead>
         <tbody>
-          {rows}
+        {materialContainers.map((container, key) => {
+          return <MaterialContainer
+            material={container}
+            key={key}
+            dropSample={(sample, materialId) => this.dropSample(sample, materialId)}
+            />
+        })}
         </tbody>
-      </Table>
+      </table>
     )
   }
 }
 
-ReactionDetailsMaterials.propTypes = propTypes;
 
-// Export the wrapped component:
-export default DragSource(ItemTypes.REACTION_MATERIALS, cardSource, collect)(ReactionDetailsMaterials);
+ReactionDetailsMaterials.propTypes = {
+  samples: PropTypes.array.isRequired
+};
+

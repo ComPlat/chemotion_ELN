@@ -1,4 +1,5 @@
 export default {
   WELL: 'well',
-  SAMPLE: 'sample'
+  SAMPLE: 'sample',
+  MATERIAL: 'material'
 };

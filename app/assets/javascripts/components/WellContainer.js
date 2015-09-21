@@ -73,7 +73,7 @@ class WellContainer extends Component {
       containerStyle.opacity = 1;
       hasLabel = false;
     } else if (canDrop) {
-      containerStyle.borderStyle = 'dotted';
+      containerStyle.borderStyle = 'dashed';
     }
     return (
       connectDragSource(connectDropTarget(

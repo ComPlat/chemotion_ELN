@@ -1,5 +1,5 @@
 import React from 'react'
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon, Table} from 'react-bootstrap';
+import {Accordion, Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon, Table} from 'react-bootstrap';
 
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -26,7 +26,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   onChange(state) {
-    if(!state.currentElement || state.currentElement.type == 'reaction') {
+    if (! state.currentElement || state.currentElement.type == 'reaction') {
       this.setState({
         reaction: state.currentElement
       });
@@ -38,7 +38,7 @@ export default class ReactionDetails extends React.Component {
       case 'referenceChanged':
         this.setState({
           reaction: this.updatedReactionForReferenceChange(change)
-        })
+        });
         break;
     }
   }
@@ -54,19 +54,23 @@ export default class ReactionDetails extends React.Component {
   }
 
   updatedSamplesForReferenceChange(samples, sampleID) {
-    return samples.map((sample)=>{
-     if(sample.id == sampleID) {
-       sample.equivalent = 1.0;
-     } else {
-       //TODO replace dummmy calculation
-       sample.equivalent = 2.0;
-     }
-     return sample;
-   });
+    return samples.map((sample)=> {
+      if (sample.id == sampleID) {
+        sample.equivalent = 1.0;
+      } else {
+        //TODO replace dummmy calculation
+        sample.equivalent = 2.0;
+      }
+      return sample;
+    });
+  }
+
+  handleMaterialsChange(materialContainers) {
+    console.log(materialContainers)
   }
 
   render() {
-    let reaction = this.state.reaction;
+    const {reaction} = this.state;
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
@@ -74,7 +78,7 @@ export default class ReactionDetails extends React.Component {
             <tr>
               <td width="70%">
                 <h3>{reaction.name}</h3>
-                <ElementCollectionLabels element={reaction} key={reaction.id} />
+                <ElementCollectionLabels element={reaction} key={reaction.id}/>
               </td>
               <td width="30%">
                 SVG
