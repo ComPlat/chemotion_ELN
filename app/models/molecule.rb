@@ -4,27 +4,6 @@ class Molecule < ActiveRecord::Base
 
   validates_uniqueness_of :inchikey
 
-  # def self.valuesFromPubchemByMolfile(molfile)
-  #   babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-  #   pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(babel_info[:inchikey])
-
-  #   svg_file_name = "#{babel_info[:inchikey]}.svg"
-  #   svg_file_path = "public/images/molecules/#{svg_file_name}"
-  #   svg_file = File.new(svg_file_path, 'w+')
-  #   svg_file.write(babel_info[:svg])
-  #   svg_file.close
-  #   {
-  #     molfile: molfile,
-  #     inchistring: babel_info[:inchi],
-  #     sum_formular: babel_info[:formula],
-  #     molecular_weight: babel_info[:mol_wt],
-  #     iupac_name: pubchem_info[:iupac_name],
-  #     names: pubchem_info[:names],
-  #     molecule_svg_file: svg_file_name
-  #   }
-  # end
-
-
   def self.find_or_create_by_molfile molfile
     
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
