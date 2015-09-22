@@ -2,6 +2,7 @@ import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
+import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
 
 class ElementActions {
 
@@ -71,6 +72,15 @@ class ElementActions {
     WellplatesFetcher.fetchById(id)
       .then((result) => {
         this.dispatch(result.wellplate);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+  createReactionLiterature(paramObj) {
+    LiteraturesFetcher.create(paramObj)
+      .then((result) => {
+        // TODO> CHECK VALUE OF PARAMOBJ
+        this.dispatch(paramObj)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

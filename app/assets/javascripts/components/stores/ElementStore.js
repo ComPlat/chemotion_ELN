@@ -41,6 +41,7 @@ class ElementStore {
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+      handleCreateReactionLiterature: ElementActions.createReactionLiterature,
 
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
@@ -99,6 +100,10 @@ class ElementStore {
 
   handleFetchReactionsByCollectionId(result) {
     this.state.elements.reactions = result;
+  }
+
+  handleCreateReactionLiterature(result) {
+    this.state.currentElement.literatures.push(result);
   }
 
   // -- Generic --

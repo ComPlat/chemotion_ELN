@@ -1,5 +1,8 @@
 import React from 'react'
-import {Table} from 'react-bootstrap';
+import {Table, Input, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
+
+import ElementActions from './actions/ElementActions';
+import ElementStore from './stores/ElementStore';
 
 
 export default class ReactionDetailsLiteratures extends React.Component {
@@ -12,29 +15,77 @@ export default class ReactionDetailsLiteratures extends React.Component {
     }
   }
 
+  componentDidMount() {
+    ElementStore.listen(this.onChange.bind(this));
+  }
+
+  componentWillUnmount() {
+    ElementStore.unlisten(this.onChange.bind(this));
+  }
+
+  onChange(state) {
+    this.setState({
+      literatures: state.currentElement.literatures,
+      reaction_id: state.currentElement.id
+    });
+  }
+
   _displayLiteratureRows() {
     let {literatures} = this.state;
     return literatures.map((element) => {
       return (
         <tr>
-          <td> {element.title} </td>
-          <td> {element.url} </td>
+          <td width="45%" className="padding-right"> {element.title}  </td>
+          <td width="50%" className="padding-right"> {element.url} </td>
+          <td width="5%">
+            <Button bsSize="xsmall" bsStyle="danger">
+              <i className="fa fa-trash-o"></i>
+            </Button>
+          </td>
         </tr>
       )
     });
   }
 
+  _submitFunction() {
+    let paramObj = {
+      reaction_id: this.state.reaction_id,
+      title: this.refs.titleInput.getValue(),
+      url: this.refs.urlInput.getValue()
+    }
+    ElementActions.createReactionLiterature(paramObj);
+  }
+
   render() {
     return (
-      <Table width="100%">
-        <thead>
-          <th> Title </th>
-          <th> URL </th>
-        </thead>
-        <tbody>
-          {this._displayLiteratureRows()}
-        </tbody>
-      </Table>
+      <ListGroup fill>
+        <Table width="100%">
+          <tbody>
+            {this._displayLiteratureRows()}
+          </tbody>
+        </Table>
+        <ListGroupItem>
+          <form>
+            <table width="100%">
+              <tr>
+                <td className="padding-right">
+                  <Input type="text" label="Title" ref="titleInput"/>
+                </td>
+                <td>
+                  <Input type="text" label="URL" ref="urlInput"/>
+                </td>
+              </tr>
+              <tr>
+                <td colSpan={2}>
+                  <ButtonToolbar>
+                    <Button bsStyle="warning" onClick={this._submitFunction.bind(this)}>Add Literature</Button>
+                  </ButtonToolbar>
+                </td>
+              </tr>
+            </table>
+          </form>
+        </ListGroupItem>
+      </ListGroup>
     );
   }
 

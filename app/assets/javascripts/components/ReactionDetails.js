@@ -67,7 +67,6 @@ export default class ReactionDetails extends React.Component {
 
   render() {
     let reaction = this.state.reaction;
-    let literatures = this._displayReactionLiteratures();
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
