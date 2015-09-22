@@ -4,7 +4,6 @@ module Chemotion
 
     resource :literatures do
 
-      #todo: more general search api
       desc "Create a new literature by reaction ID"
       params do
         requires :reaction_id, type: Integer, desc: "Reaction id"
@@ -13,6 +12,22 @@ module Chemotion
       end
       post do
         Literature.create(params)
+      end
+
+      desc "Delete a literature from a reaction by ID"
+      params do
+        requires :id, type: Integer, desc: "Literature id"
+      end
+      delete do
+        Literature.find(params[:id]).destroy
+      end
+
+      desc "Get literatures by reaction ID"
+      params do
+        requires :reaction_id, type: Integer, desc: "Reaction id"
+      end
+      get do
+        Literature.all.where(reaction_id: params[:reaction_id])
       end
 
     end

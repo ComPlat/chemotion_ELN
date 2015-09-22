@@ -42,6 +42,8 @@ class ElementStore {
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleCreateReactionLiterature: ElementActions.createReactionLiterature,
+      handleDeleteReactionLiterature: ElementActions.deleteReactionLiterature,
+      handleFetchLiteraturesByReactionId: ElementActions.fetchLiteraturesByReactionId,
 
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
@@ -104,6 +106,17 @@ class ElementStore {
 
   handleCreateReactionLiterature(result) {
     this.state.currentElement.literatures.push(result);
+  }
+
+  handleDeleteReactionLiterature(reactionId) {
+    ElementActions.fetchLiteraturesByReactionId(reactionId);
+    this.handleRefreshElements('reaction');
+  }
+
+  handleFetchLiteraturesByReactionId(result) {
+    console.log("handleFetchLiteraturesByReactionId: ");
+    console.log(result);
+    this.state.currentElement.literatures = result.literatures;
   }
 
   // -- Generic --

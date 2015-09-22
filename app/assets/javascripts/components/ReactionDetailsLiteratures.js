@@ -30,6 +30,10 @@ export default class ReactionDetailsLiteratures extends React.Component {
     });
   }
 
+  _deleteLiterature(literature) {
+    ElementActions.deleteReactionLiterature(literature);
+  }
+
   _displayLiteratureRows() {
     let {literatures} = this.state;
     return literatures.map((element) => {
@@ -38,7 +42,7 @@ export default class ReactionDetailsLiteratures extends React.Component {
           <td width="45%" className="padding-right"> {element.title}  </td>
           <td width="50%" className="padding-right"> {element.url} </td>
           <td width="5%">
-            <Button bsSize="xsmall" bsStyle="danger">
+            <Button bsSize="xsmall" bsStyle="danger" onClick={this._deleteLiterature.bind(this, element)}>
               <i className="fa fa-trash-o"></i>
             </Button>
           </td>
@@ -69,10 +73,14 @@ export default class ReactionDetailsLiteratures extends React.Component {
             <table width="100%">
               <tr>
                 <td className="padding-right">
-                  <Input type="text" label="Title" ref="titleInput"/>
+                  <Input type="text" label="Title" ref="titleInput"
+                    placeholder={'-- Please Insert Title --'}
+                  />
                 </td>
                 <td>
-                  <Input type="text" label="URL" ref="urlInput"/>
+                  <Input type="text" label="URL" ref="urlInput"
+                    placeholder={'-- Please Insert URL --'}
+                  />
                 </td>
               </tr>
               <tr>

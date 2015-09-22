@@ -79,8 +79,27 @@ class ElementActions {
   createReactionLiterature(paramObj) {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {
-        // TODO> CHECK VALUE OF PARAMOBJ
-        this.dispatch(paramObj)
+        this.dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteReactionLiterature(literature) {
+    LiteraturesFetcher.delete(literature)
+      .then((result) => {
+        this.dispatch(result.reaction_id)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchLiteraturesByReactionId(id) {
+    LiteraturesFetcher.fetchByReactionId(id)
+      .then((result) => {
+        console.log("Action Fetch Literatures: ");
+        console.log(result);
+        this.dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
