@@ -2,7 +2,6 @@ import 'whatwg-fetch';
 
 export default class MoleculesFetcher {
   static fetchByMolfile(molfile) {
-
     let promise = fetch('/api/v1/molecules', {
       credentials: 'same-origin',
       method: 'POST',

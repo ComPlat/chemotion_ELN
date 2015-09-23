@@ -77,7 +77,7 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
-  
+
   createReactionLiterature(paramObj) {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {
@@ -130,12 +130,12 @@ class ElementActions {
   }
 
   fetchMoleculeByMolfile(molfile) {
-  MoleculesFetcher.fetchByMolfile(molfile)
-    .then((result) => {
-      this.dispatch(result);
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    MoleculesFetcher.fetchByMolfile(molfile)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
 }
