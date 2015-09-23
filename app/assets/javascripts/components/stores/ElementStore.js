@@ -33,7 +33,6 @@ class ElementStore {
     };
 
     this.bindListeners({
-
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,

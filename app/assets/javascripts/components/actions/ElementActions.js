@@ -75,7 +75,8 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
+  }
+  
   createReactionLiterature(paramObj) {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {
