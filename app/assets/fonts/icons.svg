@@ -1,11 +1,11 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
 <!--
-2015-9-22: Created with FontForge (http://fontforge.org)
+2015-9-23: Created with FontForge (http://fontforge.org)
 -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
 <metadata>
-Created by FontForge 20150715 at Tue Sep 22 11:57:16 2015
+Created by FontForge 20150715 at Wed Sep 23 16:08:22 2015
  By Jan-Philipp Willem
 Copyright (c) 2015, Jan-Philipp Willem
 </metadata>
@@ -19,10 +19,10 @@ Copyright (c) 2015, Jan-Philipp Willem
     panose-1="2 0 5 3 0 0 0 0 0 0"
     ascent="448"
     descent="-64"
-    bbox="0 -64 512 448"
+    bbox="51.2002 5.63184 460.8 374.272"
     underline-thickness="25.6"
     underline-position="-51.2"
-    unicode-range="U+0020-F103"
+    unicode-range="U+0020-F102"
   />
     <missing-glyph />
     <glyph glyph-name="space" unicode=" " horiz-adv-x="200" 
@@ -46,7 +46,5 @@ c0 -15.2578 12.3906 -27.6484 27.6484 -27.6484zM297.984 243.712c15.2568 0 27.6475
 M377.856 83.9678c15.2568 0 27.6475 12.3906 27.6475 27.6484s-12.3906 27.6475 -27.6475 27.6475c-15.2578 0 -27.6484 -12.3896 -27.6484 -27.6475s12.3906 -27.6484 27.6484 -27.6484zM377.856 163.84c15.2568 0 27.6475 12.3906 27.6475 27.6484
 c0 15.2568 -12.3906 27.6475 -27.6475 27.6475c-15.2578 0 -27.6484 -12.3906 -27.6484 -27.6475c0 -15.2578 12.3906 -27.6484 27.6484 -27.6484zM377.856 243.712c15.2568 0 27.6475 12.3906 27.6475 27.6484c0 15.2568 -12.3906 27.6475 -27.6475 27.6475
 c-15.2578 0 -27.6484 -12.3906 -27.6484 -27.6475c0 -15.2578 12.3906 -27.6484 27.6484 -27.6484z" />
-    <glyph glyph-name="uniF103" unicode="&#xf103;" 
-d="M512 379.878l-187.879 -187.877l187.879 -187.878l-68.123 -68.123l-187.878 187.879l-187.876 -187.879l-68.123 68.123l187.877 187.878l-187.877 187.877l68.123 68.1221l187.876 -187.878l187.878 187.878z" />
   </font>
 </defs></svg>

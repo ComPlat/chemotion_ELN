@@ -63,10 +63,11 @@ export default class Material extends Component {
         </td>
         <td>
           <Button
-            bsSize='small'
+            bsSize="small"
+            bsStyle="danger"
             onClick={() => this.handleDelete()}
             >
-            <span className="text-danger icon-delete"></span>
+            <i className="fa fa-trash-o"></i>
           </Button>
         </td>
       </tr>
