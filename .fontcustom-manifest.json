@@ -1,7 +1,7 @@
 {
   "checksum": {
-    "previous": "099d15f200dc601faae95ccb0ffb2c5a6eaf2a22448d716bbd666ce12ce82c25",
-    "current": "099d15f200dc601faae95ccb0ffb2c5a6eaf2a22448d716bbd666ce12ce82c25"
+    "previous": "3ed8d8f736a74e2187aa717fdd6555d7691c3427d7a71d3d9d81c973144a6a3d",
+    "current": "3ed8d8f736a74e2187aa717fdd6555d7691c3427d7a71d3d9d81c973144a6a3d"
   },
   "fonts": [
     "app/assets/fonts/icons.ttf",
@@ -10,6 +10,10 @@
     "app/assets/fonts/icons.eot"
   ],
   "glyphs": {
+    "delete": {
+      "codepoint": 61699,
+      "source": "app/assets/images/svg_icons/delete.svg"
+    },
     "reaction": {
       "codepoint": 61696,
       "source": "app/assets/images/svg_icons/reaction.svg"

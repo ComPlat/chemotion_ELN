@@ -23,6 +23,7 @@
 [data-icon]:before { content: attr(data-icon); }
 
 [data-icon]:before,
+.icon-delete:before,
 .icon-reaction:before,
 .icon-sample:before,
 .icon-wellplate:before {
@@ -40,10 +41,12 @@
   font-smoothing: antialiased;
 }
 
+.icon-delete:before { content: "\f103"; }
 .icon-reaction:before { content: "\f100"; }
 .icon-sample:before { content: "\f101"; }
 .icon-wellplate:before { content: "\f102"; }
 
+$font-icons-delete: "\f103";
 $font-icons-reaction: "\f100";
 $font-icons-sample: "\f101";
 $font-icons-wellplate: "\f102";

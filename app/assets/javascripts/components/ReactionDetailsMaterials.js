@@ -3,85 +3,67 @@ import {Table} from 'react-bootstrap';
 import MaterialContainer from './MaterialContainer';
 
 export default class ReactionDetailsMaterials extends Component {
-  constructor(props) {
-    super(props);
-    const {samples} = props;
-    this.state = {
-      materialContainers: this.getMaterialContainers(samples),
-      materialGroup: props.materialGroup
-    };
-    console.log(this.state.materialContainers);
+  dropSample(sample) {
+    const {materials, materialGroup, handleMaterialsChange} = this.props;
+    materials.push(sample);
+    handleMaterialsChange(materials, materialGroup);
   }
 
-  getMaterialContainers(samples) {
-    let materialContainers = [];
-    samples.forEach((sample, key) => {
-      materialContainers.push({
-        id: key,
-        sample
-      });
-    });
-    //create temp object for dropping
-    materialContainers.push({
-      id: materialContainers.length,
-      sample: null
-    });
-    return materialContainers;
+  deleteMaterial(material) {
+    const {materials, handleMaterialsChange, materialGroup} = this.props;
+    const materialIndex = materials.indexOf(material);
+    materials.splice(materialIndex, 1);
+    handleMaterialsChange(materials, materialGroup);
   }
 
-  componentWillReceiveProps(nextProps) {
-    const {samples} = nextProps;
-    this.setState({
-      materialContainers: this.getMaterialContainers(samples)
-    });
-  }
-
-  dropSample(sample, materialContainerId) {
-    const {materialContainers} = this.state;
-    const {handleMaterialsChange} = this.props;
-    const materialContainer = materialContainers.filter(container => container.id === materialContainerId)[0];
-    if(materialContainer.sample === null) {
-      //create new temp object for dropping
-      materialContainers.push({
-        id: materialContainers.length,
-        sample: null
-      });
-    }  
-    materialContainer.sample = sample;
-    this.setState({
-      materialContainers
-    });
-    handleMaterialsChange(this.state.materialContainers);
+  dropMaterial(material, previousMaterialGroup) {
+    const {materials, materialGroup, handleMaterialsChange, removeMaterialFromMaterialGroup} = this.props;
+    //remove from previous materialGroup
+    removeMaterialFromMaterialGroup(material, previousMaterialGroup);
+    //add to new materialGroup
+    materials.push(material);
+    handleMaterialsChange(materials, materialGroup);
   }
 
   render() {
-
-    const {materialContainers} = this.state;
+    const {materials, materialGroup} = this.props;
     return (
       <table width="100%">
         <thead>
         <th width="5%">Ref</th>
-        <th width="25%">Name</th>
-        <th width="25%">Molecule</th>
-        <th width="25%">Amount</th>
+        <th width="20%">Name</th>
+        <th width="20%">Molecule</th>
+        <th width="30%">Amount</th>
         <th width="20%">Equi</th>
+        <th width="5%"></th>
         </thead>
         <tbody>
-        {materialContainers.map((container, key) => {
-          return <MaterialContainer
-            material={container}
-            key={key}
-            dropSample={(sample, materialId) => this.dropSample(sample, materialId)}
-            />
-        })}
+        {
+          materials.map((material, key) => {
+            return <MaterialContainer
+              material={material}
+              materialGroup={materialGroup}
+              key={key}
+              dropMaterial={(material, materialGroup) => this.dropMaterial(material, materialGroup)}
+              deleteMaterial={material => this.deleteMaterial(material)}
+              />
+          })
+        }
+
+        <MaterialContainer
+          material={{}}
+          materialGroup={materialGroup}
+          dropMaterial={(material, materialGroup) => this.dropMaterial(material, materialGroup)}
+          dropSample={(material, materialId) => this.dropSample(material, materialId)}
+          />
         </tbody>
       </table>
     )
   }
 }
 
-
 ReactionDetailsMaterials.propTypes = {
-  samples: PropTypes.array.isRequired
+  materials: PropTypes.array.isRequired,
+  handleMaterialsChange: PropTypes.func.isRequired
 };
 
