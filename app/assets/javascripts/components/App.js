@@ -51,7 +51,6 @@ Aviator.setRoutes({
 
       showCollectionManagement: function(e) {
         let mainContentDomNode = document.getElementById('main-content');
-        let rightColumnDomNode = document.getElementById('right-column');
 
         if(mainContentDomNode) {
           // nothing rendered in main-content div
