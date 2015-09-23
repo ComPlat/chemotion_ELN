@@ -1,5 +1,6 @@
 import alt from '../alt';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
+import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
@@ -76,7 +77,7 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
-  
+
   createReactionLiterature(paramObj) {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {
@@ -127,6 +128,18 @@ class ElementActions {
     }
     this.dispatch(sample)
   }
+
+  fetchMoleculeByMolfile(molfile) {
+    MoleculesFetcher.fetchByMolfile(molfile)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
 }
+
+
 
 export default alt.createActions(ElementActions);
