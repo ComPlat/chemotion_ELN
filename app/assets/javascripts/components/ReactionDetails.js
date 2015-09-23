@@ -6,6 +6,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 
 import ElementStore from './stores/ElementStore';
 import ReactionDetailsMaterials from './ReactionDetailsMaterials';
+import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 
 export default class ReactionDetails extends React.Component {
 
@@ -65,7 +66,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   render() {
-    let reaction = this.state.reaction
+    let reaction = this.state.reaction;
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
@@ -89,6 +90,9 @@ export default class ReactionDetails extends React.Component {
             </ListGroupItem>
             <ListGroupItem header='Products'>
               <ReactionDetailsMaterials materialGroup="products" samples={reaction.products} onChange={this.handleMaterialsChange.bind(this)}/>
+            </ListGroupItem>
+            <ListGroupItem header='Literatures'>
+              <ReactionDetailsLiteratures reaction_id={reaction.id} literatures={reaction.literatures}/>
             </ListGroupItem>
           </ListGroup>
         </Panel>

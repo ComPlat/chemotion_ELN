@@ -10,4 +10,6 @@ class Reaction < ActiveRecord::Base
 
   has_many :reactions_product_samples
   has_many :products, through: :reactions_product_samples, source: :sample
+
+  has_many :literatures
 end

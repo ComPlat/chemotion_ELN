@@ -22,6 +22,7 @@ class API < Grape::API
     authenticate!
   end
 
+  mount Chemotion::LiteratureAPI
   mount Chemotion::CollectionAPI
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
