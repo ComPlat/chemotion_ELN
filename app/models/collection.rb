@@ -4,6 +4,7 @@ class Collection < ActiveRecord::Base
 
   has_many :collections_samples
   has_many :collections_reactions
+  has_many :collections_wellplates
 
   has_many :samples, through: :collections_samples, dependent: :destroy
   has_many :reactions, through: :collections_reactions, dependent: :destroy

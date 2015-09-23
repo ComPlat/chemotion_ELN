@@ -60,9 +60,8 @@ MOLFILE
               "molfile" => molfile,
         "melting_point" => nil,
         "boiling_point" => nil,
-         "sum_formular" => "H2O",
-                "names" => ["water", "oxidane"],
-           "iupac_name" => "oxidane",
+                "names" => ["hydron;hydroxide"],
+           "iupac_name" => "hydron;hydroxide",
     "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg"
       )
     end

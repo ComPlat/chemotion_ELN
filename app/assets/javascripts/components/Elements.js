@@ -52,18 +52,20 @@ class Elements extends Component {
     }
 
     return (
-      <Table>
-        <tbody>
-        <tr valign="top" className="borderless">
-          <td className="borderless">
-            <List/>
-          </td>
-          <td className="borderless" width={width}>
-            {elementDetails}
-          </td>
-        </tr>
-        </tbody>
-      </Table>
+      <div id="elements">
+        <Table>
+          <tbody>
+          <tr valign="top" className="borderless">
+            <td className="borderless">
+              <List/>
+            </td>
+            <td className="borderless" width={width}>
+              {elementDetails}
+            </td>
+          </tr>
+          </tbody>
+        </Table>
+      </div>
     )
   }
 }
