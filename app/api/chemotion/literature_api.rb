@@ -27,7 +27,7 @@ module Chemotion
         requires :reaction_id, type: Integer, desc: "Reaction id"
       end
       get do
-        Literature.all.where(reaction_id: params[:reaction_id])
+        Literature.where(reaction_id: params[:reaction_id])
       end
 
     end
