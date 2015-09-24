@@ -1,77 +1,69 @@
-import React from 'react'
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon, Table} from 'react-bootstrap';
-import NumeralInputWithUnits from './NumeralInputWithUnits'
+import React, {Component, PropTypes} from 'react'
+import {Table} from 'react-bootstrap';
+import MaterialContainer from './MaterialContainer';
 
-export default class ReactionDetailsMaterials extends React.Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      samples: props.samples || [],
-      materialGroup: props.materialGroup
-    }
+export default class ReactionDetailsMaterials extends Component {
+  dropSample(sample) {
+    const {materials, materialGroup, handleMaterialsChange} = this.props;
+    materials.push(sample);
+    handleMaterialsChange(materials, materialGroup);
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      samples: nextProps.samples
-    })
+  deleteMaterial(material) {
+    const {materials, handleMaterialsChange, materialGroup} = this.props;
+    const materialIndex = materials.indexOf(material);
+    materials.splice(materialIndex, 1);
+    handleMaterialsChange(materials, materialGroup);
   }
 
-  handleReferenceChange(event, sampleID) {
-    let value = event.target.value;
-    this.props.onChange(
-      {
-        type: 'referenceChanged',
-        materialGroup: this.state.materialGroup,
-        sampleID: sampleID,
-        value: value
-      }
-    )
+  dropMaterial(material, previousMaterialGroup) {
+    const {materials, materialGroup, handleMaterialsChange, removeMaterialFromMaterialGroup} = this.props;
+    //remove from previous materialGroup
+    removeMaterialFromMaterialGroup(material, previousMaterialGroup);
+    //add to new materialGroup
+    materials.push(material);
+    handleMaterialsChange(materials, materialGroup);
   }
 
   render() {
-    let rows = this.state.samples.map((sample)=> (
-      <tr key={sample.id}>
-        <td width="5%">
-          <input
-            type="radio"
-            name="reference"
-            onClick={(e) => this.handleReferenceChange(e, sample.id)}
-          />
-        </td>
-        <td width="25%">{sample.name}</td>
-        <td width="25%">{sample.molecule.sum_formular}</td>
-        <td width="25%">
-          <NumeralInputWithUnits
-             key={sample.id}
-             value={sample.amount_value}
-             unit={sample.amount_unit || 'g'}
-             units={['g', 'ml', 'mol']}
-             numeralFormat='0,0.00'
-             convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
-             onChange={(amount) => this.handleAmountChanged(amount)}
-          />
-        </td>
-        <td width="20%">
-          <Input type="text" key={sample.id} value={sample.equivalent} disabled />
-        </td>
-      </tr>
-    ));
-
+    const {materials, materialGroup} = this.props;
     return (
-      <Table width="100%">
+      <table width="100%">
         <thead>
-          <th>Ref</th>
-          <th>Name</th>
-          <th>Molecule</th>
-          <th>Amount</th>
-          <th>Equi</th>
+        <th width="5%">Ref</th>
+        <th width="20%">Name</th>
+        <th width="20%">Molecule</th>
+        <th width="30%">Amount</th>
+        <th width="20%">Equi</th>
+        <th width="5%"></th>
         </thead>
         <tbody>
-          {rows}
+        {
+          materials.map((material, key) => {
+            return <MaterialContainer
+              material={material}
+              materialGroup={materialGroup}
+              key={key}
+              dropMaterial={(material, materialGroup) => this.dropMaterial(material, materialGroup)}
+              deleteMaterial={material => this.deleteMaterial(material)}
+              />
+          })
+        }
+
+        <MaterialContainer
+          material={{}}
+          materialGroup={materialGroup}
+          dropMaterial={(material, materialGroup) => this.dropMaterial(material, materialGroup)}
+          dropSample={(material, materialId) => this.dropSample(material, materialId)}
+          />
         </tbody>
-      </Table>
+      </table>
     )
   }
 }
+
+ReactionDetailsMaterials.propTypes = {
+  materials: PropTypes.array.isRequired,
+  handleMaterialsChange: PropTypes.func.isRequired
+};
+

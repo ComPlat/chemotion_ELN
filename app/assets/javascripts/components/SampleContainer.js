@@ -36,7 +36,7 @@ class SampleContainer extends Component {
   }
 }
 
-export default (DragSource(DragDropItemTypes.SAMPLE, sampleSource, collectSource)(SampleContainer));
+export default DragSource(DragDropItemTypes.SAMPLE, sampleSource, collectSource)(SampleContainer);
 
 SampleContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,

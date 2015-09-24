@@ -6,13 +6,13 @@ export default class Wellplate extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      wellContainers: this.getWellContainers()
+      wellContainers: this.getWellContainers(props.wells)
     };
     console.log(this.state.wellContainers);
   }
 
-  getWellContainers() {
-    const {wells, size} = this.props;
+  getWellContainers(wells) {
+    const {size} = this.props;
     let wellContainers = [];
     for (let i = 0; i < size; i ++) {
       const wellContainer = {id: i};
@@ -23,6 +23,13 @@ export default class Wellplate extends Component {
       wellContainers.push(wellContainer);
     }
     return wellContainers;
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {wells} = nextProps;
+    this.setState({
+      wellContainers: this.getWellContainers(wells)
+    });
   }
 
   switchWellContainers(id, afterId) {
