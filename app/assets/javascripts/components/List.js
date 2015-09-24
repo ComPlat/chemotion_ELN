@@ -16,6 +16,16 @@ export default class List extends React.Component {
     }
   }
 
+  _checkedElements(type) {
+    let elementUI = UIStore.getState()[type];
+    let element   = ElementStore.getState()['elements'][type+"s"];
+    if (elementUI.checkedAll) {
+      return element.totalElements - elementUI.uncheckedIds.size;
+    } else {
+      return elementUI.checkedIds.size;
+    }
+  }
+
   componentDidMount() {
     ElementStore.listen(this.onChange.bind(this));
     UIStore.listen(this.onChangeUI.bind(this));
@@ -45,9 +55,19 @@ export default class List extends React.Component {
   }
 
   render() {
-    let samples = <i className="icon-sample"> {this.state.totalSampleElements} </i>,
-      reactions = <i className="icon-reaction"> {this.state.totalReactionElements} </i>,
-      wellplates = <i className="icon-wellplate"> {this.state.totalWellplatesElements} </i>;
+    let samples = 
+      <i className="icon-sample">
+         {this.state.totalSampleElements} ({this._checkedElements('sample')}) 
+      </i>;
+    let reactions = 
+      <i className="icon-reaction">
+         {this.state.totalReactionElements} ({this._checkedElements('reaction')}) 
+      </i>;
+    let wellplates = 
+      <i className="icon-wellplate">
+         {this.state.totalWellplatesElements} ({this._checkedElements('wellplate')}) 
+      </i>;
+
     return (
       <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
                   onSelect={(e) => this.handleTabSelect(e)}>
