@@ -84,5 +84,28 @@ describe Chemotion::ReactionAPI do
       end
     end
 
+    describe 'DELETE /api/v1/reactions' do
+      context 'with valid parameters' do
+
+        it 'should be able to delete a reaction' do
+          r = Reaction.create(name: 'test')
+          reaction_id = r.id
+          CollectionsReaction.create(reaction_id: r.id, collection_id: 1)
+          delete '/api/v1/reactions', { id: reaction_id }
+          r = Reaction.find_by(name: 'test')
+          expect(r).to be_nil
+          a = Literature.where(reaction_id: reaction_id)
+          expect(a).to match_array([])
+          a = CollectionsReaction.where(reaction_id: reaction_id)
+          expect(a).to match_array([])
+          a = ReactionsProductSample.where(reaction_id: reaction_id)
+          expect(a).to match_array([])
+          a = ReactionsReactantSample.where(reaction_id: reaction_id)
+          expect(a).to match_array([])
+          a = ReactionsStartingMaterialSample.where(reaction_id: reaction_id)
+          expect(a).to match_array([])
+        end
+      end
+    end
   end
 end
