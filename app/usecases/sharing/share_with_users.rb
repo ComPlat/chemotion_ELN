@@ -12,6 +12,8 @@ module Usecases
                     elements_filter.fetch(:sample, {})
                   when 'Reaction'
                     elements_filter.fetch(:reaction, {})
+                  when 'Wellplate'
+                    elements_filter.fetch(:wellplate, {})
                   else
                     {}
                   end
@@ -38,7 +40,8 @@ module Usecases
           new_params = {
             collection_attributes: collection_attributes,
             sample_ids: getElementIds(elements_filter, Sample),
-            reaction_ids: getElementIds(elements_filter, Reaction)
+            reaction_ids: getElementIds(elements_filter, Reaction),
+            wellplate_ids: getElementIds(elements_filter, Wellplate)
           }
           Usecases::Sharing::ShareWithUser.new(new_params).execute!
         end

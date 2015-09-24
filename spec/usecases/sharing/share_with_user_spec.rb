@@ -1,11 +1,12 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::Sharing::ShareWithUser do
-
-  let(:sample_1) { create(:sample) }
-  let(:sample_2) { create(:sample) }
-  let(:reaction_1) { create(:reaction) }
-  let(:reaction_2) { create(:reaction) } 
+  let(:sample_1)    { create(:sample) }
+  let(:sample_2)    { create(:sample) }
+  let(:reaction_1)  { create(:reaction) }
+  let(:reaction_2)  { create(:reaction) }
+  let(:wellplate_1) { create(:wellplate) }
+  let(:wellplate_2) { create(:wellplate) }
 
   let(:params) {
     {
@@ -21,7 +22,8 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
         wellplate_detail_level: 4
       },
       sample_ids: [sample_1.id, sample_2.id],
-      reaction_ids: [reaction_1.id, reaction_2.id]
+      reaction_ids: [reaction_1.id, reaction_2.id],
+      wellplate_ids: [wellplate_1.id, wellplate_2.id]
     }
   }
 
@@ -52,6 +54,10 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       associated_reaction_ids = Collection.find_by(label: 'test').reaction_ids
       expect(associated_reaction_ids).to match_array([reaction_1.id, reaction_2.id])
     end
-    
+
+    it 'creates wellplate associations according to given params' do
+      associated_wellplate_ids = Collection.find_by(label: 'test').wellplate_ids
+      expect(associated_wellplate_ids).to match_array([wellplate_1.id, wellplate_2.id])
+    end
   end
 end
