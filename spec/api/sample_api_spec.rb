@@ -194,5 +194,46 @@ describe Chemotion::SampleAPI do
       end
     end
 
+    describe 'DELETE /api/v1/samples' do
+      context 'with valid parameters' do
+
+        let!(:params) {
+          {
+            name: 'test',
+            amount_value: 0,
+            amount_unit: 'g',
+            description: 'Test Sample',
+            purity: 1,
+            solvent: '',
+            impurities: '',
+            location: '',
+            molfile: ''
+          }
+        }
+
+        it 'should be able to delete a sample' do
+          post '/api/v1/samples', params
+          s = Sample.find_by(name: 'test')
+          expect(s).to_not be_nil
+          sample_id = s.id
+          CollectionsSample.create(sample_id: s.id, collection_id: 1)
+          delete '/api/v1/samples', { id: sample_id}
+          s = Sample.find_by(name: 'test')
+          expect(s).to be_nil
+          a = Well.where(sample_id: sample_id)
+          expect(a).to match_array([])
+          a = CollectionsSample.where(sample_id: sample_id)
+          expect(a).to match_array([])
+          a = ReactionsProductSample.where(sample_id: sample_id)
+          expect(a).to match_array([])
+          a = ReactionsReactantSample.where(sample_id: sample_id)
+          expect(a).to match_array([])
+          a = ReactionsStartingMaterialSample.where(sample_id: sample_id)
+          expect(a).to match_array([])
+        end
+
+      end
+    end
+
   end
 end
