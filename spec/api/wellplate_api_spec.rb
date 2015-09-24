@@ -1,9 +1,8 @@
 require 'rails_helper'
 
 describe Chemotion::WellplateAPI do
-
   context 'authorized user logged in' do
-    let(:user)  { create(:user) }
+    let(:user) { create(:user) }
 
     before do
       allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
@@ -39,6 +38,25 @@ describe Chemotion::WellplateAPI do
         it 'returns 401 unauthorized status code' do
           expect(response.status).to eq 401
         end
+      end
+    end
+
+    describe 'DELETE /api/v1/wellplates' do
+      context 'with valid parameters' do
+
+        it 'should be able to delete a wellplate' do
+          w = Wellplate.create(name: 'test')
+          wellplate_id = w.id
+          CollectionsWellplate.create(wellplate_id: w.id, collection_id: 1)
+          delete '/api/v1/wellplates', { id: wellplate_id }
+          w = Wellplate.find_by(name: 'test')
+          expect(w).to be_nil
+          a = Well.where(wellplate_id: wellplate_id)
+          expect(a).to match_array([])
+          a = CollectionsWellplate.where(wellplate_id: wellplate_id)
+          expect(a).to match_array([])
+        end
+
       end
     end
   end
