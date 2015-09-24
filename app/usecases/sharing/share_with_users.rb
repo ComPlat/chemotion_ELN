@@ -20,11 +20,11 @@ module Usecases
 
         return [] if element.empty?
 
-        unless element.fetch(:all)
+        if element.fetch(:all)
           excluded_ids = element.fetch(:excluded_ids, [])
           elementClass.where.not(id: excluded_ids).pluck(:id)
         else
-          element.fetch(:included_ids,[])
+          element.fetch(:included_ids, [])
         end
       end
 
@@ -43,6 +43,7 @@ module Usecases
             reaction_ids: getElementIds(elements_filter, Reaction),
             wellplate_ids: getElementIds(elements_filter, Wellplate)
           }
+        
           Usecases::Sharing::ShareWithUser.new(new_params).execute!
         end
       end
