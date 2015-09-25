@@ -120,9 +120,18 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Sample id"
       end
+      route_param :id do
+        delete do
+          Sample.find(params[:id]).destroy
+        end
+      end
+
+      desc "Delete samples by UI state"
+      params do
+        requires :ui_state, type: Hash, desc: "Selected samples from the UI"
+      end
       delete do
-        sample_id = params[:id]
-        Sample.find(params[:id]).destroy
+        Sample.for_ui_state(params[:ui_state]).destroy_all
       end
 
     end

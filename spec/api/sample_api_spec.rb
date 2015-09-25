@@ -217,7 +217,7 @@ describe Chemotion::SampleAPI do
           expect(s).to_not be_nil
           sample_id = s.id
           CollectionsSample.create(sample_id: s.id, collection_id: 1)
-          delete '/api/v1/samples', { id: sample_id}
+          delete "/api/v1/samples/#{sample_id}", { id: sample_id}
           s = Sample.find_by(name: 'test')
           expect(s).to be_nil
           a = Well.where(sample_id: sample_id)
@@ -231,8 +231,82 @@ describe Chemotion::SampleAPI do
           a = ReactionsStartingMaterialSample.where(sample_id: sample_id)
           expect(a).to match_array([])
         end
+      end
+
+      context 'with UIState' do
+
+        let!(:sample_1) { create(:sample, name: 'test_1')}
+        let!(:sample_2) { create(:sample, name: 'test_2')}
+        let!(:sample_3) { create(:sample, name: 'test_3')}
+
+        let!(:params_all_false) {
+          {
+            all: nil,
+            included_ids: [sample_1.id, sample_2.id],
+            excluded_ids: []
+          }
+        }
+
+        let!(:params_all_true) {
+          {
+            all: true,
+            included_ids: [],
+            excluded_ids: [sample_3.id]
+          }
+        }
+
+        it 'should be able to delete samples when "all" is false' do
+          sample_ids = [sample_1.id, sample_2.id]
+          array = Sample.where(id: sample_ids).to_a
+          expect(array).to match_array([sample_1, sample_2])
+          CollectionsSample.create(sample_id: sample_1.id, collection_id: 1)
+          CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
+          s = Sample.find_by(id: sample_3.id)
+          expect(s).to_not be_nil
+          delete '/api/v1/samples', { ui_state: params_all_false }
+          s = Sample.find_by(id: sample_3.id)
+          expect(s).to_not be_nil
+          array = Sample.where(id: sample_ids).to_a
+          expect(array).to match_array([])
+          a = Well.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = CollectionsSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = ReactionsProductSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = ReactionsReactantSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = ReactionsStartingMaterialSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+        end
+
+        it 'should be able to delete samples when "all" is false' do
+          sample_ids = [sample_1.id, sample_2.id]
+          array = Sample.where(id: sample_ids).to_a
+          expect(array).to match_array([sample_1, sample_2])
+          CollectionsSample.create(sample_id: sample_1.id, collection_id: 1)
+          CollectionsSample.create(sample_id: sample_2.id, collection_id: 1)
+          s = Sample.find_by(id: sample_3.id)
+          expect(s).to_not be_nil
+          delete '/api/v1/samples', { ui_state: params_all_true }
+          s = Sample.find_by(id: sample_3.id)
+          expect(s).to_not be_nil
+          array = Sample.where(id: sample_ids).to_a
+          expect(array).to match_array([])
+          a = Well.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = CollectionsSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = ReactionsProductSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = ReactionsReactantSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+          a = ReactionsStartingMaterialSample.where(sample_id: sample_ids).to_a
+          expect(a).to match_array([])
+        end
 
       end
+
     end
 
   end

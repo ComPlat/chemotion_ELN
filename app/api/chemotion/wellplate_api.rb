@@ -39,9 +39,18 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Wellplate id"
       end
+      route_param :id do
+        delete do
+          Wellplate.find(params[:id]).destroy
+        end
+      end
+
+      desc "Delete wellplates by UI state"
+      params do
+        requires :ui_state, type: Hash, desc: "Selected wellplates from the UI"
+      end
       delete do
-        wellplate_id = params[:id]
-        Wellplate.find(wellplate_id).destroy
+        Wellplate.for_ui_state(params[:ui_state]).destroy_all
       end
 
     end

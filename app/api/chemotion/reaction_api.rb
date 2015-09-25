@@ -39,9 +39,18 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Reaction id"
       end
+      route_param :id do
+        delete do
+          Reaction.find(params[:id]).destroy
+        end
+      end
+
+      desc "Delete reactions by UI state"
+      params do
+        requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
+      end
       delete do
-        reaction_id = params[:id]
-        Reaction.find(params[:id]).destroy
+        Reaction.for_ui_state(params[:ui_state]).destroy_all
       end
 
     end
