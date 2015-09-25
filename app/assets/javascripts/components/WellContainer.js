@@ -5,29 +5,29 @@ import Well from './Well';
 
 const wellSource = {
   beginDrag(props) {
-    return {id: props.id};
+    return props;
   }
 };
 
 const wellTarget = {
-  hover(props, monitor) {
-    const draggedItemId = monitor.getItem().id;
-    const itemType = monitor.getItemType();
-    if (draggedItemId !== props.id) {
-      if (itemType == 'well') {
-        props.switchWellContainers(draggedItemId, props.id);
-      }
-    }
-  },
   canDrop(props, monitor){
+    const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    return (itemType == 'sample' && props.well) ? false : true;
+    let canDrop = true;
+    if (itemType == 'sample' && props.well.sample) {
+      canDrop = false;
+    } else if (itemType == 'well' && ! item.well.sample && ! props.well.sample) {
+      canDrop = false;
+    }
+    return canDrop;
   },
   drop(props, monitor){
-    const {sample} = monitor.getItem();
+    const item = monitor.getItem();
     const itemType = monitor.getItemType();
     if (itemType == 'sample') {
-      props.dropSample(sample, props.id);
+      props.dropSample(item.sample, props.well);
+    } else if (itemType == 'well') {
+      props.swapWells(item.well, props.well);
     }
   }
 };
@@ -44,8 +44,15 @@ const collectSource = (connect, monitor) => ({
 });
 
 class WellContainer extends Component {
+  componentWillReceiveProps(nextProps) {
+    const {active, hideOverlay} = this.props;
+    if (active && nextProps.isDragging) {
+      hideOverlay();
+    }
+  }
+
   render() {
-    const {style, isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop} = this.props;
+    const {style, isDragging, connectDragSource, connectDropTarget, well, isOver, canDrop, active} = this.props;
     const containerStyle = {
       paddingTop: 9,
       borderRadius: '50%',
@@ -56,29 +63,30 @@ class WellContainer extends Component {
       textAlign: 'center',
       verticalAlign: 'middle',
       lineHeight: 2,
-      cursor: 'move'
+      cursor: 'move',
+      backgroundColor: 'white'
     };
-    let hasLabel = false;
+    if (active) {
+      containerStyle.backgroundColor = '#337ab7'
+    }
     if (isDragging) {
-      containerStyle.borderStyle = 'dashed';
       containerStyle.opacity = 0;
     }
-    if (well) {
+    if (well.sample) {
       containerStyle.borderColor = 'gray';
-      hasLabel = true;
     }
     if (isOver && canDrop) {
       containerStyle.borderStyle = 'dashed';
       containerStyle.borderColor = '#337ab7';
-      containerStyle.opacity = 1;
-      hasLabel = false;
+      containerStyle.opacity = 0;
     } else if (canDrop) {
       containerStyle.borderStyle = 'dashed';
     }
+
     return (
       connectDragSource(connectDropTarget(
         <div style={{ ...containerStyle, ...style}}>
-          <Well well={well} hasLabel={hasLabel}/>
+          <Well sample={well.sample}/>
         </div>
       ))
     );
@@ -93,7 +101,7 @@ WellContainer.propTypes = {
   isDragging: PropTypes.bool.isRequired,
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
-  id: PropTypes.number.isRequired,
-  switchWellContainers: PropTypes.func.isRequired,
-  dropSample: PropTypes.func.isRequired
+  swapWells: PropTypes.func.isRequired,
+  dropSample: PropTypes.func.isRequired,
+  well: PropTypes.object
 };

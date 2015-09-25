@@ -12,8 +12,8 @@
 .well-molecule svg {
   position: relative;
   top: -10px;
-  width: 90px;
-  height: 90px;
+  width: 40px;
+  height: 40px;
 }
 
 .well-molecule rect {
@@ -21,9 +21,13 @@
 }
 
 .molecule-mid svg {
-  width: 180px;
+width: 180px;
   height:180px;
   margin-left: 10px;
+}
+
+.molecule-mid rect {
+  opacity: 0;
 }
 
 .molecule-selected line, .molecule-selected text {
