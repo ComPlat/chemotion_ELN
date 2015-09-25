@@ -42,11 +42,6 @@ module Chemotion
       delete do
         wellplate_id = params[:id]
         Wellplate.find(wellplate_id).destroy
-        Well.where(wellplate_id: wellplate_id).destroy_all
-
-        # WARNING: Using delete_all instead of destroy_all due to PG Error
-        # TODO: Check this error and consider another solution
-        CollectionsWellplate.where(wellplate_id: wellplate_id).delete_all
       end
 
     end

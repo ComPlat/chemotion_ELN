@@ -42,15 +42,6 @@ module Chemotion
       delete do
         reaction_id = params[:id]
         Reaction.find(params[:id]).destroy
-        Literature.where(reaction_id: reaction_id).destroy_all
-
-        # WARNING: Using delete_all instead of destroy_all due to PG Error
-        # TODO: Check this error and consider another solution
-        CollectionsReaction.where(reaction_id: reaction_id).delete_all
-        
-        ReactionsProductSample.where(reaction_id: reaction_id).destroy_all
-        ReactionsReactantSample.where(reaction_id: reaction_id).destroy_all
-        ReactionsStartingMaterialSample.where(reaction_id: reaction_id).destroy_all
       end
 
     end

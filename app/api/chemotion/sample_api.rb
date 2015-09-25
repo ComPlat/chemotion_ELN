@@ -123,11 +123,6 @@ module Chemotion
       delete do
         sample_id = params[:id]
         Sample.find(params[:id]).destroy
-        Well.where(sample_id: sample_id).destroy_all
-        CollectionsSample.where(sample_id: sample_id).destroy_all
-        ReactionsProductSample.where(sample_id: sample_id).destroy_all
-        ReactionsReactantSample.where(sample_id: sample_id).destroy_all
-        ReactionsStartingMaterialSample.where(sample_id: sample_id).destroy_all
       end
 
     end

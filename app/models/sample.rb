@@ -1,6 +1,9 @@
 require 'chemotion'
+require 'ElementUIStateScopes'
 
 class Sample < ActiveRecord::Base
+  include ElementUIStateScopes
+  
   has_many :collections_samples
   has_many :collections, through: :collections_samples
 
@@ -14,12 +17,15 @@ class Sample < ActiveRecord::Base
 
   belongs_to :molecule
 
-  has_one :well
+  has_many :well
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+
+  before_destroy :destroy_associations
+
 
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
@@ -42,6 +48,14 @@ class Sample < ActiveRecord::Base
         end
       end
     end
+  end
+
+  def destroy_associations
+    Well.where(sample_id: id).destroy_all
+    CollectionsSample.where(sample_id: id).destroy_all
+    ReactionsProductSample.where(sample_id: id).destroy_all
+    ReactionsReactantSample.where(sample_id: id).destroy_all
+    ReactionsStartingMaterialSample.where(sample_id: id).destroy_all
   end
 
   def weight

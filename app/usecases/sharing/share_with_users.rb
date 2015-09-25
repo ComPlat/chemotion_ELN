@@ -43,7 +43,7 @@ module Usecases
             reaction_ids: getElementIds(elements_filter, Reaction),
             wellplate_ids: getElementIds(elements_filter, Wellplate)
           }
-        
+
           Usecases::Sharing::ShareWithUser.new(new_params).execute!
         end
       end

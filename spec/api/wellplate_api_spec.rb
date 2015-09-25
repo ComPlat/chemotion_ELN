@@ -46,8 +46,9 @@ describe Chemotion::WellplateAPI do
 
         it 'should be able to delete a wellplate' do
           w = Wellplate.create(name: 'test')
+          w.reload
           wellplate_id = w.id
-          CollectionsWellplate.create(wellplate_id: w.id, collection_id: 1)
+          CollectionsWellplate.create(wellplate_id: wellplate_id, collection_id: 1)
           delete '/api/v1/wellplates', { id: wellplate_id }
           w = Wellplate.find_by(name: 'test')
           expect(w).to be_nil
