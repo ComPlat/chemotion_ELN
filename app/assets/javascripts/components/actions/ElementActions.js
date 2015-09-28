@@ -4,6 +4,7 @@ import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
+import UIActions from '../actions/UIActions';
 
 class ElementActions {
 
@@ -131,6 +132,40 @@ class ElementActions {
 
   fetchMoleculeByMolfile(molfile) {
     MoleculesFetcher.fetchByMolfile(molfile)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteElements(ui_state) {
+    this.dispatch(ui_state);
+    UIActions.uncheckAllElements('sample');
+    UIActions.uncheckAllElements('reaction');
+    UIActions.uncheckAllElements('wellplate');
+  }
+
+  deleteSamplesByUIState(ui_state) {
+    SamplesFetcher.deleteSamplesByUIState(ui_state)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteReactionsByUIState(ui_state) {
+    ReactionsFetcher.deleteReactionsByUIState(ui_state)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteWellplatesByUIState(ui_state) {
+    WellplatesFetcher.deleteWellplatesByUIState(ui_state)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {

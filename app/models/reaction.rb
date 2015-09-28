@@ -20,15 +20,13 @@ class Reaction < ActiveRecord::Base
   before_destroy :destroy_associations
 
   def destroy_associations
-    Literature.where(reaction_id: id).destroy_all
-
     # WARNING: Using delete_all instead of destroy_all due to PG Error
     # TODO: Check this error and consider another solution
+    Literature.where(reaction_id: id).delete_all
     CollectionsReaction.where(reaction_id: id).delete_all
-
-    ReactionsProductSample.where(reaction_id: id).destroy_all
-    ReactionsReactantSample.where(reaction_id: id).destroy_all
-    ReactionsStartingMaterialSample.where(reaction_id: id).destroy_all
+    ReactionsProductSample.where(reaction_id: id).delete_all
+    ReactionsReactantSample.where(reaction_id: id).delete_all
+    ReactionsStartingMaterialSample.where(reaction_id: id).delete_all
   end
 
   def samples

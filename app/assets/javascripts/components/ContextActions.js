@@ -2,6 +2,7 @@ import React from 'react';
 import {Button, ButtonGroup} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
+import ElementActions from './actions/ElementActions';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -19,6 +20,10 @@ export default class ContextActions extends React.Component {
 
   onChange(state) {
     this.setState(state);
+  }
+
+  _deleteSelection() {
+    ElementActions.deleteElements(UIStore.getState())
   }
 
   _createSample() {
@@ -47,6 +52,7 @@ export default class ContextActions extends React.Component {
           <Button onClick={e => this._createSample()} disabled={isAllCollection}>Create Sample</Button>
           <Button disabled={isAllCollection}>Create Reaction</Button>
           <Button disabled={isAllCollection}>Create Wellplate</Button>
+          <Button onClick={e => this._deleteSelection()} disabled={isAllCollection}>Delete Selection</Button>
         </ButtonGroup>
       )
     } else {
@@ -55,6 +61,7 @@ export default class ContextActions extends React.Component {
           <Button >Split as Subsample(s)</Button>
           <Button disabled={isAllCollection}>Create Reaction</Button>
           <Button disabled={isAllCollection}>Create Wellplate</Button>
+          <Button onClick={e => this._deleteSelection()} disabled={isAllCollection}>Delete Selection</Button>
         </ButtonGroup>
       )
     }

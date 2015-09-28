@@ -12,10 +12,9 @@ class Wellplate < ActiveRecord::Base
   before_destroy :destroy_associations
 
   def destroy_associations
-    Well.where(wellplate_id: id).destroy_all
-
     # WARNING: Using delete_all instead of destroy_all due to PG Error
     # TODO: Check this error and consider another solution
+    Well.where(wellplate_id: id).delete_all
     CollectionsWellplate.where(wellplate_id: id).delete_all
   end
 

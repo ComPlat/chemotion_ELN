@@ -51,10 +51,20 @@ class ElementStore {
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
       handleGenerateEmptySample: ElementActions.generateEmptySample,
-      handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile
+      handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
+      handleDeleteElements: ElementActions.deleteElements
     })
   }
 
+  // -- Elements --
+  handleDeleteElements(ui_state) {
+    ElementActions.deleteSamplesByUIState(ui_state);
+    ElementActions.deleteReactionsByUIState(ui_state);
+    ElementActions.deleteWellplatesByUIState(ui_state);
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
+    ElementActions.fetchReactionsByCollectionId(ui_state.currentCollectionId);
+    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollectionId);
+  }
 
   // -- Samples --
 
