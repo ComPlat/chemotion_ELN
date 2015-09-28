@@ -18,6 +18,8 @@ class PermissionStore {
 
     if(!this.state.is_top_secret) {
       Aviator.navigate('/sharing');
+    } else {
+      Aviator.navigate('/top_secret');
     }
   }
 }

@@ -58,10 +58,6 @@ export default class ShareButton extends React.Component {
     }
 
     PermissionActions.fetchTopSecretStatus(paramObj);
-
-    if(!this.state.isTopSecret) {
-      //Aviator.navigate('/sharing');
-    }
   }
 
   render() {

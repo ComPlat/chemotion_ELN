@@ -8,6 +8,7 @@ import ElementFilter from './ElementFilter';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';
+import TopSecretModal from './TopSecretModal';
 
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
@@ -121,8 +122,24 @@ Aviator.setRoutes({
         Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide', ''))
       }
     }
-  }
+  },
 
+  '/top_secret': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<TopSecretModal />, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/top_secret/hide', ''))
+      }
+    }
+  }
 });
 
 class App extends React.Component {

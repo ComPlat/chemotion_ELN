@@ -70,7 +70,6 @@ export default class ShareModal extends React.Component {
     let sampleDetailLevel = this.refs.sampleDetailLevelSelect.getValue();
     let reactionDetailLevel = this.refs.reactionDetailLevelSelect.getValue();
     let wellplateDetailLevel = this.refs.wellplateDetailLevelSelect.getValue();
-    // TODO beautify
     let userIds = this.refs.userSelect.state.values.map(o => o.value);
 
     let uiState = UIStore.getState();
