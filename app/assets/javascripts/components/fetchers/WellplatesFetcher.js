@@ -39,4 +39,30 @@ export default class WellplatesFetcher {
   static update(paramObj) {
     console.log('not implemented yet');
   }
+
+  static deleteWellplatesByUIState(paramObj) {
+    let promise = fetch('/api/v1/wellplates/ui_state/', {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: {
+          all: paramObj.wellplate.checkedAll,
+          included_ids: paramObj.wellplate.checkedIds,
+          excluded_ids: paramObj.wellplate.uncheckedIds
+        }
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

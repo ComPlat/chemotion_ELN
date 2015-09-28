@@ -98,4 +98,30 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static deleteSamplesByUIState(paramObj) {
+    let promise = fetch('/api/v1/samples/ui_state/', {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: {
+          all: paramObj.sample.checkedAll,
+          included_ids: paramObj.sample.checkedIds,
+          excluded_ids: paramObj.sample.uncheckedIds
+        }
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

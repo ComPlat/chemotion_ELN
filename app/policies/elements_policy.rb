@@ -12,6 +12,12 @@ class ElementsPolicy
     records.map { |r| ElementPolicy.new(user, r).share? }.all?
   end
 
+  def destroy?
+    return true if records.empty?
+
+    records.map { |r| ElementPolicy.new(user, r).destroy? }.all?
+  end
+
   def scope
     Pundit.policy_scope!(user, records.first.class)
   end

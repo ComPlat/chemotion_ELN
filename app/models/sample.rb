@@ -1,6 +1,9 @@
 require 'chemotion'
+require 'ElementUIStateScopes'
 
 class Sample < ActiveRecord::Base
+  include ElementUIStateScopes
+
   has_many :collections_samples
   has_many :collections, through: :collections_samples
 
@@ -20,6 +23,9 @@ class Sample < ActiveRecord::Base
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+
+  before_destroy :destroy_associations
+
 
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
@@ -42,6 +48,16 @@ class Sample < ActiveRecord::Base
         end
       end
     end
+  end
+
+  def destroy_associations
+    # WARNING: Using delete_all instead of destroy_all due to PG Error
+    # TODO: Check this error and consider another solution
+    Well.where(sample_id: id).delete_all
+    CollectionsSample.where(sample_id: id).delete_all
+    ReactionsProductSample.where(sample_id: id).delete_all
+    ReactionsReactantSample.where(sample_id: id).delete_all
+    ReactionsStartingMaterialSample.where(sample_id: id).delete_all
   end
 
   def weight

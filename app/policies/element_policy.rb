@@ -24,6 +24,10 @@ class ElementPolicy
     any_unshared_collection?(user_collections) || maximum_permission_level(user_collections) >= 2
   end
 
+  def destroy?
+    any_unshared_collection?(user_collections) || maximum_permission_level(user_collections) >= 3
+  end
+
   def scope
     Pundit.policy_scope!(user, records.first.class)
   end
