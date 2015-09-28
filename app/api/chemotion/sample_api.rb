@@ -48,6 +48,7 @@ module Chemotion
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :molecule, type: Hash, desc: "Sample molecule"
+        requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
       end
       route_param :id do
         before do
@@ -64,7 +65,8 @@ module Chemotion
             solvent: params[:solvent],
             impurities: params[:impurities],
             location: params[:location],
-            molfile: params[:molfile]
+            molfile: params[:molfile],
+            is_top_secret: params[:is_top_secret]
           }
 
           attributes.merge!(
@@ -88,6 +90,7 @@ module Chemotion
         optional :molfile, type: String, desc: "Sample molfile"
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
+        requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
       end
       post do
         attributes = {
@@ -99,7 +102,8 @@ module Chemotion
           solvent: params[:solvent],
           impurities: params[:impurities],
           location: params[:location],
-          molfile: params[:molfile]
+          molfile: params[:molfile],
+          is_top_secret: params[:is_top_secret]
         }
         attributes.merge!(
           molecule_attributes: params[:molecule]
@@ -107,7 +111,7 @@ module Chemotion
         sample = Sample.create(attributes)
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)
-          CollectionsSample.create!(sample: sample, collection: collection)
+          CollectionsSample.create(sample: sample, collection: collection)
         end
         sample
       end

@@ -1,6 +1,6 @@
 class SampleSerializer < ActiveModel::Serializer
 
-  attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molfile, :purity, :solvent, :impurities, :location, :weight, :volume
+  attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molfile, :purity, :solvent, :impurities, :location, :weight, :volume, :is_top_secret
 
   has_one :molecule
 

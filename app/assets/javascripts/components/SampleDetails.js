@@ -59,6 +59,7 @@ export default class SampleDetails extends React.Component {
       location: this.state.sample.location,
       molfile: this.state.sample.molfile,
       molecule: this.state.sample.molecule,
+      is_top_secret: this.state.sample.is_top_secret,
       collection_id: uiState.currentCollectionId
     }
   }
@@ -147,6 +148,14 @@ export default class SampleDetails extends React.Component {
   handleMeltingPointChanged(e) {
     let sample = this.state.sample;
     sample.molecule.melting_point = this.refs.meltingPointInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
+  handleTopSecretChanged(e) {
+    let sample = this.state.sample;
+    sample.is_top_secret = this.refs.topSecretInput.getValue();
     this.setState({
       sample: sample
     });
@@ -270,6 +279,8 @@ export default class SampleDetails extends React.Component {
 
             <form>
               <ListGroupItem>
+                <Input ref="topSecretInput" type="checkbox" label="Top secret" checked={sample.is_top_secret} onChange={(e) => this.handleTopSecretChanged(e)}/>
+
                 <Input type="text" label="Molecule" ref="moleculeInput"
                        buttonAfter={structureEditorButton}
                        value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}

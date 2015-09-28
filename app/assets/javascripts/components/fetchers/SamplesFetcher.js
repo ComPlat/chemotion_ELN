@@ -58,6 +58,7 @@ export default class SamplesFetcher {
         impurities: paramObj.impurities,
         location: paramObj.location,
         molfile: paramObj.molfile,
+        is_top_secret: paramObj.is_top_secret,
         molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
       })
     })
