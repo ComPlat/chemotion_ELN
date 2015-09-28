@@ -5,8 +5,8 @@ import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
 
 import ElementStore from './stores/ElementStore';
-import ReactionDetailsMaterials from './ReactionDetailsMaterials';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
+import MaterialGroupContainer from './MaterialGroupContainer';
 import UIStore from './stores/UIStore';
 import Aviator from 'aviator';
 
@@ -15,7 +15,7 @@ export default class ReactionDetails extends React.Component {
     super(props);
     this.state = {
       reaction: props.reaction
-    }
+    };
     console.log(this.state.reaction);
   }
 
@@ -71,43 +71,27 @@ export default class ReactionDetails extends React.Component {
     // TODO
   }
 
-  handleMaterialsChange(materials, materialGroup) {
+  dropSample(sample, materialGroup) {
     const {reaction} = this.state;
-    switch (materialGroup) {
-      case 'starting_materials':
-        reaction.starting_materials = materials;
-        break;
-      case 'reactants':
-        reaction.reactants = materials;
-        break;
-      case 'products':
-        reaction.products = materials;
-        break;
-    }
+    const materials = reaction[materialGroup];
+    materials.push(sample);
     this.setState({reaction});
-    console.log(this.state.reaction);
   }
 
-  removeMaterialFromMaterialGroup(material, materialGroup) {
+  deleteMaterial(material, materialGroup) {
     const {reaction} = this.state;
-    const {starting_materials, reactants, products} = reaction;
-    let materialIndex;
-    switch (materialGroup) {
-      case 'starting_materials':
-        materialIndex = starting_materials.indexOf(material);
-        starting_materials.splice(materialIndex, 1);
-        break;
-      case 'reactants':
-        materialIndex = reactants.indexOf(material);
-        reactants.splice(materialIndex, 1);
-        break;
-      case 'products':
-        materialIndex = products.indexOf(material);
-        products.splice(materialIndex, 1);
-        break;
-    }
+    const materials = reaction[materialGroup];
+    const materialIndex = materials.indexOf(material);
+    materials.splice(materialIndex, 1);
     this.setState({reaction});
-    console.log(this.state.reaction);
+  }
+
+  dropMaterial(material, previousMaterialGroup, materialGroup) {
+    const {reaction} = this.state;
+    const materials = reaction[materialGroup];
+    this.deleteMaterial(material, previousMaterialGroup);
+    materials.push(material);
+    this.setState({reaction});
   }
 
   _submitFunction() {
@@ -154,25 +138,29 @@ export default class ReactionDetails extends React.Component {
           </table>
           <ListGroup fill>
             <ListGroupItem header="Starting Materials">
-              <ReactionDetailsMaterials
+              <MaterialGroupContainer
                 materialGroup="starting_materials"
                 materials={reaction.starting_materials}
-                removeMaterialFromMaterialGroup={(material, materialGroup) => this.removeMaterialFromMaterialGroup(material, materialGroup)}
-                handleMaterialsChange={(materials, materialGroup) => this.handleMaterialsChange(materials, materialGroup)}/>
+                dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+                deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+                />
             </ListGroupItem>
             <ListGroupItem header="Reactants">
-              <ReactionDetailsMaterials
+              <MaterialGroupContainer
                 materialGroup="reactants"
                 materials={reaction.reactants}
-                removeMaterialFromMaterialGroup={(material, materialGroup) => this.removeMaterialFromMaterialGroup(material, materialGroup)}
-                handleMaterialsChange={(materials, materialGroup) => this.handleMaterialsChange(materials, materialGroup)}/>
+                dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+                deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}/>
             </ListGroupItem>
             <ListGroupItem header="Products">
-              <ReactionDetailsMaterials
+              <MaterialGroupContainer
                 materialGroup="products"
                 materials={reaction.products}
-                removeMaterialFromMaterialGroup={(material, materialGroup) => this.removeMaterialFromMaterialGroup(material, materialGroup)}
-                handleMaterialsChange={(materials, materialGroup) => this.handleMaterialsChange(materials, materialGroup)}/>
+                dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+                deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}/>
             </ListGroupItem>
             <ListGroupItem header='Literatures'>
               <ReactionDetailsLiteratures
