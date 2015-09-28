@@ -22,7 +22,6 @@ module Chemotion
         end
       end
 
-      # TODO more general search api
       desc "Return serialized samples of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
@@ -50,7 +49,7 @@ module Chemotion
         end
 
         get do
-          Sample.find(params[:id])
+          SampleProxy.new(current_user).find(params[:id])
         end
       end
 
