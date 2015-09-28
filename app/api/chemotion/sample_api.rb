@@ -49,28 +49,30 @@ module Chemotion
         optional :molfile, type: String, desc: "Sample molfile"
         optional :molecule, type: Hash, desc: "Sample molecule"
       end
-      put ':id' do
+      route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Sample.find(params[:id])).update?
         end
 
-        attributes = {
-          name: params[:name],
-          amount_value: params[:amount_value],
-          amount_unit: params[:amount_unit],
-          description: params[:description],
-          purity: params[:purity],
-          solvent: params[:solvent],
-          impurities: params[:impurities],
-          location: params[:location],
-          molfile: params[:molfile]
-        }
+        put do
+          attributes = {
+            name: params[:name],
+            amount_value: params[:amount_value],
+            amount_unit: params[:amount_unit],
+            description: params[:description],
+            purity: params[:purity],
+            solvent: params[:solvent],
+            impurities: params[:impurities],
+            location: params[:location],
+            molfile: params[:molfile]
+          }
 
-        attributes.merge!(
-          molecule_attributes: params[:molecule]
-        ) unless params[:molecule].blank?
+          attributes.merge!(
+            molecule_attributes: params[:molecule]
+          ) unless params[:molecule].blank?
 
-        Sample.find(params[:id]).update(attributes)
+          Sample.find(params[:id]).update(attributes)
+        end
       end
 
       desc "Create a sample"
