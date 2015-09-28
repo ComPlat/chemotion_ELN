@@ -31,7 +31,8 @@ class SampleContainer extends Component {
     return connectDragSource(
       <div style={style}>
         <Sample sample={sample}/>
-      </div>
+      </div>,
+      {dropEffect: 'copy'}
     );
   }
 }
