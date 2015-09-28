@@ -1,23 +1,23 @@
-import React, {Component} from 'react';
+import React, {PropTypes, Component} from 'react';
 import SVG from 'react-inlinesvg';
 
 export default class Well extends Component {
   render() {
-    const {hasLabel, well} = this.props;
-    let label = '';
-    if(hasLabel){
-      const svgPath = `/images/molecules/${well.sample.molecule.molecule_svg_file}`;
-      label = <div>
-        <div className="well-text">
-          {well.sample.name}
+    const {sample} = this.props;
+    if (sample) {
+      const svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
+      return (
+        <div>
+          {sample.name}
+          <SVG className="well-molecule" src={svgPath}/>
         </div>
-        <SVG className="well-molecule" src={svgPath}/>
-      </div>;
+      );
+    } else {
+      return <div></div>
     }
-    return (
-      <div>
-        {label}
-      </div>
-    );
   }
 }
+
+Well.propTypes = {
+  sample: PropTypes.object
+};

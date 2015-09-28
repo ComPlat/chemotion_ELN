@@ -159,8 +159,8 @@ CollectionsReaction.create!(reaction: reaction_6, collection: subcollection_1)
 # --- Wellplates ---
 
 # create some wellplates
-wellplate_1 = Wellplate.create(name: 'Wellplate 1', size: 16)
-wellplate_2 = Wellplate.create(name: 'Wellplate 2', size: 16)
+wellplate_1 = Wellplate.create(name: 'Wellplate 1', size: 96, description: "lorem ipsum")
+wellplate_2 = Wellplate.create(name: 'Wellplate 2', size: 96, description: "")
 
 well_1 = Well.create!(sample: sample_1, wellplate: wellplate_1)
 well_2 = Well.create(sample: sample_1, wellplate: wellplate_1)

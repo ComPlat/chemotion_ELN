@@ -1,109 +1,126 @@
-import React, {Component} from 'react';
-import update from 'react/lib/update';
+import React, {PropTypes, Component} from 'react';
 import WellContainer from './WellContainer';
+import WellplateLabels from './WellplateLabels';
+import WellOverlay from './WellOverlay';
 
 export default class Wellplate extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      wellContainers: this.getWellContainers(props.wells)
-    };
-    console.log(this.state.wellContainers);
-  }
-
-  getWellContainers(wells) {
-    const {size} = this.props;
-    let wellContainers = [];
-    for (let i = 0; i < size; i ++) {
-      const wellContainer = {id: i};
-      const well = wells[i];
-      if (well) {
-        wellContainer.well = well;
-      }
-      wellContainers.push(wellContainer);
+      showOverlay: false,
+      overlayTarget: {},
+      overlayWell: {}
     }
-    return wellContainers;
   }
 
-  componentWillReceiveProps(nextProps) {
-    const {wells} = nextProps;
-    this.setState({
-      wellContainers: this.getWellContainers(wells)
-    });
+  swapWells(firstWell, secondWell) {
+    const {handleWellsChange, wells} = this.props;
+    const firstWellId = wells.indexOf(firstWell);
+    const secondWellId = wells.indexOf(secondWell);
+    let temp = wells[firstWellId].sample;
+    wells[firstWellId].sample = wells[secondWellId].sample;
+    wells[secondWellId].sample = temp;
+    handleWellsChange(wells);
   }
 
-  switchWellContainers(id, afterId) {
-    const {wellContainers} = this.state;
-    const {handleWellplateChange} = this.props;
-    const wellContainer = wellContainers.filter(container => container.id === id)[0];
-    const afterWell = wellContainers.filter(container => container.id === afterId)[0];
-    const wellContainerIndex = wellContainers.indexOf(wellContainer);
-    const afterIndex = wellContainers.indexOf(afterWell);
-
-    wellContainers.splice(wellContainerIndex, 1);
-    wellContainers.splice(afterIndex, 0, wellContainer);
-    this.setState({
-      wellContainers
-    });
-    handleWellplateChange(this.state.wellContainers);
-  }
-
-  dropSample(sample, wellContainerId) {
-    const {wellContainers} = this.state;
-    const {handleWellplateChange} = this.props;
-    const wellContainer = wellContainers.filter(container => container.id === wellContainerId)[0];
-    // TODO request new well object in backend
-    wellContainer.well = {
-      id: - 1,
-      position: {},
+  dropSample(sample, well) {
+    const {handleWellsChange, wells} = this.props;
+    const wellId = wells.indexOf(well);
+    wells[wellId] = {
+      ...wells[wellId],
       sample
     };
-    this.setState({
-      wellContainers
-    });
-    handleWellplateChange(this.state.wellContainers);
+    handleWellsChange(wells);
   }
 
-  calculateWellPositions(wells) {
-    const {cols} = this.props;
-    return wells.map((well, key) => {
-      let remainder = (key + 1) % cols;
-      return {
-        ...well,
-        position: {
-          x: (remainder == 0) ? cols : remainder,
-          y: Math.floor(key / cols) + 1
-        }
-      }
+  hideOverlay() {
+    this.setState({
+      showOverlay: false
     });
+  }
+
+  showOverlay(key, well) {
+    if (well.sample) {
+      this.setState({
+        showOverlay: true,
+        overlayTarget: key,
+        overlayWell: well
+      });
+    }
+  }
+
+  toggleOverlay(key, well) {
+    const {showOverlay, overlayWell} = this.state;
+    if (showOverlay && overlayWell == well) {
+      this.hideOverlay();
+    } else {
+      this.showOverlay(key, well);
+    }
+  }
+
+  isWellActive(well) {
+    const {showOverlay, overlayWell} = this.state;
+    return (showOverlay && overlayWell == well);
   }
 
   render() {
-    const {wellContainers} = this.state;
-    const {size} = this.props;
-    //calc cols & rows of size
+    const {wells, size, cols, width} = this.props;
+    const {showOverlay, overlayTarget, overlayWell} = this.state;
     const style = {
-      width: 120 * 4
+      width: (cols + 1) * width,
+      height: ((size / cols) + 1) * width
     };
     const containerStyle = {
-      width: 120,
-      height: 120
+      width: width,
+      height: width,
+      fontSize: 8
     };
     return (
       <div style={style}>
-        {wellContainers.map(container => {
+        <WellplateLabels
+          size={size}
+          cols={cols}
+          width={width}
+          type={'horizontal'}
+          />
+        <WellplateLabels
+          size={size}
+          cols={cols}
+          width={width}
+          type={'vertical'}
+          />
+        {wells.map((well, key) => {
+          //
           return (
-            <WellContainer
-              key={container.id}
-              id={container.id}
-              well={container.well}
-              style={containerStyle}
-              switchWellContainers={(id, afterId) => this.switchWellContainers(id, afterId)}
-              dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
-              />
+            <div
+              key={key}
+              ref={key}
+              onClick={event => this.toggleOverlay(key, well)}
+              >
+              <WellContainer
+                well={well}
+                style={containerStyle}
+                swapWells={(firstWell, secondWell) => this.swapWells(firstWell, secondWell)}
+                dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
+                hideOverlay={() => this.hideOverlay()}
+                active={this.isWellActive(well)}
+                />
+            </div>
           );
         })}
+        <WellOverlay
+          show={showOverlay}
+          well={overlayWell}
+          target={() => React.findDOMNode(this.refs[overlayTarget]).children[0]}
+          handleClose={() => this.hideOverlay()}
+          />
       </div>
     );
   }
 }
+
+Wellplate.propTypes = {
+  size: PropTypes.number.isRequired,
+  wells: PropTypes.array.isRequired,
+  handleWellsChange: PropTypes.func.isRequired
+};
