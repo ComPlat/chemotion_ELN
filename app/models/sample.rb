@@ -3,7 +3,7 @@ require 'ElementUIStateScopes'
 
 class Sample < ActiveRecord::Base
   include ElementUIStateScopes
-  
+
   has_many :collections_samples
   has_many :collections, through: :collections_samples
 
@@ -17,7 +17,7 @@ class Sample < ActiveRecord::Base
 
   belongs_to :molecule
 
-  has_many :well
+  has_one :well
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
