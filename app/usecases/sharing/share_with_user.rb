@@ -16,6 +16,10 @@ module Usecases
           @params.fetch(:reaction_ids, []).each do |reaction_id|
             CollectionsReaction.create(collection_id: c.id, reaction_id: reaction_id)
           end
+
+          @params.fetch(:wellplate_ids, []).each do |wellplate_id|
+            CollectionsWellplate.create(collection_id: c.id, wellplate_id: wellplate_id)
+          end
         end
       end
     end

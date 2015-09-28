@@ -5,4 +5,12 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
 
   has_many :collections
+
+  def owns_collections?(collections)
+    collections.pluck(:user_id).uniq == [id]
+  end
+
+  def owns_unshared_collections?(collections)
+    owns_collections?(collections) && collections.pluck(:is_shared).none?
+  end
 end

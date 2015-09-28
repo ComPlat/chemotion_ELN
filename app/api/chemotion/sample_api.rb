@@ -1,13 +1,10 @@
 module Chemotion
   class SampleAPI < Grape::API
-    # TODO ensure user is authenticated
-
     include Grape::Kaminari
 
     resource :samples do
-
-      #todo: more general search api
-      desc "Return serialized samples"
+      # TODO more general search api
+      desc "Return serialized samples of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
       end
@@ -29,11 +26,14 @@ module Chemotion
         requires :id, type: Integer, desc: "Sample id"
       end
       route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Sample.find(params[:id])).read?
+        end
+
         get do
           Sample.find(params[:id])
         end
       end
-
 
       desc "Update sample by id"
       params do
@@ -49,25 +49,30 @@ module Chemotion
         optional :molfile, type: String, desc: "Sample molfile"
         optional :molecule, type: Hash, desc: "Sample molecule"
       end
-      put ':id' do
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Sample.find(params[:id])).update?
+        end
 
-        attributes = {
-          name: params[:name],
-          amount_value: params[:amount_value],
-          amount_unit: params[:amount_unit],
-          description: params[:description],
-          purity: params[:purity],
-          solvent: params[:solvent],
-          impurities: params[:impurities],
-          location: params[:location],
-          molfile: params[:molfile]
-        }
+        put do
+          attributes = {
+            name: params[:name],
+            amount_value: params[:amount_value],
+            amount_unit: params[:amount_unit],
+            description: params[:description],
+            purity: params[:purity],
+            solvent: params[:solvent],
+            impurities: params[:impurities],
+            location: params[:location],
+            molfile: params[:molfile]
+          }
 
-        attributes.merge!(
-          molecule_attributes: params[:molecule]
-        ) unless params[:molecule].blank?
+          attributes.merge!(
+            molecule_attributes: params[:molecule]
+          ) unless params[:molecule].blank?
 
-        Sample.find(params[:id]).update(attributes)
+          Sample.find(params[:id]).update(attributes)
+        end
       end
 
       desc "Create a sample"
@@ -106,8 +111,6 @@ module Chemotion
         end
         sample
       end
-
-
     end
   end
 end

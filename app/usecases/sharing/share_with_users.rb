@@ -5,23 +5,33 @@ module Usecases
         @params = params
       end
 
-      def getElementIds(element, elementClass)
-        if (element.fetch(:all, false))
+      # TODO some refactoring
+      def getElementIds(elements_filter, elementClass)
+        element = case elementClass.to_s
+                  when 'Sample'
+                    elements_filter.fetch(:sample, {})
+                  when 'Reaction'
+                    elements_filter.fetch(:reaction, {})
+                  when 'Wellplate'
+                    elements_filter.fetch(:wellplate, {})
+                  else
+                    {}
+                  end
+
+        return [] if element.empty?
+
+        if element.fetch(:all)
           excluded_ids = element.fetch(:excluded_ids, [])
           elementClass.where.not(id: excluded_ids).pluck(:id)
         else
-          element.fetch(:included_ids,[])
+          element.fetch(:included_ids, [])
         end
       end
 
       def execute!
         user_ids = @params.fetch(:user_ids, [])
         collection_attributes = @params.fetch(:collection_attributes, {})
-
         elements_filter = @params.fetch(:elements_filter, {})
-        sample = elements_filter.fetch(:sample, {})
-
-        reaction = elements_filter.fetch(:reaction, {})
 
         user_ids.each do |user_id|
           collection_attributes[:user_id] = user_id
@@ -29,9 +39,11 @@ module Usecases
 
           new_params = {
             collection_attributes: collection_attributes,
-            sample_ids: getElementIds(sample, Sample),
-            reaction_ids: getElementIds(reaction, Reaction)
+            sample_ids: getElementIds(elements_filter, Sample),
+            reaction_ids: getElementIds(elements_filter, Reaction),
+            wellplate_ids: getElementIds(elements_filter, Wellplate)
           }
+        
           Usecases::Sharing::ShareWithUser.new(new_params).execute!
         end
       end

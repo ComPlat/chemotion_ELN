@@ -68,51 +68,101 @@ describe Chemotion::CollectionAPI do
     end
 
     describe 'POST /api/v1/collections/shared' do
-      context 'with valid parameters' do
-        let(:sample)    { create(:sample) }
-        let!(:reaction) { create(:reaction) }
+      describe 'sharing' do
+        context 'with appropriate permissions' do
+          let(:c1) { create(:collection, user: user) }
+          let(:c2) { create(:collection, user: user, is_shared: true, permission_level: 2) }
+          let(:s1) { create(:sample) }
+          let(:s2) { create(:sample) }
+          let(:r1) { create(:reaction) }
+          let(:r2) { create(:reaction) }
+          let(:w1) { create(:wellplate) }
+          let(:w2) { create(:wellplate) }
 
-        let!(:params) {
-          {
-            collection_attributes: attributes_for(:collection),
-            user_ids: [user.id],
-            elements_filter: {
-              sample: {
-                all: false,
-                included_ids: [sample.id],
-                excluded_ids: []
-              },
-              reaction: {
-                all: true,
-                included_ids: [],
-                excluded_ids: []
+          let!(:params) {
+            {
+              collection_attributes: attributes_for(:collection),
+              user_ids: [user.id],
+              elements_filter: {
+                sample: {
+                  all: false,
+                  included_ids: [s1.id, s2.id],
+                  excluded_ids: []
+                },
+                reaction: {
+                  all: true,
+                  included_ids: [],
+                  excluded_ids: [r2.id]
+                },
+                wellplate: {
+                  all: false,
+                  included_ids: [w1.id],
+                  excluded_ids: []
+                }
               }
             }
           }
-        }
 
-        before {
-          post '/api/v1/collections/shared', params
-        }
+          before do
+            CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
+            CollectionsSample.create!(collection_id: c2.id, sample_id: s2.id)
+            CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
+            CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
+            CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
+            CollectionsWellplate.create!(collection_id: c2.id, wellplate_id: w2.id)
 
-        it 'creates a new, shared collection' do
-          c = Collection.find_by(label: 'My project with Musashi')
-          expect(c).to_not be_nil
-          expect(c.user_id).to eq(user.id)
+            post '/api/v1/collections/shared', params
+          end
 
-          params[:collection_attributes].except(:user_id, :label).each do |k, v|
-            expect(c.attributes.symbolize_keys[k]).to eq(v)
+          it 'creates shared collection with given samples' do
+            post '/api/v1/collections/shared', params
+
+            # naming convention for shared collections
+            c = Collection.find_by(label: 'My project with Musashi')
+            expect(c).to_not be_nil
+            expect(c.user_id).to eq user.id
+            expect(c.samples).to match_array [s1, s2]
+            expect(c.reactions).to match_array [r1]
+            expect(c.wellplates).to match_array [w1]
           end
         end
 
-        it 'creates sample associations according to given params' do
-          associated_sample_ids = Collection.find_by(label: 'My project with Musashi').sample_ids
-          expect(associated_sample_ids).to match_array([sample.id])
-        end
+        context 'with inappropriate permissions' do
+          let(:c1) { create(:collection, user: user) }
+          let(:c2) { create(:collection, user: user, is_shared: true, permission_level: 1) }
+          let(:s1) { create(:sample) }
+          let(:s2) { create(:sample) }
 
-        it 'creates reaction associations according to given params' do
-          associated_reaction_ids = Collection.find_by(label: 'My project with Musashi').reaction_ids
-          expect(associated_reaction_ids).to match_array([reaction.id])
+          let!(:params) {
+            {
+              collection_attributes: attributes_for(:collection),
+              user_ids: [user.id],
+              elements_filter: {
+                sample: {
+                  all: false,
+                  included_ids: [s1.id, s2.id],
+                  excluded_ids: []
+                },
+                reaction: {
+                  all: false,
+                  included_ids: [],
+                  excluded_ids: []
+                }
+              }
+            }
+          }
+
+          before do
+            CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
+            CollectionsSample.create!(collection_id: c2.id, sample_id: s2.id)
+          end
+
+          it 'creates no shared collection' do
+            post '/api/v1/collections/shared', params
+
+            c = Collection.find_by(label: 'My project with Musashi')
+            expect(c).to be_nil
+          end
         end
       end
     end

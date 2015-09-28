@@ -36,6 +36,8 @@ gem 'grape-active_model_serializers'
 gem 'kaminari'
 gem 'grape-kaminari'
 
+gem 'pundit'
+
 gem 'awesome_print'
 
 # Chemrails
