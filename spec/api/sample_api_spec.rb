@@ -207,7 +207,8 @@ describe Chemotion::SampleAPI do
             solvent: '',
             impurities: '',
             location: '',
-            molfile: ''
+            molfile: '',
+            is_top_secret: false
           }
         }
 
