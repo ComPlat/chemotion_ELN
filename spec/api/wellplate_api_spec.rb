@@ -42,33 +42,38 @@ describe Chemotion::WellplateAPI do
     end
 
     describe 'DELETE /api/v1/wellplates' do
-      context 'with valid parameters' do
+      context 'with appropriate permissions' do
+        let(:c1) { create(:collection, user_id: user.id, is_shared: true, permission_level: 3) }
+        let(:w1) { create(:wellplate, name: 'test') }
+
+        before do
+          CollectionsWellplate.create!(wellplate: w1, collection: c1)
+
+          delete "/api/v1/wellplates/#{w1.id}"
+        end
 
         it 'should be able to delete a wellplate by id' do
-          wellplate = Wellplate.create(name: 'test')
-          wellplate.reload
-          wellplate_id = wellplate.id
-          CollectionsWellplate.create(wellplate_id: wellplate_id, collection_id: 1)
-          delete "/api/v1/wellplates/#{wellplate_id}", { id: wellplate_id }
           wellplate = Wellplate.find_by(name: 'test')
           expect(wellplate).to be_nil
-          array = Well.where(wellplate_id: wellplate_id)
+          array = Well.where(wellplate_id: w1.id)
           expect(array).to match_array([])
-          array = CollectionsWellplate.where(wellplate_id: wellplate_id)
+          array = CollectionsWellplate.where(wellplate_id: w1.id)
           expect(array).to match_array([])
         end
 
       end
+    end
 
-      context 'with UIState' do
-
+    describe 'DELETE /api/v1/wellplates/ui_state/:params' do
+      context 'with appropriate permissions' do
+        let(:c1) { create(:collection, user_id: user.id) }
         let!(:wellplate_1) { create(:wellplate, name: 'test_1')}
         let!(:wellplate_2) { create(:wellplate, name: 'test_2')}
         let!(:wellplate_3) { create(:wellplate, name: 'test_3')}
 
         let!(:params_all_false) {
           {
-            all: nil,
+            all: false,
             included_ids: [wellplate_1.id, wellplate_2.id],
             excluded_ids: []
           }
@@ -82,6 +87,12 @@ describe Chemotion::WellplateAPI do
           }
         }
 
+        before do
+          CollectionsWellplate.create!(collection: c1, wellplate: wellplate_1)
+          CollectionsWellplate.create!(collection: c1, wellplate: wellplate_2)
+          CollectionsWellplate.create!(collection: c1, wellplate: wellplate_3)
+        end
+
         it 'should be able to delete wellplates when "all" is false' do
           wellplate_ids = [wellplate_1.id, wellplate_2.id]
           array = Wellplate.where(id: wellplate_ids).to_a
@@ -90,7 +101,7 @@ describe Chemotion::WellplateAPI do
           CollectionsWellplate.create(wellplate_id: wellplate_2.id, collection_id: 1)
           w = Wellplate.find_by(id: wellplate_3.id)
           expect(w).to_not be_nil
-          delete '/api/v1/wellplates', { ui_state: params_all_false }
+          delete '/api/v1/wellplates/ui_state/', { ui_state: params_all_false }
           w = Wellplate.find_by(id: wellplate_3.id)
           expect(w).to_not be_nil
           array = Wellplate.where(id: wellplate_ids).to_a
@@ -109,7 +120,7 @@ describe Chemotion::WellplateAPI do
           CollectionsWellplate.create(wellplate_id: wellplate_2.id, collection_id: 1)
           w = Wellplate.find_by(id: wellplate_3.id)
           expect(w).to_not be_nil
-          delete '/api/v1/wellplates', { ui_state: params_all_true }
+          delete '/api/v1/wellplates/ui_state/', { ui_state: params_all_true }
           w = Wellplate.find_by(id: wellplate_3.id)
           expect(w).to_not be_nil
           array = Wellplate.where(id: wellplate_ids).to_a

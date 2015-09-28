@@ -100,7 +100,7 @@ export default class SamplesFetcher {
   }
 
   static deleteSamplesByUIState(paramObj) {
-    let promise = fetch('/api/v1/samples', {
+    let promise = fetch('/api/v1/samples/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {

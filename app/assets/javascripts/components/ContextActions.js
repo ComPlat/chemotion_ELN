@@ -52,7 +52,7 @@ export default class ContextActions extends React.Component {
           <Button onClick={e => this._createSample()} disabled={isAllCollection}>Create Sample</Button>
           <Button disabled={isAllCollection}>Create Reaction</Button>
           <Button disabled={isAllCollection}>Create Wellplate</Button>
-          <Button onClick={e => this._deleteSelection()} disabled={isAllCollection}>Delete Selection</Button>
+          <Button onClick={e => this._deleteSelection()}>Delete Selection</Button>
         </ButtonGroup>
       )
     } else {
@@ -61,7 +61,7 @@ export default class ContextActions extends React.Component {
           <Button >Split as Subsample(s)</Button>
           <Button disabled={isAllCollection}>Create Reaction</Button>
           <Button disabled={isAllCollection}>Create Wellplate</Button>
-          <Button onClick={e => this._deleteSelection()} disabled={isAllCollection}>Delete Selection</Button>
+          <Button onClick={e => this._deleteSelection()}>Delete Selection</Button>
         </ButtonGroup>
       )
     }

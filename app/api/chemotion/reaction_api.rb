@@ -3,8 +3,25 @@ module Chemotion
     include Grape::Kaminari
 
     resource :reactions do
+      namespace :ui_state do
+        desc "Delete reactions by UI state"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected reactions from the UI" do
+            optional :all, type: Boolean
+            optional :included_ids, type: Array
+            optional :excluded_ids, type: Array
+          end
+        end
 
-      #todo: more general search api
+        before do
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Reaction.for_ui_state(params[:ui_state])).destroy?
+        end
+
+        delete do
+          Reaction.for_ui_state(params[:ui_state]).destroy_all
+        end
+      end
+
       desc "Return serialized reactions"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
@@ -15,7 +32,7 @@ module Chemotion
         scope = if params[:collection_id]
           Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).reactions
         else
-          Reaction.joins(:collections).where('collections.user_id = ?', current_user.id)
+          Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
 
         paginate(scope)
@@ -49,10 +66,15 @@ module Chemotion
       params do
         requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
       end
-      delete do
-        Reaction.for_ui_state(params[:ui_state]).destroy_all
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).destroy?
+        end
+        
+        delete do
+          Reaction.for_ui_state(params[:ui_state]).destroy_all
+        end
       end
-
     end
   end
 end

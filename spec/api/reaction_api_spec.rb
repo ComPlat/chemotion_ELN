@@ -108,14 +108,14 @@ describe Chemotion::ReactionAPI do
       end
 
       context 'with UIState' do
-
+        let(:c1) { create(:collection, user: user) }
         let!(:reaction_1) { create(:reaction, name: 'test_1')}
         let!(:reaction_2) { create(:reaction, name: 'test_2')}
         let!(:reaction_3) { create(:reaction, name: 'test_3')}
 
         let!(:params_all_false) {
           {
-            all: nil,
+            all: false,
             included_ids: [reaction_1.id, reaction_2.id],
             excluded_ids: []
           }
@@ -129,6 +129,12 @@ describe Chemotion::ReactionAPI do
           }
         }
 
+        before do
+          CollectionsReaction.create!(collection: c1, reaction: reaction_1)
+          CollectionsReaction.create!(collection: c1, reaction: reaction_2)
+          CollectionsReaction.create!(collection: c1, reaction: reaction_3)
+        end
+
         it 'should be able to delete reaction when "all" is false' do
           reaction_ids = [reaction_1.id, reaction_2.id]
           array = Reaction.where(id: reaction_ids).to_a
@@ -137,7 +143,7 @@ describe Chemotion::ReactionAPI do
           CollectionsReaction.create(reaction_id: reaction_2.id, collection_id: 1)
           r = Reaction.find_by(id: reaction_3.id)
           expect(r).to_not be_nil
-          delete '/api/v1/reactions', { ui_state: params_all_false }
+          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_false }
           r = Reaction.find_by(id: reaction_3.id)
           expect(r).to_not be_nil
           array = Reaction.where(id: reaction_ids).to_a
@@ -160,7 +166,7 @@ describe Chemotion::ReactionAPI do
           CollectionsReaction.create(reaction_id: reaction_2.id, collection_id: 1)
           r = Reaction.find_by(id: reaction_3.id)
           expect(r).to_not be_nil
-          delete '/api/v1/reactions', { ui_state: params_all_true }
+          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_true }
           r = Reaction.find_by(id: reaction_3.id)
           expect(r).to_not be_nil
           array = Reaction.where(id: reaction_ids).to_a

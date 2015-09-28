@@ -41,7 +41,7 @@ export default class WellplatesFetcher {
   }
 
   static deleteWellplatesByUIState(paramObj) {
-    let promise = fetch('/api/v1/wellplates', {
+    let promise = fetch('/api/v1/wellplates/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {

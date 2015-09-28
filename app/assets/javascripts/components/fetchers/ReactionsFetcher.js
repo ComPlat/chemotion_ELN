@@ -40,7 +40,7 @@ export default class ReactionsFetcher {
   }
 
   static deleteReactionsByUIState(paramObj) {
-    let promise = fetch('/api/v1/reactions', {
+    let promise = fetch('/api/v1/reactions/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
