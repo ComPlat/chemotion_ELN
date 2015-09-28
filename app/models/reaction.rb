@@ -12,4 +12,8 @@ class Reaction < ActiveRecord::Base
   has_many :products, through: :reactions_product_samples, source: :sample
 
   has_many :literatures
+
+  def samples
+    starting_materials + reactants + products
+  end
 end

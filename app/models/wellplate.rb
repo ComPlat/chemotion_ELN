@@ -4,4 +4,8 @@ class Wellplate < ActiveRecord::Base
 
   has_many :wells
   #belongs_to :screen
+
+  def samples
+    wells.flat_map(&:sample)
+  end
 end

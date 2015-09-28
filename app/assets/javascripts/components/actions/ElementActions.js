@@ -140,6 +140,4 @@ class ElementActions {
 
 }
 
-
-
 export default alt.createActions(ElementActions);

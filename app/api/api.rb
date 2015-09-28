@@ -29,4 +29,5 @@ class API < Grape::API
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
   mount Chemotion::UserAPI
+  mount Chemotion::PermissionAPI
 end

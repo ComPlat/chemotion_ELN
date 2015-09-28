@@ -76,13 +76,19 @@ module Chemotion
           reaction_ids = usecase.getElementIds(params[:elements_filter], Reaction)
           wellplate_ids = usecase.getElementIds(params[:elements_filter], Wellplate)
 
+          top_secret_sample = Sample.where(id: sample_ids).pluck(:is_top_secret).any?
+          top_secret_reaction = Reaction.where(id: reaction_ids).flat_map(&:samples).map(&:is_top_secret).any?
+          top_secret_wellplate = Wellplate.where(id: wellplate_ids).flat_map(&:samples).map(&:is_top_secret).any?
+
+          is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction
+
           share_samples = ElementsPolicy.new(current_user, Sample.where(id: sample_ids)).share?
           share_reactions = ElementsPolicy.new(current_user, Reaction.where(id: reaction_ids)).share?
           share_wellplates = ElementsPolicy.new(current_user, Wellplate.where(id: wellplate_ids)).share?
 
           sharing_allowed = share_samples && share_reactions && share_wellplates
 
-          error!('401 Unauthorized', 401) unless sharing_allowed
+          error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
         end
 
         post do
