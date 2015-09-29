@@ -5,6 +5,8 @@ import Select from 'react-select';
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
 
+import CollectionActions from '../actions/CollectionActions';
+
 import Aviator from 'aviator';
 
 export default class ShareModal extends React.Component {
@@ -47,6 +49,11 @@ export default class ShareModal extends React.Component {
     );
   }
 
+  addCollection() {
+    let label = this.refs.collectionLabelInput.getValue() || ''; //TODO: Don't allow empty labels.
+    CollectionActions.createUnsharedCollection({label: label});
+  }
+
   hideModal() {
     Aviator.navigate(Aviator.getCurrentURI()+'/hide');
   }
@@ -62,17 +69,16 @@ export default class ShareModal extends React.Component {
             <Input ref='collectionSelect' type='select' label='Select a Collection'>
               {this.collectionEntries()}
             </Input>
-
             <form>
               <table width="100%">
                 <tr>
                   <td width="95%" className="padding-right">
-                    <Input type="text" label="Create a new Collection" ref="titleInput"
-                      placeholder={'-- Please insert new Collection name --'}
+                    <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
+                      placeholder={'-- Please insert collection name --'}
                     />
                   </td>
                   <td width="5%">
-                    <Button bsSize="xsmall" bsStyle="success">
+                    <Button bsSize="xsmall" bsStyle="success" onClick={this.addCollection.bind(this)}>
                       <i className="fa fa-plus"></i>
                     </Button>
                   </td>

@@ -144,8 +144,20 @@ module Chemotion
 
           wellplate_ids = Wellplate.for_ui_state(params[:ui_state][:wellplate]).pluck(:id)
           CollectionsWellplate.where(wellplate_id: wellplate_ids).update_all(collection_id: params[:collection_id])
-          
+
         end
+      end
+
+      namespace :unshared do
+
+        desc "Create an unshared collection"
+        params do
+          requires :label, type: String, desc: "Collection label"
+        end
+        post do
+          Collection.create(user_id: current_user.id, label: params[:label])
+        end
+
       end
 
     end

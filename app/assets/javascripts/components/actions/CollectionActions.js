@@ -65,6 +65,15 @@ class CollectionActions {
         console.log(errorMessage);
       });
   }
+
+  createUnsharedCollection(paramObj) {
+    CollectionsFetcher.createUnsharedCollection(paramObj)
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
 
 export default alt.createActions(CollectionActions);

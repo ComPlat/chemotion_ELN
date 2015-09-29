@@ -108,4 +108,26 @@ export default class CollectionsFetcher {
 
     return promise;
   }
+
+  static createUnsharedCollection(paramObj) {
+    let promise = fetch('/api/v1/collections/unshared/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        label: paramObj.label 
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }
