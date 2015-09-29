@@ -1,6 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Usecases::Sharing::ShareWithUser do
+  let(:user)        { create(:user) }
   let(:sample_1)    { create(:sample) }
   let(:sample_2)    { create(:sample) }
   let(:reaction_1)  { create(:reaction) }
@@ -12,7 +13,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
     {
       # TODO parent of collection?
       collection_attributes: {
-        user_id: 7,
+        user_id: user.id,
         label: 'test',
         shared_by_id: 10,
         is_shared: true,
@@ -36,7 +37,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       c = Collection.find_by(label: 'test')
 
       expect(c).to_not be_nil
-      expect(c.user_id).to eq(7)
+      expect(c.user_id).to eq(user.id)
       expect(c.shared_by_id).to eq(10)
       expect(c.is_shared).to eq(true)
       expect(c.permission_level).to eq(1)
