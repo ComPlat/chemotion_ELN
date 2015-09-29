@@ -1,5 +1,5 @@
 class RemoteCollectionSerializer < ActiveModel::Serializer
-  attributes :id, :label, :descendant_ids, :shared_by_name
+  attributes :id, :label, :descendant_ids, :shared_by_name, :permission_level
 
   has_many :children
 
