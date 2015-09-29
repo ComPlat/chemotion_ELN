@@ -16,11 +16,3 @@ module ElementUIStateScopes
     end
   end
 end
-
-
-#L.27
-  #include ElementUIStateScopes
-
-  #Sample.where(user_id: 1).for_ui_state(..)
-
-

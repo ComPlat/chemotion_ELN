@@ -127,6 +127,23 @@ module Chemotion
         end
       end
 
+      desc "Update the collection of a set of elements by UI state"
+      params do
+        requires :ui_state, type: Hash, desc: "Selected elements from the UI"
+        requires :collection_id, type: Integer, desc: "Destination collection id"
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).destroy?
+        end
+        
+        put do
+          Sample.for_ui_state(params[:ui_state][:sample]).update_all(params[:collection_id])
+          Reaction.for_ui_state(params[:ui_state][:reaction]).update_all(params[:collection_id])
+          Wellplate.for_ui_state(params[:ui_state][:wellplate]).update_all(params[:collection_id])
+        end
+      end
+
     end
   end
 end
