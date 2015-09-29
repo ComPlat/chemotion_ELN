@@ -28,6 +28,7 @@ class ElementActions {
 
   createSample(paramObj) {
     delete paramObj['id'];
+
     SamplesFetcher.create(paramObj)
       .then((result) => {
         this.dispatch(result.sample.id)
@@ -35,6 +36,15 @@ class ElementActions {
   }
 
   updateSample(paramObj) {
+    // delete possible null values for scoped update
+    for(var key in paramObj) {
+      if(paramObj[key] == null) {
+        delete paramObj[key];
+      }
+    }
+
+    console.log(paramObj)
+    
     SamplesFetcher.update(paramObj)
       .then((result) => {
         this.dispatch(paramObj.id)

@@ -4,24 +4,32 @@ class SampleProxy
   end
 
   def find(id)
+    s = SampleSerializer.new(Sample.find(id)).serializable_hash.deep_symbolize_keys
+
     # calculate maximal detail level
     dl = detail_level_by_sample_id(id)
 
-    # get attributes which should be blanked out
+    unless dl == 4
+      # get attributes which are allowed to be seen
+      sample_attr = allowed_sample_attributes_for_detail_level(dl)
 
+      # blank out respective serialization and return it
+      new_sample_hash = {}
+      sample_attr.each do |attr|
+        new_sample_hash[attr] = s[attr]
+      end
+      new_sample_hash[:is_scoped] = true
 
-    # blank out respective serialization and return it
-    s = SampleSerializer.new(Sample.find(id)).serializable_hash
-
-    s[:name] = "***" # feld muss im frontend deaktiviert werden
-
-    {sample: s}
+      {sample: new_sample_hash}
+    else
+      {sample: s}
+    end
   end
 
   private
 
-  # TODO funktion f: Int -> [String], detail_level |-> blacklist
   def detail_level_by_sample_id(id)
+    # on level 4 everything can be read
     max_detail_level = 4
 
     # get collections where sample belongs to
@@ -37,6 +45,27 @@ class SampleProxy
       max_detail_level
     else
       c.pluck(:sample_detail_level).max
+    end
+  end
+
+  def allowed_sample_attributes_for_detail_level(level)
+    case level
+    when 0
+      [
+        :id,
+        :type,
+        #:weight
+      ]
+    when 1
+      [
+        :id,
+        :type,
+        :molecule
+      ]
+    when 2
+
+    when 3
+
     end
   end
 

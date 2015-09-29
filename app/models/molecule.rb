@@ -1,16 +1,15 @@
-require 'chemotion'
 class Molecule < ActiveRecord::Base
   has_many :samples
 
   validates_uniqueness_of :inchikey
 
   def self.find_or_create_by_molfile molfile
-    
+
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
 
     inchikey = babel_info[:inchikey]
     unless inchikey.blank?
-      
+
       svg_file_name = "#{inchikey}.svg"
       svg_file_path = "public/images/molecules/#{svg_file_name}"
 

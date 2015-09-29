@@ -1,4 +1,3 @@
-require 'chemotion'
 module Chemotion
   class MoleculeAPI < Grape::API
     include Grape::Kaminari
@@ -12,7 +11,6 @@ module Chemotion
       post do
         Molecule.find_or_create_by_molfile(params[:molfile])
       end
-
     end
   end
 end
