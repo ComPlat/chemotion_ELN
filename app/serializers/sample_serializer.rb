@@ -1,5 +1,4 @@
 class SampleSerializer < ActiveModel::Serializer
-
   attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molfile,
              :purity, :solvent, :impurities, :location, :weight, :volume, :is_top_secret, :is_scoped
 
@@ -10,7 +9,8 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   def collection_labels
-    object.collections.flat_map(&:label).uniq
+    collections = object.collections
+    collections.flat_map(&:label).zip(collections.flat_map(&:is_shared)).uniq
   end
 
   def type

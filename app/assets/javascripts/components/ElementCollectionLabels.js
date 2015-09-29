@@ -18,12 +18,20 @@ export default class ElementCollectionLabels extends React.Component {
     );
   }
 
+  labelStyle(label) {
+    if(label[1] == false) {
+      return "primary";
+    } else {
+      return "warning";
+    }
+  }
+
   collectionLabels(element) {
     if(element.collection_labels) {
       return element.collection_labels.map((label, index) => {
         return (
           <span key={index}>
-            <Label bsStyle="primary">{label}</Label>
+            <Label bsStyle={this.labelStyle(label)}>{label[0]}</Label>
             &nbsp;
           </span>
         )
@@ -32,4 +40,3 @@ export default class ElementCollectionLabels extends React.Component {
 
   }
 }
-
