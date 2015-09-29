@@ -1,5 +1,4 @@
 class WellplateSerializer < ActiveModel::Serializer
-
   attributes :id, :type, :size, :name, :description, :created_at, :collection_labels, :wells
 
   has_many :wells
@@ -9,7 +8,8 @@ class WellplateSerializer < ActiveModel::Serializer
   end
 
   def collection_labels
-    object.collections.flat_map(&:label).uniq
+    collections = object.collections
+    collections.flat_map(&:label).zip(collections.flat_map(&:is_shared)).uniq
   end
 
   def type

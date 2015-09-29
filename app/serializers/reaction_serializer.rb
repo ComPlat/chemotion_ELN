@@ -1,5 +1,4 @@
 class ReactionSerializer < ActiveModel::Serializer
-
   attributes :id, :type, :name, :created_at, :collection_labels
 
   has_many :starting_materials
@@ -12,11 +11,11 @@ class ReactionSerializer < ActiveModel::Serializer
   end
 
   def collection_labels
-    object.collections.flat_map(&:label).uniq
+    collections = object.collections
+    collections.flat_map(&:label).zip(collections.flat_map(&:is_shared)).uniq
   end
 
   def type
     'reaction'
   end
-
 end

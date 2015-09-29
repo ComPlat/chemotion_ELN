@@ -153,13 +153,13 @@ describe Chemotion::SampleAPI do
           id: s2.id,
           name: s2.name,
           type: 'sample',
-          collection_labels: ['C1']
+          collection_labels: [['C1', false]]
         )
         expect(samples.last.symbolize_keys).to include(
           id: s1.id,
           name: s1.name,
           type: 'sample',
-          collection_labels: ['C1']
+          collection_labels: [['C1', false]]
         )
       end
     end
