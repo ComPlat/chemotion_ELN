@@ -133,14 +133,18 @@ module Chemotion
         requires :collection_id, type: Integer, desc: "Destination collection id"
       end
       route_param :id do
-        before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).destroy?
-        end
         
         put do
-          Sample.for_ui_state(params[:ui_state][:sample]).update_all(params[:collection_id])
-          Reaction.for_ui_state(params[:ui_state][:reaction]).update_all(params[:collection_id])
-          Wellplate.for_ui_state(params[:ui_state][:wellplate]).update_all(params[:collection_id])
+
+          sample_ids = Sample.for_ui_state(params[:ui_state][:sample]).pluck(:id)
+          CollectionsSample.where(sample_id: sample_ids).update_all(collection_id: params[:collection_id])
+
+          reaction_ids = Reaction.for_ui_state(params[:ui_state][:reaction]).pluck(:id)
+          CollectionsReaction.where(reaction_id: reaction_ids).update_all(collection_id: params[:collection_id])
+
+          wellplate_ids = Wellplate.for_ui_state(params[:ui_state][:wellplate]).pluck(:id)
+          CollectionsWellplate.where(wellplate_id: wellplate_ids).update_all(collection_id: params[:collection_id])
+          
         end
       end
 
