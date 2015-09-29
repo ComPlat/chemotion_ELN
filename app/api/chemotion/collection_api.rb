@@ -127,13 +127,12 @@ module Chemotion
         end
       end
 
-      desc "Update the collection of a set of elements by UI state"
-      params do
-        requires :ui_state, type: Hash, desc: "Selected elements from the UI"
-        requires :collection_id, type: Integer, desc: "Destination collection id"
-      end
-      route_param :id do
-        
+      namespace :elements do
+        desc "Update the collection of a set of elements by UI state"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected elements from the UI"
+          requires :collection_id, type: Integer, desc: "Destination collection id"
+        end
         put do
 
           sample_ids = Sample.for_ui_state(params[:ui_state][:sample]).pluck(:id)

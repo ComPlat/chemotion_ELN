@@ -49,6 +49,30 @@ export default class ShareModal extends React.Component {
     );
   }
 
+  handleMove() {
+    let collection_id = this.refs.collectionSelect.getValue();
+    // TODO: This needs to be improved.
+    // We are constantly changing the ui_state into this syntax:
+    let ui_state = {
+      sample: {
+        all: this.state.ui_state.sample.checkedAll,
+        included_ids: this.state.ui_state.sample.checkedIds,
+        excluded_ids: this.state.ui_state.sample.uncheckedIds
+      },
+      reaction: {
+        all: this.state.ui_state.reaction.checkedAll,
+        included_ids: this.state.ui_state.reaction.checkedIds,
+        excluded_ids: this.state.ui_state.reaction.uncheckedIds
+      },
+      wellplate: {
+        all: this.state.ui_state.wellplate.checkedAll,
+        included_ids: this.state.ui_state.wellplate.checkedIds,
+        excluded_ids: this.state.ui_state.wellplate.uncheckedIds
+      }
+    }
+    CollectionActions.updateElementsCollection({ui_state: ui_state, collection_id: collection_id});
+  }
+
   addCollection() {
     let label = this.refs.collectionLabelInput.getValue() || ''; //TODO: Don't allow empty labels.
     CollectionActions.createUnsharedCollection({label: label});
@@ -85,7 +109,7 @@ export default class ShareModal extends React.Component {
                 </tr>
               </table>
             </form>
-            <Button bsStyle="warning">Move</Button>
+            <Button bsStyle="warning" onClick={this.handleMove.bind(this)}>Move</Button>
           </Modal.Body>
         </Modal>
       </div>

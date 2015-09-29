@@ -17,7 +17,8 @@ class CollectionStore {
       handleCreateSharedCollections: CollectionActions.createSharedCollections,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
-      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection
+      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection,
+      handleUpdateElementsCollection: CollectionActions.updateElementsCollection
     })
   }
 
@@ -55,6 +56,12 @@ class CollectionStore {
 
   handleCreateUnsharedCollection(results) {
     CollectionActions.fetchUnsharedCollectionRoots();
+  }
+
+  handleUpdateElementsCollection(results) {
+    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchSharedCollectionRoots();
+    CollectionActions.fetchRemoteCollectionRoots();
   }
 }
 
