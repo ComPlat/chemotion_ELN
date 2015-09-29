@@ -8,6 +8,7 @@ import ElementFilter from './ElementFilter';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';
+import MoveModal from './managing_actions/MoveModal';
 import TopSecretModal from './TopSecretModal';
 
 import UIActions from './actions/UIActions';
@@ -120,6 +121,23 @@ Aviator.setRoutes({
           React.unmountComponentAtNode(modalDomNode);
         }
         Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide', ''))
+      }
+    }
+  },
+
+  '/move': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<MoveModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/move/hide', ''))
       }
     }
   },
