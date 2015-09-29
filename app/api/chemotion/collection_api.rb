@@ -1,6 +1,22 @@
 module Chemotion
   class CollectionAPI < Grape::API
     resource :collections do
+      namespace :take_ownership do
+        desc "Take ownership of collection with specified id"
+        params do
+          requires :id, type: Integer, desc: "Collection id"
+        end
+        route_param :id do
+          before do
+            error!('401 Unauthorized', 401) unless CollectionPolicy.new(@current_user, Collection.find(params[:id])).take_ownership?
+          end
+
+          post do
+            Collection.find(params[:id]).update(is_shared: false)
+          end
+        end
+      end
+
       desc "Return all unshared serialized collection roots of current user"
       get :roots do
         current_user.collections.ordered.unshared.roots

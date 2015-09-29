@@ -5,6 +5,7 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
+import CollectionActions from './actions/CollectionActions';
 
 import Aviator from 'aviator';
 
@@ -112,7 +113,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleTakeOwnership() {
-    
+    CollectionActions.takeOwnership({id: this.state.root.id});
   }
 
   handleClick() {

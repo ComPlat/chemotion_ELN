@@ -10,14 +10,60 @@ describe Chemotion::CollectionAPI do
 
   context 'authorized user logged in' do
     let(:user)  { create(:user, name: 'Musashi') }
+    let(:u2)    { create(:user) }
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
     let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true) }
     let!(:c3)   { create(:collection, is_shared: false) }
-    let!(:c4)   { create(:collection, user: user, shared_by_id: user.id+1, is_shared: true) }
-    let!(:c5)   { create(:collection, shared_by_id: user.id+1, is_shared: true) }
+    let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true) }
+    let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
 
     before do
       allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
+    end
+
+    describe 'POST /api/v1/collections/take_ownership' do
+      context 'with appropriate permissions' do
+        let!(:c1) { create(:collection, user: user) }
+        let!(:c2) { create(:collection, user: user, is_shared: true, permission_level: 4) }
+
+        describe 'take ownership of c1' do
+          before { post "/api/v1/collections/take_ownership/#{c1.id}" }
+
+          it 'is allowed' do
+            expect(response.status).to eq 201
+          end
+        end
+
+        describe 'take ownership of c2' do
+          before { post "/api/v1/collections/take_ownership/#{c2.id}" }
+
+          it 'is allowed' do
+            expect(response.status).to eq 201
+          end
+        end
+      end
+
+      context 'with inappropriate permissions' do
+        let(:u2)  { create(:user) }
+        let!(:c1) { create(:collection, user: u2) }
+        let!(:c2) { create(:collection, user: user, is_shared: true, permission_level: 3) }
+
+        describe 'take ownership of c1' do
+          before { post "/api/v1/collections/take_ownership/#{c1.id}" }
+
+          it 'is not allowed' do
+            expect(response.status).to eq 401
+          end
+        end
+
+        describe 'take ownership of c2' do
+          before { post "/api/v1/collections/take_ownership/#{c2.id}" }
+
+          it 'is not allowed' do
+            expect(response.status).to eq 401
+          end
+        end
+      end
     end
 
     describe 'GET /api/v1/collections/roots' do
@@ -33,14 +79,6 @@ describe Chemotion::CollectionAPI do
         get '/api/v1/collections/shared_roots'
 
         expect(JSON.parse(response.body)['collections']).to eq [c2.as_json(json_options)]
-      end
-    end
-
-    describe 'GET /api/v1/collections/remote_roots' do
-      it 'returns serialized (remote) collection roots of logged in user' do
-        get '/api/v1/collections/remote_roots'
-
-        expect(JSON.parse(response.body)['collections']).to eq [c4.as_json(json_options)]
       end
     end
 

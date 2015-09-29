@@ -10,6 +10,7 @@ class CollectionStore {
     };
 
     this.bindListeners({
+      handleTakeOwnership: CollectionActions.takeOwnership,
       handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
       handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
       handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
@@ -17,6 +18,12 @@ class CollectionStore {
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection
     })
+  }
+
+  handleTakeOwnership() {
+    CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchSharedCollectionRoots();
+    CollectionActions.fetchRemoteCollectionRoots();
   }
 
   handleFetchUnsharedCollectionRoots(results) {
@@ -37,7 +44,7 @@ class CollectionStore {
   }
 
   handleBulkUpdateUnsharedCollections() {
-    CollectionActions.fetchUnsharedCollectionRoots();
+
   }
 
   handleUpdateSharedCollection() {
