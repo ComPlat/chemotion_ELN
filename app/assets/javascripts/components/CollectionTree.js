@@ -42,7 +42,33 @@ export default class CollectionTree extends React.Component {
   remoteSubtrees() {
     let roots = this.state.remoteRoots;
 
-    return this.subtrees(roots, 'Shared with me')
+    console.log(roots)
+    // for unique see below (end of file)
+    let sharedByNames = roots.map((root) => {
+      return root.shared_by_name
+    }).unique();
+
+    let fakeRoots = sharedByNames.map((name) => {
+      return {
+        label: 'From ' + name,
+        children: [],
+        descendant_ids: []
+      }
+    });
+
+    this.assignRootsAsChildrenToFakeRoots(roots, fakeRoots);
+
+    return this.subtrees(fakeRoots, 'Shared with me')
+  }
+
+  assignRootsAsChildrenToFakeRoots(roots, fakeRoots) {
+    roots.forEach((root) => {
+      let fakeRootForRoot = fakeRoots.filter((fakeRoot) => {
+        return fakeRoot.name == root.name
+      })[0];
+
+      fakeRootForRoot.children.push(root);
+    })
   }
 
   subtrees(roots, label) {
@@ -87,3 +113,7 @@ export default class CollectionTree extends React.Component {
     )
   }
 }
+
+Array.prototype.unique = function(a){
+    return function(){ return this.filter(a) }
+}(function(a,b,c){ return c.indexOf(a,b+1) < 0 });

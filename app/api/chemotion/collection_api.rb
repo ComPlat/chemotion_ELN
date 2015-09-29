@@ -12,7 +12,7 @@ module Chemotion
       end
 
       desc "Return all remote serialized collection roots"
-      get :remote_roots do
+      get :remote_roots, each_serializer: RemoteCollectionSerializer do
         current_user.collections.remote(current_user.id).roots
       end
 
