@@ -30,6 +30,13 @@ class UIStore {
         currentId: null,
         page: 1
       },
+      screen: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null,
+        page: 1
+      },
       currentCollectionId: null,
       currentTab: 1,
     };
@@ -107,6 +114,9 @@ class UIStore {
       case 'wellplate':
         ElementActions.fetchWellplateById(element.id);
         break;
+      case 'screen':
+        ElementActions.fetchScreenById(element.id);
+        break;
     }
   }
 
@@ -118,6 +128,7 @@ class UIStore {
       ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination);
       ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination);
       ElementActions.fetchWellplatesByCollectionId(collection.id, this.state.pagination);
+      ElementActions.fetchScreensByCollectionId(collection.id, this.state.pagination);
     }
   }
 

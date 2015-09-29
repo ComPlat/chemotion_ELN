@@ -109,6 +109,17 @@ Aviator.setRoutes({
     },
     '/:wellplateID': 'show',
   },
+  '/screen': {
+    target: {
+      show: function(e) {
+        UIActions.selectElement({
+          type: 'screen',
+          id: e.params['screenID']
+        })
+      }
+    },
+    '/:screenID': 'show',
+  },
 
   '/sharing': {
     '/': 'show',

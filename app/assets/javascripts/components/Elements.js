@@ -8,6 +8,7 @@ import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ManagingActions from './ManagingActions';
+import ScreenDetails from './ScreenDetails';
 
 class Elements extends Component {
   constructor(props) {
@@ -47,8 +48,11 @@ class Elements extends Component {
           break;
         case 'wellplate':
           elementDetails = <WellplateDetails wellplate={this.state.currentElement}/>;
+          break;
+        case 'screen':
+          elementDetails = <ScreenDetails screen={this.state.currentElement}/>;
+          break;
         default:
-
       }
 
     }

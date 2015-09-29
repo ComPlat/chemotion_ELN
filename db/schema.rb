@@ -29,6 +29,7 @@ ActiveRecord::Schema.define(version: 20151002083208) do
     t.datetime "created_at",                             null: false
     t.datetime "updated_at",                             null: false
     t.integer  "position"
+    t.integer  "screen_detail_level",    default: 0
   end
 
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
@@ -49,6 +50,14 @@ ActiveRecord::Schema.define(version: 20151002083208) do
 
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
+
+  create_table "collections_screens", id: false, force: :cascade do |t|
+    t.integer "collection_id", null: false
+    t.integer "screen_id",     null: false
+  end
+
+  add_index "collections_screens", ["collection_id"], name: "index_collections_screens_on_collection_id", using: :btree
+  add_index "collections_screens", ["screen_id"], name: "index_collections_screens_on_screen_id", using: :btree
 
   create_table "collections_wellplates", id: false, force: :cascade do |t|
     t.integer "collection_id", null: false
@@ -151,6 +160,17 @@ ActiveRecord::Schema.define(version: 20151002083208) do
 
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
 
+  create_table "screens", force: :cascade do |t|
+    t.string   "description"
+    t.string   "name"
+    t.string   "result"
+    t.string   "collaborator"
+    t.string   "conditions"
+    t.string   "requirements"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
+
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false
     t.string   "encrypted_password",     default: "", null: false
@@ -176,6 +196,7 @@ ActiveRecord::Schema.define(version: 20151002083208) do
     t.string   "description"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
+    t.integer  "screen_id"
   end
 
   create_table "wells", force: :cascade do |t|

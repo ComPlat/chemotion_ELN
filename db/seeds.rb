@@ -156,11 +156,24 @@ CollectionsReaction.create!(reaction: reaction_4, collection: grand_child)
 CollectionsReaction.create!(reaction: reaction_5, collection: subcollection_1)
 CollectionsReaction.create!(reaction: reaction_6, collection: subcollection_1)
 
+# --- Screens ---
+
+#create screens
+screen_1 = Screen.create!(name: "Screen 1", result: "result", collaborator: "collabs", conditions: "conditions", requirements: "requirements", description: "lorem ipsum")
+screen_2 = Screen.create!(name: "Screen 2", result: "", collaborator: "", conditions: "", requirements: "", description: "")
+
+# associate screens with collections
+CollectionsScreen.create!(screen: screen_1, collection: collection_1)
+CollectionsScreen.create!(screen: screen_2, collection: collection_1)
+CollectionsScreen.create!(screen: screen_1, collection: grand_child)
+CollectionsScreen.create!(screen: screen_1, collection: subcollection_1)
+CollectionsScreen.create!(screen: screen_1, collection: subcollection_1)
+
 # --- Wellplates ---
 
 # create some wellplates
-wellplate_1 = Wellplate.create(name: 'Wellplate 1', size: 96, description: "lorem ipsum")
-wellplate_2 = Wellplate.create(name: 'Wellplate 2', size: 96, description: "")
+wellplate_1 = Wellplate.create!(screen: screen_1, name: 'Wellplate 1', size: 96, description: "lorem ipsum")
+wellplate_2 = Wellplate.create!(screen: screen_1, name: 'Wellplate 2', size: 96, description: "")
 
 well_1 = Well.create!(sample: sample_1, wellplate: wellplate_1)
 well_2 = Well.create(sample: sample_1, wellplate: wellplate_1)

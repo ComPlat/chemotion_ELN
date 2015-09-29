@@ -14,20 +14,21 @@ export default class WellplateDetails extends Component {
       name,
       size,
       description,
-      wells: this.getWellsAndPlaceholders(wells)
+      wells: this.getWellsAndPlaceholders(wells, size)
     };
   }
 
   componentWillReceiveProps(nextProps) {
-    const {wells} = nextProps;
+    const {name, wells, size, description} = nextProps.wellplate;
     this.setState({
-      wells: this.getWellsAndPlaceholders(wells)
+      name,
+      size,
+      description,
+      wells: this.getWellsAndPlaceholders(wells, size)
     });
   }
 
-  // TODO move this to createWellplate & set positions of x,y!
-  getWellsAndPlaceholders(wells) {
-    const {size} = this.props.wellplate;
+  getWellsAndPlaceholders(wells, size) {
     const neededPlaceholders = size - wells.length;
     let placeholders = Array(neededPlaceholders).fill({});
     const newWells = wells.concat(placeholders);
@@ -62,7 +63,7 @@ export default class WellplateDetails extends Component {
   handleInputChange(type, event) {
     let newState = {};
     const value = event.target.value;
-    switch(type){
+    switch (type) {
       case 'name':
         newState.name = value;
         break;

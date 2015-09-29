@@ -11,7 +11,8 @@ export default class List extends React.Component {
     this.state = {
       totalSampleElements: 0,
       totalReactionElements: 0,
-      totalWellplatesElements: 0,
+      totalWellplateElements: 0,
+      totalScreenElements: 0,
       currentTab: 1
     }
   }
@@ -40,7 +41,8 @@ export default class List extends React.Component {
     this.setState({
       totalSampleElements: state.elements.samples.totalElements,
       totalReactionElements: state.elements.reactions.totalElements,
-      totalWellplatesElements: state.elements.wellplates.totalElements
+      totalWellplateElements: state.elements.wellplates.totalElements,
+      totalScreenElements: state.elements.screens.totalElements
     });
   }
 
@@ -65,7 +67,11 @@ export default class List extends React.Component {
       </i>;
     let wellplates =
       <i className="icon-wellplate">
-         {this.state.totalWellplatesElements} ({this._checkedElements('wellplate')})
+         {this.state.totalWellplateElements} ({this._checkedElements('wellplate')})
+      </i>;
+    let screens =
+      <i className="icon-screen">
+        {" " + this.state.totalScreenElements} ({this._checkedElements('screen')})
       </i>;
 
     return (
@@ -79,6 +85,9 @@ export default class List extends React.Component {
         </TabPane>
         <TabPane eventKey={3} tab={wellplates}>
           <ElementsTable type='wellplate'/>
+        </TabPane>
+        <TabPane eventKey={4} tab={screens}>
+          <ElementsTable type='screen'/>
         </TabPane>
       </TabbedArea>
     )
