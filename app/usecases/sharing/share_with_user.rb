@@ -3,6 +3,7 @@ module Usecases
     class ShareWithUser
       def initialize(params)
         @params = params
+        @user = User.find(@params[:collection_attributes][:user_id])
       end
 
       def execute!
@@ -20,6 +21,8 @@ module Usecases
           @params.fetch(:wellplate_ids, []).each do |wellplate_id|
             CollectionsWellplate.create(collection_id: c.id, wellplate_id: wellplate_id)
           end
+          
+          SendSharingNotificationJob.perform_later(@user, '')
         end
       end
     end
