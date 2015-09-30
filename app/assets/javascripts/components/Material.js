@@ -58,7 +58,7 @@ class Material extends Component {
       <td className="padding-right">
         <Input
           type="text"
-          value={material.equivalent} disabled={false}/>
+          value={material.equivalent} disabled={material.reference}/>
       </td>
       <td style={{verticalAlign: 'top'}}>
         <Button

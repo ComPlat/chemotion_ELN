@@ -62,9 +62,11 @@ export default class ReactionDetails extends React.Component {
    return samples.map((sample)=> {
      if (sample.id == sampleID) {
        sample.equivalent = 1.0;
+       sample.reference = true;
      } else {
        //TODO replace dummmy calculation
        sample.equivalent = 2.0;
+       sample.reference = false;
      }
      return sample;
    });
