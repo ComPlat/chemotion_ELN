@@ -20,3 +20,6 @@
 
 /public/images/molecules/*
 !/public/images/molecules/.keep
+
+/public/images/reactions/*
+!/public/images/reactions/.keep

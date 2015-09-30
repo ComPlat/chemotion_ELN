@@ -5,6 +5,7 @@ import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
+import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import UIActions from '../actions/UIActions';
 
 class ElementActions {
@@ -145,6 +146,24 @@ class ElementActions {
     MoleculesFetcher.fetchByMolfile(molfile)
       .then((result) => {
         this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchReactionSvgByMaterialsInchikeys(materialsInchikeys){
+    ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys)
+      .then((result) => {
+        this.dispatch(result.reaction_svg);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchReactionSvgByReactionId(reaction_id){
+    ReactionSvgFetcher.fetchByReactionId(reaction_id)
+      .then((result) => {
+        this.dispatch(result.reaction_svg);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

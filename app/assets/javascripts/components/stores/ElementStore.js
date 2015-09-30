@@ -45,6 +45,8 @@ class ElementStore {
       handleCreateReactionLiterature: ElementActions.createReactionLiterature,
       handleDeleteReactionLiterature: ElementActions.deleteReactionLiterature,
       handleFetchLiteraturesByReactionId: ElementActions.fetchLiteraturesByReactionId,
+      handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
+      handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
 
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
@@ -166,6 +168,14 @@ class ElementStore {
     console.log("handleFetchLiteraturesByReactionId: ");
     console.log(result);
     this.state.currentElement.literatures = result.literatures;
+  }
+
+  handleFetchReactionSvgByMaterialsInchikeys(result) {
+    this.state.currentElement.reactionSvg = result;
+  }
+
+  handleFetchReactionSvgByReactionId(result) {
+    this.state.currentElement.reactionSvg = result;
   }
 
   // -- Generic --

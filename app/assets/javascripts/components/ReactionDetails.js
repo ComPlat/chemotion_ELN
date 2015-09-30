@@ -5,6 +5,7 @@ import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
 
 import ElementStore from './stores/ElementStore';
+import ElementActions from './actions/ElementActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import UIStore from './stores/UIStore';
@@ -14,14 +15,16 @@ import SVG from 'react-inlinesvg';
 export default class ReactionDetails extends React.Component {
   constructor(props) {
     super(props);
+    const {reaction} = props;
     this.state = {
-      reaction: props.reaction
+      reaction
     };
-    console.log(this.state.reaction);
   }
 
   componentDidMount() {
     ElementStore.listen(this.onChange.bind(this));
+    const {reaction} = this.state;
+    ElementActions.fetchReactionSvgByReactionId(reaction.id)
   }
 
   componentWillUnmount() {
@@ -175,6 +178,7 @@ export default class ReactionDetails extends React.Component {
     const materials = reaction[materialGroup];
     materials.push(sample);
     this.setState({reaction});
+    this.updateReactionSvg();
   }
 
   deleteMaterial(material, materialGroup) {
@@ -183,6 +187,7 @@ export default class ReactionDetails extends React.Component {
     const materialIndex = materials.indexOf(material);
     materials.splice(materialIndex, 1);
     this.setState({reaction});
+    this.updateReactionSvg();
   }
 
   dropMaterial(material, previousMaterialGroup, materialGroup) {
@@ -191,6 +196,7 @@ export default class ReactionDetails extends React.Component {
     this.deleteMaterial(material, previousMaterialGroup);
     materials.push(material);
     this.setState({reaction});
+    this.updateReactionSvg();
   }
 
   _submitFunction() {
@@ -219,19 +225,30 @@ export default class ReactionDetails extends React.Component {
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
+  updateReactionSvg() {
+    const {reaction} = this.state;
+    const materialsInchikeys = {
+      starting_materials: reaction.starting_materials.map(material => material.molecule.inchikey),
+      reactants: reaction.reactants.map(material => material.molecule.inchikey),
+      products: reaction.products.map(material => material.molecule.inchikey)
+    };
+    ElementActions.fetchReactionSvgByMaterialsInchikeys(materialsInchikeys);
+  }
+
   render() {
     const {reaction} = this.state;
+    const svgPath = (reaction.reactionSvg) ? "/images/reactions/"+ reaction.reactionSvg : "";
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
           <table width="100%" height="100px">
             <tr>
-              <td width="70%">
+              <td width="30%">
                 <h3>{reaction.name}</h3>
                 <ElementCollectionLabels element={reaction} key={reaction.id}/>
               </td>
-              <td width="30%">
-                <SVG src="http://localhost:3333/api/v1/reaction_svg?id=1" className="molecule-mid"/>
+              <td width="70%" style={{textAlign: 'right'}}>
+                <SVG key={reaction.reactionSvg} src={svgPath}/>
               </td>
             </tr>
           </table>
