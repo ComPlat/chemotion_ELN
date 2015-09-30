@@ -22,3 +22,7 @@ th.name, td.check {
 .managing-actions-add-btn {
   margin-top: 11px;
 }
+
+.collection-label {
+  display: inline-block;
+}
