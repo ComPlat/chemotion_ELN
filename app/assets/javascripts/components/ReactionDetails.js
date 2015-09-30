@@ -35,41 +35,47 @@ export default class ReactionDetails extends React.Component {
     }
   }
 
-  //handleMaterialsChange(change) {
-  //  switch (change.type) {
-  //    case 'referenceChanged':
-  //      this.setState({
-  //        reaction: this.updatedReactionForReferenceChange(change)
-  //      });
-  //      break;
-  //  }
-  //}
-  //
-  //updatedReactionForReferenceChange(change) {
-  //  let {reaction} = this.state;
-  //  let {sampleID} = change;
-  //
-  //  reaction.starting_materials = this.updatedSamplesForReferenceChange(reaction.starting_materials, sampleID);
-  //  reaction.reactants = this.updatedSamplesForReferenceChange(reaction.reactants, sampleID);
-  //  reaction.products = this.updatedSamplesForReferenceChange(reaction.products, sampleID);
-  //  return reaction;
-  //}
+  // ---
 
-  //updatedSamplesForReferenceChange(samples, sampleID) {
-  //  return samples.map((sample)=> {
-  //    if (sample.id == sampleID) {
-  //      sample.equivalent = 1.0;
-  //    } else {
-  //      //TODO replace dummmy calculation
-  //      sample.equivalent = 2.0;
-  //    }
-  //    return sample;
-  //  });
-  //}
+  handleMaterialsChange(changeEvent) {
+   console.log("handleMaterialsChange: " + JSON.stringify(changeEvent))
+   switch (changeEvent.type) {
+     case 'referenceChanged':
+       this.setState({
+         reaction: this.updatedReactionForReferenceChange(changeEvent)
+       });
+       break;
+   }
+  }
+
+  updatedReactionForReferenceChange(changeEvent) {
+   let {reaction} = this.state;
+   let {sampleID} = changeEvent;
+
+   reaction.starting_materials = this.updatedSamplesForReferenceChange(reaction.starting_materials, sampleID);
+   reaction.reactants = this.updatedSamplesForReferenceChange(reaction.reactants, sampleID);
+   reaction.products = this.updatedSamplesForReferenceChange(reaction.products, sampleID);
+   return reaction;
+  }
+
+  updatedSamplesForReferenceChange(samples, sampleID) {
+   return samples.map((sample)=> {
+     if (sample.id == sampleID) {
+       sample.equivalent = 1.0;
+     } else {
+       //TODO replace dummmy calculation
+       sample.equivalent = 2.0;
+     }
+     return sample;
+   });
+  }
 
   handleReferenceMaterialChange() {
     // TODO
   }
+
+  // --
+
 
   dropSample(sample, materialGroup) {
     const {reaction} = this.state;
@@ -144,6 +150,7 @@ export default class ReactionDetails extends React.Component {
                 dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
                 deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                 dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+                onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
                 />
             </ListGroupItem>
             <ListGroupItem header="Reactants">
@@ -152,7 +159,9 @@ export default class ReactionDetails extends React.Component {
                 materials={reaction.reactants}
                 dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
                 deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}/>
+                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+                onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+                />
             </ListGroupItem>
             <ListGroupItem header="Products">
               <MaterialGroupContainer
@@ -160,7 +169,9 @@ export default class ReactionDetails extends React.Component {
                 materials={reaction.products}
                 dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
                 deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}/>
+                dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+                onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+                />
             </ListGroupItem>
             <ListGroupItem header='Literatures'>
               <ReactionDetailsLiteratures

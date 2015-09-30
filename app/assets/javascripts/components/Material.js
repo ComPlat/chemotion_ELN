@@ -17,25 +17,6 @@ const collect = (connect, monitor) => ({
 });
 
 class Material extends Component {
-  //handleReferenceChange(event, sampleId) {
-  //  let value = event.target.value;
-  //  this.props.onChange(
-  //    {
-  //      type: 'referenceChanged',
-  //      materialGroup: this.state.materialGroup,
-  //      sampleID: sampleId,
-  //      value: value
-  //    }
-  //  )
-  //}
-
-  handleAmountChange(amount) {
-
-  }
-
-  handleUnitChange(unit, nextUnit, value) {
-
-  }
 
   render() {
     const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
@@ -59,7 +40,7 @@ class Material extends Component {
         <input
           type="radio"
           name="reference"
-          onClick={event => this.handleReferenceChange(event, material.id)}
+          onClick={event => this.handleReferenceChange(event)}
           />
       </td>
       <td>{material.name}</td>
@@ -77,7 +58,7 @@ class Material extends Component {
       <td className="padding-right">
         <Input
           type="text"
-          value={material.equivalent} disabled/>
+          value={material.equivalent} disabled={false}/>
       </td>
       <td style={{verticalAlign: 'top'}}>
         <Button
@@ -88,6 +69,39 @@ class Material extends Component {
         </Button>
       </td>
     </tr>
+  }
+
+  handleReferenceChange(event) {
+   let value = event.target.value;
+   console.log("Material " + this.materialId() + " handleReferenceChange value:" + value)
+
+   if(this.props.onChange) {
+     let event = {
+       type: 'referenceChanged',
+       materialGroup: this.props.materialGroup,
+       sampleID: this.materialId(),
+       value: value
+     };
+     this.props.onChange(event);
+   }
+  }
+
+  handleAmountChange(amount) {
+    console.log("Material " + this.materialId() + " handleAmountChange amount:" + JSON.stringify(amount))
+  }
+
+  handleUnitChange(unit, nextUnit, value) {
+    console.log("Material " + this.materialId() + " handleUnitChange unit: " + unit + "->" + nextUnit + " value:" + value)
+    //TODO: returns the convertedValue
+    return value;
+  }
+
+  materialId() {
+    return this.material().id
+  }
+
+  material() {
+    return this.props.material
   }
 }
 
