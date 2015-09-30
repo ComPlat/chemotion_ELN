@@ -38,46 +38,134 @@ export default class ReactionDetails extends React.Component {
   // ---
 
   handleMaterialsChange(changeEvent) {
-   console.log("handleMaterialsChange: " + JSON.stringify(changeEvent))
-   switch (changeEvent.type) {
-     case 'referenceChanged':
-       this.setState({
-         reaction: this.updatedReactionForReferenceChange(changeEvent)
-       });
-       break;
-   }
+    switch (changeEvent.type) {
+      case 'referenceChanged':
+        this.setState({
+          reaction: this.updatedReactionForReferenceChange(changeEvent)
+        });
+        break;
+      case 'amountChanged':
+        this.setState({
+          reaction: this.updatedReactionForAmountChange(changeEvent)
+        });
+        break;
+      case 'equivalentChanged':
+        this.setState({
+          reaction: this.updatedReactionForEquivalentChange(changeEvent)
+        });
+        break;
+    }
   }
 
   updatedReactionForReferenceChange(changeEvent) {
-   let {reaction} = this.state;
-   let {sampleID} = changeEvent;
+    let {reaction} = this.state;
+    let {sampleID} = changeEvent;
+    let sample = this.findSampleById(sampleID);
 
-   reaction.starting_materials = this.updatedSamplesForReferenceChange(reaction.starting_materials, sampleID);
-   reaction.reactants = this.updatedSamplesForReferenceChange(reaction.reactants, sampleID);
-   reaction.products = this.updatedSamplesForReferenceChange(reaction.products, sampleID);
-   return reaction;
+    //remember the referenceMaterial
+    this.setState({
+       referenceMaterial: sample
+    });
+
+    return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample)
   }
 
-  updatedSamplesForReferenceChange(samples, sampleID) {
-   return samples.map((sample)=> {
-     if (sample.id == sampleID) {
-       sample.equivalent = 1.0;
-       sample.reference = true;
-     } else {
-       //TODO replace dummmy calculation
-       sample.equivalent = 2.0;
-       sample.reference = false;
-     }
-     return sample;
-   });
+  updatedReactionForAmountChange(changeEvent) {
+    let {sampleID, amount} = changeEvent;
+    let sample = this.findSampleById(sampleID);
+
+    sample.amount_value = amount.value;
+    sample.amount_unit = amount.unit;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), sample)
   }
 
-  handleReferenceMaterialChange() {
-    // TODO
+  updatedReactionForEquivalentChange(changeEvent) {
+    let {sampleID, equivalent} = changeEvent;
+    let sample = this.findSampleById(sampleID);
+
+    sample.equivalent = equivalent;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), sample)
+  }
+
+  updatedReactionWithSample(updateFunction, sample) {
+    let {reaction} = this.state;
+    reaction.starting_materials = updateFunction(reaction.starting_materials, sample);
+    reaction.reactants = updateFunction(reaction.reactants, sample);
+    reaction.products = updateFunction(reaction.products, sample);
+    return reaction;
+  }
+
+  updatedSamplesForAmountChange(samples, updatedSample) {
+    let referenceSample = this.state.referenceMaterial;
+
+    return samples.map((sample) => {
+      if (sample.id == updatedSample.id) {
+        sample.amount_value = updatedSample.amount_value;
+        sample.amount_unit = updatedSample.amount_unit;
+
+        if(!updatedSample.reference && referenceSample.amount_value) {
+          sample.equivalent = sample.amount_value / referenceSample.amount_value;
+        } else {
+          sample.equivalent = 1.0;
+        }
+      }
+      else {
+        if(updatedSample.reference) {
+          if(sample.equivalent) {
+            sample.amount_value = sample.equivalent * updatedSample.amount_value;
+          }
+        }
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForEquivalentChange(samples, updatedSample) {
+    let referenceSample = this.state.referenceMaterial;
+
+    return samples.map((sample) => {
+      if (sample.id == updatedSample.id) {
+        sample.equivalent = updatedSample.equivalent;
+        if(referenceSample.amount_value) {
+          sample.amount_value = updatedSample.equivalent * referenceSample.amount_value;
+        }
+        else if(sample.amount_value) {
+          sample.amount_value = updatedSample.equivalent * sample.amount_value;
+        }
+      }
+      return sample;
+    });
+  }
+
+  updatedSamplesForReferenceChange(samples, referenceSample) {
+    return samples.map((sample) => {
+      if (sample.id == referenceSample.id) {
+        sample.equivalent = 1.0;
+        sample.reference = true;
+      }
+      else {
+        if(sample.amount_value) {
+          let referenceAmount = referenceSample.amount_value;
+          if(referenceSample && referenceAmount) {
+            sample.equivalent = sample.amount_value / referenceAmount;
+          }
+        }
+        sample.reference = false;
+      }
+      return sample;
+    });
+  }
+
+  findSampleById(sampleID) {
+    let reaction = this.state.reaction;
+    return [...reaction.starting_materials, ...reaction.reactants, ...reaction.products].find((sample) => {
+      return sample.id == sampleID;
+    })
   }
 
   // --
-
 
   dropSample(sample, materialGroup) {
     const {reaction} = this.state;
