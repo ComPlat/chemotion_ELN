@@ -5,6 +5,7 @@ module ElementUIStateScopes
   end
 
   module ClassMethods
+
     def for_ui_state(ui_state)
       if (ui_state.fetch(:all, false))
         excluded_ids = ui_state.fetch(:excluded_ids, [])
