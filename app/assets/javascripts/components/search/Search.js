@@ -1,7 +1,7 @@
 import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
-import {Button} from 'react-bootstrap';
+import {Button, Input} from 'react-bootstrap';
 import 'whatwg-fetch';
 
 export default class Search extends React.Component {
@@ -52,11 +52,22 @@ export default class Search extends React.Component {
       }
     };
     return (
-      <div>
-        <AutoCompleteInput inputAttributes={inputAttributes}
-                           suggestionsAttributes={suggestionsAttributes}
-                           suggestions={input => this.search(input)}
-                           onSelectionChange={selection => this.handleSelectionChange(selection)}/>
+      <div className="chemotion-search">
+        <div className="search-elements-select">
+          <Input type="select">
+            <option value="all">All elements</option>
+            <option value="samples">Samples</option>
+            <option value="reaction">Reactions</option>
+            <option value="wellplate">Wellplates</option>
+            <option value="screens">Screens</option>
+          </Input>
+        </div>
+        <div className="search-autocomplete">
+          <AutoCompleteInput inputAttributes={inputAttributes}
+                             suggestionsAttributes={suggestionsAttributes}
+                             suggestions={input => this.search(input)}
+                             onSelectionChange={selection => this.handleSelectionChange(selection)}/>
+        </div>
       </div>
     );
   }
