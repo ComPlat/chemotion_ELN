@@ -2,6 +2,15 @@ import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 
 class CollectionActions {
+  takeOwnership(paramObj) {
+    CollectionsFetcher.takeOwnership(paramObj)
+      .then((roots) => {
+        this.dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   // TODO #2...centralized error handling maybe ErrorActions?
   fetchUnsharedCollectionRoots() {
     CollectionsFetcher.fetchUnsharedRoots()

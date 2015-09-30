@@ -31,3 +31,8 @@
   background: #337ab7;
   color: #fff;
 }
+
+.take-ownership-btn {
+  float: right;
+  margin-top: 5px;
+}

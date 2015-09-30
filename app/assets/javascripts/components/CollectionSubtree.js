@@ -5,6 +5,7 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
+import CollectionActions from './actions/CollectionActions';
 
 import Aviator from 'aviator';
 
@@ -15,8 +16,9 @@ export default class CollectionSubtree extends React.Component {
     let uiState = UIStore.getState();
     let selected = uiState.currentCollectionId == props.root.id;
     let visible = this.isVisible(props.root, uiState);
-    
+
     this.state = {
+      isRemote: props.isRemote,
       label: props.root.label,
       selected: selected,
       root: props.root,
@@ -74,7 +76,7 @@ export default class CollectionSubtree extends React.Component {
       return children.map((child, index) => {
         return (
           <li key={index}>
-            <CollectionSubtree root={child} />
+            <CollectionSubtree root={child} isRemote={this.state.isRemote} />
           </li>
         )
       })
@@ -95,6 +97,25 @@ export default class CollectionSubtree extends React.Component {
     }
   }
 
+  takeOwnershipButton() {
+    let isRemote = this.state.isRemote;
+    let isTakeOwnershipAllowed = this.state.root.permission_level == 4;
+
+    if(isRemote && isTakeOwnershipAllowed) {
+      return (
+        <div className="take-ownership-btn">
+          <Button bsStyle="danger" bsSize="xsmall" onClick={(e) => this.handleTakeOwnership()}>
+            <i className="fa fa-exchange"></i>
+          </Button>
+        </div>
+      )
+    }
+  }
+
+  handleTakeOwnership() {
+    CollectionActions.takeOwnership({id: this.state.root.id});
+  }
+
   handleClick() {
     Aviator.navigate('/collection/'+this.state.root.id);
   }
@@ -113,6 +134,7 @@ export default class CollectionSubtree extends React.Component {
 
     return (
       <div className="tree-view" key={this.state.root.id}>
+        {this.takeOwnershipButton()}
         <div className={"title " + this.selectedCssClass()} onClick={this.handleClick.bind(this)}>
           {this.expandButton()}
           {this.state.label}

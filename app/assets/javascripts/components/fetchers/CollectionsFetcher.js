@@ -1,6 +1,15 @@
 import 'whatwg-fetch';
 
 export default class CollectionsFetcher {
+  static takeOwnership(paramObj) {
+    let promise = fetch('/api/v1/collections/take_ownership/' + paramObj.id, {
+      credentials: 'same-origin',
+      method: 'POST'
+    })
+
+    return promise;
+  }
+
   static fetchUnsharedRoots() {
     let promise = fetch('/api/v1/collections/roots.json', {
         credentials: 'same-origin'
