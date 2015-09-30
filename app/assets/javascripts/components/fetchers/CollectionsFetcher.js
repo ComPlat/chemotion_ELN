@@ -153,4 +153,27 @@ export default class CollectionsFetcher {
 
     return promise;
   }
+
+  static assignElementsCollection(paramObj) {
+    let promise = fetch('/api/v1/collections/elements/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: paramObj.ui_state,
+        collection_id: paramObj.collection_id 
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

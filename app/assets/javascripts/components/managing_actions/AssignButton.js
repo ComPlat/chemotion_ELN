@@ -7,13 +7,13 @@ export default class ShareButton extends React.Component {
     super(props);
   }
 
-  showMoveModal() {
-    Aviator.navigate('/move');
+  showAssignModal() {
+    Aviator.navigate('/assign');
   }
 
   render() {
     return (
-      <Button block onClick={this.showMoveModal.bind(this)}>Move Selection</Button>
+      <Button block onClick={this.showAssignModal.bind(this)}>Assign Selection</Button>
     )
   }
 }

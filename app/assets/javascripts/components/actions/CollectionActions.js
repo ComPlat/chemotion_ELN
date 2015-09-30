@@ -83,6 +83,15 @@ class CollectionActions {
         console.log(errorMessage);
       });
   }
+
+  assignElementsCollection(paramObj) {
+    CollectionsFetcher.assignElementsCollection(paramObj)
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
 
 export default alt.createActions(CollectionActions);
