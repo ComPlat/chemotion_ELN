@@ -134,15 +134,16 @@ module Chemotion
           requires :collection_id, type: Integer, desc: "Destination collection id"
         end
         put do
-
+          ui_state = params[:ui_state]
+          current_collection_id = ui_state[:currentCollectionId]
           sample_ids = Sample.for_ui_state(params[:ui_state][:sample]).pluck(:id)
-          CollectionsSample.where(sample_id: sample_ids).update_all(collection_id: params[:collection_id])
+          CollectionsSample.where(sample_id: sample_ids, collection_id: current_collection_id).update_all(collection_id: params[:collection_id])
 
           reaction_ids = Reaction.for_ui_state(params[:ui_state][:reaction]).pluck(:id)
-          CollectionsReaction.where(reaction_id: reaction_ids).update_all(collection_id: params[:collection_id])
+          CollectionsReaction.where(reaction_id: reaction_ids, collection_id: current_collection_id).update_all(collection_id: params[:collection_id])
 
           wellplate_ids = Wellplate.for_ui_state(params[:ui_state][:wellplate]).pluck(:id)
-          CollectionsWellplate.where(wellplate_id: wellplate_ids).update_all(collection_id: params[:collection_id])
+          CollectionsWellplate.where(wellplate_id: wellplate_ids, collection_id: current_collection_id).update_all(collection_id: params[:collection_id])
 
         end
       end

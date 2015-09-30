@@ -68,7 +68,8 @@ export default class ShareModal extends React.Component {
         all: this.state.ui_state.wellplate.checkedAll,
         included_ids: this.state.ui_state.wellplate.checkedIds,
         excluded_ids: this.state.ui_state.wellplate.uncheckedIds
-      }
+      },
+      currentCollectionId: this.state.ui_state.currentCollectionId
     }
     CollectionActions.updateElementsCollection({ui_state: ui_state, collection_id: collection_id});
   }
