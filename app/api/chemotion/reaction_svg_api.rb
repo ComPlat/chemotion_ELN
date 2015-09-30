@@ -19,9 +19,25 @@ module Chemotion
           material.molecule.inchikey
         end
 
-        hash_of_inchikeys = Digest::SHA256.hexdigest(inchikeys.values.join)
-        hash_of_inchikeys + '.svg'
+        composer = SVG::ReactionComposer.new(*inchikeys.values)
+        svg = composer.compose_reaction_svg
+
+        content_type('image/svg+xml')
+        p svg
+        svg
+
+        #composer.file_path
+        # hash_of_inchikeys = Digest::SHA256.hexdigest(inchikeys.values.join)
+        # hash_of_inchikeys + '.svg'
       end
+
+      # params do
+      #   requires :materials, type: Hash, desc: "Starting-, Reactants, Product-Materials"
+      # end
+
+      # post do
+      #   ..
+      # end
     end
   end
 end

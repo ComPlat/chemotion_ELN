@@ -5,7 +5,7 @@ require 'digest'
 module SVG
   class ReactionComposer
 
-    def initialize (starting_materials, reactants, products)
+    def initialize(starting_materials, reactants, products)
       @svg_path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'molecules')
       @starting_materials = starting_materials
       @reactants = reactants
@@ -41,7 +41,7 @@ module SVG
     end
 
     def compose_reaction_svg
-      compose_reaction_svg_document.to_xml
+      compose_reaction_svg_document.to_xml(:indent => 5, :encoding => 'UTF-8')
     end
 
     def compose_reaction_svg_document
@@ -51,6 +51,10 @@ module SVG
       end
       output += '</svg>'
       Nokogiri::XML(output)
+    end
+
+    def file_path
+      File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'reactions', generateFilename)
     end
 
     private
@@ -85,10 +89,6 @@ module SVG
           output
         end
         materials
-      end
-
-      def file_path
-        File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'reactions', generateFilename)
       end
 
       def generateFilename

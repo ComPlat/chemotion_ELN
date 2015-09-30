@@ -9,6 +9,7 @@ import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import UIStore from './stores/UIStore';
 import Aviator from 'aviator';
+import SVG from 'react-inlinesvg';
 
 export default class ReactionDetails extends React.Component {
   constructor(props) {
@@ -230,7 +231,7 @@ export default class ReactionDetails extends React.Component {
                 <ElementCollectionLabels element={reaction} key={reaction.id}/>
               </td>
               <td width="30%">
-                SVG
+                <SVG src="http://localhost:3333/api/v1/reaction_svg?id=1" className="molecule-mid"/>
               </td>
             </tr>
           </table>
