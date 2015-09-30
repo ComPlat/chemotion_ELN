@@ -13,6 +13,7 @@ import RemoveModal from './managing_actions/RemoveModal';
 import TopSecretModal from './TopSecretModal';
 
 import UIActions from './actions/UIActions';
+import UIStore from './stores/UIStore';
 import ElementActions from './actions/ElementActions';
 
 import Aviator from 'aviator'
@@ -42,13 +43,22 @@ Aviator.setRoutes({
         }
 
         UIActions.selectCollection({id: e.params['id']});
+
         if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID']) {
-          UIActions.deselectAllElements('sample');
-          UIActions.deselectAllElements('reaction');
-          UIActions.deselectAllElements('wellplate');
           UIActions.uncheckAllElements('sample');
           UIActions.uncheckAllElements('reaction');
           UIActions.uncheckAllElements('wellplate');
+        }
+
+        if(e.params['sampleID']) {
+          UIActions.deselectAllElements('reaction');
+          UIActions.deselectAllElements('wellplate');
+        } else if(e.params['reactionID']) {
+          UIActions.deselectAllElements('sample');
+          UIActions.deselectAllElements('wellplate');
+        } else if(e.params['wellplateID']) {
+          UIActions.deselectAllElements('sample');
+          UIActions.deselectAllElements('reaction');
         }
       },
 
@@ -73,13 +83,15 @@ Aviator.setRoutes({
   '/sample': {
     target: {
       showOrNew: function(e) {
-        //UIActions.selectTab(1);
         let sampleID = e.params['sampleID']
+        UIActions.selectElement({type: 'sample', id: sampleID})
+
         if (sampleID != 'new') {
-          UIActions.selectElement({type: 'sample', id: sampleID})
+          ElementActions.fetchSampleById(sampleID);
         } else {
           ElementActions.generateEmptySample()
         }
+        UIActions.selectTab(1);
       }
     },
     '/:sampleID': 'showOrNew'
@@ -88,12 +100,15 @@ Aviator.setRoutes({
   '/reaction': {
     target: {
       show: function(e) {
-        const id = e.params['reactionID'];
-        //UIActions.selectTab(2);
-        UIActions.selectElement({
-          type: 'reaction',
-          id
-        });
+        let reactionID = e.params['reactionID']
+        UIActions.selectElement({type: 'reaction', id: reactionID})
+
+        if (reactionID != 'new') {
+          ElementActions.fetchReactionById(reactionID);
+        } else {
+          //ElementActions.generateEmptyReaction()
+        }
+        UIActions.selectTab(2);
       }
     },
     '/:reactionID': 'show',
@@ -105,10 +120,7 @@ Aviator.setRoutes({
         if (wellplateId == 'new') {
           ElementActions.generateEmptyWellplate();
         } else {
-          UIActions.selectElement({
-            type: 'wellplate',
-            id: wellplateId
-          })
+          ElementActions.fetchWellplateById(wellplateId);
         }
       }
     },

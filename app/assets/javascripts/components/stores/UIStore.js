@@ -103,21 +103,6 @@ class UIStore {
 
   handleSelectElement(element) {
     this.state[element.type].currentId = element.id;
-
-    switch(element.type) {
-      case 'sample':
-        ElementActions.fetchSampleById(element.id);
-        break;
-      case 'reaction':
-        ElementActions.fetchReactionById(element.id);
-        break;
-      case 'wellplate':
-        ElementActions.fetchWellplateById(element.id);
-        break;
-      case 'screen':
-        ElementActions.fetchScreenById(element.id);
-        break;
-    }
   }
 
   handleSelectCollection(collection) {

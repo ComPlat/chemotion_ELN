@@ -21,6 +21,7 @@ class Elements extends Component {
 
   componentDidMount() {
     ElementStore.getState();
+    
     ElementStore.listen(this.onChange.bind(this));
   }
 

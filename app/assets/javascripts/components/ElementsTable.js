@@ -31,10 +31,9 @@ export default class ElementsTable extends React.Component {
   }
 
   componentDidMount() {
+    UIStore.getState();
     ElementStore.listen(this.onChange.bind(this));
     UIStore.listen(this.onChangeUI.bind(this));
-
-    this.onChangeUI(UIStore.getState());
   }
 
   componentWillUnmount() {
@@ -43,6 +42,7 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
+    //console.log(state)
     let type = this.props.type;
     let page = state.pagination && state.pagination[type] && state.pagination[type].page;
     if (page) {
@@ -53,12 +53,10 @@ export default class ElementsTable extends React.Component {
 
     //console.log('ElementsType: ' + type + '#activePage ' + page);
 
-    let {checkedIds, uncheckedIds, checkedAll, currentId} = state[this.props.type];
+    let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
 
-    // console.log('currentId ' + currentId);
-    // console.log('checkedAll ' + checkedAll);
-    // console.log('checkedIds ' + checkedIds && checkedIds.toArray());
-    // console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
+    // check if element details of any type are open at the moment
+    let currentId = state.sample.currentId || state.reaction.currentId || state.wellplate.currentId;
 
     if (checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
@@ -80,7 +78,7 @@ export default class ElementsTable extends React.Component {
     const totalElements = state.elements[type].totalElements;
 
     let currentElement;
-    if (! state.currentElement || state.currentElement.type == this.props.type) {
+    if(!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
@@ -188,7 +186,7 @@ export default class ElementsTable extends React.Component {
   }
 
   showElementDetailsColumns() {
-    return ! (this.state.ui.currentId);
+    return !(this.state.ui.currentId);
   }
 
   showDetails(element) {

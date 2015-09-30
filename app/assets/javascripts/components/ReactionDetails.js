@@ -9,6 +9,7 @@ import ElementActions from './actions/ElementActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 import Aviator from 'aviator';
 import SVG from 'react-inlinesvg';
 
@@ -32,7 +33,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   onChange(state) {
-    if (! state.currentElement || state.currentElement.type == 'reaction') {
+    if (!state.currentElement || state.currentElement.type == 'reaction') {
       this.setState({
         reaction: state.currentElement
       });
@@ -228,6 +229,8 @@ export default class ReactionDetails extends React.Component {
   }
 
   closeDetails() {
+    UIActions.deselectAllElements('reaction');
+
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }

@@ -6,6 +6,10 @@ import ElementActions from './actions/ElementActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
+import ElementStore from './stores/ElementStore';
+
 const cols = 12;
 
 export default class WellplateDetails extends Component {
@@ -22,6 +26,22 @@ export default class WellplateDetails extends Component {
     console.log(wells);
   }
 
+  componentDidMount() {
+    ElementStore.listen(this.onChange.bind(this));
+  }
+
+  componentWillUnmount() {
+    ElementStore.unlisten(this.onChange.bind(this));
+  }
+
+  onChange(state) {
+    if(!state.currentElement || state.currentElement.type == 'wellplate') {
+      this.setState({
+        wellplate: state.currentElement
+      });
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     const {id, name, wells, size, description} = nextProps.wellplate;
     this.setState({
@@ -31,6 +51,13 @@ export default class WellplateDetails extends Component {
       description,
       wells: this.initWells(wells, size)
     });
+  }
+
+  closeDetails() {
+    UIActions.deselectAllElements('wellplate');
+
+    let uiState = UIStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   initWells(wells, size) {

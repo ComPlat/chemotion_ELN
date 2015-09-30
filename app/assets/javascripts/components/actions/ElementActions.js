@@ -269,10 +269,9 @@ class ElementActions {
 
   deleteElements(ui_state) {
     this.dispatch(ui_state);
-    UIActions.uncheckAllElements('sample');
-    UIActions.uncheckAllElements('reaction');
-    UIActions.uncheckAllElements('wellplate');
-    UIActions.uncheckAllElements('screen');
+    //UIActions.uncheckAllElements('sample');
+    //UIActions.uncheckAllElements('reaction');
+    //UIActions.uncheckAllElements('wellplate');
   }
 
   deleteSamplesByUIState(ui_state) {
