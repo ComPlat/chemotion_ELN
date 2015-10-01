@@ -1,4 +1,6 @@
 import 'whatwg-fetch';
+import Sample from '../models/Sample';
+
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class SamplesFetcher {
@@ -9,7 +11,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return json;
+        return new Sample(json.sample);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -26,7 +28,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.samples,
+            elements: json.samples.map((s) => new Sample(s)),
             totalElements: response.headers.get('X-Total'),
             page: response.headers.get('X-Page'),
             pages: response.headers.get('X-Total-Pages')
