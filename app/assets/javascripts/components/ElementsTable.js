@@ -42,7 +42,6 @@ export default class ElementsTable extends React.Component {
   }
 
   onChangeUI(state) {
-    //console.log(state)
     let type = this.props.type;
     let page = state.pagination && state.pagination[type] && state.pagination[type].page;
     if (page) {

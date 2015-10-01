@@ -30,8 +30,12 @@ class UIActions {
     this.dispatch(element);
   }
 
-  deselectAllElements(type) {
+  deselectAllElementsOfType(type) {
     this.dispatch(type);
+  }
+
+  deselectAllElements() {
+    this.dispatch();
   }
 
   setPagination(pagination) {

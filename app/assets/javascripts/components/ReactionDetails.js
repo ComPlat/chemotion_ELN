@@ -30,6 +30,7 @@ export default class ReactionDetails extends React.Component {
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
+    console.log('unmount reactiondetails')
   }
 
   onChange(state) {
@@ -229,7 +230,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   closeDetails() {
-    UIActions.deselectAllElements('reaction');
+    UIActions.deselectAllElements();
 
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);

@@ -2,7 +2,7 @@ require 'ElementUIStateScopes'
 
 class Sample < ActiveRecord::Base
   include ElementUIStateScopes
-
+  
   has_many :collections_samples
   has_many :collections, through: :collections_samples
 
@@ -26,7 +26,6 @@ class Sample < ActiveRecord::Base
   before_destroy :destroy_associations
 
   has_ancestry
-
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true

@@ -27,14 +27,17 @@ export default class WellplateDetails extends Component {
   }
 
   componentDidMount() {
+    console.log('Mount WellplateDetails')
     ElementStore.listen(this.onChange.bind(this));
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
+    console.log('Unmount WellplateDetails')
   }
 
   onChange(state) {
+    console.log(state)
     if(!state.currentElement || state.currentElement.type == 'wellplate') {
       this.setState({
         wellplate: state.currentElement
@@ -54,7 +57,7 @@ export default class WellplateDetails extends Component {
   }
 
   closeDetails() {
-    UIActions.deselectAllElements('wellplate');
+    UIActions.deselectAllElements();
 
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
@@ -126,7 +129,7 @@ export default class WellplateDetails extends Component {
     const {wells, name, size, description} = this.state;
     const submitLabel = (wellplate.id == '_new_') ? "Save Wellplate" : "Update Wellplate";
     return (
-      <div>
+      <div key={wellplate.id}>
         <Panel header="Wellplate Details" bsStyle='primary'>
           <h3>{name}</h3>
           <ElementCollectionLabels element={wellplate}/>

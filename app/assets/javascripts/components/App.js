@@ -49,17 +49,6 @@ Aviator.setRoutes({
           UIActions.uncheckAllElements('reaction');
           UIActions.uncheckAllElements('wellplate');
         }
-
-        if(e.params['sampleID']) {
-          UIActions.deselectAllElements('reaction');
-          UIActions.deselectAllElements('wellplate');
-        } else if(e.params['reactionID']) {
-          UIActions.deselectAllElements('sample');
-          UIActions.deselectAllElements('wellplate');
-        } else if(e.params['wellplateID']) {
-          UIActions.deselectAllElements('sample');
-          UIActions.deselectAllElements('reaction');
-        }
       },
 
       showCollectionManagement: function(e) {

@@ -27,11 +27,13 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
+    console.log('mount sample details')
     ElementStore.listen(this.onChange.bind(this));
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
+    console.log('unmount sample details')
   }
 
   onChange(state) {
@@ -43,7 +45,7 @@ export default class SampleDetails extends React.Component {
   }
 
   closeDetails() {
-    UIActions.deselectAllElements('sample');
+    UIActions.deselectAllElements();
 
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);

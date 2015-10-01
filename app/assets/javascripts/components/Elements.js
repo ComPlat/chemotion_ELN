@@ -21,7 +21,7 @@ class Elements extends Component {
 
   componentDidMount() {
     ElementStore.getState();
-    
+
     ElementStore.listen(this.onChange.bind(this));
   }
 
@@ -30,6 +30,7 @@ class Elements extends Component {
   }
 
   onChange(state) {
+    console.log(state.currentElement)
     this.setState({
       currentElement: state.currentElement
     })

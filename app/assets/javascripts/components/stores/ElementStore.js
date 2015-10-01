@@ -149,6 +149,7 @@ class ElementStore {
   // -- Wellplates --
 
   handleFetchWellplateById(result) {
+    console.log(result)
     this.state.currentElement = result;
   }
 

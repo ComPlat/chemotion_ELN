@@ -48,9 +48,10 @@ class UIStore {
       handleCheckElement: UIActions.checkElement,
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
-      handleDeselectAllElements: UIActions.deselectAllElements,
+      handleDeselectAllElementsOfType: UIActions.deselectAllElementsOfType,
       handleSelectElement: UIActions.selectElement,
-      handleSetPagination: UIActions.setPagination
+      handleSetPagination: UIActions.setPagination,
+      handleDeselectAllElements: UIActions.deselectAllElements
     });
   }
 
@@ -97,8 +98,14 @@ class UIStore {
     }
   }
 
-  handleDeselectAllElements(type) {
+  handleDeselectAllElementsOfType(type) {
     this.state[type].currentId = null;
+  }
+
+  handleDeselectAllElements() {
+    this.state.sample.currentId = null;
+    this.state.reaction.currentId = null;
+    this.state.wellplate.currentId = null;
   }
 
   handleSelectElement(element) {
