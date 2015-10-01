@@ -75,32 +75,6 @@ class CollectionActions {
       });
   }
 
-  updateElementsCollection(paramObj) {
-    CollectionsFetcher.updateElementsCollection(paramObj)
-      .then(() => {
-        this.dispatch();
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  assignElementsCollection(paramObj) {
-    CollectionsFetcher.assignElementsCollection(paramObj)
-      .then(() => {
-        this.dispatch();
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  removeElementsCollection(paramObj) {
-    CollectionsFetcher.removeElementsCollection(paramObj)
-      .then(() => {
-        this.dispatch();
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
 }
 
 export default alt.createActions(CollectionActions);

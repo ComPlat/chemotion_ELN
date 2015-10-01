@@ -1,7 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
 
-import CollectionActions from '../actions/CollectionActions';
+import ElementActions from '../actions/ElementActions';
 import CollectionManagementModal from './CollectionManagementModal';
 
 export default class AssignModal extends React.Component {
@@ -12,7 +12,7 @@ export default class AssignModal extends React.Component {
   render() {
     return (
       <CollectionManagementModal 
-        action={CollectionActions.assignElementsCollection}
+        action={ElementActions.assignElementsCollection}
         modal_title={"Assign to Collection"}
         show_collections={true}
       />

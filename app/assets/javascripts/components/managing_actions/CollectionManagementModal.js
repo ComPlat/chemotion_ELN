@@ -6,6 +6,7 @@ import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
 
 import CollectionActions from '../actions/CollectionActions';
+import ElementActions from '../actions/ElementActions';
 
 import Aviator from 'aviator';
 
@@ -86,6 +87,7 @@ export default class CollectionManagementModal extends React.Component {
     }
 
     this.state.action({ui_state: ui_state, collection_id: collection_id});
+    Aviator.navigate(Aviator.getCurrentURI()+'/hide');
   }
 
   showCollections() {

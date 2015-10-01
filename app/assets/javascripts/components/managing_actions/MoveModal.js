@@ -1,7 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
 
-import CollectionActions from '../actions/CollectionActions';
+import ElementActions from '../actions/ElementActions';
 import CollectionManagementModal from './CollectionManagementModal';
 
 export default class MoveModal extends React.Component {
@@ -12,7 +12,7 @@ export default class MoveModal extends React.Component {
   render() {
     return (
       <CollectionManagementModal 
-        action={CollectionActions.updateElementsCollection}
+        action={ElementActions.updateElementsCollection}
         modal_title={"Move to Collection"}
         show_collections={true}
       />

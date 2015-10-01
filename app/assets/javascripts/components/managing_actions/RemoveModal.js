@@ -1,7 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
 
-import CollectionActions from '../actions/CollectionActions';
+import ElementActions from '../actions/ElementActions';
 import CollectionManagementModal from './CollectionManagementModal';
 
 export default class RemoveModal extends React.Component {
@@ -12,7 +12,7 @@ export default class RemoveModal extends React.Component {
   render() {
     return (
       <CollectionManagementModal 
-        action={CollectionActions.removeElementsCollection}
+        action={ElementActions.removeElementsCollection}
         modal_title={"Remove selected elements from this Collection?"}
         show_collections={false}
       />
