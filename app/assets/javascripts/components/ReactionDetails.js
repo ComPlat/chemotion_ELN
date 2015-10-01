@@ -105,10 +105,12 @@ export default class ReactionDetails extends React.Component {
         sample.amount_value = updatedSample.amount_value;
         sample.amount_unit = updatedSample.amount_unit;
 
-        if(!updatedSample.reference && referenceSample.amount_value) {
-          sample.equivalent = sample.amount_value / referenceSample.amount_value;
-        } else {
-          sample.equivalent = 1.0;
+        if(referenceSample) {
+          if(!updatedSample.reference && referenceSample.amount_value) {
+            sample.equivalent = sample.amount_value / referenceSample.amount_value;
+          } else {
+            sample.equivalent = 1.0;
+          }
         }
       }
       else {
@@ -128,7 +130,7 @@ export default class ReactionDetails extends React.Component {
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
-        if(referenceSample.amount_value) {
+        if(referenceSample && referenceSample.amount_value) {
           sample.amount_value = updatedSample.equivalent * referenceSample.amount_value;
         }
         else if(sample.amount_value) {
