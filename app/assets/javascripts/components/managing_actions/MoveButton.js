@@ -13,7 +13,7 @@ export default class ShareButton extends React.Component {
 
   render() {
     return (
-      <Button block onClick={this.showMoveModal.bind(this)}>Move Selection</Button>
+      <Button onClick={this.showMoveModal.bind(this)}>Move to Collection</Button>
     )
   }
 }

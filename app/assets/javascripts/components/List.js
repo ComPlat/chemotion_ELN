@@ -4,6 +4,7 @@ import {TabbedArea, TabPane} from 'react-bootstrap';
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
+import ManagingActions from './ManagingActions';
 
 export default class List extends React.Component {
   constructor(props) {
@@ -69,18 +70,24 @@ export default class List extends React.Component {
       </i>;
 
     return (
-      <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
-                  onSelect={(e) => this.handleTabSelect(e)}>
-        <TabPane eventKey={1} tab={samples}>
-          <ElementsTable type='sample'/>
-        </TabPane>
-        <TabPane eventKey={2} tab={reactions}>
-          <ElementsTable type='reaction'/>
-        </TabPane>
-        <TabPane eventKey={3} tab={wellplates}>
-          <ElementsTable type='wellplate'/>
-        </TabPane>
-      </TabbedArea>
+      <div>
+        <div>
+          <ManagingActions />
+        </div>
+        <br/>
+        <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
+                    onSelect={(e) => this.handleTabSelect(e)}>
+          <TabPane eventKey={1} tab={samples}>
+            <ElementsTable type='sample'/>
+          </TabPane>
+          <TabPane eventKey={2} tab={reactions}>
+            <ElementsTable type='reaction'/>
+          </TabPane>
+          <TabPane eventKey={3} tab={wellplates}>
+            <ElementsTable type='wellplate'/>
+          </TabPane>
+        </TabbedArea>
+      </div>
     )
   }
 }

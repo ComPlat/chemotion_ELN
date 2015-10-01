@@ -13,7 +13,7 @@ export default class RemoveButton extends React.Component {
 
   render() {
     return (
-      <Button block onClick={this.showRemoveModal.bind(this)}>Remove Selection</Button>
+      <Button onClick={this.showRemoveModal.bind(this)}>Remove from Collection</Button>
     )
   }
 }

@@ -226,7 +226,7 @@ class App extends React.Component {
             </div>
           </Col>
           <Col sm={2} md={2} lg={2}>
-            <ManagingActions /><br/><ContextActions />
+            <ContextActions />
           </Col>
         </Row>
       </Grid>
