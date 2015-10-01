@@ -9,15 +9,13 @@ module SVG
       @starting_materials = materialsInchikeys[:starting_materials]
       @reactants = materialsInchikeys[:reactants]
       @products = materialsInchikeys[:products]
-      reactants_size = @reactants.size
-      number_of_reactants = (reactants_size == 0) ? 1 : reactants_size
+      number_of_reactants = (@reactants.size == 0 && @starting_materials.size != 0) ? 1 : @reactants.size
       arrow_width = number_of_reactants * 50
-      width = (materialsInchikeys[:starting_materials].size + materialsInchikeys[:products].size) * 100 + arrow_width
+      width = (@starting_materials.size + @products.size) * 100 + arrow_width
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-          width="#{width}" height="100">
+          width="#{width}" height="100" viewBox="0 0 #{width} 100" style=" position: absolute; height: 100%; width: 100%; left: 0; top: 0;">
         <title>Reaction 1</title>
-        <rect x="0" y="0" width="#{width}" height="100" fill="white"/>
       END
       @plus = <<-END
         <svg font-family="sans-serif" stroke="rgb(0,0,0)" stroke-width="2" stroke-linecap="round">
@@ -68,7 +66,7 @@ module SVG
           output
         end
         materials[:arrow] = "<g transform='translate(#{shift},0)'>" + @arrow + "</g>"
-        if (@reactants.size == 0)
+        if (@reactants.size == 0 && @starting_materials.size != 0)
           shift += 50
         end
         materials[:reactants] = @reactants.map do |material|

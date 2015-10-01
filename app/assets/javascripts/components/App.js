@@ -89,11 +89,12 @@ Aviator.setRoutes({
   '/reaction': {
     target: {
       show: function(e) {
+        const id = e.params['reactionID'];
         //UIActions.selectTab(2);
         UIActions.selectElement({
           type: 'reaction',
-          id: e.params['reactionID']
-        })
+          id
+        });
       }
     },
     '/:reactionID': 'show',

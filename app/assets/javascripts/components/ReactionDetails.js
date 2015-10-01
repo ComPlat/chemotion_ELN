@@ -22,9 +22,9 @@ export default class ReactionDetails extends React.Component {
   }
 
   componentDidMount() {
+    const {id} = this.state.reaction;
     ElementStore.listen(this.onChange.bind(this));
-    const {reaction} = this.state;
-    ElementActions.fetchReactionSvgByReactionId(reaction.id)
+    ElementActions.fetchReactionSvgByReactionId(id);
   }
 
   componentWillUnmount() {
@@ -38,8 +38,6 @@ export default class ReactionDetails extends React.Component {
       });
     }
   }
-
-  // ---
 
   handleMaterialsChange(changeEvent) {
     switch (changeEvent.type) {
@@ -62,13 +60,12 @@ export default class ReactionDetails extends React.Component {
   }
 
   updatedReactionForReferenceChange(changeEvent) {
-    let {reaction} = this.state;
     let {sampleID} = changeEvent;
     let sample = this.findSampleById(sampleID);
 
     //remember the referenceMaterial
     this.setState({
-       referenceMaterial: sample
+      referenceMaterial: sample
     });
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample)
@@ -101,6 +98,14 @@ export default class ReactionDetails extends React.Component {
     return reaction;
   }
 
+  componentWillReceiveProps(nextProps) {
+    const {id} = nextProps.reaction;
+    const {reaction} = this.state;
+    if (id != reaction.id) {
+      ElementActions.fetchReactionSvgByReactionId(id);
+    }
+  }
+
   updatedSamplesForAmountChange(samples, updatedSample) {
     let referenceSample = this.state.referenceMaterial;
 
@@ -109,8 +114,8 @@ export default class ReactionDetails extends React.Component {
         sample.amount_value = updatedSample.amount_value;
         sample.amount_unit = updatedSample.amount_unit;
 
-        if(referenceSample) {
-          if(!updatedSample.reference && referenceSample.amount_value) {
+        if (referenceSample) {
+          if (! updatedSample.reference && referenceSample.amount_value) {
             sample.equivalent = sample.amount_value / referenceSample.amount_value;
           } else {
             sample.equivalent = 1.0;
@@ -118,8 +123,8 @@ export default class ReactionDetails extends React.Component {
         }
       }
       else {
-        if(updatedSample.reference) {
-          if(sample.equivalent) {
+        if (updatedSample.reference) {
+          if (sample.equivalent) {
             sample.amount_value = sample.equivalent * updatedSample.amount_value;
           }
         }
@@ -134,10 +139,10 @@ export default class ReactionDetails extends React.Component {
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
-        if(referenceSample && referenceSample.amount_value) {
+        if (referenceSample && referenceSample.amount_value) {
           sample.amount_value = updatedSample.equivalent * referenceSample.amount_value;
         }
-        else if(sample.amount_value) {
+        else if (sample.amount_value) {
           sample.amount_value = updatedSample.equivalent * sample.amount_value;
         }
       }
@@ -152,9 +157,9 @@ export default class ReactionDetails extends React.Component {
         sample.reference = true;
       }
       else {
-        if(sample.amount_value) {
+        if (sample.amount_value) {
           let referenceAmount = referenceSample.amount_value;
-          if(referenceSample && referenceAmount) {
+          if (referenceSample && referenceAmount) {
             sample.equivalent = sample.amount_value / referenceAmount;
           }
         }
@@ -237,7 +242,14 @@ export default class ReactionDetails extends React.Component {
 
   render() {
     const {reaction} = this.state;
-    const svgPath = (reaction.reactionSvg) ? "/images/reactions/"+ reaction.reactionSvg : "";
+    const svgPath = (reaction.reactionSvg) ? "/images/reactions/" + reaction.reactionSvg : "";
+    const svgContainerStyle = {
+      position: 'relative',
+      height: 0,
+      width: '100%',
+      padding: 0,
+      paddingBottom: '50%'
+    };
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
@@ -247,8 +259,10 @@ export default class ReactionDetails extends React.Component {
                 <h3>{reaction.name}</h3>
                 <ElementCollectionLabels element={reaction} key={reaction.id}/>
               </td>
-              <td width="70%" style={{textAlign: 'right'}}>
-                <SVG key={reaction.reactionSvg} src={svgPath}/>
+              <td width="70%">
+                <div style={svgContainerStyle}>
+                  <SVG key={reaction.reactionSvg} src={svgPath}/>
+                </div>
               </td>
             </tr>
           </table>
