@@ -181,6 +181,38 @@ module Chemotion
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           end
         end
+
+        desc "Remove from a collection a set of elements by UI state"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected elements from the UI"
+        end
+        delete do
+          ui_state = params[:ui_state]
+          current_collection_id = ui_state[:currentCollectionId]
+
+          ui_state_sample_ids = Sample.for_ui_state(params[:ui_state][:sample]).pluck(:id)
+          collection_sample_ids = CollectionsSample.where(collection_id: current_collection_id).pluck(:sample_id)
+          #TODO: Improve function for_ui_state to avoid intersection.
+          sample_ids = ui_state_sample_ids & collection_sample_ids
+          
+          CollectionsSample.where(sample_id: sample_ids, collection_id: current_collection_id).delete_all
+
+          ui_state_reaction_ids = Reaction.for_ui_state(params[:ui_state][:reaction]).pluck(:id)
+          collection_reaction_ids = CollectionsReaction.where(collection_id: current_collection_id).pluck(:reaction_id)
+          #TODO: Improve function for_ui_state to avoid intersection.
+          reaction_ids = ui_state_reaction_ids & collection_reaction_ids
+          
+          CollectionsReaction.where(reaction_id: reaction_ids, collection_id: current_collection_id).delete_all
+
+          ui_state_wellplate_ids = Wellplate.for_ui_state(params[:ui_state][:wellplate]).pluck(:id)
+          collection_wellplate_ids = CollectionsWellplate.where(collection_id: current_collection_id).pluck(:wellplate_id)
+          #TODO: Improve function for_ui_state to avoid intersection.
+          wellplate_ids = ui_state_wellplate_ids & collection_wellplate_ids 
+
+          CollectionsWellplate.where(wellplate_id: wellplate_ids, collection_id: current_collection_id).delete_all
+
+        end
+
       end
 
       namespace :unshared do

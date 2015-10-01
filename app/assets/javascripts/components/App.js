@@ -10,6 +10,7 @@ import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';
 import MoveModal from './managing_actions/MoveModal';
 import AssignModal from './managing_actions/AssignModal';
+import RemoveModal from './managing_actions/RemoveModal';
 import TopSecretModal from './TopSecretModal';
 
 import UIActions from './actions/UIActions';
@@ -156,6 +157,23 @@ Aviator.setRoutes({
           React.unmountComponentAtNode(modalDomNode);
         }
         Aviator.navigate(Aviator.getCurrentURI().replace('/assign/hide', ''))
+      }
+    }
+  },
+
+  '/remove': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<RemoveModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/remove/hide', ''))
       }
     }
   },

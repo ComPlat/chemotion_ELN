@@ -92,6 +92,15 @@ class CollectionActions {
         console.log(errorMessage);
       });
   }
+
+  removeElementsCollection(paramObj) {
+    CollectionsFetcher.removeElementsCollection(paramObj)
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 }
 
 export default alt.createActions(CollectionActions);

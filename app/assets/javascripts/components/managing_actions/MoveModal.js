@@ -14,6 +14,7 @@ export default class MoveModal extends React.Component {
       <CollectionManagementModal 
         action={CollectionActions.updateElementsCollection}
         modal_title={"Move to Collection"}
+        show_collections={true}
       />
     )
   }

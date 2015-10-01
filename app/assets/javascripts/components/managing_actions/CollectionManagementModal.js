@@ -16,7 +16,8 @@ export default class CollectionManagementModal extends React.Component {
       ui_state: UIStore.getState(),
       collection_state: CollectionStore.getState(),
       action: props.action,
-      modal_title: props.modal_title
+      modal_title: props.modal_title,
+      show_collections: props.show_collections
     }
   }
 
@@ -61,7 +62,8 @@ export default class CollectionManagementModal extends React.Component {
   }
 
   handleSubmit() {
-    let collection_id = this.refs.collectionSelect.getValue();
+    let select_ref = this.refs.collectionSelect
+    let collection_id = select_ref ? select_ref.getValue() : undefined;
     // TODO: This needs to be improved.
     // We are constantly changing the ui_state into this syntax:
     let ui_state = {
@@ -86,6 +88,35 @@ export default class CollectionManagementModal extends React.Component {
     this.state.action({ui_state: ui_state, collection_id: collection_id});
   }
 
+  showCollections() {
+    if (this.state.show_collections) {
+      return (
+        <div>
+          <Input ref='collectionSelect' type='select' label='Select a Collection'>
+            {this.collectionEntries()}
+          </Input>
+          <form>
+            <table width="100%">
+              <tr>
+                <td width="95%" className="padding-right">
+                  <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
+                    placeholder={'-- Please insert collection name --'}
+                  />
+                </td>
+                <td width="5%">
+                  <Button bsSize="xsmall" bsStyle="success" onClick={this.addCollection.bind(this)}>
+                    <i className="fa fa-plus"></i>
+                  </Button>
+                </td>
+              </tr>
+            </table>
+          </form>
+        </div>
+      )
+    }
+    return;
+  }
+
   render() {
     return (
       <div>
@@ -94,25 +125,7 @@ export default class CollectionManagementModal extends React.Component {
             <Modal.Title>{this.state.modal_title}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Input ref='collectionSelect' type='select' label='Select a Collection'>
-              {this.collectionEntries()}
-            </Input>
-            <form>
-              <table width="100%">
-                <tr>
-                  <td width="95%" className="padding-right">
-                    <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
-                      placeholder={'-- Please insert collection name --'}
-                    />
-                  </td>
-                  <td width="5%">
-                    <Button bsSize="xsmall" bsStyle="success" onClick={this.addCollection.bind(this)}>
-                      <i className="fa fa-plus"></i>
-                    </Button>
-                  </td>
-                </tr>
-              </table>
-            </form>
+            { this.showCollections() }
             <Button bsStyle="warning" onClick={this.handleSubmit.bind(this)}>Submit</Button>
           </Modal.Body>
         </Modal>
