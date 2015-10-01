@@ -134,16 +134,43 @@ module Chemotion
           requires :collection_id, type: Integer, desc: "Destination collection id"
         end
         put do
+
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollectionId]
-          sample_ids = Sample.for_ui_state(ui_state[:sample]).pluck(:id)
-          CollectionsSample.where(sample_id: sample_ids, collection_id: current_collection_id).update_all(collection_id: params[:collection_id])
 
-          reaction_ids = Reaction.for_ui_state(ui_state[:reaction]).pluck(:id)
-          CollectionsReaction.where(reaction_id: reaction_ids, collection_id: current_collection_id).update_all(collection_id: params[:collection_id])
+          sample_ids = Sample.for_ui_state_with_collection(
+            ui_state[:sample], 
+            CollectionsSample, 
+            current_collection_id
+          )
 
-          wellplate_ids = Wellplate.for_ui_state(ui_state[:wellplate]).pluck(:id)
-          CollectionsWellplate.where(wellplate_id: wellplate_ids, collection_id: current_collection_id).update_all(collection_id: params[:collection_id])
+          CollectionsSample.where(
+            sample_id: sample_ids, 
+            collection_id: current_collection_id
+          ).update_all(collection_id: params[:collection_id])
+
+          reaction_ids = Reaction.for_ui_state_with_collection(
+            ui_state[:reaction], 
+            CollectionsReaction, 
+            current_collection_id
+          )
+
+          CollectionsReaction.where(
+            reaction_id: reaction_ids, 
+            collection_id: current_collection_id
+          ).update_all(collection_id: params[:collection_id])
+
+          wellplate_ids = Wellplate.for_ui_state_with_collection(
+            ui_state[:wellplate], 
+            CollectionsWellplate, 
+            current_collection_id
+          )
+
+          CollectionsWellplate.where(
+            wellplate_id: wellplate_ids, 
+            collection_id: current_collection_id
+          ).update_all(collection_id: params[:collection_id])
+
         end
 
         desc "Assign a collection to a set of elements by UI state"
@@ -152,34 +179,35 @@ module Chemotion
           requires :collection_id, type: Integer, desc: "Destination collection id"
         end
         post do
+
           ui_state = params[:ui_state]
           collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollectionId]
 
-          ui_state_sample_ids = Sample.for_ui_state(params[:ui_state][:sample]).pluck(:id)
-          collection_sample_ids = CollectionsSample.where(collection_id: current_collection_id).pluck(:sample_id)
-          #TODO: Improve function for_ui_state to avoid intersection.
-          sample_ids = ui_state_sample_ids & collection_sample_ids
-          sample_ids.each do |id|
+          Sample.for_ui_state_with_collection(
+            ui_state[:sample], 
+            CollectionsSample, 
+            current_collection_id
+          ).each do |id|
             CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
           end
 
-
-          ui_state_reaction_ids = Reaction.for_ui_state(params[:ui_state][:reaction]).pluck(:id)
-          collection_reaction_ids = CollectionsReaction.where(collection_id: current_collection_id).pluck(:reaction_id)
-          #TODO: Improve function for_ui_state to avoid intersection.
-          reaction_ids = ui_state_reaction_ids & collection_reaction_ids
-          reaction_ids.each do |id|
+          Reaction.for_ui_state_with_collection(
+            ui_state[:reaction], 
+            CollectionsReaction, 
+            current_collection_id
+          ).each do |id|
             CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
           end
 
-          ui_state_wellplate_ids = Wellplate.for_ui_state(params[:ui_state][:wellplate]).pluck(:id)
-          collection_wellplate_ids = CollectionsWellplate.where(collection_id: current_collection_id).pluck(:wellplate_id)
-          #TODO: Improve function for_ui_state to avoid intersection.
-          wellplate_ids = ui_state_wellplate_ids & collection_wellplate_ids 
-          wellplate_ids.each do |id|
+          Wellplate.for_ui_state_with_collection(
+            ui_state[:wellplate], 
+            CollectionsWellplate, 
+            current_collection_id
+          ).each do |id|
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           end
+
         end
 
         desc "Remove from a collection a set of elements by UI state"
@@ -190,26 +218,38 @@ module Chemotion
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollectionId]
 
-          ui_state_sample_ids = Sample.for_ui_state(params[:ui_state][:sample]).pluck(:id)
-          collection_sample_ids = CollectionsSample.where(collection_id: current_collection_id).pluck(:sample_id)
-          #TODO: Improve function for_ui_state to avoid intersection.
-          sample_ids = ui_state_sample_ids & collection_sample_ids
+          sample_ids = Sample.for_ui_state_with_collection(
+            ui_state[:sample], 
+            CollectionsSample, 
+            current_collection_id
+          )
+
+          CollectionsSample.where(
+            sample_id: sample_ids, 
+            collection_id: current_collection_id
+          ).delete_all
+
+          reaction_ids = Reaction.for_ui_state_with_collection(
+            ui_state[:reaction], 
+            CollectionsReaction, 
+            current_collection_id
+          )
+
+          CollectionsReaction.where(
+            reaction_id: reaction_ids, 
+            collection_id: current_collection_id
+          ).delete_all
+
+          wellplate_ids = Wellplate.for_ui_state_with_collection(
+            ui_state[:wellplate], 
+            CollectionsWellplate, 
+            current_collection_id
+          )
           
-          CollectionsSample.where(sample_id: sample_ids, collection_id: current_collection_id).delete_all
-
-          ui_state_reaction_ids = Reaction.for_ui_state(params[:ui_state][:reaction]).pluck(:id)
-          collection_reaction_ids = CollectionsReaction.where(collection_id: current_collection_id).pluck(:reaction_id)
-          #TODO: Improve function for_ui_state to avoid intersection.
-          reaction_ids = ui_state_reaction_ids & collection_reaction_ids
-          
-          CollectionsReaction.where(reaction_id: reaction_ids, collection_id: current_collection_id).delete_all
-
-          ui_state_wellplate_ids = Wellplate.for_ui_state(params[:ui_state][:wellplate]).pluck(:id)
-          collection_wellplate_ids = CollectionsWellplate.where(collection_id: current_collection_id).pluck(:wellplate_id)
-          #TODO: Improve function for_ui_state to avoid intersection.
-          wellplate_ids = ui_state_wellplate_ids & collection_wellplate_ids 
-
-          CollectionsWellplate.where(wellplate_id: wellplate_ids, collection_id: current_collection_id).delete_all
+          CollectionsWellplate.where(
+            wellplate_id: wellplate_ids, 
+            collection_id: current_collection_id
+          ).delete_all
 
         end
 

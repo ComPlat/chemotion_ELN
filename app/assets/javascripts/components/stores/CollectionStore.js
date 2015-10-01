@@ -17,10 +17,7 @@ class CollectionStore {
       handleCreateSharedCollections: CollectionActions.createSharedCollections,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
-      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection,
-      handleUpdateElementsCollection: CollectionActions.updateElementsCollection,
-      handleAssignElementsCollection: CollectionActions.assignElementsCollection,
-      handleRemoveElementsCollection: CollectionActions.removeElementsCollection
+      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection
     })
   }
 
@@ -60,23 +57,6 @@ class CollectionStore {
     CollectionActions.fetchUnsharedCollectionRoots();
   }
 
-  handleUpdateElementsCollection(results) {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
-
-  handleAssignElementsCollection(results) {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
-
-  handleRemoveElementsCollection(results) {
-    CollectionActions.fetchUnsharedCollectionRoots();
-    CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
 }
 
 export default alt.createStore(CollectionStore, 'CollectionStore');
