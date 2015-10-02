@@ -31,8 +31,9 @@ module Chemotion
           ui_state = params[:ui_state]
           currentCollectionId = ui_state[:currentCollectionId]
           sample_ids = Sample.for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
-          Sample.where(id: sample_ids).each do |s|
-            subsample = s.dup
+          Sample.where(id: sample_ids).each do |sample|
+            subsample = sample.dup
+            subsample.parent = sample
             subsample.save
             CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
           end
