@@ -27,17 +27,14 @@ export default class WellplateDetails extends Component {
   }
 
   componentDidMount() {
-    console.log('Mount WellplateDetails')
     ElementStore.listen(this.onChange.bind(this));
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
-    console.log('Unmount WellplateDetails')
   }
 
   onChange(state) {
-    console.log(state)
     if(!state.currentElement || state.currentElement.type == 'wellplate') {
       this.setState({
         wellplate: state.currentElement

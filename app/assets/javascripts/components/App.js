@@ -80,7 +80,7 @@ Aviator.setRoutes({
         } else {
           ElementActions.generateEmptySample()
         }
-        UIActions.selectTab(1);
+        //UIActions.selectTab(1);
       }
     },
     '/:sampleID': 'showOrNew'
@@ -97,7 +97,7 @@ Aviator.setRoutes({
         } else {
           //ElementActions.generateEmptyReaction()
         }
-        UIActions.selectTab(2);
+        //UIActions.selectTab(2);
       }
     },
     '/:reactionID': 'show',
@@ -122,10 +122,7 @@ Aviator.setRoutes({
         if (screenId == 'new') {
           ElementActions.generateEmptyScreen();
         } else {
-          UIActions.selectElement({
-            type: 'screen',
-            id: screenId
-          })
+          ElementActions.fetchScreenById(screenId);
         }
       }
     },

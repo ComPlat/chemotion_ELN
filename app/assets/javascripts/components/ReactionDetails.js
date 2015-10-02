@@ -30,7 +30,6 @@ export default class ReactionDetails extends React.Component {
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
-    console.log('unmount reactiondetails')
   }
 
   onChange(state) {

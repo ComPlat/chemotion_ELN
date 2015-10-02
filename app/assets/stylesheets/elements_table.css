@@ -26,3 +26,16 @@ th.name, td.check {
 .collection-label {
   display: inline-block;
 }
+
+.fa-user-secret {
+  float:right;
+}
+
+.top-secret-icon {
+  vertical-align: top;
+  overflow: hidden;
+}
+
+.sample-container {
+  position: absolute;
+}

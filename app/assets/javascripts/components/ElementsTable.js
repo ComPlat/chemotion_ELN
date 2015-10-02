@@ -159,6 +159,7 @@ export default class ElementsTable extends React.Component {
               onClick={e => this.showDetails(element)}
               style={{cursor: 'pointer'}}>
             {this.elementLabel(element)}
+            {this.topSecretIcon(element)}
           </td>
           {optionalLabelColumn}
           {svgColumn}
@@ -167,7 +168,17 @@ export default class ElementsTable extends React.Component {
     });
   }
 
-  moleculeSVGColumn(molecule, options = {}) {
+  topSecretIcon(element) {
+    if(element.type == 'sample' && element.is_top_secret == true) {
+      return (
+        <div className="top-secret-icon">
+          <i className="fa fa-user-secret"></i>
+        </div>
+      )
+    }
+  }
+
+  moleculeSVGColumn(molecule, options={}) {
     let className = options.selected ? 'molecule-selected' : 'molecule';
     let moleculeSVG = this.moleculeSVG(molecule, className);
     return (
