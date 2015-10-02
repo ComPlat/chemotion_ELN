@@ -58,7 +58,7 @@ class ElementStore {
 
       handleUpdateElementsCollection: ElementActions.updateElementsCollection,
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
-      handleRemoveElementsCollection: ElementActions.removeElementsCollection
+      handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples
     })
   }
