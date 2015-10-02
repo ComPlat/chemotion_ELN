@@ -66,7 +66,8 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         collection_attributes: paramObj.collection_attributes,
         elements_filter: paramObj.elements_filter,
-        user_ids: paramObj.user_ids
+        user_ids: paramObj.user_ids,
+        current_collection_id: paramObj.current_collection_id
       })
     })
 
@@ -118,7 +119,7 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        label: paramObj.label 
+        label: paramObj.label
       })
     }).then((response) => {
       return response.json()
@@ -141,7 +142,7 @@ export default class CollectionsFetcher {
       },
       body: JSON.stringify({
         ui_state: paramObj.ui_state,
-        collection_id: paramObj.collection_id 
+        collection_id: paramObj.collection_id
       })
     }).then((response) => {
       return response.json()
@@ -164,7 +165,7 @@ export default class CollectionsFetcher {
       },
       body: JSON.stringify({
         ui_state: paramObj.ui_state,
-        collection_id: paramObj.collection_id 
+        collection_id: paramObj.collection_id
       })
     }).then((response) => {
       return response.json()

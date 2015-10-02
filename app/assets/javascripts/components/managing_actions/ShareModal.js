@@ -77,6 +77,7 @@ export default class ShareModal extends React.Component {
     let userIds = this.refs.userSelect.state.values.map(o => o.value);
 
     let uiState = UIStore.getState();
+    let currentCollectionId = uiState.currentCollectionId == "all" ? null : uiState.currentCollectionId;
     let filterParams = this.filterParamsFromUIState(uiState);
 
     let paramObj = {
@@ -88,7 +89,8 @@ export default class ShareModal extends React.Component {
         wellplate_detail_level: wellplateDetailLevel
       },
       elements_filter: filterParams,
-      user_ids: userIds
+      user_ids: userIds,
+      current_collection_id: currentCollectionId
     }
     CollectionActions.createSharedCollections(paramObj);
     this.hideModal();

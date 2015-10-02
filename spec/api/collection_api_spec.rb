@@ -225,6 +225,7 @@ describe Chemotion::CollectionAPI do
 
           let!(:params) {
             {
+              current_collection_id: nil,
               collection_attributes: attributes_for(:collection),
               user_ids: [user.id],
               elements_filter: {

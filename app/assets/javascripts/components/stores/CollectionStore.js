@@ -40,15 +40,16 @@ class CollectionStore {
   }
 
   handleCreateSharedCollections() {
+    CollectionActions.fetchUnsharedCollectionRoots()
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
   }
 
   handleBulkUpdateUnsharedCollections() {
-
   }
 
   handleUpdateSharedCollection() {
+    CollectionActions.fetchUnsharedCollectionRoots()
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
   }

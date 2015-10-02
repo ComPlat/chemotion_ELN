@@ -31,6 +31,7 @@ module Usecases
       def execute!
         user_ids = @params.fetch(:user_ids, [])
         collection_attributes = @params.fetch(:collection_attributes, {})
+        current_collection_id = @params.fetch(:current_collection_id, {})
         elements_filter = @params.fetch(:elements_filter, {})
 
         user_ids.each do |user_id|
@@ -41,7 +42,8 @@ module Usecases
             collection_attributes: collection_attributes,
             sample_ids: getElementIds(elements_filter, Sample),
             reaction_ids: getElementIds(elements_filter, Reaction),
-            wellplate_ids: getElementIds(elements_filter, Wellplate)
+            wellplate_ids: getElementIds(elements_filter, Wellplate),
+            current_collection_id: current_collection_id
           }
 
           Usecases::Sharing::ShareWithUser.new(new_params).execute!
