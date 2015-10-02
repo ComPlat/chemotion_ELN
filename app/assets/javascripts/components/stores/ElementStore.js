@@ -59,6 +59,7 @@ class ElementStore {
       handleUpdateElementsCollection: ElementActions.updateElementsCollection,
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection
+      handleSplitAsSubsamples: ElementActions.splitAsSubsamples
     })
   }
 
@@ -119,6 +120,10 @@ class ElementStore {
     ElementActions.fetchSampleById(sampleId);
     this.state.currentElement.id = sampleId;
     this.handleRefreshElements('sample');
+  }
+
+  handleSplitAsSubsamples(ui_state) {
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
   }
 
   // Molecules

@@ -127,4 +127,33 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static splitAsSubsamples(paramObj) {
+    let promise = fetch('/api/v1/samples/subsamples/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: {
+          sample: {
+            all: paramObj.sample.checkedAll,
+            included_ids: paramObj.sample.checkedIds,
+            excluded_ids: paramObj.sample.uncheckedIds
+          },
+          currentCollectionId: paramObj.currentCollectionId
+        }
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }
