@@ -4,7 +4,7 @@ describe Chemotion::CollectionAPI do
   let(:json_options) {
     {
       only: [:id, :label],
-      methods: [:children, :descendant_ids, :permission_level, :sample_detail_level, :reaction_detail_level, :wellplate_detail_level]
+      methods: [:children, :descendant_ids, :permission_level, :sample_detail_level, :reaction_detail_level, :wellplate_detail_level, :is_shared]
     }
   }
 
@@ -86,7 +86,7 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (remote) collection roots of logged in user' do
         get '/api/v1/collections/remote_roots'
 
-        expect(JSON.parse(response.body)['collections']).to eq [c4.as_json(json_options)]
+        expect(JSON.parse(response.body)['collections'].first['label']).to eq c4.label
       end
     end
 
