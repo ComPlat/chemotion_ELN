@@ -1,4 +1,4 @@
-import Molecule from './molecule';
+import Molecule from './Molecule';
 
 export default class Sample {
 
