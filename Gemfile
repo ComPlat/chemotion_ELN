@@ -28,6 +28,9 @@ gem 'browserify-rails'
 # for collection tree structure
 gem 'ancestry'
 
+# svg composer
+gem 'nokogiri'
+
 # API
 gem 'grape'
 gem 'hashie-forbidden_attributes'

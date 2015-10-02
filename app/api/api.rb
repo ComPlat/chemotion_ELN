@@ -30,5 +30,6 @@ class API < Grape::API
   mount Chemotion::WellplateAPI
   mount Chemotion::ScreenAPI
   mount Chemotion::UserAPI
+  mount Chemotion::ReactionSvgAPI
   mount Chemotion::PermissionAPI
 end

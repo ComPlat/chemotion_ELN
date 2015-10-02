@@ -329,6 +329,7 @@ DEPENDENCIES
   jquery-rails
   kaminari
   mailcatcher
+  nokogiri
   openbabel (= 2.3.2.1)!
   pg
   pundit
@@ -340,3 +341,6 @@ DEPENDENCIES
   thin
   uglifier (>= 1.3.0)
   web-console (~> 2.0)
+
+BUNDLED WITH
+   1.10.6
