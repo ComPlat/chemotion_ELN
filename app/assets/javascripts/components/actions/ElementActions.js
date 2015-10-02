@@ -211,6 +211,15 @@ class ElementActions {
       });
   }
 
+  splitAsSubsamples(ui_state) {
+    SamplesFetcher.splitAsSubsamples(ui_state)
+      .then((result) => {
+        this.dispatch(ui_state);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
 }
 
 export default alt.createActions(ElementActions);

@@ -7,12 +7,12 @@ export default class Sample {
   }
 
   get name() {
-    console.log(`Sample(${this.id}).name`)
+    //console.log(`Sample(${this.id}).name`)
     return this._name
   }
 
   set name(name) {
-    console.log(`Sample(${this.id}).name=${name}`)
+    //console.log(`Sample(${this.id}).name=${name}`)
     this._name = name
   }
 
