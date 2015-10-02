@@ -22,14 +22,14 @@ module Chemotion
         current_user.collections.ordered.unshared.roots
       end
 
-      desc "Return all shared serialized collection roots"
+      desc "Return all shared serialized collections"
       get :shared_roots do
-        Collection.shared(current_user.id).roots
+        Collection.shared(current_user.id)
       end
 
-      desc "Return all remote serialized collection roots"
+      desc "Return all remote serialized collections"
       get :remote_roots, each_serializer: RemoteCollectionSerializer do
-        current_user.collections.remote(current_user.id).roots
+        current_user.collections.remote(current_user.id)
       end
 
       desc "Bulk update and/or create new collections"
@@ -83,6 +83,7 @@ module Chemotion
             requires :wellplate_detail_level, type: Integer
           end
           requires :user_ids, type: Array
+          optional :current_collection_id, type: Integer
         end
 
         before do
