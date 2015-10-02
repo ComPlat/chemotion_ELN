@@ -35,6 +35,10 @@ export default class ContextActions extends React.Component {
     return `/collection/${uiState.currentCollectionId}`
   }
 
+  _splitSelectionAsSubsamples() {
+    ElementActions.splitAsSubsamples(UIStore.getState())
+  }
+
   availableActions() {
     // TODO später auch für reaktionen usw
     // TODO replace dummy implementation
@@ -53,7 +57,7 @@ export default class ContextActions extends React.Component {
     } else {
       return (
         <ButtonGroup vertical block>
-          <Button >Split as Subsample(s)</Button>
+          <Button onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</Button>
           <Button disabled={isAllCollection}>Create Reaction</Button>
           <Button disabled={isAllCollection}>Create Wellplate</Button>
         </ButtonGroup>
