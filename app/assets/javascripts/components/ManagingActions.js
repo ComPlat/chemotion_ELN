@@ -14,10 +14,10 @@ export default class ManagingActions extends React.Component {
   render() {
     return (
       <ButtonGroup>
-        <ShareButton />
         <MoveButton />
         <AssignButton />
         <RemoveButton />
+        <ShareButton />
         <DeleteButton />
       </ButtonGroup>
     )
