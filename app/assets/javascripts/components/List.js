@@ -55,17 +55,17 @@ export default class List extends React.Component {
   }
 
   render() {
-    let samples = 
+    let samples =
       <i className="icon-sample">
-         {this.state.totalSampleElements} ({this._checkedElements('sample')}) 
+         {this.state.totalSampleElements} ({this._checkedElements('sample')})
       </i>;
-    let reactions = 
+    let reactions =
       <i className="icon-reaction">
-         {this.state.totalReactionElements} ({this._checkedElements('reaction')}) 
+         {this.state.totalReactionElements} ({this._checkedElements('reaction')})
       </i>;
-    let wellplates = 
+    let wellplates =
       <i className="icon-wellplate">
-         {this.state.totalWellplatesElements} ({this._checkedElements('wellplate')}) 
+         {this.state.totalWellplatesElements} ({this._checkedElements('wellplate')})
       </i>;
 
     return (

@@ -4,6 +4,7 @@ import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
+import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import UIActions from '../actions/UIActions';
 
 class ElementActions {
@@ -178,6 +179,33 @@ class ElementActions {
     WellplatesFetcher.deleteWellplatesByUIState(ui_state)
       .then((result) => {
         this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  updateElementsCollection(paramObj) {
+    CollectionsFetcher.updateElementsCollection(paramObj)
+      .then(() => {
+        this.dispatch(paramObj);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  assignElementsCollection(paramObj) {
+    CollectionsFetcher.assignElementsCollection(paramObj)
+      .then(() => {
+        this.dispatch(paramObj);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  removeElementsCollection(paramObj) {
+    CollectionsFetcher.removeElementsCollection(paramObj)
+      .then(() => {
+        this.dispatch(paramObj);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

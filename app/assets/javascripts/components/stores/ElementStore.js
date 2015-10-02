@@ -54,7 +54,11 @@ class ElementStore {
       handleRefreshElements: ElementActions.refreshElements,
       handleGenerateEmptySample: ElementActions.generateEmptySample,
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
-      handleDeleteElements: ElementActions.deleteElements
+      handleDeleteElements: ElementActions.deleteElements,
+
+      handleUpdateElementsCollection: ElementActions.updateElementsCollection,
+      handleAssignElementsCollection: ElementActions.assignElementsCollection,
+      handleRemoveElementsCollection: ElementActions.removeElementsCollection
     })
   }
 
@@ -66,6 +70,27 @@ class ElementStore {
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollectionId);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollectionId);
+  }
+
+  handleUpdateElementsCollection(paramObj) {
+    let collection_id = paramObj.ui_state.currentCollectionId
+    ElementActions.fetchSamplesByCollectionId(collection_id);
+    ElementActions.fetchReactionsByCollectionId(collection_id);
+    ElementActions.fetchWellplatesByCollectionId(collection_id);
+  }
+
+  handleAssignElementsCollection(paramObj) {
+    let collection_id = paramObj.ui_state.currentCollectionId
+    ElementActions.fetchSamplesByCollectionId(collection_id);
+    ElementActions.fetchReactionsByCollectionId(collection_id);
+    ElementActions.fetchWellplatesByCollectionId(collection_id);
+  }
+
+  handleRemoveElementsCollection(paramObj) {
+    let collection_id = paramObj.ui_state.currentCollectionId
+    ElementActions.fetchSamplesByCollectionId(collection_id);
+    ElementActions.fetchReactionsByCollectionId(collection_id);
+    ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
   // -- Samples --

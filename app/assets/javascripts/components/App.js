@@ -8,6 +8,9 @@ import ElementFilter from './ElementFilter';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';
+import MoveModal from './managing_actions/MoveModal';
+import AssignModal from './managing_actions/AssignModal';
+import RemoveModal from './managing_actions/RemoveModal';
 import TopSecretModal from './TopSecretModal';
 
 import UIActions from './actions/UIActions';
@@ -124,6 +127,57 @@ Aviator.setRoutes({
     }
   },
 
+  '/move': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<MoveModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/move/hide', ''))
+      }
+    }
+  },
+
+  '/assign': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<AssignModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/assign/hide', ''))
+      }
+    }
+  },
+
+  '/remove': {
+    '/': 'show',
+    '/hide': 'hide',
+    target: {
+      show: function(e) {
+        React.render(<RemoveModal/>, document.getElementById('modal'));
+      },
+      hide: function(e) {
+        let modalDomNode = document.getElementById('modal');
+        if(modalDomNode) {
+          React.unmountComponentAtNode(modalDomNode);
+        }
+        Aviator.navigate(Aviator.getCurrentURI().replace('/remove/hide', ''))
+      }
+    }
+  },
+
   '/top_secret': {
     '/': 'show',
     '/hide': 'hide',
@@ -172,7 +226,7 @@ class App extends React.Component {
             </div>
           </Col>
           <Col sm={2} md={2} lg={2}>
-            <ManagingActions /><br/><ContextActions />
+            <ContextActions />
           </Col>
         </Row>
       </Grid>

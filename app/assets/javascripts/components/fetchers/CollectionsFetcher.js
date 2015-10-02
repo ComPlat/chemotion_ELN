@@ -108,4 +108,94 @@ export default class CollectionsFetcher {
 
     return promise;
   }
+
+  static createUnsharedCollection(paramObj) {
+    let promise = fetch('/api/v1/collections/unshared/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        label: paramObj.label 
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static updateElementsCollection(paramObj) {
+    let promise = fetch('/api/v1/collections/elements/', {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: paramObj.ui_state,
+        collection_id: paramObj.collection_id 
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static assignElementsCollection(paramObj) {
+    let promise = fetch('/api/v1/collections/elements/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: paramObj.ui_state,
+        collection_id: paramObj.collection_id 
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static removeElementsCollection(paramObj) {
+    let promise = fetch('/api/v1/collections/elements/', {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: paramObj.ui_state,
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }
