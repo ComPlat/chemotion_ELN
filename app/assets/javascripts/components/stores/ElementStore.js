@@ -29,6 +29,13 @@ class ElementStore {
           page: null,
           pages: null,
           per_page: null
+        },
+        screens: {
+          elements: [],
+          totalElements: 0,
+          page: null,
+          pages: null,
+          per_page: null
         }
       },
       currentElement: null
@@ -48,6 +55,9 @@ class ElementStore {
 
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
+
+      handleFetchScreenById: ElementActions.fetchScreenById,
+      handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -143,6 +153,16 @@ class ElementStore {
     this.state.elements.wellplates = result;
   }
 
+  // -- Screens --
+
+  handleFetchScreenById(result) {
+    this.state.currentElement = result;
+  }
+
+  handleFetchScreensByCollectionId(result) {
+    this.state.elements.screens = result;
+  }
+
   // -- Reactions --
 
   handleFetchReactionById(result) {
@@ -192,6 +212,9 @@ class ElementStore {
         break;
       case 'wellplate':
         ElementActions.fetchWellplatesByCollectionId(uiState.currentCollectionId, {page: page});
+        break;
+      case 'screen':
+        ElementActions.fetchScreensByCollectionId(uiState.currentCollectionId, {page: page});
         break;
     }
   }

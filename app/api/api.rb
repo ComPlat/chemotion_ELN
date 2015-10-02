@@ -28,6 +28,7 @@ class API < Grape::API
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
+  mount Chemotion::ScreenAPI
   mount Chemotion::UserAPI
   mount Chemotion::PermissionAPI
 end

@@ -6,6 +6,7 @@ import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import UIActions from '../actions/UIActions';
+import ScreensFetcher from '../fetchers/ScreensFetcher';
 
 class ElementActions {
 
@@ -85,6 +86,24 @@ class ElementActions {
     WellplatesFetcher.fetchById(id)
       .then((result) => {
         this.dispatch(result.wellplate);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchScreensByCollectionId(id, queryParams={}) {
+    ScreensFetcher.fetchByCollectionId(id, queryParams)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchScreenById(id) {
+    ScreensFetcher.fetchById(id)
+      .then((result) => {
+        this.dispatch(result.screen);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

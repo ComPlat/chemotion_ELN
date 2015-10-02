@@ -9,6 +9,7 @@ import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import SampleContainer from './SampleContainer'
+import WellplateContainer from './WellplateContainer'
 
 import SVG from 'react-inlinesvg';
 import Aviator from 'aviator';
@@ -23,7 +24,7 @@ export default class ElementsTable extends React.Component {
       elements: [],
       ui: {},
       // Pagination
-      activePage: this.props.activePage || 1,
+      activePage: this.props.activePage || 1,
       numberOfPages: 0,
       pageSize: 5
     }
@@ -44,7 +45,7 @@ export default class ElementsTable extends React.Component {
   onChangeUI(state) {
     let type = this.props.type;
     let page = state.pagination && state.pagination[type] && state.pagination[type].page;
-    if(page) {
+    if (page) {
       this.setState({
         activePage: parseInt(page)
       });
@@ -59,7 +60,7 @@ export default class ElementsTable extends React.Component {
     // console.log('checkedIds ' + checkedIds && checkedIds.toArray());
     // console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
 
-    if(checkedIds || uncheckedIds || checkedAll || currentId) {
+    if (checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
         ui: {
           checkedIds: checkedIds,
@@ -73,27 +74,27 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    let type = this.props.type+'s';
+    let type = this.props.type + 's';
 
     const elements = state.elements[type].elements;
     const totalElements = state.elements[type].totalElements;
 
     let currentElement;
-    if(!state.currentElement || state.currentElement.type == this.props.type) {
+    if (! state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
-    let elementsDidChange = elements && !deepEqual(elements, this.state.elements);
-    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
+    let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
+    let currentElementDidChange = ! deepEqual(currentElement, this.state.currentElement);
 
     let page = this.state.activePage;
 
     let numberOfPages = Math.ceil(totalElements / this.state.pageSize);
-    if(page > numberOfPages) {
+    if (page > numberOfPages) {
       page = 1
     }
 
-    if(elementsDidChange) {
+    if (elementsDidChange) {
       this.setState({
         elements: elements,
         currentElement: currentElement,
@@ -109,6 +110,16 @@ export default class ElementsTable extends React.Component {
     }
   }
 
+  elementLabel(element) {
+    if (element.type == 'sample') {
+      return <SampleContainer sample={element}/>
+    } else if (element.type == 'wellplate') {
+      return <WellplateContainer wellplate={element}/>
+    } else {
+      return element.name;
+    }
+  }
+
   entries() {
     // Pagination: startAt...Arrayindex to start with...
     // TODO Move to PaginationUtils?
@@ -120,7 +131,7 @@ export default class ElementsTable extends React.Component {
       let checked = this.isElementChecked(element);
 
       let optionalLabelColumn;
-      if(this.showElementDetailsColumns()) {
+      if (this.showElementDetailsColumns()) {
         optionalLabelColumn = (
           <td className="labels">
             <ElementCollectionLabels element={element} key={element.id}/>
@@ -129,14 +140,14 @@ export default class ElementsTable extends React.Component {
       }
 
       let svgColumn;
-      if(element.molecule) {
+      if (element.molecule) {
         svgColumn = this.moleculeSVGColumn(element.molecule, {selected: isSelected});
       } else {
         svgColumn = (<td className="molecule" margin="0" padding="0">SVG ..</td>);
       }
 
       let style = {}
-      if(isSelected) {
+      if (isSelected) {
         style = {
           color: '#fff',
           background: '#337ab7'
@@ -150,16 +161,16 @@ export default class ElementsTable extends React.Component {
           <td className="name"
               onClick={e => this.showDetails(element)}
               style={{cursor: 'pointer'}}>
-            {(element.type == 'sample') ? <SampleContainer sample={element}/> : element.name}
+            {this.elementLabel(element)}
           </td>
-         {optionalLabelColumn}
-         {svgColumn}
+          {optionalLabelColumn}
+          {svgColumn}
         </tr>
       )
     });
   }
 
-  moleculeSVGColumn(molecule, options={}) {
+  moleculeSVGColumn(molecule, options = {}) {
     let className = options.selected ? 'molecule-selected' : 'molecule';
     let moleculeSVG = this.moleculeSVG(molecule, className);
     return (
@@ -177,7 +188,7 @@ export default class ElementsTable extends React.Component {
   }
 
   showElementDetailsColumns() {
-    return !(this.state.ui.currentId);
+    return ! (this.state.ui.currentId);
   }
 
   showDetails(element) {
@@ -198,7 +209,7 @@ export default class ElementsTable extends React.Component {
     let {checkedIds, uncheckedIds, checkedAll} = this.state.ui
 
     let checked = (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-                  || ArrayUtils.isValInArray(checkedIds || [], element.id);
+      || ArrayUtils.isValInArray(checkedIds || [], element.id);
 
     return checked;
   }
@@ -213,7 +224,7 @@ export default class ElementsTable extends React.Component {
   }
 
   pagination() {
-    if(this.state.numberOfPages > 1) {
+    if (this.state.numberOfPages > 1) {
       return (
         <Pagination activePage={this.state.activePage}
                     items={this.state.numberOfPages}
@@ -228,12 +239,12 @@ export default class ElementsTable extends React.Component {
 
     return (
       <thead>
-        <th className="check">
-          <ElementAllCheckbox type={this.props.type} checked={checkedAll}/>
-        </th>
-        <th colSpan={colSpan}>
-          All {this.props.type}s
-        </th>
+      <th className="check">
+        <ElementAllCheckbox type={this.props.type} checked={checkedAll}/>
+      </th>
+      <th colSpan={colSpan}>
+        All {this.props.type}s
+      </th>
       </thead>
     )
   }
@@ -241,13 +252,13 @@ export default class ElementsTable extends React.Component {
   render() {
     let entries = this.entries();
     let result;
-    if(entries) {
+    if (entries) {
       result = (
         <div>
           <Table className="elements" bordered hover>
             {this.header()}
             <tbody>
-              {entries}
+            {entries}
             </tbody>
           </Table>
           {this.pagination()}

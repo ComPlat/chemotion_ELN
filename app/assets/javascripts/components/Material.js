@@ -3,7 +3,6 @@ import {Input, Button} from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnits from './NumeralInputWithUnits';
-import MaterialDragHandle from './MaterialContainer';
 
 const source = {
   beginDrag(props) {

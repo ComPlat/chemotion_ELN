@@ -7,7 +7,7 @@ class Wellplate < ActiveRecord::Base
   has_many :collections, through: :collections_wellplates
 
   has_many :wells
-  #belongs_to :screen
+  belongs_to :screen
 
   before_destroy :destroy_associations
 

@@ -25,6 +25,7 @@
 [data-icon]:before,
 .icon-reaction:before,
 .icon-sample:before,
+.icon-screen:before,
 .icon-wellplate:before {
   display: inline-block;
   font-family: "icons";
@@ -42,8 +43,10 @@
 
 .icon-reaction:before { content: "\f100"; }
 .icon-sample:before { content: "\f101"; }
+.icon-screen:before { content: "\f103"; }
 .icon-wellplate:before { content: "\f102"; }
 
 $font-icons-reaction: "\f100";
 $font-icons-sample: "\f101";
+$font-icons-screen: "\f103";
 $font-icons-wellplate: "\f102";
