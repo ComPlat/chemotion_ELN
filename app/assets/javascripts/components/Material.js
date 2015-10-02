@@ -51,7 +51,7 @@ class Material extends Component {
           key={material.id}
           value={material.amount_mg}
           unit='mg'
-          numeralFormat='0,0.00'
+          numeralFormat='0,0.0000'
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
@@ -61,7 +61,8 @@ class Material extends Component {
           key={material.id}
           value={material.amount_ml}
           unit='ml'
-          numeralFormat='0,0.00'
+          numeralFormat='0,0.0000'
+          onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
 
@@ -70,7 +71,8 @@ class Material extends Component {
           key={material.id}
           value={material.amount_mmol}
           unit='mmol'
-          numeralFormat='0,0.00'
+          numeralFormat='0,0.0000'
+          onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
 

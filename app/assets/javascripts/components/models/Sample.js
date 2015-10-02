@@ -23,6 +23,11 @@ export default class Sample {
     })
   }
 
+  setAmountAndNormalizeToMilligram(amount_value, amount_unit) {
+    this.amount_value = this.convertToMilligram(amount_value, amount_unit)
+    this.amount_unit = 'mg'
+  }
+
   get amount_value() {
     return this._amount_value || 0;
   }
@@ -30,7 +35,6 @@ export default class Sample {
   set amount_value(amount_value) {
     this._amount_value = amount_value
   }
-
 
   get amount_unit() {
     return this._amount_unit || 'mg';
@@ -41,16 +45,55 @@ export default class Sample {
   }
 
   get amount_mg() {
-    return this.convertAmount('mg')
+    return this.convertMilligramToUnit(this.amount_value, 'mg')
   }
 
   get amount_ml() {
-    return this.convertAmount('ml')
+    return this.convertMilligramToUnit(this.amount_value, 'ml')
   }
 
   get amount_mmol() {
-    return this.convertAmount('mmol')
+    return this.convertMilligramToUnit(this.amount_value, 'mmol')
   }
+
+  //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
+	//Volumen (ml) = Menge (mg) / Dichte (g/ml)
+	//Menge (mg)  = Volumen (ml) * Dichte
+	//Menge (mg) = Menge (mmol)  * Molmasse / Reinheit
+
+  convertMilligramToUnit(amount_mg, unit) {
+
+    switch (unit) {
+      case 'mg':
+        return amount_mg;
+        break;
+      case 'ml':
+        return amount_mg / this.molecule_density;
+        break;
+      case 'mmol':
+        return amount_mg * this.purity / this.molecule_molecular_weight;
+        break;
+      default:
+        return amount_mg
+    }
+  }
+
+  convertToMilligram(amount_value, amount_unit) {
+    switch (amount_unit) {
+      case 'mg':
+        return amount_value;
+        break;
+      case 'ml':
+        return amount_value * this.molecule_density;
+        break;
+      case 'mmol':
+        return amount_value / this.purity * this.molecule_molecular_weight;
+        break;
+      default:
+        return amount_value
+    }
+  }
+
 
   // set density(density) {
   //   if(this.molecule) {
@@ -87,28 +130,6 @@ export default class Sample {
 
   set molecule(molecule) {
     this._molecule = new Molecule(molecule)
-  }
-
-  //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
-	//Volumen (ml) = Menge (mg) / Dichte (g/ml)
-	//Menge (mg)  = Volumen (ml) * Dichte
-	//Menge (mg) = Menge (mmol)  * Molmasse / Reinheit
-
-  convertAmount(targetUnit) {
-
-    switch (targetUnit) {
-      case 'mg':
-        return this.amount_value * 1.0;
-        break;
-      case 'ml':
-        return this.amount_value / this.molecule_density;
-        break;
-      case 'mmol':
-        return this.amount_value * this.purity / this.molecule_molecular_weight;
-        break;
-      default:
-        return this.amount_value
-    }
   }
 
 };
