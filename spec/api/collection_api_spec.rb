@@ -82,6 +82,112 @@ describe Chemotion::CollectionAPI do
       end
     end
 
+    describe 'GET /api/v1/collections/remote_roots' do
+      it 'returns serialized (remote) collection roots of logged in user' do
+        get '/api/v1/collections/remote_roots'
+
+        expect(JSON.parse(response.body)['collections']).to eq [c4.as_json(json_options)]
+      end
+    end
+
+    describe 'POST /api/v1/collections/unshared' do
+      let(:params) {
+        {
+          label: 'test'
+        }
+      }
+      it 'should be able to create new collections' do
+        collection = Collection.find_by(label: 'test')
+        expect(collection).to be_nil
+        post '/api/v1/collections/unshared', params
+        collection = Collection.find_by(label: 'test')
+        expect(collection).to_not be_nil
+      end
+    end
+
+    describe 'elements' do
+      let(:s1) { create(:sample) }
+      let(:s2) { create(:sample) }
+      let(:r1) { create(:reaction) }
+      let(:r2) { create(:reaction) }
+      let(:w1) { create(:wellplate) }
+      let(:w2) { create(:wellplate) }
+
+      let!(:params) {
+        {
+          ui_state: {
+            sample: {
+              all: true,
+              included_ids: [],
+              excluded_ids: []
+            },
+            reaction: {
+              all: true,
+              included_ids: [],
+              excluded_ids: [r2.id]
+            },
+            wellplate: {
+              all: nil,
+              included_ids: [w1.id],
+              excluded_ids: []
+            },
+            currentCollectionId: c1.id
+          },
+          collection_id: c2.id
+        }
+      }
+
+      before do
+        CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
+        CollectionsSample.create!(collection_id: c1.id, sample_id: s2.id)
+        CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
+        CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
+        CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
+        CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w2.id)
+        c1.reload
+        c2.reload
+      end
+
+      describe 'PUT /api/v1/collections/elements' do
+        it 'should be able to move elements between collections' do
+          put '/api/v1/collections/elements', params
+          c1.reload
+          c2.reload
+          expect(c1.samples).to match_array []
+          expect(c1.reactions).to match_array [r2]
+          expect(c1.wellplates).to match_array [w2]
+          expect(c2.samples).to match_array [s1, s2]
+          expect(c2.reactions).to match_array [r1]
+          expect(c2.wellplates).to match_array [w1]
+        end
+      end
+
+      describe 'POST /api/v1/collections/elements' do
+        it 'should be able to assign elements to a collection' do
+          post '/api/v1/collections/elements', params
+          c1.reload
+          c2.reload
+          expect(c1.samples).to match_array [s1, s2]
+          expect(c1.reactions).to match_array [r1, r2]
+          expect(c1.wellplates).to match_array [w1, w2]
+          expect(c2.samples).to match_array [s1, s2]
+          expect(c2.reactions).to match_array [r1]
+          expect(c2.wellplates).to match_array [w1]
+        end
+      end
+
+      describe 'DELETE /api/v1/collections/elements' do
+        it 'should be able to remove elements from a collection' do
+          delete '/api/v1/collections/elements', params
+          c1.reload
+          expect(c1.samples).to match_array []
+          expect(c1.reactions).to match_array [r2]
+          expect(c1.wellplates).to match_array [w2]
+        end
+      end
+
+    end
+
     describe 'PUT /api/v1/collections/shared/:id' do
       let(:params) {
         {
