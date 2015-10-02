@@ -139,35 +139,35 @@ module Chemotion
           current_collection_id = ui_state[:currentCollectionId]
 
           sample_ids = Sample.for_ui_state_with_collection(
-            ui_state[:sample], 
-            CollectionsSample, 
+            ui_state[:sample],
+            CollectionsSample,
             current_collection_id
           )
 
           CollectionsSample.where(
-            sample_id: sample_ids, 
+            sample_id: sample_ids,
             collection_id: current_collection_id
           ).update_all(collection_id: params[:collection_id])
 
           reaction_ids = Reaction.for_ui_state_with_collection(
-            ui_state[:reaction], 
-            CollectionsReaction, 
+            ui_state[:reaction],
+            CollectionsReaction,
             current_collection_id
           )
 
           CollectionsReaction.where(
-            reaction_id: reaction_ids, 
+            reaction_id: reaction_ids,
             collection_id: current_collection_id
           ).update_all(collection_id: params[:collection_id])
 
           wellplate_ids = Wellplate.for_ui_state_with_collection(
-            ui_state[:wellplate], 
-            CollectionsWellplate, 
+            ui_state[:wellplate],
+            CollectionsWellplate,
             current_collection_id
           )
 
           CollectionsWellplate.where(
-            wellplate_id: wellplate_ids, 
+            wellplate_id: wellplate_ids,
             collection_id: current_collection_id
           ).update_all(collection_id: params[:collection_id])
 
@@ -179,30 +179,29 @@ module Chemotion
           requires :collection_id, type: Integer, desc: "Destination collection id"
         end
         post do
-
           ui_state = params[:ui_state]
           collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollectionId]
 
           Sample.for_ui_state_with_collection(
-            ui_state[:sample], 
-            CollectionsSample, 
+            ui_state[:sample],
+            CollectionsSample,
             current_collection_id
           ).each do |id|
             CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
           end
 
           Reaction.for_ui_state_with_collection(
-            ui_state[:reaction], 
-            CollectionsReaction, 
+            ui_state[:reaction],
+            CollectionsReaction,
             current_collection_id
           ).each do |id|
             CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
           end
 
           Wellplate.for_ui_state_with_collection(
-            ui_state[:wellplate], 
-            CollectionsWellplate, 
+            ui_state[:wellplate],
+            CollectionsWellplate,
             current_collection_id
           ).each do |id|
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
@@ -219,35 +218,35 @@ module Chemotion
           current_collection_id = ui_state[:currentCollectionId]
 
           sample_ids = Sample.for_ui_state_with_collection(
-            ui_state[:sample], 
-            CollectionsSample, 
+            ui_state[:sample],
+            CollectionsSample,
             current_collection_id
           )
 
           CollectionsSample.where(
-            sample_id: sample_ids, 
+            sample_id: sample_ids,
             collection_id: current_collection_id
           ).delete_all
 
           reaction_ids = Reaction.for_ui_state_with_collection(
-            ui_state[:reaction], 
-            CollectionsReaction, 
+            ui_state[:reaction],
+            CollectionsReaction,
             current_collection_id
           )
 
           CollectionsReaction.where(
-            reaction_id: reaction_ids, 
+            reaction_id: reaction_ids,
             collection_id: current_collection_id
           ).delete_all
 
           wellplate_ids = Wellplate.for_ui_state_with_collection(
-            ui_state[:wellplate], 
-            CollectionsWellplate, 
+            ui_state[:wellplate],
+            CollectionsWellplate,
             current_collection_id
           )
-          
+
           CollectionsWellplate.where(
-            wellplate_id: wellplate_ids, 
+            wellplate_id: wellplate_ids,
             collection_id: current_collection_id
           ).delete_all
 

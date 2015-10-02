@@ -18,7 +18,8 @@ export default class CollectionManagementModal extends React.Component {
       collection_state: CollectionStore.getState(),
       action: props.action,
       modal_title: props.modal_title,
-      show_collections: props.show_collections
+      show_collections: props.show_collections,
+      labelOfNewCollection: null
     }
   }
 
@@ -56,6 +57,10 @@ export default class CollectionManagementModal extends React.Component {
   addCollection() {
     let label = this.refs.collectionLabelInput.getValue() || ''; //TODO: Don't allow empty labels.
     CollectionActions.createUnsharedCollection({label: label});
+
+    this.setState({
+      labelOfNewCollection: label
+    });
   }
 
   hideModal() {
@@ -65,6 +70,18 @@ export default class CollectionManagementModal extends React.Component {
   handleSubmit() {
     let select_ref = this.refs.collectionSelect
     let collection_id = select_ref ? select_ref.getValue() : undefined;
+    let newLabel = this.state.labelOfNewCollection;
+
+    if(newLabel) {
+      let unsharedCollections = CollectionStore.getState().unsharedRoots;
+
+      let newCollection = unsharedCollections.filter((collection) => {
+        return collection.label == newLabel;
+      }).pop();
+
+      collection_id = newCollection.id;
+    }
+
     // TODO: This needs to be improved.
     // We are constantly changing the ui_state into this syntax:
     let ui_state = {

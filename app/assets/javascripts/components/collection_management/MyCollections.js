@@ -167,8 +167,8 @@ export default class MyCollections extends React.Component {
 
   findParentById(root, id) {
     if(!root.children) {
-      return null
       root.children = [];
+      return null;
     }
 
     let children = root.children;
