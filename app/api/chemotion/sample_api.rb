@@ -22,6 +22,23 @@ module Chemotion
         end
       end
 
+      namespace :subsamples do
+        desc "Split Samples into Subsamples"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected samples from the UI"
+        end
+        post do
+          ui_state = params[:ui_state]
+          currentCollectionId = ui_state[:currentCollectionId]
+          sample_ids = Sample.for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
+          Sample.where(id: sample_ids).each do |s|
+            subsample = s.dup
+            subsample.save
+            CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
+          end
+        end
+      end
+
       desc "Return serialized samples of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"

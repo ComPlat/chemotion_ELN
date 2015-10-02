@@ -300,5 +300,51 @@ describe Chemotion::SampleAPI do
 
     end
 
+    describe "subsamples" do
+      context "with valid parameters" do
+        let!(:c)      { create(:collection, user_id: user.id) }
+        let!(:s1) { create(:sample, name: 's1') }
+        let!(:s2) { create(:sample, name: 's2') }
+
+        before do
+          CollectionsSample.create!(sample_id: s1.id, collection_id: c.id)
+          CollectionsSample.create!(sample_id: s2.id, collection_id: c.id)
+        end
+
+        let!(:params) {
+          {
+            ui_state: {
+              sample: {
+                all: true,
+                included_ids: [],
+                excluded_ids: []
+              },
+              currentCollectionId: c.id
+            }
+          }
+        }
+        describe 'POST /api/v1/samples/subsamples' do
+          it 'should be able to split Samples into Subsamples' do
+            post '/api/v1/samples/subsamples', params
+            subsamples = Sample.where(name: ['s1','s2']).where.not(id: [s1.id,s2.id])
+            s3 = subsamples[0]
+            s4 = subsamples[1]
+            s3.attributes.except("id", "created_at", "updated_at").each do |k, v|
+              expect(s1[k]).to eq(v)
+            end
+            s4.attributes.except("id", "created_at", "updated_at").each do |k, v|
+              expect(s2[k]).to eq(v)
+            end
+            expect(s1.id).to_not eq(s3.id)
+            expect(s2.id).to_not eq(s4.id)
+            collection_sample = CollectionsSample.where(sample_id: s3.id, collection_id: c.id)
+            expect(collection_sample).to_not be_nil
+            collection_sample = CollectionsSample.where(sample_id: s4.id, collection_id: c.id)
+            expect(collection_sample).to_not be_nil
+          end
+        end
+      end
+    end
+
   end
 end
