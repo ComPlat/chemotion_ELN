@@ -14,19 +14,21 @@ export default class WellplateDetails extends Component {
       name,
       size,
       description,
-      wells: this.initWells(wells)
+      wells: this.initWells(wells, size)
     };
   }
 
   componentWillReceiveProps(nextProps) {
     const {name, wells, size, description} = nextProps.wellplate;
     this.setState({
-      wells: this.initWells(wells)
+      name,
+      size,
+      description,
+      wells: this.initWells(wells, size)
     });
   }
 
-  initWells(wells) {
-    const {size} = this.props.wellplate;
+  initWells(wells, size) {
     const neededPlaceholders = size - wells.length;
     const placeholders = Array(neededPlaceholders).fill({});
     wells = wells.concat(placeholders);
@@ -37,11 +39,11 @@ export default class WellplateDetails extends Component {
     return {
       ...well,
       position: this.calculatePositionOfWell(key),
-      readout: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. "
+      readout: ""
     }
   }
 
-  calculatePositionOfWell(key){
+  calculatePositionOfWell(key) {
     let remainder = (key + 1) % cols;
     return {
       x: (remainder == 0) ? cols : remainder,
