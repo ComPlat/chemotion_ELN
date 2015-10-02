@@ -7,12 +7,10 @@ export default class Sample {
   }
 
   get name() {
-    //console.log(`Sample(${this.id}).name`)
     return this._name
   }
 
   set name(name) {
-    //console.log(`Sample(${this.id}).name=${name}`)
     this._name = name
   }
 
@@ -94,23 +92,9 @@ export default class Sample {
     }
   }
 
-
-  // set density(density) {
-  //   if(this.molecule) {
-  //     this.molecule.density = density;
-  //   }
-  // }
-  //
   get molecule_density() {
     return this.molecule && this.molecule.density || 1.0
   }
-  //
-  // set density(density) {
-  //   if(this.molecule) {
-  //     this.molecule.density = density;
-  //   }
-  // }
-  //
 
   get molecule_molecular_weight() {
     return this.molecule && this.molecule.molecular_weight

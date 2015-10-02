@@ -75,10 +75,6 @@ export default class ReactionDetails extends React.Component {
     let {sampleID, amount} = changeEvent;
     let updatedSample = this.findSampleById(sampleID);
 
-    //todo: sample.setAmountAndNormalizeToMilligram(amount);
-    // sample.amount_value = amount.value;
-    // sample.amount_unit = amount.unit;
-
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
 
@@ -116,9 +112,6 @@ export default class ReactionDetails extends React.Component {
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
 
-        // sample.amount_value = updatedSample.amount_value;
-        // sample.amount_unit = updatedSample.amount_unit;
-
         sample.setAmountAndNormalizeToMilligram(updatedSample.amount_value, updatedSample.amount_unit);
 
 
@@ -149,13 +142,9 @@ export default class ReactionDetails extends React.Component {
       if (sample.id == updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
         if(referenceSample && referenceSample.amount_value) {
-          console.log("updatedSamplesForEquivalentChange newEqui: " + updatedSample.equivalent + " * refAmountValue: " + referenceSample.amount_value)
-          //sample.amount_value = updatedSample.equivalent * referenceSample.amount_value;
           sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * referenceSample.amount_mmol, 'mmol');
         }
         else if(sample.amount_value) {
-          console.log("updatedSamplesForEquivalentChange newEqui: " + updatedSample.equivalent + " * sampleValue: " + sample.amount_value)
-          //sample.amount_value = updatedSample.equivalent * sample.amount_value;
           sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * sample.amount_mmol, 'mmol');
         }
       }
