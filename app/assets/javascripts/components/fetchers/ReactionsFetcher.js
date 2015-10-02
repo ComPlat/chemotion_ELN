@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import Reaction from '../models/Reaction';
 
 // TODO: Extract common base functionality into ElementsFetcher
 export default class ReactionsFetcher {
@@ -9,7 +10,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return json;
+        return new Reaction(json.reaction);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -26,7 +27,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.reactions,
+            elements: json.reactions.map((r) => new Reaction(r)),
             totalElements: response.headers.get('X-Total'),
             page: response.headers.get('X-Page'),
             pages: response.headers.get('X-Total-Pages')

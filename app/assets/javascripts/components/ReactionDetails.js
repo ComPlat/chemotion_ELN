@@ -75,6 +75,7 @@ export default class ReactionDetails extends React.Component {
     let {sampleID, amount} = changeEvent;
     let sample = this.findSampleById(sampleID);
 
+    //todo: sample.setAmountAndNormalizeToMilligram(amount);
     sample.amount_value = amount.value;
     sample.amount_unit = amount.unit;
 
@@ -250,6 +251,7 @@ export default class ReactionDetails extends React.Component {
       padding: 0,
       paddingBottom: '50%'
     };
+
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
