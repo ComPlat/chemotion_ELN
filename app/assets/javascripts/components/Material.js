@@ -50,8 +50,8 @@ class Material extends Component {
         <NumeralInputWithUnits
           key={material.id}
           value={material.amount_value}
-          unit={material.amount_unit || 'g'}
-          units={['g', 'ml', 'mol']}
+          unit={material.amount_unit || 'mg'}
+          units={['mg', 'ml', 'mmol']}
           numeralFormat='0,0.00'
           convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChange(unit, nextUnit, value)}
           onChange={(amount) => this.handleAmountChange(amount)}
