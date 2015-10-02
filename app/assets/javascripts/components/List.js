@@ -4,7 +4,6 @@ import {TabbedArea, TabPane} from 'react-bootstrap';
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
-import ManagingActions from './ManagingActions';
 
 export default class List extends React.Component {
   constructor(props) {
@@ -56,38 +55,32 @@ export default class List extends React.Component {
   }
 
   render() {
-    let samples = 
+    let samples =
       <i className="icon-sample">
-         {this.state.totalSampleElements} ({this._checkedElements('sample')}) 
+         {this.state.totalSampleElements} ({this._checkedElements('sample')})
       </i>;
-    let reactions = 
+    let reactions =
       <i className="icon-reaction">
-         {this.state.totalReactionElements} ({this._checkedElements('reaction')}) 
+         {this.state.totalReactionElements} ({this._checkedElements('reaction')})
       </i>;
-    let wellplates = 
+    let wellplates =
       <i className="icon-wellplate">
-         {this.state.totalWellplatesElements} ({this._checkedElements('wellplate')}) 
+         {this.state.totalWellplatesElements} ({this._checkedElements('wellplate')})
       </i>;
 
     return (
-      <div>
-        <div>
-          <ManagingActions />
-        </div>
-        <br/>
-        <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
-                    onSelect={(e) => this.handleTabSelect(e)}>
-          <TabPane eventKey={1} tab={samples}>
-            <ElementsTable type='sample'/>
-          </TabPane>
-          <TabPane eventKey={2} tab={reactions}>
-            <ElementsTable type='reaction'/>
-          </TabPane>
-          <TabPane eventKey={3} tab={wellplates}>
-            <ElementsTable type='wellplate'/>
-          </TabPane>
-        </TabbedArea>
-      </div>
+      <TabbedArea defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
+                  onSelect={(e) => this.handleTabSelect(e)}>
+        <TabPane eventKey={1} tab={samples}>
+          <ElementsTable type='sample'/>
+        </TabPane>
+        <TabPane eventKey={2} tab={reactions}>
+          <ElementsTable type='reaction'/>
+        </TabPane>
+        <TabPane eventKey={3} tab={wellplates}>
+          <ElementsTable type='wellplate'/>
+        </TabPane>
+      </TabbedArea>
     )
   }
 }

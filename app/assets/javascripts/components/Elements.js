@@ -7,6 +7,7 @@ import List from './List';
 import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
+import ManagingActions from './ManagingActions';
 
 class Elements extends Component {
   constructor(props) {
@@ -55,6 +56,11 @@ class Elements extends Component {
     return (
       <div id="elements">
         <Table>
+          <thead>
+            <th className="borderless" colSpan="2">
+              <ManagingActions />
+            </th>
+          </thead>
           <tbody>
           <tr valign="top" className="borderless">
             <td className="borderless">

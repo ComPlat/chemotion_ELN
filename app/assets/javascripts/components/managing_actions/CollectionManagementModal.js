@@ -123,7 +123,7 @@ export default class CollectionManagementModal extends React.Component {
                   />
                 </td>
                 <td width="5%">
-                  <Button bsSize="xsmall" bsStyle="success" onClick={this.addCollection.bind(this)}>
+                  <Button bsSize="small" className="managing-actions-add-btn" bsStyle="success" onClick={this.addCollection.bind(this)}>
                     <i className="fa fa-plus"></i>
                   </Button>
                 </td>

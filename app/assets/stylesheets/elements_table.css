@@ -18,3 +18,7 @@ th.check, td.check {
 th.name, td.check {
   width: 120px !important;
 }
+
+.managing-actions-add-btn {
+  margin-top: 11px;
+}
