@@ -99,8 +99,8 @@ export default class SampleDetails extends React.Component {
 
   handleAmountChanged(amount) {
     let sample = this.state.sample;
-    sample.amount_unit = amount.unit;
-    sample.amount_value = amount.value;
+    sample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
+
     this.setState({
       sample: sample
     });
@@ -534,16 +534,38 @@ export default class SampleDetails extends React.Component {
   sampleAmount(sample) {
     if(sample.is_scoped == false || sample.amount_value || sample.id == '_new_' ) {
       return (
-        <NumeralInputWithUnits
-          key={sample.id}
-          value={sample.amount_value}
-          unit={sample.amount_unit || 'mg'}
-          label="Amount"
-          units={['mg', 'ml', 'mmol']}
-          numeralFormat='0,0.00'
-          convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
-          onChange={(amount) => this.handleAmountChanged(amount)}
-          />
+        <table><tr>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_mg}
+              unit='mg'
+              label="mg"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_ml}
+              unit='ml'
+              label="ml"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_mmol}
+              unit='mmol'
+              label="mmol"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+        </tr></table>
       )
     } else {
       return (
@@ -558,6 +580,7 @@ export default class SampleDetails extends React.Component {
         <Input type="text" label="Purity"
                ref="purityInput"
                value={sample.purity}
+               numeralFormat='0,0.00'
                onChange={(e) => this.handlePurityChanged(e)}
         />
       )
