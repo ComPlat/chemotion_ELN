@@ -3,6 +3,8 @@ import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import UIStore from './UIStore';
 
+import Sample from '../models/Sample'
+
 class ElementStore {
   constructor() {
     this.state = {
@@ -69,15 +71,16 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
+    console.log(result)
     this.state.currentElement = result;
   }
 
   handleGenerateEmptySample(result) {
-    this.state.currentElement = result;
+    this.state.currentElement = new Sample;
   }
 
   handleFetchSamplesByCollectionId(result) {
-    this.state.elements.samples = result;
+    this.state.elements.samples = result
   }
 
   // update stored sample if it has been updated

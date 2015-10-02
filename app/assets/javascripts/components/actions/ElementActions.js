@@ -11,7 +11,7 @@ class ElementActions {
   fetchSampleById(id) {
     SamplesFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result.sample);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -44,7 +44,7 @@ class ElementActions {
     }
 
     console.log(paramObj)
-    
+
     SamplesFetcher.update(paramObj)
       .then((result) => {
         this.dispatch(paramObj.id)

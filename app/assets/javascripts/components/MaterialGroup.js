@@ -3,7 +3,7 @@ import Material from './Material';
 
 export default class MaterialGroup extends Component {
   render() {
-    const {materials, materialGroup, deleteMaterial} = this.props;
+    const {materials, materialGroup, deleteMaterial, onChange} = this.props;
     return (
       <div>
         <table width="100%">
@@ -21,6 +21,7 @@ export default class MaterialGroup extends Component {
             materials.map((material, key) => {
               return (
                 <Material
+                  onChange={onChange}
                   key={key}
                   material={material}
                   materialGroup={materialGroup}

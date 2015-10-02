@@ -537,9 +537,9 @@ export default class SampleDetails extends React.Component {
         <NumeralInputWithUnits
           key={sample.id}
           value={sample.amount_value}
-          unit={sample.amount_unit || 'g'}
+          unit={sample.amount_unit || 'mg'}
           label="Amount"
-          units={['g', 'ml', 'mol']}
+          units={['mg', 'ml', 'mmol']}
           numeralFormat='0,0.00'
           convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChanged(unit, nextUnit, value)}
           onChange={(amount) => this.handleAmountChanged(amount)}

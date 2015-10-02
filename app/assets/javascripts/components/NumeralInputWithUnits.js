@@ -13,6 +13,14 @@ export default class NumeralInputWithUnits extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    let {value, unit} = nextProps;
+    this.setState({
+      unit: unit,
+      value: value
+    })
+  }
+
   _handleUnitSelect(nextUnit) {
     let {value, unit} = this.state;
     let convertedValue = value;
