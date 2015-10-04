@@ -6,6 +6,8 @@ class User < ActiveRecord::Base
 
   has_many :collections
 
+  validates_presence_of :first_name, :last_name, allow_blank: false
+
   def owns_collections?(collections)
     collections.pluck(:user_id).uniq == [id]
   end
