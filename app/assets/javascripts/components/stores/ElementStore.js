@@ -114,7 +114,7 @@ class ElementStore {
   }
 
   handleGenerateEmptySample(result) {
-    this.state.currentElement = new Sample;
+    this.state.currentElement = result;
   }
 
   handleFetchSamplesByCollectionId(result) {
