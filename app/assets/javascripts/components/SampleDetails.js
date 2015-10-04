@@ -269,7 +269,7 @@ export default class SampleDetails extends React.Component {
       return (
         <Input type="text" label="Molecule" ref="moleculeInput"
                buttonAfter={this.structureEditorButton(false)}
-               value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+               defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
         />
       )
     } else {
@@ -324,7 +324,7 @@ export default class SampleDetails extends React.Component {
     if(sample.is_scoped == false || sample.molecule.inchistring || sample.id == '_new_') {
       return (
         <Input type="text" label="InChI"
-               value={sample.molecule && (sample.molecule.inchistring)}
+               defaultValue={sample.molecule && (sample.molecule.inchistring)}
                disabled
         />
       )
@@ -342,7 +342,7 @@ export default class SampleDetails extends React.Component {
     if(sample.is_scoped == false || sample.molecule.molecular_weight || sample.id == '_new_') {
       return (
         <Input type="text" label="M. Weight"
-               value={sample.molecule && (sample.molecule.molecular_weight)}
+               defaultValue={sample.molecule && (sample.molecule.molecular_weight)}
                disabled
           />
       )
@@ -379,7 +379,7 @@ export default class SampleDetails extends React.Component {
     if(sample.is_scoped == false || sample.molecule.sum_formular || sample.id == '_new_') {
       return (
         <Input type="text" label="Formula"
-               value={sample.molecule && (sample.molecule.sum_formular)}
+               defaultValue={sample.molecule && (sample.molecule.sum_formular)}
                disabled
           />
       )
@@ -499,7 +499,7 @@ export default class SampleDetails extends React.Component {
     if(sample.is_scoped == false || sample.weight || sample.id == '_new_' ) {
       return (
         <Input type="text" label="Weight"
-               value={sample.weight}
+               defaultValue={sample.weight}
                disabled
           />
       )
@@ -517,7 +517,7 @@ export default class SampleDetails extends React.Component {
     if(sample.is_scoped == false || sample.volume || sample.id == '_new_' ) {
       return (
         <Input type="text" label="Volume"
-               value={sample.volume}
+               defaultValue={sample.volume}
                disabled
         />
       )
