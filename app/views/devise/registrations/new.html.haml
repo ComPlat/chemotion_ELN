@@ -7,6 +7,14 @@
       %br/
       = f.email_field :email, autofocus: true, class: 'form-control'
     .form-group.field
+      = f.label :first_name
+      %br/
+      = f.text_field :first_name, autofocus: true, class: 'form-control'
+    .form-group.field
+      = f.label :last_name
+      %br/
+      = f.text_field :last_name, autofocus: true, class: 'form-control'
+    .form-group.field
       = f.label :password
       - if @validatable
         %em

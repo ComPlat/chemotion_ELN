@@ -9,7 +9,7 @@ export default class UserAuth extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentUser: props.currentUser || {name: 'unkown'}
+      currentUser: props.currentUser || {name: 'unknown'}
     }
   }
 
@@ -27,7 +27,7 @@ export default class UserAuth extends Component {
       currentUser: state.currentUser
     });
   }
- 
+
   logout(){
     $.ajax({
       method: "DELETE",
@@ -45,7 +45,7 @@ export default class UserAuth extends Component {
     return (
       <span>
         <p className='navbar-text'>
-          {`Logged in as ${this.state.currentUser.name}.`}
+          {`Logged in as ${this.state.currentUser.name}`}
         </p>
         <a onClick={() => this.logout()} className='btn btn-primary navbar-btn'>Logout</a>
       </span>
