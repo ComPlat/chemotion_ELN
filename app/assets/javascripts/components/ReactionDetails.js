@@ -13,6 +13,9 @@ import UIActions from './actions/UIActions';
 import Aviator from 'aviator';
 import SVG from 'react-inlinesvg';
 
+import Reaction from './models/Reaction';
+import Sample from './models/Sample';
+
 export default class ReactionDetails extends React.Component {
   constructor(props) {
     super(props);
@@ -181,7 +184,12 @@ export default class ReactionDetails extends React.Component {
   dropSample(sample, materialGroup) {
     const {reaction} = this.props;
     const materials = reaction[materialGroup];
-    materials.push(sample);
+
+    let splitSample = Sample.buildChild(sample);
+    console.log("splitSample:")
+    console.dir(splitSample);
+
+    materials.push(splitSample);
     this.setState({reaction});
     this.updateReactionSvg();
   }

@@ -1,3 +1,5 @@
+import uuid from 'uuid';
+
 import Molecule from './Molecule';
 
 export default class Sample {
@@ -9,6 +11,17 @@ export default class Sample {
   // methods regarding sharing and sample detail levels
   isRestricted() {
     return this.is_restricted;
+  }
+
+  static buildChild(sample) {
+    Sample.counter += 1;
+    let splitSample = new Sample(sample)
+    splitSample.parent_id = sample.id;
+    splitSample.id = uuid.v1();
+    splitSample.name += "-" + Sample.counter;
+    splitSample.created_at = null;
+    splitSample.updated_at = null;
+    return splitSample;
   }
 
   get name() {
@@ -187,3 +200,5 @@ export default class Sample {
     this._molecule = new Molecule(molecule)
   }
 };
+
+Sample.counter = 0;
