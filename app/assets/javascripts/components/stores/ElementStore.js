@@ -60,6 +60,7 @@ class ElementStore {
 
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
+      handleUpdateScreen: ElementActions.updateScreen,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -163,6 +164,11 @@ class ElementStore {
 
   handleFetchScreensByCollectionId(result) {
     this.state.elements.screens = result;
+  }
+
+  handleUpdateScreen(screenId) {
+    ElementActions.fetchScreenById(screenId);
+    this.handleRefreshElements('screen');
   }
 
   // -- Reactions --

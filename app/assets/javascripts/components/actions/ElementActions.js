@@ -114,6 +114,19 @@ class ElementActions {
       });
   }
 
+  updateScreen(screen) {
+    const {wellplates} = screen;
+    delete screen.wellplates;
+    screen.wellplate_ids = wellplates.map(wellplate => wellplate.id );
+
+    ScreensFetcher.update(screen)
+      .then(result => {
+        this.dispatch(screen.id)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   createReactionLiterature(paramObj) {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {

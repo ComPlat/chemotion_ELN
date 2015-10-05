@@ -3,8 +3,8 @@ import 'whatwg-fetch';
 export default class ScreensFetcher {
   static fetchById(id) {
     let promise = fetch('/api/v1/screens/' + id + '.json', {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json()
       }).then((json) => {
@@ -15,12 +15,12 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}) {
+  static fetchByCollectionId(id, queryParams = {}) {
     let page = queryParams.page || 1;
     let api = id == 'all' ? `/api/v1/screens.json?page=${page}` : `/api/v1/screens.json?collection_id=${id}&page=${page}`;
     let promise = fetch(api, {
-        credentials: 'same-origin'
-      })
+      credentials: 'same-origin'
+    })
       .then((response) => {
         return response.json().then((json) => {
           return {
@@ -36,7 +36,26 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static update(paramObj) {
-    console.log('not implemented yet');
+  static update(screen) {
+    const {id, wellplate_ids, name, collaborator, result, conditions, requirements, description} = screen;
+    let promise = fetch('/api/v1/screens/' + id, {
+      credentials: 'same-origin',
+      method: 'put',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        collaborator,
+        result,
+        conditions,
+        requirements,
+        description,
+        wellplate_ids
+      })
+    });
+
+    return promise;
   }
 }

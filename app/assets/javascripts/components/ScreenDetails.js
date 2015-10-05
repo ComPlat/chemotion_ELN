@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {Input, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
+import ElementActions from './actions/ElementActions';
 import UIStore from './stores/UIStore';
 import Aviator from 'aviator';
 import ScreenWellplates from './ScreenWellplates';
@@ -8,24 +9,26 @@ import ScreenWellplates from './ScreenWellplates';
 export default class ScreenDetails extends Component {
   constructor(props) {
     super(props);
-    const {wellplates, name, collaborator, result, conditions, requirements, description} = props.screen;
+    const {screen} = props;
     this.state = {
-      wellplates,
-      name,
-      collaborator,
-      result,
-      conditions,
-      requirements,
-      description
+      ...screen
     };
   }
 
-  _submitFunction() {
-    //if(this.state.sample.id == '_new_') {
-    //  this.createSample();
-    //} else {
-    //  this.updateSample();
-    //}
+  componentWillReceiveProps(nextProps) {
+    const {screen} = nextProps;
+    this.state = {
+      ...screen
+    };
+  }
+
+  handleSubmit() {
+    const {id} = this.state;
+    if(id == '_new_') {
+      this.createSample();
+    } else {
+      ElementActions.updateScreen(this.state);
+    }
   }
 
   handleInputChange(type, event) {
@@ -56,19 +59,6 @@ export default class ScreenDetails extends Component {
     });
   }
 
-  _submitLabel() {
-    const {id} = this.state;
-    if (id == '_new_') {
-      return "Save Screen";
-    } else {
-      return "Update Screen";
-    }
-  }
-
-  screenIsValid() {
-
-  }
-
   closeDetails() {
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
@@ -89,7 +79,8 @@ export default class ScreenDetails extends Component {
 
   render() {
     const {screen} = this.props;
-    const {wellplates, name, collaborator, result, conditions, requirements, description} = this.state;
+    const {id, wellplates, name, collaborator, result, conditions, requirements, description} = this.state;
+    const submitLabel = (id == '_new_') ?"Save Screen" : "Update Screen";
     return (
       <div>
         <Panel header="Screen Details" bsStyle='primary'>
@@ -166,8 +157,7 @@ export default class ScreenDetails extends Component {
           </ListGroup>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => this.closeDetails()}>Back</Button>
-            <Button bsStyle="warning" onClick={() => this._submitFunction()}
-                    disabled={!this.screenIsValid()}>{this._submitLabel()}</Button>
+            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
         </Panel>
       </div>

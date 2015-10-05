@@ -35,6 +35,33 @@ module Chemotion
         end
       end
 
+      desc "Update screen by id"
+      params do
+        requires :id, type: Integer, desc: "screen id"
+        optional :name, type: String
+        optional :collaborator, type: String
+        optional :requirements, type: String
+        optional :conditions, type: String
+        optional :result, type: String
+        optional :description, type: String
+        optional :wellplate_ids, type: Array
+      end
+      route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Screen.find(params[:id])).update?
+        end
+
+        put do
+          attributes = declared(params, include_missing: false)
+          Screen.find(params[:id]).update(attributes)
+
+          Wellplate.all do |wellplate|
+            screen_id = (params[:wellplate_ids].include? wellplate.id) ? params[:id] : null;
+            wellplate.update(:screen_id)
+          end
+        end
+      end
+
     end
   end
 end
