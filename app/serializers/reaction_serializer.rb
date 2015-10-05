@@ -1,9 +1,9 @@
 class Material < Sample
-  attr_accessor :reference
+  attr_accessor :reference, :equivalent
 end
 
 class MaterialSerializer < SampleSerializer
-  attributes :reference
+  attributes :reference, :equivalent
 end
 
 class ReactionSerializer < ActiveModel::Serializer
@@ -48,6 +48,7 @@ class ReactionSerializer < ActiveModel::Serializer
         m = Material.new(reaction_material.sample.attributes)
         rma = reaction_materials_attributes[reaction_material.sample_id] || {}
         m.reference = rma['reference']
+        m.equivalent = rma['equivalent']
         m
       end
     end
