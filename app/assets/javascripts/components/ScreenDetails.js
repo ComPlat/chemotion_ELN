@@ -23,9 +23,13 @@ export default class ScreenDetails extends Component {
   }
 
   handleSubmit() {
-    const {id} = this.state;
-    if(id == '_new_') {
-      this.createSample();
+    const {currentCollectionId} = UIStore.getState();
+    const {state} = this;
+    if(state.id == '_new_') {
+      ElementActions.createScreen({
+        ...state,
+        collection_id: currentCollectionId
+    });
     } else {
       ElementActions.updateScreen(this.state);
     }

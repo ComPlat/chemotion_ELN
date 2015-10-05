@@ -39,36 +39,25 @@ export default class ContextActions extends React.Component {
     ElementActions.splitAsSubsamples(UIStore.getState())
   }
 
-  availableActions() {
-    // TODO später auch für reaktionen usw
-    // TODO replace dummy implementation
-
-    let uiState = UIStore.getState();
-
-    let isAllCollection = uiState.currentCollectionId == 'all'
-    if(this.state.sample.checkedIds.size == 0) {
-      return (
-        <ButtonGroup vertical block>
-          <Button onClick={e => this._createSample()} disabled={isAllCollection}>Create Sample</Button>
-          <Button disabled={isAllCollection}>Create Reaction</Button>
-          <Button disabled={isAllCollection}>Create Wellplate</Button>
-        </ButtonGroup>
-      )
-    } else {
-      return (
-        <ButtonGroup vertical block>
-          <Button onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</Button>
-          <Button disabled={isAllCollection}>Create Reaction</Button>
-          <Button disabled={isAllCollection}>Create Wellplate</Button>
-        </ButtonGroup>
-      )
-    }
+  createScreen() {
+    Aviator.navigate(`${this._collectionUrl()}/screen/new`);
   }
 
   render() {
+    const uiState = UIStore.getState();
+    const isAllCollection = uiState.currentCollectionId == 'all';
+    const sampleNode = (this.state.sample.checkedIds.size == 0) ?
+      <Button onClick={e => this._createSample()} disabled={isAllCollection}>Create Sample</Button> :
+      <Button onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</Button>;
+
     return (
       <div>
-        {this.availableActions()}
+        <ButtonGroup vertical block>
+          {sampleNode}
+          <Button disabled={isAllCollection}>Create Reaction</Button>
+          <Button disabled={isAllCollection}>Create Wellplate</Button>
+          <Button onClick={() => this.createScreen()} disabled={isAllCollection}>Create Screen</Button>
+        </ButtonGroup>
       </div>
     )
   }

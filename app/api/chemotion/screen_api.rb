@@ -12,11 +12,11 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).screens
-        else
-          # All collection of current_user
-          Screen.joins(:collections).where('collections.user_id = ?', current_user.id)
-        end.order("created_at DESC")
+                  Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).screens
+                else
+                  # All collection of current_user
+                  Screen.joins(:collections).where('collections.user_id = ?', current_user.id)
+                end.order("created_at DESC")
 
         paginate(scope)
       end
@@ -44,7 +44,7 @@ module Chemotion
         optional :conditions, type: String
         optional :result, type: String
         optional :description, type: String
-        optional :wellplate_ids, type: Array
+        requires :wellplate_ids, type: Array
       end
       route_param :id do
         before do
@@ -52,14 +52,60 @@ module Chemotion
         end
 
         put do
-          attributes = declared(params, include_missing: false)
-          Screen.find(params[:id]).update(attributes)
+          attributes = {
+              name: params[:name],
+              collaborator: params[:collaborator],
+              requirements: params[:requirements],
+              conditions: params[:conditions],
+              result: params[:result],
+              description: params[:description]
+          }
+          screen = Screen.find(params[:id])
+          screen.update(attributes)
 
-          Wellplate.all do |wellplate|
-            screen_id = (params[:wellplate_ids].include? wellplate.id) ? params[:id] : null;
-            wellplate.update(:screen_id)
+          Wellplate.all.each do |wellplate|
+            if (params[:wellplate_ids].include? wellplate.id)
+              wellplate.update(screen_id: params[:id])
+            elsif (params[:id] == wellplate.screen_id)
+              # remove wellplate from screen
+              wellplate.update(screen_id: nil)
+            end
+          end
+          screen
+        end
+      end
+
+      desc "Create a screen"
+      params do
+        requires :name, type: String
+        optional :collaborator, type: String
+        optional :requirements, type: String
+        optional :conditions, type: String
+        optional :result, type: String
+        optional :description, type: String
+        optional :collection_id, type: Integer
+        requires :wellplate_ids, type: Array
+      end
+      post do
+        attributes = {
+            name: params[:name],
+            collaborator: params[:collaborator],
+            requirements: params[:requirements],
+            conditions: params[:conditions],
+            result: params[:result],
+            description: params[:description]
+        }
+        screen = Screen.create(attributes)
+
+        collection = Collection.find(params[:collection_id])
+        CollectionsScreen.create(screen: screen, collection: collection)
+
+        Wellplate.all.each do |wellplate|
+          if (params[:wellplate_ids].include? wellplate.id)
+            wellplate.update(screen_id: screen.id)
           end
         end
+        screen
       end
 
     end

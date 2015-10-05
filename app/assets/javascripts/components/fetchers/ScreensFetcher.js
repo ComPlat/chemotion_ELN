@@ -54,8 +54,42 @@ export default class ScreensFetcher {
         description,
         wellplate_ids
       })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
     });
+    return promise;
+  }
 
+  static create(screen) {
+    const {collection_id, wellplate_ids, name, collaborator, result, conditions, requirements, description} = screen;
+    let promise = fetch('/api/v1/screens/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        collaborator,
+        result,
+        conditions,
+        requirements,
+        description,
+        wellplate_ids,
+        collection_id: collection_id
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
     return promise;
   }
 }

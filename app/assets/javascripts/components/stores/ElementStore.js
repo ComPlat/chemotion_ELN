@@ -61,11 +61,12 @@ class ElementStore {
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
       handleUpdateScreen: ElementActions.updateScreen,
+      handleCreateScreen: ElementActions.createScreen,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
-      handleGenerateEmptySample: ElementActions.generateEmptySample,
+      handleGenerateEmptyElement: [ElementActions.generateEmptyScreen, ElementActions.generateEmptySample],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
 
@@ -111,10 +112,6 @@ class ElementStore {
 
   handleFetchSampleById(result) {
     console.log(result)
-    this.state.currentElement = result;
-  }
-
-  handleGenerateEmptySample(result) {
     this.state.currentElement = result;
   }
 
@@ -166,8 +163,13 @@ class ElementStore {
     this.state.elements.screens = result;
   }
 
-  handleUpdateScreen(screenId) {
-    ElementActions.fetchScreenById(screenId);
+  handleUpdateScreen(screen) {
+    ElementActions.fetchScreenById(screen.id);
+    this.handleRefreshElements('screen');
+  }
+
+  handleCreateScreen(screen) {
+    ElementActions.fetchScreenById(screen.id);
     this.handleRefreshElements('screen');
   }
 
@@ -205,6 +207,10 @@ class ElementStore {
   }
 
   // -- Generic --
+
+  handleGenerateEmptyElement(result) {
+    this.state.currentElement = result;
+  }
 
   handleUnselectCurrentElement() {
     this.state.currentElement = null;
