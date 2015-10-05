@@ -44,7 +44,6 @@ gem 'pundit'
 gem 'awesome_print'
 
 # Chemrails
-gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
 gem 'httparty'
 gem 'chemrails', git: 'git://github.com/cominch/chemrails'
 
@@ -57,7 +56,16 @@ gem 'delayed_job_active_record'
 # required by cap3 delayed-job but has to be specified manually >_<
 gem 'daemons'
 
+group :production do
+  if ENV["RAILS_ENV"] == "production"
+    gem 'openbabel'
+  end
+end
+
 group :development, :test do
+  if ENV.fetch("RAILS_ENV", "development") == "development"
+    gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
+  end
   gem 'mailcatcher'
 
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
