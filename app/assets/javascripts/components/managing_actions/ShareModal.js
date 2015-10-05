@@ -64,6 +64,11 @@ export default class ShareModal extends React.Component {
         all: uiState.wellplate.checkedAll,
         included_ids: uiState.wellplate.checkedIds,
         excluded_ids: uiState.wellplate.uncheckedIds
+      },
+      screens: {
+        all: uiState.screen.checkedAll,
+        included_ids: uiState.screen.checkedIds,
+        excluded_ids: uiState.screen.uncheckedIds
       }
     };
     return filterParams;

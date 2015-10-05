@@ -8,6 +8,8 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
   let(:reaction_2)  { create(:reaction) }
   let(:wellplate_1) { create(:wellplate) }
   let(:wellplate_2) { create(:wellplate) }
+  let(:screen_1)    { create(:screen) }
+  let(:screen_2)    { create(:screen) }
 
   let(:params) {
     {
@@ -24,7 +26,8 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       },
       sample_ids: [sample_1.id, sample_2.id],
       reaction_ids: [reaction_1.id, reaction_2.id],
-      wellplate_ids: [wellplate_1.id, wellplate_2.id]
+      wellplate_ids: [wellplate_1.id, wellplate_2.id],
+      screen_ids: [screen_1.id]
     }
   }
 
@@ -59,6 +62,11 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
     it 'creates wellplate associations according to given params' do
       associated_wellplate_ids = Collection.find_by(label: 'test').wellplate_ids
       expect(associated_wellplate_ids).to match_array([wellplate_1.id, wellplate_2.id])
+    end
+
+    it 'creates screen associations according to given params' do
+      associated_screen_ids = Collection.find_by(label: 'test').screen_ids
+      expect(associated_screen_ids).to match_array([screen_1.id])
     end
   end
 end

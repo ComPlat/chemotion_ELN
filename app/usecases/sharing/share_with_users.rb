@@ -14,6 +14,8 @@ module Usecases
                     elements_filter.fetch(:reaction, {})
                   when 'Wellplate'
                     elements_filter.fetch(:wellplate, {})
+                  when 'Screen'
+                    elements_filter.fetch(:screen, {})
                   else
                     {}
                   end
@@ -43,6 +45,7 @@ module Usecases
             sample_ids: getElementIds(elements_filter, Sample),
             reaction_ids: getElementIds(elements_filter, Reaction),
             wellplate_ids: getElementIds(elements_filter, Wellplate),
+            screen_ids: getElementIds(elements_filter, Screen),
             current_collection_id: current_collection_id
           }
 

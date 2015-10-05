@@ -115,6 +115,7 @@ describe Chemotion::CollectionAPI do
           label: 'test'
         }
       }
+
       it 'should be able to create new collections' do
         collection = Collection.find_by(label: 'test')
         expect(collection).to be_nil
@@ -233,14 +234,16 @@ describe Chemotion::CollectionAPI do
     describe 'POST /api/v1/collections/shared' do
       describe 'sharing' do
         context 'with appropriate permissions' do
-          let(:c1) { create(:collection, user: user) }
-          let(:c2) { create(:collection, user: user, is_shared: true, permission_level: 2) }
-          let(:s1) { create(:sample) }
-          let(:s2) { create(:sample) }
-          let(:r1) { create(:reaction) }
-          let(:r2) { create(:reaction) }
-          let(:w1) { create(:wellplate) }
-          let(:w2) { create(:wellplate) }
+          let(:c1)  { create(:collection, user: user) }
+          let(:c2)  { create(:collection, user: user, is_shared: true, permission_level: 2) }
+          let(:s1)  { create(:sample) }
+          let(:s2)  { create(:sample) }
+          let(:r1)  { create(:reaction) }
+          let(:r2)  { create(:reaction) }
+          let(:w1)  { create(:wellplate) }
+          let(:w2)  { create(:wellplate) }
+          let(:sc1) { create(:screen) }
+          let(:sc2) { create(:screen) }
 
           let!(:params) {
             {
@@ -262,6 +265,11 @@ describe Chemotion::CollectionAPI do
                   all: false,
                   included_ids: [w1.id],
                   excluded_ids: []
+                },
+                screen: {
+                  all: false,
+                  included_ids: [sc1.id, sc2.id],
+                  excluded_ids: []
                 }
               }
             }
@@ -274,6 +282,8 @@ describe Chemotion::CollectionAPI do
             CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
             CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
             CollectionsWellplate.create!(collection_id: c2.id, wellplate_id: w2.id)
+            CollectionsScreen.create!(collection_id: c1.id, screen_id: sc1.id)
+            CollectionsScreen.create!(collection_id: c1.id, screen_id: sc2.id)
 
             post '/api/v1/collections/shared', params
           end
@@ -288,6 +298,7 @@ describe Chemotion::CollectionAPI do
             expect(c.samples).to match_array [s1, s2]
             expect(c.reactions).to match_array [r1]
             expect(c.wellplates).to match_array [w1]
+            expect(c.screens).to match_array [sc1, sc2]
           end
         end
 
