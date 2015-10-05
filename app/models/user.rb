@@ -5,6 +5,9 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
 
   has_many :collections
+  has_many :samples, through: :collections
+  has_many :reactions, through: :collections
+  has_many :wellplates, through: :collections
 
   validates_presence_of :first_name, :last_name, allow_blank: false
 

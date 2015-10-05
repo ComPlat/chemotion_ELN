@@ -12,7 +12,7 @@ module Chemotion
           end
 
           post do
-            Collection.find(params[:id]).update(is_shared: false)
+            Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id)).execute!
           end
         end
       end
