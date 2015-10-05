@@ -54,6 +54,9 @@ gem "font-awesome-rails"
 # Email notifications and so on
 gem 'delayed_job_active_record'
 
+# required by cap3 delayed-job but has to be specified manually >_<
+gem 'daemons'
+
 group :development, :test do
   gem 'mailcatcher'
 
@@ -81,8 +84,6 @@ group :development, :test do
   gem 'capistrano-rails'
   gem 'capistrano-npm'
   gem 'capistrano3-delayed-job'
-  # required by cap3 delayed-job but has to be specified manually >_<
-  gem 'daemons'
 end
 
 group :test do
