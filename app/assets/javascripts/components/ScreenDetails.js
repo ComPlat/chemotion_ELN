@@ -3,6 +3,7 @@ import {Input, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'rea
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 import Aviator from 'aviator';
 import ScreenWellplates from './ScreenWellplates';
 import ElementStore from './stores/ElementStore';

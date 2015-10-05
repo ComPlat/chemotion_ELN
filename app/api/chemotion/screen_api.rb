@@ -12,11 +12,11 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-                  Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).screens
-                else
-                  # All collection of current_user
-                  Screen.joins(:collections).where('collections.user_id = ?', current_user.id)
-                end.order("created_at DESC")
+          Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).screens
+        else
+          # All collection of current_user
+          Screen.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
+        end.order("created_at DESC")
 
         paginate(scope)
       end

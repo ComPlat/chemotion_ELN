@@ -26,22 +26,6 @@ export default class WellplateDetails extends Component {
     console.log(wells);
   }
 
-  componentDidMount() {
-    ElementStore.listen(this.onChange.bind(this));
-  }
-
-  componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
-  }
-
-  onChange(state) {
-    if(!state.currentElement || state.currentElement.type == 'wellplate') {
-      this.setState({
-        wellplate: state.currentElement
-      });
-    }
-  }
-
   componentWillReceiveProps(nextProps) {
     const {id, name, wells, size, description} = nextProps.wellplate;
     this.setState({
@@ -124,7 +108,7 @@ export default class WellplateDetails extends Component {
   render() {
     const {wellplate} = this.props;
     const {wells, name, size, description} = this.state;
-    const submitLabel = (wellplate.id == '_new_') ? "Save Wellplate" : "Update Wellplate";
+    const submitLabel = (wellplate.id == '_new_') ? "Create" : "Save";
     return (
       <div key={wellplate.id}>
         <Panel header="Wellplate Details" bsStyle='primary'>
@@ -193,7 +177,7 @@ export default class WellplateDetails extends Component {
                   bsStyle="primary"
                   onClick={() => this.closeDetails()}
                   >
-                  Back
+                  Close
                 </Button>
                 <Button
                   bsStyle="warning"
