@@ -181,6 +181,16 @@ module Chemotion
             collection_id: current_collection_id
           ).update_all(collection_id: params[:collection_id])
 
+          screen_ids = Screen.for_ui_state_with_collection(
+            ui_state[:screen],
+            CollectionsScreen,
+            current_collection_id
+          )
+
+          CollectionsScreen.where(
+            screen_id: screen_ids,
+            collection_id: current_collection_id
+          ).update_all(collection_id: params[:collection_id])
         end
 
         desc "Assign a collection to a set of elements by UI state"
@@ -217,6 +227,13 @@ module Chemotion
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           end
 
+          Screen.for_ui_state_with_collection(
+            ui_state[:screen],
+            CollectionsScreen,
+            current_collection_id
+          ).each do |id|
+            CollectionsScreen.find_or_create_by(screen_id: id, collection_id: collection_id)
+          end
         end
 
         desc "Remove from a collection a set of elements by UI state"
@@ -260,6 +277,16 @@ module Chemotion
             collection_id: current_collection_id
           ).delete_all
 
+          screen_ids = Screen.for_ui_state_with_collection(
+            ui_state[:screen],
+            CollectionsScreen,
+            current_collection_id
+          )
+
+          CollectionsScreen.where(
+            screen_id: screen_ids,
+            collection_id: current_collection_id
+          ).delete_all
         end
 
       end

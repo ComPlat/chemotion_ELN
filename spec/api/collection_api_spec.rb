@@ -132,6 +132,7 @@ describe Chemotion::CollectionAPI do
       let(:r2) { create(:reaction) }
       let(:w1) { create(:wellplate) }
       let(:w2) { create(:wellplate) }
+      let(:sc1) { create(:screen) }
 
       let!(:params) {
         {
@@ -151,6 +152,11 @@ describe Chemotion::CollectionAPI do
               included_ids: [w1.id],
               excluded_ids: []
             },
+            screen: {
+              all: nil,
+              included_ids: [sc1.id],
+              excluded_ids: []
+            },
             currentCollectionId: c1.id
           },
           collection_id: c2.id
@@ -164,6 +170,7 @@ describe Chemotion::CollectionAPI do
         CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
         CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
         CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w2.id)
+        CollectionsScreen.create!(collection_id: c1.id, screen_id: sc1.id)
         c1.reload
         c2.reload
       end
@@ -176,9 +183,11 @@ describe Chemotion::CollectionAPI do
           expect(c1.samples).to match_array []
           expect(c1.reactions).to match_array [r2]
           expect(c1.wellplates).to match_array [w2]
+          expect(c1.screens).to match_array []
           expect(c2.samples).to match_array [s1, s2]
           expect(c2.reactions).to match_array [r1]
           expect(c2.wellplates).to match_array [w1]
+          expect(c2.screens).to match_array [sc1]
         end
       end
 
@@ -190,9 +199,11 @@ describe Chemotion::CollectionAPI do
           expect(c1.samples).to match_array [s1, s2]
           expect(c1.reactions).to match_array [r1, r2]
           expect(c1.wellplates).to match_array [w1, w2]
+          expect(c1.screens).to match_array [sc1]
           expect(c2.samples).to match_array [s1, s2]
           expect(c2.reactions).to match_array [r1]
           expect(c2.wellplates).to match_array [w1]
+          expect(c2.screens).to match_array [sc1]
         end
       end
 
@@ -203,6 +214,7 @@ describe Chemotion::CollectionAPI do
           expect(c1.samples).to match_array []
           expect(c1.reactions).to match_array [r2]
           expect(c1.wellplates).to match_array [w2]
+          expect(c2.screens).to match_array []
         end
       end
 

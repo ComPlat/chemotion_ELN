@@ -100,6 +100,11 @@ export default class CollectionManagementModal extends React.Component {
         included_ids: this.state.ui_state.wellplate.checkedIds,
         excluded_ids: this.state.ui_state.wellplate.uncheckedIds
       },
+      screen: {
+        all: this.state.ui_state.screen.checkedAll,
+        included_ids: this.state.ui_state.screen.checkedIds,
+        excluded_ids: this.state.ui_state.screen.uncheckedIds
+      },
       currentCollectionId: this.state.ui_state.currentCollectionId
     }
 
