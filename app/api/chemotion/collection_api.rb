@@ -75,6 +75,12 @@ module Chemotion
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
+
+            optional :screen, type: Hash do
+              optional :all, type: Boolean
+              optional :included_ids, type: Array
+              optional :excluded_ids, type: Array
+            end
           end
           requires :collection_attributes, type: Hash do
             requires :permission_level, type: Integer
@@ -92,16 +98,19 @@ module Chemotion
           sample_ids = usecase.getElementIds(params[:elements_filter], Sample)
           reaction_ids = usecase.getElementIds(params[:elements_filter], Reaction)
           wellplate_ids = usecase.getElementIds(params[:elements_filter], Wellplate)
+          screen_ids = usecase.getElementIds(params[:elements_filter], Screen)
 
           top_secret_sample = Sample.where(id: sample_ids).pluck(:is_top_secret).any?
           top_secret_reaction = Reaction.where(id: reaction_ids).flat_map(&:samples).map(&:is_top_secret).any?
           top_secret_wellplate = Wellplate.where(id: wellplate_ids).flat_map(&:samples).map(&:is_top_secret).any?
+          top_secret_screen = Screen.where(id: screen_ids).flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
 
-          is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction
+          is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
 
           share_samples = ElementsPolicy.new(current_user, Sample.where(id: sample_ids)).share?
           share_reactions = ElementsPolicy.new(current_user, Reaction.where(id: reaction_ids)).share?
           share_wellplates = ElementsPolicy.new(current_user, Wellplate.where(id: wellplate_ids)).share?
+          # TODO share_screens wenn anforderungen bekannt
 
           sharing_allowed = share_samples && share_reactions && share_wellplates
 
@@ -172,6 +181,16 @@ module Chemotion
             collection_id: current_collection_id
           ).update_all(collection_id: params[:collection_id])
 
+          screen_ids = Screen.for_ui_state_with_collection(
+            ui_state[:screen],
+            CollectionsScreen,
+            current_collection_id
+          )
+
+          CollectionsScreen.where(
+            screen_id: screen_ids,
+            collection_id: current_collection_id
+          ).update_all(collection_id: params[:collection_id])
         end
 
         desc "Assign a collection to a set of elements by UI state"
@@ -208,6 +227,13 @@ module Chemotion
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           end
 
+          Screen.for_ui_state_with_collection(
+            ui_state[:screen],
+            CollectionsScreen,
+            current_collection_id
+          ).each do |id|
+            CollectionsScreen.find_or_create_by(screen_id: id, collection_id: collection_id)
+          end
         end
 
         desc "Remove from a collection a set of elements by UI state"
@@ -251,6 +277,16 @@ module Chemotion
             collection_id: current_collection_id
           ).delete_all
 
+          screen_ids = Screen.for_ui_state_with_collection(
+            ui_state[:screen],
+            CollectionsScreen,
+            current_collection_id
+          )
+
+          CollectionsScreen.where(
+            screen_id: screen_ids,
+            collection_id: current_collection_id
+          ).delete_all
         end
 
       end

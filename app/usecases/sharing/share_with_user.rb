@@ -26,6 +26,10 @@ module Usecases
             CollectionsWellplate.create(collection_id: c.id, wellplate_id: wellplate_id)
           end
 
+          @params.fetch(:screen_ids, []).each do |screen_id|
+            CollectionsScreen.create(collection_id: c.id, screen_id: screen_id)
+          end
+
           SendSharingNotificationJob.perform_later(@user, '')
         end
       end
