@@ -152,6 +152,7 @@ class ElementActions {
       id: '_new_',
       type: 'sample',
       name: 'New Sample',
+      external_label: '',
       amount_value: 0,
       amount_unit: 'g',
       description: '',

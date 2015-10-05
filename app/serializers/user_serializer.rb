@@ -2,7 +2,7 @@ class UserSerializer < ActiveModel::Serializer
   attributes :id, :name, :initials
 
   def name
-    "#{object.first_name} #{object.last_name}"
+    object.name
   end
 
   def initials

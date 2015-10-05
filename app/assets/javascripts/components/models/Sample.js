@@ -6,6 +6,11 @@ export default class Sample {
     Object.assign(this, args);
   }
 
+  // methods regarding sharing and sample detail levels
+  isRestricted() {
+    return this.is_restricted;
+  }
+
   get name() {
     return this._name
   }
@@ -14,10 +19,42 @@ export default class Sample {
     this._name = name
   }
 
+  get external_label() {
+    return this._external_label;
+  }
+
+  set external_label(label) {
+    this._external_label = label;
+  }
+
+  get location() {
+    return this._location;
+  }
+
+  set location(location) {
+    this._location = location;
+  }
+
+  get description() {
+    return this._description;
+  }
+
+  set description(description) {
+    this._description = description;
+  }
+
+  get impurities() {
+    return this._impurities;
+  }
+
+  set impurities(impurities) {
+    this._impurities = impurities;
+  }
+
   get amount() {
     return({
-      value: amount_value,
-      unit: amount_unit
+      value: this.amount_value,
+      unit: this.amount_unit
     })
   }
 
@@ -66,11 +103,17 @@ export default class Sample {
         return amount_mg;
         break;
       case 'ml':
-        return amount_mg / this.molecule_density;
-        break;
+        let molecule_density = this.molecule_density;
+        if(molecule_density) {
+          return amount_mg / this.molecule_density;
+          break;
+        }
       case 'mmol':
-        return amount_mg * this.purity / this.molecule_molecular_weight;
-        break;
+        let molecule_molecular_weight = this.molecule_molecular_weight
+        if (molecule_molecular_weight) {
+          return amount_mg * this.purity / molecule_molecular_weight;
+          break;
+        }
       default:
         return amount_mg
     }
@@ -96,8 +139,36 @@ export default class Sample {
     return this.molecule && this.molecule.density || 1.0
   }
 
+  set molecule_density(density) {
+    this.molecule.density = density;
+  }
+
   get molecule_molecular_weight() {
     return this.molecule && this.molecule.molecular_weight
+  }
+
+  get molecule_formula() {
+    return this.molecule && this.molecule.sum_formular;
+  }
+
+  get molecule_inchistring() {
+    return this.molecule && this.molecule.inchistring;
+  }
+
+  get molecule_boiling_point() {
+    return this.molecule && this.molecule.boiling_point;
+  }
+
+  set molecule_boiling_point(bp) {
+    this.molecule.boiling_point = bp;
+  }
+
+  get molecule_melting_point() {
+    return this.molecule && this.molecule.melting_point;
+  }
+
+  set molecule_melting_point(mp) {
+    this.molecule.melting_point = mp;
   }
 
   get purity() {
@@ -115,5 +186,4 @@ export default class Sample {
   set molecule(molecule) {
     this._molecule = new Molecule(molecule)
   }
-
 };
