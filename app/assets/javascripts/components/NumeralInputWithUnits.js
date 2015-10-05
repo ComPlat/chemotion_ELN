@@ -82,5 +82,5 @@ export default class NumeralInputWithUnits extends Component {
 NumeralInputWithUnits.defaultProps = {
   value: 0,
   numeralFormat: '',
-  units: ['']
+  units: []
 };

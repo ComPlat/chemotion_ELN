@@ -11,9 +11,11 @@ export default class MaterialGroup extends Component {
           <th width="5%"></th>
           <th width="5%">Ref</th>
           <th width="20%">Name</th>
-          <th width="20%">Molecule</th>
-          <th width="25%">Amount</th>
-          <th width="20%">Equi</th>
+          <th width="15%">Molecule</th>
+          <th width="15%">mg</th>
+          <th width="15%">ml</th>
+          <th width="15%">mmol</th>
+          <th width="10%">Equi</th>
           <th width="5%"></th>
           </thead>
           <tbody>

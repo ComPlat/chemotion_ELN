@@ -9,6 +9,10 @@ import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import UIActions from '../actions/UIActions';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 
+import Molecule from '../models/Molecule';
+import Sample from '../models/Sample';
+import Reaction from '../models/Reaction';
+
 class ElementActions {
 
   fetchSampleById(id) {
@@ -68,7 +72,7 @@ class ElementActions {
   fetchReactionById(id) {
     ReactionsFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result.reaction);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -144,7 +148,7 @@ class ElementActions {
   }
 
   generateEmptySample() {
-    let sample = {
+    let sample = new Sample({
       id: '_new_',
       type: 'sample',
       name: 'New Sample',
@@ -157,7 +161,7 @@ class ElementActions {
       location: '',
       molfile: '',
       molecule: {}
-    }
+    })
     this.dispatch(sample)
   }
 

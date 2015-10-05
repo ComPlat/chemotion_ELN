@@ -45,17 +45,37 @@ class Material extends Component {
       </td>
       <td>{material.name}</td>
       <td>{material.molecule.sum_formular}</td>
-      <td className="padding-right">
+
+      <td>
         <NumeralInputWithUnits
           key={material.id}
-          value={material.amount_value}
-          unit={material.amount_unit || 'mg'}
-          units={['mg', 'ml', 'mmol']}
-          numeralFormat='0,0.00'
-          convertValueFromUnitToNextUnit={(unit, nextUnit, value) => this.handleUnitChange(unit, nextUnit, value)}
+          value={material.amount_mg}
+          unit='mg'
+          numeralFormat='0,0.0000'
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
+
+      <td>
+        <NumeralInputWithUnits
+          key={material.id}
+          value={material.amount_ml}
+          unit='ml'
+          numeralFormat='0,0.0000'
+          onChange={(amount) => this.handleAmountChange(amount)}
+        />
+      </td>
+
+      <td>
+        <NumeralInputWithUnits
+          key={material.id}
+          value={material.amount_mmol}
+          unit='mmol'
+          numeralFormat='0,0.0000'
+          onChange={(amount) => this.handleAmountChange(amount)}
+        />
+      </td>
+
       <td className="padding-right">
         <Input
           type="text"

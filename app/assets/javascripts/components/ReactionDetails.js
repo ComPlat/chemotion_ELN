@@ -73,28 +73,28 @@ export default class ReactionDetails extends React.Component {
 
   updatedReactionForAmountChange(changeEvent) {
     let {sampleID, amount} = changeEvent;
-    let sample = this.findSampleById(sampleID);
+    let updatedSample = this.findSampleById(sampleID);
 
-    sample.amount_value = amount.value;
-    sample.amount_unit = amount.unit;
+    // normalize to milligram
+    updatedSample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
 
-    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), sample)
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
 
   updatedReactionForEquivalentChange(changeEvent) {
     let {sampleID, equivalent} = changeEvent;
-    let sample = this.findSampleById(sampleID);
+    let updatedSample = this.findSampleById(sampleID);
 
-    sample.equivalent = equivalent;
+    updatedSample.equivalent = equivalent;
 
-    return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), sample)
+    return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample)
   }
 
-  updatedReactionWithSample(updateFunction, sample) {
+  updatedReactionWithSample(updateFunction, updatedSample) {
     let {reaction} = this.state;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, sample);
-    reaction.reactants = updateFunction(reaction.reactants, sample);
-    reaction.products = updateFunction(reaction.products, sample);
+    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample);
+    reaction.reactants = updateFunction(reaction.reactants, updatedSample);
+    reaction.products = updateFunction(reaction.products, updatedSample);
     return reaction;
   }
 
@@ -111,21 +111,23 @@ export default class ReactionDetails extends React.Component {
 
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
-        sample.amount_value = updatedSample.amount_value;
-        sample.amount_unit = updatedSample.amount_unit;
 
-        if (referenceSample) {
-          if (! updatedSample.reference && referenceSample.amount_value) {
-            sample.equivalent = sample.amount_value / referenceSample.amount_value;
+        sample.setAmountAndNormalizeToMilligram(updatedSample.amount_value, updatedSample.amount_unit);
+
+
+        if(referenceSample) {
+          if(!updatedSample.reference && referenceSample.amount_value) {
+            sample.equivalent = sample.amount_mmol / referenceSample.amount_mmol;
           } else {
             sample.equivalent = 1.0;
           }
         }
       }
       else {
-        if (updatedSample.reference) {
-          if (sample.equivalent) {
-            sample.amount_value = sample.equivalent * updatedSample.amount_value;
+
+        if(updatedSample.reference) {
+          if(sample.equivalent) {
+            sample.setAmountAndNormalizeToMilligram(sample.equivalent * updatedSample.amount_mmol, 'mmol');
           }
         }
       }
@@ -139,11 +141,11 @@ export default class ReactionDetails extends React.Component {
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
-        if (referenceSample && referenceSample.amount_value) {
-          sample.amount_value = updatedSample.equivalent * referenceSample.amount_value;
+        if(referenceSample && referenceSample.amount_value) {
+          sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * referenceSample.amount_mmol, 'mmol');
         }
-        else if (sample.amount_value) {
-          sample.amount_value = updatedSample.equivalent * sample.amount_value;
+        else if(sample.amount_value) {
+          sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * sample.amount_mmol, 'mmol');
         }
       }
       return sample;
@@ -157,10 +159,10 @@ export default class ReactionDetails extends React.Component {
         sample.reference = true;
       }
       else {
-        if (sample.amount_value) {
-          let referenceAmount = referenceSample.amount_value;
-          if (referenceSample && referenceAmount) {
-            sample.equivalent = sample.amount_value / referenceAmount;
+        if(sample.amount_value) {
+          let referenceAmount = referenceSample.amount_mmol;
+          if(referenceSample && referenceAmount) {
+            sample.equivalent = sample.amount_mmol / referenceAmount;
           }
         }
         sample.reference = false;
@@ -245,11 +247,12 @@ export default class ReactionDetails extends React.Component {
     const svgPath = (reaction.reactionSvg) ? "/images/reactions/" + reaction.reactionSvg : "";
     const svgContainerStyle = {
       position: 'relative',
-      height: 0,
-      width: '100%',
+      //height: 0,
+      //width: '100%',
       padding: 0,
-      paddingBottom: '50%'
+      paddingBottom: '30%'
     };
+
     return (
       <div>
         <Panel header="Reaction Details" bsStyle='primary'>
@@ -261,7 +264,7 @@ export default class ReactionDetails extends React.Component {
               </td>
               <td width="70%">
                 <div style={svgContainerStyle}>
-                  <SVG key={reaction.reactionSvg} src={svgPath}/>
+                  <SVG key={reaction.reactionSvg} src={svgPath} className="molecule-small"/>
                 </div>
               </td>
             </tr>
