@@ -88,6 +88,8 @@ GEM
     capistrano-rvm (0.1.2)
       capistrano (~> 3.0)
       sshkit (~> 1.2)
+    capistrano3-delayed-job (1.4.1)
+      capistrano (>= 3.0.0)
     celluloid (0.16.0)
       timers (~> 4.0.0)
     coercible (1.0.0)
@@ -340,6 +342,7 @@ DEPENDENCIES
   capistrano-npm
   capistrano-rails
   capistrano-rvm
+  capistrano3-delayed-job
   chemrails!
   database_cleaner
   delayed_job_active_record
