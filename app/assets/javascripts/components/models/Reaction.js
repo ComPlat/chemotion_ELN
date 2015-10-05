@@ -11,7 +11,7 @@ export default class Reaction {
   }
 
   set starting_materials(samples) {
-    this._starting_materials = samples.map(s => new Sample(s))
+    this._starting_materials = samples.map(s => new Sample(s));
   }
 
   get reactants() {
@@ -29,6 +29,5 @@ export default class Reaction {
   set products(samples) {
     this._products = samples.map(s => new Sample(s))
   }
-
 
 }

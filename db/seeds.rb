@@ -140,7 +140,7 @@ reaction_5 = Reaction.create(name: 'Reaction 5')
 reaction_6 = Reaction.create(name: 'Reaction 6')
 
 # associate samples with reactions
-ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1)
+ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1, reference: true)
 ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2)
 ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3)
 

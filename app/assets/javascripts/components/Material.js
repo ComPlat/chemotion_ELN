@@ -40,6 +40,7 @@ class Material extends Component {
         <input
           type="radio"
           name="reference"
+          checked={material.reference}
           onClick={event => this.handleReferenceChange(event)}
         />
       </td>
@@ -80,7 +81,7 @@ class Material extends Component {
         <Input
           type="text"
           value={material.equivalent}
-          disabled={material.reference}
+          disabled={material.reference && material.equivalent}
           onChange={(e) => this.handleEquivalentChange(e)}
         />
       </td>
