@@ -27,7 +27,7 @@ export default class Wellplate extends Component {
     const {handleWellsChange, wells} = this.props;
     const wellId = wells.indexOf(well);
     wells[wellId] = {
-      ...wells[wellId],
+      ...well,
       sample
     };
     handleWellsChange(wells);
@@ -40,13 +40,13 @@ export default class Wellplate extends Component {
   }
 
   showOverlay(key, well) {
-    if (well.sample) {
+    //if (well.sample) {
       this.setState({
         showOverlay: true,
         overlayTarget: key,
         overlayWell: well
       });
-    }
+    //}
   }
 
   toggleOverlay(key, well) {

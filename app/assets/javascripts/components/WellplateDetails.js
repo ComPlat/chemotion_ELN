@@ -14,7 +14,7 @@ export default class WellplateDetails extends Component {
       name,
       size,
       description,
-      wells: this.getWellsAndPlaceholders(wells, size)
+      wells: this.initWells(wells, size)
     };
   }
 
@@ -24,28 +24,31 @@ export default class WellplateDetails extends Component {
       name,
       size,
       description,
-      wells: this.getWellsAndPlaceholders(wells, size)
+      wells: this.initWells(wells, size)
     });
   }
 
-  getWellsAndPlaceholders(wells, size) {
+  initWells(wells, size) {
     const neededPlaceholders = size - wells.length;
-    let placeholders = Array(neededPlaceholders).fill({});
-    const newWells = wells.concat(placeholders);
-    return this.calculateWellPositions(newWells);
+    const placeholders = Array(neededPlaceholders).fill({});
+    wells = wells.concat(placeholders);
+    return wells.map((well, key) => this.initWell(well, key));
   }
 
-  calculateWellPositions(wells) {
-    return wells.map((well, key) => {
-      let remainder = (key + 1) % cols;
-      return {
-        ...well,
-        position: {
-          x: (remainder == 0) ? cols : remainder,
-          y: Math.floor(key / cols) + 1
-        }
-      }
-    });
+  initWell(well, key) {
+    return {
+      ...well,
+      position: this.calculatePositionOfWell(key),
+      readout: ""
+    }
+  }
+
+  calculatePositionOfWell(key) {
+    let remainder = (key + 1) % cols;
+    return {
+      x: (remainder == 0) ? cols : remainder,
+      y: Math.floor(key / cols) + 1
+    };
   }
 
   submitFunction() {
@@ -58,6 +61,7 @@ export default class WellplateDetails extends Component {
 
   handleWellsChange(wells) {
     this.setState({wells});
+    //console.log(wells);
   }
 
   handleInputChange(type, event) {
@@ -79,8 +83,6 @@ export default class WellplateDetails extends Component {
     });
   }
 
-  // TODO move forms to own components
-  // TODO tab pane-state in ui-store?
   render() {
     const {wellplate} = this.props;
     const {wells, name, size, description} = this.state;
@@ -139,7 +141,10 @@ export default class WellplateDetails extends Component {
                 </TabPane>
                 <TabPane eventKey={2} tab={'List'}>
                   <Well>
-                    <WellplateList wells={wells}/>
+                    <WellplateList
+                      wells={wells}
+                      handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                      />
                   </Well>
                 </TabPane>
               </TabbedArea>

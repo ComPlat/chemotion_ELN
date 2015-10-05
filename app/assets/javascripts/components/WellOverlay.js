@@ -1,28 +1,32 @@
 import React, {Component} from 'react';
-import {Popover, Overlay} from 'react-bootstrap';
+import {Popover, Overlay, Table} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
-const style = {
-  width: 280,
-  height: 200
-};
 
 export default class WellOverlay extends Component {
   render() {
     const {show, well, target, handleClose} = this.props;
-    const {sample} = well;
-    let title = '';
-    let text = '';
+    const {sample, readout} = well;
+    const style = {
+      width: 240,
+      height: 20,
+      textAlign: 'center'
+    };
+    let title = "Empty";
+    let text = "";
+    let readoutNode = "";
     if (sample) {
       const {name, molecule} = sample;
-      title = name;
       const svgPath = `/images/molecules/${molecule.molecule_svg_file}`;
-      text = (
-        <div>
-          <SVG className="molecule-mid" src={svgPath}/>
-          <strong>{molecule.sum_formular}</strong>
-        </div>
-      );
+      title = name + " : " + molecule.sum_formular;
+      style.height = 220;
+      text = <div><SVG className="molecule-mid" src={svgPath}/><br/></div>;
+    }
+    if(readout != ""){
+      style.height = style.height + 80;
+      readoutNode = <div style={{width:"240px", textAlign: 'left'}}>
+        <strong>Readout: </strong>{readout}
+      </div>;
     }
     return (
       <div>
@@ -34,8 +38,9 @@ export default class WellOverlay extends Component {
           >
           <Popover title={title}>
             <div style={style}>
-            {text}
-              </div>
+              {text}
+              {readoutNode}
+            </div>
           </Popover>
         </Overlay>
       </div>
