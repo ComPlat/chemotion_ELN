@@ -24,7 +24,10 @@ describe Chemotion::CollectionAPI do
     describe 'POST /api/v1/collections/take_ownership' do
       context 'with appropriate permissions' do
         let!(:c1) { create(:collection, user: user) }
-        let!(:c2) { create(:collection, user: user, is_shared: true, permission_level: 4) }
+        let(:s)   { create(:sample) }
+        let(:r)   { create(:reaction) }
+        let(:w)   { create(:wellplate) }
+        let!(:c2) { create(:collection, user: user, is_shared: true, shared_by_id: u2.id, permission_level: 4, parent: c1) }
 
         describe 'take ownership of c1' do
           before { post "/api/v1/collections/take_ownership/#{c1.id}" }
@@ -35,10 +38,26 @@ describe Chemotion::CollectionAPI do
         end
 
         describe 'take ownership of c2' do
-          before { post "/api/v1/collections/take_ownership/#{c2.id}" }
+          before do
+            CollectionsSample.create!(sample: s, collection: c1)
+            CollectionsSample.create!(sample: s, collection: c2)
+            CollectionsReaction.create!(reaction: r, collection: c1)
+            CollectionsReaction.create!(reaction: r, collection: c2)
+            CollectionsWellplate.create!(wellplate: w, collection: c1)
+            CollectionsWellplate.create!(wellplate: w, collection: c2)
+
+            post "/api/v1/collections/take_ownership/#{c2.id}"
+          end
 
           it 'is allowed' do
             expect(response.status).to eq 201
+          end
+
+          it 'makes c2 an unshared root collection of user' do
+            c2.reload
+            expect(c2.parent).to be_nil
+            expect(c2.is_shared).to eq false
+            expect(c2.shared_by_id).to be_nil
           end
         end
       end
