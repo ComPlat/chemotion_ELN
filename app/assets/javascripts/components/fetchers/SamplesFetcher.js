@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Sample from '../models/Sample';
+import SampleProxy from '../proxies/SampleProxy';
 
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
@@ -11,7 +12,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new Sample(json.sample);
+        return new SampleProxy(json.sample);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -52,6 +53,7 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify({
         name: paramObj.name,
+        external_label: paramObj.external_label,
         amount_value: paramObj.amount_value,
         amount_unit: paramObj.amount_unit,
         description: paramObj.description,
@@ -79,6 +81,7 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify({
         name: paramObj.name,
+        external_label: paramObj.external_label,
         amount_value: paramObj.amount_value,
         amount_unit: paramObj.amount_unit,
         description: paramObj.description,

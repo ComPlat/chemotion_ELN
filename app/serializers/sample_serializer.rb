@@ -1,6 +1,6 @@
 class SampleSerializer < ActiveModel::Serializer
   attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molfile,
-             :purity, :solvent, :impurities, :location, :weight, :volume, :is_top_secret, :is_scoped
+             :purity, :solvent, :impurities, :location, :weight, :volume, :is_top_secret, :is_restricted, :external_label
 
   has_one :molecule
 
@@ -29,7 +29,7 @@ class SampleSerializer < ActiveModel::Serializer
     object.volume
   end
 
-  def is_scoped
+  def is_restricted
     false
   end
 end

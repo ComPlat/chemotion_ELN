@@ -18,4 +18,8 @@ class User < ActiveRecord::Base
   def owns_unshared_collections?(collections)
     owns_collections?(collections) && collections.pluck(:is_shared).none?
   end
+
+  def name
+    "#{first_name} #{last_name}"
+  end
 end

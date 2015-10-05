@@ -51,6 +51,7 @@ export default class SampleDetails extends React.Component {
     return {
       id: this.state.sample.id,
       name: this.nullOrValue(this.state.sample.name),
+      external_label: this.nullOrValue(this.state.sample.external_label),
       amount_value: this.nullOrValue(this.state.sample.amount_value),
       amount_unit: this.nullOrValue(this.state.sample.amount_unit),
       description: this.nullOrValue(this.state.sample.description),
@@ -89,6 +90,14 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+  handleExternalLabelChanged(e) {
+    let sample = this.state.sample;
+    sample.external_label = this.refs.externalLabelInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
   handleDescriptionChanged(e) {
     let sample = this.state.sample;
     sample.description = this.refs.descriptionInput.getValue();
@@ -116,7 +125,7 @@ export default class SampleDetails extends React.Component {
 
   handleDensityChanged(e) {
     let sample = this.state.sample;
-    sample.molecule.density = this.refs.densityInput.getValue();
+    sample.molecule_density = this.refs.densityInput.getValue();
     this.setState({
       sample: sample
     });
@@ -132,7 +141,7 @@ export default class SampleDetails extends React.Component {
 
   handleBoilingPointChanged(e) {
     let sample = this.state.sample;
-    sample.molecule.boiling_point = this.refs.boilingPointInput.getValue();
+    sample.molecule_boiling_point = this.refs.boilingPointInput.getValue();
     this.setState({
       sample: sample
     });
@@ -156,7 +165,7 @@ export default class SampleDetails extends React.Component {
 
   handleMeltingPointChanged(e) {
     let sample = this.state.sample;
-    sample.molecule.melting_point = this.refs.meltingPointInput.getValue();
+    sample.molecule_melting_point = this.refs.meltingPointInput.getValue();
     this.setState({
       sample: sample
     });
@@ -236,9 +245,9 @@ export default class SampleDetails extends React.Component {
 
   _submitLabel() {
     if(this.state.sample.id == '_new_') {
-      return "Save Sample";
+      return "Create";
     } else {
-      return "Update Sample";
+      return "Save";
     }
   }
 
@@ -256,8 +265,12 @@ export default class SampleDetails extends React.Component {
   }
 
   // Input Components of Sample Details with scoping
+  isDisabled(sample, method) {
+    return sample.isRestricted() == true && (sample[method] == undefined && sample.molecule == undefined || sample.molecule[method] == undefined) && sample.id != '_new_'
+  }
+
   topSecretCheckbox(sample) {
-    if(sample.is_scoped == false || sample.is_top_secret || sample.id == '_new_') {
+    if(!this.isDisabled(sample, 'is_top_secret')) {
       return (
         <Input ref="topSecretInput" type="checkbox" label="Top secret" checked={sample.is_top_secret} onChange={(e) => this.handleTopSecretChanged(e)}/>
       )
@@ -265,306 +278,161 @@ export default class SampleDetails extends React.Component {
   }
 
   moleculeInput(sample) {
-    if(sample.is_scoped == false || sample.molecule || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Molecule" ref="moleculeInput"
-               buttonAfter={this.structureEditorButton(false)}
-               defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
-        />
-      )
-    } else {
-      return (
-        <Input type="text" label="Molecule" ref="moleculeInput"
-               buttonAfter={this.structureEditorButton(true)}
-               value="***"
-               disabled
-        />
-      )
-    }
+    return (
+      <Input type="text" label="Molecule" ref="moleculeInput"
+             buttonAfter={this.structureEditorButton(this.isDisabled(sample, 'molecule'))}
+             defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+             disabled={this.isDisabled(sample, 'molecule')}
+      />
+    )
   }
 
   sampleHeader(sample) {
     let sampleAmount = sample.amount_value && sample.amount_unit ? `(${sample.amount_value} ${sample.amount_unit})` : '';
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}` : '';
 
-    if(sample.is_scoped == false || sampleAmount && svgPath || sample.id == '_new_') {
-      return (
-        <table width="100%" height="190px">
-          <tr>
-            <td width="70%">
-              <h3>{sample.name}</h3>
-              <h4>{sampleAmount}</h4>
-              <ElementCollectionLabels element={sample} key={sample.id}/>
-            </td>
-            <td width="30%">
-              <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
-            </td>
-          </tr>
-        </table>
-      )
-    } else {
-      return (
-        <table width="100%" height="190px">
-          <tr>
-            <td width="70%">
-              <h3>{sample.name || '***'}</h3>
-              <h4>{sampleAmount || '***'}</h4>
-              <ElementCollectionLabels element={sample} key={sample.id}/>
-            </td>
-            <td width="30%">
-              <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
-            </td>
-          </tr>
-        </table>
-      )
-    }
+    return (
+      <table width="100%" height="190px">
+        <tr>
+          <td width="70%">
+            <h3>{sample.name}</h3>
+            <h4>{sampleAmount}</h4>
+            <ElementCollectionLabels element={sample} key={sample.id}/>
+          </td>
+          <td width="30%">
+            <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
+          </td>
+        </tr>
+      </table>
+    )
   }
 
   moleculeInchi(sample) {
-    if(sample.is_scoped == false || sample.molecule.inchistring || sample.id == '_new_') {
-      return (
-        <Input type="text" label="InChI"
-               defaultValue={sample.molecule && (sample.molecule.inchistring)}
-               disabled
-        />
-      )
-    } else {
-      return (
-        <Input type="text" label="InChI"
-               value='***'
-               disabled
-        />
-      )
-    }
+    return (
+      <Input type="text" label="InChI"
+             defaultValue={sample.molecule_inchistring}
+             disabled
+      />
+    )
   }
 
   molecularWeight(sample) {
-    if(sample.is_scoped == false || sample.molecule.molecular_weight || sample.id == '_new_') {
-      return (
-        <Input type="text" label="M. Weight"
-               defaultValue={sample.molecule && (sample.molecule.molecular_weight)}
-               disabled
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="M. Weight"
-               value='***'
-               disabled
+    return (
+      <Input type="text" label="M. Weight"
+             defaultValue={sample.molecule_molecular_weight}
+             disabled
         />
-      )
-    }
+    )
   }
 
   moleculeDensity(sample) {
-    if(sample.is_scoped == false || sample.molecule.density || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Density" ref="densityInput"
-               value={sample.molecule && (sample.molecule.density)}
-               onChange={(e) => this.handleDensityChanged(e)}
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="Density" ref="densityInput"
-               value='***'
-               onChange={(e) => this.handleDensityChanged(e)}
-               disabled
-          />
-      )
-    }
+    return (
+      <Input type="text" label="Density" ref="densityInput"
+             value={sample.molecule_density}
+             onChange={(e) => this.handleDensityChanged(e)}
+             disabled={this.isDisabled(sample, 'density')}
+        />
+    )
   }
 
   moleculeFormular(sample) {
-    if(sample.is_scoped == false || sample.molecule.sum_formular || sample.id == '_new_') {
-      return (
-        <Input type="text" label="Formula"
-               defaultValue={sample.molecule && (sample.molecule.sum_formular)}
-               disabled
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="Formula"
-               value='***'
-               disabled
-          />
-      )
-    }
+    return (
+      <Input type="text" label="Formula"
+             defaultValue={sample.molecule_formula}
+             disabled
+        />
+    )
   }
 
   moleculeBoilingPoint(sample) {
-    if(sample.is_scoped == false || sample.molecule.boiling_point || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Boiling Point" ref="boilingPointInput"
-               value={sample.molecule && (sample.molecule.boiling_point) }
-               onChange={(e) => this.handleBoilingPointChanged(e)}
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="Boiling Point" ref="boilingPointInput"
-               value="***"
-               onChange={(e) => this.handleBoilingPointChanged(e)}
-               disabled
-          />
-      )
-    }
+    return (
+      <Input type="text" label="Boiling Point" ref="boilingPointInput"
+             value={sample.molecule_boiling_point}
+             onChange={(e) => this.handleBoilingPointChanged(e)}
+             disabled={this.isDisabled(sample, 'boiling_point')}
+        />
+    )
   }
 
   moleculeMeltingPoint(sample) {
-    if(sample.is_scoped == false || sample.molecule.melting_point || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Melting Point" ref="meltingPointInput"
-               value={sample.molecule && (sample.molecule.melting_point) }
-               onChange={(e) => this.handleMeltingPointChanged(e)}
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="Melting Point" ref="meltingPointInput"
-               value="***"
-               onChange={(e) => this.handleMeltingPointChanged(e)}
-               disabled
-          />
-      )
-    }
+    return (
+      <Input type="text" label="Melting Point" ref="meltingPointInput"
+             value={sample.molecule_melting_point}
+             onChange={(e) => this.handleMeltingPointChanged(e)}
+             disabled={this.isDisabled(sample, 'melting_point')}
+        />
+    )
   }
 
   sampleName(sample) {
-    if(sample.is_scoped == false || sample.name || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Name" ref="nameInput"
-               placeholder={sample.name}
-               value={sample.name}
-               onChange={(e) => this.handleNameChanged(e)}
-        />
-      )
-    } else {
-      return (
-        <Input type="text" label="Name" ref="nameInput"
-               value="***"
-               onChange={(e) => this.handleNameChanged(e)}
-               disabled
-        />
-      )
-    }
+    return (
+      <Input type="text" label="Name" ref="nameInput"
+             placeholder={sample.name}
+             value={sample.name}
+             onChange={(e) => this.handleNameChanged(e)}
+             disabled={this.isDisabled(sample, 'name')}
+      />
+    )
   }
 
   sampleImpurities(sample) {
-    if(sample.is_scoped == false  || sample.impurities || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Impurities"
-               ref="impuritiesInput"
-               value={sample.impurities}
-               onChange={(e) => this.handleImpuritiesChanged(e)}
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="Impurities"
-               ref="impuritiesInput"
-               value="***"
-               onChange={(e) => this.handleImpuritiesChanged(e)}
-               disabled
-          />
-      )
-    }
+    return (
+      <Input type="text" label="Impurities"
+             ref="impuritiesInput"
+             value={sample.impurities}
+             onChange={(e) => this.handleImpuritiesChanged(e)}
+             disabled={this.isDisabled(sample, 'impurities')}
+        />
+    )
   }
 
   sampleSolvent(sample) {
-    if(sample.is_scoped == false || sample.solvent || sample.id == '_new_' ) {
-      return (
-        <Select ref='solventInput'
-                name='solvents'
-                multi={false}
-                options={solvents}
-                onChange={(e) => this.handleSolventChanged(e)}
-                value={sample.solvent}/>
-      )
-    } else {
-      return (
-        <Select ref='solventInput'
-                name='solvents'
-                multi={false}
-                options={solvents}
-                onChange={(e) => this.handleSolventChanged(e)}
-                value={sample.solvent}
-                disabled/>
-      )
-    }
-  }
-
-  sampleWeight(sample) {
-    if(sample.is_scoped == false || sample.weight || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Weight"
-               defaultValue={sample.weight}
-               disabled
-          />
-      )
-    } else {
-      return (
-        <Input type="text" label="Weight"
-               value="***"
-               disabled
-          />
-      )
-    }
-  }
-
-  sampleVolume(sample) {
-    if(sample.is_scoped == false || sample.volume || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Volume"
-               defaultValue={sample.volume}
-               disabled
-        />
-      )
-    } else {
-      return (
-        <Input type="text" label="Volume"
-               value="***"
-               disabled
-        />
-      )
-    }
+    return (
+      <Select ref='solventInput'
+              name='solvents'
+              multi={false}
+              options={solvents}
+              onChange={(e) => this.handleSolventChanged(e)}
+              value={sample.solvent}
+              disabled={this.isDisabled(sample, 'solvent')}
+      />
+    )
   }
 
   sampleAmount(sample) {
-    if(sample.is_scoped == false || sample.amount_value || sample.id == '_new_' ) {
+    if(this.isDisabled(sample, 'amount_value') == false) {
       return (
         <table><tr>
-          <td>
-            <NumeralInputWithUnits
-              key={sample.id}
-              value={sample.amount_mg}
-              unit='mg'
-              label="mg"
-              numeralFormat='0,0.00'
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
-          <td>
-            <NumeralInputWithUnits
-              key={sample.id}
-              value={sample.amount_ml}
-              unit='ml'
-              label="ml"
-              numeralFormat='0,0.00'
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
-          <td>
-            <NumeralInputWithUnits
-              key={sample.id}
-              value={sample.amount_mmol}
-              unit='mmol'
-              label="mmol"
-              numeralFormat='0,0.00'
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
+        <td>
+          <NumeralInputWithUnits
+            key={sample.id}
+            value={sample.amount_mg}
+            unit='mg'
+            label="mg"
+            numeralFormat='0,0.00'
+            onChange={(amount) => this.handleAmountChanged(amount)}
+            />
+        </td>
+        <td>
+          <NumeralInputWithUnits
+            key={sample.id}
+            value={sample.amount_ml}
+            unit='ml'
+            label="ml"
+            numeralFormat='0,0.00'
+            onChange={(amount) => this.handleAmountChanged(amount)}
+            />
+        </td>
+        <td>
+          <NumeralInputWithUnits
+            key={sample.id}
+            value={sample.amount_mmol}
+            unit='mmol'
+            label="mmol"
+            numeralFormat='0,0.00'
+            onChange={(amount) => this.handleAmountChanged(amount)}
+            />
+        </td>
         </tr></table>
       )
     } else {
@@ -575,70 +443,50 @@ export default class SampleDetails extends React.Component {
   }
 
   samplePurity(sample) {
-    if(sample.is_scoped == false || sample.purity || sample.id == '_new_' ) {
-      return (
-        <Input type="text" label="Purity"
-               ref="purityInput"
-               value={sample.purity}
-               numeralFormat='0,0.00'
-               onChange={(e) => this.handlePurityChanged(e)}
-        />
-      )
-    } else {
-      return (
-        <Input type="text" label="Purity"
-               ref="purityInput"
-               value="***"
-               onChange={(e) => this.handlePurityChanged(e)}
-               disabled
-        />
-      )
-    }
+    return (
+      <Input type="text" label="Purity"
+             ref="purityInput"
+             value={sample.purity}
+             numeralFormat='0,0.00'
+             onChange={(e) => this.handlePurityChanged(e)}
+             disabled={this.isDisabled(sample, 'purity')}
+      />
+    )
   }
 
   sampleLocation(sample) {
-    if(sample.is_scoped == false || sample.location || sample.id == '_new_') {
-      return (
-        <Input type="textarea" label="Location"
-               ref="locationInput"
-               value={sample.location}
-               onChange={(e) => this.handleLocationChanged(e)}
-               rows={2}
-        />
-      )
-    } else {
-      return (
-        <Input type="textarea" label="Location"
-               ref="locationInput"
-               value="***"
-               onChange={(e) => this.handleLocationChanged(e)}
-               rows={2}
-               disabled
-        />
-      )
-    }
+    return (
+      <Input type="textarea" label="Location"
+             ref="locationInput"
+             value={sample.location}
+             onChange={(e) => this.handleLocationChanged(e)}
+             rows={2}
+             disabled={this.isDisabled(sample, 'location')}
+      />
+    )
   }
 
   sampleDescription(sample) {
-    if(sample.is_scoped == false || sample.description || sample.id == '_new_' ) {
-      return (
-        <Input type="textarea" label="Description" ref="descriptionInput"
-               placeholder={sample.description}
-               value={sample.description}
-               onChange={(e) => this.handleDescriptionChanged(e)}
-               rows={2}
-          />
-      )
-    } else {
-      return (
-        <Input type="textarea" label="Description" ref="descriptionInput"
-               value="***"
-               onChange={(e) => this.handleDescriptionChanged(e)}
-               rows={2}
-               disabled
+    return (
+      <Input type="textarea" label="Description" ref="descriptionInput"
+             placeholder={sample.description}
+             value={sample.description}
+             onChange={(e) => this.handleDescriptionChanged(e)}
+             rows={2}
+             disabled={this.isDisabled(sample, 'description')}
         />
-      )
-    }
+    )
+  }
+
+  sampleExternalLabel(sample) {
+    return (
+      <Input type="text" label="External Label"
+             ref="externalLabelInput"
+             value={sample.external_label}
+             onChange={(e) => this.handleExternalLabelChanged(e)}
+             disabled={this.isDisabled(sample, 'external_label')}
+      />
+    )
   }
 
   render() {
@@ -705,11 +553,8 @@ export default class SampleDetails extends React.Component {
                     </td>
                   </tr>
                   <tr>
-                    <td width="25%" className="padding-right">
-                      {this.sampleWeight(sample)}
-                    </td>
-                    <td width="25%" className="padding-right">
-                      {this.sampleVolume(sample)}
+                    <td width="50%" className="padding-right" colSpan={2}>
+                      {this.sampleExternalLabel(sample)}
                     </td>
                     <td width="25%" className="padding-right">
                       {this.sampleAmount(sample)}
@@ -731,7 +576,7 @@ export default class SampleDetails extends React.Component {
               </ListGroupItem>
               <ListGroupItem>
                 <ButtonToolbar>
-                  <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Back</Button>
+                  <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Close</Button>
                   <Button bsStyle="warning" onClick={this._submitFunction.bind(this)}
                           disabled={!sampleIsValid}>{this._submitLabel()}</Button>
                 </ButtonToolbar>

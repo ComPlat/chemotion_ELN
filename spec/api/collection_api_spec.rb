@@ -9,7 +9,7 @@ describe Chemotion::CollectionAPI do
   }
 
   context 'authorized user logged in' do
-    let(:user)  { create(:user, name: 'Musashi') }
+    let(:user)  { create(:user, first_name: 'Musashi', last_name: 'M') }
     let(:u2)    { create(:user) }
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
     let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true) }
@@ -304,7 +304,7 @@ describe Chemotion::CollectionAPI do
             post '/api/v1/collections/shared', params
 
             # naming convention for shared collections
-            c = Collection.find_by(label: 'My project with Musashi')
+            c = Collection.find_by(label: 'My project with Musashi M')
             expect(c).to_not be_nil
             expect(c.user_id).to eq user.id
             expect(c.samples).to match_array [s1, s2]
@@ -347,7 +347,7 @@ describe Chemotion::CollectionAPI do
           it 'creates no shared collection' do
             post '/api/v1/collections/shared', params
 
-            c = Collection.find_by(label: 'My project with Musashi')
+            c = Collection.find_by(label: 'My project with Musashi M')
             expect(c).to be_nil
           end
         end

@@ -18,7 +18,7 @@ class SampleProxy
       sample_attr.each do |attr|
         new_sample_hash[attr] = s[attr]
       end
-      new_sample_hash[:is_scoped] = true
+      new_sample_hash[:is_restricted] = true
 
       {sample: new_sample_hash}
     else
@@ -54,13 +54,18 @@ class SampleProxy
       [
         :id,
         :type,
-        #:weight
+        :external_label,
+        :amount_value,
+        :amount_unit
       ]
     when 1
       [
         :id,
         :type,
-        :molecule
+        :external_label,
+        :molecule,
+        :amount_value,
+        :amount_unit
       ]
     when 2
 
