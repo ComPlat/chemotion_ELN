@@ -74,6 +74,13 @@ group :development, :test do
 
   # generate icon fonts
   gem 'fontcustom'
+
+  gem 'capistrano', '~> 3.4.0'
+  gem 'capistrano-rvm'
+  gem 'capistrano-bundler'
+  gem 'capistrano-rails'
+  gem 'capistrano-npm'
+  gem 'capistrano3-delayed-job'
 end
 
 group :test do
