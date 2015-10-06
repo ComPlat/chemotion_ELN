@@ -239,6 +239,7 @@ class ElementActions {
     UIActions.uncheckAllElements('sample');
     UIActions.uncheckAllElements('reaction');
     UIActions.uncheckAllElements('wellplate');
+    UIActions.uncheckAllElements('screen');
   }
 
   deleteSamplesByUIState(ui_state) {
@@ -261,6 +262,15 @@ class ElementActions {
 
   deleteWellplatesByUIState(ui_state) {
     WellplatesFetcher.deleteWellplatesByUIState(ui_state)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteScreensByUIState(ui_state) {
+    ScreensFetcher.deleteScreensByUIState(ui_state)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {

@@ -82,9 +82,11 @@ class ElementStore {
     ElementActions.deleteSamplesByUIState(ui_state);
     ElementActions.deleteReactionsByUIState(ui_state);
     ElementActions.deleteWellplatesByUIState(ui_state);
+    ElementActions.deleteScreensByUIState(ui_state);
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollectionId);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollectionId);
+    ElementActions.fetchScreensByCollectionId(ui_state.currentCollectionId);
   }
 
   handleUpdateElementsCollection(paramObj) {
