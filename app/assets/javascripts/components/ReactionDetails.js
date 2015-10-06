@@ -202,28 +202,6 @@ export default class ReactionDetails extends React.Component {
     this.updateReactionSvg();
   }
 
-  _submitFunction() {
-    //if(this.state.sample.id == '_new_') {
-    //  this.createSample();
-    //} else {
-    //  this.updateSample();
-    //}
-  }
-
-  _submitLabel() {
-    const {id} = this.state;
-    if (id == '_new_') {
-      return "Create";
-    } else {
-      return "Save";
-    }
-  }
-
-  reactionIsValid() {
-    //let sample = this.state.sample;
-    //return sample && sample.molfile
-  }
-
   closeDetails() {
     UIActions.deselectAllElements();
 
@@ -307,7 +285,7 @@ export default class ReactionDetails extends React.Component {
             </ListGroupItem>
           </ListGroup>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => this.closeDetails()}>Back</Button>
+            <Button bsStyle="primary" onClick={() => this.closeDetails()}>Close</Button>
             <Button bsStyle="warning" onClick={() => this._submitFunction()}
                     disabled={!this.reactionIsValid()}>{this._submitLabel()}</Button>
           </ButtonToolbar>
@@ -315,4 +293,25 @@ export default class ReactionDetails extends React.Component {
       </div>
     );
   }
+
+  _submitFunction() {
+    if(this.state.reaction.isNew) {
+     ElementActions.createReaction(this.state.reaction);
+    } else {
+     ElementActions.updateReaction(this.state.reaction);
+    }
+  }
+
+  _submitLabel() {
+    if (this.state.reaction.isNew) {
+      return "Create";
+    } else {
+      return "Save";
+    }
+  }
+
+  reactionIsValid() {
+    return true
+  }
+
 }

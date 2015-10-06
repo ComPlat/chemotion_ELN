@@ -202,6 +202,18 @@ class ElementStore {
     this.state.elements.reactions = result;
   }
 
+  handleUpdateReaction(reaction) {
+    this.state.currentElement = reaction;
+    this.handleRefreshElements('reaction');
+  }
+
+  handleCreateSample(reaction) {
+    this.handleRefreshElements('reaction');
+    this.navigateToNewElement(reaction);
+  }
+
+  // -- Reactions Literatures --
+
   handleCreateReactionLiterature(result) {
     this.state.currentElement.literatures.push(result);
   }
@@ -216,6 +228,8 @@ class ElementStore {
     console.log(result);
     this.state.currentElement.literatures = result.literatures;
   }
+
+  // -- Reactions SVGs --
 
   handleFetchReactionSvgByMaterialsInchikeys(result) {
     this.state.currentElement.reactionSvg = result;

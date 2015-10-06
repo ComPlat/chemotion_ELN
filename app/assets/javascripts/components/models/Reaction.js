@@ -6,6 +6,10 @@ export default class Reaction {
     Object.assign(this, args);
   }
 
+  get isNew() {
+    return this.id == '_new_'
+  }
+
   get starting_materials() {
     return this._starting_materials
   }
