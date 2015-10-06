@@ -1,11 +1,11 @@
 import React, {Component} from 'react';
-import {Popover, Overlay, Table} from 'react-bootstrap';
+import {Button, Popover, Overlay, Table} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 
 export default class WellOverlay extends Component {
   render() {
-    const {show, well, target, handleClose} = this.props;
+    const {show, well, target, handleClose, removeSampleFromWell} = this.props;
     const {sample, readout} = well;
     const style = {
       width: 240,
@@ -18,7 +18,15 @@ export default class WellOverlay extends Component {
     if (sample) {
       const {name, molecule} = sample;
       const svgPath = `/images/molecules/${molecule.molecule_svg_file}`;
-      title = name + " : " + molecule.sum_formular;
+      title = <div>
+                {name} : {molecule.sum_formular}
+                <div className="pull-right" style={{marginTop: '-3px', marginRight: '-8px'}}>
+                  <Button bsSize="xsmall" bsStyle="danger" onClick={() => removeSampleFromWell(well)}>
+                    <span className="fa fa-trash-o"></span>
+                  </Button>
+                </div>
+              </div>;
+
       style.height = 220;
       text = <div><SVG className="molecule-mid" src={svgPath}/><br/></div>;
     }
