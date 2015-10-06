@@ -25,11 +25,12 @@ export default class WellplateList extends Component {
           <th width="20%">Sum-Formula</th>
           <th width="30%">Molecule</th>
           <th width="20%">Readout</th>
-          // TODO position e.g. A1, E3
           {wells.map((well, key) => {
             const id = key + 1;
             const {sample, position, readout} = well;
-            const positions = `(${position.x}, ${position.y})`;
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            const positionY = alphabet[position.y-1];
+            const positions = positionY + position.x;
             let svgPath = '';
             let name = '';
             let sum_formular = '';
