@@ -70,19 +70,15 @@ export default class ReactionDetails extends React.Component {
 
   updatedReactionForReferenceChange(changeEvent) {
     let {sampleID} = changeEvent;
-    let sample = this.findSampleById(sampleID);
-
-    //remember the referenceMaterial
-    this.setState({
-      referenceMaterial: sample
-    });
+    let sample = this.state.reaction.sampleById(sampleID);
+    this.state.reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample)
   }
 
   updatedReactionForAmountChange(changeEvent) {
     let {sampleID, amount} = changeEvent;
-    let updatedSample = this.findSampleById(sampleID);
+    let updatedSample = this.state.reaction.sampleById(sampleID);
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
@@ -92,7 +88,7 @@ export default class ReactionDetails extends React.Component {
 
   updatedReactionForEquivalentChange(changeEvent) {
     let {sampleID, equivalent} = changeEvent;
-    let updatedSample = this.findSampleById(sampleID);
+    let updatedSample = this.state.reaction.sampleById(sampleID);
 
     updatedSample.equivalent = equivalent;
 
@@ -108,7 +104,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   updatedSamplesForAmountChange(samples, updatedSample) {
-    let referenceSample = this.state.referenceMaterial;
+    let referenceMaterial = this.state.reaction.referenceMaterial;
 
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
@@ -116,9 +112,9 @@ export default class ReactionDetails extends React.Component {
         sample.setAmountAndNormalizeToMilligram(updatedSample.amount_value, updatedSample.amount_unit);
 
 
-        if(referenceSample) {
-          if(!updatedSample.reference && referenceSample.amount_value) {
-            sample.equivalent = sample.amount_mmol / referenceSample.amount_mmol;
+        if(referenceMaterial) {
+          if(!updatedSample.reference && referenceMaterial.amount_value) {
+            sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
           } else {
             sample.equivalent = 1.0;
           }
@@ -137,13 +133,13 @@ export default class ReactionDetails extends React.Component {
   }
 
   updatedSamplesForEquivalentChange(samples, updatedSample) {
-    let referenceSample = this.state.referenceMaterial;
+    let referenceMaterial = this.state.reaction.referenceMaterial;
 
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
-        if(referenceSample && referenceSample.amount_value) {
-          sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * referenceSample.amount_mmol, 'mmol');
+        if(referenceMaterial && referenceMaterial.amount_value) {
+          sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * referenceMaterial.amount_mmol, 'mmol');
         }
         else if(sample.amount_value) {
           sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * sample.amount_mmol, 'mmol');
@@ -153,16 +149,16 @@ export default class ReactionDetails extends React.Component {
     });
   }
 
-  updatedSamplesForReferenceChange(samples, referenceSample) {
+  updatedSamplesForReferenceChange(samples, referenceMaterial) {
     return samples.map((sample) => {
-      if (sample.id == referenceSample.id) {
+      if (sample.id == referenceMaterial.id) {
         sample.equivalent = 1.0;
         sample.reference = true;
       }
       else {
         if(sample.amount_value) {
-          let referenceAmount = referenceSample.amount_mmol;
-          if(referenceSample && referenceAmount) {
+          let referenceAmount = referenceMaterial.amount_mmol;
+          if(referenceMaterial && referenceAmount) {
             sample.equivalent = sample.amount_mmol / referenceAmount;
           }
         }
@@ -170,13 +166,6 @@ export default class ReactionDetails extends React.Component {
       }
       return sample;
     });
-  }
-
-  findSampleById(sampleID) {
-    let reaction = this.state.reaction;
-    return [...reaction.starting_materials, ...reaction.reactants, ...reaction.products].find((sample) => {
-      return sample.id == sampleID;
-    })
   }
 
   // --

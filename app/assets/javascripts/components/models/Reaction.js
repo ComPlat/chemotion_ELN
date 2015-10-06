@@ -30,4 +30,29 @@ export default class Reaction {
     this._products = samples.map(s => new Sample(s))
   }
 
+  get samples() {
+    return [...this.starting_materials, ...this.reactants, ...this.products]
+  }
+
+  sampleById(id) {
+
+  }
+
+  sampleById(sampleID) {
+    return this.samples.find((sample) => {
+      return sample.id == sampleID;
+    })
+  }
+
+  get referenceMaterial() {
+    return this.samples.find((sample) => {
+      return sample.reference;
+    })
+  }
+
+  markSampleAsReference(sampleID) {
+    this.samples.forEach((sample) => {
+      sample.reference = sample.id == sampleID;
+    })
+  }
 }
