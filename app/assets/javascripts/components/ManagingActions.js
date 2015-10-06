@@ -44,8 +44,9 @@ export default class ManagingActions extends React.Component {
 
   render() {
     if (!this.state.hidden) {
+      let style = {marginRight: '10px'}
       return (
-        <ButtonGroup>
+        <ButtonGroup style={style}>
           <MoveButton />
           <AssignButton />
           <RemoveButton />
@@ -55,7 +56,7 @@ export default class ManagingActions extends React.Component {
       )
     } else {
       return(
-        <div/>
+        <ButtonGroup/>
       )
     }
     

@@ -58,22 +58,17 @@ class Elements extends Component {
 
     }
 
-    let colSpan = elementDetails ? 1 : 2
-
     return (
       <div id="elements">
         <Table>
           <thead>
-            <th className="borderless">
-              <ManagingActions />
-            </th>
-            <th className="borderless">
-              <ContextActions />
+            <th className="borderless" colSpan={2}>
+              <ManagingActions /><ContextActions />  
             </th>
           </thead>
           <tbody>
           <tr valign="top" className="borderless">
-            <td className="borderless" colSpan={colSpan}>
+            <td className="borderless">
               <List/>
             </td>
             <td className="borderless" width={width}>

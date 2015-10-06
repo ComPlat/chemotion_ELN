@@ -39,14 +39,12 @@ export default class ContextActions extends React.Component {
       <Button onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</Button>;
 
     return (
-      <div>
-        <ButtonGroup>
-          {sampleNode}
-          <Button disabled={isAllCollection}>Create Reaction</Button>
-          <Button onClick={() => this.createElementOfType('wellplate')} disabled={isAllCollection}>Create Wellplate</Button>
-          <Button onClick={() => this.createElementOfType('screen')} disabled={isAllCollection}>Create Screen</Button>
-        </ButtonGroup>
-      </div>
+      <ButtonGroup>
+        {sampleNode}
+        <Button disabled={isAllCollection}>Create Reaction</Button>
+        <Button onClick={() => this.createElementOfType('wellplate')} disabled={isAllCollection}>Create Wellplate</Button>
+        <Button onClick={() => this.createElementOfType('screen')} disabled={isAllCollection}>Create Screen</Button>
+      </ButtonGroup>
     )
   }
 }
