@@ -2,8 +2,6 @@ import 'whatwg-fetch';
 import Sample from '../models/Sample';
 import SampleProxy from '../proxies/SampleProxy';
 
-
-// TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class SamplesFetcher {
   static fetchById(id) {
     let promise = fetch('/api/v1/samples/' + id + '.json', {

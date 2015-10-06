@@ -39,6 +39,7 @@ class UIStore {
       },
       currentCollectionId: null,
       currentTab: 1,
+      currentSearchSelection: null
     };
 
     this.bindListeners({
@@ -51,7 +52,10 @@ class UIStore {
       handleDeselectAllElementsOfType: UIActions.deselectAllElementsOfType,
       handleSelectElement: UIActions.selectElement,
       handleSetPagination: UIActions.setPagination,
-      handleDeselectAllElements: UIActions.deselectAllElements
+      handleDeselectAllElements: UIActions.deselectAllElements,
+      handleSetSearchSelection: UIActions.setSearchSelection,
+      handleSelectCollectionWithoutUpdating: UIActions.selectCollectionWithoutUpdating,
+      handleClearSearchSelection: UIActions.clearSearchSelection
     });
   }
 
@@ -113,7 +117,7 @@ class UIStore {
   }
 
   handleSelectCollection(collection) {
-    let hasChanged = this.state.currentCollectionId != collection.id;
+    let hasChanged = (this.state.currentCollectionId != collection.id) || (this.state.currentSearchSelection != null);
     this.state.currentCollectionId = collection.id;
 
     if(hasChanged) {
@@ -129,6 +133,17 @@ class UIStore {
     this.state[type].page = page;
   }
 
+  handleSetSearchSelection(selection) {
+    this.state.currentSearchSelection = selection;
+  }
+
+  handleSelectCollectionWithoutUpdating(collection) {
+    this.state.currentCollectionId = collection.id;
+  }
+
+  handleClearSearchSelection() {
+    this.state.currentSearchSelection = null;
+  }
 }
 
 export default alt.createStore(UIStore, 'UIStore');

@@ -2,7 +2,19 @@ require 'ElementUIStateScopes'
 
 class Sample < ActiveRecord::Base
   include ElementUIStateScopes
-  
+  include PgSearch
+  include Collectable
+
+  # search related
+  pg_search_scope :search_by_sum_formula, associated_against: {
+    molecule: :sum_formular
+  }
+
+  pg_search_scope :search_by_sample_name, against: :name
+
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+
+
   has_many :collections_samples
   has_many :collections, through: :collections_samples
 
@@ -29,6 +41,10 @@ class Sample < ActiveRecord::Base
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
+
+  def reactions
+    reactions_as_starting_material + reactions_as_reactant + reactions_as_product
+  end
 
   #todo: find_or_create_molecule_based_on_inchikey
   def auto_set_molfile_to_molecules_molfile
@@ -57,16 +73,6 @@ class Sample < ActiveRecord::Base
     ReactionsProductSample.where(sample_id: id).delete_all
     ReactionsReactantSample.where(sample_id: id).delete_all
     ReactionsStartingMaterialSample.where(sample_id: id).delete_all
-  end
-
-  def weight
-    #TODO: Calculate weight of sample
-    0.0
-  end
-
-  def volume
-    #TODO: Calculate volume of sample
-    0.0
   end
 
 end

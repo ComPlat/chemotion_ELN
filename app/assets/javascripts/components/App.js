@@ -42,7 +42,16 @@ Aviator.setRoutes({
           }
         }
 
-        UIActions.selectCollection({id: e.params['id']});
+        let uiState = UIStore.getState();
+        let currentSearchSelection = uiState.currentSearchSelection;
+        let collectionId = e.params['id'];
+
+        if(currentSearchSelection) {
+          UIActions.selectCollectionWithoutUpdating({id: collectionId})
+          ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collectionId);
+        } else {
+          UIActions.selectCollection({id: collectionId});
+        }
 
         if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID']) {
           UIActions.uncheckAllElements('sample');

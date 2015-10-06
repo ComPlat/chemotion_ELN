@@ -81,6 +81,7 @@ export default class ElementsTable extends React.Component {
       currentElement = state.currentElement
     }
 
+    //console.log(type + ' ' + elements)
     let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
     let currentElementDidChange = ! deepEqual(currentElement, this.state.currentElement);
 

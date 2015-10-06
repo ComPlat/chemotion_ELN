@@ -27,6 +27,11 @@ export default class ReactionDetails extends React.Component {
     };
   }
 
+  componentDidMount() {
+    let id = this.state.reaction.id;
+    ElementActions.fetchReactionSvgByReactionId(id);
+  }
+
   componentWillReceiveProps(nextProps) {
     const {id} = nextProps.reaction;
     const {reaction} = this.props;
@@ -210,9 +215,9 @@ export default class ReactionDetails extends React.Component {
   _submitLabel() {
     const {id} = this.state;
     if (id == '_new_') {
-      return "Save Reaction";
+      return "Create";
     } else {
-      return "Update Reaction";
+      return "Save";
     }
   }
 

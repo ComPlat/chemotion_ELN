@@ -7,26 +7,23 @@ import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
 import SuggestionActions from '../actions/SuggestionActions';
 import SuggestionStore from '../stores/SuggestionStore';
 import ElementActions from '../actions/ElementActions';
+import UIStore from '../stores/UIStore';
+import UIActions from '../actions/UIActions';
 
 export default class Search extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      apiEndpoint: '/api/v1/suggestions/all/',
-      selection: null
+      apiEndpoint: '/api/v1/suggestions/samples/'
     }
   }
 
   handleSelectionChange(selection) {
-    console.log('Search-Selection: ');
-    console.log(selection);
+    UIActions.setSearchSelection(selection);
 
-    this.setState({
-      selection: selection
-    });
-
-    //ElementActions.fetchBasedOnSuggestions(selection);
+    let uiState = UIStore.getState();
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollectionId);
   }
 
   search(query) {
@@ -34,8 +31,15 @@ export default class Search extends React.Component {
     return promise;
   }
 
-  handleSearch() {
-    console.log('Search..');
+  handleClearSearchSelection() {
+    let uiState = UIStore.getState();
+
+    this.refs.autoComplete.setState({
+      value: ''
+    })
+
+    UIActions.selectCollection({id: uiState.currentCollectionId});
+    UIActions.clearSearchSelection();
   }
 
   handleElementSelection() {
@@ -47,7 +51,7 @@ export default class Search extends React.Component {
   }
 
   render() {
-    let searchButton = <Button onClick={() => this.handleSearch()}>S</Button>;
+    let searchButton = <Button bsStyle="danger" onClick={() => this.handleClearSearchSelection()}><i className="fa fa-times"></i></Button>;
 
     let inputAttributes = {
       placeholder: 'Search for elements...',
@@ -68,7 +72,6 @@ export default class Search extends React.Component {
       <div className="chemotion-search">
         <div className="search-elements-select">
           <Input ref="elementTypeSelect" type="select" onChange={() => this.handleElementSelection()}>
-            <option value="all">All elements</option>
             <option value="samples">Samples</option>
             <option value="reactions">Reactions</option>
             <option value="wellplates">Wellplates</option>
@@ -79,6 +82,7 @@ export default class Search extends React.Component {
           <AutoCompleteInput inputAttributes={inputAttributes}
                              suggestionsAttributes={suggestionsAttributes}
                              suggestions={input => this.search(input)}
+                             ref="autoComplete"
                              onSelectionChange={selection => this.handleSelectionChange(selection)}/>
         </div>
       </div>

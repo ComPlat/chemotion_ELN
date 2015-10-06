@@ -27,13 +27,11 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
-    console.log('mount sample details')
     ElementStore.listen(this.onChange.bind(this));
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
-    console.log('unmount sample details')
   }
 
   onChange(state) {
@@ -287,6 +285,7 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="Molecule" ref="moleculeInput"
              buttonAfter={this.structureEditorButton(this.isDisabled(sample, 'molecule'))}
              defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+             value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              disabled={this.isDisabled(sample, 'molecule')}
       />
     )
@@ -316,6 +315,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Input type="text" label="InChI"
              defaultValue={sample.molecule_inchistring}
+             value={sample.molecule_inchistring}
              disabled
       />
     )
@@ -325,6 +325,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Input type="text" label="M. Weight"
              defaultValue={sample.molecule_molecular_weight}
+             value={sample.molecule_molecular_weight}
              disabled
         />
     )
@@ -344,6 +345,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Input type="text" label="Formula"
              defaultValue={sample.molecule_formula}
+             value={sample.molecule_formula}
              disabled
         />
     )

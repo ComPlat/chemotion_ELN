@@ -41,6 +41,18 @@ class UIActions {
   setPagination(pagination) {
     this.dispatch(pagination);
   }
+
+  setSearchSelection(selection) {
+    this.dispatch(selection);
+  }
+
+  selectCollectionWithoutUpdating(collection) {
+    this.dispatch(collection);
+  }
+
+  clearSearchSelection() {
+    this.dispatch();
+  }
 }
 
 export default alt.createActions(UIActions);

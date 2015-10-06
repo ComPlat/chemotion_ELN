@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import {Input, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementActions from './actions/ElementActions';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import Aviator from 'aviator';

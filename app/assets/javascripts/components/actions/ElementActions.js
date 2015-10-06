@@ -8,12 +8,22 @@ import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import UIActions from '../actions/UIActions';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
+import SearchFetcher from '../fetchers/SearchFetcher';
 
 import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 
 class ElementActions {
+
+  fetchBasedOnSearchSelectionAndCollection(selection, collectionId) {
+    SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
 
   fetchSampleById(id) {
     SamplesFetcher.fetchById(id)
@@ -49,8 +59,6 @@ class ElementActions {
         delete paramObj[key];
       }
     }
-
-    console.log(paramObj)
 
     SamplesFetcher.update(paramObj)
       .then((result) => {

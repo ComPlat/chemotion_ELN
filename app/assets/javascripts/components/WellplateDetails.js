@@ -1,7 +1,6 @@
 import React, {PropTypes, Component} from 'react';
 import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
-import UIStore from './stores/UIStore';
 import ElementActions from './actions/ElementActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
