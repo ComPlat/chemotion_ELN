@@ -3,6 +3,10 @@ class WellplateSerializer < ActiveModel::Serializer
 
   has_many :wells
 
+  def wells
+    object.wells.order("id asc")
+  end
+
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
   end

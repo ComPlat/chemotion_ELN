@@ -33,6 +33,17 @@ export default class Wellplate extends Component {
     handleWellsChange(wells);
   }
 
+  removeSampleFromWell(well) {
+    const {handleWellsChange, wells} = this.props;
+    const wellId = wells.indexOf(well);
+    wells[wellId] = {
+      ...well,
+      sample: null
+    };
+    handleWellsChange(wells);
+    this.hideOverlay();
+  }
+
   hideOverlay() {
     this.setState({
       showOverlay: false
@@ -102,7 +113,6 @@ export default class Wellplate extends Component {
                 style={containerStyle}
                 swapWells={(firstWell, secondWell) => this.swapWells(firstWell, secondWell)}
                 dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
-                hideOverlay={() => this.hideOverlay()}
                 active={this.isWellActive(well)}
                 />
             </div>
@@ -113,6 +123,7 @@ export default class Wellplate extends Component {
           well={overlayWell}
           target={() => React.findDOMNode(this.refs[overlayTarget]).children[0]}
           handleClose={() => this.hideOverlay()}
+          removeSampleFromWell={well => this.removeSampleFromWell(well)}
           />
       </div>
     );

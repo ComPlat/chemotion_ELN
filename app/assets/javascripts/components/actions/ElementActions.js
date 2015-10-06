@@ -38,7 +38,7 @@ class ElementActions {
 
     SamplesFetcher.create(paramObj)
       .then((result) => {
-        this.dispatch(result.sample.id)
+        this.dispatch(result.sample)
       });
   }
 
@@ -54,7 +54,7 @@ class ElementActions {
 
     SamplesFetcher.update(paramObj)
       .then((result) => {
-        this.dispatch(paramObj.id)
+        this.dispatch(paramObj)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -73,6 +73,38 @@ class ElementActions {
     ReactionsFetcher.fetchById(id)
       .then((result) => {
         this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  generateEmptyWellplate() {
+    const wellplate = {
+      id: '_new_',
+      type: 'wellplate',
+      name: 'New Wellplate',
+      size: 96,
+      description: '',
+      wells: []
+    };
+    this.dispatch(wellplate);
+  }
+
+  createWellplate(wellplate) {
+    delete wellplate.id;
+
+    WellplatesFetcher.create(wellplate)
+      .then(result => {
+        this.dispatch(result.wellplate);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  updateWellplate(wellplate) {
+    WellplatesFetcher.update(wellplate)
+      .then(result => {
+        this.dispatch(result.wellplate);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

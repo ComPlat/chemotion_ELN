@@ -36,8 +36,57 @@ export default class WellplatesFetcher {
     return promise;
   }
 
-  static update(paramObj) {
-    console.log('not implemented yet');
+  static update(wellplate) {
+    const {id, collection_id, name, size, description, wells} = wellplate;
+    let promise = fetch('/api/v1/wellplates/' + id, {
+      credentials: 'same-origin',
+      method: 'put',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id,
+        name,
+        size,
+        description,
+        wells,
+        collection_id
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
+  static create(wellplate) {
+    const {collection_id, name, size, description, wells} = wellplate;
+    let promise = fetch('/api/v1/wellplates/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        size,
+        description,
+        wells,
+        collection_id
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
   }
 
   static deleteWellplatesByUIState(paramObj) {

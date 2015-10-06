@@ -101,14 +101,19 @@ Aviator.setRoutes({
   },
   '/wellplate': {
     target: {
-      show: function(e) {
-        UIActions.selectElement({
-          type: 'wellplate',
-          id: e.params['wellplateID']
-        })
+      showOrNew(e) {
+        const {wellplateId} = e.params;
+        if (wellplateId == 'new') {
+          ElementActions.generateEmptyWellplate();
+        } else {
+          UIActions.selectElement({
+            type: 'wellplate',
+            id: wellplateId
+          })
+        }
       }
     },
-    '/:wellplateID': 'show',
+    '/:wellplateId': 'showOrNew'
   },
   '/screen': {
     target: {
