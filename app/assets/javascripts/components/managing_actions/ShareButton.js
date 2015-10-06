@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import PermissionStore from '../stores/PermissionStore';
@@ -61,8 +61,15 @@ export default class ShareButton extends React.Component {
   }
 
   render() {
+    const tooltip = (
+      <Tooltip>Share the selected elements</Tooltip>
+    );
     return (
-      <Button onClick={this.showShareModal.bind(this)}>Share</Button>
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <Button bsStyle="info" onClick={this.showShareModal.bind(this)}>
+          <i className="fa fa-share-alt"></i>
+        </Button>
+      </OverlayTrigger>
     )
   }
 }

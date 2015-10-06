@@ -50,8 +50,8 @@ export default class ManagingActions extends React.Component {
           <MoveButton />
           <AssignButton />
           <RemoveButton />
-          <ShareButton />
           <DeleteButton />
+          <ShareButton />
         </ButtonGroup>
       )
     } else {
