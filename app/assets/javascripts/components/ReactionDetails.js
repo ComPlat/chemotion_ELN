@@ -38,13 +38,15 @@ export default class ReactionDetails extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {id} = nextProps.reaction;
-    const {reaction} = this.props;
-    if (id != reaction.id && id != '_new_') {
-      const {reaction} = nextProps.reaction;
-      ElementActions.fetchReactionSvgByReactionId(id);
+    const nextReaction = nextProps.reaction;
+    const currentReaction = this.props.reaction;
+
+    if (nextReaction.id != currentReaction.id) {
+      if(!nextReaction.isNew){
+        ElementActions.fetchReactionSvgByReactionId(nextReaction.id);
+      }
       this.setState({
-        reaction
+        reaction: nextReaction
       });
     }
   }
@@ -295,7 +297,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   _submitFunction() {
-    if(this.state.reaction.isNew) {
+    if(this.state.reaction && this.state.reaction.isNew) {
      ElementActions.createReaction(this.state.reaction);
     } else {
      ElementActions.updateReaction(this.state.reaction);
@@ -303,7 +305,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   _submitLabel() {
-    if (this.state.reaction.isNew) {
+    if (this.state.reaction && this.state.reaction.isNew) {
       return "Create";
     } else {
       return "Save";

@@ -13,6 +13,10 @@ export default class Sample {
     return this.is_restricted;
   }
 
+  get isNew() {
+    return this.id == '_new_'
+  }
+
   static buildChild(sample) {
     Sample.counter += 1;
     let splitSample = new Sample(sample)
