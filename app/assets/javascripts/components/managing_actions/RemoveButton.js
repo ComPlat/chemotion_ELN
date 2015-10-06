@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
@@ -38,10 +38,15 @@ export default class RemoveButton extends React.Component {
   }
 
   render() {
+    const tooltip = (
+      <Tooltip>Remove from this Collection the selected elements</Tooltip>
+    );
     return (
-      <Button onClick={this.showRemoveModal.bind(this)} disabled={this.isDisabled()}>
-        Remove from Collection
-      </Button>
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <Button bsStyle="warning" onClick={this.showRemoveModal.bind(this)} disabled={this.isDisabled()}>
+          <i className="fa fa-minus"></i>
+        </Button>
+      </OverlayTrigger>
     )
   }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
@@ -38,10 +38,15 @@ export default class ShareButton extends React.Component {
   }
 
   render() {
+    const tooltip = (
+      <Tooltip>Move the selected elements from this Collection to another Collection</Tooltip>
+    );
     return (
-      <Button onClick={this.showMoveModal.bind(this)} disabled={this.isDisabled()}>
-        Move to Collection
-      </Button>
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <Button bsStyle="primary" onClick={this.showMoveModal.bind(this)} disabled={this.isDisabled()}>
+          <i className="fa fa-arrow-right"></i>
+        </Button>
+      </OverlayTrigger>
     )
   }
 }

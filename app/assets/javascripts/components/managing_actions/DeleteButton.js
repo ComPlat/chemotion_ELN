@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 
@@ -15,8 +15,15 @@ export default class DeleteButton extends React.Component {
   }
 
   render() {
+    const tooltip = (
+      <Tooltip>Delete from system the selected elements</Tooltip>
+    );
     return (
-      <Button onClick={e => this._deleteSelection()}>Delete Elements</Button>
+      <OverlayTrigger placement="top" overlay={tooltip}>
+        <Button bsStyle="danger" onClick={e => this._deleteSelection()}>
+          <i className="fa fa-trash"></i>
+        </Button>
+      </OverlayTrigger>
     )
   }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, ButtonGroup} from 'react-bootstrap';
+import {Button, ButtonGroup, SplitButton, MenuItem} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 import ElementActions from './actions/ElementActions';
@@ -35,18 +35,18 @@ export default class ContextActions extends React.Component {
     const uiState = UIStore.getState();
     const isAllCollection = uiState.currentCollectionId == 'all';
     const sampleNode = (this.state.sample.checkedIds.size == 0) ?
-      <Button onClick={() => this.createElementOfType('sample')} disabled={isAllCollection}>Create Sample</Button> :
-      <Button onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</Button>;
+      <MenuItem onClick={() => this.createElementOfType('sample')} disabled={isAllCollection}>Create Sample</MenuItem> :
+      <MenuItem onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</MenuItem>;
 
     return (
-      <div>
-        <ButtonGroup vertical block>
+      <ButtonGroup>
+        <SplitButton bsStyle="primary" title="Create">
           {sampleNode}
-          <Button disabled={isAllCollection}>Create Reaction</Button>
-          <Button onClick={() => this.createElementOfType('wellplate')} disabled={isAllCollection}>Create Wellplate</Button>
-          <Button onClick={() => this.createElementOfType('screen')} disabled={isAllCollection}>Create Screen</Button>
-        </ButtonGroup>
-      </div>
+          <MenuItem disabled={isAllCollection}>Create Reaction</MenuItem>
+          <MenuItem onClick={() => this.createElementOfType('wellplate')} disabled={isAllCollection}>Create Wellplate</MenuItem>
+          <MenuItem onClick={() => this.createElementOfType('screen')} disabled={isAllCollection}>Create Screen</MenuItem>
+        </SplitButton>
+      </ButtonGroup>
     )
   }
 }

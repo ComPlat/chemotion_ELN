@@ -8,6 +8,7 @@ import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ManagingActions from './ManagingActions';
+import ContextActions from './ContextActions';
 import ScreenDetails from './ScreenDetails';
 
 class Elements extends Component {
@@ -61,8 +62,8 @@ class Elements extends Component {
       <div id="elements">
         <Table>
           <thead>
-            <th className="borderless" colSpan="2">
-              <ManagingActions />
+            <th className="borderless" colSpan={2}>
+              <ManagingActions /><ContextActions />  
             </th>
           </thead>
           <tbody>
