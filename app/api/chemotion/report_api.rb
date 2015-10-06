@@ -13,6 +13,7 @@ module Chemotion
       post :rtf do
         report = Report::RTFReport.new do |r|
           r.header {|h| h.build(params[:header])}
+
           params[:body].each do |text_item|
             case text_item[:type]
             when "line_break"
@@ -29,7 +30,7 @@ module Chemotion
                 t.table_data = text_item[:data]
               end
             else
-              raise "Fehler: Nicht implementierte funktion: " + text_item[:type]
+              raise "Fehler: Nicht implementierte Funktion: " + text_item[:type]
             end
           end
         end

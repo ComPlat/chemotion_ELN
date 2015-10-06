@@ -37,7 +37,7 @@ class Report::RTFReport < Report::Report
             else
               character_style = RTF::CharacterStyle.new
               character_style.font = font(report_element.font)
-              character_style.font_size = report_element.font_size*2 #Probably bug in the library
+              character_style.font_size = report_element.font_size*2 # Probably bug in the library
               character_style.bold = report_text.font_style == :bold ? true : false
 
               p.apply(character_style) do |l|

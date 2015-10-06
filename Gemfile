@@ -46,6 +46,7 @@ gem 'awesome_print'
 # Report Generator
 gem 'rtf'
 gem 'rmagick'
+gem 'axlsx'
 
 # Chemrails
 gem 'httparty'
