@@ -1,4 +1,6 @@
 import alt from '../alt';
+import UIActions from '../actions/UIActions';
+
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
@@ -6,7 +8,6 @@ import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
-import UIActions from '../actions/UIActions';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 
@@ -200,6 +201,46 @@ class ElementActions {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {
         this.dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  generateEmptyReaction() {
+    let reaction = new Reaction({
+      id: '_new_',
+      type: 'reaction',
+      //name: 'New Reaction',
+      starting_materials: [],
+      reactants: [],
+      products: [],
+      literatures: []
+
+    })
+    this.dispatch(reaction)
+  }
+
+  createReaction(paramObj) {
+    delete paramObj['id'];
+    ReactionsFetcher.create(paramObj)
+      .then((result) => {
+        this.dispatch(result.sample)
+      });
+  }
+
+  updateReaction(paramObj) {
+    // delete possible null values for scoped update
+    // Todo: ???
+    for(var key in paramObj) {
+      if(paramObj[key] == null) {
+        delete paramObj[key];
+      }
+    }
+    console.log(paramObj)
+
+    ReactionsFetcher.update(paramObj)
+      .then((result) => {
+        this.dispatch(paramObj)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

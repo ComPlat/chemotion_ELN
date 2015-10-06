@@ -120,6 +120,8 @@ ActiveRecord::Schema.define(version: 20151006123344) do
   create_table "reactions_product_samples", id: false, force: :cascade do |t|
     t.integer "reaction_id", null: false
     t.integer "sample_id",   null: false
+    t.boolean "reference"
+    t.float   "equivalent"
   end
 
   add_index "reactions_product_samples", ["reaction_id"], name: "index_reactions_product_samples_on_reaction_id", using: :btree
@@ -128,6 +130,8 @@ ActiveRecord::Schema.define(version: 20151006123344) do
   create_table "reactions_reactant_samples", id: false, force: :cascade do |t|
     t.integer "reaction_id", null: false
     t.integer "sample_id",   null: false
+    t.boolean "reference"
+    t.float   "equivalent"
   end
 
   add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
@@ -136,6 +140,8 @@ ActiveRecord::Schema.define(version: 20151006123344) do
   create_table "reactions_starting_material_samples", id: false, force: :cascade do |t|
     t.integer "reaction_id", null: false
     t.integer "sample_id",   null: false
+    t.boolean "reference"
+    t.float   "equivalent"
   end
 
   add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
