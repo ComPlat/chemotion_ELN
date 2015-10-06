@@ -9,7 +9,9 @@ export default class DeleteButton extends React.Component {
   }
 
   _deleteSelection() {
-    ElementActions.deleteElements(UIStore.getState())
+    const uiState = UIStore.getState();
+    ElementActions.deleteElements(uiState);
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   render() {
