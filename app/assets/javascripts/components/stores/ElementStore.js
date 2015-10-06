@@ -57,6 +57,8 @@ class ElementStore {
 
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
+      handleUpdateWellplate: ElementActions.updateWellplate,
+      handleCreateWellplate: ElementActions.createWellplate,
 
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
@@ -66,7 +68,7 @@ class ElementStore {
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
-      handleGenerateEmptyElement: [ElementActions.generateEmptyScreen, ElementActions.generateEmptySample],
+      handleGenerateEmptyElement: [ElementActions.generateEmptyWellplate, ElementActions.generateEmptyScreen, ElementActions.generateEmptySample],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
 
@@ -122,15 +124,15 @@ class ElementStore {
   }
 
   // update stored sample if it has been updated
-  handleUpdateSample(sampleId) {
-    ElementActions.fetchSampleById(sampleId);
+  handleUpdateSample(sample) {
+    this.state.currentElement = sample;
     this.handleRefreshElements('sample');
   }
 
   // Update Stored Sample if it has been created
-  handleCreateSample(sampleId) {
+  handleCreateSample(sample) {
     this.handleRefreshElements('sample');
-    this.navigateToNewElementById(sampleId);
+    this.navigateToNewElement(sample);
   }
 
   handleSplitAsSubsamples(ui_state) {
@@ -154,6 +156,16 @@ class ElementStore {
     this.state.elements.wellplates = result;
   }
 
+  handleUpdateWellplate(wellplate) {
+    this.state.currentElement = wellplate;
+    this.handleRefreshElements('wellplate');
+  }
+
+  handleCreateWellplate(wellplate) {
+    this.handleRefreshElements('wellplate');
+    this.navigateToNewElement(wellplate);
+  }
+
   // -- Screens --
 
   handleFetchScreenById(result) {
@@ -171,7 +183,7 @@ class ElementStore {
 
   handleCreateScreen(screen) {
     this.handleRefreshElements('screen');
-    this.navigateToNewElementById(screen.id);
+    this.navigateToNewElement(screen);
   }
 
   // -- Reactions --
@@ -209,9 +221,9 @@ class ElementStore {
 
   // -- Generic --
 
-  navigateToNewElementById(elementId) {
+  navigateToNewElement(element) {
     const uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}/screen/${elementId}`);
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/${element.type}/${element.id}`);
   }
 
   handleGenerateEmptyElement(result) {

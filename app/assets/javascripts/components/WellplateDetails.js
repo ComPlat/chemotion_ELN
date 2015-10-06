@@ -1,6 +1,8 @@
 import React, {PropTypes, Component} from 'react';
 import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
+import UIStore from './stores/UIStore';
+import ElementActions from './actions/ElementActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 
@@ -9,18 +11,21 @@ const cols = 12;
 export default class WellplateDetails extends Component {
   constructor(props) {
     super(props);
-    const {name, wells, size, description} = props.wellplate;
+    const {id, name, wells, size, description} = props.wellplate;
     this.state = {
+      id,
       name,
       size,
       description,
       wells: this.initWells(wells, size)
     };
+    console.log(wells);
   }
 
   componentWillReceiveProps(nextProps) {
-    const {name, wells, size, description} = nextProps.wellplate;
+    const {id, name, wells, size, description} = nextProps.wellplate;
     this.setState({
+      id,
       name,
       size,
       description,
@@ -51,12 +56,18 @@ export default class WellplateDetails extends Component {
     };
   }
 
-  submitFunction() {
-
-  }
-
-  sampleIsValid() {
-
+  handleSubmit() {
+    const {id} = this.props.wellplate;
+    const {currentCollectionId} = UIStore.getState();
+    const {state} = this;
+    if(id == '_new_') {
+      ElementActions.createWellplate({
+        ...state,
+        collection_id: currentCollectionId
+      });
+    } else {
+      ElementActions.updateWellplate(this.state);
+    }
   }
 
   handleWellsChange(wells) {
@@ -159,8 +170,7 @@ export default class WellplateDetails extends Component {
                 </Button>
                 <Button
                   bsStyle="warning"
-                  onClick={() => this.submitFunction()}
-                  disabled={!this.sampleIsValid()}
+                  onClick={() => this.handleSubmit()}
                   >
                   {submitLabel}
                 </Button>
