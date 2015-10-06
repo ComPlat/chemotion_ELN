@@ -40,7 +40,7 @@ export default class ContextActions extends React.Component {
 
     return (
       <div>
-        <ButtonGroup vertical block>
+        <ButtonGroup>
           {sampleNode}
           <Button disabled={isAllCollection}>Create Reaction</Button>
           <Button onClick={() => this.createElementOfType('wellplate')} disabled={isAllCollection}>Create Wellplate</Button>

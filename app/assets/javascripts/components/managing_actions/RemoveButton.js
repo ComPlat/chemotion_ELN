@@ -40,7 +40,7 @@ export default class RemoveButton extends React.Component {
   render() {
     return (
       <Button onClick={this.showRemoveModal.bind(this)} disabled={this.isDisabled()}>
-        Remove from Collection
+        Remove
       </Button>
     )
   }

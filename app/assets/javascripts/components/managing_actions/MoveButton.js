@@ -40,7 +40,7 @@ export default class ShareButton extends React.Component {
   render() {
     return (
       <Button onClick={this.showMoveModal.bind(this)} disabled={this.isDisabled()}>
-        Move to Collection
+        Move
       </Button>
     )
   }

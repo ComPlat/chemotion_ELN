@@ -3,7 +3,6 @@ import {Col, Grid, Row, Table} from 'react-bootstrap';
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import ManagingActions from './ManagingActions';
-import ContextActions from './ContextActions';
 import ElementFilter from './ElementFilter';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
@@ -243,13 +242,11 @@ class App extends React.Component {
           <Col sm={2} md={2} lg={2}>
             <CollectionTree />
           </Col>
-          <Col sm={8} md={8} lg={8}>
+          <Col sm={10} md={10} lg={10}>
             <div id="main-content">
             </div>
           </Col>
-          <Col sm={2} md={2} lg={2}>
-            <ContextActions />
-          </Col>
+
         </Row>
       </Grid>
     )

@@ -8,6 +8,7 @@ import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ManagingActions from './ManagingActions';
+import ContextActions from './ContextActions';
 import ScreenDetails from './ScreenDetails';
 
 class Elements extends Component {
@@ -57,17 +58,22 @@ class Elements extends Component {
 
     }
 
+    let colSpan = elementDetails ? 1 : 2
+
     return (
       <div id="elements">
         <Table>
           <thead>
-            <th className="borderless" colSpan="2">
+            <th className="borderless">
               <ManagingActions />
+            </th>
+            <th className="borderless">
+              <ContextActions />
             </th>
           </thead>
           <tbody>
           <tr valign="top" className="borderless">
-            <td className="borderless">
+            <td className="borderless" colSpan={colSpan}>
               <List/>
             </td>
             <td className="borderless" width={width}>
