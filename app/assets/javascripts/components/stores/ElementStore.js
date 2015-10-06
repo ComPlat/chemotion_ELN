@@ -60,11 +60,13 @@ class ElementStore {
 
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
+      handleUpdateScreen: ElementActions.updateScreen,
+      handleCreateScreen: ElementActions.createScreen,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
-      handleGenerateEmptySample: ElementActions.generateEmptySample,
+      handleGenerateEmptyElement: [ElementActions.generateEmptyScreen, ElementActions.generateEmptySample],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
 
@@ -80,9 +82,11 @@ class ElementStore {
     ElementActions.deleteSamplesByUIState(ui_state);
     ElementActions.deleteReactionsByUIState(ui_state);
     ElementActions.deleteWellplatesByUIState(ui_state);
+    ElementActions.deleteScreensByUIState(ui_state);
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollectionId);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollectionId);
+    ElementActions.fetchScreensByCollectionId(ui_state.currentCollectionId);
   }
 
   handleUpdateElementsCollection(paramObj) {
@@ -113,10 +117,6 @@ class ElementStore {
     this.state.currentElement = result;
   }
 
-  handleGenerateEmptySample(result) {
-    this.state.currentElement = result;
-  }
-
   handleFetchSamplesByCollectionId(result) {
     this.state.elements.samples = result
   }
@@ -129,9 +129,8 @@ class ElementStore {
 
   // Update Stored Sample if it has been created
   handleCreateSample(sampleId) {
-    ElementActions.fetchSampleById(sampleId);
-    this.state.currentElement.id = sampleId;
     this.handleRefreshElements('sample');
+    this.navigateToNewElementById(sampleId);
   }
 
   handleSplitAsSubsamples(ui_state) {
@@ -163,6 +162,16 @@ class ElementStore {
 
   handleFetchScreensByCollectionId(result) {
     this.state.elements.screens = result;
+  }
+
+  handleUpdateScreen(screen) {
+    this.state.currentElement = screen;
+    this.handleRefreshElements('screen');
+  }
+
+  handleCreateScreen(screen) {
+    this.handleRefreshElements('screen');
+    this.navigateToNewElementById(screen.id);
   }
 
   // -- Reactions --
@@ -199,6 +208,15 @@ class ElementStore {
   }
 
   // -- Generic --
+
+  navigateToNewElementById(elementId) {
+    const uiState = UIStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/screen/${elementId}`);
+  }
+
+  handleGenerateEmptyElement(result) {
+    this.state.currentElement = result;
+  }
 
   handleUnselectCurrentElement() {
     this.state.currentElement = null;

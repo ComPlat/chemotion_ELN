@@ -112,14 +112,19 @@ Aviator.setRoutes({
   },
   '/screen': {
     target: {
-      show: function(e) {
-        UIActions.selectElement({
-          type: 'screen',
-          id: e.params['screenID']
-        })
+      showOrNew(e) {
+        const {screenId} = e.params;
+        if (screenId == 'new') {
+          ElementActions.generateEmptyScreen();
+        } else {
+          UIActions.selectElement({
+            type: 'screen',
+            id: screenId
+          })
+        }
       }
     },
-    '/:screenID': 'show',
+    '/:screenId': 'showOrNew'
   },
 
   '/sharing': {

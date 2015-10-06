@@ -114,6 +114,48 @@ class ElementActions {
       });
   }
 
+  generateEmptyScreen() {
+    const screen = {
+      id: '_new_',
+      type: 'screen',
+      name: 'New Screen',
+      collaborator: '',
+      requirements: '',
+      conditions: '',
+      result: '',
+      description: '',
+      wellplates: []
+    };
+    this.dispatch(screen);
+  }
+
+  createScreen(screen) {
+    const {wellplates} = screen;
+    delete screen.wellplates;
+    delete screen.id;
+    screen.wellplate_ids = wellplates.map(wellplate => wellplate.id );
+
+    ScreensFetcher.create(screen)
+      .then(result => {
+        this.dispatch(result.screen);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  updateScreen(screen) {
+    const {wellplates} = screen;
+    delete screen.wellplates;
+    screen.wellplate_ids = wellplates.map(wellplate => wellplate.id );
+
+    ScreensFetcher.update(screen)
+      .then(result => {
+        this.dispatch(result.screen);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   createReactionLiterature(paramObj) {
     LiteraturesFetcher.create(paramObj)
       .then((result) => {
@@ -198,6 +240,7 @@ class ElementActions {
     UIActions.uncheckAllElements('sample');
     UIActions.uncheckAllElements('reaction');
     UIActions.uncheckAllElements('wellplate');
+    UIActions.uncheckAllElements('screen');
   }
 
   deleteSamplesByUIState(ui_state) {
@@ -220,6 +263,15 @@ class ElementActions {
 
   deleteWellplatesByUIState(ui_state) {
     WellplatesFetcher.deleteWellplatesByUIState(ui_state)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteScreensByUIState(ui_state) {
+    ScreensFetcher.deleteScreensByUIState(ui_state)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {
