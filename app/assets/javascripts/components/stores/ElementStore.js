@@ -129,9 +129,8 @@ class ElementStore {
 
   // Update Stored Sample if it has been created
   handleCreateSample(sampleId) {
-    ElementActions.fetchSampleById(sampleId);
-    this.state.currentElement.id = sampleId;
     this.handleRefreshElements('sample');
+    this.navigateToNewElementById(sampleId);
   }
 
   handleSplitAsSubsamples(ui_state) {
@@ -166,13 +165,13 @@ class ElementStore {
   }
 
   handleUpdateScreen(screen) {
-    ElementActions.fetchScreenById(screen.id);
+    this.state.currentElement = screen;
     this.handleRefreshElements('screen');
   }
 
   handleCreateScreen(screen) {
-    ElementActions.fetchScreenById(screen.id);
     this.handleRefreshElements('screen');
+    this.navigateToNewElementById(screen.id);
   }
 
   // -- Reactions --
@@ -209,6 +208,11 @@ class ElementStore {
   }
 
   // -- Generic --
+
+  navigateToNewElementById(elementId) {
+    const uiState = UIStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/screen/${elementId}`);
+  }
 
   handleGenerateEmptyElement(result) {
     this.state.currentElement = result;
