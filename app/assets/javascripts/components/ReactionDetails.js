@@ -9,6 +9,7 @@ import ElementActions from './actions/ElementActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 import Aviator from 'aviator';
 import SVG from 'react-inlinesvg';
 
@@ -16,25 +17,30 @@ export default class ReactionDetails extends React.Component {
   constructor(props) {
     super(props);
     const {reaction} = props;
+    const {products, starting_materials, reactants} = props.reaction;
+
     this.state = {
-      reaction
+      reaction,
+      products,
+      starting_materials,
+      reactants
     };
   }
 
   componentDidMount() {
-    const {id} = this.state.reaction;
-    ElementStore.listen(this.onChange.bind(this));
+    let id = this.state.reaction.id;
     ElementActions.fetchReactionSvgByReactionId(id);
   }
 
-  componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
-  }
+  componentWillReceiveProps(nextProps) {
+    const {id} = nextProps.reaction;
+    const {reaction} = this.props;
 
-  onChange(state) {
-    if (! state.currentElement || state.currentElement.type == 'reaction') {
+    if (id != reaction.id) {
+      const {reaction} = nextProps.reaction;
+      ElementActions.fetchReactionSvgByReactionId(id);
       this.setState({
-        reaction: state.currentElement
+        reaction
       });
     }
   }
@@ -96,14 +102,6 @@ export default class ReactionDetails extends React.Component {
     reaction.reactants = updateFunction(reaction.reactants, updatedSample);
     reaction.products = updateFunction(reaction.products, updatedSample);
     return reaction;
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const {id} = nextProps.reaction;
-    const {reaction} = this.state;
-    if (id != reaction.id) {
-      ElementActions.fetchReactionSvgByReactionId(id);
-    }
   }
 
   updatedSamplesForAmountChange(samples, updatedSample) {
@@ -181,7 +179,7 @@ export default class ReactionDetails extends React.Component {
   // --
 
   dropSample(sample, materialGroup) {
-    const {reaction} = this.state;
+    const {reaction} = this.props;
     const materials = reaction[materialGroup];
     materials.push(sample);
     this.setState({reaction});
@@ -189,7 +187,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   deleteMaterial(material, materialGroup) {
-    const {reaction} = this.state;
+    const {reaction} = this.props;
     const materials = reaction[materialGroup];
     const materialIndex = materials.indexOf(material);
     materials.splice(materialIndex, 1);
@@ -198,7 +196,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   dropMaterial(material, previousMaterialGroup, materialGroup) {
-    const {reaction} = this.state;
+    const {reaction} = this.props;
     const materials = reaction[materialGroup];
     this.deleteMaterial(material, previousMaterialGroup);
     materials.push(material);
@@ -215,10 +213,11 @@ export default class ReactionDetails extends React.Component {
   }
 
   _submitLabel() {
-    if (this.state.reaction.id == '_new_') {
-      return "Save Reaction";
+    const {id} = this.state;
+    if (id == '_new_') {
+      return "Create";
     } else {
-      return "Update Reaction";
+      return "Save";
     }
   }
 
@@ -228,12 +227,14 @@ export default class ReactionDetails extends React.Component {
   }
 
   closeDetails() {
+    UIActions.deselectAllElements();
+
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   updateReactionSvg() {
-    const {reaction} = this.state;
+    const {reaction} = this.props;
     const materialsInchikeys = {
       starting_materials: reaction.starting_materials.map(material => material.molecule.inchikey),
       reactants: reaction.reactants.map(material => material.molecule.inchikey),
@@ -243,7 +244,7 @@ export default class ReactionDetails extends React.Component {
   }
 
   render() {
-    const {reaction} = this.state;
+    const {reaction} = this.props;
     const svgPath = (reaction.reactionSvg) ? "/images/reactions/" + reaction.reactionSvg : "";
     const svgContainerStyle = {
       position: 'relative',

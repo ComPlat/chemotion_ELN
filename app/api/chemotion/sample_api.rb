@@ -3,6 +3,7 @@ module Chemotion
     include Grape::Kaminari
 
     resource :samples do
+      
       namespace :ui_state do
         desc "Delete samples by UI state"
         params do

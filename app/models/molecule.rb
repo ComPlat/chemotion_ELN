@@ -3,6 +3,8 @@ class Molecule < ActiveRecord::Base
 
   validates_uniqueness_of :inchikey
 
+  scope :by_formula, ->(query) { where('sum_formular ILIKE ?', "%#{query}%") }
+
   def self.find_or_create_by_molfile molfile
 
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)

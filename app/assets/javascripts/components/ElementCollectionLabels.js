@@ -2,7 +2,6 @@ import React from 'react';
 import {Label} from 'react-bootstrap';
 
 export default class ElementCollectionLabels extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -30,7 +29,7 @@ export default class ElementCollectionLabels extends React.Component {
     if(element.collection_labels) {
       return element.collection_labels.map((label, index) => {
         return (
-          <span key={index}>
+          <span className="collection-label" key={index}>
             <Label bsStyle={this.labelStyle(label)}>{label[0]}</Label>
             &nbsp;
           </span>

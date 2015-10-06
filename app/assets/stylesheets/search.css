@@ -1,0 +1,12 @@
+.search-elements-select {
+  position: absolute;
+}
+
+.search-autocomplete {
+  float: right;
+  padding-left: 110px;
+}
+
+.chemotion-search {
+  padding-left: 50px;
+}

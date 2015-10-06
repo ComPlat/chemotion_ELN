@@ -1,10 +1,13 @@
 import React, {PropTypes, Component} from 'react';
 import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
-import UIStore from './stores/UIStore';
 import ElementActions from './actions/ElementActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
+
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
+import ElementStore from './stores/ElementStore';
 
 const cols = 12;
 
@@ -31,6 +34,13 @@ export default class WellplateDetails extends Component {
       description,
       wells: this.initWells(wells, size)
     });
+  }
+
+  closeDetails() {
+    UIActions.deselectAllElements();
+
+    let uiState = UIStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   initWells(wells, size) {
@@ -97,9 +107,9 @@ export default class WellplateDetails extends Component {
   render() {
     const {wellplate} = this.props;
     const {wells, name, size, description} = this.state;
-    const submitLabel = (wellplate.id == '_new_') ? "Save Wellplate" : "Update Wellplate";
+    const submitLabel = (wellplate.id == '_new_') ? "Create" : "Save";
     return (
-      <div>
+      <div key={wellplate.id}>
         <Panel header="Wellplate Details" bsStyle='primary'>
           <h3>{name}</h3>
           <ElementCollectionLabels element={wellplate}/>
@@ -166,7 +176,7 @@ export default class WellplateDetails extends Component {
                   bsStyle="primary"
                   onClick={() => this.closeDetails()}
                   >
-                  Back
+                  Close
                 </Button>
                 <Button
                   bsStyle="warning"

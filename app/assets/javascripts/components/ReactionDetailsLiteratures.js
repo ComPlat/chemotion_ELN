@@ -24,10 +24,12 @@ export default class ReactionDetailsLiteratures extends React.Component {
   }
 
   onChange(state) {
-    this.setState({
-      literatures: state.currentElement.literatures,
-      reaction_id: state.currentElement.id
-    });
+    if(state.currentElement) {
+      this.setState({
+        literatures: state.currentElement.literatures,
+        reaction_id: state.currentElement.id
+      });
+    }
   }
 
   _deleteLiterature(literature) {

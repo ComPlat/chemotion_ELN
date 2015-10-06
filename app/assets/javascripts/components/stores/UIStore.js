@@ -39,6 +39,7 @@ class UIStore {
       },
       currentCollectionId: null,
       currentTab: 1,
+      currentSearchSelection: null
     };
 
     this.bindListeners({
@@ -48,9 +49,13 @@ class UIStore {
       handleCheckElement: UIActions.checkElement,
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
-      handleDeselectAllElements: UIActions.deselectAllElements,
+      handleDeselectAllElementsOfType: UIActions.deselectAllElementsOfType,
       handleSelectElement: UIActions.selectElement,
-      handleSetPagination: UIActions.setPagination
+      handleSetPagination: UIActions.setPagination,
+      handleDeselectAllElements: UIActions.deselectAllElements,
+      handleSetSearchSelection: UIActions.setSearchSelection,
+      handleSelectCollectionWithoutUpdating: UIActions.selectCollectionWithoutUpdating,
+      handleClearSearchSelection: UIActions.clearSearchSelection
     });
   }
 
@@ -97,31 +102,22 @@ class UIStore {
     }
   }
 
-  handleDeselectAllElements(type) {
+  handleDeselectAllElementsOfType(type) {
     this.state[type].currentId = null;
+  }
+
+  handleDeselectAllElements() {
+    this.state.sample.currentId = null;
+    this.state.reaction.currentId = null;
+    this.state.wellplate.currentId = null;
   }
 
   handleSelectElement(element) {
     this.state[element.type].currentId = element.id;
-
-    switch(element.type) {
-      case 'sample':
-        ElementActions.fetchSampleById(element.id);
-        break;
-      case 'reaction':
-        ElementActions.fetchReactionById(element.id);
-        break;
-      case 'wellplate':
-        ElementActions.fetchWellplateById(element.id);
-        break;
-      case 'screen':
-        ElementActions.fetchScreenById(element.id);
-        break;
-    }
   }
 
   handleSelectCollection(collection) {
-    let hasChanged = this.state.currentCollectionId != collection.id;
+    let hasChanged = (this.state.currentCollectionId != collection.id) || (this.state.currentSearchSelection != null);
     this.state.currentCollectionId = collection.id;
 
     if(hasChanged) {
@@ -137,6 +133,17 @@ class UIStore {
     this.state[type].page = page;
   }
 
+  handleSetSearchSelection(selection) {
+    this.state.currentSearchSelection = selection;
+  }
+
+  handleSelectCollectionWithoutUpdating(collection) {
+    this.state.currentCollectionId = collection.id;
+  }
+
+  handleClearSearchSelection() {
+    this.state.currentSearchSelection = null;
+  }
 }
 
 export default alt.createStore(UIStore, 'UIStore');

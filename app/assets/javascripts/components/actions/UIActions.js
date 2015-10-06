@@ -30,12 +30,28 @@ class UIActions {
     this.dispatch(element);
   }
 
-  deselectAllElements(type) {
+  deselectAllElementsOfType(type) {
     this.dispatch(type);
+  }
+
+  deselectAllElements() {
+    this.dispatch();
   }
 
   setPagination(pagination) {
     this.dispatch(pagination);
+  }
+
+  setSearchSelection(selection) {
+    this.dispatch(selection);
+  }
+
+  selectCollectionWithoutUpdating(collection) {
+    this.dispatch(collection);
+  }
+
+  clearSearchSelection() {
+    this.dispatch();
   }
 }
 

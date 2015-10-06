@@ -31,10 +31,9 @@ export default class ElementsTable extends React.Component {
   }
 
   componentDidMount() {
+    UIStore.getState();
     ElementStore.listen(this.onChange.bind(this));
     UIStore.listen(this.onChangeUI.bind(this));
-
-    this.onChangeUI(UIStore.getState());
   }
 
   componentWillUnmount() {
@@ -53,12 +52,10 @@ export default class ElementsTable extends React.Component {
 
     //console.log('ElementsType: ' + type + '#activePage ' + page);
 
-    let {checkedIds, uncheckedIds, checkedAll, currentId} = state[this.props.type];
+    let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
 
-    // console.log('currentId ' + currentId);
-    // console.log('checkedAll ' + checkedAll);
-    // console.log('checkedIds ' + checkedIds && checkedIds.toArray());
-    // console.log('uncheckedIds ' + uncheckedIds && uncheckedIds.toArray());
+    // check if element details of any type are open at the moment
+    let currentId = state.sample.currentId || state.reaction.currentId || state.wellplate.currentId;
 
     if (checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
@@ -80,10 +77,11 @@ export default class ElementsTable extends React.Component {
     const totalElements = state.elements[type].totalElements;
 
     let currentElement;
-    if (! state.currentElement || state.currentElement.type == this.props.type) {
+    if(!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
+    //console.log(type + ' ' + elements)
     let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
     let currentElementDidChange = ! deepEqual(currentElement, this.state.currentElement);
 
@@ -162,6 +160,7 @@ export default class ElementsTable extends React.Component {
               onClick={e => this.showDetails(element)}
               style={{cursor: 'pointer'}}>
             {this.elementLabel(element)}
+            {this.topSecretIcon(element)}
           </td>
           {optionalLabelColumn}
           {svgColumn}
@@ -170,7 +169,17 @@ export default class ElementsTable extends React.Component {
     });
   }
 
-  moleculeSVGColumn(molecule, options = {}) {
+  topSecretIcon(element) {
+    if(element.type == 'sample' && element.is_top_secret == true) {
+      return (
+        <div className="top-secret-icon">
+          <i className="fa fa-user-secret"></i>
+        </div>
+      )
+    }
+  }
+
+  moleculeSVGColumn(molecule, options={}) {
     let className = options.selected ? 'molecule-selected' : 'molecule';
     let moleculeSVG = this.moleculeSVG(molecule, className);
     return (
@@ -188,7 +197,7 @@ export default class ElementsTable extends React.Component {
   }
 
   showElementDetailsColumns() {
-    return ! (this.state.ui.currentId);
+    return !(this.state.ui.currentId);
   }
 
   showDetails(element) {

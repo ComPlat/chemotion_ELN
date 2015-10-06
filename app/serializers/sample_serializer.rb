@@ -1,6 +1,6 @@
 class SampleSerializer < ActiveModel::Serializer
   attributes :id, :type, :name, :description, :created_at, :collection_labels, :amount_value, :amount_unit, :molfile,
-             :purity, :solvent, :impurities, :location, :weight, :volume, :is_top_secret, :is_restricted, :external_label
+             :purity, :solvent, :impurities, :location, :is_top_secret, :is_restricted, :external_label
 
   has_one :molecule
 
@@ -19,14 +19,6 @@ class SampleSerializer < ActiveModel::Serializer
 
   def molecule_svg
     molecule.molecule_svg_file
-  end
-
-  def weight
-    object.weight
-  end
-
-  def volume
-    object.volume
   end
 
   def is_restricted

@@ -29,7 +29,7 @@ class SampleContainer extends Component {
     const {sample, connectDragSource} = this.props;
 
     return connectDragSource(
-      <div style={style}>
+      <div className="sample-container" style={style}>
         <Sample sample={sample}/>
       </div>,
       {dropEffect: 'copy'}

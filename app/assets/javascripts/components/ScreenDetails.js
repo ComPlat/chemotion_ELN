@@ -1,10 +1,12 @@
 import React, {Component} from 'react';
 import {Input, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
-import ElementActions from './actions/ElementActions';
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 import Aviator from 'aviator';
 import ScreenWellplates from './ScreenWellplates';
+import ElementStore from './stores/ElementStore';
+import ElementActions from './actions/ElementActions';
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -64,6 +66,8 @@ export default class ScreenDetails extends Component {
   }
 
   closeDetails() {
+    UIActions.deselectAllElements();
+
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }

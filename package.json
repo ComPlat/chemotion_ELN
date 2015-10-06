@@ -19,7 +19,9 @@
     "deep-equal": "1.0.0",
     "react-cookie": "^0.2.6",
     "react-dnd": "^1.1.8",
-    "numeral": "^1.5.3"
+    "numeral": "^1.5.3",
+    "debounce": "^1.0.0",
+    "es6-promise-debounce": "^1.0.1"
   },
   "browserify": {
     "transform": [

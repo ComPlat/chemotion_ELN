@@ -42,6 +42,7 @@ class ElementStore {
     };
 
     this.bindListeners({
+      handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
@@ -77,6 +78,12 @@ class ElementStore {
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples
     })
+  }
+
+  handleFetchBasedOnSearchSelection(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
   }
 
   // -- Elements --
@@ -115,7 +122,6 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    console.log(result)
     this.state.currentElement = result;
   }
 

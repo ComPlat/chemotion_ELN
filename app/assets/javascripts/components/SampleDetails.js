@@ -6,6 +6,7 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -42,6 +43,8 @@ export default class SampleDetails extends React.Component {
   }
 
   closeDetails() {
+    UIActions.deselectAllElements();
+
     let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
@@ -282,6 +285,7 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="Molecule" ref="moleculeInput"
              buttonAfter={this.structureEditorButton(this.isDisabled(sample, 'molecule'))}
              defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+             value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              disabled={this.isDisabled(sample, 'molecule')}
       />
     )
@@ -311,6 +315,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Input type="text" label="InChI"
              defaultValue={sample.molecule_inchistring}
+             value={sample.molecule_inchistring}
              disabled
       />
     )
@@ -320,6 +325,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Input type="text" label="M. Weight"
              defaultValue={sample.molecule_molecular_weight}
+             value={sample.molecule_molecular_weight}
              disabled
         />
     )
@@ -339,6 +345,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Input type="text" label="Formula"
              defaultValue={sample.molecule_formula}
+             value={sample.molecule_formula}
              disabled
         />
     )

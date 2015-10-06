@@ -2,6 +2,14 @@ require 'ElementUIStateScopes'
 
 class Reaction < ActiveRecord::Base
   include ElementUIStateScopes
+  include PgSearch
+  include Collectable
+
+  # search related
+  pg_search_scope :search_by_reaction_name, against: :name
+
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+
 
   has_many :collections_reactions
   has_many :collections, through: :collections_reactions
