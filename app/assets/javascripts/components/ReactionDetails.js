@@ -32,14 +32,15 @@ export default class ReactionDetails extends React.Component {
 
   componentDidMount() {
     let id = this.state.reaction.id;
-    ElementActions.fetchReactionSvgByReactionId(id);
+    if(id != '_new_') {
+      ElementActions.fetchReactionSvgByReactionId(id);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
     const {id} = nextProps.reaction;
     const {reaction} = this.props;
-
-    if (id != reaction.id) {
+    if (id != reaction.id && id != '_new_') {
       const {reaction} = nextProps.reaction;
       ElementActions.fetchReactionSvgByReactionId(id);
       this.setState({

@@ -98,15 +98,14 @@ Aviator.setRoutes({
   '/reaction': {
     target: {
       show: function(e) {
-        let reactionID = e.params['reactionID']
-        UIActions.selectElement({type: 'reaction', id: reactionID})
-
+        const reactionID = e.params['reactionID'];
+        //UIActions.selectTab(2);
         if (reactionID != 'new') {
           ElementActions.fetchReactionById(reactionID);
         } else {
-          //ElementActions.generateEmptyReaction()
+          console.log("generateEmptyReaction")
+          ElementActions.generateEmptyReaction()
         }
-        //UIActions.selectTab(2);
       }
     },
     '/:reactionID': 'show',

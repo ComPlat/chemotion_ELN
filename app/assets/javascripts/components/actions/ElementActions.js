@@ -205,6 +205,20 @@ class ElementActions {
       });
   }
 
+  generateEmptyReaction() {
+    let reaction = new Reaction({
+      id: '_new_',
+      type: 'reaction',
+      //name: 'New Reaction',
+      starting_materials: [],
+      reactants: [],
+      products: [],
+      literatures: []
+
+    })
+    this.dispatch(reaction)
+  }
+
   deleteReactionLiterature(literature) {
     LiteraturesFetcher.delete(literature)
       .then((result) => {

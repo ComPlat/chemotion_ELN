@@ -42,7 +42,7 @@ export default class ContextActions extends React.Component {
       <ButtonGroup>
         <SplitButton bsStyle="primary" title="Create">
           {sampleNode}
-          <MenuItem disabled={isAllCollection}>Create Reaction</MenuItem>
+          <MenuItem onClick={() => this.createElementOfType('reaction')} disabled={isAllCollection}>Create Reaction</MenuItem>
           <MenuItem onClick={() => this.createElementOfType('wellplate')} disabled={isAllCollection}>Create Wellplate</MenuItem>
           <MenuItem onClick={() => this.createElementOfType('screen')} disabled={isAllCollection}>Create Screen</MenuItem>
         </SplitButton>
