@@ -1,5 +1,3 @@
-require 'ElementUIStateScopes'
-
 class Reaction < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch

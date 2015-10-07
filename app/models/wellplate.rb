@@ -1,5 +1,3 @@
-require 'ElementUIStateScopes'
-
 class Wellplate < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch

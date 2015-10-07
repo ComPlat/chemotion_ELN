@@ -104,26 +104,24 @@ module Chemotion
         end
 
         before do
-          # TODO extract getElementIds to separate class? FilterParams e.g.?
-          usecase = Usecases::Sharing::ShareWithUsers.new(params)
-          sample_ids = usecase.getElementIds(params[:elements_filter], Sample)
-          reaction_ids = usecase.getElementIds(params[:elements_filter], Reaction)
-          wellplate_ids = usecase.getElementIds(params[:elements_filter], Wellplate)
-          screen_ids = usecase.getElementIds(params[:elements_filter], Screen)
+          samples = Sample.for_ui_state(params[:elements_filter][:sample])
+          reactions = Reaction.for_ui_state(params[:elements_filter][:reaction])
+          wellplates = Wellplate.for_ui_state(params[:elements_filter][:wellplate])
+          screens = Screen.for_ui_state(params[:elements_filter][:screen])
 
-          top_secret_sample = Sample.where(id: sample_ids).pluck(:is_top_secret).any?
-          top_secret_reaction = Reaction.where(id: reaction_ids).flat_map(&:samples).map(&:is_top_secret).any?
-          top_secret_wellplate = Wellplate.where(id: wellplate_ids).flat_map(&:samples).map(&:is_top_secret).any?
-          top_secret_screen = Screen.where(id: screen_ids).flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
+          top_secret_sample = samples.pluck(:is_top_secret).any?
+          top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
+          top_secret_wellplate = wellplates.flat_map(&:samples).map(&:is_top_secret).any?
+          top_secret_screen = screens.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any?
 
           is_top_secret = top_secret_sample || top_secret_wellplate || top_secret_reaction || top_secret_screen
 
-          share_samples = ElementsPolicy.new(current_user, Sample.where(id: sample_ids)).share?
-          share_reactions = ElementsPolicy.new(current_user, Reaction.where(id: reaction_ids)).share?
-          share_wellplates = ElementsPolicy.new(current_user, Wellplate.where(id: wellplate_ids)).share?
-          # TODO share_screens wenn anforderungen bekannt
+          share_samples = ElementsPolicy.new(current_user, samples).share?
+          share_reactions = ElementsPolicy.new(current_user, reactions).share?
+          share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
+          share_screens = ElementsPolicy.new(current_user, screens).share?
 
-          sharing_allowed = share_samples && share_reactions && share_wellplates
+          sharing_allowed = share_samples && share_reactions && share_wellplates && share_screens
 
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
         end

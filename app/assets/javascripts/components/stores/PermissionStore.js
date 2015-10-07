@@ -5,11 +5,15 @@ import Aviator from 'aviator';
 class PermissionStore {
   constructor() {
     this.state = {
-      is_top_secret: false
+      is_top_secret: false,
+      sharing_allowed: false,
+      deletion_allowed: false
     };
 
     this.bindListeners({
-      handleFetchTopSecretStatus: PermissionActions.fetchTopSecretStatus
+      handleFetchTopSecretStatus: PermissionActions.fetchTopSecretStatus,
+      handleFetchSharingAllowedStatus: PermissionActions.fetchSharingAllowedStatus,
+      handleFetchDeletionAllowedStatus: PermissionActions.fetchDeletionAllowedStatus
     })
   }
 
@@ -21,6 +25,14 @@ class PermissionStore {
     } else {
       Aviator.navigate('/top_secret');
     }
+  }
+
+  handleFetchSharingAllowedStatus(result) {
+    this.state.sharing_allowed = result.sharing_allowed;
+  }
+
+  handleFetchDeletionAllowedStatus(result) {
+    this.state.deletion_allowed = result.deletion_allowed;
   }
 }
 

@@ -12,6 +12,12 @@ export default class DeleteButton extends React.Component {
     }
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      isDisabled: nextProps.isDisabled
+    })
+  }
+  
   _deleteSelection() {
     const uiState = UIStore.getState();
     ElementActions.deleteElements(uiState);
