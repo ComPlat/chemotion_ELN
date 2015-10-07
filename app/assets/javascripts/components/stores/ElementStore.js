@@ -224,8 +224,6 @@ class ElementStore {
   }
 
   handleFetchLiteraturesByReactionId(result) {
-    console.log("handleFetchLiteraturesByReactionId: ");
-    console.log(result);
     this.state.currentElement.literatures = result.literatures;
   }
 
