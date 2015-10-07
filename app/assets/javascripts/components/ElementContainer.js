@@ -26,7 +26,8 @@ class ElementContainer extends Component {
   render() {
     const {connectDragSource} = this.props;
     const style = {
-      cursor: 'move'
+      cursor: 'move',
+      fontSize: '18pt'
     };
     return connectDragSource(
       <span style={style} className='text-info fa fa-arrows'></span>,

@@ -2,21 +2,12 @@
   margin-top: 0 !important;
 }
 
-.borderless {
-    border: none !important;
-    padding-top: 0px !important;
-}
-
-table.elements {
-  table-layout: fixed;
-}
-
-th.check, td.check {
+th.check {
   width: 30px !important;
 }
 
-th.name, td.check {
-  width: 120px !important;
+th.drag {
+  width: 40px !important;
 }
 
 .managing-actions-add-btn {
@@ -35,8 +26,4 @@ th.name, td.check {
 .top-secret-icon {
   vertical-align: top;
   overflow: hidden;
-}
-
-.sample-container {
-  position: absolute;
 }

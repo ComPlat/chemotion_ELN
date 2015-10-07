@@ -80,7 +80,8 @@ export default class ElementsTableEntries extends Component {
         let style = {};
         if (this.isDraggable(element)) {
           dragHandleStyle = {
-            verticalAlign: 'middle'
+            verticalAlign: 'middle',
+            textAlign: 'center'
           };
         }
         if (this.isElementSelected(element)) {
@@ -91,7 +92,7 @@ export default class ElementsTableEntries extends Component {
         }
         return (
           <tr key={index} height="100" style={style}>
-            <td className="check">
+            <td>
               <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
             </td>
             <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>

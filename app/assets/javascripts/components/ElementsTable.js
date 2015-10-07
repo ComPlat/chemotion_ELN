@@ -134,7 +134,7 @@ export default class ElementsTable extends React.Component {
             <th colSpan={colSpan}>
               All {this.props.type}s
             </th>
-          <th className="check"></th>
+          <th className="drag"></th>
           </thead>
           <ElementsTableEntries elements={elements} currentElement={currentElement} ui={ui}/>
         </Table>
