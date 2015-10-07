@@ -2,7 +2,6 @@ import React from 'react';
 import {Col, Grid, Row, Table} from 'react-bootstrap';
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
-import ManagingActions from './ManagingActions';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';
@@ -240,25 +239,14 @@ class App extends React.Component {
         <Row>
           <Navigation />
         </Row>
-        {
-          // <Row>
-          //   <Col sm={3} md={3} lg={3}>
-          //     <ElementFilter />
-          //   </Col>
-          //   <Col sm={9} md={9} lg={9}>
-          //     <ManagingActions />
-          //   </Col>
-          // </Row>
-        }
         <Row>
           <Col sm={2} md={2} lg={2}>
-            <CollectionTree />
+            <CollectionTree/>
           </Col>
           <Col sm={10} md={10} lg={10}>
             <div id="main-content">
             </div>
           </Col>
-
         </Row>
       </Grid>
     )
