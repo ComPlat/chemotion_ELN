@@ -3,6 +3,7 @@ import {Table, Input, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'rea
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
+import LiteraturesForm from './LiteraturesForm';
 
 
 export default class ReactionDetailsLiteratures extends React.Component {
@@ -25,12 +26,10 @@ export default class ReactionDetailsLiteratures extends React.Component {
 
   onChange(state) {
     let element = state.currentElement
-    if(state.currentElement) {
-      this.setState({
-        literatures: element ? element.literatures : [],
-        reaction_id: element ? element.id : undefined
-      });
-    }
+    this.setState({
+      literatures: element ? element.literatures : [],
+      reaction_id: element ? element.id : undefined
+    });
   }
 
   _deleteLiterature(literature) {
@@ -54,15 +53,6 @@ export default class ReactionDetailsLiteratures extends React.Component {
     });
   }
 
-  _submitFunction() {
-    let paramObj = {
-      reaction_id: this.state.reaction_id,
-      title: this.refs.titleInput.getValue(),
-      url: this.refs.urlInput.getValue()
-    }
-    ElementActions.createReactionLiterature(paramObj);
-  }
-
   render() {
     return (
       <ListGroup fill>
@@ -72,29 +62,7 @@ export default class ReactionDetailsLiteratures extends React.Component {
           </tbody>
         </Table>
         <ListGroupItem>
-          <form>
-            <table width="100%">
-              <tr>
-                <td className="padding-right">
-                  <Input type="text" label="Title" ref="titleInput"
-                    placeholder={'-- Please Insert Title --'}
-                  />
-                </td>
-                <td>
-                  <Input type="text" label="URL" ref="urlInput"
-                    placeholder={'-- Please Insert URL --'}
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td colSpan={2}>
-                  <ButtonToolbar>
-                    <Button bsStyle="warning" onClick={this._submitFunction.bind(this)}>Add Literature</Button>
-                  </ButtonToolbar>
-                </td>
-              </tr>
-            </table>
-          </form>
+          <LiteraturesForm reaction_id={this.state.reaction_id} />
         </ListGroupItem>
       </ListGroup>
     );
