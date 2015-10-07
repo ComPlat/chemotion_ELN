@@ -39,17 +39,23 @@ class CreateCollections < ActiveRecord::Migration
       t.index :sample_id
     end
 
-    create_join_table :reactions, :samples, table_name: 'reactions_starting_material_samples' do |t|
+    create_table :reactions_starting_material_samples do |t|
+      t.integer :reaction_id
+      t.integer :sample_id
       t.index :reaction_id
       t.index :sample_id
     end
 
-    create_join_table :reactions, :samples, table_name: 'reactions_reactant_samples' do |t|
+    create_table :reactions_reactant_samples do |t|
+      t.integer :reaction_id
+      t.integer :sample_id
       t.index :reaction_id
       t.index :sample_id
     end
 
-    create_join_table :reactions, :samples, table_name: 'reactions_product_samples' do |t|
+    create_table :reactions_product_samples do |t|
+      t.integer :reaction_id
+      t.integer :sample_id
       t.index :reaction_id
       t.index :sample_id
     end

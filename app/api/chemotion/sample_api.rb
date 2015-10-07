@@ -3,7 +3,7 @@ module Chemotion
     include Grape::Kaminari
 
     resource :samples do
-      
+
       namespace :ui_state do
         desc "Delete samples by UI state"
         params do
@@ -33,6 +33,7 @@ module Chemotion
           currentCollectionId = ui_state[:currentCollectionId]
           sample_ids = Sample.for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
           Sample.where(id: sample_ids).each do |sample|
+            #todo: extract method into Sample
             subsample = sample.dup
             subsample.parent = sample
             subsample.save

@@ -1,5 +1,5 @@
 import alt from '../alt';
-import UIActions from '../actions/UIActions';
+import UIActions from './UIActions';
 
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
@@ -207,6 +207,7 @@ class ElementActions {
   }
 
   generateEmptyReaction() {
+    //todo: move to Reaction
     let reaction = new Reaction({
       id: '_new_',
       type: 'reaction',
@@ -221,26 +222,17 @@ class ElementActions {
   }
 
   createReaction(paramObj) {
-    delete paramObj['id'];
+    console.log(paramObj)
     ReactionsFetcher.create(paramObj)
       .then((result) => {
-        this.dispatch(result.sample)
+        this.dispatch(result)
       });
   }
 
   updateReaction(paramObj) {
-    // delete possible null values for scoped update
-    // Todo: ???
-    for(var key in paramObj) {
-      if(paramObj[key] == null) {
-        delete paramObj[key];
-      }
-    }
-    console.log(paramObj)
-
     ReactionsFetcher.update(paramObj)
       .then((result) => {
-        this.dispatch(paramObj)
+        this.dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
