@@ -28,12 +28,20 @@ export default class Sample {
     return splitSample;
   }
 
+  get is_top_secret() {
+    return this._is_top_secret;
+  }
+
+  set is_top_secret(is_top_secret) {
+    this._is_top_secret = is_top_secret;
+  }
+
   get name() {
-    return this._name
+    return this._name;
   }
 
   set name(name) {
-    this._name = name
+    this._name = name;
   }
 
   get external_label() {

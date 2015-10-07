@@ -45,15 +45,19 @@ export default class ManagingActions extends React.Component {
   }
 
   isDisabled() {
-    let currentCollection = this.state.currentCollection;
+    if(this.state.currentCollection) {
+      let currentCollection = this.state.currentCollection;
 
-    return currentCollection.id == 'all' || currentCollection.is_shared == true;
+      return currentCollection.id == 'all' || currentCollection.is_shared == true;
+    }
   }
 
   isRemoteDisabled() {
-    let currentCollection = this.state.currentCollection;
+    if(this.state.currentCollection) {
+      let currentCollection = this.state.currentCollection;
 
-    return currentCollection.id == 'all' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
+      return currentCollection.id == 'all' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
+    }
   }
 
   render() {
