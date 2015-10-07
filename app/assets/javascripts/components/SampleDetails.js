@@ -177,8 +177,8 @@ export default class SampleDetails extends React.Component {
 
   handleTopSecretChanged(e) {
     let sample = this.state.sample;
-    let checkedState = this.refs.topSecretInput.getValue();
-
+    let checkedState = this.refs.topSecretInput.props.checked;
+    
     sample.is_top_secret = !checkedState;
     this.setState({
       sample: sample

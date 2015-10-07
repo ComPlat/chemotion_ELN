@@ -1,5 +1,3 @@
-require 'ElementUIStateScopes'
-
 class Sample < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch

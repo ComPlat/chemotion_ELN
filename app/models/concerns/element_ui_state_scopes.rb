@@ -1,12 +1,9 @@
 module ElementUIStateScopes
-
-  def self.included(base)
-    base.extend(ClassMethods)
-  end
+  extend ActiveSupport::Concern
 
   module ClassMethods
-
     def for_ui_state(ui_state)
+      return [] unless ui_state
       if (ui_state.fetch(:all, false))
         excluded_ids = ui_state.fetch(:excluded_ids, [])
         where.not(id: excluded_ids)
@@ -29,7 +26,6 @@ module ElementUIStateScopes
         result = collection_elements.where({element_label => included_ids})
         result.pluck(element_label)
       end
-
     end
   end
 end
