@@ -60,6 +60,8 @@ export default class ReactionDetailsLiteratures extends React.Component {
       title: this.refs.titleInput.getValue(),
       url: this.refs.urlInput.getValue()
     }
+    document.getElementById("titleInput").value = "";
+    document.getElementById("urlInput").value = "";
     ElementActions.createReactionLiterature(paramObj);
   }
 
@@ -76,12 +78,12 @@ export default class ReactionDetailsLiteratures extends React.Component {
             <table width="100%">
               <tr>
                 <td className="padding-right">
-                  <Input type="text" label="Title" ref="titleInput"
+                  <Input type="text" label="Title" ref="titleInput" id="titleInput"
                     placeholder={'-- Please Insert Title --'}
                   />
                 </td>
                 <td>
-                  <Input type="text" label="URL" ref="urlInput"
+                  <Input type="text" label="URL" ref="urlInput" id="urlInput"
                     placeholder={'-- Please Insert URL --'}
                   />
                 </td>
