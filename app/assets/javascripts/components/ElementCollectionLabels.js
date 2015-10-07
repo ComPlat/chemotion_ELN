@@ -19,7 +19,7 @@ export default class ElementCollectionLabels extends React.Component {
 
   labelStyle(label) {
     if(label.is_shared == false) {
-      return "primary";
+      return "info";
     } else {
       return "warning";
     }
