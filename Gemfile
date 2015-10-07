@@ -61,6 +61,8 @@ group :production do
   if ENV["RAILS_ENV"] == "production"
     gem 'openbabel'
   end
+  gem 'unicorn'
+  
 end
 
 group :development, :test do
@@ -93,6 +95,7 @@ group :development, :test do
   gem 'capistrano-rails'
   gem 'capistrano-npm'
   gem 'capistrano3-delayed-job'
+  gem 'capistrano3-unicorn'
 end
 
 group :test do
