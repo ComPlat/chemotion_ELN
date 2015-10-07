@@ -1,7 +1,5 @@
 import React, {Component, PropTypes} from 'react';
 import {DragSource} from 'react-dnd';
-import DragDropItemTypes from './DragDropItemTypes';
-import Sample from './Sample';
 
 const style = {
   cursor: 'move',
@@ -20,26 +18,27 @@ const collectSource = (connect, monitor) => ({
   isDragging: monitor.isDragging()
 });
 
-class SampleContainer extends Component {
+class ElementContainer extends Component {
   constructor(props) {
     super(props);
   }
 
   render() {
-    const {sample, connectDragSource} = this.props;
-
+    const {connectDragSource} = this.props;
+    const style = {
+      cursor: 'move',
+      fontSize: '18pt'
+    };
     return connectDragSource(
-      <div className="sample-container" style={style}>
-        <Sample sample={sample}/>
-      </div>,
+      <span style={style} className='text-info fa fa-arrows'></span>,
       {dropEffect: 'copy'}
     );
   }
 }
 
-export default DragSource(DragDropItemTypes.SAMPLE, sampleSource, collectSource)(SampleContainer);
+export default DragSource(props => props.sourceType, sampleSource, collectSource)(ElementContainer);
 
-SampleContainer.propTypes = {
+ElementContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired
 };

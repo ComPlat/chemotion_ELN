@@ -3,7 +3,6 @@ import {Col, Grid, Row, Table} from 'react-bootstrap';
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import ManagingActions from './ManagingActions';
-import ElementFilter from './ElementFilter';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
 import ShareModal from './managing_actions/ShareModal';

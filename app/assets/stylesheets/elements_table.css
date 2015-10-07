@@ -2,21 +2,12 @@
   margin-top: 0 !important;
 }
 
-.borderless {
-    border: none !important;
-    padding-top: 0px !important;
+th.check {
+  width: 30px !important;
 }
 
-table.elements {
-  table-layout: fixed;
-}
-
-th.check, td.check {
+th.drag {
   width: 40px !important;
-}
-
-th.name, td.check {
-  width: 120px !important;
 }
 
 .managing-actions-add-btn {
@@ -29,13 +20,10 @@ th.name, td.check {
 
 .fa-user-secret {
   float:right;
+  marging-top:2px;
 }
 
 .top-secret-icon {
   vertical-align: top;
   overflow: hidden;
-}
-
-.sample-container {
-  position: absolute;
 }
