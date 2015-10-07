@@ -4,7 +4,7 @@ describe Chemotion::CollectionAPI do
   let(:json_options) {
     {
       only: [:id, :label],
-      methods: [:children, :descendant_ids, :permission_level, :sample_detail_level, :reaction_detail_level, :wellplate_detail_level, :is_shared]
+      methods: [:children, :descendant_ids, :permission_level, :shared_by_id, :sample_detail_level, :reaction_detail_level, :wellplate_detail_level, :is_shared]
     }
   }
 

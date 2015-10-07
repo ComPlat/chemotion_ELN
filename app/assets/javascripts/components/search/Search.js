@@ -23,7 +23,7 @@ export default class Search extends React.Component {
     UIActions.setSearchSelection(selection);
 
     let uiState = UIStore.getState();
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollectionId);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollection.id);
   }
 
   search(query) {
@@ -38,7 +38,7 @@ export default class Search extends React.Component {
       value: ''
     })
 
-    UIActions.selectCollection({id: uiState.currentCollectionId});
+    UIActions.selectCollection({id: uiState.currentCollection.id});
     UIActions.clearSearchSelection();
   }
 

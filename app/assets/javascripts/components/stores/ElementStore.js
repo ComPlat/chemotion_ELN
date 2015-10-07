@@ -92,28 +92,28 @@ class ElementStore {
     ElementActions.deleteReactionsByUIState(ui_state);
     ElementActions.deleteWellplatesByUIState(ui_state);
     ElementActions.deleteScreensByUIState(ui_state);
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
-    ElementActions.fetchReactionsByCollectionId(ui_state.currentCollectionId);
-    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollectionId);
-    ElementActions.fetchScreensByCollectionId(ui_state.currentCollectionId);
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
   }
 
   handleUpdateElementsCollection(paramObj) {
-    let collection_id = paramObj.ui_state.currentCollectionId
+    let collection_id = paramObj.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
   handleAssignElementsCollection(paramObj) {
-    let collection_id = paramObj.ui_state.currentCollectionId
+    let collection_id = paramObj.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
   handleRemoveElementsCollection(paramObj) {
-    let collection_id = paramObj.ui_state.currentCollectionId
+    let collection_id = paramObj.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
@@ -142,7 +142,7 @@ class ElementStore {
   }
 
   handleSplitAsSubsamples(ui_state) {
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollectionId);
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);
   }
 
   // Molecules
@@ -241,7 +241,7 @@ class ElementStore {
 
   navigateToNewElement(element) {
     const uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}/${element.type}/${element.id}`);
+    Aviator.navigate(`/collection/${uiState.currentCollection.id}/${element.type}/${element.id}`);
   }
 
   handleGenerateEmptyElement(result) {
@@ -263,16 +263,16 @@ class ElementStore {
     let page = uiState[type].page;
     switch (type) {
       case 'sample':
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollectionId, {page: page});
+        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page});
         break;
       case 'reaction':
-        ElementActions.fetchReactionsByCollectionId(uiState.currentCollectionId, {page: page});
+        ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page});
         break;
       case 'wellplate':
-        ElementActions.fetchWellplatesByCollectionId(uiState.currentCollectionId, {page: page});
+        ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id, {page: page});
         break;
       case 'screen':
-        ElementActions.fetchScreensByCollectionId(uiState.currentCollectionId, {page: page});
+        ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id, {page: page});
         break;
     }
   }

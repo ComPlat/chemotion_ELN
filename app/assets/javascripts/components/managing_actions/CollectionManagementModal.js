@@ -105,7 +105,8 @@ export default class CollectionManagementModal extends React.Component {
         included_ids: this.state.ui_state.screen.checkedIds,
         excluded_ids: this.state.ui_state.screen.uncheckedIds
       },
-      currentCollectionId: this.state.ui_state.currentCollectionId
+      currentCollection: this.state.ui_state.currentCollection,
+      currentCollectionId: this.state.ui_state.currentCollection.id
     }
 
     this.state.action({ui_state: ui_state, collection_id: collection_id});

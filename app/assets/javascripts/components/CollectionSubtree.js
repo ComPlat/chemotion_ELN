@@ -13,24 +13,20 @@ export default class CollectionSubtree extends React.Component {
   constructor(props) {
     super(props);
 
-    let uiState = UIStore.getState();
-    let selected = uiState.currentCollectionId == props.root.id;
-    let visible = this.isVisible(props.root, uiState);
-
     this.state = {
       isRemote: props.isRemote,
       label: props.root.label,
-      selected: selected,
+      selected: false,
       root: props.root,
-      visible: visible
+      visible: false
     }
   }
 
   isVisible(node, uiState) {
     if(node.descendant_ids) {
-      node.descendant_ids.indexOf(parseInt(uiState.currentCollectionId)) > -1
+      return node.descendant_ids.indexOf(parseInt(uiState.currentCollection.id)) > -1;
     } else {
-      false
+      return false;
     }
   }
 
@@ -50,10 +46,18 @@ export default class CollectionSubtree extends React.Component {
   }
 
   onChange(state) {
-    if(state.currentCollectionId == this.state.root.id) {
-      this.setState({selected: true});
+    let visible = this.isVisible(this.state.root, state);
+  
+    if(state.currentCollection.id == this.state.root.id) {
+      this.setState({
+        selected: true,
+        visible: visible
+      });
     } else {
-      this.setState({selected: false});
+      this.setState({
+        selected: false,
+        visible: visible
+      });
     }
   }
 

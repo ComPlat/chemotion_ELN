@@ -6,6 +6,10 @@ import UIStore from '../stores/UIStore';
 export default class DeleteButton extends React.Component {
   constructor(props) {
     super(props);
+
+    this.state = {
+      isDisabled: props.isDisabled
+    }
   }
 
   _deleteSelection() {
@@ -20,7 +24,7 @@ export default class DeleteButton extends React.Component {
     );
     return (
       <OverlayTrigger placement="top" overlay={tooltip}>
-        <Button bsStyle="danger" onClick={e => this._deleteSelection()}>
+        <Button bsStyle="danger" onClick={e => this._deleteSelection()} disabled={this.state.isDisabled}>
           <i className="fa fa-trash"></i>
         </Button>
       </OverlayTrigger>
