@@ -2,14 +2,13 @@ module Chemotion
   class ReportAPI < Grape::API
     resource :reports do
       desc "Build a report using the contents of a JSON file"
-      
+
       params do
         optional :header, type: Hash
         requires :body, type: Array do
           requires :type, type: String
         end
       end
-      
       post :rtf do
         report = Report::RTFReport.new do |r|
           r.header {|h| h.build(params[:header])}
@@ -33,13 +32,28 @@ module Chemotion
               raise "Fehler: Nicht implementierte Funktion: " + text_item[:type]
             end
           end
+
+          env['api.format'] = :binary
+          content_type('text/rtf')
+          body report.generate_report
+        end
+      end
+
+      params do
+        requires :id, type: String
+      end
+      get :excel do
+        env['api.format'] = :binary
+        content_type('application/vnd.ms-excel')
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Sample Excel.xlsx")}"
+
+        excel = ExcelExport.new
+
+        Collection.find(params[:id]).samples.each do |sample|
+          excel.add_sample(sample)
         end
 
-        content_type('text/rtf')
-
-        env['api.format'] = :binary
-
-        body report.generate_report
+        excel.generate_file
       end
     end
   end
