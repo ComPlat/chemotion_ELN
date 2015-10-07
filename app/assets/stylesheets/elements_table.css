@@ -12,7 +12,7 @@ table.elements {
 }
 
 th.check, td.check {
-  width: 40px !important;
+  width: 30px !important;
 }
 
 th.name, td.check {
@@ -29,6 +29,7 @@ th.name, td.check {
 
 .fa-user-secret {
   float:right;
+  marging-top:2px;
 }
 
 .top-secret-icon {

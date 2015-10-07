@@ -9,7 +9,7 @@ const target = {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     if (itemType == 'sample') {
-      dropSample(item.sample, materialGroup);
+      dropSample(item.element, materialGroup);
     } else if (itemType == 'material') {
       dropMaterial(item.material, item.materialGroup, materialGroup);
     }

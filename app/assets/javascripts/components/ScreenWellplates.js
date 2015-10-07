@@ -9,7 +9,7 @@ const target = {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     if (itemType == 'wellplate') {
-      dropWellplate(item.wellplate);
+      dropWellplate(item.element);
     }
   },
   canDrop(props, monitor){

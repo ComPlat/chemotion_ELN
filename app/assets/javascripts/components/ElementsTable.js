@@ -6,16 +6,9 @@ import UIActions from './actions/UIActions';
 
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
-import ElementCheckbox from './ElementCheckbox';
-import ElementCollectionLabels from './ElementCollectionLabels';
-import SampleContainer from './SampleContainer'
-import WellplateContainer from './WellplateContainer'
+import ElementsTableEntries from './ElementsTableEntries';
 
-import SVG from 'react-inlinesvg';
-import Aviator from 'aviator';
 import deepEqual from 'deep-equal';
-
-import ArrayUtils from './utils/ArrayUtils';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -26,7 +19,8 @@ export default class ElementsTable extends React.Component {
       // Pagination
       activePage: this.props.activePage || 1,
       numberOfPages: 0,
-      pageSize: 5
+      pageSize: 5,
+      currentElement: null
     }
   }
 
@@ -108,179 +102,44 @@ export default class ElementsTable extends React.Component {
     }
   }
 
-  elementLabel(element) {
-    if (element.type == 'sample') {
-      return <SampleContainer sample={element}/>
-    } else if (element.type == 'wellplate') {
-      return <WellplateContainer wellplate={element}/>
-    } else {
-      return element.name;
-    }
-  }
-
-  entries() {
-    // Pagination: startAt...Arrayindex to start with...
-    // TODO Move to PaginationUtils?
-    let pageSize = this.state.pageSize;
-    let elements = this.state.elements;
-
-    return elements.map((element, index) => {
-      let isSelected = this.state.currentElement && this.state.currentElement.id == element.id;
-      let checked = this.isElementChecked(element);
-
-      let optionalLabelColumn;
-      if (this.showElementDetailsColumns()) {
-        optionalLabelColumn = (
-          <td className="labels">
-            <ElementCollectionLabels element={element} key={element.id}/>
-          </td>
-        )
-      }
-
-      let svgColumn;
-      if (element.molecule) {
-        svgColumn = this.moleculeSVGColumn(element.molecule, {selected: isSelected});
-      } else {
-        svgColumn = (<td className="molecule" margin="0" padding="0">SVG ..</td>);
-      }
-
-      let style = {}
-      if (isSelected) {
-        style = {
-          color: '#fff',
-          background: '#337ab7'
-        }
-      }
-      return (
-        <tr key={index} height="100" style={style}>
-          <td className="check">
-            <ElementCheckbox element={element} key={element.id} checked={checked}/>
-          </td>
-          <td className="name"
-              onClick={e => this.showDetails(element)}
-              style={{cursor: 'pointer'}}>
-            {this.elementLabel(element)}
-            {this.topSecretIcon(element)}
-          </td>
-          {optionalLabelColumn}
-          {svgColumn}
-        </tr>
-      )
-    });
-  }
-
-  topSecretIcon(element) {
-    if(element.type == 'sample' && element.is_top_secret == true) {
-      return (
-        <div className="top-secret-icon">
-          <i className="fa fa-user-secret"></i>
-        </div>
-      )
-    }
-  }
-
-  moleculeSVGColumn(molecule, options={}) {
-    let className = options.selected ? 'molecule-selected' : 'molecule';
-    let moleculeSVG = this.moleculeSVG(molecule, className);
-    return (
-      <td className="molecule" margin="0" padding="0">
-        {moleculeSVG}
-      </td>
-    );
-  }
-
-  moleculeSVG(molecule, className) {
-    let svgPath = `/images/molecules/${molecule.molecule_svg_file}`;
-    return (
-      <SVG src={svgPath} className={className} key={molecule.id}/>
-    );
-  }
-
-  showElementDetailsColumns() {
-    return !(this.state.ui.currentId);
-  }
-
-  showDetails(element) {
-    Aviator.navigate(this._elementDetailsUrl(element));
-  }
-
   handlePaginationSelect(event, selectedEvent) {
+    const {type} = this.props;
     this.setState({
       activePage: selectedEvent.eventKey
-    }, () => {
-      let type = this.props.type;
-      let pagination = {type: type, page: this.state.activePage};
-      UIActions.setPagination(pagination)
-    })
-  }
-
-  isElementChecked(element) {
-    let {checkedIds, uncheckedIds, checkedAll} = this.state.ui
-
-    let checked = (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
-      || ArrayUtils.isValInArray(checkedIds || [], element.id);
-
-    return checked;
-  }
-
-  _elementDetailsUrl(element) {
-    return `${this._collectionUrl()}/${element.type}/${element.id}`
-  }
-
-  _collectionUrl() {
-    let uiState = UIStore.getState();
-    return `/collection/${uiState.currentCollectionId}`
+    }, () => UIActions.setPagination({type, page: this.state.activePage}));
   }
 
   pagination() {
-    if (this.state.numberOfPages > 1) {
-      return (
-        <Pagination activePage={this.state.activePage}
-                    items={this.state.numberOfPages}
-                    onSelect={this.handlePaginationSelect.bind(this)}/>
-      )
-    }
-  }
-
-  header() {
-    let colSpan = this.showElementDetailsColumns() ? "3" : "2";
-    let checkedAll = this.state.ui.checkedAll;
-
-    return (
-      <thead>
-      <th className="check">
-        <ElementAllCheckbox type={this.props.type} checked={checkedAll}/>
-      </th>
-      <th colSpan={colSpan}>
-        All {this.props.type}s
-      </th>
-      </thead>
-    )
+    const {numberOfPages, activePage} = this.state;
+    return (numberOfPages > 1) ?
+      <Pagination
+        activePage={activePage}
+        items={numberOfPages}
+        onSelect={(event, selectedEvent) => this.handlePaginationSelect(event, selectedEvent)}/> :
+      '';
   }
 
   render() {
-    let entries = this.entries();
-    let result;
-    if (entries) {
-      result = (
-        <div>
-          <Table className="elements" bordered hover>
-            {this.header()}
-            <tbody>
-            {entries}
-            </tbody>
-          </Table>
-          {this.pagination()}
-        </div>
-      )
-    } else {
-      result = (
-        <div>
-          'Nothing found.'
-        </div>
-      )
-    }
-
-    return result;
+    const {type} = this.props;
+    const {elements, currentElement, ui} = this.state;
+    const hasSvgColumn = (type == 'sample' || type == 'reaction');
+    const colSpan = hasSvgColumn ? 2 : 1;
+    return (
+      <div>
+        <Table className="elements" bordered hover>
+          <thead>
+            <th className="check">
+              <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
+            </th>
+            <th colSpan={colSpan}>
+              All {this.props.type}s
+            </th>
+          <th className="check"></th>
+          </thead>
+          <ElementsTableEntries elements={elements} currentElement={currentElement} ui={ui}/>
+        </Table>
+        {this.pagination()}
+      </div>
+    );
   }
 }
