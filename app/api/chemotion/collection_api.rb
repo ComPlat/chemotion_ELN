@@ -1,6 +1,17 @@
 module Chemotion
   class CollectionAPI < Grape::API
     resource :collections do
+
+      desc "Return collection by id"
+      params do
+        requires :id, type: Integer, desc: "Collection id"
+      end
+      route_param :id, requirements: { id: /[0-9]*/ } do
+        get do
+          Collection.find(params[:id])
+        end
+      end
+
       namespace :take_ownership do
         desc "Take ownership of collection with specified id"
         params do

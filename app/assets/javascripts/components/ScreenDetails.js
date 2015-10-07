@@ -25,12 +25,12 @@ export default class ScreenDetails extends Component {
   }
 
   handleSubmit() {
-    const {currentCollectionId} = UIStore.getState();
+    const {currentCollection} = UIStore.getState();
     const {state} = this;
     if(state.id == '_new_') {
       ElementActions.createScreen({
         ...state,
-        collection_id: currentCollectionId
+        collection_id: currentCollection.id
     });
     } else {
       ElementActions.updateScreen(this.state);
@@ -69,7 +69,7 @@ export default class ScreenDetails extends Component {
     UIActions.deselectAllElements();
 
     let uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
+    Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
   }
 
   dropWellplate(wellplate) {

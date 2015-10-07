@@ -37,6 +37,7 @@ class UIStore {
         currentId: null,
         page: 1
       },
+      currentCollection: null,
       currentCollectionId: null,
       currentTab: 1,
       currentSearchSelection: null
@@ -117,14 +118,16 @@ class UIStore {
   }
 
   handleSelectCollection(collection) {
-    let hasChanged = (this.state.currentCollectionId != collection.id) || (this.state.currentSearchSelection != null);
-    this.state.currentCollectionId = collection.id;
+    let state = this.state;
+    let hasChanged = true//(state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
 
     if(hasChanged) {
-      ElementActions.fetchSamplesByCollectionId(collection.id, this.state.pagination);
-      ElementActions.fetchReactionsByCollectionId(collection.id, this.state.pagination);
-      ElementActions.fetchWellplatesByCollectionId(collection.id, this.state.pagination);
-      ElementActions.fetchScreensByCollectionId(collection.id, this.state.pagination);
+      this.state.currentCollection = collection;
+      this.state.currentCollectionId = collection.id;
+      ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
+      ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
+      ElementActions.fetchWellplatesByCollectionId(collection.id, state.pagination);
+      ElementActions.fetchScreensByCollectionId(collection.id, state.pagination);
     }
   }
 
@@ -138,6 +141,7 @@ class UIStore {
   }
 
   handleSelectCollectionWithoutUpdating(collection) {
+    this.state.currentCollection = collection;
     this.state.currentCollectionId = collection.id;
   }
 

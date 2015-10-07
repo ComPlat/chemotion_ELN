@@ -16,6 +16,8 @@ import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
 import ElementActions from './actions/ElementActions';
 
+import CollectionStore from './stores/CollectionStore';
+
 import Aviator from 'aviator'
 Aviator.root = '/';
 Aviator.pushStateEnabled = false;
@@ -45,19 +47,24 @@ Aviator.setRoutes({
         let uiState = UIStore.getState();
         let currentSearchSelection = uiState.currentSearchSelection;
         let collectionId = e.params['id'];
+        let collectionPromise = CollectionStore.findById(collectionId);
 
-        if(currentSearchSelection) {
-          UIActions.selectCollectionWithoutUpdating({id: collectionId})
-          ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collectionId);
-        } else {
-          UIActions.selectCollection({id: collectionId});
-        }
+        collectionPromise.then((result) => {
+          let collection = result.collection;
+          
+          if(currentSearchSelection) {
+            UIActions.selectCollectionWithoutUpdating(collection)
+            ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collection.id);
+          } else {
+            UIActions.selectCollection(collection);
+          }
 
-        if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID']) {
-          UIActions.uncheckAllElements('sample');
-          UIActions.uncheckAllElements('reaction');
-          UIActions.uncheckAllElements('wellplate');
-        }
+          if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID']) {
+            UIActions.uncheckAllElements('sample');
+            UIActions.uncheckAllElements('reaction');
+            UIActions.uncheckAllElements('wellplate');
+          }
+        });
       },
 
       showCollectionManagement: function(e) {
