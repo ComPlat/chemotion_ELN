@@ -6,7 +6,8 @@ export default class SampleProxy extends Sample {
     super(args)
 
     let sampleMethodsWithGetAndSet = [
-      'name', 'external_label', 'location', 'description', 'impurities', 'amount_unit', 'amount_value', 'purity'
+      'name', 'external_label', 'location', 'description', 'impurities', 'amount_unit', 'amount_value',
+      'purity', 'is_top_secret'
     ]
 
     sampleMethodsWithGetAndSet.forEach((m) => {
