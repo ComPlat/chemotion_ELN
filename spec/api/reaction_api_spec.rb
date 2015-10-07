@@ -26,13 +26,13 @@ describe Chemotion::ReactionAPI do
           id: r1.id,
           name: r1.name,
           type: 'reaction',
-          collection_labels: [['C1', false]]
+          collection_labels: [{"name" => 'C1', "is_shared" => false}]
         )
         expect(reactions.first.symbolize_keys).to include(
           id: r2.id,
           name: r2.name,
           type: 'reaction',
-          collection_labels: [['C1', false]]
+          collection_labels: [{"name" => 'C1', "is_shared" => false}]
         )
       end
     end

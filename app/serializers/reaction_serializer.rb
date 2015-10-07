@@ -7,7 +7,9 @@ class MaterialSerializer < SampleSerializer
 end
 
 class ReactionSerializer < ActiveModel::Serializer
-  attributes :id, :type, :name, :created_at, :collection_labels
+  include Labeled
+
+  attributes :id, :type, :name, :created_at
 
   has_many :starting_materials, serializer: MaterialSerializer
   has_many :reactants, serializer: MaterialSerializer
@@ -29,11 +31,6 @@ class ReactionSerializer < ActiveModel::Serializer
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
-  end
-
-  def collection_labels
-    collections = object.collections
-    collections.flat_map(&:label).zip(collections.flat_map(&:is_shared)).uniq
   end
 
   def type

@@ -18,7 +18,7 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   labelStyle(label) {
-    if(label[1] == false) {
+    if(label.is_shared == false) {
       return "primary";
     } else {
       return "warning";
@@ -30,7 +30,7 @@ export default class ElementCollectionLabels extends React.Component {
       return element.collection_labels.map((label, index) => {
         return (
           <span className="collection-label" key={index}>
-            <Label bsStyle={this.labelStyle(label)}>{label[0]}</Label>
+            <Label bsStyle={this.labelStyle(label)}>{label.name}</Label>
             &nbsp;
           </span>
         )
