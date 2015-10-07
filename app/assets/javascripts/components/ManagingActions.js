@@ -15,8 +15,8 @@ export default class ManagingActions extends React.Component {
     let {currentUser} = UserStore.getState();
 
     this.state = {
-      hidden: true,
-      currentUser: currentUser
+      currentUser: currentUser,
+      currentCollection: {id: 0}
     }
   }
 
@@ -32,22 +32,8 @@ export default class ManagingActions extends React.Component {
     UIStore.unlisten(this.onChange.bind(this));
   }
 
-  lookForCheckedElements(uistate) {
-    let samples =
-      (uistate.sample.checkedIds.size > 0 || uistate.sample.checkedAll)
-    let reactions =
-      (uistate.reaction.checkedIds.size > 0 || uistate.reaction.checkedAll)
-    let screens =
-      (uistate.screen.checkedIds.size > 0 || uistate.screen.checkedAll)
-    let wellplates =
-      (uistate.wellplate.checkedIds.size > 0 || uistate.wellplate.checkedAll)
-
-    return samples || reactions || wellplates || screens
-  }
-
   onChange(state) {
     this.setState({
-      hidden: !(this.lookForCheckedElements(state)),
       currentCollection: state.currentCollection
     })
   }
@@ -71,22 +57,15 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
-    if (!this.state.hidden) {
-      let style = {marginRight: '10px'}
-      return (
-        <ButtonGroup style={style}>
-          <MoveButton isDisabled={this.isDisabled()}/>
-          <AssignButton isDisabled={this.isDisabled()}/>
-          <RemoveButton isDisabled={this.isRemoteDisabled()}/>
-          <DeleteButton isDisabled={this.isRemoteDisabled()}/>
-          <ShareButton/>
-        </ButtonGroup>
-      )
-    } else {
-      return(
-        <ButtonGroup/>
-      )
-    }
-
+    let style = {marginRight: '10px'}
+    return (
+      <ButtonGroup style={style}>
+        <MoveButton isDisabled={this.isDisabled()}/>
+        <AssignButton isDisabled={this.isDisabled()}/>
+        <RemoveButton isDisabled={this.isRemoteDisabled()}/>
+        <DeleteButton isDisabled={this.isRemoteDisabled()}/>
+        <ShareButton/>
+      </ButtonGroup>
+    )
   }
 }
