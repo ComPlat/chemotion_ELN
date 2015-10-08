@@ -60,11 +60,11 @@ export default class ShareButton extends React.Component {
     let uiState = UIStore.getState();
     let elementsFilter = this.filterParamsFromUIState(uiState);
 
-    let paramObj = {
+    let params = {
       elements_filter: elementsFilter
     }
 
-    PermissionActions.fetchTopSecretStatus(paramObj);
+    PermissionActions.fetchTopSecretStatus(params);
   }
 
   render() {

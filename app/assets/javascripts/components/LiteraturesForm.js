@@ -28,7 +28,7 @@ export default class LiteraturesForm extends React.Component {
   }
 
   _submitFunction() {
-    let paramObj = {
+    let params = {
       reaction_id: this.props.reaction_id,
       title: this.state.title,
       url: this.state.url
@@ -37,7 +37,7 @@ export default class LiteraturesForm extends React.Component {
       title: "",
       url: ""
     })
-    ElementActions.createReactionLiterature(paramObj);
+    ElementActions.createReactionLiterature(params);
   }
 
   render() {

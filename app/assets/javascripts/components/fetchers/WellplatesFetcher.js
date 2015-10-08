@@ -89,7 +89,7 @@ export default class WellplatesFetcher {
     return promise;
   }
 
-  static deleteWellplatesByUIState(paramObj) {
+  static deleteWellplatesByUIState(params) {
     let promise = fetch('/api/v1/wellplates/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
@@ -99,9 +99,9 @@ export default class WellplatesFetcher {
       },
       body: JSON.stringify({
         ui_state: {
-          all: paramObj.wellplate.checkedAll,
-          included_ids: paramObj.wellplate.checkedIds,
-          excluded_ids: paramObj.wellplate.uncheckedIds
+          all: params.wellplate.checkedAll,
+          included_ids: params.wellplate.checkedIds,
+          excluded_ids: params.wellplate.uncheckedIds
         }
       })
     }).then((response) => {

@@ -29,6 +29,24 @@ export default class Sample {
     return splitSample;
   }
 
+  static buildEmpty() {
+    return new Sample({
+      id: '_new_',
+      type: 'sample',
+      name: 'New Sample',
+      external_label: '',
+      amount_value: 0,
+      amount_unit: 'g',
+      description: '',
+      purity: 0,
+      solvent: '',
+      impurities: '',
+      location: '',
+      molfile: '',
+      molecule: { id: '_none_' }
+    })
+  }
+
   get is_top_secret() {
     return this._is_top_secret;
   }

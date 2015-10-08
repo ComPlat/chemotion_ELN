@@ -40,7 +40,7 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static deleteReactionsByUIState(paramObj) {
+  static deleteReactionsByUIState(params) {
     let promise = fetch('/api/v1/reactions/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
@@ -50,9 +50,9 @@ export default class ReactionsFetcher {
       },
       body: JSON.stringify({
         ui_state: {
-          all: paramObj.reaction.checkedAll,
-          included_ids: paramObj.reaction.checkedIds,
-          excluded_ids: paramObj.reaction.uncheckedIds
+          all: params.reaction.checkedAll,
+          included_ids: params.reaction.checkedIds,
+          excluded_ids: params.reaction.uncheckedIds
         }
       })
     }).then((response) => {

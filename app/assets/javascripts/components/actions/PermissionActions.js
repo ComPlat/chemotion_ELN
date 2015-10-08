@@ -2,8 +2,8 @@ import alt from '../alt';
 import PermissionsFetcher from '../fetchers/PermissionsFetcher';
 
 class PermissionActions {
-  fetchTopSecretStatus(paramObj) {
-    PermissionsFetcher.fetchTopSecretStatus(paramObj)
+  fetchTopSecretStatus(params) {
+    PermissionsFetcher.fetchTopSecretStatus(params)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {
@@ -11,8 +11,8 @@ class PermissionActions {
       });
   }
 
-  fetchSharingAllowedStatus(paramObj) {
-    PermissionsFetcher.fetchSharingAllowedStatus(paramObj)
+  fetchSharingAllowedStatus(params) {
+    PermissionsFetcher.fetchSharingAllowedStatus(params)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {
@@ -20,8 +20,8 @@ class PermissionActions {
       });
   }
 
-  fetchDeletionAllowedStatus(paramObj) {
-    PermissionsFetcher.fetchDeletionAllowedStatus(paramObj)
+  fetchDeletionAllowedStatus(params) {
+    PermissionsFetcher.fetchDeletionAllowedStatus(params)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {

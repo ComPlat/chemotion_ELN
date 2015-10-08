@@ -1,7 +1,7 @@
 import 'whatwg-fetch';
 
 export default class PermissionsFetcher {
-  static fetchTopSecretStatus(paramObj) {
+  static fetchTopSecretStatus(params) {
     let promise = fetch('/api/v1/permissions/top_secret/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -10,7 +10,7 @@ export default class PermissionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        elements_filter: paramObj.elements_filter
+        elements_filter: params.elements_filter
       })
     }).then((response) => {
       return response.json()
@@ -23,7 +23,7 @@ export default class PermissionsFetcher {
     return promise;
   }
 
-  static fetchSharingAllowedStatus(paramObj) {
+  static fetchSharingAllowedStatus(params) {
     let promise = fetch('/api/v1/permissions/sharing/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -32,7 +32,7 @@ export default class PermissionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        elements_filter: paramObj.elements_filter
+        elements_filter: params.elements_filter
       })
     }).then((response) => {
       return response.json()
@@ -45,7 +45,7 @@ export default class PermissionsFetcher {
     return promise;
   }
 
-  static fetchDeletionAllowedStatus(paramObj) {
+  static fetchDeletionAllowedStatus(params) {
     let promise = fetch('/api/v1/permissions/deletion/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -54,7 +54,7 @@ export default class PermissionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        elements_filter: paramObj.elements_filter
+        elements_filter: params.elements_filter
       })
     }).then((response) => {
       return response.json()

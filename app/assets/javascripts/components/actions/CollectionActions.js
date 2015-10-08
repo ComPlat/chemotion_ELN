@@ -2,8 +2,8 @@ import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 
 class CollectionActions {
-  takeOwnership(paramObj) {
-    CollectionsFetcher.takeOwnership(paramObj)
+  takeOwnership(params) {
+    CollectionsFetcher.takeOwnership(params)
       .then((roots) => {
         this.dispatch(roots);
       }).catch((errorMessage) => {
@@ -39,8 +39,8 @@ class CollectionActions {
       });
   }
 
-  createSharedCollections(paramObj) {
-    CollectionsFetcher.createSharedCollections(paramObj)
+  createSharedCollections(params) {
+    CollectionsFetcher.createSharedCollections(params)
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {
@@ -48,8 +48,8 @@ class CollectionActions {
       });
   }
 
-  bulkUpdateUnsharedCollections(paramObj) {
-    CollectionsFetcher.bulkUpdateUnsharedCollections(paramObj)
+  bulkUpdateUnsharedCollections(params) {
+    CollectionsFetcher.bulkUpdateUnsharedCollections(params)
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {
@@ -57,8 +57,8 @@ class CollectionActions {
       });
   }
 
-  updateSharedCollection(paramObj) {
-    CollectionsFetcher.updateSharedCollection(paramObj)
+  updateSharedCollection(params) {
+    CollectionsFetcher.updateSharedCollection(params)
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {
@@ -66,8 +66,8 @@ class CollectionActions {
       });
   }
 
-  createUnsharedCollection(paramObj) {
-    CollectionsFetcher.createUnsharedCollection(paramObj)
+  createUnsharedCollection(params) {
+    CollectionsFetcher.createUnsharedCollection(params)
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {

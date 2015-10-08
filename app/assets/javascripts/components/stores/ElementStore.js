@@ -102,22 +102,22 @@ class ElementStore {
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
   }
 
-  handleUpdateElementsCollection(paramObj) {
-    let collection_id = paramObj.ui_state.currentCollection.id
+  handleUpdateElementsCollection(params) {
+    let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
-  handleAssignElementsCollection(paramObj) {
-    let collection_id = paramObj.ui_state.currentCollection.id
+  handleAssignElementsCollection(params) {
+    let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
-  handleRemoveElementsCollection(paramObj) {
-    let collection_id = paramObj.ui_state.currentCollection.id
+  handleRemoveElementsCollection(params) {
+    let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);

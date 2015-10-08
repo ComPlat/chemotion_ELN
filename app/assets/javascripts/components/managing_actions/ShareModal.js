@@ -85,7 +85,7 @@ export default class ShareModal extends React.Component {
     let currentCollectionId = uiState.currentCollectionId == "all" ? null : uiState.currentCollectionId;
     let filterParams = this.filterParamsFromUIState(uiState);
 
-    let paramObj = {
+    let params = {
       collection_attributes: {
         is_shared: true,
         permission_level: permissionLevel,
@@ -97,7 +97,7 @@ export default class ShareModal extends React.Component {
       user_ids: userIds,
       current_collection_id: currentCollectionId
     }
-    CollectionActions.createSharedCollections(paramObj);
+    CollectionActions.createSharedCollections(params);
     this.hideModal();
   }
 
