@@ -42,12 +42,15 @@ export default class UserAuth extends Component {
   }
 
   render() {
+    const style = {
+      marginRight: '5px'
+    };
     return (
       <span>
         <p className='navbar-text'>
           {`Logged in as ${this.state.currentUser.name}`}
         </p>
-        <a onClick={() => this.logout()} className='btn btn-primary navbar-btn'>Logout</a>
+        <a onClick={() => this.logout()} style={style} className='btn btn-primary navbar-btn'>Logout</a>
       </span>
     );
   }
