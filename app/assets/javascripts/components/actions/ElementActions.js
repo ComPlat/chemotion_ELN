@@ -44,26 +44,24 @@ class ElementActions {
       });
   }
 
-  createSample(paramObj) {
-    delete paramObj['id'];
-
-    SamplesFetcher.create(paramObj)
+  createSample(params) {
+    SamplesFetcher.create(params)
       .then((result) => {
         this.dispatch(result.sample)
       });
   }
 
-  updateSample(paramObj) {
+  updateSample(params) {
     // delete possible null values for scoped update
-    for(var key in paramObj) {
-      if(paramObj[key] == null) {
-        delete paramObj[key];
+    for(var key in params) {
+      if(params[key] == null) {
+        delete params[key];
       }
     }
 
-    SamplesFetcher.update(paramObj)
+    SamplesFetcher.update(params)
       .then((result) => {
-        this.dispatch(paramObj)
+        this.dispatch(params)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -100,8 +98,6 @@ class ElementActions {
   }
 
   createWellplate(wellplate) {
-    delete wellplate.id;
-
     WellplatesFetcher.create(wellplate)
       .then(result => {
         this.dispatch(result.wellplate);
@@ -197,8 +193,8 @@ class ElementActions {
       });
   }
 
-  createReactionLiterature(paramObj) {
-    LiteraturesFetcher.create(paramObj)
+  createReactionLiterature(params) {
+    LiteraturesFetcher.create(params)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {
@@ -221,16 +217,16 @@ class ElementActions {
     this.dispatch(reaction)
   }
 
-  createReaction(paramObj) {
-    console.log(paramObj)
-    ReactionsFetcher.create(paramObj)
+  createReaction(params) {
+    console.log(params)
+    ReactionsFetcher.create(params)
       .then((result) => {
         this.dispatch(result)
       });
   }
 
-  updateReaction(paramObj) {
-    ReactionsFetcher.update(paramObj)
+  updateReaction(params) {
+    ReactionsFetcher.update(params)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {
@@ -351,28 +347,28 @@ class ElementActions {
       });
   }
 
-  updateElementsCollection(paramObj) {
-    CollectionsFetcher.updateElementsCollection(paramObj)
+  updateElementsCollection(params) {
+    CollectionsFetcher.updateElementsCollection(params)
       .then(() => {
-        this.dispatch(paramObj);
+        this.dispatch(params);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
 
-  assignElementsCollection(paramObj) {
-    CollectionsFetcher.assignElementsCollection(paramObj)
+  assignElementsCollection(params) {
+    CollectionsFetcher.assignElementsCollection(params)
       .then(() => {
-        this.dispatch(paramObj);
+        this.dispatch(params);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
 
-  removeElementsCollection(paramObj) {
-    CollectionsFetcher.removeElementsCollection(paramObj)
+  removeElementsCollection(params) {
+    CollectionsFetcher.removeElementsCollection(params)
       .then(() => {
-        this.dispatch(paramObj);
+        this.dispatch(params);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

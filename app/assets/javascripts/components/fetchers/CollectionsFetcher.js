@@ -1,8 +1,8 @@
 import 'whatwg-fetch';
 
 export default class CollectionsFetcher {
-  static takeOwnership(paramObj) {
-    let promise = fetch('/api/v1/collections/take_ownership/' + paramObj.id, {
+  static takeOwnership(params) {
+    let promise = fetch('/api/v1/collections/take_ownership/' + params.id, {
       credentials: 'same-origin',
       method: 'POST'
     })
@@ -55,7 +55,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static createSharedCollections(paramObj) {
+  static createSharedCollections(params) {
     let promise = fetch('/api/v1/collections/shared/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -64,17 +64,17 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        collection_attributes: paramObj.collection_attributes,
-        elements_filter: paramObj.elements_filter,
-        user_ids: paramObj.user_ids,
-        current_collection_id: paramObj.current_collection_id
+        collection_attributes: params.collection_attributes,
+        elements_filter: params.elements_filter,
+        user_ids: params.user_ids,
+        current_collection_id: params.current_collection_id
       })
     })
 
     return promise;
   }
 
-  static bulkUpdateUnsharedCollections(paramObj) {
+  static bulkUpdateUnsharedCollections(params) {
     let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin',
       method: 'PATCH',
@@ -83,16 +83,16 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        collections: paramObj.collections,
-        deleted_ids: paramObj.deleted_ids
+        collections: params.collections,
+        deleted_ids: params.deleted_ids
       })
     })
 
     return promise;
   }
 
-  static updateSharedCollection(paramObj) {
-    let promise = fetch('/api/v1/collections/shared/' + paramObj.id, {
+  static updateSharedCollection(params) {
+    let promise = fetch('/api/v1/collections/shared/' + params.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -100,17 +100,17 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        permission_level: paramObj.permission_level,
-        sample_detail_level: paramObj.sample_detail_level,
-        reaction_detail_level: paramObj.reaction_detail_level,
-        wellplate_detail_level: paramObj.wellplate_detail_level
+        permission_level: params.permission_level,
+        sample_detail_level: params.sample_detail_level,
+        reaction_detail_level: params.reaction_detail_level,
+        wellplate_detail_level: params.wellplate_detail_level
       })
     })
 
     return promise;
   }
 
-  static createUnsharedCollection(paramObj) {
+  static createUnsharedCollection(params) {
     let promise = fetch('/api/v1/collections/unshared/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -119,7 +119,7 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        label: paramObj.label
+        label: params.label
       })
     }).then((response) => {
       return response.json()
@@ -132,7 +132,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static updateElementsCollection(paramObj) {
+  static updateElementsCollection(params) {
     let promise = fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'PUT',
@@ -141,8 +141,8 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        ui_state: paramObj.ui_state,
-        collection_id: paramObj.collection_id
+        ui_state: params.ui_state,
+        collection_id: params.collection_id
       })
     }).then((response) => {
       return response.json()
@@ -155,7 +155,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static assignElementsCollection(paramObj) {
+  static assignElementsCollection(params) {
     let promise = fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -164,8 +164,8 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        ui_state: paramObj.ui_state,
-        collection_id: paramObj.collection_id
+        ui_state: params.ui_state,
+        collection_id: params.collection_id
       })
     }).then((response) => {
       return response.json()
@@ -178,7 +178,7 @@ export default class CollectionsFetcher {
     return promise;
   }
 
-  static removeElementsCollection(paramObj) {
+  static removeElementsCollection(params) {
     let promise = fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'DELETE',
@@ -187,7 +187,7 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        ui_state: paramObj.ui_state,
+        ui_state: params.ui_state,
       })
     }).then((response) => {
       return response.json()

@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 
 export default class LiteraturesFetcher {
 
-  static create(paramObj) {
+  static create(params) {
     let promise = fetch('/api/v1/literatures', {
       credentials: 'same-origin',
       method: 'post',
@@ -11,9 +11,9 @@ export default class LiteraturesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        reaction_id: paramObj.reaction_id,
-        title: paramObj.title,
-        url: paramObj.url
+        reaction_id: params.reaction_id,
+        title: params.title,
+        url: params.url
       })
     }).then((response) => {
       return response.json()
@@ -26,7 +26,7 @@ export default class LiteraturesFetcher {
     return promise;
   }
 
-  static delete(paramObj) {
+  static delete(params) {
     let promise = fetch('/api/v1/literatures', {
       credentials: 'same-origin',
       method: 'DELETE',
@@ -35,7 +35,7 @@ export default class LiteraturesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        id: paramObj.id
+        id: params.id
       })
     }).then((response) => {
       return response.json()

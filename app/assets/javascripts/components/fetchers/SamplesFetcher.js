@@ -40,9 +40,9 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static update(paramObj) {
-    let { density, boiling_point, melting_point } = paramObj.molecule;
-    let promise = fetch('/api/v1/samples/' + paramObj.id, {
+  static update(params) {
+    let { density, boiling_point, melting_point } = params.molecule;
+    let promise = fetch('/api/v1/samples/' + params.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -50,17 +50,17 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: paramObj.name,
-        external_label: paramObj.external_label,
-        amount_value: paramObj.amount_value,
-        amount_unit: paramObj.amount_unit,
-        description: paramObj.description,
-        purity: paramObj.purity,
-        solvent: paramObj.solvent,
-        impurities: paramObj.impurities,
-        location: paramObj.location,
-        molfile: paramObj.molfile,
-        is_top_secret: paramObj.is_top_secret,
+        name: params.name,
+        external_label: params.external_label,
+        amount_value: params.amount_value,
+        amount_unit: params.amount_unit,
+        description: params.description,
+        purity: params.purity,
+        solvent: params.solvent,
+        impurities: params.impurities,
+        location: params.location,
+        molfile: params.molfile,
+        is_top_secret: params.is_top_secret,
         molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
       })
     })
@@ -68,8 +68,8 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static create(paramObj) {
-    let { density, boiling_point, melting_point } = paramObj.molecule;
+  static create(params) {
+    let { density, boiling_point, melting_point } = params.molecule;
     let promise = fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
@@ -78,19 +78,19 @@ export default class SamplesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: paramObj.name,
-        external_label: paramObj.external_label,
-        amount_value: paramObj.amount_value,
-        amount_unit: paramObj.amount_unit,
-        description: paramObj.description,
-        purity: paramObj.purity,
-        solvent: paramObj.solvent,
-        impurities: paramObj.impurities,
-        location: paramObj.location,
-        molfile: paramObj.molfile,
-        is_top_secret: paramObj.is_top_secret,
+        name: params.name,
+        external_label: params.external_label,
+        amount_value: params.amount_value,
+        amount_unit: params.amount_unit,
+        description: params.description,
+        purity: params.purity,
+        solvent: params.solvent,
+        impurities: params.impurities,
+        location: params.location,
+        molfile: params.molfile,
+        is_top_secret: params.is_top_secret,
         molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point },
-        collection_id: paramObj.collection_id
+        collection_id: params.collection_id
       })
     }).then((response) => {
       return response.json()
@@ -103,7 +103,7 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static deleteSamplesByUIState(paramObj) {
+  static deleteSamplesByUIState(params) {
     let promise = fetch('/api/v1/samples/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
@@ -113,9 +113,9 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify({
         ui_state: {
-          all: paramObj.sample.checkedAll,
-          included_ids: paramObj.sample.checkedIds,
-          excluded_ids: paramObj.sample.uncheckedIds
+          all: params.sample.checkedAll,
+          included_ids: params.sample.checkedIds,
+          excluded_ids: params.sample.uncheckedIds
         }
       })
     }).then((response) => {
@@ -129,7 +129,7 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static splitAsSubsamples(paramObj) {
+  static splitAsSubsamples(params) {
     let promise = fetch('/api/v1/samples/subsamples/', {
       credentials: 'same-origin',
       method: 'POST',
@@ -140,11 +140,11 @@ export default class SamplesFetcher {
       body: JSON.stringify({
         ui_state: {
           sample: {
-            all: paramObj.sample.checkedAll,
-            included_ids: paramObj.sample.checkedIds,
-            excluded_ids: paramObj.sample.uncheckedIds
+            all: params.sample.checkedAll,
+            included_ids: params.sample.checkedIds,
+            excluded_ids: params.sample.uncheckedIds
           },
-          currentCollectionId: paramObj.currentCollectionId
+          currentCollectionId: params.currentCollectionId
         }
       })
     }).then((response) => {

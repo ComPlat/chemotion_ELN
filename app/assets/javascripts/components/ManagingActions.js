@@ -42,12 +42,12 @@ export default class ManagingActions extends React.Component {
   onChange(state) {
     let elementsFilter = this.filterParamsFromUIState(state);
 
-    let paramObj = {
+    let params = {
       elements_filter: elementsFilter
     }
 
-    PermissionActions.fetchSharingAllowedStatus(paramObj);
-    PermissionActions.fetchDeletionAllowedStatus(paramObj);
+    PermissionActions.fetchSharingAllowedStatus(params);
+    PermissionActions.fetchDeletionAllowedStatus(params);
 
     this.setState({
       currentCollection: state.currentCollection

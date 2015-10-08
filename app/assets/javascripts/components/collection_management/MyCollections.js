@@ -80,12 +80,12 @@ export default class MyCollections extends React.Component {
       return child.label
     });
 
-    let paramObj = {
+    let params = {
       collections: collections,
       deleted_ids: this.state.deleted_ids
     }
 
-    CollectionActions.bulkUpdateUnsharedCollections(paramObj);
+    CollectionActions.bulkUpdateUnsharedCollections(params);
   }
 
   actions(node) {

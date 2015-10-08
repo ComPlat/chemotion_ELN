@@ -51,14 +51,14 @@ export default class ShareSettingsModal extends React.Component {
     let reactionDetailLevel = this.refs.reactionDetailLevelSelect.getValue();
     let wellplateDetailLevel = this.refs.wellplateDetailLevelSelect.getValue();
 
-    let paramObj = {
+    let params = {
       id: this.state.node.id,
       permission_level: permissionLevel,
       sample_detail_level: sampleDetailLevel,
       reaction_detail_level: reactionDetailLevel,
       wellplate_detail_level: wellplateDetailLevel
     }
-    CollectionActions.updateSharedCollection(paramObj);
+    CollectionActions.updateSharedCollection(params);
     this.hideModal();
   }
 
