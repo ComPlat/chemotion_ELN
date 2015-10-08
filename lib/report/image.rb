@@ -4,7 +4,11 @@ class Report::Image
   end
 
   def set_path path
-    @svg_file = path
+    File.open(path, "rb") {|io| svg = io.read }
+  end
+
+  def set_blob blob
+    @svg = blob
   end
 
   def size hash = nil
@@ -31,9 +35,9 @@ class Report::Image
   private
 
   def obtain_png_blob
-    unless @svg_file.nil?
+    unless @svg.nil?
       # Das Umwandlungsprozess könnte auch andere Bibilotheke benutzen, es ist hier unabhängig
-      image = Magick::Image.read(@svg_file).first
+      image = Magick::Image.from_blob(@svg) { self.format = 'SVG'; }.first
       image.format = 'png'
       image.to_blob
     else

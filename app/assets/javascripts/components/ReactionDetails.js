@@ -248,6 +248,9 @@ export default class ReactionDetails extends React.Component {
               </td>
             </tr>
           </table>
+          <Button href={"api/v1/reports/rtf?id=" + reaction.id}>
+            Generate Report
+          </Button>
           <ListGroup fill>
             <ListGroupItem header="Starting Materials">
               <MaterialGroupContainer
