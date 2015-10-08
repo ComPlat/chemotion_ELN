@@ -32,3 +32,10 @@ div[class^="col-"] {
 .navbar {
   border-radius: 0;
 }
+
+#app {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
