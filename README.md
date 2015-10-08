@@ -10,6 +10,7 @@
  
 ## rmagick
 * `brew install imagemagick gs` for OSX
+* `apt-get install libmagickcore-dev libmagickwand-dev` for linux
 * if installing the rmagick gem fails you may try: `IM_PREFIX=$(brew list imagemagick 2>&1 | grep -E 'identify$' | sed 's/bin\/identify$//g') PKG_CONFIG_PATH=${IM_PREFIX}lib/pkgconfig/ C_INCLUDE_PATH=${IM_PREFIX}include/ImageMagick*/ gem install rmagick` (OSX only)
 
 ## Application Setup
