@@ -2,22 +2,11 @@ import React, {Component} from 'react';
 import {Input} from 'react-bootstrap';
 
 export default class WellplateProperties extends Component {
+
   handleInputChange(type, event) {
     const {changeProperties} = this.props;
     const {value} = event.target;
-    let properties = {};
-    switch (type) {
-      case 'name':
-        properties.name = value;
-        break;
-      case 'size':
-        properties.size = value;
-        break;
-      case 'description':
-        properties.description = value;
-        break;
-    }
-    changeProperties(properties);
+    changeProperties({type: type, value: value});
   }
 
   render() {

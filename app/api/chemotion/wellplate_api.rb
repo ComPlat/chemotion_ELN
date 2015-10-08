@@ -87,21 +87,35 @@ module Chemotion
               size: params[:size],
               description: params[:description]
           }
-          wellplate = Wellplate.find(params[:id])
-          wellplate.update(attributes)
 
-          params[:wells].each do |well|
-            sample = well.sample
-            sample_id = (sample) ? sample.id : nil
-            Well.find(well.id).update(
-                sample_id: sample_id,
-                readout: well.readout,
-                additive: well.additive,
-                position_x: well.position.x,
-                position_y: well.position.y,
-            )
+          ActiveRecord::Base.transaction do
+            wellplate = Wellplate.find(params[:id])
+            wellplate.update(attributes)
+
+            params[:wells].each do |well|
+              sample = well.sample
+              sample_id = (sample) ? sample.id : nil
+              if well.id
+                Well.find(well.id).update(
+                    sample_id: sample_id,
+                    readout: well.readout,
+                    additive: well.additive,
+                    position_x: well.position.x,
+                    position_y: well.position.y,
+                )
+              else
+                Well.create(
+                  wellplate_id: wellplate.id,
+                  sample_id: sample_id,
+                  readout: well.readout,
+                  additive: well.additive,
+                  position_x: well.position.x,
+                  position_y: well.position.y,
+                )
+              end
+            end
+            wellplate
           end
-          wellplate
         end
       end
 
@@ -119,24 +133,27 @@ module Chemotion
             size: params[:size],
             description: params[:description]
         }
-        wellplate = Wellplate.create(attributes)
 
-        collection = Collection.find(params[:collection_id])
-        CollectionsWellplate.create(wellplate: wellplate, collection: collection)
+        ActiveRecord::Base.transaction do
+          wellplate = Wellplate.create(attributes)
+          wellplate.reload
+          collection = Collection.find(params[:collection_id])
+          CollectionsWellplate.create(wellplate: wellplate, collection: collection)
 
-        params[:wells].each do |well|
-          sample = well.sample
-          sample_id = (sample) ? sample.id : nil
-          Well.create(
-              sample_id: sample_id,
-              readout: well.readout,
-              additive: well.additive,
-              position_x: well.position.x,
-              position_y: well.position.y,
-              wellplate: wellplate
-          )
+          params[:wells].each do |well|
+            sample = well.sample
+            sample_id = (sample) ? sample.id : nil
+            Well.create(
+                sample_id: sample_id,
+                readout: well.readout,
+                additive: well.additive,
+                position_x: well.position.x,
+                position_y: well.position.y,
+                wellplate_id: wellplate.id
+            )
+          end
+          wellplate
         end
-        wellplate
       end
 
       namespace :ui_state do
