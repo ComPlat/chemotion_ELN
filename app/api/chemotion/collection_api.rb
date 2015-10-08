@@ -163,6 +163,16 @@ module Chemotion
             current_collection_id
           )
 
+          sample_ids_to_delete = CollectionsSample.where(
+            sample_id: sample_ids,
+            collection_id: params[:collection_id]
+          ).pluck(:sample_id)
+
+          CollectionsSample.where(
+            sample_id: sample_ids_to_delete,
+            collection_id: current_collection_id
+          ).delete_all
+
           CollectionsSample.where(
             sample_id: sample_ids,
             collection_id: current_collection_id
@@ -173,6 +183,16 @@ module Chemotion
             CollectionsReaction,
             current_collection_id
           )
+
+          reaction_ids_to_delete = CollectionsReaction.where(
+            reaction_id: reaction_ids,
+            collection_id: params[:collection_id]
+          ).pluck(:reaction_id)
+
+          CollectionsReaction.where(
+            reaction_id: reaction_ids_to_delete,
+            collection_id: current_collection_id
+          ).delete_all
 
           CollectionsReaction.where(
             reaction_id: reaction_ids,
@@ -185,6 +205,16 @@ module Chemotion
             current_collection_id
           )
 
+          wellplate_ids_to_delete = CollectionsWellplate.where(
+            wellplate_id: wellplate_ids,
+            collection_id: params[:collection_id]
+          ).pluck(:wellplate_id)
+
+          CollectionsWellplate.where(
+            wellplate_id: wellplate_ids_to_delete,
+            collection_id: current_collection_id
+          ).delete_all
+
           CollectionsWellplate.where(
             wellplate_id: wellplate_ids,
             collection_id: current_collection_id
@@ -195,6 +225,16 @@ module Chemotion
             CollectionsScreen,
             current_collection_id
           )
+
+          screen_ids_to_delete = CollectionsScreen.where(
+            screen_id: screen_ids,
+            collection_id: params[:collection_id]
+          ).pluck(:screen_id)
+
+          CollectionsScreen.where(
+            screen_id: screen_ids_to_delete,
+            collection_id: current_collection_id
+          ).delete_all
 
           CollectionsScreen.where(
             screen_id: screen_ids,
