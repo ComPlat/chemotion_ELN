@@ -127,7 +127,7 @@ module Chemotion
         content_type('application/vnd.ms-excel')
         header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Sample Excel.xlsx")}"
 
-        excel = ExcelExport.new
+        excel = Report::ExcelExport.new
 
         Collection.find(params[:id]).samples.each do |sample|
           excel.add_sample(sample)

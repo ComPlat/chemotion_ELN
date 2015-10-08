@@ -1,4 +1,4 @@
-class ExcelExport
+class Report::ExcelExport
   def initialize
     @@sample_list = Array.new
   end
