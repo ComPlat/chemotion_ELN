@@ -40,16 +40,6 @@ export default class ScreensFetcher {
   static update(screen) {
     const {id, wellplate_ids, name, collaborator, result, conditions, requirements, description} = screen;
 
-    console.log(JSON.stringify({
-      name,
-      collaborator,
-      result,
-      conditions,
-      requirements,
-      description,
-      wellplate_ids
-    }));
-    
     let promise = fetch('/api/v1/screens/' + id, {
       credentials: 'same-origin',
       method: 'put',

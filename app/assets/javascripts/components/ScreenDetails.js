@@ -12,16 +12,12 @@ export default class ScreenDetails extends Component {
   constructor(props) {
     super(props);
     const {screen} = props;
-    this.state = {
-      screen: screen
-    };
+    this.state = { screen };
   }
 
   componentWillReceiveProps(nextProps) {
     const {screen} = nextProps;
-    this.setState({
-      screen: screen
-    });
+    this.setState({ screen });
   }
 
   handleSubmit() {
@@ -35,7 +31,6 @@ export default class ScreenDetails extends Component {
     } else {
       ElementActions.updateScreen(screen);
     }
-
   }
 
   handleInputChange(type, event) {
@@ -77,9 +72,7 @@ export default class ScreenDetails extends Component {
     const {screen} = this.state;
 
     screen.wellplates.push(wellplate);
-    this.setState({
-      screen: screen
-    });
+    this.setState({ screen });
   }
 
   deleteWellplate(wellplate){
@@ -87,9 +80,7 @@ export default class ScreenDetails extends Component {
     const wellplateIndex = screen.wellplates.indexOf(wellplate);
     screen.wellplates.splice(wellplateIndex, 1);
 
-    this.setState({
-      screen: screen
-    });
+    this.setState({ screen });
   }
 
   render() {
