@@ -43,7 +43,7 @@ export default class Sample {
       impurities: '',
       location: '',
       molfile: '',
-      molecule: {}
+      molecule: { id: '_none_' }
     })
   }
 
