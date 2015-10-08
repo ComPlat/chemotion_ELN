@@ -167,7 +167,6 @@ CollectionsScreen.create!(screen: screen_1, collection: collection_1)
 CollectionsScreen.create!(screen: screen_2, collection: collection_1)
 CollectionsScreen.create!(screen: screen_1, collection: grand_child)
 CollectionsScreen.create!(screen: screen_1, collection: subcollection_1)
-CollectionsScreen.create!(screen: screen_1, collection: subcollection_1)
 
 # --- Wellplates ---
 
@@ -190,5 +189,4 @@ CollectionsWellplate.create!(wellplate: wellplate_2, collection: collection_1)
 CollectionsWellplate.create!(wellplate: wellplate_3, collection: collection_1)
 CollectionsWellplate.create!(wellplate: wellplate_4, collection: collection_1)
 CollectionsWellplate.create!(wellplate: wellplate_1, collection: grand_child)
-CollectionsWellplate.create!(wellplate: wellplate_1, collection: subcollection_1)
 CollectionsWellplate.create!(wellplate: wellplate_1, collection: subcollection_1)
