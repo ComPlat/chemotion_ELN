@@ -4,7 +4,7 @@ import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
 
-export default class ShareButton extends React.Component {
+export default class MoveButton extends React.Component {
   constructor(props) {
     super(props);
 
@@ -19,10 +19,10 @@ export default class ShareButton extends React.Component {
 
   render() {
     const tooltip = (
-      <Tooltip>Move the selected elements from this Collection to another Collection</Tooltip>
+      <Tooltip>Move to Collection</Tooltip>
     );
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
         <Button bsStyle="primary" onClick={this.showMoveModal.bind(this)} disabled={this.state.isDisabled}>
           <i className="fa fa-arrow-right"></i>
         </Button>

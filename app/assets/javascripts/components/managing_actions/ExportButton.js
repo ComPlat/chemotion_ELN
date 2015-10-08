@@ -1,19 +1,20 @@
-import React from 'react';
-import {Button} from 'react-bootstrap';
+import React, {Component} from 'react';
+import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
-import UIStore from '../stores/UIStore';
-import CollectionStore from '../stores/CollectionStore';
+import CollectionActions from '../actions/CollectionActions';
 
-export default class ExportButton extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        return (
-            <Button href={"api/v1/reports/excel?id=" + UIStore.getState().currentCollectionId}>
-                Export Collection
-            </Button>
-        )
-    }
+export default class ExportButton extends Component {
+  render() {
+    const {isDisabled} = this.props;
+    const tooltip = (
+      <Tooltip>Export Report</Tooltip>
+    );
+    return (
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <Button onClick={() => CollectionActions.downloadReport()} disabled={isDisabled}>
+          <i className="fa fa-download"></i>
+        </Button>
+      </OverlayTrigger>
+    )
+  }
 }
