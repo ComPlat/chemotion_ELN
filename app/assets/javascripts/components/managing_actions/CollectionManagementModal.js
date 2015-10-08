@@ -45,13 +45,27 @@ export default class CollectionManagementModal extends React.Component {
     })
   }
 
-  collectionEntries() {
-    let collections = this.state.collection_state.unsharedRoots
+  collectionEntriesMap(collections) {
+
+    if (collections == undefined) return []
+
+    let result = collections.reduce(
+      (result, collection, index, array) => {
+        return result.concat(this.collectionEntriesMap(collection.children))
+      },
+      []
+    )
+
     return collections.map(
       (collection) => {
         return (<option value={collection.id}>{collection.label}</option>)
       }
-    );
+    ).concat(result);
+  }
+
+  collectionEntries() {
+    let collections = this.state.collection_state.unsharedRoots
+    return this.collectionEntriesMap(collections);
   }
 
   addCollection() {
