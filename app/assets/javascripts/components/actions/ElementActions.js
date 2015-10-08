@@ -81,22 +81,7 @@ class ElementActions {
   }
 
   generateEmptySample() {
-    let sample = new Sample({
-      id: '_new_',
-      type: 'sample',
-      name: 'New Sample',
-      external_label: '',
-      amount_value: 0,
-      amount_unit: 'g',
-      description: '',
-      purity: 0,
-      solvent: '',
-      impurities: '',
-      location: '',
-      molfile: '',
-      molecule: {}
-    })
-    this.dispatch(sample)
+    this.dispatch(Sample.buildEmpty())
   }
 
   splitAsSubsamples(ui_state) {
@@ -148,18 +133,7 @@ class ElementActions {
   }
 
   generateEmptyReaction() {
-    //todo: move to Reaction
-    let reaction = new Reaction({
-      id: '_new_',
-      type: 'reaction',
-      //name: 'New Reaction',
-      starting_materials: [],
-      reactants: [],
-      products: [],
-      literatures: []
-
-    })
-    this.dispatch(reaction)
+    this.dispatch(Reaction.buildEmpty())
   }
 
 

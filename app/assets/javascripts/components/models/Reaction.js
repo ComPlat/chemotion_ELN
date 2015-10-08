@@ -6,6 +6,18 @@ export default class Reaction {
     Object.assign(this, args);
   }
 
+  static buildEmpty() {
+    return new Reaction({
+      id: '_new_',
+      type: 'reaction',
+      //name: 'New Reaction',
+      starting_materials: [],
+      reactants: [],
+      products: [],
+      literatures: []
+    })
+  }
+
   get isNew() {
     return this.id == '_new_'
   }
