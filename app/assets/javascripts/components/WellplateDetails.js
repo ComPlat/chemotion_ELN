@@ -4,6 +4,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
+import WellplateProperties from './WellplateProperties';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -37,24 +38,25 @@ export default class WellplateDetails extends Component {
   }
 
   closeDetails() {
-    UIActions.deselectAllElements();
-
     let uiState = UIStore.getState();
+    UIActions.deselectAllElements();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   initWells(wells, size) {
+    // TODO needs to be done in backend!
     const neededPlaceholders = size - wells.length;
     const placeholders = Array(neededPlaceholders).fill({});
     wells = wells.concat(placeholders);
+    // TODO END
+
     return wells.map((well, key) => this.initWell(well, key));
   }
 
   initWell(well, key) {
     return {
       ...well,
-      position: this.calculatePositionOfWell(key),
-      readout: ""
+      position: this.calculatePositionOfWell(key)
     }
   }
 
@@ -82,25 +84,12 @@ export default class WellplateDetails extends Component {
 
   handleWellsChange(wells) {
     this.setState({wells});
-    //console.log(wells);
+    //console.log(this.state.wells);
   }
 
-  handleInputChange(type, event) {
-    let newState = {};
-    const value = event.target.value;
-    switch (type) {
-      case 'name':
-        newState.name = value;
-        break;
-      case 'size':
-        newState.size = value;
-        break;
-      case 'description':
-        newState.description = value;
-        break;
-    }
+  handleChangeProperties(properties) {
     this.setState({
-      ...newState
+        ...properties
     });
   }
 
@@ -108,6 +97,11 @@ export default class WellplateDetails extends Component {
     const {wellplate} = this.props;
     const {wells, name, size, description} = this.state;
     const submitLabel = (wellplate.id == '_new_') ? "Create" : "Save";
+    const properties = {
+      name,
+      size,
+      description
+    };
     return (
       <div key={wellplate.id}>
         <Panel header="Wellplate Details" bsStyle='primary'>
@@ -115,40 +109,13 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate}/>
           <ListGroup fill>
             <ListGroupItem>
-              <table width="100%">
-                <tr>
-                  <td width="70%" className="padding-right">
-                    <Input
-                      type="text"
-                      label="Name"
-                      value={name}
-                      onChange={event => this.handleInputChange('name', event)}
-                      />
-                  </td>
-                  <td width="30%">
-                    <Input
-                      type="text"
-                      label="Size"
-                      value={size}
-                      onChange={event => this.handleInputChange('size', event)}
-                      disabled
-                      />
-                  </td>
-                </tr>
-                <tr>
-                  <td colSpan="2">
-                    <Input
-                      type="textarea"
-                      label="Description"
-                      value={description}
-                      onChange={event => this.handleInputChange('description', event)}
-                      />
-                  </td>
-                </tr>
-              </table>
-            </ListGroupItem>
-            <ListGroupItem>
-              <TabbedArea>
+              <TabbedArea defaultActiveKey={1}>
+                <TabPane eventKey={0} tab={'Properties'}>
+                  <WellplateProperties
+                    {...properties}
+                    changeProperties={properties => this.handleChangeProperties(properties)}
+                    />
+                </TabPane>
                 <TabPane eventKey={1} tab={'Designer'}>
                   <Well>
                     <Wellplate
