@@ -254,49 +254,29 @@ class ElementActions {
   fetchScreenById(id) {
     ScreensFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result.screen);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
 
   generateEmptyScreen() {
-    const screen = {
-      id: '_new_',
-      type: 'screen',
-      name: 'New Screen',
-      collaborator: '',
-      requirements: '',
-      conditions: '',
-      result: '',
-      description: '',
-      wellplates: []
-    };
-    this.dispatch(screen);
+    this.dispatch(Screen.buildEmpty());
   }
 
   createScreen(screen) {
-    const {wellplates} = screen;
-    delete screen.wellplates;
-    delete screen.id;
-    screen.wellplate_ids = wellplates.map(wellplate => wellplate.id );
-
     ScreensFetcher.create(screen)
       .then(result => {
-        this.dispatch(result.screen);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
 
   updateScreen(screen) {
-    const {wellplates} = screen;
-    delete screen.wellplates;
-    screen.wellplate_ids = wellplates.map(wellplate => wellplate.id );
-
     ScreensFetcher.update(screen)
       .then(result => {
-        this.dispatch(result.screen);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
