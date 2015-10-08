@@ -69,8 +69,8 @@ module Chemotion
         end
 
         get do
-          #Sample.find(params[:id])
-          SampleProxy.new(current_user).find(params[:id])
+          sample = Sample.find(params[:id])
+          ElementPermissionProxy.new(current_user, sample).serialized
         end
       end
 
