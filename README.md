@@ -3,8 +3,17 @@
 * Copy `.ruby-gemset.example` to `.ruby-gemset`.
 * Copy `.ruby-version.example` to `.ruby-version`.
 * Reload directory to create rvm gemset.
-* `brew install cmake` for Mac OS X
+
+## openbabel
+* `brew install cmake` for OSX
 * install openbabel as described in its [documentation](https://github.com/cubuslab/openbabel/blob/master/INSTALL)
+ 
+## rmagick
+* `brew install imagemagick gs` for OSX
+* `apt-get install libmagickcore-dev libmagickwand-dev` for linux
+* if installing the rmagick gem fails you may try: `IM_PREFIX=$(brew list imagemagick 2>&1 | grep -E 'identify$' | sed 's/bin\/identify$//g') PKG_CONFIG_PATH=${IM_PREFIX}lib/pkgconfig/ C_INCLUDE_PATH=${IM_PREFIX}include/ImageMagick*/ gem install rmagick` (OSX only)
+
+## Application Setup
 * Execute `bundle install`.
 * Execute `rake db:reset` (this creates and seeds the database).
 
@@ -14,7 +23,6 @@
 * Copy `.nvmrc.example` to `.nvmrc`.
 * Execute `nvm install` nvm will automatically use node 0.10.40 (in order to work with current jest-version)
 * Execute `npm install`.
-* Execute `npm test`.
 
 # Available Seeds
 
