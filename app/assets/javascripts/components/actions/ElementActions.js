@@ -15,6 +15,9 @@ import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 
+import Wellplate from '../models/Wellplate';
+import Screen from '../models/Screen';
+
 import _ from 'lodash';
 
 class ElementActions {
@@ -196,21 +199,13 @@ class ElementActions {
 
 
   generateEmptyWellplate() {
-    const wellplate = {
-      id: '_new_',
-      type: 'wellplate',
-      name: 'New Wellplate',
-      size: 96,
-      description: '',
-      wells: []
-    };
-    this.dispatch(wellplate);
+    this.dispatch(Wellplate.buildEmpty());
   }
 
   createWellplate(wellplate) {
     WellplatesFetcher.create(wellplate)
       .then(result => {
-        this.dispatch(result.wellplate);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -219,7 +214,7 @@ class ElementActions {
   updateWellplate(wellplate) {
     WellplatesFetcher.update(wellplate)
       .then(result => {
-        this.dispatch(result.wellplate);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -237,7 +232,7 @@ class ElementActions {
   fetchWellplateById(id) {
     WellplatesFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result.wellplate);
+        this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
