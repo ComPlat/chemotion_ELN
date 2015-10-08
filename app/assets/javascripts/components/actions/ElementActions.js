@@ -15,7 +15,11 @@ import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 
+import _ from 'lodash';
+
 class ElementActions {
+
+  // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId) {
     SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId)
@@ -25,6 +29,21 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
+
+  // -- Collections --
+
+
+  fetchReactionsByCollectionId(id, queryParams={}) {
+    ReactionsFetcher.fetchByCollectionId(id, queryParams)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+
+  // -- Samples --
 
   fetchSampleById(id) {
     SamplesFetcher.fetchById(id)
@@ -52,14 +71,8 @@ class ElementActions {
   }
 
   updateSample(params) {
-    // delete possible null values for scoped update
-    for(var key in params) {
-      if(params[key] == null) {
-        delete params[key];
-      }
-    }
-
-    SamplesFetcher.update(params)
+    let _params = _.omit( params, _.isNull); //should be better done in SampleProxy#serialize
+    SamplesFetcher.update(_params)
       .then((result) => {
         this.dispatch(params)
       }).catch((errorMessage) => {
@@ -67,14 +80,46 @@ class ElementActions {
       });
   }
 
-  fetchReactionsByCollectionId(id, queryParams={}) {
-    ReactionsFetcher.fetchByCollectionId(id, queryParams)
+  generateEmptySample() {
+    let sample = new Sample({
+      id: '_new_',
+      type: 'sample',
+      name: 'New Sample',
+      external_label: '',
+      amount_value: 0,
+      amount_unit: 'g',
+      description: '',
+      purity: 0,
+      solvent: '',
+      impurities: '',
+      location: '',
+      molfile: '',
+      molecule: {}
+    })
+    this.dispatch(sample)
+  }
+
+  splitAsSubsamples(ui_state) {
+    SamplesFetcher.splitAsSubsamples(ui_state)
+      .then((result) => {
+        this.dispatch(ui_state);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  // -- Molecules --
+
+  fetchMoleculeByMolfile(molfile) {
+    MoleculesFetcher.fetchByMolfile(molfile)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
   }
+
+  // -- Reactions --
 
   fetchReactionById(id) {
     ReactionsFetcher.fetchById(id)
@@ -84,6 +129,97 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
+
+  createReaction(params) {
+    console.log(params)
+    ReactionsFetcher.create(params)
+      .then((result) => {
+        this.dispatch(result)
+      });
+  }
+
+  updateReaction(params) {
+    ReactionsFetcher.update(params)
+      .then((result) => {
+        this.dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  generateEmptyReaction() {
+    //todo: move to Reaction
+    let reaction = new Reaction({
+      id: '_new_',
+      type: 'reaction',
+      //name: 'New Reaction',
+      starting_materials: [],
+      reactants: [],
+      products: [],
+      literatures: []
+
+    })
+    this.dispatch(reaction)
+  }
+
+
+  // -- Reactions literatures --
+
+
+  createReactionLiterature(params) {
+    LiteraturesFetcher.create(params)
+      .then((result) => {
+        this.dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  deleteReactionLiterature(literature) {
+    LiteraturesFetcher.delete(literature)
+      .then((result) => {
+        this.dispatch(result.reaction_id)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchLiteraturesByReactionId(id) {
+    LiteraturesFetcher.fetchByReactionId(id)
+      .then((result) => {
+        console.log("Action Fetch Literatures: ");
+        console.log(result);
+        this.dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+
+  // -- Reactions SVGs --
+
+
+  fetchReactionSvgByMaterialsInchikeys(materialsInchikeys){
+    ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys)
+      .then((result) => {
+        this.dispatch(result.reaction_svg);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  fetchReactionSvgByReactionId(reaction_id){
+    ReactionSvgFetcher.fetchByReactionId(reaction_id)
+      .then((result) => {
+        this.dispatch(result.reaction_svg);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+
+  // -- Wellplates --
+
 
   generateEmptyWellplate() {
     const wellplate = {
@@ -132,6 +268,10 @@ class ElementActions {
         console.log(errorMessage);
       });
   }
+
+
+  // -- Screens --
+
 
   fetchScreensByCollectionId(id, queryParams={}) {
     ScreensFetcher.fetchByCollectionId(id, queryParams)
@@ -193,123 +333,18 @@ class ElementActions {
       });
   }
 
-  createReactionLiterature(params) {
-    LiteraturesFetcher.create(params)
-      .then((result) => {
-        this.dispatch(result)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  generateEmptyReaction() {
-    //todo: move to Reaction
-    let reaction = new Reaction({
-      id: '_new_',
-      type: 'reaction',
-      //name: 'New Reaction',
-      starting_materials: [],
-      reactants: [],
-      products: [],
-      literatures: []
-
-    })
-    this.dispatch(reaction)
-  }
-
-  createReaction(params) {
-    console.log(params)
-    ReactionsFetcher.create(params)
-      .then((result) => {
-        this.dispatch(result)
-      });
-  }
-
-  updateReaction(params) {
-    ReactionsFetcher.update(params)
-      .then((result) => {
-        this.dispatch(result)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  deleteReactionLiterature(literature) {
-    LiteraturesFetcher.delete(literature)
-      .then((result) => {
-        this.dispatch(result.reaction_id)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  fetchLiteraturesByReactionId(id) {
-    LiteraturesFetcher.fetchByReactionId(id)
-      .then((result) => {
-        console.log("Action Fetch Literatures: ");
-        console.log(result);
-        this.dispatch(result)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
+  // -- General --
 
   refreshElements(type) {
     this.dispatch(type)
   }
 
-  generateEmptySample() {
-    let sample = new Sample({
-      id: '_new_',
-      type: 'sample',
-      name: 'New Sample',
-      external_label: '',
-      amount_value: 0,
-      amount_unit: 'g',
-      description: '',
-      purity: 0,
-      solvent: '',
-      impurities: '',
-      location: '',
-      molfile: '',
-      molecule: {}
-    })
-    this.dispatch(sample)
-  }
-
-  fetchMoleculeByMolfile(molfile) {
-    MoleculesFetcher.fetchByMolfile(molfile)
-      .then((result) => {
-        this.dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  fetchReactionSvgByMaterialsInchikeys(materialsInchikeys){
-    ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys)
-      .then((result) => {
-        this.dispatch(result.reaction_svg);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  fetchReactionSvgByReactionId(reaction_id){
-    ReactionSvgFetcher.fetchByReactionId(reaction_id)
-      .then((result) => {
-        this.dispatch(result.reaction_svg);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
 
   deleteElements(ui_state) {
     this.dispatch(ui_state);
-    //UIActions.uncheckAllElements('sample');
-    //UIActions.uncheckAllElements('reaction');
-    //UIActions.uncheckAllElements('wellplate');
   }
+
+  // - ...
 
   deleteSamplesByUIState(ui_state) {
     SamplesFetcher.deleteSamplesByUIState(ui_state)
@@ -369,15 +404,6 @@ class ElementActions {
     CollectionsFetcher.removeElementsCollection(params)
       .then(() => {
         this.dispatch(params);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  splitAsSubsamples(ui_state) {
-    SamplesFetcher.splitAsSubsamples(ui_state)
-      .then((result) => {
-        this.dispatch(ui_state);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
