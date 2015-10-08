@@ -8,15 +8,12 @@ class ElementPermissionProxy
 
   def serialized
     serializer_class = serializer_class_by_element
-    #serialized_element = serializer_instance_by_element.serializable_hash
     dl = detail_level_for_element
 
     unless dl == max_detail_level_by_element_class
-      serialized_element = restriction_by_dl(serializer_class, dl)
-      {element.class.to_s.downcase => serialized_element}.deep_symbolize_keys
+      serialized_element = restriction_by_dl(serializer_class, dl).deep_symbolize_keys
     else
-      serialized_element = serializer_class.new(element).serializable_hash
-      {element.class.to_s.downcase => serialized_element}.deep_symbolize_keys
+      serialized_element = serializer_class.new(element).serializable_hash.deep_symbolize_keys
     end
   end
 
@@ -75,54 +72,7 @@ class ElementPermissionProxy
   end
 
   def restriction_by_dl(serializer_class, dl)
-    allowed_attributes = allowed_attributes_for_dl(dl)
-    serializer_class.new(element, only: allowed_attributes).serializable_hash
-  end
-
-  def allowed_attributes_for_dl(dl)
-    case element
-    when Sample
-      allowed_sample_attributes_for_dl(dl)
-    when Reaction
-      allowed_reaction_attributes_for_dl(dl)
-    when Wellplate
-      allowed_wellplate_attributes_for_dl(dl)
-    when Screen
-      allowed_screen_attributes_for_dl(dl)
-    end
-  end
-
-  def allowed_sample_attributes_for_dl(dl)
-    basic_attributes = [:id, :type]
-
-    case dl
-    when 0
-      basic_attributes +
-      [
-        :external_label,
-        :amount_value,
-        :amount_unit
-      ]
-    when 1
-      basic_attributes +
-      [
-        :external_label,
-        :molecule,
-        :amount_value,
-        :amount_unit
-      ]
-    when 2
-      basic_attributes +
-      [
-        :external_label,
-        :molecule,
-        :amount_value,
-        :amount_unit,
-        :description,
-        :analyses
-      ]
-    when 3
-
-    end
+    klass = "#{serializer_class}::Level#{dl}".constantize
+    klass.new(element).serializable_hash
   end
 end

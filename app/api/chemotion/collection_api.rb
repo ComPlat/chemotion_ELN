@@ -135,19 +135,6 @@ module Chemotion
         end
       end
 
-      # TODO add authorization/authentication, e.g. is current_user allowed
-      # to fetch this samples?
-      desc "Return serialized samples for given collection id"
-      params do
-        requires :id, type: Integer, desc: "Collection id"
-      end
-
-      route_param :id do
-        get :samples do
-          Collection.find(params[:id]).samples
-        end
-      end
-
       namespace :elements do
         desc "Update the collection of a set of elements by UI state"
         params do

@@ -10,6 +10,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
+        console.log(json)
         return new SampleProxy(json.sample);
       }).catch((errorMessage) => {
         console.log(errorMessage);
@@ -27,7 +28,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.samples.map((s) => new Sample(s)),
+            elements: json.samples.map((s) => new SampleProxy(s)),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),

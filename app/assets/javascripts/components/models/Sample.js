@@ -26,6 +26,24 @@ export default class Sample extends Element {
     return splitSample;
   }
 
+  serialize() {
+    return {
+      id: this.id,
+      name: this.name,
+      external_label: this.external_label,
+      amount_value: this.amount_value,
+      amount_unit: this.amount_unit,
+      description: this.description,
+      purity: this.purity,
+      solvent: this.solvent,
+      impurities: this.impurities,
+      location: this.location,
+      molfile: this.molfile,
+      molecule: this.molecule,
+      is_top_secret: this.is_top_secret || false
+    }
+  }
+
   static buildEmpty() {
     return new Sample({
       id: '_new_',
@@ -105,7 +123,7 @@ export default class Sample extends Element {
   }
 
   get amount_value() {
-    return this._amount_value || 0;
+    return this._amount_value;
   }
 
   set amount_value(amount_value) {
@@ -176,8 +194,16 @@ export default class Sample extends Element {
     }
   }
 
+  get molecule_iupac_name() {
+    return this.molecule && this.molecule.iupac_name;
+  }
+
+  set molecule_iupac_name(iupac_name) {
+    this.molecule.iupac_name = iupac_name;
+  }
+
   get molecule_density() {
-    return this.molecule && this.molecule.density || 1.0
+    return this.molecule && this.molecule.density;
   }
 
   set molecule_density(density) {
@@ -213,7 +239,7 @@ export default class Sample extends Element {
   }
 
   get purity() {
-    return this._purity || 1.0
+    return this._purity
   }
 
   set purity(purity) {

@@ -7,7 +7,8 @@ export default class SampleProxy extends Sample {
 
     let sampleMethodsWithGetAndSet = [
       'name', 'external_label', 'location', 'description', 'impurities', 'amount_unit', 'amount_value',
-      'purity', 'is_top_secret'
+      'purity', 'is_top_secret', 'molecule_density', 'molecule_boiling_point', 'molecule_melting_point',
+      'molecule_iupac_name'
     ]
 
     sampleMethodsWithGetAndSet.forEach((m) => {
@@ -18,7 +19,7 @@ export default class SampleProxy extends Sample {
     })
 
     let sampleMethodsWithGet = [
-      'amount_mg', 'amount_ml', 'amount_mmol'
+      'amount_mg', 'amount_ml', 'amount_mmol', 'amount', 'molecule_molecular_weight', 'molecule_formula', 'molecule_inchistring'
     ]
 
     sampleMethodsWithGet.forEach((m) => {
@@ -26,27 +27,18 @@ export default class SampleProxy extends Sample {
         get: function() { return this.methodOrRestrictionPattern(m) },
       })
     })
+  }
 
-    let moleculeMethodsWithGetAndSet = [
-      'molecule_density', 'molecule_boiling_point', 'molecule_melting_point'
-    ]
+  serialize() {
+    let sampleSerialization = super.serialize();
 
-    moleculeMethodsWithGetAndSet.forEach((m) => {
-      Object.defineProperty(this, m, {
-        get: function() { return this.methodOnMoleculeOrRestrictionPattern(m) },
-        set: function(arg) { super[m] = arg }
-      })
+    Object.keys(sampleSerialization).forEach((method) => {
+      if(sampleSerialization[method] == this.restrictionPattern) {
+        delete sampleSerialization[method];
+      }
     })
 
-    let moleculeMethodsWithGet = [
-      'molecule_molecular_weight', 'molecule_formula', 'molecule_inchistring'
-    ]
-
-    moleculeMethodsWithGet.forEach((m) => {
-      Object.defineProperty(this, m, {
-        get: function() { return this.methodOnMoleculeOrRestrictionPattern(m) },
-      })
-    })
+    return sampleSerialization;
   }
 
   get restrictionPattern() {
@@ -54,15 +46,7 @@ export default class SampleProxy extends Sample {
   }
 
   methodOrRestrictionPattern(method) {
-    if(super.isRestricted && super[method] == undefined) {
-      return this.restrictionPattern;
-    } else {
-      return super[method];
-    }
-  }
-
-  methodOnMoleculeOrRestrictionPattern(method) {
-    if(super.isRestricted && super.molecule == undefined) {
+    if(super.isRestricted() == true && (super.molecule == undefined || super[method] === undefined)) {
       return this.restrictionPattern;
     } else {
       return super[method];
@@ -82,5 +66,13 @@ export default class SampleProxy extends Sample {
 
   set molecule(molecule) {
     super.molecule = new Molecule(molecule)
+  }
+
+  methodIsRestricted(method) {
+    return this.isRestricted() == true && this.methodOrRestrictionPattern(method) == this.restrictionPattern;
+  }
+
+  isMethodDisabled(method) {
+    return this.methodIsRestricted(method) == true && this.id != '_new_'
   }
 }
