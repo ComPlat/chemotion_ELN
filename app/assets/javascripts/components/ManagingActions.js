@@ -4,6 +4,7 @@ import MoveButton from './managing_actions/MoveButton';
 import AssignButton from './managing_actions/AssignButton';
 import RemoveButton from './managing_actions/RemoveButton';
 import DeleteButton from './managing_actions/DeleteButton';
+import ExportButton from './managing_actions/ExportButton';
 import {ButtonGroup} from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
@@ -125,6 +126,7 @@ export default class ManagingActions extends React.Component {
         <RemoveButton isDisabled={this.isRemoteDisabled()}/>
         <DeleteButton isDisabled={this.isDeleteButtonDisabled()}/>
         <ShareButton isDisabled={this.isShareButtonDisabled()}/>
+        <ExportButton />
       </ButtonGroup>
     )
   }

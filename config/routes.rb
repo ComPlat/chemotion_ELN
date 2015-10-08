@@ -8,4 +8,6 @@ Rails.application.routes.draw do
   mount API => '/'
 
   root :to => redirect("/users/sign_in")
+
+  get 'test', to: 'pages#test'
 end

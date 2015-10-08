@@ -1,0 +1,247 @@
+{
+  "header": {
+    "experiment": "Simone_18-100",
+    "owner": "ELNdmin",
+    "created_date": "2015-03-23T12:09:42.000Z",
+    "printed_date": "2015-03-23T12:09:42.000Z",
+    "status": "Open"
+  },
+  
+  "body": [
+    {
+      "type": "image",
+      "path": "data/example.svg",
+      "size": {
+        "x": 70,
+        "y": 10
+      }
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "style": {
+            "font_style": "bold"
+          },
+          "text": "Reaction conditions: "
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "data": [
+        [
+          "Reaction Molarity",
+          "0,056 molar"
+        ],
+        [
+          "Pressure",
+          "Temperature"
+        ]
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "style": {
+            "font_style": "bold"
+          },
+          "text": "Reactants: "
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "data": [
+        [
+          "",
+          "Reactant",
+          "MF",
+          "Limit?",
+          "MW",
+          "Eq",
+          "Moles (mmol)",
+          "Sample Mass (g)",
+          "Vol",
+          "Molarity",
+          "d",
+          "% Wt",
+          "FM",
+          "Reactant Mass (g)"
+        ],          
+        [
+          "1",
+          "Harz SG-V1892",
+          "C92H89F3 NO4",
+          "true",
+          "1329,6 91",
+          "1,00 0",
+          "0,226",
+          "0,300",
+          "",
+          "",
+          "",
+          "",
+          "1329,6 91",
+          "0,300"
+        ],          
+        [
+          "2",
+          "2-amino-4-(tert-butyl)phenol",
+          "C10H15NO",
+          "false",
+          "165,23 2",
+          "3,00 0",
+          "0,677",
+          "0,112",
+          "",
+          "",
+          "",
+          "",
+          "165,23 2",
+          "0,112"
+        ]
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "style": {
+            "font_style": "bold"
+          },
+          "text": "Solvents: "
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "data": [
+        [
+          "",
+          "Name",
+          "Ratio",
+          "Volume (ml)"
+        ],          
+        [
+          "1",
+          "Methanol",
+          "",
+          "4"
+        ]
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "style": {
+            "font_style": "bold"
+          },
+          "text": "Products"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "data": [
+        [
+          "",
+          "Product",
+          "MF",
+          "Actual Mass",
+          "Actual Mol",
+          "Yiel d",
+          "Purit y",
+          "MW",
+          "Eq",
+          "Theo Mol (mmol)",
+          "Theo Mass (g)",
+          "FM"
+        ],          
+        [
+          "1",
+          "6-(tert-butyl)-3-phenyl-2H-benzo[b][1,4]-2-one",
+          "C18H17N O2",
+          "",
+          "",
+          "",
+          "",
+          "279,3 33",
+          "1,00 0",
+          "0,226",
+          "0,063",
+          "279,3 33"
+        ]
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "text": "Das Harz SG-V1892 (0,300 g, 0,226 mmol) wird in Methanol (Volume: 4 ml) gequellt und mit 2-amino-4-(tert-butyl)phenol (0,112 g, 0,667 mmol) und aluminum chloride (0,030 g. 0,226 mmol) versetzt. Die Reaktion wird über das Wochenende bei 50C im Vialblock gerührt."
+        }
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "text": "Zur Aufarbeitung wird eine Säulenchromatographie durchgeführt."
+        }
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "text": "DC: CH/EE 2:1"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "text": "Säule: CH/EE"
+        }
+      ]
+    },
+    {
+      "type": "line_break"
+    },
+    {
+      "type": "paragraph",
+      "text": [
+        {
+          "text": "Die Reaktion hat schon reagiert, aber zu wenig zu säulen."
+        }
+      ]
+    },
+    {
+      "type": "line_break"
+    }
+  ]
+}

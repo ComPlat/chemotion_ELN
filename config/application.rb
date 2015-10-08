@@ -19,6 +19,8 @@ module Chemotion
     # Grape API config
     config.paths.add File.join('app', 'api'), glob: File.join('**', '*.rb')
     config.autoload_paths += Dir[Rails.root.join('app', 'api', '*')]
+    # load lib path
+    config.autoload_paths += Dir["#{config.root}/lib/**/"]
 
     config.autoload_paths += Dir[Rails.root.join('app')]
     config.autoload_paths += Dir[Rails.root.join('lib')]
