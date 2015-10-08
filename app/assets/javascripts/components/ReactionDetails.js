@@ -41,7 +41,7 @@ export default class ReactionDetails extends React.Component {
     const nextReaction = nextProps.reaction;
     const currentReaction = this.props.reaction;
 
-    if (nextReaction.id != currentReaction.id) {
+    if (nextReaction.id != currentReaction.id || nextReaction.updated_at != currentReaction.updated_at) {
       if(!nextReaction.isNew){
         ElementActions.fetchReactionSvgByReactionId(nextReaction.id);
       }
@@ -301,9 +301,15 @@ export default class ReactionDetails extends React.Component {
 
   _submitFunction() {
     if(this.state.reaction && this.state.reaction.isNew) {
-     ElementActions.createReaction(this.state.reaction);
-    } else {
-     ElementActions.updateReaction(this.state.reaction);
+
+      let uiState = UIStore.getState();
+      let params = this.state.reaction;
+      params.collection_id = uiState.currentCollectionId;
+
+      ElementActions.createReaction(params);
+    }
+    else {
+      ElementActions.updateReaction(this.state.reaction);
     }
   }
 

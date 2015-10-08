@@ -14,7 +14,7 @@ export default class Sample {
   }
 
   get isNew() {
-    return this.id == '_new_'
+    return this.id == '_new_' || this._split
   }
 
   static buildChild(sample) {
@@ -25,6 +25,7 @@ export default class Sample {
     splitSample.name += "-" + Sample.counter;
     splitSample.created_at = null;
     splitSample.updated_at = null;
+    splitSample._split = true;
     return splitSample;
   }
 
@@ -210,6 +211,29 @@ export default class Sample {
 
   set molecule(molecule) {
     this._molecule = new Molecule(molecule)
+  }
+
+  //todo: have a dedicated Material Sample subclass
+
+  set equivalent(equivalent) {
+    this._equivalent = equivalent;
+  }
+
+  get equivalent() {
+    return this._equivalent;
+  }
+
+  serializeMaterial() {
+    return({
+      id: this.id,
+      name: this.name,
+      amount_unit: 'mg',
+      amount_value: this.amount_mg,
+      parent_id: this.parent_id,
+      equivalent: this.equivalent,
+      reference: this.reference || false,
+      is_new: this.isNew || false,
+    });
   }
 };
 

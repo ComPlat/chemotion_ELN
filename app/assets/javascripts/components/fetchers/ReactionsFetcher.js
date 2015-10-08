@@ -65,4 +65,62 @@ export default class ReactionsFetcher {
 
     return promise;
   }
+
+  static update(params) {
+    let promise = fetch('/api/v1/reactions/' + params.id, {
+      credentials: 'same-origin',
+      method: 'put',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: params.id,
+        name: params.name,
+        materials: {
+          starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
+          reactants: params.reactants.map(s=>s.serializeMaterial()),
+          products: params.products.map(s=>s.serializeMaterial())
+        },
+        literatures: params.literatures
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return new Reaction(json.reaction);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static create(params) {
+    let promise = fetch('/api/v1/reactions/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        collection_id: params.collection_id,
+        name: params.name,
+        materials: {
+          starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
+          reactants: params.reactants.map(s=>s.serializeMaterial()),
+          products: params.products.map(s=>s.serializeMaterial())
+        },
+        literatures: params.literatures
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return new Reaction(json.reaction);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

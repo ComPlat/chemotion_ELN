@@ -9,7 +9,7 @@ end
 class ReactionSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :name, :created_at
+  attributes :id, :type, :name, :created_at, :updated_at
 
   has_many :starting_materials, serializer: MaterialSerializer
   has_many :reactants, serializer: MaterialSerializer

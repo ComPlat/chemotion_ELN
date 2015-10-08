@@ -117,9 +117,9 @@ ActiveRecord::Schema.define(version: 20151007231740) do
     t.datetime "updated_at", null: false
   end
 
-  create_table "reactions_product_samples", id: false, force: :cascade do |t|
-    t.integer "reaction_id", null: false
-    t.integer "sample_id",   null: false
+  create_table "reactions_product_samples", force: :cascade do |t|
+    t.integer "reaction_id"
+    t.integer "sample_id"
     t.boolean "reference"
     t.float   "equivalent"
   end
@@ -127,9 +127,9 @@ ActiveRecord::Schema.define(version: 20151007231740) do
   add_index "reactions_product_samples", ["reaction_id"], name: "index_reactions_product_samples_on_reaction_id", using: :btree
   add_index "reactions_product_samples", ["sample_id"], name: "index_reactions_product_samples_on_sample_id", using: :btree
 
-  create_table "reactions_reactant_samples", id: false, force: :cascade do |t|
-    t.integer "reaction_id", null: false
-    t.integer "sample_id",   null: false
+  create_table "reactions_reactant_samples", force: :cascade do |t|
+    t.integer "reaction_id"
+    t.integer "sample_id"
     t.boolean "reference"
     t.float   "equivalent"
   end
@@ -137,9 +137,9 @@ ActiveRecord::Schema.define(version: 20151007231740) do
   add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
   add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
 
-  create_table "reactions_starting_material_samples", id: false, force: :cascade do |t|
-    t.integer "reaction_id", null: false
-    t.integer "sample_id",   null: false
+  create_table "reactions_starting_material_samples", force: :cascade do |t|
+    t.integer "reaction_id"
+    t.integer "sample_id"
     t.boolean "reference"
     t.float   "equivalent"
   end

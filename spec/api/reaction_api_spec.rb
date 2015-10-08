@@ -183,5 +183,217 @@ describe Chemotion::ReactionAPI do
 
       end
     end
+
+    describe 'PUT /api/v1/reactions', focus: true do
+
+      let(:collection_1) { Collection.create!(label: 'Collection #1', user: user) }
+      let(:sample_1) { Sample.create!(name: 'Sample 1') }
+      let(:sample_2) { Sample.create!(name: 'Sample 2') }
+      let(:sample_3) { Sample.create!(name: 'Sample 3') }
+      let(:reaction_1) { Reaction.create(name: 'r1') }
+
+      before do
+        CollectionsReaction.create(reaction_id: reaction_1.id, collection_id: collection_1.id)
+        ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1)
+        ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2, equivalent: 2)
+        ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3, equivalent: 1)
+      end
+
+      context 'updating and reassigning existing materials' do
+        let(:params) {
+          {
+            "id" => reaction_1.id,
+            "name" => "new name",
+            "materials" => {
+              "starting_materials" => [
+                  {
+                                "id" => sample_1.id,
+                       "amount_unit" => "mg",
+                      "amount_value" => 76.09596,
+                        "equivalent" => 1,
+                         "reference" => true,
+                            "is_new" => false
+                  },
+                  {
+                                "id" => sample_2.id,
+                       "amount_unit" => "mg",
+                      "amount_value" => 99.08404,
+                        "equivalent" => 5.5,
+                         "reference" => false,
+                            "is_new" => false
+                  }
+              ]
+            }
+          }
+        }
+
+        before do
+          put "/api/v1/reactions/#{reaction_1.id}", params
+        end
+
+        let(:r) { Reaction.find(reaction_1.id) }
+
+        it 'should update the reaction attributes' do
+          expect(r.name).to eq('new name')
+        end
+
+        it 'should update the sample attributes' do
+          s1 = r.starting_materials.find(sample_1.id)
+          s2 = r.starting_materials.find(sample_2.id)
+
+          expect(s1.attributes).to include({
+            "amount_unit" => "mg",
+            "amount_value" => 76.09596,
+          })
+
+          expect(s2.attributes).to include({
+            "amount_unit" => "mg",
+            "amount_value" => 99.08404,
+          })
+        end
+
+        it 'should material associations and reassign to a new group' do
+
+          sa1 = r.reactions_starting_material_samples.find_by(sample_id: sample_1.id)
+          sa2 = r.reactions_starting_material_samples.find_by(sample_id: sample_2.id)
+
+          expect(sa1.attributes).to include({
+            "reference" => true,
+            "equivalent" => 1.0
+          })
+
+          expect(sa2.attributes).to include({
+            "reference" => false,
+            "equivalent" => 5.5
+          })
+
+          expect(r.reactions_reactant_samples).to be_empty
+          expect(r.reactions_product_samples.find_by(sample_id: sample_3.id)).to be_present
+        end
+      end
+
+      context 'creating new materials' do
+        let(:params) {
+          {
+            "id" => reaction_1.id,
+            "name" => "new name",
+            "materials" => {
+              "starting_materials" => [
+                  {
+                                "id" => sample_1.id,
+                       "amount_unit" => "mg",
+                      "amount_value" => 76.09596,
+                        "equivalent" => 1,
+                         "reference" => false,
+                            "is_new" => false
+                  },
+                  {
+                                "id" => sample_2.id,
+                       "amount_unit" => "mg",
+                      "amount_value" => 99.08404,
+                        "equivalent" => 5.5,
+                         "reference" => false,
+                            "is_new" => false
+                  }
+              ],
+              "products" => [
+                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
+                       "name" => "New Subsample 1",
+                "amount_unit" => "mg",
+               "amount_value" => 76.09596,
+                  "parent_id" => sample_1.id,
+                  "reference" => true,
+                 "equivalent" => 1,
+                     "is_new" => true
+              ]
+            }
+          }
+        }
+
+        before do
+          put "/api/v1/reactions/#{reaction_1.id}", params
+        end
+
+        let(:r) { Reaction.find(reaction_1.id) }
+
+        it 'should create subsamples' do
+
+          subsample = r.products.last
+
+          expect(subsample.parent).to eq(sample_1)
+          expect(subsample.attributes).to include(
+            {
+                      "name" => "New Subsample 1",
+              "amount_value" => 76.09596,
+               "amount_unit" => "mg",
+            }
+          )
+
+          subsample_association = r.reactions_product_samples.find_by(sample_id: subsample.id)
+          expect(subsample_association.attributes).to include({
+            "reference" => true,
+            "equivalent" => 1
+          })
+
+        end
+
+      end
+    end
+
+    describe 'POST /api/v1/reactions', focus: true do
+      let(:collection_1) { Collection.create!(label: 'Collection #1', user: user) }
+      let(:sample_1) { Sample.create!(name: 'Sample 1') }
+
+      context 'creating new materials' do
+        let(:params) {
+          {
+            "name" => "r001",
+            "collection_id" => collection_1.id,
+            "materials" => {
+              "products" => [
+                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
+                       "name" => "New Subsample 1",
+                "amount_unit" => "mg",
+               "amount_value" => 76.09596,
+                  "parent_id" => sample_1.id,
+                  "reference" => true,
+                 "equivalent" => 1,
+                     "is_new" => true
+              ]
+            }
+          }
+        }
+
+        before do
+          post "/api/v1/reactions", params
+        end
+
+        let(:r) { Reaction.find_by(name: 'r001') }
+
+        it 'should create subsamples' do
+
+          subsample = r.products.last
+
+          expect(subsample.parent).to eq(sample_1)
+          expect(subsample.attributes).to include(
+            {
+                      "name" => "New Subsample 1",
+              "amount_value" => 76.09596,
+               "amount_unit" => "mg",
+            }
+          )
+
+          subsample_association = r.reactions_product_samples.find_by(sample_id: subsample.id)
+          expect(subsample_association.attributes).to include({
+            "reference" => true,
+            "equivalent" => 1
+          })
+
+        end
+
+      end
+
+    end
+
   end
 end

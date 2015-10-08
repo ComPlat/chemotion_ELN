@@ -50,9 +50,13 @@ class ElementStore {
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+      handleUpdateReaction: ElementActions.updateReaction,
+      handleCreateReaction: ElementActions.createReaction,
+
       handleCreateReactionLiterature: ElementActions.createReactionLiterature,
       handleDeleteReactionLiterature: ElementActions.deleteReactionLiterature,
       handleFetchLiteraturesByReactionId: ElementActions.fetchLiteraturesByReactionId,
+
       handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
       handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
 
@@ -207,7 +211,7 @@ class ElementStore {
     this.handleRefreshElements('reaction');
   }
 
-  handleCreateSample(reaction) {
+  handleCreateReaction(reaction) {
     this.handleRefreshElements('reaction');
     this.navigateToNewElement(reaction);
   }
