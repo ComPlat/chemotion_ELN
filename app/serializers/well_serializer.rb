@@ -1,5 +1,5 @@
 class WellSerializer < ActiveModel::Serializer
-  attributes :id, :position
+  attributes :id, :position, :readout, :additive
 
   has_one :sample
 

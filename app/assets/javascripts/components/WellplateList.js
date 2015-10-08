@@ -23,8 +23,8 @@ export default class WellplateList extends Component {
           <th width="5%">Position</th>
           <th width="20%">Name</th>
           <th width="20%">Sum-Formula</th>
-          <th width="30%">Molecule</th>
-          <th width="20%">Readout</th>
+          <th width="20%">Molecule</th>
+          <th width="30%">Readout</th>
           {wells.map((well, key) => {
             const id = key + 1;
             const {sample, position, readout} = well;

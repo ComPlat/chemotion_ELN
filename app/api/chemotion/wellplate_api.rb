@@ -93,7 +93,13 @@ module Chemotion
           params[:wells].each do |well|
             sample = well.sample
             sample_id = (sample) ? sample.id : nil
-            Well.find(well.id).update(sample_id: sample_id)
+            Well.find(well.id).update(
+                sample_id: sample_id,
+                readout: well.readout,
+                additive: well.additive,
+                position_x: well.position.x,
+                position_y: well.position.y,
+            )
           end
           wellplate
         end
@@ -121,7 +127,14 @@ module Chemotion
         params[:wells].each do |well|
           sample = well.sample
           sample_id = (sample) ? sample.id : nil
-          Well.create(sample_id: sample_id, position_x: well.position.x, position_y: well.position.y, wellplate: wellplate)
+          Well.create(
+              sample_id: sample_id,
+              readout: well.readout,
+              additive: well.additive,
+              position_x: well.position.x,
+              position_y: well.position.y,
+              wellplate: wellplate
+          )
         end
         wellplate
       end
