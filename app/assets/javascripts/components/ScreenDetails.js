@@ -12,56 +12,52 @@ export default class ScreenDetails extends Component {
   constructor(props) {
     super(props);
     const {screen} = props;
-    this.state = {
-      ...screen
-    };
+    this.state = { screen };
   }
 
   componentWillReceiveProps(nextProps) {
     const {screen} = nextProps;
-    this.state = {
-      ...screen
-    };
+    this.setState({ screen });
   }
 
   handleSubmit() {
     const {currentCollection} = UIStore.getState();
-    const {state} = this;
-    if(state.id == '_new_') {
-      ElementActions.createScreen({
-        ...state,
-        collection_id: currentCollection.id
-    });
+    const {screen} = this.state;
+
+    if(screen.id == '_new_') {
+      let params = screen;
+      params.collection_id = currentCollection.id;
+      ElementActions.createScreen(params);
     } else {
-      ElementActions.updateScreen(this.state);
+      ElementActions.updateScreen(screen);
     }
   }
 
   handleInputChange(type, event) {
-    let newState = {};
+    let {screen} = this.state;
     const value = event.target.value;
     switch (type) {
       case 'name':
-        newState.name = value;
+        screen.name = value;
         break;
       case 'requirements':
-        newState.requirements = value;
+        screen.requirements = value;
         break;
       case 'collaborator':
-        newState.collaborator = value;
+        screen.collaborator = value;
         break;
       case 'conditions':
-        newState.conditions = value;
+        screen.conditions = value;
         break;
       case 'result':
-        newState.result = value;
+        screen.result = value;
         break;
       case 'description':
-        newState.description = value;
+        screen.description = value;
         break;
     }
     this.setState({
-      ...newState
+      screen: screen
     });
   }
 
@@ -73,24 +69,27 @@ export default class ScreenDetails extends Component {
   }
 
   dropWellplate(wellplate) {
-    const {wellplates} = this.state;
-    wellplates.push(wellplate);
-    this.setState({wellplates});
+    const {screen} = this.state;
+
+    screen.wellplates.push(wellplate);
+    this.setState({ screen });
   }
 
   deleteWellplate(wellplate){
-    const {wellplates} = this.state;
-    const wellplateIndex = wellplates.indexOf(wellplate);
-    wellplates.splice(wellplateIndex, 1);
-    this.setState({wellplates});
+    const {screen} = this.state;
+    const wellplateIndex = screen.wellplates.indexOf(wellplate);
+    screen.wellplates.splice(wellplateIndex, 1);
+
+    this.setState({ screen });
   }
 
   render() {
-    const {screen} = this.props;
-    const {id, wellplates, name, collaborator, result, conditions, requirements, description} = this.state;
+    const {screen} = this.state;
+    const {id, wellplates, name, collaborator, result, conditions, requirements, description} = screen;
+
     const submitLabel = (id == '_new_') ?"Save Screen" : "Update Screen";
     return (
-      <div>
+      <div key={screen.id}>
         <Panel header="Screen Details" bsStyle='primary'>
           <h3>{name}</h3>
           <ElementCollectionLabels element={screen}/>

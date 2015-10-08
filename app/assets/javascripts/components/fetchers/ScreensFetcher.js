@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import Screen from '../models/Screen';
 
 export default class ScreensFetcher {
   static fetchById(id) {
@@ -8,7 +9,7 @@ export default class ScreensFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return json;
+        return new Screen(json.screen);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -24,7 +25,7 @@ export default class ScreensFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.screens,
+            elements: json.screens.map (s => new Screen(s)),
             totalElements: response.headers.get('X-Total'),
             page: response.headers.get('X-Page'),
             pages: response.headers.get('X-Total-Pages')
@@ -38,6 +39,7 @@ export default class ScreensFetcher {
 
   static update(screen) {
     const {id, wellplate_ids, name, collaborator, result, conditions, requirements, description} = screen;
+
     let promise = fetch('/api/v1/screens/' + id, {
       credentials: 'same-origin',
       method: 'put',
@@ -57,7 +59,7 @@ export default class ScreensFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return json;
+      return new Screen(json.screen);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -86,7 +88,7 @@ export default class ScreensFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return json;
+      return new Screen(json.screen);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

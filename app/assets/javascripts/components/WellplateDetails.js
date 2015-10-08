@@ -13,28 +13,16 @@ import ElementStore from './stores/ElementStore';
 const cols = 12;
 
 export default class WellplateDetails extends Component {
+
   constructor(props) {
     super(props);
-    const {id, name, wells, size, description} = props.wellplate;
-    this.state = {
-      id,
-      name,
-      size,
-      description,
-      wells: this.initWells(wells, size)
-    };
-    console.log(wells);
+    const {wellplate} = props;
+    this.state = { wellplate };
   }
 
   componentWillReceiveProps(nextProps) {
-    const {id, name, wells, size, description} = nextProps.wellplate;
-    this.setState({
-      id,
-      name,
-      size,
-      description,
-      wells: this.initWells(wells, size)
-    });
+    const {wellplate} = nextProps;
+    this.setState({ wellplate });
   }
 
   closeDetails() {
@@ -43,65 +31,54 @@ export default class WellplateDetails extends Component {
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
-  initWells(wells, size) {
-    // TODO needs to be done in backend!
-    const neededPlaceholders = size - wells.length;
-    const placeholders = Array(neededPlaceholders).fill({});
-    wells = wells.concat(placeholders);
-    // TODO END
-
-    return wells.map((well, key) => this.initWell(well, key));
-  }
-
-  initWell(well, key) {
-    return {
-      ...well,
-      position: this.calculatePositionOfWell(key)
-    }
-  }
-
-  calculatePositionOfWell(key) {
-    let remainder = (key + 1) % cols;
-    return {
-      x: (remainder == 0) ? cols : remainder,
-      y: Math.floor(key / cols) + 1
-    };
-  }
-
   handleSubmit() {
-    const {id} = this.props.wellplate;
-    const {currentCollectionId} = UIStore.getState();
-    const {state} = this;
-    if(id == '_new_') {
-      ElementActions.createWellplate({
-        ...state,
-        collection_id: currentCollectionId
-      });
+    const {currentCollection} = UIStore.getState();
+    const {wellplate} = this.state;
+
+    if(wellplate.id == '_new_') {
+      let params = wellplate;
+      params.collection_id = currentCollection.id;
+      ElementActions.createWellplate(params);
     } else {
-      ElementActions.updateWellplate(this.state);
+      ElementActions.updateWellplate(wellplate);
     }
   }
 
   handleWellsChange(wells) {
-    this.setState({wells});
-    //console.log(this.state.wells);
+    let {wellplate} = this.state;
+    wellplate.wells = wells;
+    this.setState({ wellplate });
   }
 
-  handleChangeProperties(properties) {
-    this.setState({
-        ...properties
-    });
+  handleChangeProperties(change) {
+    let {wellplate} = this.state;
+    let {type, value} = change;
+
+    switch (type) {
+      case 'name':
+        wellplate.name = value;
+        break;
+      case 'description':
+        wellplate.description = value;
+        break;
+    }
+
+    this.setState({ wellplate });
   }
+
 
   render() {
-    const {wellplate} = this.props;
-    const {wells, name, size, description} = this.state;
+    const {wellplate} = this.state;
+    const {wells, name, size, description} = wellplate;
+
     const submitLabel = (wellplate.id == '_new_') ? "Create" : "Save";
+
     const properties = {
       name,
       size,
       description
     };
+
     return (
       <div key={wellplate.id}>
         <Panel header="Wellplate Details" bsStyle='primary'>
@@ -113,7 +90,7 @@ export default class WellplateDetails extends Component {
                 <TabPane eventKey={0} tab={'Properties'}>
                   <WellplateProperties
                     {...properties}
-                    changeProperties={properties => this.handleChangeProperties(properties)}
+                    changeProperties={(change) => this.handleChangeProperties(change)}
                     />
                 </TabPane>
                 <TabPane eventKey={1} tab={'Designer'}>
@@ -158,6 +135,8 @@ export default class WellplateDetails extends Component {
       </div>
     );
   }
+
+
 }
 
 WellplateDetails.propTypes = {
