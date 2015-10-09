@@ -80,11 +80,10 @@ export default class ReactionDetails extends Component {
   }
 
   handleChangeReaction(reaction) {
-    this.setState({
-        reaction
-      },
-      () => this.updateReactionSvg()
-    );
+
+    console.log('handleChangeReaction');
+    console.log(reaction);
+    this.setState({ reaction }, () => this.updateReactionSvg());
   }
 
   render() {
