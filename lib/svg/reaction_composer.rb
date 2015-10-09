@@ -10,8 +10,8 @@ module SVG
       @reactants = materialsInchikeys[:reactants]
       @products = materialsInchikeys[:products]
       number_of_reactants = (@reactants.size == 0 && @starting_materials.size != 0) ? 1 : @reactants.size
-      arrow_width = number_of_reactants * 50
-      width = (@starting_materials.size + @products.size) * 100 + arrow_width
+      @arrow_width = number_of_reactants * 50 + 60
+      width = (@starting_materials.size + @products.size) * 100 + @arrow_width
       labels = options[:labels]
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
@@ -20,9 +20,9 @@ module SVG
       END
       @labels = <<-END
         <svg font-family="sans-serif" font-size="8">
-          <text text-anchor="middle" x="#{arrow_width / 2}" y="65">#{labels[:first]}</text>
-          <text text-anchor="middle" x="#{arrow_width / 2}" y="75">#{labels[:second]}</text>
-          <text text-anchor="middle" x="#{arrow_width / 2}" y="85">#{labels[:third]}</text>
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="65">#{labels[0]}</text>
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="75">#{labels[1]}</text>
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="85">#{labels[2]}</text>
         </svg>
       END
       @divider = <<-END
@@ -32,8 +32,8 @@ module SVG
       END
       @arrow = <<-END
         <svg stroke="black" stroke-width="1">
-          <line x1="0" y1="50" x2="#{arrow_width}" y2="50"/>
-          <polygon points="#{arrow_width - 8},50 #{arrow_width - 10},47 #{arrow_width},50 #{arrow_width - 10},53"/>
+          <line x1="0" y1="50" x2="#{@arrow_width}" y2="50"/>
+          <polygon points="#{@arrow_width - 8},50 #{@arrow_width - 10},47 #{@arrow_width},50 #{@arrow_width - 10},53"/>
         </svg>
       END
     end
@@ -47,7 +47,7 @@ module SVG
     end
 
     def compose_reaction_svg
-      @template + materialGroups.values.join + "</svg>"
+      @template + sections.values.join + "</svg>"
     end
 
     def file_path
@@ -62,39 +62,35 @@ module SVG
         doc.css("g svg")
       end
 
-      def materialGroups
-        materials = {}
-        shift = 0
-        divider = ""
-        materials[:starting_materials] = @starting_materials.map do |material|
+      def compose_material_group( material_group, options = {} )
+        shift = options[:start_at]
+        material_width = options[:material_width]
+        scale = options[:scale] || 1
+        divider = ''
+        material_group.map do |material|
           content = innerFileContent(material).to_s
-          output = "<g transform='translate(#{shift}, 0)'>" + content + "</g>" + divider
-          divider = "<g transform='translate(#{shift + 100}, 0)'>" + @divider + "</g>"
-          shift += 100
+          output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + content + "</g>" + divider
+          divider = "<g transform='translate(#{shift + material_width}, 0) scale(#{scale})'>" + @divider + "</g>"
+          shift += material_width
           output
         end
-        materials[:arrow] = "<g transform='translate(#{shift}, 0)'>" + @arrow + "</g>"
-        materials[:labels] = "<g transform='translate(#{shift}, 0)'>" + @labels + "</g>"
-        if (@reactants.size == 0 && @starting_materials.size != 0)
-          shift += 50
-        end
-        divider = ""
-        materials[:reactants] = @reactants.map do |material|
-          content = innerFileContent(material).to_s
-          output = "<g transform='translate(#{shift}, 0) scale(0.5)'>" + content + "</g>" + divider
-          divider = "<g transform='translate(#{shift + 50}, 0) scale(0.5)'>" + @divider + "</g>"
-          shift += 50
-          output
-        end
-        divider = ""
-        materials[:products] = @products.map do |material|
-          content = innerFileContent(material).to_s
-          output = "<g transform='translate(#{shift}, 0)'>" + content + "</g>" + divider
-          divider = "<g transform='translate(#{shift + 100}, 0)'>" + @divider + "</g>"
-          shift += 100
-          output
-        end
-        materials
+      end
+
+      def compose_arrow_and_reaction_labels( options = {} )
+        shift = options[:start_at]
+        output = "<g transform='translate(#{shift}, 0)'>" + @arrow + "</g>"
+        output += "<g transform='translate(#{shift}, 0)'>" + @labels + "</g>"
+        output
+      end
+
+      def sections
+        sections = {}
+        starting_materials_length = @starting_materials.length * 100
+        sections[:starting_materials] = compose_material_group @starting_materials, {start_at: 0, material_width: 100}
+        sections[:reactants] = compose_material_group @reactants, start_at: starting_materials_length + 30, material_width: 50, scale: 0.5
+        sections[:arrow] = compose_arrow_and_reaction_labels start_at: starting_materials_length
+        sections[:products] = compose_material_group @products, start_at: starting_materials_length + @arrow_width, material_width: 100
+        sections
       end
 
       def generateFilename
