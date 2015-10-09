@@ -57,10 +57,11 @@ Aviator.setRoutes({
             UIActions.selectCollection(collection);
           }
 
-          if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID']) {
+          if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
             UIActions.uncheckAllElements('sample');
             UIActions.uncheckAllElements('reaction');
             UIActions.uncheckAllElements('wellplate');
+            UIActions.uncheckAllElements('screen');
           }
         });
       },
