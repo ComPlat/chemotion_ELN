@@ -15,9 +15,9 @@ export default class ReactionDetailsProperties extends Component {
     const nextReaction = nextProps.reaction;
     this.setState({ reaction: nextReaction });
   }
-  
+
   handleInputChange(type, event) {
-    const {changeReaction} = this.props;
+    const {onReactionChange} = this.props;
     const {value} = event.target;
     let {reaction} = this.state;
 
@@ -60,7 +60,7 @@ export default class ReactionDetailsProperties extends Component {
         break;
     }
 
-    changeReaction(reaction);
+    onReactionChange(reaction);
   }
 
   render() {

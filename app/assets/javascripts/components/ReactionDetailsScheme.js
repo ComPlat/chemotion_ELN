@@ -23,7 +23,7 @@ export default class ReactionDetailsScheme extends Component {
     const materials = reaction[materialGroup];
     const splitSample = Sample.buildChild(sample);
     materials.push(splitSample);
-    this.changeReaction(reaction);
+    this.onReactionChange(reaction);
   }
 
   deleteMaterial(material, materialGroup) {
@@ -31,7 +31,7 @@ export default class ReactionDetailsScheme extends Component {
     const materials = reaction[materialGroup];
     const materialIndex = materials.indexOf(material);
     materials.splice(materialIndex, 1);
-    this.changeReaction(reaction);
+    this.onReactionChange(reaction);
   }
 
   dropMaterial(material, previousMaterialGroup, materialGroup) {
@@ -39,27 +39,27 @@ export default class ReactionDetailsScheme extends Component {
     const materials = reaction[materialGroup];
     this.deleteMaterial(material, previousMaterialGroup);
     materials.push(material);
-    this.changeReaction(reaction);
+    this.onReactionChange(reaction);
   }
 
-  changeReaction(reaction) {
-    this.props.changeReaction(reaction);
+  onReactionChange(reaction) {
+    this.props.onReactionChange(reaction);
   }
 
   handleMaterialsChange(changeEvent) {
     switch (changeEvent.type) {
       case 'referenceChanged':
-        this.changeReaction(
+        this.onReactionChange(
           this.updatedReactionForReferenceChange(changeEvent)
         );
         break;
       case 'amountChanged':
-        this.changeReaction(
+        this.onReactionChange(
           this.updatedReactionForAmountChange(changeEvent)
         );
         break;
       case 'equivalentChanged':
-        this.changeReaction(
+        this.onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
         );
         break;
