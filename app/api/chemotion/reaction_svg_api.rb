@@ -18,7 +18,7 @@ module Chemotion
           material.molecule.inchikey
         end
 
-        composer = SVG::ReactionComposer.new(inchikeys)
+        composer = SVG::ReactionComposer.new(inchikeys, labels: {first: "text", second: "text", third: "text"})
         filename = composer.compose_reaction_svg_and_save
         {:reaction_svg => filename}
       end
@@ -31,7 +31,7 @@ module Chemotion
         requires :materials_inchikeys, type: Hash, desc: "Starting-, Reactants, Product-Materials"
       end
       post do
-        composer = SVG::ReactionComposer.new(params[:materials_inchikeys])
+        composer = SVG::ReactionComposer.new(params[:materials_inchikeys], labels: {first: "text", second: "text", third: "text"})
         filename = composer.compose_reaction_svg_and_save :temp => true
         {:reaction_svg => filename}
       end
