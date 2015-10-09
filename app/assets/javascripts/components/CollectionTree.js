@@ -72,6 +72,7 @@ export default class CollectionTree extends React.Component {
       })[0];
 
       fakeRootForRoot.children.push(root);
+      fakeRootForRoot.descendant_ids.push(root.id);
     })
   }
 
