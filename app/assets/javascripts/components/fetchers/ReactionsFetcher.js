@@ -67,6 +67,27 @@ export default class ReactionsFetcher {
   }
 
   static update(params) {
+    let body = JSON.stringify({
+      id: params.id,
+      name: params.name,
+      description: params.description,
+      timestamp_start: params.timestamp_start,
+      timestamp_stop: params.timestamp_stop,
+      observation: params.observation,
+      purification: params.purification,
+      dangerous_products: params.dangerous_products,
+      solvents: params.solvents,
+      tlc_description: params.tlc_description,
+      rf_value: params.rf_value,
+      temperature: params.temperature,
+      status: params.status,
+      materials: {
+        starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
+        reactants: params.reactants.map(s=>s.serializeMaterial()),
+        products: params.products.map(s=>s.serializeMaterial())
+      },
+      literatures: params.literatures
+    })
     let promise = fetch('/api/v1/reactions/' + params.id, {
       credentials: 'same-origin',
       method: 'put',
@@ -74,16 +95,7 @@ export default class ReactionsFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        id: params.id,
-        name: params.name,
-        materials: {
-          starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
-          reactants: params.reactants.map(s=>s.serializeMaterial()),
-          products: params.products.map(s=>s.serializeMaterial())
-        },
-        literatures: params.literatures
-      })
+      body: body
     }).then((response) => {
       return response.json()
     }).then((json) => {
@@ -96,6 +108,28 @@ export default class ReactionsFetcher {
   }
 
   static create(params) {
+    let body = JSON.stringify({
+      collection_id: params.collection_id,
+      id: params.id,
+      name: params.name,
+      description: params.description,
+      timestamp_start: params.timestamp_start,
+      timestamp_stop: params.timestamp_stop,
+      observation: params.observation,
+      purification: params.purification,
+      dangerous_products: params.dangerous_products,
+      solvents: params.solvents,
+      tlc_description: params.tlc_description,
+      rf_value: params.rf_value,
+      temperature: params.temperature,
+      status: params.status,
+      materials: {
+        starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
+        reactants: params.reactants.map(s=>s.serializeMaterial()),
+        products: params.products.map(s=>s.serializeMaterial())
+      },
+      literatures: params.literatures
+    });
     let promise = fetch('/api/v1/reactions/', {
       credentials: 'same-origin',
       method: 'post',
@@ -103,16 +137,7 @@ export default class ReactionsFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        collection_id: params.collection_id,
-        name: params.name,
-        materials: {
-          starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
-          reactants: params.reactants.map(s=>s.serializeMaterial()),
-          products: params.products.map(s=>s.serializeMaterial())
-        },
-        literatures: params.literatures
-      })
+      body: body
     }).then((response) => {
       return response.json()
     }).then((json) => {

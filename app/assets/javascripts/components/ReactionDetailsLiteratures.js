@@ -56,11 +56,13 @@ export default class ReactionDetailsLiteratures extends React.Component {
   render() {
     return (
       <ListGroup fill>
-        <Table width="100%">
-          <tbody>
-            {this._displayLiteratureRows()}
-          </tbody>
-        </Table>
+        <ListGroupItem>
+          <Table width="100%">
+            <tbody>
+              {this._displayLiteratureRows()}
+            </tbody>
+          </Table>
+        </ListGroupItem>
         <ListGroupItem>
           <LiteraturesForm reaction_id={this.state.reaction_id} />
         </ListGroupItem>

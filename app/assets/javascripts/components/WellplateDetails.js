@@ -86,14 +86,8 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate}/>
           <ListGroup fill>
             <ListGroupItem>
-              <TabbedArea defaultActiveKey={1}>
-                <TabPane eventKey={0} tab={'Properties'}>
-                  <WellplateProperties
-                    {...properties}
-                    changeProperties={(change) => this.handleChangeProperties(change)}
-                    />
-                </TabPane>
-                <TabPane eventKey={1} tab={'Designer'}>
+              <TabbedArea defaultActiveKey={0}>
+                <TabPane eventKey={0} tab={'Designer'}>
                   <Well>
                     <Wellplate
                       size={size}
@@ -104,13 +98,19 @@ export default class WellplateDetails extends Component {
                       />
                   </Well>
                 </TabPane>
-                <TabPane eventKey={2} tab={'List'}>
+                <TabPane eventKey={1} tab={'List'}>
                   <Well>
                     <WellplateList
                       wells={wells}
                       handleWellsChange={(wells) => this.handleWellsChange(wells)}
                       />
                   </Well>
+                </TabPane>
+                <TabPane eventKey={2} tab={'Properties'}>
+                  <WellplateProperties
+                    {...properties}
+                    changeProperties={(change) => this.handleChangeProperties(change)}
+                    />
                 </TabPane>
               </TabbedArea>
             </ListGroupItem>

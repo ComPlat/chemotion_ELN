@@ -80,7 +80,20 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Reaction id"
         optional :name, type: String
+        optional :description, type: String
+        optional :timestamp_start, type: String
+        optional :timestamp_stop, type: String
+        optional :observation, type: String
+        optional :purification, type: Array, default: []
+        optional :dangerous_products, type: Array, default: []
+        optional :solvents, type: String
+        optional :tlc_description, type: String
+        optional :rf_value, type: String
+        optional :temperature, type: String
+        optional :status, type: String
+
         requires :materials, type: Hash
+        #optional :literatures, type: Array, default: []
       end
       route_param :id do
 
@@ -89,15 +102,14 @@ module Chemotion
         end
 
         put do
-          #ap params
-          attributes = declared(params, include_missing: false)
+          attributes = declared(params, include_missing: false).symbolize_keys
+          materials = attributes.delete(:materials)
+          id = attributes.delete(:id)
 
-          if reaction = Reaction.find(params[:id])
-            reaction.update_attributes({
-              name: attributes['name']
-            })
+          if reaction = Reaction.find(id)
+            reaction.update_attributes(attributes)
             reaction.touch
-            ReactionUpdator.update_materials_for_reaction(reaction, attributes['materials'])
+            ReactionUpdator.update_materials_for_reaction(reaction, materials)
             reaction.reload
             reaction
           end
@@ -108,24 +120,36 @@ module Chemotion
       params do
         requires :collection_id, type: Integer, desc: "Collection id"
         optional :name, type: String
+        optional :description, type: String
+        optional :timestamp_start, type: String
+        optional :timestamp_stop, type: String
+        optional :observation, type: String
+        optional :purification, type: Array, default: []
+        optional :dangerous_products, type: Array, default: []
+        optional :solvents, type: String
+        optional :tlc_description, type: String
+        optional :rf_value, type: String
+        optional :temperature, type: String
+        optional :status, type: String
+
         requires :materials, type: Hash
       end
 
       # before do
-      #   error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).update?
+      #   error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction).create?
       # end
 
       post do
-        attributes = declared(params, include_missing: false)
+        attributes = declared(params, include_missing: false).symbolize_keys
+        materials = attributes.delete(:materials)
+        collection_id = attributes.delete(:collection_id)
 
-        reaction = Reaction.create({
-          name: attributes['name']
-        })
-        collection = Collection.find(params[:collection_id])
+        collection = Collection.find(collection_id)
+        reaction = Reaction.create(attributes)
+
         CollectionsReaction.create(reaction: reaction, collection: collection)
-
         if reaction
-          ReactionUpdator.update_materials_for_reaction(reaction, attributes['materials'])
+          ReactionUpdator.update_materials_for_reaction(reaction, materials)
           reaction.reload
           reaction
         end
