@@ -3,49 +3,11 @@ import {Row, Col, Input, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
 
 export default class ReactionDetailsProperties extends Component {
+
   handleInputChange(type, event) {
     const {changeProperties} = this.props;
     const {value} = event.target;
-    let properties = {};
-    switch (type) {
-      case 'name':
-        properties.name = value;
-        break;
-      case 'observation':
-        properties.observation = value;
-        break;
-      case 'status':
-        properties.status = value;
-        break;
-      case 'description':
-        properties.description = value;
-        break;
-      case 'purification':
-        properties.purification = value;
-        break;
-      case 'solvents':
-        properties.solvents = value;
-        break;
-      case 'rfValue':
-        properties.rf_value = value;
-        break;
-      case 'timestampStart':
-        properties.timestamp_start = value;
-        break;
-      case 'timestampStop':
-        properties.timestamp_stop = value;
-        break;
-      case 'tlcDescription':
-        properties.tlc_description = value;
-        break;
-      case 'temperature':
-        properties.temperature = value;
-        break;
-      case 'dangerousProducts':
-        properties.dangerous_products = value;
-        break;
-    }
-    changeProperties(properties);
+    changeProperties({type: type, value: value});
   }
 
   render() {
