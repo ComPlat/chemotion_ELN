@@ -49,7 +49,7 @@ Aviator.setRoutes({
 
         collectionPromise.then((result) => {
           let collection = result.collection;
-          
+
           if(currentSearchSelection) {
             UIActions.selectCollectionWithoutUpdating(collection)
             ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collection.id);
@@ -72,7 +72,7 @@ Aviator.setRoutes({
           // nothing rendered in main-content div
           if(!mainContentDomNode.firstChild) {
             React.render(<CollectionManagement />, mainContentDomNode);
-          } else if (document.getElementById('elements')) {
+          } else {
             React.unmountComponentAtNode(mainContentDomNode);
             React.render(<CollectionManagement />, mainContentDomNode);
           }
