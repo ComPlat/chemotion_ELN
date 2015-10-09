@@ -151,7 +151,7 @@ export default class ReactionDetailsProperties extends Component {
                 name='dangerous_products'
                 multi={true}
                 options={dangerousProductsOptions}
-                value={reaction.purification}
+                value={reaction.dangerous_products}
                 onChange={event => {
                   const wrappedEvent = {target: {value: event}};
                   this.handleInputChange('dangerousProducts', wrappedEvent)
