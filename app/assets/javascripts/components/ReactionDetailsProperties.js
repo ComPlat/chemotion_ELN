@@ -116,7 +116,7 @@ export default class ReactionDetailsProperties extends Component {
               <Input
                 type="text"
                 label="Stop"
-                value={reaction.timestamp_end}
+                value={reaction.timestamp_stop}
                 placeholder="Stop..."
                 onChange={event => this.handleInputChange('timestampStop', event)}/>
             </Col>
@@ -138,8 +138,9 @@ export default class ReactionDetailsProperties extends Component {
                 name='purification'
                 multi={true}
                 options={purificationOptions}
-                onChange={event => {
-                  const wrappedEvent = {target: {value: event}};
+                onChange={(event, selectedOptions) => {
+                  const values = selectedOptions.map(o => o.value);
+                  const wrappedEvent = {target: {value: values}};
                   this.handleInputChange('purification', wrappedEvent)
                 }}
                 value={reaction.purification}
@@ -152,8 +153,9 @@ export default class ReactionDetailsProperties extends Component {
                 multi={true}
                 options={dangerousProductsOptions}
                 value={reaction.dangerous_products}
-                onChange={event => {
-                  const wrappedEvent = {target: {value: event}};
+                onChange={(event, selectedOptions) => {
+                  const values = selectedOptions.map(o => o.value);
+                  const wrappedEvent = {target: {value: values}};
                   this.handleInputChange('dangerousProducts', wrappedEvent)
                 }}
                 />

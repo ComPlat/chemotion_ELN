@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151007231740) do
+ActiveRecord::Schema.define(version: 20151009135514) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -113,8 +113,19 @@ ActiveRecord::Schema.define(version: 20151007231740) do
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+    t.text     "description"
+    t.string   "timestamp_start"
+    t.string   "timestamp_stop"
+    t.text     "observation"
+    t.string   "purification",       default: [],              array: true
+    t.string   "dangerous_products", default: [],              array: true
+    t.string   "solvents"
+    t.text     "tlc_description"
+    t.string   "rf_value"
+    t.string   "temperature"
+    t.string   "status"
   end
 
   create_table "reactions_product_samples", force: :cascade do |t|
