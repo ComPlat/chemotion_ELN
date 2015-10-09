@@ -5,56 +5,70 @@ import Reaction from './models/Reaction';
 import Sample from './models/Sample';
 
 export default class ReactionDetailsScheme extends Component {
+
+  constructor(props) {
+    super(props);
+    const {reaction} = props;
+    this.state = { reaction };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {reaction} = this.state;
+    const nextReaction = nextProps.reaction;
+    this.setState({ reaction: nextReaction });
+  }
+
   dropSample(sample, materialGroup) {
-    const {reaction, changeReaction} = this.props;
+    const {reaction} = this.state;
     const materials = reaction[materialGroup];
     const splitSample = Sample.buildChild(sample);
-    //console.log("splitSample:");
-    //console.dir(splitSample);
     materials.push(splitSample);
-    changeReaction(reaction);
+    this.onReactionChange(reaction);
   }
 
   deleteMaterial(material, materialGroup) {
-    const {reaction, changeReaction} = this.props;
+    const {reaction} = this.state;
     const materials = reaction[materialGroup];
     const materialIndex = materials.indexOf(material);
     materials.splice(materialIndex, 1);
-    changeReaction(reaction);
+    this.onReactionChange(reaction);
   }
 
   dropMaterial(material, previousMaterialGroup, materialGroup) {
-    const {reaction, changeReaction} = this.props;
+    const {reaction} = this.state;
     const materials = reaction[materialGroup];
     this.deleteMaterial(material, previousMaterialGroup);
     materials.push(material);
-    changeReaction(reaction);
+    this.onReactionChange(reaction);
+  }
+
+  onReactionChange(reaction) {
+    this.props.onReactionChange(reaction);
   }
 
   handleMaterialsChange(changeEvent) {
-    const {changeReaction} = this.props;
     switch (changeEvent.type) {
       case 'referenceChanged':
-        changeReaction({
-          reaction: this.updatedReactionForReferenceChange(changeEvent)
-        });
+        this.onReactionChange(
+          this.updatedReactionForReferenceChange(changeEvent)
+        );
         break;
       case 'amountChanged':
-        changeReaction({
-          reaction: this.updatedReactionForAmountChange(changeEvent)
-        });
+        this.onReactionChange(
+          this.updatedReactionForAmountChange(changeEvent)
+        );
         break;
       case 'equivalentChanged':
-        changeReaction({
-          reaction: this.updatedReactionForEquivalentChange(changeEvent)
-        });
+        this.onReactionChange(
+          this.updatedReactionForEquivalentChange(changeEvent)
+        );
         break;
     }
   }
 
   updatedReactionForReferenceChange(changeEvent) {
     const {sampleID} = changeEvent;
-    const {reaction} = this.props;
+    const {reaction} = this.state;
     const sample = reaction.sampleById(sampleID);
     reaction.markSampleAsReference(sampleID);
 
@@ -140,7 +154,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionWithSample(updateFunction, updatedSample) {
-    const {reaction} = this.props;
+    const {reaction} = this.state;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample);
     reaction.reactants = updateFunction(reaction.reactants, updatedSample);
     reaction.products = updateFunction(reaction.products, updatedSample);
@@ -148,7 +162,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   render() {
-    const {reaction} = this.props;
+    const {reaction} = this.state;
     return (
         <ListGroup fill>
           <ListGroupItem header="Starting Materials">

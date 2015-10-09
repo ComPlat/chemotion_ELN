@@ -3,53 +3,68 @@ import {Row, Col, Input, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
 
 export default class ReactionDetailsProperties extends Component {
+
+  constructor(props) {
+    super(props);
+    const {reaction} = props;
+    this.state = { reaction };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {reaction} = this.state;
+    const nextReaction = nextProps.reaction;
+    this.setState({ reaction: nextReaction });
+  }
+
   handleInputChange(type, event) {
-    const {changeProperties} = this.props;
+    const {onReactionChange} = this.props;
     const {value} = event.target;
-    let properties = {};
+    let {reaction} = this.state;
+
     switch (type) {
       case 'name':
-        properties.name = value;
+        reaction.name = value;
         break;
       case 'observation':
-        properties.observation = value;
+        reaction.observation = value;
         break;
       case 'status':
-        properties.status = value;
+        reaction.status = value;
         break;
       case 'description':
-        properties.description = value;
+        reaction.description = value;
         break;
       case 'purification':
-        properties.purification = value;
+        reaction.purification = value;
         break;
       case 'solvents':
-        properties.solvents = value;
+        reaction.solvents = value;
         break;
       case 'rfValue':
-        properties.rf_value = value;
+        reaction.rf_value = value;
         break;
       case 'timestampStart':
-        properties.timestamp_start = value;
+        reaction.timestamp_start = value;
         break;
       case 'timestampStop':
-        properties.timestamp_stop = value;
+        reaction.timestamp_stop = value;
         break;
       case 'tlcDescription':
-        properties.tlc_description = value;
+        reaction.tlc_description = value;
         break;
       case 'temperature':
-        properties.temperature = value;
+        reaction.temperature = value;
         break;
       case 'dangerousProducts':
-        properties.dangerous_products = value;
+        reaction.dangerous_products = value;
         break;
     }
-    changeProperties(properties);
+
+    onReactionChange(reaction);
   }
 
   render() {
-    const {reaction} = this.props;
+    const {reaction} = this.state;
     return (
       <ListGroup>
         <ListGroupItem header="">

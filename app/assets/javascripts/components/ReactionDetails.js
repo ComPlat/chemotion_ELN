@@ -69,22 +69,8 @@ export default class ReactionDetails extends Component {
     return true
   }
 
-  handleChangeProperties(properties) {
-    const reaction = {
-      ...properties
-    };
-    this.setState({
-      reaction
-    });
-    console.log(this.state.reaction);
-  }
-
-  handleChangeReaction(reaction) {
-    this.setState({
-        reaction
-      },
-      () => this.updateReactionSvg()
-    );
+  handleReactionChange(reaction) {
+    this.setState({ reaction }, () => this.updateReactionSvg());
   }
 
   render() {
@@ -111,17 +97,17 @@ export default class ReactionDetails extends Component {
             </Col>
           </Row>
           <hr/>
-          <TabbedArea defaultActiveKey={1}>
-            <TabPane eventKey={0} tab={'Properties'}>
-              <ReactionDetailsProperties
-                reaction={reaction}
-                changeProperties={properties => this.handleChangeProperties(properties)}
-                />
-            </TabPane>
-            <TabPane eventKey={1} tab={'Scheme'}>
+          <TabbedArea defaultActiveKey={0}>
+            <TabPane eventKey={0} tab={'Scheme'}>
               <ReactionDetailsScheme
                 reaction={reaction}
-                changeReaction={reaction => this.handleChangeReaction(reaction)}
+                onReactionChange={reaction => this.handleReactionChange(reaction)}
+                />
+            </TabPane>
+            <TabPane eventKey={1} tab={'Properties'}>
+              <ReactionDetailsProperties
+                reaction={reaction}
+                onReactionChange={reaction => this.handleReactionChange(reaction)}
                 />
             </TabPane>
             <TabPane eventKey={2} tab={'Literatures'}>
