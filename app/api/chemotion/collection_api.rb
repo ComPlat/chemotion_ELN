@@ -156,6 +156,7 @@ module Chemotion
 
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollectionId]
+          collection_id = params[:collection_id]
 
           sample_ids = Sample.for_ui_state_with_collection(
             ui_state[:sample],
@@ -166,7 +167,11 @@ module Chemotion
           CollectionsSample.where(
             sample_id: sample_ids,
             collection_id: current_collection_id
-          ).update_all(collection_id: params[:collection_id])
+          ).delete_all
+
+          sample_ids.map { |id| 
+            CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
+          }
 
           reaction_ids = Reaction.for_ui_state_with_collection(
             ui_state[:reaction],
@@ -177,7 +182,11 @@ module Chemotion
           CollectionsReaction.where(
             reaction_id: reaction_ids,
             collection_id: current_collection_id
-          ).update_all(collection_id: params[:collection_id])
+          ).delete_all
+
+          reaction_ids.map { |id| 
+            CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
+          }
 
           wellplate_ids = Wellplate.for_ui_state_with_collection(
             ui_state[:wellplate],
@@ -188,18 +197,26 @@ module Chemotion
           CollectionsWellplate.where(
             wellplate_id: wellplate_ids,
             collection_id: current_collection_id
-          ).update_all(collection_id: params[:collection_id])
+          ).delete_all
+
+          wellplate_ids.map { |id| 
+            CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
+          }
 
           screen_ids = Screen.for_ui_state_with_collection(
             ui_state[:screen],
             CollectionsScreen,
             current_collection_id
           )
-
+          
           CollectionsScreen.where(
             screen_id: screen_ids,
             collection_id: current_collection_id
-          ).update_all(collection_id: params[:collection_id])
+          ).delete_all
+
+          screen_ids.map { |id| 
+            CollectionsScreen.find_or_create_by(wellplate_id: id, collection_id: collection_id)
+          }
         end
 
         desc "Assign a collection to a set of elements by UI state"
