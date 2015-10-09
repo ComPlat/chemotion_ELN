@@ -169,7 +169,7 @@ module Chemotion
             collection_id: current_collection_id
           ).delete_all
 
-          sample_ids.map { |id| 
+          sample_ids.map { |id|
             CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
           }
 
@@ -184,7 +184,7 @@ module Chemotion
             collection_id: current_collection_id
           ).delete_all
 
-          reaction_ids.map { |id| 
+          reaction_ids.map { |id|
             CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
           }
 
@@ -199,7 +199,7 @@ module Chemotion
             collection_id: current_collection_id
           ).delete_all
 
-          wellplate_ids.map { |id| 
+          wellplate_ids.map { |id|
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           }
 
@@ -208,14 +208,14 @@ module Chemotion
             CollectionsScreen,
             current_collection_id
           )
-          
+
           CollectionsScreen.where(
             screen_id: screen_ids,
             collection_id: current_collection_id
           ).delete_all
 
-          screen_ids.map { |id| 
-            CollectionsScreen.find_or_create_by(wellplate_id: id, collection_id: collection_id)
+          screen_ids.map { |id|
+            CollectionsScreen.find_or_create_by(screen_id: id, collection_id: collection_id)
           }
         end
 

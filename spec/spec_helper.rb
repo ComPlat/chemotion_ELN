@@ -11,6 +11,8 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
 
+  RSpec::Expectations.configuration.warn_about_potential_false_positives = false
+
   config.order = :random
   Kernel.srand config.seed
 end
