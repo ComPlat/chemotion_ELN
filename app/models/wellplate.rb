@@ -3,16 +3,34 @@ class Wellplate < ActiveRecord::Base
   include PgSearch
   include Collectable
 
-  # search related
+  multisearchable against: :name
+
   pg_search_scope :search_by_wellplate_name, against: :name
 
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  pg_search_scope :search_by_sample_name, associated_against: {
+    samples: :name
+  }
 
+  pg_search_scope :search_by_iupac_name, associated_against: {
+    molecules: :iupac_name
+  }
+
+  pg_search_scope :search_by_substring, against: :name,
+                                        associated_against: {
+                                          samples: :name,
+                                          molecules: :iupac_name
+                                        },
+                                        using: {trigram: {threshold:  0.0001}}
+
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
 
   has_many :collections_wellplates
   has_many :collections, through: :collections_wellplates
 
   has_many :wells
+  has_many :samples, through: :wells
+  has_many :molecules, through: :samples
+
   belongs_to :screen
 
   before_destroy :destroy_associations

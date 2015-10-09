@@ -2,8 +2,7 @@ import 'whatwg-fetch';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(selection, collectionId) {
-    console.log(collectionId)
-    let promise = fetch('/api/v1/search/' + selection.endpoint, {
+    let promise = fetch('/api/v1/search/' + selection.elementType, {
         credentials: 'same-origin',
         method: 'POST',
         headers: {

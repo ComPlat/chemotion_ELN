@@ -3,10 +3,20 @@ class Molecule < ActiveRecord::Base
 
   validates_uniqueness_of :inchikey
 
+  # scope for suggestions
   scope :by_formula, ->(query) { where('sum_formular ILIKE ?', "%#{query}%") }
+  scope :by_iupac_name, ->(query) { where('iupac_name ILIKE ?', "%#{query}%") }
+  scope :with_reactions, -> {
+    sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
+    molecule_ids = Sample.find(sample_ids).flat_map(&:molecule).map(&:id)
+    where(id: molecule_ids)
+  }
+  scope :with_wellplates, -> {
+    molecule_ids = Wellplate.all.flat_map(&:samples).flat_map(&:molecule).map(&:id)
+    where(id: molecule_ids)
+  }
 
   def self.find_or_create_by_molfile molfile
-
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
 
     inchikey = babel_info[:inchikey]

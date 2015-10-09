@@ -3,15 +3,37 @@ class Sample < ActiveRecord::Base
   include PgSearch
   include Collectable
 
-  # search related
+  multisearchable against: [:name, :iupac_name, :sum_formular]
+  delegate :sum_formular, :iupac_name, to: :molecule, allow_nil: true
+
+  # search scopes for exact matching
   pg_search_scope :search_by_sum_formula, associated_against: {
     molecule: :sum_formular
   }
 
+  pg_search_scope :search_by_iupac_name, associated_against: {
+    molecule: :iupac_name
+  }
+
   pg_search_scope :search_by_sample_name, against: :name
 
-  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  # search scope for substrings
+  pg_search_scope :search_by_substring, against: :name,
+                                        associated_against: {
+                                          molecule: [:sum_formular, :iupac_name]
+                                        },
+                                        using: {trigram: {threshold:  0.0001}}
 
+  # scopes for suggestions
+  scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :with_reactions, -> {
+    sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
+    where(id: sample_ids)
+  }
+  scope :with_wellplates, -> {
+    sample_ids = Wellplate.all.flat_map(&:samples).map(&:id)
+    where(id: sample_ids)
+  }
 
   has_many :collections_samples
   has_many :collections, through: :collections_samples
