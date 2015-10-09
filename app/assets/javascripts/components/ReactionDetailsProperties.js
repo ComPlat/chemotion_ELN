@@ -4,14 +4,67 @@ import Select from 'react-select'
 
 export default class ReactionDetailsProperties extends Component {
 
+  constructor(props) {
+    super(props);
+    const {reaction} = props;
+    this.state = { reaction };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {reaction} = this.state;
+    const nextReaction = nextProps.reaction;
+    this.setState({ reaction: nextReaction });
+  }
+  
   handleInputChange(type, event) {
-    const {changeProperties} = this.props;
+    const {changeReaction} = this.props;
     const {value} = event.target;
-    changeProperties({type: type, value: value});
+    let {reaction} = this.state;
+
+    switch (type) {
+      case 'name':
+        reaction.name = value;
+        break;
+      case 'observation':
+        reaction.observation = value;
+        break;
+      case 'status':
+        reaction.status = value;
+        break;
+      case 'description':
+        reaction.description = value;
+        break;
+      case 'purification':
+        reaction.purification = value;
+        break;
+      case 'solvents':
+        reaction.solvents = value;
+        break;
+      case 'rfValue':
+        reaction.rf_value = value;
+        break;
+      case 'timestampStart':
+        reaction.timestamp_start = value;
+        break;
+      case 'timestampStop':
+        reaction.timestamp_stop = value;
+        break;
+      case 'tlcDescription':
+        reaction.tlc_description = value;
+        break;
+      case 'temperature':
+        reaction.temperature = value;
+        break;
+      case 'dangerousProducts':
+        reaction.dangerous_products = value;
+        break;
+    }
+
+    changeReaction(reaction);
   }
 
   render() {
-    const {reaction} = this.props;
+    const {reaction} = this.state;
     return (
       <ListGroup>
         <ListGroupItem header="">

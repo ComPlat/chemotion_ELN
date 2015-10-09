@@ -69,50 +69,6 @@ export default class ReactionDetails extends Component {
     return true
   }
 
-  handleChangeProperties(change) {
-    let {type, value} = change;
-    let {reaction} = this.state;
-    switch (type) {
-      case 'name':
-        reaction.name = value;
-        break;
-      case 'observation':
-        reaction.observation = value;
-        break;
-      case 'status':
-        reaction.status = value;
-        break;
-      case 'description':
-        reaction.description = value;
-        break;
-      case 'purification':
-        reaction.purification = value;
-        break;
-      case 'solvents':
-        reaction.solvents = value;
-        break;
-      case 'rfValue':
-        reaction.rf_value = value;
-        break;
-      case 'timestampStart':
-        reaction.timestamp_start = value;
-        break;
-      case 'timestampStop':
-        reaction.timestamp_stop = value;
-        break;
-      case 'tlcDescription':
-        reaction.tlc_description = value;
-        break;
-      case 'temperature':
-        reaction.temperature = value;
-        break;
-      case 'dangerousProducts':
-        reaction.dangerous_products = value;
-        break;
-    }
-    this.setState({reaction})
-  }
-
   handleChangeReaction(reaction) {
     this.setState({ reaction }, () => this.updateReactionSvg());
   }
@@ -145,7 +101,7 @@ export default class ReactionDetails extends Component {
             <TabPane eventKey={0} tab={'Properties'}>
               <ReactionDetailsProperties
                 reaction={reaction}
-                changeProperties={properties => this.handleChangeProperties(properties)}
+                changeReaction={reaction => this.handleChangeReaction(reaction)}
                 />
             </TabPane>
             <TabPane eventKey={1} tab={'Scheme'}>

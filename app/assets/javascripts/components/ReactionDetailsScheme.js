@@ -15,9 +15,7 @@ export default class ReactionDetailsScheme extends Component {
   componentWillReceiveProps(nextProps) {
     const {reaction} = this.state;
     const nextReaction = nextProps.reaction;
-    this.setState({
-      reaction: nextReaction
-    });
+    this.setState({ reaction: nextReaction });
   }
 
   dropSample(sample, materialGroup) {
