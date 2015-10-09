@@ -170,7 +170,7 @@ module Chemotion
           ).delete_all
 
           sample_ids.map { |id| 
-            CollectionsSample.find_or_create_by(sample_id: x, collection_id: collection_id)
+            CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
           }
 
           reaction_ids = Reaction.for_ui_state_with_collection(
@@ -185,7 +185,7 @@ module Chemotion
           ).delete_all
 
           reaction_ids.map { |id| 
-            CollectionsReaction.find_or_create_by(reaction_id: x, collection_id: collection_id)
+            CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
           }
 
           wellplate_ids = Wellplate.for_ui_state_with_collection(
@@ -200,7 +200,7 @@ module Chemotion
           ).delete_all
 
           wellplate_ids.map { |id| 
-            CollectionsWellplate.find_or_create_by(wellplate_id: x, collection_id: collection_id)
+            CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           }
 
           screen_ids = Screen.for_ui_state_with_collection(
@@ -215,7 +215,7 @@ module Chemotion
           ).delete_all
 
           screen_ids.map { |id| 
-            CollectionsScreen.find_or_create_by(wellplate_id: x, collection_id: collection_id)
+            CollectionsScreen.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           }
         end
 
