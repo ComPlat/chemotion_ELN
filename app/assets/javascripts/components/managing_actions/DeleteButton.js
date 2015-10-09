@@ -25,12 +25,13 @@ export default class DeleteButton extends React.Component {
   }
 
   render() {
+    const {isDisabled} = this.props;
     const tooltip = (
-      <Tooltip>Delete from system the selected elements</Tooltip>
+      <Tooltip>Delete from all Collections</Tooltip>
     );
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <Button bsStyle="danger" onClick={e => this._deleteSelection()} disabled={this.state.isDisabled}>
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <Button bsStyle="danger" onClick={e => this._deleteSelection()} disabled={isDisabled}>
           <i className="fa fa-trash"></i>
         </Button>
       </OverlayTrigger>

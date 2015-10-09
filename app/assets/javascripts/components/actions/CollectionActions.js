@@ -1,5 +1,7 @@
 import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
+import UIStore from '../stores/UIStore';
+import Utils from '../utils/Functions';
 
 class CollectionActions {
   takeOwnership(params) {
@@ -75,6 +77,11 @@ class CollectionActions {
       });
   }
 
+  downloadReport(){
+    const {currentCollectionId} = UIStore.getState();
+    // TODO use reportFetcher
+    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId});
+  }
 }
 
 export default alt.createActions(CollectionActions);

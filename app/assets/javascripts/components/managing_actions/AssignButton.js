@@ -4,7 +4,7 @@ import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
 
-export default class ShareButton extends React.Component {
+export default class AssignButton extends React.Component {
   constructor(props) {
     super(props);
 
@@ -18,13 +18,14 @@ export default class ShareButton extends React.Component {
   }
 
   render() {
+    const {isDisabled} = this.props;
     const tooltip = (
-      <Tooltip>Assign a Collection to the selected elements</Tooltip>
+      <Tooltip>Assign to Collection</Tooltip>
     );
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <Button bsStyle="success" onClick={this.showAssignModal.bind(this)} disabled={this.state.isDisabled}>
-          <i className="fa fa-plus"></i>
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <Button bsStyle="success" onClick={this.showAssignModal.bind(this)} disabled={isDisabled}>
+          <i className="fa fa-plus-square"></i>
         </Button>
       </OverlayTrigger>
     )

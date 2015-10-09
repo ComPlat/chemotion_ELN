@@ -1,68 +1,49 @@
 import React from 'react';
-import {Button, ButtonGroup, SplitButton, MenuItem} from 'react-bootstrap';
-
+import {ButtonGroup} from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import ElementActions from './actions/ElementActions';
+import SplitButton from './contextActions/SplitButton';
+import CreateButton from './contextActions/CreateButton';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
     super(props);
-    this.state = UIStore.getState();
+    const uiState = UIStore.getState();
+    this.state = {
+      uiState
+    }
   }
 
   componentDidMount() {
-    UIStore.listen(this.onChange.bind(this));
+    UIStore.listen(state => this.onChange(state));
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onChange.bind(this));
+    UIStore.unlisten(state => this.onChange(state));
   }
 
   onChange(state) {
+    const uiState = state;
     this.setState({
-      sample: state.sample,
-      currentCollection: state.currentCollection
+      uiState
     });
   }
 
-  _splitSelectionAsSubsamples() {
-    ElementActions.splitAsSubsamples(UIStore.getState())
-  }
-
-  createElementOfType(type) {
-    let uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}/${type}/new`);
-  }
-
   isAllCollection() {
-    if(this.state.currentCollection) {
-      return this.state.currentCollection.id == 'all';
-    } else {
-      return false;
-    }
+    const {currentCollection} = this.state.uiState;
+    return currentCollection && currentCollection.id == 'all';
   }
 
-  sampleNode() {
-    if(this.state.sample.checkedIds.size == 0) {
-      return (
-        <MenuItem onClick={() => this.createElementOfType('sample')} disabled={this.isAllCollection()}>Create Sample</MenuItem>
-      )
-    } else {
-      return (
-        <MenuItem onClick={e => this._splitSelectionAsSubsamples()}>Split as Subsample(s)</MenuItem>
-      )
-    }
+  noSampleSelected() {
+    const {sample} = this.state.uiState;
+    return sample.checkedIds.size == 0;
   }
 
   render() {
     return (
       <ButtonGroup>
-        <SplitButton bsStyle="primary" title="Create">
-          {this.sampleNode()}
-          <MenuItem onClick={() => this.createElementOfType('reaction')} disabled={this.isAllCollection()}>Create Reaction</MenuItem>
-          <MenuItem onClick={() => this.createElementOfType('wellplate')} disabled={this.isAllCollection()}>Create Wellplate</MenuItem>
-          <MenuItem onClick={() => this.createElementOfType('screen')} disabled={this.isAllCollection()}>Create Screen</MenuItem>
-        </SplitButton>
+        <SplitButton isDisabled={this.noSampleSelected() || this.isAllCollection()}/>
+        <CreateButton isDisabled={this.isAllCollection()}/>
       </ButtonGroup>
     )
   }

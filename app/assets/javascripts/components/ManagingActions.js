@@ -94,9 +94,8 @@ export default class ManagingActions extends React.Component {
   }
 
   isDisabled() {
-    if(this.state.currentCollection) {
-      let currentCollection = this.state.currentCollection;
-
+    const {currentCollection} = this.state;
+    if(currentCollection) {
       return currentCollection.id == 'all' || currentCollection.is_shared == true;
     }
   }
@@ -118,7 +117,7 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
-    let style = {marginRight: '10px'}
+    let style = {marginRight: '10px'};
     return (
       <ButtonGroup style={style}>
         <MoveButton isDisabled={this.isDisabled()}/>
@@ -126,7 +125,7 @@ export default class ManagingActions extends React.Component {
         <RemoveButton isDisabled={this.isRemoteDisabled()}/>
         <DeleteButton isDisabled={this.isDeleteButtonDisabled()}/>
         <ShareButton isDisabled={this.isShareButtonDisabled()}/>
-        <ExportButton />
+        <ExportButton isDisabled={this.isDisabled()}/>
       </ButtonGroup>
     )
   }

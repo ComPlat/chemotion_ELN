@@ -8,10 +8,8 @@ import PermissionActions from '../actions/PermissionActions';
 export default class ShareButton extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
-      isTopSecret: false,
-      isDisabled: props.isDisabled
+      isTopSecret: false
     }
   }
 
@@ -26,12 +24,6 @@ export default class ShareButton extends React.Component {
   onPermissionChange(state) {
     this.setState({
       isTopSecret: state.is_top_secret
-    })
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      isDisabled: nextProps.isDisabled
     })
   }
 
@@ -62,18 +54,19 @@ export default class ShareButton extends React.Component {
 
     let params = {
       elements_filter: elementsFilter
-    }
+    };
 
     PermissionActions.fetchTopSecretStatus(params);
   }
 
   render() {
+    const {isDisabled} = this.props;
     const tooltip = (
-      <Tooltip>Share the selected elements</Tooltip>
+      <Tooltip>Share</Tooltip>
     );
     return (
-      <OverlayTrigger placement="top" overlay={tooltip}>
-        <Button bsStyle="info" onClick={this.showShareModal.bind(this)} disabled={this.state.isDisabled}>
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <Button bsStyle="info" onClick={this.showShareModal.bind(this)} disabled={isDisabled}>
           <i className="fa fa-share-alt"></i>
         </Button>
       </OverlayTrigger>
