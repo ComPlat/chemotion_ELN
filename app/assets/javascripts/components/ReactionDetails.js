@@ -70,6 +70,7 @@ export default class ReactionDetails extends Component {
   }
 
   handleReactionChange(reaction) {
+    //Todo: check we really have to update the SVG
     this.setState({ reaction }, () => this.updateReactionSvg());
   }
 
@@ -79,7 +80,7 @@ export default class ReactionDetails extends Component {
     const svgContainer = {
       position: 'relative',
       padding: 0,
-      paddingBottom: '30%'
+      paddingBottom: '20%'
     };
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     return (

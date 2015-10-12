@@ -4,6 +4,8 @@ import MaterialGroupContainer from './MaterialGroupContainer';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
 
+import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+
 export default class ReactionDetailsScheme extends Component {
 
   constructor(props) {
@@ -164,6 +166,7 @@ export default class ReactionDetailsScheme extends Component {
   render() {
     const {reaction} = this.state;
     return (
+      <div>
         <ListGroup fill>
           <ListGroupItem header="Starting Materials">
             <MaterialGroupContainer
@@ -196,6 +199,11 @@ export default class ReactionDetailsScheme extends Component {
               />
           </ListGroupItem>
         </ListGroup>
+        <ReactionDetailsMainProperties
+          reaction={reaction}
+          onReactionChange={reaction => this.onReactionChange(reaction)}
+          />
+      </div>
     );
   }
 }
