@@ -14,6 +14,10 @@ class UIActions {
     this.dispatch(type);
   }
 
+  toggleShowPreviews() {
+    this.dispatch();
+  }
+
   checkElement(element) {
     this.dispatch(element);
   }

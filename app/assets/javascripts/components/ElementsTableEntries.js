@@ -20,12 +20,6 @@ export default class ElementsTableEntries extends Component {
     return (currentElement && currentElement.id == element.id);
   }
 
-  isDraggable(element) {
-    return element &&
-      (element.type == 'sample' && this.isCurrentElementDropTargetForType('sample')) ||
-      (element.type == 'wellplate' && this.isCurrentElementDropTargetForType('wellplate'));
-  }
-
   isCurrentElementDropTargetForType(type) {
     const {currentElement} = ElementStore.getState();
     const targets = {
@@ -35,25 +29,19 @@ export default class ElementsTableEntries extends Component {
     return type && currentElement && targets[type].includes(currentElement.type)
   }
 
-  svgColumn(element, options = {}) {
-    const className = options.selected ? 'molecule-selected' : 'molecule';
-    let svgColumn = <td className="molecule"><SVG src={element.svgPath} className={className} key={element.id}/></td>;
-    return svgColumn;
-  }
-
   showDetails(element) {
     const uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}/${element.type}/${element.id}`);
   }
 
   dragHandle(element) {
-    let dragHandle = '';
+    let sourceType =  "";
     if (element.type == 'sample' && this.isCurrentElementDropTargetForType('sample')) {
-      dragHandle = <ElementContainer key={element.id} sourceType={DragDropItemTypes.SAMPLE} element={element}/>;
+      sourceType = DragDropItemTypes.SAMPLE;
     } else if (element.type == 'wellplate' && this.isCurrentElementDropTargetForType('wellplate')) {
-      dragHandle = <ElementContainer key={element.id} sourceType={DragDropItemTypes.WELLPLATE} element={element}/>;
+      sourceType = DragDropItemTypes.WELLPLATE;
     }
-    return dragHandle;
+    return <ElementContainer key={element.id} sourceType={sourceType} element={element}/>;
   }
 
   topSecretIcon(element) {
@@ -62,19 +50,39 @@ export default class ElementsTableEntries extends Component {
     }
   }
 
+  previewColumn(element) {
+    const {ui} = this.props;
+    const className = this.isElementSelected(element) ? 'molecule molecule-selected' : 'molecule';
+    if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
+      return (
+        <td style={{verticalAlign: 'middle', textAlign: 'center'}}>
+          <SVG src={element.svgPath} className={className} key={element.id}/>
+        </td>
+      );
+    } else {
+      return <td style={{display:'none'}}></td>;
+    }
+  }
+
+  dragColumn(element) {
+    const {showDragColumn} = this.props;
+    if(showDragColumn) {
+      return (
+        <td style={{verticalAlign: 'middle', textAlign: 'center'}}>
+          {this.dragHandle(element)}
+        </td>
+      );
+    } else {
+     return <td style={{display:'none'}}></td>;
+    }
+  }
+
   render() {
     const {elements} = this.props;
     return (
       <tbody>
       {elements.map((element, index) => {
-        let dragHandleStyle = {};
         let style = {};
-        if (this.isDraggable(element)) {
-          dragHandleStyle = {
-            verticalAlign: 'middle',
-            textAlign: 'center'
-          };
-        }
         if (this.isElementSelected(element)) {
           style = {
             color: '#fff',
@@ -82,7 +90,7 @@ export default class ElementsTableEntries extends Component {
           }
         }
         return (
-          <tr key={index} height="100" style={style}>
+          <tr key={index} style={style}>
             <td>
               <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
             </td>
@@ -91,10 +99,8 @@ export default class ElementsTableEntries extends Component {
               <ElementCollectionLabels element={element} key={element.id}/>
               {this.topSecretIcon(element)}
             </td>
-            {this.svgColumn(element, {selected: this.isElementSelected(element)})}
-            <td style={dragHandleStyle}>
-              {this.dragHandle(element)}
-            </td>
+            {this.previewColumn(element)}
+            {this.dragColumn(element)}
           </tr>
         )
       })}
