@@ -33,6 +33,22 @@ export default class Reaction {
     return this.id == '_new_'
   }
 
+  get temperature() {
+    return this._temperature
+  }
+
+  set temperature(temperature) {
+    this._temperature = temperature
+  }
+
+  get solvents() {
+    return this._solvents
+  }
+
+  set solvents(solvents) {
+    this._solvents = solvents
+  }
+
   get starting_materials() {
     return this._starting_materials
   }

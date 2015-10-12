@@ -52,7 +52,8 @@ class Reaction < ActiveRecord::Base
     inchikeys[:products] = products.map do |material|
       material.molecule.inchikey
     end
-    composer = SVG::ReactionComposer.new(inchikeys)
+    label = [solvents, temperature].compact.join(', ')
+    composer = SVG::ReactionComposer.new(inchikeys, label: label)
     self.reaction_svg_file = composer.compose_reaction_svg_and_save
   end
 

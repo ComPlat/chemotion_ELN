@@ -17,21 +17,20 @@ module Chemotion
         inchikeys[:products] = reaction.products.map do |material|
           material.molecule.inchikey
         end
+        label = reaction.solvents + ", " + reaction.temperature
 
-        composer = SVG::ReactionComposer.new(inchikeys, labels: ["DMF, 100°C"])
+        composer = SVG::ReactionComposer.new(inchikeys, label: label)
         filename = composer.compose_reaction_svg_and_save
         {:reaction_svg => filename}
       end
 
-      # content_type 'image/svg+xml'
-      # env['api.format'] = :binary
-
       desc "Get reaction_svg by materials_inchikeys"
       params do
         requires :materials_inchikeys, type: Hash, desc: "Starting-, Reactants, Product-Materials"
+        requires :label, type: String, desc: "label which is placed under the reaction-arrow"
       end
       post do
-        composer = SVG::ReactionComposer.new(params[:materials_inchikeys], labels: ["Methyl-tert-butylether, 100°C"])
+        composer = SVG::ReactionComposer.new(params[:materials_inchikeys], label: params[:label])
         filename = composer.compose_reaction_svg_and_save :temp => true
         {:reaction_svg => filename}
       end

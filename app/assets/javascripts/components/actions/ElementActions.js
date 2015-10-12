@@ -176,8 +176,8 @@ class ElementActions {
   // -- Reactions SVGs --
 
 
-  fetchReactionSvgByMaterialsInchikeys(materialsInchikeys){
-    ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys)
+  fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label){
+    ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys, label)
       .then((result) => {
         this.dispatch(result.reaction_svg);
       }).catch((errorMessage) => {
