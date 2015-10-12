@@ -15,11 +15,12 @@ export default class Search extends React.Component {
     super(props);
 
     this.state = {
-      apiEndpoint: '/api/v1/suggestions/samples/'
+      elementType: 'all'
     }
   }
 
   handleSelectionChange(selection) {
+    selection.elementType = this.state.elementType;
     UIActions.setSearchSelection(selection);
 
     let uiState = UIStore.getState();
@@ -27,7 +28,7 @@ export default class Search extends React.Component {
   }
 
   search(query) {
-    let promise = SuggestionsFetcher.fetchSuggestions(this.state.apiEndpoint, query);
+    let promise = SuggestionsFetcher.fetchSuggestions('/api/v1/suggestions/' + this.state.elementType + '/', query);
     return promise;
   }
 
@@ -46,7 +47,7 @@ export default class Search extends React.Component {
     let val = this.refs.elementTypeSelect.getValue()
 
     this.setState({
-      apiEndpoint: '/api/v1/suggestions/' + val + '/'
+      elementType: val
     })
   }
 
@@ -72,6 +73,7 @@ export default class Search extends React.Component {
       <div className="chemotion-search">
         <div className="search-elements-select">
           <Input ref="elementTypeSelect" type="select" onChange={() => this.handleElementSelection()}>
+            <option value="all">All</option>
             <option value="samples">Samples</option>
             <option value="reactions">Reactions</option>
             <option value="wellplates">Wellplates</option>

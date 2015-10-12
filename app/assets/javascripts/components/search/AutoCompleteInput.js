@@ -154,7 +154,10 @@ export default class AutoCompleteInput extends React.Component {
       showSuggestions: false,
       valueBeforeFocus: null
     });
-    onSelectionChange(suggestions[suggestionFocus]);
+
+    let selection = this.state.value == suggestions[suggestionFocus].name ? suggestions[suggestionFocus] : {name: this.state.value, search_by_method: 'substring'};
+
+    onSelectionChange(selection);
   }
 
   abortAutoSelection() {
