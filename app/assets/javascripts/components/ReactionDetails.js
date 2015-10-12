@@ -76,7 +76,7 @@ export default class ReactionDetails extends Component {
 
   render() {
     const {reaction} = this.state;
-    const svgPath = (reaction.reactionSvg) ? "/images/reactions/" + reaction.reactionSvg : "";
+    const svgPath = (reaction.reaction_svg_file) ? "/images/reactions/" + reaction.reaction_svg_file : "";
     const svgContainer = {
       position: 'relative',
       padding: 0,
@@ -93,7 +93,7 @@ export default class ReactionDetails extends Component {
             </Col>
             <Col md={9}>
               <div style={svgContainer}>
-                <SVG key={reaction.reactionSvg} src={svgPath} className="molecule-small"/>
+                <SVG key={reaction.reaction_svg_file} src={svgPath} className="molecule-small"/>
               </div>
             </Col>
           </Row>
