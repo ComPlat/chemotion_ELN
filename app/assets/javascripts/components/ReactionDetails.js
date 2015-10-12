@@ -81,7 +81,7 @@ export default class ReactionDetails extends Component {
     };
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     return (
-        <Panel header="Reaction Details" bsStyle='primary'>
+        <Panel header="Reaction Details" bsStyle={reaction.edited ? 'info' : 'primary'}>
           <Row>
             <Col md={3}>
               <h3>{reaction.name}</h3>
