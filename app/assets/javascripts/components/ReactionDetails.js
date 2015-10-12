@@ -63,9 +63,12 @@ export default class ReactionDetails extends Component {
     return true
   }
 
-  handleReactionChange(reaction) {
-    //Todo: check we really have to update the SVG
-    this.setState({ reaction }, () => this.updateReactionSvg());
+  handleReactionChange(reaction, options={}) {
+    if(options.schemaChanged) {
+      this.setState({ reaction }, () => this.updateReactionSvg());
+    } else{
+      this.setState({ reaction });
+    }
   }
 
   render() {
@@ -95,7 +98,7 @@ export default class ReactionDetails extends Component {
             <TabPane eventKey={0} tab={'Scheme'}>
               <ReactionDetailsScheme
                 reaction={reaction}
-                onReactionChange={reaction => this.handleReactionChange(reaction)}
+                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
                 />
             </TabPane>
             <TabPane eventKey={1} tab={'Properties'}>
