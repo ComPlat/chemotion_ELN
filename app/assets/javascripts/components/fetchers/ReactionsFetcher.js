@@ -81,6 +81,7 @@ export default class ReactionsFetcher {
       rf_value: params.rf_value,
       temperature: params.temperature,
       status: params.status,
+      reaction_svg_file: params.reaction_svg_file,
       materials: {
         starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
         reactants: params.reactants.map(s=>s.serializeMaterial()),
@@ -123,6 +124,7 @@ export default class ReactionsFetcher {
       rf_value: params.rf_value,
       temperature: params.temperature,
       status: params.status,
+      reaction_svg_file: params.reaction_svg_file,
       materials: {
         starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
         reactants: params.reactants.map(s=>s.serializeMaterial()),
