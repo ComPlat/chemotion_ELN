@@ -12,7 +12,8 @@ module SVG
       number_of_reactants = (@reactants.size == 0 && @starting_materials.size != 0) ? 1 : @reactants.size
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
-      label = options[:label]
+      @label = options[:label]
+
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
           width="#{width}" height="100" viewBox="0 0 #{width} 100" style=" position: absolute; height: 100%; max-height: 200px; width: 100%;">
@@ -20,7 +21,7 @@ module SVG
       END
       @labels = <<-END
         <svg font-family="sans-serif" font-size="8">
-          <text text-anchor="middle" x="#{@arrow_width / 2}" y="65">#{label}</text>
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="65">#{@label}</text>
         </svg>
       END
       @divider = <<-END
@@ -93,7 +94,7 @@ module SVG
 
       def generate_filename
         inchikeys = {:starting_materials => @starting_materials, :reactants => @reactants, :products => @products}
-        hash_of_inchikeys = Digest::SHA256.hexdigest(inchikeys.values.join)
+        hash_of_inchikeys = Digest::SHA256.hexdigest((inchikeys.values + [@label]).join)
         hash_of_inchikeys + '.svg'
       end
 
