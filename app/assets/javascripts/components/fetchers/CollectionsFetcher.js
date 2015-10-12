@@ -103,7 +103,8 @@ export default class CollectionsFetcher {
         permission_level: params.permission_level,
         sample_detail_level: params.sample_detail_level,
         reaction_detail_level: params.reaction_detail_level,
-        wellplate_detail_level: params.wellplate_detail_level
+        wellplate_detail_level: params.wellplate_detail_level,
+        screen_detail_level: params.screen_detail_level
       })
     })
 

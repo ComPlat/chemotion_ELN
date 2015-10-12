@@ -56,13 +56,15 @@ module Chemotion
           requires :sample_detail_level, type: Integer
           requires :reaction_detail_level, type: Integer
           requires :wellplate_detail_level, type: Integer
+          requires :screen_detail_level, type: Integer
         end
         put ':id' do
           Collection.find(params[:id]).update({
             permission_level: params[:permission_level],
             sample_detail_level: params[:sample_detail_level],
             reaction_detail_level: params[:reaction_detail_level],
-            wellplate_detail_level: params[:wellplate_detail_level]
+            wellplate_detail_level: params[:wellplate_detail_level],
+            screen_detail_level: params[:screen_detail_level]
           })
         end
 
