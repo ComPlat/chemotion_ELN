@@ -21,18 +21,12 @@ export default class ReactionDetails extends Component {
 
   componentDidMount() {
     const {reaction} = this.state;
-    if(reaction.id != '_new_') {
-      ElementActions.fetchReactionSvgByReactionId(reaction.id);
-    }
   }
 
   componentWillReceiveProps(nextProps) {
     const {reaction} = this.state;
     const nextReaction = nextProps.reaction;
     if (nextReaction.id != reaction.id || nextReaction.updated_at != reaction.updated_at) {
-      if(!nextReaction.isNew){
-        ElementActions.fetchReactionSvgByReactionId(nextReaction.id);
-      }
       this.setState({
         reaction: nextReaction
       });
@@ -76,8 +70,7 @@ export default class ReactionDetails extends Component {
 
   render() {
     const {reaction} = this.state;
-    const svgPath = (reaction.reaction_svg_file) ? "/images/reactions/" + reaction.reaction_svg_file : "";
-    const svgContainer = {
+    const svgContainerStyle = {
       position: 'relative',
       padding: 0,
       paddingBottom: '20%'
@@ -92,8 +85,8 @@ export default class ReactionDetails extends Component {
               <Button href={"api/v1/reports/rtf?id=" + reaction.id}>Generate Report</Button>
             </Col>
             <Col md={9}>
-              <div style={svgContainer}>
-                <SVG key={reaction.reaction_svg_file} src={svgPath} className="molecule-small"/>
+              <div style={svgContainerStyle}>
+                <SVG key={reaction.svgPath} src={reaction.svgPath} className="molecule-small"/>
               </div>
             </Col>
           </Row>

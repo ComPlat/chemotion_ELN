@@ -109,7 +109,6 @@ module Chemotion
 
           if reaction = Reaction.find(id)
             reaction.update_attributes(attributes)
-            reaction.touch
             ReactionUpdator.update_materials_for_reaction(reaction, materials)
             reaction.reload
             reaction
@@ -239,5 +238,9 @@ module ReactionUpdator
       #for testing
       #raise ActiveRecord::Rollback
     end
+
+    # to update the SVG
+    reaction.reload
+    reaction.save
   end
 end

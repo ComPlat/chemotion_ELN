@@ -84,6 +84,6 @@ export default class Reaction {
   }
 
   get svgPath() {
-    return this.reaction_svg_file && `/images/reaction/${this.reaction_svg_file}`
+    return this.reaction_svg_file && `/images/reactions/${this.reaction_svg_file}`
   }
 }
