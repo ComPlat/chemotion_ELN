@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 
 export default class ReactionSvgFetcher {
 
-  static fetchByMaterialsInchikeys(materialsInchikeys) {
+  static fetchByMaterialsInchikeys(materialsInchikeys, label) {
     let promise = fetch('/api/v1/reaction_svg', {
       credentials: 'same-origin',
       method: 'post',
@@ -11,7 +11,8 @@ export default class ReactionSvgFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        materials_inchikeys: materialsInchikeys
+        materials_inchikeys: materialsInchikeys,
+        label
       })
     }).then(response => {
       return response.json()

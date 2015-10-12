@@ -46,7 +46,8 @@ export default class ReactionDetails extends Component {
       reactants: reaction.reactants.map(material => material.molecule.inchikey),
       products: reaction.products.map(material => material.molecule.inchikey)
     };
-    ElementActions.fetchReactionSvgByMaterialsInchikeys(materialsInchikeys);
+    const label = (reaction.solvents && reaction.temperature) ? reaction.solvents + ", " + reaction.temperature : '';
+    ElementActions.fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label);
   }
 
   submitFunction() {
