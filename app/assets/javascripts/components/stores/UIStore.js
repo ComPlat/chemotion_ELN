@@ -37,6 +37,7 @@ class UIStore {
         currentId: null,
         page: 1
       },
+      showPreviews: true,
       currentCollection: null,
       currentCollectionId: null,
       currentTab: 1,
@@ -47,6 +48,7 @@ class UIStore {
       handleSelectTab: UIActions.selectTab,
       handleSelectCollection: UIActions.selectCollection,
       handleCheckAllElements: UIActions.checkAllElements,
+      handleToggleShowPreviews: UIActions.toggleShowPreviews,
       handleCheckElement: UIActions.checkElement,
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
@@ -71,6 +73,10 @@ class UIStore {
     this.state[type].checkedAll = true;
     this.state[type].checkedIds = Immutable.List();
     this.state[type].uncheckedIds = Immutable.List();
+  }
+
+  handleToggleShowPreviews() {
+    this.state.showPreviews = !this.state.showPreviews;
   }
 
   handleUncheckAllElements(type) {

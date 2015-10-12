@@ -1,12 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import {DragSource} from 'react-dnd';
 
-const style = {
-  cursor: 'move',
-  width: 100,
-  height: 100
-};
-
 const sampleSource = {
   beginDrag(props) {
     return props;
@@ -24,15 +18,15 @@ class ElementContainer extends Component {
   }
 
   render() {
-    const {connectDragSource} = this.props;
-    const style = {
-      cursor: 'move',
-      fontSize: '18pt'
-    };
-    return connectDragSource(
-      <span style={style} className='text-info fa fa-arrows'></span>,
-      {dropEffect: 'copy'}
-    );
+    const {connectDragSource, sourceType} = this.props;
+    if(sourceType == "") {
+      return <span style={{fontSize: '18pt', cursor: 'not-allowed'}} className='text-muted fa fa-arrows'></span>;
+    } else {
+      return connectDragSource(
+        <span style={{fontSize: '18pt', cursor: 'move'}} className='text-info fa fa-arrows'></span>,
+        {dropEffect: 'copy'}
+      );
+    }
   }
 }
 

@@ -7,6 +7,7 @@ import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
+import ElementsSvgCheckbox from './ElementsSvgCheckbox';
 
 import deepEqual from 'deep-equal';
 
@@ -51,13 +52,14 @@ export default class ElementsTable extends React.Component {
     // check if element details of any type are open at the moment
     let currentId = state.sample.currentId || state.reaction.currentId || state.wellplate.currentId;
 
-    if (checkedIds || uncheckedIds || checkedAll || currentId) {
+    if (checkedIds || uncheckedIds || checkedAll || currentId || state.showPreviews) {
       this.setState({
         ui: {
           checkedIds: checkedIds,
           uncheckedIds: uncheckedIds,
           checkedAll: checkedAll,
-          currentId: currentId
+          currentId: currentId,
+          showPreviews: state.showPreviews
         }
       });
     }
@@ -111,19 +113,26 @@ export default class ElementsTable extends React.Component {
 
   pagination() {
     const {numberOfPages, activePage} = this.state;
-    return (numberOfPages > 1) ?
-      <Pagination
+    if(numberOfPages > 1) {
+      return <Pagination
         activePage={activePage}
         items={numberOfPages}
-        onSelect={(event, selectedEvent) => this.handlePaginationSelect(event, selectedEvent)}/> :
-      '';
+        style={{float: 'left'}}
+        onSelect={(event, selectedEvent) => this.handlePaginationSelect(event, selectedEvent)}/>
+    }
+  }
+
+  previewCheckbox() {
+    const {ui} = this.state;
+    const {type} = this.props;
+    if(type == 'sample' || type == 'reaction' ) {
+      return <ElementsSvgCheckbox checked={ui.showPreviews}/>
+    }
   }
 
   render() {
-    const {type} = this.props;
-    const {elements, currentElement, ui} = this.state;
-    const hasSvgColumn = (type == 'sample' || type == 'reaction');
-    const colSpan = hasSvgColumn ? 2 : 1;
+    const {elements, ui, currentElement} = this.state;
+    const {overview} = this.props;
     return (
       <div>
         <Table className="elements" bordered hover>
@@ -131,14 +140,14 @@ export default class ElementsTable extends React.Component {
             <th className="check">
               <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
             </th>
-            <th colSpan={colSpan}>
+            <th colSpan={3}>
               All {this.props.type}s
             </th>
-          <th className="drag"></th>
           </thead>
-          <ElementsTableEntries elements={elements} currentElement={currentElement} ui={ui}/>
+          <ElementsTableEntries elements={elements} currentElement={currentElement} showDragColumn={!overview} ui={ui}/>
         </Table>
         {this.pagination()}
+        {this.previewCheckbox()}
       </div>
     );
   }

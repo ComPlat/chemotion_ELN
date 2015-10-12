@@ -28,12 +28,12 @@ class Elements extends Component {
   }
 
   render() {
-    const {currentElement} =  this.state;
+    const {currentElement} = this.state;
     if (currentElement) {
       return (
         <div>
           <Col md={4}>
-            <List/>
+            <List overview={false}/>
           </Col>
           <Col md={8}>
             <ElementDetails currentElement={currentElement}/>
@@ -44,7 +44,7 @@ class Elements extends Component {
       return (
         <div>
           <Col md={12}>
-            <List/>
+            <List overview={true}/>
           </Col>
         </div>
       );
