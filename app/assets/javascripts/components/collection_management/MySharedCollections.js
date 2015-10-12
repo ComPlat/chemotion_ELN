@@ -78,7 +78,7 @@ export default class MySharedCollections extends React.Component {
     let collections = this.state.tree.children.filter((child) => {
       return child.label
     });
-    
+
     let params = {
       collections: this.state.tree.children,
       deleted_ids: this.state.deleted_ids

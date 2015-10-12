@@ -22,7 +22,8 @@ export default class ShareModal extends React.Component {
       permissionLevel: 0,
       sampleDetailLevel: 0,
       reactionDetailLevel: 0,
-      wellplateDetailLevel: 0
+      wellplateDetailLevel: 0,
+      screenDetailLevel: 0
     }
   }
 
@@ -79,6 +80,7 @@ export default class ShareModal extends React.Component {
     let sampleDetailLevel = this.refs.sampleDetailLevelSelect.getValue();
     let reactionDetailLevel = this.refs.reactionDetailLevelSelect.getValue();
     let wellplateDetailLevel = this.refs.wellplateDetailLevelSelect.getValue();
+    let screenDetailLevel = this.refs.screenDetailLevelSelect.getValue();
     let userIds = this.refs.userSelect.state.values.map(o => o.value);
 
     let uiState = UIStore.getState();
@@ -91,7 +93,8 @@ export default class ShareModal extends React.Component {
         permission_level: permissionLevel,
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
-        wellplate_detail_level: wellplateDetailLevel
+        wellplate_detail_level: wellplateDetailLevel,
+        screen_detail_level: screenDetailLevel
       },
       elements_filter: filterParams,
       user_ids: userIds,
@@ -110,7 +113,8 @@ export default class ShareModal extends React.Component {
           permissionLevel: 4,
           sampleDetailLevel: 2,
           reactionDetailLevel: 1,
-          wellplateDetailLevel: 3
+          wellplateDetailLevel: 3,
+          screenDetailLevel: 1
         });
         break;
       case 'partner':
@@ -118,7 +122,8 @@ export default class ShareModal extends React.Component {
           permissionLevel: 1,
           sampleDetailLevel: 4,
           reactionDetailLevel: 3,
-          wellplateDetailLevel: 3
+          wellplateDetailLevel: 3,
+          screenDetailLevel: 1
         });
         break;
       case 'collaborator':
@@ -126,7 +131,8 @@ export default class ShareModal extends React.Component {
           permissionLevel: 0,
           sampleDetailLevel: 1,
           reactionDetailLevel: 1,
-          wellplateDetailLevel: 1
+          wellplateDetailLevel: 1,
+          screenDetailLevel: 0
         });
         break;
       case 'reviewer':
@@ -134,7 +140,8 @@ export default class ShareModal extends React.Component {
           permissionLevel: 0,
           sampleDetailLevel: 2,
           reactionDetailLevel: 3,
-          wellplateDetailLevel: 2
+          wellplateDetailLevel: 2,
+          screenDetailLevel: 1
         });
         break;
       case 'supervisor':
@@ -142,7 +149,8 @@ export default class ShareModal extends React.Component {
           permissionLevel: 4,
           sampleDetailLevel: 4,
           reactionDetailLevel: 3,
-          wellplateDetailLevel: 3
+          wellplateDetailLevel: 3,
+          screenDetailLevel: 2
         });
         break;
     }
@@ -177,6 +185,14 @@ export default class ShareModal extends React.Component {
 
     this.setState({
       wellplateDetailLevel: val
+    });
+  }
+
+  handleScreenDLChange() {
+    let val = this.refs.screenDetailLevelSelect.getValue();
+
+    this.setState({
+      screenDetailLevel: val
     });
   }
 
@@ -227,9 +243,14 @@ export default class ShareModal extends React.Component {
             </Input>
             <Input ref='wellplateDetailLevelSelect' type='select' label='Wellplate detail level' value={this.state.wellplateDetailLevel} onChange={(e) => this.handleWellplateDLChange(e)}>
               <option value='0'>Include Samples Level 0/Wells (Positions)</option>
-              <option value='1'>Include Sample 1</option>
+              <option value='1'>Include Sample Level 1</option>
               <option value='2'>Readout</option>
               <option value='3'>Everything</option>
+            </Input>
+            <Input ref='screenDetailLevelSelect' type='select' label='Screen detail level' value={this.state.screenDetailLevel} onChange={(e) => this.handleScreenDLChange(e)}>
+              <option value='0'>Name, description, conditions, requirements</option>
+              <option value='1'>Include Wellplate Level 1</option>
+              <option value='2'>Everything</option>
             </Input>
 
             <b>Select Users to share with</b>

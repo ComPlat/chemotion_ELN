@@ -4,7 +4,7 @@ describe Chemotion::CollectionAPI do
   let(:json_options) {
     {
       only: [:id, :label],
-      methods: [:children, :descendant_ids, :permission_level, :shared_by_id, :sample_detail_level, :reaction_detail_level, :wellplate_detail_level, :is_shared]
+      methods: [:children, :descendant_ids, :permission_level, :shared_by_id, :sample_detail_level, :reaction_detail_level, :wellplate_detail_level, :screen_detail_level, :is_shared]
     }
   }
 
@@ -226,7 +226,8 @@ describe Chemotion::CollectionAPI do
           permission_level: 13,
           sample_detail_level: 5,
           reaction_detail_level: 2,
-          wellplate_detail_level: 1
+          wellplate_detail_level: 1,
+          screen_detail_level: 5
         }
       }
 
@@ -240,6 +241,7 @@ describe Chemotion::CollectionAPI do
         expect(c2.sample_detail_level).to eq 5
         expect(c2.reaction_detail_level).to eq 2
         expect(c2.wellplate_detail_level).to eq 1
+        expect(c2.screen_detail_level).to eq 5
       end
     end
 

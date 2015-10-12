@@ -16,10 +16,11 @@ export default class ShareSettingsModal extends React.Component {
       node: props.node,
       currentUser: currentUser,
       users: users,
-      permissionLevel: 0,
-      sampleDetailLevel: 0,
-      reactionDetailLevel: 0,
-      wellplateDetailLevel: 0
+      permissionLevel: props.permission_level,
+      sampleDetailLevel: props.sample_detail_level,
+      reactionDetailLevel: props.reaction_detail_level,
+      wellplateDetailLevel: props.wellplate_detail_level,
+      screenDetailLevel: props.screen_detail_level
     }
   }
 
@@ -50,14 +51,17 @@ export default class ShareSettingsModal extends React.Component {
     let sampleDetailLevel = this.refs.sampleDetailLevelSelect.getValue();
     let reactionDetailLevel = this.refs.reactionDetailLevelSelect.getValue();
     let wellplateDetailLevel = this.refs.wellplateDetailLevelSelect.getValue();
+    let screenDetailLevel = this.refs.screenDetailLevelSelect.getValue();
 
     let params = {
       id: this.state.node.id,
       permission_level: permissionLevel,
       sample_detail_level: sampleDetailLevel,
       reaction_detail_level: reactionDetailLevel,
-      wellplate_detail_level: wellplateDetailLevel
+      wellplate_detail_level: wellplateDetailLevel,
+      screen_detail_level: screenDetailLevel
     }
+
     CollectionActions.updateSharedCollection(params);
     this.hideModal();
   }
@@ -71,7 +75,8 @@ export default class ShareSettingsModal extends React.Component {
           permissionLevel: 4,
           sampleDetailLevel: 2,
           reactionDetailLevel: 1,
-          wellplateDetailLevel: 3
+          wellplateDetailLevel: 3,
+          screenDetailLevel: 1
         });
         break;
       case 'partner':
@@ -79,7 +84,8 @@ export default class ShareSettingsModal extends React.Component {
           permissionLevel: 1,
           sampleDetailLevel: 4,
           reactionDetailLevel: 3,
-          wellplateDetailLevel: 3
+          wellplateDetailLevel: 3,
+          screenDetailLevel: 1
         });
         break;
       case 'collaborator':
@@ -87,7 +93,8 @@ export default class ShareSettingsModal extends React.Component {
           permissionLevel: 0,
           sampleDetailLevel: 1,
           reactionDetailLevel: 1,
-          wellplateDetailLevel: 1
+          wellplateDetailLevel: 1,
+          screenDetailLevel: 0
         });
         break;
       case 'reviewer':
@@ -95,7 +102,8 @@ export default class ShareSettingsModal extends React.Component {
           permissionLevel: 0,
           sampleDetailLevel: 2,
           reactionDetailLevel: 3,
-          wellplateDetailLevel: 2
+          wellplateDetailLevel: 2,
+          screenDetailLevel: 1
         });
         break;
       case 'supervisor':
@@ -103,7 +111,8 @@ export default class ShareSettingsModal extends React.Component {
           permissionLevel: 4,
           sampleDetailLevel: 4,
           reactionDetailLevel: 3,
-          wellplateDetailLevel: 3
+          wellplateDetailLevel: 3,
+          screenDetailLevel: 2
         });
         break;
     }
@@ -138,6 +147,14 @@ export default class ShareSettingsModal extends React.Component {
 
     this.setState({
       wellplateDetailLevel: val
+    });
+  }
+
+  handleScreenDLChange() {
+    let val = this.refs.screenDetailLevelSelect.getValue();
+
+    this.setState({
+      screenDetailLevel: val
     });
   }
 
@@ -182,6 +199,11 @@ export default class ShareSettingsModal extends React.Component {
               <option value='1'>Include Sample 1</option>
               <option value='2'>Readout</option>
               <option value='3'>Everything</option>
+            </Input>
+            <Input ref='screenDetailLevelSelect' type='select' label='Screen detail level' defaultValue={this.state.node.screen_detail_level} value={this.state.screenDetailLevel} onChange={(e) => this.handleScreenDLChange(e)}>
+              <option value='0'>Name, description, conditions, requirements</option>
+              <option value='1'>Include Wellplate Level 1</option>
+              <option value='2'>Everything</option>
             </Input>
             <Button bsStyle="warning" onClick={this.handleUpdateSharing.bind(this)}>Update Share</Button>
           </Modal.Body>
