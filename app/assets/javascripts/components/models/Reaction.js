@@ -82,4 +82,8 @@ export default class Reaction {
       sample.reference = sample.id == sampleID;
     })
   }
+
+  get svgPath() {
+    return this.reaction_svg_file && `/images/reactions/${this.reaction_svg_file}`
+  }
 }

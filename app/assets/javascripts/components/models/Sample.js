@@ -231,6 +231,10 @@ export default class Sample {
     this._molecule = new Molecule(molecule)
   }
 
+  get svgPath() {
+    return this.molecule && this.molecule.svgPath
+  }
+
   //todo: have a dedicated Material Sample subclass
 
   set equivalent(equivalent) {

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151009135514) do
+ActiveRecord::Schema.define(version: 20151012130019) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -126,6 +126,7 @@ ActiveRecord::Schema.define(version: 20151009135514) do
     t.string   "rf_value"
     t.string   "temperature"
     t.string   "status"
+    t.string   "reaction_svg_file"
   end
 
   create_table "reactions_product_samples", force: :cascade do |t|

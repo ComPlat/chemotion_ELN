@@ -234,11 +234,11 @@ class ElementStore {
   // -- Reactions SVGs --
 
   handleFetchReactionSvgByMaterialsInchikeys(result) {
-    this.state.currentElement.reactionSvg = result;
+    this.state.currentElement.reaction_svg_file = result;
   }
 
   handleFetchReactionSvgByReactionId(result) {
-    this.state.currentElement.reactionSvg = result;
+    this.state.currentElement.reaction_svg_file = result;
   }
 
   // -- Generic --

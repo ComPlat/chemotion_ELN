@@ -25,6 +25,8 @@ class Reaction < ActiveRecord::Base
 
   before_destroy :destroy_associations
 
+  before_save :update_svg_file!
+
   def destroy_associations
     # WARNING: Using delete_all instead of destroy_all due to PG Error
     # TODO: Check this error and consider another solution
@@ -38,4 +40,20 @@ class Reaction < ActiveRecord::Base
   def samples
     starting_materials + reactants + products
   end
+
+  def update_svg_file!
+    inchikeys = {}
+    inchikeys[:starting_materials] = starting_materials.map do |material|
+      material.molecule.inchikey
+    end
+    inchikeys[:reactants] = reactants.map do |material|
+      material.molecule.inchikey
+    end
+    inchikeys[:products] = products.map do |material|
+      material.molecule.inchikey
+    end
+    composer = SVG::ReactionComposer.new(inchikeys)
+    self.reaction_svg_file = composer.compose_reaction_svg_and_save
+  end
+
 end

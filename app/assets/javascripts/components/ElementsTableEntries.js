@@ -37,16 +37,7 @@ export default class ElementsTableEntries extends Component {
 
   svgColumn(element, options = {}) {
     const className = options.selected ? 'molecule-selected' : 'molecule';
-    const {id, type} = element;
-    let svgColumn = '';
-    let svgPath = '';
-    if (type == 'sample') {
-      svgPath = `/images/molecules/${element.molecule.molecule_svg_file}`;
-      svgColumn = <td className="molecule"><SVG src={svgPath} className={className} key={id}/></td>;
-    } else if (type == 'reaction') {
-      //svgPath = `/images/reactions/${element.reaction_svg}}`;
-      svgColumn = <td className="molecule"><SVG src={svgPath} className={className} key={id}/></td>;
-    }
+    let svgColumn = <td className="molecule"><SVG src={element.svgPath} className={className} key={element.id}/></td>;
     return svgColumn;
   }
 
