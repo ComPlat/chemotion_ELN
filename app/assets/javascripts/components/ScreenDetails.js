@@ -87,7 +87,7 @@ export default class ScreenDetails extends Component {
     const {screen} = this.state;
     const {id, wellplates, name, collaborator, result, conditions, requirements, description} = screen;
 
-    const submitLabel = (id == '_new_') ?"Save Screen" : "Update Screen";
+    const submitLabel = (id == '_new_') ? "Create" : "Save";
     return (
       <div key={screen.id}>
         <Panel header="Screen Details" bsStyle='primary'>
