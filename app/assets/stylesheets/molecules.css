@@ -34,3 +34,8 @@
   stroke: white;
   fill: white;
 }
+
+.reaction-selected line, .reaction-selected text, .reaction-selected polygon {
+  stroke: white;
+  fill: white;
+}
