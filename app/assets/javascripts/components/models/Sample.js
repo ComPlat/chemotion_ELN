@@ -11,7 +11,7 @@ export default class Sample extends Element {
   }
 
   get isNew() {
-    return this.id == '_new_' || this._split
+    return super.isNew || this._split
   }
 
   static buildChild(sample) {
