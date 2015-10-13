@@ -57,7 +57,9 @@ export default class ElementsTableEntries extends Component {
         'molecule': element.type == 'sample'
       }, {
         'molecule-selected': element.type == 'sample' && this.isElementSelected(element)
-      });
+      }, {
+      'reaction-selected': element.type == 'reaction' && this.isElementSelected(element)
+    });
     let svgContainer = {
       verticalAlign: 'middle',
       textAlign: 'center'
