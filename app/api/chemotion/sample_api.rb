@@ -102,7 +102,10 @@ module Chemotion
             molecule_attributes: params[:molecule]
           ) unless params[:molecule].blank?
 
-          Sample.find(params[:id]).update(attributes)
+          if sample = Sample.find(params[:id])
+            sample.update(attributes)
+            sample
+          end
         end
       end
 

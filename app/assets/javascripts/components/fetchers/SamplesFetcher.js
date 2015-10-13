@@ -63,7 +63,13 @@ export default class SamplesFetcher {
         is_top_secret: params.is_top_secret,
         molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
       })
-    })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return new SampleProxy(json.sample);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
 
     return promise;
   }
@@ -95,7 +101,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return json;
+      return new SampleProxy(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

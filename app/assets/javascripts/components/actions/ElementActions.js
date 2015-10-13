@@ -69,7 +69,7 @@ class ElementActions {
   createSample(params) {
     SamplesFetcher.create(params)
       .then((result) => {
-        this.dispatch(result.sample)
+        this.dispatch(result)
       });
   }
 
@@ -77,7 +77,7 @@ class ElementActions {
     let _params = _.omit( params, _.isNull); //should be better done in SampleProxy#serialize
     SamplesFetcher.update(_params)
       .then((result) => {
-        this.dispatch(params)
+        this.dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

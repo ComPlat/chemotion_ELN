@@ -5,7 +5,7 @@ export default class Element {
 
   constructor(args) {
     Object.assign(this, args);
-    this._checksum = this.checksum();
+    this.updateChecksum();
   }
 
   get isEdited() {
@@ -18,6 +18,10 @@ export default class Element {
 
   get isNew() {
     return this.id == '_new_'
+  }
+
+  updateChecksum() {
+    this._checksum = this.checksum();
   }
 
 }
