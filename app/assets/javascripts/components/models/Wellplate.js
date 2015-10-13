@@ -6,6 +6,7 @@ export default class Wellplate extends Element {
   constructor(args) {
     super(args)
     this.wells = this.initWellsWithPosition(this.wells, 96);
+    this._checksum = this.checksum();
   }
 
   static buildEmpty() {
