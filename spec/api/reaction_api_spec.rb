@@ -190,6 +190,7 @@ describe Chemotion::ReactionAPI do
       let(:sample_1) { Sample.create!(name: 'Sample 1') }
       let(:sample_2) { Sample.create!(name: 'Sample 2') }
       let(:sample_3) { Sample.create!(name: 'Sample 3') }
+      let(:sample_4) { Sample.create!(name: 'Sample 4') }
       let(:reaction_1) { Reaction.create(name: 'r1') }
 
       before do
@@ -197,6 +198,7 @@ describe Chemotion::ReactionAPI do
         ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1)
         ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2, equivalent: 2)
         ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3, equivalent: 1)
+        ReactionsProductSample.create!(reaction: reaction_1, sample: sample_4, equivalent: 1)
       end
 
       context 'updating and reassigning existing materials' do
@@ -216,6 +218,16 @@ describe Chemotion::ReactionAPI do
                   },
                   {
                                 "id" => sample_2.id,
+                       "amount_unit" => "mg",
+                      "amount_value" => 99.08404,
+                        "equivalent" => 5.5,
+                         "reference" => false,
+                            "is_new" => false
+                  }
+              ],
+            "products" => [
+                  {
+                                "id" => sample_3.id,
                        "amount_unit" => "mg",
                       "amount_value" => 99.08404,
                         "equivalent" => 5.5,
@@ -253,7 +265,6 @@ describe Chemotion::ReactionAPI do
         end
 
         it 'should material associations and reassign to a new group' do
-
           sa1 = r.reactions_starting_material_samples.find_by(sample_id: sample_1.id)
           sa2 = r.reactions_starting_material_samples.find_by(sample_id: sample_2.id)
 
@@ -268,8 +279,13 @@ describe Chemotion::ReactionAPI do
           })
 
           expect(r.reactions_reactant_samples).to be_empty
-          expect(r.reactions_product_samples.find_by(sample_id: sample_3.id)).to be_present
         end
+
+        it 'should delete only not included samples' do
+          expect(r.reactions_product_samples.find_by(sample_id: sample_3.id)).to be_present
+          expect(r.reactions_product_samples.find_by(sample_id: sample_4.id)).not_to be_present
+        end
+
       end
 
       context 'creating new materials' do
