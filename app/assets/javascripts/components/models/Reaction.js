@@ -77,6 +77,23 @@ export default class Reaction {
     return [...this.starting_materials, ...this.reactants, ...this.products]
   }
 
+  addMaterial(material, materialGroup) {
+    const materials = this[materialGroup];
+    materials.push(material);
+  }
+
+  deleteMaterial(material, materialGroup) {
+    const materials = this[materialGroup];
+    const materialIndex = materials.indexOf(material);
+    materials.splice(materialIndex, 1);
+  }
+
+  moveMaterial(material, previousMaterialGroup, materialGroup) {
+    const materials = this[materialGroup];
+    this.deleteMaterial(material, previousMaterialGroup);
+    materials.push(material);
+  }
+
   _coerceToSamples(samples) {
     return samples && samples.map(s => new Sample(s)) || []
   }

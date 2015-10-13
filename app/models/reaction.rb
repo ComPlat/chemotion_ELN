@@ -71,18 +71,16 @@ class Reaction < ActiveRecord::Base
 
   def update_svg_file!
     inchikeys = {}
-    inchikeys[:starting_materials] = starting_materials.map do |material|
-      material.molecule.inchikey
-    end
-    inchikeys[:reactants] = reactants.map do |material|
-      material.molecule.inchikey
-    end
-    inchikeys[:products] = products.map do |material|
-      material.molecule.inchikey
-    end
+    inchikeys[:starting_materials] = starting_materials.includes(:molecule).pluck(:'molecules.inchikey')
+    inchikeys[:reactants] = reactants.includes(:molecule).pluck(:'molecules.inchikey')
+    inchikeys[:products] = products.includes(:molecule).pluck(:'molecules.inchikey')
     label = [solvents, temperature].compact.join(', ')
-    composer = SVG::ReactionComposer.new(inchikeys, label: label)
-    self.reaction_svg_file = composer.compose_reaction_svg_and_save
+    begin
+      composer = SVG::ReactionComposer.new(inchikeys, label: label)
+      self.reaction_svg_file = composer.compose_reaction_svg_and_save
+    rescue Exception => e
+      p "**** SVG::ReactionComposer failed ***"
+    end
   end
 
 end

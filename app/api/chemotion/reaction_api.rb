@@ -177,10 +177,12 @@ module ReactionUpdator
     }
 
     ActiveRecord::Base.transaction do
+      included_sample_ids = []
       materials.each do |material_group, samples|
         reaction_samples_association = reaction.public_send("reactions_#{material_group}_samples")
         samples.each do |sample|
 
+          #create new subsample
           if sample.is_new && sample.parent_id
 
             parent_sample = Sample.find(sample.parent_id)
@@ -192,8 +194,9 @@ module ReactionUpdator
             subsample.amount_value = sample.amount_value
             subsample.amount_unit = sample.amount_unit
 
-            subsample.id
             subsample.save
+            subsample.reload
+            included_sample_ids << subsample.id
 
             #assign subsample to current collection
             CollectionsSample.create(collection_id: collection_id, sample_id: subsample.id)
@@ -203,12 +206,15 @@ module ReactionUpdator
               equivalent: sample.equivalent,
               reference: sample.reference
             )
+
+          #update the existing sample
           else
             existing_sample = Sample.find(sample.id)
 
             existing_sample.amount_value = sample.amount_value
             existing_sample.amount_unit = sample.amount_unit
             existing_sample.save
+            included_sample_ids << existing_sample.id
 
             existing_association = reaction_samples_association.find_by(sample_id: sample.id)
 
@@ -218,6 +224,7 @@ module ReactionUpdator
                 equivalent: sample.equivalent,
                 reference: sample.reference
               )
+            #sample was moved to other materialgroup
             else
               #clear existing associations
               reaction.reactions_starting_material_samples.find_by(sample_id: sample.id).try(:destroy)
@@ -231,10 +238,22 @@ module ReactionUpdator
                 reference: sample.reference
               )
             end
-
           end
+
         end
       end
+
+      #delete all samples not anymore in one of the groups
+
+      current_sample_ids = [
+        reaction.reactions_starting_material_samples.pluck(:sample_id),
+        reaction.reactions_reactant_samples.pluck(:sample_id),
+        reaction.reactions_product_samples.pluck(:sample_id)
+      ].flatten.uniq
+
+      deleted_sample_ids = current_sample_ids - included_sample_ids
+      Sample.where(id: deleted_sample_ids).destroy_all
+
       #for testing
       #raise ActiveRecord::Rollback
     end

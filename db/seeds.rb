@@ -139,18 +139,18 @@ reaction_4 = Reaction.create(name: 'Reaction 4')
 reaction_5 = Reaction.create(name: 'Reaction 5')
 reaction_6 = Reaction.create(name: 'Reaction 6')
 
-# associate samples with reactions
-ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1)
-ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2, equivalent: 2)
-ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3, equivalent: 1)
-reaction_1.reload
-reaction_1.save
-
-ReactionsStartingMaterialSample.create!(reaction: reaction_2, sample: sample_3, equivalent: 1)
-ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_2, equivalent: 2)
-ReactionsProductSample.create!(reaction: reaction_2, sample: sample_1, equivalent: 3)
-reaction_2.reload
-reaction_2.save
+# # associate samples with reactions
+# ReactionsStartingMaterialSample.create!(reaction: reaction_1, sample: sample_1, reference: true, equivalent: 1)
+# ReactionsReactantSample.create!(reaction: reaction_1, sample: sample_2, equivalent: 2)
+# ReactionsProductSample.create!(reaction: reaction_1, sample: sample_3, equivalent: 1)
+# reaction_1.reload
+# reaction_1.save
+#
+# ReactionsStartingMaterialSample.create!(reaction: reaction_2, sample: sample_3, equivalent: 1)
+# ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_2, equivalent: 2)
+# ReactionsProductSample.create!(reaction: reaction_2, sample: sample_1, equivalent: 3)
+# reaction_2.reload
+# reaction_2.save
 
 # associate reactions with collections
 CollectionsReaction.create!(reaction: reaction_1, collection: collection_1)
