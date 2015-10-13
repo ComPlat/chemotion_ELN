@@ -7,6 +7,7 @@ import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
+import classnames from 'classnames';
 
 export default class ElementsTableEntries extends Component {
   isElementChecked(element) {
@@ -52,11 +53,27 @@ export default class ElementsTableEntries extends Component {
 
   previewColumn(element) {
     const {ui} = this.props;
-    const className = this.isElementSelected(element) ? 'molecule molecule-selected' : 'molecule';
+    const classNames = classnames({
+        'molecule': element.type == 'sample'
+      }, {
+        'molecule-selected': element.type == 'sample' && this.isElementSelected(element)
+      });
+    let svgContainer = {
+      verticalAlign: 'middle',
+      textAlign: 'center'
+    };
+    if(element.type == 'reaction') {
+      svgContainer = {
+        width: '50%',
+        position: 'relative',
+        padding: 0,
+        paddingBottom: '10%'
+      };
+    }
     if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
       return (
-        <td style={{verticalAlign: 'middle', textAlign: 'center'}}>
-          <SVG src={element.svgPath} className={className} key={element.id}/>
+        <td style={svgContainer}>
+          <SVG src={element.svgPath} className={classNames} key={element.id}/>
         </td>
       );
     } else {
