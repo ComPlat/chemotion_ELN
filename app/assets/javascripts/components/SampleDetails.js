@@ -49,7 +49,7 @@ export default class SampleDetails extends React.Component {
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
-  //todo: belongs to Action/Store
+  //todo: extract serialize method
   createSampleObject() {
     let uiState = UIStore.getState();
     return {
