@@ -7,7 +7,7 @@
 ## openbabel
 * `brew install cmake` for OSX
 * install openbabel as described in its [documentation](https://github.com/cubuslab/openbabel/blob/master/INSTALL)
- 
+
 ## rmagick
 * `brew install imagemagick gs` for OSX
 * `apt-get install libmagickcore-dev libmagickwand-dev` for linux
@@ -16,6 +16,17 @@
 ## Application Setup
 * Execute `bundle install`.
 * Execute `rake db:reset` (this creates and seeds the database).
+
+# Deployment notes
+
+The search feature uses the Postgres extension pg_trgm (http://www.postgresql.org/docs/9.3/static/pgtrgm.html). For the first installation on the production machine you have to install the `postgres-contrib` package in order to enable Postgres extensions.
+Just restart Postgres after installing the package.
+
+If you like to reset the database (after `cap production deploy`) you have to execute the following commands (under the assumption your production database is called `chemotion`)
+
+* `RAILS_ENV=production bundle exec rake db:drop db:create`
+* `sudo -u postgres psql -d chemotion -c "CREATE EXTENSION pg_trgm;"`
+* `RAILS_ENV=production bundle exec rake db:migrate db:seed`
 
 # JS Setup & Testing
 
