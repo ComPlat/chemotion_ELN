@@ -178,7 +178,7 @@ export default class SampleDetails extends React.Component {
   handleTopSecretChanged(e) {
     let sample = this.state.sample;
     let checkedState = this.refs.topSecretInput.props.checked;
-    
+
     sample.is_top_secret = !checkedState;
     this.setState({
       sample: sample
@@ -513,7 +513,7 @@ export default class SampleDetails extends React.Component {
           onCancel={this.handleStructureEditorCancel.bind(this)}
           molfile={molfile}
           />
-        <Panel header="Sample Details" bsStyle='primary'>
+        <Panel header="Sample Details" bsStyle={sample.isEdited ? 'info' : 'primary'}>
           {this.sampleHeader(sample)}
 
           <ListGroup fill>

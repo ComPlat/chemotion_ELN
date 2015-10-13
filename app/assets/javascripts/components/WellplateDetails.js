@@ -81,7 +81,7 @@ export default class WellplateDetails extends Component {
 
     return (
       <div key={wellplate.id}>
-        <Panel header="Wellplate Details" bsStyle='primary'>
+        <Panel header="Wellplate Details" bsStyle={wellplate.isEdited ? 'info' : 'primary'} >
           <h3>{name}</h3>
           <ElementCollectionLabels element={wellplate}/>
           <ListGroup fill>
