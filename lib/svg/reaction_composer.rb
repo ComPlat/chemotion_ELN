@@ -16,7 +16,7 @@ module SVG
 
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-          width="#{width}" height="100" viewBox="0 0 #{width} 100" style=" position: absolute; height: 100%; max-height: 200px; width: 100%;">
+          width="#{width}" height="100" viewBox="0 0 #{width} 100" style="position: absolute;height: 100%;max-height: 200px;width: 100%;top: 0;left: 0;">
         <title>Reaction 1</title>
       END
       @labels = <<-END

@@ -77,7 +77,9 @@ export default class ReactionDetails extends Component {
     const svgContainerStyle = {
       position: 'relative',
       padding: 0,
-      paddingBottom: '20%'
+      paddingBottom: '20%',
+      height: 0,
+      width: '100%'
     };
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     return (
@@ -90,7 +92,7 @@ export default class ReactionDetails extends Component {
             </Col>
             <Col md={9}>
               <div style={svgContainerStyle}>
-                <SVG key={reaction.svgPath} src={reaction.svgPath} className="molecule-small"/>
+                <SVG key={reaction.svgPath} src={reaction.svgPath}/>
               </div>
             </Col>
           </Row>
