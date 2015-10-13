@@ -1,10 +1,12 @@
+import Element from './Element';
 import Well from './Well';
 
-export default class Wellplate {
+export default class Wellplate extends Element {
 
   constructor(args) {
-    Object.assign(this, args);
+    super(args)
     this.wells = this.initWellsWithPosition(this.wells, 96);
+    this._checksum = this.checksum();
   }
 
   static buildEmpty() {

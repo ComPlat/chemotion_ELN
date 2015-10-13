@@ -22,6 +22,7 @@
     "react-select": "0.6.1",
     "react-tools": "0.13.3",
     "react-ui-tree": "2.2.1",
+    "sha256": "^0.2.0",
     "uuid": "^2.0.1",
     "whatwg-fetch": "0.9.0"
   },

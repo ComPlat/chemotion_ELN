@@ -90,7 +90,7 @@ export default class ScreenDetails extends Component {
     const submitLabel = (id == '_new_') ? "Create" : "Save";
     return (
       <div key={screen.id}>
-        <Panel header="Screen Details" bsStyle='primary'>
+        <Panel header="Screen Details" bsStyle={screen.isEdited ? 'info' : 'primary'}>
           <h3>{name}</h3>
           <ElementCollectionLabels element={screen}/>
           <ListGroup fill>

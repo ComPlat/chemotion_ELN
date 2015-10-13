@@ -1,10 +1,7 @@
+import Element from './Element';
 import Wellplate from './Wellplate';
 
-export default class Screen {
-
-  constructor(args) {
-    Object.assign(this, args);
-  }
+export default class Screen extends Element {
 
   static buildEmpty() {
     return new Screen({

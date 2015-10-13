@@ -1,10 +1,7 @@
-import Sample from '../models/Sample';
+import Element from './Element';
+import Sample from './Sample';
 
-export default class Reaction {
-
-  constructor(args) {
-    Object.assign(this, args);
-  }
+export default class Reaction extends Element {
 
   static buildEmpty() {
     return new Reaction({
@@ -27,10 +24,6 @@ export default class Reaction {
       products: [],
       literatures: []
     })
-  }
-
-  get isNew() {
-    return this.id == '_new_'
   }
 
   get temperature() {

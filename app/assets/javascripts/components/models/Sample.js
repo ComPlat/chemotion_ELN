@@ -1,12 +1,9 @@
 import uuid from 'uuid';
 
+import Element from './Element';
 import Molecule from './Molecule';
 
-export default class Sample {
-
-  constructor(args) {
-    Object.assign(this, args);
-  }
+export default class Sample extends Element {
 
   // methods regarding sharing and sample detail levels
   isRestricted() {
@@ -14,7 +11,7 @@ export default class Sample {
   }
 
   get isNew() {
-    return this.id == '_new_' || this._split
+    return super.isNew || this._split
   }
 
   static buildChild(sample) {
