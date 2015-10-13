@@ -1,14 +1,7 @@
-import sha256 from 'sha256';
-import _ from 'lodash';
+import Element from './Element';
+import Sample from './Sample';
 
-import Sample from '../models/Sample';
-
-export default class Reaction {
-
-  constructor(args) {
-    Object.assign(this, args);
-    this._checksum = this.checksum();
-  }
+export default class Reaction extends Element {
 
   static buildEmpty() {
     return new Reaction({
@@ -31,18 +24,6 @@ export default class Reaction {
       products: [],
       literatures: []
     })
-  }
-
-  get edited() {
-    return this._checksum != this.checksum();
-  }
-
-  checksum() {
-    return sha256(JSON.stringify(_.omit(_.omit(this, '_checksum'), _.isEmpty)));
-  }
-
-  get isNew() {
-    return this.id == '_new_'
   }
 
   get temperature() {

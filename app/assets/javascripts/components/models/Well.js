@@ -1,7 +1,5 @@
-export default class Well {
+import Element from './Element';
 
-  constructor(args) {
-    Object.assign(this, args);
-  }
+export default class Well extends Element {
 
 }

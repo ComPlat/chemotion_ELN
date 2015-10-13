@@ -1,12 +1,9 @@
 import uuid from 'uuid';
 
+import Element from './Element';
 import Molecule from './Molecule';
 
-export default class Sample {
-
-  constructor(args) {
-    Object.assign(this, args);
-  }
+export default class Sample extends Element {
 
   // methods regarding sharing and sample detail levels
   isRestricted() {
