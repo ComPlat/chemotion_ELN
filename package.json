@@ -19,6 +19,7 @@
     "react-bootstrap": "0.24.2",
     "react-cookie": "^0.2.6",
     "react-dnd": "^1.1.8",
+    "react-dropzone": "^2.2.0",
     "react-inlinesvg": "0.4.2",
     "react-select": "0.6.1",
     "react-tools": "0.13.3",

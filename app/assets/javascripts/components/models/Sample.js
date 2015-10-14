@@ -18,7 +18,7 @@ export default class Sample extends Element {
 
   static buildChild(sample) {
     Sample.counter += 1;
-    let splitSample = new Sample(sample)
+    let splitSample = new Sample(sample);
     splitSample.parent_id = sample.id;
     splitSample.id = uuid.v1();
     splitSample.name += "-" + Sample.counter;
@@ -60,7 +60,8 @@ export default class Sample extends Element {
       impurities: '',
       location: '',
       molfile: '',
-      molecule: { id: '_none_' }
+      molecule: { id: '_none_' },
+      analyses: []
     })
   }
 
@@ -70,6 +71,14 @@ export default class Sample extends Element {
 
   set is_top_secret(is_top_secret) {
     this._is_top_secret = is_top_secret;
+  }
+
+  get analyses() {
+    return this._analyses;
+  }
+
+  set analyses(analyses) {
+    this._analyses = analyses;
   }
 
   get name() {
