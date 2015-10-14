@@ -2,7 +2,14 @@ import Element from './Element';
 import Sample from './Sample';
 
 export default class Reaction extends Element {
+  isMethodDisabled() {
+    return false;
+  }
 
+  isMethodRestricted(m) {
+    return false;
+  }
+  
   static buildEmpty() {
     return new Reaction({
       id: '_new_',

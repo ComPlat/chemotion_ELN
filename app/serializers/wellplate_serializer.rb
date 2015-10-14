@@ -16,4 +16,28 @@ class WellplateSerializer < ActiveModel::Serializer
   def type
     'wellplate'
   end
+
+  class BasePermissionSerializer < ActiveModel::Serializer
+    attributes :id, :type, :is_restricted, :size
+
+    def type
+      'wellplate'
+    end
+
+    def is_restricted
+      true
+    end
+  end
+
+  class Level0 < BasePermissionSerializer
+    has_many :wells, serializer: WellSerializer::Level0
+  end
+
+  class Level1 < Level0
+    has_many :wells, serializer: WellSerializer::Level1
+  end
+
+  class Level2 < Level1
+    has_many :wells, serializer: WellSerializer::Level2
+  end
 end

@@ -10,8 +10,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        console.log(json)
-        return new SampleProxy(json.sample);
+        return new Sample(json.sample);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -28,7 +27,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.samples.map((s) => new SampleProxy(s)),
+            elements: json.samples.map((s) => new Sample(s)),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),
@@ -68,7 +67,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new SampleProxy(json.sample);
+      return new Sample(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -103,7 +102,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new SampleProxy(json.sample);
+      return new Sample(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

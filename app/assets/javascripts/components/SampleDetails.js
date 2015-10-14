@@ -387,7 +387,7 @@ export default class SampleDetails extends React.Component {
 
   sampleAmount(sample) {
     if(sample.isMethodDisabled('amount_value') == false) {
-      if(sample.methodIsRestricted('molecule') == true) {
+      if(sample.isMethodRestricted('molecule') == true) {
         return (
           <table><tr>
           <td>

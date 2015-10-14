@@ -9,6 +9,14 @@ export default class Wellplate extends Element {
     this._checksum = this.checksum();
   }
 
+  isMethodDisabled() {
+    return false;
+  }
+
+  isMethodRestricted(m) {
+    return false;
+  }
+  
   static buildEmpty() {
     return new Wellplate(
       {
@@ -20,6 +28,22 @@ export default class Wellplate extends Element {
         wells: []
       }
     )
+  }
+
+  get name() {
+    return this._name;
+  }
+
+  set name(name) {
+    this._name = name;
+  }
+
+  get description() {
+    return this._description;
+  }
+
+  set description(description) {
+    this._description = description;
   }
 
   get wells() {

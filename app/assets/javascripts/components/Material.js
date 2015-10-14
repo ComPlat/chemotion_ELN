@@ -29,6 +29,7 @@ class Material extends Component {
       lineHeight: 2,
       verticalAlign: 'middle'
     };
+
     return <tr style={style}>
       {connectDragSource(
         <td style={handleStyle}>

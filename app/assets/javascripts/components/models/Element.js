@@ -24,4 +24,8 @@ export default class Element {
     this._checksum = this.checksum();
   }
 
+  // methods regarding sharing and detail levels
+  isRestricted() {
+    return this.is_restricted;
+  }
 }

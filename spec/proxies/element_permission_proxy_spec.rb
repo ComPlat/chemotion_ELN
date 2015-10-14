@@ -35,9 +35,7 @@ RSpec.describe ElementPermissionProxy do
           end
 
           it 'returns restricted version of serialized sample' do
-            s = SampleSerializer.new(sample, only: [:id, :type, :external_label, :amount_value, :amount_unit]).serializable_hash.deep_symbolize_keys
-            s[:is_restricted] = true
-            expect(subject.serialized).to include({sample: s})
+            expect(subject.serialized).to include({is_restricted: true})
           end
         end
       end
@@ -57,7 +55,7 @@ RSpec.describe ElementPermissionProxy do
 
       describe 'serialized' do
         it 'returns serialized sample with no restrictions' do
-          expect(subject.serialized).to include({sample: SampleSerializer.new(sample).serializable_hash.deep_symbolize_keys})
+          expect(subject.serialized).to include({is_restricted: false})
         end
       end
     end

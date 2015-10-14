@@ -4,12 +4,14 @@ import Element from './Element';
 import Molecule from './Molecule';
 
 export default class Sample extends Element {
-
-  // methods regarding sharing and sample detail levels
-  isRestricted() {
-    return this.is_restricted;
+  isMethodDisabled() {
+    return false;
   }
 
+  isMethodRestricted(m) {
+    return false;
+  }
+  
   get isNew() {
     return super.isNew || this._split
   }

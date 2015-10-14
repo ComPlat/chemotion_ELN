@@ -35,19 +35,24 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   class Level0 < BasePermissionSerializer
-    attributes :external_label, :molecule
+    attributes :external_label
+    has_one :molecule
 
     def molecule
       {
-        molecular_weight: object.molecule.molecular_weight
+        molecular_weight: object.molecule.try(:molecular_weight)
       }
     end
   end
 
-  class Level1 < BasePermissionSerializer
-    attributes :external_label, :molfile
+  class Level1 < Level0
+    attributes :molfile
 
     has_one :molecule
+
+    def molecule
+      object.molecule
+    end
   end
 
   # TODO implement once Analysis feature is finished

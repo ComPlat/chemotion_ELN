@@ -103,6 +103,7 @@ export default class ScreenDetails extends Component {
                       label="Name"
                       value={name}
                       onChange={event => this.handleInputChange('name', event)}
+                      disabled={screen.isMethodDisabled('name')}
                       />
                   </td>
                   <td width="50%">
@@ -111,6 +112,7 @@ export default class ScreenDetails extends Component {
                       label="Collaborator"
                       value={collaborator}
                       onChange={event => this.handleInputChange('collaborator', event)}
+                      disabled={screen.isMethodDisabled('collaborator')}
                       />
                   </td>
                 </tr>
@@ -121,6 +123,7 @@ export default class ScreenDetails extends Component {
                       label="Requirements"
                       value={requirements}
                       onChange={event => this.handleInputChange('requirements', event)}
+                      disabled={screen.isMethodDisabled('requirements')}
                       />
                   </td>
                   <td >
@@ -129,6 +132,7 @@ export default class ScreenDetails extends Component {
                       label="Conditions"
                       value={conditions}
                       onChange={event => this.handleInputChange('conditions', event)}
+                      disabled={screen.isMethodDisabled('conditions')}
                       />
                   </td>
                 </tr>
@@ -139,6 +143,7 @@ export default class ScreenDetails extends Component {
                       label="Result"
                       value={result}
                       onChange={event => this.handleInputChange('result', event)}
+                      disabled={screen.isMethodDisabled('result')}
                       />
                   </td>
                 </tr>
@@ -149,6 +154,7 @@ export default class ScreenDetails extends Component {
                       label="Description"
                       value={description}
                       onChange={event => this.handleInputChange('description', event)}
+                      disabled={screen.isMethodDisabled('description')}
                       />
                   </td>
                 </tr>

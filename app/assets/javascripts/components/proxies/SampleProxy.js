@@ -68,11 +68,11 @@ export default class SampleProxy extends Sample {
     super.molecule = new Molecule(molecule)
   }
 
-  methodIsRestricted(method) {
+  isMethodRestricted(method) {
     return this.isRestricted() == true && this.methodOrRestrictionPattern(method) == this.restrictionPattern;
   }
 
   isMethodDisabled(method) {
-    return this.methodIsRestricted(method) == true && this.id != '_new_'
+    return this.isMethodRestricted(method) == true && this.id != '_new_'
   }
 }
