@@ -8,7 +8,7 @@ export default class SampleDetailsAnalyses extends Component {
     const {sample} = this.props;
     this.state = {
       sample,
-      accordionActiveKey: 0
+      activeAnalysis: 0
     };
   }
 
@@ -28,8 +28,8 @@ export default class SampleDetailsAnalyses extends Component {
     const {sample} = this.state;
     //uuid: new-12656512
     sample.analyses.push({id: '_new_', name: 'new Analysis', datasets: []});
-    const newActiveKey = sample.analyses.length - 1;
-    this.setState({sample, accordionActiveKey: newActiveKey});
+    const newKey = sample.analyses.length - 1;
+    this.setState({sample, activeAnalysis: newKey});
   }
 
   removeAnalysis(analysis) {
@@ -39,14 +39,18 @@ export default class SampleDetailsAnalyses extends Component {
     this.setState({sample});
   }
 
+  openAnalysis(key) {
+    this.setState({activeAnalysis: key});
+  }
+
   render() {
-    const {sample, accordionActiveKey} = this.state;
+    const {sample, activeAnalysis} = this.state;
     return (
       <div>
-        <PanelGroup defaultActiveKey={0} activeKey={accordionActiveKey} accordion>
+        <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
           {sample.analyses.map((analysis, key) => {
             return (
-              <Panel header={analysis.name} key={key} eventKey={key}>
+              <Panel header={analysis.name} key={key} onClick={() => this.openAnalysis(key)} eventKey={key}>
                 <Analysis
                   analysis={analysis}
                   changeAnalysis={analysis => this.changeAnalysis(analysis)}
