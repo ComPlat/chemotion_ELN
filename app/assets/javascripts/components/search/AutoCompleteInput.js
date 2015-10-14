@@ -214,6 +214,7 @@ export default class AutoCompleteInput extends React.Component {
           ref='input'
           onChange={event => this.handleValueChange(event)}
           onKeyDown={event => this.handleKeyDown(event)}
+          buttonBefore={this.props.buttonBefore}
           />
         <Overlay
           show={showSuggestions}
