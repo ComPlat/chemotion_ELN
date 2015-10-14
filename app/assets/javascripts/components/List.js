@@ -54,6 +54,28 @@ export default class List extends React.Component {
 
   handleTabSelect(tab) {
     UIActions.selectTab(tab);
+
+    // TODO sollte in tab action handler
+    let type;
+
+    switch(tab) {
+      case 1:
+        type = 'sample';
+        break;
+      case 2:
+        type = 'reaction';
+        break;
+      case 3:
+        type = 'wellplate';
+        break;
+      case 4:
+        type = 'screen';
+    }
+
+    let uiState = UIStore.getState();
+    let page = uiState[type].page;
+
+    UIActions.setPagination({type: type, page: page})
   }
 
   render() {

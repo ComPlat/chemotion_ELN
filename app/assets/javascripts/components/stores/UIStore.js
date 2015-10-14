@@ -63,7 +63,6 @@ class UIStore {
   }
 
   handleSelectTab(tab) {
-    console.log('handleSelectTab: ' + tab)
     this.state.currentTab = tab;
   }
 
@@ -127,6 +126,7 @@ class UIStore {
     let state = this.state;
     let hasChanged = (!state.currentCollection || state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
 
+    // TODO state.pagination does not make sense
     if(hasChanged) {
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;
@@ -138,6 +138,7 @@ class UIStore {
     }
   }
 
+  // FIXME this method is also defined in ElementStore
   handleSetPagination(pagination) {
     let {type, page} = pagination;
     this.state[type].page = page;

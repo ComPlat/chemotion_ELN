@@ -2,29 +2,54 @@ module Chemotion
   class SearchAPI < Grape::API
     include Grape::Kaminari
 
+    # TODO implement search cache?
     helpers do
-      def serialization_by_elements(elements)
-        serialized_samples = elements.fetch(:samples, []).map{|s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}
-        serialized_reactions = elements.fetch(:reactions, []).map{|s| ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys}
-        serialized_wellplates = elements.fetch(:wellplates, []).map{|s| WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys}
-        serialized_screens = elements.fetch(:screens, []).map{|s| ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys}
+      def page_size
+        7
+      end
+
+      def pages(total_elements)
+        total_elements.fdiv(page_size).ceil
+      end
+
+      def serialization_by_elements_and_page(elements, page=1)
+        samples = elements.fetch(:samples, [])
+        reactions = elements.fetch(:reactions, [])
+        wellplates = elements.fetch(:wellplates, [])
+        screens = elements.fetch(:screens, [])
+        serialized_samples = Kaminari.paginate_array(samples).page(page).per(page_size).map{|s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}
+        serialized_reactions = Kaminari.paginate_array(reactions).page(page).per(page_size).map{|s| ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys}
+        serialized_wellplates = Kaminari.paginate_array(wellplates).page(page).per(page_size).map{|s| WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys}
+        serialized_screens = Kaminari.paginate_array(screens).page(page).per(page_size).map{|s| ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys}
 
         {
           samples: {
             elements: serialized_samples,
-            totalElements: elements.fetch(:samples, []).size
+            totalElements: samples.size,
+            page: page,
+            pages: pages(samples.size),
+            per_page: page_size
           },
           reactions: {
             elements: serialized_reactions,
-            totalElements: elements.fetch(:reactions, []).size
+            totalElements: reactions.size,
+            page: page,
+            pages: pages(reactions.size),
+            per_page: page_size
           },
           wellplates: {
             elements: serialized_wellplates,
-            totalElements: elements.fetch(:wellplates, []).size
+            totalElements: wellplates.size,
+            page: page,
+            pages: pages(wellplates.size),
+            per_page: page_size
           },
           screens: {
             elements: serialized_screens,
-            totalElements: elements.fetch(:screens, []).size
+            totalElements: screens.size,
+            page: page,
+            pages: pages(screens.size),
+            per_page: page_size
           }
         }
       end
@@ -43,10 +68,11 @@ module Chemotion
           AllElementSearch.new(arg).search_by_substring
         end
 
+        # TODO only elements of current user
         unless params[:collection_id] == "all"
           scope = scope.by_collection_id(params[:collection_id].to_i)
         end
-        scope
+        scope # joins(:collections).where('collections.user_id = ?', current_user.id).references(:collections)
       end
 
       def elements_by_scope(scope)
@@ -68,7 +94,7 @@ module Chemotion
         when Wellplate
           elements[:wellplates] = scope
           elements[:screens] = scope.flat_map(&:screen).compact.uniq
-          elements[:samples] = scope.flat_map(&:wells).compact.flat_map(&:sample).uniq
+          elements[:samples] = scope.flat_map(&:samples).uniq
           elements[:reactions] = elements[:samples].flat_map(&:reactions).uniq
         when Screen
           elements[:screens] = scope
@@ -88,8 +114,9 @@ module Chemotion
 
     resource :search do
       namespace :all do
-        desc "Return all matched elements and associations"
+        desc "Return all matched elements and associations for substring query"
         params do
+          optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
         end
@@ -100,13 +127,14 @@ module Chemotion
 
           scope = scope_by_search_by_method_arg_and_collection_id(search_by_method, arg, params[:collection_id])
 
-          serialization_by_elements(elements_by_scope(scope))
+          serialization_by_elements_and_page(elements_by_scope(scope), params[:page])
         end
       end
 
       namespace :samples do
         desc "Return samples and associated elements by search selection"
         params do
+          optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
         end
@@ -122,13 +150,14 @@ module Chemotion
             samples = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(samples))
+          serialization_by_elements(elements_by_scope(samples), params[:page])
         end
       end
 
       namespace :reactions do
         desc "Return reactions and associated elements by search selection"
         params do
+          optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
         end
@@ -144,13 +173,14 @@ module Chemotion
             reactions = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(reactions))
+          serialization_by_elements(elements_by_scope(reactions), params[:page])
         end
       end
 
       namespace :wellplates do
         desc "Return wellplates and associated elements by search selection"
         params do
+          optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
         end
@@ -166,13 +196,14 @@ module Chemotion
             wellplates = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(wellplates))
+          serialization_by_elements(elements_by_scope(wellplates), params[:page])
         end
       end
 
       namespace :screens do
         desc "Return wellplates and associated elements by search selection"
         params do
+          optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
         end
@@ -188,7 +219,7 @@ module Chemotion
             screens = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(screens))
+          serialization_by_elements(elements_by_scope(screens), params[:page])
         end
       end
 

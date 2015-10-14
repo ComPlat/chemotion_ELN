@@ -78,7 +78,6 @@ export default class ElementsTable extends React.Component {
     let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
     let currentElementDidChange = ! deepEqual(currentElement, this.state.currentElement);
 
-
     if (elementsDidChange) {
       this.setState({
         elements, page, pages, perPage, totalElements, currentElement

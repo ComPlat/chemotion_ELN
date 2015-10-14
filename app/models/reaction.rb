@@ -81,7 +81,7 @@ class Reaction < ActiveRecord::Base
       composer = SVG::ReactionComposer.new(inchikeys, label: label)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
-      p "**** SVG::ReactionComposer failed ***"
+      Rails.logger.info("**** SVG::ReactionComposer failed ***")
     end
   end
 

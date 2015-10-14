@@ -41,8 +41,4 @@ class Wellplate < ActiveRecord::Base
     Well.where(wellplate_id: id).delete_all
     CollectionsWellplate.where(wellplate_id: id).delete_all
   end
-
-  def samples
-    wells.flat_map(&:sample)
-  end
 end

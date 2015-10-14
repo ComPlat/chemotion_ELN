@@ -24,7 +24,7 @@ export default class Search extends React.Component {
     UIActions.setSearchSelection(selection);
 
     let uiState = UIStore.getState();
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollection.id);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollection.id, 1);
   }
 
   search(query) {
