@@ -94,7 +94,8 @@ module SVG
 
       def generate_filename
         inchikeys = {:starting_materials => @starting_materials, :reactants => @reactants, :products => @products}
-        hash_of_inchikeys = Digest::SHA256.hexdigest((inchikeys.values + [@label]).join)
+        key_base = "#{inchikeys.to_a.flatten.join}#{@label}"
+        hash_of_inchikeys = Digest::SHA256.hexdigest(key_base)
         hash_of_inchikeys + '.svg'
       end
 
