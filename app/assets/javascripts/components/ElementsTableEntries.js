@@ -53,28 +53,29 @@ export default class ElementsTableEntries extends Component {
 
   previewColumn(element) {
     const {ui} = this.props;
-    const classNames = classnames({
+    const classNames = classnames(
+      {
         'molecule': element.type == 'sample'
-      }, {
+      },
+      {
+        'reaction': element.type == 'reaction'
+      },
+      {
         'molecule-selected': element.type == 'sample' && this.isElementSelected(element)
-      }, {
-      'reaction-selected': element.type == 'reaction' && this.isElementSelected(element)
-    });
-    let svgContainer = {
+      },
+      {
+        'reaction-selected': element.type == 'reaction' && this.isElementSelected(element)
+      }
+    );
+
+    let svgContainerStyle = {
       verticalAlign: 'middle',
       textAlign: 'center'
     };
-    if(element.type == 'reaction') {
-      svgContainer = {
-        width: '50%',
-        position: 'relative',
-        padding: 0,
-        paddingBottom: '10%'
-      };
-    }
+
     if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
       return (
-        <td style={svgContainer}>
+        <td style={svgContainerStyle}>
           <SVG src={element.svgPath} className={classNames} key={element.id}/>
         </td>
       );
