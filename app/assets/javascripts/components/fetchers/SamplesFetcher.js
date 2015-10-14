@@ -30,7 +30,8 @@ export default class SamplesFetcher {
             elements: json.samples.map((s) => new Sample(s)),
             totalElements: response.headers.get('X-Total'),
             page: response.headers.get('X-Page'),
-            pages: response.headers.get('X-Total-Pages')
+            pages: response.headers.get('X-Total-Pages'),
+            perPage: response.headers.get('X-Per-Page')
           }
         })
       }).catch((errorMessage) => {

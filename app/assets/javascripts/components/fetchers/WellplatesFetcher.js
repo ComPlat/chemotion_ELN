@@ -28,7 +28,8 @@ export default class WellplatesFetcher {
             elements: json.wellplates.map((w) => new Wellplate(w)),
             totalElements: response.headers.get('X-Total'),
             page: response.headers.get('X-Page'),
-            pages: response.headers.get('X-Total-Pages')
+            pages: response.headers.get('X-Total-Pages'),
+            perPage: response.headers.get('X-Per-Page')
           }
         })
       }).catch((errorMessage) => {
