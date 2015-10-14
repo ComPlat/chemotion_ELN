@@ -13,38 +13,38 @@ module Chemotion
         case type
         when 'sample'
           {
-            sample_name: Sample.by_name(params[:query]).pluck(:name),
-            sum_formula: Molecule.by_formula(params[:query]).map(&:sum_formular),
-            iupac_name: Molecule.by_iupac_name(params[:query]).map(&:iupac_name)
+            sample_name: Sample.by_name(params[:query]).pluck(:name).uniq,
+            sum_formula: Molecule.by_formula(params[:query]).map(&:sum_formular).uniq,
+            iupac_name: Molecule.by_iupac_name(params[:query]).map(&:iupac_name).uniq
           }
         when 'reaction'
           {
-            reaction_name: Reaction.by_name(params[:query]).pluck(:name),
-            sample_name: Sample.with_reactions.by_name(params[:query]).pluck(:name),
-            iupac_name: Molecule.with_reactions.by_iupac_name(params[:query]).map(&:iupac_name)
+            reaction_name: Reaction.by_name(params[:query]).pluck(:name).uniq,
+            sample_name: Sample.with_reactions.by_name(params[:query]).pluck(:name).uniq,
+            iupac_name: Molecule.with_reactions.by_iupac_name(params[:query]).map(&:iupac_name).uniq
           }
         when 'wellplate'
           {
-            wellplate_name: Wellplate.by_name(params[:query]).pluck(:name),
-            sample_name: Sample.with_wellplates.by_name(params[:query]).pluck(:name),
-            iupac_name: Molecule.with_wellplates.by_iupac_name(params[:query]).map(&:iupac_name)
+            wellplate_name: Wellplate.by_name(params[:query]).pluck(:name).uniq,
+            sample_name: Sample.with_wellplates.by_name(params[:query]).pluck(:name).uniq,
+            iupac_name: Molecule.with_wellplates.by_iupac_name(params[:query]).map(&:iupac_name).uniq
           }
         when 'screen'
           {
-            screen_name: Screen.by_name(params[:query]).pluck(:name),
-            conditions: Screen.by_conditions(params[:query]).pluck(:conditions),
-            requirements: Screen.by_requirements(params[:query]).pluck(:requirements)
+            screen_name: Screen.by_name(params[:query]).pluck(:name).uniq,
+            conditions: Screen.by_conditions(params[:query]).pluck(:conditions).uniq,
+            requirements: Screen.by_requirements(params[:query]).pluck(:requirements).uniq
           }
         else
           {
-            sample_name: Sample.by_name(params[:query]).pluck(:name),
-            sum_formula: Molecule.by_formula(params[:query]).map(&:sum_formular),
-            iupac_name: Molecule.by_iupac_name(params[:query]).map(&:iupac_name),
-            reaction_name: Reaction.by_name(params[:query]).pluck(:name),
-            wellplate_name: Wellplate.by_name(params[:query]).pluck(:name),
-            screen_name: Screen.by_name(params[:query]).pluck(:name),
-            conditions: Screen.by_conditions(params[:query]).pluck(:conditions),
-            requirements: Screen.by_requirements(params[:query]).pluck(:requirements)
+            sample_name: Sample.by_name(params[:query]).pluck(:name).uniq,
+            sum_formula: Molecule.by_formula(params[:query]).map(&:sum_formular).uniq,
+            iupac_name: Molecule.by_iupac_name(params[:query]).map(&:iupac_name).uniq,
+            reaction_name: Reaction.by_name(params[:query]).pluck(:name).uniq,
+            wellplate_name: Wellplate.by_name(params[:query]).pluck(:name).uniq,
+            screen_name: Screen.by_name(params[:query]).pluck(:name).uniq,
+            conditions: Screen.by_conditions(params[:query]).pluck(:conditions).uniq,
+            requirements: Screen.by_requirements(params[:query]).pluck(:requirements).uniq
           }
         end
       end
