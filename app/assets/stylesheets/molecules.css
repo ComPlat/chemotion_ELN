@@ -37,11 +37,16 @@
 
 
 .reaction svg {
-  height: 90px;
+  max-height: 90px;
+  width: 90%;
   margin-left: 10px;
 }
 
 .reaction-selected line, .reaction-selected text, .reaction-selected polygon {
   stroke: white;
   fill: white;
+}
+
+.reaction-details svg {
+  width: 100%
 }
