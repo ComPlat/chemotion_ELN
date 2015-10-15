@@ -1,5 +1,6 @@
 import React from 'react';
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Panel, ListGroup, ListGroupItem, Glyphicon} from 'react-bootstrap';
+import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Accordion,
+  Panel, ListGroup, ListGroupItem, Glyphicon, TabbedArea, TabPane} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -10,6 +11,7 @@ import UIActions from './actions/UIActions';
 
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
+import SampleDetailsAnalyses from './SampleDetailsAnalyses';
 import Select from 'react-select';
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
@@ -64,6 +66,15 @@ export default class SampleDetails extends React.Component {
 
   createSample() {
     ElementActions.createSample(this.createSampleObject());
+  }
+
+  handleSampleChanged(sample) {
+    console.log('handleSampleChanged');
+    console.log(sample);
+    window.sample = sample;
+    this.setState({
+      sample
+    });
   }
 
   handleNameChanged(e) {
@@ -222,7 +233,7 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-    if(this.state.sample.id == '_new_') {
+    if(this.state.sample.isNew) {
       this.createSample();
     } else {
       this.updateSample();
@@ -230,7 +241,7 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitLabel() {
-    if(this.state.sample.id == '_new_') {
+    if(this.state.sample.isNew) {
       return "Create";
     } else {
       return "Save";
@@ -508,9 +519,9 @@ export default class SampleDetails extends React.Component {
           />
         <Panel header="Sample Details" bsStyle={sample.isEdited ? 'info' : 'primary'}>
           {this.sampleHeader(sample)}
-
-          <ListGroup fill>
-            <form>
+          <ListGroup>
+          <TabbedArea defaultActiveKey={1}>
+            <TabPane eventKey={0} tab={'Properties'}>
               <ListGroupItem>
                 {this.topSecretCheckbox(sample)}
 
@@ -577,6 +588,16 @@ export default class SampleDetails extends React.Component {
                 </table>
 
               </ListGroupItem>
+            </TabPane>
+            <TabPane eventKey={1} tab={'Analyses'}>
+              <ListGroupItem style={{paddingBottom: 20}}>
+                <SampleDetailsAnalyses
+                  sample={sample}
+                  onSampleChanged={sample => this.handleSampleChanged(sample)}
+                  />
+              </ListGroupItem>
+            </TabPane>
+          </TabbedArea>
               <ListGroupItem>
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Close</Button>
@@ -584,7 +605,6 @@ export default class SampleDetails extends React.Component {
                           disabled={!sampleIsValid}>{this._submitLabel()}</Button>
                 </ButtonToolbar>
               </ListGroupItem>
-            </form>
           </ListGroup>
         </Panel>
       </div>

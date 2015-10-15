@@ -16,11 +16,10 @@ export default class Wellplate extends Element {
   isMethodRestricted(m) {
     return false;
   }
-  
+
   static buildEmpty() {
     return new Wellplate(
       {
-        id: '_new_',
         type: 'wellplate',
         name: 'New Wellplate',
         size: 96,

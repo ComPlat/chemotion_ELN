@@ -24,7 +24,7 @@ export default class ScreenDetails extends Component {
     const {currentCollection} = UIStore.getState();
     const {screen} = this.state;
 
-    if(screen.id == '_new_') {
+    if(screen.isNew) {
       let params = screen;
       params.collection_id = currentCollection.id;
       ElementActions.createScreen(params);
@@ -87,7 +87,7 @@ export default class ScreenDetails extends Component {
     const {screen} = this.state;
     const {id, wellplates, name, collaborator, result, conditions, requirements, description} = screen;
 
-    const submitLabel = (id == '_new_') ? "Create" : "Save";
+    const submitLabel = screen.isNew ? "Create" : "Save";
     return (
       <div key={screen.id}>
         <Panel header="Screen Details" bsStyle={screen.isEdited ? 'info' : 'primary'}>

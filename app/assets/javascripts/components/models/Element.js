@@ -1,3 +1,4 @@
+import uuid from 'uuid';
 import sha256 from 'sha256';
 import _ from 'lodash';
 
@@ -5,7 +6,15 @@ export default class Element {
 
   constructor(args) {
     Object.assign(this, args);
+    if(!this.id) {
+      this.id = Element.buildID();
+      this._new = true
+    }
     this.updateChecksum();
+  }
+
+  static buildID() {
+    return uuid.v1();
   }
 
   get isEdited() {
@@ -17,7 +26,7 @@ export default class Element {
   }
 
   get isNew() {
-    return this.id == '_new_'
+    return this._new == true
   }
 
   updateChecksum() {

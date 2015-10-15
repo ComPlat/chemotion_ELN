@@ -35,7 +35,7 @@ export default class WellplateDetails extends Component {
     const {currentCollection} = UIStore.getState();
     const {wellplate} = this.state;
 
-    if(wellplate.id == '_new_') {
+    if(wellplate.isNew) {
       let params = wellplate;
       params.collection_id = currentCollection.id;
       ElementActions.createWellplate(params);
@@ -71,7 +71,7 @@ export default class WellplateDetails extends Component {
     const {wellplate} = this.state;
     const {wells, name, size, description} = wellplate;
 
-    const submitLabel = (wellplate.id == '_new_') ? "Create" : "Save";
+    const submitLabel = wellplate.isNew ? "Create" : "Save";
 
     const properties = {
       name,

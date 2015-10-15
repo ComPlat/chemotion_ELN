@@ -9,10 +9,9 @@ export default class Reaction extends Element {
   isMethodRestricted(m) {
     return false;
   }
-  
+
   static buildEmpty() {
     return new Reaction({
-      id: '_new_',
       type: 'reaction',
       name: 'New Reaction',
       status: "",

@@ -67,6 +67,6 @@ export default class ScreenProxy extends Screen {
   }
 
   isMethodDisabled(method) {
-    return this.isMethodRestricted(method) == true && this.id != '_new_'
+    return this.isMethodRestricted(method) == true && this.isNew
   }
 }
