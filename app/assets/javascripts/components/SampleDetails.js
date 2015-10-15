@@ -68,6 +68,15 @@ export default class SampleDetails extends React.Component {
     ElementActions.createSample(this.createSampleObject());
   }
 
+  handleSampleChanged(sample) {
+    console.log('handleSampleChanged');
+    console.log(sample);
+    window.sample = sample;
+    this.setState({
+      sample
+    });
+  }
+
   handleNameChanged(e) {
     let sample = this.state.sample;
     sample.name = this.refs.nameInput.getValue();
@@ -582,7 +591,10 @@ export default class SampleDetails extends React.Component {
             </TabPane>
             <TabPane eventKey={1} tab={'Analyses'}>
               <ListGroupItem style={{paddingBottom: 20}}>
-                <SampleDetailsAnalyses sample={{analyses:[]}}/>
+                <SampleDetailsAnalyses
+                  sample={sample}
+                  onSampleChanged={sample => this.handleSampleChanged(sample)}
+                  />
               </ListGroupItem>
             </TabPane>
           </TabbedArea>

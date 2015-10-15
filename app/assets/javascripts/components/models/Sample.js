@@ -2,6 +2,7 @@ import uuid from 'uuid';
 
 import Element from './Element';
 import Molecule from './Molecule';
+import Analysis from './Analysis';
 
 export default class Sample extends Element {
   isMethodDisabled() {
@@ -71,14 +72,6 @@ export default class Sample extends Element {
 
   set is_top_secret(is_top_secret) {
     this._is_top_secret = is_top_secret;
-  }
-
-  get analyses() {
-    return this._analyses;
-  }
-
-  set analyses(analyses) {
-    this._analyses = analyses;
   }
 
   get name() {
@@ -289,6 +282,34 @@ export default class Sample extends Element {
       equivalent: this.equivalent,
       reference: this.reference || false,
       is_new: this.isNew || false,
+    });
+  }
+
+  // -- Analyses --
+
+  get analyses() {
+    return this._analyses || [];
+  }
+
+  set analyses(analyses) {
+    console.log('*** set analyses ***')
+    this._analyses = analyses.map(a => new Analysis(a));
+  }
+
+  addAnalysis(analysis) {
+    console.log('*** add analysis ***')
+    let analyses = this.analyses;
+    analyses.push(analysis);
+    this.analyses = analyses;
+  }
+
+  updateAnalysis(changedAnalysis) {
+    console.log('*** update analysis ***')
+    this._analyses.find(analysis => {
+      if(analysis.id == changedAnalysis.id) {
+        const analysisId = this.analyses.indexOf(analysis);
+        this.analyses[analysisId] = changedAnalysis;
+      }
     });
   }
 };

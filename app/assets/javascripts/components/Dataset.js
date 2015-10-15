@@ -5,7 +5,7 @@ import Functions from './utils/Functions';
 
 export default class Dataset extends Component {
   constructor(props) {
-    super(props);
+    super();
     const {dataset} = props;
     this.state = {
       dataset
@@ -26,24 +26,24 @@ export default class Dataset extends Component {
         dataset.description = value;
         break;
     }
-    this.setState({dataset});
+    this.props.onChange(dataset);
   }
 
-  onDrop(files) {
+  handleFileDrop(files) {
     const {dataset} = this.state;
     dataset.files = dataset.files.concat(files);
-    this.setState({dataset});
+    this.props.onChange(dataset);
   }
 
-  download(file) {
+  handleFileDownload(file) {
     Functions.downloadFile({contents: file.preview, name: file.name});
   }
 
-  removeFile(file) {
+  handleFileRemove(file) {
     const {dataset} = this.state;
     const fileId = dataset.files.indexOf(file);
     dataset.files.splice(fileId, 1);
-    this.setState({dataset});
+    this.props.onChange(dataset);
   }
 
   render() {
@@ -83,9 +83,9 @@ export default class Dataset extends Component {
             {dataset.files.map((file, key) => {
               return (
                 <ListGroupItem key={key}>
-                  <a onClick={() => this.download(file)} style={{cursor: 'pointer'}}>{file.name}</a>
+                  <a onClick={() => this.handleFileDownload(file)} style={{cursor: 'pointer'}}>{file.name}</a>
                   <div className="pull-right">
-                    <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.removeFile(file)}>
+                    <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleFileRemove(file)}>
                       <i className="fa fa-trash-o"></i>
                     </Button>
                   </div>
@@ -93,7 +93,10 @@ export default class Dataset extends Component {
               )
             })}
           </ListGroup>
-          <Dropzone onDrop={files => this.onDrop(files)} style={{height: 50, width: '100%', border: '3px dashed lightgray'}}>
+          <Dropzone
+            onDrop={files => this.handleFileDrop(files)}
+            style={{height: 50, width: '100%', border: '3px dashed lightgray'}}
+            >
             <div style={{textAlign: 'center', paddingTop: 12, color: 'gray'}}>
               Drop Files, or Click to Select.
             </div>

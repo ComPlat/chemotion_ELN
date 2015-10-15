@@ -5,7 +5,7 @@ import AnalysisDatasets from './AnalysisDatasets';
 
 export default class Analysis extends Component {
   constructor(props) {
-    super(props);
+    super();
     const {analysis} = props;
     this.state = {
       analysis
@@ -32,12 +32,7 @@ export default class Analysis extends Component {
         analysis.description = value;
         break;
     }
-    this.props.changeAnalysis(analysis);
-  }
-
-  removeAnalysis() {
-    const {analysis} = this.state;
-    this.props.removeAnalysis(analysis);
+    this.props.onChange(analysis);
   }
 
   render() {
@@ -100,9 +95,12 @@ export default class Analysis extends Component {
         </Col>
         <Col md={4}>
           <label>Datasets</label>
-          <AnalysisDatasets analysis={analysis}/>
+          <AnalysisDatasets
+            analysis={analysis}
+            onChange={analysis => this.props.onChange(analysis)}
+            />
         </Col>
-        <Button bsStyle="danger" onClick={() => this.removeAnalysis()}>Remove</Button>
+        <Button bsStyle="danger" onClick={() => this.props.onRemove(analysis)}>Remove</Button>
       </div>
     );
   }

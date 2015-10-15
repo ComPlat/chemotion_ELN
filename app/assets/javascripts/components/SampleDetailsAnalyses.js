@@ -1,45 +1,55 @@
 import React, {Component} from 'react';
 import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
-import Analysis from './Analysis';
+import AnalysisComponent from './Analysis';
+import Analysis from './models/Analysis';
 
 export default class SampleDetailsAnalyses extends Component {
   constructor(props) {
-    super(props);
-    const {sample} = this.props;
+    super();
+    const {sample} = props;
     this.state = {
       sample,
       activeAnalysis: 0
     };
+    console.log(this.state.sample);
   }
 
-  changeAnalysis(changedAnalysis) {
+  handleChange(analysis) {
     const {sample} = this.state;
-    const {analyses} = sample;
-    analyses.find(analysis => {
-      if(analysis.id == changedAnalysis.id) {
-        const analysisId = analyses.indexOf(analysis);
-        analyses[analysisId] = changedAnalysis;
-      }
-    });
-    this.setState({sample});
+    sample.updateAnalysis(analysis);
+    this.props.onSampleChanged(sample);
   }
 
-  addAnalysis() {
+  handleAdd() {
+    console.log("*** handleAdd ***")
     const {sample} = this.state;
-    //uuid: new-12656512
-    sample.analyses.push({id: '_new_', name: 'new Analysis', datasets: []});
+    // model: sample.createAnalysis()
+
+    let analysis = Analysis.buildEmpty();
+    console.log(analysis);
+
+    sample.addAnalysis(analysis);
+    console.log(sample.analyses);
+
     const newKey = sample.analyses.length - 1;
-    this.setState({sample, activeAnalysis: newKey});
+    this.handleAccordionOpen(newKey);
+
+    this.props.onSampleChanged(sample);
+
+    console.log(sample);
   }
 
-  removeAnalysis(analysis) {
+  handleRemove(analysis) {
     const {sample} = this.state;
+    // sample.removeAnalysis(analysis)
     const analysisId = sample.analyses.indexOf(analysis);
     sample.analyses.splice(analysisId, 1);
-    this.setState({sample});
+    //
+    this.props.onSampleChanged(sample);
+    console.log(this.state.sample);
   }
 
-  openAnalysis(key) {
+  handleAccordionOpen(key) {
     this.setState({activeAnalysis: key});
   }
 
@@ -50,18 +60,18 @@ export default class SampleDetailsAnalyses extends Component {
         <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
           {sample.analyses.map((analysis, key) => {
             return (
-              <Panel header={analysis.name} key={key} onClick={() => this.openAnalysis(key)} eventKey={key}>
-                <Analysis
+              <Panel header={analysis.name} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
+                <AnalysisComponent
                   analysis={analysis}
-                  changeAnalysis={analysis => this.changeAnalysis(analysis)}
-                  removeAnalysis={analysis => this.removeAnalysis(analysis)}
+                  onChange={analysis => this.handleChange(analysis)}
+                  onRemove={analysis => this.handleRemove(analysis)}
                   />
               </Panel>
             )
           })}
         </PanelGroup>
         <div className="pull-right" style={{marginTop: -12}}>
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.addAnalysis()}>
+          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus"></i>
           </Button>
         </div>
