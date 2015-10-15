@@ -102,7 +102,7 @@ export default class ElementsTableEntries extends Component {
     return (
       <tbody>
       {elements.map((element, index) => {
-        const sampleMoleculeName = (element.type == 'sample') ? element.molecule.names[0]: '';
+        const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
         let style = {};
         if (this.isElementSelected(element)) {
           style = {
