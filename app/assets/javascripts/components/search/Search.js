@@ -1,7 +1,7 @@
 import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
-import {Button, Input} from 'react-bootstrap';
+import {Button, Input, DropdownButton, MenuItem} from 'react-bootstrap';
 
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
 import SuggestionActions from '../actions/SuggestionActions';
@@ -45,12 +45,21 @@ export default class Search extends React.Component {
     UIActions.clearSearchSelection();
   }
 
-  handleElementSelection() {
-    let val = this.refs.elementTypeSelect.getValue()
-
+  handleElementSelection(event) {
     this.setState({
-      elementType: val
+      elementType: event
     })
+  }
+
+  renderMenuItems() {
+    let elements = ["all", "samples", "reactions", "wellplates", "screens"];
+    return elements.map((element, index) => {
+      return (
+        <MenuItem key={element} onSelect={() => this.handleElementSelection(element)}>
+          {element}
+        </MenuItem>
+      );
+    });
   }
 
   render() {
@@ -67,27 +76,24 @@ export default class Search extends React.Component {
     let suggestionsAttributes = {
       style: {
         marginTop: 15,
-        width: 300
+        width: 400
       }
     };
 
+    let innerDropdown = 
+      <DropdownButton title={this.state.elementType} style={{width:'100px'}}>
+        {this.renderMenuItems()}
+      </DropdownButton>
+
     return (
       <div className="chemotion-search">
-        <div className="search-elements-select">
-          <Input ref="elementTypeSelect" type="select" onChange={() => this.handleElementSelection()}>
-            <option value="all">All</option>
-            <option value="samples">Samples</option>
-            <option value="reactions">Reactions</option>
-            <option value="wellplates">Wellplates</option>
-            <option value="screens">Screens</option>
-          </Input>
-        </div>
         <div className="search-autocomplete">
           <AutoCompleteInput inputAttributes={inputAttributes}
                              suggestionsAttributes={suggestionsAttributes}
                              suggestions={input => this.search(input)}
                              ref="autoComplete"
-                             onSelectionChange={selection => this.handleSelectionChange(selection)}/>
+                             onSelectionChange={selection => this.handleSelectionChange(selection)}
+                             buttonBefore={innerDropdown}/>
         </div>
       </div>
     );
