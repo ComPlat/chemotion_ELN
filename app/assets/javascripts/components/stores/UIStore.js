@@ -125,11 +125,12 @@ class UIStore {
 
   handleSelectCollection(collection) {
     let state = this.state;
-    let hasChanged = true//(state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
+    let hasChanged = (!state.currentCollection || state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
 
     if(hasChanged) {
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;
+
       ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
       ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
       ElementActions.fetchWellplatesByCollectionId(collection.id, state.pagination);

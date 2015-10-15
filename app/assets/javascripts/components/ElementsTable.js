@@ -14,14 +14,11 @@ import deepEqual from 'deep-equal';
 export default class ElementsTable extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       elements: [],
-      ui: {},
-      // Pagination
-      activePage: this.props.activePage || 1,
-      numberOfPages: 0,
-      pageSize: 5,
-      currentElement: null
+      currentElement: null,
+      ui: {}
     }
   }
 
@@ -29,6 +26,7 @@ export default class ElementsTable extends React.Component {
     UIStore.getState();
     ElementStore.listen(this.onChange.bind(this));
     UIStore.listen(this.onChangeUI.bind(this));
+    this.initializePagination();
   }
 
   componentWillUnmount() {
@@ -36,22 +34,17 @@ export default class ElementsTable extends React.Component {
     UIStore.unlisten(this.onChangeUI.bind(this));
   }
 
-  onChangeUI(state) {
+  initializePagination() {
     const type = this.props.type;
-    const pagination = state.pagination && state.pagination[type];
-    if(pagination) {
-      const {page, perPage} = pagination;
-      if (page) {
-        this.setState({
-          activePage: parseInt(page),
-          pageSize: parseInt(perPage)
-        });
-      }
-    }
+    const {page, pages, perPage, totalElements} = this.state;
 
+    this.setState({
+      page, pages, perPage, totalElements
+    });
 
-    //console.log('ElementsType: ' + type + '#activePage ' + page);
+  }
 
+  onChangeUI(state) {
     let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
 
     // check if element details of any type are open at the moment
@@ -73,56 +66,52 @@ export default class ElementsTable extends React.Component {
 
   onChange(state) {
     let type = this.props.type + 's';
+    let elementsState = state.elements[type];
 
-    const elements = state.elements[type].elements;
-    const totalElements = state.elements[type].totalElements;
+    const {elements, page, pages, perPage, totalElements} = elementsState;
 
     let currentElement;
     if(!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
-    //console.log(type + ' ' + elements)
     let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
     let currentElementDidChange = ! deepEqual(currentElement, this.state.currentElement);
 
-    let page = this.state.activePage;
-
-    let numberOfPages = Math.ceil(totalElements / this.state.pageSize);
-    if (page > numberOfPages) {
-      page = 1
-    }
 
     if (elementsDidChange) {
       this.setState({
-        elements: elements,
-        currentElement: currentElement,
-        numberOfPages: numberOfPages,
-        activePage: page
-      });
+        elements, page, pages, perPage, totalElements, currentElement
+      }),
+      () => this.initializePagination()
     }
     else if (currentElementDidChange) {
       this.setState({
-        currentElement: currentElement,
-        activePage: page
-      });
+        page, pages, perPage, totalElements, currentElement
+      }),
+      () => this.initializePagination()
     }
   }
 
   handlePaginationSelect(event, selectedEvent) {
     const {type} = this.props;
     this.setState({
-      activePage: selectedEvent.eventKey
-    }, () => UIActions.setPagination({type, page: this.state.activePage}));
+      page: selectedEvent.eventKey
+    }, () => UIActions.setPagination({type, page: this.state.page}));
   }
 
   pagination() {
-    const {numberOfPages, activePage} = this.state;
-    if(numberOfPages > 1) {
+    const {page, pages} = this.state;
+
+    if(pages > 1) {
       return <Pagination
-        activePage={activePage}
-        items={numberOfPages}
-        style={{float: 'left'}}
+        prev
+        next
+        first
+        last
+        maxButtons={10}
+        activePage={page}
+        items={pages}
         onSelect={(event, selectedEvent) => this.handlePaginationSelect(event, selectedEvent)}/>
     }
   }
