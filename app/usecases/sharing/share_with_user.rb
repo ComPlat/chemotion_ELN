@@ -18,7 +18,7 @@ module Usecases
           # Reactions and Wellplates have associated Samples
           associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@user.id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@user.id, wellplate_ids).map(&:id)
           # Screens have associated Wellplates
-          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@user.id, wellplate_ids).map(&:id)
+          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@user.id, screen_ids).map(&:id)
 
           sample_ids = (sample_ids + associated_sample_ids).uniq
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq

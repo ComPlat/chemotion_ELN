@@ -18,7 +18,6 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
   let(:params) {
     {
-      # TODO parent of collection?
       collection_attributes: {
         user_id: user.id,
         label: 'test',
@@ -52,6 +51,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
     CollectionsScreen.create!(collection: collection, screen: screen_2)
     ReactionsProductSample.create!(reaction: reaction_1, sample: sample_a1)
     ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_a1)
+    ScreensWellplate.create!(screen: screen_1, wellplate: wellplate_a)
   end
 
   describe 'execute!' do
@@ -82,7 +82,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
     it 'creates wellplate associations according to given params' do
       associated_wellplate_ids = Collection.find_by(label: 'test').wellplate_ids
-      expect(associated_wellplate_ids).to match_array([wellplate_1.id, wellplate_2.id, wellplate_a])
+      expect(associated_wellplate_ids).to match_array([wellplate_1.id, wellplate_2.id, wellplate_a.id])
     end
 
     it 'creates screen associations according to given params' do

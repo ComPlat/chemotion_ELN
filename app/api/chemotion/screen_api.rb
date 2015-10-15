@@ -55,25 +55,25 @@ module Chemotion
 
         put do
           attributes = {
-              name: params[:name],
-              collaborator: params[:collaborator],
-              requirements: params[:requirements],
-              conditions: params[:conditions],
-              result: params[:result],
-              description: params[:description]
+            name: params[:name],
+            collaborator: params[:collaborator],
+            requirements: params[:requirements],
+            conditions: params[:conditions],
+            result: params[:result],
+            description: params[:description]
           }
           screen = Screen.find(params[:id])
           screen.update(attributes)
+          old_wellplate_ids = screen.wellplates.pluck(:id)
 
-          Wellplate.all.each do |wellplate|
-            if (params[:wellplate_ids].include? wellplate.id)
-              wellplate.update(screen_id: params[:id])
-            elsif (params[:id] == wellplate.screen_id)
-              # remove wellplate from screen
-              wellplate.update(screen_id: nil)
-            end
+          params[:wellplate_ids].each do |id|
+            ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: params[:id])
           end
-          screen
+
+          (old_wellplate_ids - params[:wellplate_ids]).each do |id|
+            ScreensWellplate.where(wellplate_id: id, screen_id: params[:id]).destroy_all
+          end
+          {screen: ElementPermissionProxy.new(current_user, screen).serialized}
         end
       end
 
@@ -102,10 +102,8 @@ module Chemotion
         collection = Collection.find(params[:collection_id])
         CollectionsScreen.create(screen: screen, collection: collection)
 
-        Wellplate.all.each do |wellplate|
-          if (params[:wellplate_ids].include? wellplate.id)
-            wellplate.update(screen_id: screen.id)
-          end
+        params[:wellplate_ids].each do |id|
+          ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: params[:id])
         end
         screen
       end

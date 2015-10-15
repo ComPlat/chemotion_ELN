@@ -175,9 +175,9 @@ CollectionsScreen.create!(screen: screen_1, collection: subcollection_1)
 # --- Wellplates ---
 
 # create some wellplates
-wellplate_1 = Wellplate.create!(screen: screen_1, name: 'Wellplate 1', size: 96, description: "lorem ipsum")
-wellplate_2 = Wellplate.create!(screen: screen_1, name: 'Wellplate 2', size: 96, description: "")
-wellplate_3 = Wellplate.create!(screen: screen_2, name: 'Wellplate 3', size: 96, description: "")
+wellplate_1 = Wellplate.create!(name: 'Wellplate 1', size: 96, description: "lorem ipsum")
+wellplate_2 = Wellplate.create!(name: 'Wellplate 2', size: 96, description: "")
+wellplate_3 = Wellplate.create!(name: 'Wellplate 3', size: 96, description: "")
 wellplate_4 = Wellplate.create!(name: 'Wellplate 4', size: 96, description: "")
 
 well_1 = Well.create!(sample: sample_1, wellplate: wellplate_1)
@@ -186,6 +186,10 @@ well_3 = Well.create(sample: sample_2, wellplate: wellplate_1)
 well_4 = Well.create(sample: sample_3, wellplate: wellplate_1)
 well_5 = Well.create(sample: sample_4, wellplate: wellplate_1)
 well_6 = Well.create(sample: sample_5, wellplate: wellplate_1)
+
+ScreensWellplate.create!(screen: screen_1, wellplate: wellplate_1)
+ScreensWellplate.create!(screen: screen_2, wellplate: wellplate_1)
+ScreensWellplate.create!(screen: screen_2, wellplate: wellplate_2)
 
 # associate wellplates with collections
 CollectionsWellplate.create!(wellplate: wellplate_1, collection: collection_1)
