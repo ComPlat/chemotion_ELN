@@ -520,7 +520,7 @@ export default class SampleDetails extends React.Component {
         <Panel header="Sample Details" bsStyle={sample.isEdited ? 'info' : 'primary'}>
           {this.sampleHeader(sample)}
           <ListGroup>
-          <TabbedArea defaultActiveKey={1}>
+          <TabbedArea defaultActiveKey={0}>
             <TabPane eventKey={0} tab={'Properties'}>
               <ListGroupItem>
                 {this.topSecretCheckbox(sample)}
