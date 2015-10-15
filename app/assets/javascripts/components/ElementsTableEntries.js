@@ -102,6 +102,7 @@ export default class ElementsTableEntries extends Component {
     return (
       <tbody>
       {elements.map((element, index) => {
+        const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
         let style = {};
         if (this.isElementSelected(element)) {
           style = {
@@ -116,6 +117,7 @@ export default class ElementsTableEntries extends Component {
             </td>
             <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
               {element.name}<br/>
+              {sampleMoleculeName}
               <ElementCollectionLabels element={element} key={element.id}/>
               {this.topSecretIcon(element)}
             </td>
