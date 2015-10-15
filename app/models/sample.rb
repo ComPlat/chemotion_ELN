@@ -67,6 +67,14 @@ class Sample < ActiveRecord::Base
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
 
+  def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
+    (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq
+  end
+
+  def self.associated_by_user_id_and_wellplate_ids(user_id, wellplate_ids)
+    for_user(user_id).by_wellplate_ids(wellplate_ids)
+  end
+
   def reactions
     reactions_as_starting_material + reactions_as_reactant + reactions_as_product
   end

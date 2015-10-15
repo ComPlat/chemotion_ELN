@@ -10,23 +10,36 @@ module Usecases
         ActiveRecord::Base.transaction do
           c = Collection.create(@params.fetch(:collection_attributes, {}))
 
+          sample_ids = @params.fetch(:sample_ids, [])
+          reaction_ids =  @params.fetch(:reaction_ids, [])
+          wellplate_ids = @params.fetch(:wellplate_ids, [])
+          screen_ids = @params.fetch(:screen_ids, [])
+
+          # Reactions and Wellplates have associated Samples
+          associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@user.id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@user.id, wellplate_ids).map(&:id)
+          # Screens have associated Wellplates
+          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@user.id, screen_ids).map(&:id)
+
+          sample_ids = (sample_ids + associated_sample_ids).uniq
+          wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq
+
           if @params[:current_collection_id]
             c.update(parent: Collection.find(@params[:current_collection_id]))
           end
 
-          @params.fetch(:sample_ids, []).each do |sample_id|
+          sample_ids.each do |sample_id|
             CollectionsSample.create(collection_id: c.id, sample_id: sample_id)
           end
 
-          @params.fetch(:reaction_ids, []).each do |reaction_id|
+          reaction_ids.each do |reaction_id|
             CollectionsReaction.create(collection_id: c.id, reaction_id: reaction_id)
           end
 
-          @params.fetch(:wellplate_ids, []).each do |wellplate_id|
+          wellplate_ids.each do |wellplate_id|
             CollectionsWellplate.create(collection_id: c.id, wellplate_id: wellplate_id)
           end
 
-          @params.fetch(:screen_ids, []).each do |screen_id|
+          screen_ids.each do |screen_id|
             CollectionsScreen.create(collection_id: c.id, screen_id: screen_id)
           end
 

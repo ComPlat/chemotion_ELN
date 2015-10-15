@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151012130019) do
+ActiveRecord::Schema.define(version: 20151015161007) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -201,6 +201,14 @@ ActiveRecord::Schema.define(version: 20151012130019) do
     t.datetime "updated_at",   null: false
   end
 
+  create_table "screens_wellplates", force: :cascade do |t|
+    t.integer "screen_id"
+    t.integer "wellplate_id"
+  end
+
+  add_index "screens_wellplates", ["screen_id"], name: "index_screens_wellplates_on_screen_id", using: :btree
+  add_index "screens_wellplates", ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
+
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false
     t.string   "encrypted_password",     default: "", null: false
@@ -228,7 +236,6 @@ ActiveRecord::Schema.define(version: 20151012130019) do
     t.string   "description"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
-    t.integer  "screen_id"
   end
 
   create_table "wells", force: :cascade do |t|
