@@ -11,7 +11,7 @@ export default class Sample extends Element {
   isMethodRestricted(m) {
     return false;
   }
-  
+
   get isNew() {
     return super.isNew || this._split
   }
@@ -164,15 +164,15 @@ export default class Sample extends Element {
         return amount_mg;
         break;
       case 'ml':
-        let molecule_density = this.molecule_density;
+        let molecule_density = this.molecule_density || 1.0;
         if(molecule_density) {
-          return amount_mg / this.molecule_density;
+          return amount_mg / molecule_density;
           break;
         }
       case 'mmol':
         let molecule_molecular_weight = this.molecule_molecular_weight
         if (molecule_molecular_weight) {
-          return amount_mg * this.purity / molecule_molecular_weight;
+          return amount_mg * (this.purity || 1.0) / molecule_molecular_weight;
           break;
         }
       default:
@@ -186,10 +186,10 @@ export default class Sample extends Element {
         return amount_value;
         break;
       case 'ml':
-        return amount_value * this.molecule_density;
+        return amount_value * (this.molecule_density || 1.0);
         break;
       case 'mmol':
-        return amount_value / this.purity * this.molecule_molecular_weight;
+        return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
         break;
       default:
         return amount_value
