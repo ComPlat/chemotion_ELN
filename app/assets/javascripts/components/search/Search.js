@@ -9,6 +9,7 @@ import SuggestionStore from '../stores/SuggestionStore';
 import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
+import UserStore from '../stores/UserStore';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -24,11 +25,12 @@ export default class Search extends React.Component {
     UIActions.setSearchSelection(selection);
 
     let uiState = UIStore.getState();
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollection.id);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollection.id, 1);
   }
 
   search(query) {
-    let promise = SuggestionsFetcher.fetchSuggestions('/api/v1/suggestions/' + this.state.elementType + '/', query);
+    let userState = UserStore.getState();
+    let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser('/api/v1/suggestions/' + this.state.elementType + '/', query, userState.currentUser.id);
     return promise;
   }
 

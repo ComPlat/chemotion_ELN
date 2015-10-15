@@ -111,7 +111,7 @@ Aviator.setRoutes({
         } else {
           console.log("generateEmptyReaction")
           ElementActions.generateEmptyReaction()
-        }
+        }    
       }
     },
     '/:reactionID': 'show',
@@ -125,6 +125,7 @@ Aviator.setRoutes({
         } else {
           ElementActions.fetchWellplateById(wellplateId);
         }
+        //UIActions.selectTab(3)
       }
     },
     '/:wellplateId': 'showOrNew'

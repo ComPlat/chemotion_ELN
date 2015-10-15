@@ -1,9 +1,8 @@
 import 'whatwg-fetch';
 
 export default class SuggestionsFetcher {
-  static fetchSuggestions(endpoint, query) {
-    // TODO: scope on current collection?
-    let promise = fetch(endpoint + query + '.json', {
+  static fetchSuggestionsForCurrentUser(endpoint, query, userId) {
+    let promise = fetch(endpoint + query + '.json?user_id=' + userId, {
         credentials: 'same-origin'
       }).then(response => {
         return response.json();

@@ -23,6 +23,8 @@ class Wellplate < ActiveRecord::Base
                                         using: {trigram: {threshold:  0.0001}}
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_sample_ids, -> (ids) { joins(:samples).where('samples.id in (?)', ids) }
+  scope :by_screen_ids, -> (ids) { where('screen_id in (?)', ids) }
 
   has_many :collections_wellplates
   has_many :collections, through: :collections_wellplates
@@ -40,9 +42,5 @@ class Wellplate < ActiveRecord::Base
     # TODO: Check this error and consider another solution
     Well.where(wellplate_id: id).delete_all
     CollectionsWellplate.where(wellplate_id: id).delete_all
-  end
-
-  def samples
-    wells.flat_map(&:sample)
   end
 end

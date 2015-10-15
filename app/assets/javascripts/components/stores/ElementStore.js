@@ -14,28 +14,28 @@ class ElementStore {
           totalElements: 0,
           page: null,
           pages: null,
-          per_page: null
+          perPage: null
         },
         reactions: {
           elements: [],
           totalElements: 0,
           page: null,
           pages: null,
-          per_page: null
+          perPage: null
         },
         wellplates: {
           elements: [],
           totalElements: 0,
           page: null,
           pages: null,
-          per_page: null
+          perPage: null
         },
         screens: {
           elements: [],
           totalElements: 0,
           page: null,
           pages: null,
-          per_page: null
+          perPage: null
         }
       },
       currentElement: null
@@ -71,6 +71,7 @@ class ElementStore {
       handleCreateScreen: ElementActions.createScreen,
 
       handleUnselectCurrentElement: UIActions.deselectAllElements,
+      // FIXME ElementStore listens to UIActions?
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
       handleGenerateEmptyElement: [ElementActions.generateEmptyWellplate, ElementActions.generateEmptyScreen, ElementActions.generateEmptySample, ElementActions.generateEmptyReaction],
@@ -265,19 +266,29 @@ class ElementStore {
     this.waitFor(UIStore.dispatchToken);
     let uiState = UIStore.getState();
     let page = uiState[type].page;
-    switch (type) {
-      case 'sample':
-        ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page});
-        break;
-      case 'reaction':
-        ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page});
-        break;
-      case 'wellplate':
-        ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id, {page: page});
-        break;
-      case 'screen':
-        ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id, {page: page});
-        break;
+
+    this.state.elements[type+'s'].page = page;
+    let currentSearchSelection = uiState.currentSearchSelection;
+
+    // TODO if page changed -> fetch
+    // if there is a currentSearchSelection we have to execute the respective action
+    if(currentSearchSelection != null) {
+      ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, uiState.currentCollection.id, page);
+    } else {
+      switch (type) {
+        case 'sample':
+          ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page});
+          break;
+        case 'reaction':
+          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page});
+          break;
+        case 'wellplate':
+          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id, {page: page});
+          break;
+        case 'screen':
+          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id, {page: page});
+          break;
+      }
     }
   }
 }

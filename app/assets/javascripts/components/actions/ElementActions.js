@@ -24,8 +24,8 @@ class ElementActions {
 
   // -- Search --
 
-  fetchBasedOnSearchSelectionAndCollection(selection, collectionId) {
-    SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId)
+  fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage) {
+    SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {

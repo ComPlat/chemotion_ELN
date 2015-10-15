@@ -15,6 +15,7 @@ class Screen < ActiveRecord::Base
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
   scope :by_conditions, ->(query) { where('conditions ILIKE ?', "%#{query}%") }
   scope :by_requirements, ->(query) { where('requirements ILIKE ?', "%#{query}%") }
+  scope :by_wellplate_ids, ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
 
   has_many :collections_screens
   has_many :collections, through: :collections_screens

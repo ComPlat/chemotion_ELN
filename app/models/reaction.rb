@@ -33,6 +33,9 @@ class Reaction < ActiveRecord::Base
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
+  scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
+  scope :by_product_ids, ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
 
   has_many :collections_reactions
   has_many :collections, through: :collections_reactions
@@ -81,7 +84,7 @@ class Reaction < ActiveRecord::Base
       composer = SVG::ReactionComposer.new(inchikeys, label: label)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
-      p "**** SVG::ReactionComposer failed ***"
+      Rails.logger.info("**** SVG::ReactionComposer failed ***")
     end
   end
 

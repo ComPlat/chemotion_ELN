@@ -63,7 +63,6 @@ class UIStore {
   }
 
   handleSelectTab(tab) {
-    console.log('handleSelectTab: ' + tab)
     this.state.currentTab = tab;
   }
 
@@ -138,6 +137,7 @@ class UIStore {
     }
   }
 
+  // FIXME this method is also defined in ElementStore
   handleSetPagination(pagination) {
     let {type, page} = pagination;
     this.state[type].page = page;
