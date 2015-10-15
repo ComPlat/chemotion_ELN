@@ -37,6 +37,10 @@ class Wellplate < ActiveRecord::Base
 
   before_destroy :destroy_associations
 
+  def self.associated_by_user_id_and_screen_ids(user_id, screen_ids)
+    for_user(user_id).by_screen_ids(screen_ids)
+  end
+
   def destroy_associations
     # WARNING: Using delete_all instead of destroy_all due to PG Error
     # TODO: Check this error and consider another solution

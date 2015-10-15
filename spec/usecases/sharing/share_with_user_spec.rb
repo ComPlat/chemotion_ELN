@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Usecases::Sharing::ShareWithUser do
   let(:user)        { create(:user) }
+  let(:collection)  { create(:collection, user: user) }
   let(:sample_1)    { create(:sample) }
   let(:sample_2)    { create(:sample) }
   let(:reaction_1)  { create(:reaction) }
@@ -10,6 +11,10 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
   let(:wellplate_2) { create(:wellplate) }
   let(:screen_1)    { create(:screen) }
   let(:screen_2)    { create(:screen) }
+  # associated elements
+  let(:sample_a1)   { create(:sample) }
+  let(:wellplate_a) { create(:wellplate) }
+  let(:wellplate_b) { create(:wellplate) }
 
   let(:params) {
     {
@@ -33,6 +38,22 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
   subject { described_class.new(params) }
 
+  before do
+    CollectionsSample.create!(collection: collection, sample: sample_1)
+    CollectionsSample.create!(collection: collection, sample: sample_2)
+    CollectionsSample.create!(collection: collection, sample: sample_a1)
+    CollectionsReaction.create!(collection: collection, reaction: reaction_1)
+    CollectionsReaction.create!(collection: collection, reaction: reaction_2)
+    CollectionsWellplate.create!(collection: collection, wellplate: wellplate_1)
+    CollectionsWellplate.create!(collection: collection, wellplate: wellplate_2)
+    CollectionsWellplate.create!(collection: collection, wellplate: wellplate_a)
+    CollectionsWellplate.create!(collection: collection, wellplate: wellplate_b)
+    CollectionsScreen.create!(collection: collection, screen: screen_1)
+    CollectionsScreen.create!(collection: collection, screen: screen_2)
+    ReactionsProductSample.create!(reaction: reaction_1, sample: sample_a1)
+    ReactionsReactantSample.create!(reaction: reaction_2, sample: sample_a1)
+  end
+
   describe 'execute!' do
     before { subject.execute! }
 
@@ -51,7 +72,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
     it 'creates sample associations according to given params' do
       associated_sample_ids = Collection.find_by(label: 'test').sample_ids
-      expect(associated_sample_ids).to match_array([sample_1.id,sample_2.id])
+      expect(associated_sample_ids).to match_array([sample_1.id,sample_2.id, sample_a1.id])
     end
 
     it 'creates reaction associations according to given params' do
@@ -61,7 +82,7 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
 
     it 'creates wellplate associations according to given params' do
       associated_wellplate_ids = Collection.find_by(label: 'test').wellplate_ids
-      expect(associated_wellplate_ids).to match_array([wellplate_1.id, wellplate_2.id])
+      expect(associated_wellplate_ids).to match_array([wellplate_1.id, wellplate_2.id, wellplate_a])
     end
 
     it 'creates screen associations according to given params' do
