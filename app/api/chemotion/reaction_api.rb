@@ -84,8 +84,8 @@ module Chemotion
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
         optional :observation, type: String
-        optional :purification, type: Array, default: []
-        optional :dangerous_products, type: Array, default: []
+        optional :purification, type: Array[String]
+        optional :dangerous_products, type: Array[String]
         optional :solvents, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
@@ -125,8 +125,8 @@ module Chemotion
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
         optional :observation, type: String
-        optional :purification, type: Array, default: []
-        optional :dangerous_products, type: Array, default: []
+        optional :purification, type: Array[String]
+        optional :dangerous_products, type: Array[String]
         optional :solvents, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
@@ -142,7 +142,14 @@ module Chemotion
       # end
 
       post do
+        ap params
+
+
         attributes = declared(params, include_missing: false).symbolize_keys
+
+        ap attributes
+
+
         materials = attributes.delete(:materials)
         collection_id = attributes.delete(:collection_id)
 

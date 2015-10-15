@@ -54,10 +54,12 @@ class Reaction < ActiveRecord::Base
   before_destroy :destroy_associations
 
   before_save :update_svg_file!
+  before_save :cleanup_array_fields
 
   def destroy_associations
     # WARNING: Using delete_all instead of destroy_all due to PG Error
     # TODO: Check this error and consider another solution
+    # TODO: define dependent destroy hooks
     Literature.where(reaction_id: id).delete_all
     CollectionsReaction.where(reaction_id: id).delete_all
     ReactionsProductSample.where(reaction_id: id).delete_all
@@ -81,6 +83,11 @@ class Reaction < ActiveRecord::Base
     rescue Exception => e
       p "**** SVG::ReactionComposer failed ***"
     end
+  end
+
+  def cleanup_array_fields
+    self.dangerous_products = dangerous_products.reject(&:blank?)
+    self.purification = purification.reject(&:blank?)
   end
 
 end
