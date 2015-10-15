@@ -126,7 +126,6 @@ class UIStore {
     let state = this.state;
     let hasChanged = (!state.currentCollection || state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
 
-    // TODO state.pagination does not make sense
     if(hasChanged) {
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;

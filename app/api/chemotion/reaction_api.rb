@@ -137,19 +137,8 @@ module Chemotion
         requires :materials, type: Hash
       end
 
-      # before do
-      #   error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction).create?
-      # end
-
       post do
-        ap params
-
-
         attributes = declared(params, include_missing: false).symbolize_keys
-
-        ap attributes
-
-
         materials = attributes.delete(:materials)
         collection_id = attributes.delete(:collection_id)
 
