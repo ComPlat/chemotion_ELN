@@ -98,6 +98,26 @@ export default class ElementsTableEntries extends Component {
     }
   }
 
+  reactionStatus(element) {
+
+    if (element.type == 'reaction') {
+      switch (element.status) {
+        case "Successful":
+          return (<a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>)
+          break;
+        case "Planned":
+          return (<a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>)
+          break;
+        case "Not Successful":
+          return (<a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>)
+          break;
+
+        default:
+          break;
+      }
+    }
+  }
+
   render() {
     const {elements} = this.props;
     return (
@@ -119,6 +139,7 @@ export default class ElementsTableEntries extends Component {
             <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
               {element.name}<br/>
               {sampleMoleculeName}
+              {element.name} {this.reactionStatus(element)}<br/>
               <ElementCollectionLabels element={element} key={element.id}/>
               {this.topSecretIcon(element)}
             </td>
