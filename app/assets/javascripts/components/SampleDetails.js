@@ -233,7 +233,7 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-    if(this.state.sample.id == '_new_') {
+    if(this.state.sample.isNew) {
       this.createSample();
     } else {
       this.updateSample();
@@ -241,7 +241,7 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitLabel() {
-    if(this.state.sample.id == '_new_') {
+    if(this.state.sample.isNew) {
       return "Create";
     } else {
       return "Save";

@@ -9,10 +9,9 @@ export default class Screen extends Element {
   isMethodRestricted(m) {
     return false;
   }
-  
+
   static buildEmpty() {
     return new Screen({
-      id: '_new_',
       type: 'screen',
       name: 'New Screen',
       collaborator: '',

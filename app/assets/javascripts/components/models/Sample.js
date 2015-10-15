@@ -1,5 +1,3 @@
-import uuid from 'uuid';
-
 import Element from './Element';
 import Molecule from './Molecule';
 import Analysis from './Analysis';
@@ -21,7 +19,7 @@ export default class Sample extends Element {
     Sample.counter += 1;
     let splitSample = new Sample(sample);
     splitSample.parent_id = sample.id;
-    splitSample.id = uuid.v1();
+    splitSample.id = Element.buildID();
     splitSample.name += "-" + Sample.counter;
     splitSample.created_at = null;
     splitSample.updated_at = null;
@@ -49,7 +47,6 @@ export default class Sample extends Element {
 
   static buildEmpty() {
     return new Sample({
-      id: '_new_',
       type: 'sample',
       name: 'New Sample',
       external_label: '',

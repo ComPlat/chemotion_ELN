@@ -4,7 +4,6 @@ import Dataset from './Dataset';
 export default class Analysis extends Element {
   static buildEmpty() {
     return new Analysis({
-      id: '_new_',
       name: 'new Analysis',
       type: '',
       status: '',

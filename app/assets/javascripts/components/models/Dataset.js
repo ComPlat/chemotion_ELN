@@ -4,7 +4,6 @@ import Element from './Element';
 export default class Dataset extends Element {
   static buildEmpty() {
     return new Dataset({
-      id: '_new_',
       name: 'new Dataset',
       instrument: '',
       description: '',

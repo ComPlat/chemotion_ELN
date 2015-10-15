@@ -17,7 +17,7 @@ export default class WellplateProxy extends Wellplate {
     })
 
     let methodsWithGet = [
-    
+
     ]
 
     methodsWithGet.forEach((m) => {
@@ -65,6 +65,6 @@ export default class WellplateProxy extends Wellplate {
   }
 
   isMethodDisabled(method) {
-    return this.isMethodRestricted(method) == true && this.id != '_new_'
+    return this.isMethodRestricted(method) == true && this.isNew
   }
 }
