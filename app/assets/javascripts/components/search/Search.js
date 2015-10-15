@@ -74,12 +74,12 @@ export default class Search extends React.Component {
     let suggestionsAttributes = {
       style: {
         marginTop: 15,
-        width: 300
+        width: 400
       }
     };
 
     let innerDropdown = 
-      <DropdownButton title={this.state.elementType}>
+      <DropdownButton title={this.state.elementType} style={{width:'100px'}}>
         {this.renderMenuItems()}
       </DropdownButton>
 
