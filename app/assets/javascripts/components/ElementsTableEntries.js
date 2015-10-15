@@ -70,17 +70,18 @@ export default class ElementsTableEntries extends Component {
 
     let svgContainerStyle = {
       verticalAlign: 'middle',
-      textAlign: 'center'
+      textAlign: 'center',
+      cursor: 'pointer'
     };
 
     if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
       return (
-        <td style={svgContainerStyle}>
+        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.id}/>
         </td>
       );
     } else {
-      return <td style={{display:'none'}}></td>;
+      return <td style={{display:'none', cursor: 'pointer'}} onClick={e => this.showDetails(element)}/>;
     }
   }
 
