@@ -106,10 +106,10 @@ module Chemotion
         end
 
         before do
-          samples = Sample.for_ui_state(params[:elements_filter][:sample])
-          reactions = Reaction.for_ui_state(params[:elements_filter][:reaction])
-          wellplates = Wellplate.for_ui_state(params[:elements_filter][:wellplate])
-          screens = Screen.for_ui_state(params[:elements_filter][:screen])
+          samples = Sample.for_user(current_user.id).for_ui_state(params[:elements_filter][:sample])
+          reactions = Reaction.for_user(current_user.id).for_ui_state(params[:elements_filter][:reaction])
+          wellplates = Wellplate.for_user(current_user.id).for_ui_state(params[:elements_filter][:wellplate])
+          screens = Screen.for_user(current_user.id).for_ui_state(params[:elements_filter][:screen])
 
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
@@ -160,7 +160,7 @@ module Chemotion
           current_collection_id = ui_state[:currentCollectionId]
           collection_id = params[:collection_id]
 
-          sample_ids = Sample.for_ui_state_with_collection(
+          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:sample],
             CollectionsSample,
             current_collection_id
@@ -175,7 +175,7 @@ module Chemotion
             CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
           }
 
-          reaction_ids = Reaction.for_ui_state_with_collection(
+          reaction_ids = Reaction.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:reaction],
             CollectionsReaction,
             current_collection_id
@@ -190,7 +190,7 @@ module Chemotion
             CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
           }
 
-          wellplate_ids = Wellplate.for_ui_state_with_collection(
+          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:wellplate],
             CollectionsWellplate,
             current_collection_id
@@ -205,7 +205,7 @@ module Chemotion
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           }
 
-          screen_ids = Screen.for_ui_state_with_collection(
+          screen_ids = Screen.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:screen],
             CollectionsScreen,
             current_collection_id
@@ -231,7 +231,7 @@ module Chemotion
           collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollectionId]
 
-          Sample.for_ui_state_with_collection(
+          Sample.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:sample],
             CollectionsSample,
             current_collection_id
@@ -239,7 +239,7 @@ module Chemotion
             CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
           end
 
-          Reaction.for_ui_state_with_collection(
+          Reaction.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:reaction],
             CollectionsReaction,
             current_collection_id
@@ -247,7 +247,7 @@ module Chemotion
             CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
           end
 
-          Wellplate.for_ui_state_with_collection(
+          Wellplate.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:wellplate],
             CollectionsWellplate,
             current_collection_id
@@ -255,7 +255,7 @@ module Chemotion
             CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
           end
 
-          Screen.for_ui_state_with_collection(
+          Screen.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:screen],
             CollectionsScreen,
             current_collection_id

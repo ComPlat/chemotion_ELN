@@ -14,11 +14,11 @@ module Chemotion
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Reaction.for_ui_state(params[:ui_state])).destroy?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
         end
 
         delete do
-          Reaction.for_ui_state(params[:ui_state]).destroy_all
+          Reaction.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
         end
       end
 
@@ -72,7 +72,7 @@ module Chemotion
         end
 
         delete do
-          Reaction.for_ui_state(params[:ui_state]).destroy_all
+          Reaction.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
         end
       end
 

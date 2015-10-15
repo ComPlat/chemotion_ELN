@@ -15,11 +15,11 @@ module Chemotion
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Sample.for_ui_state(params[:ui_state])).destroy?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Sample.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
         end
 
         delete do
-          Sample.for_ui_state(params[:ui_state]).destroy_all
+          Sample.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
         end
       end
 
@@ -31,7 +31,7 @@ module Chemotion
         post do
           ui_state = params[:ui_state]
           currentCollectionId = ui_state[:currentCollectionId]
-          sample_ids = Sample.for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
+          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
           Sample.where(id: sample_ids).each do |sample|
             #todo: extract method into Sample
             subsample = sample.dup
