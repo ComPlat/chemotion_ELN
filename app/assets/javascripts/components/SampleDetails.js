@@ -52,30 +52,10 @@ export default class SampleDetails extends React.Component {
   //todo: extract serialize method
   createSampleObject() {
     let uiState = UIStore.getState();
-    return {
-      id: this.state.sample.id,
-      name: this.nullOrValue(this.state.sample.name),
-      external_label: this.nullOrValue(this.state.sample.external_label),
-      amount_value: this.nullOrValue(this.state.sample.amount_value),
-      amount_unit: this.nullOrValue(this.state.sample.amount_unit),
-      description: this.nullOrValue(this.state.sample.description),
-      purity: this.nullOrValue(this.state.sample.purity),
-      solvent: this.nullOrValue(this.state.sample.solvent),
-      impurities: this.nullOrValue(this.state.sample.impurities),
-      location: this.nullOrValue(this.state.sample.location),
-      molfile: this.nullOrValue(this.state.sample.molfile),
-      molecule: this.nullOrValue(this.state.sample.molecule),
-      is_top_secret: this.state.sample.is_top_secret || false,
-      collection_id: this.nullOrValue(uiState.currentCollectionId)
-    }
-  }
+    let sampleSerialization = this.state.sample.serialize();
+    sampleSerialization.collection_id = uiState.currentCollectionId;
 
-  nullOrValue(option) {
-    if(option == '***') {
-      return null;
-    } else {
-      return option;
-    }
+    return sampleSerialization;
   }
 
   updateSample() {
@@ -270,13 +250,9 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  // Input Components of Sample Details with scoping
-  isDisabled(sample, method) {
-    return sample.isRestricted() == true && (sample[method] == undefined && sample.molecule == undefined || sample.molecule[method] == undefined) && sample.id != '_new_'
-  }
-
+  // Input components of sample details should be disabled if detail level does not allow to read their content
   topSecretCheckbox(sample) {
-    if(!this.isDisabled(sample, 'is_top_secret')) {
+    if(!sample.isMethodDisabled('is_top_secret')) {
       return (
         <Input ref="topSecretInput" type="checkbox" label="Top secret" checked={sample.is_top_secret} onChange={(e) => this.handleTopSecretChanged(e)}/>
       )
@@ -286,10 +262,10 @@ export default class SampleDetails extends React.Component {
   moleculeInput(sample) {
     return (
       <Input type="text" label="Molecule" ref="moleculeInput"
-             buttonAfter={this.structureEditorButton(this.isDisabled(sample, 'molecule'))}
+             buttonAfter={this.structureEditorButton(sample.isMethodDisabled('molecule_iupac_name'))}
              defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
-             disabled={this.isDisabled(sample, 'molecule')}
+             disabled={sample.isMethodDisabled('molecule_iupac_name')}
       />
     )
   }
@@ -339,7 +315,7 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="Density" ref="densityInput"
              value={sample.molecule_density}
              onChange={(e) => this.handleDensityChanged(e)}
-             disabled={this.isDisabled(sample, 'density')}
+             disabled={sample.isMethodDisabled('molecule_density')}
         />
     )
   }
@@ -359,7 +335,7 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="Boiling Point" ref="boilingPointInput"
              value={sample.molecule_boiling_point}
              onChange={(e) => this.handleBoilingPointChanged(e)}
-             disabled={this.isDisabled(sample, 'boiling_point')}
+             disabled={sample.isMethodDisabled('molecule_boiling_point')}
         />
     )
   }
@@ -369,7 +345,7 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="Melting Point" ref="meltingPointInput"
              value={sample.molecule_melting_point}
              onChange={(e) => this.handleMeltingPointChanged(e)}
-             disabled={this.isDisabled(sample, 'melting_point')}
+             disabled={sample.isMethodDisabled('molecule_melting_point')}
         />
     )
   }
@@ -380,7 +356,7 @@ export default class SampleDetails extends React.Component {
              placeholder={sample.name}
              value={sample.name}
              onChange={(e) => this.handleNameChanged(e)}
-             disabled={this.isDisabled(sample, 'name')}
+             disabled={sample.isMethodDisabled('name')}
       />
     )
   }
@@ -391,7 +367,7 @@ export default class SampleDetails extends React.Component {
              ref="impuritiesInput"
              value={sample.impurities}
              onChange={(e) => this.handleImpuritiesChanged(e)}
-             disabled={this.isDisabled(sample, 'impurities')}
+             disabled={sample.isMethodDisabled('impurities')}
         />
     )
   }
@@ -404,47 +380,64 @@ export default class SampleDetails extends React.Component {
               options={solvents}
               onChange={(e) => this.handleSolventChanged(e)}
               value={sample.solvent}
-              disabled={this.isDisabled(sample, 'solvent')}
+              disabled={sample.isMethodDisabled('solvent')}
       />
     )
   }
 
   sampleAmount(sample) {
-    if(this.isDisabled(sample, 'amount_value') == false) {
-      return (
-        <table><tr>
-        <td>
-          <NumeralInputWithUnits
-            key={sample.id}
-            value={sample.amount_mg}
-            unit='mg'
-            label="mg"
-            numeralFormat='0,0.00'
-            onChange={(amount) => this.handleAmountChanged(amount)}
-            />
-        </td>
-        <td>
-          <NumeralInputWithUnits
-            key={sample.id}
-            value={sample.amount_ml}
-            unit='ml'
-            label="ml"
-            numeralFormat='0,0.00'
-            onChange={(amount) => this.handleAmountChanged(amount)}
-            />
-        </td>
-        <td>
-          <NumeralInputWithUnits
-            key={sample.id}
-            value={sample.amount_mmol}
-            unit='mmol'
-            label="mmol"
-            numeralFormat='0,0.00'
-            onChange={(amount) => this.handleAmountChanged(amount)}
-            />
-        </td>
-        </tr></table>
-      )
+    if(sample.isMethodDisabled('amount_value') == false) {
+      if(sample.isMethodRestricted('molecule') == true) {
+        return (
+          <table><tr>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_mg}
+              unit='mg'
+              label="mg"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+          </tr></table>
+        )
+      } else {
+        return (
+          <table><tr>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_mg}
+              unit='mg'
+              label="mg"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_ml}
+              unit='ml'
+              label="ml"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+          <td>
+            <NumeralInputWithUnits
+              key={sample.id}
+              value={sample.amount_mmol}
+              unit='mmol'
+              label="mmol"
+              numeralFormat='0,0.00'
+              onChange={(amount) => this.handleAmountChanged(amount)}
+              />
+          </td>
+          </tr></table>
+        )
+      }
     } else {
       return (
         <Input type="text" label="Amount" disabled value="***" />
@@ -459,7 +452,7 @@ export default class SampleDetails extends React.Component {
              value={sample.purity}
              numeralFormat='0,0.00'
              onChange={(e) => this.handlePurityChanged(e)}
-             disabled={this.isDisabled(sample, 'purity')}
+             disabled={sample.isMethodDisabled('purity')}
       />
     )
   }
@@ -471,7 +464,7 @@ export default class SampleDetails extends React.Component {
              value={sample.location}
              onChange={(e) => this.handleLocationChanged(e)}
              rows={2}
-             disabled={this.isDisabled(sample, 'location')}
+             disabled={sample.isMethodDisabled('location')}
       />
     )
   }
@@ -483,7 +476,7 @@ export default class SampleDetails extends React.Component {
              value={sample.description}
              onChange={(e) => this.handleDescriptionChanged(e)}
              rows={2}
-             disabled={this.isDisabled(sample, 'description')}
+             disabled={sample.isMethodDisabled('description')}
         />
     )
   }
@@ -494,7 +487,7 @@ export default class SampleDetails extends React.Component {
              ref="externalLabelInput"
              value={sample.external_label}
              onChange={(e) => this.handleExternalLabelChanged(e)}
-             disabled={this.isDisabled(sample, 'external_label')}
+             disabled={sample.isMethodDisabled('external_label')}
       />
     )
   }

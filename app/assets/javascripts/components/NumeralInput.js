@@ -21,7 +21,15 @@ export default class NumeralInput extends Component {
 
   _convertValueToNumeralValue(value) {
     let {numeralFormat} = this.props;
-    return Numeral(value).format(numeralFormat);
+    let numeralValue = null;
+
+    try {
+      numeralValue = Numeral(value).format(numeralFormat);
+    } catch(err) {
+      console.log('Error in NumeralInput component: ' + err)
+    }
+
+    return numeralValue;
   }
 
   //TODO fix issue that cursor is behind, when numeral inserts a comma:

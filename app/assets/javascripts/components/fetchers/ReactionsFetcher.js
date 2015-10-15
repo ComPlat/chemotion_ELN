@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
+import ReactionProxy from '../proxies/ReactionProxy';
 
 // TODO: Extract common base functionality into ElementsFetcher
 export default class ReactionsFetcher {
@@ -10,6 +11,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
+        // TODO use ReactionProxy on implemented finally
         return new Reaction(json.reaction);
       }).catch((errorMessage) => {
         console.log(errorMessage);

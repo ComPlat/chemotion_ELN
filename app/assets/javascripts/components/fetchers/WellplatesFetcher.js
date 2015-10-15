@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Wellplate from '../models/Wellplate';
+import WellplateProxy from '../proxies/WellplateProxy';
 
 export default class WellplatesFetcher {
   static fetchById(id) {
@@ -9,6 +10,7 @@ export default class WellplatesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
+        // TODO WellplateProxy
         return new Wellplate(json.wellplate);
       }).catch((errorMessage) => {
         console.log(errorMessage);
@@ -25,6 +27,7 @@ export default class WellplatesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
+            // TODO WellplateProxy
             elements: json.wellplates.map((w) => new Wellplate(w)),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
@@ -58,6 +61,7 @@ export default class WellplatesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
+      // TODO WellplateProxy
       return new Wellplate(json.wellplate);
     }).catch((errorMessage) => {
       console.log(errorMessage);

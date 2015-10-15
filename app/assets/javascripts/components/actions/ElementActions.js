@@ -74,7 +74,8 @@ class ElementActions {
   }
 
   updateSample(params) {
-    let _params = _.omit( params, _.isNull); //should be better done in SampleProxy#serialize
+    let _params = _.omit(params, _.isNull); //should be better done in SampleProxy#serialize
+
     SamplesFetcher.update(_params)
       .then((result) => {
         this.dispatch(result)
@@ -119,7 +120,6 @@ class ElementActions {
   }
 
   createReaction(params) {
-    console.log(params)
     ReactionsFetcher.create(params)
       .then((result) => {
         this.dispatch(result)
@@ -164,8 +164,6 @@ class ElementActions {
   fetchLiteraturesByReactionId(id) {
     LiteraturesFetcher.fetchByReactionId(id)
       .then((result) => {
-        console.log("Action Fetch Literatures: ");
-        console.log(result);
         this.dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);

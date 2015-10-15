@@ -10,7 +10,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new SampleProxy(json.sample);
+        return new Sample(json.sample);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -67,7 +67,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new SampleProxy(json.sample);
+      return new Sample(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -102,7 +102,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new SampleProxy(json.sample);
+      return new Sample(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

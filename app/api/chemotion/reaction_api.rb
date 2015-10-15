@@ -35,6 +35,7 @@ module Chemotion
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
 
+        scope = Kaminari.paginate_array(scope.map{|s| ElementPermissionProxy.new(current_user, s).serialized})
         paginate(scope)
       end
 
@@ -48,7 +49,8 @@ module Chemotion
         end
 
         get do
-          Reaction.find(params[:id])
+          reaction = Reaction.find(params[:id])
+          {reaction: ElementPermissionProxy.new(current_user, reaction).serialized}
         end
       end
 

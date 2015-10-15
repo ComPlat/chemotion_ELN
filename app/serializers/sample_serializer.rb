@@ -21,4 +21,41 @@ class SampleSerializer < ActiveModel::Serializer
   def is_restricted
     false
   end
+
+  class BasePermissionSerializer < ActiveModel::Serializer
+    attributes :id, :type, :is_restricted
+
+    def type
+      'sample'
+    end
+
+    def is_restricted
+      true
+    end
+  end
+
+  class Level0 < BasePermissionSerializer
+    attributes :external_label
+    has_one :molecule
+
+    def molecule
+      {
+        molecular_weight: object.molecule.try(:molecular_weight)
+      }
+    end
+  end
+
+  class Level1 < Level0
+    attributes :molfile
+
+    has_one :molecule
+
+    def molecule
+      object.molecule
+    end
+  end
+
+  # TODO implement once Analysis feature is finished
+  # class Level2
+  # class Level3
 end

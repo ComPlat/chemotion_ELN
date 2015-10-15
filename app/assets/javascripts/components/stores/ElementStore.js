@@ -131,7 +131,7 @@ class ElementStore {
   }
 
   handleFetchSamplesByCollectionId(result) {
-    this.state.elements.samples = result
+    this.state.elements.samples = result;
   }
 
   // update stored sample if it has been updated

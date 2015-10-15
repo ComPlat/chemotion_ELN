@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Screen from '../models/Screen';
+import ScreenProxy from '../proxies/ScreenProxy';
 
 export default class ScreensFetcher {
   static fetchById(id) {
