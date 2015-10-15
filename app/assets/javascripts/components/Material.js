@@ -46,7 +46,7 @@ class Material extends Component {
         />
       </td>
       <td>{material.name}</td>
-      <td>{material.molecule.sum_formular}</td>
+      <td>{material.molecule.names[0]}</td>
 
       <td>
         <NumeralInputWithUnits
