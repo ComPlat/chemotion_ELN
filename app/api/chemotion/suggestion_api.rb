@@ -9,42 +9,42 @@ module Chemotion
         suggestions
       end
 
-      def search_possibilities_by_type(type)
+      def search_possibilities_by_type_and_user_id(type, user_id)
         case type
         when 'sample'
           {
-            sample_name: Sample.by_name(params[:query]).pluck(:name).uniq,
-            sum_formula: Molecule.by_formula(params[:query]).map(&:sum_formular).uniq,
-            iupac_name: Molecule.by_iupac_name(params[:query]).map(&:iupac_name).uniq
+            sample_name: Sample.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            sum_formula: Molecule.for_user(user_id).by_formula(params[:query]).map(&:sum_formular).uniq,
+            iupac_name: Molecule.for_user(user_id).by_iupac_name(params[:query]).map(&:iupac_name).uniq
           }
         when 'reaction'
           {
-            reaction_name: Reaction.by_name(params[:query]).pluck(:name).uniq,
-            sample_name: Sample.with_reactions.by_name(params[:query]).pluck(:name).uniq,
-            iupac_name: Molecule.with_reactions.by_iupac_name(params[:query]).map(&:iupac_name).uniq
+            reaction_name: Reaction.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            sample_name: Sample.for_user(user_id).with_reactions.by_name(params[:query]).pluck(:name).uniq,
+            iupac_name: Molecule.for_user(user_id).with_reactions.by_iupac_name(params[:query]).map(&:iupac_name).uniq
           }
         when 'wellplate'
           {
-            wellplate_name: Wellplate.by_name(params[:query]).pluck(:name).uniq,
-            sample_name: Sample.with_wellplates.by_name(params[:query]).pluck(:name).uniq,
-            iupac_name: Molecule.with_wellplates.by_iupac_name(params[:query]).map(&:iupac_name).uniq
+            wellplate_name: Wellplate.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            sample_name: Sample.for_user(user_id).with_wellplates.by_name(params[:query]).pluck(:name).uniq,
+            iupac_name: Molecule.for_user(user_id).with_wellplates.by_iupac_name(params[:query]).map(&:iupac_name).uniq
           }
         when 'screen'
           {
-            screen_name: Screen.by_name(params[:query]).pluck(:name).uniq,
-            conditions: Screen.by_conditions(params[:query]).pluck(:conditions).uniq,
-            requirements: Screen.by_requirements(params[:query]).pluck(:requirements).uniq
+            screen_name: Screen.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            conditions: Screen.for_user(user_id).by_conditions(params[:query]).pluck(:conditions).uniq,
+            requirements: Screen.for_user(user_id).by_requirements(params[:query]).pluck(:requirements).uniq
           }
         else
           {
-            sample_name: Sample.by_name(params[:query]).pluck(:name).uniq,
-            sum_formula: Molecule.by_formula(params[:query]).map(&:sum_formular).uniq,
-            iupac_name: Molecule.by_iupac_name(params[:query]).map(&:iupac_name).uniq,
-            reaction_name: Reaction.by_name(params[:query]).pluck(:name).uniq,
-            wellplate_name: Wellplate.by_name(params[:query]).pluck(:name).uniq,
-            screen_name: Screen.by_name(params[:query]).pluck(:name).uniq,
-            conditions: Screen.by_conditions(params[:query]).pluck(:conditions).uniq,
-            requirements: Screen.by_requirements(params[:query]).pluck(:requirements).uniq
+            sample_name: Sample.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            sum_formula: Molecule.for_user(user_id).by_formula(params[:query]).map(&:sum_formular).uniq,
+            iupac_name: Molecule.for_user(user_id).by_iupac_name(params[:query]).map(&:iupac_name).uniq,
+            reaction_name: Reaction.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            wellplate_name: Wellplate.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            screen_name: Screen.for_user(user_id).by_name(params[:query]).pluck(:name).uniq,
+            conditions: Screen.for_user(user_id).by_conditions(params[:query]).pluck(:conditions).uniq,
+            requirements: Screen.for_user(user_id).by_requirements(params[:query]).pluck(:requirements).uniq
           }
         end
       end
@@ -55,11 +55,12 @@ module Chemotion
       namespace :all do
         desc 'Return all suggestions for AutoCompleteInput'
         params do
+          requires :user_id, type: Integer, desc: 'Current user id'
           requires :query, type: String, desc: 'Search query'
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type('all')
+            search_possibilities = search_possibilities_by_type_and_user_id('all', params[:user_id])
             {suggestions: search_possibilities_to_suggestions(search_possibilities)}
           end
         end
@@ -72,7 +73,7 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type('sample')
+            search_possibilities = search_possibilities_by_type_and_user_id('sample', params[:user_id])
             {suggestions: search_possibilities_to_suggestions(search_possibilities)}
           end
         end
@@ -85,7 +86,7 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type('reaction')
+            search_possibilities = search_possibilities_by_type_and_user_id('reaction', params[:user_id])
             {suggestions: search_possibilities_to_suggestions(search_possibilities)}
           end
         end
@@ -98,7 +99,7 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type('wellplate')
+            search_possibilities = search_possibilities_by_type_and_user_id('wellplate', params[:user_id])
             {suggestions: search_possibilities_to_suggestions(search_possibilities)}
           end
         end
@@ -111,7 +112,7 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type('screen')
+            search_possibilities = search_possibilities_by_type_and_user_id('screen', params[:user_id])
             {suggestions: search_possibilities_to_suggestions(search_possibilities)}
           end
         end

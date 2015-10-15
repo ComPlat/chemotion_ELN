@@ -34,6 +34,10 @@ class Sample < ActiveRecord::Base
     sample_ids = Wellplate.all.flat_map(&:samples).map(&:id)
     where(id: sample_ids)
   }
+  scope :by_wellplate_ids, ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
+  scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_as_reactant).where('reactions.id in (?)', ids) }
+  scope :by_reaction_product_ids, ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
+  scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
 
   has_many :collections_samples
   has_many :collections, through: :collections_samples
@@ -49,6 +53,7 @@ class Sample < ActiveRecord::Base
   belongs_to :molecule
 
   has_one :well
+  has_many :wellplates, through: :well
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 

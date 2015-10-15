@@ -57,22 +57,21 @@ module Chemotion
       def scope_by_search_by_method_arg_and_collection_id(search_by_method, arg, collection_id)
         scope = case search_by_method
         when 'sum_formula', 'iupac_name', 'sample_name'
-          Sample.search_by(search_by_method, arg)
+          Sample.for_user(current_user.id).search_by(search_by_method, arg)
         when 'reaction_name'
-          Reaction.search_by(search_by_method, arg)
+          Reaction.for_user(current_user.id).search_by(search_by_method, arg)
         when 'wellplate_name'
-          Wellplate.search_by(search_by_method, arg)
+          Wellplate.for_user(current_user.id).search_by(search_by_method, arg)
         when 'screen_name'
-          Screen.search_by(search_by_method, arg)
+          Screen.for_user(current_user.id).search_by(search_by_method, arg)
         when 'substring'
-          AllElementSearch.new(arg).search_by_substring
+          AllElementSearch.new(arg, current_user.id).search_by_substring
         end
 
-        # TODO only elements of current user
         unless params[:collection_id] == "all"
           scope = scope.by_collection_id(params[:collection_id].to_i)
         end
-        scope # joins(:collections).where('collections.user_id = ?', current_user.id).references(:collections)
+        scope
       end
 
       def elements_by_scope(scope)
@@ -83,29 +82,29 @@ module Chemotion
         case scope.first
         when Sample
           elements[:samples] = scope
-          elements[:reactions] = scope.flat_map(&:reactions).uniq
-          elements[:wellplates] = scope.flat_map(&:well).compact.flat_map(&:wellplate).uniq
-          elements[:screens] = elements[:wellplates].flat_map(&:screen).compact.uniq
+          elements[:reactions] = (Reaction.for_user(current_user.id).by_material_ids(scope.map(&:id)) + Reaction.for_user(current_user.id).by_reactant_ids(scope.map(&:id)) + Reaction.for_user(current_user.id).by_product_ids(scope.map(&:id))).uniq
+          elements[:wellplates] = Wellplate.for_user(current_user.id).by_sample_ids(scope.map(&:id)).uniq
+          elements[:screens] = Screen.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id))
         when Reaction
           elements[:reactions] = scope
-          elements[:samples] = scope.flat_map(&:samples).uniq
-          elements[:wellplates] = elements[:samples].flat_map(&:well).compact.flat_map(&:wellplate).uniq
-          elements[:screens] = elements[:wellplates].flat_map(&:screen).compact.uniq
+          elements[:samples] = (Sample.for_user(current_user.id).by_reaction_reactant_ids(scope.map(&:id)) + Sample.for_user(current_user.id).by_reaction_product_ids(scope.map(&:id)) + Sample.for_user(current_user.id).by_reaction_material_ids(scope.map(&:id))).uniq
+          elements[:wellplates] = Wellplate.for_user(current_user.id).by_sample_ids(elements[:samples].map(&:id)).uniq
+          elements[:screens] = Screen.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id))
         when Wellplate
           elements[:wellplates] = scope
-          elements[:screens] = scope.flat_map(&:screen).compact.uniq
-          elements[:samples] = scope.flat_map(&:samples).uniq
-          elements[:reactions] = elements[:samples].flat_map(&:reactions).uniq
+          elements[:screens] = Screen.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id)).uniq
+          elements[:samples] = Sample.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id)).uniq
+          elements[:reactions] = (Reaction.for_user(current_user.id).by_material_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_reactant_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_product_ids(elements[:samples].map(&:id))).uniq
         when Screen
           elements[:screens] = scope
-          elements[:wellplates] = scope.flat_map(&:wellplates).uniq
-          elements[:samples] = elements[:wellplates].flat_map(&:wells).compact.flat_map(&:sample).uniq
-          elements[:reactions] = elements[:samples].flat_map(&:reactions).uniq
+          elements[:wellplates] = Wellplate.for_user(current_user.id).by_screen_ids(scope.map(&:id)).uniq
+          elements[:samples] = Sample.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id)).uniq
+          elements[:reactions] = (Reaction.for_user(current_user.id).by_material_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_reactant_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_product_ids(elements[:samples].map(&:id))).uniq
         when AllElementSearch::Results
           elements[:samples] = scope.samples
-          elements[:reactions] = (scope.reactions + elements[:samples].flat_map(&:reactions)).uniq
-          elements[:wellplates] = (scope.wellplates + elements[:samples].flat_map(&:well).compact.flat_map(&:wellplate)).uniq
-          elements[:screens] = (scope.screens + elements[:wellplates].flat_map(&:screen).compact).uniq
+          elements[:reactions] = (scope.reactions + (Reaction.for_user(current_user.id).by_material_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_reactant_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_product_ids(elements[:samples].map(&:id)))).uniq
+          elements[:wellplates] = (scope.wellplates + Wellplate.for_user(current_user.id).by_sample_ids(elements[:samples].map(&:id))).uniq
+          elements[:screens] = (scope.screens + Screen.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id))).uniq
         end
 
         elements
@@ -150,7 +149,7 @@ module Chemotion
             samples = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(samples), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(samples), params[:page])
         end
       end
 
@@ -173,7 +172,7 @@ module Chemotion
             reactions = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(reactions), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(reactions), params[:page])
         end
       end
 
@@ -196,7 +195,7 @@ module Chemotion
             wellplates = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(wellplates), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(wellplates), params[:page])
         end
       end
 
@@ -219,7 +218,7 @@ module Chemotion
             screens = scope.by_collection_id(params[:collection_id].to_i)
           end
 
-          serialization_by_elements(elements_by_scope(screens), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(screens), params[:page])
         end
       end
 

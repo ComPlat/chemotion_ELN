@@ -23,6 +23,8 @@ class Wellplate < ActiveRecord::Base
                                         using: {trigram: {threshold:  0.0001}}
 
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_sample_ids, -> (ids) { joins(:samples).where('samples.id in (?)', ids) }
+  scope :by_screen_ids, -> (ids) { where('screen_id in (?)', ids) }
 
   has_many :collections_wellplates
   has_many :collections, through: :collections_wellplates

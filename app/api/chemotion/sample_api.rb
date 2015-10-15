@@ -53,7 +53,7 @@ module Chemotion
           Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).samples.includes(:molecule)
         else
           # All collection
-          Sample.joins(:collections).where('collections.user_id = ?', current_user.id).references(:collections).includes(:molecule).uniq
+          Sample.for_user(current_user.id).includes(:molecule).uniq
         end.order("created_at DESC")
 
         paginate(scope)

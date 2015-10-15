@@ -1,5 +1,8 @@
 class Molecule < ActiveRecord::Base
+  include Collectable
+  
   has_many :samples
+  has_many :collections, through: :samples
 
   validates_uniqueness_of :inchikey
 
