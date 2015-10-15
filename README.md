@@ -4,6 +4,10 @@
 * Copy `.ruby-version.example` to `.ruby-version`.
 * Reload directory to create rvm gemset.
 
+## nokogiri
+if there are errors with nokogiri compilation with new xcode7:
+`gem install nokogiri -- --with-xml2-include=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/usr/include/libxml2 --use-system-libraries`
+
 ## openbabel
 * `brew install cmake` for OSX
 * install openbabel as described in its [documentation](https://github.com/cubuslab/openbabel/blob/master/INSTALL)
