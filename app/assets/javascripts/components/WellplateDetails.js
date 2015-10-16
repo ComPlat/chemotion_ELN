@@ -17,7 +17,11 @@ export default class WellplateDetails extends Component {
   constructor(props) {
     super(props);
     const {wellplate} = props;
-    this.state = { wellplate };
+    this.state = {
+      wellplate,
+      activeTab: 0,
+      showWellplate: true
+    };
   }
 
   componentWillReceiveProps(nextProps) {
@@ -64,9 +68,13 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
+  handleTabChange(event) {
+    let showWellplate = (event == 0) ? true : false;
+    this.setState({activeTab: event, showWellplate});
+  }
 
   render() {
-    const {wellplate} = this.state;
+    const {wellplate, activeTab, showWellplate} = this.state;
     const {wells, name, size, description} = wellplate;
 
     const submitLabel = wellplate.isNew ? "Create" : "Save";
@@ -84,10 +92,11 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate}/>
           <ListGroup fill>
             <ListGroupItem>
-              <TabbedArea defaultActiveKey={0}>
+              <TabbedArea activeKey={activeTab} onSelect={event => this.handleTabChange(event)}>
                 <TabPane eventKey={0} tab={'Designer'}>
                   <Well>
                     <Wellplate
+                      show={showWellplate}
                       size={size}
                       wells={wells}
                       handleWellsChange={(wells) => this.handleWellsChange(wells)}
