@@ -91,6 +91,22 @@ export default class CollectionSubtree extends React.Component {
     }
   }
 
+  collectionManagementButton() {
+    if(this.state.root.id == 'all') {
+      return  (
+        <div className="take-ownership-btn">
+          <Button bsStyle="danger" bsSize="xsmall" onClick={this.navigateToCollectionManagement.bind(this)}>
+            <i className="fa fa-cog"></i>
+          </Button>
+        </div>
+      )
+    }
+  }
+
+  navigateToCollectionManagement() {
+    Aviator.navigate('/collection/management');
+  }
+
   expandButton() {
     let label = this.state.visible ? '-' : '+';
 
@@ -140,6 +156,7 @@ export default class CollectionSubtree extends React.Component {
 
     return (
       <div className="tree-view" key={this.state.root.id}>
+        {this.collectionManagementButton()}
         {this.takeOwnershipButton()}
         <div className={"title " + this.selectedCssClass()} onClick={this.handleClick.bind(this)}>
           {this.expandButton()}
