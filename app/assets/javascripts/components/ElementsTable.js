@@ -93,15 +93,17 @@ export default class ElementsTable extends React.Component {
   }
 
   handlePaginationSelect(event, selectedEvent) {
+    const {pages} = this.state;
     const {type} = this.props;
-    this.setState({
-      page: selectedEvent.eventKey
-    }, () => UIActions.setPagination({type, page: this.state.page}));
+    if(selectedEvent.eventKey > 0 && selectedEvent.eventKey <= pages) {
+      this.setState({
+        page: selectedEvent.eventKey
+      }, () => UIActions.setPagination({type, page: this.state.page}));
+    }
   }
 
   pagination() {
     const {page, pages} = this.state;
-
     if(pages > 1) {
       return <Pagination
         prev
