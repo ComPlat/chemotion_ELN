@@ -17,9 +17,10 @@ export default class Wellplate extends Element {
     return false;
   }
 
-  static buildEmpty() {
+  static buildEmpty(collection_id) {
     return new Wellplate(
       {
+        collection_id: collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
         size: 96,

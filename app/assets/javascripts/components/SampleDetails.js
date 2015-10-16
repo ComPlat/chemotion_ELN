@@ -51,27 +51,7 @@ export default class SampleDetails extends React.Component {
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
-  //todo: extract serialize method
-  createSampleObject() {
-    let uiState = UIStore.getState();
-    let sampleSerialization = this.state.sample.serialize();
-    sampleSerialization.collection_id = uiState.currentCollectionId;
-
-    return sampleSerialization;
-  }
-
-  updateSample() {
-    ElementActions.updateSample(this.createSampleObject());
-  }
-
-  createSample() {
-    ElementActions.createSample(this.createSampleObject());
-  }
-
   handleSampleChanged(sample) {
-    console.log('handleSampleChanged');
-    console.log(sample);
-    window.sample = sample;
     this.setState({
       sample
     });
@@ -214,11 +194,6 @@ export default class SampleDetails extends React.Component {
   }
 
   handleStructureEditorSave(molfile) {
-    // TODO: handle the resulting molfile and submit it
-    console.log("Molecule MOL-file:");
-    console.log(molfile);
-
-    // TODO: optimize
     let sample = this.state.sample;
     if(sample) {
       sample.molfile = molfile
@@ -233,10 +208,13 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-    if(this.state.sample.isNew) {
-      this.createSample();
+    let {sample} = this.state
+    console.log(sample.serialize());
+    
+    if(sample.isNew) {
+      ElementActions.createSample(sample.serialize());
     } else {
-      this.updateSample();
+      ElementActions.updateSample(sample.serialize());
     }
   }
 

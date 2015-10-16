@@ -45,8 +45,9 @@ export default class Sample extends Element {
     })
   }
 
-  static buildEmpty() {
+  static buildEmpty(collection_id) {
     return new Sample({
+      collection_id: collection_id,
       type: 'sample',
       name: 'New Sample',
       external_label: '',

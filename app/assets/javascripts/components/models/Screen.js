@@ -10,8 +10,9 @@ export default class Screen extends Element {
     return false;
   }
 
-  static buildEmpty() {
+  static buildEmpty(collection_id) {
     return new Screen({
+      collection_id: collection_id,
       type: 'screen',
       name: 'New Screen',
       collaborator: '',
