@@ -44,7 +44,7 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  handleWellsChange(wells) {
+  handleWellsChange(wells) {    
     let {wellplate} = this.state;
     wellplate.wells = wells;
     this.setState({ wellplate });
