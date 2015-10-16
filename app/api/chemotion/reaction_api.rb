@@ -165,7 +165,7 @@ module ReactionUpdator
 
   def self.update_materials_for_reaction(reaction, material_attributes)
     #todo: is this correct to set it to the first collection?
-    collection_id = reaction.collections.first.id
+    collection_ids = reaction.collection_ids
 
     materials = OpenStruct.new(material_attributes)
 
@@ -197,8 +197,10 @@ module ReactionUpdator
             subsample.reload
             included_sample_ids << subsample.id
 
-            #assign subsample to current collection
-            CollectionsSample.create(collection_id: collection_id, sample_id: subsample.id)
+            #assign subsample to all collections
+            collection_ids.each do |collection_id|
+              CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
+            end
 
             reaction_samples_association.create(
               sample_id: subsample.id,

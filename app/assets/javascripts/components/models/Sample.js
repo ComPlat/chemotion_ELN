@@ -28,8 +28,7 @@ export default class Sample extends Element {
   }
 
   serialize() {
-    return {
-      id: this.id,
+    return super.serialize({
       name: this.name,
       external_label: this.external_label,
       amount_value: this.amount_value,
@@ -41,8 +40,9 @@ export default class Sample extends Element {
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule,
-      is_top_secret: this.is_top_secret || false
-    }
+      is_top_secret: this.is_top_secret || false,
+      parent_id: this.parent_id
+    })
   }
 
   static buildEmpty() {
