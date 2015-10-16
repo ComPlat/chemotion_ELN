@@ -79,6 +79,11 @@ export default class Reaction extends Element {
 
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
+    if(this.sampleCount == 0) {
+      this._setAsReferenceMaterial(material);
+    } else {
+      this._updateEquivalentForMaterial(material);
+    }
     materials.push(material);
   }
 
@@ -110,10 +115,25 @@ export default class Reaction extends Element {
     })
   }
 
+  get sampleCount() {
+    return this.samples.length;
+  }
+
   markSampleAsReference(sampleID) {
     this.samples.forEach((sample) => {
       sample.reference = sample.id == sampleID;
     })
+  }
+
+  _setAsReferenceMaterial(sample) {
+    sample.equivalent = 1;
+    sample.reference = 1;
+  }
+
+  _updateEquivalentForMaterial(sample) {
+    if(this.referenceMaterial) {
+      sample.equivalent = sample.amount_mmol / this.referenceMaterial.amount_mmol;
+    }
   }
 
   get svgPath() {
