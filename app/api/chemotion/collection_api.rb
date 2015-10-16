@@ -71,26 +71,26 @@ module Chemotion
         desc "Create shared collections"
         params do
           requires :elements_filter, type: Hash do
-            optional :sample, type: Hash do
-              optional :all, type: Boolean
+            requires :sample, type: Hash do
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
-            optional :reaction, type: Hash do
-              optional :all, type: Boolean
+            requires :reaction, type: Hash do
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
-            optional :wellplate, type: Hash do
-              optional :all, type: Boolean
+            requires :wellplate, type: Hash do
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
-            optional :screen, type: Hash do
-              optional :all, type: Boolean
+            requires :screen, type: Hash do
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end

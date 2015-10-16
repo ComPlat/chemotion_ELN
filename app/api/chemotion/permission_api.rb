@@ -7,25 +7,25 @@ module Chemotion
         params do
           requires :elements_filter, type: Hash do
             optional :sample, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :reaction, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :wellplate, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :screen, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
@@ -49,25 +49,25 @@ module Chemotion
         params do
           requires :elements_filter, type: Hash do
             optional :sample, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :reaction, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :wellplate, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :screen, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
@@ -91,25 +91,25 @@ module Chemotion
         params do
           requires :elements_filter, type: Hash do
             optional :sample, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :reaction, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :wellplate, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end
 
             optional :screen, type: Hash do
-              optional :all, type: Boolean
+              requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
             end

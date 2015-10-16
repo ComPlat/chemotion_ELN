@@ -7,7 +7,7 @@ module Chemotion
         desc "Delete wellplates by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected wellplates from the UI" do
-            optional :all, type: Boolean
+            requires :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
           end
@@ -109,9 +109,9 @@ module Chemotion
       end
       post do
         attributes = {
-            name: params[:name],
-            size: params[:size],
-            description: params[:description]
+          name: params[:name],
+          size: params[:size],
+          description: params[:description]
         }
 
         ActiveRecord::Base.transaction do
@@ -178,7 +178,6 @@ module Chemotion
           end
 
           deleted_sample_ids = current_sample_ids - included_sample_ids
-          ap({deleted_sample_ids: deleted_sample_ids})
           Sample.where(id: deleted_sample_ids).destroy_all
         end
       end
@@ -187,7 +186,7 @@ module Chemotion
         desc "Delete screens by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected screens from the UI" do
-            optional :all, type: Boolean
+            requires :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
           end
