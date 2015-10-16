@@ -84,12 +84,7 @@ class Material extends Component {
       </td>
 
       <td style={inputsStyle}>
-        <Input
-          type="text"
-          value={material.equivalent}
-          disabled={material.reference && material.equivalent}
-          onChange={(e) => this.handleEquivalentChange(e)}
-        />
+        {this.equivalentOrYield(material)}
       </td>
       <td>
         <Button
@@ -99,6 +94,27 @@ class Material extends Component {
         </Button>
       </td>
     </tr>
+  }
+
+  equivalentOrYield(material) {
+    if(this.props.materialGroup == 'products') {
+      return (
+        <Input
+          type="text"
+          value={`${(material.equivalent || 0 ) * 100} %`}
+          disabled={true}
+        />
+      );
+    } else {
+      return (
+        <Input
+          type="text"
+          value={material.equivalent}
+          disabled={material.reference && material.equivalent}
+          onChange={(e) => this.handleEquivalentChange(e)}
+        />
+      );
+    }
   }
 
   handleReferenceChange(event) {
