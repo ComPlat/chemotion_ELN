@@ -129,9 +129,9 @@ module Chemotion
       module WellplateUpdator
 
         def self.update_wells_for_wellplate(wellplate, wells)
-
-          p "wellplate.collection_ids: #{wellplate.collection_ids}"
           collection_ids = wellplate.collection_ids
+          current_sample_ids = wellplate.wells.pluck(:sample_id).uniq.compact
+          included_sample_ids = []
 
           wells.each do |well|
             sample = well.sample
@@ -139,7 +139,6 @@ module Chemotion
 
             if sample
               if sample.is_new && sample.parent_id
-                p "***** SPLIT *****"
                 parent_sample = Sample.find(sample.parent_id)
 
                 subsample = parent_sample.dup
@@ -156,6 +155,7 @@ module Chemotion
 
                 sample_id = subsample.id
               end
+              included_sample_ids << sample_id
             end
 
 
@@ -178,6 +178,10 @@ module Chemotion
               )
             end
           end
+
+          deleted_sample_ids = current_sample_ids - included_sample_ids
+          ap({deleted_sample_ids: deleted_sample_ids})
+          Sample.where(id: deleted_sample_ids).destroy_all
         end
       end
 

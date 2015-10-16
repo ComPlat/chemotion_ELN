@@ -39,7 +39,7 @@ class Sample < ActiveRecord::Base
   scope :by_reaction_product_ids, ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
 
-  has_many :collections_samples
+  has_many :collections_samples, dependent: :destroy
   has_many :collections, through: :collections_samples
 
   has_many :reactions_starting_material_samples, dependent: :destroy

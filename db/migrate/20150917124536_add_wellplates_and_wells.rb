@@ -17,7 +17,9 @@ class AddWellplatesAndWells < ActiveRecord::Migration
       t.datetime "updated_at",  null: false
     end
 
-    create_join_table :collections, :wellplates do |t|
+    create_table :collections_wellplates do |t|
+      t.integer :collection_id
+      t.integer :wellplate_id
       t.index :collection_id
       t.index :wellplate_id
     end
