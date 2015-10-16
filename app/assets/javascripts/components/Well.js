@@ -3,13 +3,13 @@ import SVG from 'react-inlinesvg';
 
 export default class Well extends Component {
   render() {
-    const {sample} = this.props;
+    const {sample, active} = this.props;
+    const className = (active) ? "well-molecule molecule-selected" : "well-molecule";
     if (sample) {
       const svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
       return (
         <div>
-          {sample.name}
-          <SVG className="well-molecule" src={svgPath}/>
+          <SVG className={className} src={svgPath}/>
         </div>
       );
     } else {

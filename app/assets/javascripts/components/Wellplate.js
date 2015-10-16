@@ -9,7 +9,15 @@ export default class Wellplate extends Component {
     this.state = {
       showOverlay: false,
       overlayTarget: {},
-      overlayWell: {}
+      overlayWell: {},
+      overlayPlacement: 'top'
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const {show} = nextProps;
+    if(!show) {
+      this.hideOverlay();
     }
   }
 
@@ -51,13 +59,15 @@ export default class Wellplate extends Component {
   }
 
   showOverlay(key, well) {
-    //if (well.sample) {
-      this.setState({
-        showOverlay: true,
-        overlayTarget: key,
-        overlayWell: well
-      });
-    //}
+    const {size} = this.props;
+    const isWellInUpperHalf = (size / 2) <= key;
+    const placement = (isWellInUpperHalf) ? 'top' : 'bottom';
+    this.setState({
+      showOverlay: true,
+      overlayTarget: key,
+      overlayWell: well,
+      overlayPlacement: placement
+    });
   }
 
   toggleOverlay(key, well) {
@@ -75,8 +85,8 @@ export default class Wellplate extends Component {
   }
 
   render() {
-    const {wells, size, cols, width} = this.props;
-    const {showOverlay, overlayTarget, overlayWell} = this.state;
+    const {wells, size, cols, width, handleWellsChange} = this.props;
+    const {showOverlay, overlayTarget, overlayWell, overlayPlacement} = this.state;
     const style = {
       width: (cols + 1) * width,
       height: ((size / cols) + 1) * width
@@ -101,7 +111,6 @@ export default class Wellplate extends Component {
           type={'vertical'}
           />
         {wells.map((well, key) => {
-          //
           return (
             <div
               key={key}
@@ -114,6 +123,7 @@ export default class Wellplate extends Component {
                 swapWells={(firstWell, secondWell) => this.swapWells(firstWell, secondWell)}
                 dropSample={(sample, wellId) => this.dropSample(sample, wellId)}
                 active={this.isWellActive(well)}
+                hideOverlay={() => this.hideOverlay()}
                 />
             </div>
           );
@@ -121,6 +131,7 @@ export default class Wellplate extends Component {
         <WellOverlay
           show={showOverlay}
           well={overlayWell}
+          placement={overlayPlacement}
           target={() => React.findDOMNode(this.refs[overlayTarget]).children[0]}
           handleClose={() => this.hideOverlay()}
           removeSampleFromWell={well => this.removeSampleFromWell(well)}

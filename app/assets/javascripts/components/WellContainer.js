@@ -67,7 +67,8 @@ class WellContainer extends Component {
       backgroundColor: 'white'
     };
     if (active) {
-      containerStyle.backgroundColor = '#337ab7'
+      containerStyle.backgroundColor = '#337ab7';
+      containerStyle.color = 'white';
     }
     if (isDragging) {
       containerStyle.opacity = 0;
@@ -86,7 +87,10 @@ class WellContainer extends Component {
     return (
       connectDragSource(connectDropTarget(
         <div style={{ ...containerStyle, ...style}}>
-          <Well sample={well.sample}/>
+          <Well
+            active={active}
+            sample={well.sample}
+            />
         </div>
       ))
     );
