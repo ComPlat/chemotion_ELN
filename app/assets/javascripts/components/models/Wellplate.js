@@ -53,6 +53,17 @@ export default class Wellplate extends Element {
     this._wells = wells.map(w => new Well(w));
   }
 
+
+  serialize() {
+    return super.serialize({
+      name: this.name,
+      size: this.size,
+      description: this.description,
+      wells: this.wells.map(w => w.serialize())
+    })
+  }
+
+
   // ---
 
   initWellsWithPosition(wells, size) {

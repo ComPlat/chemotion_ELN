@@ -11,7 +11,9 @@ class AddScreen < ActiveRecord::Migration
       t.datetime "updated_at",  null: false
     end
 
-    create_join_table :collections, :screens do |t|
+    create_table :collections_screens do |t|
+      t.integer :collection_id
+      t.integer :screen_id
       t.index :collection_id
       t.index :screen_id
     end

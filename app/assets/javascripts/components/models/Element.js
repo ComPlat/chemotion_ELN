@@ -37,4 +37,16 @@ export default class Element {
   isRestricted() {
     return this.is_restricted;
   }
+
+  // base serializer
+  serialize( extra_params = {} ) {
+    let params = {
+      id: this.id,
+      type: this.type,
+      is_new: this.isNew || false
+    }
+    _.merge(params, extra_params);
+    let clean_params = _.omit(params, _.isNull);
+    return clean_params;
+  }
 }

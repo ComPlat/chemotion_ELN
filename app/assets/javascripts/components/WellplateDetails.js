@@ -36,11 +36,11 @@ export default class WellplateDetails extends Component {
     const {wellplate} = this.state;
 
     if(wellplate.isNew) {
-      let params = wellplate;
+      let params = wellplate.serialize();
       params.collection_id = currentCollection.id;
       ElementActions.createWellplate(params);
     } else {
-      ElementActions.updateWellplate(wellplate);
+      ElementActions.updateWellplate(wellplate.serialize());
     }
   }
 

@@ -3,6 +3,8 @@ import WellContainer from './WellContainer';
 import WellplateLabels from './WellplateLabels';
 import WellOverlay from './WellOverlay';
 
+import Sample from './models/Sample';
+
 export default class Wellplate extends Component {
   constructor(props) {
     super(props);
@@ -23,9 +25,10 @@ export default class Wellplate extends Component {
     handleWellsChange(wells);
   }
 
-  dropSample(sample, well) {
+  dropSample(droppedSample, well) {
     const {handleWellsChange, wells} = this.props;
     const wellId = wells.indexOf(well);
+    const sample = Sample.buildChild(droppedSample);
     wells[wellId] = {
       ...well,
       sample

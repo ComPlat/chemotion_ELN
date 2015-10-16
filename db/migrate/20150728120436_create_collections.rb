@@ -22,7 +22,9 @@ class CreateCollections < ActiveRecord::Migration
       t.timestamps null: false
     end
 
-    create_join_table :collections, :reactions do |t|
+    create_table :collections_reactions do |t|
+      t.integer :collection_id
+      t.integer :reaction_id
       t.index :collection_id
       t.index :reaction_id
     end
@@ -34,7 +36,9 @@ class CreateCollections < ActiveRecord::Migration
       t.timestamps null: false
     end
 
-    create_join_table :collections, :samples do |t|
+    create_table :collections_samples do |t|
+      t.integer :collection_id
+      t.integer :sample_id
       t.index :collection_id
       t.index :sample_id
     end

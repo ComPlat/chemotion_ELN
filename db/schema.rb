@@ -36,33 +36,33 @@ ActiveRecord::Schema.define(version: 20151015161007) do
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
   add_index "collections", ["user_id"], name: "index_collections_on_user_id", using: :btree
 
-  create_table "collections_reactions", id: false, force: :cascade do |t|
-    t.integer "collection_id", null: false
-    t.integer "reaction_id",   null: false
+  create_table "collections_reactions", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "reaction_id"
   end
 
   add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
   add_index "collections_reactions", ["reaction_id"], name: "index_collections_reactions_on_reaction_id", using: :btree
 
-  create_table "collections_samples", id: false, force: :cascade do |t|
-    t.integer "collection_id", null: false
-    t.integer "sample_id",     null: false
+  create_table "collections_samples", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "sample_id"
   end
 
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
 
-  create_table "collections_screens", id: false, force: :cascade do |t|
-    t.integer "collection_id", null: false
-    t.integer "screen_id",     null: false
+  create_table "collections_screens", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "screen_id"
   end
 
   add_index "collections_screens", ["collection_id"], name: "index_collections_screens_on_collection_id", using: :btree
   add_index "collections_screens", ["screen_id"], name: "index_collections_screens_on_screen_id", using: :btree
 
-  create_table "collections_wellplates", id: false, force: :cascade do |t|
-    t.integer "collection_id", null: false
-    t.integer "wellplate_id",  null: false
+  create_table "collections_wellplates", force: :cascade do |t|
+    t.integer "collection_id"
+    t.integer "wellplate_id"
   end
 
   add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree

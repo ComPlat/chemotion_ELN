@@ -84,6 +84,8 @@ module Chemotion
         end
 
         put do
+          ap params[:wells][0..2]
+
           attributes = {
               name: params[:name],
               size: params[:size],
@@ -93,29 +95,7 @@ module Chemotion
           ActiveRecord::Base.transaction do
             wellplate = Wellplate.find(params[:id])
             wellplate.update(attributes)
-
-            params[:wells].each do |well|
-              sample = well.sample
-              sample_id = (sample) ? sample.id : nil
-              if well.id
-                Well.find(well.id).update(
-                    sample_id: sample_id,
-                    readout: well.readout,
-                    additive: well.additive,
-                    position_x: well.position.x,
-                    position_y: well.position.y,
-                )
-              else
-                Well.create(
-                  wellplate_id: wellplate.id,
-                  sample_id: sample_id,
-                  readout: well.readout,
-                  additive: well.additive,
-                  position_x: well.position.x,
-                  position_y: well.position.y,
-                )
-              end
-            end
+            WellplateUpdator.update_wells_for_wellplate(wellplate, params[:wells])
             wellplate
           end
         end
@@ -141,20 +121,67 @@ module Chemotion
           wellplate.reload
           collection = Collection.find(params[:collection_id])
           CollectionsWellplate.create(wellplate: wellplate, collection: collection)
+          WellplateUpdator.update_wells_for_wellplate(wellplate, params[:wells])
+          wellplate
+        end
+      end
 
-          params[:wells].each do |well|
+      module WellplateUpdator
+
+        def self.update_wells_for_wellplate(wellplate, wells)
+          collection_ids = wellplate.collection_ids
+          current_sample_ids = wellplate.wells.pluck(:sample_id).uniq.compact
+          included_sample_ids = []
+
+          wells.each do |well|
             sample = well.sample
-            sample_id = (sample) ? sample.id : nil
-            Well.create(
+            sample_id = sample && sample.id
+
+            if sample
+              if sample.is_new && sample.parent_id
+                parent_sample = Sample.find(sample.parent_id)
+
+                subsample = parent_sample.dup
+                subsample.parent = parent_sample
+                subsample.name = sample.name
+
+                subsample.save
+                subsample.reload
+
+                #assign subsample to all collections
+                collection_ids.each do |collection_id|
+                  CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
+                end
+
+                sample_id = subsample.id
+              end
+              included_sample_ids << sample_id
+            end
+
+
+            unless well.is_new
+              Well.find(well.id).update(
+                  sample_id: sample_id,
+                  readout: well.readout,
+                  additive: well.additive,
+                  position_x: well.position.x,
+                  position_y: well.position.y,
+              )
+            else
+              Well.create(
+                wellplate_id: wellplate.id,
                 sample_id: sample_id,
                 readout: well.readout,
                 additive: well.additive,
                 position_x: well.position.x,
                 position_y: well.position.y,
-                wellplate_id: wellplate.id
-            )
+              )
+            end
           end
-          wellplate
+
+          deleted_sample_ids = current_sample_ids - included_sample_ids
+          ap({deleted_sample_ids: deleted_sample_ids})
+          Sample.where(id: deleted_sample_ids).destroy_all
         end
       end
 
