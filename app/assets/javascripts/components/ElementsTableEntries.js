@@ -137,9 +137,10 @@ export default class ElementsTableEntries extends Component {
               <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
             </td>
             <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
-              {element.name}<br/>
+              {element.name}&nbsp;
+              {this.reactionStatus(element)}
+              <br/>
               {sampleMoleculeName}
-              {element.name} {this.reactionStatus(element)}<br/>
               <ElementCollectionLabels element={element} key={element.id}/>
               {this.topSecretIcon(element)}
             </td>
