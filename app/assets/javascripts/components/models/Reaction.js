@@ -119,4 +119,8 @@ export default class Reaction extends Element {
   get svgPath() {
     return this.reaction_svg_file && `/images/reactions/${this.reaction_svg_file}`
   }
+
+  hasMaterials() {
+    return this.starting_materials.length > 0 || this.reactants.length > 0 || this.products.length > 0;
+  }
 }

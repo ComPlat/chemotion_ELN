@@ -1,6 +1,6 @@
 import React from 'react';
 import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Accordion,
-  Panel, ListGroup, ListGroupItem, Glyphicon, TabbedArea, TabPane} from 'react-bootstrap';
+  Panel, ListGroup, ListGroupItem, Glyphicon, TabbedArea, TabPane, Row, Col} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -228,7 +228,7 @@ export default class SampleDetails extends React.Component {
 
   sampleIsValid() {
     let sample = this.state.sample;
-    return (sample && sample.molfile) || sample.is_scoped == true
+    return (sample && sample.molfile && sample.name != "") || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
@@ -264,18 +264,16 @@ export default class SampleDetails extends React.Component {
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}` : '';
 
     return (
-      <table width="100%" height="190px">
-        <tr>
-          <td width="70%">
-            <h3>{sample.name}</h3>
-            <h4>{sampleAmount}</h4>
-            <ElementCollectionLabels element={sample} key={sample.id}/>
-          </td>
-          <td width="30%">
+      <Row>
+        <Col md={7}>
+          <h3>{sample.name}</h3>
+          <h4>{sampleAmount}</h4>
+          <ElementCollectionLabels element={sample} key={sample.id}/>
+        </Col>
+        <Col md={5}>
             <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
-          </td>
-        </tr>
-      </table>
+        </Col>
+      </Row>
     )
   }
 

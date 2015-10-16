@@ -60,7 +60,8 @@ export default class ReactionDetails extends Component {
   }
 
   reactionIsValid() {
-    return true
+    const {reaction} = this.state;
+    return reaction.hasMaterials();
   }
 
   handleReactionChange(reaction, options={}) {

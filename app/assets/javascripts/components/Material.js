@@ -29,6 +29,10 @@ class Material extends Component {
       lineHeight: 2,
       verticalAlign: 'middle'
     };
+    const inputsStyle = {
+      paddingTop: 15,
+      paddingRight: 5
+    };
 
     return <tr style={style}>
       {connectDragSource(
@@ -45,10 +49,11 @@ class Material extends Component {
           onClick={event => this.handleReferenceChange(event)}
         />
       </td>
-      <td>{material.name}</td>
-      <td>{material.molecule.iupac_name}</td>
-
       <td>
+        {material.name}<br/>
+        {material.molecule.iupac_name}
+      </td>
+      <td style={inputsStyle}>
         <NumeralInputWithUnits
           key={material.id}
           value={material.amount_mg}
@@ -58,7 +63,7 @@ class Material extends Component {
         />
       </td>
 
-      <td>
+      <td style={inputsStyle}>
         <NumeralInputWithUnits
           key={material.id}
           value={material.amount_ml}
@@ -68,7 +73,7 @@ class Material extends Component {
         />
       </td>
 
-      <td>
+      <td style={inputsStyle}>
         <NumeralInputWithUnits
           key={material.id}
           value={material.amount_mmol}
@@ -78,7 +83,7 @@ class Material extends Component {
         />
       </td>
 
-      <td className="padding-right">
+      <td style={inputsStyle}>
         <Input
           type="text"
           value={material.equivalent}
@@ -86,7 +91,7 @@ class Material extends Component {
           onChange={(e) => this.handleEquivalentChange(e)}
         />
       </td>
-      <td style={{verticalAlign: 'top'}}>
+      <td>
         <Button
           bsStyle="danger"
           onClick={() => deleteMaterial(material)} >
