@@ -44,7 +44,7 @@ Aviator.setRoutes({
 
         let uiState = UIStore.getState();
         let currentSearchSelection = uiState.currentSearchSelection;
-        let collectionId = e.params['id'];
+        let collectionId = e.params['collectionID'];
         let collectionPromise = CollectionStore.findById(collectionId);
 
         collectionPromise.then((result) => {
@@ -81,19 +81,19 @@ Aviator.setRoutes({
       }
     },
     '/management': 'showCollectionManagement',
-    '/:id': 'show'
+    '/:collectionID': 'show'
   },
 
   '/sample': {
     target: {
       showOrNew: function(e) {
-        let sampleID = e.params['sampleID']
+        const {sampleID, collectionID} = e.params;
         UIActions.selectElement({type: 'sample', id: sampleID})
 
         if (sampleID != 'new') {
           ElementActions.fetchSampleById(sampleID);
         } else {
-          ElementActions.generateEmptySample()
+          ElementActions.generateEmptySample(collectionID)
         }
         //UIActions.selectTab(1);
       }
@@ -104,14 +104,14 @@ Aviator.setRoutes({
   '/reaction': {
     target: {
       show: function(e) {
-        const reactionID = e.params['reactionID'];
+        const {reactionID, collectionID} = e.params;
         //UIActions.selectTab(2);
         if (reactionID != 'new') {
           ElementActions.fetchReactionById(reactionID);
         } else {
           console.log("generateEmptyReaction")
-          ElementActions.generateEmptyReaction()
-        }    
+          ElementActions.generateEmptyReaction(collectionID)
+        }
       }
     },
     '/:reactionID': 'show',
@@ -119,29 +119,29 @@ Aviator.setRoutes({
   '/wellplate': {
     target: {
       showOrNew(e) {
-        const {wellplateId} = e.params;
-        if (wellplateId == 'new') {
-          ElementActions.generateEmptyWellplate();
+        const {wellplateID, collectionID} = e.params;
+        if (wellplateID == 'new') {
+          ElementActions.generateEmptyWellplate(collectionID);
         } else {
-          ElementActions.fetchWellplateById(wellplateId);
+          ElementActions.fetchWellplateById(wellplateID);
         }
         //UIActions.selectTab(3)
       }
     },
-    '/:wellplateId': 'showOrNew'
+    '/:wellplateID': 'showOrNew'
   },
   '/screen': {
     target: {
       showOrNew(e) {
-        const {screenId} = e.params;
-        if (screenId == 'new') {
-          ElementActions.generateEmptyScreen();
+        const {screenID, collectionID} = e.params;
+        if (screenID == 'new') {
+          ElementActions.generateEmptyScreen(collectionID);
         } else {
-          ElementActions.fetchScreenById(screenId);
+          ElementActions.fetchScreenById(screenID);
         }
       }
     },
-    '/:screenId': 'showOrNew'
+    '/:screenID': 'showOrNew'
   },
 
   '/sharing': {

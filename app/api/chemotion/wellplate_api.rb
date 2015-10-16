@@ -84,8 +84,6 @@ module Chemotion
         end
 
         put do
-          ap params[:wells][0..2]
-
           attributes = {
               name: params[:name],
               size: params[:size],

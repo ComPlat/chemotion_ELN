@@ -21,13 +21,10 @@ export default class ScreenDetails extends Component {
   }
 
   handleSubmit() {
-    const {currentCollection} = UIStore.getState();
     const {screen} = this.state;
 
     if(screen.isNew) {
-      let params = screen;
-      params.collection_id = currentCollection.id;
-      ElementActions.createScreen(params);
+      ElementActions.createScreen(screen);
     } else {
       ElementActions.updateScreen(screen);
     }

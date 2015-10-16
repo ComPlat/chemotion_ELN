@@ -43,7 +43,8 @@ export default class Element {
     let params = {
       id: this.id,
       type: this.type,
-      is_new: this.isNew || false
+      is_new: this.isNew || false,
+      collection_id: this.collection_id
     }
     _.merge(params, extra_params);
     let clean_params = _.omit(params, _.isNull);

@@ -53,10 +53,9 @@ export default class ReactionDetails extends Component {
   submitFunction() {
     const {reaction} = this.state;
     if(reaction && reaction.isNew) {
-      reaction.collection_id = UIStore.getState().currentCollectionId;
       ElementActions.createReaction(reaction);
     } else {
-      ElementActions.updateReaction(this.state.reaction);
+      ElementActions.updateReaction(reaction);
     }
   }
 

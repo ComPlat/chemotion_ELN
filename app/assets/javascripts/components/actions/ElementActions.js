@@ -84,8 +84,8 @@ class ElementActions {
       });
   }
 
-  generateEmptySample() {
-    this.dispatch(Sample.buildEmpty())
+  generateEmptySample(collection_id) {
+    this.dispatch(Sample.buildEmpty(collection_id))
   }
 
   splitAsSubsamples(ui_state) {
@@ -135,8 +135,8 @@ class ElementActions {
       });
   }
 
-  generateEmptyReaction() {
-    this.dispatch(Reaction.buildEmpty())
+  generateEmptyReaction(collection_id) {
+    this.dispatch(Reaction.buildEmpty(collection_id))
   }
 
 
@@ -196,8 +196,8 @@ class ElementActions {
   // -- Wellplates --
 
 
-  generateEmptyWellplate() {
-    this.dispatch(Wellplate.buildEmpty());
+  generateEmptyWellplate(collection_id) {
+    this.dispatch(Wellplate.buildEmpty(collection_id));
   }
 
   createWellplate(wellplate) {
@@ -258,8 +258,8 @@ class ElementActions {
       });
   }
 
-  generateEmptyScreen() {
-    this.dispatch(Screen.buildEmpty());
+  generateEmptyScreen(collection_id) {
+    this.dispatch(Screen.buildEmpty(collection_id));
   }
 
   createScreen(screen) {

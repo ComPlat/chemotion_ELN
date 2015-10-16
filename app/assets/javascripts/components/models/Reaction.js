@@ -10,8 +10,9 @@ export default class Reaction extends Element {
     return false;
   }
 
-  static buildEmpty() {
+  static buildEmpty(collection_id) {
     return new Reaction({
+      collection_id: collection_id,
       type: 'reaction',
       name: 'New Reaction',
       status: "",
