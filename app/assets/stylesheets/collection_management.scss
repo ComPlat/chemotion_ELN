@@ -1,6 +1,10 @@
 #collection-management {
   .nav-tabs {
     font-size: 13px;
+
+    li.active > a {
+      background: #eee;
+    }
   }
 }
 
@@ -34,7 +38,7 @@
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: #21252B;
+  background-color: #eee;
 }
 
 .m-node {
@@ -47,7 +51,7 @@
   }
 
   .inner {
-    color: #9DA5B4;
+    //color: #9DA5B4;
     font-size: 12px;
     font-family: Menlo;
     position: relative;
@@ -62,7 +66,7 @@
     .collection-label {
       @extend .inner;
       font-size: 10px;
-      background-color: #31363F;
+      //background-color: #31363F;
       color: #9DA5B4 !important;
       width: 200px;
       height: 22px;
