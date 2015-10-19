@@ -47,6 +47,8 @@ class CollectionStore {
 
   handleBulkUpdateUnsharedCollections() {
     CollectionActions.fetchUnsharedCollectionRoots();
+    CollectionActions.fetchSharedCollectionRoots();
+    CollectionActions.fetchRemoteCollectionRoots();
   }
 
   handleUpdateSharedCollection() {
