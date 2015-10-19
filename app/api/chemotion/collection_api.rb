@@ -75,24 +75,28 @@ module Chemotion
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
+              optional :collection_id, type: Integer
             end
 
             requires :reaction, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
+              optional :collection_id, type: Integer
             end
 
             requires :wellplate, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
+              optional :collection_id, type: Integer
             end
 
             requires :screen, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
+              optional :collection_id, type: Integer
             end
           end
           requires :collection_attributes, type: Hash do
@@ -129,9 +133,7 @@ module Chemotion
         end
 
         post do
-          # TODO better way to do this?
-          params[:collection_attributes][:shared_by_id] = current_user.id
-          Usecases::Sharing::ShareWithUsers.new(params).execute!
+          Usecases::Sharing::ShareWithUsers.new(params, current_user).execute!
         end
       end
 

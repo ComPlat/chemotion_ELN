@@ -3,12 +3,13 @@ module Usecases
     class ShareWithUser
       def initialize(params)
         @params = params
-        @user = User.find(@params[:collection_attributes][:user_id])
       end
 
       def execute!
         ActiveRecord::Base.transaction do
-          c = Collection.create(@params.fetch(:collection_attributes, {}))
+          collection_attributes = @params.fetch(:collection_attributes, {})
+          c = Collection.create(collection_attributes)
+          current_user_id = collection_attributes.fetch(:shared_by_id)
 
           sample_ids = @params.fetch(:sample_ids, [])
           reaction_ids =  @params.fetch(:reaction_ids, [])
@@ -16,9 +17,9 @@ module Usecases
           screen_ids = @params.fetch(:screen_ids, [])
 
           # Reactions and Wellplates have associated Samples
-          associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@user.id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@user.id, wellplate_ids).map(&:id)
+          associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(current_user_id, wellplate_ids).map(&:id)
           # Screens have associated Wellplates
-          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@user.id, screen_ids).map(&:id)
+          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(current_user_id, screen_ids).map(&:id)
 
           sample_ids = (sample_ids + associated_sample_ids).uniq
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq

@@ -1,38 +1,17 @@
 module Usecases
   module Sharing
     class ShareWithUsers
-      def initialize(params)
+      def initialize(params, current_user)
         @params = params
-      end
-
-      # TODO some refactoring
-      def getElementIds(elements_filter, elementClass)
-        element = case elementClass.to_s
-                  when 'Sample'
-                    elements_filter.fetch(:sample, {})
-                  when 'Reaction'
-                    elements_filter.fetch(:reaction, {})
-                  when 'Wellplate'
-                    elements_filter.fetch(:wellplate, {})
-                  when 'Screen'
-                    elements_filter.fetch(:screen, {})
-                  else
-                    {}
-                  end
-
-        return [] if element.empty?
-
-        if element.fetch(:all)
-          excluded_ids = element.fetch(:excluded_ids, [])
-          elementClass.where.not(id: excluded_ids).pluck(:id)
-        else
-          element.fetch(:included_ids, [])
-        end
+        @current_user = current_user
       end
 
       def execute!
+        current_user_id = @current_user.id
         user_ids = @params.fetch(:user_ids, [])
         collection_attributes = @params.fetch(:collection_attributes, {})
+        collection_attributes[:shared_by_id] = current_user_id
+
         current_collection_id = @params.fetch(:current_collection_id, {})
         elements_filter = @params.fetch(:elements_filter, {})
 
@@ -42,10 +21,10 @@ module Usecases
 
           new_params = {
             collection_attributes: collection_attributes,
-            sample_ids: getElementIds(elements_filter, Sample),
-            reaction_ids: getElementIds(elements_filter, Reaction),
-            wellplate_ids: getElementIds(elements_filter, Wellplate),
-            screen_ids: getElementIds(elements_filter, Screen),
+            sample_ids: Sample.for_user(current_user_id).for_ui_state(elements_filter.fetch(:sample, [])).pluck(:id),
+            reaction_ids: Reaction.for_user(current_user_id).for_ui_state(elements_filter.fetch(:reaction, [])).pluck(:id),
+            wellplate_ids: Wellplate.for_user(current_user_id).for_ui_state(elements_filter.fetch(:wellplate, [])).pluck(:id),
+            screen_ids: Screen.for_user(current_user_id).for_ui_state(elements_filter.fetch(:screen, [])).pluck(:id),
             current_collection_id: current_collection_id
           }
 

@@ -4,9 +4,36 @@ RSpec.describe Sample, type: :model do
 
   describe 'creation' do
     let(:sample) { create(:sample) }
-    
+
     it 'is possible to create a valid sample' do
       expect(sample.valid?).to be(true)
+    end
+  end
+
+  describe 'for_ui_state scope' do
+    let(:c1) { create(:collection) }
+    let(:c2) { create(:collection) }
+    let(:s1) { create(:sample) }
+    let(:s2) { create(:sample) }
+    let(:s3) { create(:sample) }
+
+    let(:ui_state) {
+      {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: c1.id
+      }
+    }
+
+    before do
+      CollectionsSample.create!(collection: c1, sample: s1)
+      CollectionsSample.create!(collection: c1, sample: s2)
+      CollectionsSample.create!(collection: c2, sample: s3)
+    end
+
+    it 'returns samples according to ui_state' do
+      expect(Sample.for_ui_state(ui_state)).to match_array([s1, s2])
     end
   end
 

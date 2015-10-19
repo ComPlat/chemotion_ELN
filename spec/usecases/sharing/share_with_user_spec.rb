@@ -15,13 +15,15 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
   let(:sample_a1)   { create(:sample) }
   let(:wellplate_a) { create(:wellplate) }
   let(:wellplate_b) { create(:wellplate) }
+  # user who gets the share
+  let(:user_s)      { create(:user) }
 
   let(:params) {
     {
       collection_attributes: {
-        user_id: user.id,
+        user_id: user_s.id,
+        shared_by_id: user.id,
         label: 'test',
-        shared_by_id: 10,
         is_shared: true,
         permission_level: 1,
         sample_detail_level: 2,
@@ -61,8 +63,8 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       c = Collection.find_by(label: 'test')
 
       expect(c).to_not be_nil
-      expect(c.user_id).to eq(user.id)
-      expect(c.shared_by_id).to eq(10)
+      expect(c.user_id).to eq(user_s.id)
+      expect(c.shared_by_id).to eq(user.id)
       expect(c.is_shared).to eq(true)
       expect(c.permission_level).to eq(1)
       expect(c.sample_detail_level).to eq(2)
