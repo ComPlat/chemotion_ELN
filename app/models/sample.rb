@@ -34,9 +34,9 @@ class Sample < ActiveRecord::Base
     sample_ids = Wellplate.all.flat_map(&:samples).map(&:id)
     where(id: sample_ids)
   }
-  scope :by_wellplate_ids, ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
+  scope :by_wellplate_ids,         ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
   scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_as_reactant).where('reactions.id in (?)', ids) }
-  scope :by_reaction_product_ids, ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
+  scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
 
   has_many :collections_samples, dependent: :destroy
@@ -52,15 +52,13 @@ class Sample < ActiveRecord::Base
 
   belongs_to :molecule
 
-  has_one :well
+  has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
-
-  before_destroy :destroy_associations
 
   has_ancestry
 
@@ -96,16 +94,6 @@ class Sample < ActiveRecord::Base
         end
       end
     end
-  end
-
-  def destroy_associations
-    # WARNING: Using delete_all instead of destroy_all due to PG Error
-    # TODO: Check this error and consider another solution
-    Well.where(sample_id: id).delete_all
-    CollectionsSample.where(sample_id: id).delete_all
-    ReactionsProductSample.where(sample_id: id).delete_all
-    ReactionsReactantSample.where(sample_id: id).delete_all
-    ReactionsStartingMaterialSample.where(sample_id: id).delete_all
   end
 
 end
