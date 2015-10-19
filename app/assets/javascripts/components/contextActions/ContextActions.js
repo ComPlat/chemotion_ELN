@@ -1,9 +1,9 @@
 import React from 'react';
 import {ButtonGroup} from 'react-bootstrap';
-import UIStore from './stores/UIStore';
-import ElementActions from './actions/ElementActions';
-import SplitButton from './contextActions/SplitButton';
-import CreateButton from './contextActions/CreateButton';
+import UIStore from './../stores/UIStore';
+import ElementActions from './../actions/ElementActions';
+import SplitButton from './SplitButton';
+import CreateButton from './CreateButton';
 
 export default class ContextActions extends React.Component {
   constructor(props) {

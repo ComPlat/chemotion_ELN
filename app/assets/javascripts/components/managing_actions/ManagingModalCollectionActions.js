@@ -6,19 +6,13 @@ import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
 
 import CollectionActions from '../actions/CollectionActions';
-import ElementActions from '../actions/ElementActions';
 
-import Aviator from 'aviator';
-
-export default class CollectionManagementModal extends React.Component {
+export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       ui_state: UIStore.getState(),
       collection_state: CollectionStore.getState(),
-      action: props.action,
-      modal_title: props.modal_title,
-      show_collections: props.show_collections,
       labelOfNewCollection: null
     }
   }
@@ -77,10 +71,6 @@ export default class CollectionManagementModal extends React.Component {
     });
   }
 
-  hideModal() {
-    Aviator.navigate(Aviator.getCurrentURI()+'/hide');
-  }
-
   handleSubmit() {
     let select_ref = this.refs.collectionSelect
     let collection_id = select_ref ? select_ref.getValue() : undefined;
@@ -123,51 +113,31 @@ export default class CollectionManagementModal extends React.Component {
       currentCollectionId: this.state.ui_state.currentCollection.id
     }
 
-    this.state.action({ui_state: ui_state, collection_id: collection_id});
-    Aviator.navigate(Aviator.getCurrentURI()+'/hide');
-  }
-
-  showCollections() {
-    if (this.state.show_collections) {
-      return (
-        <div>
-          <Input ref='collectionSelect' type='select' label='Select a Collection'>
-            {this.collectionEntries()}
-          </Input>
-          <form>
-            <table width="100%">
-              <tr>
-                <td width="95%" className="padding-right">
-                  <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
-                    placeholder={'-- Please insert collection name --'}
-                  />
-                </td>
-                <td width="5%">
-                  <Button bsSize="small" className="managing-actions-add-btn" bsStyle="success" onClick={this.addCollection.bind(this)}>
-                    <i className="fa fa-plus"></i>
-                  </Button>
-                </td>
-              </tr>
-            </table>
-          </form>
-        </div>
-      )
-    }
-    return;
+    this.props.action({ui_state: ui_state, collection_id: collection_id});
+    this.props.onHide();
   }
 
   render() {
     return (
       <div>
-        <Modal animation show={true} onHide={this.hideModal.bind(this)}>
-          <Modal.Header closeButton>
-            <Modal.Title>{this.state.modal_title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            { this.showCollections() }
-            <Button bsStyle="warning" onClick={this.handleSubmit.bind(this)}>Submit</Button>
-          </Modal.Body>
-        </Modal>
+        <Input ref='collectionSelect' type='select' label='Select a Collection'>
+          {this.collectionEntries()}
+        </Input>
+        <table width="100%">
+          <tr>
+            <td width="95%" className="padding-right">
+              <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
+                     placeholder={'-- Please insert collection name --'}
+                />
+            </td>
+            <td width="5%">
+              <Button bsSize="small" className="managing-actions-add-btn" bsStyle="success" onClick={this.addCollection.bind(this)}>
+                <i className="fa fa-plus"></i>
+              </Button>
+            </td>
+          </tr>
+        </table>
+        <Button bsStyle="warning" onClick={() => this.handleSubmit()}>Submit</Button>
       </div>
     )
   }

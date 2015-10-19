@@ -287,8 +287,12 @@ class ElementActions {
   }
 
 
-  deleteElements(ui_state) {
-    this.dispatch(ui_state);
+  deleteElements() {
+    this.dispatch();
+  }
+
+  removeElements() {
+    this.dispatch();
   }
 
   // - ...

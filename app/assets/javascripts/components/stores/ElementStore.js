@@ -92,7 +92,8 @@ class ElementStore {
   }
 
   // -- Elements --
-  handleDeleteElements(ui_state) {
+  handleDeleteElements() {
+    const ui_state = UIStore.getState();
     ElementActions.deleteSamplesByUIState(ui_state);
     ElementActions.deleteReactionsByUIState(ui_state);
     ElementActions.deleteWellplatesByUIState(ui_state);
