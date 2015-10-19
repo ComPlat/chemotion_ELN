@@ -35,40 +35,27 @@ class Reaction < ActiveRecord::Base
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
   scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
-  scope :by_product_ids, ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
+  scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
 
-  has_many :collections_reactions
+  has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
 
-  has_many :reactions_starting_material_samples
+  has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
   has_many :starting_material_molecules, through: :starting_materials, source: :molecule
 
-  has_many :reactions_reactant_samples
+  has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
-  has_many :reactions_product_samples
+  has_many :reactions_product_samples, dependent: :destroy
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
 
-  has_many :literatures
-
-  before_destroy :destroy_associations
+  has_many :literatures, dependent: :destroy
 
   before_save :update_svg_file!
   before_save :cleanup_array_fields
-
-  def destroy_associations
-    # WARNING: Using delete_all instead of destroy_all due to PG Error
-    # TODO: Check this error and consider another solution
-    # TODO: define dependent destroy hooks
-    Literature.where(reaction_id: id).delete_all
-    CollectionsReaction.where(reaction_id: id).delete_all
-    ReactionsProductSample.where(reaction_id: id).delete_all
-    ReactionsReactantSample.where(reaction_id: id).delete_all
-    ReactionsStartingMaterialSample.where(reaction_id: id).delete_all
-  end
 
   def samples
     starting_materials + reactants + products

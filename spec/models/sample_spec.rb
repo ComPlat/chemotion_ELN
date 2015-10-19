@@ -28,9 +28,10 @@ RSpec.describe Sample, type: :model do
     end
 
     it 'destroys associations properly' do
-      expect(collection.samples).to eq []
-      expect(reaction_1.samples).to eq []
-      expect(reaction_2.samples).to eq []
+      expect(collection.collections_samples).to eq []
+      expect(reaction_1.reactions_starting_material_samples).to eq []
+      expect(reaction_2.reactions_reactant_samples).to eq []
+      expect(reaction_2.reactions_product_samples).to eq []
       expect(wellplate.wells).to eq []
     end
   end
