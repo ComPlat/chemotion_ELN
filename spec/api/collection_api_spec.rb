@@ -324,18 +324,21 @@ describe Chemotion::CollectionAPI do
 
           let!(:params) {
             {
+              current_collection_id: nil,
               collection_attributes: attributes_for(:collection),
               user_ids: [user.id],
               elements_filter: {
                 sample: {
                   all: false,
                   included_ids: [s1.id, s2.id],
-                  excluded_ids: []
+                  excluded_ids: [],
+                  collection_id: 1
                 },
                 reaction: {
                   all: false,
                   included_ids: [],
-                  excluded_ids: []
+                  excluded_ids: [],
+                  collection_id: 2
                 }
               }
             }

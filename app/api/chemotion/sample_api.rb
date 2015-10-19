@@ -8,7 +8,7 @@ module Chemotion
         desc "Delete samples by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected samples from the UI" do
-            optional :all, type: Boolean
+            requires :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
           end

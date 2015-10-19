@@ -158,27 +158,11 @@ describe Chemotion::ReactionAPI do
           expect(a).to match_array([])
         end
 
-        it 'should be able to delete reactions when "all" is false' do
-          reaction_ids = [reaction_1.id, reaction_2.id]
-          array = Reaction.where(id: reaction_ids).to_a
-          expect(array).to match_array([reaction_1, reaction_2])
-          CollectionsReaction.create(reaction_id: reaction_1.id, collection_id: 1)
-          CollectionsReaction.create(reaction_id: reaction_2.id, collection_id: 1)
-          r = Reaction.find_by(id: reaction_3.id)
-          expect(r).to_not be_nil
+        it 'should be able to delete reactions when "all" is true' do
+          old_reaction_ids = [reaction_1.id, reaction_2.id]
           delete '/api/v1/reactions/ui_state/', { ui_state: params_all_true }
-          r = Reaction.find_by(id: reaction_3.id)
-          expect(r).to_not be_nil
-          array = Reaction.where(id: reaction_ids).to_a
-          expect(array).to match_array([])
-          a = CollectionsReaction.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
-          a = ReactionsProductSample.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
-          a = ReactionsReactantSample.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
-          a = ReactionsStartingMaterialSample.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
+
+          expect(Reaction.where(id: old_reaction_ids)).to eq []
         end
 
       end

@@ -35,21 +35,32 @@ export default class ShareButton extends React.Component {
   }
 
   filterParamsFromUIState(uiState) {
+    let collectionId = uiState.currentCollection.id;
+
     let filterParams = {
       sample: {
         all: uiState.sample.checkedAll,
         included_ids: uiState.sample.checkedIds,
-        excluded_ids: uiState.sample.uncheckedIds
+        excluded_ids: uiState.sample.uncheckedIds,
+        collection_id: collectionId
       },
       reaction: {
         all: uiState.reaction.checkedAll,
         included_ids: uiState.reaction.checkedIds,
-        excluded_ids: uiState.reaction.uncheckedIds
+        excluded_ids: uiState.reaction.uncheckedIds,
+        collection_id: collectionId
       },
       wellplate: {
         all: uiState.wellplate.checkedAll,
         included_ids: uiState.wellplate.checkedIds,
-        excluded_ids: uiState.wellplate.uncheckedIds
+        excluded_ids: uiState.wellplate.uncheckedIds,
+        collection_id: collectionId
+      },
+      screen: {
+        all: uiState.screen.checkedAll,
+        included_ids: uiState.screen.checkedIds,
+        excluded_ids: uiState.screen.uncheckedIds,
+        collection_id: collectionId
       }
     };
     return filterParams;
