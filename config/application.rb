@@ -16,6 +16,7 @@ Bundler.require(*Rails.groups)
 
 module Chemotion
   class Application < Rails::Application
+    config.action_dispatch.perform_deep_munge = false
     # Grape API config
     config.paths.add File.join('app', 'api'), glob: File.join('**', '*.rb')
     config.autoload_paths += Dir[Rails.root.join('app', 'api', '*')]
