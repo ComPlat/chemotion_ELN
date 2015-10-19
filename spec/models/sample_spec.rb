@@ -10,6 +10,31 @@ RSpec.describe Sample, type: :model do
     end
   end
 
+  describe 'deletion' do
+    let(:sample)     { create(:sample) }
+    let(:reaction_1) { create(:reaction) }
+    let(:reaction_2) { create(:reaction) }
+    let(:wellplate)  { create(:wellplate) }
+    let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
+    let(:collection) { create(:collection) }
+
+    before do
+      CollectionsSample.create!(sample: sample, collection: collection)
+      ReactionsStartingMaterialSample.create!(sample: sample, reaction: reaction_1)
+      ReactionsReactantSample.create!(sample: sample, reaction: reaction_1)
+      ReactionsProductSample.create!(sample: sample, reaction: reaction_2)
+      sample.destroy
+      wellplate.reload
+    end
+
+    it 'destroys associations properly' do
+      expect(collection.samples).to eq []
+      expect(reaction_1.samples).to eq []
+      expect(reaction_2.samples).to eq []
+      expect(wellplate.wells).to eq []
+    end
+  end
+
   describe 'for_ui_state scope' do
     let(:c1) { create(:collection) }
     let(:c2) { create(:collection) }
