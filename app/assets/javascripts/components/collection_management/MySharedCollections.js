@@ -80,7 +80,7 @@ export default class MySharedCollections extends React.Component {
     });
 
     let params = {
-      collections: this.state.tree.children,
+      collections: collections,
       deleted_ids: this.state.deleted_ids
     }
 
@@ -100,9 +100,62 @@ export default class MySharedCollections extends React.Component {
           <Button bsSize="xsmall" bsStyle="primary" onClick={this.editShare.bind(this, node)}>
             <i className="fa fa-share"></i>
           </Button>
+          <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
+            <i className="fa fa-trash-o"></i>
+          </Button>
         </ButtonGroup>
       )
     }
+  }
+
+  // TODO add CollectionManagementStore?
+  deleteCollection(node) {
+    let children = node.children || [];
+    let parent = this.findParentById(this.state.tree, node.id);
+
+    this.removeNodeById(parent, node.id)
+    this.appendChildrenToParent(parent, children)
+
+    if(!node.isNew) {
+      let deleted_ids = this.state.deleted_ids.concat([node.id])
+
+      this.setState({
+        deleted_ids: deleted_ids
+      })
+    }
+  }
+
+  appendChildrenToParent(parent, children) {
+    children.forEach((child) => {
+      parent.children.push(child)
+    });
+  }
+
+  findParentById(root, id) {
+    if(!root.children) {
+      root.children = [];
+      return null;
+    }
+
+    let children = root.children;
+
+    for(let i = 0; i < children.length; i++) {
+      if(children[i].id == id) {
+        return root;
+        break;
+      } else {
+        let parent = this.findParentById(children[i], id);
+        if(parent) {
+          return parent
+        }
+      }
+    }
+  }
+
+  removeNodeById(parent, id) {
+    parent.children = parent.children.filter((child) => {
+      return child.id != id
+    });
   }
 
   editShare(node) {

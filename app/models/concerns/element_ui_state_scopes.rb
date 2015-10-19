@@ -6,7 +6,7 @@ module ElementUIStateScopes
       return [] unless ui_state
 
       all = coerce_all_to_boolean(ui_state.fetch(:all, false))
-      collection_id = ui_state.collection_id || 'all'
+      collection_id = ui_state.fetch(:collection_id, 'all')
 
       if (all)
         excluded_ids = ui_state.fetch(:excluded_ids, [])
