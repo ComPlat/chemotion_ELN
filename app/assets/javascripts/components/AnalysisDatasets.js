@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {ListGroup, ListGroupItem, Button, Well} from 'react-bootstrap';
+import {ListGroup, ListGroupItem, Button, ButtonToolbar, Well} from 'react-bootstrap';
 import DatasetModal from './DatasetModal';
 import Dataset from './models/Dataset';
 
@@ -48,45 +48,67 @@ export default class AnalysisDatasets extends Component {
     this.props.onChange(analysis);
   }
 
-  handleModalHide(actionType, dataset) {
+  handleModalHide() {
     const {modal} = this.state;
     modal.show = false;
     modal.dataset = null;
     this.setState({modal});
   }
 
+  addButton() {
+    return (
+      <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
+        <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          <i className="fa fa-plus"></i>
+        </Button>
+      </div>
+    )
+  }
+
   render() {
     const {analysis, modal} = this.state;
-    return (
-      <div>
-        <Well style={{minHeight: 148}}>
-          <ListGroup style={{marginBottom: 0}}>
-            {analysis.datasets.map((dataset, key) => {
-              return (
-                <ListGroupItem key={key}>
-                  <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset)}>{dataset.name}</a>
+    if(analysis.datasets.length > 0) {
+      return (
+        <div>
+          <Well style={{minHeight: 148, paddingBottom: 46}}>
+            <ListGroup style={{marginBottom: 0}}>
+              {analysis.datasets.map((dataset, key) => {
+                return (
+                  <ListGroupItem key={key}>
+                    <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset)}>{dataset.name}</a>
                     <span className="pull-right">
-                      <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemove(dataset)}>
-                        <i className="fa fa-trash-o"></i>
-                      </Button>
+                      <ButtonToolbar>
+                        <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
+                          <i className="fa fa-download"></i>
+                        </Button>
+                        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemove(dataset)}>
+                          <i className="fa fa-trash-o"></i>
+                        </Button>
+                      </ButtonToolbar>
                     </span>
-                </ListGroupItem>
-              )
-            })}
-          </ListGroup>
-            <span className="pull-right">
-              <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-                <i className="fa fa-plus"></i>
-              </Button>
-            </span>
-        </Well>
-        <DatasetModal
-          onHide={() => this.handleModalHide()}
-          onChange={dataset => this.handleChange(dataset)}
-          show={modal.show}
-          dataset={modal.dataset}
-          />
-      </div>
-    );
+                  </ListGroupItem>
+                )
+              })}
+            </ListGroup>
+            {this.addButton()}
+          </Well>
+          <DatasetModal
+            onHide={() => this.handleModalHide()}
+            onChange={dataset => this.handleChange(dataset)}
+            show={modal.show}
+            dataset={modal.dataset}
+            />
+        </div>
+      );
+    } else {
+      return(
+        <div>
+          <Well style={{minHeight: 148}}>
+            There are currently no Datasets.<br/>
+            {this.addButton()}
+          </Well>
+        </div>
+      )
+    }
   }
 }
