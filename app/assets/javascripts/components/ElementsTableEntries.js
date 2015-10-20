@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
+import {Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ArrayUtils from './utils/ArrayUtils';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
@@ -47,7 +48,12 @@ export default class ElementsTableEntries extends Component {
 
   topSecretIcon(element) {
     if (element.type == 'sample' && element.is_top_secret == true) {
-      return <i className="fa fa-user-secret"></i>
+      const tooltip = (<Tooltip>Top secret</Tooltip>);
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          <i className="fa fa-user-secret"></i>
+        </OverlayTrigger>
+      )
     }
   }
 
@@ -100,16 +106,35 @@ export default class ElementsTableEntries extends Component {
 
   reactionStatus(element) {
 
+    let tooltip = null;
     if (element.type == 'reaction') {
       switch (element.status) {
+
         case "Successful":
-          return (<a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>)
+          tooltip = (<Tooltip>Successful Reaction</Tooltip>);
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>
+            </OverlayTrigger>
+          )
           break;
+
         case "Planned":
-          return (<a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>)
+          tooltip = (<Tooltip>Planned Reaction</Tooltip>);
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>
+            </OverlayTrigger>
+          )
           break;
+
         case "Not Successful":
-          return (<a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>)
+          tooltip = (<Tooltip>Not Successful Reaction</Tooltip>);
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>
+            </OverlayTrigger>
+          )
           break;
 
         default:
