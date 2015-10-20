@@ -91,6 +91,20 @@ class ElementStore {
     });
   }
 
+  closeElementWhenDeleted(ui_state) {
+    let currentElement = this.state.currentElement;
+    if (currentElement) {
+      let type_state = ui_state[currentElement.type]
+      let checked = type_state.checkedIds.indexOf(currentElement.id) > -1
+      let checked_all_and_not_unchecked = 
+        type_state.checkedAll && type_state.uncheckedIds.indexOf(currentElement.id) == -1
+
+      if (checked_all_and_not_unchecked || checked) {
+        this.state.currentElement = null;
+      }
+    }
+  }
+
   // -- Elements --
   handleDeleteElements(ui_state) {
     ElementActions.deleteSamplesByUIState(ui_state);
@@ -101,6 +115,7 @@ class ElementStore {
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
+    this.closeElementWhenDeleted(ui_state);
   }
 
   handleUpdateElementsCollection(params) {
