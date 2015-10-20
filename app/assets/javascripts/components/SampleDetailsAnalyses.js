@@ -54,17 +54,21 @@ export default class SampleDetailsAnalyses extends Component {
   }
 
   addButton() {
-    return (
-      <div className="pull-right" style={{marginTop: -12}}>
-      <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-        <i className="fa fa-plus"></i>
-      </Button>
-    </div>
-    )
+    const {readOnly} = this.props;
+    if(! readOnly) {
+      return (
+        <div className="pull-right" style={{marginTop: -12}}>
+          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+            <i className="fa fa-plus"></i>
+          </Button>
+        </div>
+      )
+    }
   }
 
   render() {
     const {sample, activeAnalysis} = this.state;
+    const {readOnly} = this.props;
     if(sample.analyses.length > 0) {
       return (
         <div>
@@ -73,6 +77,7 @@ export default class SampleDetailsAnalyses extends Component {
               return (
                 <Panel header={analysis.name} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
                   <AnalysisComponent
+                    readOnly={readOnly}
                     analysis={analysis}
                     onChange={analysis => this.handleChange(analysis)}
                     onRemove={analysis => this.handleRemove(analysis)}

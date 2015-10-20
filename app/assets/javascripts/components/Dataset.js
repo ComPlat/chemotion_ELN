@@ -56,9 +56,7 @@ export default class Dataset extends Component {
             <ListGroupItem key={key}>
               <a onClick={() => this.handleFileDownload(file)} style={{cursor: 'pointer'}}>{file.name}</a>
               <div className="pull-right">
-                <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleFileRemove(file)}>
-                  <i className="fa fa-trash-o"></i>
-                </Button>
+                {this.removeButton()}
               </div>
             </ListGroupItem>
           )
@@ -74,8 +72,36 @@ export default class Dataset extends Component {
     }
   }
 
+  removeButton() {
+    const {readOnly} = this.props;
+    if(!readOnly) {
+      return (
+        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleFileRemove(file)}>
+          <i className="fa fa-trash-o"></i>
+        </Button>
+      );
+    }
+  }
+
+  dropzone() {
+    const {readOnly} = this.props;
+    if(!readOnly) {
+      return (
+        <Dropzone
+          onDrop={files => this.handleFileDrop(files)}
+          style={{height: 50, width: '100%', border: '3px dashed lightgray'}}
+          >
+          <div style={{textAlign: 'center', paddingTop: 12, color: 'gray'}}>
+            Drop Files, or Click to Select.
+          </div>
+        </Dropzone>
+      );
+    }
+  }
+
   render() {
     const {dataset} = this.state;
+    const {readOnly} = this.props;
     return (
       <div>
         <Col md={6}>
@@ -84,6 +110,7 @@ export default class Dataset extends Component {
               type="text"
               label="Name"
               value={dataset.name}
+              disabled={readOnly}
               onChange={event => this.handleInputChange('name', event)}
               />
           </Row>
@@ -92,6 +119,7 @@ export default class Dataset extends Component {
               type="text"
               label="Instrument"
               value={dataset.instrument}
+              disabled={readOnly}
               onChange={event => this.handleInputChange('instrument', event)}
               />
           </Row>
@@ -100,6 +128,7 @@ export default class Dataset extends Component {
               type="textarea"
               label="Description"
               value={dataset.description}
+              disabled={readOnly}
               onChange={event => this.handleInputChange('description', event)}
               style={{minHeight: 100}}
               />
@@ -108,14 +137,7 @@ export default class Dataset extends Component {
         <Col md={6}>
           <label>Attachments</label>
           {this.attachements()}
-          <Dropzone
-            onDrop={files => this.handleFileDrop(files)}
-            style={{height: 50, width: '100%', border: '3px dashed lightgray'}}
-            >
-            <div style={{textAlign: 'center', paddingTop: 12, color: 'gray'}}>
-              Drop Files, or Click to Select.
-            </div>
-          </Dropzone>
+          {this.dropzone()}
         </Col>
       </div>
     );

@@ -4,7 +4,7 @@ import Dataset from './Dataset';
 
 export default class DatasetModal extends Component {
   render() {
-    const {show, dataset, onHide, onChange} = this.props;
+    const {show, dataset, onHide, onChange, readOnly} = this.props;
     if(show) {
       return (
         <div>
@@ -17,6 +17,7 @@ export default class DatasetModal extends Component {
             <Modal.Body>
               <div style={{minHeight: 500}}>
                 <Dataset
+                  readOnly={readOnly}
                   dataset={dataset}
                   onModalHide={() => onHide()}
                   onChange={dataset => onChange(dataset)}

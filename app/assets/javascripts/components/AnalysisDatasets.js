@@ -56,13 +56,27 @@ export default class AnalysisDatasets extends Component {
   }
 
   addButton() {
-    return (
-      <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
-        <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-          <i className="fa fa-plus"></i>
+    const {readOnly} = this.props;
+    if(!readOnly) {
+      return (
+        <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
+          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+            <i className="fa fa-plus"></i>
+          </Button>
+        </div>
+      )
+    }
+  }
+
+  removeButton() {
+    const {readOnly} = this.props;
+    if(!readOnly) {
+      return (
+        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemove(dataset)}>
+          <i className="fa fa-trash-o"></i>
         </Button>
-      </div>
-    )
+      );
+    }
   }
 
   render() {
@@ -81,9 +95,7 @@ export default class AnalysisDatasets extends Component {
                         <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
                           <i className="fa fa-download"></i>
                         </Button>
-                        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemove(dataset)}>
-                          <i className="fa fa-trash-o"></i>
-                        </Button>
+                        {this.removeButton()}
                       </ButtonToolbar>
                     </span>
                   </ListGroupItem>
@@ -96,6 +108,7 @@ export default class AnalysisDatasets extends Component {
             onHide={() => this.handleModalHide()}
             onChange={dataset => this.handleChange(dataset)}
             show={modal.show}
+            readOnly={this.props.readOnly}
             dataset={modal.dataset}
             />
         </div>
