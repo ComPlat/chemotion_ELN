@@ -1,6 +1,5 @@
 import React from 'react';
 import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
-import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import PermissionStore from '../stores/PermissionStore';
 import PermissionActions from '../actions/PermissionActions';
@@ -66,7 +65,7 @@ export default class ShareButton extends React.Component {
     return filterParams;
   }
 
-  showShareModal() {
+  handleModalShow() {
     let uiState = UIStore.getState();
     let elementsFilter = this.filterParamsFromUIState(uiState);
 
@@ -75,15 +74,17 @@ export default class ShareButton extends React.Component {
     };
 
     PermissionActions.fetchTopSecretStatus(params);
+    this.props.onClick();
   }
 
   render() {
+    const {isDisabled} = this.props;
     const tooltip = (
       <Tooltip>Share</Tooltip>
     );
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <Button bsStyle="info" onClick={this.showShareModal.bind(this)} disabled={this.state.isDisabled}>
+        <Button bsStyle="info" onClick={() => this.handleModalShow()} disabled={isDisabled}>
           <i className="fa fa-share-alt"></i>
         </Button>
       </OverlayTrigger>

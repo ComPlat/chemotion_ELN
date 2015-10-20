@@ -8,9 +8,7 @@ import CollectionActions from '../actions/CollectionActions';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 
-import Aviator from 'aviator';
-
-export default class ShareModal extends React.Component {
+export default class ManagingModalSharing extends React.Component {
   constructor(props) {
     super(props);
 
@@ -23,7 +21,7 @@ export default class ShareModal extends React.Component {
       sampleDetailLevel: 0,
       reactionDetailLevel: 0,
       wellplateDetailLevel: 0,
-      screenDetailLevel: 0
+      screenDetailLevel: 0,
     }
   }
 
@@ -43,10 +41,6 @@ export default class ShareModal extends React.Component {
       currentUser: state.currentUser,
       users: state.users
     })
-  }
-
-  hideModal() {
-    Aviator.navigate(Aviator.getCurrentURI()+'/hide');
   }
 
   filterParamsFromUIState(uiState) {
@@ -107,7 +101,7 @@ export default class ShareModal extends React.Component {
       current_collection_id: currentCollectionId
     }
     CollectionActions.createSharedCollections(params);
-    this.hideModal();
+    this.props.onHide();
   }
 
   handleShortcutChange() {
@@ -213,60 +207,58 @@ export default class ShareModal extends React.Component {
 
   render() {
     return (
-      <div>
-        <Modal animation show={true} onHide={this.hideModal.bind(this)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Sharing</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Input ref='shortcutSelect' type='select' label='Role' onChange={(e) => this.handleShortcutChange(e)}>
-              <option value='Pick a sharing role'>Pick a sharing role (optional)</option>
-              <option value='user'>User</option>
-              <option value='partner'>Partner</option>
-              <option value='collaborator'>Collaborator</option>
-              <option value='reviewer'>Reviewer</option>
-              <option value='supervisor'>Supervisor</option>
-            </Input>
-            <Input ref='permissionLevelSelect' type='select' label='Permission level' value={this.state.permissionLevel} onChange={(e) => this.handlePLChange(e)}>
-              <option value='0'>Read</option>
-              <option value='1'>Write</option>
-              <option value='2'>Share</option>
-              <option value='3'>Delete</option>
-              <option value='4'>Take ownership</option>
-            </Input>
-            <Input ref='sampleDetailLevelSelect' type='select' label='Sample detail level' value={this.state.sampleDetailLevel} onChange={(e) => this.handleSampleDLChange(e)}>
-              <option value='0'>Molecular mass of compound/External label</option>
-              <option value='1'>Molecule, structure</option>
-              <option value='2'>Analysis Result/Description</option>
-              <option value='3'>Analysis Datasets</option>
-              <option value='4'>Everything</option>
-            </Input>
-            <Input ref='reactionDetailLevelSelect' type='select' label='Reaction detail level' value={this.state.reactionDetailLevel} onChange={(e) => this.handleReactionDLChange(e)}>
-              <option value='0'>Include Sample Level 1</option>
-              <option value='1'>Observation/Description/Calculation</option>
-              <option value='2'>Include Sample Level 2</option>
-              <option value='3'>Everything</option>
-            </Input>
-            <Input ref='wellplateDetailLevelSelect' type='select' label='Wellplate detail level' value={this.state.wellplateDetailLevel} onChange={(e) => this.handleWellplateDLChange(e)}>
-              <option value='0'>Include Samples Level 0/Wells (Positions)</option>
-              <option value='1'>Include Sample Level 1</option>
-              <option value='2'>Readout</option>
-              <option value='3'>Everything</option>
-            </Input>
-            <Input ref='screenDetailLevelSelect' type='select' label='Screen detail level' value={this.state.screenDetailLevel} onChange={(e) => this.handleScreenDLChange(e)}>
-              <option value='0'>Name, description, conditions, requirements</option>
-              <option value='1'>Include Wellplate Level 1</option>
-              <option value='2'>Everything</option>
-            </Input>
+    <div>
+      <Input ref='shortcutSelect' type='select' label='Role' onChange={(e) => this.handleShortcutChange(e)}>
+        <option value='Pick a sharing role'>Pick a sharing role (optional)</option>
+        <option value='user'>User</option>
+        <option value='partner'>Partner</option>
+        <option value='collaborator'>Collaborator</option>
+        <option value='reviewer'>Reviewer</option>
+        <option value='supervisor'>Supervisor</option>
+      </Input>
+      <Input ref='permissionLevelSelect' type='select' label='Permission level'
+             value={this.state.permissionLevel} onChange={(e) => this.handlePLChange(e)}>
+        <option value='0'>Read</option>
+        <option value='1'>Write</option>
+        <option value='2'>Share</option>
+        <option value='3'>Delete</option>
+        <option value='4'>Take ownership</option>
+      </Input>
+      <Input ref='sampleDetailLevelSelect' type='select' label='Sample detail level'
+             value={this.state.sampleDetailLevel} onChange={(e) => this.handleSampleDLChange(e)}>
+        <option value='0'>Molecular mass of compound/External label</option>
+        <option value='1'>Molecule, structure</option>
+        <option value='2'>Analysis Result/Description</option>
+        <option value='3'>Analysis Datasets</option>
+        <option value='4'>Everything</option>
+      </Input>
+      <Input ref='reactionDetailLevelSelect' type='select' label='Reaction detail level'
+             value={this.state.reactionDetailLevel} onChange={(e) => this.handleReactionDLChange(e)}>
+        <option value='0'>Include Sample Level 1</option>
+        <option value='1'>Observation/Description/Calculation</option>
+        <option value='2'>Include Sample Level 2</option>
+        <option value='3'>Everything</option>
+      </Input>
+      <Input ref='wellplateDetailLevelSelect' type='select' label='Wellplate detail level'
+             value={this.state.wellplateDetailLevel} onChange={(e) => this.handleWellplateDLChange(e)}>
+        <option value='0'>Include Samples Level 0/Wells (Positions)</option>
+        <option value='1'>Include Sample Level 1</option>
+        <option value='2'>Readout</option>
+        <option value='3'>Everything</option>
+      </Input>
+      <Input ref='screenDetailLevelSelect' type='select' label='Screen detail level'
+             value={this.state.screenDetailLevel} onChange={(e) => this.handleScreenDLChange(e)}>
+        <option value='0'>Name, description, conditions, requirements</option>
+        <option value='1'>Include Wellplate Level 1</option>
+        <option value='2'>Everything</option>
+      </Input>
 
-            <b>Select Users to share with</b>
-            <Select ref='userSelect' name='users' multi={true}
-                    options={this.usersEntries()} />
-            <br/>
-            <Button bsStyle="warning" onClick={this.handleSharing.bind(this)}>Share</Button>
-          </Modal.Body>
-        </Modal>
-      </div>
+      <b>Select Users to share with</b>
+      <Select ref='userSelect' name='users' multi={true}
+              options={this.usersEntries()}/>
+      <br/>
+      <Button bsStyle="warning" onClick={() => this.handleSharing()}>Share</Button>
+    </div>
     )
   }
 }

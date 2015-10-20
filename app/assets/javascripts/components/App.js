@@ -4,11 +4,6 @@ import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import CollectionManagement from './CollectionManagement';
 import Elements from './Elements';
-import ShareModal from './managing_actions/ShareModal';
-import MoveModal from './managing_actions/MoveModal';
-import AssignModal from './managing_actions/AssignModal';
-import RemoveModal from './managing_actions/RemoveModal';
-import TopSecretModal from './TopSecretModal';
 
 import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
@@ -142,91 +137,6 @@ Aviator.setRoutes({
       }
     },
     '/:screenID': 'showOrNew'
-  },
-
-  '/sharing': {
-    '/': 'show',
-    '/hide': 'hide',
-    target: {
-      show: function(e) {
-        React.render(<ShareModal/>, document.getElementById('modal'));
-      },
-      hide: function(e) {
-        let modalDomNode = document.getElementById('modal');
-        if(modalDomNode) {
-          React.unmountComponentAtNode(modalDomNode);
-        }
-        Aviator.navigate(Aviator.getCurrentURI().replace('/sharing/hide', ''))
-      }
-    }
-  },
-
-  '/move': {
-    '/': 'show',
-    '/hide': 'hide',
-    target: {
-      show: function(e) {
-        React.render(<MoveModal/>, document.getElementById('modal'));
-      },
-      hide: function(e) {
-        let modalDomNode = document.getElementById('modal');
-        if(modalDomNode) {
-          React.unmountComponentAtNode(modalDomNode);
-        }
-        Aviator.navigate(Aviator.getCurrentURI().replace('/move/hide', ''))
-      }
-    }
-  },
-
-  '/assign': {
-    '/': 'show',
-    '/hide': 'hide',
-    target: {
-      show: function(e) {
-        React.render(<AssignModal/>, document.getElementById('modal'));
-      },
-      hide: function(e) {
-        let modalDomNode = document.getElementById('modal');
-        if(modalDomNode) {
-          React.unmountComponentAtNode(modalDomNode);
-        }
-        Aviator.navigate(Aviator.getCurrentURI().replace('/assign/hide', ''))
-      }
-    }
-  },
-
-  '/remove': {
-    '/': 'show',
-    '/hide': 'hide',
-    target: {
-      show: function(e) {
-        React.render(<RemoveModal/>, document.getElementById('modal'));
-      },
-      hide: function(e) {
-        let modalDomNode = document.getElementById('modal');
-        if(modalDomNode) {
-          React.unmountComponentAtNode(modalDomNode);
-        }
-        Aviator.navigate(Aviator.getCurrentURI().replace('/remove/hide', ''))
-      }
-    }
-  },
-
-  '/top_secret': {
-    '/': 'show',
-    '/hide': 'hide',
-    target: {
-      show: function(e) {
-        React.render(<TopSecretModal />, document.getElementById('modal'));
-      },
-      hide: function(e) {
-        let modalDomNode = document.getElementById('modal');
-        if(modalDomNode) {
-          React.unmountComponentAtNode(modalDomNode);
-        }
-        Aviator.navigate(Aviator.getCurrentURI().replace('/top_secret/hide', ''))
-      }
-    }
   }
 });
 

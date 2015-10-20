@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
-import Aviator from 'aviator';
 import CollectionActions from '../actions/CollectionActions';
 
 export default class ExportButton extends Component {
