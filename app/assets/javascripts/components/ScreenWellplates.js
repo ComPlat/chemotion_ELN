@@ -2,6 +2,7 @@ import React, {Component, PropTypes} from 'react';
 import {Button} from 'react-bootstrap';
 import {DropTarget} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
+import UiStore from './stores/UIStore';
 
 const target = {
   drop(props, monitor){
@@ -30,6 +31,11 @@ const collect = (connect, monitor) => ({
 });
 
 class ScreenWellplates extends Component {
+  handleWellplateClick(wellplate) {
+    const uiState = UiStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/wellplate/${wellplate.id}`);
+  }
+
   render() {
     const {wellplates, isOver, canDrop, connectDropTarget, deleteWellplate} = this.props;
     let style = {
@@ -52,7 +58,11 @@ class ScreenWellplates extends Component {
           <tbody>
           {wellplates.map((wellplate, key) => {
             return <tr key={key} height="40px">
-              <td>{wellplate.name}</td>
+              <td>
+                <a onClick={() => this.handleWellplateClick(wellplate)} style={{cursor: 'pointer'}}>
+                  {wellplate.name}
+                </a>
+              </td>
               <td>{wellplate.description}</td>
               <td style={{verticalAlign: 'top'}}>
                 <Button

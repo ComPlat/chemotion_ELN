@@ -1,13 +1,34 @@
 import React, {Component} from 'react';
 import {Button, Popover, Overlay, Table, Input} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-
+import UiStore from './stores/UIStore';
 
 export default class WellOverlay extends Component {
+  handleSampleClick(sample) {
+    const uiState = UiStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/sample/${sample.id}`);
+  }
+
+  sampleName() {
+    const {sample} = this.props.well;
+    if(sample) {
+      if(!sample.isNew) {
+        return (
+          <a onClick={() => this.handleSampleClick(sample)} style={{cursor: 'pointer'}}>
+            {sample.name}
+          </a>
+        );
+      } else {
+        return sample.name;
+      }
+
+    }
+  }
+
   renderWellContent() {
     const {well, removeSampleFromWell} = this.props;
     const {sample} = well;
-    let name, svg, moleculeName, removeButton = '';
+    let svg, moleculeName, removeButton = '';
     const namesStyle= {textAlign: 'center', marginTop: 5};
     const svgContainerStyle = {
       borderRadius: '50%',
@@ -20,7 +41,6 @@ export default class WellOverlay extends Component {
     };
     if (sample) {
       svg = <SVG key={sample.id} className="molecule-mid" src={`/images/molecules/${sample.molecule.molecule_svg_file}`}/>;
-      name = sample.name;
       moleculeName = sample.molecule.iupac_name;
       removeButton = (
         <div className="pull-right">
@@ -36,7 +56,7 @@ export default class WellOverlay extends Component {
           {svg}
         </div>
         <div style={namesStyle}>
-          {name}<br/>
+          {this.sampleName()}<br/>
           {moleculeName}
         </div>
         {removeButton}
