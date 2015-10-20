@@ -59,6 +59,7 @@ export default class WellOverlay extends Component {
     return (
       <div>
         <Overlay
+          rootClose
           show={show}
           target={target}
           placement={placement}
