@@ -53,29 +53,44 @@ export default class SampleDetailsAnalyses extends Component {
     this.setState({activeAnalysis: key});
   }
 
+  addButton() {
+    return (
+      <div className="pull-right" style={{marginTop: -12}}>
+      <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+        <i className="fa fa-plus"></i>
+      </Button>
+    </div>
+    )
+  }
+
   render() {
     const {sample, activeAnalysis} = this.state;
-    return (
-      <div>
-        <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
-          {sample.analyses.map((analysis, key) => {
-            return (
-              <Panel header={analysis.name} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
-                <AnalysisComponent
-                  analysis={analysis}
-                  onChange={analysis => this.handleChange(analysis)}
-                  onRemove={analysis => this.handleRemove(analysis)}
-                  />
-              </Panel>
-            )
-          })}
-        </PanelGroup>
-        <div className="pull-right" style={{marginTop: -12}}>
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            <i className="fa fa-plus"></i>
-          </Button>
+    if(sample.analyses.length > 0) {
+      return (
+        <div>
+          <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
+            {sample.analyses.map((analysis, key) => {
+              return (
+                <Panel header={analysis.name} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
+                  <AnalysisComponent
+                    analysis={analysis}
+                    onChange={analysis => this.handleChange(analysis)}
+                    onRemove={analysis => this.handleRemove(analysis)}
+                    />
+                </Panel>
+              )
+            })}
+          </PanelGroup>
+          {this.addButton()}
         </div>
+      );
+    } else {
+      return (
+      <div>
+        There are currently no Analyses.<br/>
+        {this.addButton()}
       </div>
-    );
+      )
+    }
   }
 }

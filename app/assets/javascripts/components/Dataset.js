@@ -46,6 +46,34 @@ export default class Dataset extends Component {
     this.props.onChange(dataset);
   }
 
+  attachements() {
+    const {dataset} = this.state;
+    if(dataset.files.length > 0) {
+      return (
+        <ListGroup>
+        {dataset.files.map((file, key) => {
+          return (
+            <ListGroupItem key={key}>
+              <a onClick={() => this.handleFileDownload(file)} style={{cursor: 'pointer'}}>{file.name}</a>
+              <div className="pull-right">
+                <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleFileRemove(file)}>
+                  <i className="fa fa-trash-o"></i>
+                </Button>
+              </div>
+            </ListGroupItem>
+          )
+        })}
+        </ListGroup>
+      )
+    } else {
+      return (
+        <div style={{padding: 5}}>
+          There are currently no Datasets.<br/>
+        </div>
+      )
+    }
+  }
+
   render() {
     const {dataset} = this.state;
     return (
@@ -79,20 +107,7 @@ export default class Dataset extends Component {
         </Col>
         <Col md={6}>
           <label>Attachments</label>
-          <ListGroup>
-            {dataset.files.map((file, key) => {
-              return (
-                <ListGroupItem key={key}>
-                  <a onClick={() => this.handleFileDownload(file)} style={{cursor: 'pointer'}}>{file.name}</a>
-                  <div className="pull-right">
-                    <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleFileRemove(file)}>
-                      <i className="fa fa-trash-o"></i>
-                    </Button>
-                  </div>
-                </ListGroupItem>
-              )
-            })}
-          </ListGroup>
+          {this.attachements()}
           <Dropzone
             onDrop={files => this.handleFileDrop(files)}
             style={{height: 50, width: '100%', border: '3px dashed lightgray'}}
