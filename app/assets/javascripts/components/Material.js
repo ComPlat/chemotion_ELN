@@ -3,6 +3,7 @@ import {Input, Button} from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnits from './NumeralInputWithUnits';
+import UiStore from './stores/UIStore';
 
 const source = {
   beginDrag(props) {
@@ -16,6 +17,23 @@ const collect = (connect, monitor) => ({
 });
 
 class Material extends Component {
+  handleMaterialClick(sample) {
+    const uiState = UiStore.getState();
+    Aviator.navigate(`/collection/${uiState.currentCollectionId}/sample/${sample.id}`);
+  }
+
+  materialName() {
+    const {material} = this.props;
+    if(!material.isNew) {
+      return (
+        <a onClick={() => this.handleMaterialClick(material)} style={{cursor: 'pointer'}}>
+          {material.name}
+        </a>
+      );
+    } else {
+      return material.name;
+    }
+  }
 
   render() {
     const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
@@ -50,7 +68,7 @@ class Material extends Component {
         />
       </td>
       <td>
-        {material.name}<br/>
+        {this.materialName()}<br/>
         {material.molecule.iupac_name}
       </td>
       <td style={inputsStyle}>
