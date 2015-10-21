@@ -1,5 +1,4 @@
 import Element from './Element';
-//import Attachment from './Attachment';
 
 export default class Dataset extends Element {
   static buildEmpty() {
