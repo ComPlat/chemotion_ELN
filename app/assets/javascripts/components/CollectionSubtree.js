@@ -95,7 +95,7 @@ export default class CollectionSubtree extends React.Component {
     if(this.state.root.id == 'all') {
       return  (
         <div className="take-ownership-btn">
-          <Button bsStyle="danger" bsSize="xsmall" onClick={this.navigateToCollectionManagement.bind(this)}>
+          <Button bsStyle="danger" bsSize="xsmall" onClick={() => this.handleCollectionManagementToggle()}>
             <i className="fa fa-cog"></i>
           </Button>
         </div>
@@ -103,8 +103,16 @@ export default class CollectionSubtree extends React.Component {
     }
   }
 
-  navigateToCollectionManagement() {
-    Aviator.navigate('/collection/management');
+  handleCollectionManagementToggle() {
+    UIActions.toggleCollectionManagement();
+    const {showCollectionManagement, currentCollectionId} = UIStore.getState();
+    const {currentElement} = ElementStore.getState();
+    if(showCollectionManagement) {
+      Aviator.navigate('/collection/management');
+    } else {
+      const element = (currentElement) ? `${currentElement.type}/${currentElement.id}` : '';
+      Aviator.navigate(`/collection/${currentCollectionId}/${element}`);
+    }
   }
 
   expandButton() {
@@ -139,7 +147,9 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleClick() {
-    Aviator.navigate('/collection/'+this.state.root.id);
+    const {currentElement} = ElementStore.getState();
+    const element = (currentElement) ? `${currentElement.type}/${currentElement.id}` : '';
+    Aviator.navigate(`/collection/${this.state.root.id}/${element}`);
   }
 
   toggleExpansion(e) {

@@ -41,7 +41,8 @@ class UIStore {
       currentCollection: null,
       currentCollectionId: null,
       currentTab: 1,
-      currentSearchSelection: null
+      currentSearchSelection: null,
+      showCollectionManagement: false
     };
 
     this.bindListeners({
@@ -58,8 +59,23 @@ class UIStore {
       handleDeselectAllElements: UIActions.deselectAllElements,
       handleSetSearchSelection: UIActions.setSearchSelection,
       handleSelectCollectionWithoutUpdating: UIActions.selectCollectionWithoutUpdating,
-      handleClearSearchSelection: UIActions.clearSearchSelection
+      handleClearSearchSelection: UIActions.clearSearchSelection,
+      handleShowCollectionManagement: UIActions.showCollectionManagement,
+      handleShowElements: UIActions.showElements,
+      handleToggleCollectionManagement: UIActions.toggleCollectionManagement
     });
+  }
+
+  handleToggleCollectionManagement() {
+    this.state.showCollectionManagement = !this.state.showCollectionManagement;
+  }
+
+  handleShowCollectionManagement() {
+    this.state.showCollectionManagement = true;
+  }
+
+  handleShowElements() {
+    this.state.showCollectionManagement = false;
   }
 
   handleSelectTab(tab) {
