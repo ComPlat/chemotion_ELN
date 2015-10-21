@@ -186,6 +186,7 @@ class ElementStore {
   handleUpdateWellplate(wellplate) {
     this.state.currentElement = wellplate;
     this.handleRefreshElements('wellplate');
+    this.handleRefreshElements('sample');
   }
 
   handleCreateWellplate(wellplate) {
@@ -226,6 +227,7 @@ class ElementStore {
   handleUpdateReaction(reaction) {
     this.state.currentElement = reaction;
     this.handleRefreshElements('reaction');
+    this.handleRefreshElements('sample');
   }
 
   handleCreateReaction(reaction) {
