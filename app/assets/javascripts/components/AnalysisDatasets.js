@@ -25,24 +25,20 @@ export default class AnalysisDatasets extends Component {
 
   handleAdd(){
     const {analysis} = this.state;
-    // TODO move to analysis model
-    // analysis.createDataset()
     const newDataset = Dataset.buildEmpty();
     analysis.datasets.push(newDataset);
-    // TODOEND
     this.handleModalOpen(newDataset);
     this.props.onChange(analysis);
   }
 
   handleChange(dataset) {
     const {analysis} = this.state;
-    // -> model: analysis.updateDataset(dataset)
+    analysis.updateDataset(dataset);
     this.props.onChange(analysis);
   }
 
   handleRemove(dataset) {
     const {analysis} = this.state;
-    // analysis.removeDataset()
     const datasetId = analysis.datasets.indexOf(dataset);
     analysis.datasets.splice(datasetId, 1);
     this.props.onChange(analysis);

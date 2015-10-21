@@ -2,13 +2,13 @@ import React, {Component} from 'react';
 import {Row, Col, Input, Table, ListGroup, ListGroupItem, Button, ButtonToolbar} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import Functions from './utils/Functions';
+import _ from 'lodash';
 
 export default class Dataset extends Component {
   constructor(props) {
     super();
-    const {dataset} = props;
     this.state = {
-      dataset
+      dataset: _.cloneDeep(props.dataset)
     };
   }
 
@@ -26,13 +26,13 @@ export default class Dataset extends Component {
         dataset.description = value;
         break;
     }
-    this.props.onChange(dataset);
+    this.setState({dataset});
   }
 
   handleFileDrop(files) {
     const {dataset} = this.state;
     dataset.files = dataset.files.concat(files);
-    this.props.onChange(dataset);
+    this.setState({dataset});
   }
 
   handleFileDownload(file) {
@@ -43,7 +43,14 @@ export default class Dataset extends Component {
     const {dataset} = this.state;
     const fileId = dataset.files.indexOf(file);
     dataset.files.splice(fileId, 1);
-    this.props.onChange(dataset);
+    this.setState({dataset});
+  }
+
+  handleSave() {
+    const {dataset} = this.state;
+    const {onChange, onModalHide} = this.props;
+    onChange(dataset);
+    onModalHide();
   }
 
   attachements() {
@@ -56,7 +63,7 @@ export default class Dataset extends Component {
             <ListGroupItem key={key}>
               <a onClick={() => this.handleFileDownload(file)} style={{cursor: 'pointer'}}>{file.name}</a>
               <div className="pull-right">
-                {this.removeButton()}
+                {this.removeButton(file)}
               </div>
             </ListGroupItem>
           )
@@ -72,7 +79,7 @@ export default class Dataset extends Component {
     }
   }
 
-  removeButton() {
+  removeButton(file) {
     const {readOnly} = this.props;
     if(!readOnly) {
       return (
@@ -101,11 +108,11 @@ export default class Dataset extends Component {
 
   render() {
     const {dataset} = this.state;
-    const {readOnly} = this.props;
+    const {readOnly, onModalHide} = this.props;
     return (
-      <div>
-        <Col md={6}>
-          <Row>
+      <Row>
+        <Col md={6} style={{paddingRight: 0}}>
+          <Col md={12} style={{padding: 0}}>
             <Input
               type="text"
               label="Name"
@@ -113,8 +120,8 @@ export default class Dataset extends Component {
               disabled={readOnly}
               onChange={event => this.handleInputChange('name', event)}
               />
-          </Row>
-          <Row>
+          </Col>
+          <Col md={12} style={{padding: 0}}>
             <Input
               type="text"
               label="Instrument"
@@ -122,8 +129,8 @@ export default class Dataset extends Component {
               disabled={readOnly}
               onChange={event => this.handleInputChange('instrument', event)}
               />
-          </Row>
-          <Row>
+          </Col>
+          <Col md={12} style={{padding: 0}}>
             <Input
               type="textarea"
               label="Description"
@@ -132,14 +139,20 @@ export default class Dataset extends Component {
               onChange={event => this.handleInputChange('description', event)}
               style={{minHeight: 100}}
               />
-          </Row>
+          </Col>
         </Col>
         <Col md={6}>
           <label>Attachments</label>
           {this.attachements()}
           {this.dropzone()}
         </Col>
-      </div>
+        <Col md={12}>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={() => onModalHide()}>Close</Button>
+            <Button bsStyle="warning" onClick={() => this.handleSave()}>Save</Button>
+          </ButtonToolbar>
+        </Col>
+      </Row>
     );
   }
 }

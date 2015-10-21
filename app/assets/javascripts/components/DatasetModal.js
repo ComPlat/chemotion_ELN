@@ -15,7 +15,7 @@ export default class DatasetModal extends Component {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <div style={{minHeight: 500}}>
+              <div>
                 <Dataset
                   readOnly={readOnly}
                   dataset={dataset}
