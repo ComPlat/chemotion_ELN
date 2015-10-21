@@ -4,6 +4,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
+import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import UIStore from './stores/UIStore';
@@ -72,6 +73,25 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  productAnalyses() {
+    const {products} = this.state.reaction;
+    if(products.length > 0) {
+      return products.map((product, key) => {
+        if(product.analyses.length > 0) {
+          return (
+            <TabPane key={key} eventKey={3 + key} tab={"Analysis: " + product.name}>
+              <ReactionDetailsAnalyses
+                sample={product}
+                />
+            </TabPane>
+          )
+        }
+      });
+    } else {
+      return <div></div>
+    }
+  }
+
   render() {
     const {reaction} = this.state;
     const svgContainerStyle = {
@@ -112,6 +132,7 @@ export default class ReactionDetails extends Component {
                 literatures={reaction.literatures}
                 />
             </TabPane>
+            {this.productAnalyses()}
           </TabbedArea>
           <hr/>
           <ButtonToolbar>

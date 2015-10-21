@@ -35,8 +35,16 @@ export default class Analysis extends Component {
     this.props.onChange(analysis);
   }
 
+  removeButton() {
+    const {readOnly, onRemove} = this.props;
+    if(!readOnly) {
+      return <Button bsStyle="danger" onClick={() => onRemove(analysis)}>Remove</Button>
+    }
+  }
+
   render() {
     const {analysis} = this.state;
+    const {readOnly} = this.props;
     return (
       <div>
         <Col md={4}>
@@ -45,6 +53,7 @@ export default class Analysis extends Component {
             label="Name"
             value={analysis.name}
             onChange={event => this.handleInputChange('name', event)}
+            disabled={readOnly}
             />
         </Col>
         <Col md={4}>
@@ -55,6 +64,7 @@ export default class Analysis extends Component {
               multi={false}
               options={typeOptions}
               value={analysis.type}
+              disabled={readOnly}
               onChange={(event, selectedOptions) => {
                 const values = selectedOptions.map(o => o.value);
                 const wrappedEvent = {target: {value: values[0]}};
@@ -71,6 +81,7 @@ export default class Analysis extends Component {
               multi={false}
               options={statusOptions}
               value={analysis.status}
+              disabled={readOnly}
               onChange={(event, selectedOptions) => {
                 const values = selectedOptions.map(o => o.value);
                 const wrappedEvent = {target: {value: values[0]}};
@@ -84,12 +95,14 @@ export default class Analysis extends Component {
             type="textarea"
             label="Content"
             value={analysis.content}
+            disabled={readOnly}
             onChange={event => this.handleInputChange('content', event)}
             />
           <Input
             type="textarea"
             label="Description"
             value={analysis.description}
+            disabled={readOnly}
             onChange={event => this.handleInputChange('description', event)}
             />
         </Col>
@@ -97,10 +110,11 @@ export default class Analysis extends Component {
           <label>Datasets</label>
           <AnalysisDatasets
             analysis={analysis}
+            readOnly={readOnly}
             onChange={analysis => this.props.onChange(analysis)}
             />
         </Col>
-        <Button bsStyle="danger" onClick={() => this.props.onRemove(analysis)}>Remove</Button>
+        {this.removeButton()}
       </div>
     );
   }
