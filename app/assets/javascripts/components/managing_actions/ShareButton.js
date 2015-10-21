@@ -73,7 +73,7 @@ export default class ShareButton extends React.Component {
       elements_filter: elementsFilter
     };
 
-    PermissionActions.fetchTopSecretStatus(params);
+    //PermissionActions.fetchTopSecretStatus(params);
     this.props.onClick();
   }
 
