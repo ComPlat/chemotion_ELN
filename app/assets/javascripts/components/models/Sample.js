@@ -42,7 +42,8 @@ export default class Sample extends Element {
       molfile: this.molfile,
       molecule: this.molecule,
       is_top_secret: this.is_top_secret || false,
-      parent_id: this.parent_id
+      parent_id: this.parent_id,
+      analyses: this.analyses.map(a => a.serialize())
     })
   }
 
@@ -291,7 +292,6 @@ export default class Sample extends Element {
   }
 
   set analyses(analyses) {
-    console.log('*** set analyses ***')
     this._analyses = analyses.map(a => new Analysis(a));
   }
 

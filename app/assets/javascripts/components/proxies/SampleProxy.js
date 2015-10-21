@@ -8,7 +8,7 @@ export default class SampleProxy extends Sample {
     let sampleMethodsWithGetAndSet = [
       'name', 'external_label', 'location', 'description', 'impurities', 'amount_unit', 'amount_value',
       'purity', 'is_top_secret', 'molecule_density', 'molecule_boiling_point', 'molecule_melting_point',
-      'molecule_iupac_name'
+      'molecule_iupac_name', 'analyses'
     ]
 
     sampleMethodsWithGetAndSet.forEach((m) => {

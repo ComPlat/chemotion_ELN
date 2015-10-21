@@ -62,6 +62,7 @@ export default class SamplesFetcher {
         location: params.location,
         molfile: params.molfile,
         is_top_secret: params.is_top_secret,
+        analyses: params.analyses,
         molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
       })
     }).then((response) => {

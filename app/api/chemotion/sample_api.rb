@@ -90,6 +90,7 @@ module Chemotion
         optional :molfile, type: String, desc: "Sample molfile"
         #optional :molecule, type: Hash, desc: "Sample molecule"
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
+        optional :analyses, type: Array
       end
       route_param :id do
         before do
@@ -97,6 +98,8 @@ module Chemotion
         end
 
         put do
+          ap params
+
           attributes = declared(params, include_missing: false)
 
           attributes.merge!(
@@ -125,6 +128,7 @@ module Chemotion
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
+        optional :analyses, type: Hash
       end
       post do
         attributes = {
@@ -137,7 +141,8 @@ module Chemotion
           impurities: params[:impurities],
           location: params[:location],
           molfile: params[:molfile],
-          is_top_secret: params[:is_top_secret]
+          is_top_secret: params[:is_top_secret],
+          analyses: params[:analyses]
         }
         attributes.merge!(
           molecule_attributes: params[:molecule]
