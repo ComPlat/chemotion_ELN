@@ -77,7 +77,7 @@ export default class ElementsTableEntries extends Component {
     if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-          <SVG src={element.svgPath} className={classNames} key={element.id}/>
+          <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
         </td>
       );
     } else {
