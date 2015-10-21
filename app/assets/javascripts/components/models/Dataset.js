@@ -15,8 +15,12 @@ export default class Dataset extends Element {
     return super.serialize({
       name: this.name,
       instrument: this.instrument,
-      description: this.description
-      //todo: files: this.files
+      description: this.description,
+      files: this.files
     })
+  }
+
+  clone() {
+    return new Dataset(this);
   }
 }

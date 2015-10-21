@@ -2,13 +2,13 @@ import React, {Component} from 'react';
 import {Row, Col, Input, Table, ListGroup, ListGroupItem, Button, ButtonToolbar} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import Functions from './utils/Functions';
-import _ from 'lodash';
 
 export default class Dataset extends Component {
   constructor(props) {
     super();
+    let dataset = props.dataset.clone();
     this.state = {
-      dataset: _.cloneDeep(props.dataset)
+      dataset: dataset
     };
   }
 
