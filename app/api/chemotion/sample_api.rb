@@ -75,6 +75,81 @@ module Chemotion
         end
       end
 
+      #todo: move to AttachmentAPI
+      desc "Upload attachements"
+      post 'upload_dataset_attachments' do
+        params.each do |file_id, file|
+          if tempfile = file.tempfile
+            ap file
+            begin
+              upload_path = File.join('uploads', 'attachments', file_id)
+              p "move tempfile from #{tempfile.path} to #{upload_path}"
+              FileUtils.cp(tempfile.path, upload_path)
+            ensure
+              tempfile.close
+              tempfile.unlink   # deletes the temp file
+            end
+          end
+        end
+        true
+      end
+
+      #todo: authorize attachment download
+      desc "Download the attachment file"
+      params do
+        optional :filename, type: String
+      end
+      get 'download_attachement/:attachment_id' do
+        file_id = params[:attachment_id]
+        filename = params[:filename] || file_id
+        content_type "application/octet-stream"
+        header['Content-Disposition'] = "attachment; filename=#{filename}"
+        env['api.format'] = :binary
+        File.open(File.join('uploads', 'attachments', file_id)).read
+      end
+
+      module SampleUpdator
+
+        def self.updated_embedded_analyses(analyses)
+          Array(analyses).map do |ana|
+            {
+              id: ana.id,
+              type: ana.type,
+              name: ana.name,
+              kind: ana.kind,
+              status: ana.status,
+              content: ana.content,
+              description: ana.description,
+              datasets: Array(ana.datasets).map do |dataset|
+                {
+                  id: dataset.id,
+                  type: dataset.type,
+                  name: dataset.name,
+                  instrument: dataset.instrument,
+                  description: dataset.description,
+                  attachments: Array(dataset.attachments).map do |attachment|
+                    if(attachment.file)
+                      {
+                        id: attachment.id,
+                        name: attachment.name,
+                        filename: attachment.file.id
+                      }
+                    else
+                      {
+                        id: attachment.id,
+                        name: attachment.name,
+                        filename: attachment.filename
+                      }
+                    end
+                  end
+                }
+              end
+            }
+          end
+        end
+
+      end
+
       desc "Update sample by id"
       params do
         requires :id, type: Integer, desc: "Sample id"
@@ -88,7 +163,7 @@ module Chemotion
         optional :impurities, type: String, desc: "Sample impurities"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
-        #optional :molecule, type: Hash, desc: "Sample molecule"
+        optional :molecule, type: Hash, desc: "Sample molecule"
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
       end
@@ -98,13 +173,14 @@ module Chemotion
         end
 
         put do
-          ap params
-
           attributes = declared(params, include_missing: false)
+          embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
+          attributes.merge!(analyses: embedded_analyses)
 
+          molecule_attributes = attributes.delete(:molecule)
           attributes.merge!(
-            molecule_attributes: params[:molecule]
-          ) unless params[:molecule].blank?
+            molecule_attributes: molecule_attributes
+          ) unless molecule_attributes.blank?
 
           if sample = Sample.find(params[:id])
             sample.update(attributes)
@@ -128,7 +204,7 @@ module Chemotion
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
-        optional :analyses, type: Hash
+        optional :analyses, type: Array
       end
       post do
         attributes = {
@@ -142,11 +218,12 @@ module Chemotion
           location: params[:location],
           molfile: params[:molfile],
           is_top_secret: params[:is_top_secret],
-          analyses: params[:analyses]
+          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses])
         }
         attributes.merge!(
           molecule_attributes: params[:molecule]
         ) unless params[:molecule].blank?
+
         sample = Sample.create(attributes)
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)
@@ -168,7 +245,6 @@ module Chemotion
           Sample.find(params[:id]).destroy
         end
       end
-
     end
   end
 end

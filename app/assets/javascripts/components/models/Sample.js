@@ -296,14 +296,12 @@ export default class Sample extends Element {
   }
 
   addAnalysis(analysis) {
-    console.log('*** add analysis ***')
     let analyses = this.analyses;
     analyses.push(analysis);
     this.analyses = analyses;
   }
 
   updateAnalysis(changedAnalysis) {
-    console.log('*** update analysis ***')
     this._analyses.find(analysis => {
       if(analysis.id == changedAnalysis.id) {
         const analysisId = this.analyses.indexOf(analysis);

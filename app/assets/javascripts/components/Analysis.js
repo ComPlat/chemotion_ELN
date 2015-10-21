@@ -19,8 +19,8 @@ export default class Analysis extends Component {
       case 'name':
         analysis.name = value;
         break;
-      case 'type':
-        analysis.type = value;
+      case 'kind':
+        analysis.kind = value;
         break;
       case 'status':
         analysis.status = value;
@@ -60,15 +60,15 @@ export default class Analysis extends Component {
           <div style={{marginBottom: 11}}>
             <label>Type</label>
             <Select
-              name='type'
+              name='kind'
               multi={false}
-              options={typeOptions}
-              value={analysis.type}
+              options={kindOptions}
+              value={analysis.kind}
               disabled={readOnly}
               onChange={(event, selectedOptions) => {
                 const values = selectedOptions.map(o => o.value);
                 const wrappedEvent = {target: {value: values[0]}};
-                this.handleInputChange('type', wrappedEvent)
+                this.handleInputChange('kind', wrappedEvent)
               }}
               />
           </div>
@@ -128,7 +128,7 @@ const statusOptions = [{
   value: "Unconfirmed"
 }];
 
-const typeOptions = [{
+const kindOptions = [{
   label: "1H NMR",
   value: "1H NMR"
 },{

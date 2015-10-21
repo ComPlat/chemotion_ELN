@@ -6,6 +6,7 @@ export default class Analysis extends Element {
     return new Analysis({
       name: 'new Analysis',
       type: 'analysis',
+      kind: '',
       status: '',
       content: '',
       description: '',
@@ -33,6 +34,7 @@ export default class Analysis extends Element {
   serialize() {
     return super.serialize({
       name: this.name,
+      kind: this.kind,
       status: this.status,
       content: this.content,
       description: this.description,

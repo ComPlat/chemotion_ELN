@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import Sample from '../models/Sample';
 import SampleProxy from '../proxies/SampleProxy';
+import _ from 'lodash';
 
 export default class SamplesFetcher {
   static fetchById(id) {
@@ -41,7 +42,37 @@ export default class SamplesFetcher {
     return promise;
   }
 
+  static uploadFiles(files) {
+    var data = new FormData()
+    files.forEach((file)=> {
+      data.append(file.id || file.name, file);
+    });
+    fetch('/api/v1/samples/upload_dataset_attachments', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: data
+    })
+  }
+
+  static uploadDatasetAttachmentsForSample(sample) {
+
+    let datasets = _.flatten(sample.analyses.map(a=>a.datasets));
+    let attachments = _.flatten(datasets.map(d=>d.attachments));
+    const fileFromAttachment = function(attachment) {
+      let file = attachment.file;
+      file.id = attachment.id;
+      return file;
+    }
+    let files = _.compact(_.flatten(attachments.filter(a=>a.is_new).map(a=>fileFromAttachment(a))));
+
+    if(files.length > 0) {
+      SamplesFetcher.uploadFiles(files);
+    }
+  }
+
   static update(params) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(params);
+
     let { density, boiling_point, melting_point } = params.molecule;
     let promise = fetch('/api/v1/samples/' + params.id, {
       credentials: 'same-origin',
@@ -77,6 +108,8 @@ export default class SamplesFetcher {
   }
 
   static create(params) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(params);
+
     let { density, boiling_point, melting_point } = params.molecule;
     let promise = fetch('/api/v1/samples', {
       credentials: 'same-origin',
@@ -97,6 +130,7 @@ export default class SamplesFetcher {
         location: params.location,
         molfile: params.molfile,
         is_top_secret: params.is_top_secret,
+        analyses: params.analyses,
         molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point },
         collection_id: params.collection_id
       })
