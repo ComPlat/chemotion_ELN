@@ -1,5 +1,6 @@
 import Element from './Element';
 import Sample from './Sample';
+import Literature from './Literature';
 
 export default class Reaction extends Element {
   isMethodDisabled() {
@@ -142,5 +143,24 @@ export default class Reaction extends Element {
 
   hasMaterials() {
     return this.starting_materials.length > 0 || this.reactants.length > 0 || this.products.length > 0;
+  }
+
+  // literatures
+
+  get literatures() {
+    return this._literatures || [];
+  }
+
+  set literatures(literatures) {
+    this._literatures = literatures.map(literature => new Literature(literature));
+  }
+
+  removeLiterature(literature) {
+    const literatureKey = this.literatures.indexOf(literature);
+    this._literatures.splice(literatureKey, 1);
+  }
+
+  addLiterature(literature) {
+    this._literatures.push(literature);
   }
 }
