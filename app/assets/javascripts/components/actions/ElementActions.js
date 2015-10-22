@@ -5,7 +5,6 @@ import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
-import LiteraturesFetcher from '../fetchers/LiteraturesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
