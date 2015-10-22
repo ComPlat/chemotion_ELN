@@ -140,37 +140,6 @@ class ElementActions {
   }
 
 
-  // -- Reactions literatures --
-
-
-  createReactionLiterature(params) {
-    LiteraturesFetcher.create(params)
-      .then((result) => {
-        this.dispatch(result)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  deleteReactionLiterature(literature) {
-    LiteraturesFetcher.delete(literature)
-      .then((result) => {
-        this.dispatch(result.reaction_id)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-  fetchLiteraturesByReactionId(id) {
-    LiteraturesFetcher.fetchByReactionId(id)
-      .then((result) => {
-        this.dispatch(result)
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-
   // -- Reactions SVGs --
 
 

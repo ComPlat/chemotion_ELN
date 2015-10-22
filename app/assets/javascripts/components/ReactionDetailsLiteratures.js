@@ -1,52 +1,41 @@
-import React from 'react'
-import {Table, Input, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
-
-import ElementActions from './actions/ElementActions';
-import ElementStore from './stores/ElementStore';
+import React, {Component} from 'react'
+import {Table, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
 import LiteraturesForm from './LiteraturesForm';
 
-
-export default class ReactionDetailsLiteratures extends React.Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      literatures: props.literatures || [],
-      reaction_id: props.reaction_id
-    }
+export default class ReactionDetailsLiteratures extends Component {
+  handleLiteratureRemove(literature) {
+    const {reaction, onReactionChange} = this.props;
+    reaction.removeLiterature(literature);
+    onReactionChange(reaction);
   }
 
-  componentDidMount() {
-    ElementStore.listen(this.onChange.bind(this));
+  handleLiteratureAdd(literature) {
+    const {reaction, onReactionChange} = this.props;
+    // TODO add url validation!
+    reaction.addLiterature(literature);
+    onReactionChange(reaction);
   }
 
-  componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
+  removeButton(literature) {
+    return <Button
+      bsSize="small"
+      bsStyle="danger"
+      onClick={() => this.handleLiteratureRemove(literature)}
+      >
+      <i className="fa fa-trash-o"></i>
+    </Button>
   }
 
-  onChange(state) {
-    let element = state.currentElement
-    this.setState({
-      literatures: element ? element.literatures : [],
-      reaction_id: element ? element.id : undefined
-    });
-  }
-
-  _deleteLiterature(literature) {
-    ElementActions.deleteReactionLiterature(literature);
-  }
-
-  _displayLiteratureRows() {
-    let {literatures} = this.state;
-    return literatures.map((element) => {
+  literatureRows(literatures) {
+    return literatures.map((literature, key) => {
       return (
-        <tr>
-          <td width="45%" className="padding-right"> {element.title}  </td>
-          <td width="50%" className="padding-right"> {element.url} </td>
-          <td width="5%">
-            <Button bsSize="xsmall" bsStyle="danger" onClick={this._deleteLiterature.bind(this, element)}>
-              <i className="fa fa-trash-o"></i>
-            </Button>
+        <tr key={key}>
+          <td className="padding-right">{literature.title}</td>
+          <td className="padding-right">
+            <a href={literature.url} target="_blank">{literature.url}</a>
+          </td>
+          <td>
+            {this.removeButton(literature)}
           </td>
         </tr>
       )
@@ -54,17 +43,25 @@ export default class ReactionDetailsLiteratures extends React.Component {
   }
 
   render() {
+    const {reaction} = this.props;
     return (
       <ListGroup fill>
         <ListGroupItem>
-          <Table width="100%">
+          <Table>
+            <thead>
+              <th width="33%">Title</th>
+              <th width="61%">URL</th>
+              <th width="6%"></th>
+            </thead>
             <tbody>
-              {this._displayLiteratureRows()}
+              {this.literatureRows(reaction.literatures)}
             </tbody>
           </Table>
         </ListGroupItem>
         <ListGroupItem>
-          <LiteraturesForm reaction_id={this.state.reaction_id} />
+          <LiteraturesForm
+            onLiteratureAdd={literature => this.handleLiteratureAdd(literature)}
+            />
         </ListGroupItem>
       </ListGroup>
     );

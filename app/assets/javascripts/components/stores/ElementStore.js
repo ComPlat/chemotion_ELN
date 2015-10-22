@@ -53,10 +53,6 @@ class ElementStore {
       handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
 
-      handleCreateReactionLiterature: ElementActions.createReactionLiterature,
-      handleDeleteReactionLiterature: ElementActions.deleteReactionLiterature,
-      handleFetchLiteraturesByReactionId: ElementActions.fetchLiteraturesByReactionId,
-
       handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
       handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
 
@@ -96,7 +92,7 @@ class ElementStore {
     if (currentElement) {
       let type_state = ui_state[currentElement.type]
       let checked = type_state.checkedIds.indexOf(currentElement.id) > -1
-      let checked_all_and_not_unchecked = 
+      let checked_all_and_not_unchecked =
         type_state.checkedAll && type_state.uncheckedIds.indexOf(currentElement.id) == -1
 
       if (checked_all_and_not_unchecked || checked) {

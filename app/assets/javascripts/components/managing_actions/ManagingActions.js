@@ -80,7 +80,7 @@ export default class ManagingActions extends React.Component {
   }
 
   filterParamsFromUIState(uiState) {
-    let collectionId = uiState.currentCollection.id;
+    let collectionId = uiState.currentCollection && uiState.currentCollection.id;
 
     let filterParams = {
       sample: {

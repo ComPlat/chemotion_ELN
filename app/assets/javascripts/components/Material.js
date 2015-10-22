@@ -64,7 +64,7 @@ class Material extends Component {
           type="radio"
           name="reference"
           checked={material.reference}
-          onClick={event => this.handleReferenceChange(event)}
+          onChange={event => this.handleReferenceChange(event)}
         />
       </td>
       <td>

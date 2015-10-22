@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
+import Literature from '../models/Literature';
 import ReactionProxy from '../proxies/ReactionProxy';
 
 // TODO: Extract common base functionality into ElementsFetcher
@@ -90,7 +91,7 @@ export default class ReactionsFetcher {
         reactants: params.reactants.map(s=>s.serializeMaterial()),
         products: params.products.map(s=>s.serializeMaterial())
       },
-      literatures: params.literatures
+      literatures: params.literatures.map(literature => literature.serialize())
     })
     let promise = fetch('/api/v1/reactions/' + params.id, {
       credentials: 'same-origin',
@@ -133,7 +134,7 @@ export default class ReactionsFetcher {
         reactants: params.reactants.map(s=>s.serializeMaterial()),
         products: params.products.map(s=>s.serializeMaterial())
       },
-      literatures: params.literatures
+      literatures: params.literatures.map(literature => literature.serialize())
     });
     let promise = fetch('/api/v1/reactions/', {
       credentials: 'same-origin',

@@ -96,7 +96,7 @@ module Chemotion
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
-        #optional :literatures, type: Array, default: []
+        requires :literatures, type: Array
       end
       route_param :id do
 
@@ -107,12 +107,14 @@ module Chemotion
         put do
           attributes = declared(params, include_missing: false).symbolize_keys
           materials = attributes.delete(:materials)
+          literatures = attributes.delete(:literatures)
           id = attributes.delete(:id)
 
           if reaction = Reaction.find(id)
             reaction.update_attributes(attributes)
             reaction.touch
             ReactionUpdator.update_materials_for_reaction(reaction, materials)
+            ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
             reaction.reload
             reaction
           end
@@ -137,11 +139,13 @@ module Chemotion
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
+        requires :literatures, type: Array
       end
 
       post do
         attributes = declared(params, include_missing: false).symbolize_keys
         materials = attributes.delete(:materials)
+        literatures = attributes.delete(:literatures)
         collection_id = attributes.delete(:collection_id)
 
         collection = Collection.find(collection_id)
@@ -150,6 +154,7 @@ module Chemotion
         CollectionsReaction.create(reaction: reaction, collection: collection)
         if reaction
           ReactionUpdator.update_materials_for_reaction(reaction, materials)
+          ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
           reaction.reload
           reaction
         end
@@ -162,9 +167,21 @@ end
 
 
 module ReactionUpdator
+  def self.update_literatures_for_reaction(reaction, literatures)
+    current_literature_ids = reaction.literature_ids
+    Array(literatures).each do |literature|
+      if literature.is_new
+        Literature.create(reaction_id: reaction.id, title: literature.title, url: literature.url)
+      else
+        #update
+      end
+    end
+    included_literature_ids = literatures.map(&:id)
+    deleted_literature_ids = current_literature_ids - included_literature_ids
+    Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
+  end
 
   def self.update_materials_for_reaction(reaction, material_attributes)
-    #todo: is this correct to set it to the first collection?
     collection_ids = reaction.collection_ids
 
     materials = OpenStruct.new(material_attributes)
