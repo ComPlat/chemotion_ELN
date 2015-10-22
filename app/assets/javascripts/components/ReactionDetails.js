@@ -128,8 +128,8 @@ export default class ReactionDetails extends Component {
             </TabPane>
             <TabPane eventKey={2} tab={'Literatures'}>
               <ReactionDetailsLiteratures
-                reaction_id={reaction.id}
-                literatures={reaction.literatures}
+                reaction={reaction}
+                onReactionChange={reaction => this.handleReactionChange(reaction)}
                 />
             </TabPane>
             {this.productAnalyses()}

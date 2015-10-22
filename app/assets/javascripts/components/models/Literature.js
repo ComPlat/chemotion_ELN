@@ -8,7 +8,7 @@ export default class Literature extends Element {
     })
   }
 
-  serializeLiterature() {
+  serialize() {
     return({
       id: this.id,
       title: this.title,

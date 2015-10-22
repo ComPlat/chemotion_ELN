@@ -91,7 +91,7 @@ export default class ReactionsFetcher {
         reactants: params.reactants.map(s=>s.serializeMaterial()),
         products: params.products.map(s=>s.serializeMaterial())
       },
-      literatures: params.literatures.map(l => l.serializeLiterature())
+      literatures: params.literatures.map(literature => literature.serialize())
     })
     let promise = fetch('/api/v1/reactions/' + params.id, {
       credentials: 'same-origin',
@@ -134,7 +134,7 @@ export default class ReactionsFetcher {
         reactants: params.reactants.map(s=>s.serializeMaterial()),
         products: params.products.map(s=>s.serializeMaterial())
       },
-      literatures: params.literatures.map(l => l.serializeLiterature())
+      literatures: params.literatures.map(literature => literature.serialize())
     });
     let promise = fetch('/api/v1/reactions/', {
       credentials: 'same-origin',

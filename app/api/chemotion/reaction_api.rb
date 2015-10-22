@@ -178,7 +178,7 @@ module ReactionUpdator
     end
     included_literature_ids = literatures.map(&:id)
     deleted_literature_ids = current_literature_ids - included_literature_ids
-    Literature.where(id: deleted_literature_ids).destroy_all
+    Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
   end
 
   def self.update_materials_for_reaction(reaction, material_attributes)

@@ -1,75 +1,84 @@
-import React from 'react'
-import {Table, Input, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
+import React, {Component} from 'react'
+import {Row, Col, Input, Button} from 'react-bootstrap';
+import Literature from './models/Literature';
 
-import ElementActions from './actions/ElementActions';
-
-export default class LiteraturesForm extends React.Component {
-
-  constructor(props) {
-    super(props);
+export default class LiteraturesForm extends Component {
+  constructor() {
+    super();
     this.state = {
-      title: "",
-      url: ""
+      literature: Literature.buildEmpty()
     }
   }
 
-  handleUrlChanged(e) {
-    let url = e.target.value;
-    this.setState({
-      url: url
-    });
-  }
-
-  handleTitleChanged(e) {
-    let title = e.target.value;
-    this.setState({
-      title: title
-    });
-  }
-
-  _submitFunction() {
-    let params = {
-      reaction_id: this.props.reaction_id,
-      title: this.state.title,
-      url: this.state.url
+  handleInputChange(type, event) {
+    const {literature} = this.state;
+    const {value} = event.target;
+    switch(type) {
+      case 'url':
+        literature.url = value;
+        break;
+      case 'title':
+        literature.title = value;
+        break;
     }
+    this.setState({literature});
+  }
+
+  handleLiteratureAdd() {
+    const {literature} = this.state;
+    this.props.onLiteratureAdd(literature);
     this.setState({
-      title: "",
-      url: ""
+      literature: Literature.buildEmpty()
     })
-    ElementActions.createReactionLiterature(params);
+  }
+
+  titleInput() {
+    return <Input
+      type="text"
+      onChange={event => this.handleInputChange('title', event)}
+      placeholder={'Title...'}
+      value={this.state.literature.title}
+    />
+  }
+
+  urlInput() {
+    return <Input
+      type="text"
+      onChange={event => this.handleInputChange('url', event)}
+      placeholder={'URL...'}
+      value={this.state.literature.url}
+    />
+  }
+
+  isLiteratureValid() {
+    const {literature} = this.state;
+    return literature.title != '' && literature.url != '';
+  }
+
+  addButton() {
+    return <Button
+      bsStyle="success"
+      bsSize="small"
+      onClick={() => this.handleLiteratureAdd()}
+      style={{marginTop: 2}}
+      disabled={!this.isLiteratureValid()}
+      >
+      <i className="fa fa-plus"></i>
+    </Button>
   }
 
   render() {
-    return (
-      <form>
-        <table width="100%">
-          <tr>
-            <td className="padding-right">
-              <Input type="text" label="Title" ref="titleInput" id="titleInput"
-                onChange={(e) => this.handleTitleChanged(e)}
-                placeholder={'-- Please Insert Title --'}
-                value={this.state.title}
-              />
-            </td>
-            <td>
-              <Input type="text" label="URL" ref="urlInput" id="urlInput"
-                onChange={(e) => this.handleUrlChanged(e)}
-                placeholder={'-- Please Insert URL --'}
-                value={this.state.url}
-              />
-            </td>
-          </tr>
-          <tr>
-            <td colSpan={2}>
-              <ButtonToolbar>
-                <Button bsStyle="warning" onClick={this._submitFunction.bind(this)}>Add Literature</Button>
-              </ButtonToolbar>
-            </td>
-          </tr>
-        </table>
-      </form>
-    );
+    return <Row>
+      <Col md={4} style={{paddingRight: 0}}>
+        {this.titleInput()}
+      </Col>
+      <Col md={7} style={{paddingRight: 0}}>
+        {this.urlInput()}
+      </Col>
+      <Col md={1}>
+        {this.addButton()}
+      </Col>
+    </Row>
   }
 
 }
