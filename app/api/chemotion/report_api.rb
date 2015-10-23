@@ -180,6 +180,31 @@ module Chemotion
 
         excel.generate_file
       end
+
+      params do
+        requires :id, type: String
+      end
+      get :excel_reaction do
+        env['api.format'] = :binary
+        content_type('application/vnd.ms-excel')
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Reaction #{params[:id]} Samples Excel.xlsx")}"
+
+        excel = Report::ExcelExport.new
+
+        reaction = Reaction.find(params[:id])
+
+        reaction.starting_materials.each do |material|
+          excel.add_sample(material)
+        end
+        reaction.reactants.each do |reactant|
+          excel.add_sample(reactant)
+        end
+        reaction.products.each do |product|
+          excel.add_sample(product)
+        end
+
+        excel.generate_file
+      end
     end
   end
 end

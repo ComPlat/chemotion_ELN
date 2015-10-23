@@ -87,6 +87,10 @@ class CollectionActions {
   downloadReportWellplate(wellplateId){    
     Utils.downloadFile({contents: "api/v1/reports/excel_wellplate?id=" + wellplateId});
   }
+
+  downloadReportReaction(reactionId){    
+    Utils.downloadFile({contents: "api/v1/reports/excel_reaction?id=" + reactionId});
+  }
 }
 
 export default alt.createActions(CollectionActions);

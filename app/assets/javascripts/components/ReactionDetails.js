@@ -3,6 +3,7 @@ import {Col, Row, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tabbed
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
+import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
@@ -141,6 +142,9 @@ export default class ReactionDetails extends Component {
             </Button>
             <Button bsStyle="warning" onClick={() => this.submitFunction()} disabled={!this.reactionIsValid()}>
               {submitLabel}
+            </Button>
+            <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
+              Export samples
             </Button>
           </ButtonToolbar>
         </Panel>
