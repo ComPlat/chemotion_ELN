@@ -131,7 +131,7 @@ export default class Reaction extends Element {
   }
 
   _updateEquivalentForMaterial(sample) {
-    if(this.referenceMaterial) {
+    if(this.referenceMaterial && this.referenceMaterial.amount_mmol) {
       sample.equivalent = sample.amount_mmol / this.referenceMaterial.amount_mmol;
     }
   }
