@@ -1,6 +1,7 @@
 import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import UIStore from '../stores/UIStore';
+import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions';
 
 class CollectionActions {
@@ -79,8 +80,12 @@ class CollectionActions {
 
   downloadReport(tab){
     const {currentCollectionId} = UIStore.getState();
-    // TODO use reportFetcher
+
     Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId +"&tab="+tab});
+  }
+
+  downloadReportWellplate(wellplateId){    
+    Utils.downloadFile({contents: "api/v1/reports/excel_wellplate?id=" + wellplateId});
   }
 }
 

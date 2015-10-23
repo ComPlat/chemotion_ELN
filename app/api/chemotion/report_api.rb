@@ -126,7 +126,7 @@ module Chemotion
       get :excel do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Sample Excel.xlsx")}"
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:tab]} Excel.xlsx")}"
 
         excel = Report::ExcelExport.new
 
@@ -156,6 +156,26 @@ module Chemotion
                 excel.add_sample(well.sample)
               end
             end
+        end
+
+        excel.generate_file
+      end
+
+      params do
+        requires :id, type: String
+      end
+      get :excel_wellplate do
+        env['api.format'] = :binary
+        content_type('application/vnd.ms-excel')
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Wellplate #{params[:id]} Samples Excel.xlsx")}"
+
+        excel = Report::ExcelExport.new
+
+        Wellplate.find(params[:id]).wells.each do |well|
+          sample = well.sample
+          if (sample)
+            excel.add_sample(sample)
+          end
         end
 
         excel.generate_file
