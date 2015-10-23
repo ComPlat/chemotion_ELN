@@ -33,6 +33,10 @@ export default class Element {
     this._checksum = this.checksum();
   }
 
+  buildCopy() {
+    return new this.constructor(_.omit(this, 'id'))
+  }
+
   // methods regarding sharing and detail levels
   isRestricted() {
     return this.is_restricted;

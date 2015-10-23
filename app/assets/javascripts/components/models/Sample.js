@@ -23,6 +23,7 @@ export default class Sample extends Element {
     splitSample.name += "-" + Sample.counter;
     splitSample.created_at = null;
     splitSample.updated_at = null;
+    splitSample.amount_value = 0;
     splitSample._split = true;
     return splitSample;
   }
