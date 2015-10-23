@@ -121,6 +121,7 @@ module Chemotion
 
       params do
         requires :id, type: String
+        requires :tab, type: String
       end
       get :excel do
         env['api.format'] = :binary
@@ -129,8 +130,32 @@ module Chemotion
 
         excel = Report::ExcelExport.new
 
-        Collection.find(params[:id]).samples.each do |sample|
-          excel.add_sample(sample)
+        tab = params[:tab]
+        collectionId = params[:id]
+
+        case tab
+          when "sample"
+            Collection.find(collectionId).samples.each do |sample|
+              excel.add_sample(sample)
+            end
+          when "reaction"
+            Collection.find(collectionId).reactions.each do |reaction|
+              reaction.starting_materials.each do |material|
+                excel.add_sample(material)
+              end
+              reaction.reactants.each do |reactant|
+                excel.add_sample(reactant)
+              end
+              reaction.products.each do |product|
+                excel.add_sample(product)
+              end
+            end
+          when "wellplate"
+            Collection.find(collectionId).wellplates.each do |wellplate|
+              wellplate.wells.each do |well|
+                excel.add_sample(well.sample)
+              end
+            end
         end
 
         excel.generate_file

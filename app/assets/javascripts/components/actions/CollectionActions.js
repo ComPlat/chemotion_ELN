@@ -73,14 +73,14 @@ class CollectionActions {
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {
-        console.log(errorMessage);
+        console.log(errorMessage); 
       });
   }
 
-  downloadReport(){
+  downloadReport(tab){
     const {currentCollectionId} = UIStore.getState();
     // TODO use reportFetcher
-    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId});
+    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId +"&tab="+tab});
   }
 }
 
