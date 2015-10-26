@@ -97,7 +97,7 @@ module Chemotion
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
-        requires :literatures, type: Array
+        optional :literatures, type: Array
       end
       route_param :id do
 
@@ -141,7 +141,7 @@ module Chemotion
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
-        requires :literatures, type: Array
+        optional :literatures, type: Array
       end
 
       post do
@@ -169,12 +169,14 @@ end
 
 
 module ReactionUpdator
-  def self.update_literatures_for_reaction(reaction, literatures)
+  def self.update_literatures_for_reaction(reaction, _literatures)
     current_literature_ids = reaction.literature_ids
-    Array(literatures).each do |literature|
+    literatures = Array(_literatures)
+    literatures.each do |literature|
       if literature.is_new
         Literature.create(reaction_id: reaction.id, title: literature.title, url: literature.url)
       else
+        #todo:
         #update
       end
     end
