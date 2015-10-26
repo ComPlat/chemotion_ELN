@@ -122,7 +122,7 @@ module Chemotion
       params do
         requires :id, type: String
       end
-      get :excel_collection_samples do
+      get :export_samples_from_collection_samples do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
         header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:id]} Samples Excel.xlsx")}"
@@ -139,7 +139,7 @@ module Chemotion
       params do
         requires :id, type: String
       end
-      get :excel_collection_reactions do
+      get :export_samples_from_collection_reactions do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
         header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:id]} Reactions Excel.xlsx")}"
@@ -164,7 +164,7 @@ module Chemotion
       params do
         requires :id, type: String
       end
-      get :excel_collection_wellplates do
+      get :export_samples_from_collection_wellplates do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
         header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:id]} Samples Excel.xlsx")}"

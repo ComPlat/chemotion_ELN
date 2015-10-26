@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import {Button, Tooltip, OverlayTrigger, DropdownButton, MenuItem} from 'react-bootstrap';
 import CollectionActions from '../actions/CollectionActions';
-import UIStore from '../stores/UIStore';
 
 export default class ExportButton extends Component {
   render() {
@@ -12,15 +11,12 @@ export default class ExportButton extends Component {
 
     let title = <i className="fa fa-download"></i>
 
-    let {currentSearchSelection} = UIStore.getState();
-    let search_text = (currentSearchSelection) ? "search" : "";
-
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <DropdownButton title={title} disabled={isDisabled}>
-          <MenuItem onClick={() => CollectionActions.downloadReportCollectionSamples()}>Export {search_text} samples</MenuItem>
-          <MenuItem onClick={() => CollectionActions.downloadReportCollectionReactions()}>Export {search_text} reaction samples</MenuItem>
-          <MenuItem onClick={() => CollectionActions.downloadReportCollectionWellplates()}>Export {search_text} wellplate samples</MenuItem>
+          <MenuItem onClick={() => CollectionActions.downloadReportCollectionSamples()}>Export samples from collection</MenuItem>
+          <MenuItem onClick={() => CollectionActions.downloadReportCollectionReactions()}>Export samples from collection reactions</MenuItem>
+          <MenuItem onClick={() => CollectionActions.downloadReportCollectionWellplates()}>Export samples from collection wellplates</MenuItem>
         </DropdownButton>
       </OverlayTrigger>
     )
