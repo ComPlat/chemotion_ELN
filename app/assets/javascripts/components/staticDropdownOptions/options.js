@@ -113,12 +113,51 @@ export const statusOptions = [{
 }];
 
 export const dangerousProductsOptions = [{
-  label: 'Product 1',
-  value: 'Product 1'
+  label: 'Causes cancer',
+  value: 'Causes cancer'
 }, {
-  label: 'Product 2',
-  value: 'Product 2'
+  label: 'Mutagenic',
+  value: 'Mutagenic'
 }, {
-  label: 'Product 3',
-  value: 'Product 3'
+  label: 'Damage to environment',
+  value: 'Damage to environment'
+}, {
+  label: 'Explosive (Class 1)',
+  value: 'Explosive (Class 1)'
+}, {
+  label: 'Pressure (Class 2)',
+  value: 'Pressure (Class 2)'
+}, {
+  label: 'Flammable liquid (Class 3)',
+  value: 'Flammable liquid (Class 3)'
+}, {
+  label: 'Flammable solid (Class 4.1)',
+  value: 'Flammable solid (Class 4.1)'
+}, {
+  label: 'Self-flammable solid (Class 4.2)',
+  value: 'Self-flammable solid (Class 4.2)'
+}, {
+  label: 'Flammable/contact with water (Class 4.3)',
+  value: 'Flammable/contact with water (Class 4.3)'
+}, {
+  label: 'Oxidizing (Class 5.1)',
+  value: 'Oxidizing (Class 5.1)'
+}, {
+  label: 'Peroxides (Class 5.2)',
+  value: 'Peroxides (Class 5.2)'
+}, {
+  label: 'Toxic and very toxic (Class 6.1)',
+  value: 'Toxic and very toxic (Class 6.1)'
+}, {
+  label: 'Infective (Class 6.2)',
+  value: 'Infective (Class 6.2)'
+}, {
+  label: 'Radioactive (Class 7)',
+  value: 'Radioactive (Class 7)'
+}, {
+  label: 'Corrosive (Class 8)',
+  value: 'Corrosive (Class 8)'
+}, {
+  label: 'Diverse (Class 9)',
+  value: 'Diverse (Class 9)'
 }];
