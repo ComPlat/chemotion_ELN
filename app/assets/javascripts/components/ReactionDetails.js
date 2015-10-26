@@ -10,6 +10,7 @@ import ReactionDetailsProperties from './ReactionDetailsProperties';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
+import Utils from './utils/Functions';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -47,7 +48,10 @@ export default class ReactionDetails extends Component {
       reactants: reaction.reactants.map(material => material.molecule.inchikey),
       products: reaction.products.map(material => material.molecule.inchikey)
     };
-    const label = (reaction.solvents && reaction.temperature) ? reaction.solvents + ", " + reaction.temperature : '';
+    const solvent = reaction.solvent || "";
+    const temperature = reaction.temperature ? reaction.temperature + "°" : "";
+    const comma = reaction.solvent && reaction.temperature ? ", " : "";
+    const label = solvent + comma + temperature;
     ElementActions.fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label);
   }
 
@@ -104,7 +108,15 @@ export default class ReactionDetails extends Component {
             <Col md={3}>
               <h3>{reaction.name}</h3>
               <ElementCollectionLabels element={reaction} key={reaction.id}/><br/>
-              <Button href={"api/v1/reports/rtf?id=" + reaction.id}>Generate Report</Button>
+              <Button
+                style={{cursor: 'pointer'}}
+                onClick={() => Utils.downloadFile({
+                  contents: "api/v1/reports/rtf?id=" + reaction.id,
+                  name: reaction.name
+                })}
+              >
+                Generate Report
+              </Button>
             </Col>
             <Col md={9}>
               <div style={svgContainerStyle}>
@@ -123,7 +135,7 @@ export default class ReactionDetails extends Component {
             <TabPane eventKey={1} tab={'Properties'}>
               <ReactionDetailsProperties
                 reaction={reaction}
-                onReactionChange={reaction => this.handleReactionChange(reaction)}
+                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
                 />
             </TabPane>
             <TabPane eventKey={2} tab={'Literatures'}>
