@@ -103,10 +103,11 @@ export default class ReactionDetails extends Component {
       textAlign: 'center'
     };
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
+    const style = {height: '220px'};
     return (
         <Panel header="Reaction Details" bsStyle={reaction.isEdited ? 'info' : 'primary'}>
           <Row>
-            <Col md={3}>
+            <Col md={3} style={style}>
               <h3>{reaction.name}</h3>
               <ElementCollectionLabels element={reaction} key={reaction.id}/><br/>
               <Button
