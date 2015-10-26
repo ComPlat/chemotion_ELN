@@ -75,28 +75,28 @@ module Chemotion
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
-              optional :collection_id, type: Integer
+              optional :collection_id
             end
 
             requires :reaction, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
-              optional :collection_id, type: Integer
+              optional :collection_id
             end
 
             requires :wellplate, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
-              optional :collection_id, type: Integer
+              optional :collection_id
             end
 
             requires :screen, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
-              optional :collection_id, type: Integer
+              optional :collection_id
             end
           end
           requires :collection_attributes, type: Hash do
