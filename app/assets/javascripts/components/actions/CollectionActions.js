@@ -78,6 +78,21 @@ class CollectionActions {
       });
   }
 
+  downloadReportCollectionSamples(){
+    const {currentCollectionId} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/excel_collection_samples?id=" + currentCollectionId});
+  }
+
+  downloadReportCollectionReactions(){
+    const {currentCollectionId} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/excel_collection_reactions?id=" + currentCollectionId});
+  }
+
+  downloadReportCollectionWellplates(){
+    const {currentCollectionId} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/excel_collection_wellplates?id=" + currentCollectionId});
+  }
+
   downloadReport(tab){
     const {currentCollectionId} = UIStore.getState();
 

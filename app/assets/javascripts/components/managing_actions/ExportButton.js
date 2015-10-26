@@ -18,9 +18,9 @@ export default class ExportButton extends Component {
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <DropdownButton title={title} disabled={isDisabled}>
-          <MenuItem onClick={() => CollectionActions.downloadReport("sample")}>Export {search_text} samples</MenuItem>
-          <MenuItem onClick={() => CollectionActions.downloadReport("reaction")}>Export {search_text} reaction samples</MenuItem>
-          <MenuItem onClick={() => CollectionActions.downloadReport("wellplate")}>Export {search_text} wellplate samples</MenuItem>
+          <MenuItem onClick={() => CollectionActions.downloadReportCollectionSamples()}>Export {search_text} samples</MenuItem>
+          <MenuItem onClick={() => CollectionActions.downloadReportCollectionReactions()}>Export {search_text} reaction samples</MenuItem>
+          <MenuItem onClick={() => CollectionActions.downloadReportCollectionWellplates()}>Export {search_text} wellplate samples</MenuItem>
         </DropdownButton>
       </OverlayTrigger>
     )
