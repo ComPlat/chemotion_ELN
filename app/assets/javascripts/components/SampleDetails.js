@@ -18,6 +18,8 @@ import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Aviator from 'aviator';
 
+import {solventOptions} from './staticDropdownOptions/options';
+
 export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
@@ -364,7 +366,7 @@ export default class SampleDetails extends React.Component {
       <Select ref='solventInput'
               name='solvents'
               multi={false}
-              options={solvents}
+              options={solventOptions}
               onChange={(e) => this.handleSolventChanged(e)}
               value={sample.solvent}
               disabled={sample.isMethodDisabled('solvent')}
@@ -587,86 +589,3 @@ export default class SampleDetails extends React.Component {
     )
   }
 }
-
-const solvents = [{
-  label: 'Aceton',
-  value: 'Aceton'
-}, {
-  label: 'Benzol',
-  value: 'Benzol'
-}, {
-  label: 'Butanol',
-  value: 'Butanol'
-}, {
-  label: 'Chloroform',
-  value: 'Chloroform'
-}, {
-  label: 'Cyclohexan',
-  value: 'Cyclohexan'
-}, {
-  label: 'Diethylether',
-  value: 'Diethylether'
-}, {
-  label: 'Dimethylsulfoxid (DMF)',
-  value: 'Dimethylsulfoxid'
-}, {
-  label: 'Dimethylformamid (DMF)',
-  value: 'Dimethylformamid'
-}, {
-  label: '1,4-Dioxan',
-  value: '1,4-Dioxan'
-}, {
-  label: 'Essigsäure',
-  value: 'Essigsäure'
-}, {
-  label: 'Ethanol',
-  value: 'Ethanol'
-}, {
-  label: 'Ethylacetat',
-  value: 'Ethylacetat'
-}, {
-  label: 'Isopropanol',
-  value: 'Isopropanol'
-}, {
-  label: 'Methanol',
-  value: 'Methanol'
-}, {
-  label: 'Methylenchlorid (DCM)',
-  value: 'Methylenchlorid'
-}, {
-  label: 'Methyl-tert-butylether (MTBE)',
-  value: 'Methyl-tert-butylether'
-}, {
-  label: 'n-Hexan',
-  value: 'n-Hexan'
-}, {
-  label: 'N-Methyl-2-pyrrolidon (NMP)',
-  value: 'N-Methyl-2-pyrrolidon'
-}, {
-  label: 'Pentan',
-  value: 'Pentan'
-}, {
-  label: 'Pyridin',
-  value: 'Pyridin'
-}, {
-  label: 'Tetrahydrofuran (THF)',
-  value: 'Tetrahydrofuran'
-}, {
-  label: 'Toluol',
-  value: 'Toluol'
-}, {
-  label: 'Wasser',
-  value: 'Wasser'
-}, {
-  label: 'CDCl3',
-  value: 'CDCl3'
-}, {
-  label: 'MeOD-d4',
-  value: 'MeOD-d4'
-}, {
-  label: 'C6D6',
-  value: 'C6D6'
-}, {
-  label: 'D2O',
-  value: 'D2O'
-}];

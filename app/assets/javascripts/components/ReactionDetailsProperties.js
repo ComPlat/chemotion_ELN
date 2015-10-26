@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import {Row, Col, Input, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
+import {solventOptions, purificationOptions, statusOptions, dangerousProductsOptions}
+  from './staticDropdownOptions/options';
 
 export default class ReactionDetailsProperties extends Component {
 
@@ -19,7 +21,8 @@ export default class ReactionDetailsProperties extends Component {
   handleInputChange(type, event) {
     const {onReactionChange} = this.props;
     const {value} = event.target;
-    let {reaction} = this.state;
+    const {reaction} = this.state;
+    let options = {};
 
     switch (type) {
       case 'name':
@@ -54,13 +57,24 @@ export default class ReactionDetailsProperties extends Component {
         break;
       case 'temperature':
         reaction.temperature = value;
+        options = {schemaChanged: true}
         break;
       case 'dangerousProducts':
         reaction.dangerous_products = value;
         break;
+        case 'solvent':
+          reaction.solvent = value;
+          options = {schemaChanged: true}
+          break;
     }
 
-    onReactionChange(reaction);
+    onReactionChange(reaction, options);
+  }
+
+  handleMultiselectChange(type, selectedOptions) {
+    const values = selectedOptions.map(option => option.value);
+    const wrappedEvent = {target: {value: values}};
+    this.handleInputChange(type, wrappedEvent)
   }
 
   render() {
@@ -132,33 +146,40 @@ export default class ReactionDetailsProperties extends Component {
             </Col>
           </Row>
           <Row>
-            <Col md={6}>
+            <Col md={4}>
               <label>Purification</label>
               <Select
                 name='purification'
                 multi={true}
                 options={purificationOptions}
-                onChange={(event, selectedOptions) => {
-                  const values = selectedOptions.map(o => o.value);
-                  const wrappedEvent = {target: {value: values}};
-                  this.handleInputChange('purification', wrappedEvent)
-                }}
+                onChange={(event, selectedOptions) =>
+                  this.handleMultiselectChange('purification', selectedOptions)}
                 value={reaction.purification}
                 />
             </Col>
-            <Col md={6}>
+            <Col md={4}>
+              <label>Solvent</label>
+              <Select
+                name='solvent'
+                multi={false}
+                options={solventOptions}
+                value={reaction.solvent}
+                onChange={event => {
+                  const wrappedEvent = {target: {value: event}};
+                  this.handleInputChange('solvent', wrappedEvent)
+                }}
+              />
+            </Col>
+            <Col md={4}>
               <label>Dangerous Products</label>
               <Select
                 name='dangerous_products'
                 multi={true}
                 options={dangerousProductsOptions}
                 value={reaction.dangerous_products}
-                onChange={(event, selectedOptions) => {
-                  const values = selectedOptions.map(o => o.value);
-                  const wrappedEvent = {target: {value: values}};
-                  this.handleInputChange('dangerousProducts', wrappedEvent)
-                }}
-                />
+                onChange={(event, selectedOptions) =>
+                  this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+              />
             </Col>
           </Row>
         </ListGroupItem>
@@ -204,45 +225,3 @@ export default class ReactionDetailsProperties extends Component {
     );
   }
 }
-
-const purificationOptions = [{
-  label: 'Flash-Chromatography',
-  value: 'Flash-Chromatography'
-}, {
-  label: 'TLC',
-  value: 'TLC'
-}, {
-  label: 'HPLC',
-  value: 'HPLC'
-}, {
-  label: 'Distillation',
-  value: 'Distillation'
-}, {
-  label: 'Sublimation',
-  value: 'Sublimation'
-}, {
-  label: 'Crystallisation',
-  value: 'Crystallisation'
-}];
-
-const statusOptions = [{
-  label: 'Planned',
-  value: 'Planned'
-}, {
-  label: 'Successful',
-  value: 'Successful'
-}, {
-  label: 'Not Successful',
-  value: 'Not Successful'
-}];
-
-const dangerousProductsOptions = [{
-  label: 'Product 1',
-  value: 'Product 1'
-}, {
-  label: 'Product 2',
-  value: 'Product 2'
-}, {
-  label: 'Product 3',
-  value: 'Product 3'
-}];

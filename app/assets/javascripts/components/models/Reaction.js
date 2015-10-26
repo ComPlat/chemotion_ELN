@@ -23,14 +23,15 @@ export default class Reaction extends Element {
       observation: "",
       purification: "",
       dangerous_products: "",
-      solvents: "",
+      tlc_solvents: "",
       rf_value: 0.00,
       temperature: "",
       tlc_description: "",
       starting_materials: [],
       reactants: [],
       products: [],
-      literatures: []
+      literatures: [],
+      solvent: ''
     })
   }
 

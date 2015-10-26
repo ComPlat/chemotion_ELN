@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151021100740) do
+ActiveRecord::Schema.define(version: 20151023135011) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -132,12 +132,13 @@ ActiveRecord::Schema.define(version: 20151021100740) do
     t.text     "observation"
     t.string   "purification",       default: [],              array: true
     t.string   "dangerous_products", default: [],              array: true
-    t.string   "solvents"
+    t.string   "tlc_solvents"
     t.text     "tlc_description"
     t.string   "rf_value"
     t.string   "temperature"
     t.string   "status"
     t.string   "reaction_svg_file"
+    t.string   "solvent"
   end
 
   create_table "reactions_product_samples", force: :cascade do |t|

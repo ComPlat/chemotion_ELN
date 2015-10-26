@@ -18,7 +18,7 @@ class ReactionSerializer < ActiveModel::Serializer
   include Labeled
 
   attributes :id, :type, :name, :created_at, :updated_at, :description, :timestamp_start, :timestamp_stop,
-             :observation, :purification, :dangerous_products, :solvents, :tlc_description, :rf_value, :temperature, :status, :reaction_svg_file
+             :observation, :purification, :dangerous_products, :solvent, :tlc_solvents, :tlc_description, :rf_value, :temperature, :status, :reaction_svg_file
 
 
   has_many :starting_materials, serializer: MaterialSerializer
@@ -87,7 +87,7 @@ class ReactionSerializer < ActiveModel::Serializer
 
   class Level0 < BasePermissionSerializer
     attributes :reaction_svg_file
-    
+
     has_many :starting_materials, serializer: MaterialSerializer::Level0
     has_many :reactants, serializer: MaterialSerializer::Level0
     has_many :products, serializer: MaterialSerializer::Level0

@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {Row, Col, Input, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
+import {statusOptions} from './staticDropdownOptions/options'
 
 export default class ReactionDetailsMainProperties extends Component {
 
@@ -115,45 +116,3 @@ export default class ReactionDetailsMainProperties extends Component {
     );
   }
 }
-
-const purificationOptions = [{
-  label: 'Flash-Chromatography',
-  value: 'Flash-Chromatography'
-}, {
-  label: 'TLC',
-  value: 'TLC'
-}, {
-  label: 'HPLC',
-  value: 'HPLC'
-}, {
-  label: 'Distillation',
-  value: 'Distillation'
-}, {
-  label: 'Sublimation',
-  value: 'Sublimation'
-}, {
-  label: 'Crystallisation',
-  value: 'Crystallisation'
-}];
-
-const statusOptions = [{
-  label: 'Planned',
-  value: 'Planned'
-}, {
-  label: 'Successful',
-  value: 'Successful'
-}, {
-  label: 'Not Successful',
-  value: 'Not Successful'
-}];
-
-const dangerousProductsOptions = [{
-  label: 'Product 1',
-  value: 'Product 1'
-}, {
-  label: 'Product 2',
-  value: 'Product 2'
-}, {
-  label: 'Product 3',
-  value: 'Product 3'
-}];

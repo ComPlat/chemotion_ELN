@@ -88,7 +88,8 @@ module Chemotion
         optional :observation, type: String
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
-        optional :solvents, type: String
+        optional :tlc_solvents, type: String
+        optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: String
@@ -131,7 +132,8 @@ module Chemotion
         optional :observation, type: String
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
-        optional :solvents, type: String
+        optional :tlc_solvents, type: String
+        optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
         optional :temperature, type: String
