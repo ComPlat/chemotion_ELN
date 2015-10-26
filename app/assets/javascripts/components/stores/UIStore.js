@@ -143,6 +143,7 @@ class UIStore {
     let hasChanged = (!state.currentCollection || state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
 
     if(hasChanged) {
+      // FIXME why both?
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;
 
@@ -164,6 +165,7 @@ class UIStore {
   }
 
   handleSelectCollectionWithoutUpdating(collection) {
+    // FIXME why both?
     this.state.currentCollection = collection;
     this.state.currentCollectionId = collection.id;
   }
