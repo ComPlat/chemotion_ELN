@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151015161007) do
+ActiveRecord::Schema.define(version: 20151021100740) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -186,6 +186,7 @@ ActiveRecord::Schema.define(version: 20151015161007) do
     t.boolean  "is_top_secret",  default: false
     t.string   "ancestry"
     t.string   "external_label", default: ""
+    t.text     "analyses_dump"
   end
 
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree

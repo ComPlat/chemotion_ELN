@@ -210,7 +210,7 @@ export default class SampleDetails extends React.Component {
   _submitFunction() {
     let {sample} = this.state
     console.log(sample.serialize());
-    
+
     if(sample.isNew) {
       ElementActions.createSample(sample.serialize());
     } else {
@@ -565,7 +565,7 @@ export default class SampleDetails extends React.Component {
 
               </ListGroupItem>
             </TabPane>
-            <TabPane eventKey={1} tab={'Analyses'}>
+            <TabPane eventKey={1} tab={'Analyses'} key={sample.id}>
               <ListGroupItem style={{paddingBottom: 20}}>
                 <SampleDetailsAnalyses
                   sample={sample}

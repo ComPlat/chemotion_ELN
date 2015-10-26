@@ -23,3 +23,6 @@
 
 /public/images/reactions/*
 !/public/images/reactions/.keep
+
+/uploads/attachments/*
+!/public/attachments/.keep

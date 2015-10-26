@@ -1,14 +1,17 @@
 import React, {Component} from 'react';
 import {Row, Col, Input, Table, ListGroup, ListGroupItem, Button, ButtonToolbar} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-import Functions from './utils/Functions';
-import _ from 'lodash';
+import Utils from './utils/Functions';
+
+import Attachment from './models/Attachment';
+import SamplesFetcher from './fetchers/SamplesFetcher';
 
 export default class Dataset extends Component {
   constructor(props) {
     super();
+    let dataset = props.dataset.clone();
     this.state = {
-      dataset: _.cloneDeep(props.dataset)
+      dataset: dataset
     };
   }
 
@@ -31,18 +34,26 @@ export default class Dataset extends Component {
 
   handleFileDrop(files) {
     const {dataset} = this.state;
-    dataset.files = dataset.files.concat(files);
+
+    let attachments = files.map(f => Attachment.fromFile(f));
+    dataset.attachments = dataset.attachments.concat(attachments);
+
     this.setState({dataset});
   }
 
-  handleFileDownload(file) {
-    Functions.downloadFile({contents: file.preview, name: file.name});
+  handleAttachmentDownload(attachment) {
+    if(attachment.preview) {
+      Utils.downloadFile({contents: attachment.preview, name: attachment.name});
+    }
+    else {
+      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.filename}/?filename=${attachment.name}`, name: attachment.name});
+    }
   }
 
-  handleFileRemove(file) {
+  handleAttachmentRemove(attachments) {
     const {dataset} = this.state;
-    const fileId = dataset.files.indexOf(file);
-    dataset.files.splice(fileId, 1);
+    const index = dataset.attachments.indexOf(attachments);
+    dataset.attachments.splice(index, 1);
     this.setState({dataset});
   }
 
@@ -53,17 +64,17 @@ export default class Dataset extends Component {
     onModalHide();
   }
 
-  attachements() {
+  attachments() {
     const {dataset} = this.state;
-    if(dataset.files.length > 0) {
+    if(dataset.attachments.length > 0) {
       return (
         <ListGroup>
-        {dataset.files.map((file, key) => {
+        {dataset.attachments.map(attachment => {
           return (
-            <ListGroupItem key={key}>
-              <a onClick={() => this.handleFileDownload(file)} style={{cursor: 'pointer'}}>{file.name}</a>
+            <ListGroupItem key={attachment.id}>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.name}</a>
               <div className="pull-right">
-                {this.removeButton(file)}
+                {this.removeAttachmentButton(attachment)}
               </div>
             </ListGroupItem>
           )
@@ -79,11 +90,11 @@ export default class Dataset extends Component {
     }
   }
 
-  removeButton(file) {
+  removeAttachmentButton(attachment) {
     const {readOnly} = this.props;
     if(!readOnly) {
       return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleFileRemove(file)}>
+        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
           <i className="fa fa-trash-o"></i>
         </Button>
       );
@@ -143,7 +154,7 @@ export default class Dataset extends Component {
         </Col>
         <Col md={6}>
           <label>Attachments</label>
-          {this.attachements()}
+          {this.attachments()}
           {this.dropzone()}
         </Col>
         <Col md={12}>

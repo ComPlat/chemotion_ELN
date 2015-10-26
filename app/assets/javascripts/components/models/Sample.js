@@ -42,7 +42,8 @@ export default class Sample extends Element {
       molfile: this.molfile,
       molecule: this.molecule,
       is_top_secret: this.is_top_secret || false,
-      parent_id: this.parent_id
+      parent_id: this.parent_id,
+      analyses: this.analyses.map(a => a.serialize())
     })
   }
 
@@ -291,19 +292,16 @@ export default class Sample extends Element {
   }
 
   set analyses(analyses) {
-    console.log('*** set analyses ***')
     this._analyses = analyses.map(a => new Analysis(a));
   }
 
   addAnalysis(analysis) {
-    console.log('*** add analysis ***')
     let analyses = this.analyses;
     analyses.push(analysis);
     this.analyses = analyses;
   }
 
   updateAnalysis(changedAnalysis) {
-    console.log('*** update analysis ***')
     this._analyses.find(analysis => {
       if(analysis.id == changedAnalysis.id) {
         const analysisId = this.analyses.indexOf(analysis);

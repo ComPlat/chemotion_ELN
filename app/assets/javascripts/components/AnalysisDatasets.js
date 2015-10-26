@@ -39,8 +39,8 @@ export default class AnalysisDatasets extends Component {
 
   handleRemove(dataset) {
     const {analysis} = this.state;
-    const datasetId = analysis.datasets.indexOf(dataset);
-    analysis.datasets.splice(datasetId, 1);
+    const index = analysis.datasets.indexOf(dataset);
+    analysis.datasets.splice(index, 1);
     this.props.onChange(analysis);
   }
 
@@ -64,7 +64,7 @@ export default class AnalysisDatasets extends Component {
     }
   }
 
-  removeButton() {
+  removeButton(dataset) {
     const {readOnly} = this.props;
     if(!readOnly) {
       return (
@@ -91,7 +91,7 @@ export default class AnalysisDatasets extends Component {
                         <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
                           <i className="fa fa-download"></i>
                         </Button>
-                        {this.removeButton()}
+                        {this.removeButton(dataset)}
                       </ButtonToolbar>
                     </span>
                   </ListGroupItem>

@@ -96,4 +96,21 @@ class Sample < ActiveRecord::Base
     end
   end
 
+
+  # -- fake analyes
+
+  def analyses
+    unless analyses_dump.blank?
+      JSON.parse(analyses_dump)
+    else
+      []
+    end
+  end
+
+  def analyses= analyses
+    json_dump = JSON.dump(analyses)
+    ap json_dump
+    self.analyses_dump = json_dump
+  end
+
 end
