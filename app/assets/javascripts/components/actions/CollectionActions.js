@@ -1,6 +1,7 @@
 import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import UIStore from '../stores/UIStore';
+import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions';
 
 class CollectionActions {
@@ -73,14 +74,37 @@ class CollectionActions {
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {
-        console.log(errorMessage);
+        console.log(errorMessage); 
       });
   }
 
-  downloadReport(){
+  downloadReportCollectionSamples(){
     const {currentCollectionId} = UIStore.getState();
-    // TODO use reportFetcher
-    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId});
+    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_samples?id=" + currentCollectionId});
+  }
+
+  downloadReportCollectionReactions(){
+    const {currentCollectionId} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_reactions?id=" + currentCollectionId});
+  }
+
+  downloadReportCollectionWellplates(){
+    const {currentCollectionId} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_wellplates?id=" + currentCollectionId});
+  }
+
+  downloadReport(tab){
+    const {currentCollectionId} = UIStore.getState();
+
+    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId +"&tab="+tab});
+  }
+
+  downloadReportWellplate(wellplateId){    
+    Utils.downloadFile({contents: "api/v1/reports/excel_wellplate?id=" + wellplateId});
+  }
+
+  downloadReportReaction(reactionId){    
+    Utils.downloadFile({contents: "api/v1/reports/excel_reaction?id=" + reactionId});
   }
 }
 

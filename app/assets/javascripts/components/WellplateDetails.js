@@ -2,6 +2,7 @@ import React, {PropTypes, Component} from 'react';
 import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
+import CollectionActions from './actions/CollectionActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
@@ -134,6 +135,13 @@ export default class WellplateDetails extends Component {
                   onClick={() => this.handleSubmit()}
                   >
                   {submitLabel}
+                </Button>
+
+                <Button
+                  bsStyle="default"
+                  onClick={() => CollectionActions.downloadReportWellplate(wellplate.id)}
+                  >
+                  Export samples
                 </Button>
               </ButtonToolbar>
             </ListGroupItem>
