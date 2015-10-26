@@ -13,8 +13,8 @@ class ScreenSerializer < ActiveModel::Serializer
     'screen'
   end
 
-  class BasePermissionSerializer < ActiveModel::Serializer
-    attributes :id, :type, :is_restricted
+  class Level0 < ActiveModel::Serializer
+    attributes :id, :type, :is_restricted, :name, :description, :conditions, :requirements
 
     def type
       'screen'
@@ -23,13 +23,5 @@ class ScreenSerializer < ActiveModel::Serializer
     def is_restricted
       true
     end
-  end
-
-  class Level0 < BasePermissionSerializer
-    attributes :name, :description, :conditions, :requirements
-  end
-
-  class Level1 < Level0
-    has_many :wellplates
   end
 end

@@ -1,7 +1,7 @@
 class WellplateSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :size, :name, :description, :created_at, :updated_at, :wells
+  attributes :id, :type, :size, :name, :description, :created_at, :updated_at
 
   has_many :wells
 
@@ -17,27 +17,25 @@ class WellplateSerializer < ActiveModel::Serializer
     'wellplate'
   end
 
-  class BasePermissionSerializer < ActiveModel::Serializer
-    attributes :id, :type, :is_restricted, :size
+  class Level0 < ActiveModel::Serializer
+    attributes :id, :type, :size, :is_restricted
+
+    has_many :wells, serializer: WellSerializer::Level0
+
+    def is_restricted
+      true
+    end
 
     def type
       'wellplate'
     end
 
-    def is_restricted
-      true
+    def wells
+      object.wells.order("id asc")
     end
-  end
-
-  class Level0 < BasePermissionSerializer
-    has_many :wells, serializer: WellSerializer::Level0
   end
 
   class Level1 < Level0
     has_many :wells, serializer: WellSerializer::Level1
-  end
-
-  class Level2 < Level1
-    has_many :wells, serializer: WellSerializer::Level2
   end
 end
