@@ -37,6 +37,10 @@ export default class Element {
     return new this.constructor(_.omit(this, 'id'))
   }
 
+  clone() {
+    return new this.constructor(this);
+  }
+
   // methods regarding sharing and detail levels
   isRestricted() {
     return this.is_restricted;

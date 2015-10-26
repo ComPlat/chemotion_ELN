@@ -86,12 +86,12 @@ export default function() {
       target: {
         showOrNew(e) {
           const {wellplateID, collectionID} = e.params;
+
           if (wellplateID == 'new') {
             ElementActions.generateEmptyWellplate(collectionID);
           } else {
             ElementActions.fetchWellplateById(wellplateID);
           }
-          //UIActions.selectTab(3)
         }
       },
       '/:wellplateID': 'showOrNew'

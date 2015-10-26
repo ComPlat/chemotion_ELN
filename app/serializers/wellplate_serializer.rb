@@ -1,7 +1,7 @@
 class WellplateSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :size, :name, :description, :created_at, :wells
+  attributes :id, :type, :size, :name, :description, :created_at, :updated_at, :wells
 
   has_many :wells
 

@@ -94,6 +94,8 @@ module Chemotion
             wellplate = Wellplate.find(params[:id])
             wellplate.update(attributes)
             WellplateUpdator.update_wells_for_wellplate(wellplate, params[:wells])
+            wellplate.touch
+            wellplate.reload
             wellplate
           end
         end

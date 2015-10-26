@@ -15,7 +15,7 @@ class App extends Component {
   constructor(props) {
     super();
     this.state= {
-      uiState: null
+      showCollectionManagement: false
     };
   }
 
@@ -28,17 +28,17 @@ class App extends Component {
   }
 
   handleUiStoreChange(state) {
-    this.setState({uiState: state});
+    if(this.state.showCollectionManagement != state.showCollectionManagement) {
+      this.setState({showCollectionManagement: state.showCollectionManagement});
+    }
   }
 
   mainContent() {
-    const {uiState} = this.state;
-    if(uiState) {
-      if(uiState.showCollectionManagement) {
-        return <CollectionManagement/>
-      } else {
-        return <Elements/>
-      }
+    const {showCollectionManagement} = this.state;
+    if(showCollectionManagement) {
+      return <CollectionManagement/>
+    } else {
+      return <Elements/>
     }
   }
 

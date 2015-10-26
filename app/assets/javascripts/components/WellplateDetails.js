@@ -26,8 +26,13 @@ export default class WellplateDetails extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {wellplate} = nextProps;
-    this.setState({ wellplate });
+    const {wellplate} = this.state;
+    const nextWellplate = nextProps.wellplate;
+    if (nextWellplate.id != wellplate.id || nextWellplate.updated_at != wellplate.updated_at) {
+      this.setState({
+        wellplate: nextWellplate
+      });
+    }
   }
 
   closeDetails() {
