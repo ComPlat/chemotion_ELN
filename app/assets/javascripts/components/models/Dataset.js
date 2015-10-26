@@ -21,10 +21,6 @@ export default class Dataset extends Element {
     })
   }
 
-  clone() {
-    return new Dataset(this);
-  }
-
   get attachments() {
     return this._attachments;
   }
