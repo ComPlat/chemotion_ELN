@@ -263,8 +263,13 @@ class ElementStore {
     Aviator.navigate(`/collection/${uiState.currentCollection.id}/${element.type}/${element.id}`);
   }
 
-  handleGenerateEmptyElement(result) {
-    this.state.currentElement = result;
+  handleGenerateEmptyElement(element) {
+    let {currentElement} = this.state;
+
+    const newElementOfSameTypeIsPresent = currentElement && currentElement.isNew && currentElement.type == element.type;
+    if(!newElementOfSameTypeIsPresent) {
+      this.state.currentElement = element;
+    }
   }
 
   handleUnselectCurrentElement() {

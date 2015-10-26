@@ -106,12 +106,10 @@ export default class CollectionSubtree extends React.Component {
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
     const {showCollectionManagement, currentCollectionId} = UIStore.getState();
-    const {currentElement} = ElementStore.getState();
     if(showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {
-      const element = (currentElement) ? `${currentElement.type}/${currentElement.id}` : '';
-      Aviator.navigate(`/collection/${currentCollectionId}/${element}`);
+      Aviator.navigate(`/collection/${currentCollectionId}/${this.urlForCurrentElement()}`);
     }
   }
 
@@ -147,9 +145,22 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleClick() {
+    Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`);
+  }
+
+  urlForCurrentElement() {
     const {currentElement} = ElementStore.getState();
-    const element = (currentElement) ? `${currentElement.type}/${currentElement.id}` : '';
-    Aviator.navigate(`/collection/${this.state.root.id}/${element}`);
+    if(currentElement) {
+      if(currentElement.isNew) {
+        return `${currentElement.type}/new`;
+      }
+      else{
+        return `${currentElement.type}/${currentElement.id}`;
+      }
+    }
+    else {
+      return '';
+    }
   }
 
   toggleExpansion(e) {
