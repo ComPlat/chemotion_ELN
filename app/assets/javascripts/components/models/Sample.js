@@ -14,6 +14,13 @@ export default class Sample extends Element {
     return false;
   }
 
+  static copyFromSampleAndCollectionId(sample, collection_id) {
+    let sample = sample.buildCopy();
+    sample.collection_id = collection_id;
+
+    return sample;
+  }
+
   buildChild() {
     Sample.counter += 1;
 
@@ -65,9 +72,9 @@ export default class Sample extends Element {
       type: 'sample',
       external_label: '',
       amount_value: 0,
-      amount_unit: 'g',
+      amount_unit: 'mg',
       description: '',
-      purity: 0,
+      purity: 1,
       solvent: '',
       impurities: '',
       location: '',

@@ -50,6 +50,7 @@ class ElementStore {
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
       handleCreateSample: ElementActions.createSample,
+      handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -177,6 +178,12 @@ class ElementStore {
     this.handleRefreshElements('sample');
   }
 
+  handleCopySampleFromClipboard(collection_id) {
+    let clipboardSamples = ClipboardStore.getState().samples;
+
+    this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id)
+  }
+
   // -- Wellplates --
 
   handleFetchWellplateById(result) {
@@ -199,9 +206,9 @@ class ElementStore {
   }
 
   handleGenerateWellplateFromClipboard(collection_id) {
-    let clipboard_samples = ClipboardStore.getState().samples;
+    let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboard_samples, collection_id);
+    this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
   // -- Screens --
 

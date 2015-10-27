@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151027111518) do
+ActiveRecord::Schema.define(version: 20151027164552) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -173,14 +173,14 @@ ActiveRecord::Schema.define(version: 20151027111518) do
 
   create_table "samples", force: :cascade do |t|
     t.string   "name"
-    t.float    "amount_value"
-    t.string   "amount_unit"
+    t.float    "amount_value",   default: 0.0
+    t.string   "amount_unit",    default: "mg"
     t.datetime "created_at",                     null: false
     t.datetime "updated_at",                     null: false
     t.text     "description",    default: ""
     t.integer  "molecule_id"
     t.binary   "molfile"
-    t.float    "purity"
+    t.float    "purity",         default: 1.0
     t.string   "solvent",        default: ""
     t.string   "impurities",     default: ""
     t.string   "location",       default: ""
