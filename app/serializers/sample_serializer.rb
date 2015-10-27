@@ -1,7 +1,7 @@
 class SampleSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :name, :description, :created_at, :amount_value, :amount_unit, :molfile,
+  attributes :id, :type, :name, :short_label, :description, :created_at, :amount_value, :amount_unit, :molfile,
              :purity, :solvent, :impurities, :location, :is_top_secret, :is_restricted, :external_label, :analyses,
              :analysis_kinds, :children_count
 
@@ -32,12 +32,12 @@ class SampleSerializer < ActiveModel::Serializer
   def analysis_kinds
     analyses = object.analyses
     analyses.inject({confirmed: {}, unconfirmed: {}, other: {}}) { |result, analysis|
-      if analysis["status"] == "Confirmed" 
+      if analysis["status"] == "Confirmed"
         result[:confirmed][analysis["kind"]] = {
           label: analysis["kind"],
           count: 1
         }
-      elsif analysis["status"] == "Unconfirmed" 
+      elsif analysis["status"] == "Unconfirmed"
         result[:unconfirmed][analysis["kind"]] = {
           label: analysis["kind"],
           count: 1
