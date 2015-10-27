@@ -8,7 +8,7 @@ export default class Element {
     Object.assign(this, args);
     if(!this.id) {
       this.id = Element.buildID();
-      this._new = true
+      this.is_new = true
     }
     this.updateChecksum();
   }
@@ -26,7 +26,7 @@ export default class Element {
   }
 
   get isNew() {
-    return this._new == true
+    return this.is_new == true
   }
 
   updateChecksum() {

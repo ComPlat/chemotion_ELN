@@ -304,7 +304,8 @@ describe Chemotion::ReactionAPI do
                   "parent_id" => sample_1.id,
                   "reference" => true,
                  "equivalent" => 1,
-                     "is_new" => true
+                     "is_new" => true,
+                   "is_split" => true
               ]
             }
           }
@@ -358,7 +359,20 @@ describe Chemotion::ReactionAPI do
                   "parent_id" => sample_1.id,
                   "reference" => true,
                  "equivalent" => 1,
-                     "is_new" => true
+                     "is_new" => true,
+                   "is_split" => true
+              ],
+              "reactants" => [
+                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336",
+                       "name" => "Copied Sample",
+                    "solvent" => "solvent1",
+                "amount_unit" => "mg",
+               "amount_value" => 86.09596,
+                  "parent_id" => sample_1.id,
+                  "reference" => false,
+                 "equivalent" => 2,
+                     "is_new" => true,
+                   "is_split" => false
               ]
             }
           }
@@ -379,7 +393,7 @@ describe Chemotion::ReactionAPI do
             {
                       "name" => "New Subsample 1",
               "amount_value" => 76.09596,
-               "amount_unit" => "mg",
+               "amount_unit" => "mg"
             }
           )
 
@@ -389,6 +403,26 @@ describe Chemotion::ReactionAPI do
             "equivalent" => 1
           })
 
+        end
+
+        it 'should created a copied sample' do
+
+          reactant = r.reactants.last
+
+          expect(reactant.attributes).to include(
+            {
+                      "name" => "Copied Sample",
+              "amount_value" => 86.09596,
+               "amount_unit" => "mg",
+                   "solvent" => "solvent1"
+            }
+          )
+
+          reactant_association = r.reactions_reactant_samples.find_by(sample_id: reactant.id)
+          expect(reactant_association.attributes).to include({
+            "reference" => false,
+            "equivalent" => 2
+          })
         end
 
       end

@@ -1,6 +1,7 @@
 import Element from './Element';
 import Molecule from './Molecule';
 import Analysis from './Analysis';
+import _ from 'lodash';
 
 export default class Sample extends Element {
   isMethodDisabled() {
@@ -9,10 +10,6 @@ export default class Sample extends Element {
 
   isMethodRestricted(m) {
     return false;
-  }
-
-  get isNew() {
-    return super.isNew || this._split
   }
 
   static buildChild(sample) {
@@ -24,8 +21,13 @@ export default class Sample extends Element {
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.amount_value = 0;
-    splitSample._split = true;
+    splitSample.is_split = true;
+    splitSample.is_new = true;
     return splitSample;
+  }
+
+  get isSplit() {
+    return this.is_split
   }
 
   serialize() {
@@ -43,7 +45,8 @@ export default class Sample extends Element {
       molecule: this.molecule,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
-      analyses: this.analyses.map(a => a.serialize())
+      analyses: this.analyses.map(a => a.serialize()),
+      is_split: this.isSplit || false
     })
   }
 
@@ -273,16 +276,13 @@ export default class Sample extends Element {
   }
 
   serializeMaterial() {
-    return({
-      id: this.id,
-      name: this.name,
-      amount_unit: 'mg',
-      amount_value: this.amount_mg,
-      parent_id: this.parent_id,
+    let params = this.serialize();
+    let extra_params = {
       equivalent: this.equivalent,
-      reference: this.reference || false,
-      is_new: this.isNew || false,
-    });
+      reference: this.reference || false
+    }
+    _.merge(params, extra_params);
+    return params;
   }
 
   // -- Analyses --
