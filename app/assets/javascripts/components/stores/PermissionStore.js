@@ -19,12 +19,6 @@ class PermissionStore {
 
   handleFetchTopSecretStatus(result) {
     this.state.is_top_secret = result.is_top_secret;
-
-    if(!this.state.is_top_secret) {
-      Aviator.navigate('/sharing');
-    } else {
-      Aviator.navigate('/top_secret');
-    }
   }
 
   handleFetchSharingAllowedStatus(result) {
