@@ -22,7 +22,7 @@ export default class ReactionDetailsScheme extends Component {
 
   dropSample(sample, materialGroup) {
     const {reaction} = this.state;
-    const splitSample = Sample.buildChild(sample);
+    const splitSample = sample.buildChild();
     reaction.addMaterial(splitSample, materialGroup);
     this.onReactionChange(reaction, {schemaChanged: true});
   }

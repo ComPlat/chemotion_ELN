@@ -5,7 +5,7 @@ class ClipboardActions {
   fetchSamplesByUIStateAndLimit(params) {
     ClipboardFetcher.fetchSamplesByUIStateAndLimit(params)
       .then((result) => {
-        this.dispatch({samples: result.samples, collection_id: params.sample.collection_id});
+        this.dispatch({samples: result, collection_id: params.sample.collection_id});
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
