@@ -56,10 +56,12 @@ export default function() {
           const {sampleID, collectionID} = e.params;
           UIActions.selectElement({type: 'sample', id: sampleID})
 
-          if (sampleID != 'new') {
-            ElementActions.fetchSampleById(sampleID);
-          } else {
+          if (sampleID == 'new') {
             ElementActions.generateEmptySample(collectionID)
+          } else if(sampleID == 'copy') {
+            ElementActions.copySampleFromClipboard(collectionID);
+          } else {
+            ElementActions.fetchSampleById(sampleID);
           }
           //UIActions.selectTab(1);
         }

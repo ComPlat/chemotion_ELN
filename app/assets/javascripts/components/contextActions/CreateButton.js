@@ -6,17 +6,29 @@ import ElementActions from 'components/actions/ElementActions';
 import ClipboardActions from '../actions/ClipboardActions';
 
 export default class CreateButton extends React.Component {
+  copySample() {
+    let uiState = UIStore.getState();
+    let sampleFilter = this.filterSampleParamsFromUIState(uiState);
+
+    // Set limit to 1 because we are only interested in one sample
+    let params = {
+      sample: sampleFilter,
+      limit: 1
+    }
+
+    ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'copy_sample');
+  }
+
   createWellplateFromSamples() {
     let uiState = UIStore.getState();
     let sampleFilter = this.filterSampleParamsFromUIState(uiState);
-    let currentCollection = uiState.currentCollection;
 
     let params = {
       sample: sampleFilter,
       limit: 96
     }
 
-    ClipboardActions.fetchSamplesByUIStateAndLimit(params);
+    ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'template_wellplate');
   }
 
   filterSampleParamsFromUIState(uiState) {
@@ -54,9 +66,10 @@ export default class CreateButton extends React.Component {
           <MenuItem onClick={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
           <MenuItem divider />
           <MenuItem onClick={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
+          <MenuItem divider />
+          <MenuItem onClick={() => this.copySample()}>Copy Sample</MenuItem>
         </DropdownButton>
       </OverlayTrigger>
-
     )
   }
 }
