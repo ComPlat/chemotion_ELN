@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
+import ElementAnalysesLabels from './ElementAnalysesLabels';
 import {Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ArrayUtils from './utils/ArrayUtils';
 import UIStore from './stores/UIStore';
@@ -143,6 +144,14 @@ export default class ElementsTableEntries extends Component {
     }
   }
 
+  sampleAnalysesLabels(element) {
+    if (element.type == 'sample') {
+      return (
+        <ElementAnalysesLabels element={element} key={element.id+"_analyses"}/>
+      )
+    }
+  }
+
   render() {
     const {elements} = this.props;
     return (
@@ -167,6 +176,7 @@ export default class ElementsTableEntries extends Component {
               <br/>
               {sampleMoleculeName}
               <ElementCollectionLabels element={element} key={element.id}/>
+              {this.sampleAnalysesLabels(element)}
               {this.topSecretIcon(element)}
             </td>
             {this.previewColumn(element)}
