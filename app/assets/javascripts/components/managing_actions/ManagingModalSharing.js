@@ -7,6 +7,7 @@ import CollectionActions from '../actions/CollectionActions';
 
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
+import SharingShortcuts from '../sharing/SharingShortcuts';
 
 export default class ManagingModalSharing extends React.Component {
   constructor(props) {
@@ -109,49 +110,19 @@ export default class ManagingModalSharing extends React.Component {
 
     switch(val) {
       case 'user':
-        this.setState({
-          permissionLevel: 4,
-          sampleDetailLevel: 2,
-          reactionDetailLevel: 1,
-          wellplateDetailLevel: 3,
-          screenDetailLevel: 1
-        });
+        this.setState(SharingShortcuts.user());
         break;
       case 'partner':
-        this.setState({
-          permissionLevel: 1,
-          sampleDetailLevel: 4,
-          reactionDetailLevel: 3,
-          wellplateDetailLevel: 3,
-          screenDetailLevel: 1
-        });
+        this.setState(SharingShortcuts.partner());
         break;
       case 'collaborator':
-        this.setState({
-          permissionLevel: 0,
-          sampleDetailLevel: 1,
-          reactionDetailLevel: 1,
-          wellplateDetailLevel: 1,
-          screenDetailLevel: 0
-        });
+        this.setState(SharingShortcuts.collaborator());
         break;
       case 'reviewer':
-        this.setState({
-          permissionLevel: 0,
-          sampleDetailLevel: 2,
-          reactionDetailLevel: 3,
-          wellplateDetailLevel: 2,
-          screenDetailLevel: 1
-        });
+        this.setState(SharingShortcuts.reviewer());
         break;
       case 'supervisor':
-        this.setState({
-          permissionLevel: 4,
-          sampleDetailLevel: 4,
-          reactionDetailLevel: 3,
-          wellplateDetailLevel: 3,
-          screenDetailLevel: 2
-        });
+        this.setState(SharingShortcuts.supervisor());
         break;
     }
   }
@@ -226,31 +197,27 @@ export default class ManagingModalSharing extends React.Component {
       </Input>
       <Input ref='sampleDetailLevelSelect' type='select' label='Sample detail level'
              value={this.state.sampleDetailLevel} onChange={(e) => this.handleSampleDLChange(e)}>
-        <option value='0'>Molecular mass of compound/External label</option>
+        <option value='0'>Molecular mass of the compound, external label</option>
         <option value='1'>Molecule, structure</option>
-        <option value='2'>Analysis Result/Description</option>
+        <option value='2'>Analysis Result + Description</option>
         <option value='3'>Analysis Datasets</option>
-        <option value='4'>Everything</option>
+        <option value='10'>Everything</option>
       </Input>
       <Input ref='reactionDetailLevelSelect' type='select' label='Reaction detail level'
              value={this.state.reactionDetailLevel} onChange={(e) => this.handleReactionDLChange(e)}>
-        <option value='0'>Include Sample Level 1</option>
-        <option value='1'>Observation/Description/Calculation</option>
-        <option value='2'>Include Sample Level 2</option>
-        <option value='3'>Everything</option>
+        <option value='0'>Observation, description, calculation</option>
+        <option value='10'>Everything</option>
       </Input>
       <Input ref='wellplateDetailLevelSelect' type='select' label='Wellplate detail level'
              value={this.state.wellplateDetailLevel} onChange={(e) => this.handleWellplateDLChange(e)}>
-        <option value='0'>Include Samples Level 0/Wells (Positions)</option>
-        <option value='1'>Include Sample Level 1</option>
-        <option value='2'>Readout</option>
-        <option value='3'>Everything</option>
+        <option value='0'>Wells (Positions)</option>
+        <option value='1'>Readout</option>
+        <option value='10'>Everything</option>
       </Input>
       <Input ref='screenDetailLevelSelect' type='select' label='Screen detail level'
              value={this.state.screenDetailLevel} onChange={(e) => this.handleScreenDLChange(e)}>
-        <option value='0'>Name, description, conditions, requirements</option>
-        <option value='1'>Include Wellplate Level 1</option>
-        <option value='2'>Everything</option>
+        <option value='0'>Name, description, condition, requirements</option>
+        <option value='10'>Everything</option>
       </Input>
 
       <b>Select Users to share with</b>

@@ -22,26 +22,24 @@ class SampleSerializer < ActiveModel::Serializer
     false
   end
 
-  class BasePermissionSerializer < ActiveModel::Serializer
-    attributes :id, :type, :is_restricted
+  class Level0 < ActiveModel::Serializer
+    attributes :id, :type, :is_restricted, :external_label
 
-    def type
-      'sample'
-    end
-
-    def is_restricted
-      true
-    end
-  end
-
-  class Level0 < BasePermissionSerializer
-    attributes :external_label
     has_one :molecule
 
     def molecule
       {
         molecular_weight: object.molecule.try(:molecular_weight)
       }
+    end
+
+    def type
+      'sample'
+    end
+
+    # evtl Restrictionlevel mitsenden?
+    def is_restricted
+      true
     end
   end
 
@@ -55,7 +53,19 @@ class SampleSerializer < ActiveModel::Serializer
     end
   end
 
-  # TODO implement once Analysis feature is finished
-  # class Level2
-  # class Level3
+  class Level2 < Level1
+    attributes :analyses
+
+    def analyses
+      object.analyses.map {|x| x['datasets'] = {:datasets => []}}
+    end
+  end
+
+  class Level3 < Level2
+    attributes :analyses
+
+    def analyses
+      object.analyses
+    end
+  end
 end

@@ -42,13 +42,13 @@ class ElementPermissionProxy
   def max_detail_level_by_element_class
     case element
     when Sample
-      4
+      10
     when Reaction
-      3
+      10
     when Wellplate
-      3
+      10
     when Screen
-      2
+      10
     end
   end
 

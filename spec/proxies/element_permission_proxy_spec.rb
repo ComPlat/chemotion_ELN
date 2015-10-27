@@ -49,7 +49,7 @@ RSpec.describe ElementPermissionProxy do
 
       describe 'detail_level_for_element' do
         it 'returns maximal sample detail level' do
-          expect(subject.send(:detail_level_for_element)).to eq 4
+          expect(subject.send(:detail_level_for_element)).to eq 10
         end
       end
 

@@ -4,8 +4,8 @@ FactoryGirl.define do
     sequence(:label) { |i| "Collection #{i}" }
 
     permission_level 0
-    sample_detail_level 1
-    reaction_detail_level 2
-    wellplate_detail_level 3
+    sample_detail_level 0
+    reaction_detail_level 0
+    wellplate_detail_level 0
   end
 end
