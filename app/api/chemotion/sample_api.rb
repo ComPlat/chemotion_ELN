@@ -5,6 +5,28 @@ module Chemotion
     resource :samples do
 
       namespace :ui_state do
+        desc "Get samples by UI state"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected samples from the UI" do
+            requires :all, type: Boolean
+            optional :included_ids, type: Array
+            optional :excluded_ids, type: Array
+          end
+          optional :limit, type: Integer, desc: "Limit number of samples"
+        end
+
+        before do
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Sample.for_user(current_user.id).for_ui_state(params[:ui_state])).read?
+        end
+
+        # we are using POST because the fetchers don't support GET requests with body data
+        post do
+          samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
+          samples = samples.limit(params[:limit]) if params[:limit]
+
+          {samples: samples}
+        end
+
         desc "Delete samples by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected samples from the UI" do

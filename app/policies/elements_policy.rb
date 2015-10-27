@@ -6,6 +6,12 @@ class ElementsPolicy
     @records = records
   end
 
+  def read?
+    return true if records.empty?
+
+    records.map { |r| ElementPolicy.new(user, r).read? }.all?
+  end
+
   def share?
     return true if records.empty?
 
