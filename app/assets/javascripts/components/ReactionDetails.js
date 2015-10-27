@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import {Col, Row, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
+import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
@@ -110,6 +111,7 @@ export default class ReactionDetails extends Component {
             <Col md={3} style={style}>
               <h3>{reaction.name}</h3>
               <ElementCollectionLabels element={reaction} key={reaction.id}/><br/>
+              <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/><br/>
               <Button
                 style={{cursor: 'pointer'}}
                 onClick={() => Utils.downloadFile({

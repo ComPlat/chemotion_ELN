@@ -31,13 +31,22 @@ class SampleSerializer < ActiveModel::Serializer
 
   def analysis_kinds
     analyses = object.analyses
-    analyses.inject({confirmed: [], unconfirmed: [], other: []}) { |result, analysis|
+    analyses.inject({confirmed: {}, unconfirmed: {}, other: {}}) { |result, analysis|
       if analysis["status"] == "Confirmed" 
-        result[:confirmed].push(analysis["kind"])
+        result[:confirmed][analysis["kind"]] = {
+          label: analysis["kind"],
+          count: 1
+        }
       elsif analysis["status"] == "Unconfirmed" 
-        result[:unconfirmed].push(analysis["kind"])
+        result[:unconfirmed][analysis["kind"]] = {
+          label: analysis["kind"],
+          count: 1
+        }
       else
-        result[:other].push(analysis["kind"])
+        result[:other][analysis["kind"]] = {
+          label: analysis["kind"],
+          count: 1
+        }
       end
       result
     }
