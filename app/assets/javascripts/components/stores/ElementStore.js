@@ -2,8 +2,10 @@ import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import UIStore from './UIStore';
+import ClipboardStore from './ClipboardStore';
 
-import Sample from '../models/Sample'
+import Sample from '../models/Sample';
+import Wellplate from '../models/Wellplate';
 
 class ElementStore {
   constructor() {
@@ -60,6 +62,7 @@ class ElementStore {
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleUpdateWellplate: ElementActions.updateWellplate,
       handleCreateWellplate: ElementActions.createWellplate,
+      handleGenerateWellplateFromClipboard: ElementActions.generateWellplateFromClipboard,
 
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
@@ -190,6 +193,11 @@ class ElementStore {
     this.navigateToNewElement(wellplate);
   }
 
+  handleGenerateWellplateFromClipboard(collection_id) {
+    let clipboard_samples = ClipboardStore.getState().samples;
+
+    this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboard_samples, collection_id);
+  }
   // -- Screens --
 
   handleFetchScreenById(result) {

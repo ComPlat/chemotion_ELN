@@ -1,5 +1,6 @@
 import Element from './Element';
 import Well from './Well';
+import Sample from './Sample';
 
 export default class Wellplate extends Element {
 
@@ -26,6 +27,29 @@ export default class Wellplate extends Element {
         size: 96,
         description: '',
         wells: []
+      }
+    )
+  }
+
+  static buildFromSamplesAndCollectionId(clipboardSamples, collection_id) {
+    let samples = clipboardSamples.map(sample => {
+      return new Sample.buildChild(sample);
+    });
+
+    let wells = samples.map(sample => {
+      return new Well({
+        sample: sample
+      });
+    })
+
+    return new Wellplate(
+      {
+        collection_id: collection_id,
+        type: 'wellplate',
+        name: 'New Wellplate',
+        size: 96,
+        description: '',
+        wells: wells
       }
     )
   }

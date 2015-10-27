@@ -9,6 +9,59 @@ describe Chemotion::SampleAPI do
       allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
     end
 
+    describe 'POST /api/v1/samples/ui_state/' do
+      context 'with appropriate permissions' do
+        let(:c)        { create(:collection, user_id: user.id) }
+        let(:sample_1) { create(:sample) }
+        let(:sample_2) { create(:sample) }
+        let(:limit)    { 1 }
+
+        let(:params) {
+          {
+            ui_state: {
+              all: false,
+              included_ids: [sample_1.id, sample_2.id],
+              excluded_ids: [],
+              collection_id: c.id
+            }
+          }
+        }
+
+        let(:params_with_limit) {
+          {
+            ui_state: {
+              all: false,
+              included_ids: [sample_1.id, sample_2.id],
+              excluded_ids: [],
+              collection_id: c.id
+            },
+            limit: limit
+          }
+        }
+
+        before do
+          CollectionsSample.create!(sample: sample_1, collection: c)
+          CollectionsSample.create!(sample: sample_2, collection: c)
+        end
+
+        describe "limit param given" do
+          before { post "/api/v1/samples/ui_state/", params_with_limit }
+
+          it "fetches less or equal than limit samples" do
+            expect(JSON.parse(response.body)['samples'].size).to be <= limit
+          end
+        end
+
+        describe "limit param not given" do
+          before { post "/api/v1/samples/ui_state/", params }
+
+          it "fetches all samples for given ui_state" do
+            expect(JSON.parse(response.body)['samples'].size).to eq 2
+          end
+        end
+      end
+    end
+
     # Permission related are reading and updating of a sample
     describe 'GET /api/v1/samples/:id' do
       context 'with appropriate permissions' do
