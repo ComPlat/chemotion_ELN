@@ -16,6 +16,7 @@ import ManagingModalSharing from './ManagingModalSharing';
 import ManagingModalCollectionActions from './ManagingModalCollectionActions';
 import ManagingModalDelete from './ManagingModalDelete';
 import ManagingModalRemove from './ManagingModalRemove';
+import ManagingModalTopSecret from './ManagingModalTopSecret';
 import ElementActions from '../actions/ElementActions';
 
 export default class ManagingActions extends React.Component {
@@ -28,6 +29,7 @@ export default class ManagingActions extends React.Component {
       currentCollection: {id: 0},
       sharing_allowed: false,
       deletion_allowed: false,
+      is_top_secret: false,
       modalProps: {
         show: false,
         title: "",
@@ -60,6 +62,7 @@ export default class ManagingActions extends React.Component {
 
     PermissionActions.fetchSharingAllowedStatus(params);
     PermissionActions.fetchDeletionAllowedStatus(params);
+    PermissionActions.fetchTopSecretStatus(params);
 
     this.setState({
       currentCollection: state.currentCollection
@@ -75,7 +78,8 @@ export default class ManagingActions extends React.Component {
   onPermissionChange(state) {
     this.setState({
       sharing_allowed: state.sharing_allowed,
-      deletion_allowed: state.deletion_allowed
+      deletion_allowed: state.deletion_allowed,
+      is_top_secret: state.is_top_secret
     })
   }
 
@@ -151,8 +155,13 @@ export default class ManagingActions extends React.Component {
     let title, component, action = "";
     switch(type) {
       case 'share':
-        title = "Sharing";
-        component = ManagingModalSharing;
+        if(!this.state.is_top_secret) {
+          title = "Sharing";
+          component = ManagingModalSharing;
+        } else {
+          title = "Sharing not allowed";
+          component = ManagingModalTopSecret;
+        }
         break;
       case 'move':
         title = "Move to Collection";
