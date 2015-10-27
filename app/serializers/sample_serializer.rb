@@ -1,7 +1,7 @@
 class SampleSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :name, :description, :created_at, :amount_value, :amount_unit, :molfile,
+  attributes :id, :type, :name, :short_label, :description, :created_at, :amount_value, :amount_unit, :molfile,
              :purity, :solvent, :impurities, :location, :is_top_secret, :is_restricted, :external_label, :analyses
 
   has_one :molecule

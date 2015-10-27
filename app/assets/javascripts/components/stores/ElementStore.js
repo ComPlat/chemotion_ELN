@@ -1,6 +1,7 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
+import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
 
 import Sample from '../models/Sample'
@@ -148,12 +149,16 @@ class ElementStore {
 
   // update stored sample if it has been updated
   handleUpdateSample(sample) {
+    UserActions.fetchCurrentUser();
+
     this.state.currentElement = sample;
     this.handleRefreshElements('sample');
   }
 
   // Update Stored Sample if it has been created
   handleCreateSample(sample) {
+    UserActions.fetchCurrentUser();
+
     this.handleRefreshElements('sample');
     this.navigateToNewElement(sample);
   }

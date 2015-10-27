@@ -46,6 +46,10 @@ export default class Element {
     return this.is_restricted;
   }
 
+  title() {
+    return this.name;
+  }
+
   // base serializer
   serialize( extra_params = {} ) {
     let params = {

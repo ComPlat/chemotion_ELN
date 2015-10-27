@@ -3,6 +3,8 @@ import Molecule from './Molecule';
 import Analysis from './Analysis';
 import _ from 'lodash';
 
+import UserStore from '../stores/UserStore';
+
 export default class Sample extends Element {
   isMethodDisabled() {
     return false;
@@ -17,7 +19,8 @@ export default class Sample extends Element {
     let splitSample = new Sample(sample);
     splitSample.parent_id = sample.id;
     splitSample.id = Element.buildID();
-    splitSample.name += "-" + Sample.counter;
+    splitSample.name = null;
+    splitSample.short_label += "-" + Sample.counter;
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.amount_value = 0;
@@ -33,6 +36,7 @@ export default class Sample extends Element {
   serialize() {
     return super.serialize({
       name: this.name,
+      short_label: this.short_label,
       external_label: this.external_label,
       amount_value: this.amount_value,
       amount_unit: this.amount_unit,
@@ -51,10 +55,9 @@ export default class Sample extends Element {
   }
 
   static buildEmpty(collection_id) {
-    return new Sample({
+    let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
-      name: 'New Sample',
       external_label: '',
       amount_value: 0,
       amount_unit: 'g',
@@ -66,7 +69,19 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: []
-    })
+    });
+
+    sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
+    return sample;
+  }
+
+  static buildNewSampleShortLabelForCurrentUser() {
+    let {currentUser} = UserStore.getState();
+    if(!currentUser) {
+      return 'NEW SAMPLE';
+    } else {
+      return `${currentUser.initials}-${currentUser.samples_created_count + 1}`;
+    }
   }
 
   get is_top_secret() {
@@ -77,12 +92,24 @@ export default class Sample extends Element {
     this._is_top_secret = is_top_secret;
   }
 
+  title() {
+    return this.name ? `${this.short_label} ${this.name}` : this.short_label
+  }
+
   get name() {
     return this._name;
   }
 
   set name(name) {
     this._name = name;
+  }
+
+  get short_label() {
+    return this._short_label;
+  }
+
+  set short_label(short_label) {
+    this._short_label = short_label;
   }
 
   get external_label() {

@@ -2,7 +2,7 @@ class OSample < OpenStruct
   def is_new
     to_boolean super
   end
-  
+
   def is_split
     to_boolean super
   end
@@ -225,6 +225,7 @@ module ReactionUpdator
               subsample.parent = parent_sample
 
               subsample.name = sample.name
+              subsample.short_label = sample.short_label
               subsample.amount_value = sample.amount_value
               subsample.amount_unit = sample.amount_unit
 

@@ -103,14 +103,14 @@ Geometry Optimized at HF/STO-3G
 MOLFILE
 
 # create some samples
-sample_1 = Sample.create!(name: 'Sample 1', molfile: molfiles[0])
-sample_2 = Sample.create!(name: 'Sample 2', molfile: molfiles[1])
-sample_3 = Sample.create!(name: 'Sample 3', molfile: molfiles[2])
-sample_4 = Sample.create!(name: 'Sample 4', molfile: molfiles[0])
-sample_5 = Sample.create!(name: 'Sample 5', molfile: molfiles[1])
-sample_6 = Sample.create!(name: 'Sample 6', molfile: molfiles[2])
-sample_7 = Sample.create!(name: 'Sample 7', molfile: molfiles[0])
-sample_8 = Sample.create!(name: 'Sample 8', molfile: molfiles[1])
+sample_1 = Sample.create!(molfile: molfiles[0], creator: u)
+sample_2 = Sample.create!(molfile: molfiles[1], creator: u)
+sample_3 = Sample.create!(molfile: molfiles[2], creator: u)
+sample_4 = Sample.create!(molfile: molfiles[0], creator: u)
+sample_5 = Sample.create!(molfile: molfiles[1], creator: u)
+sample_6 = Sample.create!(molfile: molfiles[2], creator: u)
+sample_7 = Sample.create!(molfile: molfiles[0], creator: u)
+sample_8 = Sample.create!(molfile: molfiles[1], creator: u)
 
 
 # associate samples with collections

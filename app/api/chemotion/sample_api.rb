@@ -36,6 +36,7 @@ module Chemotion
             #todo: extract method into Sample
             subsample = sample.dup
             subsample.parent = sample
+            subsample.created_by = current_user.id
             subsample.save
             CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
           end
@@ -154,6 +155,7 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Sample id"
         optional :name, type: String, desc: "Sample name"
+        optional :short_label, type: String, desc: "Sample short label"
         optional :external_label, type: String, desc: "Sample external label"
         optional :amount_value, type: Float, desc: "Sample amount_value"
         optional :amount_unit, type: String, desc: "Sample amount_unit"
@@ -192,6 +194,7 @@ module Chemotion
       desc "Create a sample"
       params do
         requires :name, type: String, desc: "Sample name"
+        optional :short_label, type: String, desc: "Sample short label"
         optional :external_label, type: String, desc: "Sample external label"
         requires :amount_value, type: Float, desc: "Sample amount_value"
         requires :amount_unit, type: String, desc: "Sample amount_unit"
@@ -218,7 +221,8 @@ module Chemotion
           location: params[:location],
           molfile: params[:molfile],
           is_top_secret: params[:is_top_secret],
-          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses])
+          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
+          created_by: current_user.id
         }
         attributes.merge!(
           molecule_attributes: params[:molecule]
