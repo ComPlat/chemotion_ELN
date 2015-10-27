@@ -1,8 +1,9 @@
 class SampleSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :name, :short_label, :description, :created_at, :amount_value, :amount_unit, :molfile,
-             :purity, :solvent, :impurities, :location, :is_top_secret, :is_restricted, :external_label, :analyses, :children_count
+  attributes :id, :type, :name, :description, :created_at, :amount_value, :amount_unit, :molfile,
+             :purity, :solvent, :impurities, :location, :is_top_secret, :is_restricted, :external_label, :analyses,
+             :analysis_kinds, :children_count
 
   has_one :molecule
 
@@ -26,6 +27,20 @@ class SampleSerializer < ActiveModel::Serializer
     unless object.new_record?
       object.children.count.to_i
     end
+  end
+
+  def analysis_kinds
+    analyses = object.analyses
+    analyses.inject({confirmed: [], unconfirmed: [], other: []}) { |result, analysis|
+      if analysis["status"] == "Confirmed" 
+        result[:confirmed].push(analysis["kind"])
+      elsif analysis["status"] == "Unconfirmed" 
+        result[:unconfirmed].push(analysis["kind"])
+      else
+        result[:other].push(analysis["kind"])
+      end
+      result
+    }
   end
 
   class Level0 < ActiveModel::Serializer
