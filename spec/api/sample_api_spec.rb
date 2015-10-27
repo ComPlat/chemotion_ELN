@@ -21,7 +21,8 @@ describe Chemotion::SampleAPI do
             ui_state: {
               all: false,
               included_ids: [sample_1.id, sample_2.id],
-              excluded_ids: []
+              excluded_ids: [],
+              collection_id: c.id
             }
           }
         }
@@ -31,7 +32,8 @@ describe Chemotion::SampleAPI do
             ui_state: {
               all: false,
               included_ids: [sample_1.id, sample_2.id],
-              excluded_ids: []
+              excluded_ids: [],
+              collection_id: c.id
             },
             limit: limit
           }

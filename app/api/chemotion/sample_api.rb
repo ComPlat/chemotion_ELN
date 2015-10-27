@@ -11,6 +11,7 @@ module Chemotion
             requires :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
+            optional :collection_id
           end
           optional :limit, type: Integer, desc: "Limit number of samples"
         end
@@ -33,6 +34,7 @@ module Chemotion
             requires :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
+            optional :collection_id
           end
         end
 
