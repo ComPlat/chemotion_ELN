@@ -28,6 +28,8 @@ export default class MySharedCollections extends React.Component {
   }
 
   onStoreChange(state) {
+    let children = state.sharedRoots.length > 0 ? state.sharedRoots : [{}];
+
     this.setState({
       tree: {
         label: 'My Shared Collections',
@@ -126,9 +128,13 @@ export default class MySharedCollections extends React.Component {
   }
 
   appendChildrenToParent(parent, children) {
-    children.forEach((child) => {
-      parent.children.push(child)
-    });
+    if(children.length > 0) {
+      children.forEach((child) => {
+        parent.children.push(child);
+      });
+    } else if (parent.label == 'My Shared Collections') {
+      parent.children.push({});
+    }
   }
 
   findParentById(root, id) {

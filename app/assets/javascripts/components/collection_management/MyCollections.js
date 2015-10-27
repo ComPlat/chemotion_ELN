@@ -29,10 +29,12 @@ export default class MyCollections extends React.Component {
   }
 
   onStoreChange(state) {
+    let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
+
     this.setState({
       tree: {
         label: 'My Collections',
-        children: state.unsharedRoots
+        children: children
       }
     });
   }
@@ -160,9 +162,13 @@ export default class MyCollections extends React.Component {
   }
 
   appendChildrenToParent(parent, children) {
-    children.forEach((child) => {
-      parent.children.push(child)
-    });
+    if(children.length > 0) {
+      children.forEach((child) => {
+        parent.children.push(child);
+      });
+    } else if (parent.label == 'My Collections') {
+      parent.children.push({});
+    }
   }
 
   findParentById(root, id) {
