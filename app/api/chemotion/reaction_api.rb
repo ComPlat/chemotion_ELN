@@ -1,3 +1,17 @@
+class OSample < OpenStruct
+  def is_new
+    to_boolean super
+  end
+  
+  def is_split
+    to_boolean super
+  end
+
+  def to_boolean string
+    !!"#{string}".match(/^(true|t|yes|y|1)$/i)
+  end
+end
+
 module Chemotion
   class ReactionAPI < Grape::API
     include Grape::Kaminari
@@ -191,9 +205,9 @@ module ReactionUpdator
     materials = OpenStruct.new(material_attributes)
 
     materials = {
-      starting_material: Array(material_attributes['starting_materials']).map{|m| OpenStruct.new(m)},
-      reactant: Array(material_attributes['reactants']).map{|m| OpenStruct.new(m)},
-      product: Array(material_attributes['products']).map{|m| OpenStruct.new(m)}
+      starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
+      reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
+      product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
 
     ActiveRecord::Base.transaction do
@@ -203,32 +217,44 @@ module ReactionUpdator
         samples.each do |sample|
 
           #create new subsample
-          if sample.is_new && sample.parent_id
+          if sample.is_new
+            if sample.is_split && sample.parent_id
+              parent_sample = Sample.find(sample.parent_id)
 
-            parent_sample = Sample.find(sample.parent_id)
+              subsample = parent_sample.dup
+              subsample.parent = parent_sample
 
-            subsample = parent_sample.dup
-            subsample.parent = parent_sample
+              subsample.name = sample.name
+              subsample.amount_value = sample.amount_value
+              subsample.amount_unit = sample.amount_unit
 
-            subsample.name = sample.name
-            subsample.amount_value = sample.amount_value
-            subsample.amount_unit = sample.amount_unit
+              subsample.save
+              subsample.reload
+              included_sample_ids << subsample.id
 
-            subsample.save
-            subsample.reload
-            included_sample_ids << subsample.id
+              #assign subsample to all collections
+              collection_ids.each do |collection_id|
+                CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
+              end
 
-            #assign subsample to all collections
-            collection_ids.each do |collection_id|
-              CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
+              reaction_samples_association.create(
+                sample_id: subsample.id,
+                equivalent: sample.equivalent,
+                reference: sample.reference
+              )
+            #create new sample
+            else
+              new_sample = Sample.create(
+                sample.to_h.except(:id, :is_new, :is_split, :reference, :equivalent)
+              )
+
+              reaction_samples_association.create(
+                sample_id: new_sample.id,
+                equivalent: sample.equivalent,
+                reference: sample.reference
+              )
+              included_sample_ids << new_sample.id
             end
-
-            reaction_samples_association.create(
-              sample_id: subsample.id,
-              equivalent: sample.equivalent,
-              reference: sample.reference
-            )
-
           #update the existing sample
           else
             existing_sample = Sample.find(sample.id)
