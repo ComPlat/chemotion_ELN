@@ -14,17 +14,16 @@ export default class Sample extends Element {
     return false;
   }
 
-  static buildChild(sample) {
-
+  buildChild() {
     Sample.counter += 1;
 
     //increase subsample count per sample on client side, as we have no persisted data at this moment
-    let children_count = parseInt(Sample.children_count[sample.id] || sample.children_count);
+    let children_count = parseInt(Sample.children_count[this.id] || this.children_count);
     children_count += 1;
-    Sample.children_count[sample.id] = children_count;
+    Sample.children_count[this.id] = children_count;
 
-    let splitSample = new Sample(sample);
-    splitSample.parent_id = sample.id;
+    let splitSample = new Sample(this);
+    splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
     splitSample.name = null;
     splitSample.short_label += "-" + children_count;

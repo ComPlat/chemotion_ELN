@@ -36,7 +36,7 @@ export default class Wellplate extends Component {
   dropSample(droppedSample, well) {
     const {handleWellsChange, wells} = this.props;
     const wellId = wells.indexOf(well);
-    const sample = Sample.buildChild(droppedSample);
+    const sample = droppedSample.buildChild();
     wells[wellId] = {
       ...well,
       sample

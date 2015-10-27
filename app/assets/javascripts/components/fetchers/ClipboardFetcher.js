@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import Sample from '../models/Sample';
 
 export default class ClipboardFetcher {
   static fetchSamplesByUIStateAndLimit(params) {
@@ -23,7 +24,7 @@ export default class ClipboardFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return json;
+      return json.samples.map((s) => new Sample(s));
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

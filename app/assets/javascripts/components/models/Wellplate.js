@@ -33,7 +33,7 @@ export default class Wellplate extends Element {
 
   static buildFromSamplesAndCollectionId(clipboardSamples, collection_id) {
     let samples = clipboardSamples.map(sample => {
-      return new Sample.buildChild(sample);
+      return sample.buildChild();
     });
 
     let wells = samples.map(sample => {
