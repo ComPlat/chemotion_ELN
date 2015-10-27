@@ -13,7 +13,6 @@ class ClipboardStore {
   }
 
   handleFetchSamplesByUIStateAndLimit(result) {
-    console.log(result)
     this.state.samples = result.samples;
   }
 }
