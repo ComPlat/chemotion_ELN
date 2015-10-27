@@ -163,6 +163,9 @@ class ElementActions {
 
   // -- Wellplates --
 
+  generateWellplateFromClipboard(collection_id) {
+    this.dispatch(collection_id);
+  }
 
   generateEmptyWellplate(collection_id) {
     this.dispatch(Wellplate.buildEmpty(collection_id));

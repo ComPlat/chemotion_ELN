@@ -89,6 +89,8 @@ export default function() {
 
           if (wellplateID == 'new') {
             ElementActions.generateEmptyWellplate(collectionID);
+          } else if(wellplateID == 'template') {
+            ElementActions.generateWellplateFromClipboard(collectionID);
           } else {
             ElementActions.fetchWellplateById(wellplateID);
           }

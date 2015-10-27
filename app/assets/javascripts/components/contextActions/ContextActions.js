@@ -4,7 +4,6 @@ import UIStore from './../stores/UIStore';
 import ElementActions from './../actions/ElementActions';
 import SplitButton from './SplitButton';
 import CreateButton from './CreateButton';
-import TemplateButton from './TemplateButton';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -45,7 +44,6 @@ export default class ContextActions extends React.Component {
       <ButtonGroup>
         <SplitButton isDisabled={this.noSampleSelected() || this.isAllCollection()}/>
         <CreateButton isDisabled={this.isAllCollection()}/>
-        <TemplateButton isDisabled={this.isAllCollection()}/>
       </ButtonGroup>
     )
   }

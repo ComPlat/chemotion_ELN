@@ -1,5 +1,6 @@
 import alt from '../alt';
 import ClipboardActions from '../actions/ClipboardActions';
+import Aviator from 'aviator';
 
 class ClipboardStore {
   constructor() {
@@ -14,6 +15,8 @@ class ClipboardStore {
 
   handleFetchSamplesByUIStateAndLimit(result) {
     this.state.samples = result.samples;
+
+    Aviator.navigate(`/collection/${result.collection_id}/wellplate/template`);
   }
 }
 

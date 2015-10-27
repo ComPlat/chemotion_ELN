@@ -4,6 +4,7 @@ module Chemotion
 
     resource :samples do
 
+      # TODO Refactoring: Use Grape Entities
       namespace :ui_state do
         desc "Get samples by UI state"
         params do
@@ -25,7 +26,7 @@ module Chemotion
           samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
           samples = samples.limit(params[:limit]) if params[:limit]
 
-          {samples: samples}
+          {samples: samples.map{|s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}}
         end
 
         desc "Delete samples by UI state"
