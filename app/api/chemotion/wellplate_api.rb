@@ -143,6 +143,7 @@ module Chemotion
 
                 subsample = parent_sample.dup
                 subsample.parent = parent_sample
+                subsample.short_label = nil #we don't want to inherit short_label from parent
                 subsample.name = sample.name
 
                 subsample.save

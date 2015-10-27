@@ -124,4 +124,44 @@ MOLFILE
 
   end
 
+  context 'count samples created by user' do
+    let(:user) { create(:user)}
+
+    before do
+      3.times do
+        create(:sample, creator: user)
+      end
+    end
+
+    it 'should associate the samples with its creator' do
+      expect(Sample.last.creator).to eq(user)
+      expect(user.samples_created.count).to eq(3)
+    end
+
+    it 'should count samples created by user' do
+      user.reload
+      expect(user.samples_created_count).to eq(3)
+    end
+  end
+
+
+  context 'count subsamples created per sample' do
+    let(:sample) { create(:sample)}
+
+    before do
+      3.times do
+        create(:sample, parent: sample)
+      end
+    end
+
+    it 'should associate the subsamples with its parent' do
+      expect(sample.children.count).to eq(3)
+    end
+
+    it 'should count sub_samples per sample' do
+      pending
+      sample.reload
+      expect(sample.children_count).to eq(3)
+    end
+  end
 end

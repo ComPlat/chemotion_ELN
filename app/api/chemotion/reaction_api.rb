@@ -2,7 +2,7 @@ class OSample < OpenStruct
   def is_new
     to_boolean super
   end
-  
+
   def is_split
     to_boolean super
   end
@@ -221,8 +221,10 @@ module ReactionUpdator
             if sample.is_split && sample.parent_id
               parent_sample = Sample.find(sample.parent_id)
 
+              #TODO extract subsample method
               subsample = parent_sample.dup
               subsample.parent = parent_sample
+              subsample.short_label = nil #we don't want to inherit short_label from parent
 
               subsample.name = sample.name
               subsample.amount_value = sample.amount_value

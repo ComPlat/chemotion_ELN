@@ -9,6 +9,8 @@ class User < ActiveRecord::Base
   has_many :reactions, through: :collections
   has_many :wellplates, through: :collections
 
+  has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
+
   validates_presence_of :first_name, :last_name, allow_blank: false
 
   def owns_collections?(collections)
@@ -22,4 +24,9 @@ class User < ActiveRecord::Base
   def name
     "#{first_name} #{last_name}"
   end
+
+  def initials
+    "#{first_name[0].capitalize}#{last_name[0].capitalize}"
+  end
+
 end

@@ -269,7 +269,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Row style={style}>
         <Col md={7}>
-          <h3>{sample.name}</h3>
+          <h3>{sample.title()}</h3>
           <h4>{sampleAmount}</h4>
           <ElementCollectionLabels element={sample} key={sample.id}/>
         </Col>

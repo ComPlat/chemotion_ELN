@@ -3,6 +3,8 @@ import Molecule from './Molecule';
 import Analysis from './Analysis';
 import _ from 'lodash';
 
+import UserStore from '../stores/UserStore';
+
 export default class Sample extends Element {
   isMethodDisabled() {
     return false;
@@ -13,11 +15,19 @@ export default class Sample extends Element {
   }
 
   static buildChild(sample) {
+
     Sample.counter += 1;
+
+    //increase subsample count per sample on client side, as we have no persisted data at this moment
+    let children_count = parseInt(Sample.children_count[sample.id] || sample.children_count);
+    children_count += 1;
+    Sample.children_count[sample.id] = children_count;
+
     let splitSample = new Sample(sample);
     splitSample.parent_id = sample.id;
     splitSample.id = Element.buildID();
-    splitSample.name += "-" + Sample.counter;
+    splitSample.name = null;
+    splitSample.short_label += "-" + children_count;
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.amount_value = 0;
@@ -51,10 +61,9 @@ export default class Sample extends Element {
   }
 
   static buildEmpty(collection_id) {
-    return new Sample({
+    let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
-      name: 'New Sample',
       external_label: '',
       amount_value: 0,
       amount_unit: 'g',
@@ -66,7 +75,19 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: []
-    })
+    });
+
+    sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
+    return sample;
+  }
+
+  static buildNewSampleShortLabelForCurrentUser() {
+    let {currentUser} = UserStore.getState();
+    if(!currentUser) {
+      return 'NEW SAMPLE';
+    } else {
+      return `${currentUser.initials}-${currentUser.samples_created_count + 1}`;
+    }
   }
 
   get is_top_secret() {
@@ -77,12 +98,24 @@ export default class Sample extends Element {
     this._is_top_secret = is_top_secret;
   }
 
+  title() {
+    return this.name ? `${this.short_label} ${this.name}` : this.short_label
+  }
+
   get name() {
     return this._name;
   }
 
   set name(name) {
     this._name = name;
+  }
+
+  get short_label() {
+    return this._short_label;
+  }
+
+  set short_label(short_label) {
+    this._short_label = short_label;
   }
 
   get external_label() {
@@ -312,3 +345,4 @@ export default class Sample extends Element {
 };
 
 Sample.counter = 0;
+Sample.children_count = {}

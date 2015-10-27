@@ -61,6 +61,7 @@ module Chemotion
             #todo: extract method into Sample
             subsample = sample.dup
             subsample.parent = sample
+            subsample.created_by = current_user.id
             subsample.save
             CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
           end
@@ -243,7 +244,8 @@ module Chemotion
           location: params[:location],
           molfile: params[:molfile],
           is_top_secret: params[:is_top_secret],
-          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses])
+          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
+          created_by: current_user.id
         }
         attributes.merge!(
           molecule_attributes: params[:molecule]
