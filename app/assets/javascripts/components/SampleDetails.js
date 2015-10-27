@@ -11,6 +11,7 @@ import UIActions from './actions/UIActions';
 
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
+import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
 import Select from 'react-select';
 
@@ -272,6 +273,7 @@ export default class SampleDetails extends React.Component {
           <h3>{sample.title()}</h3>
           <h4>{sampleAmount}</h4>
           <ElementCollectionLabels element={sample} key={sample.id}/>
+          <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
         </Col>
         <Col md={5}>
             <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
