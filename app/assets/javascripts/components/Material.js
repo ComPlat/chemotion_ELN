@@ -27,11 +27,11 @@ class Material extends Component {
     if(!material.isNew) {
       return (
         <a onClick={() => this.handleMaterialClick(material)} style={{cursor: 'pointer'}}>
-          {material.name}
+          {material.title()}
         </a>
       );
     } else {
-      return material.name;
+      return material.title();
     }
   }
 

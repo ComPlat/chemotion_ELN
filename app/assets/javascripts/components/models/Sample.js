@@ -15,12 +15,19 @@ export default class Sample extends Element {
   }
 
   static buildChild(sample) {
+
     Sample.counter += 1;
+
+    //increase subsample count per sample on client side, as we have no persisted data at this moment
+    let children_count = parseInt(Sample.children_count[sample.id] || sample.children_count);
+    children_count += 1;
+    Sample.children_count[sample.id] = children_count;
+
     let splitSample = new Sample(sample);
     splitSample.parent_id = sample.id;
     splitSample.id = Element.buildID();
     splitSample.name = null;
-    splitSample.short_label += "-" + Sample.counter;
+    splitSample.short_label += "-" + children_count;
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.amount_value = 0;
@@ -36,7 +43,6 @@ export default class Sample extends Element {
   serialize() {
     return super.serialize({
       name: this.name,
-      short_label: this.short_label,
       external_label: this.external_label,
       amount_value: this.amount_value,
       amount_unit: this.amount_unit,
@@ -339,3 +345,4 @@ export default class Sample extends Element {
 };
 
 Sample.counter = 0;
+Sample.children_count = {}

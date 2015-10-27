@@ -70,8 +70,16 @@ class Sample < ActiveRecord::Base
   before_save :auto_set_short_label
 
   def auto_set_short_label
-    creator.reload if creator
-    self.short_label ||= creator ? "#{creator.initials}-#{creator.samples_created_count.to_i + 1}" : "NEW SAMPLE"
+    if parent
+      parent.reload
+      self.short_label ||= "#{parent.short_label}-#{parent.children.count.to_i + 1}"
+    elsif creator
+      creator.reload
+      self.short_label ||= "#{creator.initials}-#{creator.samples_created_count.to_i + 1}"
+    elsif
+      'NEW'
+    end
+
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)

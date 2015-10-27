@@ -143,4 +143,25 @@ MOLFILE
       expect(user.samples_created_count).to eq(3)
     end
   end
+
+
+  context 'count subsamples created per sample' do
+    let(:sample) { create(:sample)}
+
+    before do
+      3.times do
+        create(:sample, parent: sample)
+      end
+    end
+
+    it 'should associate the subsamples with its parent' do
+      expect(sample.children.count).to eq(3)
+    end
+
+    it 'should count sub_samples per sample' do
+      pending
+      sample.reload
+      expect(sample.children_count).to eq(3)
+    end
+  end
 end

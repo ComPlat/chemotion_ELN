@@ -155,7 +155,6 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Sample id"
         optional :name, type: String, desc: "Sample name"
-        optional :short_label, type: String, desc: "Sample short label"
         optional :external_label, type: String, desc: "Sample external label"
         optional :amount_value, type: Float, desc: "Sample amount_value"
         optional :amount_unit, type: String, desc: "Sample amount_unit"
@@ -194,7 +193,6 @@ module Chemotion
       desc "Create a sample"
       params do
         requires :name, type: String, desc: "Sample name"
-        optional :short_label, type: String, desc: "Sample short label"
         optional :external_label, type: String, desc: "Sample external label"
         requires :amount_value, type: Float, desc: "Sample amount_value"
         requires :amount_unit, type: String, desc: "Sample amount_unit"

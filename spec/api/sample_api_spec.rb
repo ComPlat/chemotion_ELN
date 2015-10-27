@@ -334,10 +334,10 @@ describe Chemotion::SampleAPI do
             subsamples = Sample.where(name: ['s1','s2']).where.not(id: [s1.id,s2.id])
             s3 = subsamples[0]
             s4 = subsamples[1]
-            s3.attributes.except("id", "created_at", "updated_at", "ancestry", "created_by").each do |k, v|
+            s3.attributes.except("id", "created_at", "updated_at", "ancestry", "created_by", "short_label").each do |k, v|
               expect(s1[k]).to eq(v)
             end
-            s4.attributes.except("id", "created_at", "updated_at", "ancestry", "created_by").each do |k, v|
+            s4.attributes.except("id", "created_at", "updated_at", "ancestry", "created_by", "short_label").each do |k, v|
               expect(s2[k]).to eq(v)
             end
             expect(s1.id).to_not eq(s3.id)
