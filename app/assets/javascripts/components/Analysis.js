@@ -36,6 +36,7 @@ export default class Analysis extends Component {
   }
 
   removeButton() {
+    const {analysis} = this.state;
     const {readOnly, onRemove} = this.props;
     if(!readOnly) {
       return <Button bsStyle="danger" onClick={() => onRemove(analysis)}>Remove</Button>
