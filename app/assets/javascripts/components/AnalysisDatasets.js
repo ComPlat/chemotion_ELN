@@ -49,6 +49,8 @@ export default class AnalysisDatasets extends Component {
     modal.show = false;
     modal.dataset = null;
     this.setState({modal});
+    // https://github.com/react-bootstrap/react-bootstrap/issues/1137
+    document.body.className = document.body.className.replace('modal-open', '');
   }
 
   addButton() {
