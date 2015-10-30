@@ -264,7 +264,7 @@ export default class SampleDetails extends React.Component {
 
   sampleHeader(sample) {
     let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}` : '';
-    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} g/mol)` : '';
+    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} mg/mmol)` : '';
     const style = {height: '200px'};
     return (
       <Row style={style}>
