@@ -142,6 +142,14 @@ class ElementActions {
     this.dispatch(Reaction.buildEmpty(collection_id))
   }
 
+  copyReactionFromId(id) {
+    ReactionsFetcher.fetchById(id)
+    .then((result) => {
+      this.dispatch(result);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
 
   // -- Reactions SVGs --
 

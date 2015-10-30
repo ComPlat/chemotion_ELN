@@ -38,6 +38,7 @@ class UserActions {
       }
     });
   }
+
 }
 
 export default alt.createActions(UserActions);

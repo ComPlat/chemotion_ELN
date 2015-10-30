@@ -1,8 +1,9 @@
 import React from 'react';
 import {DropdownButton, MenuItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
-import UIStore from 'components/stores/UIStore';
-import ElementActions from 'components/actions/ElementActions';
+import UIStore from '../stores/UIStore';
+import ElementStore from '../stores/ElementStore';
+import ElementActions from '../actions/ElementActions';
 import ClipboardActions from '../actions/ClipboardActions';
 
 export default class CreateButton extends React.Component {
@@ -17,6 +18,13 @@ export default class CreateButton extends React.Component {
     }
 
     ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'copy_sample');
+  }
+
+  copyReaction() {
+    const uiState = UIStore.getState();
+    const elementState = ElementStore.getState();
+    const reactionId = uiState.reaction.checkedIds.first();
+    ElementActions.copyReactionFromId(reactionId);
   }
 
   createWellplateFromSamples() {
@@ -68,6 +76,7 @@ export default class CreateButton extends React.Component {
           <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
           <MenuItem divider />
           <MenuItem onSelect={() => this.copySample()}>Copy Sample</MenuItem>
+          <MenuItem onSelect={() => this.copyReaction()}>Copy Reaction</MenuItem>
         </DropdownButton>
       </OverlayTrigger>
     )

@@ -76,6 +76,8 @@ export default function() {
           //UIActions.selectTab(2);
           if (reactionID != 'new') {
             ElementActions.fetchReactionById(reactionID);
+          }  else if(reactionID == 'copy') {
+            ElementActions.copyReactionFromClipboard(collectionID);
           } else {
             console.log("generateEmptyReaction")
             ElementActions.generateEmptyReaction(collectionID)

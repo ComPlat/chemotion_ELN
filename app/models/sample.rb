@@ -77,7 +77,7 @@ class Sample < ActiveRecord::Base
       creator.reload
       self.short_label ||= "#{creator.initials}-#{creator.samples_created_count.to_i + 1}"
     elsif
-      'NEW'
+      self.short_label ||= 'NEW'
     end
 
   end
