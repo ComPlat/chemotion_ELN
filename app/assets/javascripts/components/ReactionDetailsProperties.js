@@ -118,7 +118,20 @@ export default class ReactionDetailsProperties extends Component {
         </ListGroupItem>
         <ListGroupItem header="">
           <Row>
-            <Col md={6}>
+            <Col md={4}>
+              <label>Solvent</label>
+              <Select
+                name='solvent'
+                multi={false}
+                options={solventOptions}
+                value={reaction.solvent}
+                onChange={event => {
+                  const wrappedEvent = {target: {value: event}};
+                  this.handleInputChange('solvent', wrappedEvent)
+                }}
+              />
+            </Col>
+            <Col md={4}>
               <Input
                 type="text"
                 label="Start"
@@ -126,7 +139,7 @@ export default class ReactionDetailsProperties extends Component {
                 placeholder="Start..."
                 onChange={event => this.handleInputChange('timestampStart', event)}/>
             </Col>
-            <Col md={6}>
+            <Col md={4}>
               <Input
                 type="text"
                 label="Stop"
@@ -146,7 +159,7 @@ export default class ReactionDetailsProperties extends Component {
             </Col>
           </Row>
           <Row>
-            <Col md={4}>
+            <Col md={6}>
               <label>Purification</label>
               <Select
                 name='purification'
@@ -157,20 +170,7 @@ export default class ReactionDetailsProperties extends Component {
                 value={reaction.purification}
                 />
             </Col>
-            <Col md={4}>
-              <label>Solvent</label>
-              <Select
-                name='solvent'
-                multi={false}
-                options={solventOptions}
-                value={reaction.solvent}
-                onChange={event => {
-                  const wrappedEvent = {target: {value: event}};
-                  this.handleInputChange('solvent', wrappedEvent)
-                }}
-              />
-            </Col>
-            <Col md={4}>
+            <Col md={6}>
               <label>Dangerous Products</label>
               <Select
                 name='dangerous_products'
