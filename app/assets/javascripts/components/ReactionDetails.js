@@ -83,9 +83,11 @@ export default class ReactionDetails extends Component {
     const {products} = this.state.reaction;
     if(products.length > 0) {
       return products.map((product, key) => {
+        console.log(product);
+
         if(product.analyses.length > 0) {
           return (
-            <TabPane key={key} eventKey={3 + key} tab={"Analysis: " + product.name}>
+            <TabPane key={key} eventKey={3 + key} tab={"Analysis: " + product.short_label}>
               <ReactionDetailsAnalyses
                 sample={product}
                 />
