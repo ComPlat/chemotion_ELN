@@ -60,14 +60,14 @@ export default class CreateButton extends React.Component {
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <DropdownButton bsStyle="primary" title={title} disabled={isDisabled}>
-          <MenuItem onClick={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
-          <MenuItem onClick={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
-          <MenuItem onClick={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
-          <MenuItem onClick={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
           <MenuItem divider />
-          <MenuItem onClick={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
+          <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
           <MenuItem divider />
-          <MenuItem onClick={() => this.copySample()}>Copy Sample</MenuItem>
+          <MenuItem onSelect={() => this.copySample()}>Copy Sample</MenuItem>
         </DropdownButton>
       </OverlayTrigger>
     )
