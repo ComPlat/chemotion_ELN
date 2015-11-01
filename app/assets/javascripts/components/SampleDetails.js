@@ -231,7 +231,7 @@ export default class SampleDetails extends React.Component {
 
   sampleIsValid() {
     let sample = this.state.sample;
-    return (sample && sample.molfile && sample.name != "") || sample.is_scoped == true;
+    return (sample && sample.molfile) || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
