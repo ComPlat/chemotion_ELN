@@ -119,7 +119,7 @@ class Material extends Component {
       return (
         <Input
           type="text"
-          value={`${(material.equivalent || 0 ) * 100} %`}
+          value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
           disabled={true}
         />
       );
