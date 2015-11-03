@@ -3,6 +3,7 @@ import Molecule from './Molecule';
 import Analysis from './Analysis';
 import _ from 'lodash';
 
+import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 
 export default class Sample extends Element {
@@ -19,6 +20,12 @@ export default class Sample extends Element {
     newSample.collection_id = collection_id;
 
     return newSample;
+  }
+
+  buildCopy() {
+    let sample = super.buildCopy();
+    sample.short_label = sample.short_label + " Copy";
+    return sample;
   }
 
   buildChild() {

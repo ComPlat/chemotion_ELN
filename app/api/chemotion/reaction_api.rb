@@ -128,7 +128,7 @@ module Chemotion
           if reaction = Reaction.find(id)
             reaction.update_attributes(attributes)
             reaction.touch
-            ReactionUpdator.update_materials_for_reaction(reaction, materials)
+            ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)
             ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
             reaction.reload
             reaction
@@ -168,8 +168,9 @@ module Chemotion
         reaction = Reaction.create(attributes)
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
+
         if reaction
-          ReactionUpdator.update_materials_for_reaction(reaction, materials)
+          ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)
           ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
           reaction.reload
           reaction
@@ -199,7 +200,13 @@ module ReactionUpdator
     Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
   end
 
-  def self.update_materials_for_reaction(reaction, material_attributes)
+  def self.assign_sample_to_collections! sample, collection_ids
+    collection_ids.each do |collection_id|
+      CollectionsSample.create(sample_id: sample.id, collection_id: collection_id)
+    end
+  end
+
+  def self.update_materials_for_reaction(reaction, material_attributes, current_user)
     collection_ids = reaction.collection_ids
 
     materials = OpenStruct.new(material_attributes)
@@ -225,7 +232,7 @@ module ReactionUpdator
               subsample = parent_sample.dup
               subsample.parent = parent_sample
               subsample.short_label = nil #we don't want to inherit short_label from parent
-
+              subsample.created_by = current_user.id
               subsample.name = sample.name
               subsample.amount_value = sample.amount_value
               subsample.amount_unit = sample.amount_unit
@@ -234,10 +241,7 @@ module ReactionUpdator
               subsample.reload
               included_sample_ids << subsample.id
 
-              #assign subsample to all collections
-              collection_ids.each do |collection_id|
-                CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
-              end
+              assign_sample_to_collections! subsample, collection_ids
 
               reaction_samples_association.create(
                 sample_id: subsample.id,
@@ -246,9 +250,15 @@ module ReactionUpdator
               )
             #create new sample
             else
+              attributes = sample.to_h
+                .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
+                .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
+
               new_sample = Sample.create(
-                sample.to_h.except(:id, :is_new, :is_split, :reference, :equivalent)
+                attributes
               )
+
+              assign_sample_to_collections! new_sample, collection_ids
 
               reaction_samples_association.create(
                 sample_id: new_sample.id,

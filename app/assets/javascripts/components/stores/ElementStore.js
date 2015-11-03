@@ -6,6 +6,7 @@ import UIStore from './UIStore';
 import ClipboardStore from './ClipboardStore';
 
 import Sample from '../models/Sample';
+import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 
 class ElementStore {
@@ -56,6 +57,7 @@ class ElementStore {
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
+      handleCopyReactionFromId: ElementActions.copyReactionFromId,
 
       handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
       handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
@@ -249,6 +251,11 @@ class ElementStore {
   handleCreateReaction(reaction) {
     this.handleRefreshElements('reaction');
     this.navigateToNewElement(reaction);
+  }
+
+  handleCopyReactionFromId(reaction) {
+    const uiState = UIStore.getState();
+    this.state.currentElement = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
   }
 
   // -- Reactions Literatures --
