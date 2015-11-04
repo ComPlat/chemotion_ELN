@@ -44,6 +44,53 @@ export default class ManagingModalSharing extends React.Component {
     })
   }
 
+  isElementSelectionEmpty(element) {
+    return !element.checkedAll &&
+           element.checkedIds.length == 0 && 
+           element.uncheckedIds.length == 0;
+  }
+
+  isSelectionEmpty(uiState) {
+    let isSampleSelectionEmpty = this.isElementSelectionEmpty(uiState.sample);
+    let isReactionSelectionEmpty = this.isElementSelectionEmpty(uiState.reaction);
+    let isWellplateSelectionEmpty = this.isElementSelectionEmpty(uiState.wellplate);
+    let isScreenSelectionEmpty = this.isElementSelectionEmpty(uiState.screen);
+
+    return isSampleSelectionEmpty && isReactionSelectionEmpty &&
+           isWellplateSelectionEmpty && isScreenSelectionEmpty
+  }
+
+  filterParamsWholeCollection(uiState) {
+    let collectionId = uiState.currentCollection.id;
+    let filterParams = {
+      sample: {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      },
+      reaction: {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      },
+      wellplate: {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      },
+      screen: {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      }
+    };
+    return filterParams;
+  }
+
   filterParamsFromUIState(uiState) {
     let collectionId = uiState.currentCollection.id;
 
@@ -86,7 +133,11 @@ export default class ManagingModalSharing extends React.Component {
 
     let uiState = UIStore.getState();
     let currentCollectionId = uiState.currentCollectionId == "all" ? null : uiState.currentCollectionId;
-    let filterParams = this.filterParamsFromUIState(uiState);
+
+    let filterParams = 
+      this.isSelectionEmpty(uiState) ? 
+        this.filterParamsWholeCollection(uiState) : 
+        this.filterParamsFromUIState(uiState);
 
     let params = {
       collection_attributes: {
