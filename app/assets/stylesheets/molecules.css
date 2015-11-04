@@ -38,6 +38,7 @@
 
 .reaction svg {
   max-height: 90px;
+  height: 100%;
   width: 90%;
   margin-left: 10px;
 }
