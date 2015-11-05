@@ -272,6 +272,7 @@ class ElementActions {
 
   deleteElements() {
     this.dispatch();
+    UIActions.uncheckWholeSelection();
   }
 
   removeElements() {
@@ -323,6 +324,7 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
+    UIActions.uncheckWholeSelection();
   }
 
   assignElementsCollection(params) {
@@ -332,6 +334,7 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
+    UIActions.uncheckWholeSelection();
   }
 
   removeElementsCollection(params) {
@@ -341,6 +344,7 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
+    UIActions.uncheckWholeSelection();
   }
 
 }
