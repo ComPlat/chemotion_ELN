@@ -254,6 +254,7 @@ export default class SampleDetails extends React.Component {
   moleculeInput(sample) {
     return (
       <Input type="text" label="Molecule" ref="moleculeInput"
+             key={sample.id}
              buttonAfter={this.structureEditorButton(sample.isMethodDisabled('molecule_iupac_name'))}
              defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
@@ -285,6 +286,7 @@ export default class SampleDetails extends React.Component {
   moleculeInchi(sample) {
     return (
       <Input type="text" label="InChI"
+             key={sample.id}
              defaultValue={sample.molecule_inchistring}
              value={sample.molecule_inchistring}
              disabled
@@ -295,6 +297,7 @@ export default class SampleDetails extends React.Component {
   molecularWeight(sample) {
     return (
       <Input type="text" label="M. Weight"
+             key={sample.id}
              defaultValue={sample.molecule_molecular_weight}
              value={sample.molecule_molecular_weight}
              disabled
@@ -315,6 +318,7 @@ export default class SampleDetails extends React.Component {
   moleculeFormular(sample) {
     return (
       <Input type="text" label="Formula"
+             key={sample.id}
              defaultValue={sample.molecule_formula}
              value={sample.molecule_formula}
              disabled
