@@ -62,7 +62,8 @@ class UIStore {
       handleClearSearchSelection: UIActions.clearSearchSelection,
       handleShowCollectionManagement: UIActions.showCollectionManagement,
       handleShowElements: UIActions.showElements,
-      handleToggleCollectionManagement: UIActions.toggleCollectionManagement
+      handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
+      handleUncheckWholeSelection: UIActions.uncheckWholeSelection
     });
   }
 
@@ -98,6 +99,13 @@ class UIStore {
     this.state[type].checkedAll = false;
     this.state[type].checkedIds = Immutable.List();
     this.state[type].uncheckedIds = Immutable.List();
+  }
+
+  handleUncheckWholeSelection() {
+    this.handleUncheckAllElements('sample');
+    this.handleUncheckAllElements('screen');
+    this.handleUncheckAllElements('reaction');
+    this.handleUncheckAllElements('wellplate');
   }
 
   handleCheckElement(element) {

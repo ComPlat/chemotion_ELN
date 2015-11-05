@@ -38,6 +38,10 @@ class UIActions {
     this.dispatch(type);
   }
 
+  uncheckWholeSelection() {
+    this.dispatch();
+  }
+
   uncheckElement(element) {
     this.dispatch(element);
   }
