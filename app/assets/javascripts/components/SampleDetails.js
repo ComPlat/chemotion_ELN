@@ -27,7 +27,8 @@ export default class SampleDetails extends React.Component {
 
     this.state = {
       sample: props.sample,
-      showStructureEditor: false
+      showStructureEditor: false,
+      loadingMolecule: false
     }
   }
 
@@ -42,7 +43,8 @@ export default class SampleDetails extends React.Component {
   onChange(state) {
     if(!state.currentElement || state.currentElement.type == 'sample') {
       this.setState({
-        sample: state.currentElement
+        sample: state.currentElement,
+        loadingMolecule: false
       });
     }
   }
@@ -201,7 +203,7 @@ export default class SampleDetails extends React.Component {
     if(sample) {
       sample.molfile = molfile
     }
-    this.setState({sample: sample});
+    this.setState({sample: sample, loadingMolecule: true});
     this.updateMolecule(molfile);
     this.hideStructureEditor()
   }
@@ -231,7 +233,7 @@ export default class SampleDetails extends React.Component {
 
   sampleIsValid() {
     let sample = this.state.sample;
-    return (sample && sample.molfile) || sample.is_scoped == true;
+    return (sample && sample.molfile && !this.state.loadingMolecule) || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
@@ -263,8 +265,17 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  svgOrLoading(sample) {
+    let svgPath = "";
+    if (this.state.loadingMolecule) {
+      svgPath = "/images/loading-bubbles.svg";
+    } else {
+      svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}` : '';
+    }
+    return (<SVG key={svgPath} src={svgPath} className="molecule-mid"/>);
+  }
+
   sampleHeader(sample) {
-    let svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}` : '';
     let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} mg/mmol)` : '';
     const style = {height: '200px'};
     return (
@@ -277,7 +288,7 @@ export default class SampleDetails extends React.Component {
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
         </Col>
         <Col md={5}>
-            <SVG key={sample.molecule && sample.molecule.id} src={svgPath} className="molecule-mid"/>
+          {this.svgOrLoading(sample)}
         </Col>
       </Row>
     )
