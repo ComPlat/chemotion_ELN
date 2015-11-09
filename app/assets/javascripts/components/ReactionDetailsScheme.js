@@ -55,6 +55,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForAmountChange(changeEvent)
         );
         break;
+      case 'amountTypeChanged':
+        this.onReactionChange(
+          this.updatedReactionForAmountTypeChange(changeEvent)
+        );
+        break;
       case 'equivalentChanged':
         this.onReactionChange(
           this.updatedReactionForEquivalentChange(changeEvent)
@@ -78,6 +83,15 @@ export default class ReactionDetailsScheme extends Component {
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+  }
+
+  updatedReactionForAmountTypeChange(changeEvent) {
+    let {sampleID, amountType} = changeEvent;
+    let updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.amountType = amountType;
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }

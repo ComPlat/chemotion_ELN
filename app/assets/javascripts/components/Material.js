@@ -71,6 +71,21 @@ class Material extends Component {
         {this.materialName()}<br/>
         {material.molecule.iupac_name}
       </td>
+      <td>
+        <input
+          type="radio"
+          name={`amount_type_${material.id}`}
+          checked={material.amountType === 'target'}
+          onChange={event => this.handleAmountTypeChange('target')}
+        />
+        <input
+          type="radio"
+          name={`amount_type_${material.id}`}
+          checked={material.amountType === 'actual'}
+          onChange={event => this.handleAmountTypeChange('real')}
+        />
+      </td>
+
       <td style={inputsStyle}>
         <NumeralInputWithUnits
           key={material.id}
@@ -147,6 +162,20 @@ class Material extends Component {
          value: value
        };
        this.props.onChange(event);
+    }
+  }
+
+  handleAmountTypeChange(amountType) {
+    console.log("amountType: "  + amountType);
+
+    if(this.props.onChange) {
+      let event = {
+        type: 'amountTypeChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        amountType: amountType
+      };
+      this.props.onChange(event);
     }
   }
 

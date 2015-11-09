@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151027164552) do
+ActiveRecord::Schema.define(version: 20151109131413) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -173,23 +173,25 @@ ActiveRecord::Schema.define(version: 20151027164552) do
 
   create_table "samples", force: :cascade do |t|
     t.string   "name"
-    t.float    "amount_value",   default: 0.0
-    t.string   "amount_unit",    default: "mg"
-    t.datetime "created_at",                     null: false
-    t.datetime "updated_at",                     null: false
-    t.text     "description",    default: ""
+    t.float    "target_amount_value", default: 0.0
+    t.string   "target_amount_unit",  default: "mg"
+    t.datetime "created_at",                          null: false
+    t.datetime "updated_at",                          null: false
+    t.text     "description",         default: ""
     t.integer  "molecule_id"
     t.binary   "molfile"
-    t.float    "purity",         default: 1.0
-    t.string   "solvent",        default: ""
-    t.string   "impurities",     default: ""
-    t.string   "location",       default: ""
-    t.boolean  "is_top_secret",  default: false
+    t.float    "purity",              default: 1.0
+    t.string   "solvent",             default: ""
+    t.string   "impurities",          default: ""
+    t.string   "location",            default: ""
+    t.boolean  "is_top_secret",       default: false
     t.string   "ancestry"
-    t.string   "external_label", default: ""
+    t.string   "external_label",      default: ""
     t.text     "analyses_dump"
     t.integer  "created_by"
     t.string   "short_label"
+    t.float    "real_amount_value"
+    t.string   "real_amount_unit"
   end
 
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
