@@ -63,10 +63,10 @@ class Reaction < ActiveRecord::Base
   end
 
   def auto_format_temperature!
-    valid_input = (temperature =~ /^-?\s*\d*\s*°?\s*[c|f|k]?\s*$/i).present?
+    valid_input = (temperature =~ /^-?\s*\d*(.\d+)?\s*°?\s*[c|f|k]?\s*$/i).present?
     if (valid_input)
       sign   = (temperature =~ /^-/).present? ? "-" : ""
-      number = temperature[ /\d+/ ] || "0"
+      number = temperature[ /\d+(.\d+)?/ ].to_f
       unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
       self.temperature = "#{sign}#{number}°#{unit}"
     else
