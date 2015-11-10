@@ -232,8 +232,8 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleIsValid() {
-    let sample = this.state.sample;
-    return (sample && sample.molfile && !this.state.loadingMolecule) || sample.is_scoped == true;
+    const {sample, loadingMolecule} = this.state;
+    return (sample && sample.molfile && !loadingMolecule) || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
