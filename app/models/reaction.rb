@@ -56,9 +56,22 @@ class Reaction < ActiveRecord::Base
 
   before_save :update_svg_file!
   before_save :cleanup_array_fields
+  before_save :auto_format_temperature!
 
   def samples
     starting_materials + reactants + products
+  end
+
+  def auto_format_temperature!
+    valid_input = (temperature =~ /^-?\s*\d*(\.\d+)?\s*°?\s*[c|f|k]?\s*$/i).present?
+    if (valid_input)
+      sign   = (temperature =~ /^-/).present? ? "-" : ""
+      number = temperature[ /\d+(\.\d+)?/ ].to_f
+      unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
+      self.temperature = "#{sign}#{number}°#{unit}"
+    else
+      self.temperature = "0.0°C"
+    end
   end
 
   def update_svg_file!
