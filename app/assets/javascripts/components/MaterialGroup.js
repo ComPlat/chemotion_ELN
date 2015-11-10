@@ -10,7 +10,8 @@ export default class MaterialGroup extends Component {
           <thead>
           <th width="5%"></th>
           <th width="5%">Ref</th>
-          <th width="30%">Name</th>
+          <th width="25%">Name</th>
+          <th width="5%">T/R</th>
           <th width="15%">mg</th>
           <th width="15%">ml</th>
           <th width="15%">mmol</th>

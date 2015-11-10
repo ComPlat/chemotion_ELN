@@ -181,8 +181,10 @@ module Chemotion
         requires :id, type: Integer, desc: "Sample id"
         optional :name, type: String, desc: "Sample name"
         optional :external_label, type: String, desc: "Sample external label"
-        optional :amount_value, type: Float, desc: "Sample amount_value"
-        optional :amount_unit, type: String, desc: "Sample amount_unit"
+        requires :target_amount_value, type: Float, desc: "Sample target amount_value"
+        requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
+        optional :real_amount_value, type: Float, desc: "Sample real amount_value"
+        optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
         optional :description, type: String, desc: "Sample description"
         optional :purity, type: Float, desc: "Sample purity"
         optional :solvent, type: String, desc: "Sample solvent"
@@ -219,8 +221,10 @@ module Chemotion
       params do
         optional :name, type: String, desc: "Sample name"
         optional :external_label, type: String, desc: "Sample external label"
-        requires :amount_value, type: Float, desc: "Sample amount_value"
-        requires :amount_unit, type: String, desc: "Sample amount_unit"
+        requires :target_amount_value, type: Float, desc: "Sample target amount_value"
+        requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
+        optional :real_amount_value, type: Float, desc: "Sample real amount_value"
+        optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
         requires :solvent, type: String, desc: "Sample solvent"
@@ -235,8 +239,10 @@ module Chemotion
       post do
         attributes = {
           name: params[:name],
-          amount_value: params[:amount_value],
-          amount_unit: params[:amount_unit],
+          target_amount_value: params[:target_amount_value],
+          target_amount_unit: params[:target_amount_unit],
+          real_amount_value: params[:real_amount_value],
+          real_amount_unit: params[:real_amount_unit],
           description: params[:description],
           purity: params[:purity],
           solvent: params[:solvent],

@@ -43,7 +43,8 @@ export default class Sample extends Element {
     splitSample.short_label += "-" + children_count;
     splitSample.created_at = null;
     splitSample.updated_at = null;
-    splitSample.amount_value = 0;
+    splitSample.target_amount_value = 0;
+    splitSample.real_amount_value = null;
     splitSample.is_split = true;
     splitSample.is_new = true;
     return splitSample;
@@ -57,8 +58,10 @@ export default class Sample extends Element {
     return super.serialize({
       name: this.name,
       external_label: this.external_label,
-      amount_value: this.amount_value,
-      amount_unit: this.amount_unit,
+      target_amount_value: this.target_amount_value,
+      target_amount_unit: this.target_amount_unit,
+      real_amount_value: this.real_amount_value,
+      real_amount_unit: this.real_amount_unit,
       description: this.description,
       purity: this.purity,
       solvent: this.solvent,
@@ -78,8 +81,8 @@ export default class Sample extends Element {
       collection_id: collection_id,
       type: 'sample',
       external_label: '',
-      amount_value: 0,
-      amount_unit: 'mg',
+      target_amount_value: 0,
+      target_amount_unit: 'mg',
       description: '',
       purity: 1,
       solvent: '',
@@ -163,6 +166,26 @@ export default class Sample extends Element {
     this._impurities = impurities;
   }
 
+  setAmountAndNormalizeToMilligram(amount_value, amount_unit) {
+    this.amount_value = this.convertToMilligram(amount_value, amount_unit)
+    this.amount_unit = 'mg'
+  }
+
+
+  get amountType() {
+    return this._current_amount_type || this.defaultAmountType();
+  }
+
+  set amountType(amount_type) {
+    this._current_amount_type = amount_type;
+  }
+
+  defaultAmountType() {
+    return this.real_amount_value ? 'real' : 'target';
+  }
+
+  // amount proxy
+
   get amount() {
     return({
       value: this.amount_value,
@@ -170,25 +193,64 @@ export default class Sample extends Element {
     })
   }
 
-  setAmountAndNormalizeToMilligram(amount_value, amount_unit) {
-    this.amount_value = this.convertToMilligram(amount_value, amount_unit)
-    this.amount_unit = 'mg'
-  }
-
   get amount_value() {
-    return this._amount_value;
+    return this.amountType === 'real' ? this.real_amount_value : this.target_amount_value;
   }
 
   set amount_value(amount_value) {
-    this._amount_value = amount_value
+    if(this.amountType === 'real') {
+      this.real_amount_value = amount_value;
+    } else {
+      this.target_amount_value = amount_value;
+    }
   }
 
   get amount_unit() {
-    return this._amount_unit || 'mg';
+    return (this.amountType === 'real' ? this.real_amount_unit : this.target_amount_unit) || 'mg';
   }
 
   set amount_unit(amount_unit) {
-    this._amount_unit = amount_unit
+    if(this.amountType === 'real') {
+      this.real_amount_unit = amount_unit;
+    } else {
+      this.target_amount_unit = amount_unit;
+    }
+  }
+
+  // target amount
+
+  get target_amount_value() {
+    return this._target_amount_value;
+  }
+
+  set target_amount_value(amount_value) {
+    this._target_amount_value = amount_value
+  }
+
+  get target_amount_unit() {
+    return this._target_amount_unit || 'mg';
+  }
+
+  set target_amount_unit(amount_unit) {
+    this._target_amount_unit = amount_unit
+  }
+
+  // real amount
+
+  get real_amount_value() {
+    return this._real_amount_value;
+  }
+
+  set real_amount_value(amount_value) {
+    this._real_amount_value = amount_value
+  }
+
+  get real_amount_unit() {
+    return this._real_amount_unit || 'mg';
+  }
+
+  set real_amount_unit(amount_unit) {
+    this._real_amount_unit = amount_unit
   }
 
   get amount_mg() {

@@ -104,14 +104,14 @@ describe Chemotion::SampleAPI do
         let(:c1) { create(:collection, user_id: user.id) }
         let(:c2) { create(:collection, user_id: user.id + 1) }
         let(:c3) { create(:collection, user_id: user.id, is_shared: true, permission_level: 1) }
-        let(:s1) { create(:sample, name: 'old', amount_value: 0.1) }
-        let(:s2) { create(:sample, name: 'old2', amount_value: 0.2) }
+        let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
+        let(:s2) { create(:sample, name: 'old2', target_amount_value: 0.2) }
 
         let(:params) {
           {
             name: 'updated name',
-            amount_value: 0,
-            amount_unit: 'g',
+            target_amount_value: 0,
+            target_amount_unit: 'g',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
@@ -138,7 +138,7 @@ describe Chemotion::SampleAPI do
           it 'updates sample' do
             s = Sample.find_by(name: 'updated name')
             expect(s).to_not be_nil
-            expect(s.amount_value).to eq 0
+            expect(s.target_amount_value).to eq 0
           end
         end
 
@@ -152,7 +152,7 @@ describe Chemotion::SampleAPI do
           it 'updates sample' do
             s = Sample.find_by(name: 'updated name')
             expect(s).to_not be_nil
-            expect(s.amount_value).to eq 0
+            expect(s.target_amount_value).to eq 0
           end
         end
       end
@@ -163,8 +163,8 @@ describe Chemotion::SampleAPI do
         let(:params) {
           {
             name: 'updated name',
-            amount_value: 0,
-            amount_unit: 'g',
+            target_amount_value: 0,
+            target_amount_unit: 'g',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
@@ -222,8 +222,8 @@ describe Chemotion::SampleAPI do
         let(:params) {
           {
             name: 'test',
-            amount_value: 0,
-            amount_unit: 'g',
+            target_amount_value: 0,
+            target_amount_unit: 'g',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
@@ -260,8 +260,8 @@ describe Chemotion::SampleAPI do
         let!(:params) {
           {
             name: 'test',
-            amount_value: 0,
-            amount_unit: 'g',
+            target_amount_value: 0,
+            target_amount_unit: 'g',
             description: 'Test Sample',
             purity: 1,
             solvent: '',

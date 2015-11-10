@@ -234,8 +234,10 @@ module ReactionUpdator
               subsample.short_label = nil #we don't want to inherit short_label from parent
               subsample.created_by = current_user.id
               subsample.name = sample.name
-              subsample.amount_value = sample.amount_value
-              subsample.amount_unit = sample.amount_unit
+              subsample.target_amount_value = sample.target_amount_value
+              subsample.target_amount_unit = sample.target_amount_unit
+              subsample.real_amount_value = sample.real_amount_value
+              subsample.real_amount_unit = sample.real_amount_unit
 
               subsample.save
               subsample.reload
@@ -271,8 +273,11 @@ module ReactionUpdator
           else
             existing_sample = Sample.find(sample.id)
 
-            existing_sample.amount_value = sample.amount_value
-            existing_sample.amount_unit = sample.amount_unit
+            existing_sample.target_amount_value = sample.target_amount_value
+            existing_sample.target_amount_unit = sample.target_amount_unit
+            existing_sample.real_amount_value = sample.real_amount_value
+            existing_sample.real_amount_unit = sample.real_amount_unit
+
             existing_sample.save
             included_sample_ids << existing_sample.id
 
