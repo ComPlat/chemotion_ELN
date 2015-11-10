@@ -81,7 +81,7 @@ class Material extends Component {
         <input
           type="radio"
           name={`amount_type_${material.id}`}
-          checked={material.amountType === 'actual'}
+          checked={material.amountType === 'real'}
           onChange={event => this.handleAmountTypeChange('real')}
         />
       </td>
