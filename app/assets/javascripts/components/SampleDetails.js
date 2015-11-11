@@ -514,6 +514,7 @@ export default class SampleDetails extends React.Component {
           molfile={molfile}
           />
         <Panel header="Sample Details" bsStyle={sample.isEdited ? 'info' : 'primary'}>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>X</Button>
           {this.sampleHeader(sample)}
           <ListGroup>
           <TabbedArea defaultActiveKey={0}>

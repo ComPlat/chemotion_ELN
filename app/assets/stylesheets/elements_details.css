@@ -1,3 +1,11 @@
 .padding-right {
   padding-right: 10px;
 }
+
+.button-right {
+  position: absolute;
+  margin-right: 25px;
+  margin-top: -45px;
+  right: 0px;
+  z-index: 1;
+}

@@ -109,6 +109,7 @@ export default class ReactionDetails extends Component {
     const style = {height: '220px'};
     return (
         <Panel header="Reaction Details" bsStyle={reaction.isEdited ? 'info' : 'primary'}>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>X</Button>
           <Row>
             <Col md={3} style={style}>
               <h3>{reaction.name}</h3>
