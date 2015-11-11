@@ -57,6 +57,13 @@ class SampleSerializer < ActiveModel::Serializer
 
     has_one :molecule
 
+    # TODO use decorators?
+    alias_method :original_initialize, :initialize
+
+    def initialize(element, nested_detail_levels)
+      original_initialize(element)
+    end
+
     def molecule
       {
         molecular_weight: object.molecule.try(:molecular_weight)
@@ -67,7 +74,6 @@ class SampleSerializer < ActiveModel::Serializer
       'sample'
     end
 
-    # evtl Restrictionlevel mitsenden?
     def is_restricted
       true
     end
@@ -97,5 +103,12 @@ class SampleSerializer < ActiveModel::Serializer
     def analyses
       object.analyses
     end
+  end
+end
+
+class SampleSerializer::Level10 < SampleSerializer
+  alias_method :original_initialize, :initialize
+  def initialize(element, nested_detail_levels)
+    original_initialize(element)
   end
 end
