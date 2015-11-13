@@ -323,16 +323,16 @@ class ElementStore {
     } else {
       switch (type) {
         case 'sample':
-          ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page});
+          ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
           break;
         case 'reaction':
-          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page});
+          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
           break;
         case 'wellplate':
-          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id, {page: page});
+          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
           break;
         case 'screen':
-          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id, {page: page});
+          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
           break;
       }
     }

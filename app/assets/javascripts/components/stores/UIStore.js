@@ -38,6 +38,7 @@ class UIStore {
         page: 1
       },
       showPreviews: true,
+      number_of_results: 7,
       currentCollection: null,
       currentCollectionId: null,
       currentTab: 1,
@@ -63,7 +64,8 @@ class UIStore {
       handleShowCollectionManagement: UIActions.showCollectionManagement,
       handleShowElements: UIActions.showElements,
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
-      handleUncheckWholeSelection: UIActions.uncheckWholeSelection
+      handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
+      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown
     });
   }
 
@@ -180,6 +182,10 @@ class UIStore {
 
   handleClearSearchSelection() {
     this.state.currentSearchSelection = null;
+  }
+
+  handleChangeNumberOfResultsShown(value) {
+    this.state.number_of_results = value;
   }
 }
 

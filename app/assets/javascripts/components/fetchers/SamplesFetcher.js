@@ -21,7 +21,8 @@ export default class SamplesFetcher {
 
   static fetchByCollectionId(id, queryParams={}) {
     let page = queryParams.page || 1
-    let api = id == 'all' ? `/api/v1/samples.json?page=${page}` : `/api/v1/samples.json?collection_id=${id}&page=${page}`
+    let per_page = queryParams.per_page || 7
+    let api = id == 'all' ? `/api/v1/samples.json?page=${page}&per_page=${per_page}` : `/api/v1/samples.json?collection_id=${id}&page=${page}&per_page=${per_page}`
     let promise = fetch(api, {
         credentials: 'same-origin'
       })

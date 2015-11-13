@@ -1,8 +1,9 @@
 import React from 'react';
-import {Label, Pagination, Table} from 'react-bootstrap';
+import {Label, Pagination, Table, Input} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
+import ElementActions from './actions/ElementActions';
 
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
@@ -57,7 +58,8 @@ export default class ElementsTable extends React.Component {
           uncheckedIds: uncheckedIds,
           checkedAll: checkedAll,
           currentId: currentId,
-          showPreviews: state.showPreviews
+          showPreviews: state.showPreviews,
+          number_of_results: state.number_of_results
         }
       });
     }
@@ -113,6 +115,7 @@ export default class ElementsTable extends React.Component {
         maxButtons={10}
         activePage={page}
         items={pages}
+        bsSize="small"
         onSelect={(event, selectedEvent) => this.handlePaginationSelect(event, selectedEvent)}/>
     }
   }
@@ -123,6 +126,26 @@ export default class ElementsTable extends React.Component {
     if(type == 'sample' || type == 'reaction' ) {
       return <ElementsSvgCheckbox checked={ui.showPreviews}/>
     }
+  }
+
+  handleNumberOfResultsChange(event) {
+    const value = event.target.value;
+    const {type} = this.props;
+    UIActions.changeNumberOfResultsShown(value);
+    ElementActions.refreshElements(type)
+  }
+
+  numberOfResultsDropdown() {
+    let {ui} = this.state
+    return (
+      <Input className="number-shown-select" onChange={event => this.handleNumberOfResultsChange(event)} label="Show:" type="select" bsSize="small" value={ui.number_of_results}>
+        <option value="2">2</option>
+        <option value="5">5</option>
+        <option value="7">7</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+      </Input>
+    );
   }
 
   render() {
@@ -141,7 +164,12 @@ export default class ElementsTable extends React.Component {
           </thead>
           <ElementsTableEntries elements={elements} currentElement={currentElement} showDragColumn={!overview} ui={ui}/>
         </Table>
-        {this.pagination()}
+        <table width="100%">
+          <tr>
+            <td width="75%">{this.pagination()}</td>
+            <td width="25%">{this.numberOfResultsDropdown()}</td>
+          </tr>
+        </table>
         {this.previewCheckbox()}
       </div>
     );

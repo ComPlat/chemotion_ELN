@@ -27,3 +27,9 @@ th.drag {
   vertical-align: top;
   overflow: hidden;
 }
+
+.number-shown-select {
+  float: right !important;
+  text-align: right;
+  width: 60% !important;
+}
