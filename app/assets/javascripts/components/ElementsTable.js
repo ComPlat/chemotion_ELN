@@ -166,8 +166,8 @@ export default class ElementsTable extends React.Component {
         </Table>
         <table width="100%">
           <tr>
-            <td width="75%">{this.pagination()}</td>
-            <td width="25%">{this.numberOfResultsDropdown()}</td>
+            <td width="70%">{this.pagination()}</td>
+            <td width="30%">{this.numberOfResultsDropdown()}</td>
           </tr>
         </table>
         {this.previewCheckbox()}

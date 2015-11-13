@@ -156,6 +156,7 @@ class UIStore {
       // FIXME why both?
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;
+      this.state.number_of_results = 7;
 
       ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
       ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
