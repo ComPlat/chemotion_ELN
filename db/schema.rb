@@ -124,18 +124,18 @@ ActiveRecord::Schema.define(version: 20151118090203) do
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"
-    t.datetime "created_at",                      null: false
-    t.datetime "updated_at",                      null: false
+    t.datetime "created_at",                            null: false
+    t.datetime "updated_at",                            null: false
     t.text     "description"
     t.string   "timestamp_start"
     t.string   "timestamp_stop"
     t.text     "observation"
-    t.string   "purification",       default: [],              array: true
-    t.string   "dangerous_products", default: [],              array: true
+    t.string   "purification",       default: [],                    array: true
+    t.string   "dangerous_products", default: [],                    array: true
     t.string   "tlc_solvents"
     t.text     "tlc_description"
     t.string   "rf_value"
-    t.string   "temperature"
+    t.string   "temperature",        default: "21.0°C"
     t.string   "status"
     t.string   "reaction_svg_file"
     t.string   "solvent"
