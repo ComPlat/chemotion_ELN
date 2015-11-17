@@ -222,6 +222,10 @@ class ElementActions {
 
   // -- Screens --
 
+  generateScreenFromClipboard(collection_id) {
+    this.dispatch(collection_id);
+  }
+
 
   fetchScreensByCollectionId(id, queryParams={}) {
     ScreensFetcher.fetchByCollectionId(id, queryParams)

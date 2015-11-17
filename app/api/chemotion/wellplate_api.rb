@@ -20,6 +20,26 @@ module Chemotion
         delete do
           Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
         end
+
+
+        desc "Get Wellplates by UI state"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected wellplates from the UI" do
+            optional :all, type: Boolean
+            optional :included_ids, type: Array
+            optional :excluded_ids, type: Array
+            optional :collection_id
+          end
+        end
+        before do
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])).read?
+        end
+        # we are using POST because the fetchers don't support GET requests with body data
+        post do
+          wellplates = Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])
+
+          {wellplates: wellplates.map{|w| WellplateSerializer.new(w).serializable_hash.deep_symbolize_keys}}
+        end
       end
 
       desc "Return serialized wellplates"

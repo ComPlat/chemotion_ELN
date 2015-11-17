@@ -5,11 +5,13 @@ import Aviator from 'aviator';
 class ClipboardStore {
   constructor() {
     this.state = {
-      samples: []
+      samples: [],
+      wellplates: []
     };
 
     this.bindListeners({
-      handleFetchSamplesByUIStateAndLimit: ClipboardActions.fetchSamplesByUIStateAndLimit
+      handleFetchSamplesByUIStateAndLimit: ClipboardActions.fetchSamplesByUIStateAndLimit,
+      handleFetchWellplatesByUIState: ClipboardActions.fetchWellplatesByUIState
     })
   }
 
@@ -22,6 +24,14 @@ class ClipboardStore {
         break;
       case 'copy_sample':
         Aviator.navigate(`/collection/${result.collection_id}/sample/copy`);
+    }
+  }
+
+  handleFetchWellplatesByUIState(result) {
+    this.state.wellplates = result.wellplates;
+    switch(result.action) {
+      case 'template_screen':
+        Aviator.navigate(`/collection/${result.collection_id}/screen/template`);
     }
   }
 }

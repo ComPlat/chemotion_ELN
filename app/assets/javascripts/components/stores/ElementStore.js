@@ -8,6 +8,7 @@ import ClipboardStore from './ClipboardStore';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
+import Screen from '../models/Screen';
 
 class ElementStore {
   constructor() {
@@ -67,6 +68,7 @@ class ElementStore {
       handleUpdateWellplate: ElementActions.updateWellplate,
       handleCreateWellplate: ElementActions.createWellplate,
       handleGenerateWellplateFromClipboard: ElementActions.generateWellplateFromClipboard,
+      handleGenerateScreenFromClipboard: ElementActions.generateScreenFromClipboard,
 
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
@@ -230,6 +232,12 @@ class ElementStore {
   handleCreateScreen(screen) {
     this.handleRefreshElements('screen');
     this.navigateToNewElement(screen);
+  }
+
+  handleGenerateScreenFromClipboard(collection_id) {
+    let clipboardWellplates = ClipboardStore.getState().wellplates;
+
+    this.state.currentElement = Screen.buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id);
   }
 
   // -- Reactions --

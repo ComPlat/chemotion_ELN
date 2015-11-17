@@ -108,6 +108,8 @@ export default function() {
           const {screenID, collectionID} = e.params;
           if (screenID == 'new') {
             ElementActions.generateEmptyScreen(collectionID);
+          } else if(screenID == 'template') {
+            ElementActions.generateScreenFromClipboard(collectionID);
           } else {
             ElementActions.fetchScreenById(screenID);
           }
