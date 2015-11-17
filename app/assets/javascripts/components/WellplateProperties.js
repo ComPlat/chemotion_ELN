@@ -20,6 +20,7 @@ export default class WellplateProperties extends Component {
               label="Name"
               value={name}
               onChange={event => this.handleInputChange('name', event)}
+              disabled={name == '***'}
               />
           </td>
           <td width="30%">
@@ -39,6 +40,7 @@ export default class WellplateProperties extends Component {
               label="Description"
               value={description}
               onChange={event => this.handleInputChange('description', event)}
+              disabled={description == '***'}
               />
           </td>
         </tr>

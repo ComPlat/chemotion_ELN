@@ -126,7 +126,6 @@ class Sample < ActiveRecord::Base
 
   def analyses= analyses
     json_dump = JSON.dump(analyses)
-    ap json_dump
     self.analyses_dump = json_dump
   end
 

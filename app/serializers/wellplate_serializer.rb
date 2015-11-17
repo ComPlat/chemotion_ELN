@@ -33,7 +33,6 @@ class WellplateSerializer < ActiveModel::Serializer
       true
     end
 
-    # Wellplate Lvl 10, Sample Lvl 1
     def type
       'wellplate'
     end
@@ -44,7 +43,11 @@ class WellplateSerializer < ActiveModel::Serializer
   end
 
   class Level1 < Level0
-    has_many :wells, serializer: WellSerializer::Level1
+    has_many :wells
+
+    def wells
+      object.wells.order("id asc").map{ |s| WellSerializer::Level1.new(s, @nested_dl).serializable_hash }
+    end
   end
 end
 

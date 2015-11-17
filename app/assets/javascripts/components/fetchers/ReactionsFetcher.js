@@ -1,9 +1,9 @@
 import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
 import Literature from '../models/Literature';
-import ReactionProxy from '../proxies/ReactionProxy';
+import ElementPermissionProxy from '../proxies/ElementPermissionProxy';
 
-// TODO: Extract common base functionality into ElementsFetcher
+// TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
   static fetchById(id) {
     let promise = fetch('/api/v1/reactions/' + id + '.json', {
@@ -12,8 +12,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        // TODO use ReactionProxy on implemented finally
-        return new Reaction(json.reaction);
+        return new ElementPermissionProxy(new Reaction(json.reaction));
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -30,7 +29,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.reactions.map((r) => new Reaction(r)),
+            elements: json.reactions.map((r) => new ElementPermissionProxy(new Reaction(r))),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),

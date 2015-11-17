@@ -106,7 +106,6 @@ module Chemotion
       post 'upload_dataset_attachments' do
         params.each do |file_id, file|
           if tempfile = file.tempfile
-            ap file
             begin
               upload_path = File.join('uploads', 'attachments', file_id)
               p "move tempfile from #{tempfile.path} to #{upload_path}"

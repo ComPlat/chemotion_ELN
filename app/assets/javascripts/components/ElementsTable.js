@@ -67,7 +67,7 @@ export default class ElementsTable extends React.Component {
   onChange(state) {
     let type = this.props.type + 's';
     let elementsState = state.elements[type];
-
+    
     const {elements, page, pages, perPage, totalElements} = elementsState;
 
     let currentElement;

@@ -20,6 +20,7 @@ import StructureEditorModal from './structure_editor/StructureEditorModal';
 import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
+import ElementPermissionProxy from './proxies/ElementPermissionProxy';
 
 export default class SampleDetails extends React.Component {
   constructor(props) {
@@ -199,7 +200,8 @@ export default class SampleDetails extends React.Component {
   }
 
   handleStructureEditorSave(molfile) {
-    let sample = this.state.sample;
+    let {sample} = this.state;
+
     if(sample) {
       sample.molfile = molfile
     }
@@ -213,8 +215,7 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-    let {sample} = this.state
-    console.log(sample.serialize());
+    let {sample} = this.state;
 
     if(sample.isNew) {
       ElementActions.createSample(sample.serialize());
@@ -224,7 +225,9 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitLabel() {
-    if(this.state.sample.isNew) {
+    let {sample} = this.state;
+    
+    if(sample.isNew) {
       return "Create";
     } else {
       return "Save";

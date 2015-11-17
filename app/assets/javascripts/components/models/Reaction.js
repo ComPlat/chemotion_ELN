@@ -35,6 +35,14 @@ export default class Reaction extends Element {
     })
   }
 
+  get name() {
+    return this._name;
+  }
+
+  set name(name) {
+    this._name = name;
+  }
+  
   get temperature() {
     return this._temperature
   }

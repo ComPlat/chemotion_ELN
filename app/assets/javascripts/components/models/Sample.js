@@ -7,10 +7,6 @@ import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 
 export default class Sample extends Element {
-  isMethodDisabled() {
-    return false;
-  }
-
   isMethodRestricted(m) {
     return false;
   }
