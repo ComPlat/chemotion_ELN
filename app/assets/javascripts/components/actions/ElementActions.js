@@ -135,8 +135,8 @@ class ElementActions {
       });
   }
 
-  createReaction(params) {
-    ReactionsFetcher.create(params)
+  createReaction(reaction) {
+    ReactionsFetcher.create(reaction)
       .then((result) => {
         this.dispatch(result)
       });

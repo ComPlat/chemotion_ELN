@@ -75,31 +75,9 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static update(params) {
-    let body = JSON.stringify({
-      id: params.id,
-      name: params.name,
-      description: params.description,
-      timestamp_start: params.timestamp_start,
-      timestamp_stop: params.timestamp_stop,
-      observation: params.observation,
-      purification: params.purification,
-      solvent: params.solvent,
-      dangerous_products: params.dangerous_products,
-      tlc_solvents: params.solvents,
-      tlc_description: params.tlc_description,
-      rf_value: params.rf_value,
-      temperature: params.temperature,
-      status: params.status,
-      reaction_svg_file: params.reaction_svg_file,
-      materials: {
-        starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
-        reactants: params.reactants.map(s=>s.serializeMaterial()),
-        products: params.products.map(s=>s.serializeMaterial())
-      },
-      literatures: params.literatures.map(literature => literature.serialize())
-    })
-    let promise = fetch('/api/v1/reactions/' + params.id, {
+  static update(reaction) {
+    let body = JSON.stringify(reaction.serialize());
+    let promise = fetch('/api/v1/reactions/' + reaction.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -118,31 +96,8 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static create(params) {
-    let body = JSON.stringify({
-      collection_id: params.collection_id,
-      id: params.id,
-      name: params.name,
-      description: params.description,
-      timestamp_start: params.timestamp_start,
-      timestamp_stop: params.timestamp_stop,
-      observation: params.observation,
-      purification: params.purification,
-      dangerous_products: params.dangerous_products,
-      solvent: params.solvent,
-      tlc_solvents: params.solvents,
-      tlc_description: params.tlc_description,
-      rf_value: params.rf_value,
-      temperature: params.temperature,
-      status: params.status,
-      reaction_svg_file: params.reaction_svg_file,
-      materials: {
-        starting_materials: params.starting_materials.map(s=>s.serializeMaterial()),
-        reactants: params.reactants.map(s=>s.serializeMaterial()),
-        products: params.products.map(s=>s.serializeMaterial())
-      },
-      literatures: params.literatures.map(literature => literature.serialize())
-    });
+  static create(reaction) {
+    let body = JSON.stringify(reaction.serialize());
     let promise = fetch('/api/v1/reactions/', {
       credentials: 'same-origin',
       method: 'post',
