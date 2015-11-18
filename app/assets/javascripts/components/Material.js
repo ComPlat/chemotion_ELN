@@ -51,7 +51,7 @@ class Material extends Component {
       paddingTop: 15,
       paddingRight: 5
     };
-
+    
     return <tr style={style}>
       {connectDragSource(
         <td style={handleStyle}>

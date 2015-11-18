@@ -2,6 +2,7 @@ import Element from './Element';
 import Molecule from './Molecule';
 import Analysis from './Analysis';
 import _ from 'lodash';
+import AnalysisPermissionProxy from '../proxies/AnalysisPermissionProxy';
 
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
@@ -11,6 +12,10 @@ export default class Sample extends Element {
     return false;
   }
 
+  isMethodDisabled(m) {
+    return false;
+  }
+  
   static copyFromSampleAndCollectionId(sample, collection_id) {
     let newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
@@ -32,7 +37,7 @@ export default class Sample extends Element {
     children_count += 1;
     Sample.children_count[this.id] = children_count;
 
-    let splitSample = new Sample(this);
+    let splitSample = this;
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
     splitSample.name = null;
@@ -68,7 +73,8 @@ export default class Sample extends Element {
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
-      is_split: this.isSplit || false
+      is_split: this.is_split || false,
+      is_new: this.is_new
     })
   }
 
@@ -392,7 +398,7 @@ export default class Sample extends Element {
   // -- Analyses --
 
   get analyses() {
-    return this._analyses || [];
+    return (this._analyses || []).map(a => new AnalysisPermissionProxy(a, this));
   }
 
   set analyses(analyses) {

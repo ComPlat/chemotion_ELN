@@ -18,13 +18,17 @@ export default class ElementPermissionProxy {
 
     // get "superclass methods" and define them on proxy
     let rootMethodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(new Element));
-    
+
     _.difference(rootMethodNames, elementMethodNames).forEach((m) => {
       Object.defineProperty(this, m, {
         get: () => { return element[m] },
         set: (arg) => { element[m] = arg }
       })
     });
+
+    this.unwrap = () => {
+      return element;
+    }
   }
 
   methodOrRestrictionPattern(element, m) {

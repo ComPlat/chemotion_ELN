@@ -54,7 +54,7 @@ export default class Analysis extends Component {
             label="Name"
             value={analysis.name}
             onChange={event => this.handleInputChange('name', event)}
-            disabled={readOnly}
+            disabled={readOnly || analysis.isMethodDisabled('name')}
             />
         </Col>
         <Col md={4}>
