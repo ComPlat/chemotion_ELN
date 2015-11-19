@@ -21,7 +21,6 @@ module Chemotion
           Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
         end
 
-
         desc "Get Wellplates by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected wellplates from the UI" do

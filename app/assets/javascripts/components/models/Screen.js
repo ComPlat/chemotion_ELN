@@ -25,7 +25,6 @@ export default class Screen extends Element {
   }
 
   static buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id) {
-
     return new Screen({
       collection_id: collection_id,
       type: 'screen',

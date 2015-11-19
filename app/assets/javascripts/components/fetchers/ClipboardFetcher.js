@@ -34,7 +34,6 @@ export default class ClipboardFetcher {
   }
 
   static fetchWellplatesByUIState(params) {
-
     let promise = fetch('/api/v1/wellplates/ui_state/', {
       credentials: 'same-origin',
       method: 'POST',
