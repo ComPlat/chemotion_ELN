@@ -103,7 +103,7 @@ module Chemotion
         CollectionsScreen.create(screen: screen, collection: collection)
 
         params[:wellplate_ids].each do |id|
-          ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: params[:id])
+          ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)
         end
         screen
       end

@@ -9,7 +9,7 @@ import ClipboardActions from '../actions/ClipboardActions';
 export default class CreateButton extends React.Component {
   copySample() {
     let uiState = UIStore.getState();
-    let sampleFilter = this.filterSampleParamsFromUIState(uiState);
+    let sampleFilter = this.filterParamsFromUIStateByElementType(uiState, "sample");
 
     // Set limit to 1 because we are only interested in one sample
     let params = {
@@ -29,7 +29,7 @@ export default class CreateButton extends React.Component {
 
   createWellplateFromSamples() {
     let uiState = UIStore.getState();
-    let sampleFilter = this.filterSampleParamsFromUIState(uiState);
+    let sampleFilter = this.filterParamsFromUIStateByElementType(uiState, "sample");
 
     let params = {
       sample: sampleFilter,
@@ -39,13 +39,22 @@ export default class CreateButton extends React.Component {
     ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'template_wellplate');
   }
 
-  filterSampleParamsFromUIState(uiState) {
+  createScreenFromWellplates() {
+    let uiState = UIStore.getState();
+    let wellplateFilter = this.filterParamsFromUIStateByElementType(uiState, "wellplate");
+    let params = {
+      wellplate: wellplateFilter
+    }
+    ClipboardActions.fetchWellplatesByUIState(params, 'template_screen');
+  }
+
+  filterParamsFromUIStateByElementType(uiState, elementType) {
     let collectionId = uiState.currentCollection && uiState.currentCollection.id;
 
     return {
-      all: uiState.sample.checkedAll,
-      included_ids: uiState.sample.checkedIds,
-      excluded_ids: uiState.sample.uncheckedIds,
+      all: uiState[elementType].checkedAll,
+      included_ids: uiState[elementType].checkedIds,
+      excluded_ids: uiState[elementType].uncheckedIds,
       collection_id: collectionId
     }
   }
@@ -74,6 +83,7 @@ export default class CreateButton extends React.Component {
           <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
           <MenuItem divider />
           <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
+          <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
           <MenuItem divider />
           <MenuItem onSelect={() => this.copySample()}>Copy Sample</MenuItem>
           <MenuItem onSelect={() => this.copyReaction()}>Copy Reaction</MenuItem>
