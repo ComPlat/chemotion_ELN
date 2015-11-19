@@ -135,15 +135,15 @@ class ElementActions {
       });
   }
 
-  createReaction(reaction) {
-    ReactionsFetcher.create(reaction)
+  createReaction(serialized_reaction) {
+    ReactionsFetcher.create(serialized_reaction)
       .then((result) => {
         this.dispatch(result)
       });
   }
 
-  updateReaction(params) {
-    ReactionsFetcher.update(params)
+  updateReaction(serialized_reaction) {
+    ReactionsFetcher.update(serialized_reaction)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {

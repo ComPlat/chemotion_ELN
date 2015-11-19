@@ -75,16 +75,15 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static update(reaction) {
-    let body = JSON.stringify(reaction.serialize());
-    let promise = fetch('/api/v1/reactions/' + reaction.id, {
+  static update(serialized_reaction) {
+    let promise = fetch('/api/v1/reactions/' + serialized_reaction.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: body
+      body: JSON.stringify(serialized_reaction)
     }).then((response) => {
       return response.json()
     }).then((json) => {
@@ -96,8 +95,7 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static create(reaction) {
-    let body = JSON.stringify(reaction.serialize());
+  static create(serialized_reaction) {
     let promise = fetch('/api/v1/reactions/', {
       credentials: 'same-origin',
       method: 'post',
@@ -105,7 +103,7 @@ export default class ReactionsFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: body
+      body: JSON.stringify(serialized_reaction)
     }).then((response) => {
       return response.json()
     }).then((json) => {
