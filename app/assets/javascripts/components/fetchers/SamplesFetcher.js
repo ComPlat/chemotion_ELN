@@ -98,34 +98,16 @@ export default class SamplesFetcher {
     }
   }
 
-  static update(params) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(params);
-
-    let { density, boiling_point, melting_point } = params.molecule;
-    let promise = fetch('/api/v1/samples/' + params.id, {
+  static update(serialized_sample) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(serialized_sample);
+    let promise = fetch('/api/v1/samples/' + serialized_sample.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        name: params.name,
-        external_label: params.external_label,
-        real_amount_value: params.real_amount_value,
-        real_amount_unit: params.real_amount_unit,
-        target_amount_value: params.target_amount_value,
-        target_amount_unit: params.target_amount_unit,
-        description: params.description,
-        purity: params.purity,
-        solvent: params.solvent,
-        impurities: params.impurities,
-        location: params.location,
-        molfile: params.molfile,
-        is_top_secret: params.is_top_secret,
-        analyses: params.analyses,
-        molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point }
-      })
+      body: JSON.stringify(serialized_sample)
     }).then((response) => {
       return response.json()
     }).then((json) => {
@@ -137,10 +119,8 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static create(params) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(params);
-
-    let { density, boiling_point, melting_point } = params.molecule;
+  static create(serialized_sample) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(serialized_sample);
     let promise = fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
@@ -148,24 +128,7 @@ export default class SamplesFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        name: params.name,
-        external_label: params.external_label,
-        real_amount_value: params.real_amount_value,
-        real_amount_unit: params.real_amount_unit,
-        target_amount_value: params.target_amount_value,
-        target_amount_unit: params.target_amount_unit,
-        description: params.description,
-        purity: params.purity,
-        solvent: params.solvent,
-        impurities: params.impurities,
-        location: params.location,
-        molfile: params.molfile,
-        is_top_secret: params.is_top_secret,
-        analyses: params.analyses,
-        molecule: { density: density, boiling_point: boiling_point, melting_point: melting_point },
-        collection_id: params.collection_id
-      })
+      body: JSON.stringify(serialized_sample)
     }).then((response) => {
       return response.json()
     }).then((json) => {

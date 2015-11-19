@@ -65,17 +65,17 @@ class ElementActions {
       });
   }
 
-  createSample(params) {
-    SamplesFetcher.create(params)
+  createSample(serialized_sample) {
+    SamplesFetcher.create(serialized_sample)
       .then((result) => {
         this.dispatch(result)
       });
   }
 
-  updateSample(params) {
-    let _params = _.omit(params, _.isNull); //should be better done in SampleProxy#serialize
+  updateSample(serialized_sample) {
+    let _serialized_sample = _.omit(serialized_sample, _.isNull); //should be better done in SampleProxy#serialize
 
-    SamplesFetcher.update(_params)
+    SamplesFetcher.update(_serialized_sample)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {

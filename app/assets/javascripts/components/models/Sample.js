@@ -56,7 +56,7 @@ export default class Sample extends Element {
   }
 
   serialize() {
-    return super.serialize({
+    let serialized_sample = super.serialize({
       name: this.name,
       external_label: this.external_label,
       target_amount_value: this.target_amount_value,
@@ -69,13 +69,17 @@ export default class Sample extends Element {
       impurities: this.impurities,
       location: this.location,
       molfile: this.molfile,
-      molecule: this.molecule,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
       is_split: this.is_split || false,
       is_new: this.is_new
     })
+
+    if (!this.isNew) {
+      serialized_sample.molecule = this.molecule.serialize()
+    } 
+    return serialized_sample;
   }
 
   static buildEmpty(collection_id) {
