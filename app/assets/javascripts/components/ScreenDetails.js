@@ -169,7 +169,7 @@ export default class ScreenDetails extends Component {
             </ListGroupItem>
           </ListGroup>
           <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => this.closeDetails()}>Back</Button>
+            <Button bsStyle="primary" onClick={() => this.closeDetails()}>Close</Button>
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
         </Panel>
