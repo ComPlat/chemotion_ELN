@@ -73,6 +73,10 @@ class UIActions {
   clearSearchSelection() {
     this.dispatch();
   }
+
+  changeNumberOfResultsShown(value) {
+    this.dispatch(value);
+  }
 }
 
 export default alt.createActions(UIActions);

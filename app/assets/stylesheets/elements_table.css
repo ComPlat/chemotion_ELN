@@ -20,10 +20,17 @@ th.drag {
 
 .fa-user-secret {
   float:right;
-  marging-top:2px;
+  margin-top:2px;
 }
 
 .top-secret-icon {
   vertical-align: top;
   overflow: hidden;
+}
+
+.number-shown-select {
+  float: right !important;
+  text-align: right;
+  width: 55% !important;
+  height: 22px !important;
 }
