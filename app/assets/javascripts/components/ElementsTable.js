@@ -138,13 +138,7 @@ export default class ElementsTable extends React.Component {
   numberOfResultsDropdown() {
     let {ui} = this.state
     return (
-      <Input className="number-shown-select" onChange={event => this.handleNumberOfResultsChange(event)} label="Show:" type="select" bsSize="small" value={ui.number_of_results}>
-        <option value="2">2</option>
-        <option value="5">5</option>
-        <option value="7">7</option>
-        <option value="15">15</option>
-        <option value="20">20</option>
-      </Input>
+      <Input className="number-shown-select" onChange={event => this.handleNumberOfResultsChange(event)} label="Show:" type="text" bsSize="small" value={ui.number_of_results} />
     );
   }
 
