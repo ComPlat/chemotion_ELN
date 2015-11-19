@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import Screen from '../models/Screen';
-import ScreenProxy from '../proxies/ScreenProxy';
+import ElementPermissionProxy from '../proxies/ElementPermissionProxy';
 
 export default class ScreensFetcher {
   static fetchById(id) {
@@ -10,7 +10,7 @@ export default class ScreensFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new Screen(json.screen);
+        return new ElementPermissionProxy(new Screen(json.screen));
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -26,7 +26,7 @@ export default class ScreensFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.screens.map (s => new Screen(s)),
+            elements: json.screens.map (s => new ElementPermissionProxy(new Screen(s))),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),

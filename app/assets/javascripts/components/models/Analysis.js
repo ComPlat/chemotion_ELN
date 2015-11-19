@@ -14,8 +14,24 @@ export default class Analysis extends Element {
     })
   }
 
+  get name() {
+    return this._name;
+  }
+
+  set name(name) {
+    this._name = name;
+  }
+
+  get type() {
+    return this._type;
+  }
+
+  set type(type) {
+    this._type = type;
+  }
+
   get datasets() {
-    return this._datasets;
+    return this._datasets || [];
   }
 
   set datasets(datasets) {

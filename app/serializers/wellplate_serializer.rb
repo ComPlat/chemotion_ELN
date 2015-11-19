@@ -20,7 +20,14 @@ class WellplateSerializer < ActiveModel::Serializer
   class Level0 < ActiveModel::Serializer
     attributes :id, :type, :size, :is_restricted
 
-    has_many :wells, serializer: WellSerializer::Level0
+    has_many :wells
+
+    alias_method :original_initialize, :initialize
+
+    def initialize(element, nested_detail_levels)
+      original_initialize(element)
+      @nested_dl = nested_detail_levels
+    end
 
     def is_restricted
       true
@@ -31,11 +38,27 @@ class WellplateSerializer < ActiveModel::Serializer
     end
 
     def wells
-      object.wells.order("id asc")
+      object.wells.order("id asc").map{ |s| WellSerializer::Level0.new(s, @nested_dl).serializable_hash }
     end
   end
 
   class Level1 < Level0
-    has_many :wells, serializer: WellSerializer::Level1
+    has_many :wells
+
+    def wells
+      object.wells.order("id asc").map{ |s| WellSerializer::Level1.new(s, @nested_dl).serializable_hash }
+    end
+  end
+end
+
+class WellplateSerializer::Level10 < WellplateSerializer
+  alias_method :original_initialize, :initialize
+  def initialize(element, nested_detail_levels)
+    original_initialize(element)
+    @nested_dl = nested_detail_levels
+  end
+
+  def wells
+    object.wells.order("id asc").map{ |s| WellSerializer::Level10.new(s, @nested_dl).serializable_hash }
   end
 end

@@ -9,12 +9,9 @@ class ElementPermissionProxy
   def serialized
     serializer_class = serializer_class_by_element
     dl = detail_level_for_element
+    nested_dl = nested_details_levels_for_element
 
-    unless dl == max_detail_level_by_element_class
-      serialized_element = restriction_by_dl(serializer_class, dl).deep_symbolize_keys
-    else
-      serialized_element = serializer_class.new(element).serializable_hash.deep_symbolize_keys
-    end
+    serialized_element = restriction_by_dl(serializer_class, dl, nested_dl).deep_symbolize_keys
   end
 
   private
@@ -23,7 +20,7 @@ class ElementPermissionProxy
     # on max level everything can be read
     max_detail_level = max_detail_level_by_element_class
 
-    # get collections where sample belongs to
+    # get collections where element belongs to
     c = user_collections_for_element
 
     # if user owns none of the collections which include the element, return minimum level
@@ -37,6 +34,16 @@ class ElementPermissionProxy
     else
       c.public_send(:pluck, "#{element.class.to_s.downcase}_detail_level").max
     end
+  end
+
+  def nested_details_levels_for_element
+    nested_detail_levels = {}
+
+    c = user_collections_for_element
+
+    nested_detail_levels[:sample] = c.pluck(:sample_detail_level).max
+    nested_detail_levels[:wellplate] = c.pluck(:wellplate_detail_level).max
+    nested_detail_levels
   end
 
   def max_detail_level_by_element_class
@@ -71,8 +78,8 @@ class ElementPermissionProxy
     end
   end
 
-  def restriction_by_dl(serializer_class, dl)
+  def restriction_by_dl(serializer_class, dl, nested_dl)
     klass = "#{serializer_class}::Level#{dl}".constantize
-    klass.new(element).serializable_hash
+    klass.new(element, nested_dl).serializable_hash
   end
 end

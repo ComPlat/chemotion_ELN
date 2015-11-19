@@ -76,6 +76,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 label="Name"
                 value={reaction.name}
                 placeholder="Name..."
+                disabled={reaction.isMethodDisabled('name')}
                 onChange={event => this.handleInputChange('name', event)}/>
             </Col>
             <Col md={3}>
@@ -85,6 +86,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 multi={false}
                 options={statusOptions}
                 value={reaction.status}
+                disabled={reaction.isMethodDisabled('status')}
                 onChange={event => {
                   const wrappedEvent = {target: {value: event}};
                   this.handleInputChange('status', wrappedEvent)
@@ -96,6 +98,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 type="text"
                 label="Temperature"
                 value={reaction.temperature}
+                disabled={reaction.isMethodDisabled('temperature')}
                 placeholder="Temperature..."
                 onChange={event => this.handleInputChange('temperature', event)}/>
             </Col>
@@ -106,6 +109,7 @@ export default class ReactionDetailsMainProperties extends Component {
                 type="textarea"
                 label="Description"
                 value={reaction.description}
+                disabled={reaction.isMethodDisabled('description')}
                 placeholder="Description..."
                 rows={6}
                 onChange={event => this.handleInputChange('description', event)}/>

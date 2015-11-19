@@ -89,6 +89,7 @@ export default class ReactionDetailsProperties extends Component {
                 label="Name"
                 value={reaction.name}
                 placeholder="Name..."
+                disabled={reaction.isMethodDisabled('name')}
                 onChange={event => this.handleInputChange('name', event)}/>
             </Col>
             <Col md={6}>
@@ -98,6 +99,7 @@ export default class ReactionDetailsProperties extends Component {
                 multi={false}
                 options={statusOptions}
                 value={reaction.status}
+                disabled={reaction.isMethodDisabled('status')}
                 onChange={event => {
                   const wrappedEvent = {target: {value: event}};
                   this.handleInputChange('status', wrappedEvent)
@@ -111,6 +113,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="textarea"
                 label="Description"
                 value={reaction.description}
+                disabled={reaction.isMethodDisabled('description')}
                 placeholder="Description..."
                 onChange={event => this.handleInputChange('description', event)}/>
             </Col>
@@ -125,6 +128,7 @@ export default class ReactionDetailsProperties extends Component {
                 multi={false}
                 options={solventOptions}
                 value={reaction.solvent}
+                disabled={reaction.isMethodDisabled('solvent')}
                 onChange={event => {
                   const wrappedEvent = {target: {value: event}};
                   this.handleInputChange('solvent', wrappedEvent)
@@ -136,6 +140,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="text"
                 label="Start"
                 value={reaction.timestamp_start}
+                disabled={reaction.isMethodDisabled('timestamp_start')}
                 placeholder="Start..."
                 onChange={event => this.handleInputChange('timestampStart', event)}/>
             </Col>
@@ -144,6 +149,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="text"
                 label="Stop"
                 value={reaction.timestamp_stop}
+                disabled={reaction.isMethodDisabled('timestamp_stop')}
                 placeholder="Stop..."
                 onChange={event => this.handleInputChange('timestampStop', event)}/>
             </Col>
@@ -154,6 +160,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="textarea"
                 label="Observation"
                 value={reaction.observation}
+                disabled={reaction.isMethodDisabled('observation')}
                 placeholder="Observation..."
                 onChange={event => this.handleInputChange('observation', event)}/>
             </Col>
@@ -164,6 +171,7 @@ export default class ReactionDetailsProperties extends Component {
               <Select
                 name='purification'
                 multi={true}
+                disabled={reaction.isMethodDisabled('purification')}
                 options={purificationOptions}
                 onChange={(event, selectedOptions) =>
                   this.handleMultiselectChange('purification', selectedOptions)}
@@ -177,6 +185,7 @@ export default class ReactionDetailsProperties extends Component {
                 multi={true}
                 options={dangerousProductsOptions}
                 value={reaction.dangerous_products}
+                disabled={reaction.isMethodDisabled('dangerous_products')}
                 onChange={(event, selectedOptions) =>
                   this.handleMultiselectChange('dangerousProducts', selectedOptions)}
               />
@@ -190,6 +199,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="text"
                 label="Solvents (parts)"
                 value={reaction.solvents}
+                disabled={reaction.isMethodDisabled('solvents')}
                 placeholder="Solvents as parts..."
                 onChange={event => this.handleInputChange('solvents', event)}/>
             </Col>
@@ -198,6 +208,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="text"
                 label="Rf-Value"
                 value={reaction.rf_value}
+                disabled={reaction.isMethodDisabled('rf_value')}
                 placeholder="Rf-Value..."
                 onChange={event => this.handleInputChange('rfValue', event)}/>
             </Col>
@@ -206,6 +217,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="text"
                 label="Temperature"
                 value={reaction.temperature}
+                disabled={reaction.isMethodDisabled('temperature')}
                 placeholder="Temperature..."
                 onChange={event => this.handleInputChange('temperature', event)}/>
             </Col>
@@ -216,6 +228,7 @@ export default class ReactionDetailsProperties extends Component {
                 type="textarea"
                 label="TLC-Description"
                 value={reaction.tlc_description}
+                disabled={reaction.isMethodDisabled('tlc_description')}
                 placeholder="TLC-Description..."
                 onChange={event => this.handleInputChange('tlcDescription', event)}/>
             </Col>

@@ -11,7 +11,6 @@ export default class SampleDetailsAnalyses extends Component {
       sample,
       activeAnalysis: 0
     };
-    console.log(this.state.sample);
   }
 
   handleChange(analysis) {
@@ -21,22 +20,17 @@ export default class SampleDetailsAnalyses extends Component {
   }
 
   handleAdd() {
-    console.log("*** handleAdd ***")
     const {sample} = this.state;
     // model: sample.createAnalysis()
 
     let analysis = Analysis.buildEmpty();
-    console.log(analysis);
 
     sample.addAnalysis(analysis);
-    console.log(sample.analyses);
 
     const newKey = sample.analyses.length - 1;
     this.handleAccordionOpen(newKey);
 
     this.props.onSampleChanged(sample);
-
-    console.log(sample);
   }
 
   handleRemove(analysis) {
@@ -44,9 +38,7 @@ export default class SampleDetailsAnalyses extends Component {
     // sample.removeAnalysis(analysis)
     const analysisId = sample.analyses.indexOf(analysis);
     sample.analyses.splice(analysisId, 1);
-    //
     this.props.onSampleChanged(sample);
-    console.log(this.state.sample);
   }
 
   handleAccordionOpen(key) {

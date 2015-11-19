@@ -6,6 +6,22 @@ class MaterialSerializer < SampleSerializer
   attributes :reference, :equivalent
 end
 
+class MaterialSerializer::Level0 < SampleSerializer::Level0
+  attributes :reference, :equivalent
+end
+
+class MaterialSerializer::Level1 < SampleSerializer::Level1
+  attributes :reference, :equivalent
+end
+
+class MaterialSerializer::Level2 < SampleSerializer::Level2
+  attributes :reference, :equivalent
+end
+
+class MaterialSerializer::Level3 < SampleSerializer::Level3
+  attributes :reference, :equivalent
+end
+
 class ReactionSerializer < ActiveModel::Serializer
   include Labeled
 
@@ -20,15 +36,15 @@ class ReactionSerializer < ActiveModel::Serializer
   has_many :literatures
 
   def starting_materials
-    decorated_materials( object.reactions_starting_material_samples )
+    MaterialDecorator.new(object.reactions_starting_material_samples).decorated
   end
 
   def reactants
-    decorated_materials( object.reactions_reactant_samples )
+    MaterialDecorator.new(object.reactions_reactant_samples).decorated
   end
 
   def products
-    decorated_materials( object.reactions_product_samples )
+    MaterialDecorator.new(object.reactions_product_samples).decorated
   end
 
   def created_at
@@ -54,7 +70,7 @@ class ReactionSerializer < ActiveModel::Serializer
               count: 1
             }
           end
-        elsif analysis["status"] == "Unconfirmed" 
+        elsif analysis["status"] == "Unconfirmed"
           if result[:unconfirmed][analysis["kind"]] then
             result[:unconfirmed][analysis["kind"]][:count] += 1
           else
@@ -82,9 +98,16 @@ class ReactionSerializer < ActiveModel::Serializer
   class Level0 < ActiveModel::Serializer
     attributes :id, :type, :is_restricted, :observation, :description
 
-    has_many :starting_materials, serializer: MaterialSerializer
-    has_many :reactants, serializer: MaterialSerializer
-    has_many :products, serializer: MaterialSerializer
+    has_many :starting_materials
+    has_many :reactants
+    has_many :products
+
+    alias_method :original_initialize, :initialize
+
+    def initialize(element, nested_detail_levels)
+      original_initialize(element)
+      @nested_dl = nested_detail_levels
+    end
 
     def type
       'reaction'
@@ -95,43 +118,40 @@ class ReactionSerializer < ActiveModel::Serializer
     end
 
     def starting_materials
-      decorated_materials( object.reactions_starting_material_samples )
+      MaterialDecorator.new(object.reactions_starting_material_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
     end
 
     def reactants
-      decorated_materials( object.reactions_reactant_samples )
+      MaterialDecorator.new(object.reactions_reactant_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
     end
 
     def products
-      decorated_materials( object.reactions_product_samples )
+      MaterialDecorator.new(object.reactions_product_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
     end
+  end
+end
 
-    # TODO fix duplication
-    private
+class ReactionSerializer::Level10 < ReactionSerializer
+  has_many :starting_materials
+  has_many :reactants
+  has_many :products
 
-      def decorated_materials reaction_materials
-        reaction_materials_attributes = Hash[Array(reaction_materials).map {|r| [r.sample_id, r.attributes]}]
-        reaction_materials.map do |reaction_material|
-          m = Material.new(reaction_material.sample.attributes)
-          rma = reaction_materials_attributes[reaction_material.sample_id] || {}
-          m.reference = rma['reference']
-          m.equivalent = rma['equivalent']
-          m
-        end
-      end
+  alias_method :original_initialize, :initialize
+
+  def initialize(element, nested_detail_levels)
+    original_initialize(element)
+    @nested_dl = nested_detail_levels
   end
 
-  private
+  def starting_materials
+    MaterialDecorator.new(object.reactions_starting_material_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
+  end
 
-    def decorated_materials reaction_materials
-      reaction_materials_attributes = Hash[Array(reaction_materials).map {|r| [r.sample_id, r.attributes]}]
-      reaction_materials.map do |reaction_material|
-        m = Material.new(reaction_material.sample.attributes)
-        rma = reaction_materials_attributes[reaction_material.sample_id] || {}
-        m.reference = rma['reference']
-        m.equivalent = rma['equivalent']
-        m
-      end
-    end
+  def reactants
+    MaterialDecorator.new(object.reactions_reactant_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
+  end
 
+  def products
+    MaterialDecorator.new(object.reactions_product_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
+  end
 end

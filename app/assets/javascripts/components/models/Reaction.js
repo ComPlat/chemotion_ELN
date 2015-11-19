@@ -35,6 +35,14 @@ export default class Reaction extends Element {
     })
   }
 
+  get name() {
+    return this._name;
+  }
+
+  set name(name) {
+    this._name = name;
+  }
+
   get temperature() {
     return this._temperature
   }
@@ -79,13 +87,15 @@ export default class Reaction extends Element {
     return [...this.starting_materials, ...this.reactants, ...this.products]
   }
 
-  static copyFromReactionAndCollectionId(reaction, collection_id) {
+  static copyFromReactionAndCollectionId(reactionProxy, collection_id) {
+    let reaction = reactionProxy.unwrap();
     const copy = reaction.buildCopy();
     copy.name = reaction.name + " Copy"
     copy.collection_id = collection_id;
     copy.starting_materials = reaction.starting_materials.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.reactants = reaction.reactants.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.products = reaction.products.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
+
     return copy;
   }
 

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151109131413) do
+ActiveRecord::Schema.define(version: 20151118090203) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -24,13 +24,13 @@ ActiveRecord::Schema.define(version: 20151109131413) do
     t.integer  "shared_by_id"
     t.boolean  "is_shared",              default: false
     t.integer  "permission_level",       default: 0
-    t.integer  "sample_detail_level",    default: 0
-    t.integer  "reaction_detail_level",  default: 0
-    t.integer  "wellplate_detail_level", default: 0
+    t.integer  "sample_detail_level",    default: 10
+    t.integer  "reaction_detail_level",  default: 10
+    t.integer  "wellplate_detail_level", default: 10
     t.datetime "created_at",                             null: false
     t.datetime "updated_at",                             null: false
     t.integer  "position"
-    t.integer  "screen_detail_level",    default: 0
+    t.integer  "screen_detail_level",    default: 10
   end
 
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
