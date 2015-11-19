@@ -94,6 +94,9 @@ export default class WellplateDetails extends Component {
     return (
       <div key={wellplate.id}>
         <Panel header="Wellplate Details" bsStyle={wellplate.isEdited ? 'info' : 'primary'} >
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+            <i className="fa fa-times"></i>
+          </Button>
           <h3>{name}</h3>
           <ElementCollectionLabels element={wellplate}/>
           <ListGroup fill>
