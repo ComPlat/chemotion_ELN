@@ -72,6 +72,7 @@ export default class ReactionDetailsScheme extends Component {
     const {sampleID} = changeEvent;
     const {reaction} = this.state;
     const sample = reaction.sampleById(sampleID);
+
     reaction.markSampleAsReference(sampleID);
 
     return this.updatedReactionWithSample(this.updatedSamplesForReferenceChange.bind(this), sample)

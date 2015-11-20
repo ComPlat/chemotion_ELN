@@ -70,7 +70,7 @@ class Reaction < ActiveRecord::Base
       unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
       self.temperature = "#{sign}#{number}°#{unit}"
     else
-      self.temperature = "0.0°C"
+      self.temperature = "21.0°C"
     end
   end
 

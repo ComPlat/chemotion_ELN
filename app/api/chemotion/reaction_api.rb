@@ -216,7 +216,7 @@ module ReactionUpdator
       reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
-
+    
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|

@@ -37,7 +37,7 @@ class Material extends Component {
 
   render() {
     const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
-
+    
     let style = {};
     if (isDragging) {
       style.opacity = 0.3;
@@ -51,7 +51,7 @@ class Material extends Component {
       paddingTop: 15,
       paddingRight: 5
     };
-    
+
     return <tr style={style}>
       {connectDragSource(
         <td style={handleStyle}>
