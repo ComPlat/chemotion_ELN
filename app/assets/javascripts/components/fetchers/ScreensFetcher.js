@@ -40,25 +40,15 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static update(screen) {
-    const {id, wellplate_ids, name, collaborator, result, conditions, requirements, description} = screen;
-
-    let promise = fetch('/api/v1/screens/' + id, {
+  static update(serialized_screen) {
+    let promise = fetch('/api/v1/screens/' + serialized_screen.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        name,
-        collaborator,
-        result,
-        conditions,
-        requirements,
-        description,
-        wellplate_ids
-      })
+      body: JSON.stringify(serialized_screen)
     }).then((response) => {
       return response.json()
     }).then((json) => {
@@ -69,8 +59,9 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static create(screen) {
-    const {collection_id, wellplate_ids, name, collaborator, result, conditions, requirements, description} = screen;
+  static create(serialized_screen) {
+    console.log("CREATE: ");
+    console.log(serialized_screen);
     let promise = fetch('/api/v1/screens/', {
       credentials: 'same-origin',
       method: 'post',
@@ -78,16 +69,7 @@ export default class ScreensFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        name,
-        collaborator,
-        result,
-        conditions,
-        requirements,
-        description,
-        wellplate_ids,
-        collection_id: collection_id
-      })
+      body: JSON.stringify(serialized_screen)
     }).then((response) => {
       return response.json()
     }).then((json) => {

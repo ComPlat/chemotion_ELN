@@ -24,9 +24,9 @@ export default class ScreenDetails extends Component {
     const {screen} = this.state;
 
     if(screen.isNew) {
-      ElementActions.createScreen(screen);
+      ElementActions.createScreen(screen.serialize());
     } else {
-      ElementActions.updateScreen(screen);
+      ElementActions.updateScreen(screen.serialize());
     }
   }
 

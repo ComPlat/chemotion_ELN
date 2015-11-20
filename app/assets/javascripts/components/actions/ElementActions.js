@@ -287,8 +287,8 @@ class ElementActions {
     this.dispatch(Screen.buildEmpty(collection_id));
   }
 
-  createScreen(screen) {
-    ScreensFetcher.create(screen)
+  createScreen(serialized_screen) {
+    ScreensFetcher.create(serialized_screen)
       .then(result => {
         this.dispatch(result);
       }).catch((errorMessage) => {
@@ -296,8 +296,8 @@ class ElementActions {
       });
   }
 
-  updateScreen(screen) {
-    ScreensFetcher.update(screen)
+  updateScreen(serialized_screen) {
+    ScreensFetcher.update(serialized_screen)
       .then(result => {
         this.dispatch(result);
       }).catch((errorMessage) => {
