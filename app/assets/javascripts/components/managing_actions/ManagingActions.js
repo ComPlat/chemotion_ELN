@@ -123,7 +123,9 @@ export default class ManagingActions extends React.Component {
   }
 
   isShareButtonDisabled() {
-    return this.state.sharing_allowed == false;
+    const {currentCollection} = this.state;
+    let in_all_collection = (currentCollection) ? currentCollection.id == 'all' : false
+    return in_all_collection || this.state.sharing_allowed == false;
   }
 
   isDeleteButtonDisabled() {
