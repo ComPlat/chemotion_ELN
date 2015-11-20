@@ -111,10 +111,14 @@ class ElementStore {
   }
 
   // -- Elements --
-  handleDeleteElements() {
+  handleDeleteElements(options) {
     const ui_state = UIStore.getState();
+
     ElementActions.deleteSamplesByUIState(ui_state);
-    ElementActions.deleteReactionsByUIState(ui_state);
+    ElementActions.deleteReactionsByUIState({
+      ui_state,
+      options
+    });
     ElementActions.deleteWellplatesByUIState(ui_state);
     ElementActions.deleteScreensByUIState(ui_state);
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);

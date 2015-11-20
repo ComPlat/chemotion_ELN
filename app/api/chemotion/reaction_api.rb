@@ -25,6 +25,9 @@ module Chemotion
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
           end
+          optional :options, type: Hash do
+            optional :delete_subsamples, type: Boolean
+          end
         end
 
         before do
@@ -32,7 +35,14 @@ module Chemotion
         end
 
         delete do
-          Reaction.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
+          reactions = Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])
+          options = params[:options]
+
+          if options && options.fetch(:delete_subsamples, false)
+            reactions.flat_map(&:samples).map(&:destroy)
+          end
+
+          reactions.destroy_all
         end
       end
 
@@ -40,7 +50,7 @@ module Chemotion
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
       end
-      paginate per_page: 7, max_per_page: 25, offset: 0
+      paginate per_page: 7, offset: 0
 
       get do
         scope = if params[:collection_id]
@@ -216,7 +226,7 @@ module ReactionUpdator
       reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
-    
+
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
