@@ -60,8 +60,6 @@ export default class ScreensFetcher {
   }
 
   static create(serialized_screen) {
-    console.log("CREATE: ");
-    console.log(serialized_screen);
     let promise = fetch('/api/v1/screens/', {
       credentials: 'same-origin',
       method: 'post',
