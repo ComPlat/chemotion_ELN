@@ -2,6 +2,8 @@ import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
 
+import UserStore from '../stores/UserStore';
+
 export default class Reaction extends Element {
   isMethodDisabled() {
     return false;
@@ -9,6 +11,12 @@ export default class Reaction extends Element {
 
   isMethodRestricted(m) {
     return false;
+  }
+
+  initializeTemporarySampleCounter(currentUser) {
+    if(!this.temporary_sample_counter) {
+      this.temporary_sample_counter = currentUser.samples_created_count + 1;
+    }
   }
 
   static buildEmpty(collection_id) {
@@ -33,6 +41,14 @@ export default class Reaction extends Element {
       literatures: [],
       solvent: ''
     })
+  }
+
+  get temporary_sample_counter() {
+    return this._temporary_sample_counter;
+  }
+
+  set temporary_sample_counter(count) {
+    this._temporary_sample_counter = count;
   }
 
   get name() {

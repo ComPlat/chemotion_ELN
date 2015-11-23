@@ -15,7 +15,7 @@ export default class Sample extends Element {
   isMethodDisabled(m) {
     return false;
   }
-  
+
   static copyFromSampleAndCollectionId(sample, collection_id) {
     let newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
@@ -97,6 +97,33 @@ export default class Sample extends Element {
 
     sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
     return sample;
+  }
+
+  static buildEmptyWithCounter(collection_id, counter) {
+    let sample = new Sample({
+      collection_id: collection_id,
+      type: 'sample',
+      external_label: '',
+      target_amount_value: 0,
+      target_amount_unit: 'mg',
+      description: '',
+      purity: 1,
+      solvent: '',
+      impurities: '',
+      location: '',
+      molfile: '',
+      molecule: { id: '_none_' },
+      analyses: []
+    });
+
+    sample.short_label = Sample.buildNewSampleShortLabelWithCounter(counter);
+    return sample;
+  }
+
+  static buildNewSampleShortLabelWithCounter(counter) {
+    let {currentUser} = UserStore.getState();
+
+    return `${currentUser.initials}-${counter}`;
   }
 
   static buildNewSampleShortLabelForCurrentUser() {
