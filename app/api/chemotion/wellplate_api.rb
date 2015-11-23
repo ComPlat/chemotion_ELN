@@ -45,7 +45,7 @@ module Chemotion
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
       end
-      paginate per_page: 5, max_per_page: 25, offset: 0
+      paginate per_page: 5, offset: 0
 
       get do
         scope = if params[:collection_id]

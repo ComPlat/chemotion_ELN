@@ -274,8 +274,8 @@ class ElementActions {
   }
 
 
-  deleteElements() {
-    this.dispatch();
+  deleteElements(options) {
+    this.dispatch(options);
     UIActions.uncheckWholeSelection();
   }
 
@@ -294,8 +294,8 @@ class ElementActions {
       });
   }
 
-  deleteReactionsByUIState(ui_state) {
-    ReactionsFetcher.deleteReactionsByUIState(ui_state)
+  deleteReactionsByUIState(params) {
+    ReactionsFetcher.deleteReactionsByUIState(params)
       .then((result) => {
         this.dispatch(result);
       }).catch((errorMessage) => {

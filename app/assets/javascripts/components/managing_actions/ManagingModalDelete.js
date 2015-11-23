@@ -1,20 +1,40 @@
 import React from 'react';
-import {Button, ButtonToolbar} from 'react-bootstrap';
+import {Button, ButtonToolbar, Input} from 'react-bootstrap';
 
 export default class ManagingModalDelete extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      delete_subsamples: false
+    }
+  }
+
   handleClick() {
     const {onHide, action} = this.props;
-    action();
+    action(this.state);
     onHide();
+  }
+
+  handleCheck() {
+    let {delete_subsamples} = this.state;
+
+    this.setState({
+      delete_subsamples: !delete_subsamples
+    });
   }
 
   render() {
     const {onHide} = this.props;
     return (
-      <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-        <Button bsStyle="warning" onClick={() => this.handleClick()}>Delete</Button>
-      </ButtonToolbar>
+      <div>
+        <Input type="checkbox"
+               label="Also delete reaction subsamples?"
+               onChange={() => this.handleCheck()} />
+        <ButtonToolbar>
+          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
+          <Button bsStyle="warning" onClick={() => this.handleClick()}>Delete</Button>
+        </ButtonToolbar>
+      </div>
     )
   }
 }
