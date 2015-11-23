@@ -28,7 +28,7 @@ export default class WellOverlay extends Component {
   renderWellContent() {
     const {well, removeSampleFromWell} = this.props;
     const {sample} = well;
-    let svg, moleculeName, removeButton = '';
+    let svg, moleculeName, externalLabel, shortLabel, removeButton = '';
     const namesStyle= {textAlign: 'center', marginTop: 5};
     const svgContainerStyle = {
       borderRadius: '50%',
@@ -41,6 +41,8 @@ export default class WellOverlay extends Component {
     };
     if (sample) {
       svg = <SVG key={sample.id} className="molecule-mid" src={`/images/molecules/${sample.molecule.molecule_svg_file}`}/>;
+      externalLabel = sample.external_label;
+      shortLabel = sample.short_label;
       moleculeName = sample.molecule.iupac_name;
       removeButton = (
         <div className="pull-right">
@@ -57,7 +59,9 @@ export default class WellOverlay extends Component {
         </div>
         <div style={namesStyle}>
           {this.sampleName()}<br/>
-          {moleculeName}
+          {moleculeName}<br/>
+          {externalLabel}<br/>
+          {shortLabel}
         </div>
         {removeButton}
       </div>
@@ -86,7 +90,7 @@ export default class WellOverlay extends Component {
           onHide={() => handleClose()}
           >
           <Popover title={title}>
-            <div style={{width: 200, height: 420}}>
+            <div style={{width: 200, height: 450}}>
               {this.renderWellContent()}
               <div>
                 <hr style={{marginTop: 28, marginBottom: 10}}/>
