@@ -111,7 +111,7 @@ export default class ReactionDetailsScheme extends Component {
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
         sample.setAmountAndNormalizeToMilligram(updatedSample.amount_value, updatedSample.amount_unit);
-        if(referenceMaterial) {
+        if(referenceMaterial && sample.amountType != 'real') {
           if(!updatedSample.reference && referenceMaterial.amount_value) {
             sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
           } else {
@@ -121,7 +121,7 @@ export default class ReactionDetailsScheme extends Component {
       }
       else {
         if(updatedSample.reference) {
-          if(sample.equivalent) {
+          if(sample.equivalent && sample.amountType != 'real') {
             sample.setAmountAndNormalizeToMilligram(sample.equivalent * updatedSample.amount_mmol, 'mmol');
           }
         }
