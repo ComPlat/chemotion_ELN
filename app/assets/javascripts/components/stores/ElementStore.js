@@ -43,7 +43,9 @@ class ElementStore {
           perPage: null
         }
       },
-      currentElement: null
+      currentElement: null,
+      currentReaction: null,
+      currentMaterialGroup: null
     };
 
     this.bindListeners({
@@ -53,15 +55,16 @@ class ElementStore {
       handleUpdateSample: ElementActions.updateSample,
       handleCreateSample: ElementActions.createSample,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
+      handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
       handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
-
       handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
       handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
+      handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
@@ -192,6 +195,20 @@ class ElementStore {
     this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id)
   }
 
+  /**
+   * @param {Object} params = { reaction, materialGroup }
+   */
+  handleAddSampleToMaterialGroup(params) {
+    const { reaction, materialGroup } = params;
+    const { temporary_sample_counter } = reaction;
+
+    let sample = Sample.buildEmptyWithCounter(reaction.collection_id, temporary_sample_counter);
+
+    this.state.currentMaterialGroup = materialGroup;
+    this.state.currentReaction = reaction;
+    this.state.currentElement = sample;
+  }
+
   // -- Wellplates --
 
   handleFetchWellplateById(result) {
@@ -268,6 +285,11 @@ class ElementStore {
   handleCopyReactionFromId(reaction) {
     const uiState = UIStore.getState();
     this.state.currentElement = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
+  }
+
+  handleOpenReactionDetails(reaction) {
+    this.state.currentReaction = null;
+    this.state.currentElement = reaction;
   }
 
   // -- Reactions Literatures --

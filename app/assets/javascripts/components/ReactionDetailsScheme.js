@@ -1,13 +1,15 @@
 import React, {Component} from 'react';
-import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Button, ListGroup, ListGroupItem} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
 
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
-export default class ReactionDetailsScheme extends Component {
+import ElementActions from './actions/ElementActions';
+import UsersFetcher from './fetchers/UsersFetcher';
 
+export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
     const {reaction} = props;
@@ -173,6 +175,21 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
+  /**
+   * Add a (not yet persisted) sample to a material group
+   * of the given reaction
+   */
+  addSampleToMaterialGroup(reaction, materialGroup) {
+    UsersFetcher.fetchCurrentUser().then((result) => {
+      reaction.initializeTemporarySampleCounter(result.user);
+
+      ElementActions.addSampleToMaterialGroup({
+        reaction,
+        materialGroup
+      });
+    });
+  }
+
   render() {
     const {reaction} = this.state;
     return (
@@ -187,6 +204,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
+              <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'starting_materials')}>Add Sample</Button>
           </ListGroupItem>
           <ListGroupItem header="Reactants">
             <MaterialGroupContainer
@@ -197,6 +215,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
+              <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'reactants')}>Add Sample</Button>
           </ListGroupItem>
           <ListGroupItem header="Products">
             <MaterialGroupContainer
@@ -207,6 +226,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
+              <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'products')}>Add Sample</Button>
           </ListGroupItem>
         </ListGroup>
         <ReactionDetailsMainProperties

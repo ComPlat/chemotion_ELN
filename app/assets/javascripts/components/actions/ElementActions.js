@@ -100,6 +100,10 @@ class ElementActions {
     this.dispatch(collection_id);
   }
 
+  addSampleToMaterialGroup(params) {
+    this.dispatch(params);
+  }
+
   // -- Molecules --
 
   fetchMoleculeByMolfile(molfile) {
@@ -151,8 +155,11 @@ class ElementActions {
     });
   }
 
-  // -- Reactions SVGs --
+  openReactionDetails(reaction) {
+    this.dispatch(reaction);
+  }
 
+  // -- Reactions SVGs --
 
   fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label){
     ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys, label)

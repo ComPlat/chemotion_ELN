@@ -21,6 +21,7 @@ import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
 import ElementPermissionProxy from './proxies/ElementPermissionProxy';
+import Sample from './models/Sample';
 
 export default class SampleDetails extends React.Component {
   constructor(props) {
@@ -28,6 +29,8 @@ export default class SampleDetails extends React.Component {
 
     this.state = {
       sample: props.sample,
+      reaction: null,
+      materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false
     }
@@ -45,16 +48,11 @@ export default class SampleDetails extends React.Component {
     if(!state.currentElement || state.currentElement.type == 'sample') {
       this.setState({
         sample: state.currentElement,
+        reaction: state.currentReaction,
+        materialGroup: state.currentMaterialGroup,
         loadingMolecule: false
       });
     }
-  }
-
-  closeDetails() {
-    UIActions.deselectAllElements();
-
-    let uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
 
   handleSampleChanged(sample) {
@@ -215,18 +213,37 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-    let {sample} = this.state;
+    let {sample, reaction, materialGroup} = this.state;
 
-    if(sample.isNew) {
-      ElementActions.createSample(sample.serialize());
+    if(reaction) {
+      reaction.addMaterial(sample, materialGroup);
+      reaction.temporary_sample_counter += 1;
+      ElementActions.openReactionDetails(reaction);
     } else {
-      ElementActions.updateSample(sample.serialize());
+      if(sample.isNew) {
+        ElementActions.createSample(sample.serialize());
+      } else {
+        ElementActions.updateSample(sample.serialize());
+      }
+    }
+  }
+
+  closeDetails() {
+    let { currentReaction } = ElementStore.getState();
+
+    if(currentReaction) {
+      ElementActions.openReactionDetails(currentReaction);
+    } else {
+      UIActions.deselectAllElements();
+
+      let uiState = UIStore.getState();
+      Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
     }
   }
 
   _submitLabel() {
     let {sample} = this.state;
-    
+
     if(sample.isNew) {
       return "Create";
     } else {
