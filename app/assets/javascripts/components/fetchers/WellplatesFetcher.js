@@ -40,6 +40,21 @@ export default class WellplatesFetcher {
     return promise;
   }
 
+  static bulkCreateWellplates(params) {
+    let promise = fetch('/api/v1/wellplates/bulk', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
   static update(params) {
     let promise = fetch('/api/v1/wellplates/' + params.id, {
       credentials: 'same-origin',

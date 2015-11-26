@@ -157,11 +157,5 @@ MOLFILE
     it 'should associate the subsamples with its parent' do
       expect(sample.children.count).to eq(3)
     end
-
-    it 'should count sub_samples per sample' do
-      pending
-      sample.reload
-      expect(sample.children_count).to eq(3)
-    end
   end
 end
