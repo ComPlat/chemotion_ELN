@@ -11,18 +11,12 @@ export default class ElementCollectionLabels extends React.Component {
 
   render() {
     return (
-      <div>
-        {this.collectionLabels(this.state.element)}
-      </div>
+      this.collectionLabels(this.state.element)
     );
   }
 
   labelStyle(label) {
-    if(label.is_shared == false) {
-      return "info";
-    } else {
-      return "warning";
-    }
+    return label.is_shared ? "warning" : "info";
   }
 
   format_labels(labels) {
@@ -36,8 +30,23 @@ export default class ElementCollectionLabels extends React.Component {
     });
   }
 
+  labelWithPopover(title, labels) {
+    let {element} = this.state;
+    let label_popover = <Popover title={title}>{this.format_labels(labels)}</Popover>
+    return (
+      labels.length > 0 ?
+        <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
+          <span className="collection-label" key={element.type+element.id+title+labels.length}>
+            <Label bsStyle={this.labelStyle(labels[0])}>In {labels.length} {title}</Label>
+            &nbsp;
+          </span> 
+        </OverlayTrigger> : undefined
+    );
+  }
+
   collectionLabels(element) {
     if(element.collection_labels) {
+
       let shared_labels = [];
       let labels = [];
       element.collection_labels.map((label, index) => {
@@ -48,30 +57,10 @@ export default class ElementCollectionLabels extends React.Component {
         }
       });
 
-      let shared_label_popover = <Popover title="Shared Collections">{this.format_labels(shared_labels)}</Popover>
-
-      let label_popover = <Popover title="Collections">{this.format_labels(labels)}</Popover>
-
-      let shared_label = shared_labels.length > 0 ?
-        <OverlayTrigger trigger="hover" placement="top" overlay={shared_label_popover}>
-          <span className="collection-label" key={element.id+"_shared_labels_"+shared_labels.length}>
-            <Label bsStyle="warning">In {shared_labels.length} Shared Collections</Label>
-            &nbsp;
-          </span>
-        </OverlayTrigger> : undefined
-
-      let collection_label = labels.length > 0 ?
-        <OverlayTrigger trigger="hover" placement="top" overlay={label_popover}>
-          <span className="collection-label" key={element.id+"_labels_"+shared_labels.length}>
-            <Label bsStyle="info">In {labels.length} Collections</Label>
-            &nbsp;
-          </span> 
-        </OverlayTrigger>: undefined
-
       return (
         <div>
-          {collection_label}
-          {shared_label}
+          {this.labelWithPopover("Collections", labels)}
+          {this.labelWithPopover("Shared Collections", shared_labels)}
         </div>
       )
     }
