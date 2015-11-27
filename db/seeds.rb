@@ -103,31 +103,14 @@ Geometry Optimized at HF/STO-3G
 MOLFILE
 
 # create some samples
-sample_1 = Sample.create!(molfile: molfiles[0], creator: u)
-sample_2 = Sample.create!(molfile: molfiles[1], creator: u)
-sample_3 = Sample.create!(molfile: molfiles[2], creator: u)
-sample_4 = Sample.create!(molfile: molfiles[0], creator: u)
-sample_5 = Sample.create!(molfile: molfiles[1], creator: u)
-sample_6 = Sample.create!(molfile: molfiles[2], creator: u)
-sample_7 = Sample.create!(molfile: molfiles[0], creator: u)
-sample_8 = Sample.create!(molfile: molfiles[1], creator: u)
+number_of_samples = 100
 
-
-# associate samples with collections
-CollectionsSample.create!(sample: sample_1, collection: collection_1)
-CollectionsSample.create!(sample: sample_2, collection: collection_1)
-CollectionsSample.create!(sample: sample_3, collection: collection_1)
-CollectionsSample.create!(sample: sample_4, collection: collection_1)
-CollectionsSample.create!(sample: sample_2, collection: subcollection_1)
-CollectionsSample.create!(sample: sample_5, collection: subcollection_1)
-CollectionsSample.create!(sample: sample_6, collection: subcollection_1)
-CollectionsSample.create!(sample: sample_1, collection: grand_child)
-CollectionsSample.create!(sample: sample_7, collection: grand_child)
-CollectionsSample.create!(sample: sample_8, collection: grand_child)
-
-# CollectionsSample.create!(sample: sample_1, collection: shared_collection_1)
-# CollectionsSample.create!(sample: sample_2, collection: shared_collection_2)
-# CollectionsSample.create!(sample: sample_3, collection: shared_collection_2)
+(1..100).each do |i|
+  s = Sample.create!(molfile: molfiles[rand(3)], creator: u)
+  c = (Collection.all - [collection_1]).sample
+  CollectionsSample.create!(sample: s, collection: collection_1)
+  CollectionsSample.create!(sample: s, collection: c)
+end
 
 # --- Reactions ---
 
@@ -180,12 +163,10 @@ wellplate_2 = Wellplate.create!(name: 'Wellplate 2', size: 96, description: "")
 wellplate_3 = Wellplate.create!(name: 'Wellplate 3', size: 96, description: "")
 wellplate_4 = Wellplate.create!(name: 'Wellplate 4', size: 96, description: "")
 
-well_1 = Well.create!(sample: sample_1, wellplate: wellplate_1)
-well_2 = Well.create(sample: sample_1, wellplate: wellplate_1)
-well_3 = Well.create(sample: sample_2, wellplate: wellplate_1)
-well_4 = Well.create(sample: sample_3, wellplate: wellplate_1)
-well_5 = Well.create(sample: sample_4, wellplate: wellplate_1)
-well_6 = Well.create(sample: sample_5, wellplate: wellplate_1)
+well_1 = Well.create!(sample: Sample.all.sample, wellplate: wellplate_1)
+well_2 = Well.create!(sample: Sample.all.sample, wellplate: wellplate_1)
+well_3 = Well.create!(sample: Sample.all.sample, wellplate: wellplate_1)
+well_4 = Well.create!(sample: Sample.all.sample, wellplate: wellplate_1)
 
 ScreensWellplate.create!(screen: screen_1, wellplate: wellplate_1)
 ScreensWellplate.create!(screen: screen_2, wellplate: wellplate_1)

@@ -182,6 +182,28 @@ class ElementActions {
 
   // -- Wellplates --
 
+  bulkCreateWellplatesFromSamples(params) {
+    let { collection_id, samples, wellplateCount } = params;
+
+    // wellplateCount correction
+    if(wellplateCount > Math.ceil(samples.length / 96)) {
+      wellplateCount = Math.ceil(samples.length / 96)
+    }
+
+    // build wellplate objects from samples
+    let wellplates = [];
+    _.range(wellplateCount ).forEach((i) => {
+      wellplates[i] = Wellplate.buildFromSamplesAndCollectionId(_.compact(samples.slice(96*i, 96*(i+1))), collection_id).serialize();
+    });
+
+    WellplatesFetcher.bulkCreateWellplates({wellplates: wellplates})
+      .then(() => {
+        this.dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   generateWellplateFromClipboard(collection_id) {
     this.dispatch(collection_id);
   }

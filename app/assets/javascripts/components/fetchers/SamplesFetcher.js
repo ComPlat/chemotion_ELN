@@ -4,6 +4,33 @@ import ElementPermissionProxy from '../proxies/ElementPermissionProxy';
 import _ from 'lodash';
 
 export default class SamplesFetcher {
+  static fetchByUIState(params) {
+    let promise = fetch('/api/v1/samples/ui_state/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: {
+          all: params.sample.all,
+          included_ids: params.sample.included_ids,
+          excluded_ids: params.sample.excluded_ids,
+          collection_id: params.sample.collection_id
+        }
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json.samples.map((s) => new ElementPermissionProxy(new Sample(s)));
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static fetchById(id) {
     let promise = fetch('/api/v1/samples/' + id + '.json', {
         credentials: 'same-origin'

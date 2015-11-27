@@ -3,6 +3,23 @@ module Chemotion
     include Grape::Kaminari
 
     resource :wellplates do
+      namespace :bulk do
+        desc "Bulk create wellplates"
+        params do
+          requires :wellplates, type: Array do
+            requires :name, type: String
+            optional :size, type: Integer
+            optional :description, type: String
+            optional :wells, type: Array
+            optional :collection_id, type: Integer
+          end
+        end
+        post do
+          Usecases::Wellplates::BulkCreate.new(params).execute!
+          body false
+        end
+      end
+
       namespace :ui_state do
         desc "Delete wellplates by UI state"
         params do
@@ -103,20 +120,7 @@ module Chemotion
         end
 
         put do
-          attributes = {
-              name: params[:name],
-              size: params[:size],
-              description: params[:description]
-          }
-
-          ActiveRecord::Base.transaction do
-            wellplate = Wellplate.find(params[:id])
-            wellplate.update(attributes)
-            WellplateUpdator.update_wells_for_wellplate(wellplate, params[:wells])
-            wellplate.touch
-            wellplate.reload
-            wellplate
-          end
+          Usecases::Wellplates::Update.new(params).execute!
         end
       end
 
@@ -129,79 +133,7 @@ module Chemotion
         optional :collection_id, type: Integer
       end
       post do
-        attributes = {
-          name: params[:name],
-          size: params[:size],
-          description: params[:description]
-        }
-
-        ActiveRecord::Base.transaction do
-          wellplate = Wellplate.create(attributes)
-          wellplate.reload
-          collection = Collection.find(params[:collection_id])
-          CollectionsWellplate.create(wellplate: wellplate, collection: collection)
-          WellplateUpdator.update_wells_for_wellplate(wellplate, params[:wells])
-          wellplate
-        end
-      end
-
-      module WellplateUpdator
-
-        def self.update_wells_for_wellplate(wellplate, wells)
-          collection_ids = wellplate.collection_ids
-          current_sample_ids = wellplate.wells.pluck(:sample_id).uniq.compact
-          included_sample_ids = []
-
-          wells.each do |well|
-            sample = well.sample
-            sample_id = sample && sample.id
-
-            if sample
-              if sample.is_new && sample.parent_id
-                parent_sample = Sample.find(sample.parent_id)
-
-                subsample = parent_sample.dup
-                subsample.parent = parent_sample
-                subsample.short_label = nil #we don't want to inherit short_label from parent
-                subsample.name = sample.name
-
-                subsample.save
-                subsample.reload
-
-                #assign subsample to all collections
-                collection_ids.each do |collection_id|
-                  CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
-                end
-
-                sample_id = subsample.id
-              end
-              included_sample_ids << sample_id
-            end
-
-
-            unless well.is_new
-              Well.find(well.id).update(
-                  sample_id: sample_id,
-                  readout: well.readout,
-                  additive: well.additive,
-                  position_x: well.position.x,
-                  position_y: well.position.y,
-              )
-            else
-              Well.create(
-                wellplate_id: wellplate.id,
-                sample_id: sample_id,
-                readout: well.readout,
-                additive: well.additive,
-                position_x: well.position.x,
-                position_y: well.position.y,
-              )
-            end
-          end
-
-          deleted_sample_ids = current_sample_ids - included_sample_ids
-          Sample.where(id: deleted_sample_ids).destroy_all
-        end
+        Usecases::Wellplates::Create.new(params).execute!
       end
 
       namespace :ui_state do

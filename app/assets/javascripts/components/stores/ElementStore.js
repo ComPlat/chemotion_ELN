@@ -66,6 +66,7 @@ class ElementStore {
       handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
+      handleBulkCreateWellplatesFromSamples: ElementActions.bulkCreateWellplatesFromSamples,
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
       handleUpdateWellplate: ElementActions.updateWellplate,
@@ -210,6 +211,11 @@ class ElementStore {
   }
 
   // -- Wellplates --
+
+  handleBulkCreateWellplatesFromSamples() {
+    this.handleRefreshElements('wellplate');
+    this.handleRefreshElements('sample');
+  }
 
   handleFetchWellplateById(result) {
     this.state.currentElement = result;
