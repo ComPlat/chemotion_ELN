@@ -28,6 +28,11 @@ module Chemotion
         end
       end
 
+      desc "Return all locked serialized collection roots of current user"
+      get :locked do
+        current_user.collections.locked.roots
+      end
+
       desc "Return all unshared serialized collection roots of current user"
       get :roots do
         current_user.collections.ordered.unshared.roots

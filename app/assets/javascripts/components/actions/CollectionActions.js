@@ -15,6 +15,15 @@ class CollectionActions {
   }
 
   // TODO #2...centralized error handling maybe ErrorActions?
+  fetchLockedCollectionRoots() {
+    CollectionsFetcher.fetchLockedRoots()
+      .then((roots) => {
+        this.dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   fetchUnsharedCollectionRoots() {
     CollectionsFetcher.fetchUnsharedRoots()
       .then((roots) => {
@@ -74,7 +83,7 @@ class CollectionActions {
       .then(() => {
         this.dispatch();
       }).catch((errorMessage) => {
-        console.log(errorMessage); 
+        console.log(errorMessage);
       });
   }
 
@@ -99,11 +108,11 @@ class CollectionActions {
     Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId +"&tab="+tab});
   }
 
-  downloadReportWellplate(wellplateId){    
+  downloadReportWellplate(wellplateId){
     Utils.downloadFile({contents: "api/v1/reports/excel_wellplate?id=" + wellplateId});
   }
 
-  downloadReportReaction(reactionId){    
+  downloadReportReaction(reactionId){
     Utils.downloadFile({contents: "api/v1/reports/excel_reaction?id=" + reactionId});
   }
 }

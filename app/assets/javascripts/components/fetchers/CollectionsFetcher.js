@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import BaseFetcher from './BaseFetcher';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {
@@ -8,6 +9,14 @@ export default class CollectionsFetcher {
     })
 
     return promise;
+  }
+
+  static fetchLockedRoots() {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: '/api/v1/collections/locked.json',
+      requestMethod: 'GET',
+      jsonTranformation: (json) => { return json }
+    });
   }
 
   static fetchUnsharedRoots() {

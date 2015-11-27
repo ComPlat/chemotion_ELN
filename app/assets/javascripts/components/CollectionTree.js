@@ -14,6 +14,7 @@ export default class CollectionTree extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onChange.bind(this));
+    CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
@@ -25,6 +26,12 @@ export default class CollectionTree extends React.Component {
 
   onChange(state) {
     this.setState(state);
+  }
+
+  lockedSubtrees() {
+    const roots = this.state.lockedRoots;
+
+    return this.subtrees(roots, null, false);
   }
 
   unsharedSubtrees() {
@@ -106,6 +113,7 @@ export default class CollectionTree extends React.Component {
       <div>
         <CollectionSubtree key='all' root={allCollection}/>
         <div className="tree-wrapper">
+          {this.lockedSubtrees()}
           {this.unsharedSubtrees()}
         </div>
         <div className="tree-wrapper">
