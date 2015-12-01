@@ -1,4 +1,4 @@
-class Authentication
+class WardenAuthentication
   def initialize(env)
     @env = env
   end

@@ -6,7 +6,7 @@ describe Chemotion::MoleculeAPI do
     let(:user)  { create(:user) }
 
     before do
-      allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
     end
 
     describe 'POST /api/v1/molecules' do
