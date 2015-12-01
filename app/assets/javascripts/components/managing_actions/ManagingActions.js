@@ -187,10 +187,10 @@ export default class ManagingActions extends React.Component {
         component = ManagingModalDelete;
         action = ElementActions.deleteElements;
         break;
-      case 'test':
+      case 'import':
         title = "Import Elements from File";
         component = ManagingModalImport;
-        action = ElementActions.assignElementsCollection;
+        action = ElementActions.importSamplesFromFile;
         break;
     }
     this.setState({
@@ -213,7 +213,7 @@ export default class ManagingActions extends React.Component {
           <RemoveButton isDisabled={this.isRemoteDisabled()} onClick={() => this.handleButtonClick('remove')}/>
           <DeleteButton isDisabled={this.isDeleteButtonDisabled()} onClick={() => this.handleButtonClick('delete')}/>
           <ShareButton isDisabled={this.isShareButtonDisabled()} onClick={() => this.handleButtonClick('share')}/>
-          <ImportButton onClick={() => this.handleButtonClick('test')}/>
+          <ImportButton onClick={() => this.handleButtonClick('import')}/>
           <ExportButton isDisabled={this.isDisabled()}/>
         </ButtonGroup>
         <ManagingModal

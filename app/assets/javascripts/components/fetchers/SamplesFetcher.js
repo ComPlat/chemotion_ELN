@@ -204,4 +204,25 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static importSamplesFromFile(params) {
+
+    var data = new FormData();
+    data.append("file", params.file);
+    data.append("currentCollectionId", params.currentCollectionId);
+
+    let promise = fetch('/api/v1/samples/import/', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: data
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

@@ -2,6 +2,7 @@ class Sample < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include ImportSamples
 
   multisearchable against: [:name, :iupac_name, :sum_formular]
   delegate :sum_formular, :iupac_name, to: :molecule, allow_nil: true
