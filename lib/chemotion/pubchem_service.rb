@@ -48,4 +48,8 @@ module Chemotion::PubchemService
     PubChem.get_molfile_by_inchikey(inchikey)
   end
 
+  def self.molfile_from_smiles smiles
+    PubChem.get_molfile_by_smiles(smiles)
+  end
+
 end
