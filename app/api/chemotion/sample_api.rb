@@ -72,12 +72,7 @@ module Chemotion
         desc "Import Samples from a File"
         post do
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          samples = Import::ImportSamples.import_samples_from_file(params[:file].tempfile.path)
-          collection_id = params[:currentCollectionId]
-          samples.each do |sample|
-            CollectionsSample.create(collection_id: collection_id, sample_id: sample.id)
-          end
-          samples
+          Import::ImportSamples.import_samples_from_file(params[:file].tempfile.path, params[:currentCollectionId])
         end
       end
 
