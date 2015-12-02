@@ -9,6 +9,11 @@ class Import::ImportSamples
       rows.map do |row|
         molfile = Chemotion::PubchemService.molfile_from_smiles URI::encode(row[:smiles], '[]/()+-.@#=\\')
         molecule = Molecule.find_or_create_by_molfile(molfile)
+
+        if molecule.nil?
+          raise "Import of Sample #{row[:name]}: Molecule is nil."
+        end
+
         sample = Sample.create(name: row[:name], description: row[:description], molecule: molecule)
         CollectionsSample.create(collection_id: collection_id, sample_id: sample.id)
       end
