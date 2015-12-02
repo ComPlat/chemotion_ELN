@@ -213,7 +213,7 @@ export default class ManagingActions extends React.Component {
           <RemoveButton isDisabled={this.isRemoteDisabled()} onClick={() => this.handleButtonClick('remove')}/>
           <DeleteButton isDisabled={this.isDeleteButtonDisabled()} onClick={() => this.handleButtonClick('delete')}/>
           <ShareButton isDisabled={this.isShareButtonDisabled()} onClick={() => this.handleButtonClick('share')}/>
-          <ImportButton onClick={() => this.handleButtonClick('import')}/>
+          <ImportButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('import')}/>
           <ExportButton isDisabled={this.isDisabled()}/>
         </ButtonGroup>
         <ManagingModal
