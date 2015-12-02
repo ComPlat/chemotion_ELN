@@ -38,7 +38,7 @@ export default class ManagingModalImport extends React.Component {
       return (
         <div>
           {file.name}
-          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()}>
+          <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove()} className="pull-right">
             <i className="fa fa-trash-o"></i>
           </Button>
         </div>
@@ -62,6 +62,7 @@ export default class ManagingModalImport extends React.Component {
     return (
       <div>
         {this.dropzoneOrfilePreview()}
+        &nbsp;
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
           <Button bsStyle="warning" onClick={() => this.handleClick()}>Import</Button>
