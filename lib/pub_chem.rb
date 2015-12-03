@@ -25,4 +25,11 @@ module PubChem
 
     HTTParty.get('http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/record/SDF', options).body
   end
+
+  def self.get_molfile_by_smiles(smiles)
+    @auth = {:username => '', :password => ''}
+    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
+    encoded_smiles = URI::encode(smiles, '[]/()+-.@#=\\')
+    HTTParty.get('http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/'+encoded_smiles+'/record/SDF', options).body
+  end
 end

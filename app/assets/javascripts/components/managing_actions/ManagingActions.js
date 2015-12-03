@@ -6,6 +6,7 @@ import AssignButton from './AssignButton';
 import RemoveButton from './RemoveButton';
 import DeleteButton from './DeleteButton';
 import ExportButton from './ExportButton';
+import ImportButton from './ImportButton';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
 import UserActions from './../actions/UserActions';
@@ -15,6 +16,7 @@ import ManagingModal from './ManagingModal';
 import ManagingModalSharing from './ManagingModalSharing';
 import ManagingModalCollectionActions from './ManagingModalCollectionActions';
 import ManagingModalDelete from './ManagingModalDelete';
+import ManagingModalImport from './ManagingModalImport';
 import ManagingModalRemove from './ManagingModalRemove';
 import ManagingModalTopSecret from './ManagingModalTopSecret';
 import ElementActions from '../actions/ElementActions';
@@ -185,6 +187,11 @@ export default class ManagingActions extends React.Component {
         component = ManagingModalDelete;
         action = ElementActions.deleteElements;
         break;
+      case 'import':
+        title = "Import Elements from File";
+        component = ManagingModalImport;
+        action = ElementActions.importSamplesFromFile;
+        break;
     }
     this.setState({
       modalProps: {
@@ -206,6 +213,7 @@ export default class ManagingActions extends React.Component {
           <RemoveButton isDisabled={this.isRemoteDisabled()} onClick={() => this.handleButtonClick('remove')}/>
           <DeleteButton isDisabled={this.isDeleteButtonDisabled()} onClick={() => this.handleButtonClick('delete')}/>
           <ShareButton isDisabled={this.isShareButtonDisabled()} onClick={() => this.handleButtonClick('share')}/>
+          <ImportButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('import')}/>
           <ExportButton isDisabled={this.isDisabled()}/>
         </ButtonGroup>
         <ManagingModal

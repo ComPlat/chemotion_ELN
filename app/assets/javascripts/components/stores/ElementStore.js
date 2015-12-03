@@ -56,6 +56,7 @@ class ElementStore {
       handleCreateSample: ElementActions.createSample,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
+      handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -208,6 +209,10 @@ class ElementStore {
     this.state.currentMaterialGroup = materialGroup;
     this.state.currentReaction = reaction;
     this.state.currentElement = sample;
+  }
+
+  handleImportSamplesFromFile(result) {
+    this.handleRefreshElements('sample');
   }
 
   // -- Wellplates --

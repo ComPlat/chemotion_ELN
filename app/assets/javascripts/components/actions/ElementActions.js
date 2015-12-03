@@ -104,6 +104,15 @@ class ElementActions {
     this.dispatch(params);
   }
 
+  importSamplesFromFile(params) {
+    SamplesFetcher.importSamplesFromFile(params)
+      .then((result) => {
+        this.dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
   // -- Molecules --
 
   fetchMoleculeByMolfile(molfile) {

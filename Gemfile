@@ -48,6 +48,9 @@ gem 'rtf'
 gem 'rmagick'
 gem 'axlsx'
 
+# Import of elements from XLS and CSV file
+gem 'roo'
+
 # Chemrails
 gem 'httparty'
 gem 'chemrails', git: 'git://github.com/cominch/chemrails'

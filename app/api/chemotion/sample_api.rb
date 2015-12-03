@@ -68,6 +68,14 @@ module Chemotion
         end
       end
 
+      namespace :import do
+        desc "Import Samples from a File"
+        post do
+          # Creates the Samples from the XLS/CSV file. Empty Array if not successful
+          Import::ImportSamples.import_samples_from_file(params[:file].tempfile.path, params[:currentCollectionId])
+        end
+      end
+
       desc "Return serialized samples of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
