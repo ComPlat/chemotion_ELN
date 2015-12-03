@@ -164,15 +164,11 @@ class ElementStore {
     this.state.elements.samples = result;
   }
 
-  // update stored sample if it has been updated
   handleUpdateSample(sample) {
-    UserActions.fetchCurrentUser();
-
     this.state.currentElement = sample;
     this.handleRefreshElements('sample');
   }
 
-  // Update Stored Sample if it has been created
   handleCreateSample(sample) {
     UserActions.fetchCurrentUser();
 

@@ -25,4 +25,5 @@
 !/public/images/reactions/.keep
 
 /uploads/attachments/*
+/uploads/thumbnails
 !/public/attachments/.keep

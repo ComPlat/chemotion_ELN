@@ -5,6 +5,7 @@ import Utils from './utils/Functions';
 
 import Attachment from './models/Attachment';
 import SamplesFetcher from './fetchers/SamplesFetcher';
+import AttachmentFetcher from './fetchers/AttachmentFetcher';
 
 export default class Dataset extends Component {
   constructor(props) {
@@ -13,6 +14,30 @@ export default class Dataset extends Component {
     this.state = {
       dataset: dataset
     };
+  }
+
+  componentDidMount() {
+    this.createAttachmentPreviews(this.state.dataset);
+  }
+
+  createAttachmentPreviews(dataset) {
+    const { attachments } = dataset;
+    let updatedAttachments = attachments.map((attachment) => {
+      return AttachmentFetcher.fetchThumbnail({filename: attachment.filename || attachment.id}).then((result) => {
+        if(result != null) {
+          attachment.previewImage = `data:image/png;base64,${result}`;
+        }
+        return attachment;
+      });
+    });
+
+    Promise.all(updatedAttachments).then((attachments) => {
+      dataset.attachments = attachments;
+
+      this.setState({
+        dataset: dataset
+      });
+    });
   }
 
   handleInputChange(type, event) {
@@ -72,10 +97,21 @@ export default class Dataset extends Component {
         {dataset.attachments.map(attachment => {
           return (
             <ListGroupItem key={attachment.id}>
-              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.name}</a>
-              <div className="pull-right">
-                {this.removeAttachmentButton(attachment)}
-              </div>
+              <Table className="borderless">
+                <tr>
+                  <td rowSpan="2" width="128">
+                    <img src={attachment.previewImage} />
+                  </td>
+                  <td>
+                    <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.name}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    {this.removeAttachmentButton(attachment)}
+                  </td>
+                </tr>
+              </Table>
             </ListGroupItem>
           )
         })}

@@ -39,3 +39,7 @@ div[class^="col-"] {
   -ms-user-select: none;
   user-select: none;
 }
+
+.table.borderless td, .table.borderless th {
+  border: 0;
+}

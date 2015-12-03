@@ -110,14 +110,16 @@ module Chemotion
       end
 
       #todo: move to AttachmentAPI
-      desc "Upload attachements"
+      desc "Upload attachments"
       post 'upload_dataset_attachments' do
         params.each do |file_id, file|
           if tempfile = file.tempfile
             begin
-              upload_path = File.join('uploads', 'attachments', file_id)
+              upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
               p "move tempfile from #{tempfile.path} to #{upload_path}"
               FileUtils.cp(tempfile.path, upload_path)
+              thumbnail_path = Thumbnailer.create(upload_path)
+              FileUtils.mv(thumbnail_path, File.join('uploads', 'thumbnails', "#{file_id}.png"))
             ensure
               tempfile.close
               tempfile.unlink   # deletes the temp file
@@ -138,7 +140,7 @@ module Chemotion
         content_type "application/octet-stream"
         header['Content-Disposition'] = "attachment; filename=#{filename}"
         env['api.format'] = :binary
-        File.open(File.join('uploads', 'attachments', file_id)).read
+        File.open(File.join('uploads', 'attachments', "#{file_id}#{File.extname(filename)}")).read
       end
 
       module SampleUpdator
@@ -219,8 +221,8 @@ module Chemotion
 
           if sample = Sample.find(params[:id])
             sample.update(attributes)
-            sample
           end
+          {sample: ElementPermissionProxy.new(current_user, sample).serialized}
         end
       end
 
