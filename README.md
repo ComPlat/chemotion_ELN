@@ -17,6 +17,10 @@ if there are errors with nokogiri compilation with new xcode7:
 * `apt-get install libmagickcore-dev libmagickwand-dev` for linux
 * if installing the rmagick gem fails you may try: `IM_PREFIX=$(brew list imagemagick 2>&1 | grep -E 'identify$' | sed 's/bin\/identify$//g') PKG_CONFIG_PATH=${IM_PREFIX}lib/pkgconfig/ C_INCLUDE_PATH=${IM_PREFIX}include/ImageMagick*/ gem install rmagick` (OSX only)
 
+## Dataset previews
+* `brew install imagemagick mplayer` for OSX
+* `sudo apt-get -y install imagemagick mplayer` for Linux
+
 ## Application Setup
 * Execute `bundle install`.
 * Execute `rake db:reset` (this creates and seeds the database).
@@ -46,26 +50,6 @@ Currently 3 users are seeded with respective email `test@ninjaconcept.com`, `hat
 # Mailing in Development Environment
 
 Run `rake jobs:work` for asynchronous handling of email notifications. Run `mailcatcher` in your console and go to `localhost:1080` to see all sent mails.
-
-# API (v1)
-
-## Collections
-
-* Get serialized, unshared collection roots for current user
-
-  `/api/v1/collections/roots`
-
-* Get serialized, shared collection roots for current user
-
-  `/api/v1/collections/shared_roots`
-
-* Get serialized samples by collection id
-
-  `/api/v1/collections/:collection_id/samples`
-
-* Get serialized sample by id
-
-  `/api/v1/samples/:id`
 
 # Icon Font
 
