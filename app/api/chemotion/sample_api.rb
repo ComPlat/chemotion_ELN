@@ -190,6 +190,7 @@ module Chemotion
         requires :id, type: Integer, desc: "Sample id"
         optional :name, type: String, desc: "Sample name"
         optional :external_label, type: String, desc: "Sample external label"
+        optional :imported_readout, type: String, desc: "Sample Imported Readout"
         requires :target_amount_value, type: Float, desc: "Sample target amount_value"
         requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
         optional :real_amount_value, type: Float, desc: "Sample real amount_value"
@@ -230,6 +231,7 @@ module Chemotion
       params do
         optional :name, type: String, desc: "Sample name"
         optional :external_label, type: String, desc: "Sample external label"
+        optional :imported_readout, type: String, desc: "Sample Imported Readout"
         requires :target_amount_value, type: Float, desc: "Sample target amount_value"
         requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
         optional :real_amount_value, type: Float, desc: "Sample real amount_value"

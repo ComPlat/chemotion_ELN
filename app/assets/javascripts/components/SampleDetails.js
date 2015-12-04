@@ -118,6 +118,14 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+  handleImportedReadoutChanged(e) {
+    let sample = this.state.sample;
+    sample.imported_readout = this.refs.importedReadoutInput.getValue();
+    this.setState({
+      sample: sample
+    });
+  }
+
   handleBoilingPointChanged(e) {
     let sample = this.state.sample;
     sample.molecule_boiling_point = this.refs.boilingPointInput.getValue();
@@ -519,6 +527,17 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  sampleImportedReadout(sample) {
+    return (
+      <Input type="text" label="Imported Readout"
+             ref="importedReadoutInput"
+             value={sample.imported_readout}
+             onChange={(e) => this.handleImportedReadoutChanged(e)}
+             disabled
+      />
+    )
+  }
+
   render() {
     let sample = this.state.sample || {}
     let molfile = sample.molfile;
@@ -586,14 +605,17 @@ export default class SampleDetails extends React.Component {
                     </td>
                   </tr>
                   <tr>
-                    <td width="50%" className="padding-right" colSpan={2}>
+                    <td width="25%" className="padding-right">
                       {this.sampleExternalLabel(sample)}
                     </td>
                     <td width="25%" className="padding-right">
                       {this.sampleAmount(sample)}
                     </td>
-                    <td width="25%">
+                    <td width="25%" className="padding-right">
                       {this.samplePurity(sample)}
+                    </td>
+                    <td width="25%">
+                      {this.sampleImportedReadout(sample)}
                     </td>
                   </tr>
                   <tr>
