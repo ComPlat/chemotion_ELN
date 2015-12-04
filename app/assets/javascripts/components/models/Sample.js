@@ -198,6 +198,14 @@ export default class Sample extends Element {
     this._impurities = impurities;
   }
 
+  get imported_readout() {
+    return this._imported_readout;
+  }
+
+  set imported_readout(imported_readout) {
+    this._imported_readout = imported_readout;
+  }
+
   setAmountAndNormalizeToMilligram(amount_value, amount_unit) {
     this.amount_value = this.convertToMilligram(amount_value, amount_unit)
     this.amount_unit = 'mg'

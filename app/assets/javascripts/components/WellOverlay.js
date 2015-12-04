@@ -68,8 +68,17 @@ export default class WellOverlay extends Component {
     );
   }
 
+  sampleImportedReadout() {
+    const {sample} = this.props.well;
+    if(sample) {
+      return sample.imported_readout
+    }
+    return ""
+  }
+
   render() {
     const {show, well, target, handleClose, placement} = this.props;
+    
     let title = (
       <div>
         Well Details
@@ -90,7 +99,7 @@ export default class WellOverlay extends Component {
           onHide={() => handleClose()}
           >
           <Popover title={title}>
-            <div style={{width: 200, height: 450}}>
+            <div style={{width: 200, height: 620}}>
               {this.renderWellContent()}
               <div>
                 <hr style={{marginTop: 28, marginBottom: 10}}/>
@@ -99,6 +108,13 @@ export default class WellOverlay extends Component {
                   label="Readout"
                   disabled={true}
                   value={well.readout}
+                  style={{height: 100}}
+                  />
+                <Input
+                  type="textarea"
+                  label="Imported Readout"
+                  disabled={true}
+                  value={this.sampleImportedReadout()}
                   style={{height: 100}}
                   />
               </div>
