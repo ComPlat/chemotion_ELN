@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151203092316) do
+ActiveRecord::Schema.define(version: 20151204112634) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -197,6 +197,7 @@ ActiveRecord::Schema.define(version: 20151203092316) do
     t.string   "short_label"
     t.float    "real_amount_value"
     t.string   "real_amount_unit"
+    t.string   "imported_readout"
   end
 
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
