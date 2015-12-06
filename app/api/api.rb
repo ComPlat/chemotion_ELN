@@ -34,4 +34,5 @@ class API < Grape::API
   mount Chemotion::SuggestionAPI
   mount Chemotion::SearchAPI
   mount Chemotion::ReportAPI
+  mount Chemotion::AttachmentAPI
 end

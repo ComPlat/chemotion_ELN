@@ -61,15 +61,18 @@ gem "font-awesome-rails"
 # Email notifications and so on
 gem 'delayed_job_active_record'
 
-# required by cap3 delayed-job but has to be specified manually >_<
+# required by cap3 delayed-job but has to be specified manually
 gem 'daemons'
+
+# dataset previews
+gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
 
 group :production do
   if ENV["RAILS_ENV"] == "production"
     gem 'openbabel'
   end
   gem 'unicorn'
-  
+
 end
 
 group :development, :test do

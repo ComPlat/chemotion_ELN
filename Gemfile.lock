@@ -10,6 +10,12 @@ GIT
   specs:
     openbabel (2.3.2.1)
 
+GIT
+  remote: https://github.com/merlin-p/thumbnailer.git
+  revision: 33933ff636bbc0f3b0ab53735749b71ab8955b77
+  specs:
+    thumbnailer (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -402,6 +408,7 @@ DEPENDENCIES
   sdoc (~> 0.4.0)
   spring
   thin
+  thumbnailer!
   uglifier (>= 1.3.0)
   unicorn
   web-console (~> 2.0)
