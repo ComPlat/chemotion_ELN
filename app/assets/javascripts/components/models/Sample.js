@@ -69,7 +69,7 @@ export default class Sample extends Element {
       impurities: this.impurities,
       location: this.location,
       molfile: this.molfile,
-      molecule: this.molecule.serialize(),
+      molecule: this.molecule && this.molecule.serialize(),
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
