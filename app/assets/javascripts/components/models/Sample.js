@@ -74,7 +74,8 @@ export default class Sample extends Element {
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
       is_split: this.is_split || false,
-      is_new: this.is_new
+      is_new: this.is_new,
+      imported_readout: this.imported_readout
     });
   }
 
@@ -92,7 +93,8 @@ export default class Sample extends Element {
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
-      analyses: []
+      analyses: [],
+      imported_readout: ''
     });
 
     sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
@@ -113,7 +115,8 @@ export default class Sample extends Element {
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
-      analyses: []
+      analyses: [],
+      imported_readout: ''
     });
 
     sample.short_label = Sample.buildNewSampleShortLabelWithCounter(counter);
@@ -193,6 +196,14 @@ export default class Sample extends Element {
 
   set impurities(impurities) {
     this._impurities = impurities;
+  }
+
+  get imported_readout() {
+    return this._imported_readout;
+  }
+
+  set imported_readout(imported_readout) {
+    this._imported_readout = imported_readout;
   }
 
   setAmountAndNormalizeToMilligram(amount_value, amount_unit) {
