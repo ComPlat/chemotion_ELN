@@ -38,6 +38,18 @@ export default class Screen extends Element {
     })
   }
 
+  serialize() {
+    return super.serialize({
+      name: this.name,
+      collaborator: this.collaborator,
+      result: this.result,
+      conditions: this.conditions,
+      requirements: this.requirements,
+      description: this.description,
+      wellplate_ids: this.wellplate_ids
+    })
+  }
+
   get name() {
     return this._name;
   }

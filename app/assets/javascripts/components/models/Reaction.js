@@ -59,6 +59,33 @@ export default class Reaction extends Element {
     this._name = name;
   }
 
+  serialize() {
+    return super.serialize({
+      collection_id: this.collection_id,
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      timestamp_start: this.timestamp_start,
+      timestamp_stop: this.timestamp_stop,
+      observation: this.observation,
+      purification: this.purification,
+      dangerous_products: this.dangerous_products,
+      solvent: this.solvent,
+      tlc_solvents: this.solvents,
+      tlc_description: this.tlc_description,
+      rf_value: this.rf_value,
+      temperature: this.temperature,
+      status: this.status,
+      reaction_svg_file: this.reaction_svg_file,
+      materials: {
+        starting_materials: this.starting_materials.map(s=>s.serializeMaterial()),
+        reactants: this.reactants.map(s=>s.serializeMaterial()),
+        products: this.products.map(s=>s.serializeMaterial())
+      },
+      literatures: this.literatures.map(literature => literature.serialize())
+    })
+  }
+
   get temperature() {
     return this._temperature
   }

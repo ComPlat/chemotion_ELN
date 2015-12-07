@@ -287,8 +287,8 @@ class ElementActions {
     this.dispatch(Screen.buildEmpty(collection_id));
   }
 
-  createScreen(screen) {
-    ScreensFetcher.create(screen)
+  createScreen(params) {
+    ScreensFetcher.create(params)
       .then(result => {
         this.dispatch(result);
       }).catch((errorMessage) => {
@@ -296,8 +296,8 @@ class ElementActions {
       });
   }
 
-  updateScreen(screen) {
-    ScreensFetcher.update(screen)
+  updateScreen(params) {
+    ScreensFetcher.update(params)
       .then(result => {
         this.dispatch(result);
       }).catch((errorMessage) => {

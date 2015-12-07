@@ -221,9 +221,9 @@ export default class SampleDetails extends React.Component {
       ElementActions.openReactionDetails(reaction);
     } else {
       if(sample.isNew) {
-        ElementActions.createSample(sample.serialize());
+        ElementActions.createSample(sample);
       } else {
-        ElementActions.updateSample(sample.serialize());
+        ElementActions.updateSample(sample);
       }
     }
   }

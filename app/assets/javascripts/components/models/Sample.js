@@ -75,7 +75,7 @@ export default class Sample extends Element {
       analyses: this.analyses.map(a => a.serialize()),
       is_split: this.is_split || false,
       is_new: this.is_new
-    })
+    });
   }
 
   static buildEmpty(collection_id) {
