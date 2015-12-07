@@ -1,7 +1,6 @@
 import Element from './Element';
 
 export default class Molecule extends Element {
-
   get svgPath() {
     return this.molecule_svg_file && `/images/molecules/${this.molecule_svg_file}`
   }
@@ -13,5 +12,4 @@ export default class Molecule extends Element {
       boiling_point: this.boiling_point,
     })
   }
-
 }

@@ -83,7 +83,6 @@ export default class SamplesFetcher {
   }
 
   static uploadDatasetAttachmentsForSample(sample) {
-
     let datasets = _.flatten(sample.analyses.map(a=>a.datasets));
     let attachments = _.flatten(datasets.map(d=>d.attachments));
     const fileFromAttachment = function(attachment) {
@@ -98,16 +97,17 @@ export default class SamplesFetcher {
     }
   }
 
-  static update(serialized_sample) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(serialized_sample);
-    let promise = fetch('/api/v1/samples/' + serialized_sample.id, {
+  static update(sample) {
+    let unwrappedSample = sample.unwrap();
+    SamplesFetcher.uploadDatasetAttachmentsForSample(unwrappedSample.serialize());
+    let promise = fetch('/api/v1/samples/' + unwrappedSample.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(serialized_sample)
+      body: JSON.stringify(unwrappedSample.serialize())
     }).then((response) => {
       return response.json()
     }).then((json) => {
@@ -119,8 +119,8 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static create(serialized_sample) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(serialized_sample);
+  static create(sample) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(sample.serialize());
     let promise = fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
@@ -128,7 +128,7 @@ export default class SamplesFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(serialized_sample)
+      body: JSON.stringify(sample.serialize())
     }).then((response) => {
       return response.json()
     }).then((json) => {

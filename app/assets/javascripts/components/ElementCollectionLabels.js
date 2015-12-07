@@ -10,9 +10,7 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   render() {
-    return (
-      this.collectionLabels(this.state.element)
-    );
+    return this.collectionLabels(this.state.element);
   }
 
   labelStyle(label) {
@@ -65,6 +63,8 @@ export default class ElementCollectionLabels extends React.Component {
           {this.labelWithPopover(sharedTitle, shared_labels)}
         </div>
       )
+    } else {
+      return (<div></div>)
     }
   }
 }

@@ -65,17 +65,17 @@ class ElementActions {
       });
   }
 
-  createSample(serialized_sample) {
-    SamplesFetcher.create(serialized_sample)
+  createSample(params) {
+    SamplesFetcher.create(params)
       .then((result) => {
         this.dispatch(result)
       });
   }
 
-  updateSample(serialized_sample) {
-    let _serialized_sample = _.omit(serialized_sample, _.isNull); //should be better done in SampleProxy#serialize
+  updateSample(params) {
+    let _params = _.omit(params, _.isNull); //should be better done in SampleProxy#serialize
 
-    SamplesFetcher.update(_serialized_sample)
+    SamplesFetcher.update(_params)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {
@@ -135,15 +135,15 @@ class ElementActions {
       });
   }
 
-  createReaction(serialized_reaction) {
-    ReactionsFetcher.create(serialized_reaction)
+  createReaction(params) {
+    ReactionsFetcher.create(params)
       .then((result) => {
         this.dispatch(result)
       });
   }
 
-  updateReaction(serialized_reaction) {
-    ReactionsFetcher.update(serialized_reaction)
+  updateReaction(params) {
+    ReactionsFetcher.update(params)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {
@@ -287,8 +287,8 @@ class ElementActions {
     this.dispatch(Screen.buildEmpty(collection_id));
   }
 
-  createScreen(serialized_screen) {
-    ScreensFetcher.create(serialized_screen)
+  createScreen(params) {
+    ScreensFetcher.create(params)
       .then(result => {
         this.dispatch(result);
       }).catch((errorMessage) => {
@@ -296,8 +296,8 @@ class ElementActions {
       });
   }
 
-  updateScreen(serialized_screen) {
-    ScreensFetcher.update(serialized_screen)
+  updateScreen(params) {
+    ScreensFetcher.update(params)
       .then(result => {
         this.dispatch(result);
       }).catch((errorMessage) => {

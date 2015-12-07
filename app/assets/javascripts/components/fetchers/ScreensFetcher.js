@@ -40,15 +40,15 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static update(serialized_screen) {
-    let promise = fetch('/api/v1/screens/' + serialized_screen.id, {
+  static update(screen) {
+    let promise = fetch('/api/v1/screens/' + screen.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(serialized_screen)
+      body: JSON.stringify(screen.serialize())
     }).then((response) => {
       return response.json()
     }).then((json) => {
@@ -59,7 +59,7 @@ export default class ScreensFetcher {
     return promise;
   }
 
-  static create(serialized_screen) {
+  static create(screen) {
     let promise = fetch('/api/v1/screens/', {
       credentials: 'same-origin',
       method: 'post',
@@ -67,7 +67,7 @@ export default class ScreensFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(serialized_screen)
+      body: JSON.stringify(screen.serialize())
     }).then((response) => {
       return response.json()
     }).then((json) => {

@@ -60,9 +60,9 @@ export default class ReactionDetails extends Component {
   submitFunction() {
     const {reaction} = this.state;
     if(reaction && reaction.isNew) {
-      ElementActions.createReaction(reaction.serialize());
+      ElementActions.createReaction(reaction);
     } else {
-      ElementActions.updateReaction(reaction.serialize());
+      ElementActions.updateReaction(reaction);
     }
   }
 
