@@ -13,7 +13,7 @@ class User < ActiveRecord::Base
 
   validates_presence_of :first_name, :last_name, allow_blank: false
 
-  after_create :create_chemotion_public_collection
+  after_create :create_chemotion_public_collection, :create_all_collection
 
   def owns_collections?(collections)
     collections.pluck(:user_id).uniq == [id]
@@ -33,11 +33,15 @@ class User < ActiveRecord::Base
 
   private
 
-  # This user collection is locked, i.e., the user is not allowed to:
+  # These user collections are locked, i.e., the user is not allowed to:
   # - rename it
   # - move it around in collection tree
   # - add subcollections
   # - delete it
+  def create_all_collection
+    Collection.create(user: self, label: 'All', is_locked: true)
+  end
+
   def create_chemotion_public_collection
     Collection.create(user: self, label: 'chemotion.net', is_locked: true)
   end

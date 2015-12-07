@@ -120,13 +120,13 @@ export default class ManagingActions extends React.Component {
   isDisabled() {
     const {currentCollection} = this.state;
     if(currentCollection) {
-      return currentCollection.id == 'all' || currentCollection.is_shared == true;
+      return currentCollection.label == 'All' || currentCollection.is_shared == true;
     }
   }
 
   isShareButtonDisabled() {
     const {currentCollection} = this.state;
-    let in_all_collection = (currentCollection) ? currentCollection.id == 'all' : false
+    let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
     return in_all_collection || this.state.sharing_allowed == false;
   }
 
@@ -138,7 +138,7 @@ export default class ManagingActions extends React.Component {
     if(this.state.currentCollection) {
       let currentCollection = this.state.currentCollection;
 
-      return currentCollection.id == 'all' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
+      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
     }
   }
 

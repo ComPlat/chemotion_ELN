@@ -1,10 +1,11 @@
 module Usecases
   module Wellplates
     class Create
-      attr_reader :params
+      attr_reader :params, :user_id
 
-      def initialize(params)
+      def initialize(params, user_id)
         @params = params
+        @user_id = user_id
       end
 
       def execute!
@@ -19,6 +20,7 @@ module Usecases
           wellplate.reload
           collection = Collection.find(params[:collection_id])
           CollectionsWellplate.create(wellplate: wellplate, collection: collection)
+          CollectionsWellplate.create(wellplate: wellplate, collection: Collection.get_all_collection_for_user(user_id))
           WellplateUpdater.update_wells_for_wellplate(wellplate, params[:wells])
           wellplate
         end

@@ -6,7 +6,7 @@ module Labeled
   end
 
   def collection_labels
-    collections = object.collections
+    collections = object.collections.where.not(label: 'All')
     collections.map {|c| {name: c.label, is_shared: c.is_shared}}.uniq
   end
 end

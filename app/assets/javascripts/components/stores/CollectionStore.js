@@ -70,7 +70,7 @@ class CollectionStore {
   // 'repository' methods; returns a promise
   static findById(collectionId) {
     let state = this.state;
-    let roots = state.unsharedRoots.concat(state.sharedRoots).concat(state.remoteRoots);
+    let roots = state.unsharedRoots.concat(state.sharedRoots).concat(state.remoteRoots).concat(state.lockedRoots);
 
     let foundCollection = roots.filter((root) => {
       return root.id == collectionId;
@@ -80,30 +80,53 @@ class CollectionStore {
 
     // if not loaded already fetch collection from backend
     if(!foundCollection) {
-      if(collectionId != 'all') {
-        // TODO maybe move to CollectionsFetcher
-        promise = fetch('/api/v1/collections/' + collectionId, {
-          credentials: 'same-origin',
-          method: 'GET'
-        }).then((response) => {
-          return response.json()
-        }).then((json) => {
-          return json;
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-        });
-      } else {
-        promise = new Promise((resolve) => {
-          resolve({collection: {id: 'all'}});
-        });
-      }
+      // TODO maybe move to CollectionsFetcher
+      promise = fetch('/api/v1/collections/' + collectionId, {
+        credentials: 'same-origin',
+        method: 'GET'
+      }).then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
     } else {
       promise = new Promise((resolve) => {
         resolve({collection: foundCollection});
       });
     }
     return promise;
-    //foundCollection
+  }
+
+  static findAllCollection() {
+    let state = this.state;
+    let roots = state.lockedRoots;
+
+    let foundCollection = roots.filter((root) => {
+      return root.label == 'All';
+    }).pop();
+
+    let promise;
+
+    // if not loaded already fetch collection from backend
+    if(!foundCollection) {
+      promise = fetch('/api/v1/collections/all/', {
+        credentials: 'same-origin',
+        method: 'GET'
+      }).then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    } else {
+      promise = new Promise((resolve) => {
+        resolve({collection: foundCollection});
+      });
+    }
+    return promise;
   }
 }
 

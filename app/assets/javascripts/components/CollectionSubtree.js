@@ -92,7 +92,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   collectionManagementButton() {
-    if(this.state.root.id == 'all') {
+    if(this.state.root.label == 'All') {
       return  (
         <div className="take-ownership-btn">
           <Button bsStyle="danger" bsSize="xsmall" onClick={() => this.handleCollectionManagementToggle()}>
@@ -105,11 +105,15 @@ export default class CollectionSubtree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
-    const {showCollectionManagement, currentCollectionId} = UIStore.getState();
+    const {showCollectionManagement, currentCollection} = UIStore.getState();
     if(showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {
-      Aviator.navigate(`/collection/${currentCollectionId}/${this.urlForCurrentElement()}`);
+      if(currentCollection.label == 'All') {
+        Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
+      } else {
+        Aviator.navigate(`/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
+      }
     }
   }
 
@@ -145,7 +149,13 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleClick() {
-    Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`);
+    const { root } = this.state;
+
+    if(root.label == 'All') {
+      Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
+    } else {
+      Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`);
+    }
   }
 
   urlForCurrentElement() {

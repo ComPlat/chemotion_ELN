@@ -46,7 +46,7 @@ export default class ManagingModalSharing extends React.Component {
 
   isElementSelectionEmpty(element) {
     return !element.checkedAll &&
-           element.checkedIds.length == 0 && 
+           element.checkedIds.length == 0 &&
            element.uncheckedIds.length == 0;
   }
 
@@ -132,11 +132,11 @@ export default class ManagingModalSharing extends React.Component {
     let userIds = this.refs.userSelect.state.values.map(o => o.value);
 
     let uiState = UIStore.getState();
-    let currentCollectionId = uiState.currentCollectionId == "all" ? null : uiState.currentCollectionId;
+    let currentCollectionId = uiState.currentCollectionId;
 
-    let filterParams = 
-      this.isSelectionEmpty(uiState) ? 
-        this.filterParamsWholeCollection(uiState) : 
+    let filterParams =
+      this.isSelectionEmpty(uiState) ?
+        this.filterParamsWholeCollection(uiState) :
         this.filterParamsFromUIState(uiState);
 
     let params = {
