@@ -6,11 +6,13 @@ class CollectionStore {
     this.state = {
       unsharedRoots: [],
       sharedRoots: [],
-      remoteRoots: []
+      remoteRoots: [],
+      lockedRoots: []
     };
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
+      handleFetchLockedCollectionRoots: CollectionActions.fetchLockedCollectionRoots,
       handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
       handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
       handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
@@ -25,6 +27,10 @@ class CollectionStore {
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
+  }
+
+  handleFetchLockedCollectionRoots(results) {
+    this.state.lockedRoots = results.collections;
   }
 
   handleFetchUnsharedCollectionRoots(results) {

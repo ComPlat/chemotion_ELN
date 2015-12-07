@@ -12,10 +12,18 @@ class Collection < ActiveRecord::Base
   has_many :wellplates, through: :collections_wellplates, dependent: :destroy
   has_many :screens, through: :collections_screens, dependent: :destroy
 
+  # A collection is locked if it is not allowed to rename or rearrange it
+  scope :unlocked, -> { where(is_locked: false) }
+  scope :locked, -> { where(is_locked: true) }
+
+  # A collection is for_publication if it has the 'chemotion.net' label. In this collection
+  # are elements which maybe shared on chemotion.net
+  scope :for_publication, -> { where(label: 'chemotion.net') }
+
   scope :ordered, -> { order("position ASC") }
-  scope :unshared, -> { where(is_shared: false) }
-  scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
-  scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
+  scope :unshared, -> { unlocked.where(is_shared: false) }
+  scope :shared, ->(user_id) { unlocked.where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  scope :remote, ->(user_id) { unlocked.where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
   scope :belongs_to_or_shared_by, ->(user_id) { where("user_id = ? OR shared_by_id = ?", user_id, user_id) }
 
   default_scope { ordered }

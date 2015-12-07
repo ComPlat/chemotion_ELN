@@ -18,7 +18,7 @@ describe Chemotion::CollectionAPI do
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
 
     before do
-      allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
     end
 
     describe 'POST /api/v1/collections/take_ownership' do

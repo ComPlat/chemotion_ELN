@@ -58,7 +58,7 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   collectionEntries() {
-    let collections = this.state.collection_state.unsharedRoots
+    let collections = this.state.collection_state.unsharedRoots.concat(this.state.collection_state.lockedRoots);
     return this.collectionEntriesMap(collections);
   }
 

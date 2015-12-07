@@ -1,5 +1,3 @@
-require_relative './authentication'
-
 class API < Grape::API
   prefix 'api'
   version 'v1'
@@ -10,16 +8,20 @@ class API < Grape::API
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
     def current_user
-      @current_user = Authentication.new(env).current_user
+      @current_user = WardenAuthentication.new(env).current_user
     end
 
     def authenticate!
       error!('401 Unauthorized', 401) unless current_user
     end
+
+    def is_public_request?
+      request.path.include?('/api/v1/public/')
+    end
   end
 
   before do
-    authenticate!
+    authenticate! unless is_public_request?
   end
 
   mount Chemotion::MoleculeAPI
@@ -35,4 +37,5 @@ class API < Grape::API
   mount Chemotion::SearchAPI
   mount Chemotion::ReportAPI
   mount Chemotion::AttachmentAPI
+  mount Chemotion::PublicAPI
 end

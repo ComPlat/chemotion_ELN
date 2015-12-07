@@ -11,11 +11,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151118090203) do
+ActiveRecord::Schema.define(version: 20151203092316) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "pg_trgm"
+
+  create_table "authentication_keys", force: :cascade do |t|
+    t.string "token", null: false
+  end
 
   create_table "collections", force: :cascade do |t|
     t.integer  "user_id",                                null: false
@@ -31,6 +35,7 @@ ActiveRecord::Schema.define(version: 20151118090203) do
     t.datetime "updated_at",                             null: false
     t.integer  "position"
     t.integer  "screen_detail_level",    default: 10
+    t.boolean  "is_locked",              default: false
   end
 
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree

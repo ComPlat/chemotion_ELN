@@ -9,7 +9,7 @@
 #     let!(:l2)    { create(:literature, reaction_id: r1.id)}
 #
 #     before do
-#       allow_any_instance_of(Authentication).to receive(:current_user).and_return(user)
+#       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
 #     end
 #
 #     describe 'GET /api/v1/literatures' do
