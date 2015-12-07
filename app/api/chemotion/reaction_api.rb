@@ -178,6 +178,7 @@ module Chemotion
         reaction = Reaction.create(attributes)
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
+        CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
 
         if reaction
           ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)

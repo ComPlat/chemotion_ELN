@@ -120,13 +120,20 @@ export default class ManagingActions extends React.Component {
   isDisabled() {
     const {currentCollection} = this.state;
     if(currentCollection) {
-      return currentCollection.id == 'all' || currentCollection.is_shared == true;
+      return currentCollection.label == 'All' || currentCollection.is_shared == true;
+    }
+  }
+
+  isAssignButtonDisabled() {
+    const {currentCollection} = this.state;
+    if(currentCollection) {
+      return currentCollection.is_shared == true;
     }
   }
 
   isShareButtonDisabled() {
     const {currentCollection} = this.state;
-    let in_all_collection = (currentCollection) ? currentCollection.id == 'all' : false
+    let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
     return in_all_collection || this.state.sharing_allowed == false;
   }
 
@@ -138,7 +145,7 @@ export default class ManagingActions extends React.Component {
     if(this.state.currentCollection) {
       let currentCollection = this.state.currentCollection;
 
-      return currentCollection.id == 'all' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
+      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
     }
   }
 
@@ -209,7 +216,7 @@ export default class ManagingActions extends React.Component {
       <div style={{display: 'inline', float: 'left', marginRight: 10}}>
         <ButtonGroup>
           <MoveButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('move')}/>
-          <AssignButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('assign')}/>
+          <AssignButton isDisabled={this.isAssignButtonDisabled()} onClick={() => this.handleButtonClick('assign')}/>
           <RemoveButton isDisabled={this.isRemoteDisabled()} onClick={() => this.handleButtonClick('remove')}/>
           <DeleteButton isDisabled={this.isDeleteButtonDisabled()} onClick={() => this.handleButtonClick('delete')}/>
           <ShareButton isDisabled={this.isShareButtonDisabled()} onClick={() => this.handleButtonClick('share')}/>

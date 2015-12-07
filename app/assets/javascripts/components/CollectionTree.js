@@ -101,17 +101,8 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    //Fake All-Collection
-    let allCollection = {
-      label: 'All',
-      id: 'all',
-      children: [],
-      descendant_ids: []
-    };
-
     return (
       <div>
-        <CollectionSubtree key='all' root={allCollection}/>
         <div className="tree-wrapper">
           {this.lockedSubtrees()}
           {this.unsharedSubtrees()}

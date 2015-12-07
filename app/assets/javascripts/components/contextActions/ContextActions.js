@@ -31,7 +31,7 @@ export default class ContextActions extends React.Component {
 
   isAllCollection() {
     const {currentCollection} = this.state.uiState;
-    return currentCollection && currentCollection.id == 'all';
+    return currentCollection && currentCollection.label == 'All';
   }
 
   noSampleSelected() {

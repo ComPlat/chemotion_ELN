@@ -101,6 +101,7 @@ module Chemotion
 
         collection = Collection.find(params[:collection_id])
         CollectionsScreen.create(screen: screen, collection: collection)
+        CollectionsScreen.create(screen: screen, collection: Collection.get_all_collection_for_user(current_user.id))
 
         params[:wellplate_ids].each do |id|
           ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: screen.id)

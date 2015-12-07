@@ -28,6 +28,10 @@ class Collection < ActiveRecord::Base
 
   default_scope { ordered }
 
+  def self.get_all_collection_for_user(user_id)
+    where(user_id: user_id, label: 'All').first
+  end
+
   def self.bulk_update(user_id, collection_attributes, deleted_ids)
     ActiveRecord::Base.transaction do
       update_or_create(user_id, collection_attributes)

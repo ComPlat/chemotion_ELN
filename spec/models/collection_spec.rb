@@ -46,6 +46,16 @@ RSpec.describe Collection, type: :model do
     end
   end
 
+  describe 'get_all_collection_for_user' do
+    let(:user) { create(:user) }
+
+    it 'returns the users all collection' do
+      all_collection = Collection.get_all_collection_for_user(user.id)
+      expect(all_collection).to be_present
+      expect(all_collection.label).to eq 'All'
+    end
+  end
+
   describe 'bulk_update' do
     let(:c1) { create(:collection) }
     let(:c2) { create(:collection, parent: c1) }

@@ -2,6 +2,13 @@ module Chemotion
   class CollectionAPI < Grape::API
     resource :collections do
 
+      namespace :all do
+        desc "Return the 'All' collection of the current user"
+        get do
+          Collection.get_all_collection_for_user(current_user.id)
+        end
+      end
+      
       desc "Return collection by id"
       params do
         requires :id, type: Integer, desc: "Collection id"
@@ -30,7 +37,7 @@ module Chemotion
 
       desc "Return all locked serialized collection roots of current user"
       get :locked do
-        current_user.collections.locked.roots
+        current_user.collections.locked.roots.order('label ASC')
       end
 
       desc "Return all unshared serialized collection roots of current user"

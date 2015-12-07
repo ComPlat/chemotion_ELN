@@ -267,11 +267,12 @@ module Chemotion
         attributes.merge!(
           molecule_attributes: params[:molecule]
         ) unless params[:molecule].blank?
-
+        
         sample = Sample.create(attributes)
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)
           CollectionsSample.create(sample: sample, collection: collection)
+          CollectionsSample.create(sample: sample, collection: Collection.get_all_collection_for_user(current_user.id))
         end
         sample
       end

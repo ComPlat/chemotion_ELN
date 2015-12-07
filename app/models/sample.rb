@@ -79,7 +79,6 @@ class Sample < ActiveRecord::Base
     elsif
       self.short_label ||= 'NEW'
     end
-
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
@@ -113,9 +112,7 @@ class Sample < ActiveRecord::Base
     end
   end
 
-
   # -- fake analyes
-
   def analyses
     unless analyses_dump.blank?
       JSON.parse(analyses_dump)
@@ -128,5 +125,4 @@ class Sample < ActiveRecord::Base
     json_dump = JSON.dump(analyses)
     self.analyses_dump = json_dump
   end
-
 end

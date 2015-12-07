@@ -15,7 +15,7 @@ module Chemotion
           end
         end
         post do
-          Usecases::Wellplates::BulkCreate.new(params).execute!
+          Usecases::Wellplates::BulkCreate.new(params, current_user.id).execute!
           body false
         end
       end
@@ -133,7 +133,7 @@ module Chemotion
         optional :collection_id, type: Integer
       end
       post do
-        Usecases::Wellplates::Create.new(params).execute!
+        Usecases::Wellplates::Create.new(params, current_user.id).execute!
       end
 
       namespace :ui_state do

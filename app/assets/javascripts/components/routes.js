@@ -21,7 +21,13 @@ export default function() {
           let uiState = UIStore.getState();
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];
-          let collectionPromise = CollectionStore.findById(collectionId);
+          let collectionPromise = null;
+
+          if(collectionId == 'all') {
+            collectionPromise = CollectionStore.findAllCollection();
+          } else {
+            collectionPromise = CollectionStore.findById(collectionId);
+          }
 
           collectionPromise.then((result) => {
             let collection = result.collection;
