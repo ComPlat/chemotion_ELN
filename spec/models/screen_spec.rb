@@ -24,5 +24,10 @@ RSpec.describe Screen, type: :model do
       expect(collection.collections_screens).to eq []
       expect(wellplate.screens_wellplates).to eq []
     end
+
+    it 'only soft deletes screen and associated wellplates' do
+      expect(Screen.with_deleted).to eq [screen]
+      expect(Wellplate.with_deleted).to eq [wellplate]
+    end
   end
 end

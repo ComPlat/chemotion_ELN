@@ -1,7 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe Sample, type: :model do
-
   describe 'creation' do
     let(:sample) { create(:sample) }
 
@@ -33,6 +32,10 @@ RSpec.describe Sample, type: :model do
       expect(reaction_2.reactions_reactant_samples).to eq []
       expect(reaction_2.reactions_product_samples).to eq []
       expect(wellplate.wells).to eq []
+    end
+
+    it 'only soft deletes sample' do
+      expect(Sample.with_deleted).to eq [sample]
     end
   end
 

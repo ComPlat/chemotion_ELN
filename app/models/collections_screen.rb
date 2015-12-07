@@ -1,4 +1,5 @@
 class CollectionsScreen < ActiveRecord::Base
+  acts_as_paranoid
   belongs_to :collection
   belongs_to :screen
 

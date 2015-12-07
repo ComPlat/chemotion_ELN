@@ -30,5 +30,10 @@ RSpec.describe Reaction, type: :model do
       expect(sample.reactions_starting_material_samples).to eq []
       expect(Literature.count).to eq 0
     end
+
+    it 'only soft deletes reaction and associated samples' do
+      expect(Reaction.with_deleted).to eq [reaction]
+      expect(Sample.with_deleted).to eq [sample]
+    end
   end
 end

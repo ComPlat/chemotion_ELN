@@ -1,4 +1,5 @@
 class CollectionsWellplate < ActiveRecord::Base
+  acts_as_paranoid
   belongs_to :collection
   belongs_to :wellplate
   validate :collection_wellplate_id_uniqueness

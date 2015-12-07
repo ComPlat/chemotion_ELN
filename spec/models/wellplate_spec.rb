@@ -12,7 +12,8 @@ RSpec.describe Wellplate, type: :model do
   describe 'deletion' do
     let(:screen)     { create(:screen) }
     let(:wellplate)  { create(:wellplate) }
-    let(:well)       { create(:well, wellplate: wellplate) }
+    let(:sample)     { create(:sample) }
+    let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
     let(:collection) { create(:collection) }
 
     before do
@@ -25,6 +26,11 @@ RSpec.describe Wellplate, type: :model do
       expect(collection.collections_wellplates).to eq []
       expect(screen.screens_wellplates).to eq []
       expect(Well.count).to eq 0
+    end
+
+    it 'only soft deletes wellplate and associated sample' do
+      expect(Wellplate.with_deleted).to eq [wellplate]
+      expect(Sample.with_deleted).to eq [sample]
     end
   end
 end

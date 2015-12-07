@@ -1,4 +1,5 @@
 class Sample < ActiveRecord::Base
+  acts_as_paranoid
   include ElementUIStateScopes
   include PgSearch
   include Collectable
