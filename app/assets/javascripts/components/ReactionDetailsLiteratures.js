@@ -32,7 +32,7 @@ export default class ReactionDetailsLiteratures extends Component {
         <tr key={key}>
           <td className="padding-right">{literature.title}</td>
           <td className="padding-right">
-            <a href={literature.url} target="_blank">{literature.url}</a>
+            <a href={this.literatureUrl(literature)} target="_blank">{literature.url}</a>
           </td>
           <td>
             {this.removeButton(literature)}
@@ -40,6 +40,15 @@ export default class ReactionDetailsLiteratures extends Component {
         </tr>
       )
     });
+  }
+
+  literatureUrl(literature) {
+    const { url } = literature;
+    if(url.includes("http://")) {
+      return url;
+    } else {
+      return `//${url}`;
+    }
   }
 
   render() {
