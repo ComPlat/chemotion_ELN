@@ -116,7 +116,8 @@ module Chemotion
           if tempfile = file.tempfile
             begin
               upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
-              p "move tempfile from #{tempfile.path} to #{upload_path}"
+              upload_dir = File.join('uploads', 'attachments')
+              FileUtils.mkdir_p(upload_dir) unless Dir.exist?(upload_dir)
               FileUtils.cp(tempfile.path, upload_path)
               thumbnail_path = Thumbnailer.create(upload_path)
               FileUtils.mv(thumbnail_path, File.join('uploads', 'thumbnails', "#{file_id}.png"))
@@ -267,7 +268,7 @@ module Chemotion
         attributes.merge!(
           molecule_attributes: params[:molecule]
         ) unless params[:molecule].blank?
-        
+
         sample = Sample.create(attributes)
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)
