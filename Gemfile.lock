@@ -221,6 +221,8 @@ GEM
     nokogiri (1.6.6.2)
       mini_portile (~> 0.6.0)
     orm_adapter (0.5.0)
+    paranoia (2.1.4)
+      activerecord (~> 4.0)
     pg (0.18.3)
     pg_search (1.0.5)
       activerecord (>= 3.1)
@@ -396,6 +398,7 @@ DEPENDENCIES
   mailcatcher
   nokogiri
   openbabel (= 2.3.2.1)!
+  paranoia (~> 2.0)
   pg
   pg_search
   pundit

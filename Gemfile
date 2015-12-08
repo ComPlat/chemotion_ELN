@@ -67,6 +67,9 @@ gem 'daemons'
 # dataset previews
 gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
 
+# data integrity
+gem "paranoia", "~> 2.0"
+
 group :production do
   if ENV["RAILS_ENV"] == "production"
     gem 'openbabel'
