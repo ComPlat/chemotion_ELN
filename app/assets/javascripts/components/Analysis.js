@@ -91,7 +91,7 @@ export default class Analysis extends Component {
             />
           </div>
         </Col>
-        <Col md={8}>
+        <Col md={12}>
           <Input
             type="textarea"
             label="Content"
@@ -107,7 +107,7 @@ export default class Analysis extends Component {
             onChange={event => this.handleInputChange('description', event)}
             />
         </Col>
-        <Col md={4}>
+        <Col md={12}>
           <label>Datasets</label>
           <AnalysisDatasets
             analysis={analysis}

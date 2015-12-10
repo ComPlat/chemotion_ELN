@@ -82,20 +82,20 @@ export default class AnalysisDatasets extends Component {
     if(analysis.datasets.length > 0) {
       return (
         <div>
-          <Well style={{minHeight: 148, paddingBottom: 46}}>
+          <Well style={{minHeight: 70, padding: 5, paddingBottom: 31}}>
             <ListGroup style={{marginBottom: 0}}>
               {analysis.datasets.map((dataset, key) => {
                 return (
                   <ListGroupItem key={key}>
-                    <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset)}>{dataset.name}</a>
-                    <span className="pull-right">
-                      <ButtonToolbar>
-                        <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
-                          <i className="fa fa-download"></i>
-                        </Button>
-                        {this.removeButton(dataset)}
-                      </ButtonToolbar>
-                    </span>
+                    <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset)}>
+                      {dataset.name}
+                    </a>
+                    <ButtonToolbar className="pull-right">
+                      <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
+                        <i className="fa fa-download"></i>
+                      </Button>
+                      {this.removeButton(dataset)}
+                    </ButtonToolbar>
                   </ListGroupItem>
                 )
               })}
@@ -114,7 +114,7 @@ export default class AnalysisDatasets extends Component {
     } else {
       return(
         <div>
-          <Well style={{minHeight: 148}}>
+          <Well style={{minHeight: 70, padding: 10}}>
             There are currently no Datasets.<br/>
             {this.addButton()}
           </Well>
