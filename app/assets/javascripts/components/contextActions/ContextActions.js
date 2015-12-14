@@ -36,7 +36,7 @@ export default class ContextActions extends React.Component {
 
   noSampleSelected() {
     const {sample} = this.state.uiState;
-    return sample.checkedIds.size == 0;
+    return sample.checkedIds.size == 0 && sample.checkedAll == false;
   }
 
   render() {
