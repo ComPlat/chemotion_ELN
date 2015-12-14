@@ -2,6 +2,7 @@ import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
 import {Button, Input, DropdownButton, MenuItem} from 'react-bootstrap';
+import Select from 'react-select'
 
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
 import SuggestionActions from '../actions/SuggestionActions';
@@ -14,7 +15,6 @@ import UserStore from '../stores/UserStore';
 export default class Search extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
       elementType: 'all'
     }
@@ -76,11 +76,13 @@ export default class Search extends React.Component {
     let suggestionsAttributes = {
       style: {
         marginTop: 15,
-        width: 400
+        width: 400,
+        height: 400,
+        overflow: 'scroll'
       }
     };
 
-    let innerDropdown = 
+    let innerDropdown =
       <DropdownButton title={this.state.elementType} style={{width:'100px'}}>
         {this.renderMenuItems()}
       </DropdownButton>

@@ -155,7 +155,9 @@ export default class AutoCompleteInput extends React.Component {
       valueBeforeFocus: null
     });
 
-    let selection = this.state.value == suggestions[suggestionFocus].name ? suggestions[suggestionFocus] : {name: this.state.value, search_by_method: 'substring'};
+    let selection = (this.state.value == suggestions[suggestionFocus].name)
+      ? suggestions[suggestionFocus]
+      : {name: this.state.value, search_by_method: 'substring'};
 
     onSelectionChange(selection);
   }
@@ -172,16 +174,29 @@ export default class AutoCompleteInput extends React.Component {
 
   renderSuggestions() {
     let {suggestions, error} = this.state;
+    let types = {
+      iupac_name: {icon: 'icon-sample', label: 'Molecule'},
+      sample_name: {icon: 'icon-sample', label: 'Sample'},
+      reaction_name: {icon: 'icon-reaction', label: 'Reaction'},
+      wellplate_name: {icon: 'icon-wellplate', label: 'Wellplate'},
+      screen_name: {icon: 'icon-screen', label: 'Screen'},
+      requirements: {icon: 'icon-screen', label: 'Requirement'},
+      conditions: {icon: 'icon-screen', label: 'Condition'},
+    }
     if(suggestions) {
       return (
         <div>
           {suggestions.map((suggestion, index) => {
-            return ( <ListGroupItem onClick={() => this.selectSuggestion()}
-                                    onMouseEnter={() => this.focusSuggestion(index)}
-                                    key={'suggestion_' + index}
-                                    ref={'suggestion_' + index}
-                                    header={suggestion.name}>
-                {suggestion.type}
+            let suggestionType = types[suggestion.search_by_method]
+            return (
+              <ListGroupItem
+                onClick={() => this.selectSuggestion()}
+                onMouseEnter={() => this.focusSuggestion(index)}
+                key={'suggestion_' + index}
+                ref={'suggestion_' + index}
+              >
+                <i className={suggestionType.icon} style={{marginRight: 2}}></i>
+                {suggestion.name}
               </ListGroupItem>
             );
           })}
@@ -215,7 +230,7 @@ export default class AutoCompleteInput extends React.Component {
           onChange={event => this.handleValueChange(event)}
           onKeyDown={event => this.handleKeyDown(event)}
           buttonBefore={this.props.buttonBefore}
-          />
+        />
         <Overlay
           show={showSuggestions}
           onHide={() => this.abortAutoSelection()}
