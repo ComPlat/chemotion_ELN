@@ -2,6 +2,10 @@ import Element from './Element';
 import Dataset from './Dataset';
 
 export default class Analysis extends Element {
+  isMethodDisabled(m) {
+    return this[m] == undefined
+  }
+
   static buildEmpty() {
     return new Analysis({
       name: 'new Analysis',

@@ -34,10 +34,8 @@ export default class SampleDetailsAnalyses extends Component {
   }
 
   handleRemove(analysis) {
-    const {sample} = this.state;
-    // sample.removeAnalysis(analysis)
-    const analysisId = sample.analyses.indexOf(analysis);
-    sample.analyses.splice(analysisId, 1);
+    let {sample} = this.state;
+    sample.removeAnalysis(analysis);
     this.props.onSampleChanged(sample);
   }
 
@@ -67,7 +65,7 @@ export default class SampleDetailsAnalyses extends Component {
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
             {sample.analyses.map((analysis, key) => {
               return (
-                <Panel header={analysis.name || " "} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
+                <Panel header={analysis.name || '***'} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
                   <AnalysisComponent
                     readOnly={readOnly}
                     analysis={analysis}

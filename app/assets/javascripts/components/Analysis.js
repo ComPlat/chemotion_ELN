@@ -12,6 +12,12 @@ export default class Analysis extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      analysis: nextProps.analysis
+    });
+  }
+  
   handleInputChange(type, event) {
     const {analysis} = this.state;
     const {value} = event.target;
@@ -52,7 +58,7 @@ export default class Analysis extends Component {
           <Input
             type="text"
             label="Name"
-            value={analysis.name}
+            value={analysis.name || '***'}
             onChange={event => this.handleInputChange('name', event)}
             disabled={readOnly || analysis.isMethodDisabled('name')}
             />
