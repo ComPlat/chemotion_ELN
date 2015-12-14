@@ -117,7 +117,9 @@ module Chemotion
             begin
               upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
               upload_dir = File.join('uploads', 'attachments')
+              thumbnail_dir = File.join('uploads', 'thumbnails')
               FileUtils.mkdir_p(upload_dir) unless Dir.exist?(upload_dir)
+              FileUtils.mkdir_p(thumbnail_dir) unless Dir.exist?(thumbnail_dir)
               FileUtils.cp(tempfile.path, upload_path)
               thumbnail_path = Thumbnailer.create(upload_path)
               FileUtils.mv(thumbnail_path, File.join('uploads', 'thumbnails', "#{file_id}.png"))
