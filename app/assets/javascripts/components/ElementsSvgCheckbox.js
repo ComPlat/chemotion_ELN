@@ -15,7 +15,7 @@ export default class ElementsSvgCheckbox extends Component {
       checked: nextProps.checked
     })
   }
-  
+
 
   toggleCheckbox() {
     const {checked} = this.state;
@@ -25,9 +25,9 @@ export default class ElementsSvgCheckbox extends Component {
 
   render() {
     return (
-      <div style={{textAlign:'right', paddingTop: 3}}>
+      <div style={{paddingTop: 3, marginBottom: 33}}>
         <Input label="Show Previews" type="checkbox" onChange={() => this.toggleCheckbox()} checked={this.state.checked}/>
       </div>
-  );
+    );
   }
 }
