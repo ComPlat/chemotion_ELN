@@ -168,7 +168,7 @@ export default class ElementsTableEntries extends Component {
         return (
           <tr key={index} style={style}>
             <td>
-              <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
+            <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
             </td>
             <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
               {element.title()}&nbsp;

@@ -24,10 +24,6 @@ export default class ElementsSvgCheckbox extends Component {
   }
 
   render() {
-    return (
-      <div style={{paddingTop: 3, marginBottom: 33}}>
-        <Input label="Show Previews" type="checkbox" onChange={() => this.toggleCheckbox()} checked={this.state.checked}/>
-      </div>
-    );
+    return <Input label="Show Previews" type="checkbox" onChange={() => this.toggleCheckbox()} checked={this.state.checked}/>
   }
 }

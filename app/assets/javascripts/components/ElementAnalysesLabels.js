@@ -11,8 +11,8 @@ export default class ElementAnalysesLabels extends React.Component {
 
   render() {
     return (
-      <div>
-        {this.confirmedAnalysesLabels(this.state.element)} <br/>
+      <div style={{display: 'inline-block'}}>
+        {this.confirmedAnalysesLabels(this.state.element)}
         {this.unconfirmedAnalysesLabels(this.state.element)}
       </div>
     );

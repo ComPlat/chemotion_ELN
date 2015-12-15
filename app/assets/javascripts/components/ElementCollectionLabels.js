@@ -58,7 +58,7 @@ export default class ElementCollectionLabels extends React.Component {
       let sharedTitle = shared_labels.length > 1 ? 'Shared Collections' : 'Shared Collection';
 
       return (
-        <div>
+        <div style={{display: 'inline-block'}}>
           {this.labelWithPopover(unsharedTitle, labels)}
           {this.labelWithPopover(sharedTitle, shared_labels)}
         </div>
