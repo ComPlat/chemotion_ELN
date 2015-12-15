@@ -11,7 +11,9 @@ export default class Well extends Element {
   }
 
   set sample(sample) {
-    this._sample = sample;
+    if(sample) {
+      this._sample = new Sample(sample);
+    }
   }
 
   get sample() {

@@ -82,7 +82,6 @@ export default class WellplateDetails extends Component {
   render() {
     const {wellplate, activeTab, showWellplate} = this.state;
     const {wells, name, size, description} = wellplate;
-
     const submitLabel = wellplate.isNew ? "Create" : "Save";
 
     const properties = {
