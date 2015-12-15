@@ -18,8 +18,7 @@ module Chemotion
           Screen.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
 
-        scope = Kaminari.paginate_array(scope.map{|s| ElementPermissionProxy.new(current_user, s).serialized})
-        paginate(scope)
+        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
       end
 
       desc "Return serialized screen by id"

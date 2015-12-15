@@ -90,8 +90,7 @@ module Chemotion
           Sample.for_user(current_user.id).includes(:molecule).uniq
         end.order("created_at DESC")
 
-        scope = Kaminari.paginate_array(scope.map{|s| ElementPermissionProxy.new(current_user, s).serialized})
-        paginate(scope)
+        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
       end
 
       desc "Return serialized sample by id"
