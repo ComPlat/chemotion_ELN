@@ -38,7 +38,7 @@ class UIStore {
         page: 1
       },
       showPreviews: true,
-      number_of_results: 7,
+      number_of_results: 15,
       currentCollection: null,
       currentCollectionId: null,
       currentTab: 1,
@@ -156,7 +156,7 @@ class UIStore {
       // FIXME why both?
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;
-      this.state.number_of_results = 7;
+      this.state.number_of_results = 15;
 
       ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
       ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);

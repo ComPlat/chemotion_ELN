@@ -8,8 +8,8 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
+import ElementsTableSampleEntries from './ElementsTableSampleEntries'
 import ElementsSvgCheckbox from './ElementsSvgCheckbox';
-
 import deepEqual from 'deep-equal';
 
 export default class ElementsTable extends React.Component {
@@ -112,7 +112,7 @@ export default class ElementsTable extends React.Component {
         next
         first
         last
-        maxButtons={10}
+        maxButtons={3}
         activePage={page}
         items={pages}
         bsSize="small"
@@ -123,8 +123,12 @@ export default class ElementsTable extends React.Component {
   previewCheckbox() {
     const {ui} = this.state;
     const {type} = this.props;
-    if(type == 'sample' || type == 'reaction' ) {
-      return <ElementsSvgCheckbox checked={ui.showPreviews}/>
+    if(type == 'reaction' ) {
+      return (
+        <div style={{float: 'right'}}>
+          <ElementsSvgCheckbox checked={ui.showPreviews}/>
+        </div>
+      )
     }
   }
 
@@ -142,29 +146,63 @@ export default class ElementsTable extends React.Component {
     );
   }
 
-  render() {
-    const {elements, ui, currentElement} = this.state;
-    const {overview} = this.props;
-    return (
-      <div>
+  renderEntries() {
+    const {elements, ui, currentElement} = this.state
+    const {overview, type} = this.props
+    if(type == 'sample') {
+      return (
+        <div>
+          <Table className="elements" bordered hover style={{marginBottom: 0}}>
+            <thead>
+              <th className="check">
+                <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
+              </th>
+              <th colSpan={3}>
+                All {type}s
+              </th>
+            </thead>
+          </Table>
+          <ElementsTableSampleEntries
+            elements={elements}
+            currentElement={currentElement}
+            showDragColumn={!overview}
+            ui={ui}
+          />
+        </div>
+      )
+    } else {
+      return (
         <Table className="elements" bordered hover>
           <thead>
             <th className="check">
               <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
             </th>
             <th colSpan={3}>
-              All {this.props.type}s
+              All {type}s
             </th>
           </thead>
-          <ElementsTableEntries elements={elements} currentElement={currentElement} showDragColumn={!overview} ui={ui}/>
+          <ElementsTableEntries
+            elements={elements}
+            currentElement={currentElement}
+            showDragColumn={!overview}
+            ui={ui}
+          />
         </Table>
+      )
+    }
+  }
+
+  render() {
+    const {elements, ui, currentElement} = this.state
+    const {overview, type} = this.props
+    return (
+      <div>
+        {this.renderEntries()}
         {this.pagination()}
-        <table width="100%">
-          <tr>
-            <td width="70%">{this.previewCheckbox()}</td>
-            <td width="30%">{this.numberOfResultsInput()}</td>
-          </tr>
-        </table>
+        <div style={{float: 'right', paddingTop: 4}}>
+          {this.numberOfResultsInput()}
+          {this.previewCheckbox()}
+        </div>
       </div>
     );
   }
