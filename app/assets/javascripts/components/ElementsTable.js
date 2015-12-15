@@ -69,7 +69,7 @@ export default class ElementsTable extends React.Component {
   onChange(state) {
     let type = this.props.type + 's';
     let elementsState = state.elements[type];
-    
+
     const {elements, page, pages, perPage, totalElements} = elementsState;
 
     let currentElement;
@@ -135,7 +135,7 @@ export default class ElementsTable extends React.Component {
     ElementActions.refreshElements(type)
   }
 
-  numberOfResultsDropdown() {
+  numberOfResultsInput() {
     let {ui} = this.state
     return (
       <Input className="number-shown-select" onChange={event => this.handleNumberOfResultsChange(event)} label="Show:" type="text" bsSize="small" value={ui.number_of_results} />
@@ -158,13 +158,13 @@ export default class ElementsTable extends React.Component {
           </thead>
           <ElementsTableEntries elements={elements} currentElement={currentElement} showDragColumn={!overview} ui={ui}/>
         </Table>
+        {this.pagination()}
         <table width="100%">
           <tr>
-            <td width="70%">{this.pagination()}</td>
-            <td width="30%">{this.numberOfResultsDropdown()}</td>
+            <td width="70%">{this.previewCheckbox()}</td>
+            <td width="30%">{this.numberOfResultsInput()}</td>
           </tr>
         </table>
-        {this.previewCheckbox()}
       </div>
     );
   }
