@@ -2,8 +2,6 @@ import Element from './Element';
 import Molecule from './Molecule';
 import Analysis from './Analysis';
 import _ from 'lodash';
-import AnalysisPermissionProxy from '../proxies/AnalysisPermissionProxy';
-
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 
@@ -436,7 +434,7 @@ export default class Sample extends Element {
   // -- Analyses --
 
   get analyses() {
-    return (this._analyses || []).map(a => new AnalysisPermissionProxy(a, this));
+    return (this._analyses || []).map(a => new Analysis(a));
   }
 
   set analyses(analyses) {
@@ -449,11 +447,17 @@ export default class Sample extends Element {
     this.analyses = analyses;
   }
 
+  removeAnalysis(analysis) {
+    let analyses = this.analyses;
+    _.remove(analyses, (a) => { return a.id == analysis.id});
+    this.analyses = analyses;
+  }
+
   updateAnalysis(changedAnalysis) {
-    this._analyses.find(analysis => {
+    this.analyses.find(analysis => {
       if(analysis.id == changedAnalysis.id) {
-        const analysisId = this.analyses.indexOf(analysis);
-        this.analyses[analysisId] = changedAnalysis;
+        const analysisPosition = _.findIndex(this.analyses, (a) => { return a.id == analysis.id});
+        this._analyses[analysisPosition] = changedAnalysis;
       }
     });
   }
