@@ -70,6 +70,8 @@ gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
 # data integrity
 gem "paranoia", "~> 2.0"
 
+gem "whenever", require: false
+
 group :production do
   if ENV["RAILS_ENV"] == "production"
     gem 'openbabel'
