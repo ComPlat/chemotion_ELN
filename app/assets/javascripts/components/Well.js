@@ -10,7 +10,7 @@ export default class Well extends Component {
       const svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
       return (
         <div>
-          <SVG className={className} src={svgPath}/>
+          <SVG className={className} key={sample.id} src={svgPath}/>
         </div>
       );
     } else {
