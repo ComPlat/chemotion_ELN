@@ -4,13 +4,10 @@ import SVG from 'react-inlinesvg';
 
 export default class WellplateList extends Component {
   handleReadoutOfWellChange(event, well) {
-    const readout = event.target.value;
+    const value = event.target.value;
     const {wells, handleWellsChange} = this.props;
     const wellId = wells.indexOf(well);
-    wells[wellId] = {
-      ...well,
-      readout
-    };
+    wells[wellId].readout = value
     handleWellsChange(wells);
   }
 
@@ -18,13 +15,17 @@ export default class WellplateList extends Component {
     const {wells} = this.props;
     return (
       <div>
-        <Table bordered hover>
-          <th width="5%">#</th>
-          <th width="5%">Position</th>
-          <th width="20%">Name</th>
-          <th width="20%">Sum-Formula</th>
-          <th width="20%">Molecule</th>
-          <th width="30%">Readout</th>
+        <Table bordered hover condensed>
+          <thead>
+            <th width="3%">#</th>
+            <th width="5%">Position</th>
+            <th width="5%">Molecule</th>
+            <th width="22%">Name</th>
+            <th width="15%">Sum-Formula</th>
+            <th width="25%">Readout</th>
+            <th width="25%">Imported Readout</th>
+          </thead>
+          <tbody>
           {wells.map((well, key) => {
             const id = key + 1;
             const {sample, position, readout} = well;
@@ -32,46 +33,52 @@ export default class WellplateList extends Component {
             const positionY = alphabet[position.y-1];
             const positions = positionY + position.x;
             let svgPath = '';
-            let name = '';
+            let sampleName = '';
             let sum_formular = '';
+            let importedReadout = ''
             let svgNode = '';
             const style = {
-              position: 'absolute',
-              height: '100%',
-              width: '100%',
-              left: 0,
-              top: 0
+              resize: 'none',
+              height: 66,
             };
             const inputContainerStyle = {
-              position: 'relative',
-              height: 0,
-              width: '100%',
-              padding: 0,
-              paddingBottom: '5%'
+              padding: 0
             };
             if (sample) {
               svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
-              svgNode = <SVG className="molecule-mid" src={svgPath}/>;
-              name = sample.name;
+              svgNode = <SVG className="molecule-small" src={svgPath}/>;
+              let {name, external_label, short_label, imported_readout} = sample
+              sampleName = `${name || ""} ${external_label || ""} ${short_label || ""}`
+              importedReadout = imported_readout
               sum_formular = sample.molecule.sum_formular;
-              inputContainerStyle.paddingBottom = '20%'
             }
             return <tr key={key}>
               <td>{id}</td>
               <td>{positions}</td>
-              <td>{name}</td>
-              <td>{sum_formular}</td>
               <td>{svgNode}</td>
+              <td>{sampleName}</td>
+              <td>{sum_formular}</td>
               <td style={inputContainerStyle}>
                 <Input
                   type="textarea"
                   style={style}
                   value={readout}
                   onChange={event => this.handleReadoutOfWellChange(event, well)}
-                  />
+                  groupClassName="no-margin"
+                />
+              </td>
+              <td style={inputContainerStyle}>
+                <Input
+                  type="textarea"
+                  style={style}
+                  value={importedReadout}
+                  disabled
+                  groupClassName="no-margin"
+                />
               </td>
             </tr>
           })}
+        </tbody>
         </Table>
       </div>
     );
