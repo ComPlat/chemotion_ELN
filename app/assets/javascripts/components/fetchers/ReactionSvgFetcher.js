@@ -23,17 +23,4 @@ export default class ReactionSvgFetcher {
 
     return promise;
   }
-
-  static fetchByReactionId(reaction_id) {
-    let promise = fetch('/api/v1/reaction_svg?reaction_id=' + reaction_id, {
-      credentials: 'same-origin'
-    }).then(response => {
-      return response.json()
-    })
-      .catch(errorMessage => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
 }

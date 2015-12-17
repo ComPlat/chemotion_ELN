@@ -64,7 +64,6 @@ class ElementStore {
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
       handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
-      handleFetchReactionSvgByReactionId: ElementActions.fetchReactionSvgByReactionId,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples: ElementActions.bulkCreateWellplatesFromSamples,
@@ -317,10 +316,6 @@ class ElementStore {
   // -- Reactions SVGs --
 
   handleFetchReactionSvgByMaterialsInchikeys(result) {
-    this.state.currentElement.reaction_svg_file = result;
-  }
-
-  handleFetchReactionSvgByReactionId(result) {
     this.state.currentElement.reaction_svg_file = result;
   }
 
