@@ -189,13 +189,11 @@ describe Chemotion::SampleAPI do
 
     # not permission related endpoints
     describe 'GET /api/v1/samples' do
-      let!(:c1)   { create(:collection, label: 'C1', user: user, is_shared: false) }
-      let(:s1)    { create(:sample) }
-      let(:s2)    { create(:sample) }
+      let!(:c) { create(:collection, label: 'C1', user: user, is_shared: false) }
+      let(:s)  { create(:sample) }
 
       before do
-        CollectionsSample.create!(sample: s1, collection: c1)
-        CollectionsSample.create!(sample: s2, collection: c1)
+        CollectionsSample.create!(sample: s, collection: c)
       end
 
       it 'returns serialized (unshared) samples roots of logged in user' do
@@ -203,14 +201,8 @@ describe Chemotion::SampleAPI do
 
         samples = JSON.parse(response.body)['samples']
         expect(samples.first.symbolize_keys).to include(
-          id: s2.id,
-          name: s2.name,
-          type: 'sample',
-          collection_labels: [{"name" => 'C1', "is_shared" => false}]
-        )
-        expect(samples.last.symbolize_keys).to include(
-          id: s1.id,
-          name: s1.name,
+          id: s.id,
+          name: s.name,
           type: 'sample',
           collection_labels: [{"name" => 'C1', "is_shared" => false}]
         )

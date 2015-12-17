@@ -177,16 +177,6 @@ class ElementActions {
       });
   }
 
-  fetchReactionSvgByReactionId(reaction_id){
-    ReactionSvgFetcher.fetchByReactionId(reaction_id)
-      .then((result) => {
-        this.dispatch(result.reaction_svg);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-  }
-
-
   // -- Wellplates --
 
   bulkCreateWellplatesFromSamples(params) {
