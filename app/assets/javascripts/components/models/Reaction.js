@@ -130,8 +130,7 @@ export default class Reaction extends Element {
     return [...this.starting_materials, ...this.reactants, ...this.products]
   }
 
-  static copyFromReactionAndCollectionId(reactionProxy, collection_id) {
-    let reaction = reactionProxy.unwrap();
+  static copyFromReactionAndCollectionId(reaction, collection_id) {
     const copy = reaction.buildCopy();
     copy.name = reaction.name + " Copy"
     copy.collection_id = collection_id;

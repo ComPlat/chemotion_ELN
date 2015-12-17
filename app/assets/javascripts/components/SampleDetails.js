@@ -20,7 +20,6 @@ import StructureEditorModal from './structure_editor/StructureEditorModal';
 import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
-import ElementPermissionProxy from './proxies/ElementPermissionProxy';
 import Sample from './models/Sample';
 
 export default class SampleDetails extends React.Component {

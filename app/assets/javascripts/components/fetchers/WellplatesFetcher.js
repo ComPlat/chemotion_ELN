@@ -1,6 +1,5 @@
 import 'whatwg-fetch';
 import Wellplate from '../models/Wellplate';
-import ElementPermissionProxy from '../proxies/ElementPermissionProxy';
 
 export default class WellplatesFetcher {
   static fetchById(id) {
@@ -10,7 +9,7 @@ export default class WellplatesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new ElementPermissionProxy(new Wellplate(json.wellplate));
+        return new Wellplate(json.wellplate);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -27,7 +26,7 @@ export default class WellplatesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.wellplates.map((w) => new ElementPermissionProxy(new Wellplate(w))),
+            elements: json.wellplates.map((w) => new Wellplate(w)),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),
@@ -67,7 +66,7 @@ export default class WellplatesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new ElementPermissionProxy(new Wellplate(json.wellplate));
+      return new Wellplate(json.wellplate);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -86,7 +85,7 @@ export default class WellplatesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new ElementPermissionProxy(new Wellplate(json.wellplate));
+      return new Wellplate(json.wellplate);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

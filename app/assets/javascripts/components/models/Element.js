@@ -13,6 +13,10 @@ export default class Element {
     this.updateChecksum();
   }
 
+  isMethodDisabled(m) {
+    return this[m] == '***'
+  }
+
   static buildID() {
     return uuid.v1();
   }
