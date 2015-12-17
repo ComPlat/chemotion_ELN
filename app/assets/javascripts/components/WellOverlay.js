@@ -12,14 +12,16 @@ export default class WellOverlay extends Component {
   sampleName() {
     const {sample} = this.props.well;
     if(sample) {
-      if(!sample.isNew) {
+      let {name, external_label, short_label} = sample
+      let sampleName = `${name || ""} ${external_label || ""} ${short_label || ""}`
+      if(sample.isNew) {
+        return sampleName;
+      } else {
         return (
           <a onClick={() => this.handleSampleClick(sample)} style={{cursor: 'pointer'}}>
-            {sample.name}
+            {sampleName}
           </a>
         );
-      } else {
-        return sample.name;
       }
 
     }
@@ -28,7 +30,7 @@ export default class WellOverlay extends Component {
   renderWellContent() {
     const {well, removeSampleFromWell} = this.props;
     const {sample} = well;
-    let svg, moleculeName, externalLabel, shortLabel, removeButton = '';
+    let svg, moleculeName, removeButton = '';
     const namesStyle= {textAlign: 'center', marginTop: 5};
     const svgContainerStyle = {
       borderRadius: '50%',
@@ -41,8 +43,6 @@ export default class WellOverlay extends Component {
     };
     if (sample) {
       svg = <SVG key={sample.id} className="molecule-mid" src={`/images/molecules/${sample.molecule.molecule_svg_file}`}/>;
-      externalLabel = sample.external_label;
-      shortLabel = sample.short_label;
       moleculeName = sample.molecule.iupac_name;
       removeButton = (
         <div className="pull-right">
@@ -60,8 +60,6 @@ export default class WellOverlay extends Component {
         <div style={namesStyle}>
           {this.sampleName()}<br/>
           {moleculeName}<br/>
-          {externalLabel}<br/>
-          {shortLabel}
         </div>
         {removeButton}
       </div>
@@ -78,7 +76,7 @@ export default class WellOverlay extends Component {
 
   render() {
     const {show, well, target, handleClose, placement} = this.props;
-    
+
     let title = (
       <div>
         Well Details
