@@ -8,15 +8,9 @@ module Usecases
       end
 
       def execute!
-        attributes = {
-          name: params[:name],
-          size: params[:size],
-          description: params[:description]
-        }
-
         ActiveRecord::Base.transaction do
           wellplate = Wellplate.find(params[:id])
-          wellplate.update(attributes)
+          wellplate.update(params.except(:wells))
           WellplateUpdater.update_wells_for_wellplate(wellplate, params[:wells])
           wellplate.touch
           wellplate.reload

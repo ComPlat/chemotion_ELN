@@ -140,8 +140,8 @@ module Chemotion
             ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)
             ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
             reaction.reload
-            reaction
           end
+          {reaction: ElementPermissionProxy.new(current_user, reaction).serialized}
         end
       end
 

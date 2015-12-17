@@ -1,6 +1,5 @@
 import 'whatwg-fetch';
 import Sample from '../models/Sample';
-import ElementPermissionProxy from '../proxies/ElementPermissionProxy';
 import _ from 'lodash';
 
 export default class SamplesFetcher {
@@ -23,7 +22,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return json.samples.map((s) => new ElementPermissionProxy(new Sample(s)));
+      return json.samples.map((s) => new Sample(s));
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -38,7 +37,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new ElementPermissionProxy(new Sample(json.sample));
+        return new Sample(json.sample);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -56,7 +55,7 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.samples.map((s) => new ElementPermissionProxy(new Sample(s))),
+            elements: json.samples.map((s) => new Sample(s)),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),
@@ -98,20 +97,19 @@ export default class SamplesFetcher {
   }
 
   static update(sample) {
-    let unwrappedSample = sample.unwrap();
-    SamplesFetcher.uploadDatasetAttachmentsForSample(unwrappedSample.serialize());
-    let promise = fetch('/api/v1/samples/' + unwrappedSample.id, {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(sample.serialize());
+    let promise = fetch('/api/v1/samples/' + sample.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(unwrappedSample.serialize())
+      body: JSON.stringify(sample.serialize())
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new ElementPermissionProxy(new Sample(json.sample));
+      return new Sample(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -132,7 +130,7 @@ export default class SamplesFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return new ElementPermissionProxy(new Sample(json.sample));
+      return new Sample(json.sample);
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

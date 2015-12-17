@@ -1,10 +1,7 @@
 class SampleSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :name, :short_label, :description, :created_at, :target_amount_value, :target_amount_unit, :real_amount_value, :real_amount_unit, :molfile,
-             :purity, :solvent, :impurities, :location, :is_top_secret, :is_restricted, :external_label, :analyses,
-             :analysis_kinds, :children_count, :imported_readout
-
+  attributes *DetailLevels::Sample.new.base_attributes
   has_one :molecule
 
   def created_at
@@ -53,56 +50,33 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   class Level0 < ActiveModel::Serializer
-    attributes :id, :type, :is_restricted, :external_label
-
-    has_one :molecule
-
-    # TODO use decorators?
-    alias_method :original_initialize, :initialize
-
-    def initialize(element, nested_detail_levels)
-      original_initialize(element)
-    end
+    include SampleLevelSerializable
+    define_restricted_methods_for_level(0)
 
     def molecule
       {
         molecular_weight: object.molecule.try(:molecular_weight)
       }
     end
-
-    def type
-      'sample'
-    end
-
-    def is_restricted
-      true
-    end
   end
 
-  class Level1 < Level0
-    attributes :molfile
-
-    has_one :molecule
-
-    def molecule
-      object.molecule
-    end
+  class Level1 < ActiveModel::Serializer
+    include SampleLevelSerializable
+    define_restricted_methods_for_level(1)
   end
 
-  class Level2 < Level1
-    attributes :analyses
+  class Level2 < ActiveModel::Serializer
+    include SampleLevelSerializable
+    define_restricted_methods_for_level(2)
 
     def analyses
       object.analyses.map {|x| x['datasets'] = {:datasets => []}}
     end
   end
 
-  class Level3 < Level2
-    attributes :analyses
-
-    def analyses
-      object.analyses
-    end
+  class Level3 < ActiveModel::Serializer
+    include SampleLevelSerializable
+    define_restricted_methods_for_level(3)
   end
 end
 

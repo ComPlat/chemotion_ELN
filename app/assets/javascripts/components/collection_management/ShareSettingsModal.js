@@ -145,7 +145,7 @@ export default class ShareSettingsModal extends React.Component {
               <option value='reviewer'>Reviewer</option>
               <option value='supervisor'>Supervisor</option>
             </Input>
-            <Input ref='permissionLevelSelect' type='select' label='Permission level' value={this.state.permissionLevel} onChange={(e) => this.handlePLChange(e)}>
+            <Input ref='permissionLevelSelect' type='select' label='Permission level' defaultValue={this.state.node.permission_level} value={this.state.permissionLevel} onChange={(e) => this.handlePLChange(e)}>
               <option value='0'>Read</option>
               <option value='1'>Write</option>
               <option value='2'>Share</option>

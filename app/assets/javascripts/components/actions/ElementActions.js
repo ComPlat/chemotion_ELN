@@ -73,9 +73,7 @@ class ElementActions {
   }
 
   updateSample(params) {
-    let _params = _.omit(params, _.isNull); //should be better done in SampleProxy#serialize
-
-    SamplesFetcher.update(_params)
+    SamplesFetcher.update(params)
       .then((result) => {
         this.dispatch(result)
       }).catch((errorMessage) => {

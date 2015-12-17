@@ -1,37 +1,7 @@
-class Material < Sample
-  attr_accessor :reference, :equivalent
-end
-
-class MaterialSerializer < SampleSerializer
-  attributes :reference, :equivalent
-end
-
-class MaterialSerializer::Level0 < SampleSerializer::Level0
-  attributes :reference, :equivalent
-end
-
-class MaterialSerializer::Level1 < SampleSerializer::Level1
-  attributes :reference, :equivalent
-end
-
-class MaterialSerializer::Level2 < SampleSerializer::Level2
-  attributes :reference, :equivalent
-end
-
-class MaterialSerializer::Level3 < SampleSerializer::Level3
-  attributes :reference, :equivalent
-end
-
-class MaterialSerializer::Level10 < SampleSerializer::Level10
-  attributes :reference, :equivalent
-end
-
 class ReactionSerializer < ActiveModel::Serializer
   include Labeled
 
-  attributes :id, :type, :name, :created_at, :updated_at, :description, :timestamp_start, :timestamp_stop,
-             :observation, :purification, :dangerous_products, :solvent, :tlc_solvents, :tlc_description,
-             :rf_value, :temperature, :status, :reaction_svg_file, :analysis_kinds
+  attributes *DetailLevels::Reaction.new.base_attributes
 
   has_many :starting_materials, serializer: MaterialSerializer
   has_many :reactants, serializer: MaterialSerializer
@@ -100,38 +70,8 @@ class ReactionSerializer < ActiveModel::Serializer
   end
 
   class Level0 < ActiveModel::Serializer
-    attributes :id, :type, :is_restricted, :observation, :description
-
-    has_many :starting_materials
-    has_many :reactants
-    has_many :products
-
-    alias_method :original_initialize, :initialize
-
-    def initialize(element, nested_detail_levels)
-      original_initialize(element)
-      @nested_dl = nested_detail_levels
-    end
-
-    def type
-      'reaction'
-    end
-
-    def is_restricted
-      true
-    end
-
-    def starting_materials
-      MaterialDecorator.new(object.reactions_starting_material_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
-    end
-
-    def reactants
-      MaterialDecorator.new(object.reactions_reactant_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
-    end
-
-    def products
-      MaterialDecorator.new(object.reactions_product_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
-    end
+    include ReactionLevelSerializable
+    define_restricted_methods_for_level(0)
   end
 end
 

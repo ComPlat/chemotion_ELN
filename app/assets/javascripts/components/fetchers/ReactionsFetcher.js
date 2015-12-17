@@ -1,7 +1,6 @@
 import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
 import Literature from '../models/Literature';
-import ElementPermissionProxy from '../proxies/ElementPermissionProxy';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -12,7 +11,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new ElementPermissionProxy(new Reaction(json.reaction));
+        return new Reaction(json.reaction);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -30,7 +29,7 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json().then((json) => {
           return {
-            elements: json.reactions.map((r) => new ElementPermissionProxy(new Reaction(r))),
+            elements: json.reactions.map((r) => new Reaction(r)),
             totalElements: parseInt(response.headers.get('X-Total')),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),

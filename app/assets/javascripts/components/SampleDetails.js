@@ -20,7 +20,6 @@ import StructureEditorModal from './structure_editor/StructureEditorModal';
 import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
-import ElementPermissionProxy from './proxies/ElementPermissionProxy';
 import Sample from './models/Sample';
 
 export default class SampleDetails extends React.Component {
@@ -231,7 +230,7 @@ export default class SampleDetails extends React.Component {
       if(sample.isNew) {
         ElementActions.createSample(sample);
       } else {
-        ElementActions.updateSample(sample);
+        ElementActions.updateSample(new Sample(sample));
       }
     }
   }
