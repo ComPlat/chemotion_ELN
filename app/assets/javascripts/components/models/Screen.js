@@ -2,14 +2,6 @@ import Element from './Element';
 import Wellplate from './Wellplate';
 
 export default class Screen extends Element {
-  isMethodDisabled() {
-    return false;
-  }
-
-  isMethodRestricted(m) {
-    return false;
-  }
-
   static buildEmpty(collection_id) {
     return new Screen({
       collection_id: collection_id,

@@ -3,19 +3,10 @@ import Well from './Well';
 import Sample from './Sample';
 
 export default class Wellplate extends Element {
-
   constructor(args) {
     super(args)
     this.wells = this.initWellsWithPosition(this.wells, 96);
     this._checksum = this.checksum();
-  }
-
-  isMethodDisabled() {
-    return false;
-  }
-
-  isMethodRestricted(m) {
-    return false;
   }
 
   static buildEmpty(collection_id) {

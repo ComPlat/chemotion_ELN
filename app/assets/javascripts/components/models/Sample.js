@@ -10,10 +10,6 @@ export default class Sample extends Element {
     return false;
   }
 
-  isMethodDisabled(m) {
-    return false;
-  }
-
   static copyFromSampleAndCollectionId(sample, collection_id) {
     let newSample = sample.buildCopy();
     newSample.collection_id = collection_id;

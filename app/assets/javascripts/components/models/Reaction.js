@@ -5,14 +5,6 @@ import Literature from './Literature';
 import UserStore from '../stores/UserStore';
 
 export default class Reaction extends Element {
-  isMethodDisabled() {
-    return false;
-  }
-
-  isMethodRestricted(m) {
-    return false;
-  }
-
   initializeTemporarySampleCounter(currentUser) {
     if(!this.temporary_sample_counter) {
       this.temporary_sample_counter = currentUser.samples_created_count + 1;

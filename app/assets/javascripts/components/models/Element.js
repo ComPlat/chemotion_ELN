@@ -55,15 +55,16 @@ export default class Element {
   }
 
   // base serializer
-  serialize( extra_params = {} ) {
+  serialize(extraParams = {}) {
     let params = {
       id: this.id,
       type: this.type,
       is_new: this.isNew || false,
       collection_id: this.collection_id
     }
-    _.merge(params, extra_params);
-    let clean_params = _.omit(params, _.isNull);
-    return clean_params;
+    _.merge(params, extraParams);
+    let paramsWithoutNullEntries = _.omit(params, _.isNull);
+    let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***'})
+    return cleanParams;
   }
 }

@@ -230,7 +230,7 @@ export default class SampleDetails extends React.Component {
       if(sample.isNew) {
         ElementActions.createSample(sample);
       } else {
-        ElementActions.updateSample(sample);
+        ElementActions.updateSample(new Sample(sample));
       }
     }
   }
