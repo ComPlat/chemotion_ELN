@@ -1,7 +1,6 @@
 .molecule svg {
   width: 90px;
   height: 90px;
-  margin-left: 10px;
 }
 
 .molecule rect {
@@ -23,7 +22,6 @@
 .molecule-small svg {
   width: 50px;
   height: 50px;
-  margin-left: 10px;
 }
 
 .molecule-small rect {
@@ -33,7 +31,6 @@
 .molecule-mid svg {
   width: 180px;
   height:180px;
-  margin-left: 10px;
 }
 
 .molecule-mid rect {

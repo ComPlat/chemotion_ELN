@@ -38,15 +38,14 @@ export default class ElementsTableSampleEntries extends Component {
   renderMoleculeHeader(sample, showHeader) {
     if(showHeader) {
       return (
-        <tr>
+        <tr style={{backgroundColor: '#F5F5F5'}}>
           <td colSpan="3">
             <div style={{float: 'left'}}>
               <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
             </div>
-            <div style={{display: 'inherit'}}>
-              <h3>{sample.molecule.iupac_name}</h3>
-              ({sample.molecule_molecular_weight} mg/mmol)<br/>
-              {sample.molecule.inchistring}<br/>
+            <div style={{display: 'inherit', paddingLeft: 10}}>
+              <h4>{sample.molecule.iupac_name}</h4>
+              ({sample.molecule_molecular_weight} mg/mmol)
             </div>
           </td>
         </tr>
