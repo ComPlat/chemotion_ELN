@@ -3,6 +3,8 @@ import {Button, ButtonToolbar, Input} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from '../stores/UIStore';
 
+import NotificationActions from '../actions/NotificationActions';
+
 export default class ManagingModalImport extends React.Component {
   constructor(props) {
     super(props);
@@ -21,6 +23,16 @@ export default class ManagingModalImport extends React.Component {
     }
     action(params);
     onHide();
+
+    let notification = {
+      key: "import_samples_upload",
+      type: 'warning',
+      message: {
+        body: () => "The file is being processed. Please wait...",
+      }
+    }
+
+    NotificationActions.add(notification)
   }
 
   handleFileDrop(attachment_file) {

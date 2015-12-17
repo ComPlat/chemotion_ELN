@@ -11,6 +11,8 @@ import UIStore from './stores/UIStore';
 import Aviator from 'aviator'
 import initRoutes from './routes';
 
+import Notifications from './Notifications';
+
 class App extends Component {
   constructor(props) {
     super();
@@ -55,6 +57,9 @@ class App extends Component {
           <Col sm={10} md={10} lg={10}>
             {this.mainContent()}
           </Col>
+        </Row>
+        <Row>
+          <Notifications />
         </Row>
       </Grid>
     )
