@@ -111,7 +111,6 @@ module Chemotion
         optional :size, type: Integer
         optional :description, type: String
         optional :wells, type: Array
-        optional :collection_id, type: Integer
       end
       route_param :id do
         before do
@@ -119,7 +118,8 @@ module Chemotion
         end
 
         put do
-          Usecases::Wellplates::Update.new(params).execute!
+          wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
+          {wellplate: ElementPermissionProxy.new(current_user, wellplate).serialized}
         end
       end
 
@@ -132,28 +132,9 @@ module Chemotion
         optional :collection_id, type: Integer
       end
       post do
-        Usecases::Wellplates::Create.new(params, current_user.id).execute!
+        wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
+        {wellplate: ElementPermissionProxy.new(current_user, wellplate).serialized}
       end
-
-      namespace :ui_state do
-        desc "Delete screens by UI state"
-        params do
-          requires :ui_state, type: Hash, desc: "Selected screens from the UI" do
-            requires :all, type: Boolean
-            optional :included_ids, type: Array
-            optional :excluded_ids, type: Array
-          end
-        end
-
-        before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Screen.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
-        end
-
-        delete do
-          Screen.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
-        end
-      end
-
     end
   end
 end

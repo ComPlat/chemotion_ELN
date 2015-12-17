@@ -48,7 +48,7 @@ class ElementPolicy
   private
 
   def maximum_permission_level(collections)
-    collections.pluck(:permission_level).min || -1
+    collections.pluck(:permission_level).max || -1
   end
 
   def user_collections

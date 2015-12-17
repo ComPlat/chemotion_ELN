@@ -53,14 +53,7 @@ module Chemotion
         end
 
         put do
-          attributes = {
-            name: params[:name],
-            collaborator: params[:collaborator],
-            requirements: params[:requirements],
-            conditions: params[:conditions],
-            result: params[:result],
-            description: params[:description]
-          }
+          attributes = declared(params.except(:wellplate_ids), include_missing: false)
           screen = Screen.find(params[:id])
           screen.update(attributes)
           old_wellplate_ids = screen.wellplates.pluck(:id)
@@ -89,12 +82,12 @@ module Chemotion
       end
       post do
         attributes = {
-            name: params[:name],
-            collaborator: params[:collaborator],
-            requirements: params[:requirements],
-            conditions: params[:conditions],
-            result: params[:result],
-            description: params[:description]
+          name: params[:name],
+          collaborator: params[:collaborator],
+          requirements: params[:requirements],
+          conditions: params[:conditions],
+          result: params[:result],
+          description: params[:description]
         }
         screen = Screen.create(attributes)
 

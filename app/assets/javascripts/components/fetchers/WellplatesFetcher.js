@@ -55,14 +55,15 @@ export default class WellplatesFetcher {
   }
 
   static update(params) {
-    let promise = fetch('/api/v1/wellplates/' + params.id, {
+    const wellplate = new Wellplate(params);
+    let promise = fetch('/api/v1/wellplates/' + wellplate.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(params)
+      body: JSON.stringify(wellplate.serialize())
     }).then((response) => {
       return response.json()
     }).then((json) => {

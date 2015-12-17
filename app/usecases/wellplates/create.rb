@@ -9,14 +9,8 @@ module Usecases
       end
 
       def execute!
-        attributes = {
-          name: params[:name],
-          size: params[:size],
-          description: params[:description]
-        }
-
         ActiveRecord::Base.transaction do
-          wellplate = Wellplate.create(attributes)
+          wellplate = Wellplate.create(params.except(:collection_id, :wells))
           wellplate.reload
           collection = Collection.find(params[:collection_id])
           CollectionsWellplate.create(wellplate: wellplate, collection: collection)

@@ -25,7 +25,7 @@ const wellTarget = {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
     if (itemType == 'sample') {
-      props.dropSample(item.element.unwrap(), props.well);
+      props.dropSample(item.element, props.well);
     } else if (itemType == 'well') {
       props.swapWells(item.well, props.well);
     }
