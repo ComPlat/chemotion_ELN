@@ -25,14 +25,15 @@ export default class ManagingModalImport extends React.Component {
     onHide();
 
     let notification = {
-      key: "import_samples_upload",
-      type: 'warning',
-      message: {
-        body: () => "The file is being processed. Please wait...",
-      }
+      title: "Uploading",
+      message: "The file is being processed. Please wait...",
+      level: "warning",
+      dismissible: false,
+      uid: "import_samples_upload",
+      position: "bl"
     }
 
-    NotificationActions.add(notification)
+    NotificationActions.add(notification);
   }
 
   handleFileDrop(attachment_file) {
@@ -69,6 +70,11 @@ export default class ManagingModalImport extends React.Component {
     }
   }
 
+  isDisabled() {
+    const {file} = this.state;
+    return file == null
+  }
+
   render() {
     const {onHide} = this.props;
     return (
@@ -77,7 +83,7 @@ export default class ManagingModalImport extends React.Component {
         &nbsp;
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()}>Import</Button>
+          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
     )

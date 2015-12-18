@@ -9,10 +9,13 @@ class NotificationActions {
     this.dispatch(notification)
   }
 
-  removeByKey(key) {
-    this.dispatch(key)
+  removeByUid(uid) {
+    this.dispatch(uid)
   }
 
+  setComponentReference(input) {
+    this.dispatch(input)
+  }
 }
 
 export default alt.createActions(NotificationActions)

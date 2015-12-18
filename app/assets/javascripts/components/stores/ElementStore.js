@@ -2,7 +2,6 @@ import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
-import NotificationActions from '../actions/NotificationActions';
 import UIStore from './UIStore';
 import ClipboardStore from './ClipboardStore';
 

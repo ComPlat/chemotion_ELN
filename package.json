@@ -21,6 +21,7 @@
     "react-dnd": "^1.1.8",
     "react-dropzone": "^2.2.0",
     "react-inlinesvg": "0.4.2",
+    "react-notification-system": "^0.1.17",
     "react-select": "0.6.1",
     "react-tools": "0.13.3",
     "react-ui-tree": "2.2.1",
