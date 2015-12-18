@@ -55,7 +55,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderMoleculeHeader(sample, show) {
     let {molecule} = sample
-    let showIndicator = (show) ? '-' : '+'
+    let showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'
 
     return (
       <tr
@@ -68,8 +68,8 @@ export default class ElementsTableSampleEntries extends Component {
           </div>
           <div style={{float: 'right'}}>
             <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle Molecule</Tooltip>}>
-              <span style={{fontSize: 25, color: '#337ab7', lineHeight: '10px'}}>
-                {showIndicator}
+              <span style={{fontSize: 15, color: '#337ab7', lineHeight: '10px'}}>
+                <i className={`glyphicon ${showIndicator}`}></i>
               </span>
             </OverlayTrigger>
           </div>
@@ -85,8 +85,12 @@ export default class ElementsTableSampleEntries extends Component {
   renderSamples(samples, show) {
     if(show) {
       return samples.map((sample, index) => {
+        let style = {}
+        if (this.isElementSelected(sample)) {
+          style = {color: '#fff', background: '#337ab7'}
+        }
         return (
-          <tr key={index}>
+          <tr key={index} style={style}>
             <td width="30px">
               <ElementCheckbox element={sample} key={sample.id} checked={this.isElementChecked(sample)}/>
             </td>
