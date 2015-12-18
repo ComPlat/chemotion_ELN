@@ -175,11 +175,12 @@ export default class AutoCompleteInput extends React.Component {
   renderSuggestions() {
     let {suggestions, error} = this.state;
     let types = {
-      iupac_name: {icon: 'icon-sample', label: 'Molecule'},
       sample_name: {icon: 'icon-sample', label: 'Sample'},
       reaction_name: {icon: 'icon-reaction', label: 'Reaction'},
       wellplate_name: {icon: 'icon-wellplate', label: 'Wellplate'},
       screen_name: {icon: 'icon-screen', label: 'Screen'},
+      iupac_name: {icon: 'icon-sample', label: 'Molecule'},
+      sum_formula: {icon: 'icon-sample', label: 'Sum Formula'},
       requirements: {icon: 'icon-screen', label: 'Requirement'},
       conditions: {icon: 'icon-screen', label: 'Condition'},
     }
@@ -188,15 +189,18 @@ export default class AutoCompleteInput extends React.Component {
         <div>
           {suggestions.map((suggestion, index) => {
             let suggestionType = types[suggestion.search_by_method]
+            let icon = suggestionType ? suggestionType.icon : ""
+            let typeLabel = suggestionType ? suggestionType.label : ""
             return (
               <ListGroupItem
                 onClick={() => this.selectSuggestion()}
                 onMouseEnter={() => this.focusSuggestion(index)}
                 key={'suggestion_' + index}
                 ref={'suggestion_' + index}
+                header={suggestion.name}
               >
-                <i className={suggestionType.icon} style={{marginRight: 2}}></i>
-                {suggestion.name}
+                <i className={icon} style={{marginRight: 2}}></i>
+                {typeLabel}
               </ListGroupItem>
             );
           })}
