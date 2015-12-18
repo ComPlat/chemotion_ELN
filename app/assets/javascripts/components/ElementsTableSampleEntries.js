@@ -12,66 +12,109 @@ import ElementStore from './stores/ElementStore';
 import DragDropItemTypes from './DragDropItemTypes';
 
 export default class ElementsTableSampleEntries extends Component {
+  constructor(props) {
+    super()
+    this.state = {
+      moleculeGroupsShown: []
+    }
+  }
+
   render() {
     let {elements: samples, currentElement, showDragColumn, ui} = this.props
-    let namesOfRenderedMolecules = []
+    let groupedSamplesByMolecule = samples.reduce((groups, sample) => {
+      let moleculeName = sample.molecule.iupac_name
+      if(!groups[moleculeName]) {
+        groups[moleculeName] = [].concat(sample)
+      } else {
+        groups[moleculeName] = groups[moleculeName].concat(sample)
+      }
+      return groups
+    }, {})
+    let moleculeNames = Object.keys(groupedSamplesByMolecule)
     return (
       <Table className="elements" bordered hover style={{borderTop: 0}}>
-        {samples.map((sample, index) => {
-          let showHeader = false
-          let isSampleFirstOfMoleculeGroup = !namesOfRenderedMolecules.includes(sample.molecule.iupac_name)
-          if(isSampleFirstOfMoleculeGroup) {
-            namesOfRenderedMolecules.push(sample.molecule.iupac_name)
-            showHeader = true
-          }
-          return (
-            <tbody key={index}>
-              {this.renderMoleculeHeader(sample, showHeader)}
-              {this.renderSample(sample)}
-            </tbody>
-          )
+        {moleculeNames.map((moleculeName, index) => {
+          let moleculeGroup = groupedSamplesByMolecule[moleculeName]
+          return this.renderMoleculeGroup(moleculeGroup, index)
         })}
       </Table>
     )
   }
 
-  renderMoleculeHeader(sample, showHeader) {
-    if(showHeader) {
-      return (
-        <tr style={{backgroundColor: '#F5F5F5'}}>
-          <td colSpan="3">
-            <div style={{float: 'left'}}>
-              <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
-            </div>
-            <div style={{display: 'inherit', paddingLeft: 10}}>
-              <h4>{sample.molecule.iupac_name}</h4>
-              ({sample.molecule_molecular_weight} mg/mmol)
-            </div>
-          </td>
-        </tr>
-      )
+  renderMoleculeGroup(moleculeGroup, index) {
+    let {moleculeGroupsShown} = this.state
+    let moleculeName = moleculeGroup[0].molecule.iupac_name
+    let showGroup = moleculeGroupsShown.includes(moleculeName)
+    return (
+      <tbody key={index}>
+        {this.renderMoleculeHeader(moleculeGroup[0], showGroup)}
+        {this.renderSamples(moleculeGroup, showGroup)}
+      </tbody>
+    )
+  }
+
+  renderMoleculeHeader(sample, show) {
+    let {molecule} = sample
+    let showIndicator = (show) ? '-' : '+'
+
+    return (
+      <tr
+        style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
+        onClick={() => this.handleMoleculeToggle(molecule.iupac_name)}
+      >
+        <td colSpan="3">
+          <div style={{float: 'left'}}>
+            <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
+          </div>
+          <div style={{float: 'right'}}>
+            <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle Molecule</Tooltip>}>
+              <span style={{fontSize: 25, color: '#337ab7', lineHeight: '10px'}}>
+                {showIndicator}
+              </span>
+            </OverlayTrigger>
+          </div>
+          <div style={{display: 'inherit', paddingLeft: 10}}>
+            <h4>{molecule.iupac_name}</h4>
+            ({molecule.molecular_weight} mg/mmol)
+          </div>
+        </td>
+      </tr>
+    )
+  }
+
+  renderSamples(samples, show) {
+    if(show) {
+      return samples.map((sample, index) => {
+        return (
+          <tr key={index}>
+            <td width="30px">
+              <ElementCheckbox element={sample} key={sample.id} checked={this.isElementChecked(sample)}/>
+            </td>
+            <td style={{cursor: 'pointer'}} onClick={() => this.showDetails(sample)}>
+              {sample.title() + " "}
+              <div style={{float: 'right'}}>
+                <ElementCollectionLabels element={sample} key={sample.id}/>
+                <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+                {this.topSecretIcon(sample)}
+              </div>
+            </td>
+            {this.dragColumn(sample)}
+          </tr>
+        )
+      })
     } else {
       return null
     }
   }
 
-  renderSample(sample) {
-    return (
-      <tr>
-        <td width="30px">
-          <ElementCheckbox element={sample} key={sample.id} checked={this.isElementChecked(sample)}/>
-        </td>
-        <td style={{cursor: 'pointer'}} onClick={() => this.showDetails(sample)}>
-          {sample.title() + " "}
-          <div style={{float: 'right'}}>
-            <ElementCollectionLabels element={sample} key={sample.id}/>
-            <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
-            {this.topSecretIcon(sample)}
-          </div>
-        </td>
-        {this.dragColumn(sample)}
-      </tr>
-    )
+  handleMoleculeToggle(moleculeName) {
+    let {moleculeGroupsShown} = this.state
+    if(!moleculeGroupsShown.includes(moleculeName)) {
+      moleculeGroupsShown = moleculeGroupsShown.concat(moleculeName)
+    } else {
+      moleculeGroupsShown = moleculeGroupsShown.filter(item => item !== moleculeName)
+    }
+    this.setState({moleculeGroupsShown})
   }
 
   dragColumn(element) {
