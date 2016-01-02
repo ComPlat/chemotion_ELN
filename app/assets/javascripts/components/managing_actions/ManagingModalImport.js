@@ -3,6 +3,8 @@ import {Button, ButtonToolbar, Input} from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
 import UIStore from '../stores/UIStore';
 
+import NotificationActions from '../actions/NotificationActions';
+
 export default class ManagingModalImport extends React.Component {
   constructor(props) {
     super(props);
@@ -21,6 +23,17 @@ export default class ManagingModalImport extends React.Component {
     }
     action(params);
     onHide();
+
+    let notification = {
+      title: "Uploading",
+      message: "The file is being processed. Please wait...",
+      level: "warning",
+      dismissible: false,
+      uid: "import_samples_upload",
+      position: "bl"
+    }
+
+    NotificationActions.add(notification);
   }
 
   handleFileDrop(attachment_file) {
@@ -57,6 +70,11 @@ export default class ManagingModalImport extends React.Component {
     }
   }
 
+  isDisabled() {
+    const {file} = this.state;
+    return file == null
+  }
+
   render() {
     const {onHide} = this.props;
     return (
@@ -65,7 +83,7 @@ export default class ManagingModalImport extends React.Component {
         &nbsp;
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()}>Import</Button>
+          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
         </ButtonToolbar>
       </div>
     )
