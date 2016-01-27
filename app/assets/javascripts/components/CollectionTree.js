@@ -75,7 +75,7 @@ export default class CollectionTree extends React.Component {
   assignRootsAsChildrenToFakeRoots(roots, fakeRoots) {
     roots.forEach((root) => {
       let fakeRootForRoot = fakeRoots.filter((fakeRoot) => {
-        return fakeRoot.name == root.name
+        return fakeRoot.label == `From ${root.shared_by_name}`
       })[0];
 
       fakeRootForRoot.children.push(root);
