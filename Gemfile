@@ -53,7 +53,7 @@ gem 'roo'
 
 # Chemrails
 gem 'httparty'
-gem 'chemrails', git: 'git://github.com/cominch/chemrails'
+gem 'chemrails', git: 'git://github.com/ComPlat/chemrails'
 
 # Free font icons
 gem "font-awesome-rails"

@@ -1,6 +1,6 @@
 GIT
-  remote: git://github.com/cominch/chemrails
-  revision: d595fc995c96a07a6146534c3fdc53830f6ecb02
+  remote: git://github.com/ComPlat/chemrails
+  revision: a2a902470147eb412cac7e3605736fda5df605b5
   specs:
     chemrails (0.0.34)
 
@@ -419,3 +419,6 @@ DEPENDENCIES
   unicorn
   web-console (~> 2.0)
   whenever
+
+BUNDLED WITH
+   1.11.2
