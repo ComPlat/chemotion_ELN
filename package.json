@@ -2,10 +2,11 @@
   "name": "chemotion",
   "repository": {},
   "dependencies": {
+    "aliasify": "1.9.0",
     "alt": "0.17.1",
     "aviator": "v0.5.0",
     "babelify": "6.1.3",
-    "browserify": "~> 10.2.4",
+    "browserify": "~> 13.0.0",
     "browserify-incremental": "^3.0.1",
     "classnames": "^2.1.5",
     "debounce": "^1.0.0",
@@ -29,12 +30,8 @@
     "uuid": "^2.0.1",
     "whatwg-fetch": "0.9.0"
   },
+  "aliasify": {} ,
   "browserify": {
-    "transform": [
-      [
-        "babelify"
-      ]
-    ]
   },
   "devDependencies": {
     "babel-jest": "*",
