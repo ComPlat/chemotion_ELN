@@ -635,7 +635,6 @@ export default class SampleDetails extends React.Component {
     let num = ind - 2 ;
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
-    console.log(TabName);
     return(
        <TabPane eventKey={ind}  tab={TabName} >
          <ListGroupItem style={{paddingBottom: 20}}>
