@@ -30,7 +30,7 @@
     "uuid": "^2.0.1",
     "whatwg-fetch": "0.9.0"
   },
-  "aliasify": {} ,
+  "aliasify": "./aliasifyConfig.js" ,
   "browserify": {
   },
   "devDependencies": {
