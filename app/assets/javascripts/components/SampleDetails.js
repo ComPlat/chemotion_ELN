@@ -537,10 +537,105 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  samplePropertiesTab(ind){
+    let sample = this.state.sample || {};
+    return(
+      <TabPane eventKey={ind} tab={'Properties'}>
+        <ListGroupItem>
+          {this.topSecretCheckbox(sample)}
+
+          {this.moleculeInput(sample)}
+
+          <table width="100%">
+            <tr>
+              <td width="50%" className="padding-right">
+                {this.moleculeInchi(sample)}
+              </td>
+              <td width="25%" className="padding-right">
+                {this.molecularWeight(sample)}
+              </td>
+              <td width="25%">
+                {this.moleculeDensity(sample)}
+              </td>
+            </tr>
+            <tr>
+              <td width="50%" className="padding-right">
+                {this.moleculeFormular(sample)}
+              </td>
+              <td width="25%" className="padding-right">
+                {this.moleculeBoilingPoint(sample)}
+              </td>
+              <td width="25%">
+                {this.moleculeMeltingPoint(sample)}
+              </td>
+            </tr>
+          </table>
+        </ListGroupItem>
+        <ListGroupItem>
+          <table width="100%">
+            <tr>
+              <td width="50%" className="padding-right" colSpan={2}>
+                {this.sampleName(sample)}
+              </td>
+              <td width="25%" className="padding-right">
+                {this.sampleImpurities(sample)}
+              </td>
+              <td width="25%">
+                <label>Solvent</label>
+                {this.sampleSolvent(sample)}
+              </td>
+            </tr>
+            <tr>
+              <td width="25%" className="padding-right">
+                {this.sampleExternalLabel(sample)}
+              </td>
+              <td width="25%" className="padding-right">
+                {this.sampleAmount(sample)}
+              </td>
+              <td width="25%" className="padding-right">
+                {this.samplePurity(sample)}
+              </td>
+              <td width="25%">
+                {this.sampleImportedReadout(sample)}
+              </td>
+            </tr>
+            <tr>
+              <td width="50%" colSpan={2} className="padding-right">
+                {this.sampleLocation(sample)}
+              </td>
+              <td width="50%" colSpan={2}>
+                {this.sampleDescription(sample)}
+              </td>
+            </tr>
+          </table>
+
+        </ListGroupItem>
+      </TabPane>
+    )
+  }
+
+  sampleAnalysesTab(ind){
+    let sample = this.state.sample || {}
+    return(
+      <TabPane eventKey={ind} tab={'Analyses'} key={sample.id}>
+        <ListGroupItem style={{paddingBottom: 20}}>
+          <SampleDetailsAnalyses
+            sample={sample}
+            onSampleChanged={sample => this.handleSampleChanged(sample)}
+            />
+        </ListGroupItem>
+      </TabPane>
+    )
+  }
+
   render() {
     let sample = this.state.sample || {}
     let molfile = sample.molfile;
     let sampleIsValid = this.sampleIsValid();
+    let tabContents = [
+                       (i)=>(this.samplePropertiesTab(i)),
+                       (i)=>(this.sampleAnalysesTab(i)),
+                      ];
 
     return (
       <div>
@@ -558,85 +653,7 @@ export default class SampleDetails extends React.Component {
           {this.sampleHeader(sample)}
           <ListGroup>
           <TabbedArea defaultActiveKey={0}>
-            <TabPane eventKey={0} tab={'Properties'}>
-              <ListGroupItem>
-                {this.topSecretCheckbox(sample)}
-
-                {this.moleculeInput(sample)}
-
-                <table width="100%">
-                  <tr>
-                    <td width="50%" className="padding-right">
-                      {this.moleculeInchi(sample)}
-                    </td>
-                    <td width="25%" className="padding-right">
-                      {this.molecularWeight(sample)}
-                    </td>
-                    <td width="25%">
-                      {this.moleculeDensity(sample)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td width="50%" className="padding-right">
-                      {this.moleculeFormular(sample)}
-                    </td>
-                    <td width="25%" className="padding-right">
-                      {this.moleculeBoilingPoint(sample)}
-                    </td>
-                    <td width="25%">
-                      {this.moleculeMeltingPoint(sample)}
-                    </td>
-                  </tr>
-                </table>
-              </ListGroupItem>
-              <ListGroupItem>
-                <table width="100%">
-                  <tr>
-                    <td width="50%" className="padding-right" colSpan={2}>
-                      {this.sampleName(sample)}
-                    </td>
-                    <td width="25%" className="padding-right">
-                      {this.sampleImpurities(sample)}
-                    </td>
-                    <td width="25%">
-                      <label>Solvent</label>
-                      {this.sampleSolvent(sample)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td width="25%" className="padding-right">
-                      {this.sampleExternalLabel(sample)}
-                    </td>
-                    <td width="25%" className="padding-right">
-                      {this.sampleAmount(sample)}
-                    </td>
-                    <td width="25%" className="padding-right">
-                      {this.samplePurity(sample)}
-                    </td>
-                    <td width="25%">
-                      {this.sampleImportedReadout(sample)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td width="50%" colSpan={2} className="padding-right">
-                      {this.sampleLocation(sample)}
-                    </td>
-                    <td width="50%" colSpan={2}>
-                      {this.sampleDescription(sample)}
-                    </td>
-                  </tr>
-                </table>
-
-              </ListGroupItem>
-            </TabPane>
-            <TabPane eventKey={1} tab={'Analyses'} key={sample.id}>
-              <ListGroupItem style={{paddingBottom: 20}}>
-                <SampleDetailsAnalyses
-                  sample={sample}
-                  onSampleChanged={sample => this.handleSampleChanged(sample)}
-                  />
-              </ListGroupItem>
-            </TabPane>
+            {tabContents.map((e,i)=>e(i))}
           </TabbedArea>
               <ListGroupItem>
                 <ButtonToolbar>
