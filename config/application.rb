@@ -73,7 +73,47 @@ module Chemotion
         plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,".").to_s
         `ln -s #{aliasify_file} #{plugin_path}` # unless File.exists?(aliasify_file)
       end
-    end
+
+   # Extra module import/export mapping for each registered plugin
+      module_config =YAML.load(File.read(File.join(Rails.root,"config","module_config.yml")))
+      PLUGS.each_with_index do |plugin,i|
+        module_config_file = File.join(Gem.loaded_specs[plugin].full_gem_path,"config","module_config.yml")
+        YAML.load(File.read(module_config_file)).each do |main_comp, extra_comps|
+          if module_config.has_key?(main_comp) #|| module_config.has_key?(main_comp.to_sym)
+            extra_comps.each do |extra_comp, plug_comps|
+              if module_config[main_comp].has_key?(extra_comp)
+                module_config[main_comp][extra_comp][plugin]||=plug_comps
+              end
+            end if extra_comps
+          end
+        end if File.exists?(module_config_file)
+      end
+      extra_dir = File.join(Rails.root,"app","assets","javascripts","components","extra")
+      !File.directory?(extra_dir) && FileUtils.mkdir_p(extra_dir)
+      module_config.each do |main_comp, extra_comps|
+        import = ""
+        export = "module.exports = {\n"
+        extra_comps.each do |extra_comp, plugins|
+          i = 0
+          plugins.each do |plugin, plug_comps|
+            import << "import {\n"
+            plug_comps.each do |plug_comp|
+              import << "  %s as %s%s%i,\n" %[plug_comp,plug_comp,extra_comp,i]
+              export << "  %s%i : %s%s%i,\n" %[extra_comp,i,plug_comp,extra_comp,i]
+              i += 1
+            end
+            import << "} from '%s';\n" %(plugin)
+          end #if plugins
+          export << "  %sCount : %i,\n" %[extra_comp,i]
+        end
+        export << "}"
+        module_config_comp = import + export
+        module_config_comp_file = File.join(extra_dir,main_comp.to_s+"Extra.js")
+        File.write(module_config_comp_file,module_config_comp)
+      end
+
+    end # of config.before_configuration
+
     config.browserify_rails.commandline_options = "-t babelify -t aliasify "
 
     # Settings in config/environments/* take precedence over those specified here.
