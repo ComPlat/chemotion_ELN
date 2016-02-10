@@ -13,6 +13,7 @@ import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
+import extra from "./extra/SampleDetailsExtra"
 import Select from 'react-select';
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
@@ -21,6 +22,7 @@ import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
 import Sample from './models/Sample';
+
 
 export default class SampleDetails extends React.Component {
   constructor(props) {
@@ -628,6 +630,21 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  extraTab(ind){
+    let sample = this.state.sample || {}
+    let num = ind - 2 ;
+    let NoName =  extra["Tab"+num];
+    let TabName = extra["TabName"+num];
+    console.log(TabName);
+    return(
+       <TabPane eventKey={ind}  tab={TabName} >
+         <ListGroupItem style={{paddingBottom: 20}}>
+           <NoName  sample={sample}/>
+         </ListGroupItem>
+       </TabPane>
+      )
+  }
+
   render() {
     let sample = this.state.sample || {}
     let molfile = sample.molfile;
@@ -636,7 +653,9 @@ export default class SampleDetails extends React.Component {
                        (i)=>(this.samplePropertiesTab(i)),
                        (i)=>(this.sampleAnalysesTab(i)),
                       ];
-
+    for (let j=0;j < extra.TabCount;j++){
+      tabContents.push((i)=>this.extraTab(i))
+    }
     return (
       <div>
         <StructureEditorModal
