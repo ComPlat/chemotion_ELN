@@ -45,7 +45,7 @@ export default class ElementsTableSampleEntries extends Component {
   renderMoleculeGroup(moleculeGroup, index) {
     let {moleculeGroupsShown} = this.state
     let moleculeName = moleculeGroup[0].molecule.iupac_name
-    let showGroup = moleculeGroupsShown.includes(moleculeName)
+    let showGroup = !moleculeGroupsShown.includes(moleculeName)
     return (
       <tbody key={index}>
         {this.renderMoleculeHeader(moleculeGroup[0], showGroup)}
@@ -138,7 +138,7 @@ export default class ElementsTableSampleEntries extends Component {
         </td>
       );
     } else {
-     return null
+      return null
     }
   }
 
