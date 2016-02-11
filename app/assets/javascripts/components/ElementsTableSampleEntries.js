@@ -10,6 +10,7 @@ import ElementContainer from './ElementContainer'
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import DragDropItemTypes from './DragDropItemTypes';
+import extra from './extra/ElementsTableSampleEntriesExtra';
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
@@ -57,6 +58,12 @@ export default class ElementsTableSampleEntries extends Component {
     let {molecule} = sample
     let showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'
 
+    let tdExtraContents = [];
+    
+    for (let j=0;j < extra.MoleculeHeaderContentCount;j++){
+      let NoName = extra["MoleculeHeaderContent"+j];
+      tdExtraContents.push(<NoName element={sample}/>);
+    }
     return (
       <tr
         style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
@@ -77,6 +84,7 @@ export default class ElementsTableSampleEntries extends Component {
             <h4>{molecule.iupac_name}</h4>
             ({molecule.molecular_weight} mg/mmol)
           </div>
+          {tdExtraContents.map((e)=>{return e;})}
         </td>
       </tr>
     )

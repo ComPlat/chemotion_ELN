@@ -117,3 +117,9 @@ group :test do
   gem 'factory_girl_rails'
   gem 'database_cleaner'
 end
+
+# Chemotion plugins: lsit your chemotion specific plugin gems here
+group :development, :production, :plugins do
+  #gem 'scifinding', path: '../scifinding'
+end
+####

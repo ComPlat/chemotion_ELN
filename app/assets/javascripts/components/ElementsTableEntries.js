@@ -10,6 +10,7 @@ import ElementStore from './stores/ElementStore';
 import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
+import extra from "./extra/ElementsTableEntriesExtra";
 
 export default class ElementsTableEntries extends Component {
   isElementChecked(element) {
@@ -80,11 +81,17 @@ export default class ElementsTableEntries extends Component {
       textAlign: 'center',
       cursor: 'pointer'
     };
+    let tdExtraContents = [];
+    for (let j=0;j < extra.TdContentCount;j++){
+      let NoName = extra["TdContent"+j];
+      tdExtraContents.push(<NoName element={element}/>);
+    }
 
     if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
+          {tdExtraContents.map((e)=>{return e;})}
         </td>
       );
     } else {

@@ -1,0 +1,36 @@
+---
+#This file list the additional components from chemotion plugin gems that can be imported
+#into the main app components.
+#Do not modify unless you want to overwrite the plugin gem configurations (see comment below)
+#
+
+SampleDetails:
+  Tab:
+    {}
+  TabName:
+    {}
+
+ElementsTableEntries:
+  TdContent:
+    {}
+
+ElementsTableSampleEntries:
+  MoleculeHeaderContent:
+    {}
+---
+#To overwrite the extra module exports defined in each plugin gems, input here the gem name and
+#the list of the plugin's components wanted (or an empty array for none)
+#Example for the SampleDetails components and its hook points for Tabs and Tabname:
+#
+#SampleDetails:                            # main app component
+#   Tab:                                   # entry/hook point
+#     dummy_plugin_gem:                    # plugin gem name as in the group :plugin in the Gemfile
+#       - DummyComponent1                  # name of the module as defined in the  plugin main export module
+#       - DummyComponent2
+#     dummy_plugin_gem2:
+#        []                                 # Empty array
+#
+#   TabName:
+#     dummy_plugin_gem:
+#       - dummyExpresssion1
+#       - dummyExpresssion2
