@@ -1,7 +1,7 @@
 lock '3.4.0'
 
 set :application, 'chemotion'
-set :repo_url, 'git@github.com:ninjaconcept/chemotion.git'
+set :repo_url, 'git@github.com:ComPlat/chemotion_ELN.git'
 
 # Default branch is :master
 ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
