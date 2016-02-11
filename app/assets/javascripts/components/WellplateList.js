@@ -20,7 +20,8 @@ export default class WellplateList extends Component {
             <th width="3%">#</th>
             <th width="5%">Position</th>
             <th width="5%">Molecule</th>
-            <th width="22%">Name</th>
+            <th width="11%">Name</th>
+            <th width="11%">External Label</th>
             <th width="15%">Sum-Formula</th>
             <th width="25%">Readout</th>
             <th width="25%">Imported Readout</th>
@@ -34,6 +35,7 @@ export default class WellplateList extends Component {
             const positions = positionY + position.x;
             let svgPath = '';
             let sampleName = '';
+            let externalLabel = '';
             let sum_formular = '';
             let importedReadout = ''
             let svgNode = '';
@@ -48,7 +50,8 @@ export default class WellplateList extends Component {
               svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
               svgNode = <SVG className="molecule-small" src={svgPath}/>;
               let {name, external_label, short_label, imported_readout} = sample
-              sampleName = `${name || ""} ${external_label || ""} ${short_label || ""}`
+              sampleName = `${short_label || ""}`
+              externalLabel = `${external_label || ""}`
               importedReadout = imported_readout
               sum_formular = sample.molecule.sum_formular;
             }
@@ -57,6 +60,7 @@ export default class WellplateList extends Component {
               <td>{positions}</td>
               <td>{svgNode}</td>
               <td>{sampleName}</td>
+              <td>{externalLabel}</td>
               <td>{sum_formular}</td>
               <td style={inputContainerStyle}>
                 <Input
