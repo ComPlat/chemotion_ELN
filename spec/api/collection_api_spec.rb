@@ -27,7 +27,7 @@ describe Chemotion::CollectionAPI do
         let(:s)   { create(:sample) }
         let(:r)   { create(:reaction) }
         let(:w)   { create(:wellplate) }
-        let!(:c2) { create(:collection, user: user, is_shared: true, shared_by_id: u2.id, permission_level: 4, parent: c1) }
+        let!(:c2) { create(:collection, user: user, is_shared: true, shared_by_id: u2.id, permission_level: 5, parent: c1) }
 
         describe 'take ownership of c1' do
           before { post "/api/v1/collections/take_ownership/#{c1.id}" }

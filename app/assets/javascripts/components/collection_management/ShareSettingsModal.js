@@ -150,7 +150,8 @@ export default class ShareSettingsModal extends React.Component {
               <option value='1'>Write</option>
               <option value='2'>Share</option>
               <option value='3'>Delete</option>
-              <option value='4'>Take ownership</option>
+              <option value='4'>Import Elements</option>
+              <option value='5'>Take ownership</option>
             </Input>
             <Input ref='sampleDetailLevelSelect' type='select' label='Sample detail level' defaultValue={this.state.node.sample_detail_level} value={this.state.sampleDetailLevel} onChange={(e) => this.handleSampleDLChange(e)}>
               <option value='0'>Molecular mass of the compound, external label</option>

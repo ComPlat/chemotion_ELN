@@ -7,6 +7,6 @@ class CollectionPolicy
   end
 
   def take_ownership?
-    (record.user_id == @user.id && record.permission_level >= 4) || (record.user_id == @user.id && record.is_shared == false)
+    (record.user_id == @user.id && record.permission_level >= 5) || (record.user_id == @user.id && record.is_shared == false)
   end
 end
