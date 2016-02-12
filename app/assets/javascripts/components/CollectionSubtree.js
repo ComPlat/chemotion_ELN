@@ -131,7 +131,7 @@ export default class CollectionSubtree extends React.Component {
 
   takeOwnershipButton() {
     let isRemote = this.state.isRemote;
-    let isTakeOwnershipAllowed = this.state.root.permission_level == 4;
+    let isTakeOwnershipAllowed = this.state.root.permission_level == 5;
 
     if(isRemote && isTakeOwnershipAllowed) {
       return (

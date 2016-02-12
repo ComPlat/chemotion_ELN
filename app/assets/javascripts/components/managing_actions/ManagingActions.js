@@ -120,14 +120,14 @@ export default class ManagingActions extends React.Component {
   isDisabled() {
     const {currentCollection} = this.state;
     if(currentCollection) {
-      return currentCollection.label == 'All' || currentCollection.is_shared == true;
+      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
     }
   }
 
   isAssignButtonDisabled() {
     const {currentCollection} = this.state;
     if(currentCollection) {
-      return currentCollection.is_shared == true;
+      return currentCollection.is_shared == true && currentCollection.permission_level < 4;
     }
   }
 
