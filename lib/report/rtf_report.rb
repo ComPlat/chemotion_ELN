@@ -63,8 +63,10 @@ class Report::RTFReport < Report::Report
       when 'Report::Image'
         @document.paragraph do |p|
           image = p.image(report_element.obtain_png_file)
-          image.x_scaling = report_element.size[:x]
-          image.y_scaling = report_element.size[:y]
+          unless report_element.size == nil
+            image.x_scaling = report_element.size[:x]
+            image.y_scaling = report_element.size[:y]
+          end
         end
       else
         raise "Fehler: unbeachtetes Objekt im Report Data Objekt (Class: #{report_element.class.name})"

@@ -20,17 +20,21 @@ module Chemotion
           material.molecule.inchikey
         end
 
-        composer = SVG::ReactionComposer.new(inchikeys)
+        composer = SVG::ReactionComposer.new(inchikeys, label: reaction.temperature)
         reaction_svg = composer.compose_reaction_svg
 
         report = Report::RTFReport.new do |r|
           r.add_title do |t|
             t.add_text reaction.name, font_style: :bold
           end
-          2.times {r.line_break}
+          r.line_break
+          r.add_paragraph do |p|
+            p.add_text reaction.description
+          end
+          r.line_break
           r.add_image do |i|
             i.set_blob reaction_svg
-            i.size x: 150, y: 120
+            i.size x: 50, y: 50
           end
           r.line_break
           r.add_paragraph do |p|
@@ -75,6 +79,14 @@ module Chemotion
           r.add_paragraph do |p|
             p.add_text 'Literatures', font_style: :bold
           end
+          if reaction.literatures.count > 0
+            r.add_table(reaction.literatures.count + 1, 2) do |t|
+              t.add_line "Title", "URL"
+              reaction.literatures.each do |l|
+                t.add_line l.title, l.url
+              end
+            end
+          end
           r.line_break
         end
 
@@ -87,35 +99,6 @@ module Chemotion
         optional :header, type: Hash
         requires :body, type: Array do
           requires :type, type: String
-        end
-      end
-      post :rtf do
-        report = Report::RTFReport.new do |r|
-          r.header {|h| h.build(params[:header])}
-
-          params[:body].each do |text_item|
-            case text_item[:type]
-            when "line_break"
-              r.line_break
-            when "image"
-              r.add_image do |i|
-                i.set_path 'data/example.svg'
-                i.size x: 70, y: 10
-              end
-            when "paragraph"
-              r.add_paragraph {|p| p.build(text_item)}
-            when "table"
-              r.add_table(text_item[:data].count, text_item[:data].first.count) do |t| 
-                t.table_data = text_item[:data]
-              end
-            else
-              raise "Fehler: Nicht implementierte Funktion: " + text_item[:type]
-            end
-          end
-
-          env['api.format'] = :binary
-          content_type('text/rtf')
-          body report.generate_report
         end
       end
 
