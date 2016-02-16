@@ -20,7 +20,7 @@ module Chemotion
           material.molecule.inchikey
         end
 
-        composer = SVG::ReactionComposer.new(inchikeys, label: reaction.temperature)
+        composer = SVG::ReactionComposer.new(inchikeys, label: [reaction.solvent, reaction.temperature].reject{|c| c.blank?}.join(", "))
         reaction_svg = composer.compose_reaction_svg
 
         report = Report::RTFReport.new do |r|
