@@ -4,11 +4,11 @@ require 'digest'
 module SVG
   class ReactionComposer
 
-    def initialize(materialsInchikeys, options = {})
+    def initialize(materials_svg_paths, options = {})
       @svg_path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'molecules')
-      @starting_materials = materialsInchikeys[:starting_materials]
-      @reactants = materialsInchikeys[:reactants]
-      @products = materialsInchikeys[:products]
+      @starting_materials = materials_svg_paths[:starting_materials]
+      @reactants = materials_svg_paths[:reactants]
+      @products = materials_svg_paths[:products]
       number_of_reactants = (@reactants.size == 0 && @starting_materials.size != 0) ? 1 : @reactants.size
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
@@ -55,10 +55,14 @@ module SVG
 
     private
 
-      def innerFileContent fileName
-        file = File.join(@svg_path, fileName + '.svg')
+      def inner_file_content svg_path
+        file = "#{Rails.root}/public#{svg_path}"
         doc = Nokogiri::XML(File.open(file))
-        doc.css("g svg")
+        if(svg_path.include? '/samples')
+          doc.css("svg")
+        else
+          doc.css("g svg")
+        end
       end
 
       def compose_material_group( material_group, options = {} )
@@ -67,7 +71,7 @@ module SVG
         scale = options[:scale] || 1
         divider = ''
         material_group.map do |material|
-          content = innerFileContent(material).to_s
+          content = inner_file_content(material).to_s
           output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + content + "</g>" + divider
           divider = "<g transform='translate(#{shift + material_width}, 0) scale(#{scale})'>" + @divider + "</g>"
           shift += material_width
@@ -93,10 +97,10 @@ module SVG
       end
 
       def generate_filename
-        inchikeys = {:starting_materials => @starting_materials, :reactants => @reactants, :products => @products}
-        key_base = "#{inchikeys.to_a.flatten.join}#{@label}"
-        hash_of_inchikeys = Digest::SHA256.hexdigest(key_base)
-        hash_of_inchikeys + '.svg'
+        filenames = {:starting_materials => @starting_materials, :reactants => @reactants, :products => @products}
+        key_base = "#{filenames.to_a.flatten.join}#{@label}"
+        hash_of_filenames = Digest::SHA256.hexdigest(key_base)
+        hash_of_filenames + '.svg'
       end
   end
 end

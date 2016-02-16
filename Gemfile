@@ -52,7 +52,8 @@ gem 'roo', ">2.3.0"
 
 # Chemrails
 gem 'httparty'
-gem 'chemrails', git: 'git://github.com/ComPlat/chemrails'
+gem 'chemrails', git: 'git://github.com/ComPlat/chemrails',
+                 branch: :draw_polymer
 
 # Free font icons
 gem "font-awesome-rails"
@@ -121,7 +122,5 @@ group :test do
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
-
-gem 'scifinding', path: '~/shared/scifinding' , :group => [:plugins,:development,:production]
 
 ####

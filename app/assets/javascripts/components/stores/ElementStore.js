@@ -63,7 +63,7 @@ class ElementStore {
       handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
-      handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
+      handleFetchReactionSvgByMaterialsSvgPaths: ElementActions.fetchReactionSvgByMaterialsSvgPaths,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples: ElementActions.bulkCreateWellplatesFromSamples,
@@ -183,6 +183,14 @@ class ElementStore {
   handleFetchMoleculeByMolfile(result) {
     // Attention: This is intended to update SampleDetails
     this.state.currentElement.molecule = result;
+    this.handleRefreshElements('sample');
+  }
+
+  // Samples with residues
+  handleFetchResidueByMolfile(result) {
+    // Attention: This is intended to update SampleDetails
+    //this.state.currentElement.molecule = result;
+    this.state.currentElement.sample = result;
     this.handleRefreshElements('sample');
   }
 
@@ -315,7 +323,7 @@ class ElementStore {
 
   // -- Reactions SVGs --
 
-  handleFetchReactionSvgByMaterialsInchikeys(result) {
+  handleFetchReactionSvgByMaterialsSvgPaths(result) {
     this.state.currentElement.reaction_svg_file = result;
   }
 

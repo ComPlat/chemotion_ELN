@@ -2,7 +2,10 @@ class SampleSerializer < ActiveModel::Serializer
   include Labeled
 
   attributes *DetailLevels::Sample.new.base_attributes
+
   has_one :molecule
+
+  has_many :residues
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
@@ -10,6 +13,10 @@ class SampleSerializer < ActiveModel::Serializer
 
   def type
     'sample'
+  end
+
+  def contains_residues
+    object.residues.count > 0
   end
 
   def molecule_svg

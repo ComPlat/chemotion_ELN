@@ -23,6 +23,8 @@ import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
 import Sample from './models/Sample';
+import PolymerSection from './PolymerSection'
+import ElementalComposition from './ElementalComposition'
 
 
 export default class SampleDetails extends React.Component {
@@ -202,18 +204,29 @@ export default class SampleDetails extends React.Component {
     })
   }
 
-  updateMolecule(molfile) {
-    ElementActions.fetchMoleculeByMolfile(molfile);
+  updateMolecule(molfile, svg_file = null) {
+    ElementActions.fetchMoleculeByMolfile(molfile, svg_file);
   }
 
-  handleStructureEditorSave(molfile) {
+  handleStructureEditorSave(molfile, svg_file = null) {
     let {sample} = this.state;
 
     if(sample) {
       sample.molfile = molfile
+
+      if(molfile.indexOf(' R# ') > -1) {
+        sample.sample_svg_file = svg_file
+      }
     }
     this.setState({sample: sample, loadingMolecule: true});
-    this.updateMolecule(molfile);
+
+    // check if molecule contains residues
+    if(molfile.indexOf(' R# ') > -1){
+      this.updateMolecule(molfile, svg_file);
+    } else {
+      this.updateMolecule(molfile);
+    }
+
     this.hideStructureEditor()
   }
 
@@ -230,6 +243,7 @@ export default class SampleDetails extends React.Component {
       ElementActions.openReactionDetails(reaction);
     } else {
       if(sample.isNew) {
+        console.log(sample.sample_svg_file);
         ElementActions.createSample(sample);
       } else {
         ElementActions.updateSample(new Sample(sample));
@@ -262,7 +276,7 @@ export default class SampleDetails extends React.Component {
 
   sampleIsValid() {
     const {sample, loadingMolecule} = this.state;
-    return (sample && sample.molfile && !loadingMolecule) || sample.is_scoped == true;
+    return (sample && sample.molfile && !loadingMolecule && !sample.error_loading) || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
@@ -287,8 +301,8 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="Molecule" ref="moleculeInput"
              key={sample.id}
              buttonAfter={this.structureEditorButton(sample.isMethodDisabled('molecule_iupac_name'))}
-             defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
-             value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+             defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+             value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              disabled={sample.isMethodDisabled('molecule_iupac_name')}
              readOnly
       />
@@ -300,7 +314,7 @@ export default class SampleDetails extends React.Component {
     if (this.state.loadingMolecule) {
       svgPath = "/images/loading-bubbles.svg";
     } else {
-      svgPath = sample.molecule && sample.molecule.molecule_svg_file ? `/images/molecules/${sample.molecule.molecule_svg_file}` : '';
+      svgPath = sample.svgPath;
     }
     return (<SVG key={svgPath} src={svgPath} className="molecule-mid"/>);
   }
@@ -337,12 +351,20 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  molecularWeight(sample) {
+  molecularWeight(sample, label = "M. Weight") {
+    if(sample.contains_residues) {
+      label = "M. Weight (defined part)"
+      var value = sample.molecule_molecular_weight - 1.0;
+    } else {
+      var value = sample.molecule_molecular_weight;
+    }
+
     return (
-      <Input type="text" label="M. Weight"
+      <Input type="text" label={label}
              key={sample.id}
-             defaultValue={sample.molecule_molecular_weight}
-             value={sample.molecule_molecular_weight}
+             defaultValue={value}
+             value={value}
+             ref="molecularWeight"
              disabled
              readOnly
         />
@@ -426,62 +448,69 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  attachedAmountInput(sample) {
+    if(!sample.contains_residues)
+      return false;
+
+    return (
+      <td>
+        <Input type="text" label="m, mg"
+               value={sample.defined_part_amount}
+               ref="attachedAmountMg"
+               disabled
+          />
+      </td>
+    )
+  }
+
+  sampleNumericInput(sample, unit, prefixes, precision, label, ref = '') {
+    if(sample.contains_residues && unit == 'ml')
+      return false;
+
+    return (
+      <td>
+        <NumeralInputWithUnitsCompo
+          key={sample.id}
+          value={sample["amount_" + unit]}
+          unit={unit}
+          label={label}
+          ref={ref}
+          metricPrefix={prefixes[0]}
+          metricPrefixes = {prefixes}
+          precision={precision}
+          onChange={(amount) => this.handleAmountChanged(amount)}
+          />
+      </td>
+    )
+  }
+
   sampleAmount(sample) {
     if(sample.isMethodDisabled('amount_value') == false) {
       if(sample.isMethodRestricted('molecule') == true) {
         return (
-          <table><tbody><tr>
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={sample.id}
-              value={sample.amount_g}
-              unit='g'
-              label="g"
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
-          </tr></tbody></table>
+          <table>
+            <tbody>
+              <tr>
+                {this.sampleNumericInput(sample, 'mg')}
+              </tr>
+            </tbody>
+          </table>
         )
       } else {
         return (
-          <table><tbody><tr>
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={sample.id}
-              value={sample.amount_g}
-              unit='g'
-              label="Amount"
-              metricPrefix='milli'
-              metricPrefixes = {['milli','none']}
-              precision={4}
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={sample.id}
-              value={sample.amount_l}
-              unit='l'
-              label="&nbsp;"
-              metricPrefix='milli'
-              metricPrefixes = {['milli','micro','none']}
-              precision={4}
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
-          <td>
-            <NumeralInputWithUnitsCompo
-              key={sample.id}
-              value={sample.amount_mol}
-              unit='mol'
-              label="&nbsp;"
-              metricPrefix='milli'
-              metricPrefixes = {['milli','none']}
-              precision={4}
-              onChange={(amount) => this.handleAmountChanged(amount)}
-              />
-          </td>
-          </tr></tbody></table>
+          <table>
+            <tbody>
+              <tr>
+                {this.sampleNumericInput(sample, 'g', ['milli','none'], 4, 'Amount', 'massMgInput')}
+
+                {this.sampleNumericInput(sample, 'l', ['milli','micro','none'], 5, "&nbsp;", 'l' )}
+
+                {this.sampleNumericInput(sample, 'mol', ['milli','none'], 4, "&nbsp;", 'amountInput' )}
+
+                {this.attachedAmountInput(sample)}
+              </tr>
+            </tbody>
+          </table>
         )
       }
     } else {
@@ -549,6 +578,25 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  elementalPropertiesItem(sample) {
+    if(!sample.isNew) {
+      if(sample.contains_residues) {
+        return (
+          <PolymerSection sample={sample}
+                          parent={this}/>
+        )
+      } else {
+        return (
+          <ListGroupItem>
+            <ElementalComposition sample={sample}/>
+          </ListGroupItem>
+        )
+      }
+    } else {
+      return false;
+    }
+  }
+
   samplePropertiesTab(ind){
     let sample = this.state.sample || {};
     return(
@@ -558,69 +606,73 @@ export default class SampleDetails extends React.Component {
 
           {this.moleculeInput(sample)}
 
-          <table width="100%"><tbody>
-            <tr>
-              <td width="50%" className="padding-right">
-                {this.moleculeInchi(sample)}
-              </td>
-              <td width="25%" className="padding-right">
-                {this.molecularWeight(sample)}
-              </td>
-              <td width="25%">
-                {this.moleculeDensity(sample)}
-              </td>
-            </tr>
-            <tr>
-              <td width="50%" className="padding-right">
-                {this.moleculeFormular(sample)}
-              </td>
-              <td width="25%" className="padding-right">
-                {this.moleculeBoilingPoint(sample)}
-              </td>
-              <td width="25%">
-                {this.moleculeMeltingPoint(sample)}
-              </td>
-            </tr>
-          </tbody></table>
+          <table width="100%">
+            <tbody>
+              <tr>
+                <td width="50%" className="padding-right">
+                  {this.moleculeInchi(sample)}
+                </td>
+                <td width="25%" className="padding-right">
+                  {this.molecularWeight(sample)}
+                </td>
+                <td width="25%">
+                  {this.moleculeDensity(sample)}
+                </td>
+              </tr>
+              <tr>
+                <td width="50%" className="padding-right">
+                  {this.moleculeFormular(sample)}
+                </td>
+                <td width="25%" className="padding-right">
+                  {this.moleculeBoilingPoint(sample)}
+                </td>
+                <td width="25%">
+                  {this.moleculeMeltingPoint(sample)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </ListGroupItem>
+          {this.elementalPropertiesItem(sample)}
         <ListGroupItem>
-          <table width="100%"><tbody>
-            <tr>
-              <td width="25%" className="padding-right" >
-                {this.sampleName(sample)}
-              </td>
-              <td width="25%" className="padding-right">
-                {this.sampleExternalLabel(sample)}
-              </td>
-              <td width="25%" className="padding-right">
-                {this.sampleImpurities(sample)}
-              </td>
-              <td width="25%">
-                <label>Solvent</label>
-                {this.sampleSolvent(sample)}
-              </td>
-            </tr>
-            <tr>
-              <td width="25%" className="padding-right" colSpan={2}>
-                {this.sampleAmount(sample)}
-              </td>
-              <td width="25%" className="padding-right">
-                {this.samplePurity(sample)}
-              </td>
-              <td width="25%">
-                {this.sampleImportedReadout(sample)}
-              </td>
-            </tr>
-            <tr>
-              <td width="50%" colSpan={2} className="padding-right">
-                {this.sampleLocation(sample)}
-              </td>
-              <td width="50%" colSpan={2}>
-                {this.sampleDescription(sample)}
-              </td>
-            </tr>
-          </tbody></table>
-
+          <table width="100%">
+            <tbody>
+              <tr>
+                <td width="50%" className="padding-right" colSpan={2}>
+                  {this.sampleName(sample)}
+                </td>
+                <td width="25%" className="padding-right">
+                  {this.sampleImpurities(sample)}
+                </td>
+                <td width="25%">
+                  <label>Solvent</label>
+                  {this.sampleSolvent(sample)}
+                </td>
+              </tr>
+              <tr>
+                <td width="25%" className="padding-right">
+                  {this.sampleExternalLabel(sample)}
+                </td>
+                <td width="25%" className="padding-right">
+                  {this.sampleAmount(sample)}
+                </td>
+                <td width="25%" className="padding-right">
+                  {this.samplePurity(sample)}
+                </td>
+                <td width="25%">
+                  {this.sampleImportedReadout(sample)}
+                </td>
+              </tr>
+              <tr>
+                <td width="50%" colSpan={2} className="padding-right">
+                  {this.sampleLocation(sample)}
+                </td>
+                <td width="50%" colSpan={2}>
+                  {this.sampleDescription(sample)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </ListGroupItem>
       </Tab>
     )
@@ -629,7 +681,7 @@ export default class SampleDetails extends React.Component {
   sampleAnalysesTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} title={'Analyses'} key={sample.id}>
+      <Tab eventKey={ind} tab={'Analyses'} key={sample.id}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsAnalyses
             sample={sample}
@@ -672,6 +724,7 @@ export default class SampleDetails extends React.Component {
     for (let j=0;j < extra.TabCount;j++){
       tabContents.push((i)=>this.extraTab(i))
     }
+
     return (
       <div>
         <StructureEditorModal

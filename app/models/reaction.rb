@@ -76,10 +76,18 @@ class Reaction < ActiveRecord::Base
   end
 
   def update_svg_file!
-    inchikeys = {}
-    inchikeys[:starting_materials] = starting_materials.includes(:molecule).pluck(:'molecules.inchikey')
-    inchikeys[:reactants] = reactants.includes(:molecule).pluck(:'molecules.inchikey')
-    inchikeys[:products] = products.includes(:molecule).pluck(:'molecules.inchikey')
+    paths = {}
+    %i(starting_materials reactants products).each do |prop|
+      d = self.send(prop).includes(:molecule)
+      paths[prop]= d.pluck(:sample_svg_file,:'molecules.inchikey').map do |item|
+        if item[0].present?
+          '/images/samples/' + item[0]
+        else
+          "/images/molecules/#{item[1]}.svg"
+        end
+      end
+    end
+
     label = [solvent, temperature]
             .reject(&:blank?)
             .join(", ")

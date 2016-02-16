@@ -20,7 +20,7 @@ export default class StructureEditorModal extends React.Component {
     })
   }
 
-  initializeEditor() {
+  getKetcher() {
     let ketcherFrame = document.getElementById("ifKetcher");
     let ketcher = null;
 
@@ -28,21 +28,27 @@ export default class StructureEditorModal extends React.Component {
       ketcher = ketcherFrame.contentWindow.ketcher;
     else
       ketcher = document.frames['ifKetcher'].window.ketcher;
+
+    return ketcher;
+  }
+
+  initializeEditor() {
+    var ketcher = this.getKetcher();
 
     let molfile = this.state.molfile;
     ketcher.setMolecule(molfile);
   }
 
   getMolfileFromEditor() {
-    let ketcherFrame = document.getElementById("ifKetcher");
-    let ketcher = null;
-
-    if (ketcherFrame && ("contentDocument" in ketcherFrame))
-      ketcher = ketcherFrame.contentWindow.ketcher;
-    else
-      ketcher = document.frames['ifKetcher'].window.ketcher;
+    var ketcher = this.getKetcher();
 
     return ketcher.getMolfile();
+  }
+
+  getSVGFromEditor() {
+    var ketcher = this.getKetcher();
+
+    return ketcher.getSVG();
   }
 
   handleCancel() {
@@ -54,9 +60,11 @@ export default class StructureEditorModal extends React.Component {
 
   handleSave() {
     let molfile = this.getMolfileFromEditor()
+    let svg_file = this.getSVGFromEditor()
     this.hideModal();
     if(this.props.onSave) {
-      this.props.onSave(molfile)
+      console.log(svg_file);
+      this.props.onSave(molfile, svg_file)
     }
   }
 
@@ -91,4 +99,3 @@ export default class StructureEditorModal extends React.Component {
     )
   }
 }
-

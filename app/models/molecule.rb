@@ -20,22 +20,18 @@ class Molecule < ActiveRecord::Base
     where(id: molecule_ids)
   }
 
-  def self.find_or_create_by_molfile molfile
+  def self.find_or_create_by_molfile molfile, is_partial = false
+
+    molfile = self.skip_residues(molfile) if is_partial
+
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
 
     inchikey = babel_info[:inchikey]
     unless inchikey.blank?
 
-      svg_file_name = "#{inchikey}.svg"
-      svg_file_path = "public/images/molecules/#{svg_file_name}"
-
-      svg_file = File.new(svg_file_path, 'w+')
-      svg_file.write(babel_info[:svg])
-      svg_file.close
-
       #todo: consistent naming
 
-      molecule = Molecule.find_or_create_by(inchikey: inchikey) do |molecule|
+      molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
         pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
         molecule.molfile = molfile
@@ -45,10 +41,40 @@ class Molecule < ActiveRecord::Base
         molecule.iupac_name = pubchem_info[:iupac_name]
         molecule.names = pubchem_info[:names]
 
-        molecule.molecule_svg_file = svg_file_name
+        molecule.attach_svg babel_info[:svg]
+
       end
       molecule
     end
   end
 
+  def attach_svg svg_data
+    return if self.molecule_svg_file.present? # we usually don't need update
+
+    svg_file_name = "#{self.inchikey}.svg"
+    svg_file_path = "public/images/molecules/#{svg_file_name}"
+
+    svg_file = File.new(svg_file_path, 'w+')
+    svg_file.write(svg_data)
+    svg_file.close
+
+    self.molecule_svg_file = svg_file_name
+  end
+
+  # skip residues in molfile and replace with Hydrogens
+  # in order to save at least known part of molecule
+  def self.skip_residues molfile
+    molfile.gsub! /(M.+RGP[\d ]+)/, ''
+    molfile.gsub! /(> <PolymersList>[\W\w.\n]+[\d]+)/m, ''
+
+    lines = molfile.split "\n"
+
+    lines[4..-1].each do |line|
+      break if line.match /(M.+END+)/
+
+      line.gsub! ' R# ', ' H ' # replace residues with Hydrogens
+    end
+
+    lines.join "\n"
+  end
 end

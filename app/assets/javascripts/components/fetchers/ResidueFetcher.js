@@ -1,8 +1,8 @@
 import 'whatwg-fetch';
 
-export default class MoleculesFetcher {
+export default class ResidueFetcher {
   static fetchByMolfile(molfile, svg_file) {
-    let promise = fetch('/api/v1/molecules', {
+    let promise = fetch('/api/v1/residues', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -14,11 +14,13 @@ export default class MoleculesFetcher {
         svg_file: svg_file
       })
     }).then((response) => {
+      //console.log(response);
       return response.json()
     }).then((json) => {
+      //console.log(json);
       return json;
     }).catch((errorMessage) => {
-      console.log(errorMessage);
+      //console.log(errorMessage);
     });
 
     return promise;

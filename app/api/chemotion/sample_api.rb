@@ -184,7 +184,6 @@ module Chemotion
             }
           end
         end
-
       end
 
       desc "Update sample by id"
@@ -203,9 +202,11 @@ module Chemotion
         optional :impurities, type: String, desc: "Sample impurities"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
+        optional :sample_svg_file, type: String, desc: "Sample SVG file"
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
+        optional :residues, type: Array
       end
       route_param :id do
         before do
@@ -221,6 +222,12 @@ module Chemotion
           attributes.merge!(
             molecule_attributes: molecule_attributes
           ) unless molecule_attributes.blank?
+
+          residues_attributes = attributes.delete(:residues)
+
+          attributes.merge!(
+            residues_attributes: residues_attributes
+          ) unless residues_attributes.blank?
 
           if sample = Sample.find(params[:id])
             sample.update(attributes)
@@ -244,6 +251,7 @@ module Chemotion
         requires :impurities, type: String, desc: "Sample impurities"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
+        optional :sample_svg_file, type: String, desc: "Sample SVG file"
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
@@ -262,6 +270,7 @@ module Chemotion
           impurities: params[:impurities],
           location: params[:location],
           molfile: params[:molfile],
+          sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
           created_by: current_user.id
@@ -271,6 +280,8 @@ module Chemotion
         ) unless params[:molecule].blank?
 
         sample = Sample.create(attributes)
+        sample.create_residues
+
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)
           CollectionsSample.create(sample: sample, collection: collection)

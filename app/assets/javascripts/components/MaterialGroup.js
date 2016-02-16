@@ -15,6 +15,7 @@ export default class MaterialGroup extends Component {
           <th width="15%">Mass</th>
           <th width="15%">Vol</th>
           <th width="15%">Amount</th>
+          <th width="10%">loading</th>
           <th width="10%">{materialGroup == 'products' ? 'Yield' : 'Equi'}</th>
           <th width="5%"></th>
           </tr></thead>

@@ -52,23 +52,27 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   belongs_to :molecule
+  belongs_to :user
 
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
+  has_many :residues
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+  before_save :create_elemental_analyses
 
   has_ancestry
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
+  accepts_nested_attributes_for :residues
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', counter_cache: :samples_created_count
 
-  before_save :auto_set_short_label
+  before_save :auto_set_short_label, :attach_svg
 
   def auto_set_short_label
     if parent
@@ -103,13 +107,81 @@ class Sample < ActiveRecord::Base
 
   def find_or_create_molecule_based_on_inchikey
     if molfile
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-      inchikey = babel_info[:inchikey]
-      unless inchikey.blank?
-        unless molecule && molecule.inchikey == inchikey
-          self.molecule = Molecule.find_or_create_by_molfile(molfile)
+      if molfile.include? ' R# '
+        self.molecule = Molecule.find_or_create_by_molfile(molfile.clone, true)
+      else
+        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+        inchikey = babel_info[:inchikey]
+        unless inchikey.blank?
+          unless molecule && molecule.inchikey == inchikey
+            self.molecule = Molecule.find_or_create_by_molfile(molfile)
+          end
         end
       end
+    end
+  end
+
+  def generate_identifier
+    lines = self.molfile.split "\n"
+    self.identifier = ''
+
+    bonds_start_index = 4 # the index where bonds matrix starts
+
+    lines[4..-1].each_with_index do |line, index|
+      atom_label = line.split[3].strip
+      unless atom_label.match /[A-Za-z]/
+        bonds_start_index += index
+        break
+      end
+
+      self.identifier << atom_label
+    end
+
+    bonds_end_index = lines.index { |line| line[0] == 'M' } - 1
+
+    bonds_matrix = lines[bonds_start_index..bonds_end_index].join
+    self.identifier << Digest::SHA256.base64digest(bonds_matrix)
+  end
+
+  def create_residues
+    lines = self.molfile.split "\n"
+    polymers_list_index = lines.index { |l| l.match /> <PolymersList>/ } + 1
+    lines[polymers_list_index].split.each do |pindex|
+      residue = self.residues.new residue_type: Residue::TYPES[:polymer]
+      residue.custom_info = {} # save empty for now
+      residue.save!
+    end
+  end
+
+  def attach_svg
+    svg = self.sample_svg_file
+    return unless svg.present?
+    return unless svg.match /TMPFILE/
+
+    svg_file_name = "#{self.short_label}.svg"
+    svg_path = "#{Rails.root}/public/images/samples/#{svg}"
+
+    FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
+
+    self.sample_svg_file = svg_file_name
+  end
+
+  # creates element analyses
+  def create_elemental_analyses
+    residue = self.residues[0]
+    return unless m_formula = self.molecule.sum_formular
+
+    self.elemental_analyses = if residue.present?
+      p_formula = residue.custom_info['formula']
+      p_loading = residue.custom_info['loading'].try(:to_d)
+
+      if p_formula.present? && p_loading.present?
+        Chemotion::Calculations.get_composition m_formula, p_formula, p_loading
+      else
+        {}
+      end
+    else
+      Chemotion::Calculations.get_composition m_formula
     end
   end
 

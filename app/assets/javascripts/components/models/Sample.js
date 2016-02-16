@@ -50,7 +50,7 @@ export default class Sample extends Element {
   }
 
   serialize() {
-    return super.serialize({
+    var serialized = super.serialize({
       name: this.name,
       external_label: this.external_label,
       target_amount_value: this.target_amount_value,
@@ -64,13 +64,17 @@ export default class Sample extends Element {
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
+      sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
+      residues: this.residues,
       is_split: this.is_split || false,
       is_new: this.is_new,
       imported_readout: this.imported_readout
     });
+
+    return serialized;
   }
 
   static buildEmpty(collection_id) {
@@ -88,7 +92,10 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
-      imported_readout: ''
+      elemental_analyses: {},
+      residues: [],
+      imported_readout: '',
+      attached_amount_mg: '' // field for polymers calculations
     });
 
     sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
@@ -110,6 +117,8 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
+      elemental_analyses: {},
+      residues: [],
       imported_readout: ''
     });
 
@@ -218,6 +227,11 @@ export default class Sample extends Element {
     return this.real_amount_value ? 'real' : 'target';
   }
 
+  get defined_part_amount() {
+    let mw = this.molecule_molecular_weight - 1.0;
+    return this.amount_mmol * mw;
+  }
+
   // amount proxy
 
   get amount() {
@@ -305,7 +319,6 @@ export default class Sample extends Element {
 	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
 	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
-
   convertGramToUnit(amount_g, unit) {
 
     switch (unit) {
@@ -342,6 +355,72 @@ export default class Sample extends Element {
         break;
       default:
         return amount_value
+    }
+  }
+
+  convertMilligramToUnit(amount_mg, unit) {
+    if(this.contains_residues) {
+      var loading = this.residues[0].custom_info.loading;
+      switch (unit) {
+        case 'mg':
+          return amount_mg;
+          break;
+        case 'mmol':
+            return (loading * amount_mg) / 1000.0;
+            break;
+        default:
+          return loading * amount_mg;
+      }
+    } else {
+      switch (unit) {
+        case 'mg':
+          return amount_mg;
+          break;
+        case 'ml':
+          let molecule_density = this.molecule_density || 1.0;
+          if(molecule_density) {
+            return amount_mg / molecule_density / 1000;
+            break;
+          }
+        case 'mmol':
+          let molecule_molecular_weight = this.molecule_molecular_weight
+          if (molecule_molecular_weight) {
+            return amount_mg * (this.purity || 1.0) / molecule_molecular_weight;
+            break;
+          }
+        default:
+          return amount_mg
+      }
+    }
+  }
+
+  convertToMilligram(amount_value, amount_unit) {
+    if(this.contains_residues) {
+      switch (amount_unit) {
+        case 'mg':
+          return amount_value;
+          break;
+        case 'mmol':
+          var loading = this.residues[0].custom_info.loading;
+          return 1000.0 * amount_value / loading;
+          break;
+        default:
+          return amount_value
+      }
+    } else {
+      switch (amount_unit) {
+        case 'mg':
+          return amount_value;
+          break;
+        case 'ml':
+          return amount_value * (this.molecule_density || 1.0) * 1000;
+          break;
+        case 'mmol':
+          return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
+          break;
+        default:
+          return amount_value
+      }
     }
   }
   get molecule_iupac_name() {
@@ -402,12 +481,18 @@ export default class Sample extends Element {
 
   set molecule(molecule) {
     this._molecule = new Molecule(molecule)
+    if(molecule.temp_svg) {
+      this.sample_svg_file = molecule.temp_svg;
+    }
   }
 
   get svgPath() {
-    return this.molecule && this.molecule.svgPath
+    if (this.sample_svg_file){
+      return `/images/samples/${this.sample_svg_file}`;
+    } else {
+      return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    }
   }
-
   //todo: have a dedicated Material Sample subclass
 
   set equivalent(equivalent) {
