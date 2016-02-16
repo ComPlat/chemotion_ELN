@@ -300,9 +300,9 @@ export default class Sample extends Element {
   }
 
   //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
-	//Volumen (ml) = Menge (mg) / Dichte (g/ml)
-	//Menge (mg)  = Volumen (ml) * Dichte
-	//Menge (mg) = Menge (mmol)  * Molmasse / Reinheit
+	//Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
+	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
+	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertMilligramToUnit(amount_mg, unit) {
 
@@ -313,7 +313,7 @@ export default class Sample extends Element {
       case 'ml':
         let molecule_density = this.molecule_density || 1.0;
         if(molecule_density) {
-          return amount_mg / molecule_density;
+          return amount_mg / molecule_density / 1000 ;
           break;
         }
       case 'mmol':
@@ -333,7 +333,7 @@ export default class Sample extends Element {
         return amount_value;
         break;
       case 'ml':
-        return amount_value * (this.molecule_density || 1.0);
+        return amount_value * (this.molecule_density || 1.0) * 1000;
         break;
       case 'mmol':
         return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
