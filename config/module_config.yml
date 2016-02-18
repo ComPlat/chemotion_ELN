@@ -4,12 +4,6 @@
 #Do not modify unless you want to overwrite the plugin gem configurations (see comment below)
 #
 
-SampleDetails:
-  Tab:
-    {}
-  TabName:
-    {}
-
 ElementsTableEntries:
   TdContent:
     {}
@@ -17,6 +11,22 @@ ElementsTableEntries:
 ElementsTableSampleEntries:
   MoleculeHeaderContent:
     {}
+
+ReactionDetails:
+  Tab:
+    {}
+  TabName:
+    {}
+
+SampleDetails:
+  Tab:
+    {}
+  TabName:
+    {}
+
+
+
+
 ---
 #To overwrite the extra module exports defined in each plugin gems, input here the gem name and
 #the list of the plugin's components wanted (or an empty array for none)
