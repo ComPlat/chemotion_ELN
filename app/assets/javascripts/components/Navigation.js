@@ -20,9 +20,9 @@ export default class Navigation extends React.Component {
             <ContextActions/>
           </div>
         </Nav>
-        <Nav navbar right>
+        
           <UserAuth/>
-        </Nav>
+
       </Navbar>
     )
   }
