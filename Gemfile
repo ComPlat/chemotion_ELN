@@ -71,6 +71,8 @@ gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
 gem "paranoia", "~> 2.0"
 
 gem "whenever", require: false
+gem "dotenv-rails"
+gem "backup"
 
 group :production do
   if ENV["RAILS_ENV"] == "production"
@@ -110,7 +112,6 @@ group :development, :test do
   gem 'capistrano-rails'
   gem 'capistrano-npm'
   gem 'capistrano3-delayed-job'
-  gem 'capistrano3-unicorn'
 end
 
 group :test do

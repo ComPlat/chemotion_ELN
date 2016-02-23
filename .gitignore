@@ -30,6 +30,9 @@
 !/public/attachments/.keep
 
 
-#config generated files 
+#config generated files
 aliasifyConfig.js
 /app/assets/javascripts/components/extra/*
+
+# Backups folder
+backup/deploy_backup
