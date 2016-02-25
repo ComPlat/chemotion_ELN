@@ -81,7 +81,8 @@ export default class ReactionDetailsProperties extends Component {
     const {reaction} = this.state;
     return (
       <ListGroup>
-        <ListGroupItem header="">
+        <ListGroupItem>
+          <h4 className="list-group-item-heading" ></h4>
           <Row>
             <Col md={6}>
               <Input
@@ -119,7 +120,7 @@ export default class ReactionDetailsProperties extends Component {
             </Col>
           </Row>
         </ListGroupItem>
-        <ListGroupItem header="">
+        <ListGroupItem>
           <Row>
             <Col md={4}>
               <label>Solvent</label>
@@ -192,7 +193,8 @@ export default class ReactionDetailsProperties extends Component {
             </Col>
           </Row>
         </ListGroupItem>
-        <ListGroupItem header="TLC-Control">
+        <ListGroupItem>
+          <h4 className="list-group-item-heading" >TLC-Control</h4>
           <Row>
             <Col md={6}>
               <Input
