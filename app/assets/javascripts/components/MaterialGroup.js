@@ -7,7 +7,7 @@ export default class MaterialGroup extends Component {
     return (
       <div>
         <table width="100%">
-          <thead>
+          <thead><tr>
           <th width="5%"></th>
           <th width="5%">Ref</th>
           <th width="25%">Name</th>
@@ -17,7 +17,7 @@ export default class MaterialGroup extends Component {
           <th width="15%">mmol</th>
           <th width="10%">{materialGroup == 'products' ? 'Yield' : 'Equi'}</th>
           <th width="5%"></th>
-          </thead>
+          </tr></thead>
           <tbody>
           {
             materials.map((material, key) => {

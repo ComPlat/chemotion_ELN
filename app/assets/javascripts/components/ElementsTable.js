@@ -153,14 +153,14 @@ export default class ElementsTable extends React.Component {
       return (
         <div>
           <Table className="elements" bordered hover style={{marginBottom: 0}}>
-            <thead>
+            <thead><tr>
               <th className="check">
                 <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
               </th>
               <th colSpan={3}>
                 All {type}s
               </th>
-            </thead>
+            </tr></thead>
           </Table>
           <ElementsTableSampleEntries
             elements={elements}
@@ -173,14 +173,14 @@ export default class ElementsTable extends React.Component {
     } else {
       return (
         <Table className="elements" bordered hover>
-          <thead>
+          <thead><tr>
             <th className="check">
               <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
             </th>
             <th colSpan={3}>
               All {type}s
             </th>
-          </thead>
+          </tr></thead>
           <ElementsTableEntries
             elements={elements}
             currentElement={currentElement}

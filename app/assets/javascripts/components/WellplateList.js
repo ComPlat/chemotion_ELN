@@ -16,7 +16,7 @@ export default class WellplateList extends Component {
     return (
       <div>
         <Table bordered hover condensed>
-          <thead>
+          <thead><tr>
             <th width="3%">#</th>
             <th width="5%">Position</th>
             <th width="5%">Molecule</th>
@@ -25,7 +25,7 @@ export default class WellplateList extends Component {
             <th width="15%">Sum-Formula</th>
             <th width="25%">Readout</th>
             <th width="25%">Imported Readout</th>
-          </thead>
+          </tr></thead>
           <tbody>
           {wells.map((well, key) => {
             const id = key + 1;
