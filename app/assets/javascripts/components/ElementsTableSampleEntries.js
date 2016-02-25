@@ -23,7 +23,7 @@ export default class ElementsTableSampleEntries extends Component {
   render() {
     let {elements: samples, currentElement, showDragColumn, ui} = this.props
     let groupedSamplesByMolecule = samples.reduce((groups, sample) => {
-      let moleculeName = sample.molecule.iupac_name
+      let moleculeName = sample.molecule.iupac_name || sample.molecule.inchistring
       if(!groups[moleculeName]) {
         groups[moleculeName] = [].concat(sample)
       } else {
@@ -44,7 +44,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   renderMoleculeGroup(moleculeGroup, index) {
     let {moleculeGroupsShown} = this.state
-    let moleculeName = moleculeGroup[0].molecule.iupac_name
+    let moleculeName = moleculeGroup[0].molecule.iupac_name || moleculeGroup[0].molecule.inchistring
     let showGroup = !moleculeGroupsShown.includes(moleculeName)
     return (
       <tbody key={index}>
@@ -67,7 +67,7 @@ export default class ElementsTableSampleEntries extends Component {
     return (
       <tr
         style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
-        onClick={() => this.handleMoleculeToggle(molecule.iupac_name)}
+        onClick={() => this.handleMoleculeToggle(molecule.iupac_name || molecule.inchistring)}
       >
         <td colSpan="3">
           <div style={{float: 'left'}}>
@@ -81,7 +81,7 @@ export default class ElementsTableSampleEntries extends Component {
             </OverlayTrigger>
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
-            <h4>{molecule.iupac_name}</h4>
+            <h4>{molecule.iupac_name || molecule.inchistring}</h4>
             ({molecule.molecular_weight} mg/mmol)
           </div>
           {tdExtraContents.map((e)=>{return e;})}

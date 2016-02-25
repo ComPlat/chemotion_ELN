@@ -128,7 +128,7 @@ export default class Sample extends Element {
     if(!currentUser) {
       return 'NEW SAMPLE';
     } else {
-      return `${currentUser.initials}-${currentUser.samples_created_count + 1}`;
+      return `${currentUser.initials}-${currentUser.samples_count + 1}`;
     }
   }
 

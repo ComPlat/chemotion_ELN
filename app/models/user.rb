@@ -6,7 +6,7 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
 
   has_many :collections
-  has_many :samples, through: :collections
+  has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
   has_many :wellplates, through: :collections
 
