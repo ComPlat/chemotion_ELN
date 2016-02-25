@@ -13,6 +13,7 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
+import extra from './extra/ReactionDetailsExtra';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -96,6 +97,19 @@ export default class ReactionDetails extends Component {
       return <div></div>
     }
   }
+  extraTabPane(ind){
+    let reaction = this.state.reaction || {}
+    let num = ind  ;
+    let NoName =  extra["Tab"+num];
+    let TabName = extra["TabName"+num];
+    return(
+       <TabPane eventKey={ind+3}  tab={TabName} >
+         <ListGroupItem style={{paddingBottom: 20}}>
+           <NoName  reaction={reaction}/>
+         </ListGroupItem>
+       </TabPane>
+      )
+  }
 
   render() {
     const {reaction} = this.state;
@@ -104,6 +118,10 @@ export default class ReactionDetails extends Component {
     };
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     const style = {height: '220px'};
+    let extraTabPanes =[];
+    for (let j=0;j < extra.TabCount;j++){
+      extraTabPanes.push((i)=>this.extraTabPane(i))
+    }
     return (
         <Panel header="Reaction Details" bsStyle={reaction.isEdited ? 'info' : 'primary'}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
@@ -150,6 +168,7 @@ export default class ReactionDetails extends Component {
                 onReactionChange={reaction => this.handleReactionChange(reaction)}
                 />
             </TabPane>
+            {extraTabPanes.map((e,i)=>e(i))}
             {this.productAnalyses()}
           </TabbedArea>
           <hr/>
