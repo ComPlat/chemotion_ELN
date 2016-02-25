@@ -1,5 +1,6 @@
 import alt from '../alt';
 import UIActions from './UIActions';
+import UserActions from './UserActions';
 
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
@@ -303,6 +304,7 @@ class ElementActions {
   deleteElements(options) {
     this.dispatch(options);
     UIActions.uncheckWholeSelection();
+    UserActions.fetchCurrentUser();
   }
 
   removeElements() {
