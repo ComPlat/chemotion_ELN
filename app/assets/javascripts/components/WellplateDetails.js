@@ -1,5 +1,5 @@
 import React, {PropTypes, Component} from 'react';
-import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
+import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
@@ -100,8 +100,8 @@ export default class WellplateDetails extends Component {
           <ElementCollectionLabels element={wellplate}/>
           <ListGroup fill>
             <ListGroupItem>
-              <TabbedArea activeKey={activeTab} onSelect={event => this.handleTabChange(event)}>
-                <TabPane eventKey={0} tab={'Designer'}>
+              <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}>
+                <Tab eventKey={0} title={'Designer'}>
                   <Well>
                     <Wellplate
                       show={showWellplate}
@@ -112,22 +112,22 @@ export default class WellplateDetails extends Component {
                       width={60}
                       />
                   </Well>
-                </TabPane>
-                <TabPane eventKey={1} tab={'List'}>
+                </Tab>
+                <Tab eventKey={1} title={'List'}>
                   <Well>
                     <WellplateList
                       wells={wells}
                       handleWellsChange={(wells) => this.handleWellsChange(wells)}
                       />
                   </Well>
-                </TabPane>
-                <TabPane eventKey={2} tab={'Properties'}>
+                </Tab>
+                <Tab eventKey={2} title={'Properties'}>
                   <WellplateProperties
                     {...properties}
                     changeProperties={(change) => this.handleChangeProperties(change)}
                     />
-                </TabPane>
-              </TabbedArea>
+                </Tab>
+              </Tabs>
             </ListGroupItem>
             <ListGroupItem>
               <ButtonToolbar>

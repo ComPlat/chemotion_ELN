@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import Tree from 'react-ui-tree';
 import {Button, ButtonGroup, Input} from 'react-bootstrap';
 
@@ -165,7 +166,7 @@ export default class MySharedCollections extends React.Component {
   }
 
   editShare(node) {
-    React.render(<ShareSettingsModal node={node}/>, document.getElementById('modal'));
+    ReactDOM.render(<ShareSettingsModal node={node}/>, document.getElementById('modal'));
   }
 
   renderNode(node) {

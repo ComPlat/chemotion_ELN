@@ -1,4 +1,5 @@
 import React, {PropTypes, Component} from 'react';
+import ReactDOM from 'react-dom';
 import WellContainer from './WellContainer';
 import WellplateLabels from './WellplateLabels';
 import WellOverlay from './WellOverlay';
@@ -135,7 +136,7 @@ export default class Wellplate extends Component {
           show={showOverlay}
           well={overlayWell}
           placement={overlayPlacement}
-          target={() => React.findDOMNode(this.refs[overlayTarget]).children[0]}
+          target={() => ReactDOM.findDOMNode(this.refs[overlayTarget]).children[0]}
           handleClose={() => this.hideOverlay()}
           removeSampleFromWell={well => this.removeSampleFromWell(well)}
           />

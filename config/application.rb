@@ -117,7 +117,7 @@ module Chemotion
 
     end # of config.before_configuration
 
-    config.browserify_rails.commandline_options = "-t babelify -t aliasify "
+    config.browserify_rails.commandline_options = "-t [ babelify --presets [ es2015 react ] --plugins [ transform-object-rest-spread ] ]  -t aliasify "
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers

@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {Input, Overlay, ListGroup, ListGroupItem} from 'react-bootstrap';
 import debounce from 'es6-promise-debounce';
 
@@ -21,7 +22,7 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   initInputWidth() {
-    let input = React.findDOMNode(this.refs.input);
+    let input = ReactDOM.findDOMNode(this.refs.input);
     if(input) {
       this.setState({
         inputWidth: input.offsetWidth
@@ -72,8 +73,8 @@ export default class AutoCompleteInput extends React.Component {
     }
     newState.value = suggestions[newFocus].name;
     newState.suggestionFocus = newFocus;
-    React.findDOMNode(this.refs['suggestion_' + suggestionFocus]).classList.remove('active');
-    React.findDOMNode(this.refs['suggestion_' + newFocus]).classList.add('active');
+    ReactDOM.findDOMNode(this.refs['suggestion_' + suggestionFocus]).classList.remove('active');
+    ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus]).classList.add('active');
     this.setState(newState);
   }
 

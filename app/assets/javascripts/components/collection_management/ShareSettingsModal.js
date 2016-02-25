@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {Button, Input, Modal} from 'react-bootstrap';
 import Select from 'react-select';
 
@@ -44,7 +45,7 @@ export default class ShareSettingsModal extends React.Component {
   }
 
   hideModal() {
-    React.unmountComponentAtNode(document.getElementById('modal'));
+    ReactDOM.unmountComponentAtNode(document.getElementById('modal'));
   }
 
   handleUpdateSharing() {

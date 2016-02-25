@@ -1,6 +1,6 @@
 import React from 'react';
 import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Accordion,
-  Panel, ListGroup, ListGroupItem, Glyphicon, TabbedArea, TabPane, Row, Col} from 'react-bootstrap';
+  Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -542,7 +542,7 @@ export default class SampleDetails extends React.Component {
   samplePropertiesTab(ind){
     let sample = this.state.sample || {};
     return(
-      <TabPane eventKey={ind} tab={'Properties'}>
+      <Tab eventKey={ind} title={'Properties'}>
         <ListGroupItem>
           {this.topSecretCheckbox(sample)}
 
@@ -612,21 +612,21 @@ export default class SampleDetails extends React.Component {
           </table>
 
         </ListGroupItem>
-      </TabPane>
+      </Tab>
     )
   }
 
   sampleAnalysesTab(ind){
     let sample = this.state.sample || {}
     return(
-      <TabPane eventKey={ind} tab={'Analyses'} key={sample.id}>
+      <Tab eventKey={ind} title={'Analyses'} key={sample.id}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsAnalyses
             sample={sample}
             onSampleChanged={sample => this.handleSampleChanged(sample)}
             />
         </ListGroupItem>
-      </TabPane>
+      </Tab>
     )
   }
 
@@ -636,11 +636,11 @@ export default class SampleDetails extends React.Component {
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
     return(
-       <TabPane eventKey={ind}  tab={TabName} >
+       <Tab eventKey={ind}  title={TabName} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  sample={sample}/>
          </ListGroupItem>
-       </TabPane>
+       </Tab>
       )
   }
 
@@ -670,9 +670,9 @@ export default class SampleDetails extends React.Component {
           </Button>
           {this.sampleHeader(sample)}
           <ListGroup>
-          <TabbedArea defaultActiveKey={0}>
+          <Tabs defaultActiveKey={0}>
             {tabContents.map((e,i)=>e(i))}
-          </TabbedArea>
+          </Tabs>
               <ListGroupItem>
                 <ButtonToolbar>
                   <Button bsStyle="primary" onClick={this.closeDetails.bind(this)}>Close</Button>
