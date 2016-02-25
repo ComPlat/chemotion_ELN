@@ -98,7 +98,5 @@ module SVG
         hash_of_inchikeys = Digest::SHA256.hexdigest(key_base)
         hash_of_inchikeys + '.svg'
       end
-
-
   end
 end
