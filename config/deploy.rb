@@ -23,10 +23,11 @@ set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
 # set :pty, true
 
 # Default value for :linked_files is []
-# set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/secrets.yml')
+set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/secrets.yml', '.env')
 
 # Default value for linked_dirs is []
-set :linked_dirs, fetch(:linked_dirs, []).push('log', 'config', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'public/images', 'uploads/attachments')
+set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/cache',
+'tmp/sockets', 'public/images', 'uploads/attachments', 'backup/deploy_backup')
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
@@ -34,12 +35,30 @@ set :linked_dirs, fetch(:linked_dirs, []).push('log', 'config', 'tmp/pids', 'tmp
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
+before 'deploy:migrate', 'deploy:backup'
 after 'deploy:publishing', 'deploy:restart'
 
 namespace :deploy do
 
+  task :backup do
+    on roles :app do
+      within "#{fetch(:deploy_to)}/current/" do
+        with RAILS_ENV: fetch(:rails_env) do
+          execute :bundle, 'exec backup perform -t deploy_backup -c backup/config.rb'
+        end
+      end
+    end
+
+    # RSync local folder with server backups
+    backup_dir = "#{fetch(:user)}@#{fetch(:server)}:#{fetch(:deploy_to)}/shared/backup"
+    puts backup_dir
+    system("rsync -r #{backup_dir}/deploy_backup backup")
+  end
+
   task :restart do
-    invoke 'unicorn:reload'
+    on roles :app do
+      execute :touch, "#{current_path}/tmp/restart.txt"
+    end
   end
 
   after :restart, :clear_cache do
