@@ -121,6 +121,6 @@ end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
 group :development, :production, :plugins do
-  #gem 'scifinding', path: '../scifinding'
+  gem 'scifinding', path: '~/shared/scifinding'
 end
 ####
