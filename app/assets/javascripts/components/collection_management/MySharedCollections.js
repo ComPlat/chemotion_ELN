@@ -28,6 +28,10 @@ export default class MySharedCollections extends React.Component {
     CollectionActions.fetchSharedCollectionRoots();
   }
 
+  componentWillUnmount(){
+    CollectionStore.unlisten(this.onStoreChange.bind(this));
+  }
+
   onStoreChange(state) {
     let children = state.sharedRoots.length > 0 ? state.sharedRoots : [{}];
 

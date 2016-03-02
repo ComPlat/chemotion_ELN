@@ -28,6 +28,10 @@ export default class MyCollections extends React.Component {
     CollectionActions.fetchUnsharedCollectionRoots();
   }
 
+  componentWillUnmount() {
+    CollectionStore.unlisten(this.onStoreChange.bind(this))
+  }
+
   onStoreChange(state) {
     let children = state.unsharedRoots.length > 0 ? state.unsharedRoots : [{}];
 
