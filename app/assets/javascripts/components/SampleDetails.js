@@ -548,7 +548,7 @@ export default class SampleDetails extends React.Component {
 
           {this.moleculeInput(sample)}
 
-          <table width="100%">
+          <table width="100%"><tbody>
             <tr>
               <td width="50%" className="padding-right">
                 {this.moleculeInchi(sample)}
@@ -571,10 +571,10 @@ export default class SampleDetails extends React.Component {
                 {this.moleculeMeltingPoint(sample)}
               </td>
             </tr>
-          </table>
+          </tbody></table>
         </ListGroupItem>
         <ListGroupItem>
-          <table width="100%">
+          <table width="100%"><tbody>
             <tr>
               <td width="50%" className="padding-right" colSpan={2}>
                 {this.sampleName(sample)}
@@ -609,7 +609,7 @@ export default class SampleDetails extends React.Component {
                 {this.sampleDescription(sample)}
               </td>
             </tr>
-          </table>
+          </tbody></table>
 
         </ListGroupItem>
       </Tab>
