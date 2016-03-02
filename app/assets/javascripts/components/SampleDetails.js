@@ -425,7 +425,7 @@ export default class SampleDetails extends React.Component {
     if(sample.isMethodDisabled('amount_value') == false) {
       if(sample.isMethodRestricted('molecule') == true) {
         return (
-          <table><tr>
+          <table><tbody><tr>
           <td>
             <NumeralInputWithUnits
               key={sample.id}
@@ -436,11 +436,11 @@ export default class SampleDetails extends React.Component {
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
-          </tr></table>
+          </tr></tbody></table>
         )
       } else {
         return (
-          <table><tr>
+          <table><tbody><tr>
           <td>
             <NumeralInputWithUnits
               key={sample.id}
@@ -471,7 +471,7 @@ export default class SampleDetails extends React.Component {
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
-          </tr></table>
+          </tr></tbody></table>
         )
       }
     } else {
