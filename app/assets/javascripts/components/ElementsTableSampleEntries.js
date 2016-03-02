@@ -62,7 +62,7 @@ export default class ElementsTableSampleEntries extends Component {
 
     for (let j=0;j < extra.MoleculeHeaderContentCount;j++){
       let NoName = extra["MoleculeHeaderContent"+j];
-      tdExtraContents.push(<NoName element={sample}/>);
+      tdExtraContents.push(<NoName element={sample} key={"extraMoleculeHeader"+j}/>);
     }
     return (
       <tr
