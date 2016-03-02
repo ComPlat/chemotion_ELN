@@ -103,7 +103,7 @@ export default class ReactionDetails extends Component {
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
     return(
-       <Tab eventKey={ind+3}  title={TabName} >
+       <Tab eventKey={ind+3}  title={TabName} key={"sampleDetailsTab"+ind+3} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  reaction={reaction}/>
          </ListGroupItem>
