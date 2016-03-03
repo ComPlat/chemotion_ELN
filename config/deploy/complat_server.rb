@@ -8,3 +8,6 @@ set :ssh_options, {
 set :deploy_to, '/home/chem_dev/www/chemotion'
 set :user, 'chem_dev'
 set :server, '172.22.91.42'
+
+#set :bundle_without, %w{}.join(' ')
+set :bundle_flags, '--frozen'#'--deployment --quiet'  

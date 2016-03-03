@@ -74,18 +74,20 @@ gem "whenever", require: false
 gem "dotenv-rails"
 gem "backup"
 
+if ENV.fetch("RAILS_ENV", "development").match(/^(development|test)\z/)
+  gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
+elsif ENV["RAILS_ENV"] == "production"
+  gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
+end
+
 group :production do
-  if ENV["RAILS_ENV"] == "production"
-    gem 'openbabel'
-  end
-  gem 'unicorn'
+
+#  gem 'unicorn'
 
 end
 
 group :development, :test do
-  if ENV.fetch("RAILS_ENV", "development") == "development"
-    gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
-  end
+
   gem 'mailcatcher'
 
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
@@ -120,7 +122,9 @@ group :test do
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
-group :development, :production, :plugins do
-  gem 'scifinding', path: '~/shared/scifinding'
-end
+
+  gem 'scifinding', path: '~/shared/scifinding' , :group => [:plugins,:development,:production]
+
+
+
 ####
