@@ -12,7 +12,12 @@ export default class Navigation extends React.Component {
 
   render() {
     return (
-      <Navbar brand={<a href="#">Chemotion</a>} inverse fluid>
+      <Navbar inverse fluid>
+        <Navbar.Header>
+          <Navbar.Brand>
+            <a href="#">Chemotion</a>
+          </Navbar.Brand>
+        </Navbar.Header>
         <Nav navbar>
           <div className='navbar-form'>
             <Search />
@@ -20,9 +25,7 @@ export default class Navigation extends React.Component {
             <ContextActions/>
           </div>
         </Nav>
-        
-          <UserAuth/>
-
+        <UserAuth/>
       </Navbar>
     )
   }

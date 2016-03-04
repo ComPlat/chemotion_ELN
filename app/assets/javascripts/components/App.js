@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+import ReactDOM from 'react-dom';
 import {Col, Grid, Row} from 'react-bootstrap';
 
 import Navigation from './Navigation';
@@ -67,7 +68,7 @@ class App extends Component {
 }
 
 $(document).ready(function() {
-  React.render(<App />, document.getElementById('app'));
+  ReactDOM.render(<App />, document.getElementById('app'));
   initRoutes();
   Aviator.dispatch();
 });

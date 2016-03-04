@@ -1,5 +1,5 @@
 import React from 'react';
-import {TabbedArea, TabPane} from 'react-bootstrap';
+import {Tabs, Tab} from 'react-bootstrap';
 
 import MyCollections from './collection_management/MyCollections';
 import MySharedCollections from './collection_management/MySharedCollections';
@@ -12,14 +12,14 @@ export default class CollectionManagement extends React.Component {
   render() {
     return (
       <div id="collection-management">
-        <TabbedArea defaultActiveKey={1} inverse>
-          <TabPane eventKey={1} tab="My Collections">
+        <Tabs defaultActiveKey={1} inverse>
+          <Tab eventKey={1} title="My Collections">
             <MyCollections />
-          </TabPane>
-          <TabPane eventKey={2} tab="My Shared Collections">
+          </Tab>
+          <Tab eventKey={2} title="My Shared Collections">
             <MySharedCollections />
-          </TabPane>
-        </TabbedArea>
+          </Tab>
+        </Tabs>
       </div>
     )
   }

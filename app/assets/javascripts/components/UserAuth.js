@@ -4,7 +4,7 @@ import 'whatwg-fetch';
 import UserActions from './actions/UserActions';
 import UserStore from './stores/UserStore';
 import Functions from './utils/Functions';
-import {Nav, Navbar, DropdownButton, NavItem, MenuItem, Glyphicon} from 'react-bootstrap';
+import {Nav, Navbar, NavDropdown, NavItem, MenuItem, Glyphicon} from 'react-bootstrap';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -47,11 +47,11 @@ export default class UserAuth extends Component {
       marginRight: '5px'
     };
     return (
-      <Nav navbar right>
-        <DropdownButton title={`Log in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
+      <Nav navbar pullRight>
+        <NavDropdown title={`Log in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
           <MenuItem eventKey="1" disabled>Account settings</MenuItem>
           <MenuItem eventKey="2" href="users/edit" >Change Password</MenuItem>
-        </DropdownButton>
+        </NavDropdown>
         <NavItem onClick={() => this.logout()} style={style} className='' title='log-out'> <Glyphicon glyph="log-out" /> </NavItem>
       </Nav>
 

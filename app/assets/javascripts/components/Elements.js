@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
 import {DragDropContext} from 'react-dnd';
 import {Col} from 'react-bootstrap';
-import HTML5Backend from 'react-dnd/modules/backends/HTML5';
+import HTML5Backend from 'react-dnd-html5-backend';
+
 import List from './List';
 import ElementDetails from './ElementDetails';
 import ElementStore from './stores/ElementStore';

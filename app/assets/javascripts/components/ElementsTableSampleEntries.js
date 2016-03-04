@@ -59,10 +59,10 @@ export default class ElementsTableSampleEntries extends Component {
     let showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'
 
     let tdExtraContents = [];
-    
+
     for (let j=0;j < extra.MoleculeHeaderContentCount;j++){
       let NoName = extra["MoleculeHeaderContent"+j];
-      tdExtraContents.push(<NoName element={sample}/>);
+      tdExtraContents.push(<NoName element={sample} key={"extraMoleculeHeader"+j}/>);
     }
     return (
       <tr
@@ -81,7 +81,7 @@ export default class ElementsTableSampleEntries extends Component {
             </OverlayTrigger>
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
-            <h4>{molecule.iupac_name || molecule.inchistring}</h4>
+            <h4>{molecule.iupac_name || molecule.sum_formular}</h4>
             ({molecule.molecular_weight} mg/mmol)
           </div>
           {tdExtraContents.map((e)=>{return e;})}

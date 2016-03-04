@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Col, Row, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, TabbedArea, TabPane} from 'react-bootstrap';
+import {Col, Row, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementStore from './stores/ElementStore';
@@ -85,11 +85,11 @@ export default class ReactionDetails extends Component {
       return products.map((product, key) => {
         if(product.analyses.length > 0) {
           return (
-            <TabPane key={key} eventKey={3 + key} tab={"Analysis: " + product.short_label}>
+            <Tab key={key} eventKey={3 + key} title={"Analysis: " + product.short_label}>
               <ReactionDetailsAnalyses
                 sample={product}
                 />
-            </TabPane>
+            </Tab>
           )
         }
       });
@@ -97,17 +97,17 @@ export default class ReactionDetails extends Component {
       return <div></div>
     }
   }
-  extraTabPane(ind){
+  extraTab(ind){
     let reaction = this.state.reaction || {}
     let num = ind  ;
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
     return(
-       <TabPane eventKey={ind+3}  tab={TabName} >
+       <Tab eventKey={ind+3}  title={TabName} key={"sampleDetailsTab"+ind+3} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  reaction={reaction}/>
          </ListGroupItem>
-       </TabPane>
+       </Tab>
       )
   }
 
@@ -118,9 +118,9 @@ export default class ReactionDetails extends Component {
     };
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     const style = {height: '220px'};
-    let extraTabPanes =[];
+    let extraTabs =[];
     for (let j=0;j < extra.TabCount;j++){
-      extraTabPanes.push((i)=>this.extraTabPane(i))
+      extraTabs.push((i)=>this.extraTab(i))
     }
     return (
         <Panel header="Reaction Details" bsStyle={reaction.isEdited ? 'info' : 'primary'}>
@@ -149,28 +149,28 @@ export default class ReactionDetails extends Component {
             </Col>
           </Row>
           <hr/>
-          <TabbedArea defaultActiveKey={0}>
-            <TabPane eventKey={0} tab={'Scheme'}>
+          <Tabs defaultActiveKey={0}>
+            <Tab eventKey={0} title={'Scheme'}>
               <ReactionDetailsScheme
                 reaction={reaction}
                 onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
                 />
-            </TabPane>
-            <TabPane eventKey={1} tab={'Properties'}>
+            </Tab>
+            <Tab eventKey={1} title={'Properties'}>
               <ReactionDetailsProperties
                 reaction={reaction}
                 onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
                 />
-            </TabPane>
-            <TabPane eventKey={2} tab={'Literatures'}>
+            </Tab>
+            <Tab eventKey={2} title={'Literatures'}>
               <ReactionDetailsLiteratures
                 reaction={reaction}
                 onReactionChange={reaction => this.handleReactionChange(reaction)}
                 />
-            </TabPane>
-            {extraTabPanes.map((e,i)=>e(i))}
+            </Tab>
+            {extraTabs.map((e,i)=>e(i))}
             {this.productAnalyses()}
-          </TabbedArea>
+          </Tabs>
           <hr/>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => this.closeDetails()}>

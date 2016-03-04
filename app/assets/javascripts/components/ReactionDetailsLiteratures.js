@@ -57,11 +57,11 @@ export default class ReactionDetailsLiteratures extends Component {
       <ListGroup fill>
         <ListGroupItem>
           <Table>
-            <thead>
+            <thead><tr>
               <th width="33%">Title</th>
               <th width="61%">URL</th>
               <th width="6%"></th>
-            </thead>
+            </tr></thead>
             <tbody>
               {this.literatureRows(reaction.literatures)}
             </tbody>

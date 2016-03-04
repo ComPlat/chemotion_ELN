@@ -195,7 +195,8 @@ export default class ReactionDetailsScheme extends Component {
     return (
       <div>
         <ListGroup fill>
-          <ListGroupItem header="Starting Materials">
+          <ListGroupItem>
+            <h4 className="list-group-item-heading" >Starting Materials</h4>
             <MaterialGroupContainer
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
@@ -206,7 +207,8 @@ export default class ReactionDetailsScheme extends Component {
               />
               <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'starting_materials')}>Add Sample</Button>
           </ListGroupItem>
-          <ListGroupItem header="Reactants">
+          <ListGroupItem>
+            <h4 className="list-group-item-heading" >Reactants</h4>
             <MaterialGroupContainer
               materialGroup="reactants"
               materials={reaction.reactants}
@@ -217,7 +219,8 @@ export default class ReactionDetailsScheme extends Component {
               />
               <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'reactants')}>Add Sample</Button>
           </ListGroupItem>
-          <ListGroupItem header="Products">
+          <ListGroupItem>
+            <h4 className="list-group-item-heading" >Products</h4>
             <MaterialGroupContainer
               materialGroup="products"
               materials={reaction.products}

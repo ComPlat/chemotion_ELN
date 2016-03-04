@@ -50,11 +50,11 @@ class ScreenWellplates extends Component {
     return connectDropTarget(
       <div style={style}>
         <table width="100%">
-          <thead>
+          <thead><tr>
           <th width="45%">Name</th>
           <th width="50%">Description</th>
           <th width="5%"></th>
-          </thead>
+          </tr></thead>
           <tbody>
           {wellplates.map((wellplate, key) => {
             return <tr key={key} height="40px">
