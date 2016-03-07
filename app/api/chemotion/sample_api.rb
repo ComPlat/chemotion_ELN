@@ -256,6 +256,7 @@ module Chemotion
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
+        optional :residues, type: Array
       end
       post do
         attributes = {
@@ -273,14 +274,20 @@ module Chemotion
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
+          residues: params[:residues],
           created_by: current_user.id
         }
         attributes.merge!(
           molecule_attributes: params[:molecule]
         ) unless params[:molecule].blank?
 
+        residues_attributes = attributes.delete(:residues)
+
+        attributes.merge!(
+          residues_attributes: residues_attributes
+        ) unless residues_attributes.blank?
+
         sample = Sample.create(attributes)
-        sample.create_residues
 
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)

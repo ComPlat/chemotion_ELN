@@ -98,7 +98,8 @@ export default class Sample extends Element {
           residue_type: 'polymer', custom_info: {
             "formula": null,
             "loading": null,
-            "polymer_type": "polystyrene"
+            "polymer_type": "polystyrene",
+            "loading_type": "mass"
             }
         }
       ],
@@ -236,7 +237,7 @@ export default class Sample extends Element {
   }
 
   get defined_part_amount() {
-    let mw = this.molecule_molecular_weight - 1.0;
+    let mw = this.molecule_molecular_weight;
     return this.amount_mmol * mw;
   }
 
@@ -409,8 +410,12 @@ export default class Sample extends Element {
           return amount_value;
           break;
         case 'mmol':
-          var loading = this.residues[0].custom_info.loading;
-          return 1000.0 * amount_value / loading;
+          let loading = this.residues[0].custom_info.loading;
+          if(!loading) {
+            return 0.0;
+          } else {
+            return 1000.0 * amount_value / loading;
+          }
           break;
         default:
           return amount_value
@@ -448,7 +453,16 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
-    return this.molecule && this.molecule.molecular_weight
+    return this.molecule && this.molecule.correctedMolecularWeight
+  }
+
+  get polymer_desc() {
+    let info = this.residues[0] && this.residues[0].custom_info;
+    if(info) {
+      return info.polymer_type + ', ' + info.formula;
+    } else {
+      return ''
+    }
   }
 
   get molecule_formula() {

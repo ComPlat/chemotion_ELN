@@ -352,18 +352,14 @@ export default class SampleDetails extends React.Component {
   }
 
   molecularWeight(sample, label = "M. Weight") {
-    if(sample.contains_residues) {
+    if(sample.contains_residues)
       label = "M. Weight (defined part)"
-      var value = sample.molecule_molecular_weight - 1.0;
-    } else {
-      var value = sample.molecule_molecular_weight;
-    }
 
     return (
       <Input type="text" label={label}
              key={sample.id}
-             defaultValue={value}
-             value={value}
+             defaultValue={sample.molecule_molecular_weight}
+             value={sample.molecule_molecular_weight}
              ref="molecularWeight"
              disabled
              readOnly

@@ -82,7 +82,8 @@ export default class ElementsTableSampleEntries extends Component {
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
             <h4>{molecule.iupac_name || molecule.sum_formular}</h4>
-          
+
+            <p>{sample.polymer_desc}</p>
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>

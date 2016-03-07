@@ -259,14 +259,16 @@ class Material extends Component {
     }
   }
 
-  handleLoadingChange(newValue) {
-    console.log("Material " + this.materialId() + " handleLoadingChange L:" + JSON.stringify(newValue));
+  handleLoadingChange(newLoading) {
+    this.props.material.residues[0].custom_info.loading = newLoading.value;
+
+    // just recalculate value in mg using the new loading value
     if(this.props.onChange) {
       let event = {
-        type: 'loadingChanged',
+        type: 'equivalentChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        newValue: newValue
+        equivalent: this.props.material.equivalent
       };
       this.props.onChange(event);
     }

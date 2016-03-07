@@ -25,7 +25,7 @@ export default class PolymerSection extends React.Component {
     if(name == 'loading') {
       this.handleAmountChanged(sample.amount);
 
-      let mw_defined = sample.molecule.molecular_weight - 1.0;
+      let mw_defined = sample.molecule.molecular_weight;
       let value_to_check = e.value * mw_defined;
       let errorMessage;
 

@@ -5,6 +5,22 @@ export default class Molecule extends Element {
     return this.molecule_svg_file && `/images/molecules/${this.molecule_svg_file}`
   }
 
+  get correctedMolecularWeight() {
+    if(this.is_partial) {
+      return this.molecular_weight - 1.0;
+    } else {
+      return this.molecular_weight;
+    }
+  }
+
+  get mwPrefix(){
+    if(this.is_partial) {
+      return 'Defined part: ';
+    } else {
+      return '';
+    }
+  }
+
   serialize() {
     return ({
       density: this.density,

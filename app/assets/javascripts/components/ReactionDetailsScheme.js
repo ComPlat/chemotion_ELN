@@ -56,7 +56,6 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   handleMaterialsChange(changeEvent) {
-    console.log("changeEvent.type: " + changeEvent.type);
     switch (changeEvent.type) {
       case 'referenceChanged':
         this.onReactionChange(
@@ -225,7 +224,7 @@ export default class ReactionDetailsScheme extends Component {
     updatedS.residues[0].custom_info.loading = newLoading;
   }
 
-  updatedSamplesForAmountChange(samples, updatedSample, group) {
+  updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const {referenceMaterial} = this.props.reaction;
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
@@ -233,13 +232,14 @@ export default class ReactionDetailsScheme extends Component {
 
         if(referenceMaterial && sample.amountType != 'real') {
           if(!updatedSample.reference && referenceMaterial.amount_value) {
-            sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
-
-            let massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
-            if(updatedSample.contains_residues) {
-              this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
+            if(materialGroup == 'products') {
+              let massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
+              if(updatedSample.contains_residues) {
+                this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
+                return sample;
+              }
             }
-
+            sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
           } else {
             sample.equivalent = 1.0;
           }
@@ -293,9 +293,9 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedReactionWithSample(updateFunction, updatedSample) {
     const {reaction} = this.state;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample);
-    reaction.reactants = updateFunction(reaction.reactants, updatedSample);
-    reaction.products = updateFunction(reaction.products, updatedSample);
+    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials');
+    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants');
+    reaction.products = updateFunction(reaction.products, updatedSample, 'products');
     return reaction;
   }
 
