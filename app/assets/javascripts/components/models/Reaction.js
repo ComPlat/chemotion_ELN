@@ -200,6 +200,16 @@ export default class Reaction extends Element {
     return this.starting_materials.length > 0 || this.reactants.length > 0 || this.products.length > 0;
   }
 
+  hasSample(sampleId) {
+    return this.starting_materials.find((sample) => {
+      return sample.id == sampleId
+    }) || this.reactants.find((sample) => {
+      return sample.id == sampleId
+    }) || this.products.find((sample) => {
+      return sample.id == sampleId
+    });
+  }
+
   // literatures
 
   get literatures() {

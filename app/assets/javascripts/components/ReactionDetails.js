@@ -111,6 +111,20 @@ export default class ReactionDetails extends Component {
       )
   }
 
+  reactionSVG(reaction, svgContainerStyle) {
+    if(!reaction.svgPath) {
+      return false;
+    } else {
+      return (
+        <Col md={9}>
+          <div style={svgContainerStyle}>
+            <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
+          </div>
+        </Col>
+      )
+    }
+  }
+
   render() {
     const {reaction} = this.state;
     const svgContainerStyle = {
@@ -142,11 +156,7 @@ export default class ReactionDetails extends Component {
                 Generate Report
               </Button>
             </Col>
-            <Col md={9}>
-              <div style={svgContainerStyle}>
-                <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
-              </div>
-            </Col>
+            {this.reactionSVG(reaction, svgContainerStyle)}
           </Row>
           <hr/>
           <Tabs defaultActiveKey={0}>

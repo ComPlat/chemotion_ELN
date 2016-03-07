@@ -85,7 +85,6 @@ export default function() {
           }  else if(reactionID == 'copy') {
             ElementActions.copyReactionFromClipboard(collectionID);
           } else {
-            console.log("generateEmptyReaction")
             ElementActions.generateEmptyReaction(collectionID)
           }
         }

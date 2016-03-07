@@ -150,7 +150,7 @@ export default class CreateButton extends React.Component {
     const {isDisabled} = this.props;
     const title = <i className="fa fa-plus"></i>;
     const tooltip = (
-      <Tooltip>Create new Element</Tooltip>
+      <Tooltip id="create_button">Create new Element</Tooltip>
     );
     return (
       <div style={{marginLeft: '40px', position: 'absolute'}}>

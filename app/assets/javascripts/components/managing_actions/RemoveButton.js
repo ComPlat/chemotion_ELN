@@ -5,7 +5,7 @@ export default class RemoveButton extends React.Component {
   render() {
     const {isDisabled, onClick} = this.props;
     const tooltip = (
-      <Tooltip>Remove from Collection</Tooltip>
+      <Tooltip id="remove_button">Remove from Collection</Tooltip>
     );
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>

@@ -63,7 +63,6 @@ export default class StructureEditorModal extends React.Component {
     let svg_file = this.getSVGFromEditor()
     this.hideModal();
     if(this.props.onSave) {
-      console.log(svg_file);
       this.props.onSave(molfile, svg_file)
     }
   }

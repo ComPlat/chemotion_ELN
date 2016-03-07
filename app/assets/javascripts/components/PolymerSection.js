@@ -27,6 +27,7 @@ export default class PolymerSection extends React.Component {
 
       let mw_defined = sample.molecule.molecular_weight - 1.0;
       let value_to_check = e.value * mw_defined;
+      let errorMessage;
 
       if (value_to_check > 1000.0) {
         sample.error_loading = true;
@@ -73,6 +74,7 @@ export default class PolymerSection extends React.Component {
              onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
              checked={residue.custom_info.loading_type == value}
              name="loading_type"
+             key={value + sample.id.toString() + 'loading_type'}
              value={value}
              type="radio"/>
     )
@@ -95,7 +97,7 @@ export default class PolymerSection extends React.Component {
 
     if(key == "loading") {
       return (
-       <table width="100%"><tbody><tr>
+       <table width="100%" key={key + sample.id.toString()}><tbody><tr>
        <td>
         {this.customInfoRadio("Loading (according to mass difference):","mass", residue, sample)}
         {this.customInfoRadio("Loading (according to external estimation):","external", residue, sample)}
@@ -108,6 +110,7 @@ export default class PolymerSection extends React.Component {
            label="Loading (mmol/g)"
            numeralFormat='0,0.00'
            ref={key}
+           key={key + sample.id.toString()}
            name={key}
            bsStyle={this.checkLoadingInputStatus(sample)}
            onChange={(e) => this.handleCustomInfoNumericChanged(e, key, residue, sample)}
@@ -117,7 +120,7 @@ export default class PolymerSection extends React.Component {
      )
    } else if (key == "formula") {
      return (
-       <div>
+       <div key={key + sample.id.toString()}>
        <Button className="pull-right"
                bsStyle="warning"
                onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
@@ -128,6 +131,7 @@ export default class PolymerSection extends React.Component {
                 value={value}
                 name={key}
                 ref={key}
+                key={key + sample.id.toString()}
                 onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
          />
        </div>
@@ -139,6 +143,7 @@ export default class PolymerSection extends React.Component {
                value={value}
                name={key}
                ref={key}
+               key={key + sample.id.toString()}
                onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
         />
       )

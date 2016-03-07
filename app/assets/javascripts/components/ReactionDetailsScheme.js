@@ -25,6 +25,15 @@ export default class ReactionDetailsScheme extends Component {
 
   dropSample(sample, materialGroup) {
     const {reaction} = this.state;
+    if(reaction.hasSample(sample.id)) {
+      NotificationActions.add({
+        message: 'The sample is already present in current reaction.',
+        level: 'error'
+      });
+
+      return false;
+    }
+
     const splitSample = sample.buildChild();
     reaction.addMaterial(splitSample, materialGroup);
     this.onReactionChange(reaction, {schemaChanged: true});
@@ -125,6 +134,15 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   calculateEquivalent(referenceMaterial, updatedSample) {
+    if(!referenceMaterial.contains_residues) {
+      NotificationActions.add({
+        message: 'Cannot perform calculations for loading and equivalent.',
+        level: 'error'
+      });
+
+      return 1.0;
+    }
+
     let loading = referenceMaterial.residues[0].custom_info.loading;
     let mass_koef = updatedSample.amount_mg / referenceMaterial.amount_mg;
     let mwb = updatedSample.molecule.molecular_weight;
@@ -142,27 +160,34 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   checkMassMolecule(referenceM, updatedS) {
-    let mwb = updatedS.molecule.molecular_weight;
-    let mwa = referenceM.molecule.molecular_weight;
-    let deltaM = mwb - mwa;
-    let massA = referenceM.amount_mg;
-    let mFull = massA + referenceM.amount_mmol * deltaM;
-
-    let massExperimental = updatedS.amount_mg;
     let errorMsg;
-    if(deltaM > 0) { //expect weight gain
-      if(massExperimental > mFull) {
-        errorMsg = 'Experimental mass value is more than possible \
-                    by 100% conversion! Please check your data.';
-      } else if(massExperimental < massA) {
-        errorMsg = 'Material loss! \
-                  Experimental mass value is less than possible! \
-                  Please check your data.';
-      }
-    } else { //expect weight loss
-      if(massExperimental < mFull) {
-        errorMsg = 'Experimental mass value is less than possible \
-                    by 100% conversion! Please check your data.';
+    let mFull;
+    let mwb = updatedS.molecule.molecular_weight;
+
+    // mass check apply to 'polymers' only
+    if(!updatedS.contains_residues) {
+      mFull = referenceM.amount_mmol * mwb * 1000.0;
+    } else {
+      let mwa = referenceM.molecule.molecular_weight;
+      let deltaM = mwb - mwa;
+      let massA = referenceM.amount_mg;
+      mFull = massA + referenceM.amount_mmol * deltaM;
+
+      let massExperimental = updatedS.amount_mg;
+      if(deltaM > 0) { //expect weight gain
+        if(massExperimental > mFull) {
+          errorMsg = 'Experimental mass value is more than possible \
+                      by 100% conversion! Please check your data.';
+        } else if(massExperimental < massA) {
+          errorMsg = 'Material loss! \
+                    Experimental mass value is less than possible! \
+                    Please check your data.';
+        }
+      } else { //expect weight loss
+        if(massExperimental < mFull) {
+          errorMsg = 'Experimental mass value is less than possible \
+                      by 100% conversion! Please check your data.';
+        }
       }
     }
 

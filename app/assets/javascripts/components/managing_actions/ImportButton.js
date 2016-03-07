@@ -5,7 +5,7 @@ export default class ImportButton extends Component {
   render() {
     const {isDisabled, onClick} = this.props;
     const tooltip = (
-      <Tooltip>Import elements</Tooltip>
+      <Tooltip id="import_button">Import elements</Tooltip>
     );
 
     return (

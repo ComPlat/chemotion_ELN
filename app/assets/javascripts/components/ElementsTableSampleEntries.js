@@ -74,7 +74,7 @@ export default class ElementsTableSampleEntries extends Component {
             <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
           </div>
           <div style={{float: 'right'}}>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle Molecule</Tooltip>}>
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>}>
               <span style={{fontSize: 15, color: '#337ab7', lineHeight: '10px'}}>
                 <i className={`glyphicon ${showIndicator}`}></i>
               </span>
@@ -164,7 +164,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   topSecretIcon(element) {
     if (element.type == 'sample' && element.is_top_secret == true) {
-      const tooltip = (<Tooltip>Top secret</Tooltip>);
+      const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
           <i className="fa fa-user-secret"></i>

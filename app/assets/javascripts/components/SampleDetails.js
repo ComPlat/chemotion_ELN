@@ -215,7 +215,8 @@ export default class SampleDetails extends React.Component {
       sample.molfile = molfile
 
       if(molfile.indexOf(' R# ') > -1) {
-        sample.sample_svg_file = svg_file
+        sample.contains_residues = true;
+        sample.sample_svg_file = svg_file;
       }
     }
     this.setState({sample: sample, loadingMolecule: true});
@@ -243,7 +244,6 @@ export default class SampleDetails extends React.Component {
       ElementActions.openReactionDetails(reaction);
     } else {
       if(sample.isNew) {
-        console.log(sample.sample_svg_file);
         ElementActions.createSample(sample);
       } else {
         ElementActions.updateSample(new Sample(sample));
@@ -304,7 +304,7 @@ export default class SampleDetails extends React.Component {
              defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              disabled={sample.isMethodDisabled('molecule_iupac_name')}
-             readOnly
+             readOnly={sample.isMethodDisabled('molecule_iupac_name')}
       />
     )
   }
@@ -458,6 +458,7 @@ export default class SampleDetails extends React.Component {
                value={sample.defined_part_amount}
                ref="attachedAmountMg"
                disabled
+               readOnly
           />
       </td>
     )
@@ -515,7 +516,7 @@ export default class SampleDetails extends React.Component {
       }
     } else {
       return (
-        <Input type="text" label="Amount" disabled defaultValue="***" />
+        <Input type="text" label="Amount" disabled defaultValue="***" value="***" readOnly/>
       )
     }
   }
@@ -579,28 +580,24 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
-    if(!sample.isNew) {
-      if(sample.contains_residues) {
-        return (
-          <PolymerSection sample={sample}
-                          parent={this}/>
-        )
-      } else {
-        return (
-          <ListGroupItem>
-            <ElementalComposition sample={sample}/>
-          </ListGroupItem>
-        )
-      }
+    if(sample.contains_residues) {
+      return (
+        <PolymerSection sample={sample}
+                        parent={this}/>
+      )
     } else {
-      return false;
+      return (
+        <ListGroupItem>
+          <ElementalComposition sample={sample}/>
+        </ListGroupItem>
+      )
     }
   }
 
   samplePropertiesTab(ind){
     let sample = this.state.sample || {};
     return(
-      <Tab eventKey={ind} title={'Properties'}>
+      <Tab eventKey={ind} title={'Properties'} key={'Props' + sample.id.toString()}>
         <ListGroupItem>
           {this.topSecretCheckbox(sample)}
 
@@ -681,7 +678,7 @@ export default class SampleDetails extends React.Component {
   sampleAnalysesTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} tab={'Analyses'} key={sample.id}>
+      <Tab eventKey={ind} tab={'Analyses'} key={'Analyses' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsAnalyses
             sample={sample}

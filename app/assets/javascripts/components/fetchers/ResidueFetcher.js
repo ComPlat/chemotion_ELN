@@ -14,13 +14,11 @@ export default class ResidueFetcher {
         svg_file: svg_file
       })
     }).then((response) => {
-      //console.log(response);
       return response.json()
     }).then((json) => {
-      //console.log(json);
       return json;
     }).catch((errorMessage) => {
-      //console.log(errorMessage);
+      console.log(errorMessage);
     });
 
     return promise;

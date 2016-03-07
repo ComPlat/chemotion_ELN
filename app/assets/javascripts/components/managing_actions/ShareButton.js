@@ -80,7 +80,7 @@ export default class ShareButton extends React.Component {
   render() {
     const {isDisabled} = this.props;
     const tooltip = (
-      <Tooltip>Share</Tooltip>
+      <Tooltip id="share_button">Share</Tooltip>
     );
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>

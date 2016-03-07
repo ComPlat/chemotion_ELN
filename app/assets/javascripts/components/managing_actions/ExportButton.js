@@ -6,7 +6,7 @@ export default class ExportButton extends Component {
   render() {
     const {isDisabled} = this.props;
     const tooltip = (
-      <Tooltip>Export Report</Tooltip>
+      <Tooltip id="export_button">Export Report</Tooltip>
     );
 
     let title = <i className="fa fa-download"></i>

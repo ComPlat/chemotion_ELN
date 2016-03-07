@@ -28,10 +28,11 @@ export default class ElementalComposition extends React.Component {
              className="padding-left"
              ref={key}
              label={key}
-             key={key}
+             key={key + sample.id.toString()}
              defaultValue={value}
              value={value}
              disabled
+             readOnly
         />
       );
     });
@@ -44,19 +45,23 @@ export default class ElementalComposition extends React.Component {
 
     if (sample.isNew) {
       return false;
+    } else {
+      return (
+        <table className="elemental-composition">
+          <tbody>
+            <tr>
+              <td>
+                <label>Elemental composition</label>
+              </td>
+            </tr>
+            <tr>
+              <td className="form-inline">
+                {this.elementsList(sample)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      )
     }
-
-    return (
-      <table className="elemental-composition">
-        <tbody>
-          <tr>
-            <label>Elemental composition</label>
-            <td className="form-inline">
-              {this.elementsList(sample)}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    )
   }
 }

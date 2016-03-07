@@ -8,7 +8,7 @@ export default class AssignButton extends React.Component {
   render() {
     const {isDisabled, onClick} = this.props;
     const tooltip = (
-      <Tooltip>Assign to Collection</Tooltip>
+      <Tooltip id="assign_button">Assign to Collection</Tooltip>
     );
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>

@@ -93,7 +93,15 @@ export default class Sample extends Element {
       molecule: { id: '_none_' },
       analyses: [],
       elemental_analyses: {},
-      residues: [],
+      residues: [
+        {
+          residue_type: 'polymer', custom_info: {
+            "formula": null,
+            "loading": null,
+            "polymer_type": "polystyrene"
+            }
+        }
+      ],
       imported_readout: '',
       attached_amount_mg: '' // field for polymers calculations
     });

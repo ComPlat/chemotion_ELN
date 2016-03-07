@@ -234,8 +234,6 @@ class Material extends Component {
   }
 
   handleAmountTypeChange(amountType) {
-    console.log("amountType: "  + amountType);
-
     if(this.props.onChange) {
       let event = {
         type: 'amountTypeChanged',
@@ -270,8 +268,6 @@ class Material extends Component {
         sampleID: this.materialId(),
         newValue: newValue
       };
-      console.log('event');
-      console.log(event);
       this.props.onChange(event);
     }
   }

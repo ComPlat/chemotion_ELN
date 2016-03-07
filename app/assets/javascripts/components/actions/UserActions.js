@@ -32,7 +32,6 @@ class UserActions {
       data: {authenticity_token: DocumentHelper.getMetaContent("csrf-token")}
     })
     .then(response => {
-      console.log(response);
       if (response.status == 204) {
         location.reload();
       }
