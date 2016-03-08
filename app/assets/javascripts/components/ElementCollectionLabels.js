@@ -30,7 +30,7 @@ export default class ElementCollectionLabels extends React.Component {
 
   labelWithPopover(title, labels) {
     let {element} = this.state;
-    let label_popover = <Popover title={title}>{this.formatLabels(labels)}</Popover>
+    let label_popover = <Popover title={title} id={'labelpop'+element.id}>{this.formatLabels(labels)}</Popover>
     return (
       labels.length > 0 ?
         <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>

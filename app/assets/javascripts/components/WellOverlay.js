@@ -87,6 +87,7 @@ export default class WellOverlay extends Component {
         </span>
       </div>
     );
+  
     return (
       <div>
         <Overlay
@@ -96,7 +97,7 @@ export default class WellOverlay extends Component {
           placement={placement}
           onHide={() => handleClose()}
           >
-          <Popover title={title}>
+          <Popover title={title} id={'wellpop'+well.id}>
             <div style={{width: 200, height: 620}}>
               {this.renderWellContent()}
               <div>
