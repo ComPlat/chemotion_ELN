@@ -12,7 +12,7 @@ export default class WellplateProperties extends Component {
   render() {
     const {name, size, description} = this.props;
     return (
-      <table width="100%">
+      <table width="100%"><tbody>
         <tr>
           <td width="70%" className="padding-right">
             <Input
@@ -44,7 +44,7 @@ export default class WellplateProperties extends Component {
               />
           </td>
         </tr>
-      </table>
+      </tbody></table>
     );
   }
 }

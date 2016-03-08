@@ -123,7 +123,7 @@ export default class ManagingModalCollectionActions extends React.Component {
         <Input ref='collectionSelect' type='select' label='Select a Collection'>
           {this.collectionEntries()}
         </Input>
-        <table width="100%">
+        <table width="100%"><tbody>
           <tr>
             <td width="95%" className="padding-right">
               <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
@@ -136,7 +136,7 @@ export default class ManagingModalCollectionActions extends React.Component {
               </Button>
             </td>
           </tr>
-        </table>
+        </tbody></table>
         <Button bsStyle="warning" onClick={() => this.handleSubmit()}>Submit</Button>
       </div>
     )
