@@ -9,6 +9,11 @@ export default class PolymerSection extends React.Component {
   constructor(props) {
     super(props);
 
+    // use has to set loading on new sample
+    if(!props.sample.loading) {
+      props.sample.error_loading = true
+    }
+
     this.state = {
       sample: props.sample
     }
@@ -25,21 +30,26 @@ export default class PolymerSection extends React.Component {
     if(name == 'loading') {
       this.handleAmountChanged(sample.amount);
 
+      let errorMessage;
+      if(e.value == 0.0)
+        errorMessage = 'Loading can not be 0. Please define a value.'
+
       let mw_defined = sample.molecule.molecular_weight;
       let value_to_check = e.value * mw_defined;
-      let errorMessage;
 
       if (value_to_check > 1000.0) {
+        errorMessage = 'Combination of loading and molecular weight is wrong\
+         (MW*L > 1000.0)'
+      }
+
+      if(errorMessage){
         sample.error_loading = true;
         NotificationActions.add({
-          message: 'Combination of loading and molecular weight is wrong\
-           (MW*L > 1000.0)',
+          message: errorMessage,
           level: 'error'
         });
-        return 'error';
       } else {
         sample.error_loading = false;
-        return 'success';
       }
     } else {
       this.setState({
@@ -53,6 +63,18 @@ export default class PolymerSection extends React.Component {
 
     if(e.target.name == "formula") {
       sample.formulaChanged = true;
+    } else if (e.target.name == 'polymer_type') {
+      if(e.target.value == '') {
+        sample.error_polymer_type = true;
+        NotificationActions.add({
+          message: 'Polymer type can not be blank.',
+          level: 'error'
+        });
+      } else {
+        sample.error_polymer_type = false;
+      }
+      // tell parent (SampleDetails) component about changes
+      this.props.parent.handleSampleChanged(sample);
     }
 
     this.setState({
@@ -80,8 +102,8 @@ export default class PolymerSection extends React.Component {
     )
   }
 
-  checkLoadingInputStatus(sample) {
-    if (sample.error_loading) {
+  checkInputStatus(sample, key) {
+    if (sample['error_' + key]) {
       return 'error';
     } else {
       return 'success';
@@ -112,7 +134,7 @@ export default class PolymerSection extends React.Component {
            ref={key}
            key={key + sample.id.toString()}
            name={key}
-           bsStyle={this.checkLoadingInputStatus(sample)}
+           bsStyle={this.checkInputStatus(sample, 'loading')}
            onChange={(e) => this.handleCustomInfoNumericChanged(e, key, residue, sample)}
            />
        </td>
@@ -143,6 +165,7 @@ export default class PolymerSection extends React.Component {
                value={value}
                name={key}
                ref={key}
+               bsStyle={this.checkInputStatus(sample, key)}
                key={key + sample.id.toString()}
                onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
         />

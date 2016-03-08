@@ -121,38 +121,6 @@ class Sample < ActiveRecord::Base
     end
   end
 
-  def generate_identifier
-    lines = self.molfile.split "\n"
-    self.identifier = ''
-
-    bonds_start_index = 4 # the index where bonds matrix starts
-
-    lines[4..-1].each_with_index do |line, index|
-      atom_label = line.split[3].strip
-      unless atom_label.match /[A-Za-z]/
-        bonds_start_index += index
-        break
-      end
-
-      self.identifier << atom_label
-    end
-
-    bonds_end_index = lines.index { |line| line[0] == 'M' } - 1
-
-    bonds_matrix = lines[bonds_start_index..bonds_end_index].join
-    self.identifier << Digest::SHA256.base64digest(bonds_matrix)
-  end
-
-  def create_residues
-    lines = self.molfile.split "\n"
-    polymers_list_index = lines.index { |l| l.match /> <PolymersList>/ } + 1
-    lines[polymers_list_index].split.each do |pindex|
-      residue = self.residues.new residue_type: Residue::TYPES[:polymer]
-      residue.custom_info = {} # save empty for now
-      residue.save!
-    end
-  end
-
   def attach_svg
     svg = self.sample_svg_file
     return unless svg.present?

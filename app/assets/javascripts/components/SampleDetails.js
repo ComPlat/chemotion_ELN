@@ -216,7 +216,24 @@ export default class SampleDetails extends React.Component {
 
       if(molfile.indexOf(' R# ') > -1) {
         sample.contains_residues = true;
+        if(!sample.residues.length) {
+          // set default polymer data
+          sample.residues = [
+            {
+              residue_type: 'polymer', custom_info: {
+                "formula": 'CH',
+                "loading": null,
+                "polymer_type": "polystyrene",
+                "loading_type": "mass"
+                }
+            }
+          ];
+        }
         sample.sample_svg_file = svg_file;
+      } else {
+        sample.contains_residues = false;
+        sample.sample_svg_file = undefined;
+        sample.residues = [];
       }
     }
     this.setState({sample: sample, loadingMolecule: true});
@@ -276,7 +293,7 @@ export default class SampleDetails extends React.Component {
 
   sampleIsValid() {
     const {sample, loadingMolecule} = this.state;
-    return (sample && sample.molfile && !loadingMolecule && !sample.error_loading) || sample.is_scoped == true;
+    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
@@ -581,6 +598,8 @@ export default class SampleDetails extends React.Component {
         <PolymerSection sample={sample}
                         parent={this}/>
       )
+    } else if(sample.isNew) { // avoid empty ListGroupItem
+      return false;
     } else {
       return (
         <ListGroupItem>

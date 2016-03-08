@@ -5,7 +5,7 @@ class Molecule < ActiveRecord::Base
   has_many :samples
   has_many :collections, through: :samples
 
-  validates_uniqueness_of :inchikey
+  validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
   scope :by_formula, ->(query) { where('sum_formular ILIKE ?', "%#{query}%") }
@@ -51,7 +51,11 @@ class Molecule < ActiveRecord::Base
   def attach_svg svg_data
     return if self.molecule_svg_file.present? # we usually don't need update
 
-    svg_file_name = "#{self.inchikey}.svg"
+    svg_file_name = if self.is_partial
+      "#{self.inchikey}Part.svg"
+    else
+      "#{self.inchikey}.svg"
+    end
     svg_file_path = "public/images/molecules/#{svg_file_name}"
 
     svg_file = File.new(svg_file_path, 'w+')

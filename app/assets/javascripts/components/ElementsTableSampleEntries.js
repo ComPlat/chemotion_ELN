@@ -24,6 +24,9 @@ export default class ElementsTableSampleEntries extends Component {
     let {elements: samples, currentElement, showDragColumn, ui} = this.props
     let groupedSamplesByMolecule = samples.reduce((groups, sample) => {
       let moleculeName = sample.molecule.iupac_name || sample.molecule.inchistring
+      if(sample.contains_residues) {
+        moleculeName += '(partial)' // group polymers to different array
+      }
       if(!groups[moleculeName]) {
         groups[moleculeName] = [].concat(sample)
       } else {

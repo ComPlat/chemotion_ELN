@@ -92,17 +92,8 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
+      residues: [],
       elemental_analyses: {},
-      residues: [
-        {
-          residue_type: 'polymer', custom_info: {
-            "formula": null,
-            "loading": null,
-            "polymer_type": "polystyrene",
-            "loading_type": "mass"
-            }
-        }
-      ],
       imported_readout: '',
       attached_amount_mg: '' // field for polymers calculations
     });
@@ -506,6 +497,15 @@ export default class Sample extends Element {
     if(molecule.temp_svg) {
       this.sample_svg_file = molecule.temp_svg;
     }
+  }
+
+  get loading() {
+    return this.contains_residues && this.residues[0].custom_info.loading;
+  }
+
+  get isValid(){
+    return (this && this.molfile &&
+            !this.error_loading && !this.error_polymer_type);
   }
 
   get svgPath() {
