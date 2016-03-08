@@ -3,30 +3,30 @@ import PermissionsFetcher from '../fetchers/PermissionsFetcher';
 
 class PermissionActions {
   fetchTopSecretStatus(params) {
-    PermissionsFetcher.fetchTopSecretStatus(params)
+    return (dispatch) => { PermissionsFetcher.fetchTopSecretStatus(params)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchSharingAllowedStatus(params) {
-    PermissionsFetcher.fetchSharingAllowedStatus(params)
+    return (dispatch) => { PermissionsFetcher.fetchSharingAllowedStatus(params)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchDeletionAllowedStatus(params) {
-    PermissionsFetcher.fetchDeletionAllowedStatus(params)
+    return (dispatch) => { PermissionsFetcher.fetchDeletionAllowedStatus(params)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 }
 

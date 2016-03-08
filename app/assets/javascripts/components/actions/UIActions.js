@@ -3,79 +3,79 @@ import alt from '../alt';
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {
   showCollectionManagement() {
-    this.dispatch();
+    return  null;
   }
 
   toggleCollectionManagement() {
-    this.dispatch();
+    return  null;
   }
 
   showElements() {
-    this.dispatch();
+    return  null;
   }
 
   selectTab(tab) {
-    this.dispatch(tab);
+    return  tab;
   }
 
   selectCollection(collection) {
-    this.dispatch(collection)
+    return  collection
   }
 
   checkAllElements(type) {
-    this.dispatch(type);
+    return  type;
   }
 
   toggleShowPreviews() {
-    this.dispatch();
+    return  null;
   }
 
   checkElement(element) {
-    this.dispatch(element);
+    return  element;
   }
 
   uncheckAllElements(type) {
-    this.dispatch(type);
+    return  type;
   }
 
   uncheckWholeSelection() {
-    this.dispatch();
+    return  null;
   }
 
   uncheckElement(element) {
-    this.dispatch(element);
+    return  element;
   }
 
   selectElement(element) {
-    this.dispatch(element);
+    return  element;
   }
 
   deselectAllElementsOfType(type) {
-    this.dispatch(type);
+    return  type;
   }
 
   deselectAllElements() {
-    this.dispatch();
+    return  null;
   }
 
   setPagination(pagination) {
-    this.dispatch(pagination);
+    return  pagination;
   }
 
   setSearchSelection(selection) {
-    this.dispatch(selection);
+    return  selection;
   }
 
   selectCollectionWithoutUpdating(collection) {
-    this.dispatch(collection);
+    return  collection;
   }
 
   clearSearchSelection() {
-    this.dispatch();
+    return  null;
   }
 
   changeNumberOfResultsShown(value) {
-    this.dispatch(value);
+    return  value;
   }
 }
 
