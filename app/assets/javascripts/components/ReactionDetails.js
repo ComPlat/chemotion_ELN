@@ -79,31 +79,31 @@ export default class ReactionDetails extends Component {
     }
   }
 
+
+
   productAnalyses() {
     const {products} = this.state.reaction;
-    if(products.length > 0) {
-      return products.map((product, key) => {
-        if(product.analyses.length > 0) {
-          return (
-            <Tab key={key} eventKey={3 + key} title={"Analysis: " + product.short_label}>
-              <ReactionDetailsAnalyses
+    let tabs = products.map((product, key) =>
+           <Tab key={product.short_label} eventKey={key} title={"Analysis: " + product.short_label}>
+             <ReactionDetailsAnalyses
                 sample={product}
                 />
-            </Tab>
-          )
-        }
-      });
-    } else {
-      return <div></div>
-    }
+           </Tab>
+     );
+    return(
+        <Tabs defaultActiveKey={0}>
+          {tabs}
+        </Tabs>
+    )
   }
+
   extraTab(ind){
     let reaction = this.state.reaction || {}
     let num = ind  ;
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
     return(
-       <Tab eventKey={ind+3}  title={TabName} key={"sampleDetailsTab"+ind+3} >
+       <Tab eventKey={ind+4}  title={TabName} key={"sampleDetailsTab"+ind+3} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  reaction={reaction}/>
          </ListGroupItem>
@@ -168,8 +168,11 @@ export default class ReactionDetails extends Component {
                 onReactionChange={reaction => this.handleReactionChange(reaction)}
                 />
             </Tab>
+            <Tab eventKey={3} title={'Analyses'}>
+              {this.productAnalyses()}
+            </Tab>
             {extraTabs.map((e,i)=>e(i))}
-            {this.productAnalyses()}
+
           </Tabs>
           <hr/>
           <ButtonToolbar>
