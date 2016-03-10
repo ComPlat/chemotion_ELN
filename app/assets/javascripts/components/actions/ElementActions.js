@@ -74,6 +74,13 @@ class ElementActions {
       });};
   }
 
+  createSampleForReaction(params) {
+    return (dispatch) => { SamplesFetcher.create(params)
+      .then((result) => {
+        dispatch(result)
+      });};
+  }
+
   updateSample(params) {
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {

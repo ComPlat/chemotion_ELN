@@ -9,18 +9,18 @@ module Chemotion
       get :rtf do
         reaction = Reaction.find(params[:id])
 
-        inchikeys = {}
-        inchikeys[:starting_materials] = reaction.starting_materials.map do |material|
-          material.molecule.inchikey
+        svg_paths = {}
+        svg_paths[:starting_materials] = reaction.starting_materials.map do |material|
+          material.get_svg_path
         end
-        inchikeys[:reactants] = reaction.reactants.map do |material|
-          material.molecule.inchikey
+        svg_paths[:reactants] = reaction.reactants.map do |material|
+          material.get_svg_path
         end
-        inchikeys[:products] = reaction.products.map do |material|
-          material.molecule.inchikey
+        svg_paths[:products] = reaction.products.map do |material|
+          material.get_svg_path
         end
 
-        composer = SVG::ReactionComposer.new(inchikeys, label: [reaction.solvent, reaction.temperature].reject{|c| c.blank?}.join(", "))
+        composer = SVG::ReactionComposer.new(svg_paths, label: [reaction.solvent, reaction.temperature].reject{|c| c.blank?}.join(", "))
         reaction_svg = composer.compose_reaction_svg
 
         report = Report::RTFReport.new do |r|
@@ -140,7 +140,7 @@ module Chemotion
             excel.add_sample(product)
           end
         end
-        
+
         excel.generate_file
       end
 

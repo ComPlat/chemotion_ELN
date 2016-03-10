@@ -83,7 +83,9 @@ export default class Search extends React.Component {
     };
 
     let innerDropdown =
-      <DropdownButton title={this.state.elementType} style={{width:'100px'}}>
+      <DropdownButton id="search-inner-dropdown" 
+                      title={this.state.elementType}
+                      style={{width:'100px'}}>
         {this.renderMenuItems()}
       </DropdownButton>
 

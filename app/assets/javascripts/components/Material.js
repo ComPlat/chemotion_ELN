@@ -199,13 +199,25 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     if(this.props.materialGroup == 'products') {
-      return (
-        <Input
-          type="text"
-          value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
-          disabled={true}
-        />
-      );
+      if(material.equivalent < 0.0 || material.equivalent > 1.0) {
+        return (
+          <Input
+            type="text"
+            value={material.equivalent < 0.0 ? ' 0%' : '100%'}
+            bsStyle="error"
+            title={"Calculated " + (100*material.equivalent).toFixed(1) + ' %'}
+            disabled={true}
+          />
+        )
+      } else {
+        return (
+          <Input
+            type="text"
+            value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
+            disabled={true}
+          />
+        );
+      }
     } else {
       return (
         <Input

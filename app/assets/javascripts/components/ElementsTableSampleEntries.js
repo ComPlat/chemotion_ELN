@@ -25,7 +25,8 @@ export default class ElementsTableSampleEntries extends Component {
     let groupedSamplesByMolecule = samples.reduce((groups, sample) => {
       let moleculeName = sample.molecule.iupac_name || sample.molecule.inchistring
       if(sample.contains_residues) {
-        moleculeName += '(partial)' // group polymers to different array
+        moleculeName += 'part_' // group polymers to different array
+        moleculeName += sample.polymer_type
       }
       if(!groups[moleculeName]) {
         groups[moleculeName] = [].concat(sample)
@@ -84,9 +85,7 @@ export default class ElementsTableSampleEntries extends Component {
             </OverlayTrigger>
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
-            <h4>{molecule.iupac_name || molecule.sum_formular}</h4>
-
-            <p>{sample.polymer_desc}</p>
+            <h4>{sample.display_name}</h4>
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>

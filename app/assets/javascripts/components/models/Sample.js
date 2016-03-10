@@ -102,7 +102,7 @@ export default class Sample extends Element {
     return sample;
   }
 
-  static buildEmptyWithCounter(collection_id, counter) {
+  static buildEmptyWithCounter(collection_id, counter, materialGroup = null) {
     let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
@@ -121,6 +121,9 @@ export default class Sample extends Element {
       residues: [],
       imported_readout: ''
     });
+
+    // allow zero loading for reaction product
+    sample.reaction_product = (materialGroup == 'products');
 
     sample.short_label = Sample.buildNewSampleShortLabelWithCounter(counter);
     return sample;
@@ -447,15 +450,6 @@ export default class Sample extends Element {
     return this.molecule && this.molecule.correctedMolecularWeight
   }
 
-  get polymer_desc() {
-    let info = this.residues[0] && this.residues[0].custom_info;
-    if(info) {
-      return info.polymer_type + ', ' + info.formula;
-    } else {
-      return ''
-    }
-  }
-
   get molecule_formula() {
     return this.molecule && this.molecule.sum_formular;
   }
@@ -499,8 +493,33 @@ export default class Sample extends Element {
     }
   }
 
+  get display_name() {
+    let molecule_name = this._molecule.iupac_name || this._molecule.sum_formular;
+    if(this.contains_residues) {
+      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
+                          + this.polymer_type.slice(1);
+      return polymer_name.replace('_', '-') + ' (' + molecule_name +  ')';
+    } else {
+      return molecule_name;
+    }
+  }
+
+  get polymer_formula() {
+    return this.contains_residues
+            && this.residues[0].custom_info.formula.toString();
+  }
+
+  get polymer_type() {
+    return this.contains_residues
+            && this.residues[0].custom_info.polymer_type.toString();
+  }
+
   get loading() {
     return this.contains_residues && this.residues[0].custom_info.loading;
+  }
+
+  set loading(loading) {
+    this.residues[0].custom_info.loading = loading;
   }
 
   get isValid(){

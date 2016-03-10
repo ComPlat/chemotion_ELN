@@ -22,6 +22,10 @@ export default class ReactionDetails extends Component {
     this.state = {
       reaction
     };
+
+    if(reaction.hasMaterials()) {
+      this.updateReactionSvg();
+    }
   }
 
   componentDidMount() {
@@ -72,6 +76,7 @@ export default class ReactionDetails extends Component {
   }
 
   handleReactionChange(reaction, options={}) {
+    reaction.changed = true;
     if(options.schemaChanged) {
       this.setState({ reaction }, () => this.updateReactionSvg());
     } else{
@@ -148,6 +153,10 @@ export default class ReactionDetails extends Component {
               <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/><br/>
               <Button
                 style={{cursor: 'pointer'}}
+                disabled={reaction.changed || reaction.isNew}
+                title={(reaction.changed || reaction.isNew) ?
+                   "Report can be generated after reaction is saved."
+                   : "Generate report for this reaction"}
                 onClick={() => Utils.downloadFile({
                   contents: "api/v1/reports/rtf?id=" + reaction.id,
                   name: reaction.name

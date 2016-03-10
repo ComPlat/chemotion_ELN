@@ -152,7 +152,7 @@ export default class ReactionDetailsScheme extends Component {
 
     if(isNaN(equivalent) || !isFinite(equivalent)){
       equivalent = 1.0;
-      sample.setAmountAndNormalizeToMilligram(referenceMaterial.amount_value, referenceMaterial.amount_unit);
+      updatedSample.setAmountAndNormalizeToMilligram(referenceMaterial.amount_value, referenceMaterial.amount_unit);
     }
 
     return equivalent;

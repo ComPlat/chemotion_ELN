@@ -156,7 +156,7 @@ export default class CreateButton extends React.Component {
       <div style={{marginLeft: '40px', position: 'absolute'}}>
         {this.createWellplateModal()}
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <DropdownButton bsStyle="primary" title={title} disabled={isDisabled}>
+          <DropdownButton id='crate-button-dropdown' bsStyle="primary" title={title} disabled={isDisabled}>
             <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
             <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
             <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>

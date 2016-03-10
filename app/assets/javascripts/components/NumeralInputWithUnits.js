@@ -53,7 +53,7 @@ export default class NumeralInputWithUnits extends Component {
 
   _renderDropdownButtonAddon(title) {
     return (
-      <DropdownButton title={title}>
+      <DropdownButton id="dropdown-button-addon" title={title}>
         {this._renderUnitsAsMenuItems()}
       </DropdownButton>
     );

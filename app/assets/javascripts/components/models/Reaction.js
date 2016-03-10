@@ -7,7 +7,7 @@ import UserStore from '../stores/UserStore';
 export default class Reaction extends Element {
   initializeTemporarySampleCounter(currentUser) {
     if(!this.temporary_sample_counter) {
-      this.temporary_sample_counter = currentUser.samples_created_count + 1;
+      this.temporary_sample_counter = currentUser.samples_count + 1;
     }
   }
 
@@ -135,11 +135,18 @@ export default class Reaction extends Element {
 
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
-    if(this.sampleCount == 0) {
+    // do not set it as reference material if this is reaction product
+    if(this.sampleCount == 0 && materialGroup != 'products') {
       this._setAsReferenceMaterial(material);
     } else {
       this._updateEquivalentForMaterial(material);
     }
+
+    // we don't want to copy loading from sample
+    if(materialGroup == "products" && material.contains_residues) {
+      material.loading = 0.0;
+    }
+
     materials.push(material);
   }
 

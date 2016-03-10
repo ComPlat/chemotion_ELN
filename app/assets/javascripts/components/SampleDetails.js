@@ -217,6 +217,10 @@ export default class SampleDetails extends React.Component {
       if(molfile.indexOf(' R# ') > -1) {
         sample.contains_residues = true;
         if(!sample.residues.length) {
+          // do not allow zero loading, exclude reaction products
+          if(!sample.reaction_product)
+            sample.error_loading = true;
+
           // set default polymer data
           sample.residues = [
             {
@@ -256,9 +260,7 @@ export default class SampleDetails extends React.Component {
     let {sample, reaction, materialGroup} = this.state;
 
     if(reaction) {
-      reaction.addMaterial(sample, materialGroup);
-      reaction.temporary_sample_counter += 1;
-      ElementActions.openReactionDetails(reaction);
+      ElementActions.createSampleForReaction(sample);
     } else {
       if(sample.isNew) {
         ElementActions.createSample(sample);
@@ -470,6 +472,8 @@ export default class SampleDetails extends React.Component {
         <Input type="text" label="m, mg"
                value={sample.defined_part_amount}
                ref="attachedAmountMg"
+               id={'attachedAmountMg' + sample.id.toString()}
+               title="Weight of the defined part"
                disabled
                readOnly
           />
@@ -594,9 +598,11 @@ export default class SampleDetails extends React.Component {
 
   elementalPropertiesItem(sample) {
     if(sample.contains_residues) {
+      let materialGroup = this.state.materialGroup;
       return (
         <PolymerSection sample={sample}
-                        parent={this}/>
+                        parent={this}
+                        materialGroup={materialGroup}/>
       )
     } else if(sample.isNew) { // avoid empty ListGroupItem
       return false;
@@ -693,7 +699,7 @@ export default class SampleDetails extends React.Component {
   sampleAnalysesTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} tab={'Analyses'} key={'Analyses' + sample.id.toString()}>
+      <Tab eventKey={ind} title={'Analyses'} key={'Analyses' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsAnalyses
             sample={sample}

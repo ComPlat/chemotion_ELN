@@ -3,6 +3,7 @@ import {Input, ListGroup, ListGroupItem, Button, RadioButton} from 'react-bootst
 import NumeralInputWithUnits from './NumeralInputWithUnits'
 import ElementalComposition from './ElementalComposition'
 import NotificationActions from './actions/NotificationActions'
+import Select from 'react-select'
 
 export default class PolymerSection extends React.Component {
 
@@ -10,7 +11,7 @@ export default class PolymerSection extends React.Component {
     super(props);
 
     // use has to set loading on new sample
-    if(!props.sample.loading) {
+    if(!props.sample.loading && !props.sample.reaction_product) {
       props.sample.error_loading = true
     }
 
@@ -39,7 +40,7 @@ export default class PolymerSection extends React.Component {
 
       if (value_to_check > 1000.0) {
         errorMessage = 'Combination of loading and molecular weight is wrong\
-         (MW*L > 1000.0)'
+         (MW*L > 1.0)'
       }
 
       if(errorMessage){
@@ -63,18 +64,6 @@ export default class PolymerSection extends React.Component {
 
     if(e.target.name == "formula") {
       sample.formulaChanged = true;
-    } else if (e.target.name == 'polymer_type') {
-      if(e.target.value == '') {
-        sample.error_polymer_type = true;
-        NotificationActions.add({
-          message: 'Polymer type can not be blank.',
-          level: 'error'
-        });
-      } else {
-        sample.error_polymer_type = false;
-      }
-      // tell parent (SampleDetails) component about changes
-      this.props.parent.handleSampleChanged(sample);
     }
 
     this.setState({
@@ -89,6 +78,18 @@ export default class PolymerSection extends React.Component {
       sample: sample
     });
   }
+
+  handlePolymerTypeSelectChanged(value, residue, sample){
+    residue.custom_info['polymer_type'] = value;
+
+    this.setState({
+      sample: sample
+    });
+
+    // tell parent (SampleDetails) component about changes
+    this.props.parent.handleSampleChanged(sample);
+  }
+
   // "Loading (according to mass difference):"
   customInfoRadio(label, value, residue, sample) {
     return (
@@ -118,6 +119,9 @@ export default class PolymerSection extends React.Component {
     label = label.replace('_', ' ');
 
     if(key == "loading") {
+      if(sample.reaction_product)
+        return false;
+
       return (
        <table width="100%" key={key + sample.id.toString()}><tbody><tr>
        <td>
@@ -159,7 +163,28 @@ export default class PolymerSection extends React.Component {
        </div>
        </div>
     )
-   } else {
+  } else if (key == 'polymer_type') {
+      let selectOptions = [
+        {label: 'Polystyrene', value: 'polystyrene'},
+        {label: 'Polyethyleneglycol', value: 'polyethyleneglycol'},
+        {label: 'Self-defined', value: 'self_defined'}
+      ];
+
+      return (
+        <div>
+          <label>Polymer type</label>
+          <Select
+            options={selectOptions}
+            simpleValue
+            key={key + sample.id.toString()}
+            name={key}
+            value={value}
+            clearable={false}
+            onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
+            />
+        </div>
+      )
+  } else {
       return (
         <Input type="text" label={label}
                value={value}

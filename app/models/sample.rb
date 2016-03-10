@@ -121,6 +121,14 @@ class Sample < ActiveRecord::Base
     end
   end
 
+  def get_svg_path
+    if self.sample_svg_file
+      "/images/samples/#{self.sample_svg_file}"
+    else
+      "/images/molecules/#{self.molecule.molecule_svg_file}"
+    end
+  end
+
   def attach_svg
     svg = self.sample_svg_file
     return unless svg.present?
