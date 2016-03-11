@@ -25,157 +25,157 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage) {
-    SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage)
+    return (dispatch) => { SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   // -- Collections --
 
 
   fetchReactionsByCollectionId(id, queryParams={}) {
-    ReactionsFetcher.fetchByCollectionId(id, queryParams)
+    return (dispatch) => { ReactionsFetcher.fetchByCollectionId(id, queryParams)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
 
   // -- Samples --
 
   fetchSampleById(id) {
-    SamplesFetcher.fetchById(id)
+    return (dispatch) => { SamplesFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchSamplesByCollectionId(id, queryParams={}) {
-    SamplesFetcher.fetchByCollectionId(id, queryParams)
+    return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   createSample(params) {
-    SamplesFetcher.create(params)
+    return (dispatch) => { SamplesFetcher.create(params)
       .then((result) => {
-        this.dispatch(result)
-      });
+        dispatch(result)
+      });};
   }
 
   updateSample(params) {
-    SamplesFetcher.update(params)
+    return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
-        this.dispatch(result)
+        dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   generateEmptySample(collection_id) {
-    this.dispatch(Sample.buildEmpty(collection_id))
+    return  Sample.buildEmpty(collection_id)
   }
 
   splitAsSubsamples(ui_state) {
-    SamplesFetcher.splitAsSubsamples(ui_state)
+    return (dispatch) => { SamplesFetcher.splitAsSubsamples(ui_state)
       .then((result) => {
-        this.dispatch(ui_state);
+        dispatch(ui_state);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   copySampleFromClipboard(collection_id) {
-    this.dispatch(collection_id);
+    return  collection_id;
   }
 
   addSampleToMaterialGroup(params) {
-    this.dispatch(params);
+    return  params;
   }
 
   importSamplesFromFile(params) {
-    SamplesFetcher.importSamplesFromFile(params)
+    return (dispatch) => { SamplesFetcher.importSamplesFromFile(params)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   // -- Molecules --
 
   fetchMoleculeByMolfile(molfile) {
-    MoleculesFetcher.fetchByMolfile(molfile)
+    return (dispatch) => { MoleculesFetcher.fetchByMolfile(molfile)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   // -- Reactions --
 
   fetchReactionById(id) {
-    ReactionsFetcher.fetchById(id)
+    return (dispatch) => { ReactionsFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   createReaction(params) {
-    ReactionsFetcher.create(params)
+    return (dispatch) => { ReactionsFetcher.create(params)
       .then((result) => {
-        this.dispatch(result)
-      });
+        dispatch(result)
+      });};
   }
 
   updateReaction(params) {
-    ReactionsFetcher.update(params)
+    return (dispatch) => { ReactionsFetcher.update(params)
       .then((result) => {
-        this.dispatch(result)
+        dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   generateEmptyReaction(collection_id) {
-    this.dispatch(Reaction.buildEmpty(collection_id))
+    return  Reaction.buildEmpty(collection_id)
   }
 
   copyReactionFromId(id) {
-    ReactionsFetcher.fetchById(id)
+    return (dispatch) => { ReactionsFetcher.fetchById(id)
     .then((result) => {
-      this.dispatch(result);
+      dispatch(result);
     }).catch((errorMessage) => {
       console.log(errorMessage);
-    });
+    });};
   }
 
   openReactionDetails(reaction) {
-    this.dispatch(reaction);
+    return  reaction;
   }
 
   // -- Reactions SVGs --
 
   fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label){
-    ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys, label)
+    return (dispatch) => { ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys, label)
       .then((result) => {
-        this.dispatch(result.reaction_svg);
+        dispatch(result.reaction_svg);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   // -- Wellplates --
@@ -194,189 +194,187 @@ class ElementActions {
       wellplates[i] = Wellplate.buildFromSamplesAndCollectionId(_.compact(samples.slice(96*i, 96*(i+1))), collection_id).serialize();
     });
 
-    WellplatesFetcher.bulkCreateWellplates({wellplates: wellplates})
+    return (dispatch) => { WellplatesFetcher.bulkCreateWellplates({wellplates: wellplates})
       .then(() => {
-        this.dispatch();
+        dispatch();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   generateWellplateFromClipboard(collection_id) {
-    this.dispatch(collection_id);
+    return  collection_id;
   }
 
   generateEmptyWellplate(collection_id) {
-    this.dispatch(Wellplate.buildEmpty(collection_id));
+    return  Wellplate.buildEmpty(collection_id);
   }
 
   createWellplate(wellplate) {
-    WellplatesFetcher.create(wellplate)
+    return (dispatch) => { WellplatesFetcher.create(wellplate)
       .then(result => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   updateWellplate(wellplate) {
-    WellplatesFetcher.update(wellplate)
+    return (dispatch) => { WellplatesFetcher.update(wellplate)
       .then(result => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchWellplatesByCollectionId(id, queryParams={}) {
-    WellplatesFetcher.fetchByCollectionId(id, queryParams)
+    return (dispatch) => { WellplatesFetcher.fetchByCollectionId(id, queryParams)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchWellplateById(id) {
-    WellplatesFetcher.fetchById(id)
+    return (dispatch) => { WellplatesFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
 
   // -- Screens --
 
   generateScreenFromClipboard(collection_id) {
-    this.dispatch(collection_id);
+    return  collection_id;
   }
 
 
   fetchScreensByCollectionId(id, queryParams={}) {
-    ScreensFetcher.fetchByCollectionId(id, queryParams)
+    return (dispatch) => { ScreensFetcher.fetchByCollectionId(id, queryParams)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchScreenById(id) {
-    ScreensFetcher.fetchById(id)
+    return (dispatch) => { ScreensFetcher.fetchById(id)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   generateEmptyScreen(collection_id) {
-    this.dispatch(Screen.buildEmpty(collection_id));
+    return  Screen.buildEmpty(collection_id);
   }
 
   createScreen(params) {
-    ScreensFetcher.create(params)
+    return (dispatch) => { ScreensFetcher.create(params)
       .then(result => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   updateScreen(params) {
-    ScreensFetcher.update(params)
+    return (dispatch) => { ScreensFetcher.update(params)
       .then(result => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   // -- General --
 
   refreshElements(type) {
-    this.dispatch(type)
+    return  type
   }
 
 
   deleteElements(options) {
-    this.dispatch(options);
+    return  (dispatch)=> {
+    dispatch(options);
     UIActions.uncheckWholeSelection();
-    UserActions.fetchCurrentUser();
+    UserActions.fetchCurrentUser();}
   }
 
   removeElements() {
-    this.dispatch();
+    return  ;
   }
 
   // - ...
 
   deleteSamplesByUIState(ui_state) {
-    SamplesFetcher.deleteSamplesByUIState(ui_state)
+    return (dispatch) => { SamplesFetcher.deleteSamplesByUIState(ui_state)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   deleteReactionsByUIState(params) {
-    ReactionsFetcher.deleteReactionsByUIState(params)
+    return (dispatch) => { ReactionsFetcher.deleteReactionsByUIState(params)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   deleteWellplatesByUIState(ui_state) {
-    WellplatesFetcher.deleteWellplatesByUIState(ui_state)
+    return (dispatch) => { WellplatesFetcher.deleteWellplatesByUIState(ui_state)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   deleteScreensByUIState(ui_state) {
-    ScreensFetcher.deleteScreensByUIState(ui_state)
+    return (dispatch) => { ScreensFetcher.deleteScreensByUIState(ui_state)
       .then((result) => {
-        this.dispatch(result);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   updateElementsCollection(params) {
-    CollectionsFetcher.updateElementsCollection(params)
+    return (dispatch) => { CollectionsFetcher.updateElementsCollection(params)
       .then(() => {
-        this.dispatch(params);
+        dispatch(params);UIActions.uncheckWholeSelection();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
-    UIActions.uncheckWholeSelection();
+      });};
   }
 
   assignElementsCollection(params) {
-    CollectionsFetcher.assignElementsCollection(params)
+    return (dispatch) => { CollectionsFetcher.assignElementsCollection(params)
       .then(() => {
-        this.dispatch(params);
+        dispatch(params);UIActions.uncheckWholeSelection();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
-    UIActions.uncheckWholeSelection();
+      });};
   }
 
   removeElementsCollection(params) {
-    CollectionsFetcher.removeElementsCollection(params)
+    return (dispatch) => { CollectionsFetcher.removeElementsCollection(params)
       .then(() => {
-        this.dispatch(params);
+        dispatch(params);UIActions.uncheckWholeSelection();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
-    UIActions.uncheckWholeSelection();
+      });};
   }
 
 }

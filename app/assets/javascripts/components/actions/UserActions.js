@@ -8,21 +8,21 @@ import DocumentHelper from '../utils/DocumentHelper';
 class UserActions {
 
   fetchUsers() {
-    UsersFetcher.fetchUsers()
+    return (dispatch) => { UsersFetcher.fetchUsers()
       .then((result) => {
-        this.dispatch(result.users);
+        dispatch(result.users);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchCurrentUser() {
-    UsersFetcher.fetchCurrentUser()
+    return (dispatch) => { UsersFetcher.fetchCurrentUser()
       .then((result) => {
-        this.dispatch(result.user);
+        dispatch(result.user);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   logout() {

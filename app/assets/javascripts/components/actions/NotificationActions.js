@@ -2,19 +2,19 @@ import alt from '../alt'
 
 class NotificationActions {
   add(notification) {
-    this.dispatch(notification)
+    return  notification
   }
 
   remove(notification) {
-    this.dispatch(notification)
+    return  notification
   }
 
   removeByUid(uid) {
-    this.dispatch(uid)
+    return  uid
   }
 
   setComponentReference(input) {
-    this.dispatch(input)
+    return  input
   }
 }
 

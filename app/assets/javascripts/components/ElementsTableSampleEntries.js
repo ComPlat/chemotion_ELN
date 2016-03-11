@@ -82,7 +82,7 @@ export default class ElementsTableSampleEntries extends Component {
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
             <h4>{molecule.iupac_name || molecule.sum_formular}</h4>
-            ({molecule.molecular_weight} mg/mmol)
+          
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>

@@ -6,85 +6,85 @@ import Utils from '../utils/Functions';
 
 class CollectionActions {
   takeOwnership(params) {
-    CollectionsFetcher.takeOwnership(params)
+    return (dispatch) => { CollectionsFetcher.takeOwnership(params)
       .then((roots) => {
-        this.dispatch(roots);
+        dispatch(roots);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   // TODO #2...centralized error handling maybe ErrorActions?
   fetchLockedCollectionRoots() {
-    CollectionsFetcher.fetchLockedRoots()
+    return (dispatch) => { CollectionsFetcher.fetchLockedRoots()
       .then((roots) => {
-        this.dispatch(roots);
+        dispatch(roots);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchUnsharedCollectionRoots() {
-    CollectionsFetcher.fetchUnsharedRoots()
+    return (dispatch) => { CollectionsFetcher.fetchUnsharedRoots()
       .then((roots) => {
-        this.dispatch(roots);
+        dispatch(roots);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchSharedCollectionRoots() {
-    CollectionsFetcher.fetchSharedRoots()
+    return (dispatch) => { CollectionsFetcher.fetchSharedRoots()
       .then((roots) => {
-        this.dispatch(roots);
+        dispatch(roots);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   fetchRemoteCollectionRoots() {
-    CollectionsFetcher.fetchRemoteRoots()
+    return (dispatch) => { CollectionsFetcher.fetchRemoteRoots()
       .then((roots) => {
-        this.dispatch(roots);
+        dispatch(roots);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   createSharedCollections(params) {
-    CollectionsFetcher.createSharedCollections(params)
+    return (dispatch) => { CollectionsFetcher.createSharedCollections(params)
       .then(() => {
-        this.dispatch();
+        dispatch();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   bulkUpdateUnsharedCollections(params) {
-    CollectionsFetcher.bulkUpdateUnsharedCollections(params)
+    return (dispatch) => { CollectionsFetcher.bulkUpdateUnsharedCollections(params)
       .then(() => {
-        this.dispatch();
+        dispatch();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   updateSharedCollection(params) {
-    CollectionsFetcher.updateSharedCollection(params)
+    return (dispatch) => { CollectionsFetcher.updateSharedCollection(params)
       .then(() => {
-        this.dispatch();
+        dispatch();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   createUnsharedCollection(params) {
-    CollectionsFetcher.createUnsharedCollection(params)
+    return (dispatch) => { CollectionsFetcher.createUnsharedCollection(params)
       .then(() => {
-        this.dispatch();
+        dispatch();
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });
+      });};
   }
 
   downloadReportCollectionSamples(){

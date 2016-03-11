@@ -95,7 +95,7 @@ export default class ScreenDetails extends Component {
           <ElementCollectionLabels element={screen}/>
           <ListGroup fill>
             <ListGroupItem>
-              <table width="100%">
+              <table width="100%"><tbody>
                 <tr>
                   <td width="50%" className="padding-right">
                     <Input
@@ -158,7 +158,7 @@ export default class ScreenDetails extends Component {
                       />
                   </td>
                 </tr>
-              </table>
+              </tbody></table>
             </ListGroupItem>
             <ListGroupItem header="Wellplates">
               <ScreenWellplates

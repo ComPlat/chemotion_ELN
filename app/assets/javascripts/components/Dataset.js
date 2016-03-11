@@ -97,7 +97,7 @@ export default class Dataset extends Component {
         {dataset.attachments.map(attachment => {
           return (
             <ListGroupItem key={attachment.id}>
-              <Table className="borderless">
+              <Table className="borderless"><tbody>
                 <tr>
                   <td rowSpan="2" width="128">
                     <img src={attachment.previewImage} />
@@ -111,7 +111,7 @@ export default class Dataset extends Component {
                     {this.removeAttachmentButton(attachment)}
                   </td>
                 </tr>
-              </Table>
+              </tbody></Table>
             </ListGroupItem>
           )
         })}
