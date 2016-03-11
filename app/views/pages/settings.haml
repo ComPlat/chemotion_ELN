@@ -1,0 +1,15 @@
+.container
+  %h2
+    Account Settings
+
+
+  %br/
+  %br/
+  - plugin_list.each do |plugin|
+    .jumbotron
+      .row
+        %h3= plugin.to_s
+        = render "#{plugin}/home/account" 
+
+
+  = link_to "Back", root_path

@@ -20,7 +20,7 @@ PATH
   remote: ~/shared/scifinding
   specs:
     scifinding (0.0.1)
-      attr_encrypted
+      attr_encrypted (< 1.3.5)
       oauth2
       rails (>= 4.2.0)
 
@@ -69,8 +69,8 @@ GEM
     arel (6.0.3)
       execjs
       json
-    attr_encrypted (2.0.0)
-      encryptor (~> 2.0.0)
+    attr_encrypted (1.3.4)
+      encryptor (>= 1.3.0)
     autoprefixer-rails (6.0.3)
       execjs
       json
@@ -164,7 +164,7 @@ GEM
       thor (~> 0.14)
     globalid (0.3.6)
       activesupport (>= 4.1.0)
-    grape (0.13.0)
+    grape (0.15.0)
       activesupport
       builder
       hashie (>= 2.1.0)
@@ -188,7 +188,7 @@ GEM
       haml (>= 4.0.6, < 5.0)
       html2haml (>= 1.0.1)
       railties (>= 4.0.1)
-    hashie (3.4.2)
+    hashie (3.4.3)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
     hitimes (1.2.3)
@@ -202,7 +202,7 @@ GEM
       json (~> 1.8)
       multi_xml (>= 0.5.2)
     i18n (0.7.0)
-    ice_nine (0.11.1)
+    ice_nine (0.11.2)
     jbuilder (2.3.2)
       activesupport (>= 3.0.0, < 5)
       multi_json (~> 1.2)
@@ -233,7 +233,7 @@ GEM
       thin (~> 1.5.0)
     mime-types (2.6.2)
     mini_portile (0.6.2)
-    minitest (5.8.1)
+    minitest (5.8.4)
     multi_json (1.11.2)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
