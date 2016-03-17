@@ -151,7 +151,9 @@ export default class ReactionDetailsScheme extends Component {
 
 
     if(isNaN(equivalent) || !isFinite(equivalent)){
-      equivalent = 1.0;
+      updatedSample.adjusted_equivalent = 1.0;
+      updatedSample.adjusted_amount_mmol = referenceMaterial.amount_mmol;
+      updatedSample.adjusted_amount_mg = referenceMaterial.amount_mg;
       updatedSample.setAmountAndNormalizeToMilligram(referenceMaterial.amount_value, referenceMaterial.amount_unit);
     }
 
@@ -210,16 +212,29 @@ export default class ReactionDetailsScheme extends Component {
     let equivalent = this.calculateEquivalent(referenceM, updatedS);
     updatedS.equivalent = equivalent;
 
+    if (equivalent < 0.0) {
+      updatedS.adjusted_equivalent = 0.0;
+      updatedS.adjusted_loading = referenceM.amount_mmol / massAnalyses.mFull * 1000.0;
+      updatedS.adjusted_amount_mmol = 0.0;
+      updatedS.adjusted_amount_mg = 0.0;
+    } else if (equivalent > 1.0) {
+      updatedS.adjusted_equivalent = 1.0;
+      updatedS.adjusted_amount_mmol = referenceM.amount_mmol
+      updatedS.adjusted_loading = referenceM.amount_mmol / massAnalyses.mFull * 1000.0;
+      updatedS.adjusted_amount_mg =
+            referenceM.amount_mmol / updatedS.adjusted_loading * 1000.0;
+      newAmountMmol = referenceM.amount_mmol;
+    }
+
     let newAmountMmol;
     let newLoading;
 
     if(massAnalyses.errorMsg) {
-      newAmountMmol = referenceM.amount_mmol;
-      newLoading = newAmountMmol / massAnalyses.mFull * 1000.0;
-    } else {
-      newAmountMmol = referenceM.amount_mmol * equivalent;
-      newLoading = newAmountMmol / updatedS.amount_mg * 1000.0;
+
     }
+
+    newAmountMmol = referenceM.amount_mmol * equivalent;
+    newLoading = newAmountMmol / updatedS.amount_mg * 1000.0;
 
     updatedS.residues[0].custom_info.loading = newLoading;
   }

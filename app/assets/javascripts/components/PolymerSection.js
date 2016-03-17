@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Input, ListGroup, ListGroupItem, Button, RadioButton} from 'react-bootstrap';
 import NumeralInputWithUnits from './NumeralInputWithUnits'
-import ElementalComposition from './ElementalComposition'
+import ElementalCompositionGroup from './ElementalCompositionGroup'
 import NotificationActions from './actions/NotificationActions'
 import Select from 'react-select'
 
@@ -218,8 +218,7 @@ export default class PolymerSection extends React.Component {
           <tbody>
             <tr>
               <td width="50%" className="padding-right">
-                <ElementalComposition sample={sample}>
-                </ElementalComposition>
+                <ElementalCompositionGroup sample={sample}/>
               </td>
               <td width="50%">
                 <div>

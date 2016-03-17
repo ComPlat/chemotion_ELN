@@ -6,6 +6,7 @@ class SampleSerializer < ActiveModel::Serializer
   has_one :molecule
 
   has_many :residues
+  has_many :elemental_compositions
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")

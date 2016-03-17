@@ -1,9 +1,32 @@
 import React, {Component, PropTypes} from 'react';
 import Material from './Material';
+import MaterialCalculations from './MaterialCalculations'
 
 export default class MaterialGroup extends Component {
   render() {
     const {materials, materialGroup, deleteMaterial, onChange} = this.props;
+    let contents = [];
+
+    materials.map((material, key) => {
+      contents.push(
+        (<Material
+          onChange={onChange}
+          key={key}
+          material={material}
+          materialGroup={materialGroup}
+          deleteMaterial={material => deleteMaterial(material, materialGroup)}
+          />)
+      );
+
+      if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
+        contents.push(
+          (<MaterialCalculations
+            material={material}
+            materialGroup={materialGroup}
+            />)
+        );
+    })
+
     return (
       <div>
         <table width="100%">
@@ -20,19 +43,9 @@ export default class MaterialGroup extends Component {
           <th width="5%"></th>
           </tr></thead>
           <tbody>
-          {
-            materials.map((material, key) => {
-              return (
-                <Material
-                  onChange={onChange}
-                  key={key}
-                  material={material}
-                  materialGroup={materialGroup}
-                  deleteMaterial={material => deleteMaterial(material, materialGroup)}
-                  />
-              );
-            })
-          }
+            {contents.map(function(item) {
+              return item;
+            })}
           </tbody>
         </table>
       </div>

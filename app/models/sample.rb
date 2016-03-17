@@ -57,22 +57,22 @@ class Sample < ActiveRecord::Base
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
   has_many :residues
+  has_many :elemental_compositions
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
-  before_save :create_elemental_analyses
 
   has_ancestry
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
-  accepts_nested_attributes_for :residues
+  accepts_nested_attributes_for :residues, :elemental_compositions
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', counter_cache: :samples_created_count
 
-  before_save :auto_set_short_label, :attach_svg
+  before_save :auto_set_short_label, :attach_svg, :init_elemental_compositions
 
   def auto_set_short_label
     if parent
@@ -129,6 +129,10 @@ class Sample < ActiveRecord::Base
     end
   end
 
+  def loading
+    self.residues[0].custom_info['loading'].to_d
+  end
+
   def attach_svg
     svg = self.sample_svg_file
     return unless svg.present?
@@ -142,23 +146,40 @@ class Sample < ActiveRecord::Base
     self.sample_svg_file = svg_file_name
   end
 
-  # creates element analyses
-  def create_elemental_analyses
+  def init_elemental_compositions
     residue = self.residues[0]
     return unless m_formula = self.molecule.sum_formular
+    elem_attrs_list = self.elemental_compositions
+    items = {}
+    elem_attrs_list.each { |i| items[i.composition_type.to_sym]= i.attributes }
 
-    self.elemental_analyses = if residue.present?
+    if residue.present?
       p_formula = residue.custom_info['formula']
       p_loading = residue.custom_info['loading'].try(:to_d)
 
+      reaction = self.reactions_as_product.first
+      if reaction
+        loading_full = reaction.get_loading_full_conv self
+        d = Chemotion::Calculations
+                           .get_composition(m_formula, p_formula, loading_full)
+        items = set_elem_composition_data items, :full_conv, d, loading_full
+      end
+
       if p_formula.present? && p_loading.present?
-        Chemotion::Calculations.get_composition m_formula, p_formula, p_loading
+        d = Chemotion::Calculations
+                             .get_composition(m_formula, p_formula, p_loading)
+
+        # if it is reaction product then loading has been calculated
+        l_type = reaction.present? ? :mass_diff : :loading
+        items = set_elem_composition_data items, l_type, d, p_loading
       else
         {}
       end
     else
-      Chemotion::Calculations.get_composition m_formula
+      d = Chemotion::Calculations.get_composition(m_formula)
+      items = set_elemental_composition_data items, :formula, d
     end
+    self.elemental_compositions_attributes = items.values
   end
 
   # -- fake analyes
@@ -173,5 +194,15 @@ class Sample < ActiveRecord::Base
   def analyses= analyses
     json_dump = JSON.dump(analyses)
     self.analyses_dump = json_dump
+  end
+
+private
+  def set_elem_composition_data items, d_type, d_values, loading = nil
+    items[d_type] ||= {}
+    items[d_type][:composition_type] = d_type
+    items[d_type][:data] = d_values
+    items[d_type][:loading] = loading
+
+    items
   end
 end

@@ -16,7 +16,7 @@ const collect = (connect, monitor) => ({
   isDragging: monitor.isDragging()
 });
 
-class Material extends Component {
+export default class Material extends Component {
   handleMaterialClick(sample) {
     const uiState = UiStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}/sample/${sample.id}`);
@@ -199,25 +199,13 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     if(this.props.materialGroup == 'products') {
-      if(material.equivalent < 0.0 || material.equivalent > 1.0) {
-        return (
-          <Input
-            type="text"
-            value={material.equivalent < 0.0 ? ' 0%' : '100%'}
-            bsStyle="error"
-            title={"Calculated " + (100*material.equivalent).toFixed(1) + ' %'}
-            disabled={true}
-          />
-        )
-      } else {
-        return (
-          <Input
-            type="text"
-            value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
-            disabled={true}
-          />
-        );
-      }
+      return (
+        <Input
+          type="text"
+          value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
+          disabled={true}
+        />
+      );
     } else {
       return (
         <Input

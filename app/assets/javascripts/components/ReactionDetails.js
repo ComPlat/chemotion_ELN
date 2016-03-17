@@ -63,6 +63,16 @@ export default class ReactionDetails extends Component {
 
   submitFunction() {
     const {reaction} = this.state;
+
+    // set corrected values before we save the reaction
+    reaction.products.map(function(product) {
+      if(product.adjusted_loading && product.error_mass) {
+        product.loading = product.adjusted_loading;
+        product.equivalent = product.adjusted_equivalent;
+        product.setAmountAndNormalizeToMilligram(product.adjusted_amount_mg,'mg')
+      }
+    })
+
     if(reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
