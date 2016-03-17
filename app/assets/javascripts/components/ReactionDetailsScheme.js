@@ -35,6 +35,9 @@ export default class ReactionDetailsScheme extends Component {
     }
 
     const splitSample = sample.buildChild();
+    if(materialGroup == 'products') {
+      splitSample.residues[0].custom_info.reaction_product = true;
+    }
     reaction.addMaterial(splitSample, materialGroup);
     this.onReactionChange(reaction, {schemaChanged: true});
   }
@@ -211,18 +214,19 @@ export default class ReactionDetailsScheme extends Component {
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
     let equivalent = this.calculateEquivalent(referenceM, updatedS);
     updatedS.equivalent = equivalent;
+    let fconv_loading = referenceM.amount_mmol / updatedS.amount_mg * 1000.0;
+    updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
 
     if (equivalent < 0.0) {
       updatedS.adjusted_equivalent = 0.0;
-      updatedS.adjusted_loading = referenceM.amount_mmol / massAnalyses.mFull * 1000.0;
+      updatedS.adjusted_loading = fconv_loading;
       updatedS.adjusted_amount_mmol = 0.0;
       updatedS.adjusted_amount_mg = 0.0;
     } else if (equivalent > 1.0) {
       updatedS.adjusted_equivalent = 1.0;
       updatedS.adjusted_amount_mmol = referenceM.amount_mmol
-      updatedS.adjusted_loading = referenceM.amount_mmol / massAnalyses.mFull * 1000.0;
-      updatedS.adjusted_amount_mg =
-            referenceM.amount_mmol / updatedS.adjusted_loading * 1000.0;
+      updatedS.adjusted_loading = fconv_loading;
+      updatedS.adjusted_amount_mg = updatedS.amount_mg;
       newAmountMmol = referenceM.amount_mmol;
     }
 

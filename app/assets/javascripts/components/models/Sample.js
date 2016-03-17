@@ -93,7 +93,7 @@ export default class Sample extends Element {
       molecule: { id: '_none_' },
       analyses: [],
       residues: [],
-      elemental_analyses: {},
+      elemental_compositions: [],
       imported_readout: '',
       attached_amount_mg: '' // field for polymers calculations
     });
@@ -117,7 +117,7 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
-      elemental_analyses: {},
+      elemental_compositions: [],
       residues: [],
       imported_readout: ''
     });

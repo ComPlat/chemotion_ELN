@@ -3,6 +3,17 @@ table.polymer-section {
     vertical-align: top;
   }
 
+  td.cross_linkage {
+    padding-left: 5px;
+    input {
+      height: 38px;
+    }
+  }
+
+  td.external_loading_input {
+    padding: 0px;
+  }
+
   button {
     margin-top: 25px;
   }

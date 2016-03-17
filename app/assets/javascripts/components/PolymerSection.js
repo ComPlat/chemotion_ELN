@@ -28,7 +28,7 @@ export default class PolymerSection extends React.Component {
     residue.custom_info[name] = e.value;
 
     // make calculations if loading was changed
-    if(name == 'loading') {
+    if(name == 'loading' || name == "external_loading") {
       this.handleAmountChanged(sample.amount);
 
       let errorMessage;
@@ -44,13 +44,13 @@ export default class PolymerSection extends React.Component {
       }
 
       if(errorMessage){
-        sample.error_loading = true;
+        sample['error_' + name] = true;
         NotificationActions.add({
           message: errorMessage,
           level: 'error'
         });
       } else {
-        sample.error_loading = false;
+        sample['error_' + name] = false;
       }
     } else {
       this.setState({
@@ -90,19 +90,6 @@ export default class PolymerSection extends React.Component {
     this.props.parent.handleSampleChanged(sample);
   }
 
-  // "Loading (according to mass difference):"
-  customInfoRadio(label, value, residue, sample) {
-    return (
-      <Input label={label}
-             onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
-             checked={residue.custom_info.loading_type == value}
-             name="loading_type"
-             key={value + sample.id.toString() + 'loading_type'}
-             value={value}
-             type="radio"/>
-    )
-  }
-
   checkInputStatus(sample, key) {
     if (sample['error_' + key]) {
       return 'error';
@@ -111,91 +98,124 @@ export default class PolymerSection extends React.Component {
     }
   }
 
-  customInfoInput(key, value, residue, sample) {
-    if(key == "loading_type")
+  polymerFormula(sample, residue) {
+    return (
+      <div key={'polymer_formula' + sample.id.toString()}>
+      <Button className="pull-right"
+              bsStyle="warning"
+              onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
+       Save
+      </Button>
+      <div className="col-sm-10 formula-input">
+        <Input type="text" label="Formula"
+               value={residue.custom_info.formula}
+               name="formula"
+               key={'polymer_formula_input' + sample.id.toString()}
+               onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+        />
+      </div>
+      </div>
+    )
+  }
+
+  customInfoRadio(label, value, residue, sample) {
+    let additionalLoadingInput = false;
+
+    if(value == 'external') {
+      additionalLoadingInput = (
+        <td width="15%" className="external_loading_input">
+          <NumeralInputWithUnits
+            value={residue.custom_info.external_loading}
+            unit='mmol/g'
+            numeralFormat='0,0.00'
+            key={'polymer_loading_input' + sample.id.toString()}
+            name="polymer_external_loading"
+            disabled={residue.custom_info.loading_type != value}
+            bsStyle={this.checkInputStatus(sample, 'external_loading')}
+            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'external_loading', residue, sample)}
+            />
+         </td>
+      )
+    }
+
+    return (
+      <tr>
+        <td>
+          <Input label={label}
+                 onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
+                 checked={residue.custom_info.loading_type == value}
+                 name="loading_type"
+                 key={value + sample.id.toString() + 'loading_type'}
+                 value={value}
+                 type="radio"/>
+        </td>
+        {additionalLoadingInput}
+      </tr>
+    )
+  }
+
+  polymerLoading(sample, residue) {
+    if(sample.reaction_product)
       return false;
 
-    let label = key.charAt(0).toUpperCase() + key.slice(1);
-    label = label.replace('_', ' ');
-
-    if(key == "loading") {
-      if(sample.reaction_product)
-        return false;
-
-      return (
-       <table width="100%" key={key + sample.id.toString()}><tbody><tr>
-       <td>
+    return (
+      <table width="100%" key={'polymer_loading' + sample.id.toString()}>
+      <tbody>
         {this.customInfoRadio("Loading (according to mass difference):","mass", residue, sample)}
         {this.customInfoRadio("Loading (according to external estimation):","external", residue, sample)}
         {this.customInfoRadio("Loading (according to EA):","EA", residue, sample)}
-       </td>
-       <td width="25%">
-         <NumeralInputWithUnits
-           value={value}
-           unit='mmol/g'
-           label="Loading (mmol/g)"
-           numeralFormat='0,0.00'
-           ref={key}
-           key={key + sample.id.toString()}
-           name={key}
-           bsStyle={this.checkInputStatus(sample, 'loading')}
-           onChange={(e) => this.handleCustomInfoNumericChanged(e, key, residue, sample)}
-           />
-       </td>
-       </tr></tbody></table>
-     )
-   } else if (key == "formula") {
-     return (
-       <div key={key + sample.id.toString()}>
-       <Button className="pull-right"
-               bsStyle="warning"
-               onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
-        Save
-       </Button>
-       <div className="col-sm-10 formula-input">
-         <Input type="text" label={label}
-                value={value}
-                name={key}
-                ref={key}
-                key={key + sample.id.toString()}
-                onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
-         />
-       </div>
-       </div>
-    )
-  } else if (key == 'polymer_type') {
-      let selectOptions = [
-        {label: 'Polystyrene', value: 'polystyrene'},
-        {label: 'Polyethyleneglycol', value: 'polyethyleneglycol'},
-        {label: 'Self-defined', value: 'self_defined'}
-      ];
-
-      return (
-        <div>
-          <label>Polymer type</label>
-          <Select
-            options={selectOptions}
-            simpleValue
-            key={key + sample.id.toString()}
-            name={key}
-            value={value}
-            clearable={false}
-            onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
+       <tr>
+         <td></td>
+         <td width="15%">
+          <NumeralInputWithUnits
+            value={residue.custom_info.loading}
+            unit='mmol/g'
+            label="Loading (mmol/g)"
+            numeralFormat='0,0.00'
+            key={'polymer_loading_input' + sample.id.toString()}
+            name="polymer_loading"
+            bsStyle={this.checkInputStatus(sample, 'loading')}
+            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
             />
-        </div>
+          </td>
+       </tr>
+       </tbody>
+       </table>
       )
-  } else {
-      return (
-        <Input type="text" label={label}
-               value={value}
-               name={key}
-               ref={key}
-               bsStyle={this.checkInputStatus(sample, key)}
-               key={key + sample.id.toString()}
-               onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
-        />
-      )
-    }
+  }
+
+  polymerType(sample, residue) {
+    let selectOptions = [
+      {label: 'Polystyrene', value: 'polystyrene'},
+      {label: 'Polyethyleneglycol', value: 'polyethyleneglycol'},
+      {label: 'Self-defined', value: 'self_defined'}
+    ];
+
+    return (
+      <div>
+        <label>Polymer type</label>
+        <Select
+          options={selectOptions}
+          simpleValue
+          key={"polymer_type" + sample.id.toString()}
+          name="polymer_type"
+          value={residue.custom_info.polymer_type}
+          clearable={false}
+          onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
+          />
+      </div>
+    )
+  }
+
+  polymerCrossLinkage(sample, residue) {
+    return (
+      <Input type="text" label="Cross-linkage"
+             value={residue.custom_info.cross_linkage}
+             name="cross_linkage"
+             key={'cross_linkage' + sample.id.toString()}
+             onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+      />
+    )
   }
 
   render() {
@@ -203,14 +223,6 @@ export default class PolymerSection extends React.Component {
     let molfile = sample.molfile;
 
     let residue = sample.residues[0];
-
-    let klass = this;
-
-    let keys = Object.keys(residue.custom_info)
-    let dynamic_fields = keys.map(function(key, index) {
-      let value = residue.custom_info[key];
-      return klass.customInfoInput(key, value, residue, sample);
-    });
 
     return (
       <ListGroupItem>
@@ -223,7 +235,21 @@ export default class PolymerSection extends React.Component {
               <td width="50%">
                 <div>
                   <label>Polymer Section</label>
-                  {dynamic_fields}
+                  {this.polymerFormula(sample, residue)}
+                  {this.polymerLoading(sample, residue)}
+
+                  <table width="100%">
+                  <tbody>
+                    <tr>
+                      <td width="50%">
+                        {this.polymerType(sample, residue)}
+                      </td>
+                      <td width="50%" className="cross_linkage">
+                        {this.polymerCrossLinkage(sample, residue)}
+                      </td>
+                    </tr>
+                  </tbody>
+                  </table>
                 </div>
               </td>
             </tr>

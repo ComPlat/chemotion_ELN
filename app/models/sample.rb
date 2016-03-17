@@ -157,11 +157,9 @@ class Sample < ActiveRecord::Base
       p_formula = residue.custom_info['formula']
       p_loading = residue.custom_info['loading'].try(:to_d)
 
-      reaction = self.reactions_as_product.first
-      if reaction
-        loading_full = reaction.get_loading_full_conv self
+      if loading_full = residue.custom_info['loading_full_conv']
         d = Chemotion::Calculations
-                           .get_composition(m_formula, p_formula, loading_full)
+                       .get_composition(m_formula, p_formula, loading_full.to_f)
         items = set_elem_composition_data items, :full_conv, d, loading_full
       end
 
@@ -170,14 +168,14 @@ class Sample < ActiveRecord::Base
                              .get_composition(m_formula, p_formula, p_loading)
 
         # if it is reaction product then loading has been calculated
-        l_type = reaction.present? ? :mass_diff : :loading
+        l_type = residue.custom_info['reaction_product'] ? :mass_diff : :loading
         items = set_elem_composition_data items, l_type, d, p_loading
       else
         {}
       end
     else
       d = Chemotion::Calculations.get_composition(m_formula)
-      items = set_elemental_composition_data items, :formula, d
+      items = set_elem_composition_data items, :formula, d
     end
     self.elemental_compositions_attributes = items.values
   end

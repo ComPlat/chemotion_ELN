@@ -228,8 +228,11 @@ export default class SampleDetails extends React.Component {
                 "formula": 'CH',
                 "loading": null,
                 "polymer_type": "polystyrene",
-                "loading_type": "mass"
-                }
+                "loading_type": "mass",
+                "external_loading": 0.0,
+                "reaction_product": (sample.reaction_product ? true : null),
+                "cross_linkage": null
+              }
             }
           ];
         }

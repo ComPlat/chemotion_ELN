@@ -103,12 +103,4 @@ class Reaction < ActiveRecord::Base
     self.dangerous_products = dangerous_products.reject(&:blank?)
     self.purification = purification.reject(&:blank?)
   end
-
-  def get_loading_full_conv reaction_product
-    return unless material = self.starting_materials.first
-
-    amount_mmol_full = material.target_amount_value * material.loading
-
-    amount_mmol_full / reaction_product.target_amount_value
-  end
 end
