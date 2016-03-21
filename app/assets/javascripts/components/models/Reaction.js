@@ -217,6 +217,16 @@ export default class Reaction extends Element {
     });
   }
 
+  hasPolymers() {
+    return this.starting_materials.find((sample) => {
+      return sample.contains_residues
+    }) || this.reactants.find((sample) => {
+      return sample.contains_residues
+    }) || this.products.find((sample) => {
+      return sample.contains_residues
+    });
+  }
+
   // literatures
 
   get literatures() {

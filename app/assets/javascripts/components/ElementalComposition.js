@@ -22,7 +22,6 @@ export default class ElementalComposition extends React.Component {
       elements.push(
         <Input type="text"
              className="padding-left"
-             ref={key}
              label={key}
              key={key}
              defaultValue={value}
@@ -41,7 +40,7 @@ export default class ElementalComposition extends React.Component {
       return false;
 
     return (
-      <td className="loading" align="right" width="12%">
+      <td className="loading" align="right" width="13%">
         <Input type="text"
            key={"mc-loading" + elemental_composition.id.toString()}
            defaultValue={elemental_composition.loading}

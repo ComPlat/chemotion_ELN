@@ -63,8 +63,10 @@ export default class Material extends Component {
       )
   }
 
-  materialLoading(material, inputsStyle) {
-    if (!material.contains_residues)
+  materialLoading(material, inputsStyle, showLoadingColumn) {
+    if(!showLoadingColumn) {
+      return false;
+    } else if (!material.contains_residues)
       return this.notApplicableInput(inputsStyle);
     else {
       let disabled = this.props.materialGroup == 'products';
@@ -93,7 +95,8 @@ export default class Material extends Component {
 }
 
   render() {
-    const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
+    const {material, deleteMaterial, isDragging, connectDragSource,
+           showLoadingColumn } = this.props;
 
     let style = {};
     if (isDragging) {
@@ -182,7 +185,7 @@ export default class Material extends Component {
         />
       </td>
 
-      {this.materialLoading(material, inputsStyle)}
+      {this.materialLoading(material, inputsStyle, showLoadingColumn)}
 
       <td style={inputsStyle}>
         {this.equivalentOrYield(material)}

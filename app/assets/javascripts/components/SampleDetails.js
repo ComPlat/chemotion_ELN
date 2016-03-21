@@ -228,8 +228,8 @@ export default class SampleDetails extends React.Component {
                 "formula": 'CH',
                 "loading": null,
                 "polymer_type": "polystyrene",
-                "loading_type": "mass",
-                "external_loading": 0.0,
+                "loading_type": "external",
+                //"external_loading": 0.0,
                 "reaction_product": (sample.reaction_product ? true : null),
                 "cross_linkage": null
               }
@@ -348,7 +348,7 @@ export default class SampleDetails extends React.Component {
       <Row style={style}>
         <Col md={7}>
           <h3>{sample.title()}</h3>
-          <h4>{sample.molecule.iupac_name}</h4>
+          <h4>{sample.display_name}</h4>
           <h5>{sampleMoleculeMolecularWeight}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>

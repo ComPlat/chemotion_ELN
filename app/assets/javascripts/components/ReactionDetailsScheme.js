@@ -263,12 +263,10 @@ export default class ReactionDetailsScheme extends Component {
             sample.equivalent = 1.0;
           }
         }
-      }
-      else {
+      } else {
+        // calculate equivalent, don't touch real amount
         if(updatedSample.reference) {
-          if(sample.equivalent && sample.amountType != 'real') {
-            sample.setAmountAndNormalizeToGram({value:sample.equivalent * updatedSample.amount_mol,unit: 'mol'});
-          }
+          sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
         }
       }
       return sample;
@@ -350,6 +348,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
           </ListGroupItem>
@@ -361,6 +360,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
 
@@ -373,6 +373,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
 

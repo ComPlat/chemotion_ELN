@@ -7,7 +7,7 @@ export default class Molecule extends Element {
 
   get correctedMolecularWeight() {
     if(this.is_partial) {
-      return this.molecular_weight - 1.0;
+      return this.molecular_weight - 1.0079;
     } else {
       return this.molecular_weight;
     }

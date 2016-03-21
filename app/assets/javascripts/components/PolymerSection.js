@@ -28,7 +28,8 @@ export default class PolymerSection extends React.Component {
     residue.custom_info[name] = e.value;
 
     // make calculations if loading was changed
-    if(name == 'loading' || name == "external_loading") {
+    if(name == 'loading') {
+
       this.handleAmountChanged(sample.amount);
 
       let errorMessage;
@@ -63,7 +64,28 @@ export default class PolymerSection extends React.Component {
     residue.custom_info[e.target.name] = e.target.value;
 
     if(e.target.name == "formula") {
-      sample.formulaChanged = true;
+      if(e.target.value) {
+        let concat_formula = e.target.value.concat(sample.molecule.sum_formular);
+        let custom_composition = sample.elemental_compositions.find(c => {
+          return c.composition_type == 'found';
+        });
+
+        if(custom_composition) {
+          // be sure that 2-symbol (Br) elements are all before one-symbol (B)!
+          // TODO: check performance
+          let mendeleev = /(He|Li|Be|Ne|Na|Mg|Al|Si|Cl|Ar|Ca|Sc|Ti|Cr|Mn|Fe|Co|Ni|Cu|Zn|Ga|Ge|As|Se|Br|Kr|Rb|Sr|Zr|Nb|Mo|Tc|Ru|Rh|Pd|Ag|Cd|In|Sn|Sb|Te|Xe|Cs|Ba|La|Ce|Pr|Nd|Pm|Sm|Eu|Gd|Tb|Dy|Ho|Er|Tm|Yb|Lu|Hf|Ta|Re|Os|Ir|Pt|Au|Hg|Tl|Pb|Bi|Po|At|Rn|Fr|Ra|Ac|Th|Pa|Np|Pu|Am|Cm|Bk|Cf|Es|Fm|Md|No|Lr|Rf|Db|Sg|Bh|Hs|Mt|H|B|C|N|O|F|P|S|K|V|Y|I|W|U)/g
+
+          let newData = {};
+          // add new key to custom composition, so that we have new input
+          concat_formula.match(mendeleev).map(function(elem) {
+            newData[elem] = (custom_composition.data[elem] || 0.0);
+          });
+
+          custom_composition.data = newData;
+        }
+
+        sample.formulaChanged = true;
+      }
     }
 
     this.setState({
@@ -73,6 +95,23 @@ export default class PolymerSection extends React.Component {
 
   handlePRadioChanged(e, residue, sample) {
     residue.custom_info['loading_type'] = e.target.value;
+
+    // set 0 to external loading input if we uncheck it
+    if(e.target.value != 'external') {
+      residue.custom_info.external_loading = residue.custom_info.loading;
+    }
+
+    if(e.target.value == 'full_conv') {
+      sample.loading = residue.custom_info.loading_full_conv;
+    } else if(e.target.value == 'mass_diff') {
+      sample.loading = sample.elemental_compositions.find(function(item) {
+        return item.composition_type == 'mass_diff'
+      }).loading;
+    } else if(e.target.value == 'found') {
+      sample.loading = sample.elemental_compositions.find(function(item) {
+        return item.composition_type == 'found'
+      }).loading;
+    }
 
     this.setState({
       sample: sample
@@ -125,18 +164,22 @@ export default class PolymerSection extends React.Component {
       additionalLoadingInput = (
         <td width="15%" className="external_loading_input">
           <NumeralInputWithUnits
-            value={residue.custom_info.external_loading}
+            value={residue.custom_info.loading}
             unit='mmol/g'
             numeralFormat='0,0.00'
             key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_external_loading"
             disabled={residue.custom_info.loading_type != value}
-            bsStyle={this.checkInputStatus(sample, 'external_loading')}
-            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'external_loading', residue, sample)}
+            bsStyle={this.checkInputStatus(sample, 'loading')}
+            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
             />
          </td>
       )
     }
+
+    let rel_composition = sample.elemental_compositions.find(function(item) {
+      return item.composition_type == value
+    })
 
     return (
       <tr>
@@ -147,6 +190,7 @@ export default class PolymerSection extends React.Component {
                  name="loading_type"
                  key={value + sample.id.toString() + 'loading_type'}
                  value={value}
+                 disabled={value != 'external' && !rel_composition}
                  type="radio"/>
         </td>
         {additionalLoadingInput}
@@ -161,21 +205,23 @@ export default class PolymerSection extends React.Component {
     return (
       <table width="100%" key={'polymer_loading' + sample.id.toString()}>
       <tbody>
-        {this.customInfoRadio("Loading (according to mass difference):","mass", residue, sample)}
+        {this.customInfoRadio("Loading (according to mass difference)","mass_diff", residue, sample)}
         {this.customInfoRadio("Loading (according to external estimation):","external", residue, sample)}
-        {this.customInfoRadio("Loading (according to EA):","EA", residue, sample)}
+        {this.customInfoRadio("Loading (according to EA)","found", residue, sample)}
+        {this.customInfoRadio("Loading (according to 100% conversion)","full_conv", residue, sample)}
        <tr>
          <td></td>
          <td width="15%">
           <NumeralInputWithUnits
-            value={residue.custom_info.loading}
+            value={sample.loading}
             unit='mmol/g'
             label="Loading (mmol/g)"
             numeralFormat='0,0.00'
             key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_loading"
             bsStyle={this.checkInputStatus(sample, 'loading')}
-            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
+            disabled
+            readOnly
             />
           </td>
        </tr>

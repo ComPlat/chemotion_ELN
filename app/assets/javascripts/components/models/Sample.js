@@ -50,7 +50,7 @@ export default class Sample extends Element {
   }
 
   serialize() {
-    var serialized = super.serialize({
+    let serialized = super.serialize({
       name: this.name,
       external_label: this.external_label,
       target_amount_value: this.target_amount_value,
@@ -69,6 +69,7 @@ export default class Sample extends Element {
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
       residues: this.residues,
+      elemental_compositions: this.elemental_compositions,
       is_split: this.is_split || false,
       is_new: this.is_new,
       imported_readout: this.imported_readout
@@ -515,7 +516,10 @@ export default class Sample extends Element {
   }
 
   get loading() {
-    return this.contains_residues && this.residues[0].custom_info.loading;
+    if(!this.contains_residues)
+      return false;
+
+    return this.residues[0].custom_info.loading;
   }
 
   set loading(loading) {

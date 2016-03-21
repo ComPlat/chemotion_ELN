@@ -17,7 +17,7 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   def contains_residues
-    object.residues.count > 0
+    object.residues.any?
   end
 
   def molecule_svg

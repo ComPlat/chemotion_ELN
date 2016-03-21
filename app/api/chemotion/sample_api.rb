@@ -84,11 +84,13 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).samples.includes(:molecule)
+          coll = Collection.belongs_to_or_shared_by(current_user.id)
+          coll.find(params[:collection_id]).samples
+              .includes(:molecule, :residues, :elemental_compositions)
         else
           # All collection
           Sample.for_user(current_user.id).includes(:molecule).uniq
-        end.uniq.order("molecules.iupac_name DESC")
+        end.uniq.order("molecules.id DESC")
 
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
       end
@@ -103,7 +105,8 @@ module Chemotion
         end
 
         get do
-          sample = Sample.find(params[:id])
+          sample= Sample.includes(:molecule, :residues, :elemental_compositions)
+                         .find(params[:id])
           {sample: ElementPermissionProxy.new(current_user, sample).serialized}
         end
       end
@@ -207,6 +210,7 @@ module Chemotion
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
         optional :residues, type: Array
+        optional :elemental_compositions, type: Array
       end
       route_param :id do
         before do
@@ -218,16 +222,16 @@ module Chemotion
           embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
           attributes.merge!(analyses: embedded_analyses)
 
-          molecule_attributes = attributes.delete(:molecule)
-          attributes.merge!(
-            molecule_attributes: molecule_attributes
-          ) unless molecule_attributes.blank?
+          # otherwise ActiveRecord::UnknownAttributeError appears
+          attributes[:elemental_compositions].each { |i| i.delete :description }
 
-          residues_attributes = attributes.delete(:residues)
-
-          attributes.merge!(
-            residues_attributes: residues_attributes
-          ) unless residues_attributes.blank?
+          # set nested attributes
+          %i(molecule residues elemental_compositions).each do |prop|
+            prop_value = attributes.delete(prop)
+            attributes.merge!(
+              "#{prop}_attributes".to_sym => prop_value
+            ) unless prop_value.blank?
+          end
 
           if sample = Sample.find(params[:id])
             sample.update(attributes)

@@ -3,8 +3,17 @@ import Material from './Material';
 import MaterialCalculations from './MaterialCalculations'
 
 export default class MaterialGroup extends Component {
+
+  loadingTHead(showLoadingColumn) {
+    if(showLoadingColumn) {
+      return <th width="10%">loading</th>;
+    } else {
+      return false;
+    }
+  }
+
   render() {
-    const {materials, materialGroup, deleteMaterial, onChange} = this.props;
+    const {materials, materialGroup, deleteMaterial, onChange, showLoadingColumn} = this.props;
     let contents = [];
 
     materials.map((material, key) => {
@@ -14,6 +23,7 @@ export default class MaterialGroup extends Component {
           key={key}
           material={material}
           materialGroup={materialGroup}
+          showLoadingColumn={showLoadingColumn}
           deleteMaterial={material => deleteMaterial(material, materialGroup)}
           />)
       );
@@ -39,6 +49,7 @@ export default class MaterialGroup extends Component {
           <th width="15%">Vol</th>
           <th width="15%">Amount</th>
           <th width="10%">loading</th>
+          {this.loadingTHead(showLoadingColumn)}
           <th width="10%">{materialGroup == 'products' ? 'Yield' : 'Equi'}</th>
           <th width="5%"></th>
           </tr></thead>

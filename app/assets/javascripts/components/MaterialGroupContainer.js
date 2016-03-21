@@ -34,7 +34,8 @@ const collect = (connect, monitor) => ({
 
 class MaterialGroupContainer extends Component {
   render() {
-    const {materials, materialGroup, isOver, canDrop, connectDropTarget, deleteMaterial, onChange} = this.props;
+    const {materials, materialGroup, isOver, canDrop, connectDropTarget,
+           showLoadingColumn, deleteMaterial, onChange} = this.props;
     let style = {
       padding: 10
     };
@@ -50,6 +51,7 @@ class MaterialGroupContainer extends Component {
           onChange={onChange}
           materials={materials}
           materialGroup={materialGroup}
+          showLoadingColumn={showLoadingColumn}
           deleteMaterial={deleteMaterial}
           />
       </div>

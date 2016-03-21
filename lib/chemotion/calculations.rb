@@ -4,7 +4,7 @@ module Chemotion::Calculations
     attr_accessor :molecule
 
     def initialize molecule
-      self.molcule = molecule
+      self.molecule = molecule
     end
 
     #converts an amount from a unit to an other for specific molecule
@@ -24,6 +24,28 @@ module Chemotion::Calculations
     end
 
     result.sort.to_h
+  end
+
+  def self.get_loading m_formula, p_formula, composition
+    # select first elemental composition datum, !we take just Carbon initially!
+    #dkey, dvalue = composition.select { |k, v| v.to_f > 0.0 }.first
+    dkey = 'C'
+    dvalue = composition[dkey]
+    
+    return if dvalue.nil? || dvalue == 0.0
+
+    begin
+      p_analyses = Chemotion::Calculations.analyse_formula p_formula
+      m_analyses = Chemotion::Calculations.analyse_formula m_formula, true
+    rescue Chemotion::Calculations::BadFormulaException
+      return
+    end
+
+    wfp = p_analyses[dkey][:weight_fraction].to_d rescue 0.0
+    wfm = m_analyses[dkey][:weight_fraction].to_d rescue 0.0
+    mw_def = self.get_total_mw m_analyses
+
+    loading = 1000.0 * (wfp - dvalue.to_f/100.0) / (mw_def * (wfp - wfm))
   end
 
 private

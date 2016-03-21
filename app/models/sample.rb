@@ -173,6 +173,15 @@ class Sample < ActiveRecord::Base
       else
         {}
       end
+
+      # init empty object keys for user-calculated composition input
+      unless items[:found]
+        clone_data = d.keys.map do |key|
+          [key, nil]
+        end.to_h
+
+        items = set_elem_composition_data items, :found, clone_data, 0.0
+      end
     else
       d = Chemotion::Calculations.get_composition(m_formula)
       items = set_elem_composition_data items, :formula, d
