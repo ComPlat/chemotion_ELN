@@ -65,25 +65,6 @@ export default class PolymerSection extends React.Component {
 
     if(e.target.name == "formula") {
       if(e.target.value) {
-        let concat_formula = e.target.value.concat(sample.molecule.sum_formular);
-        let custom_composition = sample.elemental_compositions.find(c => {
-          return c.composition_type == 'found';
-        });
-
-        if(custom_composition) {
-          // be sure that 2-symbol (Br) elements are all before one-symbol (B)!
-          // TODO: check performance
-          let mendeleev = /(He|Li|Be|Ne|Na|Mg|Al|Si|Cl|Ar|Ca|Sc|Ti|Cr|Mn|Fe|Co|Ni|Cu|Zn|Ga|Ge|As|Se|Br|Kr|Rb|Sr|Zr|Nb|Mo|Tc|Ru|Rh|Pd|Ag|Cd|In|Sn|Sb|Te|Xe|Cs|Ba|La|Ce|Pr|Nd|Pm|Sm|Eu|Gd|Tb|Dy|Ho|Er|Tm|Yb|Lu|Hf|Ta|Re|Os|Ir|Pt|Au|Hg|Tl|Pb|Bi|Po|At|Rn|Fr|Ra|Ac|Th|Pa|Np|Pu|Am|Cm|Bk|Cf|Es|Fm|Md|No|Lr|Rf|Db|Sg|Bh|Hs|Mt|H|B|C|N|O|F|P|S|K|V|Y|I|W|U)/g
-
-          let newData = {};
-          // add new key to custom composition, so that we have new input
-          concat_formula.match(mendeleev).map(function(elem) {
-            newData[elem] = (custom_composition.data[elem] || 0.0);
-          });
-
-          custom_composition.data = newData;
-        }
-
         sample.formulaChanged = true;
       }
     }
@@ -101,17 +82,12 @@ export default class PolymerSection extends React.Component {
       residue.custom_info.external_loading = residue.custom_info.loading;
     }
 
-    if(e.target.value == 'full_conv') {
-      sample.loading = residue.custom_info.loading_full_conv;
-    } else if(e.target.value == 'mass_diff') {
-      sample.loading = sample.elemental_compositions.find(function(item) {
-        return item.composition_type == 'mass_diff'
-      }).loading;
-    } else if(e.target.value == 'found') {
-      sample.loading = sample.elemental_compositions.find(function(item) {
-        return item.composition_type == 'found'
-      }).loading;
-    }
+    let e_compositon = sample.elemental_compositions.find(function(item) {
+      return item.composition_type == e.target.value
+    });
+
+    if (e_compositon)
+      sample.loading = e_compositon.loading;
 
     this.setState({
       sample: sample
@@ -142,6 +118,7 @@ export default class PolymerSection extends React.Component {
       <div key={'polymer_formula' + sample.id.toString()}>
       <Button className="pull-right"
               bsStyle="warning"
+              disabled={!sample.isValid}
               onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
        Save
       </Button>

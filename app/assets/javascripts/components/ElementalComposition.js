@@ -53,9 +53,6 @@ export default class ElementalComposition extends React.Component {
   }
 
   compositonTableHeader(elemental_composition) {
-    if(!elemental_composition.loading)
-      return false;
-
     return(
       <thead>
         <tr>
@@ -63,14 +60,14 @@ export default class ElementalComposition extends React.Component {
             <span>{elemental_composition.description}</span>
           </th>
 
-          <th>Loading (mmol/g)</th>
+          <th>{elemental_composition.loading ? 'Loading (mmol/g)' : ''}</th>
         </tr>
       </thead>
     )
   }
 
   render() {
-    let elemental_composition = this.props.elemental_composition || {}
+    let { elemental_composition, formula_changed } = this.props;
 
     return (
       <table className="elemental-composition">
@@ -79,7 +76,7 @@ export default class ElementalComposition extends React.Component {
         <tbody>
           <tr>
             <td className="form-inline">
-              {this.elementsList(elemental_composition)}
+              {this.elementsList(elemental_composition, formula_changed)}
             </td>
             {this.relatedLoading(elemental_composition)}
           </tr>

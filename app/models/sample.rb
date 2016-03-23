@@ -68,11 +68,15 @@ class Sample < ActiveRecord::Base
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
-  accepts_nested_attributes_for :residues, :elemental_compositions
+  accepts_nested_attributes_for :residues, :elemental_compositions,
+                                allow_destroy: true
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', counter_cache: :samples_created_count
 
-  before_save :auto_set_short_label, :attach_svg, :init_elemental_compositions
+  before_save :auto_set_short_label, :attach_svg, :init_elemental_compositions,
+              :set_loading_from_ea
+
+  after_save :update_data_for_reactions
 
   def auto_set_short_label
     if parent
@@ -130,7 +134,7 @@ class Sample < ActiveRecord::Base
   end
 
   def loading
-    self.residues[0].custom_info['loading'].to_d
+    self.residues[0] && self.residues[0].custom_info['loading'].to_f
   end
 
   def attach_svg
@@ -149,44 +153,41 @@ class Sample < ActiveRecord::Base
   def init_elemental_compositions
     residue = self.residues[0]
     return unless m_formula = self.molecule.sum_formular
-    elem_attrs_list = self.elemental_compositions
-    items = {}
-    elem_attrs_list.each { |i| items[i.composition_type.to_sym]= i.attributes }
 
-    if residue.present?
+    if residue.present? && self.molfile.include?(' R# ')# case when residue will be deleted
       p_formula = residue.custom_info['formula']
       p_loading = residue.custom_info['loading'].try(:to_d)
 
       if loading_full = residue.custom_info['loading_full_conv']
         d = Chemotion::Calculations
                        .get_composition(m_formula, p_formula, loading_full.to_f)
-        items = set_elem_composition_data items, :full_conv, d, loading_full
+        set_elem_composition_data 'full_conv', d, loading_full
       end
 
-      if p_formula.present? && p_loading.present?
+      if p_formula.present?
         d = Chemotion::Calculations
-                             .get_composition(m_formula, p_formula, p_loading)
+                 .get_composition(m_formula, p_formula, (p_loading || 0.0))
 
         # if it is reaction product then loading has been calculated
-        l_type = residue.custom_info['reaction_product'] ? :mass_diff : :loading
-        items = set_elem_composition_data items, l_type, d, p_loading
+        l_type = residue.custom_info['reaction_product'] ? 'mass_diff' : 'loading'
+        set_elem_composition_data l_type, d, p_loading
       else
         {}
       end
-
-      # init empty object keys for user-calculated composition input
-      unless items[:found]
-        clone_data = d.keys.map do |key|
-          [key, nil]
-        end.to_h
-
-        items = set_elem_composition_data items, :found, clone_data, 0.0
-      end
     else
       d = Chemotion::Calculations.get_composition(m_formula)
-      items = set_elem_composition_data items, :formula, d
+
+      set_elem_composition_data 'formula', d
     end
-    self.elemental_compositions_attributes = items.values
+
+    # init empty object keys for user-calculated composition input
+    unless self.elemental_compositions.find {|i|i.composition_type== 'found'}
+      clone_data = (d || {}).keys.map do |key|
+        [key, nil]
+      end.to_h
+
+      set_elem_composition_data 'found', clone_data, 0.0
+    end
   end
 
   # -- fake analyes
@@ -203,13 +204,62 @@ class Sample < ActiveRecord::Base
     self.analyses_dump = json_dump
   end
 
-private
-  def set_elem_composition_data items, d_type, d_values, loading = nil
-    items[d_type] ||= {}
-    items[d_type][:composition_type] = d_type
-    items[d_type][:data] = d_values
-    items[d_type][:loading] = loading
+  def amount_mmol
+    if self.loading
+      divisor = self.target_amount_unit == 'mg' ? 1000.0 : 1.0
+      self.target_amount_value * loading.to_f / divisor
+    else
+      self.target_amount_value / self.molecule.molecular_weight
+    end
+  end
 
-    items
+private
+  def set_elem_composition_data d_type, d_values, loading = nil
+    attrs = {
+      composition_type: d_type,
+      data: d_values,
+      loading: loading
+    }
+
+    if item = self.elemental_compositions.find{|i| i.composition_type == d_type}
+      item.assign_attributes attrs
+    else
+      self.elemental_compositions << ElementalComposition.new(attrs)
+    end
+  end
+
+  def set_loading_from_ea
+    return unless residue = self.residues.first
+
+    # select from cached attributes, don't make a SQL query
+    return unless el_composition = self.elemental_compositions.find do |i|
+      i.composition_type == 'found'
+    end
+
+    el_composition.set_loading
+
+    if el_composition.loading_changed? && el_composition.loading != 0.0
+      residue.update_attributes custom_info: residue.custom_info.merge(
+        loading: el_composition.loading,
+        loading_type: 'found'
+      )
+      el_composition.save!
+    end
+  end
+
+  def update_data_for_reactions
+    %w(product reactant).each do |name|
+      self.send("reactions_#{name}_samples").each do |record|
+        record.update_equivalent
+      end
+    end
+
+    self.reactions_starting_material_samples.each do |record|
+      %w(product reactant).each do |name|
+        record.reaction.send("reactions_#{name}_samples").each do |record|
+          record.update_equivalent
+        end
+      end
+    end
   end
 end

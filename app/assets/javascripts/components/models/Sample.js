@@ -94,7 +94,10 @@ export default class Sample extends Element {
       molecule: { id: '_none_' },
       analyses: [],
       residues: [],
-      elemental_compositions: [],
+      elemental_compositions: [{
+        composition_type: 'found',
+        data: {}
+      }],
       imported_readout: '',
       attached_amount_mg: '' // field for polymers calculations
     });
@@ -118,7 +121,10 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
-      elemental_compositions: [],
+      elemental_compositions: [{
+        composition_type: 'found',
+        data: {}
+      }],
       residues: [],
       imported_readout: ''
     });
@@ -151,6 +157,54 @@ export default class Sample extends Element {
 
   set is_top_secret(is_top_secret) {
     this._is_top_secret = is_top_secret;
+  }
+
+  set contains_residues(value) {
+    this._contains_residues = value;
+
+    if(value) {
+      if(!this.residues.length) {
+        // do not allow zero loading, exclude reaction products
+        if(!this.reaction_product)
+          this.error_loading = true;
+
+        // set default polymer data
+        this.residues = [
+          {
+            residue_type: 'polymer', custom_info: {
+              "formula": 'CH',
+              "loading": null,
+              "polymer_type": "polystyrene",
+              "loading_type": "external",
+              //"external_loading": 0.0,
+              "reaction_product": (this.reaction_product ? true : null),
+              "cross_linkage": null
+            }
+          }
+        ];
+      } else {
+        this.residues[0]._destroy = undefined;
+      }
+
+      this.elemental_compositions.map(function(item) {
+        if(item.composition_type == 'formula')
+          item._destroy = true;
+      });
+    } else {
+      this.sample_svg_file = '';
+      this.error_loading = false;
+      if(this.residues.length)
+        this.residues[0]._destroy = true; // delete residue info
+
+      this.elemental_compositions.map(function(item) {
+        if(item.composition_type == 'loading')
+          item._destroy = true;
+      });
+    }
+  }
+
+  get contains_residues() {
+    return this._contains_residues;
   }
 
   title() {
@@ -508,6 +562,13 @@ export default class Sample extends Element {
   get polymer_formula() {
     return this.contains_residues
             && this.residues[0].custom_info.formula.toString();
+  }
+
+  get concat_formula() {
+    if(this.contains_residues)
+      return (this.molecule.sum_formular || '') + this.polymer_formula;
+    else
+      return (this.molecule.sum_formular || '');
   }
 
   get polymer_type() {

@@ -31,7 +31,7 @@ module Chemotion::Calculations
     #dkey, dvalue = composition.select { |k, v| v.to_f > 0.0 }.first
     dkey = 'C'
     dvalue = composition[dkey]
-    
+
     return if dvalue.nil? || dvalue == 0.0
 
     begin
@@ -57,6 +57,8 @@ private
     rescue Chemotion::Calculations::BadFormulaException
       return {}
     end
+
+    return {} unless p_loading > 0.0
 
     m_molecular_weight = self.get_total_mw m_analyses
 

@@ -214,39 +214,16 @@ export default class SampleDetails extends React.Component {
     if(sample) {
       sample.molfile = molfile
 
-      if(molfile.indexOf(' R# ') > -1) {
-        sample.contains_residues = true;
-        if(!sample.residues.length) {
-          // do not allow zero loading, exclude reaction products
-          if(!sample.reaction_product)
-            sample.error_loading = true;
+      sample.contains_residues = molfile.indexOf(' R# ') > -1;
 
-          // set default polymer data
-          sample.residues = [
-            {
-              residue_type: 'polymer', custom_info: {
-                "formula": 'CH',
-                "loading": null,
-                "polymer_type": "polystyrene",
-                "loading_type": "external",
-                //"external_loading": 0.0,
-                "reaction_product": (sample.reaction_product ? true : null),
-                "cross_linkage": null
-              }
-            }
-          ];
-        }
+      if(sample.contains_residues)
         sample.sample_svg_file = svg_file;
-      } else {
-        sample.contains_residues = false;
-        sample.sample_svg_file = undefined;
-        sample.residues = [];
-      }
+
+      sample.formulaChanged = true;
     }
     this.setState({sample: sample, loadingMolecule: true});
 
-    // check if molecule contains residues
-    if(molfile.indexOf(' R# ') > -1){
+    if(sample.contains_residues > -1){
       this.updateMolecule(molfile, svg_file);
     } else {
       this.updateMolecule(molfile);
@@ -607,7 +584,7 @@ export default class SampleDetails extends React.Component {
                         parent={this}
                         materialGroup={materialGroup}/>
       )
-    } else if(sample.isNew) { // avoid empty ListGroupItem
+    } else if(!sample.molecule.sum_formular) { // avoid empty ListGroupItem
       return false;
     } else {
       return (

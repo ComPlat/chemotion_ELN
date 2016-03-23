@@ -13,6 +13,14 @@ module Chemotion
       end
       post :layout do
         mol_data = params[:moldata]
+        r_list_index = mol_data.lines.index do |line|
+          line.match /> <PolymersList>/
+        end
+
+        if r_list_index
+          r_list = mol_data.lines[r_list_index + 1].split.map(&:to_i)
+        end
+
         c = OpenBabel::OBConversion.new
         opts = OpenBabel::OBConversion::GENOPTIONS
         c.add_option 'gen2D', opts
@@ -22,9 +30,28 @@ module Chemotion
         c.read_string m, mol_data
         m.do_transformations c.get_options(opts), c
 
+        result = c.write_string(m, false).lines
+
+        t_v2000_index = result.index do |line|
+          line.match /V2000/
+        end
+
+        end_index = result.index do |line|
+          line.match /M\s+END/
+        end
+
+        if r_list.any? && t_v2000_index && end_index
+          r_list.each do |line_number|
+            result[t_v2000_index + 1 + line_number].gsub! ' * ', ' R# '
+          end
+
+          result.insert end_index + 1, "> <PolymersList>\n"
+          result.insert end_index + 2, r_list.join(' ') + "\n"
+        end
+
         env['api.format'] = :binary
 
-        "Ok.\n" + c.write_string(m, false)
+        "Ok.\n" + result.join
       end
 
       desc 'Stub method to prevent error'

@@ -223,7 +223,9 @@ module Chemotion
           attributes.merge!(analyses: embedded_analyses)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
-          attributes[:elemental_compositions].each { |i| i.delete :description }
+          attributes[:elemental_compositions].each do |i|
+            i.delete :description
+          end if attributes[:elemental_compositions]
 
           # set nested attributes
           %i(molecule residues elemental_compositions).each do |prop|
@@ -261,6 +263,7 @@ module Chemotion
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
         optional :residues, type: Array
+        optional :elemental_compositions, type: Array
       end
       post do
         attributes = {
@@ -279,17 +282,22 @@ module Chemotion
           is_top_secret: params[:is_top_secret],
           analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
           residues: params[:residues],
+          elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id
         }
-        attributes.merge!(
-          molecule_attributes: params[:molecule]
-        ) unless params[:molecule].blank?
 
-        residues_attributes = attributes.delete(:residues)
+        # otherwise ActiveRecord::UnknownAttributeError appears
+        attributes[:elemental_compositions].each do |i|
+          i.delete :description
+        end if attributes[:elemental_compositions]
 
-        attributes.merge!(
-          residues_attributes: residues_attributes
-        ) unless residues_attributes.blank?
+        # set nested attributes
+        %i(molecule residues elemental_compositions).each do |prop|
+          prop_value = attributes.delete(prop)
+          attributes.merge!(
+            "#{prop}_attributes".to_sym => prop_value
+          ) unless prop_value.blank?
+        end
 
         sample = Sample.create(attributes)
 

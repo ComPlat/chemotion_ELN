@@ -13,6 +13,17 @@ export default class ElementalCompositionGroup extends React.Component {
     let data = [];
     let el_composition_custom;
 
+    // don't show data because it can not be calculated for non-saved sample
+    if (sample.isNew)
+      data = ''
+    else if (sample.formulaChanged)
+      data = (
+        <p>
+          Formula has been changed. Please save sample to calculate the
+          elemental compositon.
+        </p>
+      )
+
     elemental_compositions.map((elemental_composition, key) => {
       if(Object.keys(elemental_composition.data).length)
         data_empty = false;
@@ -20,11 +31,12 @@ export default class ElementalCompositionGroup extends React.Component {
       if(elemental_composition.composition_type == 'found') {
         el_composition_custom = elemental_composition;
       } else {
-        data.push(
-          <ElementalComposition
-          elemental_composition={elemental_composition}
-          key={elemental_composition.id}/>
-        );
+        if(data.constructor === Array)
+          data.push(
+            <ElementalComposition
+            elemental_composition={elemental_composition}
+            key={elemental_composition.id}/>
+          );
       }
     });
 
@@ -35,16 +47,9 @@ export default class ElementalCompositionGroup extends React.Component {
           compositon. Check data please.
         </p>
       )
-    } else if(sample.formulaChanged) {
-      data = (
-        <p>
-          Formula has been changed. Please save sample to calculate the
-          elemental compositon.
-        </p>
-      )
     }
 
-    if (sample.isNew) {
+    if (!sample.molecule.sum_formular) {
       return false;
     } else {
       return (
@@ -53,6 +58,8 @@ export default class ElementalCompositionGroup extends React.Component {
           {data}
           <ElementalCompositionCustom
             elemental_composition={el_composition_custom}
+            hideLoading={!sample.contains_residues}
+            concat_formula={sample.concat_formula}
             key={'elem_composition_found'}/>
         </div>
       )

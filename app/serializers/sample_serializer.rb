@@ -16,7 +16,7 @@ class SampleSerializer < ActiveModel::Serializer
     'sample'
   end
 
-  def contains_residues
+  def _contains_residues
     object.residues.any?
   end
 
