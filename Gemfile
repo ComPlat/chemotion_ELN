@@ -46,10 +46,9 @@ gem 'awesome_print'
 # Report Generator
 gem 'rtf'
 gem 'rmagick'
-gem 'axlsx'
-
+gem 'axlsx', git: 'git://github.com/randym/axlsx'
 # Import of elements from XLS and CSV file
-gem 'roo'
+gem 'roo', ">2.3.0"
 
 # Chemrails
 gem 'httparty'
