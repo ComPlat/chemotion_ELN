@@ -49,7 +49,7 @@ export default class UserAuth extends Component {
     return (
       <Nav navbar pullRight>
         <NavDropdown title={`Log in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
-          <MenuItem eventKey="1" disabled>Account settings</MenuItem>
+          <MenuItem eventKey="1" href="pages/settings" >Account settings</MenuItem>
           <MenuItem eventKey="2" href="users/edit" >Change Password</MenuItem>
         </NavDropdown>
         <NavItem onClick={() => this.logout()} style={style} className='' title='log-out'> <Glyphicon glyph="log-out" /> </NavItem>
