@@ -11,15 +11,15 @@ class ElementalComposition < ActiveRecord::Base
 
   validates_inclusion_of :composition_type, in: TYPES.keys.map(&:to_s)
 
-  def set_loading
-    return unless residue = self.sample.residues[0]
+  def set_loading sample
+    return unless residue = sample.residues[0]
     return unless self.composition_type == 'found'
     return unless self.data.values.map(&:to_f).sum <= 100.0
     return unless self.data.values.map(&:to_f).sum > 0.0
 
     # use different algorythm if this is reaction product
-    if d_reaction = (self.sample.reactions_product_samples.first ||
-                     self.sample.reactions_reactant_samples.first)
+    if d_reaction = (sample.reactions_product_samples.first ||
+                     sample.reactions_reactant_samples.first)
       return unless sm_data =
                 d_reaction.reaction.reactions_starting_material_samples.first
 
@@ -33,7 +33,7 @@ class ElementalComposition < ActiveRecord::Base
 
       self.loading = new_amount / self.sample.target_amount_value * 1000.0
     else
-      return unless mf = self.sample.molecule.sum_formular
+      return unless mf = sample.molecule.sum_formular
       return unless pf = residue.custom_info['formula']
 
       self.loading = Chemotion::Calculations.get_loading mf, pf, self.data

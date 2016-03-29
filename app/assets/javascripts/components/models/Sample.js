@@ -176,7 +176,7 @@ export default class Sample extends Element {
               "loading": null,
               "polymer_type": "polystyrene",
               "loading_type": "external",
-              //"external_loading": 0.0,
+              "external_loading": 0.0,
               "reaction_product": (this.reaction_product ? true : null),
               "cross_linkage": null
             }

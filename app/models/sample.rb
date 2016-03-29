@@ -169,8 +169,15 @@ class Sample < ActiveRecord::Base
                  .get_composition(m_formula, p_formula, (p_loading || 0.0))
 
         # if it is reaction product then loading has been calculated
-        l_type = residue.custom_info['reaction_product'] ? 'mass_diff' : 'loading'
-        set_elem_composition_data l_type, d, p_loading
+        l_type = if residue['custom_info']['loading_type'] == 'mass_diff'
+          'mass_diff'
+        else
+          'loading'
+        end
+
+        unless p_loading.to_f == 0.0
+          set_elem_composition_data l_type, d, p_loading
+        end
       else
         {}
       end
@@ -236,15 +243,7 @@ private
       i.composition_type == 'found'
     end
 
-    el_composition.set_loading
-
-    if el_composition.loading_changed? && el_composition.loading != 0.0
-      residue.update_attributes custom_info: residue.custom_info.merge(
-        loading: el_composition.loading,
-        loading_type: 'found'
-      )
-      el_composition.save!
-    end
+    el_composition.set_loading self
   end
 
   def update_data_for_reactions

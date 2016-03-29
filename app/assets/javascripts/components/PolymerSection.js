@@ -36,6 +36,9 @@ export default class PolymerSection extends React.Component {
       if(e.value == 0.0)
         errorMessage = 'Loading can not be 0. Please define a value.'
 
+      if(residue.custom_info.loading_type == 'external')
+        residue.custom_info.external_loading = e.value;
+
       let mw_defined = sample.molecule.molecular_weight;
       let value_to_check = e.value * mw_defined;
 
@@ -77,17 +80,16 @@ export default class PolymerSection extends React.Component {
   handlePRadioChanged(e, residue, sample) {
     residue.custom_info['loading_type'] = e.target.value;
 
-    // set 0 to external loading input if we uncheck it
-    if(e.target.value != 'external') {
-      residue.custom_info.external_loading = residue.custom_info.loading;
+    if(e.target.value == 'external') {
+      residue.custom_info.loading = residue.custom_info.external_loading;
+    } else {
+      let e_compositon = sample.elemental_compositions.find(function(item) {
+        return item.composition_type == e.target.value
+      });
+
+      if (e_compositon)
+        sample.loading = e_compositon.loading;
     }
-
-    let e_compositon = sample.elemental_compositions.find(function(item) {
-      return item.composition_type == e.target.value
-    });
-
-    if (e_compositon)
-      sample.loading = e_compositon.loading;
 
     this.setState({
       sample: sample
@@ -141,7 +143,7 @@ export default class PolymerSection extends React.Component {
       additionalLoadingInput = (
         <td width="15%" className="external_loading_input">
           <NumeralInputWithUnits
-            value={residue.custom_info.loading}
+            value={residue.custom_info.external_loading}
             unit='mmol/g'
             numeralFormat='0,0.00'
             key={'polymer_loading_input' + sample.id.toString()}
@@ -156,7 +158,8 @@ export default class PolymerSection extends React.Component {
 
     let rel_composition = sample.elemental_compositions.find(function(item) {
       return item.composition_type == value
-    })
+    });
+    let rel_loading = rel_composition && rel_composition.loading;
 
     return (
       <tr>
@@ -167,7 +170,7 @@ export default class PolymerSection extends React.Component {
                  name="loading_type"
                  key={value + sample.id.toString() + 'loading_type'}
                  value={value}
-                 disabled={value != 'external' && !rel_composition}
+                 disabled={value != 'external' && !rel_loading}
                  type="radio"/>
         </td>
         {additionalLoadingInput}
