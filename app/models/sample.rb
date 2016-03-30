@@ -63,6 +63,7 @@ class Sample < ActiveRecord::Base
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+  before_save :check_molfile_polymer_section
 
   has_ancestry
 
@@ -233,6 +234,28 @@ private
     else
       self.elemental_compositions << ElementalComposition.new(attrs)
     end
+  end
+
+  def check_molfile_polymer_section
+    return unless self.molfile.include? 'R#'
+
+    lines = self.molfile.lines
+    polymers = []
+    m_end_index = nil
+    lines[4..-1].each_with_index do |line, index|
+      polymers << index if line.include? 'R#'
+      (m_end_index = index) && break if line.match /M\s+END/
+    end
+
+    if lines[5 + m_end_index].match /(> <PolymersList>[\W\w.\n]+[\d]+)/m
+      lines[5 + m_end_index] = "> <PolymersList>\n"
+      lines.insert(5 + m_end_index, polymers.join(' ') + "\n")
+    else
+      lines.insert(5 + m_end_index, "> <PolymersList>\n")
+      lines[6 + m_end_index] = polymers.join(' ') + "\n"
+    end
+
+    self.molfile = lines.join
   end
 
   def set_loading_from_ea
