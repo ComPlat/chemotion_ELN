@@ -502,7 +502,7 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
-    return this.molecule && this.molecule.correctedMolecularWeight
+    return this.molecule && this.molecule.molecular_weight;
   }
 
   get molecule_formula() {
@@ -553,7 +553,7 @@ export default class Sample extends Element {
     if(this.contains_residues) {
       let polymer_name = this.polymer_type.charAt(0).toUpperCase()
                           + this.polymer_type.slice(1);
-      return polymer_name.replace('_', '-') + ' (' + molecule_name +  ')';
+      return polymer_name.replace('_', '-') + ' - ' + molecule_name;
     } else {
       return molecule_name;
     }

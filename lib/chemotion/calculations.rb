@@ -16,6 +16,26 @@ module Chemotion::Calculations
     end
   end
 
+  # returns only amount of each atom
+  def self.parse_formula formula, is_partial = false
+    elements = {}
+
+    formula.scan(/[A-Za-z]{1}[a-z]?\d*/).each do |atom|
+      atom_label = atom.scan(/[A-Za-z]+/).first
+
+      atoms_number = (atom.scan(/\d+/).first || 1).to_i
+
+      atoms_number -= 1 if atom_label == 'H' && is_partial
+
+      if elements.has_key? atom_label
+        old_val = elements[atom_label]
+      end
+
+      elements[atom_label] = atoms_number + old_val.to_i
+    end
+    elements
+  end
+
   def self.get_composition m_formula, p_formula = nil, p_loading = nil
     result = if p_formula.present? && p_loading.present?
       self.get_polymer_composition m_formula, p_formula, p_loading
@@ -36,7 +56,7 @@ module Chemotion::Calculations
 
     begin
       p_analyses = Chemotion::Calculations.analyse_formula p_formula
-      m_analyses = Chemotion::Calculations.analyse_formula m_formula, true
+      m_analyses = Chemotion::Calculations.analyse_formula m_formula
     rescue Chemotion::Calculations::BadFormulaException
       return
     end
@@ -53,7 +73,7 @@ private
   def self.get_polymer_composition m_formula, p_formula, p_loading
     begin
       p_analyses = Chemotion::Calculations.analyse_formula p_formula
-      m_analyses = Chemotion::Calculations.analyse_formula m_formula, true
+      m_analyses = Chemotion::Calculations.analyse_formula m_formula
     rescue Chemotion::Calculations::BadFormulaException
       return {}
     end
@@ -101,7 +121,7 @@ private
   end
 
   # get mass pecentage for elements by formula
-  def self.analyse_formula formula, is_partial = false
+  def self.analyse_formula formula
     elements = {}
 
     formula.scan(/[A-Za-z]{1}[a-z]?\d*/).each do |atom|
@@ -111,8 +131,6 @@ private
       raise BadFormulaException.new if atomic_weight.nil?
 
       atoms_number = (atom.scan(/\d+/).first || 1).to_i
-
-      atoms_number -= 1.0 if atom_label == 'H' && is_partial
 
       if elements.has_key? atom_label
         old_val = elements[atom_label][:atoms_number]

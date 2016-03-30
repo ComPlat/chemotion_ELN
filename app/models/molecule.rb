@@ -43,6 +43,8 @@ class Molecule < ActiveRecord::Base
 
         molecule.attach_svg babel_info[:svg]
 
+        molecule.check_sum_formular
+
       end
       molecule
     end
@@ -81,4 +83,23 @@ class Molecule < ActiveRecord::Base
 
     lines.join "\n"
   end
+
+  # remove additional H in formula and in molecular_weight
+  def check_sum_formular
+    return unless self.is_partial
+
+    self.molecular_weight -= Chemotion::PeriodicTable.get_atomic_weight 'H'
+
+    fdata = Chemotion::Calculations.parse_formula self.sum_formular, true
+    self.sum_formular = fdata.map do |key, value|
+      if value == 0
+        ''
+      elsif value == 1
+        key
+      else
+        key + value.to_s
+      end
+    end.join
+  end
+
 end
