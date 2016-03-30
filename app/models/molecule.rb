@@ -76,7 +76,7 @@ class Molecule < ActiveRecord::Base
     lines[4..-1].each do |line|
       break if line.match /(M.+END+)/
 
-      line.gsub! ' R# ', ' H ' # replace residues with Hydrogens
+      line.gsub! ' R# ', ' H  ' # replace residues with Hydrogens
     end
 
     lines.join "\n"
