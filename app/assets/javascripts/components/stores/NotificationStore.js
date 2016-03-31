@@ -31,25 +31,29 @@ class NotificationStore {
   }
 
   handleNotificationImportSamplesFromFile(result) {
-
+    let num = result.data.length;
+    let status = result.status;
+    let message = result.message;
     this.handleRemoveByUid("import_samples_upload");
-    let notification;
-    if (result.import.length > 0) {
+    let notification = {
+      title: "Oops!",
+      message: "There was a problem with the import of smiles for the following Samples:\n"+message+"\n Please check the file and try again.",
+      level: "error",
+      position: "bl",
+      autoDismiss: 0
+    }
+    if (status == "ok") {
       notification = {
         title: "Success",
-        message: "The samples have been imported successfully",
+        message: "The "+num+" samples have been imported successfully",
         level: "success",
         position: "bl",
         autoDismiss: 10
       }
-    } else {
-      notification = {
-        title: "Oops!",
-        message: "There was an error with the import of Samples. Please check the file and try again.",
-        level: "error",
-        position: "bl",
-        autoDismiss: 10
-      }
+    } else if (status == "failed"){
+    } else if (status == "error"){
+    } else if (status == "invalid"){
+      notification.message = message;
     }
     this.handleAdd(notification);
   }
