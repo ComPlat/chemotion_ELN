@@ -1,6 +1,6 @@
 module Chemotion::PeriodicTable
   yml_path = Rails.root + 'lib/chemotion/elements.yaml'
-  data = YAML.load File.open yml_path # TODO: check file descriptor!
+  data = YAML.load File.open yml_path
   ELEMENTS = data.symbolize_keys
 
   def self.get_atomic_weight el_sym

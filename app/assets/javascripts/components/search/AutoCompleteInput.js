@@ -177,6 +177,7 @@ export default class AutoCompleteInput extends React.Component {
     let {suggestions, error} = this.state;
     let types = {
       sample_name: {icon: 'icon-sample', label: 'Sample'},
+      polymer_type: {icon: 'icon-polymer', label: 'Polymer'},
       reaction_name: {icon: 'icon-reaction', label: 'Reaction'},
       wellplate_name: {icon: 'icon-wellplate', label: 'Wellplate'},
       screen_name: {icon: 'icon-screen', label: 'Screen'},
@@ -217,7 +218,12 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   render() {
-    let {value, showSuggestions, inputWidth} = this.state;
+    let {value, showSuggestions, inputWidth, suggestions} = this.state;
+    if (suggestions && suggestions.length > 6)// show scroll after 6 results
+      this.props.suggestionsAttributes.className = 'scroll';
+    else
+      this.props.suggestionsAttributes.className = '';// hide scroll
+
     let containerStyle = {
       position: 'absolute',
       width: inputWidth,

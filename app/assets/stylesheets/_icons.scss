@@ -23,6 +23,7 @@
 [data-icon]:before { content: attr(data-icon); }
 
 [data-icon]:before,
+.icon-polymer:before,
 .icon-reaction:before,
 .icon-sample:before,
 .icon-screen:before,
@@ -41,11 +42,13 @@
   font-smoothing: antialiased;
 }
 
+.icon-polymer:before { content: "\f104"; }
 .icon-reaction:before { content: "\f100"; }
 .icon-sample:before { content: "\f101"; }
 .icon-screen:before { content: "\f103"; }
 .icon-wellplate:before { content: "\f102"; }
 
+$font-icons-polymer: "\f104";
 $font-icons-reaction: "\f100";
 $font-icons-sample: "\f101";
 $font-icons-screen: "\f103";

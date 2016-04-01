@@ -8,7 +8,7 @@ class Molecule < ActiveRecord::Base
   validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
-  scope :by_formula, ->(query) { where('sum_formular ILIKE ?', "%#{query}%") }
+  scope :by_sum_formular, ->(query) { where('sum_formular ILIKE ?', "%#{query}%") }
   scope :by_iupac_name, ->(query) { where('iupac_name ILIKE ?', "%#{query}%") }
   scope :with_reactions, -> {
     sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
