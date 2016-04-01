@@ -315,6 +315,7 @@ export default class SampleDetails extends React.Component {
           <h5>{sampleMoleculeMolecularWeight}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+          {this.extraLabels().map(Lab=><Lab element={sample}/>)}
         </Col>
         <Col md={5}>
           {this.svgOrLoading(sample)}
@@ -642,6 +643,13 @@ export default class SampleDetails extends React.Component {
          </ListGroupItem>
        </Tab>
       )
+  }
+  extraLabels(){
+    let labels = [];
+    for (let j=0;j < extra.LabelsCount;j++){
+      labels.push(extra["Labels"+j])
+    }
+    return labels;
   }
 
   render() {
