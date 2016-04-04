@@ -69,9 +69,9 @@ class Reaction < ActiveRecord::Base
       sign   = (temperature =~ /^-/).present? ? "-" : ""
       number = temperature[ /\d+(\.\d+)?/ ].to_f
       unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
-      self.temperature = "#{sign}#{number}°#{unit}"
+      self.temperature = "#{sign}#{number} °#{unit}"
     else
-      self.temperature = "21.0°C"
+      self.temperature = "21.0 °C"
     end
   end
 
@@ -92,7 +92,7 @@ class Reaction < ActiveRecord::Base
             .reject(&:blank?)
             .join(", ")
     begin
-      composer = SVG::ReactionComposer.new(inchikeys, label: label)
+      composer = SVG::ReactionComposer.new(paths, label: label)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
       Rails.logger.info("**** SVG::ReactionComposer failed ***")

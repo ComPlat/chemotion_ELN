@@ -25,7 +25,7 @@ export default class Reaction extends Element {
       dangerous_products: "",
       tlc_solvents: "",
       rf_value: 0.00,
-      temperature: "21.0°C",
+      temperature: "21.0 °C",
       tlc_description: "",
       starting_materials: [],
       reactants: [],
