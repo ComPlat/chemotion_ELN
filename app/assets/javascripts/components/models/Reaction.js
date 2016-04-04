@@ -136,7 +136,7 @@ export default class Reaction extends Element {
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
     // do not set it as reference material if this is reaction product
-    if(this.sampleCount == 0 && materialGroup != 'products') {
+    if(!this.referenceMaterial && materialGroup == 'starting_materials') {
       this._setAsReferenceMaterial(material);
     } else {
       this._updateEquivalentForMaterial(material);

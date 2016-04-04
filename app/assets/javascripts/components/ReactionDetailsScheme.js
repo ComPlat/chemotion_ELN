@@ -36,7 +36,7 @@ export default class ReactionDetailsScheme extends Component {
 
     const splitSample = sample.buildChild();
     if(materialGroup == 'products') {
-      splitSample.residues[0].custom_info.reaction_product = true;
+      splitSample.reaction_product = true;
     }
     reaction.addMaterial(splitSample, materialGroup);
     this.onReactionChange(reaction, {schemaChanged: true});
