@@ -9,13 +9,14 @@ export default class ElementalCompositionGroup extends React.Component {
     let {sample} = this.props;
     let elemental_compositions = sample.elemental_compositions;
 
-    let data_empty = true;
+    let display_error = true;
     let data = [];
     let el_composition_custom;
 
-    // don't show data because it can not be calculated for non-saved sample
-    if (sample.isNew)
-      data = ''
+    if (elemental_compositions.length == 1){
+      data = '';
+      display_error = false;
+    }
     else if (sample.formulaChanged)
       data = (
         <p>
@@ -26,7 +27,7 @@ export default class ElementalCompositionGroup extends React.Component {
 
     elemental_compositions.map((elemental_composition, key) => {
       if(Object.keys(elemental_composition.data).length)
-        data_empty = false;
+        display_error = false;
 
       if(elemental_composition.composition_type == 'found') {
         el_composition_custom = elemental_composition;
@@ -40,7 +41,7 @@ export default class ElementalCompositionGroup extends React.Component {
       }
     });
 
-    if(data_empty) {
+    if(display_error) {
       data = (
         <p>
           Sorry, it was not possible to calculate the elemental

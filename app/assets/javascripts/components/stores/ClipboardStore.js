@@ -22,8 +22,6 @@ class ClipboardStore {
       case 'template_wellplate':
         Aviator.navigate(`/collection/${result.collection_id}/wellplate/template`);
         break;
-      case 'copy_sample':
-        Aviator.navigate(`/collection/${result.collection_id}/sample/copy`);
     }
   }
 

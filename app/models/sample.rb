@@ -79,6 +79,21 @@ class Sample < ActiveRecord::Base
 
   after_save :update_data_for_reactions
 
+  def create_subsample user
+    subsample = self.dup
+    subsample.short_label = nil # we need to reset it
+    subsample.parent = self
+    subsample.created_by = user.id
+    subsample.residues_attributes = self.residues.to_a.map do |r|
+      result = r.attributes.to_h
+      result.delete 'id'
+      result.delete 'sample_id'
+      result
+    end
+    subsample.save
+    subsample
+  end
+
   def auto_set_short_label
     if parent
       parent.reload

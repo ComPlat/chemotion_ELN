@@ -21,9 +21,23 @@ export default class CreateButton extends React.Component {
     }
   }
 
-  copySample() {
+  getSampleFilter() {
     let uiState = UIStore.getState();
-    let sampleFilter = this.filterParamsFromUIStateByElementType(uiState, "sample");
+    return this.filterParamsFromUIStateByElementType(uiState, "sample");
+  }
+
+  getReactionId() {
+    let uiState = UIStore.getState();
+    return uiState.reaction.checkedIds.first();
+  }
+
+  isCopySampleDisabled() {
+    let sampleFilter = this.getSampleFilter();
+    return !sampleFilter.all && sampleFilter.included_ids.size == 0;
+  }
+
+  copySample() {
+    let sampleFilter = this.getSampleFilter();
 
     // Set limit to 1 because we are only interested in one sample
     let params = {
@@ -34,10 +48,13 @@ export default class CreateButton extends React.Component {
     ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'copy_sample');
   }
 
+  isCopyReactionDisabled() {
+    let reactionId = this.getReactionId();
+    return !reactionId;
+  }
+
   copyReaction() {
-    const uiState = UIStore.getState();
-    const elementState = ElementStore.getState();
-    const reactionId = uiState.reaction.checkedIds.first();
+    let reactionId = this.getReactionId();
     ElementActions.copyReactionFromId(reactionId);
   }
 
@@ -165,8 +182,8 @@ export default class CreateButton extends React.Component {
             <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
             <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
             <MenuItem divider />
-            <MenuItem onSelect={() => this.copySample()}>Copy Sample</MenuItem>
-            <MenuItem onSelect={() => this.copyReaction()}>Copy Reaction</MenuItem>
+            <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
+            <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
           </DropdownButton>
         </OverlayTrigger>
       </div>

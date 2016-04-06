@@ -10,11 +10,52 @@ export default class Sample extends Element {
     return false;
   }
 
-  static copyFromSampleAndCollectionId(sample, collection_id) {
+  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
     let newSample = sample.buildCopy();
+
+    if(structure_only)
+      newSample.filterSampleData()
+
     newSample.collection_id = collection_id;
 
     return newSample;
+  }
+
+  filterSampleData() {
+    let el_c = this.elemental_compositions.find(function(item) {
+      if(item.composition_type == 'formula') {
+        item.id = null;
+        return item;
+      }
+    });
+    this.elemental_compositions = el_c ? [el_c] : [];
+    this.elemental_compositions.push({
+      composition_type: 'found',
+      data: {},
+      description: 'Found'
+    });
+
+    if(this.contains_residues) {
+      this.setDefaultResidue();
+      this.error_loading = true;
+    }
+  }
+
+  setDefaultResidue() {
+    // set default polymer data
+    this.residues = [
+      {
+        residue_type: 'polymer', custom_info: {
+          "formula": 'CH',
+          "loading": null,
+          "polymer_type": "polystyrene",
+          "loading_type": "external",
+          "external_loading": 0.0,
+          "reaction_product": (this.reaction_product ? true : null),
+          "cross_linkage": null
+        }
+      }
+    ];
   }
 
   buildCopy() {
@@ -59,6 +100,7 @@ export default class Sample extends Element {
       real_amount_unit: this.real_amount_unit,
       description: this.description,
       purity: this.purity,
+      short_label: this.short_label.includes('Copy') ? this.short_label : null,
       solvent: this.solvent,
       impurities: this.impurities,
       location: this.location,
@@ -168,20 +210,7 @@ export default class Sample extends Element {
         if(!this.reaction_product)
           this.error_loading = true;
 
-        // set default polymer data
-        this.residues = [
-          {
-            residue_type: 'polymer', custom_info: {
-              "formula": 'CH',
-              "loading": null,
-              "polymer_type": "polystyrene",
-              "loading_type": "external",
-              "external_loading": 0.0,
-              "reaction_product": (this.reaction_product ? true : null),
-              "cross_linkage": null
-            }
-          }
-        ];
+        this.setDefaultResidue();
       } else {
         this.residues[0]._destroy = undefined;
       }

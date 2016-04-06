@@ -58,11 +58,7 @@ module Chemotion
           currentCollectionId = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
           Sample.where(id: sample_ids).each do |sample|
-            #todo: extract method into Sample
-            subsample = sample.dup
-            subsample.parent = sample
-            subsample.created_by = current_user.id
-            subsample.save
+            subsample = sample.create_subsample current_user
             CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
           end
         end
@@ -245,6 +241,7 @@ module Chemotion
       desc "Create a sample"
       params do
         optional :name, type: String, desc: "Sample name"
+        optional :short_label, type: String, desc: "Sample short label"
         optional :external_label, type: String, desc: "Sample external label"
         optional :imported_readout, type: String, desc: "Sample Imported Readout"
         requires :target_amount_value, type: Float, desc: "Sample target amount_value"
@@ -268,6 +265,7 @@ module Chemotion
       post do
         attributes = {
           name: params[:name],
+          short_label: params[:short_label],
           target_amount_value: params[:target_amount_value],
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],

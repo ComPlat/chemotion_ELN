@@ -1,4 +1,18 @@
 class OSample < OpenStruct
+
+  def initialize data
+    # set nested attributes
+    %i(residues elemental_compositions).each do |prop|
+      prop_value = data.delete(prop)
+      prop_value.each { |i| i.delete :id }
+      data.merge!(
+        "#{prop}_attributes".to_sym => prop_value
+      ) unless prop_value.blank?
+    end
+    data[:elemental_compositions_attributes].each { |i| i.delete(:description)}
+    super
+  end
+
   def is_new
     to_boolean super
   end

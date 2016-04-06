@@ -212,7 +212,7 @@ class ElementStore {
   handleCopySampleFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id)
+    this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true)
   }
 
   /**
