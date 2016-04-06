@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from 'react';
 import {Input, Button} from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
-import NumeralInputWithUnits from './NumeralInputWithUnits';
+import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import UiStore from './stores/UIStore';
 
 const source = {
@@ -37,7 +37,7 @@ class Material extends Component {
 
   render() {
     const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
-    
+
     let style = {};
     if (isDragging) {
       style.opacity = 0.3;
@@ -87,31 +87,37 @@ class Material extends Component {
       </td>
 
       <td style={inputsStyle}>
-        <NumeralInputWithUnits
+        <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.amount_mg}
-          unit='mg'
-          numeralFormat='0,0.0000'
+          unit='g'
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none','micro']}
+          precision={3}
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
 
       <td style={inputsStyle}>
-        <NumeralInputWithUnits
+        <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.amount_ml}
-          unit='ml'
-          numeralFormat='0,0.0000'
+          unit='l'
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none','micro']}
+          precision={3}
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
 
       <td style={inputsStyle}>
-        <NumeralInputWithUnits
+        <NumeralInputWithUnitsCompo
           key={material.id}
           value={material.amount_mmol}
-          unit='mmol'
-          numeralFormat='0,0.0000'
+          unit='mol'
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none']}
+          precision={3}
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>

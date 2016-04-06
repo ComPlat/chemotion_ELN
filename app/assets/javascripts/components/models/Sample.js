@@ -204,7 +204,10 @@ export default class Sample extends Element {
     this.amount_value = this.convertToMilligram(amount_value, amount_unit)
     this.amount_unit = 'mg'
   }
-
+  setAmountAndNormalizeToGram(amount) {
+    this.amount_value = this.convertToGram(amount.value, amount.unit)
+    this.amount_unit = 'g'
+  }
 
   get amountType() {
     return this._current_amount_type || this.defaultAmountType();
@@ -240,7 +243,7 @@ export default class Sample extends Element {
   }
 
   get amount_unit() {
-    return (this.amountType === 'real' ? this.real_amount_unit : this.target_amount_unit) || 'mg';
+    return (this.amountType === 'real' ? this.real_amount_unit : this.target_amount_unit) || 'g';
   }
 
   set amount_unit(amount_unit) {
@@ -262,7 +265,7 @@ export default class Sample extends Element {
   }
 
   get target_amount_unit() {
-    return this._target_amount_unit || 'mg';
+    return this._target_amount_unit || 'g';
   }
 
   set target_amount_unit(amount_unit) {
@@ -280,7 +283,7 @@ export default class Sample extends Element {
   }
 
   get real_amount_unit() {
-    return this._real_amount_unit || 'mg';
+    return this._real_amount_unit || 'g';
   }
 
   set real_amount_unit(amount_unit) {
@@ -290,13 +293,20 @@ export default class Sample extends Element {
   get amount_mg() {
     return this.convertMilligramToUnit(this.amount_value, 'mg')
   }
-
+  get amount_g() {
+    return this.convertGramToUnit(this.amount_value, 'g')
+  }
   get amount_ml() {
     return this.convertMilligramToUnit(this.amount_value, 'ml')
   }
-
+  get amount_l() {
+    return this.convertGramToUnit(this.amount_value, 'l')
+  }
   get amount_mmol() {
     return this.convertMilligramToUnit(this.amount_value, 'mmol')
+  }
+  get amount_mol() {
+    return this.convertGramToUnit(this.amount_value, 'mol')
   }
 
   //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
@@ -342,7 +352,44 @@ export default class Sample extends Element {
         return amount_value
     }
   }
+  convertGramToUnit(amount_g, unit) {
 
+    switch (unit) {
+      case 'g':
+        return amount_g;
+        break;
+      case 'l':
+        let molecule_density = this.molecule_density || 1.0;
+        if(molecule_density) {
+          return amount_mg / molecule_density / 1000 ;
+          break;
+        }
+      case 'mol':
+        let molecule_molecular_weight = this.molecule_molecular_weight
+        if (molecule_molecular_weight) {
+          return amount_g * (this.purity || 1.0) / molecule_molecular_weight;
+          break;
+        }
+      default:
+        return amount_g
+    }
+  }
+
+  convertToGram(amount_value, amount_unit) {
+    switch (amount_unit) {
+      case 'g':
+        return amount_value;
+        break;
+      case 'l':
+        return amount_value * (this.molecule_density || 1.0) * 1000;
+        break;
+      case 'mol':
+        return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
+        break;
+      default:
+        return amount_value
+    }
+  }
   get molecule_iupac_name() {
     return this.molecule && this.molecule.iupac_name;
   }
