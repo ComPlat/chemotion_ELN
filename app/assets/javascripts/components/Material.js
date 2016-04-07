@@ -268,10 +268,10 @@ export default class Material extends Component {
     // just recalculate value in mg using the new loading value
     if(this.props.onChange) {
       let event = {
-        type: 'equivalentChanged',
+        type: 'amountChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        equivalent: this.props.material.equivalent
+        amount: this.props.material.amount
       };
       this.props.onChange(event);
     }

@@ -136,14 +136,24 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   calculateEquivalent(referenceMaterial, updatedSample) {
+    console.log('calculateEquivalent called');
     if(!referenceMaterial.contains_residues) {
       NotificationActions.add({
-        message: 'Cannot perform calculations for loading and equivalent.',
+        message: 'Cannot perform calculations for loading and equivalent',
         level: 'error'
       });
 
       return 1.0;
     }
+
+    /*if(!referenceMaterial.loading){
+      NotificationActions.add({
+        message: 'Please set non-zero starting material loading',
+        level: 'error'
+      });
+
+      return 0.0;
+    }*/
 
     let loading = referenceMaterial.residues[0].custom_info.loading;
     let mass_koef = updatedSample.amount_mg / referenceMaterial.amount_mg;
@@ -229,10 +239,6 @@ export default class ReactionDetailsScheme extends Component {
     let newAmountMmol;
     let newLoading;
 
-    if(massAnalyses.errorMsg) {
-
-    }
-
     newAmountMmol = referenceM.amount_mmol * equivalent;
     newLoading = newAmountMmol / updatedS.amount_mg * 1000.0;
 
@@ -265,6 +271,11 @@ export default class ReactionDetailsScheme extends Component {
           sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
         }
       }
+
+      if(isNaN(sample.equivalent) || !isFinite(sample.equivalent)){
+        sample.equivalent = 0.0;
+      }
+
       return sample;
     });
   }

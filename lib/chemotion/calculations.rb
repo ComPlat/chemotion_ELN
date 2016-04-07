@@ -16,6 +16,8 @@ module Chemotion::Calculations
     end
   end
 
+  VALUABLE_ELEMENTS = %w(S N C)
+
   # returns only amount of each atom
   def self.parse_formula formula, is_partial = false
     elements = {}
@@ -47,25 +49,39 @@ module Chemotion::Calculations
   end
 
   def self.get_loading m_formula, p_formula, composition
-    # select first elemental composition datum, !we take just Carbon initially!
-    #dkey, dvalue = composition.select { |k, v| v.to_f > 0.0 }.first
-    dkey = 'C'
-    dvalue = composition[dkey]
-
-    return if dvalue.nil? || dvalue == 0.0
-
     begin
       p_analyses = Chemotion::Calculations.analyse_formula p_formula
       m_analyses = Chemotion::Calculations.analyse_formula m_formula
     rescue Chemotion::Calculations::BadFormulaException
+      Rails.logger.error("**** Parsing formula failed for \
+                                              #{p_formula}, #{m_formula} ***")
       return
     end
 
-    wfp = p_analyses[dkey][:weight_fraction].to_d rescue 0.0
-    wfm = m_analyses[dkey][:weight_fraction].to_d rescue 0.0
-    mw_def = self.get_total_mw m_analyses
+    # we take elements in order that gives more accurate loading value
+    VALUABLE_ELEMENTS.each do |element_name|
+      dvalue = composition[element_name]
 
-    loading = 1000.0 * (wfp - dvalue.to_f/100.0) / (mw_def * (wfp - wfm))
+      next if dvalue.nil? || dvalue == 0.0
+
+      wfp = p_analyses[element_name][:weight_fraction].to_d rescue 0.0
+      wfm = m_analyses[element_name][:weight_fraction].to_d rescue 0.0
+      mw_def = self.get_total_mw m_analyses
+
+      loading = 1000.0 * (wfp - dvalue.to_f/100.0) / (mw_def * (wfp - wfm))
+      return loading if (wfp - wfm != 0.0)
+    end
+  end
+
+  def self.get_yield product_data, sm_data
+    VALUABLE_ELEMENTS.each do |element_name|
+
+      if product_data[element_name].to_f * sm_data[element_name].to_f > 0.0
+        return product_data[element_name].to_f / sm_data[element_name].to_f
+      end
+    end
+
+    return 0.0
   end
 
 private

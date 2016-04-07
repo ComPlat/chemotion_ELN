@@ -263,9 +263,10 @@ module ReactionUpdator
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
 
-              subsample.residues_attributes = sample.residues.each do |item|
-                item.delete :id
-              end
+              subsample.residues_attributes =
+                sample.residues_attributes.uniq || sample.residues.each do |i|
+                                                     i.delete :id
+                                                   end
 
               subsample.save
               subsample.reload
@@ -305,7 +306,9 @@ module ReactionUpdator
             existing_sample.target_amount_unit = sample.target_amount_unit
             existing_sample.real_amount_value = sample.real_amount_value
             existing_sample.real_amount_unit = sample.real_amount_unit
-            existing_sample.residues_attributes = sample.residues
+            if r = existing_sample.residues[0]
+              r.assign_attributes sample.residues_attributes[0]
+            end
 
             existing_sample.save
             included_sample_ids << existing_sample.id
