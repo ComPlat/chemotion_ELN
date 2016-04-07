@@ -452,7 +452,6 @@ export default class SampleDetails extends React.Component {
               value={sample.amount_mg}
               unit='g'
               label="Amount"
-              numeralFormat='0,0.00'
               metricPrefix='milli'
               metricPrefixes = {['milli','none']}
               precision={3}

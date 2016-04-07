@@ -10,7 +10,10 @@ export default class NumeralInputWithUnitsCompo extends Component {
       unit: unit,
       value: value,
       metricPrefix: metricPrefix,
-      currentPrecision: precision
+      currentPrecision: precision,
+      pendingComma: false,
+      valueString: "0",
+      showString: false
     };
   }
 
@@ -35,34 +38,82 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let caretPosition = $(inputField).caret();
     let {value} = inputField;
     let {metricPrefix} = this.state;
-    let unformatedValue = metPreConv(value,metricPrefix,"none") ;
     let {onChange} = this.props;
-    console.log(value);    console.log(inputField);
+    let {pendingComma,valueString} = this.state;
+    let l = value.length;
+    let lastChar =  value[caretPosition-1] || "";
+    let md = lastChar.match(/\d/);
+    let mc = lastChar.match(/\.|(,)/);
+    let comma= parseInt(value)!=value && value.match(/\./)&&value.match(/\./).index;
+    let removeLastChar = ()=>{value =value.slice(0,caretPosition-1)+value.slice(caretPosition)};
+    let replaceLastChar = ()=>{value = value.slice(0,caretPosition-1)+'.'+value.slice(caretPosition)}
+
+    console.log({value: value,caretPosition: caretPosition, l: l, lastChar: lastChar, comma: comma, pendingComma: pendingComma});
+
+    if (pendingComma && l<pendingComma){  pendingComma=false}
+    if (mc && mc[1]){replaceLastChar()}
+
+    let insertLastChar = (s)=>{ s.slice(0,caretPosition-1)+lastChar+s.slice(caretPosition)};
+    if (md||mc){
+      if(parseFloat(valueString)==value){}
+      valueString=value}else{
+
+    }
+    //valueString=insertLastChar(valueString);
+    /*if (caretPosition == l){
+      if (md) {
+        if (pendingComma){
+          value=value.slice(0,-1 )+'.'+lastChar;
+          pendingComma= false;
+          caretPosition += 1;
+        }
+      }else{
+        if (comma){removeLastChar();
+        }else{
+          if (mc){
+            pendingComma= caretPosition;
+            valueString=valueString.slice(0,caretPosition-1)+'.'+valueString.slice(caretPosition-1)
+          }else{removeLastChar()}
+        }
+      }
+    }else{
+      if (!md) {
+        if (!mc || (mc&&comma) ){removeLastChar()}
+      }
+    }
+*/
+    console.log({value: value,caretPosition: caretPosition, l: l, lastChar: lastChar, comma: comma, pendingComma: pendingComma});
     this.setState({
-        value: unformatedValue
+        value:  metPreConv(value,metricPrefix,"none"),
+        pendingComma: pendingComma,
+        valueString: valueString
       }, () => {
         this._onChangeCallback();
         $(inputField).caret(caretPosition);
       }
     );
-    onChange({value: unformatedValue,unit: this.state.unit});
+  //  onChange({value: unformatedValue,unit: this.state.unit});
   }
+
+
   _handleInputValueFocus(event){
      this.setState({
-        currentPrecision: undefined
+        currentPrecision: undefined,
+        showString: true
       }, () => {this._onChangeCallback();}
   );
   }
   _handleInputValueBlur(event){
      this.setState({
-        currentPrecision: 3
+        //valueString: value.toPrecision(currentPrecision)
+        currentPrecision: this.props.precision,
+        showString: false
       }, () => {this._onChangeCallback();}
   );
   }
 
   _onChangeCallback() {
     if(this.props.onChange) {
-      console.log(this.state);
       this.props.onChange(this.state);
     }
   }
@@ -80,19 +131,22 @@ export default class NumeralInputWithUnitsCompo extends Component {
 // TODO fix css-issue with wrong z-index
   render() {
     let {units, bsSize, bsStyle, label, numeralFormat, key} = this.props;
-    let {unit, value,metricPrefix,currentPrecision} = this.state;
+    let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
     let mp = metPrefSymbols[metricPrefix];
-    let val = metPreConv(value,"none",metricPrefix);
-    console.log('render:'+val);
-    let lab =<Button active onClick={() =>{this.togglePrefix()}} bsStyle={bsStyle} bsSize={bsSize}>{mp+unit}</Button>
+    let val = ()=>{
+      if (!showString){
+        return  metPreConv(value,"none",metricPrefix).toPrecision(currentPrecision);
+      }else{return valueString}
+    };
+    let prefixSwitch =<Button active onClick={() =>{this.togglePrefix()}} bsStyle={bsStyle} bsSize={bsSize}>{mp+unit}</Button>
     return (
       <div >
         <Input  key={key} type='text'  bsSize={bsSize} bsStyle={bsStyle} label={label}
-          value={val.toPrecision(currentPrecision)}
+          value={val()}
           onChange={(event) => this._handleInputValueChange(event)}
           onFocus={(event) => this._handleInputValueFocus(event)}
           onBlur={(event)=>this._handleInputValueBlur(event)}
-          buttonAfter={lab}
+          buttonAfter={prefixSwitch}
           />
       </div>
     );
