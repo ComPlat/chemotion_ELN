@@ -4,6 +4,7 @@ class Molecule < ActiveRecord::Base
 
   has_many :samples
   has_many :collections, through: :samples
+  before_save :sanitize_molfile
 
   validates_uniqueness_of :inchikey, scope: :is_partial
 
@@ -102,4 +103,11 @@ class Molecule < ActiveRecord::Base
     end.join
   end
 
+private
+
+  # TODO: check that molecules are OK and remove this method. fix is in editor
+  def sanitize_molfile
+    index = self.molfile.lines.index { |l| l.match /(M.+END+)/ }
+    self.molfile = self.molfile.lines[0..index].join
+  end
 end
