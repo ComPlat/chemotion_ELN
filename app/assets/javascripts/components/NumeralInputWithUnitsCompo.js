@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {DropdownButton, MenuItem,Input,Button} from 'react-bootstrap';
+import {SplitButton, MenuItem,Input,Button} from 'react-bootstrap';
 import {metPreConv,metPrefSymbols} from './utils/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -11,7 +11,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
       value: value,
       metricPrefix: metricPrefix,
       currentPrecision: precision,
-      pendingComma: false,
       valueString: "0",
       showString: false
     };
@@ -32,60 +31,28 @@ export default class NumeralInputWithUnitsCompo extends Component {
   }
 
   _handleInputValueChange(event) {
-    //TODO fix issue that cursor is behind, when a comma is inserted:
-    // containing comas need to be compared to previous amount
+
     let inputField = event.target;
     let caretPosition = $(inputField).caret();
     let {value} = inputField;
-    let {metricPrefix} = this.state;
+    let {metricPrefix,valueString} = this.state;
     let {onChange} = this.props;
-    let {pendingComma,valueString} = this.state;
-    let l = value.length;
+  //  let l = value.length;
     let lastChar =  value[caretPosition-1] || "";
     let md = lastChar.match(/\d/);
     let mc = lastChar.match(/\.|(,)/);
     let comma= parseInt(value)!=value && value.match(/\./)&&value.match(/\./).index;
-    let removeLastChar = ()=>{value =value.slice(0,caretPosition-1)+value.slice(caretPosition)};
-    let replaceLastChar = ()=>{value = value.slice(0,caretPosition-1)+'.'+value.slice(caretPosition)}
 
-    console.log({value: value,caretPosition: caretPosition, l: l, lastChar: lastChar, comma: comma, pendingComma: pendingComma});
 
-    if (pendingComma && l<pendingComma){  pendingComma=false}
-    if (mc && mc[1]){replaceLastChar()}
 
-    let insertLastChar = (s)=>{ s.slice(0,caretPosition-1)+lastChar+s.slice(caretPosition)};
+    if (mc && mc[1]){value = value.slice(0,caretPosition-1)+'.'+value.slice(caretPosition)}
     if (md||mc){
       if(parseFloat(valueString)==value){}
       valueString=value}else{
+    }
 
-    }
-    //valueString=insertLastChar(valueString);
-    /*if (caretPosition == l){
-      if (md) {
-        if (pendingComma){
-          value=value.slice(0,-1 )+'.'+lastChar;
-          pendingComma= false;
-          caretPosition += 1;
-        }
-      }else{
-        if (comma){removeLastChar();
-        }else{
-          if (mc){
-            pendingComma= caretPosition;
-            valueString=valueString.slice(0,caretPosition-1)+'.'+valueString.slice(caretPosition-1)
-          }else{removeLastChar()}
-        }
-      }
-    }else{
-      if (!md) {
-        if (!mc || (mc&&comma) ){removeLastChar()}
-      }
-    }
-*/
-    console.log({value: value,caretPosition: caretPosition, l: l, lastChar: lastChar, comma: comma, pendingComma: pendingComma});
     this.setState({
         value:  metPreConv(value,metricPrefix,"none"),
-        pendingComma: pendingComma,
         valueString: valueString
       }, () => {
         this._onChangeCallback();
@@ -130,7 +97,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let {units, bsSize, bsStyle, label, numeralFormat, key} = this.props;
+    let {units, bsSize, bsStyle, label, key} = this.props;
     let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
     let mp = metPrefSymbols[metricPrefix];
     let val = ()=>{
@@ -155,6 +122,5 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
 NumeralInputWithUnitsCompo.defaultProps = {
   value: 0,
-  numeralFormat: '',
   units: []
 };

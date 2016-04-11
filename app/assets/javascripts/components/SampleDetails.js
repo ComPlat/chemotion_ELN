@@ -9,7 +9,7 @@ import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 
-import NumeralInputWithUnits from './NumeralInputWithUnits';
+
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
@@ -307,7 +307,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
-    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} mg/mmol)` : '';
+    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} g/mol)` : '';
     const style = {height: '200px'};
     return (
       <Row style={style}>
@@ -432,12 +432,11 @@ export default class SampleDetails extends React.Component {
         return (
           <table><tbody><tr>
           <td>
-            <NumeralInputWithUnits
+            <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_mg}
+              value={sample.amount_g}
               unit='g'
-              label="mg"
-              numeralFormat='0,0.00'
+              label="g"
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
@@ -449,38 +448,36 @@ export default class SampleDetails extends React.Component {
           <td>
             <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_mg}
+              value={sample.amount_g}
               unit='g'
               label="Amount"
               metricPrefix='milli'
               metricPrefixes = {['milli','none']}
-              precision={3}
+              precision={4}
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
           <td>
             <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_ml}
+              value={sample.amount_l}
               unit='l'
               label="&nbsp;"
-              numeralFormat='0,0.00'
               metricPrefix='milli'
               metricPrefixes = {['milli','micro','none']}
-              precision={3}
+              precision={4}
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
           <td>
             <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_mmol}
+              value={sample.amount_mol}
               unit='mol'
               label="&nbsp;"
               metricPrefix='milli'
               metricPrefixes = {['milli','none']}
-              numeralFormat='0,0.00'
-              precision={3}
+              precision={4}
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>

@@ -89,11 +89,11 @@ class Material extends Component {
       <td style={inputsStyle}>
         <NumeralInputWithUnitsCompo
           key={material.id}
-          value={material.amount_mg}
+          value={material.amount_g}
           unit='g'
           metricPrefix='milli'
           metricPrefixes = {['milli','none','micro']}
-          precision={3}
+          precision={5}
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
@@ -101,7 +101,7 @@ class Material extends Component {
       <td style={inputsStyle}>
         <NumeralInputWithUnitsCompo
           key={material.id}
-          value={material.amount_ml}
+          value={material.amount_l}
           unit='l'
           metricPrefix='milli'
           metricPrefixes = {['milli','none','micro']}
@@ -113,11 +113,11 @@ class Material extends Component {
       <td style={inputsStyle}>
         <NumeralInputWithUnitsCompo
           key={material.id}
-          value={material.amount_mmol}
+          value={material.amount_mol}
           unit='mol'
           metricPrefix='milli'
           metricPrefixes = {['milli','none']}
-          precision={3}
+          precision={4}
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>

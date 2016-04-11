@@ -11,11 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20151207170817) do
+ActiveRecord::Schema.define(version: 20160411112619) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -120,16 +121,17 @@ ActiveRecord::Schema.define(version: 20151207170817) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.string   "sum_formular"
-    t.string   "names",             default: [],              array: true
+    t.string   "names",             default: [],                 array: true
     t.string   "iupac_name"
     t.string   "molecule_svg_file"
-    t.datetime "created_at",                     null: false
-    t.datetime "updated_at",                     null: false
+    t.datetime "created_at",                        null: false
+    t.datetime "updated_at",                        null: false
     t.datetime "deleted_at"
+    t.boolean  "is_partial",        default: false, null: false
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
-  add_index "molecules", ["inchikey"], name: "index_molecules_on_inchikey", unique: true, using: :btree
+  add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
 
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
@@ -199,10 +201,20 @@ ActiveRecord::Schema.define(version: 20151207170817) do
   add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
   add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
+  create_table "residues", force: :cascade do |t|
+    t.integer  "sample_id"
+    t.string   "residue_type"
+    t.hstore   "custom_info"
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
+
+  add_index "residues", ["sample_id"], name: "index_residues_on_sample_id", using: :btree
+
   create_table "samples", force: :cascade do |t|
     t.string   "name"
     t.float    "target_amount_value", default: 0.0
-    t.string   "target_amount_unit",  default: "mg"
+    t.string   "target_amount_unit",  default: "g"
     t.datetime "created_at",                          null: false
     t.datetime "updated_at",                          null: false
     t.text     "description",         default: ""
@@ -222,10 +234,35 @@ ActiveRecord::Schema.define(version: 20151207170817) do
     t.string   "real_amount_unit"
     t.string   "imported_readout"
     t.datetime "deleted_at"
+    t.string   "sample_svg_file"
+    t.integer  "user_id"
+    t.string   "identifier"
+    t.hstore   "elemental_analyses",  default: {},    null: false
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
+  add_index "samples", ["identifier"], name: "index_samples_on_identifier", using: :btree
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
+  add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
+
+  create_table "scifinding_credentials", force: :cascade do |t|
+    t.string   "username"
+    t.string   "encrypted_password"
+    t.string   "encrypted_current_token"
+    t.string   "encrypted_refreshed_token"
+    t.datetime "token_expires_at"
+    t.datetime "token_requested_at"
+    t.datetime "created_at",                null: false
+    t.datetime "updated_at",                null: false
+    t.integer  "user_id"
+  end
+
+  create_table "scifinding_tags", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "count"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
 
   create_table "screens", force: :cascade do |t|
     t.string   "description"

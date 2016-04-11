@@ -79,7 +79,7 @@ export default class Sample extends Element {
       type: 'sample',
       external_label: '',
       target_amount_value: 0,
-      target_amount_unit: 'mg',
+      target_amount_unit: 'g',
       description: '',
       purity: 1,
       solvent: '',
@@ -101,7 +101,7 @@ export default class Sample extends Element {
       type: 'sample',
       external_label: '',
       target_amount_value: 0,
-      target_amount_unit: 'mg',
+      target_amount_unit: 'g',
       description: '',
       purity: 1,
       solvent: '',
@@ -200,10 +200,7 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
-  setAmountAndNormalizeToMilligram(amount_value, amount_unit) {
-    this.amount_value = this.convertToMilligram(amount_value, amount_unit)
-    this.amount_unit = 'mg'
-  }
+
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit)
     this.amount_unit = 'g'
@@ -290,21 +287,15 @@ export default class Sample extends Element {
     this._real_amount_unit = amount_unit
   }
 
-  get amount_mg() {
-    return this.convertMilligramToUnit(this.amount_value, 'mg')
-  }
+
   get amount_g() {
     return this.convertGramToUnit(this.amount_value, 'g')
   }
-  get amount_ml() {
-    return this.convertMilligramToUnit(this.amount_value, 'ml')
-  }
+
   get amount_l() {
     return this.convertGramToUnit(this.amount_value, 'l')
   }
-  get amount_mmol() {
-    return this.convertMilligramToUnit(this.amount_value, 'mmol')
-  }
+
   get amount_mol() {
     return this.convertGramToUnit(this.amount_value, 'mol')
   }
@@ -314,44 +305,7 @@ export default class Sample extends Element {
 	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
 	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
-  convertMilligramToUnit(amount_mg, unit) {
 
-    switch (unit) {
-      case 'mg':
-        return amount_mg;
-        break;
-      case 'ml':
-        let molecule_density = this.molecule_density || 1.0;
-        if(molecule_density) {
-          return amount_mg / molecule_density / 1000 ;
-          break;
-        }
-      case 'mmol':
-        let molecule_molecular_weight = this.molecule_molecular_weight
-        if (molecule_molecular_weight) {
-          return amount_mg * (this.purity || 1.0) / molecule_molecular_weight;
-          break;
-        }
-      default:
-        return amount_mg
-    }
-  }
-
-  convertToMilligram(amount_value, amount_unit) {
-    switch (amount_unit) {
-      case 'mg':
-        return amount_value;
-        break;
-      case 'ml':
-        return amount_value * (this.molecule_density || 1.0) * 1000;
-        break;
-      case 'mmol':
-        return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
-        break;
-      default:
-        return amount_value
-    }
-  }
   convertGramToUnit(amount_g, unit) {
 
     switch (unit) {
@@ -361,7 +315,7 @@ export default class Sample extends Element {
       case 'l':
         let molecule_density = this.molecule_density || 1.0;
         if(molecule_density) {
-          return amount_mg / molecule_density / 1000 ;
+          return amount_g / molecule_density / 1000 ;
           break;
         }
       case 'mol':
