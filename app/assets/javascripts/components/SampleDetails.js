@@ -9,7 +9,8 @@ import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 
-import NumeralInputWithUnits from './NumeralInputWithUnits'
+
+import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
@@ -88,8 +89,7 @@ export default class SampleDetails extends React.Component {
 
   handleAmountChanged(amount) {
     let sample = this.state.sample;
-    sample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
-
+    sample.setAmountAndNormalizeToGram(amount);
     this.setState({
       sample: sample
     });
@@ -290,6 +290,7 @@ export default class SampleDetails extends React.Component {
              defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              disabled={sample.isMethodDisabled('molecule_iupac_name')}
+             readOnly
       />
     )
   }
@@ -305,7 +306,7 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
-    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} mg/mmol)` : '';
+    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} g/mol)` : '';
     const style = {height: '200px'};
     return (
       <Row style={style}>
@@ -331,6 +332,7 @@ export default class SampleDetails extends React.Component {
              defaultValue={sample.molecule_inchistring}
              value={sample.molecule_inchistring}
              disabled
+             readOnly
       />
     )
   }
@@ -342,6 +344,7 @@ export default class SampleDetails extends React.Component {
              defaultValue={sample.molecule_molecular_weight}
              value={sample.molecule_molecular_weight}
              disabled
+             readOnly
         />
     )
   }
@@ -363,6 +366,7 @@ export default class SampleDetails extends React.Component {
              defaultValue={sample.molecule_formula}
              value={sample.molecule_formula}
              disabled
+             readOnly
         />
     )
   }
@@ -428,12 +432,11 @@ export default class SampleDetails extends React.Component {
         return (
           <table><tbody><tr>
           <td>
-            <NumeralInputWithUnits
+            <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_mg}
-              unit='mg'
-              label="mg"
-              numeralFormat='0,0.00'
+              value={sample.amount_g}
+              unit='g'
+              label="g"
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
@@ -443,32 +446,38 @@ export default class SampleDetails extends React.Component {
         return (
           <table><tbody><tr>
           <td>
-            <NumeralInputWithUnits
+            <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_mg}
-              unit='mg'
-              label="mg"
-              numeralFormat='0,0.00'
+              value={sample.amount_g}
+              unit='g'
+              label="Amount"
+              metricPrefix='milli'
+              metricPrefixes = {['milli','none']}
+              precision={4}
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
           <td>
-            <NumeralInputWithUnits
+            <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_ml}
-              unit='ml'
-              label="ml"
-              numeralFormat='0,0.00'
+              value={sample.amount_l}
+              unit='l'
+              label="&nbsp;"
+              metricPrefix='milli'
+              metricPrefixes = {['milli','micro','none']}
+              precision={4}
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
           <td>
-            <NumeralInputWithUnits
+            <NumeralInputWithUnitsCompo
               key={sample.id}
-              value={sample.amount_mmol}
-              unit='mmol'
-              label="mmol"
-              numeralFormat='0,0.00'
+              value={sample.amount_mol}
+              unit='mol'
+              label="&nbsp;"
+              metricPrefix='milli'
+              metricPrefixes = {['milli','none']}
+              precision={4}
               onChange={(amount) => this.handleAmountChanged(amount)}
               />
           </td>
@@ -477,7 +486,7 @@ export default class SampleDetails extends React.Component {
       }
     } else {
       return (
-        <Input type="text" label="Amount" disabled value="***" />
+        <Input type="text" label="Amount" disabled defaultValue="***" />
       )
     }
   }
@@ -577,8 +586,11 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem>
           <table width="100%"><tbody>
             <tr>
-              <td width="50%" className="padding-right" colSpan={2}>
+              <td width="25%" className="padding-right" >
                 {this.sampleName(sample)}
+              </td>
+              <td width="25%" className="padding-right">
+                {this.sampleExternalLabel(sample)}
               </td>
               <td width="25%" className="padding-right">
                 {this.sampleImpurities(sample)}
@@ -589,10 +601,7 @@ export default class SampleDetails extends React.Component {
               </td>
             </tr>
             <tr>
-              <td width="25%" className="padding-right">
-                {this.sampleExternalLabel(sample)}
-              </td>
-              <td width="25%" className="padding-right">
+              <td width="25%" className="padding-right" colSpan={2}>
                 {this.sampleAmount(sample)}
               </td>
               <td width="25%" className="padding-right">

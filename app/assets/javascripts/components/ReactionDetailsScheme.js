@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Button, ListGroup, ListGroupItem,Glyphicon} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
@@ -85,7 +85,7 @@ export default class ReactionDetailsScheme extends Component {
     let updatedSample = this.props.reaction.sampleById(sampleID);
 
     // normalize to milligram
-    updatedSample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
+    updatedSample.setAmountAndNormalizeToGram(amount);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
@@ -112,10 +112,10 @@ export default class ReactionDetailsScheme extends Component {
     const {referenceMaterial} = this.props.reaction;
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
-        sample.setAmountAndNormalizeToMilligram(updatedSample.amount_value, updatedSample.amount_unit);
+        sample.setAmountAndNormalizeToGram({value:updatedSample.amount_value, unit:updatedSample.amount_unit});
         if(referenceMaterial && sample.amountType != 'real') {
           if(!updatedSample.reference && referenceMaterial.amount_value) {
-            sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
+            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
           } else {
             sample.equivalent = 1.0;
           }
@@ -124,7 +124,7 @@ export default class ReactionDetailsScheme extends Component {
       else {
         if(updatedSample.reference) {
           if(sample.equivalent && sample.amountType != 'real') {
-            sample.setAmountAndNormalizeToMilligram(sample.equivalent * updatedSample.amount_mmol, 'mmol');
+            sample.setAmountAndNormalizeToGram({value:sample.equivalent * updatedSample.amount_mol,unit: 'mol'});
           }
         }
       }
@@ -138,10 +138,10 @@ export default class ReactionDetailsScheme extends Component {
       if (sample.id == updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
         if(referenceMaterial && referenceMaterial.amount_value) {
-          sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * referenceMaterial.amount_mmol, 'mmol');
+          sample.setAmountAndNormalizeToGram({value:updatedSample.equivalent * referenceMaterial.amount_mol, unit:'mol'});
         }
         else if(sample.amount_value) {
-          sample.setAmountAndNormalizeToMilligram(updatedSample.equivalent * sample.amount_mmol, 'mmol');
+          sample.setAmountAndNormalizeToGram({value:updatedSample.equivalent * sample.amount_mol,unit: 'mol'});
         }
       }
       return sample;
@@ -156,9 +156,9 @@ export default class ReactionDetailsScheme extends Component {
       }
       else {
         if(sample.amount_value) {
-          let referenceAmount = referenceMaterial.amount_mmol;
+          let referenceAmount = referenceMaterial.amount_mol;
           if(referenceMaterial && referenceAmount) {
-            sample.equivalent = sample.amount_mmol / referenceAmount;
+            sample.equivalent = sample.amount_mol / referenceAmount;
           }
         }
         sample.reference = false;
@@ -190,13 +190,17 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
+
   render() {
     const {reaction} = this.state;
+    let addSampleButton = (sampleType)=> <Button bsStyle="success" bsSize="xs" onClick={() => this.addSampleToMaterialGroup(reaction, sampleType)}><Glyphicon glyph="plus" /></Button>
+
     return (
       <div>
         <ListGroup fill>
           <ListGroupItem>
-            <h4 className="list-group-item-heading" >Starting Materials</h4>
+            <h4 className="list-group-item-heading" >{addSampleButton('starting_materials')}&nbsp;Starting Materials </h4>
+
             <MaterialGroupContainer
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
@@ -205,10 +209,9 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
-              <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'starting_materials')}>Add Sample</Button>
           </ListGroupItem>
           <ListGroupItem>
-            <h4 className="list-group-item-heading" >Reactants</h4>
+            <h4 className="list-group-item-heading" >{addSampleButton('reactants')}&nbsp;Reactants </h4>
             <MaterialGroupContainer
               materialGroup="reactants"
               materials={reaction.reactants}
@@ -217,10 +220,10 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
-              <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'reactants')}>Add Sample</Button>
+
           </ListGroupItem>
           <ListGroupItem>
-            <h4 className="list-group-item-heading" >Products</h4>
+            <h4 className="list-group-item-heading" > {addSampleButton('products')}&nbsp;Products</h4>
             <MaterialGroupContainer
               materialGroup="products"
               materials={reaction.products}
@@ -229,7 +232,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
-              <Button onClick={() => this.addSampleToMaterialGroup(reaction, 'products')}>Add Sample</Button>
+
           </ListGroupItem>
         </ListGroup>
         <ReactionDetailsMainProperties
