@@ -45,7 +45,7 @@ export default class NumeralInput extends Component {
     this.setState({
         numeralValue: formatedValue
       }, () => {
-        //$(inputField).caret(caretPosition);
+        $(inputField).caret(caretPosition);
       }
     );
     onChange(unformatedValue);
