@@ -89,7 +89,6 @@ export default class SampleDetails extends React.Component {
 
   handleAmountChanged(amount) {
     let sample = this.state.sample;
-    //sample.setAmountAndNormalizeToMilligram(amount.value, amount.unit);
     sample.setAmountAndNormalizeToGram(amount);
     this.setState({
       sample: sample
