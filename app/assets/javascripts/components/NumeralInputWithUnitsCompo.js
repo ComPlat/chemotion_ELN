@@ -21,6 +21,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.setState({
       unit: unit,
       value: value,
+    //  valueString: metPreConv(value,"none",metricPrefix) || 0,
     })
   }
 
