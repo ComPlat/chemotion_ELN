@@ -24,6 +24,10 @@ export default class ElementsTableSampleEntries extends Component {
     let {elements: samples, currentElement, showDragColumn, ui} = this.props
     let groupedSamplesByMolecule = samples.reduce((groups, sample) => {
       let moleculeName = sample.molecule.iupac_name || sample.molecule.inchistring
+      if(sample.contains_residues) {
+        moleculeName += 'part_' // group polymers to different array
+        moleculeName += sample.polymer_type
+      }
       if(!groups[moleculeName]) {
         groups[moleculeName] = [].concat(sample)
       } else {
@@ -74,15 +78,14 @@ export default class ElementsTableSampleEntries extends Component {
             <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
           </div>
           <div style={{float: 'right'}}>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip>Toggle Molecule</Tooltip>}>
+            <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>}>
               <span style={{fontSize: 15, color: '#337ab7', lineHeight: '10px'}}>
                 <i className={`glyphicon ${showIndicator}`}></i>
               </span>
             </OverlayTrigger>
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
-            <h4>{molecule.iupac_name || molecule.sum_formular}</h4>
-          
+            <h4>{sample.display_name}</h4>
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
@@ -164,7 +167,7 @@ export default class ElementsTableSampleEntries extends Component {
 
   topSecretIcon(element) {
     if (element.type == 'sample' && element.is_top_secret == true) {
-      const tooltip = (<Tooltip>Top secret</Tooltip>);
+      const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
           <i className="fa fa-user-secret"></i>

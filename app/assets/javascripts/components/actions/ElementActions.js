@@ -4,6 +4,7 @@ import UserActions from './UserActions';
 
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
+import ResidueFetcher from '../fetchers/ResidueFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
@@ -73,6 +74,13 @@ class ElementActions {
       });};
   }
 
+  createSampleForReaction(params) {
+    return (dispatch) => { SamplesFetcher.create(params)
+      .then((result) => {
+        dispatch(result)
+      });};
+  }
+
   updateSample(params) {
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
@@ -114,8 +122,8 @@ class ElementActions {
 
   // -- Molecules --
 
-  fetchMoleculeByMolfile(molfile) {
-    return (dispatch) => { MoleculesFetcher.fetchByMolfile(molfile)
+  fetchMoleculeByMolfile(molfile, svg_file = null) {
+    return (dispatch) => { MoleculesFetcher.fetchByMolfile(molfile, svg_file)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -169,8 +177,8 @@ class ElementActions {
 
   // -- Reactions SVGs --
 
-  fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label){
-    return (dispatch) => { ReactionSvgFetcher.fetchByMaterialsInchikeys(materialsInchikeys, label)
+  fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, label){
+    return (dispatch) => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, label)
       .then((result) => {
         dispatch(result.reaction_svg);
       }).catch((errorMessage) => {

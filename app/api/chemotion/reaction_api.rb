@@ -1,4 +1,18 @@
 class OSample < OpenStruct
+
+  def initialize data
+    # set nested attributes
+    %i(residues elemental_compositions).each do |prop|
+      prop_value = data.delete(prop)
+      prop_value.each { |i| i.delete :id }
+      data.merge!(
+        "#{prop}_attributes".to_sym => prop_value
+      ) unless prop_value.blank?
+    end
+    data[:elemental_compositions_attributes].each { |i| i.delete(:description)}
+    super
+  end
+
   def is_new
     to_boolean super
   end
@@ -249,6 +263,12 @@ module ReactionUpdator
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
 
+              if ra = (sample.residues_attributes || sample.residues)
+                subsample.residues_attributes = ra.uniq || ra.each do |i|
+                                                             i.delete :id
+                                                           end
+              end
+
               subsample.save
               subsample.reload
               included_sample_ids << subsample.id
@@ -287,6 +307,9 @@ module ReactionUpdator
             existing_sample.target_amount_unit = sample.target_amount_unit
             existing_sample.real_amount_value = sample.real_amount_value
             existing_sample.real_amount_unit = sample.real_amount_unit
+            if r = existing_sample.residues[0]
+              r.assign_attributes sample.residues_attributes[0]
+            end
 
             existing_sample.save
             included_sample_ids << existing_sample.id

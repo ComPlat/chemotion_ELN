@@ -54,6 +54,7 @@ class ElementStore {
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
       handleCreateSample: ElementActions.createSample,
+      handleCreateSampleForReaction: ElementActions.createSampleForReaction,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
@@ -63,7 +64,7 @@ class ElementStore {
       handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
-      handleFetchReactionSvgByMaterialsInchikeys: ElementActions.fetchReactionSvgByMaterialsInchikeys,
+      handleFetchReactionSvgByMaterialsSvgPaths: ElementActions.fetchReactionSvgByMaterialsSvgPaths,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples: ElementActions.bulkCreateWellplatesFromSamples,
@@ -175,6 +176,20 @@ class ElementStore {
     this.navigateToNewElement(sample);
   }
 
+  handleCreateSampleForReaction(sample) {
+    UserActions.fetchCurrentUser();
+    let materialGroup = this.state.currentMaterialGroup;
+    let reaction = this.state.currentReaction;
+
+    reaction.addMaterial(sample, materialGroup);
+    reaction.temporary_sample_counter += 1;
+
+    this.handleRefreshElements('sample');
+
+    this.state.currentReaction = null;
+    this.state.currentElement = reaction;
+  }
+
   handleSplitAsSubsamples(ui_state) {
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);
   }
@@ -186,10 +201,18 @@ class ElementStore {
     this.handleRefreshElements('sample');
   }
 
+  // Samples with residues
+  handleFetchResidueByMolfile(result) {
+    // Attention: This is intended to update SampleDetails
+    //this.state.currentElement.molecule = result;
+    this.state.currentElement.sample = result;
+    this.handleRefreshElements('sample');
+  }
+
   handleCopySampleFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id)
+    this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true)
   }
 
   /**
@@ -199,7 +222,7 @@ class ElementStore {
     const { reaction, materialGroup } = params;
     const { temporary_sample_counter } = reaction;
 
-    let sample = Sample.buildEmptyWithCounter(reaction.collection_id, temporary_sample_counter);
+    let sample = Sample.buildEmptyWithCounter(reaction.collection_id, temporary_sample_counter, materialGroup);
 
     this.state.currentMaterialGroup = materialGroup;
     this.state.currentReaction = reaction;
@@ -315,7 +338,7 @@ class ElementStore {
 
   // -- Reactions SVGs --
 
-  handleFetchReactionSvgByMaterialsInchikeys(result) {
+  handleFetchReactionSvgByMaterialsSvgPaths(result) {
     this.state.currentElement.reaction_svg_file = result;
   }
 

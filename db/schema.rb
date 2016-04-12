@@ -15,8 +15,8 @@ ActiveRecord::Schema.define(version: 20160411112619) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -100,6 +100,17 @@ ActiveRecord::Schema.define(version: 20160411112619) do
 
   add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
 
+  create_table "elemental_compositions", force: :cascade do |t|
+    t.integer  "sample_id",                     null: false
+    t.string   "composition_type",              null: false
+    t.hstore   "data",             default: {}, null: false
+    t.float    "loading"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "elemental_compositions", ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
+
   create_table "literatures", force: :cascade do |t|
     t.integer  "reaction_id", null: false
     t.string   "title"
@@ -145,18 +156,18 @@ ActiveRecord::Schema.define(version: 20160411112619) do
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"
-    t.datetime "created_at",                            null: false
-    t.datetime "updated_at",                            null: false
+    t.datetime "created_at",                             null: false
+    t.datetime "updated_at",                             null: false
     t.text     "description"
     t.string   "timestamp_start"
     t.string   "timestamp_stop"
     t.text     "observation"
-    t.string   "purification",       default: [],                    array: true
-    t.string   "dangerous_products", default: [],                    array: true
+    t.string   "purification",       default: [],                     array: true
+    t.string   "dangerous_products", default: [],                     array: true
     t.string   "tlc_solvents"
     t.text     "tlc_description"
     t.string   "rf_value"
-    t.string   "temperature",        default: "21.0°C"
+    t.string   "temperature",        default: "21.0 °C"
     t.string   "status"
     t.string   "reaction_svg_file"
     t.string   "solvent"
@@ -237,7 +248,6 @@ ActiveRecord::Schema.define(version: 20160411112619) do
     t.string   "sample_svg_file"
     t.integer  "user_id"
     t.string   "identifier"
-    t.hstore   "elemental_analyses",  default: {},    null: false
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

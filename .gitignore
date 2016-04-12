@@ -25,6 +25,9 @@
 /public/images/reactions/*
 !/public/images/reactions/.keep
 
+/public/images/samples/*
+!/public/images/samples/.keep
+
 /uploads/attachments/*
 /uploads/thumbnails
 !/public/attachments/.keep

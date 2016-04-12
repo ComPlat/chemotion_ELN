@@ -1,0 +1,25 @@
+table.polymer-section {
+  tr td {
+    vertical-align: top;
+  }
+
+  td.cross_linkage {
+    padding-left: 5px;
+    input {
+      height: 38px;
+    }
+  }
+
+  td.external_loading_input {
+    padding: 0px;
+  }
+
+  button {
+    margin-top: 25px;
+  }
+
+  .formula-input {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+}

@@ -30,7 +30,8 @@ export default class Search extends React.Component {
 
   search(query) {
     let userState = UserStore.getState();
-    let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser('/api/v1/suggestions/' + this.state.elementType + '/', query, userState.currentUser.id);
+    let uiState = UIStore.getState();
+    let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser('/api/v1/suggestions/' + this.state.elementType + '/', query, userState.currentUser.id, uiState.currentCollection.id);
     return promise;
   }
 
@@ -76,14 +77,15 @@ export default class Search extends React.Component {
     let suggestionsAttributes = {
       style: {
         marginTop: 15,
-        width: 400,
-        height: 400,
-        overflow: 'scroll'
+        width: 398,
+        maxHeight: 400
       }
     };
 
     let innerDropdown =
-      <DropdownButton title={this.state.elementType} style={{width:'100px'}}>
+      <DropdownButton id="search-inner-dropdown"
+                      title={this.state.elementType}
+                      style={{width:'100px'}}>
         {this.renderMenuItems()}
       </DropdownButton>
 

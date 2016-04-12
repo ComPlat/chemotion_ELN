@@ -5,10 +5,20 @@
 .search-autocomplete {
   float: right;
   padding-left: 110px;
+
+  .scroll {
+    overflow: scroll;
+  }
 }
 
 .chemotion-search {
   margin-left: -80px;
   padding-right: 50px;
   float: left;
+  position: static;
+
+  div > div > div:nth-child(3) {
+    position: relative;
+    z-index: 2;
+  }
 }

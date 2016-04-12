@@ -52,23 +52,47 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   belongs_to :molecule
+  belongs_to :user
 
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
+  has_many :residues
+  has_many :elemental_compositions
 
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+  before_save :check_molfile_polymer_section
 
   has_ancestry
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
   accepts_nested_attributes_for :molecule, update_only: true
+  accepts_nested_attributes_for :residues, :elemental_compositions,
+                                allow_destroy: true
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', counter_cache: :samples_created_count
 
-  before_save :auto_set_short_label
+  before_save :auto_set_short_label, :attach_svg, :init_elemental_compositions,
+              :set_loading_from_ea
+
+  after_save :update_data_for_reactions
+
+  def create_subsample user
+    subsample = self.dup
+    subsample.short_label = nil # we need to reset it
+    subsample.parent = self
+    subsample.created_by = user.id
+    subsample.residues_attributes = self.residues.to_a.map do |r|
+      result = r.attributes.to_h
+      result.delete 'id'
+      result.delete 'sample_id'
+      result
+    end
+    subsample.save
+    subsample
+  end
 
   def auto_set_short_label
     if parent
@@ -103,13 +127,89 @@ class Sample < ActiveRecord::Base
 
   def find_or_create_molecule_based_on_inchikey
     if molfile
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-      inchikey = babel_info[:inchikey]
-      unless inchikey.blank?
-        unless molecule && molecule.inchikey == inchikey
-          self.molecule = Molecule.find_or_create_by_molfile(molfile)
+      if molfile.include? ' R# '
+        self.molecule = Molecule.find_or_create_by_molfile(molfile.clone, true)
+      else
+        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+        inchikey = babel_info[:inchikey]
+        unless inchikey.blank?
+          unless molecule && molecule.inchikey == inchikey
+            self.molecule = Molecule.find_or_create_by_molfile(molfile)
+          end
         end
       end
+    end
+  end
+
+  def get_svg_path
+    if self.sample_svg_file
+      "/images/samples/#{self.sample_svg_file}"
+    else
+      "/images/molecules/#{self.molecule.molecule_svg_file}"
+    end
+  end
+
+  def loading
+    self.residues[0] && self.residues[0].custom_info['loading'].to_f
+  end
+
+  def attach_svg
+    svg = self.sample_svg_file
+    return unless svg.present?
+    return unless svg.match /TMPFILE/
+
+    svg_file_name = "#{self.short_label}.svg"
+    svg_path = "#{Rails.root}/public/images/samples/#{svg}"
+
+    FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
+
+    self.sample_svg_file = svg_file_name
+  end
+
+  def init_elemental_compositions
+    residue = self.residues[0]
+    return unless m_formula = self.molecule.sum_formular
+
+    if residue.present? && self.molfile.include?(' R# ')# case when residue will be deleted
+      p_formula = residue.custom_info['formula']
+      p_loading = residue.custom_info['loading'].try(:to_d)
+
+      if loading_full = residue.custom_info['loading_full_conv']
+        d = Chemotion::Calculations
+                       .get_composition(m_formula, p_formula, loading_full.to_f)
+        set_elem_composition_data 'full_conv', d, loading_full
+      end
+
+      if p_formula.present?
+        d = Chemotion::Calculations
+                 .get_composition(m_formula, p_formula, (p_loading || 0.0))
+
+        # if it is reaction product then loading has been calculated
+        l_type = if residue['custom_info']['loading_type'] == 'mass_diff'
+          'mass_diff'
+        else
+          'loading'
+        end
+
+        unless p_loading.to_f == 0.0
+          set_elem_composition_data l_type, d, p_loading
+        end
+      else
+        {}
+      end
+    else
+      d = Chemotion::Calculations.get_composition(m_formula)
+
+      set_elem_composition_data 'formula', d
+    end
+
+    # init empty object keys for user-calculated composition input
+    unless self.elemental_compositions.find {|i|i.composition_type== 'found'}
+      clone_data = (d || {}).keys.map do |key|
+        [key, nil]
+      end.to_h
+
+      set_elem_composition_data 'found', clone_data, 0.0
     end
   end
 
@@ -125,5 +225,78 @@ class Sample < ActiveRecord::Base
   def analyses= analyses
     json_dump = JSON.dump(analyses)
     self.analyses_dump = json_dump
+  end
+
+  def amount_mmol
+    if self.loading
+      divisor = self.target_amount_unit == 'mg' ? 1000.0 : 1.0
+      self.target_amount_value * loading.to_f / divisor
+    else
+      self.target_amount_value / self.molecule.molecular_weight
+    end
+  end
+
+private
+  def set_elem_composition_data d_type, d_values, loading = nil
+    attrs = {
+      composition_type: d_type,
+      data: d_values,
+      loading: loading
+    }
+
+    if item = self.elemental_compositions.find{|i| i.composition_type == d_type}
+      item.assign_attributes attrs
+    else
+      self.elemental_compositions << ElementalComposition.new(attrs)
+    end
+  end
+
+  def check_molfile_polymer_section
+    return unless self.molfile.include? 'R#'
+
+    lines = self.molfile.lines
+    polymers = []
+    m_end_index = nil
+    lines[4..-1].each_with_index do |line, index|
+      polymers << index if line.include? 'R#'
+      (m_end_index = index) && break if line.match /M\s+END/
+    end
+
+    if lines[5 + m_end_index].match /(> <PolymersList>[\W\w.\n]+[\d]+)/m
+      lines[5 + m_end_index] = "> <PolymersList>\n"
+      lines.insert(5 + m_end_index, polymers.join(' ') + "\n")
+    else
+      lines.insert(5 + m_end_index, "> <PolymersList>\n")
+      lines[6 + m_end_index] = polymers.join(' ') + "\n"
+    end
+
+    self.molfile = lines.join
+  end
+
+  def set_loading_from_ea
+    return unless residue = self.residues.first
+
+    # select from cached attributes, don't make a SQL query
+    return unless el_composition = self.elemental_compositions.find do |i|
+      i.composition_type == 'found'
+    end
+
+    el_composition.set_loading self
+  end
+
+  def update_data_for_reactions
+    %w(product reactant).each do |name|
+      self.send("reactions_#{name}_samples").each do |record|
+        record.update_equivalent
+      end
+    end
+
+    self.reactions_starting_material_samples.each do |record|
+      %w(product reactant).each do |name|
+        record.reaction.send("reactions_#{name}_samples").each do |record|
+          record.update_equivalent
+        end
+      end
+    end
   end
 end

@@ -1,9 +1,42 @@
 import React, {Component, PropTypes} from 'react';
 import Material from './Material';
+import MaterialCalculations from './MaterialCalculations'
 
 export default class MaterialGroup extends Component {
+
+  loadingTHead(showLoadingColumn) {
+    if(showLoadingColumn) {
+      return <th width="10%">loading</th>;
+    } else {
+      return false;
+    }
+  }
+
   render() {
-    const {materials, materialGroup, deleteMaterial, onChange} = this.props;
+    const {materials, materialGroup, deleteMaterial, onChange, showLoadingColumn} = this.props;
+    let contents = [];
+
+    materials.map((material, key) => {
+      contents.push(
+        (<Material
+          onChange={onChange}
+          key={key}
+          material={material}
+          materialGroup={materialGroup}
+          showLoadingColumn={showLoadingColumn}
+          deleteMaterial={material => deleteMaterial(material, materialGroup)}
+          />)
+      );
+
+      if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
+        contents.push(
+          (<MaterialCalculations
+            material={material}
+            materialGroup={materialGroup}
+            />)
+        );
+    })
+
     return (
       <div>
         <table width="100%">
@@ -15,23 +48,15 @@ export default class MaterialGroup extends Component {
           <th width="15%">Mass</th>
           <th width="15%">Vol</th>
           <th width="15%">Amount</th>
-          <th width="10%">{materialGroup == 'products' ? 'Yield' : 'Equi'}</th>
+          <th width="10%">loading</th>
+          {this.loadingTHead(showLoadingColumn)}
+          <th width="10%">{materialGroup == 'products' ? 'Yield' : 'Equiv'}</th>
           <th width="5%"></th>
           </tr></thead>
           <tbody>
-          {
-            materials.map((material, key) => {
-              return (
-                <Material
-                  onChange={onChange}
-                  key={key}
-                  material={material}
-                  materialGroup={materialGroup}
-                  deleteMaterial={material => deleteMaterial(material, materialGroup)}
-                  />
-              );
-            })
-          }
+            {contents.map(function(item) {
+              return item;
+            })}
           </tbody>
         </table>
       </div>

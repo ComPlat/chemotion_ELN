@@ -10,11 +10,52 @@ export default class Sample extends Element {
     return false;
   }
 
-  static copyFromSampleAndCollectionId(sample, collection_id) {
+  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
     let newSample = sample.buildCopy();
+
+    if(structure_only)
+      newSample.filterSampleData()
+
     newSample.collection_id = collection_id;
 
     return newSample;
+  }
+
+  filterSampleData() {
+    let el_c = this.elemental_compositions.find(function(item) {
+      if(item.composition_type == 'formula') {
+        item.id = null;
+        return item;
+      }
+    });
+    this.elemental_compositions = el_c ? [el_c] : [];
+    this.elemental_compositions.push({
+      composition_type: 'found',
+      data: {},
+      description: 'Found'
+    });
+
+    if(this.contains_residues) {
+      this.setDefaultResidue();
+      this.error_loading = true;
+    }
+  }
+
+  setDefaultResidue() {
+    // set default polymer data
+    this.residues = [
+      {
+        residue_type: 'polymer', custom_info: {
+          "formula": 'CH',
+          "loading": null,
+          "polymer_type": "polystyrene",
+          "loading_type": "external",
+          "external_loading": 0.0,
+          "reaction_product": (this.reaction_product ? true : null),
+          "cross_linkage": null
+        }
+      }
+    ];
   }
 
   buildCopy() {
@@ -50,7 +91,7 @@ export default class Sample extends Element {
   }
 
   serialize() {
-    return super.serialize({
+    let serialized = super.serialize({
       name: this.name,
       external_label: this.external_label,
       target_amount_value: this.target_amount_value,
@@ -59,18 +100,24 @@ export default class Sample extends Element {
       real_amount_unit: this.real_amount_unit,
       description: this.description,
       purity: this.purity,
+      short_label: this.short_label.includes('Copy') ? this.short_label : null,
       solvent: this.solvent,
       impurities: this.impurities,
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
+      sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
       analyses: this.analyses.map(a => a.serialize()),
+      residues: this.residues,
+      elemental_compositions: this.elemental_compositions,
       is_split: this.is_split || false,
       is_new: this.is_new,
       imported_readout: this.imported_readout
     });
+
+    return serialized;
   }
 
   static buildEmpty(collection_id) {
@@ -88,14 +135,20 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
-      imported_readout: ''
+      residues: [],
+      elemental_compositions: [{
+        composition_type: 'found',
+        data: {}
+      }],
+      imported_readout: '',
+      attached_amount_mg: '' // field for polymers calculations
     });
 
     sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
     return sample;
   }
 
-  static buildEmptyWithCounter(collection_id, counter) {
+  static buildEmptyWithCounter(collection_id, counter, materialGroup = null) {
     let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
@@ -110,8 +163,16 @@ export default class Sample extends Element {
       molfile: '',
       molecule: { id: '_none_' },
       analyses: [],
+      elemental_compositions: [{
+        composition_type: 'found',
+        data: {}
+      }],
+      residues: [],
       imported_readout: ''
     });
+
+    // allow zero loading for reaction product
+    sample.reaction_product = (materialGroup == 'products');
 
     sample.short_label = Sample.buildNewSampleShortLabelWithCounter(counter);
     return sample;
@@ -138,6 +199,41 @@ export default class Sample extends Element {
 
   set is_top_secret(is_top_secret) {
     this._is_top_secret = is_top_secret;
+  }
+
+  set contains_residues(value) {
+    this._contains_residues = value;
+
+    if(value) {
+      if(!this.residues.length) {
+        // do not allow zero loading, exclude reaction products
+        if(!this.reaction_product)
+          this.error_loading = true;
+
+        this.setDefaultResidue();
+      } else {
+        this.residues[0]._destroy = undefined;
+      }
+
+      this.elemental_compositions.map(function(item) {
+        if(item.composition_type == 'formula')
+          item._destroy = true;
+      });
+    } else {
+      this.sample_svg_file = '';
+      this.error_loading = false;
+      if(this.residues.length)
+        this.residues[0]._destroy = true; // delete residue info
+
+      this.elemental_compositions.map(function(item) {
+        if(item.composition_type == 'loading')
+          item._destroy = true;
+      });
+    }
+  }
+
+  get contains_residues() {
+    return this._contains_residues;
   }
 
   title() {
@@ -216,6 +312,11 @@ export default class Sample extends Element {
 
   defaultAmountType() {
     return this.real_amount_value ? 'real' : 'target';
+  }
+
+  get defined_part_amount() {
+    let mw = this.molecule_molecular_weight;
+    return this.amount_mmol * mw;
   }
 
   // amount proxy
@@ -305,7 +406,6 @@ export default class Sample extends Element {
 	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
 	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
-
   convertGramToUnit(amount_g, unit) {
 
     switch (unit) {
@@ -344,6 +444,76 @@ export default class Sample extends Element {
         return amount_value
     }
   }
+
+  convertMilligramToUnit(amount_mg, unit) {
+    if(this.contains_residues) {
+      var loading = this.residues[0].custom_info.loading;
+      switch (unit) {
+        case 'mg':
+          return amount_mg;
+          break;
+        case 'mmol':
+            return (loading * amount_mg) / 1000.0;
+            break;
+        default:
+          return loading * amount_mg;
+      }
+    } else {
+      switch (unit) {
+        case 'mg':
+          return amount_mg;
+          break;
+        case 'ml':
+          let molecule_density = this.molecule_density || 1.0;
+          if(molecule_density) {
+            return amount_mg / molecule_density / 1000;
+            break;
+          }
+        case 'mmol':
+          let molecule_molecular_weight = this.molecule_molecular_weight
+          if (molecule_molecular_weight) {
+            return amount_mg * (this.purity || 1.0) / molecule_molecular_weight;
+            break;
+          }
+        default:
+          return amount_mg
+      }
+    }
+  }
+
+  convertToMilligram(amount_value, amount_unit) {
+    if(this.contains_residues) {
+      switch (amount_unit) {
+        case 'mg':
+          return amount_value;
+          break;
+        case 'mmol':
+          let loading = this.residues[0].custom_info.loading;
+          if(!loading) {
+            return 0.0;
+          } else {
+            return 1000.0 * amount_value / loading;
+          }
+          break;
+        default:
+          return amount_value
+      }
+    } else {
+      switch (amount_unit) {
+        case 'mg':
+          return amount_value;
+          break;
+        case 'ml':
+          return amount_value * (this.molecule_density || 1.0) * 1000;
+          break;
+        case 'mmol':
+          return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
+          break;
+        default:
+          return amount_value
+      }
+    }
+  }
   get molecule_iupac_name() {
     return this.molecule && this.molecule.iupac_name;
   }
@@ -361,7 +531,7 @@ export default class Sample extends Element {
   }
 
   get molecule_molecular_weight() {
-    return this.molecule && this.molecule.molecular_weight
+    return this.molecule && this.molecule.molecular_weight;
   }
 
   get molecule_formula() {
@@ -402,12 +572,62 @@ export default class Sample extends Element {
 
   set molecule(molecule) {
     this._molecule = new Molecule(molecule)
+    if(molecule.temp_svg) {
+      this.sample_svg_file = molecule.temp_svg;
+    }
+  }
+
+  get display_name() {
+    let molecule_name = this._molecule.iupac_name || this._molecule.sum_formular;
+    if(this.contains_residues) {
+      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
+                          + this.polymer_type.slice(1);
+      return polymer_name.replace('_', '-') + ' - ' + molecule_name;
+    } else {
+      return molecule_name;
+    }
+  }
+
+  get polymer_formula() {
+    return this.contains_residues
+            && this.residues[0].custom_info.formula.toString();
+  }
+
+  get concat_formula() {
+    if(this.contains_residues)
+      return (this.molecule.sum_formular || '') + this.polymer_formula;
+    else
+      return (this.molecule.sum_formular || '');
+  }
+
+  get polymer_type() {
+    return this.contains_residues
+            && this.residues[0].custom_info.polymer_type.toString();
+  }
+
+  get loading() {
+    if(!this.contains_residues)
+      return false;
+
+    return this.residues[0].custom_info.loading;
+  }
+
+  set loading(loading) {
+    this.residues[0].custom_info.loading = loading;
+  }
+
+  get isValid(){
+    return (this && this.molfile &&
+            !this.error_loading && !this.error_polymer_type);
   }
 
   get svgPath() {
-    return this.molecule && this.molecule.svgPath
+    if (this.sample_svg_file){
+      return `/images/samples/${this.sample_svg_file}`;
+    } else {
+      return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
+    }
   }
-
   //todo: have a dedicated Material Sample subclass
 
   set equivalent(equivalent) {

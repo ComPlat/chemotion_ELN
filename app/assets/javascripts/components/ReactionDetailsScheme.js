@@ -8,6 +8,7 @@ import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
 import ElementActions from './actions/ElementActions';
 import UsersFetcher from './fetchers/UsersFetcher';
+import NotificationActions from './actions/NotificationActions'
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -24,7 +25,19 @@ export default class ReactionDetailsScheme extends Component {
 
   dropSample(sample, materialGroup) {
     const {reaction} = this.state;
+    if(reaction.hasSample(sample.id)) {
+      NotificationActions.add({
+        message: 'The sample is already present in current reaction.',
+        level: 'error'
+      });
+
+      return false;
+    }
+
     const splitSample = sample.buildChild();
+    if(materialGroup == 'products') {
+      splitSample.reaction_product = true;
+    }
     reaction.addMaterial(splitSample, materialGroup);
     this.onReactionChange(reaction, {schemaChanged: true});
   }
@@ -55,6 +68,11 @@ export default class ReactionDetailsScheme extends Component {
       case 'amountChanged':
         this.onReactionChange(
           this.updatedReactionForAmountChange(changeEvent)
+        );
+        break;
+      case 'loadingChanged':
+        this.onReactionChange(
+          this.updatedReactionForLoadingChange(changeEvent)
         );
         break;
       case 'amountTypeChanged':
@@ -90,6 +108,15 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
 
+  updatedReactionForLoadingChange(changeEvent) {
+    let {sampleID, amountType} = changeEvent;
+    let updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.amountType = amountType;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+  }
+
   updatedReactionForAmountTypeChange(changeEvent) {
     let {sampleID, amountType} = changeEvent;
     let updatedSample = this.props.reaction.sampleById(sampleID);
@@ -108,26 +135,147 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample)
   }
 
-  updatedSamplesForAmountChange(samples, updatedSample) {
+  calculateEquivalent(referenceMaterial, updatedSample) {
+    console.log('calculateEquivalent called');
+    if(!referenceMaterial.contains_residues) {
+      NotificationActions.add({
+        message: 'Cannot perform calculations for loading and equivalent',
+        level: 'error'
+      });
+
+      return 1.0;
+    }
+
+    /*if(!referenceMaterial.loading){
+      NotificationActions.add({
+        message: 'Please set non-zero starting material loading',
+        level: 'error'
+      });
+
+      return 0.0;
+    }*/
+
+    let loading = referenceMaterial.residues[0].custom_info.loading;
+    let mass_koef = updatedSample.amount_mg / referenceMaterial.amount_mg;
+    let mwb = updatedSample.molecule.molecular_weight;
+    let mwa = referenceMaterial.molecule.molecular_weight;
+    let mw_diff = mwb - mwa;
+    let equivalent = (1000.0 / loading) * (mass_koef - 1.0) / mw_diff;
+
+
+    if(isNaN(equivalent) || !isFinite(equivalent)){
+      updatedSample.adjusted_equivalent = 1.0;
+      updatedSample.adjusted_amount_mmol = referenceMaterial.amount_mmol;
+      updatedSample.adjusted_amount_mg = referenceMaterial.amount_mg;
+      updatedSample.setAmountAndNormalizeToMilligram(referenceMaterial.amount_value, referenceMaterial.amount_unit);
+    }
+
+    return equivalent;
+  }
+
+  checkMassMolecule(referenceM, updatedS) {
+    let errorMsg;
+    let mFull;
+    let mwb = updatedS.molecule.molecular_weight;
+
+    // mass check apply to 'polymers' only
+    if(!updatedS.contains_residues) {
+      mFull = referenceM.amount_mmol * mwb * 1000.0;
+    } else {
+      let mwa = referenceM.molecule.molecular_weight;
+      let deltaM = mwb - mwa;
+      let massA = referenceM.amount_mg;
+      mFull = massA + referenceM.amount_mmol * deltaM;
+
+      let massExperimental = updatedS.amount_mg;
+      if(deltaM > 0) { //expect weight gain
+        if(massExperimental > mFull) {
+          errorMsg = 'Experimental mass value is more than possible \
+                      by 100% conversion! Please check your data.';
+        } else if(massExperimental < massA) {
+          errorMsg = 'Material loss! \
+                    Experimental mass value is less than possible! \
+                    Please check your data.';
+        }
+      } else { //expect weight loss
+        if(massExperimental < mFull) {
+          errorMsg = 'Experimental mass value is less than possible \
+                      by 100% conversion! Please check your data.';
+        }
+      }
+    }
+
+    if(errorMsg) {
+      updatedS.error_mass = true;
+      NotificationActions.add({
+        message: errorMsg,
+        level: 'error'
+      });
+    } else {
+      updatedS.error_mass = false;
+    }
+
+    return {
+      mFull: mFull,
+      errorMsg: errorMsg
+    }
+  }
+
+  checkMassPolymer(referenceM, updatedS, massAnalyses) {
+    let equivalent = this.calculateEquivalent(referenceM, updatedS);
+    updatedS.equivalent = equivalent;
+    let fconv_loading = referenceM.amount_mmol / updatedS.amount_mg * 1000.0;
+    updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
+    updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';
+
+    if (equivalent < 0.0 || equivalent > 1.0) {
+      updatedS.adjusted_equivalent = equivalent > 1.0 ? 1.0 : 0.0;
+      updatedS.adjusted_amount_mmol = referenceM.amount_mmol
+      updatedS.adjusted_loading = fconv_loading;
+      updatedS.adjusted_amount_mg = updatedS.amount_mg;
+      newAmountMmol = referenceM.amount_mmol;
+    }
+
+    let newAmountMmol;
+    let newLoading;
+
+    newAmountMmol = referenceM.amount_mmol * equivalent;
+    newLoading = newAmountMmol / updatedS.amount_mg * 1000.0;
+
+    updatedS.residues[0].custom_info.loading = newLoading;
+  }
+
+  updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const {referenceMaterial} = this.props.reaction;
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
         sample.setAmountAndNormalizeToGram({value:updatedSample.amount_value, unit:updatedSample.amount_unit});
+
         if(referenceMaterial && sample.amountType != 'real') {
           if(!updatedSample.reference && referenceMaterial.amount_value) {
-            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+            if(materialGroup == 'products') {
+              let massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
+              if(updatedSample.contains_residues) {
+                this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
+                return sample;
+              }
+            }
+            sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
           } else {
             sample.equivalent = 1.0;
           }
         }
-      }
-      else {
+      } else {
+        // calculate equivalent, don't touch real amount
         if(updatedSample.reference) {
-          if(sample.equivalent && sample.amountType != 'real') {
-            sample.setAmountAndNormalizeToGram({value:sample.equivalent * updatedSample.amount_mol,unit: 'mol'});
-          }
+          sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
         }
       }
+
+      if(isNaN(sample.equivalent) || !isFinite(sample.equivalent)){
+        sample.equivalent = 0.0;
+      }
+
       return sample;
     });
   }
@@ -169,9 +317,9 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedReactionWithSample(updateFunction, updatedSample) {
     const {reaction} = this.state;
-    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample);
-    reaction.reactants = updateFunction(reaction.reactants, updatedSample);
-    reaction.products = updateFunction(reaction.products, updatedSample);
+    reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials');
+    reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants');
+    reaction.products = updateFunction(reaction.products, updatedSample, 'products');
     return reaction;
   }
 
@@ -207,6 +355,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
           </ListGroupItem>
@@ -218,6 +367,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
 
@@ -230,6 +380,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
 

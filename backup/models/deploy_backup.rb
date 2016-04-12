@@ -11,6 +11,7 @@ Backup::Model.new(:deploy_backup, 'Description for psql_deploy') do
   archive :attachments_backup do |archive|
     archive.add "#{Rails.root}/public/images/molecules"
     archive.add "#{Rails.root}/public/images/reactions"
+    archive.add "#{Rails.root}/public/images/samples"
     archive.add "#{Rails.root}/uploads/attachments"
   end
 

@@ -56,6 +56,8 @@ module Chemotion
 
       def scope_by_search_by_method_arg_and_collection_id(search_by_method, arg, collection_id)
         scope = case search_by_method
+        when 'polymer_type'
+          Sample.for_user(current_user.id).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
         when 'sum_formula', 'iupac_name', 'sample_name'
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
         when 'reaction_name'
@@ -68,9 +70,8 @@ module Chemotion
           AllElementSearch.new(arg, current_user.id).search_by_substring
         end
 
-        unless params[:collection_id] == "all"
-          scope = scope.by_collection_id(params[:collection_id].to_i)
-        end
+        scope = scope.by_collection_id(params[:collection_id].to_i)
+
         scope
       end
 
@@ -143,11 +144,8 @@ module Chemotion
           arg = params[:selection].name
 
           scope = Sample.search_by(search_by_method, arg)
-          if params[:collection_id] == "all"
-            samples = scope
-          else
-            samples = scope.by_collection_id(params[:collection_id].to_i)
-          end
+
+          samples = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(samples), params[:page])
         end
@@ -166,11 +164,8 @@ module Chemotion
           arg = params[:selection].name
 
           scope = Reaction.search_by(search_by_method, arg)
-          if params[:collection_id] == "all"
-            reactions = scope
-          else
-            reactions = scope.by_collection_id(params[:collection_id].to_i)
-          end
+
+          reactions = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(reactions), params[:page])
         end
@@ -189,11 +184,8 @@ module Chemotion
           arg = params[:selection].name
 
           scope = Wellplate.search_by(search_by_method, arg)
-          if params[:collection_id] == "all"
-            wellplates = scope
-          else
-            wellplates = scope.by_collection_id(params[:collection_id].to_i)
-          end
+
+          wellplates = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(wellplates), params[:page])
         end
@@ -212,11 +204,8 @@ module Chemotion
           arg = params[:selection].name
 
           scope = Screen.search_by(search_by_method, arg)
-          if params[:collection_id] == "all"
-            screens = scope
-          else
-            screens = scope.by_collection_id(params[:collection_id].to_i)
-          end
+
+          screens = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(screens), params[:page])
         end

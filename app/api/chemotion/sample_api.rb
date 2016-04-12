@@ -58,11 +58,7 @@ module Chemotion
           currentCollectionId = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
           Sample.where(id: sample_ids).each do |sample|
-            #todo: extract method into Sample
-            subsample = sample.dup
-            subsample.parent = sample
-            subsample.created_by = current_user.id
-            subsample.save
+            subsample = sample.create_subsample current_user
             CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
           end
         end
@@ -84,11 +80,13 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).samples.includes(:molecule)
+          coll = Collection.belongs_to_or_shared_by(current_user.id)
+          coll.find(params[:collection_id]).samples
+              .includes(:molecule, :residues, :elemental_compositions)
         else
           # All collection
           Sample.for_user(current_user.id).includes(:molecule).uniq
-        end.uniq.order("molecules.iupac_name DESC")
+        end.uniq.order("molecules.id DESC")
 
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
       end
@@ -103,7 +101,8 @@ module Chemotion
         end
 
         get do
-          sample = Sample.find(params[:id])
+          sample= Sample.includes(:molecule, :residues, :elemental_compositions)
+                         .find(params[:id])
           {sample: ElementPermissionProxy.new(current_user, sample).serialized}
         end
       end
@@ -184,7 +183,6 @@ module Chemotion
             }
           end
         end
-
       end
 
       desc "Update sample by id"
@@ -203,9 +201,12 @@ module Chemotion
         optional :impurities, type: String, desc: "Sample impurities"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
+        optional :sample_svg_file, type: String, desc: "Sample SVG file"
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
+        optional :residues, type: Array
+        optional :elemental_compositions, type: Array
       end
       route_param :id do
         before do
@@ -217,10 +218,18 @@ module Chemotion
           embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
           attributes.merge!(analyses: embedded_analyses)
 
-          molecule_attributes = attributes.delete(:molecule)
-          attributes.merge!(
-            molecule_attributes: molecule_attributes
-          ) unless molecule_attributes.blank?
+          # otherwise ActiveRecord::UnknownAttributeError appears
+          attributes[:elemental_compositions].each do |i|
+            i.delete :description
+          end if attributes[:elemental_compositions]
+
+          # set nested attributes
+          %i(molecule residues elemental_compositions).each do |prop|
+            prop_value = attributes.delete(prop)
+            attributes.merge!(
+              "#{prop}_attributes".to_sym => prop_value
+            ) unless prop_value.blank?
+          end
 
           if sample = Sample.find(params[:id])
             sample.update(attributes)
@@ -232,6 +241,7 @@ module Chemotion
       desc "Create a sample"
       params do
         optional :name, type: String, desc: "Sample name"
+        optional :short_label, type: String, desc: "Sample short label"
         optional :external_label, type: String, desc: "Sample external label"
         optional :imported_readout, type: String, desc: "Sample Imported Readout"
         requires :target_amount_value, type: Float, desc: "Sample target amount_value"
@@ -244,14 +254,18 @@ module Chemotion
         requires :impurities, type: String, desc: "Sample impurities"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
+        optional :sample_svg_file, type: String, desc: "Sample SVG file"
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :analyses, type: Array
+        optional :residues, type: Array
+        optional :elemental_compositions, type: Array
       end
       post do
         attributes = {
           name: params[:name],
+          short_label: params[:short_label],
           target_amount_value: params[:target_amount_value],
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],
@@ -262,15 +276,29 @@ module Chemotion
           impurities: params[:impurities],
           location: params[:location],
           molfile: params[:molfile],
+          sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
+          residues: params[:residues],
+          elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id
         }
-        attributes.merge!(
-          molecule_attributes: params[:molecule]
-        ) unless params[:molecule].blank?
+
+        # otherwise ActiveRecord::UnknownAttributeError appears
+        attributes[:elemental_compositions].each do |i|
+          i.delete :description
+        end if attributes[:elemental_compositions]
+
+        # set nested attributes
+        %i(molecule residues elemental_compositions).each do |prop|
+          prop_value = attributes.delete(prop)
+          attributes.merge!(
+            "#{prop}_attributes".to_sym => prop_value
+          ) unless prop_value.blank?
+        end
 
         sample = Sample.create(attributes)
+
         if collection_id = params[:collection_id]
           collection = Collection.find(collection_id)
           CollectionsSample.create(sample: sample, collection: collection)

@@ -53,7 +53,7 @@ export default class NumeralInputWithUnits extends Component {
 
   _renderDropdownButtonAddon(title) {
     return (
-      <DropdownButton title={title}>
+      <DropdownButton id="dropdown-button-addon" title={title}>
         {this._renderUnitsAsMenuItems()}
       </DropdownButton>
     );
@@ -67,14 +67,16 @@ export default class NumeralInputWithUnits extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let {units, bsSize, bsStyle, label, numeralFormat, key} = this.props;
+    let {units, bsSize, bsStyle, label, numeralFormat, key, disabled} = this.props;
     let {unit, value} = this.state;
 
     let buttonAfter = (units.length > 1) ? this._renderDropdownButtonAddon(unit) : '';
     let addonAfter = (units.length == 1) ? unit : '';
     return (
-      <NumeralInput key={key} buttonAfter={buttonAfter} addonAfter={addonAfter} onChange={(value) => this._handleValueChange(value)}
-        value={value} bsSize={bsSize} bsStyle={bsStyle} label={label} numeralFormat={numeralFormat}/>
+      <NumeralInput key={key} buttonAfter={buttonAfter} addonAfter={addonAfter}
+        onChange={(value) => this._handleValueChange(value)}
+        value={value} bsSize={bsSize} bsStyle={bsStyle} label={label}
+        disabled={disabled} numeralFormat={numeralFormat}/>
     );
   }
 }

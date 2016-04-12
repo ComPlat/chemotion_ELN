@@ -52,7 +52,8 @@ gem 'roo', ">2.3.0"
 
 # Chemrails
 gem 'httparty'
-gem 'chemrails', git: 'git://github.com/ComPlat/chemrails'
+gem 'chemrails', git: 'git://github.com/ComPlat/chemrails',
+                 branch: :draw_polymer
 
 # Free font icons
 gem "font-awesome-rails"

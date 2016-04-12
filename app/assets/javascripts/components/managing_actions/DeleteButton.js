@@ -5,7 +5,7 @@ export default class DeleteButton extends React.Component {
   render() {
     const {isDisabled, onClick} = this.props;
     const tooltip = (
-      <Tooltip>Delete from all Collections</Tooltip>
+      <Tooltip id="delete_button">Delete from all Collections</Tooltip>
     );
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>

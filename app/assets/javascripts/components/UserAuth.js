@@ -52,7 +52,7 @@ export default class UserAuth extends Component {
           <MenuItem eventKey="1" href="pages/settings" >Account settings</MenuItem>
           <MenuItem eventKey="2" href="users/edit" >Change Password</MenuItem>
         </NavDropdown>
-        <NavItem onClick={() => this.logout()} style={style} className='' title='log-out'> <Glyphicon glyph="log-out" /> </NavItem>
+        <NavItem onClick={() => this.logout()} style={style} className='' title='Log out'> <Glyphicon glyph="log-out" /> </NavItem>
       </Nav>
 
     );

@@ -1,0 +1,30 @@
+table.elemental-composition {
+  .form-inline .form-group {
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 15px;
+
+    td {
+      vertical-align: top;
+    }
+
+    label {
+      padding-right: 5px;
+      min-width: 25px;
+    }
+
+    input {
+      max-width: 60px;
+    }
+  }
+
+  td.loading input {
+    max-width: 60px;
+    margin-top: 5px;
+    float: right;
+  }
+
+  th {
+    font-size: 12px;
+  }
+}

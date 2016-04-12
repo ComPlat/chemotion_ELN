@@ -12,7 +12,7 @@ export default class SplitButton extends React.Component {
   render() {
     const {isDisabled} = this.props;
     const tooltip = (
-      <Tooltip>Split Sample</Tooltip>
+      <Tooltip id="split_button">Split Sample</Tooltip>
     );
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>

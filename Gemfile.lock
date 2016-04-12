@@ -1,6 +1,7 @@
 GIT
   remote: git://github.com/ComPlat/chemrails
-  revision: a2a902470147eb412cac7e3605736fda5df605b5
+  revision: 1720676ec33effd722f234059d310f7041cf9e22
+  branch: draw_polymer
   specs:
     chemrails (0.0.34)
 

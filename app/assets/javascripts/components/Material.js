@@ -16,7 +16,7 @@ const collect = (connect, monitor) => ({
   isDragging: monitor.isDragging()
 });
 
-class Material extends Component {
+export default class Material extends Component {
   handleMaterialClick(sample) {
     const uiState = UiStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}/sample/${sample.id}`);
@@ -35,8 +35,68 @@ class Material extends Component {
     }
   }
 
+  notApplicableInput(inputsStyle) {
+    return (
+      <td style={inputsStyle}>
+        <Input type="text"
+               value="N / A"
+               disabled={true}
+               />
+      </td>
+    )
+  }
+
+  materialVolume(material, inputsStyle) {
+    if (material.contains_residues)
+      return this.notApplicableInput(inputsStyle);
+    else
+      return(
+        <td style={inputsStyle}>
+          <NumeralInputWithUnits
+            key={material.id}
+            value={material.amount_ml}
+            unit='ml'
+            numeralFormat='0,0.0000'
+            onChange={(amount) => this.handleAmountChange(amount)}
+          />
+        </td>
+      )
+  }
+
+  materialLoading(material, inputsStyle, showLoadingColumn) {
+    if(!showLoadingColumn) {
+      return false;
+    } else if (!material.contains_residues)
+      return this.notApplicableInput(inputsStyle);
+    else {
+      let disabled = this.props.materialGroup == 'products';
+      return(
+        <td style={inputsStyle}>
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={material.amount_l}
+            unit='l'
+            metricPrefix='milli'
+            metricPrefixes = {['milli','none','micro']}
+            precision={3}
+            onChange={(amount) => this.handleAmountChange(amount)}
+          />
+        </td>
+      )
+    }
+  }
+
+  checkMassInputBsStyle(material) {
+    if (material.error_mass) {
+      return 'error';
+    } else {
+      return 'success';
+    }
+}
+
   render() {
-    const {material, deleteMaterial, isDragging, connectDragSource} = this.props;
+    const {material, deleteMaterial, isDragging, connectDragSource,
+           showLoadingColumn } = this.props;
 
     let style = {};
     if (isDragging) {
@@ -95,6 +155,7 @@ class Material extends Component {
           metricPrefixes = {['milli','none','micro']}
           precision={5}
           onChange={(amount) => this.handleAmountChange(amount)}
+          bsStyle={this.checkMassInputBsStyle(material)}
         />
       </td>
 
@@ -110,6 +171,8 @@ class Material extends Component {
         />
       </td>
 
+      {this.materialVolume(material, inputsStyle)}
+
       <td style={inputsStyle}>
         <NumeralInputWithUnitsCompo
           key={material.id}
@@ -121,6 +184,8 @@ class Material extends Component {
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
+
+      {this.materialLoading(material, inputsStyle, showLoadingColumn)}
 
       <td style={inputsStyle}>
         {this.equivalentOrYield(material)}
@@ -172,8 +237,6 @@ class Material extends Component {
   }
 
   handleAmountTypeChange(amountType) {
-    console.log("amountType: "  + amountType);
-
     if(this.props.onChange) {
       let event = {
         type: 'amountTypeChanged',
@@ -194,6 +257,21 @@ class Material extends Component {
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
         amount: amount
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleLoadingChange(newLoading) {
+    this.props.material.residues[0].custom_info.loading = newLoading.value;
+
+    // just recalculate value in mg using the new loading value
+    if(this.props.onChange) {
+      let event = {
+        type: 'amountChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        amount: this.props.material.amount
       };
       this.props.onChange(event);
     }

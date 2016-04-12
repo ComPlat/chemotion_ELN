@@ -69,22 +69,30 @@ class Reaction < ActiveRecord::Base
       sign   = (temperature =~ /^-/).present? ? "-" : ""
       number = temperature[ /\d+(\.\d+)?/ ].to_f
       unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
-      self.temperature = "#{sign}#{number}°#{unit}"
+      self.temperature = "#{sign}#{number} °#{unit}"
     else
-      self.temperature = "21.0°C"
+      self.temperature = "21.0 °C"
     end
   end
 
   def update_svg_file!
-    inchikeys = {}
-    inchikeys[:starting_materials] = starting_materials.includes(:molecule).pluck(:'molecules.inchikey')
-    inchikeys[:reactants] = reactants.includes(:molecule).pluck(:'molecules.inchikey')
-    inchikeys[:products] = products.includes(:molecule).pluck(:'molecules.inchikey')
+    paths = {}
+    %i(starting_materials reactants products).each do |prop|
+      d = self.send(prop).includes(:molecule)
+      paths[prop]= d.pluck(:sample_svg_file,:'molecules.inchikey').map do |item|
+        if item[0].present?
+          '/images/samples/' + item[0]
+        else
+          "/images/molecules/#{item[1]}.svg"
+        end
+      end
+    end
+
     label = [solvent, temperature]
             .reject(&:blank?)
             .join(", ")
     begin
-      composer = SVG::ReactionComposer.new(inchikeys, label: label)
+      composer = SVG::ReactionComposer.new(paths, label: label)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
       Rails.logger.info("**** SVG::ReactionComposer failed ***")
@@ -95,5 +103,4 @@ class Reaction < ActiveRecord::Base
     self.dangerous_products = dangerous_products.reject(&:blank?)
     self.purification = purification.reject(&:blank?)
   end
-
 end

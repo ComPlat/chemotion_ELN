@@ -7,7 +7,7 @@ import UserStore from '../stores/UserStore';
 export default class Reaction extends Element {
   initializeTemporarySampleCounter(currentUser) {
     if(!this.temporary_sample_counter) {
-      this.temporary_sample_counter = currentUser.samples_created_count + 1;
+      this.temporary_sample_counter = currentUser.samples_count + 1;
     }
   }
 
@@ -25,7 +25,7 @@ export default class Reaction extends Element {
       dangerous_products: "",
       tlc_solvents: "",
       rf_value: 0.00,
-      temperature: "21.0°C",
+      temperature: "21.0 °C",
       tlc_description: "",
       starting_materials: [],
       reactants: [],
@@ -135,11 +135,18 @@ export default class Reaction extends Element {
 
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
-    if(this.sampleCount == 0) {
+    // do not set it as reference material if this is reaction product
+    if(!this.referenceMaterial && materialGroup == 'starting_materials') {
       this._setAsReferenceMaterial(material);
     } else {
       this._updateEquivalentForMaterial(material);
     }
+
+    // we don't want to copy loading from sample
+    if(materialGroup == "products" && material.contains_residues) {
+      material.loading = 0.0;
+    }
+
     materials.push(material);
   }
 
@@ -198,6 +205,26 @@ export default class Reaction extends Element {
 
   hasMaterials() {
     return this.starting_materials.length > 0 || this.reactants.length > 0 || this.products.length > 0;
+  }
+
+  hasSample(sampleId) {
+    return this.starting_materials.find((sample) => {
+      return sample.id == sampleId
+    }) || this.reactants.find((sample) => {
+      return sample.id == sampleId
+    }) || this.products.find((sample) => {
+      return sample.id == sampleId
+    });
+  }
+
+  hasPolymers() {
+    return this.starting_materials.find((sample) => {
+      return sample.contains_residues
+    }) || this.reactants.find((sample) => {
+      return sample.contains_residues
+    }) || this.products.find((sample) => {
+      return sample.contains_residues
+    });
   }
 
   // literatures

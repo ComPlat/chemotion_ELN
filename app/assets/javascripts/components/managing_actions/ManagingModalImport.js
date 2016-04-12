@@ -37,7 +37,6 @@ export default class ManagingModalImport extends React.Component {
   }
 
   handleFileDrop(attachment_file) {
-    console.log(attachment_file);
     this.setState({file: attachment_file[0]});
   }
 

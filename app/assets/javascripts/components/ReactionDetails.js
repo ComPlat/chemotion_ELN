@@ -22,6 +22,10 @@ export default class ReactionDetails extends Component {
     this.state = {
       reaction
     };
+
+    if(reaction.hasMaterials()) {
+      this.updateReactionSvg();
+    }
   }
 
   componentDidMount() {
@@ -46,19 +50,29 @@ export default class ReactionDetails extends Component {
 
   updateReactionSvg() {
     const {reaction} = this.state;
-    const materialsInchikeys = {
-      starting_materials: reaction.starting_materials.map(material => material.molecule.inchikey),
-      reactants: reaction.reactants.map(material => material.molecule.inchikey),
-      products: reaction.products.map(material => material.molecule.inchikey)
+    const materialsSvgPaths = {
+      starting_materials: reaction.starting_materials.map(material => material.svgPath),
+      reactants: reaction.reactants.map(material => material.svgPath),
+      products: reaction.products.map(material => material.svgPath)
     };
     const label = [reaction.solvent, reaction.temperature]
                   .filter(item => item) // omit empty string
                   .join(', ')
-    ElementActions.fetchReactionSvgByMaterialsInchikeys(materialsInchikeys, label);
+    ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, label);
   }
 
   submitFunction() {
     const {reaction} = this.state;
+
+    // set corrected values before we save the reaction
+    reaction.products.map(function(product) {
+      if(product.adjusted_loading && product.error_mass) {
+        product.loading = product.adjusted_loading;
+        product.equivalent = product.adjusted_equivalent;
+        product.setAmountAndNormalizeToMilligram(product.adjusted_amount_mg,'mg')
+      }
+    })
+
     if(reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
@@ -72,6 +86,7 @@ export default class ReactionDetails extends Component {
   }
 
   handleReactionChange(reaction, options={}) {
+    reaction.changed = true;
     if(options.schemaChanged) {
       this.setState({ reaction }, () => this.updateReactionSvg());
     } else{
@@ -111,6 +126,20 @@ export default class ReactionDetails extends Component {
       )
   }
 
+  reactionSVG(reaction, svgContainerStyle) {
+    if(!reaction.svgPath) {
+      return false;
+    } else {
+      return (
+        <Col md={9}>
+          <div style={svgContainerStyle}>
+            <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
+          </div>
+        </Col>
+      )
+    }
+  }
+
   render() {
     const {reaction} = this.state;
     const svgContainerStyle = {
@@ -134,6 +163,10 @@ export default class ReactionDetails extends Component {
               <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/><br/>
               <Button
                 style={{cursor: 'pointer'}}
+                disabled={reaction.changed || reaction.isNew}
+                title={(reaction.changed || reaction.isNew) ?
+                   "Report can be generated after reaction is saved."
+                   : "Generate report for this reaction"}
                 onClick={() => Utils.downloadFile({
                   contents: "api/v1/reports/rtf?id=" + reaction.id,
                   name: reaction.name
@@ -142,11 +175,7 @@ export default class ReactionDetails extends Component {
                 Generate Report
               </Button>
             </Col>
-            <Col md={9}>
-              <div style={svgContainerStyle}>
-                <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
-              </div>
-            </Col>
+            {this.reactionSVG(reaction, svgContainerStyle)}
           </Row>
           <hr/>
           <Tabs defaultActiveKey={0}>

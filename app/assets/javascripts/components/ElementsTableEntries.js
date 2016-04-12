@@ -50,7 +50,7 @@ export default class ElementsTableEntries extends Component {
 
   topSecretIcon(element) {
     if (element.type == 'sample' && element.is_top_secret == true) {
-      const tooltip = (<Tooltip>Top secret</Tooltip>);
+      const tooltip = (<Tooltip id="top_secret_icon">Top secret</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
           <i className="fa fa-user-secret"></i>
@@ -119,7 +119,7 @@ export default class ElementsTableEntries extends Component {
       switch (element.status) {
 
         case "Successful":
-          tooltip = (<Tooltip>Successful Reaction</Tooltip>);
+          tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
               <a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>
@@ -128,7 +128,7 @@ export default class ElementsTableEntries extends Component {
           break;
 
         case "Planned":
-          tooltip = (<Tooltip>Planned Reaction</Tooltip>);
+          tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
               <a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>
@@ -137,7 +137,7 @@ export default class ElementsTableEntries extends Component {
           break;
 
         case "Not Successful":
-          tooltip = (<Tooltip>Not Successful Reaction</Tooltip>);
+          tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
               <a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>
