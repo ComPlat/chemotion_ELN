@@ -449,7 +449,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <td>
-        <Input type="text" label="m, mg"
+        <Input type="text" label="attached, mg"
                value={sample.defined_part_amount}
                ref="attachedAmountMg"
                id={'attachedAmountMg' + sample.id.toString()}
@@ -501,9 +501,9 @@ export default class SampleDetails extends React.Component {
               <tr>
                 {this.sampleNumericInput(sample, 'g', ['milli','none'], 4, 'Amount', 'massMgInput')}
 
-                {this.sampleNumericInput(sample, 'l', ['milli','micro','none'], 5, "&nbsp;", 'l' )}
+                {this.sampleNumericInput(sample, 'l', ['milli','micro','none'], 5, '\u202F', 'l' )}
 
-                {this.sampleNumericInput(sample, 'mol', ['milli','none'], 4, "&nbsp;", 'amountInput' )}
+                {this.sampleNumericInput(sample, 'mol', ['milli','none'], 4, '\u202F', 'amountInput' )}
 
                 {this.attachedAmountInput(sample)}
               </tr>
@@ -636,8 +636,11 @@ export default class SampleDetails extends React.Component {
           <table width="100%">
             <tbody>
               <tr>
-                <td width="50%" className="padding-right" colSpan={2}>
+                <td width="25%" className="padding-right">
                   {this.sampleName(sample)}
+                </td>
+                <td width="25%" className="padding-right">
+                  {this.sampleExternalLabel(sample)}
                 </td>
                 <td width="25%" className="padding-right">
                   {this.sampleImpurities(sample)}
@@ -648,10 +651,7 @@ export default class SampleDetails extends React.Component {
                 </td>
               </tr>
               <tr>
-                <td width="25%" className="padding-right">
-                  {this.sampleExternalLabel(sample)}
-                </td>
-                <td width="25%" className="padding-right">
+                <td width="25%" className="padding-right" colSpan={2}>
                   {this.sampleAmount(sample)}
                 </td>
                 <td width="25%" className="padding-right">
