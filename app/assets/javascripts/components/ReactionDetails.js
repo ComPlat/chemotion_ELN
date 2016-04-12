@@ -69,7 +69,12 @@ export default class ReactionDetails extends Component {
       if(product.adjusted_loading && product.error_mass) {
         product.loading = product.adjusted_loading;
         product.equivalent = product.adjusted_equivalent;
-        product.setAmountAndNormalizeToMilligram(product.adjusted_amount_mg,'mg')
+        product.setAmountAndNormalizeToGram(
+          {
+            value: product.adjusted_amount_g,
+            unit: 'g'
+        });
+        
       }
     })
 

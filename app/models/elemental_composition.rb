@@ -24,7 +24,7 @@ class ElementalComposition < ActiveRecord::Base
                 d_reaction.reaction.reactions_starting_material_samples.first
 
       return unless ea_sm = sm_data.sample.elemental_compositions
-                       .where(composition_type: ['loading', 'formula']).first
+                       .where(composition_type: ['loading', 'formula', 'mass_diff']).first
 
       product_yield = Chemotion::Calculations.get_yield self.data, ea_sm.data
       return if product_yield == 0.0

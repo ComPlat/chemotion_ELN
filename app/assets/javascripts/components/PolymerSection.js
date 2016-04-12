@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Input, ListGroup, ListGroupItem, Button, RadioButton} from 'react-bootstrap';
-import NumeralInputWithUnits from './NumeralInputWithUnits'
+import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from './ElementalCompositionGroup'
 import NotificationActions from './actions/NotificationActions'
 import Select from 'react-select'
@@ -109,7 +109,7 @@ export default class PolymerSection extends React.Component {
 
   checkInputStatus(sample, key) {
     if (sample['error_' + key]) {
-      return 'error';
+      return 'danger';
     } else {
       return 'success';
     }
@@ -119,6 +119,7 @@ export default class PolymerSection extends React.Component {
     return (
       <div key={'polymer_formula' + sample.id.toString()}>
       <Button className="pull-right"
+              id="external-save-btn"
               bsStyle="warning"
               disabled={!sample.isValid}
               onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
@@ -141,17 +142,18 @@ export default class PolymerSection extends React.Component {
 
     if(value == 'external') {
       additionalLoadingInput = (
-        <td width="15%" className="external_loading_input">
-          <NumeralInputWithUnits
-            value={residue.custom_info.external_loading}
-            unit='mmol/g'
-            numeralFormat='0,0.00'
+         <td width="30%" className="external_loading_input">
+           <NumeralInputWithUnitsCompo
             key={'polymer_loading_input' + sample.id.toString()}
-            name="polymer_external_loading"
-            disabled={residue.custom_info.loading_type != value}
-            bsStyle={this.checkInputStatus(sample, 'loading')}
-            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
-            />
+             value={residue.custom_info.external_loading}
+             unit='mmol/g'
+             metricPrefix='none'
+             metricPrefixes = {['none']}
+             precision={3}
+             disabled={residue.custom_info.loading_type != value}
+             bsStyle={this.checkInputStatus(sample, 'loading')}
+             onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
+           />
          </td>
       )
     }
@@ -191,19 +193,21 @@ export default class PolymerSection extends React.Component {
         {this.customInfoRadio("Loading (according to 100% conversion)","full_conv", residue, sample)}
        <tr>
          <td></td>
-         <td width="15%">
-          <NumeralInputWithUnits
-            value={sample.loading}
-            unit='mmol/g'
-            label="Loading (mmol/g)"
-            numeralFormat='0,0.00'
-            key={'polymer_loading_input' + sample.id.toString()}
-            name="polymer_loading"
-            bsStyle={this.checkInputStatus(sample, 'loading')}
-            disabled
-            readOnly
-            />
-          </td>
+         <td width="30%">
+           <NumeralInputWithUnitsCompo
+             value={sample.loading}
+             label="Loading"
+             unit='mmol/g'
+             metricPrefix='none'
+             metricPrefixes = {['none']}
+             precision={3}
+             key={'polymer_loading_input' + sample.id.toString()}
+             name="polymer_loading"
+             bsStyle={this.checkInputStatus(sample, 'loading')}
+             disabled
+             readOnly
+           />
+         </td>
        </tr>
        </tbody>
        </table>

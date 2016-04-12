@@ -449,20 +449,26 @@ export default class SampleDetails extends React.Component {
 
     return (
       <td>
-        <Input type="text" label="attached, mg"
-               value={sample.defined_part_amount}
-               ref="attachedAmountMg"
-               id={'attachedAmountMg' + sample.id.toString()}
-               title="Weight of the defined part"
-               disabled
-               readOnly
+        <NumeralInputWithUnitsCompo
+          key={sample.id}
+          value={sample.defined_part_amount}
+          unit='g'
+          label="Attached"
+          ref="attachedAmountMg"
+          id={'attachedAmountMg' + sample.id.toString()}
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none']}
+          title="Weight of the defined part"
+          precision={4}
+          disabled
+          readOnly
           />
       </td>
     )
   }
 
   sampleNumericInput(sample, unit, prefixes, precision, label, ref = '') {
-    if(sample.contains_residues && unit == 'ml')
+    if(sample.contains_residues && unit == 'l')
       return false;
 
     return (

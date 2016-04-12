@@ -135,9 +135,8 @@ export default class ReactionDetailsScheme extends Component {
     return this.updatedReactionWithSample(this.updatedSamplesForEquivalentChange.bind(this), updatedSample)
   }
 
-  calculateEquivalent(referenceMaterial, updatedSample) {
-    console.log('calculateEquivalent called');
-    if(!referenceMaterial.contains_residues) {
+  calculateEquivalent(refM, updatedSample) {
+    if(!refM.contains_residues) {
       NotificationActions.add({
         message: 'Cannot perform calculations for loading and equivalent',
         level: 'error'
@@ -146,28 +145,27 @@ export default class ReactionDetailsScheme extends Component {
       return 1.0;
     }
 
-    /*if(!referenceMaterial.loading){
+    if(!refM.loading){
       NotificationActions.add({
         message: 'Please set non-zero starting material loading',
         level: 'error'
       });
 
       return 0.0;
-    }*/
+    }
 
-    let loading = referenceMaterial.residues[0].custom_info.loading;
-    let mass_koef = updatedSample.amount_mg / referenceMaterial.amount_mg;
+    let loading = refM.residues[0].custom_info.loading;
+    let mass_koef = updatedSample.amount_g / refM.amount_g;
     let mwb = updatedSample.molecule.molecular_weight;
-    let mwa = referenceMaterial.molecule.molecular_weight;
+    let mwa = refM.molecule.molecular_weight;
     let mw_diff = mwb - mwa;
     let equivalent = (1000.0 / loading) * (mass_koef - 1.0) / mw_diff;
 
 
     if(isNaN(equivalent) || !isFinite(equivalent)){
       updatedSample.adjusted_equivalent = 1.0;
-      updatedSample.adjusted_amount_mmol = referenceMaterial.amount_mmol;
-      updatedSample.adjusted_amount_mg = referenceMaterial.amount_mg;
-      updatedSample.setAmountAndNormalizeToMilligram(referenceMaterial.amount_value, referenceMaterial.amount_unit);
+      updatedSample.adjusted_amount_mol = refM.amount_mol;
+      updatedSample.setAmountAndNormalizeToGram({ value: refM.amount_value, unit: refM.amount_unit });
     }
 
     return equivalent;
@@ -180,14 +178,14 @@ export default class ReactionDetailsScheme extends Component {
 
     // mass check apply to 'polymers' only
     if(!updatedS.contains_residues) {
-      mFull = referenceM.amount_mmol * mwb * 1000.0;
+      mFull = referenceM.amount_mol * mwb;
     } else {
       let mwa = referenceM.molecule.molecular_weight;
       let deltaM = mwb - mwa;
-      let massA = referenceM.amount_mg;
-      mFull = massA + referenceM.amount_mmol * deltaM;
+      let massA = referenceM.amount_g;
+      mFull = massA + referenceM.amount_mol * deltaM;
 
-      let massExperimental = updatedS.amount_mg;
+      let massExperimental = updatedS.amount_g;
       if(deltaM > 0) { //expect weight gain
         if(massExperimental > mFull) {
           errorMsg = 'Experimental mass value is more than possible \
@@ -224,23 +222,23 @@ export default class ReactionDetailsScheme extends Component {
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
     let equivalent = this.calculateEquivalent(referenceM, updatedS);
     updatedS.equivalent = equivalent;
-    let fconv_loading = referenceM.amount_mmol / updatedS.amount_mg * 1000.0;
+    let fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
     updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
     updatedS.residues[0].custom_info['loading_type'] = 'mass_diff';
 
+    let newAmountMol;
+
     if (equivalent < 0.0 || equivalent > 1.0) {
       updatedS.adjusted_equivalent = equivalent > 1.0 ? 1.0 : 0.0;
-      updatedS.adjusted_amount_mmol = referenceM.amount_mmol
+      updatedS.adjusted_amount_mol = referenceM.amount_mol
       updatedS.adjusted_loading = fconv_loading;
-      updatedS.adjusted_amount_mg = updatedS.amount_mg;
-      newAmountMmol = referenceM.amount_mmol;
+      updatedS.adjusted_amount_g = updatedS.amount_g;
+      newAmountMol = referenceM.amount_mol;
     }
 
-    let newAmountMmol;
     let newLoading;
-
-    newAmountMmol = referenceM.amount_mmol * equivalent;
-    newLoading = newAmountMmol / updatedS.amount_mg * 1000.0;
+    newAmountMol = referenceM.amount_mol * equivalent;
+    newLoading = newAmountMol / updatedS.amount_g * 1000.0;
 
     updatedS.residues[0].custom_info.loading = newLoading;
   }
@@ -251,7 +249,7 @@ export default class ReactionDetailsScheme extends Component {
       if (sample.id == updatedSample.id) {
         sample.setAmountAndNormalizeToGram({value:updatedSample.amount_value, unit:updatedSample.amount_unit});
 
-        if(referenceMaterial && sample.amountType != 'real') {
+        if(referenceMaterial) {
           if(!updatedSample.reference && referenceMaterial.amount_value) {
             if(materialGroup == 'products') {
               let massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
@@ -260,7 +258,7 @@ export default class ReactionDetailsScheme extends Component {
                 return sample;
               }
             }
-            sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
+            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
           } else {
             sample.equivalent = 1.0;
           }
@@ -268,7 +266,7 @@ export default class ReactionDetailsScheme extends Component {
       } else {
         // calculate equivalent, don't touch real amount
         if(updatedSample.reference) {
-          sample.equivalent = sample.amount_mmol / referenceMaterial.amount_mmol;
+          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
         }
       }
 

@@ -52,11 +52,13 @@ export default class Material extends Component {
     else
       return(
         <td style={inputsStyle}>
-          <NumeralInputWithUnits
+          <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.amount_ml}
-            unit='ml'
-            numeralFormat='0,0.0000'
+            value={material.amount_l}
+            unit='l'
+            metricPrefix='milli'
+            metricPrefixes = {['milli','none','micro']}
+            precision={3}
             onChange={(amount) => this.handleAmountChange(amount)}
           />
         </td>
@@ -74,12 +76,13 @@ export default class Material extends Component {
         <td style={inputsStyle}>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.amount_l}
-            unit='l'
-            metricPrefix='milli'
-            metricPrefixes = {['milli','none','micro']}
+            value={material.loading}
+            unit='mmol/g'
+            metricPrefix='none'
+            metricPrefixes = {['none']}
             precision={3}
-            onChange={(amount) => this.handleAmountChange(amount)}
+            disabled={disabled}
+            onChange={(loading) => this.handleLoadingChange(loading)}
           />
         </td>
       )
@@ -88,7 +91,7 @@ export default class Material extends Component {
 
   checkMassInputBsStyle(material) {
     if (material.error_mass) {
-      return 'error';
+      return 'danger';
     } else {
       return 'success';
     }
@@ -137,6 +140,7 @@ export default class Material extends Component {
           name={`amount_type_${material.id}`}
           checked={material.amountType === 'target'}
           onChange={event => this.handleAmountTypeChange('target')}
+          disabled={this.props.materialGroup == 'products'}
         />
         <input
           type="radio"
@@ -159,18 +163,6 @@ export default class Material extends Component {
         />
       </td>
 
-      <td style={inputsStyle}>
-        <NumeralInputWithUnitsCompo
-          key={material.id}
-          value={material.amount_l}
-          unit='l'
-          metricPrefix='milli'
-          metricPrefixes = {['milli','none','micro']}
-          precision={3}
-          onChange={(amount) => this.handleAmountChange(amount)}
-        />
-      </td>
-
       {this.materialVolume(material, inputsStyle)}
 
       <td style={inputsStyle}>
@@ -181,6 +173,7 @@ export default class Material extends Component {
           metricPrefix='milli'
           metricPrefixes = {['milli','none']}
           precision={4}
+          disabled={this.props.materialGroup == 'products'}
           onChange={(amount) => this.handleAmountChange(amount)}
         />
       </td>
@@ -223,7 +216,6 @@ export default class Material extends Component {
 
   handleReferenceChange(event) {
     let value = event.target.value;
-    console.log("Material " + this.materialId() + " handleReferenceChange value:" + value)
 
     if(this.props.onChange) {
        let event = {
@@ -249,7 +241,6 @@ export default class Material extends Component {
   }
 
   handleAmountChange(amount) {
-    console.log("Material " + this.materialId() + " handleAmountChange amount:" + JSON.stringify(amount))
 
     if(this.props.onChange) {
       let event = {
@@ -278,7 +269,6 @@ export default class Material extends Component {
   }
 
   handleUnitChange(unit, nextUnit, value) {
-    console.log("Material " + this.materialId() + " handleUnitChange unit: " + unit + "->" + nextUnit + " value:" + value)
 
     if(this.props.onChange) {
       let event = {
@@ -300,7 +290,6 @@ export default class Material extends Component {
 
   handleEquivalentChange(event) {
     let equivalent = event.target.value;
-    console.log("Material " + this.materialId() + " handleEquivalentChange amount:" + equivalent)
 
     if(this.props.onChange) {
       let event = {
