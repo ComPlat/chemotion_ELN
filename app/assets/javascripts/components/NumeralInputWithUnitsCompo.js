@@ -9,9 +9,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.state ={
       unit: unit,
       value: value,
-      metricPrefix: metricPrefix,
+      metricPrefix: metricPrefix || "none",
       currentPrecision: precision,
-      valueString: metPreConv(value,"none",metricPrefix) || 0,
+      valueString:  0, // metPreConv(value,"none",metricPrefix) ||
       showString: false
     };
   }
@@ -21,7 +21,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     this.setState({
       unit: unit,
       value: value,
-    })
+    });
   }
 
   _handleValueChange(value) {
@@ -37,19 +37,13 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let {value} = inputField;
     let {metricPrefix,valueString} = this.state;
     let {onChange} = this.props;
-  //  let l = value.length;
     let lastChar =  value[caretPosition-1] || "";
     let md = lastChar.match(/\d/);
     let mc = lastChar.match(/\.|(,)/);
-    let comma= parseInt(value)!=value && value.match(/\./)&&value.match(/\./).index;
-
-
 
     if (mc && mc[1]){value = value.slice(0,caretPosition-1)+'.'+value.slice(caretPosition)}
-    if (md||mc){
-      if(parseFloat(valueString)==value){}
-      valueString=value}else{
-    }
+
+    if (md||mc){valueString=value}
 
     this.setState({
         value:  metPreConv(value,metricPrefix,"none"),
@@ -59,20 +53,20 @@ export default class NumeralInputWithUnitsCompo extends Component {
         $(inputField).caret(caretPosition);
       }
     );
-  //  onChange({value: unformatedValue,unit: this.state.unit});
-  }
 
+  }
 
   _handleInputValueFocus(event){
-     this.setState({
-        currentPrecision: undefined,
-        showString: true
+    this.setState({
+      currentPrecision: undefined,
+      showString: true,
+      valueString: metPreConv(this.state.value,"none",this.state.metricPrefix) || 0,
       }, () => {this._onChangeCallback();}
-  );
+    );
   }
+
   _handleInputValueBlur(event){
      this.setState({
-        //valueString: value.toPrecision(currentPrecision)
         currentPrecision: this.props.precision,
         showString: false
       }, () => {this._onChangeCallback();}
