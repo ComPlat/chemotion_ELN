@@ -15,7 +15,6 @@ const Functions = {
     const link = document.createElement('a');
     link.download = name;
     link.href = contents;
-    //link.click();
     let event = new MouseEvent('click', {
       'view': window,
       'bubbles': true,
