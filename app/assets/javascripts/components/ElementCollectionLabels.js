@@ -1,5 +1,5 @@
 import React from 'react';
-import {Label, OverlayTrigger, Popover,Glyphicon} from 'react-bootstrap';
+import {Label, OverlayTrigger, Popover,Glyphicon, Button} from 'react-bootstrap';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -21,7 +21,7 @@ export default class ElementCollectionLabels extends React.Component {
     return labels.map((label, index) => {
       return (
         <span className="collection-label" key={index}>
-          <Label bsStyle={this.labelStyle(label)}>{label.name}</Label>
+          <Button bsStyle='default' bsSize='xs' onClick={()=>Aviator.navigate(`/collection/${label.id}/${this.state.element.type}/${this.state.element.id}`)} >{label.name}</Button>
           &nbsp;
         </span>
       )
@@ -37,7 +37,7 @@ export default class ElementCollectionLabels extends React.Component {
       labels.length > 0 ?
         <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
           <span className="collection-label" key={element.id}>
-            <Label bsStyle={this.labelStyle(labels[0])} style={{backgroundColor:'white',color:'black', border: '1px solid grey'}}>{collection} {labels.length} {shared} </Label>
+            <Label  style={{backgroundColor:'white',color:'black', border: '1px solid grey'}}>{collection} {labels.length} {shared} </Label>
             &nbsp;
           </span>
         </OverlayTrigger> : undefined
@@ -45,6 +45,7 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   collectionLabels(element) {
+    console.log(element);
     if(element.collection_labels) {
       let shared_labels = [];
       let labels = [];

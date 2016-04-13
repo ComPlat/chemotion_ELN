@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button,Glyphicon} from 'react-bootstrap';
 
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
@@ -122,6 +122,7 @@ export default class CollectionTree extends React.Component {
   render() {
     return (
       <div>
+        <Glyphicon glyph='list'/>
         <div className="tree-wrapper">
           {this.lockedSubtrees()}
           {this.unsharedSubtrees()}
