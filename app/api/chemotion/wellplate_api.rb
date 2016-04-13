@@ -133,6 +133,7 @@ module Chemotion
       end
       post do
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
+        current_user.increment_counter 'wellplates'
         {wellplate: ElementPermissionProxy.new(current_user, wellplate).serialized}
       end
     end

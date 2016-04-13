@@ -15,7 +15,7 @@ export default class Reaction extends Element {
     return new Reaction({
       collection_id: collection_id,
       type: 'reaction',
-      name: 'New Reaction',
+      name: this.buildReactionName(),
       status: "",
       description: "",
       timestamp_start: "",
@@ -35,6 +35,16 @@ export default class Reaction extends Element {
     })
   }
 
+  static buildReactionName() {
+    let {currentUser} = UserStore.getState();
+    if(!currentUser) {
+      return 'New Reaction';
+    } else {
+      console.log(currentUser.reactions_count)
+      return `${currentUser.initials} Reaction #${currentUser.reactions_count + 1}`;
+    }
+  }
+
   get temporary_sample_counter() {
     return this._temporary_sample_counter;
   }
@@ -52,6 +62,10 @@ export default class Reaction extends Element {
   }
 
   serialize() {
+    if(this.name == 'New Reaction') {
+      this.name = Reaction.buildReactionName();
+    }
+
     return super.serialize({
       collection_id: this.collection_id,
       id: this.id,
