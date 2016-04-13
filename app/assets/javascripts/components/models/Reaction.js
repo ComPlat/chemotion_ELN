@@ -142,9 +142,13 @@ export default class Reaction extends Element {
       this._updateEquivalentForMaterial(material);
     }
 
-    // we don't want to copy loading from sample
-    if(materialGroup == "products" && material.contains_residues) {
-      material.loading = 0.0;
+    if(materialGroup == "products") {
+      material.amountType = 'real';
+
+      // we don't want to copy loading from sample
+      if(material.contains_residues) {
+        material.loading = 0.0;
+      }
     }
 
     materials.push(material);

@@ -97,7 +97,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let {units, bsSize, bsStyle, label, key} = this.props;
+    let {units, bsSize, bsStyle, disabled,label, key} = this.props;
     let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
     let mp = metPrefSymbols[metricPrefix];
     let val = ()=>{
@@ -108,7 +108,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let prefixSwitch =<Button active onClick={() =>{this.togglePrefix()}} bsStyle={bsStyle} bsSize={bsSize}>{mp+unit}</Button>
     return (
       <div >
-        <Input  key={key} type='text'  bsSize={bsSize} bsStyle={bsStyle} label={label}
+        <Input  key={key} type='text' disabled={disabled} bsSize={bsSize} bsStyle={bsStyle} label={label}
           value={val()}
           onChange={(event) => this._handleInputValueChange(event)}
           onFocus={(event) => this._handleInputValueFocus(event)}

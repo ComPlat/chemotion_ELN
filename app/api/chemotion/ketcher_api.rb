@@ -40,7 +40,7 @@ module Chemotion
           line.match /M\s+END/
         end
 
-        if r_list.any? && t_v2000_index && end_index
+        if r_list && r_list.any? && t_v2000_index && end_index
           r_list.each do |line_number|
             result[t_v2000_index + 1 + line_number].gsub! ' * ', ' R# '
           end

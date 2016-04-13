@@ -316,7 +316,7 @@ export default class Sample extends Element {
 
   get defined_part_amount() {
     let mw = this.molecule_molecular_weight;
-    return this.amount_mmol * mw;
+    return this.amount_mol * mw / 1000.0;
   }
 
   // amount proxy
@@ -390,15 +390,15 @@ export default class Sample extends Element {
 
 
   get amount_g() {
-    return this.convertGramToUnit(this.amount_value, 'g')
+    return this.convertToGram(this.amount_value, this.amount_unit)
   }
 
   get amount_l() {
-    return this.convertGramToUnit(this.amount_value, 'l')
+    return this.convertGramToUnit(this.amount_g, 'l')
   }
 
   get amount_mol() {
-    return this.convertGramToUnit(this.amount_value, 'mol')
+    return this.convertGramToUnit(this.amount_g, 'mol')
   }
 
   //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
@@ -407,92 +407,56 @@ export default class Sample extends Element {
 	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g, unit) {
-
-    switch (unit) {
-      case 'g':
-        return amount_g;
-        break;
-      case 'l':
-        let molecule_density = this.molecule_density || 1.0;
-        if(molecule_density) {
-          return amount_g / molecule_density / 1000 ;
+    if(this.contains_residues) {
+      let loading = this.residues[0].custom_info.loading;
+      switch (unit) {
+        case 'g':
+          return amount_g;
           break;
-        }
-      case 'mol':
-        let molecule_molecular_weight = this.molecule_molecular_weight
-        if (molecule_molecular_weight) {
-          return amount_g * (this.purity || 1.0) / molecule_molecular_weight;
+        case 'mol':
+            return (loading * amount_g) / 1000.0; // loading is always in mmol/g
+            break;
+        default:
+          return amount_g;
+      }
+    } else {
+      switch (unit) {
+        case 'g':
+          return amount_g;
           break;
-        }
-      default:
-        return amount_g
+        case 'l':
+          let molecule_density = this.molecule_density || 1.0;
+          if(molecule_density) {
+            return amount_g / molecule_density / 1000 ;
+            break;
+          }
+        case 'mol':
+          let molecule_molecular_weight = this.molecule_molecular_weight
+          if (molecule_molecular_weight) {
+            return amount_g * (this.purity || 1.0) / molecule_molecular_weight;
+            break;
+          }
+        default:
+          return amount_g
+      }
     }
   }
 
   convertToGram(amount_value, amount_unit) {
-    switch (amount_unit) {
-      case 'g':
-        return amount_value;
-        break;
-      case 'l':
-        return amount_value * (this.molecule_density || 1.0) * 1000;
-        break;
-      case 'mol':
-        return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
-        break;
-      default:
-        return amount_value
-    }
-  }
-
-  convertMilligramToUnit(amount_mg, unit) {
-    if(this.contains_residues) {
-      var loading = this.residues[0].custom_info.loading;
-      switch (unit) {
-        case 'mg':
-          return amount_mg;
-          break;
-        case 'mmol':
-            return (loading * amount_mg) / 1000.0;
-            break;
-        default:
-          return loading * amount_mg;
-      }
-    } else {
-      switch (unit) {
-        case 'mg':
-          return amount_mg;
-          break;
-        case 'ml':
-          let molecule_density = this.molecule_density || 1.0;
-          if(molecule_density) {
-            return amount_mg / molecule_density / 1000;
-            break;
-          }
-        case 'mmol':
-          let molecule_molecular_weight = this.molecule_molecular_weight
-          if (molecule_molecular_weight) {
-            return amount_mg * (this.purity || 1.0) / molecule_molecular_weight;
-            break;
-          }
-        default:
-          return amount_mg
-      }
-    }
-  }
-
-  convertToMilligram(amount_value, amount_unit) {
     if(this.contains_residues) {
       switch (amount_unit) {
-        case 'mg':
+        case 'g':
           return amount_value;
           break;
-        case 'mmol':
+        case 'mg':
+          return amount_value / 1000.0;
+          break;
+        case 'mol':
           let loading = this.residues[0].custom_info.loading;
           if(!loading) {
             return 0.0;
           } else {
-            return 1000.0 * amount_value / loading;
+            return amount_value / loading * 1000.0;
           }
           break;
         default:
@@ -500,13 +464,16 @@ export default class Sample extends Element {
       }
     } else {
       switch (amount_unit) {
-        case 'mg':
+        case 'g':
           return amount_value;
           break;
-        case 'ml':
+        case 'mg':
+          return amount_value / 1000.0;
+          break;
+        case 'l':
           return amount_value * (this.molecule_density || 1.0) * 1000;
           break;
-        case 'mmol':
+        case 'mol':
           return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
           break;
         default:
@@ -514,6 +481,7 @@ export default class Sample extends Element {
       }
     }
   }
+
   get molecule_iupac_name() {
     return this.molecule && this.molecule.iupac_name;
   }

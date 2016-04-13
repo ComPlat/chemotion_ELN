@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
 import {Input, Button} from 'react-bootstrap';
-import NumeralInputWithUnits from './NumeralInputWithUnits';
+import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 
 const source = {
   beginDrag(props) {
@@ -57,34 +57,43 @@ export default class MaterialCalculations extends Component {
       <td style={inputsStyle}></td>
       <td style={inputsStyle}><label>Adjusted: </label></td>
       <td style={inputsStyle}>
-        <NumeralInputWithUnits
+        <NumeralInputWithUnitsCompo
           key={material.id}
-          value={material.adjusted_amount_mg}
-          unit='mg'
+          value={material.adjusted_amount_g}
+          unit='g'
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none','micro']}
+          precision={5}
           disabled
-          numeralFormat='0,0.0000'
+          readOnly
         />
       </td>
 
       {this.materialVolume(material, inputsStyle)}
 
       <td style={inputsStyle}>
-        <NumeralInputWithUnits
-          key={material.id}
-          value={material.adjusted_amount_mmol}
-          unit='mmol'
+        <NumeralInputWithUnitsCompo
+          key={'adjusted_amount_mol' + material.id.toString()}
+          value={material.adjusted_amount_mol}
+          unit='mol'
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none']}
+          precision={4}
           disabled
-          numeralFormat='0,0.0000'
+          readOnly
         />
       </td>
 
       <td style={inputsStyle}>
-        <NumeralInputWithUnits
-          key={material.id}
+        <NumeralInputWithUnitsCompo
+          key={'adjusted_loading' + material.id.toString()}
           value={material.adjusted_loading}
           unit='mmol/g'
-          numeralFormat='0,0.0000'
+          metricPrefix='none'
+          metricPrefixes = {['none']}
+          precision={3}
           disabled
+          readOnly
         />
       </td>
 
