@@ -65,8 +65,8 @@ export const solventOptions = [{
     label: 'Toluol',
     value: 'Toluol'
   }, {
-    label: 'Wasser',
-    value: 'Wasser'
+    label: 'Water',
+    value: 'Water'
   }, {
     label: 'CDCl3',
     value: 'CDCl3'
