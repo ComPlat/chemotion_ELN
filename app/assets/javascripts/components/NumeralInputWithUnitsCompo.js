@@ -11,7 +11,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       value: value,
       metricPrefix: metricPrefix || "none",
       currentPrecision: precision,
-      valueString:  0, // metPreConv(value,"none",metricPrefix) ||
+      valueString:  0,
       showString: false
     };
   }
