@@ -99,7 +99,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
         return  metPreConv(value,"none",metricPrefix).toPrecision(currentPrecision);
       }else{return valueString}
     };
-    let prefixSwitch =<Button active onClick={() =>{this.togglePrefix()}} bsStyle={bsStyle} bsSize={bsSize}>{mp+unit}</Button>
+    let prefixSwitch =<Button active style={ {padding: '6px'}}onClick={() =>{this.togglePrefix()}} bsStyle={bsStyle} bsSize={bsSize}>{mp+unit}</Button>
     return (
       <div >
         <Input  key={key} type='text' disabled={disabled} bsSize={bsSize} bsStyle={bsStyle} label={label}

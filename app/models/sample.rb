@@ -142,7 +142,7 @@ class Sample < ActiveRecord::Base
   end
 
   def get_svg_path
-    if self.sample_svg_file
+    if self.sample_svg_file.present?
       "/images/samples/#{self.sample_svg_file}"
     else
       "/images/molecules/#{self.molecule.molecule_svg_file}"
@@ -156,14 +156,21 @@ class Sample < ActiveRecord::Base
   def attach_svg
     svg = self.sample_svg_file
     return unless svg.present?
-    return unless svg.match /TMPFILE/
-
     svg_file_name = "#{self.short_label}.svg"
-    svg_path = "#{Rails.root}/public/images/samples/#{svg}"
+    if svg.match /TMPFILE/
+      svg_path = "#{Rails.root}/public/images/samples/#{svg}"
+      FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
 
-    FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
+      self.sample_svg_file = svg_file_name
+    elsif svg.match /xml/
+      svg_path = "#{Rails.root}/public/images/samples/#{svg_file_name}"
 
-    self.sample_svg_file = svg_file_name
+      svg_file = File.new(svg_path, 'w+')
+      svg_file.write(svg)
+      svg_file.close
+
+      self.sample_svg_file = svg_file_name
+    end
   end
 
   def init_elemental_compositions

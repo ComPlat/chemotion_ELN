@@ -189,6 +189,7 @@ module Chemotion
 
         collection = Collection.find(collection_id)
         reaction = Reaction.create(attributes)
+        current_user.increment_counter 'reactions'
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
