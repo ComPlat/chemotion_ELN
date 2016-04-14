@@ -72,7 +72,7 @@ export default class ElementsTableEntries extends Component {
         'molecule-selected': element.type == 'sample' && this.isElementSelected(element)
       },
       {
-        'reaction-selected': element.type == 'reaction' && this.isElementSelected(element)
+        'reaction': element.type == 'reaction' && this.isElementSelected(element)
       }
     );
 
@@ -168,8 +168,9 @@ export default class ElementsTableEntries extends Component {
         let style = {};
         if (this.isElementSelected(element)) {
           style = {
-            color: '#fff',
-            background: '#337ab7'
+          color: '#000',
+          background: '#ddd',
+          border: '4px solid #337ab7'
           }
         }
         return (
