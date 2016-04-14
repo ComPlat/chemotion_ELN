@@ -36,24 +36,38 @@ class Molecule < ActiveRecord::Base
         pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
         molecule.molfile = molfile
-        molecule.inchistring = babel_info[:inchi]
-        molecule.sum_formular = babel_info[:formula]
-        molecule.molecular_weight = babel_info[:mol_wt]
-        molecule.iupac_name = pubchem_info[:iupac_name]
-        molecule.names = pubchem_info[:names]
-
-        molecule.attach_svg babel_info[:svg]
-
-        molecule.check_sum_formular
+        molecule.assign_molecule_data babel_info, pubchem_info
 
       end
       molecule
     end
   end
 
-  def attach_svg svg_data
-    return if self.molecule_svg_file.present? # we usually don't need update
+  def refresh_molecule_data
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(self.molfile)
+    inchikey = babel_info[:inchikey]
+    unless inchikey.blank?
+      pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
+      self.assign_molecule_data babel_info, pubchem_info
+      self.save!
+    end
+  end
+
+  def assign_molecule_data babel_info, pubchem_info
+    self.inchistring = babel_info[:inchi]
+    self.sum_formular = babel_info[:formula]
+    self.molecular_weight = babel_info[:mol_wt]
+    self.exact_molecular_weight = babel_info[:mass]
+    self.iupac_name = pubchem_info[:iupac_name]
+    self.names = pubchem_info[:names]
+
+    self.check_sum_formular # correct exact and average MW for resins
+
+    self.attach_svg babel_info[:svg]
+  end
+
+  def attach_svg svg_data
     svg_file_name = if self.is_partial
       "#{self.inchikey}Part.svg"
     else
@@ -89,7 +103,9 @@ class Molecule < ActiveRecord::Base
   def check_sum_formular
     return unless self.is_partial
 
-    self.molecular_weight -= Chemotion::PeriodicTable.get_atomic_weight 'H'
+    atomic_weight_h = Chemotion::PeriodicTable.get_atomic_weight 'H'
+    self.molecular_weight -= atomic_weight_h
+    self.exact_molecular_weight -= atomic_weight_h
 
     fdata = Chemotion::Calculations.parse_formula self.sum_formular, true
     self.sum_formular = fdata.map do |key, value|
