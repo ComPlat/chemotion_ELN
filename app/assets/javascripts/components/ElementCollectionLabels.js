@@ -30,7 +30,7 @@ export default class ElementCollectionLabels extends React.Component {
 
   labelWithPopover(title, labels) {
     let {element} = this.state;
-    let collection = <Glyphicon glyph= 'list'/>
+    let collection = <i className='fa fa-list'/> // <Glyphicon glyph= 'list'/>
     let label_popover = <Popover title={title} id={'labelpop'+element.id}>{this.formatLabels(labels)}</Popover>
     let shared =  title.match(/Shared/) ? <i className="fa fa-share-alt"/> : "" ;
     return (
@@ -45,7 +45,6 @@ export default class ElementCollectionLabels extends React.Component {
   }
 
   collectionLabels(element) {
-    console.log(element);
     if(element.collection_labels) {
       let shared_labels = [];
       let labels = [];

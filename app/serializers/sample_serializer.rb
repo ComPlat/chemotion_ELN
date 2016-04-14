@@ -36,25 +36,40 @@ class SampleSerializer < ActiveModel::Serializer
 
   def analysis_kinds
     analyses = object.analyses
-    analyses.inject({confirmed: {}, unconfirmed: {}, other: {}}) { |result, analysis|
+    analyses.inject({confirmed: {}, unconfirmed: {}, other: {}, count:{confirmed: 0, unconfirmed:0, other: 0}}) do |result, analysis|
       if analysis["status"] == "Confirmed"
-        result[:confirmed][analysis["kind"]] = {
-          label: analysis["kind"],
-          count: 1
-        }
+        if result[:confirmed][analysis["kind"]] then
+          result[:confirmed][analysis["kind"]][:count] += 1
+        else
+          result[:confirmed][analysis["kind"]] = {
+            label: analysis["kind"],
+            count: 1
+          }
+        end
+        result[:count][:confirmed] +=1
       elsif analysis["status"] == "Unconfirmed"
-        result[:unconfirmed][analysis["kind"]] = {
-          label: analysis["kind"],
-          count: 1
-        }
+        if result[:unconfirmed][analysis["kind"]] then
+          result[:unconfirmed][analysis["kind"]][:count] += 1
+        else
+          result[:unconfirmed][analysis["kind"]] = {
+            label: analysis["kind"],
+            count: 1
+          }
+        end
+        result[:count][:unconfirmed] +=1
       else
-        result[:other][analysis["kind"]] = {
-          label: analysis["kind"],
-          count: 1
-        }
+        if result[:other][analysis["kind"]] then
+          result[:other][analysis["kind"]][:count] += 1
+        else
+          result[:other][analysis["kind"]] = {
+            label: analysis["kind"],
+            count: 1
+          }
+        end
+        result[:count][:other] +=1
       end
       result
-    }
+    end
   end
 
   class Level0 < ActiveModel::Serializer

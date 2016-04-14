@@ -5,7 +5,8 @@ import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 
 import CollectionSubtree from './CollectionSubtree';
-
+import UIActions from './actions/UIActions';
+import UIStore from './stores/UIStore';
 export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
@@ -62,7 +63,7 @@ export default class CollectionTree extends React.Component {
       root.label = root.label.replace('project', 'projects');
     });
 
-    return this.subtrees(fakeRoots, 'My shared projects', false);
+    return this.subtrees(fakeRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
   }
 
   remoteSubtrees() {
@@ -118,11 +119,50 @@ export default class CollectionTree extends React.Component {
       return <div></div>;
     }
   }
+ collectionManagementButton() {
+
+      return  (
+        <div className="take-ownership-btn">
+          <Button bsStyle="danger" bsSize="xsmall" onClick={() => this.handleCollectionManagementToggle()}>
+            <i className="fa fa-cog"></i>
+          </Button>
+        </div>
+      )
+
+  }
+
+  handleCollectionManagementToggle() {
+    UIActions.toggleCollectionManagement();
+    const {showCollectionManagement, currentCollection} = UIStore.getState();
+    if(showCollectionManagement) {
+      Aviator.navigate('/collection/management');
+    } else {
+      if(currentCollection.label == 'All') {
+        Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
+      } else {
+        Aviator.navigate(`/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
+      }
+    }
+  }
+  urlForCurrentElement() {
+    const {currentElement} = ElementStore.getState();
+    if(currentElement) {
+      if(currentElement.isNew) {
+        return `${currentElement.type}/new`;
+      }
+      else{
+        return `${currentElement.type}/${currentElement.id}`;
+      }
+    }
+    else {
+      return '';
+    }
+  }
 
   render() {
     return (
       <div>
-        <Glyphicon glyph='list'/>
+        <div className="tree-view">{this.collectionManagementButton()}<div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> Collections </div></div>
         <div className="tree-wrapper">
           {this.lockedSubtrees()}
           {this.unsharedSubtrees()}
