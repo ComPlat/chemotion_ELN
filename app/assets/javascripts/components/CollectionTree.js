@@ -85,7 +85,7 @@ export default class CollectionTree extends React.Component {
 
     this.assignRootsAsChildrenToFakeRoots(roots, fakeRoots);
 
-    return this.subtrees(fakeRoots, 'Shared with me', true)
+    return this.subtrees(fakeRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> Shared with me <i className="fa fa-share-alt" /></div></div>, true)
   }
 
   convertToSlug(name) {
