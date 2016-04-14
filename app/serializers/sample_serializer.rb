@@ -63,7 +63,8 @@ class SampleSerializer < ActiveModel::Serializer
 
     def molecule
       {
-        molecular_weight: object.molecule.try(:molecular_weight)
+        molecular_weight: object.molecule.try(:molecular_weight),
+        exact_molecular_weight: object.molecule.try(:exact_molecular_weight),
       }
     end
   end

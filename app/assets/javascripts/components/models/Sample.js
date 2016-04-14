@@ -502,6 +502,10 @@ export default class Sample extends Element {
     return this.molecule && this.molecule.molecular_weight;
   }
 
+  get molecule_exact_molecular_weight() {
+    return this.molecule && this.molecule.exact_molecular_weight;
+  }
+
   get molecule_formula() {
     return this.molecule && this.molecule.sum_formular;
   }

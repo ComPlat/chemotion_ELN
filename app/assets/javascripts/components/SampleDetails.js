@@ -318,15 +318,29 @@ export default class SampleDetails extends React.Component {
     return (<SVG key={svgPath} src={svgPath} className="molecule-mid"/>);
   }
 
+  sampleAverageMW(sample) {
+    if(sample.molecule_molecular_weight)
+      return `(${sample.molecule_molecular_weight} g/mol)`;
+    else
+      return '';
+  }
+
+  sampleExactMW(sample) {
+    if(sample.molecule_exact_molecular_weight)
+      return `(Exact mass: ${sample.molecule_exact_molecular_weight} g/mol)`;
+    else
+      return '';
+  }
+
   sampleHeader(sample) {
-    let sampleMoleculeMolecularWeight = sample.molecule_molecular_weight ? `(${sample.molecule_molecular_weight} g/mol)` : '';
     const style = {height: '200px'};
     return (
       <Row style={style}>
         <Col md={7}>
           <h3>{sample.title()}</h3>
           <h4>{sample.display_name}</h4>
-          <h5>{sampleMoleculeMolecularWeight}</h5>
+          <h5>{this.sampleAverageMW(sample)}</h5>
+          <h5>{this.sampleExactMW(sample)}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
           {this.extraLabels().map(Lab=><Lab element={sample}/>)}

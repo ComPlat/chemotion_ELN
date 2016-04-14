@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160413144919) do
+ActiveRecord::Schema.define(version: 20160414070925) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -132,13 +132,14 @@ ActiveRecord::Schema.define(version: 20160413144919) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.string   "sum_formular"
-    t.string   "names",             default: [],                 array: true
+    t.string   "names",                  default: [],                 array: true
     t.string   "iupac_name"
     t.string   "molecule_svg_file"
-    t.datetime "created_at",                        null: false
-    t.datetime "updated_at",                        null: false
+    t.datetime "created_at",                             null: false
+    t.datetime "updated_at",                             null: false
     t.datetime "deleted_at"
-    t.boolean  "is_partial",        default: false, null: false
+    t.boolean  "is_partial",             default: false, null: false
+    t.float    "exact_molecular_weight"
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
