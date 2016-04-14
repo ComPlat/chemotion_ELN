@@ -32,6 +32,20 @@ class User < ActiveRecord::Base
     "#{first_name[0].capitalize}#{last_name[0].capitalize}"
   end
 
+  def reset_counters
+    self.counters = {
+      samples: self.samples.count,
+      reactions: self.reactions.count,
+      wellplates: self.wellplates.count
+    }
+    self.save!
+  end
+
+  def increment_counter key
+    self.counters[key] = self.counters[key].to_i + 1
+    self.save
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:

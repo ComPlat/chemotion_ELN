@@ -6,7 +6,7 @@ export default class MaterialGroup extends Component {
 
   loadingTHead(showLoadingColumn) {
     if(showLoadingColumn) {
-      return <th width="16%">Loading</th>;
+      return <th width="15%">Loading</th>;
     } else {
       return false;
     }
@@ -46,8 +46,8 @@ export default class MaterialGroup extends Component {
           <th width="14%">Name</th>
           <th width="5%">T/R</th>
           <th width="14%">Mass</th>
-          <th width="10%">Vol</th>
-          <th width="16%">Amount</th>
+          <th width={showLoadingColumn ? "11%" : "13%"}>Vol</th>
+          <th width={showLoadingColumn ? "16%" : "13%"}>Amount</th>
           {this.loadingTHead(showLoadingColumn)}
           <th width="10%">{materialGroup == 'products' ? 'Yield' : 'Equiv'}</th>
           <th width="5%"></th>

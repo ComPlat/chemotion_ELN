@@ -17,15 +17,16 @@ module Chemotion::Calculations
   end
 
   VALUABLE_ELEMENTS = %w(S N C)
+  FORMULA_PARSE_REGEXP = /([A-Za-z]{1}[a-z]{0,2})(\d*)/
 
   # returns only amount of each atom
   def self.parse_formula formula, is_partial = false
     elements = {}
 
-    formula.scan(/[A-Za-z]{1}[a-z]?\d*/).each do |atom|
-      atom_label = atom.scan(/[A-Za-z]+/).first
+    formula.scan(FORMULA_PARSE_REGEXP).each do |atom|
+      atom_label = atom.first
 
-      atoms_number = (atom.scan(/\d+/).first || 1).to_i
+      atoms_number = (atom.last.blank? ? 1 : atom.last).to_i
 
       atoms_number -= 1 if atom_label == 'H' && is_partial
 
@@ -140,13 +141,13 @@ private
   def self.analyse_formula formula
     elements = {}
 
-    formula.scan(/[A-Za-z]{1}[a-z]?\d*/).each do |atom|
-      atom_label = atom.scan(/[A-Za-z]+/).first
+    formula.scan(FORMULA_PARSE_REGEXP).each do |atom|
+      atom_label = atom.first
       atomic_weight = Chemotion::PeriodicTable.get_atomic_weight(atom_label)
 
       raise BadFormulaException.new if atomic_weight.nil?
 
-      atoms_number = (atom.scan(/\d+/).first || 1).to_i
+      atoms_number = (atom.last.blank? ? 1 : atom.last).to_i
 
       if elements.has_key? atom_label
         old_val = elements[atom_label][:atoms_number]
