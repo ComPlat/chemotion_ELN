@@ -25,7 +25,10 @@ SampleDetails:
     {}
   Labels:
     {}
-
+    
+CollectionTree:
+  Div:
+    {}
 
 
 

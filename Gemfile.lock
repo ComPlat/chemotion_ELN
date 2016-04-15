@@ -27,6 +27,12 @@ GIT
     thumbnailer (0.1.0)
 
 PATH
+  remote: ~/shared/basket
+  specs:
+    basket (0.0.1)
+      rails (~> 4.2.0)
+
+PATH
   remote: ~/shared/scifinding
   specs:
     scifinding (0.0.1)
@@ -398,6 +404,7 @@ DEPENDENCIES
   awesome_print
   axlsx!
   backup
+  basket!
   bootstrap-sass (~> 3.3.5)
   browserify-rails (~> 1.5.0)
   byebug

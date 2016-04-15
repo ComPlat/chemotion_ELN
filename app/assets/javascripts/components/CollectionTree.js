@@ -5,6 +5,7 @@ import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 
 import CollectionSubtree from './CollectionSubtree';
+import extra from './extra/CollectionTreeExtra';
 
 export default class CollectionTree extends React.Component {
   constructor(props) {
