@@ -38,7 +38,6 @@ export default class ElementCollectionLabels extends React.Component {
         <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
           <span className="collection-label" key={element.id}>
             <Label  style={{backgroundColor:'white',color:'black', border: '1px solid grey'}}>{collection} {labels.length} {shared} </Label>
-            &nbsp;
           </span>
         </OverlayTrigger> : undefined
     );

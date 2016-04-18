@@ -10,7 +10,7 @@ export default class ElementAnalysesLabels extends React.Component {
   }
 
   render() {
-  
+
     return (
       <div style={{display: 'inline-block'}}>
         {this.analysesLabels(this.state.element)}
@@ -51,7 +51,7 @@ export default class ElementAnalysesLabels extends React.Component {
         <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
           <span className="collection-label" key={element.id}>
             <Label  style={{backgroundColor:'white',color:'black', border: '1px solid grey'}}>{experiment} {totalCount} {status} </Label>
-            &nbsp;
+        
           </span>
         </OverlayTrigger> : undefined
     );
