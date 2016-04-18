@@ -1,5 +1,5 @@
 import React from 'react';
-import {Label, OverlayTrigger, Popover} from 'react-bootstrap';
+import {Label, OverlayTrigger, Popover,Glyphicon, Button} from 'react-bootstrap';
 
 export default class ElementCollectionLabels extends React.Component {
   constructor(props) {
@@ -21,7 +21,7 @@ export default class ElementCollectionLabels extends React.Component {
     return labels.map((label, index) => {
       return (
         <span className="collection-label" key={index}>
-          <Label bsStyle={this.labelStyle(label)}>{label.name}</Label>
+          <Button bsStyle='default' bsSize='xs' onClick={()=>Aviator.navigate(`/collection/${label.id}/${this.state.element.type}/${this.state.element.id}`)} >{label.name}</Button>
           &nbsp;
         </span>
       )
@@ -30,13 +30,14 @@ export default class ElementCollectionLabels extends React.Component {
 
   labelWithPopover(title, labels) {
     let {element} = this.state;
+    let collection = <i className='fa fa-list'/> // <Glyphicon glyph= 'list'/>
     let label_popover = <Popover title={title} id={'labelpop'+element.id}>{this.formatLabels(labels)}</Popover>
+    let shared =  title.match(/Shared/) ? <i className="fa fa-share-alt"/> : "" ;
     return (
       labels.length > 0 ?
         <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
           <span className="collection-label" key={element.id}>
-            <Label bsStyle={this.labelStyle(labels[0])}>In {labels.length} {title}</Label>
-            &nbsp;
+            <Label  style={{backgroundColor:'white',color:'black', border: '1px solid grey'}}>{collection} {labels.length} {shared} </Label>
           </span>
         </OverlayTrigger> : undefined
     );

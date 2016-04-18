@@ -186,8 +186,7 @@ export default class CollectionSubtree extends React.Component {
     }
 
     return (
-      <div className="tree-view" key={this.state.root.id}>
-        {this.collectionManagementButton()}
+      <div className="tree-view" key={this.state.root.id}>    
         {this.takeOwnershipButton()}
         <div className={"title " + this.selectedCssClass()} onClick={this.handleClick.bind(this)}>
           {this.expandButton()}

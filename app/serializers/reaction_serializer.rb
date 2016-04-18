@@ -31,7 +31,7 @@ class ReactionSerializer < ActiveModel::Serializer
 
   def analysis_kinds
     products = object.products
-    result_labels = {confirmed: {}, unconfirmed: {}, other: {}}
+    result_labels = {confirmed: {}, unconfirmed: {}, other: {}, count:{confirmed: 0, unconfirmed:0, other: 0}}
     products.each do |product|
       analyses = product.analyses
       analyses.inject(result_labels) { |result, analysis|
@@ -44,6 +44,7 @@ class ReactionSerializer < ActiveModel::Serializer
               count: 1
             }
           end
+          result[:count][:confirmed] +=1
         elsif analysis["status"] == "Unconfirmed"
           if result[:unconfirmed][analysis["kind"]] then
             result[:unconfirmed][analysis["kind"]][:count] += 1
@@ -53,6 +54,7 @@ class ReactionSerializer < ActiveModel::Serializer
               count: 1
             }
           end
+          result[:count][:unconfirmed] +=1
         else
           if result[:other][analysis["kind"]] then
             result[:other][analysis["kind"]][:count] += 1
@@ -62,6 +64,7 @@ class ReactionSerializer < ActiveModel::Serializer
               count: 1
             }
           end
+          result[:count][:other] +=1
         end
         result
       }
