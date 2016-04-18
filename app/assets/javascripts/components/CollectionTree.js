@@ -121,6 +121,11 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
+    let extraDiv = [];
+    for (let j=0;j < extra.DivCount;j++){
+      let NoName = extra["Div"+j];
+      extraDiv.push(<NoName key={"collTreeExtraDiv"+j} />);
+    }
     return (
       <div>
         <div className="tree-wrapper">
@@ -133,6 +138,7 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper">
           {this.remoteSubtrees()}
         </div>
+        {extraDiv.map((e)=>{return e;})}
       </div>
     )
   }
