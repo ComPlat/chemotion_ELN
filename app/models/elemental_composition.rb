@@ -30,8 +30,12 @@ class ElementalComposition < ActiveRecord::Base
       return if product_yield == 0.0
 
       new_amount = sm_data.sample.amount_mmol * product_yield
-
-      self.loading = new_amount / self.sample.target_amount_value * 1000.0
+      amount = if self.sample.real_amount_value.zero? || self.sample.real_amount_value.nil?
+        self.sample.amount_mg
+      else
+        self.sample.amount_mg :real
+      end
+      self.loading = new_amount / amount * 1000.0
     else
       return unless mf = sample.molecule.sum_formular
       return unless pf = residue.custom_info['formula']

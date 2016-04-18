@@ -62,7 +62,7 @@ class Report::RTFReport < Report::Report
         end
       when 'Report::Image'
         @document.paragraph do |p|
-          image = p.image(report_element.obtain_png_file)
+          image = p.image(report_element.obtain_png_file(0.99))
           unless report_element.size == nil
             image.x_scaling = report_element.size[:x]
             image.y_scaling = report_element.size[:y]
