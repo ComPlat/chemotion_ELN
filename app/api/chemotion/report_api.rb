@@ -96,13 +96,6 @@ module Chemotion
       end
 
       params do
-        optional :header, type: Hash
-        requires :body, type: Array do
-          requires :type, type: String
-        end
-      end
-
-      params do
         requires :id, type: String
       end
       get :export_samples_from_collection_samples do
@@ -112,7 +105,7 @@ module Chemotion
 
         excel = Report::ExcelExport.new
 
-        Collection.find(params[:id]).samples.each do |sample|
+        Collection.find(params[:id]).samples.includes(:molecule).each do |sample|
           excel.add_sample(sample)
         end
 
