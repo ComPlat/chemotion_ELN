@@ -14,17 +14,21 @@ table.elemental-composition {
     }
 
     input {
-      max-width: 60px;
+      max-width: 62px;
     }
   }
 
   td.loading input {
-    max-width: 60px;
+    max-width: 62px;
     margin-top: 5px;
     float: right;
   }
 
   th {
     font-size: 12px;
+  }
+  th.loading {
+    text-align: center;
+    padding-left: 10px;
   }
 }

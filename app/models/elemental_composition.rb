@@ -6,7 +6,7 @@ class ElementalComposition < ActiveRecord::Base
     loading: 'By user-defined loading',
     mass_diff: 'According to mass difference reaction/yield',
     formula: 'By molecule formula',
-    found: 'Found'
+    found: 'Experimental'
   }
 
   validates_inclusion_of :composition_type, in: TYPES.keys.map(&:to_s)

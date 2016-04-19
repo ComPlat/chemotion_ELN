@@ -100,7 +100,7 @@ export default class ElementalCompositionCustom extends React.Component {
             <span>{elemental_composition.description}</span>
           </th>
 
-          <th>
+          <th className="loading">
             {!this.hideLoading(elemental_composition) ? 'Loading (mmol/g)' : ''}
           </th>
         </tr>
