@@ -115,6 +115,9 @@ export default class Material extends Component {
       paddingRight: 5
     };
 
+    if(this.props.materialGroup == 'products')
+      material.amountType = 'real';//always take real amount for product
+
     return <tr style={style}>
       {connectDragSource(
         <td style={handleStyle}>

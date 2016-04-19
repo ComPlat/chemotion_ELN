@@ -18,10 +18,11 @@ class Report::ExcelExport
       sheet.add_row ["Bild", "", "", "Name", "Short Label", "Smiles Code"], :b => true, :sz => 12
 
       width = 0
-      @@sample_list.each_with_index do |sample, row|
-        sample_info = Chemotion::OpenBabelService.molecule_info_from_molfile sample.molfile
-        image_data = get_image_from_svg(sample_info[:svg])
-
+      files = [] # do not let Tempfile object to be garbage collected
+      @@sample_list.compact.each_with_index do |sample, row|
+        sample_info = Chemotion::OpenBabelService.molecule_info_from_molfile sample.molecule.molfile
+        svg_path = Rails.root.to_s + '/public' + sample.get_svg_path
+        image_data = get_image_from_svg(svg_path, files)
         sheet.add_image(:image_src => image_data[:path], :noMove => true) do |image|
           image.width = image_data[:width]
           image.height = image_data[:height]
@@ -41,8 +42,8 @@ class Report::ExcelExport
     p.to_stream().read()
   end
 
-  def get_image_from_svg(svg)
-    image = Magick::Image.from_blob(svg) { self.format = 'SVG'; }.first
+  def get_image_from_svg(svg_path, files)
+    image = Magick::Image.read(svg_path) { self.format = 'SVG'; }.first
     image.format = 'png'
     png_blob = image.to_blob
 
@@ -54,6 +55,7 @@ class Report::ExcelExport
     file.write png_blob
     file.flush
     file.close
+    files << file # do not let Tempfile object to be garbage collected
 
     return {path: file.path, width: width, height: height}
   end

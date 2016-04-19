@@ -41,11 +41,10 @@ module Chemotion
             p.add_text 'Starting Materials:', font_style: :bold
           end
           if reaction.starting_materials.count > 0
-            r.add_table(reaction.starting_materials.count + 1, 5) do |t|
-              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol'
-              samples = reaction.starting_materials.each do |sample|
-                sample_info = Chemotion::OpenBabelService.molecule_info_from_molfile sample.molfile
-                t.add_line sample.name, sample_info[:formula].to_s, sample_info[:mass].to_s, sample_info[:charge].to_s, sample_info[:mol_wt].to_s
+            r.add_table(reaction.starting_materials.count + 1, 6) do |t|
+              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Equiv'
+              samples = reaction.reactions_starting_material_samples.includes(:sample).each do |item|
+                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg.round(5).to_s, item.sample.amount_ml.to_s, item.sample.amount_mmol.round(5).to_s, item.equivalent.to_s
               end
             end
           end
@@ -54,11 +53,10 @@ module Chemotion
             p.add_text 'Reactants:', font_style: :bold
           end
           if reaction.reactants.count > 0
-            r.add_table(reaction.reactants.count + 1, 5) do |t|
-              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol'
-              samples = reaction.reactants.each do |sample|
-                sample_info = Chemotion::OpenBabelService.molecule_info_from_molfile sample.molfile
-                t.add_line sample.name, sample_info[:formula].to_s, sample_info[:mass].to_s, sample_info[:charge].to_s, sample_info[:mol_wt].to_s
+            r.add_table(reaction.reactants.count + 1, 6) do |t|
+              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Equiv'
+              samples = reaction.reactions_reactant_samples.includes(:sample).each do |item|
+                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg.round(5).to_s, item.sample.amount_ml.to_s, item.sample.amount_mmol.round(5).to_s, item.equivalent.round(2).to_s
               end
             end
           end
@@ -67,11 +65,10 @@ module Chemotion
             p.add_text 'Products:', font_style: :bold
           end
           if reaction.products.count > 0
-            r.add_table(reaction.products.count + 1, 5) do |t|
-              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol'
-              samples = reaction.products.each do |sample|
-                sample_info = Chemotion::OpenBabelService.molecule_info_from_molfile sample.molfile
-                t.add_line sample.name, sample_info[:formula].to_s, sample_info[:mass].to_s, sample_info[:charge].to_s, sample_info[:mol_wt].to_s
+            r.add_table(reaction.products.count + 1, 6) do |t|
+              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Yield'
+              samples = reaction.reactions_product_samples.includes(:sample).each do |item|
+                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg(:real).round(5).to_s, item.sample.amount_ml(:real).to_s, item.sample.amount_mmol(:real).round(5).to_s, item.formatted_yield
               end
             end
           end
@@ -96,13 +93,6 @@ module Chemotion
       end
 
       params do
-        optional :header, type: Hash
-        requires :body, type: Array do
-          requires :type, type: String
-        end
-      end
-
-      params do
         requires :id, type: String
       end
       get :export_samples_from_collection_samples do
@@ -112,7 +102,7 @@ module Chemotion
 
         excel = Report::ExcelExport.new
 
-        Collection.find(params[:id]).samples.each do |sample|
+        Collection.find(params[:id]).samples.includes(:molecule).each do |sample|
           excel.add_sample(sample)
         end
 

@@ -14,7 +14,7 @@ class Report::Image
     @size
   end
 
-  def obtain_png_file
+  def obtain_png_file scaling = nil
     unless @svg.nil?
       img, data = Magick::Image.from_blob(@svg) {
         self.format = 'SVG'
@@ -22,7 +22,12 @@ class Report::Image
       }
 
       file = Tempfile.new(['image', '.png'])
-      img.write(file.path)
+
+      if scaling
+        img.adaptive_resize(scaling).write(file.path)
+      else
+        img.write(file.path)
+      end
 
       return file.path
     else

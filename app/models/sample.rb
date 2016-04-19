@@ -234,13 +234,26 @@ class Sample < ActiveRecord::Base
     self.analyses_dump = json_dump
   end
 
-  def amount_mmol
+  def amount_mmol type = 'target'
+    divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
     if self.loading
-      divisor = self.target_amount_unit == 'mg' ? 1000.0 : 1.0
-      self.target_amount_value * loading.to_f / divisor
+      (self["#{type}_amount_value"] || 0.0) * loading.to_f
     else
-      self.target_amount_value / self.molecule.molecular_weight
-    end
+      1000.0 * (self["#{type}_amount_value"] || 0.0) / self.molecule.molecular_weight
+    end / divisor
+  end
+
+  def amount_mg type = 'target'
+    multiplier = self["#{type}_amount_unit"] == 'g' ? 1000.0 : 1.0
+    (self["#{type}_amount_value"] || 0.0) * multiplier
+  end
+
+  def amount_ml type = 'target'
+    return if self.molecule.is_partial
+
+    divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
+
+    (self["#{type}_amount_value"] || 0.0) / (self.molecule.density || 1.0) / divisor
   end
 
 private
