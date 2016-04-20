@@ -68,10 +68,12 @@ class Molecule < ActiveRecord::Base
   end
 
   def attach_svg svg_data
+    return unless svg_data.match /\A<\?xml/
+
     svg_file_name = if self.is_partial
-      "#{self.inchikey}Part.svg"
+      "#{SecureRandom.hex(64)}Part.svg"
     else
-      "#{self.inchikey}.svg"
+      "#{SecureRandom.hex(64)}.svg"
     end
     svg_file_path = "public/images/molecules/#{svg_file_name}"
 
