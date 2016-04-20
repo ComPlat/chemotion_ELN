@@ -1,4 +1,12 @@
-table.elemental-composition {
+table.elemental-composition, table.elemental-composition-custom {
+  font-size: 16px;
+
+  span.data-item {
+    float: left;
+    min-width: 90px;
+    margin-bottom: 5px;
+  }
+
   .form-inline .form-group {
     padding-right: 10px;
     padding-top: 5px;
@@ -18,17 +26,18 @@ table.elemental-composition {
     }
   }
 
-  td.loading input {
-    max-width: 62px;
-    margin-top: 5px;
-    float: right;
-  }
-
   th {
     font-size: 12px;
   }
-  th.loading {
-    text-align: center;
-    padding-left: 10px;
+}
+
+table.elemental-composition-custom {
+
+  td.loading input {
+    margin-top: 5px;
+  }
+
+  th {
+    padding-top: 15px;
   }
 }

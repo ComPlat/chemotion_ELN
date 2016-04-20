@@ -20,15 +20,15 @@ export default class ElementalComposition extends React.Component {
     keys.map(function(key, index) {
       let value = elemental_composition.data[key];
       elements.push(
-        <Input type="text"
-             className="padding-left"
-             label={key}
-             key={key}
-             defaultValue={value}
-             value={value}
-             disabled
-             readOnly
-        />
+        <span className="data-item">
+          <strong>
+            {key}:
+          </strong>
+          &nbsp;
+          {value}
+          &nbsp;
+          &nbsp;
+        </span>
       );
     });
 
@@ -41,13 +41,7 @@ export default class ElementalComposition extends React.Component {
 
     return (
       <td className="loading" align="right" width="13%">
-        <Input type="text"
-           key={"mc-loading" + elemental_composition.id.toString()}
-           defaultValue={elemental_composition.loading}
-           value={elemental_composition.loading.toFixed(2)}
-           disabled
-           readOnly
-        />
+        {elemental_composition.loading.toFixed(2)}
       </td>
     )
   }
