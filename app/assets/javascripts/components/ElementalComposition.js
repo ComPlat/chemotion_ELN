@@ -60,7 +60,7 @@ export default class ElementalComposition extends React.Component {
             <span>{elemental_composition.description}</span>
           </th>
 
-          <th>{elemental_composition.loading ? 'Loading (mmol/g)' : ''}</th>
+          <th className="loading">{elemental_composition.loading ? 'Loading (mmol/g)' : ''}</th>
         </tr>
       </thead>
     )

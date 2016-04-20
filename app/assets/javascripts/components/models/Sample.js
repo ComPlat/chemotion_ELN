@@ -32,7 +32,7 @@ export default class Sample extends Element {
     this.elemental_compositions.push({
       composition_type: 'found',
       data: {},
-      description: 'Found'
+      description: 'Experimental'
     });
 
     if(this.contains_residues) {
