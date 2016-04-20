@@ -73,7 +73,7 @@ export default class ElementsTableSampleEntries extends Component {
         style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
         onClick={() => this.handleMoleculeToggle(molecule.iupac_name || molecule.inchistring)}
       >
-        <td colSpan="3">
+        <td colSpan="2">
           <div style={{float: 'left'}}>
             <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
           </div>
@@ -89,6 +89,7 @@ export default class ElementsTableSampleEntries extends Component {
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
+          {this.dragColumn(molecule)}
       </tr>
     )
   }
