@@ -156,13 +156,13 @@ class Sample < ActiveRecord::Base
   def attach_svg
     svg = self.sample_svg_file
     return unless svg.present?
-    svg_file_name = "#{self.short_label}.svg"
-    if svg.match /TMPFILE/
+    svg_file_name = "#{SecureRandom.hex(64)}.svg"
+    if svg.match /TMPFILE[0-9a-f]{64}.svg/
       svg_path = "#{Rails.root}/public/images/samples/#{svg}"
       FileUtils.mv(svg_path, svg_path.gsub(/(TMPFILE\S+)/, svg_file_name))
 
       self.sample_svg_file = svg_file_name
-    elsif svg.match /xml/
+    elsif svg.match /\A<\?xml/
       svg_path = "#{Rails.root}/public/images/samples/#{svg_file_name}"
 
       svg_file = File.new(svg_path, 'w+')
