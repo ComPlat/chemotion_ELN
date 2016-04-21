@@ -51,7 +51,7 @@ export default class ElementAnalysesLabels extends React.Component {
         <OverlayTrigger trigger="click" rootClose placement="left" overlay={label_popover}>
           <span className="collection-label" key={element.id}>
             <Label  style={{backgroundColor:'white',color:'black', border: '1px solid grey'}}>{experiment} {totalCount} {status} </Label>
-        
+
           </span>
         </OverlayTrigger> : undefined
     );
@@ -62,7 +62,6 @@ export default class ElementAnalysesLabels extends React.Component {
       return (
         <span className="collection-label" key={index}>
           <Label bsStyle='default' bsSize='xs' >{label.label} {label.count}  </Label>
-          &nbsp;
         </span>
       )
     });

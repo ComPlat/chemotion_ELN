@@ -1,6 +1,7 @@
 import React from 'react';
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal, Accordion,
-  Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col} from 'react-bootstrap';
+import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal,
+        Accordion, Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab,
+        Row, Col} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -23,8 +24,9 @@ import Aviator from 'aviator';
 
 import {solventOptions} from './staticDropdownOptions/options';
 import Sample from './models/Sample';
-import PolymerSection from './PolymerSection'
-import ElementalCompositionGroup from './ElementalCompositionGroup'
+import PolymerSection from './PolymerSection';
+import ElementalCompositionGroup from './ElementalCompositionGroup';
+import ToggleSection from './common/ToggleSection'
 
 
 export default class SampleDetails extends React.Component {
@@ -36,7 +38,8 @@ export default class SampleDetails extends React.Component {
       reaction: null,
       materialGroup: null,
       showStructureEditor: false,
-      loadingMolecule: false
+      loadingMolecule: false,
+      showElementalComposition: false
     }
   }
 
@@ -596,21 +599,62 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  handleSectionToggle() {
+    this.setState({showElementalComposition: !this.state.showElementalComposition});
+  }
+
+  elementalPropertiesItemHeader(sample) {
+    return (
+      <ListGroupItem onClick={() => this.handleSectionToggle()}>
+        <div className="padding-right col-md-6">
+          <label>Elemental composition</label>
+        </div>
+        <div className="col-md-6">
+          <ToggleSection show={this.state.showElementalComposition}/>
+          <label>{sample.contains_residues ? 'Polymer section' : '' }</label>
+        </div>
+      </ListGroupItem>
+    )
+  }
+
+  elementalPropertiesItemContent(sample, materialGroup, show) {
+    if(!show)
+      return false;
+
+    return (
+      <ListGroupItem className="ea-section">
+        <table>
+          <tbody>
+            <tr>
+              <td width="50%" className="padding-right">
+                <ElementalCompositionGroup sample={sample}/>
+              </td>
+              <td width="50%">
+                <PolymerSection sample={sample}
+                                parent={this}
+                                show={sample.contains_residues}
+                                materialGroup={materialGroup}/>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </ListGroupItem>
+    )
+  }
+
   elementalPropertiesItem(sample) {
-    if(sample.contains_residues) {
-      let materialGroup = this.state.materialGroup;
-      return (
-        <PolymerSection sample={sample}
-                        parent={this}
-                        materialGroup={materialGroup}/>
-      )
-    } else if(!sample.molecule.sum_formular) { // avoid empty ListGroupItem
+    if(!sample.molecule.sum_formular) { // avoid empty ListGroupItem
       return false;
     } else {
-      return (
-        <ListGroupItem>
-          <ElementalCompositionGroup sample={sample}/>
-        </ListGroupItem>
+      let show = this.state.showElementalComposition;
+      let materialGroup = this.state.materialGroup;
+
+      return(
+        <div width="100%" className="polymer-section">
+          {this.elementalPropertiesItemHeader(sample)}
+
+          {this.elementalPropertiesItemContent(sample, materialGroup, show)}
+        </div>
       )
     }
   }

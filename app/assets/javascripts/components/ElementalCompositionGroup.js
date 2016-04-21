@@ -6,7 +6,7 @@ import ElementalCompositionCustom from './ElementalCompositionCustom'
 export default class ElementalCompositionGroup extends React.Component {
 
   render() {
-    let {sample} = this.props;
+    let {sample, show} = this.props;
     let elemental_compositions = sample.elemental_compositions;
 
     let display_error = true;
@@ -55,7 +55,6 @@ export default class ElementalCompositionGroup extends React.Component {
     } else {
       return (
         <div>
-          <label>Elemental composition</label>
           {data}
           <ElementalCompositionCustom
             elemental_composition={el_composition_custom}

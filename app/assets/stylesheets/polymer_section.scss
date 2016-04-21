@@ -1,4 +1,8 @@
-table.polymer-section {
+.polymer-section {
+  .col-md-6 {
+    padding-left: 0;
+  }
+
   tr td {
     vertical-align: top;
   }
@@ -22,4 +26,8 @@ table.polymer-section {
     padding-left: 0px;
     padding-right: 0px;
   }
+}
+
+span.ea-section {
+  border-top: none;
 }

@@ -140,7 +140,7 @@ export default class PolymerSection extends React.Component {
   customInfoRadio(label, value, residue, sample) {
     let additionalLoadingInput = false;
 
-    if(value == 'external') {
+    if(value == 'external' && residue.custom_info.loading_type == value) {
       additionalLoadingInput = (
          <td width="30%" className="external_loading_input">
            <NumeralInputWithUnitsCompo
@@ -189,8 +189,8 @@ export default class PolymerSection extends React.Component {
       <tbody>
         {this.customInfoRadio("Loading (according to mass difference)","mass_diff", residue, sample)}
         {this.customInfoRadio("Loading (according to external estimation):","external", residue, sample)}
-        {this.customInfoRadio("Loading (according to EA)","found", residue, sample)}
         {this.customInfoRadio("Loading (according to 100% conversion)","full_conv", residue, sample)}
+        {this.customInfoRadio("Loading (according to EA)","found", residue, sample)}
        <tr>
          <td></td>
          <td width="30%">
@@ -254,38 +254,27 @@ export default class PolymerSection extends React.Component {
 
     let residue = sample.residues[0];
 
-    return (
-      <ListGroupItem>
-        <table width="100%" className="polymer-section">
-          <tbody>
-            <tr>
-              <td width="50%" className="padding-right">
-                <ElementalCompositionGroup sample={sample}/>
-              </td>
-              <td width="50%">
-                <div>
-                  <label>Polymer Section</label>
-                  {this.polymerFormula(sample, residue)}
-                  {this.polymerLoading(sample, residue)}
+    if(!this.props.show)
+      return false;
 
-                  <table width="100%">
-                  <tbody>
-                    <tr>
-                      <td width="50%">
-                        {this.polymerType(sample, residue)}
-                      </td>
-                      <td width="50%" className="cross_linkage">
-                        {this.polymerCrossLinkage(sample, residue)}
-                      </td>
-                    </tr>
-                  </tbody>
-                  </table>
-                </div>
-              </td>
-            </tr>
-          </tbody>
+    return (
+      <div className="polymer-section">
+        {this.polymerFormula(sample, residue)}
+        {this.polymerLoading(sample, residue)}
+
+        <table width="100%">
+        <tbody>
+          <tr>
+            <td width="50%">
+              {this.polymerType(sample, residue)}
+            </td>
+            <td width="50%" className="cross_linkage">
+              {this.polymerCrossLinkage(sample, residue)}
+            </td>
+          </tr>
+        </tbody>
         </table>
-      </ListGroupItem>
+      </div>
     )
   }
 }

@@ -115,7 +115,7 @@ export default class ElementalCompositionCustom extends React.Component {
       return false;
 
     return (
-      <table className="elemental-composition">
+      <table className="elemental-composition-custom">
         {this.compositonTableHeader(elemental_composition)}
 
         <tbody>
