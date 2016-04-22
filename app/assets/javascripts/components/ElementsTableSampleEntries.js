@@ -11,6 +11,7 @@ import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import DragDropItemTypes from './DragDropItemTypes';
 import extra from './extra/ElementsTableSampleEntriesExtra';
+import SampleName from './common/SampleName'
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
@@ -85,7 +86,7 @@ export default class ElementsTableSampleEntries extends Component {
             </OverlayTrigger>
           </div>
           <div style={{display: 'inherit', paddingLeft: 10}}>
-            <h4>{sample.display_name}</h4>
+            <h4><SampleName sample={sample}/></h4>
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>

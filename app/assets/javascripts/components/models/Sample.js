@@ -550,17 +550,6 @@ export default class Sample extends Element {
     }
   }
 
-  get display_name() {
-    let molecule_name = this._molecule.iupac_name || this._molecule.sum_formular;
-    if(this.contains_residues) {
-      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
-                          + this.polymer_type.slice(1);
-      return polymer_name.replace('_', '-') + ' - ' + molecule_name;
-    } else {
-      return molecule_name;
-    }
-  }
-
   get polymer_formula() {
     return this.contains_residues
             && this.residues[0].custom_info.formula.toString();
