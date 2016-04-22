@@ -319,7 +319,14 @@ export default class SampleDetails extends React.Component {
     } else {
       svgPath = sample.svgPath;
     }
-    return (<SVG key={svgPath} src={svgPath} className="molecule-mid"/>);
+    let className = svgPath ? 'svg-container' : 'svg-container-empty'
+    return (
+      <div className={className}
+           onClick={this.showStructureEditor.bind(this)}>
+        <Glyphicon className="pull-right" glyph='pencil'/>
+        <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
+      </div>
+    );
   }
 
   sampleAverageMW(sample) {
@@ -340,7 +347,7 @@ export default class SampleDetails extends React.Component {
     const style = {height: '200px'};
     return (
       <Row style={style}>
-        <Col md={7}>
+        <Col md={3}>
           <h3>{sample.title()}</h3>
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
@@ -349,7 +356,7 @@ export default class SampleDetails extends React.Component {
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
           {this.extraLabels().map(Lab=><Lab element={sample}/>)}
         </Col>
-        <Col md={5}>
+        <Col md={9}>
           {this.svgOrLoading(sample)}
         </Col>
       </Row>
