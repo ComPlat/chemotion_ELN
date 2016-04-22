@@ -148,7 +148,7 @@ export default class Sample extends Element {
     return sample;
   }
 
-  static buildEmptyWithCounter(collection_id, counter, materialGroup = null) {
+  static buildEmptyWithCounter(collection_id, counter, materialGroup = null, molecule = { id: '_none_'}) {
     let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
@@ -160,8 +160,8 @@ export default class Sample extends Element {
       solvent: '',
       impurities: '',
       location: '',
-      molfile: '',
-      molecule: { id: '_none_' },
+      molfile: molecule.molfile || '',
+      molecule:  molecule,
       analyses: [],
       elemental_compositions: [{
         composition_type: 'found',
@@ -175,6 +175,7 @@ export default class Sample extends Element {
     sample.reaction_product = (materialGroup == 'products');
 
     sample.short_label = Sample.buildNewSampleShortLabelWithCounter(counter);
+
     return sample;
   }
 

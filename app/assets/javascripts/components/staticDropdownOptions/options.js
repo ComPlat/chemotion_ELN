@@ -17,7 +17,7 @@ export const solventOptions = [{
     label: 'Diethylether',
     value: 'Diethylether'
   }, {
-    label: 'Dimethylsulfoxid (DMF)',
+    label: 'Dimethylsulfoxid (DMSO)',
     value: 'Dimethylsulfoxid'
   }, {
     label: 'Dimethylformamid (DMF)',

@@ -40,7 +40,6 @@ export default class Reaction extends Element {
     if(!currentUser) {
       return 'New Reaction';
     } else {
-      console.log(currentUser.reactions_count)
       return `${currentUser.initials} Reaction #${currentUser.reactions_count + 1}`;
     }
   }

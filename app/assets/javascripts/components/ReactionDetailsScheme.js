@@ -3,7 +3,7 @@ import {Button, ListGroup, ListGroupItem,Glyphicon} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
-
+import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
 import ElementActions from './actions/ElementActions';
@@ -25,20 +25,24 @@ export default class ReactionDetailsScheme extends Component {
 
   dropSample(sample, materialGroup) {
     const {reaction} = this.state;
-    if(reaction.hasSample(sample.id)) {
-      NotificationActions.add({
-        message: 'The sample is already present in current reaction.',
-        level: 'error'
-      });
+    let splitSample ;
 
-      return false;
-    }
-
-    const splitSample = sample.buildChild();
-    if(materialGroup == 'products') {
-      splitSample.reaction_product = true;
+    if (sample instanceof Sample){
+      if(reaction.hasSample(sample.id)) {
+        NotificationActions.add({
+          message: 'The sample is already present in current reaction.',
+          level: 'error'
+        });
+        return false;
+      }
+      splitSample = sample.buildChild();
+      if(materialGroup == 'products') {splitSample.reaction_product = true }
+    } else if (sample instanceof Molecule){
+      splitSample = Sample.buildEmptyWithCounter(reaction.collection_id, 0 , materialGroup, sample );
+      splitSample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
     }
     reaction.addMaterial(splitSample, materialGroup);
+
     this.onReactionChange(reaction, {schemaChanged: true});
   }
 

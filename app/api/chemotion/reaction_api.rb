@@ -283,6 +283,7 @@ module ReactionUpdator
               )
             #create new sample
             else
+
               attributes = sample.to_h
                 .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
                 .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
@@ -290,6 +291,9 @@ module ReactionUpdator
               new_sample = Sample.create(
                 attributes
               )
+
+              new_sample=new_sample.dup
+              new_sample.save
 
               assign_sample_to_collections! new_sample, collection_ids
 
