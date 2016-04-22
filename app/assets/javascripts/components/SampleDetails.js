@@ -27,6 +27,7 @@ import Sample from './models/Sample';
 import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
+import SampleName from './common/SampleName'
 
 
 export default class SampleDetails extends React.Component {
@@ -341,7 +342,7 @@ export default class SampleDetails extends React.Component {
       <Row style={style}>
         <Col md={7}>
           <h3>{sample.title()}</h3>
-          <h4>{sample.display_name}</h4>
+          <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
