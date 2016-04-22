@@ -7,7 +7,6 @@ Rails.application.routes.draw do
   end
 
   mount API => '/'
-  mount Scifinding::Engine => 'scifi'
 
   root :to => redirect("/users/sign_in")
 
