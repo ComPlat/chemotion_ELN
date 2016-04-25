@@ -29,6 +29,8 @@ import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 
+const MWPrecision = 6;
+
 
 export default class SampleDetails extends React.Component {
   constructor(props) {
@@ -330,15 +332,17 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleAverageMW(sample) {
-    if(sample.molecule_molecular_weight)
-      return `(${sample.molecule_molecular_weight} g/mol)`;
+    let mw = sample.molecule_molecular_weight;
+    if(mw)
+      return `(${mw.toFixed(MWPrecision)} g/mol)`;
     else
       return '';
   }
 
   sampleExactMW(sample) {
-    if(sample.molecule_exact_molecular_weight)
-      return `(Exact mass: ${sample.molecule_exact_molecular_weight} g/mol)`;
+    let mw = sample.molecule_exact_molecular_weight
+    if(mw)
+      return `(Exact mass: ${mw.toFixed(MWPrecision)} g/mol)`;
     else
       return '';
   }
@@ -347,7 +351,7 @@ export default class SampleDetails extends React.Component {
     const style = {height: '200px'};
     return (
       <Row style={style}>
-        <Col md={3}>
+        <Col md={4}>
           <h3>{sample.title()}</h3>
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
@@ -356,7 +360,7 @@ export default class SampleDetails extends React.Component {
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
           {this.extraLabels().map(Lab=><Lab element={sample}/>)}
         </Col>
-        <Col md={9}>
+        <Col md={8}>
           {this.svgOrLoading(sample)}
         </Col>
       </Row>
@@ -379,11 +383,13 @@ export default class SampleDetails extends React.Component {
     if(sample.contains_residues)
       label = "M. Weight (defined part)"
 
+    let mw = sample.molecule_molecular_weight;
+
     return (
       <Input type="text" label={label}
              key={sample.id}
-             defaultValue={sample.molecule_molecular_weight}
-             value={sample.molecule_molecular_weight}
+             defaultValue={mw && mw.toFixed(MWPrecision)}
+             value={mw && mw.toFixed(MWPrecision)}
              ref="molecularWeight"
              disabled
              readOnly
