@@ -1,6 +1,6 @@
 module Usecases::Wellplates::WellplateUpdater
   def self.update_wells_for_wellplate(wellplate, wells)
-    collection_ids = wellplate.collection_ids
+    collections = wellplate.collections
     current_sample_ids = wellplate.wells.pluck(:sample_id).uniq.compact
     included_sample_ids = []
 
@@ -17,13 +17,10 @@ module Usecases::Wellplates::WellplateUpdater
           subsample.short_label = nil #we don't want to inherit short_label from parent
           subsample.name = sample.name
 
+          #assign subsample to all collections
+          subsample.collections << collections
           subsample.save
           subsample.reload
-
-          #assign subsample to all collections
-          collection_ids.each do |collection_id|
-            CollectionsSample.create(sample_id: subsample.id, collection_id: collection_id)
-          end
 
           sample_id = subsample.id
         end

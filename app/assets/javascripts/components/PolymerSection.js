@@ -11,7 +11,7 @@ export default class PolymerSection extends React.Component {
     super(props);
 
     // use has to set loading on new sample
-    if(!props.sample.loading && !props.sample.reaction_product) {
+    if(props.sample.contains_residues && !props.sample.loading && !props.sample.reaction_product) {
       props.sample.error_loading = true
     }
 

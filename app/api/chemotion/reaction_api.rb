@@ -188,7 +188,7 @@ module Chemotion
         collection_id = attributes.delete(:collection_id)
 
         collection = Collection.find(collection_id)
-        reaction = Reaction.create(attributes)
+        reaction = Reaction.create!(attributes)
         current_user.increment_counter 'reactions'
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
@@ -225,14 +225,8 @@ module ReactionUpdator
     Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
   end
 
-  def self.assign_sample_to_collections! sample, collection_ids
-    collection_ids.each do |collection_id|
-      CollectionsSample.create(sample_id: sample.id, collection_id: collection_id)
-    end
-  end
-
   def self.update_materials_for_reaction(reaction, material_attributes, current_user)
-    collection_ids = reaction.collection_ids
+    collections = reaction.collections
 
     materials = OpenStruct.new(material_attributes)
 
@@ -247,7 +241,6 @@ module ReactionUpdator
       materials.each do |material_group, samples|
         reaction_samples_association = reaction.public_send("reactions_#{material_group}_samples")
         samples.each do |sample|
-
           #create new subsample
           if sample.is_new
             if sample.is_split && sample.parent_id
@@ -270,11 +263,11 @@ module ReactionUpdator
                                                            end
               end
 
+              subsample.collections << collections
+
               subsample.save
               subsample.reload
               included_sample_ids << subsample.id
-
-              assign_sample_to_collections! subsample, collection_ids
 
               reaction_samples_association.create(
                 sample_id: subsample.id,
@@ -293,9 +286,8 @@ module ReactionUpdator
               )
 
               new_sample=new_sample.dup
+              new_sample.collections << collections
               new_sample.save
-
-              assign_sample_to_collections! new_sample, collection_ids
 
               reaction_samples_association.create(
                 sample_id: new_sample.id,
