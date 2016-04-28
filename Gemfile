@@ -123,5 +123,5 @@ end
 # Chemotion plugins: lsit your chemotion specific plugin gems here
 
 gem 'scifinding', path: '~/shared/scifinding' , :group => [:plugins,:development,:production]
-
+gem 'basket', path: '~/shared/basket' , :group => [:plugins,:development,:production]
 ####

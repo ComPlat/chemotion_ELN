@@ -5,8 +5,12 @@ import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 
 import CollectionSubtree from './CollectionSubtree';
+
 import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
+
+import extra from './extra/CollectionTreeExtra';
+
 export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
@@ -160,6 +164,11 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
+    let extraDiv = [];
+    for (let j=0;j < extra.DivCount;j++){
+      let NoName = extra["Div"+j];
+      extraDiv.push(<NoName key={"collTreeExtraDiv"+j} />);
+    }
     return (
       <div>
         <div className="tree-view">{this.collectionManagementButton()}<div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> Collections </div></div>
@@ -173,6 +182,7 @@ export default class CollectionTree extends React.Component {
         <div className="tree-wrapper">
           {this.remoteSubtrees()}
         </div>
+        {extraDiv.map((e)=>{return e;})}
       </div>
     )
   }
