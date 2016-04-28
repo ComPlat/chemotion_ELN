@@ -40,7 +40,7 @@ class Sample < ActiveRecord::Base
   scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
 
-  has_many :collections_samples, dependent: :destroy
+  has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
   has_many :reactions_starting_material_samples, dependent: :destroy
@@ -68,9 +68,12 @@ class Sample < ActiveRecord::Base
   has_ancestry
 
   validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
+  validate :has_collections
+
   accepts_nested_attributes_for :molecule, update_only: true
   accepts_nested_attributes_for :residues, :elemental_compositions,
                                 allow_destroy: true
+  accepts_nested_attributes_for :collections_samples
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User', counter_cache: :samples_created_count
 
@@ -79,7 +82,7 @@ class Sample < ActiveRecord::Base
 
   after_save :update_data_for_reactions
 
-  def create_subsample user
+  def create_subsample user, collection_id
     subsample = self.dup
     subsample.short_label = nil # we need to reset it
     subsample.parent = self
@@ -90,6 +93,7 @@ class Sample < ActiveRecord::Base
       result.delete 'sample_id'
       result
     end
+    subsample.collections << Collection.find(collection_id)
     subsample.save
     subsample
   end
@@ -257,6 +261,13 @@ class Sample < ActiveRecord::Base
   end
 
 private
+
+  def has_collections
+    if self.collections_samples.blank?
+      errors.add(:base, 'must have least one collection')
+    end
+  end
+
   def set_elem_composition_data d_type, d_values, loading = nil
     attrs = {
       composition_type: d_type,

@@ -100,7 +100,7 @@ export default class Sample extends Element {
       real_amount_unit: this.real_amount_unit,
       description: this.description,
       purity: this.purity,
-      short_label: this.short_label.includes('Copy') ? this.short_label : null,
+      short_label: (this.short_label && this.short_label.includes('Copy')) ? this.short_label : null,
       solvent: this.solvent,
       impurities: this.impurities,
       location: this.location,
