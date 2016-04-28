@@ -124,4 +124,5 @@ end
 
 gem 'scifinding', path: '~/shared/scifinding' , :group => [:plugins,:development,:production]
 gem 'basket', path: '~/shared/basket' , :group => [:plugins,:development,:production]
+gem 'chemstash', path: '~/shared/chemstash' , :group => [:plugins,:development,:production]
 ####
