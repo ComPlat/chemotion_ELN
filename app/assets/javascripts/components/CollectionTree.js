@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button,Glyphicon} from 'react-bootstrap';
+import {Button} from 'react-bootstrap';
 
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
