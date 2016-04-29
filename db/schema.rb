@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160428115515) do
+ActiveRecord::Schema.define(version: 20160429072510) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -250,6 +250,9 @@ ActiveRecord::Schema.define(version: 20160428115515) do
     t.string   "sample_svg_file"
     t.integer  "user_id"
     t.string   "identifier"
+    t.float    "density",             default: 1.0,   null: false
+    t.float    "melting_point"
+    t.float    "boiling_point"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

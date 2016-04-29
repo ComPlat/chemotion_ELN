@@ -1,8 +1,4 @@
 .polymer-section {
-  .col-md-6 {
-    padding-left: 0;
-  }
-
   tr td {
     vertical-align: top;
   }
@@ -14,18 +10,14 @@
     }
   }
 
-  td.external_loading_input {
-    padding: 0px;
-  }
-
   button#external-save-btn {
     margin-top: 25px;
+    margin-left: -10px;
   }
+}
 
-  .formula-input {
-    padding-left: 0px;
-    padding-right: 0px;
-  }
+td.loading-input .form-group {
+  margin-top: 3px;
 }
 
 span.ea-section {
