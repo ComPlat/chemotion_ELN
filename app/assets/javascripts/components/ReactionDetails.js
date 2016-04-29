@@ -20,7 +20,8 @@ export default class ReactionDetails extends Component {
     super(props);
     const {reaction} = props;
     this.state = {
-      reaction
+      reaction,
+      reactionPanelFixed: false
     };
 
     if(reaction.hasMaterials()) {
@@ -30,6 +31,18 @@ export default class ReactionDetails extends Component {
 
   componentDidMount() {
     const {reaction} = this.state;
+    window.addEventListener('scroll', this.handleScroll.bind(this));
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this.handleScroll.bind(this));
+  }
+
+  handleScroll(event) {
+    if (event.srcElement.body.scrollTop > 65) //heander height + some margin
+      this.setState({ reactionPanelFixed: true })
+    else
+      this.setState({ reactionPanelFixed: false })
   }
 
   componentWillReceiveProps(nextProps) {
@@ -74,7 +87,7 @@ export default class ReactionDetails extends Component {
             value: product.adjusted_amount_g,
             unit: 'g'
         });
-        
+
       }
     })
 
@@ -157,7 +170,9 @@ export default class ReactionDetails extends Component {
       extraTabs.push((i)=>this.extraTab(i))
     }
     return (
-        <Panel header="Reaction Details" bsStyle={reaction.isEdited ? 'info' : 'primary'}>
+        <Panel className={this.state.reactionPanelFixed ? 'panel-fixed' : ''}
+               header="Reaction Details"
+               bsStyle={reaction.isEdited ? 'info' : 'primary'}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
             <i className="fa fa-times"></i>
           </Button>

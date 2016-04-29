@@ -22,8 +22,9 @@ export default class ElementalComposition extends React.Component {
       elements.push(
         <span className="data-item">
           <strong>
-            {key}:
+            {key}
           </strong>
+          &nbsp;
           &nbsp;
           {value}
           &nbsp;

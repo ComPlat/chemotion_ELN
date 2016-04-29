@@ -16,7 +16,7 @@ export default class SampleDetailsAnalyses extends Component {
   handleChange(analysis) {
     const {sample} = this.state;
     sample.updateAnalysis(analysis);
-    this.props.onSampleChanged(sample);
+    this.props.parent.setState({sample: sample})
   }
 
   handleAdd() {
@@ -30,13 +30,13 @@ export default class SampleDetailsAnalyses extends Component {
     const newKey = sample.analyses.length - 1;
     this.handleAccordionOpen(newKey);
 
-    this.props.onSampleChanged(sample);
+    this.props.parent.setState({sample: sample})
   }
 
   handleRemove(analysis) {
     let {sample} = this.state;
     sample.removeAnalysis(analysis);
-    this.props.onSampleChanged(sample);
+    this.props.parent.setState({sample: sample})
   }
 
   handleAccordionOpen(key) {
