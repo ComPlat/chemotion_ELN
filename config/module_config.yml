@@ -25,10 +25,15 @@ SampleDetails:
     {}
   Labels:
     {}
-    
+
 CollectionTree:
   Div:
     {}
+
+routes:
+  routes:
+    {}
+  
 
 
 

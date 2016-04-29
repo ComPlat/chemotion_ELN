@@ -2,11 +2,16 @@ import UIStore from './stores/UIStore';
 import CollectionStore from './stores/CollectionStore';
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
+import routesExtra from './extra/routesExtra';
 
-export default function() {
-  Aviator.root = '/';
-  Aviator.pushStateEnabled = false;
-  Aviator.setRoutes({
+let allRoutes = (r)=>{
+  let rts ={...r};
+  for (let i=0;i<routesExtra.routesCount;i++){rts={...rts,...routesExtra['routes'+i]} }
+  return rts;
+}
+
+
+const routes = {
     '/': 'root',
     target: {
       root: function(e) {
@@ -55,6 +60,7 @@ export default function() {
       '/management': 'showCollectionManagement',
       '/:collectionID': 'show'
     },
+
 
     '/sample': {
       target: {
@@ -122,5 +128,10 @@ export default function() {
       },
       '/:screenID': 'showOrNew'
     }
-  });
+}
+console.log(allRoutes(routes));
+export default function() {
+  Aviator.root = '/';
+  Aviator.pushStateEnabled = false;
+  Aviator.setRoutes( allRoutes(routes));
 }

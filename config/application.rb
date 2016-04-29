@@ -73,9 +73,11 @@ module Chemotion
       #For each registered plugin gem (group :plugins in Gemfile) browserify needs to find
       #an aliasifyConfig.js file (and a package.json file ) in gem root directory.
       #This create a sym link if no file exists.
+      node_modules_dir = File.join(Rails.root, 'node_modules')
       PLUGS.each_with_index do |plugin,i|
         plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,".").to_s
-        `ln -s #{aliasify_file} #{plugin_path}` # unless File.exists?(aliasify_file)
+        `ln -s #{aliasify_file} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"aliasifyConfig.js"))
+        `ln -s #{node_modules_dir} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"node_modules"))
       end
 
    # Extra module import/export mapping for each registered plugin
