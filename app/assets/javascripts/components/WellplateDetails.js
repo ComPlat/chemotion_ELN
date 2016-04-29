@@ -10,6 +10,7 @@ import WellplateProperties from './WellplateProperties';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
+import StickyDiv from 'react-stickydiv'
 
 const cols = 12;
 
@@ -91,70 +92,72 @@ export default class WellplateDetails extends Component {
     };
 
     return (
-      <div key={wellplate.id}>
-        <Panel header="Wellplate Details" bsStyle={wellplate.isEdited ? 'info' : 'primary'} >
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
-            <i className="fa fa-times"></i>
-          </Button>
-          <h3>{name}</h3>
-          <ElementCollectionLabels element={wellplate}/>
-          <ListGroup fill>
-            <ListGroupItem>
-              <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}>
-                <Tab eventKey={0} title={'Designer'}>
-                  <Well>
-                    <Wellplate
-                      show={showWellplate}
-                      size={size}
-                      wells={wells}
-                      handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                      cols={cols}
-                      width={60}
+      <StickyDiv zIndex={2}>
+        <div key={wellplate.id}>
+          <Panel header="Wellplate Details" bsStyle={wellplate.isEdited ? 'info' : 'primary'} >
+            <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+              <i className="fa fa-times"></i>
+            </Button>
+            <h3>{name}</h3>
+            <ElementCollectionLabels element={wellplate}/>
+            <ListGroup fill>
+              <ListGroupItem>
+                <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}>
+                  <Tab eventKey={0} title={'Designer'}>
+                    <Well>
+                      <Wellplate
+                        show={showWellplate}
+                        size={size}
+                        wells={wells}
+                        handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                        cols={cols}
+                        width={60}
+                        />
+                    </Well>
+                  </Tab>
+                  <Tab eventKey={1} title={'List'}>
+                    <Well>
+                      <WellplateList
+                        wells={wells}
+                        handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                        />
+                    </Well>
+                  </Tab>
+                  <Tab eventKey={2} title={'Properties'}>
+                    <WellplateProperties
+                      {...properties}
+                      changeProperties={(change) => this.handleChangeProperties(change)}
                       />
-                  </Well>
-                </Tab>
-                <Tab eventKey={1} title={'List'}>
-                  <Well>
-                    <WellplateList
-                      wells={wells}
-                      handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                      />
-                  </Well>
-                </Tab>
-                <Tab eventKey={2} title={'Properties'}>
-                  <WellplateProperties
-                    {...properties}
-                    changeProperties={(change) => this.handleChangeProperties(change)}
-                    />
-                </Tab>
-              </Tabs>
-            </ListGroupItem>
-            <ListGroupItem>
-              <ButtonToolbar>
-                <Button
-                  bsStyle="primary"
-                  onClick={() => this.closeDetails()}
-                  >
-                  Close
-                </Button>
-                <Button
-                  bsStyle="warning"
-                  onClick={() => this.handleSubmit()}
-                  >
-                  {submitLabel}
-                </Button>
+                  </Tab>
+                </Tabs>
+              </ListGroupItem>
+              <ListGroupItem>
+                <ButtonToolbar>
+                  <Button
+                    bsStyle="primary"
+                    onClick={() => this.closeDetails()}
+                    >
+                    Close
+                  </Button>
+                  <Button
+                    bsStyle="warning"
+                    onClick={() => this.handleSubmit()}
+                    >
+                    {submitLabel}
+                  </Button>
 
-                <Button
-                  bsStyle="default"
-                  onClick={() => CollectionActions.downloadReportWellplate(wellplate.id)}
-                  >
-                  Export samples
-                </Button>
-              </ButtonToolbar>
-            </ListGroupItem>
-          </ListGroup>
-        </Panel>
-      </div>
+                  <Button
+                    bsStyle="default"
+                    onClick={() => CollectionActions.downloadReportWellplate(wellplate.id)}
+                    >
+                    Export samples
+                  </Button>
+                </ButtonToolbar>
+              </ListGroupItem>
+            </ListGroup>
+          </Panel>
+        </div>
+      </StickyDiv>
     );
   }
 

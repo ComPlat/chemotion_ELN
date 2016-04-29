@@ -34,8 +34,6 @@ export default class PolymerSection extends React.Component {
       if(residue.custom_info.loading_type == 'external')
         sample.external_loading = e.value;
 
-      console.log(sample.external_loading)
-
       let errorMessage;
       if(e.value == 0.0)
         errorMessage = 'Loading can not be 0. Please define a value.'
@@ -83,7 +81,6 @@ export default class PolymerSection extends React.Component {
 
     if(e.target.value == 'external'){
       sample.loading = sample.external_loading;
-      console.log(sample.loading)
     }
     else {
       let e_compositon = sample.elemental_compositions.find(function(item) {

@@ -17,6 +17,7 @@ import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
 import extra from "./extra/SampleDetailsExtra"
 import Select from 'react-select';
+import StickyDiv from 'react-stickydiv'
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
@@ -47,12 +48,10 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener('scroll', this.handleScroll.bind(this));
     ElementStore.listen(this.onChange.bind(this));
   }
 
   componentWillUnmount() {
-    window.removeEventListener('scroll', this.handleScroll.bind(this));
     ElementStore.unlisten(this.onChange.bind(this));
   }
 
@@ -66,13 +65,6 @@ export default class SampleDetails extends React.Component {
         loadingMolecule: false
       });
     }
-  }
-
-  handleScroll(event) {
-    if (event.srcElement.body.scrollTop > 65) //heander height + some margin
-      this.setState({ samplePanelFixed: true })
-    else
-      this.setState({ samplePanelFixed: false })
   }
 
   handleSampleChanged(sample) {
@@ -413,19 +405,21 @@ export default class SampleDetails extends React.Component {
           onCancel={this.handleStructureEditorCancel.bind(this)}
           molfile={molfile}
           />
-        <Panel className={this.state.samplePanelFixed ? 'panel-fixed' : ''}
-               header="Sample Details"
-               bsStyle={sample.isEdited ? 'info' : 'primary'}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
-            <i className="fa fa-times"></i>
-          </Button>
-          {this.sampleHeader(sample)}
-          <ListGroup>
-          <Tabs defaultActiveKey={0}>
-            {tabContents.map((e,i)=>e(i))}
-          </Tabs>
-          </ListGroup>
-        </Panel>
+        <StickyDiv zIndex={2}>
+          <Panel className="panel-fixed"
+                 header="Sample Details"
+                 bsStyle={sample.isEdited ? 'info' : 'primary'}>
+            <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+              <i className="fa fa-times"></i>
+            </Button>
+            {this.sampleHeader(sample)}
+            <ListGroup>
+            <Tabs defaultActiveKey={0}>
+              {tabContents.map((e,i)=>e(i))}
+            </Tabs>
+            </ListGroup>
+          </Panel>
+        </StickyDiv>
       </div>
     )
   }

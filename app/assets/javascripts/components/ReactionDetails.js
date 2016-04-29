@@ -14,6 +14,7 @@ import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
 import extra from './extra/ReactionDetailsExtra';
+import StickyDiv from 'react-stickydiv'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -31,18 +32,6 @@ export default class ReactionDetails extends Component {
 
   componentDidMount() {
     const {reaction} = this.state;
-    window.addEventListener('scroll', this.handleScroll.bind(this));
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('scroll', this.handleScroll.bind(this));
-  }
-
-  handleScroll(event) {
-    if (event.srcElement.body.scrollTop > 65) //heander height + some margin
-      this.setState({ reactionPanelFixed: true })
-    else
-      this.setState({ reactionPanelFixed: false })
   }
 
   componentWillReceiveProps(nextProps) {
@@ -170,7 +159,8 @@ export default class ReactionDetails extends Component {
       extraTabs.push((i)=>this.extraTab(i))
     }
     return (
-        <Panel className={this.state.reactionPanelFixed ? 'panel-fixed' : ''}
+      <StickyDiv zIndex={2}>
+        <Panel className="panel-fixed"
                header="Reaction Details"
                bsStyle={reaction.isEdited ? 'info' : 'primary'}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
@@ -236,6 +226,7 @@ export default class ReactionDetails extends Component {
             </Button>
           </ButtonToolbar>
         </Panel>
+      </StickyDiv>
     );
   }
 }
