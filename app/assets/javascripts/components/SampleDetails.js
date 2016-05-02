@@ -264,7 +264,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <ListGroupItem onClick={() => this.handleSectionToggle()}>
-        <Col className="padding-right" md={6}>
+        <Col className="padding-right elem-composition-header" md={6}>
           <label>{label}</label>
         </Col>
         <div className="col-md-6">
