@@ -74,7 +74,7 @@ export default class ReactionDetails extends Component {
             value: product.adjusted_amount_g,
             unit: 'g'
         });
-        
+
       }
     })
 

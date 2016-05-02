@@ -71,6 +71,18 @@ export default class ManagingActions extends React.Component {
     })
   }
 
+  hasSelection(){
+    const uiState = UIStore.getState();
+    let elementsFilter = this.filterParamsFromUIState(uiState);
+    let result = false;
+    ['sample', 'reaction', 'wellplate', 'screen'].map(function(prop){
+      if(elementsFilter[prop].included_ids.size > 0 || elementsFilter[prop].all)
+        result = true;
+    });
+
+    return result;
+  }
+
   onUserChange(state) {
     this.setState({
       currentUser: state.currentUser
@@ -124,28 +136,28 @@ export default class ManagingActions extends React.Component {
     }
   }
 
-  isAssignButtonDisabled() {
+  isAssignButtonDisabled(selection) {
     const {currentCollection} = this.state;
     if(currentCollection) {
-      return currentCollection.is_shared == true && currentCollection.permission_level < 4;
+      return !selection || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
     }
   }
 
-  isShareButtonDisabled() {
+  isShareButtonDisabled(selection) {
     const {currentCollection} = this.state;
     let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
-    return in_all_collection || this.state.sharing_allowed == false;
+    return !selection || in_all_collection || this.state.sharing_allowed == false;
   }
 
-  isDeleteButtonDisabled() {
-    return this.state.deletion_allowed == false;
+  isDeleteButtonDisabled(selection) {
+    return !selection || this.state.deletion_allowed == false;
   }
 
-  isRemoteDisabled() {
+  isRemoveDisabled(selection) {
     if(this.state.currentCollection) {
       let currentCollection = this.state.currentCollection;
 
-      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
+      return !selection || currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
     }
   }
 
@@ -212,14 +224,15 @@ export default class ManagingActions extends React.Component {
 
   render() {
     const {modalProps} = this.state;
+    let sel = this.hasSelection();
     return (
       <div style={{display: 'inline', float: 'left', marginRight: 10}}>
         <ButtonGroup>
-          <MoveButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('move')}/>
-          <AssignButton isDisabled={this.isAssignButtonDisabled()} onClick={() => this.handleButtonClick('assign')}/>
-          <RemoveButton isDisabled={this.isRemoteDisabled()} onClick={() => this.handleButtonClick('remove')}/>
-          <DeleteButton isDisabled={this.isDeleteButtonDisabled()} onClick={() => this.handleButtonClick('delete')}/>
-          <ShareButton isDisabled={this.isShareButtonDisabled()} onClick={() => this.handleButtonClick('share')}/>
+          <MoveButton isDisabled={!sel || this.isDisabled()} onClick={() => this.handleButtonClick('move')}/>
+          <AssignButton isDisabled={this.isAssignButtonDisabled(sel)} onClick={() => this.handleButtonClick('assign')}/>
+          <RemoveButton isDisabled={this.isRemoveDisabled(sel)} onClick={() => this.handleButtonClick('remove')}/>
+          <DeleteButton isDisabled={this.isDeleteButtonDisabled(sel)} onClick={() => this.handleButtonClick('delete')}/>
+          <ShareButton isDisabled={this.isShareButtonDisabled(sel)} onClick={() => this.handleButtonClick('share')}/>
           <ImportButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('import')}/>
           <ExportButton isDisabled={this.isDisabled()}/>
         </ButtonGroup>
