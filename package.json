@@ -34,7 +34,7 @@
     "react-ui-tree": "2.5.0",
     "sha256": "^0.2.0",
     "uuid": "^2.0.1",
-    "whatwg-fetch": "0.11.0"
+    "whatwg-fetch": "1.0.0"
   },
   "aliasify": "./aliasifyConfig.js",
   "browserify": {
