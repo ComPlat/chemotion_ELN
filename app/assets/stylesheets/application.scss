@@ -45,15 +45,13 @@ div[class^="col-"] {
 }
 
 .panel-fixed {
-  position: fixed;
-  margin-top: -65px;
   overflow-y: scroll;
-  height: 100%;
-  min-width: 50%;
-  margin-right: 30px;
+  max-height: 950px;
 
-  button.button-right {
-    margin-right: 10px;
+  button.btn-danger {
+    position: relative;
+    float: right;
+    margin-right: 5px;
   }
 }
 

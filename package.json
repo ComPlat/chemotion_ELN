@@ -3,16 +3,13 @@
   "repository": {},
   "dependencies": {
     "aliasify": "1.9.0",
-    "alt": "0.18.2",
+    "alt": "0.18.4",
     "alt-utils": "1.0.0",
     "aviator": "v0.5.0",
-    "babelify": "~7.2.0",
-
-    "babel-preset-es2015":"6.5.0",
-    "babel-preset-react": "6.5.0",
     "babel-plugin-transform-object-rest-spread": "6.5.0",
-
-
+    "babel-preset-es2015": "6.5.0",
+    "babel-preset-react": "6.5.0",
+    "babelify": "~7.2.0",
     "browserify": "~> 13.0.0",
     "browserify-incremental": "^3.0.1",
     "classnames": "^2.1.5",
@@ -23,25 +20,41 @@
     "lodash": "^3.10.1",
     "numeral": "^1.5.3",
     "path": "^0.11.14",
-    "react": "0.14.8",
-    "react-dom": "0.14.8",
+    "react": "15.0.1",
     "react-bootstrap": "~0.28.3",
     "react-cookie": "^0.4.5",
     "react-dnd": "^2.1.2",
     "react-dnd-html5-backend": "^2.1.2",
+    "react-dom": "15.0.0",
     "react-dropzone": "^3.3.1",
     "react-inlinesvg": "0.4.2",
     "react-notification-system": "^0.2.4",
     "react-select": "^0.9.1",
-
+    "react-stickydiv": "^3.4.18",
     "react-ui-tree": "2.5.0",
     "sha256": "^0.2.0",
     "uuid": "^2.0.1",
-    "whatwg-fetch": "0.11.0"
+    "whatwg-fetch": "1.0.0"
   },
-  "aliasify": "./aliasifyConfig.js" ,
+  "aliasify": "./aliasifyConfig.js",
   "browserify": {
-    "transform": [["babelify", { "presets": ["es2015","react"], "plugins": ["transform-object-rest-spread"] }],["aliasify"]]
+    "transform": [
+      [
+        "babelify",
+        {
+          "presets": [
+            "es2015",
+            "react"
+          ],
+          "plugins": [
+            "transform-object-rest-spread"
+          ]
+        }
+      ],
+      [
+        "aliasify"
+      ]
+    ]
   },
   "devDependencies": {
     "babel-jest": "*",
@@ -67,6 +80,6 @@
   },
   "license": "MIT",
   "engines": {
-    "node": "~4.3.2"
+    "node": "4.4.3"
   }
 }

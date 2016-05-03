@@ -7,6 +7,7 @@ import Aviator from 'aviator';
 import ScreenWellplates from './ScreenWellplates';
 import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
+import StickyDiv from 'react-stickydiv'
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -86,6 +87,7 @@ export default class ScreenDetails extends Component {
 
     const submitLabel = screen.isNew ? "Create" : "Save";
     return (
+      <StickyDiv zIndex={2}>
       <div key={screen.id}>
         <Panel header="Screen Details" bsStyle={screen.isEdited ? 'info' : 'primary'}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
@@ -174,6 +176,7 @@ export default class ScreenDetails extends Component {
           </ButtonToolbar>
         </Panel>
       </div>
+      </StickyDiv>
     );
   }
 }

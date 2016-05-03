@@ -17,6 +17,7 @@ import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
 import extra from "./extra/SampleDetailsExtra"
 import Select from 'react-select';
+import StickyDiv from 'react-stickydiv'
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
@@ -47,12 +48,10 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener('scroll', this.handleScroll.bind(this));
     ElementStore.listen(this.onChange.bind(this));
   }
 
   componentWillUnmount() {
-    window.removeEventListener('scroll', this.handleScroll.bind(this));
     ElementStore.unlisten(this.onChange.bind(this));
   }
 
@@ -66,13 +65,6 @@ export default class SampleDetails extends React.Component {
         loadingMolecule: false
       });
     }
-  }
-
-  handleScroll(event) {
-    if (event.srcElement.body.scrollTop > 65) //heander height + some margin
-      this.setState({ samplePanelFixed: true })
-    else
-      this.setState({ samplePanelFixed: false })
   }
 
   handleSampleChanged(sample) {
@@ -235,7 +227,7 @@ export default class SampleDetails extends React.Component {
           <h5>{this.sampleExactMW(sample)}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
-          {this.extraLabels().map(Lab=><Lab element={sample}/>)}
+          {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </Col>
         <Col md={8}>
           {this.svgOrLoading(sample)}
@@ -249,7 +241,6 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="InChI"
              key={sample.id}
              defaultValue={sample.molecule_inchistring}
-             value={sample.molecule_inchistring}
              disabled
              readOnly
       />
@@ -272,7 +263,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <ListGroupItem onClick={() => this.handleSectionToggle()}>
-        <Col className="padding-right" md={6}>
+        <Col className="padding-right elem-composition-header" md={6}>
           <label>{label}</label>
         </Col>
         <div className="col-md-6">
@@ -362,7 +353,7 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem style={{paddingBottom: 20}}>
         <Input type="text" label="Imported Readout"
            ref="importedReadoutInput"
-           value={sample.imported_readout}
+           value={sample.imported_readout || ''}
            disabled
            readOnly
         />
@@ -377,7 +368,7 @@ export default class SampleDetails extends React.Component {
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
     return(
-       <Tab eventKey={ind}  title={TabName} >
+       <Tab eventKey={ind} key={ind} title={TabName} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  sample={sample}/>
          </ListGroupItem>
@@ -413,19 +404,21 @@ export default class SampleDetails extends React.Component {
           onCancel={this.handleStructureEditorCancel.bind(this)}
           molfile={molfile}
           />
-        <Panel className={this.state.samplePanelFixed ? 'panel-fixed' : ''}
-               header="Sample Details"
-               bsStyle={sample.isEdited ? 'info' : 'primary'}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
-            <i className="fa fa-times"></i>
-          </Button>
-          {this.sampleHeader(sample)}
-          <ListGroup>
-          <Tabs defaultActiveKey={0}>
-            {tabContents.map((e,i)=>e(i))}
-          </Tabs>
-          </ListGroup>
-        </Panel>
+        <StickyDiv zIndex={2}>
+          <Panel className="panel-fixed"
+                 header="Sample Details"
+                 bsStyle={sample.isEdited ? 'info' : 'primary'}>
+            <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+              <i className="fa fa-times"></i>
+            </Button>
+            {this.sampleHeader(sample)}
+            <ListGroup>
+            <Tabs defaultActiveKey={0}>
+              {tabContents.map((e,i)=>e(i))}
+            </Tabs>
+            </ListGroup>
+          </Panel>
+        </StickyDiv>
       </div>
     )
   }
