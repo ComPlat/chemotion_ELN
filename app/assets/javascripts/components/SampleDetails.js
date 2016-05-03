@@ -227,7 +227,7 @@ export default class SampleDetails extends React.Component {
           <h5>{this.sampleExactMW(sample)}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
-          {this.extraLabels().map(Lab=><Lab element={sample}/>)}
+          {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </Col>
         <Col md={8}>
           {this.svgOrLoading(sample)}
@@ -241,7 +241,6 @@ export default class SampleDetails extends React.Component {
       <Input type="text" label="InChI"
              key={sample.id}
              defaultValue={sample.molecule_inchistring}
-             value={sample.molecule_inchistring}
              disabled
              readOnly
       />
@@ -354,7 +353,7 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem style={{paddingBottom: 20}}>
         <Input type="text" label="Imported Readout"
            ref="importedReadoutInput"
-           value={sample.imported_readout}
+           value={sample.imported_readout || ''}
            disabled
            readOnly
         />
@@ -369,7 +368,7 @@ export default class SampleDetails extends React.Component {
     let NoName =  extra["Tab"+num];
     let TabName = extra["TabName"+num];
     return(
-       <Tab eventKey={ind}  title={TabName} >
+       <Tab eventKey={ind} key={ind} title={TabName} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  sample={sample}/>
          </ListGroupItem>

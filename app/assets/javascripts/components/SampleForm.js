@@ -121,8 +121,8 @@ export default class SampleForm extends React.Component {
   topSecretCheckbox(sample) {
     if(!sample.isMethodDisabled('is_top_secret')) {
       return (
-        <Input ref="topSecretInput" type="checkbox" label="Top secret" c
-        hecked={sample.is_top_secret}
+        <Input ref="topSecretInput" type="checkbox" label="Top secret"
+        checked={sample.is_top_secret}
         onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}/>
       )
     }
@@ -131,12 +131,11 @@ export default class SampleForm extends React.Component {
   moleculeInput(sample) {
     return (
       <Input type="text" label="Molecule" ref="moleculeInput"
-             key={sample.id}
              buttonAfter={this.structureEditorButton(sample.isMethodDisabled('molecule_iupac_name'))}
-             defaultValue={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
              disabled={sample.isMethodDisabled('molecule_iupac_name')}
              readOnly={sample.isMethodDisabled('molecule_iupac_name')}
+             onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}
       />
     )
   }
@@ -157,8 +156,6 @@ export default class SampleForm extends React.Component {
   textInput(sample, field, label, disabled = false) {
     return (
       <Input type="text" label={label}
-             key={field + sample.id.toString()}
-             defaultValue={sample[field]}
              value={sample[field]}
              onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}
              disabled={disabled || sample.isMethodDisabled(field)}
@@ -193,9 +190,8 @@ export default class SampleForm extends React.Component {
       return false;
 
     return (
-      <Col md={2}>
+      <Col md={2} key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
-          key={sample.id}
           value={!isNaN(sample[field]) ? sample[field] : null}
           unit={unit}
           label={label}
@@ -216,9 +212,7 @@ export default class SampleForm extends React.Component {
     if(sample.isMethodDisabled('amount_value') == false) {
       if(sample.isMethodRestricted('molecule') == true) {
         content.push(
-          <Col md={6}>
-            {this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput')}
-          </Col>
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput')
         )
       } else {
         content.push(
@@ -242,7 +236,7 @@ export default class SampleForm extends React.Component {
      return content;
     } else {
       return (
-        <Input type="text" label="Amount" disabled defaultValue="***" value="***" readOnly/>
+        <Input type="text" label="Amount" disabled defaultValue="***" readOnly/>
       )
     }
   }

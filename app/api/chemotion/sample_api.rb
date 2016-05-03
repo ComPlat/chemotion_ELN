@@ -205,7 +205,7 @@ module Chemotion
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
-        optional :boiling_point, type: Float, desc: "Sample melting point"
+        optional :melting_point, type: Float, desc: "Sample melting point"
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
@@ -262,7 +262,7 @@ module Chemotion
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
-        optional :boiling_point, type: Float, desc: "Sample melting point"
+        optional :melting_point, type: Float, desc: "Sample melting point"
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array

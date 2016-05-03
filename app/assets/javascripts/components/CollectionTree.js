@@ -7,6 +7,8 @@ import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
 import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
+import ElementStore from './stores/ElementStore';
+
 export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
