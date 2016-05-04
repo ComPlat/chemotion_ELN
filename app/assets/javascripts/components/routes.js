@@ -27,7 +27,6 @@ const routes = {
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];
           let collectionPromise = null;
-
           if(collectionId == 'all') {
             collectionPromise = CollectionStore.findAllCollection();
           } else {
@@ -129,7 +128,7 @@ const routes = {
       '/:screenID': 'showOrNew'
     }
 }
-console.log(allRoutes(routes));
+
 export default function() {
   Aviator.root = '/';
   Aviator.pushStateEnabled = false;

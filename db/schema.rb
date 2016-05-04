@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160427132049) do
+ActiveRecord::Schema.define(version: 20160502124143) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -66,7 +66,7 @@ ActiveRecord::Schema.define(version: 20160427132049) do
     t.datetime "updated_at",                          null: false
   end
 
-  create_table "chemstash_chemicals_molecules", id: false, force: :cascade do |t|
+  create_table "chemstash_chemicals_molecules", force: :cascade do |t|
     t.integer "chemstash_chemical_id"
     t.integer "molecule_id"
   end
@@ -74,13 +74,16 @@ ActiveRecord::Schema.define(version: 20160427132049) do
   add_index "chemstash_chemicals_molecules", ["chemstash_chemical_id"], name: "index_chemstash_chemicals_molecules_on_chemstash_chemical_id", using: :btree
   add_index "chemstash_chemicals_molecules", ["molecule_id"], name: "index_chemstash_chemicals_molecules_on_molecule_id", using: :btree
 
-  create_table "chemstash_chemicals_orders", id: false, force: :cascade do |t|
+  create_table "chemstash_chemicals_orders", force: :cascade do |t|
     t.integer "chemstash_chemical_id"
     t.integer "chemstash_orders_id"
+    t.integer "sample_id"
+    t.string  "batch_nr"
   end
 
   add_index "chemstash_chemicals_orders", ["chemstash_chemical_id"], name: "index_chemstash_chemicals_orders_on_chemstash_chemical_id", using: :btree
   add_index "chemstash_chemicals_orders", ["chemstash_orders_id"], name: "index_chemstash_chemicals_orders_on_chemstash_orders_id", using: :btree
+  add_index "chemstash_chemicals_orders", ["sample_id"], name: "index_chemstash_chemicals_orders_on_sample_id", using: :btree
 
   create_table "chemstash_chemicals_statements", id: false, force: :cascade do |t|
     t.integer "chemstash_chemical_id"

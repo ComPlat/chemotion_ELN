@@ -157,11 +157,13 @@ class UIStore {
       this.state.currentCollection = collection;
       this.state.currentCollectionId = collection.id;
       this.state.number_of_results = 15;
-
-      ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
-      ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
-      ElementActions.fetchWellplatesByCollectionId(collection.id, state.pagination);
-      ElementActions.fetchScreensByCollectionId(collection.id, state.pagination);
+      if (!collection.noFetch){
+        // FIXME state.pagination is undefined it should be like {page: 1,per_page: 15}. 
+        ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
+        ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
+        ElementActions.fetchWellplatesByCollectionId(collection.id, state.pagination);
+        ElementActions.fetchScreensByCollectionId(collection.id, state.pagination);
+      }
     }
   }
 
