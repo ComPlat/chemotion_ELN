@@ -11,33 +11,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160502124143) do
+ActiveRecord::Schema.define(version: 20160506080101) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
   end
-
-  create_table "baskets", force: :cascade do |t|
-    t.integer  "user_id",    null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string   "name"
-  end
-
-  add_index "baskets", ["user_id"], name: "index_baskets_on_user_id", using: :btree
-
-  create_table "baskets_fruits", force: :cascade do |t|
-    t.integer "basket_id"
-    t.integer "fruit_id"
-    t.string  "category"
-  end
-
-  add_index "baskets_fruits", ["basket_id"], name: "index_baskets_fruits_on_basket_id", using: :btree
 
   create_table "chemstash_chemicals", force: :cascade do |t|
     t.string   "substance"
@@ -62,9 +45,12 @@ ActiveRecord::Schema.define(version: 20160502124143) do
     t.string   "risk_statement"
     t.text     "note"
     t.hstore   "label"
+    t.integer  "collection_id"
     t.datetime "created_at",                          null: false
     t.datetime "updated_at",                          null: false
   end
+
+  add_index "chemstash_chemicals", ["collection_id"], name: "index_chemstash_chemicals_on_collection_id", using: :btree
 
   create_table "chemstash_chemicals_molecules", force: :cascade do |t|
     t.integer "chemstash_chemical_id"

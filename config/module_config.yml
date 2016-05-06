@@ -29,11 +29,20 @@ SampleDetails:
 CollectionTree:
   Div:
     {}
-
+CollectionStore:
+  state:
+    {}
+  listeners:
+    {}
+  handlers:
+    {}
+  statics:
+    {}
+        
 routes:
   routes:
     {}
-  
+
 
 
 

@@ -1,5 +1,23 @@
 import alt from '../alt';
 import CollectionActions from '../actions/CollectionActions';
+import extra from '../extra/CollectionStoreExtra';
+
+let extraThing = (name)=> {
+  let obj = {}
+  for (let i=0;i<extra[name+'Count'];i++){obj={...obj,...extra[name+i]} }
+  return obj;
+}
+
+let extended= (store)=>{
+  for (let i=0;i<extra.handlersCount;i++){
+    Object.keys(extra["handlers"+i]).map((k)=>{store.prototype[k]=extra["handlers"+i][k]});
+  }
+
+  for (let i=0;i<extra.staticsCount;i++){
+    Object.keys(extra["statics"+i]).map((k)=>{store[k]=extra["statics"+i][k]});
+  }
+  return store;
+}
 
 class CollectionStore {
   constructor() {
@@ -7,8 +25,10 @@ class CollectionStore {
       unsharedRoots: [],
       sharedRoots: [],
       remoteRoots: [],
-      lockedRoots: []
+      lockedRoots: [],
+      ...extraThing("state")
     };
+
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
@@ -19,7 +39,8 @@ class CollectionStore {
       handleCreateSharedCollections: CollectionActions.createSharedCollections,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
-      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection
+      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection,
+      ...extraThing("listeners")
     })
   }
 
@@ -65,6 +86,10 @@ class CollectionStore {
 
   handleCreateUnsharedCollection(results) {
     CollectionActions.fetchUnsharedCollectionRoots();
+  }
+
+  for (let i=0;i<extra.handlersCount;i++){
+    Object.keys(extra["handlers"+i]).map((k)=>{return this[k]=extra["handlers"+i][k]});
   }
 
   // 'repository' methods; returns a promise
