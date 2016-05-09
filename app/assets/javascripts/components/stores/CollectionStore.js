@@ -8,16 +8,7 @@ let extraThing = (name)=> {
   return obj;
 }
 
-let extended= (store)=>{
-  for (let i=0;i<extra.handlersCount;i++){
-    Object.keys(extra["handlers"+i]).map((k)=>{store.prototype[k]=extra["handlers"+i][k]});
-  }
-
-  for (let i=0;i<extra.staticsCount;i++){
-    Object.keys(extra["statics"+i]).map((k)=>{store[k]=extra["statics"+i][k]});
-  }
-  return store;
-}
+console.log(extra);
 
 class CollectionStore {
   constructor() {
@@ -29,6 +20,11 @@ class CollectionStore {
       ...extraThing("state")
     };
 
+    for (let i=0;i<extra.listenersCount;i++){
+     Object.keys(extra["listeners"+i]).map((k)=>{
+        this.bindAction(extra["listeners"+i][k],extra["handlers"+i][k].bind(this))
+      });
+    }
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
@@ -40,7 +36,7 @@ class CollectionStore {
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
       handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection,
-      ...extraThing("listeners")
+
     })
   }
 
@@ -88,9 +84,6 @@ class CollectionStore {
     CollectionActions.fetchUnsharedCollectionRoots();
   }
 
-  for (let i=0;i<extra.handlersCount;i++){
-    Object.keys(extra["handlers"+i]).map((k)=>{return this[k]=extra["handlers"+i][k]});
-  }
 
   // 'repository' methods; returns a promise
   static findById(collectionId) {

@@ -4,11 +4,19 @@ import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
 import ClipboardStore from './ClipboardStore';
+import extra from '../extra/ElementStoreExtra';
+
 
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+
+let extraThing = (name)=> {
+  let obj = {}
+  for (let i=0;i<extra[name+'Count'];i++){obj={...obj,...extra[name+i]} }
+  return obj;
+}
 
 class ElementStore {
   constructor() {
@@ -45,8 +53,15 @@ class ElementStore {
       },
       currentElement: null,
       currentReaction: null,
-      currentMaterialGroup: null
+      currentMaterialGroup: null,
+    //  ...extraThing("state")
     };
+
+    for (let i=0;i<extra.listenersCount;i++){
+      Object.keys(extra["listeners"+i]).map((k)=>{
+        this.bindAction(extra["listeners"+i][k],extra["handlers"+i][k].bind(this))
+      });
+    }
 
     this.bindListeners({
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
