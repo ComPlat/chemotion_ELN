@@ -58,8 +58,7 @@ module Chemotion
           currentCollectionId = ui_state[:currentCollectionId]
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
           Sample.where(id: sample_ids).each do |sample|
-            subsample = sample.create_subsample current_user
-            CollectionsSample.create(collection_id: currentCollectionId, sample_id: subsample.id)
+            subsample = sample.create_subsample current_user, currentCollectionId
           end
         end
       end
@@ -204,6 +203,9 @@ module Chemotion
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
+        optional :density, type: Float, desc: "Sample density"
+        optional :boiling_point, type: Float, desc: "Sample boiling point"
+        optional :melting_point, type: Float, desc: "Sample melting point"
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
@@ -258,6 +260,9 @@ module Chemotion
         optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
+        optional :density, type: Float, desc: "Sample density"
+        optional :boiling_point, type: Float, desc: "Sample boiling point"
+        optional :melting_point, type: Float, desc: "Sample melting point"
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
@@ -297,13 +302,18 @@ module Chemotion
           ) unless prop_value.blank?
         end
 
-        sample = Sample.create(attributes)
+        sample = Sample.new(attributes)
 
-        if collection_id = params[:collection_id]
-          collection = Collection.find(collection_id)
-          CollectionsSample.create(sample: sample, collection: collection)
-          CollectionsSample.create(sample: sample, collection: Collection.get_all_collection_for_user(current_user.id))
+        if params[:collection_id]
+          collection = current_user.collections.find(params[:collection_id])
+          sample.collections << collection
         end
+
+        all_coll = Collection.get_all_collection_for_user(current_user.id)
+        sample.collections << all_coll
+
+        sample.save!
+
         sample
       end
 

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Input, ListGroup, ListGroupItem, Button, RadioButton} from 'react-bootstrap';
+import {Input, ListGroup, ListGroupItem, Button, RadioButton, Row, Col} from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from './ElementalCompositionGroup'
 import NotificationActions from './actions/NotificationActions'
@@ -11,7 +11,7 @@ export default class PolymerSection extends React.Component {
     super(props);
 
     // use has to set loading on new sample
-    if(!props.sample.loading && !props.sample.reaction_product) {
+    if(props.sample.contains_residues && !props.sample.loading && !props.sample.reaction_product) {
       props.sample.error_loading = true
     }
 
@@ -31,13 +31,12 @@ export default class PolymerSection extends React.Component {
     if(name == 'loading') {
 
       this.handleAmountChanged(sample.amount);
+      if(residue.custom_info.loading_type == 'external')
+        sample.external_loading = e.value;
 
       let errorMessage;
       if(e.value == 0.0)
         errorMessage = 'Loading can not be 0. Please define a value.'
-
-      if(residue.custom_info.loading_type == 'external')
-        residue.custom_info.external_loading = e.value;
 
       let mw_defined = sample.molecule.molecular_weight;
       let value_to_check = e.value * mw_defined;
@@ -80,9 +79,10 @@ export default class PolymerSection extends React.Component {
   handlePRadioChanged(e, residue, sample) {
     residue.custom_info['loading_type'] = e.target.value;
 
-    if(e.target.value == 'external') {
-      residue.custom_info.loading = residue.custom_info.external_loading;
-    } else {
+    if(e.target.value == 'external'){
+      sample.loading = sample.external_loading;
+    }
+    else {
       let e_compositon = sample.elemental_compositions.find(function(item) {
         return item.composition_type == e.target.value
       });
@@ -117,44 +117,36 @@ export default class PolymerSection extends React.Component {
 
   polymerFormula(sample, residue) {
     return (
-      <div key={'polymer_formula' + sample.id.toString()}>
-      <Button className="pull-right"
-              id="external-save-btn"
-              bsStyle="warning"
-              disabled={!sample.isValid}
-              onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
-       Save
-      </Button>
-      <div className="col-sm-10 formula-input">
-        <Input type="text" label="Formula"
-               value={residue.custom_info.formula}
-               name="formula"
-               key={'polymer_formula_input' + sample.id.toString()}
-               onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
-        />
-      </div>
-      </div>
+      <Input type="text" label="Formula"
+             value={residue.custom_info.formula}
+             name="formula"
+             key={'polymer_formula_input' + sample.id.toString()}
+             onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+      />
     )
   }
 
   customInfoRadio(label, value, residue, sample) {
     let additionalLoadingInput = false;
 
-    if(value == 'external' && residue.custom_info.loading_type == value) {
+    if(value == 'external') {
+      let disabled = !(residue.custom_info.loading_type == value);
       additionalLoadingInput = (
-         <td width="30%" className="external_loading_input">
-           <NumeralInputWithUnitsCompo
+        <td width="50%" className="loading-input">
+          <NumeralInputWithUnitsCompo
+            value={sample.loading}
+            unit='mmol/g'
+            metricPrefix='none'
+            metricPrefixes = {['none']}
+            precision={3}
             key={'polymer_loading_input' + sample.id.toString()}
-             value={residue.custom_info.external_loading}
-             unit='mmol/g'
-             metricPrefix='none'
-             metricPrefixes = {['none']}
-             precision={3}
-             disabled={residue.custom_info.loading_type != value}
-             bsStyle={this.checkInputStatus(sample, 'loading')}
-             onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
-           />
-         </td>
+            name="polymer_loading"
+            bsStyle={this.checkInputStatus(sample, 'loading')}
+            onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
+            disabled={disabled}
+            readOnly={disabled}
+          />
+        </td>
       )
     }
 
@@ -186,29 +178,18 @@ export default class PolymerSection extends React.Component {
 
     return (
       <table width="100%" key={'polymer_loading' + sample.id.toString()}>
-      <tbody>
-        {this.customInfoRadio("Loading (according to mass difference)","mass_diff", residue, sample)}
-        {this.customInfoRadio("Loading (according to external estimation):","external", residue, sample)}
-        {this.customInfoRadio("Loading (according to 100% conversion)","full_conv", residue, sample)}
-        {this.customInfoRadio("Loading (according to EA)","found", residue, sample)}
+      <thead>
        <tr>
-         <td></td>
-         <td width="30%">
-           <NumeralInputWithUnitsCompo
-             value={sample.loading}
-             label="Loading"
-             unit='mmol/g'
-             metricPrefix='none'
-             metricPrefixes = {['none']}
-             precision={3}
-             key={'polymer_loading_input' + sample.id.toString()}
-             name="polymer_loading"
-             bsStyle={this.checkInputStatus(sample, 'loading')}
-             disabled
-             readOnly
-           />
-         </td>
+         <th>
+           <label>Loading according to:</label>
+         </th>
        </tr>
+      </thead>
+      <tbody>
+        {this.customInfoRadio("Mass difference","mass_diff", residue, sample)}
+        {this.customInfoRadio("100% conversion","full_conv", residue, sample)}
+        {this.customInfoRadio("Elemental analyses","found", residue, sample)}
+        {this.customInfoRadio("External estimation","external", residue, sample)}
        </tbody>
        </table>
       )
@@ -222,18 +203,15 @@ export default class PolymerSection extends React.Component {
     ];
 
     return (
-      <div>
-        <label>Polymer type</label>
-        <Select
-          options={selectOptions}
-          simpleValue
-          key={"polymer_type" + sample.id.toString()}
-          name="polymer_type"
-          value={residue.custom_info.polymer_type}
-          clearable={false}
-          onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
-          />
-      </div>
+      <Select
+        options={selectOptions}
+        simpleValue
+        key={"polymer_type" + sample.id.toString()}
+        name="polymer_type"
+        value={residue.custom_info.polymer_type}
+        clearable={false}
+        onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
+        />
     )
   }
 
@@ -259,21 +237,31 @@ export default class PolymerSection extends React.Component {
 
     return (
       <div className="polymer-section">
-        {this.polymerFormula(sample, residue)}
-        {this.polymerLoading(sample, residue)}
+        <Row>
+          <Col md={4}>
+            <label>Polymer type</label>
+            {this.polymerType(sample, residue)}
+          </Col>
+          <Col md={4}>{this.polymerCrossLinkage(sample, residue)}</Col>
 
-        <table width="100%">
-        <tbody>
-          <tr>
-            <td width="50%">
-              {this.polymerType(sample, residue)}
-            </td>
-            <td width="50%" className="cross_linkage">
-              {this.polymerCrossLinkage(sample, residue)}
-            </td>
-          </tr>
-        </tbody>
-        </table>
+          <Col md={3}>{this.polymerFormula(sample, residue)}</Col>
+          <Col md={1}>
+            <Button id="external-save-btn"
+                    bsStyle="warning"
+                    disabled={!sample.isValid}
+                    onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
+             Save
+            </Button>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={8}>
+            <ElementalCompositionGroup sample={sample}/>
+          </Col>
+          <Col md={4}>
+            {this.polymerLoading(sample, residue)}
+          </Col>
+        </Row>
       </div>
     )
   }

@@ -8,11 +8,11 @@ export default class Formula extends React.Component {
 
     if(this.props.formula) {
       let keys = this.props.formula.split(/([A-Za-z]{1}[a-z]{0,2})(\+?)(\-?)(\d*)/)
-      content = _.compact(keys).map(function(item) {
+      content = _.compact(keys).map(function(item, i) {
         if((/\d+/).test(item))
-          return <sub>{item}</sub>;
+          return <sub key={i}>{item}</sub>;
         else if((/[\+\-]/).test(item))
-          return <sup>{item}</sup>
+          return <sup key={i}>{item}</sup>;
         else
           return item;
       })

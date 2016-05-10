@@ -11,7 +11,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
+
 ActiveRecord::Schema.define(version: 20160506080101) do
+
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -143,6 +145,7 @@ ActiveRecord::Schema.define(version: 20160506080101) do
 
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["deleted_at"], name: "index_collections_samples_on_deleted_at", using: :btree
+  add_index "collections_samples", ["sample_id", "collection_id"], name: "index_collections_samples_on_sample_id_and_collection_id", unique: true, using: :btree
   add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
 
   create_table "collections_screens", force: :cascade do |t|
@@ -330,6 +333,9 @@ ActiveRecord::Schema.define(version: 20160506080101) do
     t.string   "sample_svg_file"
     t.integer  "user_id"
     t.string   "identifier"
+    t.float    "density",             default: 1.0,   null: false
+    t.float    "melting_point"
+    t.float    "boiling_point"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

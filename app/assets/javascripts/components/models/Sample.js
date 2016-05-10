@@ -100,7 +100,7 @@ export default class Sample extends Element {
       real_amount_unit: this.real_amount_unit,
       description: this.description,
       purity: this.purity,
-      short_label: this.short_label.includes('Copy') ? this.short_label : null,
+      short_label: (this.short_label && this.short_label.includes('Copy')) ? this.short_label : null,
       solvent: this.solvent,
       impurities: this.impurities,
       location: this.location,
@@ -109,6 +109,9 @@ export default class Sample extends Element {
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
+      density: this.density,
+      boiling_point: this.boiling_point,
+      melting_point: this.melting_point,
       analyses: this.analyses.map(a => a.serialize()),
       residues: this.residues,
       elemental_compositions: this.elemental_compositions,
@@ -129,6 +132,7 @@ export default class Sample extends Element {
       target_amount_unit: 'g',
       description: '',
       purity: 1,
+      density: 1,
       solvent: '',
       impurities: '',
       location: '',
@@ -157,6 +161,7 @@ export default class Sample extends Element {
       target_amount_unit: 'g',
       description: '',
       purity: 1,
+      density: 1,
       solvent: '',
       impurities: '',
       location: '',
@@ -426,9 +431,9 @@ export default class Sample extends Element {
           return amount_g;
           break;
         case 'l':
-          let molecule_density = this.molecule_density || 1.0;
-          if(molecule_density) {
-            return amount_g / molecule_density / 1000 ;
+          let density = this.density || 1.0;
+          if(density) {
+            return amount_g / density / 1000 ;
             break;
           }
         case 'mol':
@@ -472,7 +477,7 @@ export default class Sample extends Element {
           return amount_value / 1000.0;
           break;
         case 'l':
-          return amount_value * (this.molecule_density || 1.0) * 1000;
+          return amount_value * (this.density || 1.0) * 1000;
           break;
         case 'mol':
           return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
@@ -491,14 +496,6 @@ export default class Sample extends Element {
     this.molecule.iupac_name = iupac_name;
   }
 
-  get molecule_density() {
-    return this.molecule && this.molecule.density;
-  }
-
-  set molecule_density(density) {
-    this.molecule.density = density;
-  }
-
   get molecule_molecular_weight() {
     return this.molecule && this.molecule.molecular_weight;
   }
@@ -513,22 +510,6 @@ export default class Sample extends Element {
 
   get molecule_inchistring() {
     return this.molecule && this.molecule.inchistring;
-  }
-
-  get molecule_boiling_point() {
-    return this.molecule && this.molecule.boiling_point;
-  }
-
-  set molecule_boiling_point(bp) {
-    this.molecule.boiling_point = bp;
-  }
-
-  get molecule_melting_point() {
-    return this.molecule && this.molecule.melting_point;
-  }
-
-  set molecule_melting_point(mp) {
-    this.molecule.melting_point = mp;
   }
 
   get purity() {
@@ -575,8 +556,22 @@ export default class Sample extends Element {
   }
 
   set loading(loading) {
-    this.residues[0].custom_info.loading = loading;
+    if(this.contains_residues)
+      this.residues[0].custom_info.loading = loading;
   }
+
+  get external_loading() {
+    if(!this.contains_residues)
+      return false;
+
+    return this.residues[0].custom_info.external_loading;
+  }
+
+  set external_loading(loading) {
+    if(this.contains_residues)
+      this.residues[0].custom_info.external_loading = loading;
+  }
+
 
   get isValid(){
     return (this && this.molfile &&

@@ -53,8 +53,10 @@ export default class ElementalCompositionGroup extends React.Component {
     if (!sample.molecule.sum_formular) {
       return false;
     } else {
+      let label = sample.contains_residues ? <label>Elemental composition</label> : false
       return (
         <div>
+          {label}
           {data}
           <ElementalCompositionCustom
             elemental_composition={el_composition_custom}

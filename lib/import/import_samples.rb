@@ -26,6 +26,7 @@ class Import::ImportSamples
       {status: "failed", data: unprocessable, message: message}
     else
       processed =[]
+      all_collection = Collection.get_all_collection_for_user(current_user_id)
       begin
       ActiveRecord::Base.transaction do
         processed = rows.map.with_index do |row,i|
@@ -36,8 +37,10 @@ class Import::ImportSamples
             processed = [row]
             raise "Import of Sample #{row[:name]}: Molecule is nil."
           end
-          sample = Sample.create(name: row[:name], description: row[:description], molecule: molecule, imported_readout: row[:value], created_by: current_user_id)
-          CollectionsSample.create(collection_id: collection_id, sample_id: sample.id)
+          sample = Sample.new(name: row[:name], description: row[:description], molecule: molecule, imported_readout: row[:value], created_by: current_user_id)
+          sample.collections << Collection.find(collection_id)
+          sample.collections << all_collection
+          sample.save!
         end
       end
       {status: "ok", data: processed, message: ""}

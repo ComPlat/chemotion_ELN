@@ -8,8 +8,8 @@ import CollectionSubtree from './CollectionSubtree';
 
 import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
-
 import extra from './extra/CollectionTreeExtra';
+import ElementStore from './stores/ElementStore';
 
 export default class CollectionTree extends React.Component {
   constructor(props) {

@@ -20,10 +20,11 @@ export default class ElementalComposition extends React.Component {
     keys.map(function(key, index) {
       let value = elemental_composition.data[key];
       elements.push(
-        <span className="data-item">
+        <span className="data-item" key={key}>
           <strong>
-            {key}:
+            {key}
           </strong>
+          &nbsp;
           &nbsp;
           {value}
           &nbsp;

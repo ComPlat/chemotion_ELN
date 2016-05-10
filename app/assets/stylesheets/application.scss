@@ -43,3 +43,19 @@ div[class^="col-"] {
 .table.borderless td, .table.borderless th {
   border: 0;
 }
+
+.panel-fixed {
+  overflow-y: scroll;
+  max-height: 950px;
+
+  button.btn-danger {
+    position: relative;
+    float: right;
+    margin-right: 5px;
+  }
+}
+
+.panel-fixed::-webkit-scrollbar {
+  width: 0px;  /* remove scrollbar space */
+  background: transparent;  /* optional: just make scrollbar invisible */
+}

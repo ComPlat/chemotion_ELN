@@ -111,6 +111,7 @@ group :development, :test do
   gem 'capistrano-rvm'
   gem 'capistrano-bundler'
   gem 'capistrano-rails'
+  gem 'capistrano-nvm', require: false
   gem 'capistrano-npm'
   gem 'capistrano3-delayed-job'
 end

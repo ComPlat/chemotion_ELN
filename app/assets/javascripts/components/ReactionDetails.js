@@ -14,13 +14,15 @@ import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
 import extra from './extra/ReactionDetailsExtra';
+import StickyDiv from 'react-stickydiv'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
     const {reaction} = props;
     this.state = {
-      reaction
+      reaction,
+      reactionPanelFixed: false
     };
 
     if(reaction.hasMaterials()) {
@@ -74,7 +76,7 @@ export default class ReactionDetails extends Component {
             value: product.adjusted_amount_g,
             unit: 'g'
         });
-        
+
       }
     })
 
@@ -157,7 +159,10 @@ export default class ReactionDetails extends Component {
       extraTabs.push((i)=>this.extraTab(i))
     }
     return (
-        <Panel header="Reaction Details" bsStyle={reaction.isEdited ? 'info' : 'primary'}>
+      <StickyDiv zIndex={2}>
+        <Panel className="panel-fixed"
+               header="Reaction Details"
+               bsStyle={reaction.isEdited ? 'info' : 'primary'}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
             <i className="fa fa-times"></i>
           </Button>
@@ -221,6 +226,7 @@ export default class ReactionDetails extends Component {
             </Button>
           </ButtonToolbar>
         </Panel>
+      </StickyDiv>
     );
   }
 }
