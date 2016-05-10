@@ -29,7 +29,7 @@ SampleDetails:
 CollectionTree:
   Div:
     {}
-    
+
 CollectionStore:
   state:
     {}
@@ -46,8 +46,6 @@ ElementStore:
   listeners:
     {}
   handlers:
-    {}
-  statics:
     {}
 
 routes:
