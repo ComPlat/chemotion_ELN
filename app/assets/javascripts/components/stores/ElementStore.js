@@ -9,10 +9,9 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 
-import extraES from '../extra/testExtra';
-//import extraES from '../extra/ElementStoreExtra';
-//import extraCS from '../extra/CollectionStoreExtra';
-//import {extraThing} from '../utils/Functions'
+
+var extraES = require('../extra/testExtra.js');
+import {extraThing} from '../utils/Functions';
 
 
 class ElementStore {
@@ -51,7 +50,7 @@ class ElementStore {
       currentElement: null,
       currentReaction: null,
       currentMaterialGroup: null,
-      //...extraThing("state",extraES)
+      ...extraThing("state",extraES)
     };
 
     for (let i=0;i<extraES.listenersCount;i++){

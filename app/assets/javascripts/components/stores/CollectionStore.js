@@ -1,7 +1,7 @@
 import alt from '../alt';
 import CollectionActions from '../actions/CollectionActions';
 import extra from '../extra/CollectionStoreExtra';
-import {extraThing} from '../utils/Functions'
+import {extraThing} from '../utils/Functions';
 
 
 class CollectionStore {

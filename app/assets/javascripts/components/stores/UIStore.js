@@ -3,7 +3,7 @@ import UIActions from '../actions/UIActions';
 import ElementActions from '../actions/ElementActions';
 import ElementStore from './ElementStore';
 import ArrayUtils from '../utils/ArrayUtils';
-const Immutable = require('immutable');
+import Immutable from 'immutable';
 
 class UIStore {
   constructor() {
