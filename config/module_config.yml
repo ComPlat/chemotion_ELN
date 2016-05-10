@@ -37,8 +37,7 @@ CollectionStore:
     {}
   handlers:
     {}
-  statics:
-    {}
+
 
 ElementStore:
   state:
@@ -52,6 +51,13 @@ routes:
   routes:
     {}
 
+test:
+  state:
+    {}
+  listeners:
+    {}
+  handlers:
+    {}
 
 
 

@@ -9,9 +9,11 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 
+import extraES from '../extra/testExtra';
 //import extraES from '../extra/ElementStoreExtra';
 //import extraCS from '../extra/CollectionStoreExtra';
 //import {extraThing} from '../utils/Functions'
+
 
 class ElementStore {
   constructor() {
@@ -51,8 +53,12 @@ class ElementStore {
       currentMaterialGroup: null,
       //...extraThing("state",extraES)
     };
-    console.log('within elem store');
-  //  console.log(extraES);
+
+    for (let i=0;i<extraES.listenersCount;i++){
+      Object.keys(extraES["listeners"+i]).map((k)=>{
+        this.bindAction(extraES["listeners"+i][k],extraES["handlers"+i][k].bind(this))
+      });
+    }
 
 
     this.bindListeners({
@@ -124,8 +130,9 @@ class ElementStore {
 
   // -- Elements --
   handleDeleteElements(options) {
-    const ui_state = UIStore.getState();
-
+    //const ui_state = UIStore.getState();
+    this.waitFor(UIStore.dispatchToken);
+    let uiState = UIStore.getState();
     ElementActions.deleteSamplesByUIState(ui_state);
     ElementActions.deleteReactionsByUIState({
       ui_state,
@@ -319,7 +326,9 @@ class ElementStore {
   }
 
   handleCopyReactionFromId(reaction) {
-    const uiState = UIStore.getState();
+    this.waitFor(UIStore.dispatchToken);
+    let uiState = UIStore.getState();
+    //const uiState = UIStore.getState();
     this.state.currentElement = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
   }
 
@@ -352,7 +361,8 @@ class ElementStore {
   // -- Generic --
 
   navigateToNewElement(element) {
-    const uiState = UIStore.getState();
+    this.waitFor(UIStore.dispatchToken);
+    let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollection.id}/${element.type}/${element.id}`);
   }
 

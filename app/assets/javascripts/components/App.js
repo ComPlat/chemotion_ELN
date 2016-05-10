@@ -14,6 +14,7 @@ import initRoutes from './routes';
 
 import Notifications from './Notifications';
 
+
 class App extends Component {
   constructor(props) {
     super();

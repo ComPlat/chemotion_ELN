@@ -24,7 +24,7 @@ gem 'pg_search'
 
 gem 'devise'
 
-gem 'browserify-rails' , '~> 1.5.0'
+gem 'browserify-rails' , '~> 3.0.1'
 
 # for collection tree structure
 gem 'ancestry'

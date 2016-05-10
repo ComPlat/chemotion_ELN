@@ -13,7 +13,7 @@
     "babel-plugin-transform-object-rest-spread": "6.5.0",
 
 
-    "browserify": "~> 13.0.0",
+    "browserify": "~> 13.0.1",
     "browserify-incremental": "^3.0.1",
     "classnames": "^2.1.5",
     "debounce": "^1.0.0",

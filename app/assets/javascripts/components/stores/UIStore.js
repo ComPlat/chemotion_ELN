@@ -2,7 +2,6 @@ import alt from '../alt';
 import UIActions from '../actions/UIActions';
 import ElementActions from '../actions/ElementActions';
 import ElementStore from './ElementStore';
-
 import ArrayUtils from '../utils/ArrayUtils';
 const Immutable = require('immutable');
 
@@ -86,6 +85,7 @@ class UIStore {
   }
 
   handleCheckAllElements(type) {
+    this.waitFor(ElementStore.dispatchToken);
     let {elements} = ElementStore.getState();
 
     this.state[type].checkedAll = true;
@@ -158,7 +158,7 @@ class UIStore {
       this.state.currentCollectionId = collection.id;
       this.state.number_of_results = 15;
       if (!collection.noFetch){
-        // FIXME state.pagination is undefined it should be like {page: 1,per_page: 15}. 
+        // FIXME state.pagination is undefined it should be like {page: 1,per_page: 15}.
         ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
         ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
         ElementActions.fetchWellplatesByCollectionId(collection.id, state.pagination);

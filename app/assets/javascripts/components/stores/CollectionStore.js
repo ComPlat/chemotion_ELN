@@ -1,7 +1,6 @@
 import alt from '../alt';
 import CollectionActions from '../actions/CollectionActions';
 import extra from '../extra/CollectionStoreExtra';
-import extraES from '../extra/ElementStoreExtra';
 import {extraThing} from '../utils/Functions'
 
 
@@ -14,9 +13,7 @@ class CollectionStore {
       lockedRoots: [],
       ...extraThing("state",extra)
     };
-    console.log('within col store');
-    console.log(extra);
-    console.log(extraES);
+
     for (let i=0;i<extra.listenersCount;i++){
      Object.keys(extra["listeners"+i]).map((k)=>{
         this.bindAction(extra["listeners"+i][k],extra["handlers"+i][k].bind(this))
