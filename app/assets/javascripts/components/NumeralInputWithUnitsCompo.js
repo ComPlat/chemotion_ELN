@@ -101,8 +101,10 @@ export default class NumeralInputWithUnitsCompo extends Component {
     };
 
     let prefixSwitch;
+    // BsStyle-s for Input and buttonAfter have differences
+    let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
     if(unit != 'none')
-       prefixSwitch=<Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyle} bsSize={bsSize}>{mp+unit}</Button>
+       prefixSwitch=<Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button>
 
     return (
       <div >

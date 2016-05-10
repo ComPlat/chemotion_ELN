@@ -87,9 +87,14 @@ export default function() {
           } else {
             ElementActions.generateEmptyReaction(collectionID)
           }
+        },
+        showSample: function(e) {
+          const {reactionID, collectionID, sampleID} = e.params;
+          ElementActions.editReactionSample(reactionID, sampleID);
         }
       },
       '/:reactionID': 'show',
+      '/sample/:sampleID': 'showSample',
     },
     '/wellplate': {
       target: {

@@ -55,6 +55,8 @@ class ElementStore {
       handleUpdateSample: ElementActions.updateSample,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
+      handleEditReactionSample: ElementActions.editReactionSample,
+      handleUpdateSampleForReaction: ElementActions.updateSampleForReaction,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
@@ -190,6 +192,20 @@ class ElementStore {
     this.state.currentElement = reaction;
   }
 
+  handleEditReactionSample(result){
+    this.state.currentReaction = result.reaction;
+    this.state.currentElement = result.sample;
+  }
+
+  handleUpdateSampleForReaction(sample) {
+    UserActions.fetchCurrentUser();
+    let reactionID = this.state.currentReaction;
+
+    this.handleRefreshElements('sample');
+
+    ElementActions.fetchReactionById(reactionID)
+  }
+
   handleSplitAsSubsamples(ui_state) {
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);
   }
@@ -294,6 +310,7 @@ class ElementStore {
 
   handleFetchReactionById(result) {
     this.state.currentElement = result;
+    this.navigateToNewElement(result);
   }
 
   handleFetchReactionsByCollectionId(result) {
@@ -380,10 +397,10 @@ class ElementStore {
     if(currentSearchSelection != null) {
       ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, uiState.currentCollection.id, page);
     } else {
+      ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
+
       switch (type) {
-        case 'sample':
-          ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
-          break;
+        // fetch samples to handle creation of split samples
         case 'reaction':
           ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
           break;

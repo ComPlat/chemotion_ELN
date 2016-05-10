@@ -35,10 +35,7 @@ export default class Sample extends Element {
       description: 'Experimental'
     });
 
-    if(this.contains_residues) {
-      this.setDefaultResidue();
-      this.error_loading = true;
-    }
+    if(this.contains_residues) { this.setDefaultResidue(); }
   }
 
   setDefaultResidue() {
@@ -212,9 +209,6 @@ export default class Sample extends Element {
 
     if(value) {
       if(!this.residues.length) {
-        // do not allow zero loading, exclude reaction products
-        if(!this.reaction_product)
-          this.error_loading = true;
 
         this.setDefaultResidue();
       } else {
@@ -227,7 +221,6 @@ export default class Sample extends Element {
       });
     } else {
       this.sample_svg_file = '';
-      this.error_loading = false;
       if(this.residues.length)
         this.residues[0]._destroy = true; // delete residue info
 
@@ -570,6 +563,10 @@ export default class Sample extends Element {
   set external_loading(loading) {
     if(this.contains_residues)
       this.residues[0].custom_info.external_loading = loading;
+  }
+
+  get error_loading() {
+    return this.contains_residues && !this.loading && !this.reaction_product;
   }
 
 

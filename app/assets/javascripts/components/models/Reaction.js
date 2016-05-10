@@ -220,6 +220,16 @@ export default class Reaction extends Element {
     return this.reaction_svg_file && `/images/reactions/${this.reaction_svg_file}`
   }
 
+  SMGroupValid() {
+    let result = true;
+    this.starting_materials.map((sample) => {
+      if(!sample.isValid)
+        result = false;
+    });
+    
+    return result;
+  }
+
   hasMaterials() {
     return this.starting_materials.length > 0 || this.reactants.length > 0 || this.products.length > 0;
   }

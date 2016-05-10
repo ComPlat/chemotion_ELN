@@ -133,46 +133,21 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
-  _submitFunction() {
-    let {sample, reaction, materialGroup} = this.state;
-
-    if(reaction) {
-      ElementActions.createSampleForReaction(sample);
-    } else {
-      if(sample.isNew) {
-        ElementActions.createSample(sample);
-      } else {
-        ElementActions.updateSample(new Sample(sample));
-      }
-    }
-  }
-
   closeDetails() {
     let { currentReaction } = ElementStore.getState();
+    let {sample} = this.state;
 
     if(currentReaction) {
-      ElementActions.openReactionDetails(currentReaction);
+      if(sample.isNew)
+        ElementActions.openReactionDetails(currentReaction);
+      else
+        ElementActions.fetchReactionById(currentReaction)
     } else {
       UIActions.deselectAllElements();
 
       let uiState = UIStore.getState();
       Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
     }
-  }
-
-  _submitLabel() {
-    let {sample} = this.state;
-
-    if(sample.isNew) {
-      return "Create";
-    } else {
-      return "Save";
-    }
-  }
-
-  sampleIsValid() {
-    const {sample, loadingMolecule} = this.state;
-    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true;
   }
 
   structureEditorButton(isDisabled) {
