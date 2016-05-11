@@ -10,11 +10,6 @@ export default class PolymerSection extends React.Component {
   constructor(props) {
     super(props);
 
-    // use has to set loading on new sample
-    if(props.sample.contains_residues && !props.sample.loading && !props.sample.reaction_product) {
-      props.sample.error_loading = true
-    }
-
     this.state = {
       sample: props.sample
     }
@@ -46,15 +41,12 @@ export default class PolymerSection extends React.Component {
          (MW*L > 1.0)'
       }
 
-      if(errorMessage){
-        sample['error_' + name] = true;
+      if(errorMessage)
         NotificationActions.add({
           message: errorMessage,
           level: 'error'
         });
-      } else {
-        sample['error_' + name] = false;
-      }
+
     } else {
       this.setState({
         sample: sample
@@ -109,7 +101,7 @@ export default class PolymerSection extends React.Component {
 
   checkInputStatus(sample, key) {
     if (sample['error_' + key]) {
-      return 'danger';
+      return 'error';
     } else {
       return 'success';
     }

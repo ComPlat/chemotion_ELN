@@ -12,6 +12,7 @@ import ElementStore from './stores/ElementStore';
 import DragDropItemTypes from './DragDropItemTypes';
 import extra from './extra/ElementsTableSampleEntriesExtra';
 import SampleName from './common/SampleName'
+import Sample from './models/Sample'
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
@@ -65,6 +66,17 @@ export default class ElementsTableSampleEntries extends Component {
 
     let tdExtraContents = [];
 
+    let dragItem;
+
+    // in molecule dnd we use sample if molecule is a partial
+    if(sample.contains_residues) {
+      const {collId} = UIStore.getState()
+      dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
+      dragItem.id = null;
+    } else {
+      dragItem = molecule;
+    }
+
     for (let j=0;j < extra.MoleculeHeaderContentCount;j++){
       let NoName = extra["MoleculeHeaderContent"+j];
       tdExtraContents.push(<NoName element={sample} key={"extraMoleculeHeader"+j}/>);
@@ -90,7 +102,7 @@ export default class ElementsTableSampleEntries extends Component {
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
-          {this.dragColumn(molecule)}
+          {this.dragColumn(dragItem)}
       </tr>
     )
   }
