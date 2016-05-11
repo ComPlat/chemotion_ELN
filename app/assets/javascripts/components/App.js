@@ -1,5 +1,7 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
+import alt from './alt';
+
 import {Col, Grid, Row} from 'react-bootstrap';
 
 import Navigation from './Navigation';
@@ -13,6 +15,8 @@ import Aviator from 'aviator'
 import initRoutes from './routes';
 
 import Notifications from './Notifications';
+
+
 
 
 class App extends Component {

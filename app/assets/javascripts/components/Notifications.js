@@ -1,5 +1,4 @@
 import React, {Component} from 'react'
-//import connectToStores from 'alt/utils/connectToStores';
 import connectToStores from 'alt-utils/lib/connectToStores';
 import NotificationActions from './actions/NotificationActions'
 import NotificationStore from './stores/NotificationStore'

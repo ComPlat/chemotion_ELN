@@ -2,7 +2,6 @@ import React from 'react';
 import {Button, ButtonToolbar, DropdownButton, Input, Modal, MenuItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
-import ElementStore from '../stores/ElementStore';
 import ElementActions from '../actions/ElementActions';
 import ClipboardActions from '../actions/ClipboardActions';
 import SamplesFetcher from '../fetchers/SamplesFetcher';

@@ -51,9 +51,9 @@ module Chemotion
     config.before_configuration do
       plugin_aliases,plugin_replacements="",""
       PLUGS.each_with_index do |plugin,i|
-        plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,"app","assets","javascripts",plugin).to_s
+        plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,"app","assets","javascripts").to_s
         #plugin_replacements << %(    "_plugin#{i.to_s}/((\\/|\\\\w)+)": "#{plugin_path}/$1",\n)
-        plugin_aliases << %(    "#{plugin}":"#{plugin_path}",\n)
+        plugin_aliases << %(    "_#{plugin}":"#{plugin_path}",\n)
       end
       aliasify_config = %(module.exports = {
       "aliases": {
@@ -97,8 +97,9 @@ module Chemotion
       extra_dir = File.join(Rails.root,"app","assets","javascripts","components","extra")
       !File.directory?(extra_dir) && FileUtils.mkdir_p(extra_dir)
       module_config.each do |main_comp, extra_comps|
+        main_comp_name = main_comp.to_s.strip+"Extra"
         import = ""
-        export = "module.exports = {\n"
+        export = "const "+main_comp_name+" = {\n"
         extra_comps.each do |extra_comp, plugins|
           i = 0
           plugins.each do |plugin, plug_comps|
@@ -108,13 +109,14 @@ module Chemotion
               export << "  %s%i : %s%s%i,\n" %[extra_comp,i,plug_comp,extra_comp,i]
               i += 1
             end
-            import << "} from '%s';\n" %(plugin)
+            plugin_path="_"+plugin+"/"+plugin
+            import << "} from '%s';\n\n" %(plugin)#{}%(plugin_path)
           end #if plugins
           export << "  %sCount : %i,\n" %[extra_comp,i]
         end
-        export << "}"
+        export << "};\nconsole.log("+main_comp_name+");\nmodule.exports = "+main_comp.to_s.strip+"Extra;\n"
         module_config_comp = import + export
-        module_config_comp_file = File.join(extra_dir,main_comp.to_s+"Extra.js")
+        module_config_comp_file = File.join(extra_dir,main_comp_name+".js")
         File.write(module_config_comp_file,module_config_comp)
       end
 

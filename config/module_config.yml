@@ -4,6 +4,11 @@
 #Do not modify unless you want to overwrite the plugin gem configurations (see comment below)
 #
 
+#components:
+CollectionTree:
+  Div:
+    {}
+
 ElementsTableEntries:
   TdContent:
     {}
@@ -26,10 +31,7 @@ SampleDetails:
   Labels:
     {}
 
-CollectionTree:
-  Div:
-    {}
-
+#Alt stores
 CollectionStore:
   state:
     {}
@@ -47,16 +49,18 @@ ElementStore:
   handlers:
     {}
 
-routes:
-  routes:
-    {}
-
-test:
+dummy:
   state:
     {}
   listeners:
     {}
   handlers:
+    {}
+
+
+#Aviator routes:
+routes:
+  routes:
     {}
 
 

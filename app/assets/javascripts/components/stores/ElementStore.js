@@ -1,5 +1,6 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
+import ElementStoreExtra from './ElementStoreExtra';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
@@ -8,10 +9,19 @@ import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
-
-
-var extraES = require('../extra/testExtra.js');
 import {extraThing} from '../utils/Functions';
+
+import extraElementStore from "_chemstash/lib/elementStore";
+
+let extra = {
+  stateCount : 0,
+  listeners0 : extraElementStore.listeners,
+  listenersCount : 1,
+  handlers0 : extraElementStore.handlers,
+  handlersCount : 1,
+};
+console.log(extra);
+
 
 
 class ElementStore {
@@ -50,17 +60,20 @@ class ElementStore {
       currentElement: null,
       currentReaction: null,
       currentMaterialGroup: null,
-      ...extraThing("state",extraES)
+      ...extraThing("state",extra)
     };
 
-    for (let i=0;i<extraES.listenersCount;i++){
-      Object.keys(extraES["listeners"+i]).map((k)=>{
-        this.bindAction(extraES["listeners"+i][k],extraES["handlers"+i][k].bind(this))
+
+    for (let i=0;i<extra.listenersCount;i++){
+      let ks = Object.keys(extra["listeners"+i]);
+      console.log(ks);
+      ks.map((k)=>{
+        this.bindAction(extra["listeners"+i][k],extra["handlers"+i][k].bind(this))
       });
     }
 
-
     this.bindListeners({
+
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
@@ -103,9 +116,11 @@ class ElementStore {
       handleUpdateElementsCollection: ElementActions.updateElementsCollection,
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
-      handleSplitAsSubsamples: ElementActions.splitAsSubsamples
+      handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
+
     })
   }
+
 
   handleFetchBasedOnSearchSelection(result) {
     Object.keys(result).forEach((key) => {
@@ -129,9 +144,8 @@ class ElementStore {
 
   // -- Elements --
   handleDeleteElements(options) {
-    //const ui_state = UIStore.getState();
     this.waitFor(UIStore.dispatchToken);
-    let uiState = UIStore.getState();
+    const ui_state = UIStore.getState();
     ElementActions.deleteSamplesByUIState(ui_state);
     ElementActions.deleteReactionsByUIState({
       ui_state,
@@ -326,8 +340,7 @@ class ElementStore {
 
   handleCopyReactionFromId(reaction) {
     this.waitFor(UIStore.dispatchToken);
-    let uiState = UIStore.getState();
-    //const uiState = UIStore.getState();
+    const uiState = UIStore.getState();
     this.state.currentElement = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
   }
 

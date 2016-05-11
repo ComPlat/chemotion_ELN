@@ -1,7 +1,6 @@
 import alt from '../alt';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import UIStore from '../stores/UIStore';
-import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions';
 
 class CollectionActions {
