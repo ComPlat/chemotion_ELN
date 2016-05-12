@@ -49,26 +49,26 @@ module Chemotion
     # As this is debated matter, aliasify also ensure here the paths are correct.
 
     config.before_configuration do
-      plugin_aliases,plugin_replacements="",""
-      PLUGS.each_with_index do |plugin,i|
-        plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,"app","assets","javascripts").to_s
-        #plugin_replacements << %(    "_plugin#{i.to_s}/((\\/|\\\\w)+)": "#{plugin_path}/$1",\n)
-        plugin_aliases << %(    "_#{plugin}":"#{plugin_path}",\n)
-      end
-      aliasify_config = %(module.exports = {
-      "aliases": {
-      #{plugin_aliases}
-      },
-      "replacements": {
-      "_components/((\\/|\\\\w)+)":  "#{Rails.root}"+"/app/assets/javascripts/components/$1",
-      "_node_modules/((\\/|\\\\w)+)":  "#{Rails.root}"+"/node_modules/$1",
-      #{plugin_replacements}
-      },
-      verbose: true
-      };
-      )
-      aliasify_file = File.join(Rails.root, 'aliasifyConfig.js')
-      File.write(aliasify_file,aliasify_config)
+#      plugin_aliases,plugin_replacements="",""
+#      PLUGS.each_with_index do |plugin,i|
+#        plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,"app","assets","javascripts").to_s
+#        #plugin_replacements << %(    "_plugin#{i.to_s}/((\\/|\\\\w)+)": "#{plugin_path}/$1",\n)
+#        plugin_aliases << %(    "_#{plugin}":"#{plugin_path}",\n)
+#      end
+#      aliasify_config = %(module.exports = {
+#      "aliases": {
+#      #{plugin_aliases}
+#      },
+#      "replacements": {
+#      "_components/((\\/|\\\\w)+)":  "#{Rails.root}"+"/app/assets/javascripts/components/$1",
+#      "_node_modules/((\\/|\\\\w)+)":  "#{Rails.root}"+"/node_modules/$1",
+#      #{plugin_replacements}
+#      },
+#      verbose: true
+#      };
+#      )
+#      aliasify_file = File.join(Rails.root, 'aliasifyConfig.js')
+#      File.write(aliasify_file,aliasify_config)
 
       #For each registered plugin gem (group :plugins in Gemfile) browserify needs to find
       #an aliasifyConfig.js file (and a package.json file ) in gem root directory.
@@ -76,7 +76,7 @@ module Chemotion
       node_modules_dir = File.join(Rails.root, 'node_modules')
       PLUGS.each_with_index do |plugin,i|
         plugin_path = File.join(Gem.loaded_specs[plugin].full_gem_path,".").to_s
-        `ln -s #{aliasify_file} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"aliasifyConfig.js"))
+#        `ln -s #{aliasify_file} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"aliasifyConfig.js"))
         `ln -s #{node_modules_dir} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"node_modules"))
       end
 
@@ -122,7 +122,7 @@ module Chemotion
 
     end # of config.before_configuration
 
-    config.browserify_rails.commandline_options = "-t [ babelify --presets [ es2015 react ] --plugins [ transform-object-rest-spread ] ]  -t aliasify "
+    config.browserify_rails.commandline_options = "-t [ babelify --presets [ es2015 react ] --plugins [ transform-object-rest-spread ] ] "# -t aliasify "
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers

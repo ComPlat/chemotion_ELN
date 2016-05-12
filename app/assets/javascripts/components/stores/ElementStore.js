@@ -1,6 +1,6 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
-import ElementStoreExtra from './ElementStoreExtra';
+//import ElementStoreExtra from './ElementStoreExtra';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
