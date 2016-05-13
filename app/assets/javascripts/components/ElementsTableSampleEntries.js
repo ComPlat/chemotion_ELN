@@ -10,8 +10,8 @@ import ElementContainer from './ElementContainer'
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import DragDropItemTypes from './DragDropItemTypes';
-import extra from './extra/ElementsTableSampleEntriesExtra';
 import SampleName from './common/SampleName'
+import XMolHeadCont from "./extra/ElementsTableSampleEntriesXMolHeadCont";
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
@@ -65,9 +65,9 @@ export default class ElementsTableSampleEntries extends Component {
 
     let tdExtraContents = [];
 
-    for (let j=0;j < extra.MoleculeHeaderContentCount;j++){
-      let NoName = extra["MoleculeHeaderContent"+j];
-      tdExtraContents.push(<NoName element={sample} key={"extraMoleculeHeader"+j}/>);
+    for (let j=0;j < XMolHeadCont.MolHeadContCount;j++){
+      let NoName = XMolHeadCont["MolHeadCont"+j];
+      tdExtraContents.push(<NoName element={sample} key={"exMolHead"+j}/>);
     }
     return (
       <tr

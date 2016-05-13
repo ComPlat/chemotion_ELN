@@ -10,7 +10,7 @@ import ElementStore from './stores/ElementStore';
 import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
-import extra from "./extra/ElementsTableEntriesExtra";
+import XTdCont from "./extra/ElementsTableEntriesXTdCont";
 
 export default class ElementsTableEntries extends Component {
   isElementChecked(element) {
@@ -82,8 +82,8 @@ export default class ElementsTableEntries extends Component {
       cursor: 'pointer'
     };
     let tdExtraContents = [];
-    for (let j=0;j < extra.TdContentCount;j++){
-      let NoName = extra["TdContent"+j];
+    for (let j=0;j < XTdCont.TdContCount;j++){
+      let NoName = XTdCont["TdCont"+j];
       tdExtraContents.push(<NoName element={element}/>);
     }
 

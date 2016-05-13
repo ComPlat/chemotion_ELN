@@ -1,6 +1,5 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
-//import ElementStoreExtra from './ElementStoreExtra';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
@@ -9,16 +8,17 @@ import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
-import {extraThing} from '../utils/Functions';
 
-import extraElementStore from "_chemstash/lib/elementStore";
+import {extraThing} from '../utils/Functions';
+import Xlisteners from '../extra/ElementStoreXlisteners';
+import Xhandlers from '../extra/ElementStoreXhandlers';
+import Xstate from '../extra/ElementStoreXhandlers';
+
 
 let extra = {
-  stateCount : 0,
-  listeners0 : extraElementStore.listeners,
-  listenersCount : 1,
-  handlers0 : extraElementStore.handlers,
-  handlersCount : 1,
+  ...Xlisteners,//extraElementStore.listeners,
+  ...Xhandlers,//extraElementStore.handlers,
+
 };
 console.log(extra);
 
@@ -60,15 +60,13 @@ class ElementStore {
       currentElement: null,
       currentReaction: null,
       currentMaterialGroup: null,
-      ...extraThing("state",extra)
+      ...extraThing("state",Xstate)
     };
 
 
-    for (let i=0;i<extra.listenersCount;i++){
-      let ks = Object.keys(extra["listeners"+i]);
-      console.log(ks);
-      ks.map((k)=>{
-        this.bindAction(extra["listeners"+i][k],extra["handlers"+i][k].bind(this))
+    for (let i=0;i<Xlisteners.listenersCount;i++){
+      Object.keys(Xlisteners["listeners"+i]).map((k)=>{
+        this.bindAction(Xlisteners["listeners"+i][k],Xhandlers["handlers"+i][k].bind(this))
       });
     }
 

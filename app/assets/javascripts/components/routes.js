@@ -2,11 +2,11 @@ import UIStore from './stores/UIStore';
 import CollectionStore from './stores/CollectionStore';
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
-import routesExtra from './extra/routesExtra';
+import rXr from './extra/routesXroutes';
 
 let allRoutes = (r)=>{
   let rts ={...r};
-  for (let i=0;i<routesExtra.routesCount;i++){rts={...rts,...routesExtra['routes'+i]} }
+  for (let i=0;i<rXr.routesCount;i++){rts={...rts,...rXr['routes'+i]} }
   return rts;
 }
 

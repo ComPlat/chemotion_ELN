@@ -1,8 +1,10 @@
 import alt from '../alt';
-import CollectionStoreExtra from '../extra/CollectionStoreExtra';
 import CollectionActions from '../actions/CollectionActions';
+
 import {extraThing} from '../utils/Functions';
-import  ElementStoreExtra from './../extra/ElementStoreExtra';
+import Xlisteners from '../extra/CollectionStoreXlisteners';
+import Xhandlers from '../extra/CollectionStoreXhandlers';
+import Xstate from '../extra/CollectionStoreXhandlers';
 
 class CollectionStore {
   constructor() {
@@ -11,12 +13,12 @@ class CollectionStore {
       sharedRoots: [],
       remoteRoots: [],
       lockedRoots: [],
-      ...extraThing("state",CollectionStoreExtra)
+      ...extraThing("state",Xstate)
     };
 
-    for (let i=0;i<CollectionStoreExtra.listenersCount;i++){
-     let ks = Object.keys(CollectionStoreExtra["listeners"+i]);console.log(ks);ks.map((k)=>{
-        this.bindAction(CollectionStoreExtra["listeners"+i][k],CollectionStoreExtra["handlers"+i][k].bind(this))
+    for (let i=0;i<Xlisteners.listenersCount;i++){
+     Object.keys(Xlisteners["listeners"+i]).map((k)=>{
+        this.bindAction(Xlisteners["listeners"+i][k],Xhandlers["handlers"+i][k].bind(this))
       });
     }
 

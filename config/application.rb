@@ -96,28 +96,58 @@ module Chemotion
       end
       extra_dir = File.join(Rails.root,"app","assets","javascripts","components","extra")
       !File.directory?(extra_dir) && FileUtils.mkdir_p(extra_dir)
+
+  #    module_import,module_export, module_imp_exp= {}, {},{}
+  #    module_config.each do |main_comp, extra_comps|
+  #      extra_comps.each do |extra_comp, plugins|
+  #        i = 0
+  #        module_import[main_comp]||={}
+  #        module_export[main_comp]||= "export default {\n"
+#
+#          plugins.each do |plugin, plug_comps|
+#            module_import[main_comp][plugin]||="import {\n"
+#            plug_comps.each do |plug_comp|
+#              module_import[main_comp][plugin]<<"  %s as %s%s%i,\n" %[plug_comp,plug_comp,extra_comp,i]
+#              module_export[main_comp]<<"  %s%i : %s%s%i,\n" %[extra_comp,i,plug_comp,extra_comp,i]
+#              i+=1
+#            end
+#          end
+#          module_export[main_comp] << "  %sCount : %i,\n" %[extra_comp,i]
+#        end
+#        module_export[main_comp] << "}"
+#      end
+#
+#      module_export.each do |main_comp, expo|
+#        module_imp_exp[main_comp]||=""
+#        module_import[main_comp].each do |plugin, imp|
+#          module_imp_exp[main_comp]<< imp << "} from '%sList';\n\n" %(plugin)
+#        end
+#        module_imp_exp[main_comp]<<module_export[main_comp]
+#      end
+#
+#      module_imp_exp.each do |main_comp, imp_exp|
+#        module_imp_exp_file = File.join(extra_dir,main_comp.to_s.strip+"Extra.js")
+#        File.write(module_imp_exp_file,imp_exp)
+#      end
+
+
       module_config.each do |main_comp, extra_comps|
-        main_comp_name = main_comp.to_s.strip+"Extra"
-        import = ""
-        export = "const "+main_comp_name+" = {\n"
         extra_comps.each do |extra_comp, plugins|
           i = 0
+          x_imp_exp_file = File.join(extra_dir,main_comp.to_s.strip+"X"+extra_comp.to_s.strip+".js")
+          x_import||=""
+          x_export||= "export default {\n"
+
           plugins.each do |plugin, plug_comps|
-            import << "import {\n"
             plug_comps.each do |plug_comp|
-              import << "  %s as %s%s%i,\n" %[plug_comp,plug_comp,extra_comp,i]
-              export << "  %s%i : %s%s%i,\n" %[extra_comp,i,plug_comp,extra_comp,i]
-              i += 1
+              x_import<<" import %s%i from 'lib%s/%s';\n" %[extra_comp,i,plugin.classify,plug_comp]
+              x_export<<"  %s%i : %s%i,\n" %[extra_comp,i,extra_comp,i]
+              i+=1
             end
-            plugin_path="_"+plugin+"/"+plugin
-            import << "} from '%s';\n\n" %(plugin)#{}%(plugin_path)
-          end #if plugins
-          export << "  %sCount : %i,\n" %[extra_comp,i]
+          end
+          x_export << "  %sCount : %i,\n}" %[extra_comp,i]
+          File.write(x_imp_exp_file,x_import+x_export)
         end
-        export << "};\nconsole.log("+main_comp_name+");\nmodule.exports = "+main_comp.to_s.strip+"Extra;\n"
-        module_config_comp = import + export
-        module_config_comp_file = File.join(extra_dir,main_comp_name+".js")
-        File.write(module_config_comp_file,module_config_comp)
       end
 
     end # of config.before_configuration

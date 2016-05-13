@@ -15,7 +15,11 @@ import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
-import extra from "./extra/SampleDetailsExtra"
+
+import XLabels from "./extra/SampleDetailsXLabels";
+import XTab from "./extra/SampleDetailsXTab";
+import XTabName from "./extra/SampleDetailsXTabName";
+
 import Select from 'react-select';
 import StickyDiv from 'react-stickydiv'
 
@@ -365,8 +369,8 @@ export default class SampleDetails extends React.Component {
   extraTab(ind){
     let sample = this.state.sample || {}
     let num = ind - 3 ;
-    let NoName =  extra["Tab"+num];
-    let TabName = extra["TabName"+num];
+    let NoName =  XTab["Tab"+num];
+    let TabName = XTabName["TabName"+num];
     return(
        <Tab eventKey={ind} key={ind} title={TabName} >
          <ListGroupItem style={{paddingBottom: 20}}>
@@ -377,8 +381,8 @@ export default class SampleDetails extends React.Component {
   }
   extraLabels(){
     let labels = [];
-    for (let j=0;j < extra.LabelsCount;j++){
-      labels.push(extra["Labels"+j])
+    for (let j=0;j < XLabels.LabelsCount;j++){
+      labels.push(XLabels["Labels"+j])
     }
     return labels;
   }
@@ -391,7 +395,7 @@ export default class SampleDetails extends React.Component {
                        (i)=>(this.sampleAnalysesTab(i)),
                        (i)=>(this.sampleImportReadoutTab(i))
                       ];
-    for (let j=0;j < extra.TabCount;j++){
+    for (let j=0;j < XTab.TabCount;j++){
       tabContents.push((i)=>this.extraTab(i))
     }
 

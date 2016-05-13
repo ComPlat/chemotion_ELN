@@ -6,15 +6,15 @@
 
 #components:
 CollectionTree:
-  Div:
+  div:
     {}
 
 ElementsTableEntries:
-  TdContent:
+  TdCont:
     {}
 
 ElementsTableSampleEntries:
-  MoleculeHeaderContent:
+  MolHeadCont:
     {}
 
 ReactionDetails:

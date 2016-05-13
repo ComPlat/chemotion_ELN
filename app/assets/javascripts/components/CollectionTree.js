@@ -8,8 +8,9 @@ import CollectionSubtree from './CollectionSubtree';
 
 import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
-import extra from './extra/CollectionTreeExtra';
 import ElementStore from './stores/ElementStore';
+
+import Xdiv from './extra/CollectionTreeXdiv';
 
 export default class CollectionTree extends React.Component {
   constructor(props) {
@@ -165,9 +166,9 @@ export default class CollectionTree extends React.Component {
 
   render() {
     let extraDiv = [];
-    for (let j=0;j < extra.DivCount;j++){
-      let NoName = extra["Div"+j];
-      extraDiv.push(<NoName key={"collTreeExtraDiv"+j} />);
+    for (let j=0;j < Xdiv.divCount;j++){
+      let NoName = Xdiv["div"+j];
+      extraDiv.push(<NoName key={"Xdiv"+j} />);
     }
     return (
       <div>
