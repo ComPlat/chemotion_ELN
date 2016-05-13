@@ -12,13 +12,13 @@ import Screen from '../models/Screen';
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
 import Xhandlers from '../extra/ElementStoreXhandlers';
-import Xstate from '../extra/ElementStoreXhandlers';
+import Xstate from '../extra/ElementStoreXstate';
 
 
 let extra = {
   ...Xlisteners,//extraElementStore.listeners,
   ...Xhandlers,//extraElementStore.handlers,
-
+  ...Xstate
 };
 console.log(extra);
 

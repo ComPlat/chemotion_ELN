@@ -4,7 +4,14 @@ import CollectionActions from '../actions/CollectionActions';
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/CollectionStoreXlisteners';
 import Xhandlers from '../extra/CollectionStoreXhandlers';
-import Xstate from '../extra/CollectionStoreXhandlers';
+import Xstate from '../extra/CollectionStoreXstate';
+
+let extra = {
+  ...Xlisteners,//extraElementStore.listeners,
+  ...Xhandlers,//extraElementStore.handlers,
+  ...Xstate
+};
+console.log(extra);
 
 class CollectionStore {
   constructor() {
