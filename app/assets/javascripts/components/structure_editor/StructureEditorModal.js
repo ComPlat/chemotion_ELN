@@ -86,7 +86,7 @@ export default class StructureEditorModal extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <div>
-              <iframe id="ifKetcher" src="/assets/ketcher/ketcher.html"></iframe>
+              <iframe id="ifKetcher" src="/ketcher"></iframe>
             </div>
             <ButtonToolbar>
               <Button bsStyle="warning" onClick={this.handleCancel.bind(this)}>Cancel</Button>
