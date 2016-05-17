@@ -133,6 +133,20 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
+  _submitFunction() {
+  let {sample, reaction, materialGroup} = this.state;
+
+  if(reaction) {
+    ElementActions.createSampleForReaction(sample);
+    } else {
+      if(sample.isNew) {
+        ElementActions.createSample(sample);
+      } else {
+        ElementActions.updateSample(new Sample(sample));
+      }
+    }
+  }
+
   closeDetails() {
     let { currentReaction } = ElementStore.getState();
     let {sample} = this.state;
