@@ -17,6 +17,7 @@ class Sample < ActiveRecord::Base
   }
 
   pg_search_scope :search_by_sample_name, against: :name
+  pg_search_scope :search_by_sample_short_label, against: :short_label
 
   # search scope for substrings
   pg_search_scope :search_by_substring, against: :name,
@@ -27,6 +28,7 @@ class Sample < ActiveRecord::Base
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{query}%") }
   scope :with_reactions, -> {
     sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
     where(id: sample_ids)
