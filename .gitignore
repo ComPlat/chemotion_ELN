@@ -39,3 +39,6 @@ aliasifyConfig.js
 
 # Backups folder
 backup/deploy_backup
+
+#mc
+.DS_Store

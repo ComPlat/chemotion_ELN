@@ -19,7 +19,8 @@ const collect = (connect, monitor) => ({
 export default class Material extends Component {
   handleMaterialClick(sample) {
     const uiState = UiStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}/sample/${sample.id}`);
+    let currentURI = Aviator.getCurrentURI();
+    Aviator.navigate(`${currentURI}/sample/${sample.id}`);
   }
 
   materialName() {
@@ -79,7 +80,8 @@ export default class Material extends Component {
             value={material.loading}
             unit='mmol/g'
             metricPrefix='none'
-            metricPrefixes = {['none']}
+            metricPrefixes={['none']}
+            bsStyle={material.error_loading ? 'error' : 'success'}
             precision={3}
             disabled={disabled}
             onChange={(loading) => this.handleLoadingChange(loading)}
@@ -88,14 +90,6 @@ export default class Material extends Component {
       )
     }
   }
-
-  checkMassInputBsStyle(material) {
-    if (material.error_mass) {
-      return 'danger';
-    } else {
-      return 'success';
-    }
-}
 
   render() {
     const {material, deleteMaterial, isDragging, connectDragSource,
@@ -162,7 +156,7 @@ export default class Material extends Component {
           metricPrefixes = {['milli','none','micro']}
           precision={5}
           onChange={(amount) => this.handleAmountChange(amount)}
-          bsStyle={this.checkMassInputBsStyle(material)}
+          bsStyle={material.error_mass ? 'error' : 'success'}
         />
       </td>
 

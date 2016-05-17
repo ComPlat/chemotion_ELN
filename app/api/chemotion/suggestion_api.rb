@@ -24,6 +24,7 @@ module Chemotion
         case type
         when 'sample'
           {
+            sample_short_label: search_by_field.call(Sample, :short_label, qry),
             sample_name: search_by_field.call(Sample, :name, qry),
             polymer_type: d_for.call(Sample).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'").pluck("residues.custom_info -> 'polymer_type'").uniq,
             sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
@@ -50,6 +51,7 @@ module Chemotion
         else
           {
             sample_name: search_by_field.call(Sample, :name, qry),
+            sample_short_label: search_by_field.call(Sample, :short_label, qry),
             polymer_type: d_for.call(Sample).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'").pluck("residues.custom_info -> 'polymer_type'").uniq,
             sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
             iupac_name: search_by_field.call(Molecule, :iupac_name, qry),

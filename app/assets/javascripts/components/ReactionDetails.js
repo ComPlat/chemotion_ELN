@@ -93,7 +93,7 @@ export default class ReactionDetails extends Component {
 
   reactionIsValid() {
     const {reaction} = this.state;
-    return reaction.hasMaterials();
+    return reaction.hasMaterials() && reaction.SMGroupValid();
   }
 
   handleReactionChange(reaction, options={}) {
@@ -104,8 +104,6 @@ export default class ReactionDetails extends Component {
       this.setState({ reaction });
     }
   }
-
-
 
   productAnalyses() {
     const {products} = this.state.reaction;

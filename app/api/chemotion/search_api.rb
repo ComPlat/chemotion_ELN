@@ -58,7 +58,7 @@ module Chemotion
         scope = case search_by_method
         when 'polymer_type'
           Sample.for_user(current_user.id).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
-        when 'sum_formula', 'iupac_name', 'sample_name'
+        when 'sum_formula', 'iupac_name', 'sample_name', 'sample_short_label'
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
         when 'reaction_name'
           Reaction.for_user(current_user.id).search_by(search_by_method, arg)

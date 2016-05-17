@@ -12,6 +12,8 @@ import ElementStore from './stores/ElementStore';
 import DragDropItemTypes from './DragDropItemTypes';
 import SampleName from './common/SampleName'
 import XMolHeadCont from "./extra/ElementsTableSampleEntriesXMolHeadCont";
+import Sample from './models/Sample'
+
 
 export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
@@ -69,6 +71,16 @@ export default class ElementsTableSampleEntries extends Component {
       let NoName = XMolHeadCont["MolHeadCont"+j];
       tdExtraContents.push(<NoName element={sample} key={"exMolHead"+j}/>);
     }
+    let dragItem;
+    // in molecule dnd we use sample if molecule is a partial
+    if(sample.contains_residues) {
+      const {collId} = UIStore.getState()
+      dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
+      dragItem.id = null;
+    } else {
+      dragItem = molecule;
+    }
+
     return (
       <tr
         style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
@@ -90,7 +102,7 @@ export default class ElementsTableSampleEntries extends Component {
           </div>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
-          {this.dragColumn(molecule)}
+          {this.dragColumn(dragItem)}
       </tr>
     )
   }

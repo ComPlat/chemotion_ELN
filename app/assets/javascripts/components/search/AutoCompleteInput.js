@@ -177,6 +177,7 @@ export default class AutoCompleteInput extends React.Component {
     let {suggestions, error} = this.state;
     let types = {
       sample_name: {icon: 'icon-sample', label: 'Sample'},
+      sample_short_label: {icon: 'icon-sample', label: 'Sample Label'},
       polymer_type: {icon: 'icon-polymer', label: 'Polymer'},
       reaction_name: {icon: 'icon-reaction', label: 'Reaction'},
       wellplate_name: {icon: 'icon-wellplate', label: 'Wellplate'},

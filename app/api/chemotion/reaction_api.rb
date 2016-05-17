@@ -265,11 +265,11 @@ module ReactionUpdator
 
               subsample.collections << collections
 
-              subsample.save
+              subsample.save!
               subsample.reload
               included_sample_ids << subsample.id
 
-              reaction_samples_association.create(
+              reaction_samples_association.create!(
                 sample_id: subsample.id,
                 equivalent: sample.equivalent,
                 reference: sample.reference
@@ -281,13 +281,12 @@ module ReactionUpdator
                 .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
                 .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
 
-              new_sample = Sample.create(
+              new_sample = Sample.new(
                 attributes
               )
 
-              new_sample=new_sample.dup
               new_sample.collections << collections
-              new_sample.save
+              new_sample.save!
 
               reaction_samples_association.create(
                 sample_id: new_sample.id,

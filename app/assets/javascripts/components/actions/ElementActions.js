@@ -82,6 +82,24 @@ class ElementActions {
       });};
   }
 
+  editReactionSample(reactionID, sampleID) {
+    return (dispatch) => { SamplesFetcher.fetchById(sampleID)
+      .then((result) => {
+        dispatch({sample: result, reaction: reactionID });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  updateSampleForReaction(params) {
+    return (dispatch) => { SamplesFetcher.update(params)
+      .then((result) => {
+        dispatch(result)
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   updateSample(params) {
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
