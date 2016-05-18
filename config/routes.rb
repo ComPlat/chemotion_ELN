@@ -11,5 +11,4 @@ Rails.application.routes.draw do
   root :to => redirect("/users/sign_in")
 
   get 'test', to: 'pages#test'
-  get 'ketcher', to: 'ketcher#index'
 end

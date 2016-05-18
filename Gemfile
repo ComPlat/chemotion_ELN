@@ -50,9 +50,9 @@ gem 'axlsx', git: 'git://github.com/randym/axlsx'
 # Import of elements from XLS and CSV file
 gem 'roo', ">2.3.0"
 
-# Chemrails
 gem 'httparty'
-gem 'chemrails', git: 'git://github.com/ComPlat/chemrails'
+# Ketcher editor
+gem 'ketcherails', path: '~/shared/ketcher-rails'
 
 # Free font icons
 gem "font-awesome-rails"
