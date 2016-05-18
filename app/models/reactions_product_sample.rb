@@ -6,6 +6,6 @@ class ReactionsProductSample < ActiveRecord::Base
   include Reactable
 
   def formatted_yield
-    (self.equivalent * 100).round(2).to_s + ' %'
+    self.equivalent ? (self.equivalent * 100).to_s + " %" : " %"
   end
 end
