@@ -2,6 +2,9 @@ export const solventOptions = [{
     label: 'Aceton',
     value: 'Aceton'
   }, {
+    label: 'Acetonitril',
+    value: 'Acetonitril'
+  }, {
     label: 'Benzol',
     value: 'Benzol'
   }, {
