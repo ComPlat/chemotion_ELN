@@ -56,7 +56,7 @@ module Chemotion
             r.add_table(reaction.reactants.count + 1, 6) do |t|
               t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Equiv'
               samples = reaction.reactions_reactant_samples.includes(:sample).each do |item|
-                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg.round(5).to_s, item.sample.amount_ml.to_s, item.sample.amount_mmol.round(5).to_s, item.equivalent.round(2).to_s
+                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg.round(5).to_s, item.sample.amount_ml.to_s, item.sample.amount_mmol.round(5).to_s, item.equivalent.try(:round, 2).try(:to_s)
               end
             end
           end
