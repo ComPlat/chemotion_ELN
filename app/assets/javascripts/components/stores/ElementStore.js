@@ -4,11 +4,25 @@ import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
 import ClipboardStore from './ClipboardStore';
-
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+
+import {extraThing} from '../utils/Functions';
+import Xlisteners from '../extra/ElementStoreXlisteners';
+import Xhandlers from '../extra/ElementStoreXhandlers';
+import Xstate from '../extra/ElementStoreXstate';
+
+
+let extra = {
+  ...Xlisteners,//extraElementStore.listeners,
+  ...Xhandlers,//extraElementStore.handlers,
+  ...Xstate
+};
+console.log(extra);
+
+
 
 class ElementStore {
   constructor() {
@@ -45,10 +59,19 @@ class ElementStore {
       },
       currentElement: null,
       currentReaction: null,
-      currentMaterialGroup: null
+      currentMaterialGroup: null,
+      ...extraThing("state",Xstate)
     };
 
+
+    for (let i=0;i<Xlisteners.listenersCount;i++){
+      Object.keys(Xlisteners["listeners"+i]).map((k)=>{
+        this.bindAction(Xlisteners["listeners"+i][k],Xhandlers["handlers"+i][k].bind(this))
+      });
+    }
+
     this.bindListeners({
+
       handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
@@ -93,9 +116,11 @@ class ElementStore {
       handleUpdateElementsCollection: ElementActions.updateElementsCollection,
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
-      handleSplitAsSubsamples: ElementActions.splitAsSubsamples
+      handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
+
     })
   }
+
 
   handleFetchBasedOnSearchSelection(result) {
     Object.keys(result).forEach((key) => {
@@ -119,8 +144,8 @@ class ElementStore {
 
   // -- Elements --
   handleDeleteElements(options) {
+    this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-
     ElementActions.deleteSamplesByUIState(ui_state);
     ElementActions.deleteReactionsByUIState({
       ui_state,
@@ -329,6 +354,7 @@ class ElementStore {
   }
 
   handleCopyReactionFromId(reaction) {
+    this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
     this.state.currentElement = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
   }
@@ -362,7 +388,8 @@ class ElementStore {
   // -- Generic --
 
   navigateToNewElement(element) {
-    const uiState = UIStore.getState();
+    this.waitFor(UIStore.dispatchToken);
+    let uiState = UIStore.getState();
     Aviator.navigate(`/collection/${uiState.currentCollection.id}/${element.type}/${element.id}`);
   }
 

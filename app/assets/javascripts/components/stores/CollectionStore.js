@@ -1,14 +1,33 @@
 import alt from '../alt';
 import CollectionActions from '../actions/CollectionActions';
 
+import {extraThing} from '../utils/Functions';
+import Xlisteners from '../extra/CollectionStoreXlisteners';
+import Xhandlers from '../extra/CollectionStoreXhandlers';
+import Xstate from '../extra/CollectionStoreXstate';
+
+let extra = {
+  ...Xlisteners,//extraElementStore.listeners,
+  ...Xhandlers,//extraElementStore.handlers,
+  ...Xstate
+};
+console.log(extra);
+
 class CollectionStore {
   constructor() {
     this.state = {
       unsharedRoots: [],
       sharedRoots: [],
       remoteRoots: [],
-      lockedRoots: []
+      lockedRoots: [],
+      ...extraThing("state",Xstate)
     };
+
+    for (let i=0;i<Xlisteners.listenersCount;i++){
+     Object.keys(Xlisteners["listeners"+i]).map((k)=>{
+        this.bindAction(Xlisteners["listeners"+i][k],Xhandlers["handlers"+i][k].bind(this))
+      });
+    }
 
     this.bindListeners({
       handleTakeOwnership: CollectionActions.takeOwnership,
@@ -19,7 +38,8 @@ class CollectionStore {
       handleCreateSharedCollections: CollectionActions.createSharedCollections,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
-      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection
+      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection,
+
     })
   }
 
@@ -66,6 +86,7 @@ class CollectionStore {
   handleCreateUnsharedCollection(results) {
     CollectionActions.fetchUnsharedCollectionRoots();
   }
+
 
   // 'repository' methods; returns a promise
   static findById(collectionId) {
