@@ -11,7 +11,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160506080101) do
+
+ActiveRecord::Schema.define(version: 20160518121815) do
+
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -236,6 +238,17 @@ ActiveRecord::Schema.define(version: 20160506080101) do
   end
 
   add_index "pg_search_documents", ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id", using: :btree
+
+  create_table "profiles", force: :cascade do |t|
+    t.boolean  "show_external_name", default: false
+    t.integer  "user_id",                            null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at",                         null: false
+    t.datetime "updated_at",                         null: false
+  end
+
+  add_index "profiles", ["deleted_at"], name: "index_profiles_on_deleted_at", using: :btree
+  add_index "profiles", ["user_id"], name: "index_profiles_on_user_id", using: :btree
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"

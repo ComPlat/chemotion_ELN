@@ -50,9 +50,9 @@ gem 'axlsx', git: 'git://github.com/randym/axlsx'
 # Import of elements from XLS and CSV file
 gem 'roo', ">2.3.0"
 
-# Chemrails
 gem 'httparty'
-gem 'chemrails', git: 'git://github.com/ComPlat/chemrails'
+# Ketcher editor
+gem 'ketcherails', path: '~/shared/ketcher-rails'
 
 # Free font icons
 gem "font-awesome-rails"
@@ -119,6 +119,11 @@ end
 group :test do
   gem 'factory_girl_rails'
   gem 'database_cleaner'
+
+  gem "faker", "~> 1.4"
+  gem "capybara", "~> 2.4"
+  gem "launchy", "~> 2.4"
+  gem "selenium-webdriver", "~> 2.43"
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here

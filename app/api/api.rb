@@ -38,5 +38,4 @@ class API < Grape::API
   mount Chemotion::ReportAPI
   mount Chemotion::AttachmentAPI
   mount Chemotion::PublicAPI
-  mount Chemotion::KetcherAPI
 end

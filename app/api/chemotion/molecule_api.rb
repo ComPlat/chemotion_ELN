@@ -16,7 +16,7 @@ module Chemotion
 
         # write temporary SVG for polymers
         if is_part && svg.present?
-          processor = ChemRails::SVGProcessor.new svg, width: 90, height: 90
+          processor = Ketcherails::SVGProcessor.new svg, width: 90, height: 90
           svg = processor.centered_and_scaled_svg
 
           digest = Digest::SHA256.hexdigest molfile

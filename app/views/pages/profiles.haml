@@ -1,0 +1,23 @@
+.container
+  %h2
+    Change your profile
+
+
+  %br/
+  %br/
+  .jumbotron
+    .row
+    = form_for @profile, url: pages_update_profiles_path do |f|
+      .checkbox
+        = f.check_box :show_external_name, autofocus: true, autocomplete: "off"
+        = f.label :show_external_name, "Show external names on sample titles?"
+
+      %br/
+
+      .actions
+        = f.submit "Change my profile", class: "btn btn-primary"
+
+  %br/
+  %br/
+
+  = link_to "Back", root_path
