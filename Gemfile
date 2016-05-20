@@ -119,6 +119,11 @@ end
 group :test do
   gem 'factory_girl_rails'
   gem 'database_cleaner'
+
+  gem "faker", "~> 1.4"
+  gem "capybara", "~> 2.4"
+  gem "launchy", "~> 2.4"
+  gem "selenium-webdriver", "~> 2.43"
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
