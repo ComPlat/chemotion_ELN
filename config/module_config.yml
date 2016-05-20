@@ -4,12 +4,17 @@
 #Do not modify unless you want to overwrite the plugin gem configurations (see comment below)
 #
 
+#components:
+CollectionTree:
+  div:
+    {}
+
 ElementsTableEntries:
-  TdContent:
+  TdCont:
     {}
 
 ElementsTableSampleEntries:
-  MoleculeHeaderContent:
+  MolHeadCont:
     {}
 
 ReactionDetails:
@@ -26,6 +31,37 @@ SampleDetails:
   Labels:
     {}
 
+#Alt stores
+CollectionStore:
+  state:
+    {}
+  listeners:
+    {}
+  handlers:
+    {}
+
+
+ElementStore:
+  state:
+    {}
+  listeners:
+    {}
+  handlers:
+    {}
+
+dummy:
+  state:
+    {}
+  listeners:
+    {}
+  handlers:
+    {}
+
+
+#Aviator routes:
+routes:
+  routes:
+    {}
 
 
 

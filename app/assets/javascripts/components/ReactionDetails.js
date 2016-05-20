@@ -13,7 +13,11 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
-import extra from './extra/ReactionDetailsExtra';
+
+
+import XTab from "./extra/ReactionDetailsXTab";
+import XTabName from "./extra/ReactionDetailsXTabName";
+
 import StickyDiv from 'react-stickydiv'
 
 export default class ReactionDetails extends Component {
@@ -120,8 +124,8 @@ export default class ReactionDetails extends Component {
   extraTab(ind){
     let reaction = this.state.reaction || {}
     let num = ind  ;
-    let NoName =  extra["Tab"+num];
-    let TabName = extra["TabName"+num];
+    let NoName =  XTab["Tab"+num];
+    let TabName = XTabName["TabName"+num];
     return(
        <Tab eventKey={ind+4}  title={TabName} key={"sampleDetailsTab"+ind+3} >
          <ListGroupItem style={{paddingBottom: 20}}>
@@ -153,7 +157,7 @@ export default class ReactionDetails extends Component {
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     const style = {height: '220px'};
     let extraTabs =[];
-    for (let j=0;j < extra.TabCount;j++){
+    for (let j=0;j < XTab.TabCount;j++){
       extraTabs.push((i)=>this.extraTab(i))
     }
     return (

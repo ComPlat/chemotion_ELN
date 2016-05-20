@@ -1,6 +1,5 @@
 import alt from '../alt';
 import PermissionActions from '../actions/PermissionActions';
-import Aviator from 'aviator';
 
 class PermissionStore {
   constructor() {

@@ -1,13 +1,10 @@
 import React from 'react';
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal,
-        Accordion, Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab,
-        Row, Col} from 'react-bootstrap';
+import {Button,  Input, Glyphicon, Row, Col} from 'react-bootstrap';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
-import extra from "./extra/SampleDetailsExtra"
 import Select from 'react-select';
 
 import {solventOptions} from './staticDropdownOptions/options';

@@ -2,11 +2,16 @@ import UIStore from './stores/UIStore';
 import CollectionStore from './stores/CollectionStore';
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
+import rXr from './extra/routesXroutes';
 
-export default function() {
-  Aviator.root = '/';
-  Aviator.pushStateEnabled = false;
-  Aviator.setRoutes({
+let allRoutes = (r)=>{
+  let rts ={...r};
+  for (let i=0;i<rXr.routesCount;i++){rts={...rts,...rXr['routes'+i]} }
+  return rts;
+}
+
+
+const routes = {
     '/': 'root',
     target: {
       root: function(e) {
@@ -22,7 +27,6 @@ export default function() {
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];
           let collectionPromise = null;
-
           if(collectionId == 'all') {
             collectionPromise = CollectionStore.findAllCollection();
           } else {
@@ -55,6 +59,7 @@ export default function() {
       '/management': 'showCollectionManagement',
       '/:collectionID': 'show'
     },
+
 
     '/sample': {
       target: {
@@ -127,5 +132,10 @@ export default function() {
       },
       '/:screenID': 'showOrNew'
     }
-  });
+}
+
+export default function() {
+  Aviator.root = '/';
+  Aviator.pushStateEnabled = false;
+  Aviator.setRoutes( allRoutes(routes));
 }

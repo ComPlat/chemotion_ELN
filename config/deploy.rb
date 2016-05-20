@@ -1,4 +1,4 @@
-lock '3.4.0'
+lock '3.4.1'
 
 set :application, 'chemotion'
 set :repo_url, 'git@github.com:ComPlat/chemotion_ELN.git'
