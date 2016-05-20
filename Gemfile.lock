@@ -1,10 +1,4 @@
 GIT
-  remote: git://github.com/ComPlat/chemrails
-  revision: 98b8710a65ff778bef7f3d96ec04d41d0d25dcea
-  specs:
-    chemrails (0.0.34)
-
-GIT
   remote: git://github.com/cubuslab/openbabel-gem.git
   revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
   specs:
@@ -25,6 +19,13 @@ GIT
   revision: 33933ff636bbc0f3b0ab53735749b71ab8955b77
   specs:
     thumbnailer (0.1.0)
+
+PATH
+  remote: ~/shared/ketcher-rails
+  specs:
+    ketcherails (0.0.1)
+      nokogiri (= 1.6.7.2)
+      rails (~> 4.2.0)
 
 PATH
   remote: ~/shared/scifinding
@@ -77,8 +78,6 @@ GEM
     ancestry (2.1.0)
       activerecord (>= 3.0.0)
     arel (6.0.3)
-      execjs
-      json
     attr_encrypted (1.3.4)
       encryptor (>= 1.3.0)
     autoprefixer-rails (6.0.3)
@@ -129,6 +128,7 @@ GEM
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
     colorize (0.7.7)
+    concurrent-ruby (1.0.2)
     daemons (1.2.3)
     database_cleaner (1.5.0)
     debug_inspector (0.0.2)
@@ -229,8 +229,8 @@ GEM
       rb-inotify (>= 0.9)
     loofah (2.0.3)
       nokogiri (>= 1.5.9)
-    mail (2.6.3)
-      mime-types (>= 1.16, < 3)
+    mail (2.6.4)
+      mime-types (>= 1.16, < 4)
     mailcatcher (0.6.1)
       activesupport (>= 4.0.0, < 5)
       eventmachine (~> 1.0.0, <= 1.0.5)
@@ -239,10 +239,12 @@ GEM
       skinny (~> 0.2.3)
       sqlite3 (~> 1.3)
       thin (~> 1.5.0)
-    mime-types (2.6.2)
+    mime-types (3.0)
+      mime-types-data (~> 3.2015)
+    mime-types-data (3.2016.0221)
     mimemagic (0.3.1)
     mini_portile2 (2.0.0)
-    minitest (5.8.4)
+    minitest (5.9.0)
     multi_json (1.11.2)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
@@ -352,12 +354,13 @@ GEM
       eventmachine (~> 1.0.0)
       thin (~> 1.5.0)
     spring (1.4.0)
-    sprockets (3.4.0)
+    sprockets (3.6.0)
+      concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
-    sprockets-rails (2.3.3)
-      actionpack (>= 3.0)
-      activesupport (>= 3.0)
-      sprockets (>= 2.8, < 4.0)
+    sprockets-rails (3.0.4)
+      actionpack (>= 4.0)
+      activesupport (>= 4.0)
+      sprockets (>= 3.0.0)
     sqlite3 (1.3.10)
     sshkit (1.7.1)
       colorize (>= 0.7.0)
@@ -410,7 +413,6 @@ DEPENDENCIES
   capistrano-rails
   capistrano-rvm
   capistrano3-delayed-job
-  chemrails!
   daemons
   database_cleaner
   delayed_job_active_record
@@ -428,6 +430,7 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   kaminari
+  ketcherails!
   mailcatcher
   nokogiri
   openbabel (= 2.3.2.1)!
