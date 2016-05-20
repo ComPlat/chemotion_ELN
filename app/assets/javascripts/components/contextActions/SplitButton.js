@@ -1,6 +1,5 @@
 import React from 'react';
 import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
-import Aviator from 'aviator';
 import UIStore from 'components/stores/UIStore';
 import ElementActions from 'components/actions/ElementActions';
 

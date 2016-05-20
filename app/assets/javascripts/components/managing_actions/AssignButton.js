@@ -1,8 +1,5 @@
 import React from 'react';
 import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
-import Aviator from 'aviator';
-import UIStore from '../stores/UIStore';
-import CollectionStore from '../stores/CollectionStore';
 
 export default class AssignButton extends React.Component {
   render() {
