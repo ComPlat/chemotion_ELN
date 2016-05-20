@@ -21,13 +21,6 @@ GIT
     thumbnailer (0.2.0)
 
 PATH
-  remote: ~/shared/chemstash
-  specs:
-    chemstash (0.0.1)
-      bootstrap-sass (>= 3.3.5)
-      rails (>= 4.2.0)
-
-PATH
   remote: ~/shared/ketcher-rails
   specs:
     ketcherails (0.0.1)
@@ -441,7 +434,6 @@ DEPENDENCIES
   capistrano-rvm
   capistrano3-delayed-job
   capybara (~> 2.4)
-  chemstash!
   daemons
   database_cleaner
   delayed_job_active_record
