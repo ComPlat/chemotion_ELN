@@ -5,6 +5,8 @@ class User < ActiveRecord::Base
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
 
+  has_one :profile, dependent: :destroy
+
   has_many :collections
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
@@ -14,7 +16,7 @@ class User < ActiveRecord::Base
 
   validates_presence_of :first_name, :last_name, allow_blank: false
 
-  after_create :create_chemotion_public_collection, :create_all_collection
+  after_create :create_chemotion_public_collection, :create_all_collection, :has_profile
 
   def owns_collections?(collections)
     collections.pluck(:user_id).uniq == [id]
@@ -44,6 +46,10 @@ class User < ActiveRecord::Base
   def increment_counter key
     self.counters[key] = self.counters[key].to_i + 1
     self.save
+  end
+
+  def has_profile
+    self.create_profile if !self.profile
   end
 
   private

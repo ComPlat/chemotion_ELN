@@ -4,6 +4,8 @@ Rails.application.routes.draw do
   authenticated :user do
     root to: 'pages#welcome', as: :authenticated_root
     get 'pages/settings', to: 'pages#settings'
+    get 'pages/profiles', to: 'pages#profiles'
+    patch 'pages/update_profiles', to: 'pages#update_profiles'
   end
 
   mount API => '/'
