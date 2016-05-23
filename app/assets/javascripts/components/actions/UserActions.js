@@ -38,6 +38,15 @@ class UserActions {
     });
   }
 
+  fetchProfile() {
+    return (dispatch) => { UsersFetcher.fetchProfile()
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
 }
 
 export default alt.createActions(UserActions);

@@ -236,7 +236,16 @@ export default class Sample extends Element {
   }
 
   title() {
-    return this.name ? `${this.short_label} ${this.name}` : this.short_label
+    const profile = UserStore.getState().profile
+    const show_external_name = profile ? profile.show_external_name : false
+    const short_label = this.name ? `${this.short_label} ${this.name}` : this.short_label
+    const external_label = this.external_label
+
+    if(show_external_name) {
+      return external_label || short_label;
+    } else {
+      return short_label;
+    }
   }
 
   get name() {
