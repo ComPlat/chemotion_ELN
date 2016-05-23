@@ -5,12 +5,14 @@ class UserStore {
   constructor() {
     this.state = {
       users: [],
-      currentUser: null
+      currentUser: null,
+      profile: null
     };
 
     this.bindListeners({
       handleFetchUsers: UserActions.fetchUsers,
-      handleFetchCurrentUser: UserActions.fetchCurrentUser
+      handleFetchCurrentUser: UserActions.fetchCurrentUser,
+      handleFetchProfile: UserActions.fetchProfile
     })
   }
 
@@ -22,6 +24,9 @@ class UserStore {
     this.state.currentUser = result;
   }
 
+  handleFetchProfile(result) {
+    this.state.profile = result;
+  }
 }
 
 export default alt.createStore(UserStore, 'UserStore');

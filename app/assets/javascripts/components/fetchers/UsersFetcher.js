@@ -32,4 +32,19 @@ export default class UsersFetcher {
     return promise;
   }
 
+  static fetchProfile() {
+    let promise = fetch('/api/v1/profiles.json', {
+        credentials: 'same-origin'
+      })
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
 }

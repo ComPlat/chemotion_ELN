@@ -16,8 +16,7 @@ import initRoutes from './routes';
 
 import Notifications from './Notifications';
 
-
-
+import UserActions from './actions/UserActions';
 
 class App extends Component {
   constructor(props) {
@@ -29,6 +28,7 @@ class App extends Component {
 
   componentDidMount() {
     UIStore.listen(state => this.handleUiStoreChange(state));
+    UserActions.fetchProfile();
   }
 
   componentWillUnmount() {
