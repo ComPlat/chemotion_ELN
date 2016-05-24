@@ -15,6 +15,12 @@
       %br/
       = f.text_field :last_name, autofocus: true, class: 'form-control'
     .form-group.field
+      = f.label :shortcut
+      %em
+        (will be used as prefix)
+      %br/
+      = f.text_field :shortcut, autofocus: true, class: 'form-control'
+    .form-group.field
       = f.label :password
       - if @validatable
         %em
