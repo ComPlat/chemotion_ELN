@@ -142,7 +142,7 @@ export default class CollectionTree extends React.Component {
     if(showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {
-      if(currentCollection.label == 'All') {
+      if( currentCollection.label == 'All' ) {   
         Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
       } else {
         Aviator.navigate(`/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);

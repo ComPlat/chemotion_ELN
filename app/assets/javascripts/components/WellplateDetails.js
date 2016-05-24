@@ -9,7 +9,7 @@ import WellplateProperties from './WellplateProperties';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
-import ElementStore from './stores/ElementStore';
+
 import StickyDiv from 'react-stickydiv'
 
 const cols = 12;

@@ -2,7 +2,6 @@ import React, {Component} from 'react'
 import {Col, Row, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
-import ElementStore from './stores/ElementStore';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';

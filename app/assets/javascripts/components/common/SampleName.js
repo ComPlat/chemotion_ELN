@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Formula from './Formula'
-var _ = require('lodash');
+//var _ = require('lodash');
 
 export default class SampleName extends React.Component {
   render() {

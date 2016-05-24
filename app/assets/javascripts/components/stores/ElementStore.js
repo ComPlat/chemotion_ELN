@@ -15,15 +15,6 @@ import Xhandlers from '../extra/ElementStoreXhandlers';
 import Xstate from '../extra/ElementStoreXstate';
 
 
-let extra = {
-  ...Xlisteners,//extraElementStore.listeners,
-  ...Xhandlers,//extraElementStore.handlers,
-  ...Xstate
-};
-console.log(extra);
-
-
-
 class ElementStore {
   constructor() {
     this.state = {
