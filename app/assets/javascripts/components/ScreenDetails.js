@@ -5,7 +5,7 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import Aviator from 'aviator';
 import ScreenWellplates from './ScreenWellplates';
-import ElementStore from './stores/ElementStore';
+
 import ElementActions from './actions/ElementActions';
 import StickyDiv from 'react-stickydiv'
 

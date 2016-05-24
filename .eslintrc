@@ -1,6 +1,8 @@
 {
   "parser": "babel-eslint",
-  "plugins": [],
+  "plugins": [
+    "react"
+  ],
   "ecmaFeatures": {
     "jsx": true,
     "modules": true
@@ -9,5 +11,8 @@
     "browser": true,
     "node": true
   },
-  "rules": {}
+  "extends": ["eslint:recommended", "plugin:react/recommended"],
+  "rules": {
+    "no-console": ["off"]
+    }
 }
