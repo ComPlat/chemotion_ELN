@@ -79,11 +79,11 @@ class Reaction < ActiveRecord::Base
     paths = {}
     %i(starting_materials reactants products).each do |prop|
       d = self.send(prop).includes(:molecule)
-      paths[prop]= d.pluck(:sample_svg_file,:'molecules.inchikey').map do |item|
+      paths[prop]= d.pluck(:sample_svg_file,:'molecules.molecule_svg_file').map do |item|
         if item[0].present?
           '/images/samples/' + item[0]
         else
-          "/images/molecules/#{item[1]}.svg"
+          "/images/molecules/#{item[1]}"
         end
       end
     end
