@@ -15,7 +15,8 @@ class User < ActiveRecord::Base
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
   validates_presence_of :first_name, :last_name, allow_blank: false
-  validates :shortcut, format: {with: /[a-zA-Z0-9\-_]{1,3}/, message: "must be characters, numers, - or _"},
+  validates :shortcut, format: {with: /(\A[a-zA-Z]{1,3}\Z)|(\A[a-zA-Z][a-zA-Z0-9\-_][a-zA-Z]\Z)/,
+      message: "must be characters, numers, - or _. No leading trailing number, - or _."},
     length: {in: 1..3},
     uniqueness: true
 
