@@ -71,7 +71,7 @@ module Chemotion
         end
       end
 
-      desc "Return serialized samples of current user"
+      desc "Return serialized molecules_samples_groups  of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
       end
@@ -85,9 +85,9 @@ module Chemotion
         else
           # All collection
           Sample.for_user(current_user.id).includes(:molecule).uniq
-        end.uniq.order("molecules.id DESC")
+        end.uniq.order("updated_at DESC")
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
+        return {molecules: group_by_molecule(paginate(scope))}
       end
 
       desc "Return serialized sample by id"
@@ -329,6 +329,40 @@ module Chemotion
         delete do
           Sample.find(params[:id]).destroy
         end
+      end
+    end
+
+    helpers do
+      def group_by_molecule(samples)
+        groups = Hash.new
+        samples.each do |s|
+          moleculeName = get_molecule_name(s)
+          serialized_sample = ElementPermissionProxy.new(current_user, s).serialized
+          if !groups[moleculeName]
+            groups[moleculeName] = [].push(serialized_sample)
+          else
+            groups[moleculeName] = groups[moleculeName].push(serialized_sample)
+          end
+        end
+
+        return to_molecule_array(groups)
+      end
+
+      def get_molecule_name(sample)
+        name = sample.molecule.iupac_name || sample.molecule.inchistring
+        if sample.residues.present?
+          name += 'part_' # group polymers to different array
+          name += sample.residues[0].residue_type.toString(); # FIXME: need to double confirm          end
+        end
+        return name
+      end
+
+      def to_molecule_array(hash_groups)
+        target = Array.new
+        hash_groups.each do |key, value|
+          target.push(moleculeName: key, samples: value)
+        end
+        return target
       end
     end
   end
