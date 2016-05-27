@@ -30,7 +30,7 @@ PATH
 PATH
   remote: ~/shared/scifinding
   specs:
-    scifinding (0.0.1)
+    scifinding (0.1.0)
       attr_encrypted (~> 3.0.1)
       oauth2
       rails (>= 4.2.0)
