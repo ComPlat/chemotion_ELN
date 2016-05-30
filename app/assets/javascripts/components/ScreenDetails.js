@@ -89,8 +89,13 @@ export default class ScreenDetails extends Component {
     return (
       <StickyDiv zIndex={2}>
       <div key={screen.id}>
-        <Panel header="Screen Details" bsStyle={screen.isEdited ? 'info' : 'primary'}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+        <Panel header="Screen Details"
+               bsStyle={screen.isEdited ? 'info' : 'primary'}
+               className="panel-fixed">
+          <Button bsStyle="danger"
+                  bsSize="xsmall"
+                  className="button-right"
+                  onClick={this.closeDetails.bind(this)}>
             <i className="fa fa-times"></i>
           </Button>
           <h3>{name}</h3>

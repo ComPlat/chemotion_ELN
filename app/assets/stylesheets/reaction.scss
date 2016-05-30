@@ -1,0 +1,16 @@
+@media screen and (max-width: 1366px) {
+  table.reaction-scheme .form-group, table.reaction-scheme button.btn-danger {
+    .form-control {
+      padding: 3px 12px;
+      height: 26px;
+      font-size: 10px;
+    }
+
+    font-size: 9px;
+
+    button {
+      padding: 5px 0px 5px 0px!important;
+      font-size: 10px;
+    }
+  }
+}

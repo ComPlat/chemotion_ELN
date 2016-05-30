@@ -13,6 +13,13 @@
   button#external-save-btn {
     margin-top: 25px;
     margin-left: -10px;
+    float: right;
+  }
+
+  @media screen and (max-height: 768px) {
+    button#external-save-btn {
+      margin-left: -30px;
+    }
   }
 
   .elem-composition-header{
