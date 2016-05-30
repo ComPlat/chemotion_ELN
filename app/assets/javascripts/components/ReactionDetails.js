@@ -103,10 +103,34 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  handleProductClick(product) {
+    const uiState = UIStore.getState();
+    let currentURI = Aviator.getCurrentURI();
+    Aviator.navigate(`${currentURI}/sample/${product.id}`);
+  }
+
+  productLink(product) {
+    return (
+      <span>
+        Analysis:
+        &nbsp;
+        <span className="pseudo-link"
+           onClick={() => this.handleProductClick(product)}
+           style={{cursor: 'pointer'}}
+           title="Open sample window">
+           {product.title()}
+        </span>
+      </span>
+    )
+  }
+
   productAnalyses() {
     const {products} = this.state.reaction;
     let tabs = products.map((product, key) =>
-           <Tab key={product.short_label} eventKey={key} title={"Analysis: " + product.short_label}>
+           <Tab key={product.short_label}
+                eventKey={key}
+                title={this.productLink(product)}>
+
              <ReactionDetailsAnalyses
                 sample={product}
                 />
