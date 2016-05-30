@@ -13,6 +13,7 @@
   },
   "extends": ["eslint:recommended", "plugin:react/recommended"],
   "rules": {
-    "no-console": ["off"]
+    "no-console": ["off"],
+    "comma-dangle": [1,"only-multiline"]
     }
 }

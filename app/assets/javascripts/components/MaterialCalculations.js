@@ -32,11 +32,12 @@ export default class MaterialCalculations extends Component {
     else
       return(
         <td style={inputsStyle}>
-          <NumeralInputWithUnits
+          <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_ml}
-            unit='ml'
-            numeralFormat='0,0.0000'
+            unit='l'
+            metricPrefix='milli'
+            metricPrefixes = {['milli','none','micro']}
             onChange={(amount) => this.handleAmountChange(amount)}
           />
         </td>
