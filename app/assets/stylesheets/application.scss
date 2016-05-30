@@ -70,3 +70,12 @@ div[class^="col-"] {
     display: none !important;
   }
 }
+
+span.pseudo-link {
+  cursor:pointer;
+  color: #337ab7;
+}
+
+span.pseudo-link:hover {
+  text-decoration:underline;
+}

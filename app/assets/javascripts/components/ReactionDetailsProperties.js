@@ -40,8 +40,8 @@ export default class ReactionDetailsProperties extends Component {
       case 'purification':
         reaction.purification = value;
         break;
-      case 'solvents':
-        reaction.solvents = value;
+      case 'tlc_solvents':
+        reaction.tlc_solvents = value;
         break;
       case 'rfValue':
         reaction.rf_value = value;
@@ -200,10 +200,10 @@ export default class ReactionDetailsProperties extends Component {
               <Input
                 type="text"
                 label="Solvents (parts)"
-                value={reaction.solvents}
-                disabled={reaction.isMethodDisabled('solvents')}
+                value={reaction.tlc_solvents}
+                disabled={reaction.isMethodDisabled('tlc_solvents')}
                 placeholder="Solvents as parts..."
-                onChange={event => this.handleInputChange('solvents', event)}/>
+                onChange={event => this.handleInputChange('tlc_solvents', event)}/>
             </Col>
             <Col md={3}>
               <Input
