@@ -25,24 +25,11 @@ export default class ElementsTableSampleEntries extends Component {
 
   render() {
     let {elements: samples, currentElement, showDragColumn, ui} = this.props
-    let groupedSamplesByMolecule = samples.reduce((groups, sample) => {
-      let moleculeName = sample.molecule.iupac_name || sample.molecule.inchistring
-      if(sample.contains_residues) {
-        moleculeName += 'part_' // group polymers to different array
-        moleculeName += sample.polymer_type
-      }
-      if(!groups[moleculeName]) {
-        groups[moleculeName] = [].concat(sample)
-      } else {
-        groups[moleculeName] = groups[moleculeName].concat(sample)
-      }
-      return groups
-    }, {})
-    let moleculeNames = Object.keys(groupedSamplesByMolecule)
+
     return (
       <Table className="elements" bordered hover style={{borderTop: 0}}>
-        {moleculeNames.map((moleculeName, index) => {
-          let moleculeGroup = groupedSamplesByMolecule[moleculeName]
+        {Object.keys(samples).map((group, index) => {
+          let moleculeGroup = samples[group]
           return this.renderMoleculeGroup(moleculeGroup, index)
         })}
       </Table>
