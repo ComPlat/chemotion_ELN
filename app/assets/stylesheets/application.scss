@@ -46,11 +46,10 @@ div[class^="col-"] {
 
 .panel-fixed {
   overflow-y: scroll;
-  max-height: 950px;
+  max-height: 100vh;
 
   button.btn-danger {
     position: relative;
-    float: right;
     margin-right: 5px;
   }
 }
@@ -58,4 +57,16 @@ div[class^="col-"] {
 .panel-fixed::-webkit-scrollbar {
   width: 0px;  /* remove scrollbar space */
   background: transparent;  /* optional: just make scrollbar invisible */
+}
+
+@media screen and (min-width: 1367px) {
+  .hidden-hd {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 1366px) {
+  .visible-hd {
+    display: none !important;
+  }
 }

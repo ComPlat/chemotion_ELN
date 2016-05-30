@@ -178,20 +178,20 @@ export default class SampleForm extends React.Component {
     )
   }
 
-  attachedAmountInput(sample) {
+  attachedAmountInput(sample, size) {
     if(!sample.contains_residues)
       return false;
 
     return this.numInput(sample, 'defined_part_amount', 'g',
-    ['milli','none'], 4, 'Attached', 'attachedAmountMg', true, "Weight of the defined part")
+    ['milli','none'], 4, 'Attached', 'attachedAmountMg', true, "Weight of the defined part", size)
   }
 
-  numInput(sample, field, unit, prefixes, precision, label, ref = '', disabled = false, title='') {
+  numInput(sample, field, unit, prefixes, precision, label, ref = '', disabled = false, title='', size=2) {
     if(sample.contains_residues && unit == 'l')
       return false;
 
     return (
-      <Col md={2} key={field + sample.id.toString()}>
+      <Col md={size} key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
           value={!isNaN(sample[field]) ? sample[field] : null}
           unit={unit}
@@ -208,30 +208,30 @@ export default class SampleForm extends React.Component {
     )
   }
 
-  sampleAmount(sample) {
+  sampleAmount(sample, inputsSize=2) {
     let content = [];
     if(sample.isMethodDisabled('amount_value') == false) {
       if(sample.isMethodRestricted('molecule') == true) {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput')
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', false, '', inputsSize)
         )
       } else {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput')
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', false, '', inputsSize)
         )
 
         if(!sample.contains_residues)
           content.push(
-            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l' )
+            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', false, '', inputsSize)
           )
 
         content.push(
-          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput' )
+          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', false, '', inputsSize)
         )
 
         if(sample.contains_residues)
           content.push(
-            this.attachedAmountInput(sample)
+            this.attachedAmountInput(sample, inputsSize)
           )
       }
      return content;
@@ -272,11 +272,10 @@ export default class SampleForm extends React.Component {
       <div className="sample-form">
         <Row>
           <Col md={6}>{this.moleculeInput(sample)}</Col>
-          <Col md={2} className="top-secret-checkbox">
+          <Col md={5} className="top-secret-checkbox">
             {this.topSecretCheckbox(sample)}
           </Col>
-          <Col md={3}></Col>
-          <Col md={1}>{this.sampleSaveButton()}</Col>
+          <Col md={1} className="pull-right">{this.sampleSaveButton()}</Col>
         </Row>
 
         <Row>
@@ -287,11 +286,20 @@ export default class SampleForm extends React.Component {
           <Col md={4}>{this.textInput(sample, 'location', 'Location')}</Col>
         </Row>
 
-        <Row>
+        <Row className="visible-hd">
           {this.sampleAmount(sample)}
           {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density')}
           {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point')}
           {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point')}
+        </Row>
+
+        <Row className="hidden-hd">
+          {this.sampleAmount(sample, 4)}
+        </Row>
+        <Row className="hidden-hd">
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', false, '', 4)}
+          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', false, '', 4)}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', false, '', 4)}
         </Row>
 
         <Row>

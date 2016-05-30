@@ -48,7 +48,6 @@ export default class ReactionDetails extends Component {
   }
 
   closeDetails() {
-    const uiState = UIStore.getState();
     UIActions.deselectAllElements();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
@@ -164,7 +163,10 @@ export default class ReactionDetails extends Component {
         <Panel className="panel-fixed"
                header="Reaction Details"
                bsStyle={reaction.isEdited ? 'info' : 'primary'}>
-          <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+          <Button bsStyle="danger"
+                  bsSize="xsmall"
+                  className="button-right"
+                  onClick={this.closeDetails.bind(this)}>
             <i className="fa fa-times"></i>
           </Button>
           <Row>

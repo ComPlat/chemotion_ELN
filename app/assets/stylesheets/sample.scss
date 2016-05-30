@@ -28,7 +28,19 @@
   button.external-save-btn {
     margin-top: 23px;
     margin-left: -10px;
+    float: right;
   }
+
+  @media screen and (max-height: 768px) {
+    button.external-save-btn {
+      margin-left: -32px;
+    }
+
+    label {
+      font-size: 13px;
+    }
+  }
+
 
   .top-secret-checkbox {
     margin-top: 20px;

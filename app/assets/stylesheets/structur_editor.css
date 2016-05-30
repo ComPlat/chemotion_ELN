@@ -1,7 +1,13 @@
 .structure-editor .modal-content {
-  width: 850px;
+  width: 900px;
 }
 .structure-editor #ifKetcher {
-  width: 832px;
-  height: 508px;
+  width: 882px;
+  height: 580px;
+}
+
+@media screen and (max-height: 768px) {
+  .structure-editor #ifKetcher {
+    height: 520px;
+  }
 }

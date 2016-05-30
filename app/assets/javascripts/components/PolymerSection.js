@@ -124,7 +124,7 @@ export default class PolymerSection extends React.Component {
     if(value == 'external') {
       let disabled = !(residue.custom_info.loading_type == value);
       additionalLoadingInput = (
-        <td width="50%" className="loading-input">
+        <td width="50%" className="loading-input visible-hd">
           <NumeralInputWithUnitsCompo
             value={sample.loading}
             unit='mmol/g'
@@ -182,6 +182,23 @@ export default class PolymerSection extends React.Component {
         {this.customInfoRadio("100% conversion","full_conv", residue, sample)}
         {this.customInfoRadio("Elemental analyses","found", residue, sample)}
         {this.customInfoRadio("External estimation","external", residue, sample)}
+        <tr className="hidden-hd">
+          <td>
+            <NumeralInputWithUnitsCompo
+              value={sample.loading}
+              unit='mmol/g'
+              metricPrefix='none'
+              metricPrefixes = {['none']}
+              precision={3}
+              key={'polymer_loading_input' + sample.id.toString()}
+              name="polymer_loading"
+              bsStyle={this.checkInputStatus(sample, 'loading')}
+              onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
+              disabled={residue.custom_info.loading_type != 'external'}
+              readOnly={residue.custom_info.loading_type != 'external'}
+            />
+          </td>
+        </tr>
        </tbody>
        </table>
       )

@@ -39,7 +39,7 @@ export default class MaterialGroup extends Component {
 
     return (
       <div>
-        <table width="100%">
+        <table width="100%" className="reaction-scheme">
           <thead><tr>
           <th width="5%"></th>
           <th width="5%">Ref</th>
