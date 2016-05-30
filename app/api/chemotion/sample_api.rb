@@ -352,7 +352,7 @@ module Chemotion
         name = sample.molecule.iupac_name || sample.molecule.inchistring
         if sample.residues.present?
           name += 'part_' # group polymers to different array
-          name += sample.residues[0].residue_type.toString(); # FIXME: need to double confirm          end
+          name += sample.residues[0].residue_type.to_s
         end
         return name
       end
