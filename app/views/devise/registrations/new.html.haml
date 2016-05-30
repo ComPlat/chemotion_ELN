@@ -15,6 +15,12 @@
       %br/
       = f.text_field :last_name, autofocus: true, class: 'form-control'
     .form-group.field
+      = f.label "Name Abbreviation"
+      %em
+        (Kürzel)
+      %br/
+      = f.text_field :name_abbreviation, autofocus: true, class: 'form-control'
+    .form-group.field
       = f.label :password
       - if @validatable
         %em
