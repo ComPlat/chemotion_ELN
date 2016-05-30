@@ -1,0 +1,17 @@
+.navig-brand {
+  list-style-type: none;
+
+  a {
+    color: #999999;
+
+    &:hover {
+      color: white;
+      text-decoration: none;
+    }
+
+    &:focus {
+      color: white;
+      text-decoration: none;
+    }
+  }
+}
