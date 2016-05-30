@@ -76,7 +76,7 @@ export default class Reaction extends Element {
       purification: this.purification,
       dangerous_products: this.dangerous_products,
       solvent: this.solvent,
-      tlc_solvents: this.solvents,
+      tlc_solvents: this.tlc_solvents,
       tlc_description: this.tlc_description,
       rf_value: this.rf_value,
       temperature: this.temperature,
@@ -99,12 +99,12 @@ export default class Reaction extends Element {
     this._temperature = temperature
   }
 
-  get solvents() {
-    return this._solvents
+  get tlc_solvents() {
+    return this._tlc_solvents
   }
 
-  set solvents(solvents) {
-    this._solvents = solvents
+  set tlc_solvents(solvents) {
+    this._tlc_solvents = solvents
   }
 
   get starting_materials() {
@@ -226,7 +226,7 @@ export default class Reaction extends Element {
       if(!sample.isValid)
         result = false;
     });
-    
+
     return result;
   }
 
