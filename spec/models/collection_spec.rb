@@ -16,9 +16,9 @@ RSpec.describe Collection, type: :model do
     before { CollectionsSample.create(collection_id: collection.id, sample_id: sample.id) }
 
     it 'destroys also the association' do
-      expect(CollectionsSample.count).to eq 1
+      expect(CollectionsSample.count).to eq 2
       collection.destroy
-      expect(CollectionsSample.count).to eq 0
+      expect(CollectionsSample.count).to eq 1
     end
   end
 
