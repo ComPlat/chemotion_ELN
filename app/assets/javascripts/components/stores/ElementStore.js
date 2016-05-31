@@ -216,6 +216,7 @@ class ElementStore {
   handleUpdateSampleForReaction(sample) {
     UserActions.fetchCurrentUser();
     let reactionID = this.state.currentReaction;
+    this.state.currentElement = null;
 
     this.handleRefreshElements('sample');
 

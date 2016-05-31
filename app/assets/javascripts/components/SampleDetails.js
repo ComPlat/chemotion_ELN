@@ -141,7 +141,11 @@ export default class SampleDetails extends React.Component {
   let {sample, reaction, materialGroup} = this.state;
 
   if(reaction) {
-    ElementActions.createSampleForReaction(sample);
+      if(sample.isNew) {
+        ElementActions.createSampleForReaction(sample);
+      } else {
+        ElementActions.updateSampleForReaction(sample);
+      }
     } else {
       if(sample.isNew) {
         ElementActions.createSample(sample);

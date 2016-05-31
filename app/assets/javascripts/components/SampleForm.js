@@ -1,9 +1,6 @@
 import React from 'react';
 import {Button,  Input, Glyphicon, Row, Col} from 'react-bootstrap';
 
-import ElementActions from './actions/ElementActions';
-import ElementStore from './stores/ElementStore';
-
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import Select from 'react-select';
 
@@ -18,25 +15,6 @@ export default class SampleForm extends React.Component {
 
     this.state = {
       sample: props.sample
-    }
-  }
-
-  componentDidMount() {
-    ElementStore.listen(this.onChange.bind(this));
-  }
-
-  componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
-  }
-
-  onChange(state) {
-    if(!state.currentElement || state.currentElement.type == 'sample') {
-      this.setState({
-        sample: state.currentElement,
-        reaction: state.currentReaction,
-        materialGroup: state.currentMaterialGroup,
-        loadingMolecule: false
-      });
     }
   }
 
@@ -75,24 +53,6 @@ export default class SampleForm extends React.Component {
 
   updateMolecule(molfile, svg_file = null) {
     ElementActions.fetchMoleculeByMolfile(molfile, svg_file);
-  }
-
-  _submitFunction() {
-    let {sample, reaction, materialGroup} = this.state;
-
-    if(reaction) {
-      if(sample.isNew) {
-        ElementActions.createSampleForReaction(sample);
-      } else {
-        ElementActions.updateSampleForReaction(sample);
-      }
-    } else {
-      if(sample.isNew) {
-        ElementActions.createSample(sample);
-      } else {
-        ElementActions.updateSample(new Sample(sample));
-      }
-    }
   }
 
   _submitLabel() {
@@ -258,7 +218,7 @@ export default class SampleForm extends React.Component {
     return (
       <Button bsStyle="warning"
               className="external-save-btn"
-              onClick={this._submitFunction.bind(this)}
+              onClick={this.props.parent._submitFunction.bind(this)}
               disabled={!this.sampleIsValid()}>
         {this._submitLabel()}
       </Button>
