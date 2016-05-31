@@ -1,4 +1,21 @@
 GIT
+  remote: git://github.com/ComPlat/ketcher-rails.git
+  revision: 9c04cfa1e54bc501bed56e14f4ab349443e0bdee
+  specs:
+    ketcherails (0.1.0)
+      nokogiri (= 1.6.7.2)
+      rails (~> 4.2.0)
+
+GIT
+  remote: git://github.com/ComPlat/scifinding.git
+  revision: b4c6dcb5bf854682c33126ca41ac1dfd6984543a
+  specs:
+    scifinding (0.1.0)
+      attr_encrypted (~> 3.0.1)
+      oauth2
+      rails (>= 4.2.0)
+
+GIT
   remote: git://github.com/cubuslab/openbabel-gem.git
   revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
   specs:
@@ -19,21 +36,6 @@ GIT
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
     thumbnailer (0.2.0)
-
-PATH
-  remote: ~/shared/ketcher-rails
-  specs:
-    ketcherails (0.0.1)
-      nokogiri (= 1.6.7.2)
-      rails (~> 4.2.0)
-
-PATH
-  remote: ~/shared/scifinding
-  specs:
-    scifinding (0.1.0)
-      attr_encrypted (~> 3.0.1)
-      oauth2
-      rails (>= 4.2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -450,7 +452,7 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   kaminari
-  ketcherails!
+  ketcherails (= 0.1.0)!
   launchy (~> 2.4)
   mailcatcher
   nokogiri
@@ -465,7 +467,7 @@ DEPENDENCIES
   rspec-rails
   rtf
   sass-rails (~> 5.0)
-  scifinding!
+  scifinding (= 0.1.0)!
   sdoc (~> 0.4.0)
   selenium-webdriver (~> 2.43)
   spring
