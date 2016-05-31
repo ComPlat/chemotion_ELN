@@ -23,7 +23,9 @@ export default class SearchFetcher {
         return response.json()
       }).then((json) => {
         let samples = {
-          elements: json.samples.elements.map((s) => new Sample(s)),
+          elements: json.samples.elements.molecules.map( m => {
+            return m.samples.map( s => new Sample(s) )
+          }),
           totalElements: json.samples.totalElements,
           page: json.samples.page,
           pages: json.samples.pages,

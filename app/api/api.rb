@@ -18,6 +18,38 @@ class API < Grape::API
     def is_public_request?
       request.path.include?('/api/v1/public/')
     end
+
+    def group_by_molecule(samples)
+      groups = Hash.new
+      samples.each do |s|
+        moleculeName = get_molecule_name(s)
+        serialized_sample = ElementPermissionProxy.new(current_user, s).serialized
+        if !groups[moleculeName]
+          groups[moleculeName] = [].push(serialized_sample)
+        else
+          groups[moleculeName] = groups[moleculeName].push(serialized_sample)
+        end
+      end
+
+      return to_molecule_array(groups)
+    end
+
+    def get_molecule_name(sample)
+      name = sample.molecule.iupac_name || sample.molecule.inchistring
+      if sample.residues.present?
+        name += 'part_' # group polymers to different array
+        name += sample.residues[0].residue_type.to_s
+      end
+      return name
+    end
+
+    def to_molecule_array(hash_groups)
+      target = Array.new
+      hash_groups.each do |key, value|
+        target.push(moleculeName: key, samples: value)
+      end
+      return target
+    end
   end
 
   before do
