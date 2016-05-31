@@ -16,7 +16,7 @@ export default class SampleDetailsAnalyses extends Component {
   handleChange(analysis) {
     const {sample} = this.state;
     sample.updateAnalysis(analysis);
-    this.props.parent.setState({sample: sample})
+    this.props.parent.handleSampleChanged(sample)
   }
 
   handleAdd() {
