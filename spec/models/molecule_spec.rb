@@ -2,7 +2,7 @@ require 'rails_helper'
 require 'digest'
 
 RSpec.describe Molecule, type: :model do
-  
+
   describe 'creation' do
     let(:molecule) { create(:molecule) }
     it 'is possible to create a valid molecule' do
@@ -27,9 +27,8 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'should persist the binary molfile' do
-      molfile_example = File.open("spec/models/molecule_spec.rb", "rb")
-      molecule.molfile = molfile_example.read
-      molfile_example.close
+      molfile_example =  "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n"#File.open("spec/models/molecule_spec.rb", "rb")
+      molecule.assign_attributes(molfile:  molfile_example)
       molecule.save
       persisted_molecule = Molecule.last
       persisted_molfile_SHA =
