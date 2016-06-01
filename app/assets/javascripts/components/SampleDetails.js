@@ -138,9 +138,10 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-  let {sample, reaction, materialGroup} = this.state;
+  let {sample, materialGroup} = this.state;
+  let { currentReaction } = ElementStore.getState();
 
-  if(reaction) {
+  if(currentReaction) {
       if(sample.isNew) {
         ElementActions.createSampleForReaction(sample);
       } else {

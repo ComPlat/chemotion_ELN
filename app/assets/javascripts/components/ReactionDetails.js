@@ -48,6 +48,7 @@ export default class ReactionDetails extends Component {
   }
 
   closeDetails() {
+    let uiState = UIStore.getState();
     UIActions.deselectAllElements();
     Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
   }
