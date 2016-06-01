@@ -1,4 +1,4 @@
-server 'complat-eln-dev.ioc.kit.edu', user: 'chem_dev', roles: %w{app web db}
+server 'complat-eln.ioc.kit.edu', user: 'chem_dev', roles: %w{app web db}
 
 set :ssh_options, {
   forward_agent: false,
@@ -7,7 +7,6 @@ set :ssh_options, {
 
 set :deploy_to, '/home/chem_dev/www/chemotion'
 set :user, 'chem_dev'
-set :server, '172.22.91.42'
 
 #set :bundle_without, %w{}.join(' ')
-set :bundle_flags, '--frozen'#'--deployment --quiet'  
+set :bundle_flags, '--frozen --deployment --quiet'
