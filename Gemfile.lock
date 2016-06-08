@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: 9c04cfa1e54bc501bed56e14f4ab349443e0bdee
+  revision: c0246408ab214eeed88af9081e54b073b3bbb939
   specs:
     ketcherails (0.1.0)
       nokogiri (= 1.6.7.2)
