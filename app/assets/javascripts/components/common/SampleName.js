@@ -14,8 +14,10 @@ export default class SampleName extends React.Component {
                           + sample.polymer_type.slice(1);
       return (
         <div>
-          <p>{polymer_name.replace('_', '-') + ' - '}</p>
-          <p>{sum_formular}</p>
+          <p>
+            {polymer_name.replace('_', '-') + ' - '}
+            {sum_formular}
+          </p>
           <p>{molecule_name}</p>
         </div>
       )
