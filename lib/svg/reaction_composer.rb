@@ -16,7 +16,7 @@ module SVG
 
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-          width="#{2*width}px" height="200px" viewBox="0 0 #{width} 100">
+          width="12in" height="#{12.0*100.0/width}in" viewBox="0 0 #{width} 100">
         <title>Reaction 1</title>
       END
       @labels = <<-END
@@ -31,7 +31,7 @@ module SVG
       END
       @arrow = <<-END
         <svg stroke="black" stroke-width="1">
-          <line x1="0" y1="50" x2="#{@arrow_width}" y2="50"/>
+          <line x1="0" y1="50" x2="#{@arrow_width}" y2="50" stroke="black"/>
           <polygon points="#{@arrow_width - 8},50 #{@arrow_width - 10},47 #{@arrow_width},50 #{@arrow_width - 10},53"/>
         </svg>
       END

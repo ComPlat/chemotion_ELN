@@ -14,20 +14,11 @@ class Report::Image
     @size
   end
 
-  def obtain_png_file scaling = nil
+  def obtain_png_file
     unless @svg.nil?
-      img, data = Magick::Image.from_blob(@svg) {
-        self.format = 'SVG'
-        self.background_color = 'transparent'
-      }
-
+      img = Svg2pdf.convert_to_img_data(@svg, :png)
       file = Tempfile.new(['image', '.png'])
-
-      if scaling
-        img.adaptive_resize(scaling).write(file.path)
-      else
-        img.write(file.path)
-      end
+      img.write_to_png(file.path)
 
       return file.path
     else

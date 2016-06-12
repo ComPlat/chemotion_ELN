@@ -31,6 +31,7 @@ gem 'ancestry'
 
 # svg composer
 gem 'nokogiri'
+gem 'svg2pdf', github: 'ComPlat/svg2pdf'
 
 # API
 gem 'grape'
