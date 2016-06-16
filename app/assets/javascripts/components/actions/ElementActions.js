@@ -59,6 +59,14 @@ class ElementActions {
       });};
   }
 
+  deselectCurrentElement() {
+    return null;
+  }
+
+  deselectCurrentReaction() {
+    return null;
+  }
+
   fetchSamplesByCollectionId(id, queryParams={}) {
     return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams)
       .then((result) => {

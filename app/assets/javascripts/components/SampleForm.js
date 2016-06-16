@@ -51,10 +51,6 @@ export default class SampleForm extends React.Component {
     })
   }
 
-  updateMolecule(molfile, svg_file = null) {
-    ElementActions.fetchMoleculeByMolfile(molfile, svg_file);
-  }
-
   _submitLabel() {
     let {sample} = this.state;
 
@@ -218,7 +214,7 @@ export default class SampleForm extends React.Component {
     return (
       <Button bsStyle="warning"
               className="external-save-btn"
-              onClick={this.props.parent._submitFunction.bind(this)}
+              onClick={this.props.parent._submitFunction.bind(this.props.parent)}
               disabled={!this.sampleIsValid()}>
         {this._submitLabel()}
       </Button>

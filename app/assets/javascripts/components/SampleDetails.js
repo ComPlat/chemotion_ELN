@@ -60,7 +60,7 @@ export default class SampleDetails extends React.Component {
   }
 
   onChange(state) {
-    if(!state.currentElement || state.currentElement.type == 'sample') {
+    if(state.currentElement && state.currentElement.type == 'sample') {
       this.setState({
         sample: state.currentElement,
         reaction: state.currentReaction,
@@ -167,6 +167,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.fetchReactionById(currentReaction)
     } else {
       UIActions.deselectAllElements();
+      ElementActions.deselectCurrentElement();
 
       let uiState = UIStore.getState();
       Aviator.navigate(`/collection/${uiState.currentCollectionId}`);

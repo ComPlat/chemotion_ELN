@@ -74,6 +74,8 @@ class ElementStore {
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
+      handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
+      handleDeselectCurrentReaction: ElementActions.deselectCurrentReaction,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
@@ -213,10 +215,19 @@ class ElementStore {
     this.state.currentElement = result.sample;
   }
 
+  handleDeselectCurrentElement() {
+    this.state.currentElement = null;
+  }
+
+  handleDeselectCurrentReaction() {
+    this.state.currentReaction = null;
+  }
+
   handleUpdateSampleForReaction(sample) {
     UserActions.fetchCurrentUser();
     let reactionID = this.state.currentReaction;
     this.state.currentElement = null;
+    this.state.currentReaction = null;
 
     this.handleRefreshElements('sample');
 
