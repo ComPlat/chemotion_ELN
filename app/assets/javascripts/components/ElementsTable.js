@@ -49,9 +49,11 @@ export default class ElementsTable extends React.Component {
     let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
 
     // check if element details of any type are open at the moment
-    let currentId = state.sample.currentId || state.reaction.currentId || state.wellplate.currentId;
+    let currentId = state.sample.currentId || state.reaction.currentId ||
+                    state.wellplate.currentId;
 
-    if (checkedIds || uncheckedIds || checkedAll || currentId || state.showPreviews) {
+    if (checkedIds || uncheckedIds || checkedAll || currentId ||
+        state.showPreviews) {
       this.setState({
         ui: {
           checkedIds: checkedIds,
@@ -78,7 +80,7 @@ export default class ElementsTable extends React.Component {
     }
 
     let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
-    let currentElementDidChange = ! deepEqual(currentElement, this.state.currentElement);
+    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
     if (elementsDidChange) {
       this.setState({
@@ -142,7 +144,10 @@ export default class ElementsTable extends React.Component {
   numberOfResultsInput() {
     let {ui} = this.state
     return (
-      <Input className="number-shown-select" onChange={event => this.handleNumberOfResultsChange(event)} label="Show:" type="text" bsSize="small" value={ui.number_of_results} />
+      <Input className="number-shown-select"
+        onChange={event => this.handleNumberOfResultsChange(event)}
+        label="Show:" type="text" bsSize="small"
+        value={ui.number_of_results ? ui.number_of_results : 0} />
     );
   }
 
@@ -155,7 +160,8 @@ export default class ElementsTable extends React.Component {
           <Table className="elements" bordered hover style={{marginBottom: 0}}>
             <thead><tr>
               <th className="check">
-                <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
+                <ElementAllCheckbox type={this.props.type}
+                  checked={ui.checkedAll}/>
               </th>
               <th colSpan={3}>
                 All {type}s
@@ -175,7 +181,8 @@ export default class ElementsTable extends React.Component {
         <Table className="elements" bordered hover>
           <thead><tr>
             <th className="check">
-              <ElementAllCheckbox type={this.props.type} checked={ui.checkedAll}/>
+              <ElementAllCheckbox type={this.props.type}
+                checked={ui.checkedAll}/>
             </th>
             <th colSpan={3}>
               All {type}s
