@@ -64,8 +64,18 @@ export default class SampleDetailsAnalyses extends Component {
         <div>
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
             {sample.analyses.map((analysis, key) => {
+
+              let analysisHeader = analysis.name;
+              if (typeof analysis.kind !== 'undefined' &&
+                  analysis.kind !== null && analysis.kind != '')
+                analysisHeader += ' - Type: ' + analysis.kind;
+              if (typeof analysis.status !== 'undefined' &&
+                  analysis.status !== null && analysis.status != '')
+                analysisHeader += ' - Status: ' + analysis.status;
+
               return (
-                <Panel header={analysis.name || '***'} key={key} onClick={() => this.handleAccordionOpen(key)} eventKey={key}>
+                <Panel header={analysisHeader} eventKey={key}
+                    key={key} onClick={() => this.handleAccordionOpen(key)}>
                   <AnalysisComponent
                     readOnly={readOnly}
                     analysis={analysis}

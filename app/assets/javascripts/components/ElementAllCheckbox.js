@@ -6,7 +6,7 @@ export default class ElementAllCheckbox extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      checked: props.checked,
+      checked: props.checked ? props.checked : false,
       type: props.type
     }
   }
@@ -17,7 +17,7 @@ export default class ElementAllCheckbox extends React.Component {
       type: nextProps.type
     })
   }
-  
+
 
   toggleCheckbox() {
     let newChecked = !this.state.checked;
@@ -33,7 +33,8 @@ export default class ElementAllCheckbox extends React.Component {
 
   render() {
     return (
-      <input type="checkbox" onChange={this.toggleCheckbox.bind(this)} checked={this.state.checked}/>
+      <input type="checkbox" onChange={this.toggleCheckbox.bind(this)}
+        checked={this.state.checked ? this.state.checked : false}/>
     )
   }
 }

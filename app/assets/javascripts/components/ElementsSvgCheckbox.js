@@ -6,7 +6,7 @@ export default class ElementsSvgCheckbox extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      checked: props.checked
+      checked: props.checked ? props.checked : false
     }
   }
 
@@ -24,6 +24,8 @@ export default class ElementsSvgCheckbox extends Component {
   }
 
   render() {
-    return <Input label="Show Previews" type="checkbox" onChange={() => this.toggleCheckbox()} checked={this.state.checked}/>
+    return <Input label="Show Previews" type="checkbox"
+      onChange={() => this.toggleCheckbox()}
+      checked={this.state.checked ? this.state.checked : false}/>
   }
 }
