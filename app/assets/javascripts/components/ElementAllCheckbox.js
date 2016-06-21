@@ -34,7 +34,9 @@ export default class ElementAllCheckbox extends React.Component {
   render() {
     return (
       <input type="checkbox" onChange={this.toggleCheckbox.bind(this)}
-        checked={this.state.checked ? this.state.checked : false}/>
+        checked={this.state.checked ? this.state.checked : false}
+        disabled={this.props.showReport}
+        />
     )
   }
 }

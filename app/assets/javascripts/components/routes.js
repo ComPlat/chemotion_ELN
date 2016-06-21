@@ -60,6 +60,14 @@ const routes = {
       '/:collectionID': 'show'
     },
 
+    '/report': {
+      target: {
+        show: function(e) {
+          ElementActions.showReportContainer();
+        }
+      },
+      '/:reportID': 'show'
+    },
 
     '/sample': {
       target: {

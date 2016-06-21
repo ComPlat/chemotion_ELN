@@ -79,7 +79,7 @@ export default class List extends React.Component {
   }
 
   render() {
-    const {overview} = this.props;
+    const {overview, showReport} = this.props;
     let samples =
       <i className="icon-sample">
          {this.state.totalSampleElements} ({this._checkedElements('sample')})
@@ -101,16 +101,16 @@ export default class List extends React.Component {
       <Tabs defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
                   onSelect={(e) => this.handleTabSelect(e)}>
         <Tab eventKey={1} title={samples}>
-          <ElementsTable overview={overview} type='sample'/>
+          <ElementsTable overview={overview} showReport={showReport} type='sample'/>
         </Tab>
         <Tab eventKey={2} title={reactions}>
-          <ElementsTable overview={overview} type='reaction'/>
+          <ElementsTable overview={overview} showReport={showReport} type='reaction'/>
         </Tab>
         <Tab eventKey={3} title={wellplates}>
-          <ElementsTable overview={overview} type='wellplate'/>
+          <ElementsTable overview={overview} showReport={showReport} type='wellplate'/>
         </Tab>
         <Tab eventKey={4} title={screens}>
-          <ElementsTable overview={overview} type='screen'/>
+          <ElementsTable overview={overview} showReport={showReport} type='screen'/>
         </Tab>
       </Tabs>
     )

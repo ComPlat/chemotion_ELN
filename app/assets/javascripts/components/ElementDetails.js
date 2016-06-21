@@ -3,6 +3,7 @@ import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
+import ReportContainer from './report/ReportContainer';
 
 export default class ElementDetails extends Component {
   render() {
@@ -16,6 +17,8 @@ export default class ElementDetails extends Component {
         return <WellplateDetails wellplate={currentElement}/>;
       case 'screen':
         return <ScreenDetails screen={currentElement}/>;
+      case 'report':
+        return <ReportContainer />;
     }
   }
 }
