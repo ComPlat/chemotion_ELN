@@ -27,7 +27,10 @@ export default class ReactionDetailsScheme extends Component {
     const {reaction} = this.state;
     let splitSample ;
 
-    if (sample instanceof Sample){
+    if (sample instanceof Molecule || materialGroup == 'products'){
+      splitSample = Sample.buildEmptyWithCounter(reaction.collection_id, 0 , materialGroup, sample );
+      splitSample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
+    } else if (sample instanceof Sample){
       if(reaction.hasSample(sample.id)) {
         NotificationActions.add({
           message: 'The sample is already present in current reaction.',
@@ -37,9 +40,6 @@ export default class ReactionDetailsScheme extends Component {
       }
       splitSample = sample.buildChild();
       if(materialGroup == 'products') {splitSample.reaction_product = true }
-    } else if (sample instanceof Molecule){
-      splitSample = Sample.buildEmptyWithCounter(reaction.collection_id, 0 , materialGroup, sample );
-      splitSample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
     }
     reaction.addMaterial(splitSample, materialGroup);
 
