@@ -169,7 +169,7 @@ export default class CreateButton extends React.Component {
       <Tooltip id="create_button">Create new Element</Tooltip>
     );
     return (
-      <div style={{marginLeft: '40px', position: 'absolute'}}>
+      <div style={{marginLeft: '80px', position: 'absolute'}}>
         {this.createWellplateModal()}
         <OverlayTrigger placement="bottom" overlay={tooltip}>
           <DropdownButton id='crate-button-dropdown' bsStyle="primary" title={title} disabled={isDisabled}>

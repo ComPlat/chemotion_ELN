@@ -7,89 +7,11 @@ module Chemotion
         requires :id
       end
       get :rtf do
-        reaction = Reaction.find(params[:id])
-
-        svg_paths = {}
-        svg_paths[:starting_materials] = reaction.starting_materials.map do |material|
-          material.get_svg_path
-        end
-        svg_paths[:reactants] = reaction.reactants.map do |material|
-          material.get_svg_path
-        end
-        svg_paths[:products] = reaction.products.map do |material|
-          material.get_svg_path
-        end
-
-        composer = SVG::ReactionComposer.new(svg_paths, label: [reaction.solvent, reaction.temperature].reject{|c| c.blank?}.join(", "))
-        reaction_svg = composer.compose_reaction_svg
-
-        report = Report::RTFReport.new do |r|
-          r.add_title do |t|
-            t.add_text reaction.name, font_style: :bold
-          end
-          r.line_break
-          r.add_paragraph do |p|
-            p.add_text reaction.description
-          end
-          r.line_break
-          r.add_image do |i|
-            i.set_blob reaction_svg
-            i.size x: 50, y: 50
-          end
-          r.line_break
-          r.add_paragraph do |p|
-            p.add_text 'Starting Materials:', font_style: :bold
-          end
-          if reaction.starting_materials.count > 0
-            r.add_table(reaction.starting_materials.count + 1, 6) do |t|
-              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Equiv'
-              samples = reaction.reactions_starting_material_samples.includes(:sample).each do |item|
-                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg.round(5).to_s, item.sample.amount_ml.to_s, item.sample.amount_mmol.round(5).to_s, item.equivalent.to_s
-              end
-            end
-          end
-          r.line_break
-          r.add_paragraph do |p|
-            p.add_text 'Reactants:', font_style: :bold
-          end
-          if reaction.reactants.count > 0
-            r.add_table(reaction.reactants.count + 1, 6) do |t|
-              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Equiv'
-              samples = reaction.reactions_reactant_samples.includes(:sample).each do |item|
-                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg.round(5).to_s, item.sample.amount_ml.to_s, item.sample.amount_mmol.round(5).to_s, item.equivalent.try(:round, 2).try(:to_s)
-              end
-            end
-          end
-          r.line_break
-          r.add_paragraph do |p|
-            p.add_text 'Products:', font_style: :bold
-          end
-          if reaction.products.count > 0
-            r.add_table(reaction.products.count + 1, 6) do |t|
-              t.add_line 'Name', 'Molecule', 'mg', 'ml', 'mmol', 'Yield'
-              samples = reaction.reactions_product_samples.includes(:sample).each do |item|
-                t.add_line item.sample.name.to_s, item.sample.molecule.sum_formular, item.sample.amount_mg(:real).round(5).to_s, item.sample.amount_ml(:real).to_s, item.sample.amount_mmol(:real).round(5).to_s, item.formatted_yield
-              end
-            end
-          end
-          r.line_break
-          r.add_paragraph do |p|
-            p.add_text 'Literatures', font_style: :bold
-          end
-          if reaction.literatures.count > 0
-            r.add_table(reaction.literatures.count + 1, 2) do |t|
-              t.add_line "Title", "URL"
-              reaction.literatures.each do |l|
-                t.add_line l.title, l.url
-              end
-            end
-          end
-          r.line_break
-        end
+        rtf_data = Template::ReactionReport.new(params[:id]).get_rtf_data
 
         env['api.format'] = :binary
         content_type('text/rtf')
-        body report.generate_report
+        body rtf_data.generate_report
       end
 
       params do
@@ -196,6 +118,25 @@ module Chemotion
         end
 
         excel.generate_file
+      end
+    end
+
+    resource :multiple_reports do
+      desc "Build a multi-reactions report using the contents of a JSON file"
+
+      params do
+        requires :ids
+        requires :settings
+      end
+
+      get :rtf do
+        ids = params[:ids].split("_")
+        settings = params[:settings].split("_")
+        rtf_data = Template::ReactionsReport.new(ids, settings).get_rtf_data
+
+        env['api.format'] = :binary
+        content_type('text/rtf')
+        body rtf_data.generate_report
       end
     end
   end

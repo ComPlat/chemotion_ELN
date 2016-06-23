@@ -153,7 +153,7 @@ export default class ElementsTable extends React.Component {
 
   renderEntries() {
     const {elements, ui, currentElement} = this.state
-    const {overview, type} = this.props
+    const {overview, showReport, type} = this.props
     if(type == 'sample') {
       return (
         <div>
@@ -161,7 +161,8 @@ export default class ElementsTable extends React.Component {
             <thead><tr>
               <th className="check">
                 <ElementAllCheckbox type={this.props.type}
-                  checked={ui.checkedAll}/>
+                  checked={ui.checkedAll}
+                  showReport={showReport}/>
               </th>
               <th colSpan={3}>
                 All {type}s
@@ -182,7 +183,8 @@ export default class ElementsTable extends React.Component {
           <thead><tr>
             <th className="check">
               <ElementAllCheckbox type={this.props.type}
-                checked={ui.checkedAll}/>
+                checked={ui.checkedAll}
+                showReport={showReport}/>
             </th>
             <th colSpan={3}>
               All {type}s

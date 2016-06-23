@@ -59,6 +59,11 @@ div[class^="col-"] {
   background: transparent;  /* optional: just make scrollbar invisible */
 }
 
+.panel-fit-screen {
+  overflow-y: scroll;
+  max-height: calc(100vh - 220px);
+}
+
 @media screen and (min-width: 1367px) {
   .hidden-hd {
     display: none !important;

@@ -3,6 +3,7 @@ import {ButtonGroup} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
 import SplitButton from './SplitButton';
 import CreateButton from './CreateButton';
+import ReportButton from './ReportButton';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -42,6 +43,7 @@ export default class ContextActions extends React.Component {
     return (
       <ButtonGroup>
         <SplitButton isDisabled={this.noSampleSelected() || this.isAllCollection()}/>
+        <ReportButton />
         <CreateButton isDisabled={this.isAllCollection()}/>
       </ButtonGroup>
     )
