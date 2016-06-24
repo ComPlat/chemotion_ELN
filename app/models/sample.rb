@@ -77,12 +77,14 @@ class Sample < ActiveRecord::Base
                                 allow_destroy: true
   accepts_nested_attributes_for :collections_samples
 
-  belongs_to :creator, foreign_key: :created_by, class_name: 'User', counter_cache: :samples_created_count
+  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  validates :creator, presence: true
 
   before_save :auto_set_short_label, :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
 
   after_save :update_data_for_reactions
+  after_create :update_counter
 
   def create_subsample user, collection_id
     subsample = self.dup
@@ -102,11 +104,9 @@ class Sample < ActiveRecord::Base
 
   def auto_set_short_label
     if parent
-      parent.reload
       self.short_label ||= "#{parent.short_label}-#{parent.children.count.to_i + 1}"
     elsif creator
-      creator.reload
-      self.short_label ||= "#{creator.initials}-#{creator.samples.count.to_i + 1}"
+      self.short_label ||= "#{creator.initials}-#{creator.counters['samples'].succ}"
     elsif
       self.short_label ||= 'NEW'
     end
@@ -331,5 +331,9 @@ private
         end
       end
     end
+  end
+
+  def update_counter
+    self.creator.increment_counter 'samples' unless self.parent
   end
 end

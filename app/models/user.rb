@@ -40,18 +40,28 @@ class User < ActiveRecord::Base
     name_abbreviation
   end
 
-  def reset_counters
+  def restore_counters_data
+    samples_number = self.samples_created.pluck(:short_label).map do |l|
+      l.split('-').map(&:to_i)
+    end.flatten.max
+
+    reactions_number = self.reactions.pluck(:name).map do |l|
+      l.split('#').last.to_i
+    end.max
+
+
     self.counters = {
-      samples: self.samples.count,
-      reactions: self.reactions.count,
-      wellplates: self.wellplates.count
+      samples: samples_number,
+      reactions: reactions_number,
+      wellplates: self.wellplates.count + self.wellplates.deleted.count
     }
+
     self.save!
   end
 
   def increment_counter key
-    self.counters[key] = self.counters[key].to_i + 1
-    self.save
+    self.counters[key] = self.counters[key].succ
+    self.save!
   end
 
   def has_profile

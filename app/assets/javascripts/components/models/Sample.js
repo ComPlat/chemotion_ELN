@@ -97,7 +97,7 @@ export default class Sample extends Element {
       real_amount_unit: this.real_amount_unit,
       description: this.description,
       purity: this.purity,
-      short_label: (this.short_label && this.short_label.includes('Copy')) ? this.short_label : null,
+      short_label: this.short_label,
       solvent: this.solvent,
       impurities: this.impurities,
       location: this.location,
@@ -149,7 +149,7 @@ export default class Sample extends Element {
     return sample;
   }
 
-  static buildEmptyWithCounter(collection_id, counter, materialGroup = null, molecule = { id: '_none_'}) {
+  static buildReactionSample(collection_id, delta, materialGroup = null, molecule = { id: '_none_'}) {
     let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
@@ -176,7 +176,7 @@ export default class Sample extends Element {
     // allow zero loading for reaction product
     sample.reaction_product = (materialGroup == 'products');
 
-    sample.short_label = Sample.buildNewSampleShortLabelWithCounter(counter);
+    sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser(delta);
 
     return sample;
   }
@@ -187,12 +187,12 @@ export default class Sample extends Element {
     return `${currentUser.initials}-${counter}`;
   }
 
-  static buildNewSampleShortLabelForCurrentUser() {
+  static buildNewSampleShortLabelForCurrentUser(delta = 0) {
     let {currentUser} = UserStore.getState();
     if(!currentUser) {
       return 'NEW SAMPLE';
     } else {
-      return `${currentUser.initials}-${currentUser.samples_count + 1}`;
+      return `${currentUser.initials}-${currentUser.samples_count + delta +  1}`;
     }
   }
 

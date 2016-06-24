@@ -5,12 +5,6 @@ import Literature from './Literature';
 import UserStore from '../stores/UserStore';
 
 export default class Reaction extends Element {
-  initializeTemporarySampleCounter(currentUser) {
-    if(!this.temporary_sample_counter) {
-      this.temporary_sample_counter = currentUser.samples_count + 1;
-    }
-  }
-
   static buildEmpty(collection_id) {
     return new Reaction({
       collection_id: collection_id,
@@ -42,14 +36,6 @@ export default class Reaction extends Element {
     } else {
       return `${currentUser.initials} Reaction #${currentUser.reactions_count + 1}`;
     }
-  }
-
-  get temporary_sample_counter() {
-    return this._temporary_sample_counter;
-  }
-
-  set temporary_sample_counter(count) {
-    this._temporary_sample_counter = count;
   }
 
   get name() {
@@ -165,6 +151,7 @@ export default class Reaction extends Element {
     }
 
     materials.push(material);
+    this.temporary_sample_counter += 1;
   }
 
   deleteMaterial(material, materialGroup) {

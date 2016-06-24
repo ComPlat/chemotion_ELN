@@ -90,9 +90,10 @@ MOLFILE
     let(:sample) { build(:sample, molfile: molfile) }
     before do
       sample.collections << FactoryGirl.build(:collection)
+      sample.creator = FactoryGirl.build(:user)
     end
     it 'should create a molecule' do
-      sample.save
+      sample.save!
       molecule = sample.molecule
       expect(molecule).to be_present
     end
@@ -140,7 +141,7 @@ MOLFILE
 
     it 'should count samples created by user' do
       user.reload
-      expect(user.samples_created_count).to eq(3)
+      expect(user.counters['samples'].to_i).to eq(3)
     end
   end
 
