@@ -385,7 +385,7 @@ export default class SampleDetails extends React.Component {
   render() {
     let sample = this.state.sample || {}
     let molfile = sample.molfile;
-    let hasParent = sample && sample.parent_id !== null
+    let hasParent = sample && sample.parent_id
     let hasChildren = sample && sample.children_count > 0
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
