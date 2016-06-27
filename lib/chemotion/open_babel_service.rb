@@ -59,8 +59,10 @@ M  END
       inchikey: inchikey,
       inchi: inchi,
       formula: m.get_formula,
-      svg: svg_from_molfile(molfile)
+      svg: svg_from_molfile(molfile),
+      fp: fingerprint_from_molfile(molfile)
     }
+
   end
 
   def self.smiles_to_canon_smiles smiles
@@ -91,6 +93,23 @@ M  END
     #m.do_transformations c.get_options(OpenBabel::OBConversion::GENOPTIONS), c
 
     c.write_string(m, false)
+  end
+
+  # Return an array of 32
+  def self.fingerprint_from_molfile molfile
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+
+    c.set_in_format('mol')
+    c.read_string(m, molfile)
+
+    fp = OpenBabel::VectorUnsignedInt.new
+    # We will gets default size of fingerprint: 1024 bits
+    fprinter = OpenBabel::OBFingerprint.find_fingerprint('FP2')
+    fprinter.get_fingerprint(m, fp)
+
+    return fp
+
   end
 
 end

@@ -30,11 +30,12 @@ class Elements extends Component {
 
   render() {
     const {currentElement} = this.state;
+    const showReport = currentElement && currentElement.type === 'report' ? true : false
     if (currentElement) {
       return (
         <div>
           <Col md={4}>
-            <List overview={false}/>
+            <List overview={false} showReport={showReport}/>
           </Col>
           <Col md={8}>
             <ElementDetails currentElement={currentElement}/>
@@ -45,7 +46,7 @@ class Elements extends Component {
       return (
         <div>
           <Col md={12}>
-            <List overview={true}/>
+            <List overview={true} showReport={showReport}/>
           </Col>
         </div>
       );

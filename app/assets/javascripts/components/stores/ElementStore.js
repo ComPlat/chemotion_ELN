@@ -102,7 +102,7 @@ class ElementStore {
       // FIXME ElementStore listens to UIActions?
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
-      handleGenerateEmptyElement: [ElementActions.generateEmptyWellplate, ElementActions.generateEmptyScreen, ElementActions.generateEmptySample, ElementActions.generateEmptyReaction],
+      handleGenerateEmptyElement: [ElementActions.generateEmptyWellplate, ElementActions.generateEmptyScreen, ElementActions.generateEmptySample, ElementActions.generateEmptyReaction, ElementActions.showReportContainer],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
 
@@ -266,7 +266,7 @@ class ElementStore {
     const { reaction, materialGroup } = params;
     const { temporary_sample_counter } = reaction;
 
-    let sample = Sample.buildEmptyWithCounter(reaction.collection_id, temporary_sample_counter, materialGroup);
+    let sample = Sample.buildReactionSample(reaction.collection_id, temporary_sample_counter, materialGroup);
 
     this.state.currentMaterialGroup = materialGroup;
     this.state.currentReaction = reaction;
@@ -346,6 +346,8 @@ class ElementStore {
   }
 
   handleUpdateReaction(reaction) {
+    UserActions.fetchCurrentUser();
+
     this.state.currentElement = reaction;
     this.handleRefreshElements('reaction');
     this.handleRefreshElements('sample');

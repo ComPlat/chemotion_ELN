@@ -65,6 +65,24 @@ class Molecule < ActiveRecord::Base
     self.check_sum_formular # correct exact and average MW for resins
 
     self.attach_svg babel_info[:svg]
+
+    fp_vector = babel_info[:fp]
+    self.fp0 = fp_vector[0] << 32 + fp_vector[1]
+    self.fp1 = fp_vector[2] << 32 + fp_vector[3]
+    self.fp2 = fp_vector[4] << 32 + fp_vector[5]
+    self.fp3 = fp_vector[6] << 32 + fp_vector[7]
+    self.fp4 = fp_vector[8] << 32 + fp_vector[9]
+    self.fp5 = fp_vector[10] << 32 + fp_vector[11]
+    self.fp6 = fp_vector[12] << 32 + fp_vector[13]
+    self.fp7 = fp_vector[14] << 32 + fp_vector[15]
+    self.fp8 = fp_vector[16] << 32 + fp_vector[17]
+    self.fp9 = fp_vector[18] << 32 + fp_vector[19]
+    self.fp10 = fp_vector[20] << 32 + fp_vector[21]
+    self.fp11 = fp_vector[22] << 32 + fp_vector[23]
+    self.fp12 = fp_vector[24] << 32 + fp_vector[25]
+    self.fp13 = fp_vector[26] << 32 + fp_vector[27]
+    self.fp14 = fp_vector[28] << 32 + fp_vector[29]
+    self.fp15 = fp_vector[30] << 32 + fp_vector[31]
   end
 
   def attach_svg svg_data
