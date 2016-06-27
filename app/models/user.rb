@@ -20,7 +20,8 @@ class User < ActiveRecord::Base
     length: {in: 1..3, message: "1 to 3 characters only"},
     uniqueness:  {message: " has already been taken." }
 
-  after_create :create_chemotion_public_collection, :create_all_collection, :has_profile
+  after_create :create_chemotion_public_collection, :create_all_collection,
+               :has_profile
 
   def owns_collections?(collections)
     collections.pluck(:user_id).uniq == [id]
@@ -43,11 +44,11 @@ class User < ActiveRecord::Base
   def restore_counters_data
     samples_number = self.samples_created.pluck(:short_label).map do |l|
       l.split('-').map(&:to_i)
-    end.flatten.max
+    end.flatten.max || 0
 
     reactions_number = self.reactions.pluck(:name).map do |l|
       l.split('#').last.to_i
-    end.max
+    end.max || 0
 
 
     self.counters = {
