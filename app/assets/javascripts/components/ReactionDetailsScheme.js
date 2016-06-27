@@ -7,13 +7,12 @@ import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
 import ElementActions from './actions/ElementActions';
-import UsersFetcher from './fetchers/UsersFetcher';
 import NotificationActions from './actions/NotificationActions'
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
-    const {reaction} = props;
+    let {reaction} = props;
     this.state = { reaction };
   }
 
@@ -24,12 +23,11 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   dropSample(sample, materialGroup) {
-    const {reaction} = this.state;
+    let {reaction} = this.state;
     let splitSample ;
 
     if (sample instanceof Molecule || materialGroup == 'products'){
-      splitSample = Sample.buildEmptyWithCounter(reaction.collection_id, 0 , materialGroup, sample );
-      splitSample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
+      splitSample = Sample.buildReactionSample(reaction.collection_id, reaction.temporary_sample_counter , materialGroup, sample );
     } else if (sample instanceof Sample){
       if(reaction.hasSample(sample.id)) {
         NotificationActions.add({
@@ -330,13 +328,9 @@ export default class ReactionDetailsScheme extends Component {
    * of the given reaction
    */
   addSampleToMaterialGroup(reaction, materialGroup) {
-    UsersFetcher.fetchCurrentUser().then((result) => {
-      reaction.initializeTemporarySampleCounter(result.user);
-
-      ElementActions.addSampleToMaterialGroup({
-        reaction,
-        materialGroup
-      });
+    ElementActions.addSampleToMaterialGroup({
+      reaction,
+      materialGroup
     });
   }
 

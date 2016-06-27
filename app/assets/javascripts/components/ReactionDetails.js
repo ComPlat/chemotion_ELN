@@ -174,7 +174,8 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    const {reaction} = this.state;
+    let {reaction} = this.state;
+    reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
     const svgContainerStyle = {
       textAlign: 'center'
     };
