@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160524102833) do
+ActiveRecord::Schema.define(version: 20160624084105) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -133,14 +133,30 @@ ActiveRecord::Schema.define(version: 20160524102833) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.string   "sum_formular"
-    t.string   "names",                  default: [],                 array: true
+    t.string   "names",                            default: [],                                                     array: true
     t.string   "iupac_name"
     t.string   "molecule_svg_file"
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
+    t.datetime "created_at",                                                                           null: false
+    t.datetime "updated_at",                                                                           null: false
     t.datetime "deleted_at"
-    t.boolean  "is_partial",             default: false, null: false
+    t.boolean  "is_partial",                       default: false,                                     null: false
     t.float    "exact_molecular_weight"
+    t.integer  "fp0",                    limit: 8, default: "nextval('molecules_fp0_seq'::regclass)",  null: false
+    t.integer  "fp1",                    limit: 8, default: "nextval('molecules_fp1_seq'::regclass)",  null: false
+    t.integer  "fp2",                    limit: 8, default: "nextval('molecules_fp2_seq'::regclass)",  null: false
+    t.integer  "fp3",                    limit: 8, default: "nextval('molecules_fp3_seq'::regclass)",  null: false
+    t.integer  "fp4",                    limit: 8, default: "nextval('molecules_fp4_seq'::regclass)",  null: false
+    t.integer  "fp5",                    limit: 8, default: "nextval('molecules_fp5_seq'::regclass)",  null: false
+    t.integer  "fp6",                    limit: 8, default: "nextval('molecules_fp6_seq'::regclass)",  null: false
+    t.integer  "fp7",                    limit: 8, default: "nextval('molecules_fp7_seq'::regclass)",  null: false
+    t.integer  "fp8",                    limit: 8, default: "nextval('molecules_fp8_seq'::regclass)",  null: false
+    t.integer  "fp9",                    limit: 8, default: "nextval('molecules_fp9_seq'::regclass)",  null: false
+    t.integer  "fp10",                   limit: 8, default: "nextval('molecules_fp10_seq'::regclass)", null: false
+    t.integer  "fp11",                   limit: 8, default: "nextval('molecules_fp11_seq'::regclass)", null: false
+    t.integer  "fp12",                   limit: 8, default: "nextval('molecules_fp12_seq'::regclass)", null: false
+    t.integer  "fp13",                   limit: 8, default: "nextval('molecules_fp13_seq'::regclass)", null: false
+    t.integer  "fp14",                   limit: 8, default: "nextval('molecules_fp14_seq'::regclass)", null: false
+    t.integer  "fp15",                   limit: 8, default: "nextval('molecules_fp15_seq'::regclass)", null: false
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
