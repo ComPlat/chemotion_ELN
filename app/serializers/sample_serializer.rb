@@ -34,6 +34,10 @@ class SampleSerializer < ActiveModel::Serializer
     end
   end
 
+  def parent_id
+    object.parent.id if object.parent
+  end
+
   def analysis_kinds
     analyses = object.analyses
     analyses.inject({confirmed: {}, unconfirmed: {}, other: {}, count:{confirmed: 0, unconfirmed:0, other: 0}}) do |result, analysis|

@@ -385,6 +385,8 @@ export default class SampleDetails extends React.Component {
   render() {
     let sample = this.state.sample || {}
     let molfile = sample.molfile;
+    let hasParent = sample && sample.parent_id !== null
+    let hasChildren = sample && sample.children_count > 0
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
                        (i)=>(this.sampleAnalysesTab(i)),
@@ -402,6 +404,8 @@ export default class SampleDetails extends React.Component {
           onSave={this.handleStructureEditorSave.bind(this)}
           onCancel={this.handleStructureEditorCancel.bind(this)}
           molfile={molfile}
+          hasParent={hasParent}
+          hasChildren={hasChildren}
           />
         <StickyDiv zIndex={2}>
           <Panel className="panel-fixed"
