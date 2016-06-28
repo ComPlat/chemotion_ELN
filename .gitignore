@@ -32,6 +32,8 @@
 /uploads/thumbnails
 !/public/attachments/.keep
 
+# Temp files
+/spec/temp/*
 
 #config generated files
 aliasifyConfig.js
