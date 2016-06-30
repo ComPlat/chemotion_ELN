@@ -35,6 +35,9 @@
 # Temp files
 /spec/tmp/*
 
+# Temp rake task file
+.rake_tasks~
+
 #config generated files
 aliasifyConfig.js
 /app/assets/javascripts/components/extra/*
