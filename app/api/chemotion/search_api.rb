@@ -18,9 +18,21 @@ module Chemotion
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
         serialized_samples = {molecules: group_by_molecule(paginate(samples))}
-        serialized_reactions = Kaminari.paginate_array(reactions).page(page).per(page_size).map{|s| ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys}
-        serialized_wellplates = Kaminari.paginate_array(wellplates).page(page).per(page_size).map{|s| WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys}
-        serialized_screens = Kaminari.paginate_array(screens).page(page).per(page_size).map{|s| ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys}
+        serialized_reactions = Kaminari.paginate_array(reactions).page(page)
+          .per(page_size).map {|s| ReactionSerializer.new(s)
+            .serializable_hash
+            .deep_symbolize_keys
+          }
+        serialized_wellplates = Kaminari.paginate_array(wellplates).page(page)
+          .per(page_size).map{ |s| WellplateSerializer.new(s)
+            .serializable_hash
+            .deep_symbolize_keys
+          }
+        serialized_screens = Kaminari.paginate_array(screens).page(page)
+          .per(page_size).map{ |s| ScreenSerializer.new(s)
+            .serializable_hash
+            .deep_symbolize_keys
+          }
 
         {
           samples: {
@@ -54,7 +66,8 @@ module Chemotion
         }
       end
 
-      def scope_by_search_by_method_arg_and_collection_id(search_by_method, arg, collection_id)
+      def scope_by_search_by_method_arg_and_collection_id(search_by_method,
+        arg, collection_id)
         scope = case search_by_method
         when 'polymer_type'
           Sample.for_user(current_user.id).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")

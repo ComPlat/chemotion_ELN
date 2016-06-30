@@ -5,7 +5,6 @@ import {Button, Input, DropdownButton, MenuItem} from 'react-bootstrap';
 import Select from 'react-select'
 
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
-import SuggestionActions from '../actions/SuggestionActions';
 import SuggestionStore from '../stores/SuggestionStore';
 import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
@@ -25,13 +24,16 @@ export default class Search extends React.Component {
     UIActions.setSearchSelection(selection);
 
     let uiState = UIStore.getState();
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, uiState.currentCollection.id, 1);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
+      uiState.currentCollection.id, 1);
   }
 
   search(query) {
     let userState = UserStore.getState();
     let uiState = UIStore.getState();
-    let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser('/api/v1/suggestions/' + this.state.elementType + '/', query, userState.currentUser.id, uiState.currentCollection.id);
+    let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser(
+      '/api/v1/suggestions/' + this.state.elementType + '/',
+      query, userState.currentUser.id, uiState.currentCollection.id);
     return promise;
   }
 
@@ -46,6 +48,10 @@ export default class Search extends React.Component {
     UIActions.clearSearchSelection();
   }
 
+  handleDrawStructureForSearch() {
+    return 0;
+  }
+
   handleElementSelection(event) {
     this.setState({
       elementType: event
@@ -56,7 +62,8 @@ export default class Search extends React.Component {
     let elements = ["all", "samples", "reactions", "wellplates", "screens"];
     return elements.map((element, index) => {
       return (
-        <MenuItem key={element} onSelect={() => this.handleElementSelection(element)}>
+        <MenuItem
+          key={element} onSelect={() => this.handleElementSelection(element)}>
           {element}
         </MenuItem>
       );
@@ -64,10 +71,16 @@ export default class Search extends React.Component {
   }
 
   render() {
-    let searchButton = <Button bsStyle="danger" onClick={() => this.handleClearSearchSelection()}><i className="fa fa-times"></i></Button>;
-
+    let drawAddon = <i className="fa fa-magic" ref="drawAddon"
+      onClick={this.handleDrawStructureForSearch()}
+      style={{cursor: 'pointer'}}></i>;
+    let searchButton =
+      <Button bsStyle="danger" onClick={this.handleClearSearchSelection}>
+        <i className="fa fa-times"></i></Button>;
     let inputAttributes = {
-      placeholder: 'Search for elements...',
+      placeholder: 'Chemical name, IUPAC, InchI, SMILES, ...',
+      // Uncomment this line to add the draw button
+      //addonAfter: drawAddon,
       buttonAfter: searchButton,
       style: {
         width: 300
@@ -92,12 +105,13 @@ export default class Search extends React.Component {
     return (
       <div className="chemotion-search">
         <div className="search-autocomplete">
-          <AutoCompleteInput inputAttributes={inputAttributes}
-                             suggestionsAttributes={suggestionsAttributes}
-                             suggestions={input => this.search(input)}
-                             ref="autoComplete"
-                             onSelectionChange={selection => this.handleSelectionChange(selection)}
-                             buttonBefore={innerDropdown}/>
+          <AutoCompleteInput
+            inputAttributes={inputAttributes}
+            suggestionsAttributes={suggestionsAttributes}
+            suggestions={input => this.search(input)}
+            ref="autoComplete"
+            onSelectionChange={selection=>this.handleSelectionChange(selection)}
+            buttonBefore={innerDropdown}/>
         </div>
       </div>
     );

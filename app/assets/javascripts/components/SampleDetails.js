@@ -10,7 +10,6 @@ import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 
-
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';

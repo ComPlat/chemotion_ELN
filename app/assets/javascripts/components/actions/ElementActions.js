@@ -28,7 +28,9 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage) {
-    return (dispatch) => { SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage)
+    return (dispatch) => {
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(
+        selection, collectionId, currentPage)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -394,7 +396,8 @@ class ElementActions {
   updateElementsCollection(params) {
     return (dispatch) => { CollectionsFetcher.updateElementsCollection(params)
       .then(() => {
-        dispatch(params);UIActions.uncheckWholeSelection();
+        dispatch(params);
+        UIActions.uncheckWholeSelection();
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -403,7 +406,8 @@ class ElementActions {
   assignElementsCollection(params) {
     return (dispatch) => { CollectionsFetcher.assignElementsCollection(params)
       .then(() => {
-        dispatch(params);UIActions.uncheckWholeSelection();
+        dispatch(params);
+        UIActions.uncheckWholeSelection();
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -412,7 +416,8 @@ class ElementActions {
   removeElementsCollection(params) {
     return (dispatch) => { CollectionsFetcher.removeElementsCollection(params)
       .then(() => {
-        dispatch(params);UIActions.uncheckWholeSelection();
+        dispatch(params);
+        UIActions.uncheckWholeSelection();
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};

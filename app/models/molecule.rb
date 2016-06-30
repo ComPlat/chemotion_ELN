@@ -9,15 +9,20 @@ class Molecule < ActiveRecord::Base
   validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
-  scope :by_sum_formular, ->(query) { where('sum_formular ILIKE ?', "%#{query}%") }
+  scope :by_sum_formular, ->(query) {
+    where('sum_formular ILIKE ?', "%#{query}%")
+  }
   scope :by_iupac_name, ->(query) { where('iupac_name ILIKE ?', "%#{query}%") }
   scope :with_reactions, -> {
-    sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
+    sample_ids = ReactionsProductSample.pluck(:sample_id) +
+      ReactionsReactantSample.pluck(:sample_id) +
+      ReactionsStartingMaterialSample.pluck(:sample_id)
     molecule_ids = Sample.find(sample_ids).flat_map(&:molecule).map(&:id)
     where(id: molecule_ids)
   }
   scope :with_wellplates, -> {
-    molecule_ids = Wellplate.all.flat_map(&:samples).flat_map(&:molecule).map(&:id)
+    molecule_ids =
+      Wellplate.all.flat_map(&:samples).flat_map(&:molecule).map(&:id)
     where(id: molecule_ids)
   }
 
@@ -32,8 +37,10 @@ class Molecule < ActiveRecord::Base
 
       #todo: consistent naming
 
-      molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
-        pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+      molecule = Molecule.find_or_create_by(inchikey: inchikey,
+        is_partial: is_partial) do |molecule|
+        pubchem_info =
+          Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
         molecule.molfile = molfile
         molecule.assign_molecule_data babel_info, pubchem_info
@@ -44,10 +51,12 @@ class Molecule < ActiveRecord::Base
   end
 
   def refresh_molecule_data
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(self.molfile)
+    babel_info =
+      Chemotion::OpenBabelService.molecule_info_from_molfile(self.molfile)
     inchikey = babel_info[:inchikey]
     unless inchikey.blank?
-      pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+      pubchem_info =
+        Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
       self.assign_molecule_data babel_info, pubchem_info
       self.save!
@@ -65,6 +74,8 @@ class Molecule < ActiveRecord::Base
     self.check_sum_formular # correct exact and average MW for resins
 
     self.attach_svg babel_info[:svg]
+
+    self.cano_smiles = babel_info[:cano_smiles]
 
     fp_vector = babel_info[:fp]
     self.fp0 = fp_vector[0] << 32 + fp_vector[1]

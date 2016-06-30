@@ -40,6 +40,11 @@ M  END
     m = OpenBabel::OBMol.new
     c.read_string m, molfile
 
+    ca_smiles = OpenBabel::OBMol.new
+    c.set_in_format 'mol'
+    c.set_out_format 'can'
+    c.read_string ca_smiles, m
+
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
@@ -60,6 +65,7 @@ M  END
       inchi: inchi,
       formula: m.get_formula,
       svg: svg_from_molfile(molfile),
+      cano_smiles: ca_smiles,
       fp: fingerprint_from_molfile(molfile)
     }
 

@@ -9,7 +9,8 @@ module Chemotion
         suggestions
       end
 
-      def search_possibilities_by_type_user_and_collection(type, user_id, collection_id)
+      def search_possibilities_by_type_user_and_collection(
+        type, user_id, collection_id)
         d_for = Proc.new do |klass|
           klass.for_user(user_id).by_collection_id(collection_id)
         end
@@ -26,21 +27,27 @@ module Chemotion
           {
             sample_short_label: search_by_field.call(Sample, :short_label, qry),
             sample_name: search_by_field.call(Sample, :name, qry),
-            polymer_type: d_for.call(Sample).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'").pluck("residues.custom_info -> 'polymer_type'").uniq,
+            polymer_type: d_for.call(Sample).joins(:residues)
+              .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
+              .pluck("residues.custom_info -> 'polymer_type'").uniq,
             sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
             iupac_name: search_by_field.call(Molecule, :iupac_name, qry)
           }
         when 'reaction'
           {
             reaction_name: search_by_field.call(Reaction, :name, qry),
-            sample_name: d_for.call(Sample).with_reactions.by_name(qry).pluck(:name).uniq,
-            iupac_name: d_for.call(Molecule).with_reactions.by_iupac_name(qry).pluck(:iupac_name).uniq
+            sample_name: d_for.call(Sample).with_reactions.by_name(qry)
+              .pluck(:name).uniq,
+            iupac_name: d_for.call(Molecule).with_reactions.by_iupac_name(qry)
+              .pluck(:iupac_name).uniq
           }
         when 'wellplate'
           {
             wellplate_name: search_by_field.call(Wellplate, :name, qry),
-            sample_name: d_for.call(Sample).with_wellplates.by_name(qry).pluck(:name).uniq,
-            iupac_name: d_for.call(Molecule).with_wellplates.by_iupac_name(qry).pluck(:iupac_name).uniq
+            sample_name: d_for.call(Sample).with_wellplates.by_name(qry)
+              .pluck(:name).uniq,
+            iupac_name: d_for.call(Molecule).with_wellplates.by_iupac_name(qry)
+              .pluck(:iupac_name).uniq
           }
         when 'screen'
           {
@@ -52,7 +59,9 @@ module Chemotion
           {
             sample_name: search_by_field.call(Sample, :name, qry),
             sample_short_label: search_by_field.call(Sample, :short_label, qry),
-            polymer_type: d_for.call(Sample).joins(:residues).where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'").pluck("residues.custom_info -> 'polymer_type'").uniq,
+            polymer_type: d_for.call(Sample).joins(:residues)
+              .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
+              .pluck("residues.custom_info -> 'polymer_type'").uniq,
             sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
             iupac_name: search_by_field.call(Molecule, :iupac_name, qry),
             reaction_name: search_by_field.call(Reaction, :name, qry),
@@ -76,9 +85,14 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type_user_and_collection('all', params[:user_id], params[:collection_id])
+            search_possibilities =
+              search_possibilities_by_type_user_and_collection(
+                'all', params[:user_id], params[:collection_id])
 
-            {suggestions: search_possibilities_to_suggestions(search_possibilities)}
+            {
+              suggestions:
+                search_possibilities_to_suggestions(search_possibilities)
+            }
           end
         end
       end
@@ -90,8 +104,14 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type_user_and_collection('sample', params[:user_id], params[:collection_id])
-            {suggestions: search_possibilities_to_suggestions(search_possibilities)}
+            search_possibilities =
+              search_possibilities_by_type_user_and_collection(
+                'sample', params[:user_id], params[:collection_id]
+              )
+            {
+              suggestions:
+                search_possibilities_to_suggestions(search_possibilities)
+            }
           end
         end
       end
@@ -103,8 +123,14 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type_user_and_collection('reaction', params[:user_id], params[:collection_id])
-            {suggestions: search_possibilities_to_suggestions(search_possibilities)}
+            search_possibilities =
+              search_possibilities_by_type_user_and_collection(
+                'reaction', params[:user_id], params[:collection_id]
+              )
+            {
+              suggestions:
+                search_possibilities_to_suggestions(search_possibilities)
+            }
           end
         end
       end
@@ -116,8 +142,14 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type_user_and_collection('wellplate', params[:user_id], params[:collection_id])
-            {suggestions: search_possibilities_to_suggestions(search_possibilities)}
+            search_possibilities =
+              search_possibilities_by_type_user_and_collection(
+                'wellplate', params[:user_id], params[:collection_id]
+              )
+            {
+              suggestions:
+                search_possibilities_to_suggestions(search_possibilities)
+            }
           end
         end
       end
@@ -129,8 +161,14 @@ module Chemotion
         end
         route_param :query do
           get do
-            search_possibilities = search_possibilities_by_type_user_and_collection('screen', params[:user_id], params[:collection_id])
-            {suggestions: search_possibilities_to_suggestions(search_possibilities)}
+            search_possibilities =
+              search_possibilities_by_type_user_and_collection(
+                'screen', params[:user_id], params[:collection_id]
+              )
+            {
+              suggestions:
+                search_possibilities_to_suggestions(search_possibilities)
+            }
           end
         end
       end

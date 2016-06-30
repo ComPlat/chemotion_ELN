@@ -49,7 +49,8 @@ export default class AutoCompleteInput extends React.Component {
     if(suggestions[previousSuggestionIndex]) {
       result = previousSuggestionIndex;
     } else {
-      result = suggestions.length - 1; // previous suggestion was first in list, so use last one
+      // previous suggestion was first in list, so use last one
+      result = suggestions.length - 1;
     }
     return result;
   }
@@ -73,8 +74,10 @@ export default class AutoCompleteInput extends React.Component {
     }
     newState.value = suggestions[newFocus].name;
     newState.suggestionFocus = newFocus;
-    ReactDOM.findDOMNode(this.refs['suggestion_' + suggestionFocus]).classList.remove('active');
-    ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus]).classList.add('active');
+    ReactDOM.findDOMNode(this.refs['suggestion_' + suggestionFocus])
+      .classList.remove('active');
+    ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus])
+      .classList.add('active');
     this.setState(newState);
   }
 
@@ -118,7 +121,8 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   handleKeyDown(event) {
-    let {value, valueBeforeFocus, showSuggestions, error, suggestions} = this.state;
+    let {value, valueBeforeFocus, showSuggestions, error, suggestions} =
+      this.state;
     let {onSelectionChange} = this.props;
     let newState = {};
     switch(event.keyCode) {

@@ -33,7 +33,7 @@
 !/public/attachments/.keep
 
 # Temp files
-/spec/temp/*
+/spec/tmp/*
 
 #config generated files
 aliasifyConfig.js

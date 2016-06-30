@@ -58,7 +58,8 @@ class UIStore {
       handleSetPagination: UIActions.setPagination,
       handleDeselectAllElements: UIActions.deselectAllElements,
       handleSetSearchSelection: UIActions.setSearchSelection,
-      handleSelectCollectionWithoutUpdating: UIActions.selectCollectionWithoutUpdating,
+      handleSelectCollectionWithoutUpdating:
+        UIActions.selectCollectionWithoutUpdating,
       handleClearSearchSelection: UIActions.clearSearchSelection,
       handleShowCollectionManagement: UIActions.showCollectionManagement,
       handleShowElements: UIActions.showElements,
@@ -114,10 +115,13 @@ class UIStore {
     let type = element.type;
 
     if(this.state[type].checkedAll) {
-      this.state[type].uncheckedIds = ArrayUtils.removeFromListByValue(this.state[type].uncheckedIds, element.id);
+      this.state[type].uncheckedIds =
+        ArrayUtils.removeFromListByValue(this.state[type].uncheckedIds,
+          element.id);
     }
     else {
-      this.state[type].checkedIds = ArrayUtils.pushUniq(this.state[type].checkedIds, element.id);
+      this.state[type].checkedIds =
+        ArrayUtils.pushUniq(this.state[type].checkedIds, element.id);
     }
 
   }
@@ -127,10 +131,13 @@ class UIStore {
 
     if(this.state[type].checkedAll)
     {
-      this.state[type].uncheckedIds = ArrayUtils.pushUniq(this.state[type].uncheckedIds, element.id);
+      this.state[type].uncheckedIds =
+        ArrayUtils.pushUniq(this.state[type].uncheckedIds, element.id);
     }
     else {
-      this.state[type].checkedIds = ArrayUtils.removeFromListByValue(this.state[type].checkedIds, element.id);
+      this.state[type].checkedIds =
+        ArrayUtils.removeFromListByValue(this.state[type].checkedIds,
+          element.id);
     }
   }
 
@@ -150,7 +157,9 @@ class UIStore {
 
   handleSelectCollection(collection) {
     let state = this.state;
-    let hasChanged = (!state.currentCollection || state.currentCollection.id != collection.id) || (state.currentSearchSelection != null);
+    let hasChanged =
+      (!state.currentCollection || state.currentCollection.id != collection.id)
+      || (state.currentSearchSelection != null);
 
     if(hasChanged) {
       // FIXME why both?
@@ -158,11 +167,16 @@ class UIStore {
       this.state.currentCollectionId = collection.id;
       this.state.number_of_results = 15;
       if (!collection.noFetch){
-        // FIXME state.pagination is undefined it should be like {page: 1,per_page: 15}.
-        ElementActions.fetchSamplesByCollectionId(collection.id, state.pagination);
-        ElementActions.fetchReactionsByCollectionId(collection.id, state.pagination);
-        ElementActions.fetchWellplatesByCollectionId(collection.id, state.pagination);
-        ElementActions.fetchScreensByCollectionId(collection.id, state.pagination);
+        // FIXME state.pagination is undefined
+        // It should be like {page: 1,per_page: 15}.
+        ElementActions.fetchSamplesByCollectionId(collection.id,
+          state.pagination);
+        ElementActions.fetchReactionsByCollectionId(collection.id,
+          state.pagination);
+        ElementActions.fetchWellplatesByCollectionId(collection.id,
+          state.pagination);
+        ElementActions.fetchScreensByCollectionId(collection.id,
+          state.pagination);
       }
     }
   }
