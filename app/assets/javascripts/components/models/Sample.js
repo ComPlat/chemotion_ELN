@@ -543,6 +543,10 @@ export default class Sample extends Element {
   }
 
   get concat_formula() {
+    // TODO Workaround, need to check how can molecule is null
+    if (!this.molecule)
+      return '';
+
     if(this.contains_residues)
       return (this.molecule.sum_formular || '') + this.polymer_formula;
     else
