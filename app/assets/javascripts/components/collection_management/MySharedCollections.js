@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, Input} from 'react-bootstrap';
+import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
 
 import ShareSettingsModal from './ShareSettingsModal';
 import CollectionStore from '../stores/CollectionStore';
@@ -19,6 +19,12 @@ export default class MySharedCollections extends React.Component {
         label: 'My Shared Collections',
         id: -1,
         children: [{}]
+      },
+      modalProps: {
+        show: false,
+        title: "",
+        component: "",
+        action: null
       }
     }
   }
@@ -38,7 +44,7 @@ export default class MySharedCollections extends React.Component {
     this.setState({
       tree: {
         label: 'My Shared Collections',
-        children: state.sharedRoots
+        children: children//state.sharedRoots
       }
     });
   }
@@ -48,6 +54,8 @@ export default class MySharedCollections extends React.Component {
       tree: tree
     });
   }
+
+
 
   isActive(node) {
     return node === this.state.active ? "node is-active" : "node";
@@ -66,7 +74,8 @@ export default class MySharedCollections extends React.Component {
       )
     } else {
       return (
-        <Input className="collection-label" type="text" id={node.id} value={node.label} onChange={this.handleLabelChange.bind(this, node)}/>
+        <FormControl className="collection-label" type="text" id={node.id}
+        value={node.label} onChange={this.handleLabelChange.bind(this, node)}/>
       )
     }
   }
@@ -153,7 +162,6 @@ export default class MySharedCollections extends React.Component {
     for(let i = 0; i < children.length; i++) {
       if(children[i].id == id) {
         return root;
-        break;
       } else {
         let parent = this.findParentById(children[i], id);
         if(parent) {
@@ -170,9 +178,34 @@ export default class MySharedCollections extends React.Component {
   }
 
   editShare(node) {
-    ReactDOM.render(<ShareSettingsModal node={node}/>, document.getElementById('modal'));
+    let {modalProps} = this.state
+    modalProps.title = "Update Share Settings for '"+node.label+"'"
+    modalProps.show = true
+    this.setState({modalProps})
+    ReactDOM.render(
+      <Modal animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{this.state.modalProps.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <ShareSettingsModal node={node}/>
+          </Modal.Body>
+      </Modal>,
+      document.getElementById('modal')
+     );
   }
 
+  handleModalHide() {
+    this.setState({
+      modalProps: {
+        show: false,
+        title: "",
+        component: "",
+        action: null
+      }
+    });
+    ReactDOM.unmountComponentAtNode(document.getElementById('modal'));
+  }
   renderNode(node) {
     if(!Object.keys(node).length == 0) {
       return (

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Input, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
+import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -88,7 +88,7 @@ export default class ScreenDetails extends Component {
     const submitLabel = screen.isNew ? "Create" : "Save";
     return (
       <StickyDiv zIndex={2}>
-      <div key={screen.id}>
+      <div key={id}>
         <Panel header="Screen Details"
                bsStyle={screen.isEdited ? 'info' : 'primary'}
                className="panel-fixed">
@@ -105,64 +105,76 @@ export default class ScreenDetails extends Component {
               <table width="100%"><tbody>
                 <tr>
                   <td width="50%" className="padding-right">
-                    <Input
-                      type="text"
-                      label="Name"
-                      value={name}
-                      onChange={event => this.handleInputChange('name', event)}
-                      disabled={screen.isMethodDisabled('name')}
+                    <FormGroup>
+                      <ControlLabel>Name</ControlLabel>
+                      <FormControl
+                        type="text"
+                        value={name}
+                        onChange={event => this.handleInputChange('name', event)}
+                        disabled={screen.isMethodDisabled('name')}
                       />
+                    </FormGroup>
                   </td>
                   <td width="50%">
-                    <Input
-                      type="text"
-                      label="Collaborator"
-                      value={collaborator}
-                      onChange={event => this.handleInputChange('collaborator', event)}
-                      disabled={screen.isMethodDisabled('collaborator')}
+                    <FormGroup>
+                      <ControlLabel>Collaborator</ControlLabel>
+                      <FormControl
+                        type="text"
+                        value={collaborator}
+                        onChange={event => this.handleInputChange('collaborator', event)}
+                        disabled={screen.isMethodDisabled('collaborator')}
                       />
+                    </FormGroup>
                   </td>
                 </tr>
                 <tr>
                   <td className="padding-right">
-                    <Input
-                      type="text"
-                      label="Requirements"
-                      value={requirements}
-                      onChange={event => this.handleInputChange('requirements', event)}
-                      disabled={screen.isMethodDisabled('requirements')}
+                    <FormGroup>
+                      <ControlLabel>Requirements</ControlLabel>
+                      <FormControl
+                        type="text"
+                        value={requirements}
+                        onChange={event => this.handleInputChange('requirements', event)}
+                        disabled={screen.isMethodDisabled('requirements')}
                       />
+                    </FormGroup>
                   </td>
                   <td >
-                    <Input
-                      type="text"
-                      label="Conditions"
-                      value={conditions}
-                      onChange={event => this.handleInputChange('conditions', event)}
-                      disabled={screen.isMethodDisabled('conditions')}
+                    <FormGroup>
+                      <ControlLabel>Conditions</ControlLabel>
+                      <FormControl
+                        type="text"
+                        value={conditions}
+                        onChange={event => this.handleInputChange('conditions', event)}
+                        disabled={screen.isMethodDisabled('conditions')}
                       />
+                    </FormGroup>
                   </td>
                 </tr>
                 <tr>
                   <td colSpan="2">
-                    <Input
-                      type="text"
-                      label="Result"
-                      value={result}
-                      onChange={event => this.handleInputChange('result', event)}
-                      disabled={screen.isMethodDisabled('result')}
+                    <FormGroup>
+                      <ControlLabel>Result</ControlLabel>
+                      <FormControl
+                        type="text"
+                        value={result}
+                        onChange={event => this.handleInputChange('result', event)}
+                        disabled={screen.isMethodDisabled('result')}
                       />
+                    </FormGroup>
                   </td>
                 </tr>
                 <tr>
                   <td colSpan="2">
-                    <Input
-                      type="textarea"
-                      label="Description"
-                      value={description}
-                      onChange={event => this.handleInputChange('description', event)}
-                      disabled={screen.isMethodDisabled('description')}
+                    <FormGroup>
+                      <ControlLabel>Description</ControlLabel>
+                      <FormControl
+                        type="textarea"
+                        value={description}
+                        onChange={event => this.handleInputChange('description', event)}
+                        disabled={screen.isMethodDisabled('description')}
                       />
+                    </FormGroup>
                   </td>
                 </tr>
               </tbody></table>

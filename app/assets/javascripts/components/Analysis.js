@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Input, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
+import {Row, Col, FormControl, ListGroup, ListGroupItem, Button} from 'react-bootstrap';
 import Select from 'react-select'
 import AnalysisDatasets from './AnalysisDatasets';
 
@@ -17,7 +17,7 @@ export default class Analysis extends Component {
       analysis: nextProps.analysis
     });
   }
-  
+
   handleInputChange(type, event) {
     const {analysis} = this.state;
     const {value} = event.target;
@@ -55,7 +55,7 @@ export default class Analysis extends Component {
     return (
       <div>
         <Col md={4}>
-          <Input
+          <FormControl
             type="text"
             label="Name"
             value={analysis.name || '***'}
@@ -98,14 +98,14 @@ export default class Analysis extends Component {
           </div>
         </Col>
         <Col md={12}>
-          <Input
+          <FormControl
             type="textarea"
             label="Content"
             value={analysis.content}
             disabled={readOnly}
             onChange={event => this.handleInputChange('content', event)}
             />
-          <Input
+          <FormControl
             type="textarea"
             label="Description"
             value={analysis.description}

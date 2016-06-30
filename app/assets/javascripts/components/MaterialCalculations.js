@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from 'react';
-import {Input, Button} from 'react-bootstrap';
+import {FormControl, Button} from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 
 const source = {
@@ -18,7 +18,7 @@ export default class MaterialCalculations extends Component {
   notApplicableInput(inputsStyle) {
     return (
       <td style={inputsStyle}>
-        <Input type="text"
+        <FormControl type="text"
                value="N / A"
                disabled={true}
                />
@@ -99,7 +99,7 @@ export default class MaterialCalculations extends Component {
       </td>
 
       <td style={inputsStyle}>
-        <Input
+        <FormControl
           type="text"
           value={`${((material.adjusted_equivalent || 0 ) * 100).toFixed(1)} %`}
           disabled

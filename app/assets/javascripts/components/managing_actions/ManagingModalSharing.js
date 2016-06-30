@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Input, Modal} from 'react-bootstrap';
+import {Button, FormGroup,FormControl,ControlLabel} from 'react-bootstrap';
 import Select from 'react-select';
 
 import UIStore from '../stores/UIStore';
@@ -18,11 +18,11 @@ export default class ManagingModalSharing extends React.Component {
     this.state = {
       currentUser: currentUser,
       users: users,
-      permissionLevel: 0,
-      sampleDetailLevel: 0,
-      reactionDetailLevel: 0,
-      wellplateDetailLevel: 0,
-      screenDetailLevel: 0,
+      permissionLevel: props.permission_level || 0,
+      sampleDetailLevel: props.sample_detail_level || 0,
+      reactionDetailLevel: props.reaction_detail_level || 0,
+      wellplateDetailLevel: props.wellplate_detail_level || 0,
+      screenDetailLevel: props.screen_detail_level || 0,
     }
   }
 
@@ -141,7 +141,7 @@ export default class ManagingModalSharing extends React.Component {
 
     let params = {
       collection_attributes: {
-        is_shared: true,
+      //  is_shared: true,
         permission_level: permissionLevel,
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
@@ -156,8 +156,8 @@ export default class ManagingModalSharing extends React.Component {
     this.props.onHide();
   }
 
-  handleShortcutChange() {
-    let val = this.refs.shortcutSelect.getValue();
+  handleShortcutChange(event) {
+    let val = event.target.value
 
     switch(val) {
       case 'user':
@@ -178,44 +178,18 @@ export default class ManagingModalSharing extends React.Component {
     }
   }
 
-  handlePLChange() {
-    let val = this.refs.permissionLevelSelect.getValue();
-
+  handlePLChange(event) {
+    let val = event.target.value
     this.setState({
       permissionLevel: val
     });
   }
 
-  handleSampleDLChange() {
-    let val = this.refs.sampleDetailLevelSelect.getValue();
-
-    this.setState({
-      sampleDetailLevel: val
-    });
-  }
-
-  handleReactionDLChange() {
-    let val = this.refs.reactionDetailLevelSelect.getValue();
-
-    this.setState({
-      reactionDetailLevel: val
-    });
-  }
-
-  handleWellplateDLChange() {
-    let val = this.refs.wellplateDetailLevelSelect.getValue();
-
-    this.setState({
-      wellplateDetailLevel: val
-    });
-  }
-
-  handleScreenDLChange() {
-    let val = this.refs.screenDetailLevelSelect.getValue();
-
-    this.setState({
-      screenDetailLevel: val
-    });
+  handleDLChange(e,elementType){
+    let val = e.target.value
+    let state = {};
+    state[elementType+'DetailLevel'] = val;
+    this.setState(state);
   }
 
   usersEntries() {
@@ -230,48 +204,78 @@ export default class ManagingModalSharing extends React.Component {
   render() {
     return (
     <div>
-      <Input ref='shortcutSelect' type='select' label='Role' onChange={(e) => this.handleShortcutChange(e)}>
-        <option value='Pick a sharing role'>Pick a sharing role (optional)</option>
-        <option value='user'>User</option>
-        <option value='partner'>Partner</option>
-        <option value='collaborator'>Collaborator</option>
-        <option value='reviewer'>Reviewer</option>
-        <option value='supervisor'>Supervisor</option>
-      </Input>
-      <Input ref='permissionLevelSelect' type='select' label='Permission level'
-             value={this.state.permissionLevel} onChange={(e) => this.handlePLChange(e)}>
-        <option value='0'>Read</option>
-        <option value='1'>Write</option>
-        <option value='2'>Share</option>
-        <option value='3'>Delete</option>
-        <option value='4'>Import Elements</option>
-        <option value='5'>Take ownership</option>
-      </Input>
-      <Input ref='sampleDetailLevelSelect' type='select' label='Sample detail level'
-             value={this.state.sampleDetailLevel} onChange={(e) => this.handleSampleDLChange(e)}>
-        <option value='0'>Molecular mass of the compound, external label</option>
-        <option value='1'>Molecule, structure</option>
-        <option value='2'>Analysis Result + Description</option>
-        <option value='3'>Analysis Datasets</option>
-        <option value='10'>Everything</option>
-      </Input>
-      <Input ref='reactionDetailLevelSelect' type='select' label='Reaction detail level'
-             value={this.state.reactionDetailLevel} onChange={(e) => this.handleReactionDLChange(e)}>
-        <option value='0'>Observation, description, calculation</option>
-        <option value='10'>Everything</option>
-      </Input>
-      <Input ref='wellplateDetailLevelSelect' type='select' label='Wellplate detail level'
-             value={this.state.wellplateDetailLevel} onChange={(e) => this.handleWellplateDLChange(e)}>
-        <option value='0'>Wells (Positions)</option>
-        <option value='1'>Readout</option>
-        <option value='10'>Everything</option>
-      </Input>
-      <Input ref='screenDetailLevelSelect' type='select' label='Screen detail level'
-             value={this.state.screenDetailLevel} onChange={(e) => this.handleScreenDLChange(e)}>
-        <option value='0'>Name, description, condition, requirements</option>
-        <option value='10'>Everything</option>
-      </Input>
-
+      <FormGroup controlId="shortcutSelect">
+        <ControlLabel>Role</ControlLabel>
+        <FormControl componentClass="select"
+          placeholder="Pick a sharing role (optional)"
+          onChange={(e) => this.handleShortcutChange(e)}
+        >
+          <option value='Pick a sharing role'>Pick a sharing role (optional)</option>
+          <option value='user'>User</option>
+          <option value='partner'>Partner</option>
+          <option value='collaborator'>Collaborator</option>
+          <option value='reviewer'>Reviewer</option>
+          <option value='supervisor'>Supervisor</option>
+        </FormControl>
+      </FormGroup>
+      <FormGroup controlId="permissionLevelSelect">
+        <ControlLabel>Permission level</ControlLabel>
+        <FormControl componentClass="select"
+          onChange={(e) => this.handlePLChange(e)}
+          value={this.state.permissionLevel}
+        >
+          <option value='0'>Read</option>
+          <option value='1'>Write</option>
+          <option value='2'>Share</option>
+          <option value='3'>Delete</option>
+          <option value='4'>Import Elements</option>
+          <option value='5'>Take ownership</option>
+        </FormControl>
+      </FormGroup>
+      <FormGroup controlId="sampleDetailLevelSelect">
+        <ControlLabel>Sample detail level</ControlLabel>
+        <FormControl componentClass="select"
+          onChange={(e) => this.handleDLChange(e,'sample')}
+          value={this.state.sampleDetailLevel}
+        >
+          <option value='0'>Molecular mass of the compound, external label</option>
+          <option value='1'>Molecule, structure</option>
+          <option value='2'>Analysis Result + Description</option>
+          <option value='3'>Analysis Datasets</option>
+          <option value='10'>Everything</option>
+        </FormControl>
+      </FormGroup>
+      <FormGroup controlId="reactionDetailLevelSelect">
+        <ControlLabel>Reaction detail level</ControlLabel>
+        <FormControl componentClass="select"
+          onChange={(e) => this.handleDLChange(e,'reaction')}
+          value={this.state.reactionDetailLevel}
+        >
+          <option value='0'>Observation, description, calculation</option>
+          <option value='10'>Everything</option>
+        </FormControl>
+      </FormGroup>
+      <FormGroup controlId="wellplateDetailLevelSelect">
+        <ControlLabel>Wellplate detail level</ControlLabel>
+        <FormControl componentClass="select"
+          onChange={(e) => this.handleDLChange(e,'wellplate')}
+          value={this.state.wellplateDetailLevel}
+        >
+          <option value='0'>Wells (Positions)</option>
+          <option value='1'>Readout</option>
+          <option value='10'>Everything</option>
+        </FormControl>
+      </FormGroup>
+      <FormGroup controlId="screenDetailLevelSelect">
+        <ControlLabel>Screen detail level</ControlLabel>
+        <FormControl componentClass="select"
+          onChange={(e) => this.handleDLChange(e,'screen')}
+          value={this.state.screenDetailLevel}
+        >
+          <option value='0'>Name, description, condition, requirements</option>
+          <option value='10'>Everything</option>
+        </FormControl>
+      </FormGroup>
       <b>Select Users to share with</b>
       <Select ref='userSelect' name='users' multi={true}
               options={this.usersEntries()}/>

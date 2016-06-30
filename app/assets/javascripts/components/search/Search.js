@@ -1,7 +1,7 @@
 import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
-import {Button, Input, DropdownButton, MenuItem} from 'react-bootstrap';
+import {Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import Select from 'react-select'
 
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
@@ -68,7 +68,7 @@ export default class Search extends React.Component {
 
     let inputAttributes = {
       placeholder: 'Search for elements...',
-      buttonAfter: searchButton,
+
       style: {
         width: 300
       }
@@ -97,7 +97,8 @@ export default class Search extends React.Component {
                              suggestions={input => this.search(input)}
                              ref="autoComplete"
                              onSelectionChange={selection => this.handleSelectionChange(selection)}
-                             buttonBefore={innerDropdown}/>
+                             buttonBefore={innerDropdown}
+                             buttonAfter={searchButton}/>
         </div>
       </div>
     );

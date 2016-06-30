@@ -32,5 +32,9 @@ th.drag {
   float: right !important;
   text-align: right;
   width: 55% !important;
-  height: 22px !important;
+
+}
+
+.element-svg-checkbox {
+  margin: 0px 0 0;
 }

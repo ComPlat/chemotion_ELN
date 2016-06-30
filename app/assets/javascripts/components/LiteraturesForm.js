@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Row, Col, Input, Button} from 'react-bootstrap';
+import {Row, Col, FormControl, Button} from 'react-bootstrap';
 import Literature from './models/Literature';
 
 export default class LiteraturesForm extends Component {
@@ -33,7 +33,7 @@ export default class LiteraturesForm extends Component {
   }
 
   titleInput() {
-    return <Input
+    return <FormControl
       type="text"
       onChange={event => this.handleInputChange('title', event)}
       placeholder={'Title...'}
@@ -42,7 +42,7 @@ export default class LiteraturesForm extends Component {
   }
 
   urlInput() {
-    return <Input
+    return <FormControl
       type="text"
       onChange={event => this.handleInputChange('url', event)}
       placeholder={'URL...'}

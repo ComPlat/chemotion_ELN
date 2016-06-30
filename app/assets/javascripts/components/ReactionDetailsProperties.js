@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Input, ListGroupItem, ListGroup} from 'react-bootstrap'
+import {Row, Col, FormGroup, ControlLabel, FormControl, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
 import {solventOptions, purificationOptions, statusOptions, dangerousProductsOptions}
   from './staticDropdownOptions/options';
@@ -13,7 +13,6 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {reaction} = this.state;
     const nextReaction = nextProps.reaction;
     this.setState({ reaction: nextReaction });
   }
@@ -85,13 +84,15 @@ export default class ReactionDetailsProperties extends Component {
           <h4 className="list-group-item-heading" ></h4>
           <Row>
             <Col md={6}>
-              <Input
-                type="text"
-                label="Name"
-                value={reaction.name}
-                placeholder="Name..."
-                disabled={reaction.isMethodDisabled('name')}
-                onChange={event => this.handleInputChange('name', event)}/>
+              <FormGroup>
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.name}
+                  placeholder="Name..."
+                  disabled={reaction.isMethodDisabled('name')}
+                  onChange={event => this.handleInputChange('name', event)}/>
+              </FormGroup>
             </Col>
             <Col md={6}>
               <label>Status</label>
@@ -110,13 +111,15 @@ export default class ReactionDetailsProperties extends Component {
           </Row>
           <Row>
             <Col md={12}>
-              <Input
-                type="textarea"
-                label="Description"
-                value={reaction.description}
-                disabled={reaction.isMethodDisabled('description')}
-                placeholder="Description..."
-                onChange={event => this.handleInputChange('description', event)}/>
+              <FormGroup>
+                <ControlLabel>Description</ControlLabel>
+                <FormControl
+                  type="textarea"
+                  value={reaction.description}
+                  disabled={reaction.isMethodDisabled('description')}
+                  placeholder="Description..."
+                  onChange={event => this.handleInputChange('description', event)}/>
+              </FormGroup>
             </Col>
           </Row>
         </ListGroupItem>
@@ -137,33 +140,39 @@ export default class ReactionDetailsProperties extends Component {
               />
             </Col>
             <Col md={4}>
-              <Input
-                type="text"
-                label="Start"
-                value={reaction.timestamp_start}
-                disabled={reaction.isMethodDisabled('timestamp_start')}
-                placeholder="Start..."
-                onChange={event => this.handleInputChange('timestampStart', event)}/>
+              <FormGroup>
+                <ControlLabel>Start</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.timestamp_start}
+                  disabled={reaction.isMethodDisabled('timestamp_start')}
+                  placeholder="Start..."
+                  onChange={event => this.handleInputChange('timestampStart', event)}/>
+              </FormGroup>
             </Col>
             <Col md={4}>
-              <Input
-                type="text"
-                label="Stop"
-                value={reaction.timestamp_stop}
-                disabled={reaction.isMethodDisabled('timestamp_stop')}
-                placeholder="Stop..."
-                onChange={event => this.handleInputChange('timestampStop', event)}/>
+              <FormGroup>
+                <ControlLabel>Stop</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.timestamp_stop}
+                  disabled={reaction.isMethodDisabled('timestamp_stop')}
+                  placeholder="Stop..."
+                  onChange={event => this.handleInputChange('timestampStop', event)}/>
+              </FormGroup>
             </Col>
           </Row>
           <Row>
             <Col md={12}>
-              <Input
-                type="textarea"
-                label="Observation"
-                value={reaction.observation}
-                disabled={reaction.isMethodDisabled('observation')}
-                placeholder="Observation..."
-                onChange={event => this.handleInputChange('observation', event)}/>
+              <FormGroup>
+                <ControlLabel>Observation</ControlLabel>
+                <FormControl
+                  type="textarea"
+                  value={reaction.observation}
+                  disabled={reaction.isMethodDisabled('observation')}
+                  placeholder="Observation..."
+                  onChange={event => this.handleInputChange('observation', event)}/>
+              </FormGroup>
             </Col>
           </Row>
           <Row>
@@ -197,42 +206,50 @@ export default class ReactionDetailsProperties extends Component {
           <h4 className="list-group-item-heading" >TLC-Control</h4>
           <Row>
             <Col md={6}>
-              <Input
-                type="text"
-                label="Solvents (parts)"
-                value={reaction.tlc_solvents}
-                disabled={reaction.isMethodDisabled('tlc_solvents')}
-                placeholder="Solvents as parts..."
-                onChange={event => this.handleInputChange('tlc_solvents', event)}/>
+              <FormGroup>
+                <ControlLabel>Solvents (parts)</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.tlc_solvents}
+                  disabled={reaction.isMethodDisabled('tlc_solvents')}
+                  placeholder="Solvents as parts..."
+                  onChange={event => this.handleInputChange('tlc_solvents', event)}/>
+              </FormGroup>
             </Col>
             <Col md={3}>
-              <Input
-                type="text"
-                label="Rf-Value"
-                value={reaction.rf_value}
-                disabled={reaction.isMethodDisabled('rf_value')}
-                placeholder="Rf-Value..."
-                onChange={event => this.handleInputChange('rfValue', event)}/>
+              <FormGroup>
+                <ControlLabel>Rf-Value</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.rf_value}
+                  disabled={reaction.isMethodDisabled('rf_value')}
+                  placeholder="Rf-Value..."
+                  onChange={event => this.handleInputChange('rfValue', event)}/>
+              </FormGroup>
             </Col>
             <Col md={3}>
-              <Input
-                type="text"
-                label="Temperature"
-                value={reaction.temperature}
-                disabled={reaction.isMethodDisabled('temperature')}
-                placeholder="Temperature..."
-                onChange={event => this.handleInputChange('temperature', event)}/>
+              <FormGroup>
+                <ControlLabel>Temperature</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.temperature}
+                  disabled={reaction.isMethodDisabled('temperature')}
+                  placeholder="Temperature..."
+                  onChange={event => this.handleInputChange('temperature', event)}/>
+              </FormGroup>
             </Col>
           </Row>
           <Row>
             <Col md={12}>
-              <Input
-                type="textarea"
-                label="TLC-Description"
-                value={reaction.tlc_description}
-                disabled={reaction.isMethodDisabled('tlc_description')}
-                placeholder="TLC-Description..."
-                onChange={event => this.handleInputChange('tlcDescription', event)}/>
+              <FormGroup>
+                <ControlLabel>TLC-Description</ControlLabel>
+                <FormControl
+                  type="textarea"
+                  value={reaction.tlc_description}
+                  disabled={reaction.isMethodDisabled('tlc_description')}
+                  placeholder="TLC-Description..."
+                  onChange={event => this.handleInputChange('tlcDescription', event)}/>
+              </FormGroup>
             </Col>
           </Row>
         </ListGroupItem>

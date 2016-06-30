@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {Input, Overlay, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem} from 'react-bootstrap';
 import debounce from 'es6-promise-debounce';
 
 export default class AutoCompleteInput extends React.Component {
@@ -234,27 +234,36 @@ export default class AutoCompleteInput extends React.Component {
     };
     return (
       <div>
-        <Input {...this.props.inputAttributes}
-          type='text'
-          value={value}
-          autoComplete='off'
-          ref='input'
-          onChange={event => this.handleValueChange(event)}
-          onKeyDown={event => this.handleKeyDown(event)}
-          buttonBefore={this.props.buttonBefore}
-        />
-        <Overlay
-          show={showSuggestions}
-          onHide={() => this.abortAutoSelection()}
-          placement='bottom'
-          container={this}
-          rootClose={true}>
-          <div style={containerStyle}>
-            <ListGroup {...this.props.suggestionsAttributes}>
-              {this.renderSuggestions()}
-            </ListGroup>
-          </div>
-        </Overlay>
+        <FormGroup>
+          <InputGroup>
+            <InputGroup.Button>
+              {this.props.buttonBefore}
+            </InputGroup.Button>
+            <FormControl {...this.props.inputAttributes}
+              type='text'
+              value={value}
+              autoComplete='off'
+              ref='input'
+              onChange={event => this.handleValueChange(event)}
+              onKeyDown={event => this.handleKeyDown(event)}
+            />
+            <InputGroup.Button>
+              {this.props.buttonAfter}
+            </InputGroup.Button>
+          </InputGroup>
+          <Overlay
+            show={showSuggestions}
+            onHide={() => this.abortAutoSelection()}
+            placement='bottom'
+            container={this}
+            rootClose={true}>
+            <div style={containerStyle}>
+              <ListGroup {...this.props.suggestionsAttributes}>
+                {this.renderSuggestions()}
+              </ListGroup>
+            </div>
+          </Overlay>
+        </FormGroup>
       </div>
     );
   }

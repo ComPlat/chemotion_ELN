@@ -8,7 +8,7 @@ module Chemotion
           Collection.get_all_collection_for_user(current_user.id)
         end
       end
-      
+
       desc "Return collection by id"
       params do
         requires :id, type: Integer, desc: "Collection id"
@@ -64,20 +64,17 @@ module Chemotion
         desc "Update shared collection"
         params do
           requires :id, type: Integer
-          requires :permission_level, type: Integer
-          requires :sample_detail_level, type: Integer
-          requires :reaction_detail_level, type: Integer
-          requires :wellplate_detail_level, type: Integer
-          requires :screen_detail_level, type: Integer
+          requires :collection_attributes, type: Hash do
+            requires :permission_level, type: Integer
+            requires :sample_detail_level, type: Integer
+            requires :reaction_detail_level, type: Integer
+            requires :wellplate_detail_level, type: Integer
+            requires :screen_detail_level, type: Integer
+          end
         end
+        
         put ':id' do
-          Collection.find(params[:id]).update({
-            permission_level: params[:permission_level],
-            sample_detail_level: params[:sample_detail_level],
-            reaction_detail_level: params[:reaction_detail_level],
-            wellplate_detail_level: params[:wellplate_detail_level],
-            screen_detail_level: params[:screen_detail_level]
-          })
+          Collection.find(params[:id]).update(params[:collection_attributes])
         end
 
         desc "Create shared collections"
@@ -116,6 +113,7 @@ module Chemotion
             requires :sample_detail_level, type: Integer
             requires :reaction_detail_level, type: Integer
             requires :wellplate_detail_level, type: Integer
+            requires :screen_detail_level, type: Integer
           end
           requires :user_ids, type: Array
           optional :current_collection_id, type: Integer

@@ -1,5 +1,5 @@
-import React, {Component} from 'react';
-import {Input} from 'react-bootstrap';
+import React from 'react';
+import {FormControl} from 'react-bootstrap';
 import NumeralInput from './NumeralInput';
 import NotificationActions from './actions/NotificationActions';
 var _ = require('lodash');
@@ -81,7 +81,7 @@ export default class ElementalCompositionCustom extends React.Component {
 
     return (
       <td className="loading" align="right" width="13%">
-        <Input type="text"
+        <FormControl type="text"
            key={"mc-loading" + (el_composition.id || 0).toString()}
            defaultValue={el_composition.loading}
            value={el_composition.loading && el_composition.loading.toFixed(2)}

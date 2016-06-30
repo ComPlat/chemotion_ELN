@@ -1,5 +1,5 @@
-import React, {Component} from 'react';
-import {Input, ListGroup, ListGroupItem, Button, RadioButton, Row, Col} from 'react-bootstrap';
+import React from 'react';
+import {FormGroup, ControlLabel, FormControl, Radio,  Button, Row, Col} from 'react-bootstrap';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo'
 import ElementalCompositionGroup from './ElementalCompositionGroup'
 import NotificationActions from './actions/NotificationActions'
@@ -109,12 +109,15 @@ export default class PolymerSection extends React.Component {
 
   polymerFormula(sample, residue) {
     return (
-      <Input type="text" label="Formula"
-             value={residue.custom_info.formula}
-             name="formula"
-             key={'polymer_formula_input' + sample.id.toString()}
-             onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
-      />
+      <FormGroup>
+        <ControlLabel>Formula</ControlLabel>
+        <FormControl type="text"
+          value={residue.custom_info.formula}
+          name="formula"
+          key={'polymer_formula_input' + sample.id.toString()}
+          onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+        />
+      </FormGroup>
     )
   }
 
@@ -150,14 +153,15 @@ export default class PolymerSection extends React.Component {
     return (
       <tr>
         <td>
-          <Input label={label}
-                 onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
+          <FormGroup>
+            <Radio onChange={(e) => this.handlePRadioChanged(e, residue, sample)}
                  checked={residue.custom_info.loading_type == value}
                  name="loading_type"
                  key={value + sample.id.toString() + 'loading_type'}
                  value={value}
                  disabled={value != 'external' && !rel_loading}
-                 type="radio"/>
+            >{label}</Radio>
+          </FormGroup>
         </td>
         {additionalLoadingInput}
       </tr>
@@ -226,19 +230,20 @@ export default class PolymerSection extends React.Component {
 
   polymerCrossLinkage(sample, residue) {
     return (
-      <Input type="text" label="Cross-linkage"
-             value={residue.custom_info.cross_linkage}
-             name="cross_linkage"
-             key={'cross_linkage' + sample.id.toString()}
-             onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
-      />
+      <FormGroup>
+        <ControlLabel>Cross-linkage</ControlLabel>
+        <FormControl type="text"
+          value={residue.custom_info.cross_linkage}
+          name="cross_linkage"
+          key={'cross_linkage' + sample.id.toString()}
+          onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
+        />
+      </FormGroup>
     )
   }
 
   render() {
     let sample = this.props.sample || {}
-    let molfile = sample.molfile;
-
     let residue = sample.residues[0];
 
     if(!this.props.show)
