@@ -514,6 +514,10 @@ export default class Sample extends Element {
     return this.molecule && this.molecule.inchistring;
   }
 
+  get molecule_cano_smiles() {
+    return this.molecule && this.molecule.cano_smiles;
+  }
+
   get purity() {
     return this._purity
   }

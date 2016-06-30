@@ -40,13 +40,11 @@ M  END
     m = OpenBabel::OBMol.new
     c.read_string m, molfile
 
-    ca_smiles = OpenBabel::OBMol.new
-    c.set_in_format 'mol'
-    c.set_out_format 'can'
-    c.read_string ca_smiles, m
-
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+
+    c.set_out_format 'can'
+    ca_smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
     c.set_out_format 'inchi'
     inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip
