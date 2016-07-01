@@ -1,8 +1,8 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: c87065dd7e98b6caa330eda078258f2e70f5d5a6
+  revision: d847eb7240c0bf774dfc9e7752175521bebb0b57
   specs:
-    ketcherails (0.1.0)
+    ketcherails (0.1.1)
       nokogiri (= 1.6.7.2)
       rails (~> 4.2.0)
 
@@ -470,7 +470,7 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   kaminari
-  ketcherails (= 0.1.0)!
+  ketcherails (= 0.1.1)!
   launchy (~> 2.4)
   mailcatcher
   nokogiri
