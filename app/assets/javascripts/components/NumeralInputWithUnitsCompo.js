@@ -104,7 +104,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     // BsStyle-s for Input and buttonAfter have differences
     let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
     if(unit != 'none')
-       prefixSwitch=<Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button>
+       prefixSwitch=<InputGroup.Button><Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button></InputGroup.Button>
 
     return (
       <div >
@@ -118,7 +118,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
               onFocus={(event) => this._handleInputValueFocus(event)}
               onBlur={(event)=>this._handleInputValueBlur(event)}
             />
-            <InputGroup.Button>{prefixSwitch}</InputGroup.Button>
+            {prefixSwitch}
           </InputGroup>
         </FormGroup>
       </div>
