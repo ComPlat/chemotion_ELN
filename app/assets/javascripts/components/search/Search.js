@@ -78,7 +78,7 @@ export default class Search extends React.Component {
       <Button bsStyle="danger" onClick={this.handleClearSearchSelection}>
         <i className="fa fa-times"></i></Button>;
     let inputAttributes = {
-      placeholder: 'Chemical name, IUPAC, InchI, SMILES, ...',
+      placeholder: 'IUPAC, InChI, SMILES, ...',
       // Uncomment this line to add the draw button
       //addonAfter: drawAddon,
       buttonAfter: searchButton,
