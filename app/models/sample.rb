@@ -16,13 +16,26 @@ class Sample < ActiveRecord::Base
     molecule: :iupac_name
   }
 
+  pg_search_scope :search_by_inchistring, associated_against: {
+    molecule: :inchistring
+  }
+
+  pg_search_scope :search_by_cano_smiles, associated_against: {
+    molecule: :cano_smiles
+  }
+
   pg_search_scope :search_by_sample_name, against: :name
   pg_search_scope :search_by_sample_short_label, against: :short_label
 
   # search scope for substrings
   pg_search_scope :search_by_substring, against: :name,
                                         associated_against: {
-                                          molecule: [:sum_formular, :iupac_name]
+                                          molecule: [
+                                            :sum_formular,
+                                            :iupac_name,
+                                            :inchistring,
+                                            :cano_smiles
+                                          ]
                                         },
                                         using: {trigram: {threshold:  0.0001}}
 
