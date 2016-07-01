@@ -31,7 +31,9 @@ module Chemotion
               .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
               .pluck("residues.custom_info -> 'polymer_type'").uniq,
             sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
-            iupac_name: search_by_field.call(Molecule, :iupac_name, qry)
+            iupac_name: search_by_field.call(Molecule, :iupac_name, qry),
+            inchistring: search_by_field.call(Molecule, :inchistring, qry),
+            cano_smiles: search_by_field.call(Molecule, :cano_smiles, qry)
           }
         when 'reaction'
           {
@@ -39,7 +41,11 @@ module Chemotion
             sample_name: d_for.call(Sample).with_reactions.by_name(qry)
               .pluck(:name).uniq,
             iupac_name: d_for.call(Molecule).with_reactions.by_iupac_name(qry)
-              .pluck(:iupac_name).uniq
+              .pluck(:iupac_name).uniq,
+            inchistring: d_for.call(Molecule).with_reactions.by_inchistring(qry)
+              .pluck(:inchistring).uniq,
+            cano_smiles: d_for.call(Molecule).with_reactions.by_cano_smiles(qry)
+              .pluck(:cano_smiles).uniq
           }
         when 'wellplate'
           {
@@ -47,7 +53,11 @@ module Chemotion
             sample_name: d_for.call(Sample).with_wellplates.by_name(qry)
               .pluck(:name).uniq,
             iupac_name: d_for.call(Molecule).with_wellplates.by_iupac_name(qry)
-              .pluck(:iupac_name).uniq
+              .pluck(:iupac_name).uniq,
+            inchistring: d_for.call(Molecule).with_wellplates.by_inchistring(qry)
+              .pluck(:inchistring).uniq,
+            cano_smiles: d_for.call(Molecule).with_wellplates.by_cano_smiles(qry)
+              .pluck(:cano_smiles).uniq
           }
         when 'screen'
           {
@@ -64,6 +74,8 @@ module Chemotion
               .pluck("residues.custom_info -> 'polymer_type'").uniq,
             sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
             iupac_name: search_by_field.call(Molecule, :iupac_name, qry),
+            inchistring: search_by_field.call(Molecule, :inchistring, qry),
+            cano_smiles: search_by_field.call(Molecule, :cano_smiles, qry),
             reaction_name: search_by_field.call(Reaction, :name, qry),
             wellplate_name: search_by_field.call(Wellplate, :name, qry),
             screen_name: search_by_field.call(Screen, :name, qry),

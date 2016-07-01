@@ -13,6 +13,9 @@ class Molecule < ActiveRecord::Base
     where('sum_formular ILIKE ?', "%#{query}%")
   }
   scope :by_iupac_name, ->(query) { where('iupac_name ILIKE ?', "%#{query}%") }
+  scope :by_inchistring, ->(query) { where('inchistring ILIKE ?', "%#{query}%") }
+  scope :by_cano_smiles, ->(query) { where('cano_smiles ILIKE ?', "%#{query}%") }
+
   scope :with_reactions, -> {
     sample_ids = ReactionsProductSample.pluck(:sample_id) +
       ReactionsReactantSample.pluck(:sample_id) +
