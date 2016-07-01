@@ -180,18 +180,18 @@ export default class AutoCompleteInput extends React.Component {
   renderSuggestions() {
     let {suggestions, error} = this.state;
     let types = {
-      sample_name: {icon: 'icon-sample', label: 'Sample'},
-      sample_short_label: {icon: 'icon-sample', label: 'Sample Label'},
-      polymer_type: {icon: 'icon-polymer', label: 'Polymer'},
-      reaction_name: {icon: 'icon-reaction', label: 'Reaction'},
-      wellplate_name: {icon: 'icon-wellplate', label: 'Wellplate'},
-      screen_name: {icon: 'icon-screen', label: 'Screen'},
-      iupac_name: {icon: 'icon-sample', label: 'Molecule'},
-      inchistring: {icon: 'icon-sample', label: 'InChI'},
-      cano_smiles: {icon: 'icon-sample', label: 'Canonical Smiles'},
-      sum_formula: {icon: 'icon-sample', label: 'Sum Formula'},
-      requirements: {icon: 'icon-screen', label: 'Requirement'},
-      conditions: {icon: 'icon-screen', label: 'Condition'},
+      sample_name       : {icon: 'icon-sample'   , label: 'Sample'          },
+      sample_short_label: {icon: 'icon-sample'   , label: 'Sample Label'    },
+      polymer_type      : {icon: 'icon-polymer'  , label: 'Polymer'         },
+      reaction_name     : {icon: 'icon-reaction' , label: 'Reaction'        },
+      wellplate_name    : {icon: 'icon-wellplate', label: 'Wellplate'       },
+      screen_name       : {icon: 'icon-screen'   , label: 'Screen'          },
+      iupac_name        : {icon: 'icon-sample'   , label: 'Molecule'        },
+      inchistring       : {icon: 'icon-sample'   , label: 'InChI'           },
+      cano_smiles       : {icon: 'icon-sample'   , label: 'Canonical Smiles'},
+      sum_formula       : {icon: 'icon-sample'   , label: 'Sum Formula'     },
+      requirements      : {icon: 'icon-screen'   , label: 'Requirement'     },
+      conditions        : {icon: 'icon-screen'   , label: 'Condition'       },
     }
     if(suggestions) {
       return (
