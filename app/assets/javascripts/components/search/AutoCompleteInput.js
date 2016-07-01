@@ -187,6 +187,8 @@ export default class AutoCompleteInput extends React.Component {
       wellplate_name: {icon: 'icon-wellplate', label: 'Wellplate'},
       screen_name: {icon: 'icon-screen', label: 'Screen'},
       iupac_name: {icon: 'icon-sample', label: 'Molecule'},
+      inchistring: {icon: 'icon-sample', label: 'InchI'},
+      cano_smiles: {icon: 'icon-sample', label: 'Canonical Smiles'},
       sum_formula: {icon: 'icon-sample', label: 'Sum Formula'},
       requirements: {icon: 'icon-screen', label: 'Requirement'},
       conditions: {icon: 'icon-screen', label: 'Condition'},
@@ -194,10 +196,19 @@ export default class AutoCompleteInput extends React.Component {
     if(suggestions) {
       return (
         <div>
-          {suggestions.map((suggestion, index) => {
+          { suggestions.map((suggestion, index) => {
             let suggestionType = types[suggestion.search_by_method]
             let icon = suggestionType ? suggestionType.icon : ""
             let typeLabel = suggestionType ? suggestionType.label : ""
+
+            // Remove first InchI string in suggestion list
+            let inchiString = 'InChI='
+            let inchiMatch = suggestion.name.substring(0, inchiString.length)
+
+            if (inchiMatch==inchiString) {
+              suggestion.name = suggestion.name.replace(inchiString, "")
+            }
+
             return (
               <ListGroupItem
                 onClick={() => this.selectSuggestion()}
