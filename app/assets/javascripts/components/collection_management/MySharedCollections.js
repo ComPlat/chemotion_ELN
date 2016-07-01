@@ -1,8 +1,7 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import Tree from 'react-ui-tree';
 import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
-
+import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
 import ShareSettingsModal from './ShareSettingsModal';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
@@ -12,7 +11,7 @@ export default class MySharedCollections extends React.Component {
     super(props);
 
     this.state = {
-      active: null,
+      active: {id: null},
       deleted_ids: [],
 
       tree: {
@@ -178,21 +177,12 @@ export default class MySharedCollections extends React.Component {
   }
 
   editShare(node) {
-    let {modalProps} = this.state
+    let {modalProps,active} = this.state
     modalProps.title = "Update Share Settings for '"+node.label+"'"
     modalProps.show = true
-    this.setState({modalProps})
-    ReactDOM.render(
-      <Modal animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
-        <Modal.Header closeButton>
-          <Modal.Title>{this.state.modalProps.title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <ShareSettingsModal node={node}/>
-          </Modal.Body>
-      </Modal>,
-      document.getElementById('modal')
-     );
+    active = node
+    this.setState({modalProps,active})
+
   }
 
   handleModalHide() {
@@ -204,8 +194,8 @@ export default class MySharedCollections extends React.Component {
         action: null
       }
     });
-    ReactDOM.unmountComponentAtNode(document.getElementById('modal'));
   }
+
   renderNode(node) {
     if(!Object.keys(node).length == 0) {
       return (
@@ -233,6 +223,17 @@ export default class MySharedCollections extends React.Component {
           onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
           renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
         />
+        <Modal animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>{this.state.modalProps.title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <ManagingModalSharing collectionId={this.state.active.id}
+              onHide={this.handleModalHide.bind(this)}
+              selectUsers={false}
+              collAction="Update" />
+            </Modal.Body>
+        </Modal>,
       </div>
     )
   }
