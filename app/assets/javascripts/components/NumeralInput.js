@@ -54,6 +54,15 @@ export default class NumeralInput extends Component {
   render() {
     let {bsSize, bsStyle, addonAfter, buttonAfter, label, disabled} = this.props;
     let {numeralValue} = this.state;
+    let addonAfterWrapper, buttonAfterWrapper;
+    if(addonAfter) {
+      addonAfterWrapper = <InputGroup.Addon>{addonAfter}</InputGroup.Addon>;
+    }
+
+    if(buttonAfter) {
+      buttonAfterWrapper = <InputGroup.Button>{buttonAfter}</InputGroup.Button>;
+    }
+
     return (
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
@@ -62,8 +71,8 @@ export default class NumeralInput extends Component {
             bsStyle={bsStyle}
             disabled={disabled}
             onChange={ event => this._handleInputValueChange(event)}/>
-          <InputGroup.Button>{buttonAfter}</InputGroup.Button>
-          <InputGroup.Addon>{addonAfter}</InputGroup.Addon>
+          {buttonAfterWrapper}
+          {addonAfterWrapper}
         </InputGroup>
       </FormGroup>
     );
