@@ -8,29 +8,7 @@ import UserStore from '../stores/UserStore';
 import SharingShortcuts from '../sharing/SharingShortcuts';
 
 export default class ManagingModalSharing extends React.Component {
-/*  static propTypes = {
-        collectionId: React.PropTypes.number,
-        collAction: React.PropTypes.string,
-        selectUsers: React.PropTypes.boolean,
-        permission_level: React.PropTypes.number,
-        sample_detail_level: React.PropTypes.number,
-        reaction_detail_level: React.PropTypes.number,
-        wellplate_detail_level: React.PropTypes.number,
-        screen_detail_level: React.PropTypes.number,
-        onHide: React.PropTypes.func.isRequired,
-  };
 
-  static defaultProps = {
-        collectionId: null,
-        collAction: "Create",
-        selectUsers: true,
-        permissionLevel: 0,
-        sampleDetailLevel: 0,
-        reactionDetailLevel: 0,
-        wellplateDetailLevel: 0,
-        screenDetailLevel: 0,
-  };
-*/
   constructor(props) {
     super(props);
 
@@ -40,11 +18,11 @@ export default class ManagingModalSharing extends React.Component {
       currentUser: currentUser,
       users: users,
       role:'Pick a sharing role',
-      permissionLevel: props.permission_level,
-      sampleDetailLevel: props.sample_detail_level,
-      reactionDetailLevel: props.reaction_detail_level,
-      wellplateDetailLevel: props.wellplate_detail_level,
-      screenDetailLevel: props.screen_detail_level,
+      permissionLevel: props.permissionLevel,
+      sampleDetailLevel: props.sampleDetailLevel,
+      reactionDetailLevel: props.reactionDetailLevel,
+      wellplateDetailLevel: props.wellplateDetailLevel,
+      screenDetailLevel: props.screenDetailLevel,
     }
   }
 
@@ -67,8 +45,8 @@ export default class ManagingModalSharing extends React.Component {
 
   isElementSelectionEmpty(element) {
     return !element.checkedAll &&
-           element.checkedIds.length == 0 &&
-           element.uncheckedIds.length == 0;
+           element.checkedIds.size == 0 &&
+           element.uncheckedIds.size == 0;
   }
 
   isSelectionEmpty(uiState) {
@@ -147,29 +125,34 @@ export default class ManagingModalSharing extends React.Component {
   handleSharing() {
     let {permissionLevel, sampleDetailLevel, reactionDetailLevel,wellplateDetailLevel,
     screenDetailLevel}= this.state
-    let userIds = this.refs.userSelect.state.values.map(o => o.value);
-    let uiState = UIStore.getState();
-    let currentCollectionId = uiState.currentCollectionId;
-    let filterParams =
-      this.isSelectionEmpty(uiState) ?
-        this.filterParamsWholeCollection(uiState) :
-        this.filterParamsFromUIState(uiState);
 
     let params = {
       id: this.props.collectionId,
       collection_attributes: {
-      //  is_shared: true,
         permission_level: permissionLevel,
         sample_detail_level: sampleDetailLevel,
         reaction_detail_level: reactionDetailLevel,
         wellplate_detail_level: wellplateDetailLevel,
         screen_detail_level: screenDetailLevel
       },
-      elements_filter: filterParams,
-      user_ids: userIds,
-      current_collection_id: currentCollectionId
     }
-    if (this.props.collAction == "Create") {CollectionActions.createSharedCollection(params);}
+
+    if (this.props.collAction == "Create") {
+      let userIds = this.refs.userSelect.state.values.map(o => o.value);
+      let uiState = UIStore.getState();
+      let currentCollectionId = uiState.currentCollectionId;
+      let filterParams =
+        this.isSelectionEmpty(uiState) ?
+          this.filterParamsWholeCollection(uiState) :
+          this.filterParamsFromUIState(uiState);
+      params = {
+        ...params,
+        elements_filter: filterParams,
+        user_ids: userIds,
+        current_collection_id: currentCollectionId
+      }
+      CollectionActions.createSharedCollections(params);
+    }
     if (this.props.collAction == "Update") {CollectionActions.updateSharedCollection(params);}
     this.props.onHide();
   }
@@ -218,13 +201,15 @@ export default class ManagingModalSharing extends React.Component {
     let users = this.state.users.filter((u)=> u.id != this.state.currentUser.id);
     let usersEntries = users.map(
       (user) => {return { value: user.id, label: user.name };});
-    return(
-      <div style={style}>
-        <b>Select Users to share with</b>
-        <Select ref='userSelect' name='users' multi={true}
-          options={usersEntries}/>
-      </div>
-    )
+
+      return(
+        <div style={style}>
+          <b>Select Users to share with</b>
+          <Select ref='userSelect' name='users' multi={true}
+            options={usersEntries}/>
+        </div>
+      )
+
   }
 
   render() {
@@ -308,12 +293,12 @@ export default class ManagingModalSharing extends React.Component {
 ManagingModalSharing.propTypes = {
           collectionId: React.PropTypes.number,
           collAction: React.PropTypes.string,
-          selectUsers: React.PropTypes.boolean,
-          permission_level: React.PropTypes.number,
-          sample_detail_level: React.PropTypes.number,
-          reaction_detail_level: React.PropTypes.number,
-          wellplate_detail_level: React.PropTypes.number,
-          screen_detail_level: React.PropTypes.number,
+          selectUsers: React.PropTypes.bool,
+          permissionLevel: React.PropTypes.number,
+          sampleDetailLevel: React.PropTypes.number,
+          reactionDetailLevel: React.PropTypes.number,
+          wellplateDetailLevel: React.PropTypes.number,
+          screenDetailLevel: React.PropTypes.number,
           onHide: React.PropTypes.func.isRequired,
 };
 

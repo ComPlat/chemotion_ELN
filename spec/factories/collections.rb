@@ -7,5 +7,6 @@ FactoryGirl.define do
     sample_detail_level 0
     reaction_detail_level 0
     wellplate_detail_level 0
+    screen_detail_level 0
   end
 end

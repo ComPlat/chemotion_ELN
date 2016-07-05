@@ -1,10 +1,7 @@
 import React from 'react';
 import {Button} from 'react-bootstrap';
-
 import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
 import ElementStore from './stores/ElementStore';
-import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
 
 import Aviator from 'aviator';
@@ -111,7 +108,7 @@ export default class CollectionSubtree extends React.Component {
     if(isRemote && isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">
-          <Button bsStyle="danger" bsSize="xsmall" onClick={(e) => this.handleTakeOwnership()}>
+          <Button bsStyle="danger" bsSize="xsmall" onClick={(e) => this.handleTakeOwnership(e)}>
             <i className="fa fa-exchange"></i>
           </Button>
         </div>
@@ -174,3 +171,11 @@ export default class CollectionSubtree extends React.Component {
     )
   }
 }
+
+CollectionSubtree.propTypes = {
+  isRemote: React.PropTypes.bool,
+  label: React.PropTypes.string,
+  selected: React.PropTypes.bool,
+  root: React.PropTypes.object,
+  visible: React.PropTypes.bool,
+};

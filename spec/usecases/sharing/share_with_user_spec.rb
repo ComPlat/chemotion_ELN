@@ -72,6 +72,33 @@ RSpec.describe Usecases::Sharing::ShareWithUser do
       expect(c.wellplate_detail_level).to eq(4)
     end
 
+    it 'finds or creates a shared root collection' do
+      c = Collection.find_by(label: 'test')
+      rc = Collection.find_by(label: "with #{user_s.name_abbreviation}") #root_label = "to %s" %c.user.name_abbreviation
+      expect(c.ancestry).to_not be_nil
+      expect(c.root).to_not eq(c)
+      expect(c.root).to eq(rc)
+      expect(c.root.user_id).to eq(c.user_id)
+      expect(c.root.shared_by_id).to eq(c.shared_by_id)
+      expect(c.root.samples).to eq(Sample.none)
+      expect(c.root.reactions).to eq(Reaction.none)
+      expect(c.root.wellplates).to eq(Wellplate.none)
+      expect(c.root.screens).to eq(Screen.none)
+      expect(c.root.attributes).to include(
+        "user_id"=>user_s.id,
+        "label"=>"with #{user_s.name_abbreviation}",
+        "shared_by_id"=>user.id,
+        "is_shared"=>true,
+        "permission_level"=>0,
+        "sample_detail_level"=>10,
+        "reaction_detail_level"=>10,
+        "wellplate_detail_level"=>10,
+        #"position"=>nil,
+        "screen_detail_level"=>10,
+        "is_locked"=>true,
+      )
+    end
+
     it 'creates sample associations according to given params' do
       associated_sample_ids = Collection.find_by(label: 'test').sample_ids
       expect(associated_sample_ids).to match_array([sample_1.id,sample_2.id, sample_a1.id])
