@@ -13,15 +13,27 @@ module SVG
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
       @label = options[:label]
+      @solvent = options[:solvent]
+      @temperature = options[:temperature]
 
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-          width="12in" height="#{12.0*100.0/width}in" viewBox="0 0 #{width} 100">
+          width="12in" height="3.33in" viewBox="0 0 #{width} 100">
         <title>Reaction 1</title>
       END
       @labels = <<-END
         <svg font-family="sans-serif" font-size="8">
           <text text-anchor="middle" x="#{@arrow_width / 2}" y="65">#{@label}</text>
+        </svg>
+      END
+      @temperature = <<-END
+        <svg font-family="sans-serif" font-size="8">
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="65">#{@temperature}</text>
+        </svg>
+      END
+      @solvent = <<-END
+        <svg font-family="sans-serif" font-size="8">
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="80">#{@solvent}</text>
         </svg>
       END
       @divider = <<-END
@@ -83,6 +95,8 @@ module SVG
         shift = options[:start_at]
         output = "<g transform='translate(#{shift}, 0)'>" + @arrow + "</g>"
         output += "<g transform='translate(#{shift}, 0)'>" + @labels + "</g>"
+        output += "<g transform='translate(#{shift}, 0)'>" + @solvent + "</g>"
+        output += "<g transform='translate(#{shift}, 0)'>" + @temperature + "</g>"
         output
       end
 

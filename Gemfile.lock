@@ -7,6 +7,15 @@ GIT
       rails (~> 4.2.0)
 
 GIT
+  remote: git://github.com/ComPlat/sablon.git
+  revision: 03130357d526230e36647a0d5d348ed3c5a51d42
+  specs:
+    sablon (0.0.19)
+      nokogiri (>= 1.6.0)
+      redcarpet (>= 3.2)
+      rubyzip (>= 1.1)
+
+GIT
   remote: git://github.com/ComPlat/scifinding.git
   revision: b4c6dcb5bf854682c33126ca41ac1dfd6984543a
   specs:
@@ -338,6 +347,7 @@ GEM
       ffi (>= 0.5.0)
     rdoc (4.2.2)
       json (~> 1.4)
+    redcarpet (3.3.4)
     responders (2.2.0)
       railties (>= 4.2.0, < 5.1)
     rmagick (2.15.4)
@@ -432,6 +442,9 @@ GEM
       chronic (>= 0.6.3)
     xpath (2.0.0)
       nokogiri (~> 1.3)
+    yaml_db (0.3.0)
+      rails (>= 3.0, < 4.3)
+      rake (>= 0.8.7)
 
 PLATFORMS
   ruby
@@ -484,6 +497,7 @@ DEPENDENCIES
   roo (> 2.3.0)
   rspec-rails
   rtf
+  sablon!
   sass-rails (~> 5.0)
   scifinding (= 0.1.0)!
   sdoc (~> 0.4.0)
@@ -495,6 +509,7 @@ DEPENDENCIES
   uglifier (>= 1.3.0)
   web-console (~> 2.0)
   whenever
+  yaml_db
 
 BUNDLED WITH
    1.12.5
