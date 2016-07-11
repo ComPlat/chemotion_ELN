@@ -87,7 +87,9 @@ module Chemotion
           Sample.for_user(current_user.id).includes(:molecule).uniq
         end.uniq.not_reactant.order("updated_at DESC")
 
-        return {molecules: group_by_molecule(paginate(scope))}
+        return {
+          molecules: group_by_molecule(paginate(scope))
+        }
       end
 
       desc "Return serialized sample by id"

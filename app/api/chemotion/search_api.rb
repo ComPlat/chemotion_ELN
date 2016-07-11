@@ -12,26 +12,53 @@ module Chemotion
         total_elements.fdiv(page_size).ceil
       end
 
-      def serialization_by_elements_and_page(elements, page=1)
+      def get_arg
+        isStructureSearch =
+          params[:selection].molfile == nil ? false : true
+
+        if (isStructureSearch)
+          return params[:selection].molfile
+        else
+          return params[:selection].name
+        end
+      end
+
+      def get_search_method
+        isStructureSearch =
+          params[:selection].molfile == nil ? false : true
+
+        if (isStructureSearch)
+          return 'structure'
+        else
+          return params[:selection].search_by_method
+        end
+      end
+
+      def serialization_by_elements_and_page(elements, page = 1)
         samples = elements.fetch(:samples, [])
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
-        serialized_samples = {molecules: group_by_molecule(paginate(samples))}
+
+        if samples.empty?
+          tmp = samples
+        else
+          tmp = paginate(samples)
+        end
+        serialized_samples = {
+          molecules: group_by_molecule(tmp)
+        }
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
-          .per(page_size).map {|s| ReactionSerializer.new(s)
-            .serializable_hash
-            .deep_symbolize_keys
+          .per(page_size).map {|s|
+            ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
         serialized_wellplates = Kaminari.paginate_array(wellplates).page(page)
-          .per(page_size).map{ |s| WellplateSerializer.new(s)
-            .serializable_hash
-            .deep_symbolize_keys
+          .per(page_size).map{ |s|
+            WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
         serialized_screens = Kaminari.paginate_array(screens).page(page)
-          .per(page_size).map{ |s| ScreenSerializer.new(s)
-            .serializable_hash
-            .deep_symbolize_keys
+          .per(page_size).map{ |s|
+            ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
 
         {
@@ -66,6 +93,7 @@ module Chemotion
         }
       end
 
+      # Generate search query
       def scope_by_search_by_method_arg_and_collection_id(search_by_method,
           arg, collection_id)
         scope = case search_by_method
@@ -86,8 +114,9 @@ module Chemotion
         when 'structure'
           fp_vector =
             Chemotion::OpenBabelService.fingerprint_from_molfile(arg)
+
           Sample.for_user(current_user.id).joins(:molecule)
-            .merge(Molecule.by_finger_print(fp_vector)).uniq
+            .merge(Molecule.by_finger_print(fp_vector))
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
@@ -142,15 +171,8 @@ module Chemotion
         end
 
         post do
-          selection = params[:selection]
-          isStructureSearch = selection.elementType == nil ? false : true
-          if (isStructureSearch)
-            search_by_method = 'structure'
-            arg = selection.molfile
-          else
-            search_by_method = selection.search_by_method
-            arg = selection.name
-          end
+          search_by_method = get_search_method()
+          arg = get_arg()
 
           scope =
             scope_by_search_by_method_arg_and_collection_id(search_by_method,
@@ -171,8 +193,8 @@ module Chemotion
         end
 
         post do
-          search_by_method = params[:selection].search_by_method
-          arg = params[:selection].name
+          search_by_method = get_search_method()
+          arg = get_arg()
 
           scope = Sample.search_by(search_by_method, arg)
 
@@ -192,8 +214,8 @@ module Chemotion
         end
 
         post do
-          search_by_method = params[:selection].search_by_method
-          arg = params[:selection].name
+          search_by_method = get_search_method()
+          arg = get_arg()
 
           scope = Reaction.search_by(search_by_method, arg)
 
@@ -213,8 +235,8 @@ module Chemotion
         end
 
         post do
-          search_by_method = params[:selection].search_by_method
-          arg = params[:selection].name
+          search_by_method = get_search_method()
+          arg = get_arg()
 
           scope = Wellplate.search_by(search_by_method, arg)
 
@@ -234,8 +256,8 @@ module Chemotion
         end
 
         post do
-          search_by_method = params[:selection].search_by_method
-          arg = params[:selection].name
+          search_by_method = get_search_method()
+          arg = get_arg()
 
           scope = Screen.search_by(search_by_method, arg)
 
