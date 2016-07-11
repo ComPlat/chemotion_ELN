@@ -53,7 +53,7 @@ gem 'roo', ">2.3.0"
 
 gem 'httparty'
 # Ketcher editor
-gem 'ketcherails', '0.1.0', github: 'ComPlat/ketcher-rails'
+gem 'ketcherails', '0.1.1', github: 'ComPlat/ketcher-rails'
 
 # Free font icons
 gem "font-awesome-rails"
