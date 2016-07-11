@@ -27,15 +27,17 @@ class ElementActions {
 
   // -- Search --
 
-  fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage) {
+  fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
+      currentPage, searchType = null) {
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(
-        selection, collectionId, currentPage)
+        selection, collectionId, currentPage, searchType)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
-      });};
+      })
+    }
   }
 
   // -- Collections --

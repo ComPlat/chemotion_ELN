@@ -9,12 +9,18 @@ class Molecule < ActiveRecord::Base
   validates_uniqueness_of :inchikey, scope: :is_partial
 
   # scope for suggestions
-  scope :by_sum_formular, ->(query) {
+  scope :by_iupac_name, -> (query) {
+    where('iupac_name ILIKE ?', "%#{query}%")
+  }
+  scope :by_sum_formular, -> (query) {
     where('sum_formular ILIKE ?', "%#{query}%")
   }
-  scope :by_iupac_name, ->(query) { where('iupac_name ILIKE ?', "%#{query}%") }
-  scope :by_inchistring, ->(query) { where('inchistring ILIKE ?', "%#{query}%") }
-  scope :by_cano_smiles, ->(query) { where('cano_smiles ILIKE ?', "%#{query}%") }
+  scope :by_inchistring, -> (query) {
+    where('inchistring ILIKE ?', "%#{query}%")
+  }
+  scope :by_cano_smiles, -> (query) {
+    where('cano_smiles ILIKE ?', "%#{query}%")
+  }
 
   scope :with_reactions, -> {
     sample_ids = ReactionsProductSample.pluck(:sample_id) +
@@ -27,6 +33,25 @@ class Molecule < ActiveRecord::Base
     molecule_ids =
       Wellplate.all.flat_map(&:samples).flat_map(&:molecule).map(&:id)
     where(id: molecule_ids)
+  }
+
+  scope :by_finger_print, -> (fp_vector) {
+    where( 'fp0  & ? = ?', fp_vector[0], fp_vector[0])
+    .where('fp1  & ? = ?', fp_vector[1], fp_vector[1])
+    .where('fp2  & ? = ?', fp_vector[2], fp_vector[2])
+    .where('fp3  & ? = ?', fp_vector[3], fp_vector[3])
+    .where('fp4  & ? = ?', fp_vector[4], fp_vector[4])
+    .where('fp5  & ? = ?', fp_vector[5], fp_vector[5])
+    .where('fp6  & ? = ?', fp_vector[6], fp_vector[6])
+    .where('fp7  & ? = ?', fp_vector[7], fp_vector[7])
+    .where('fp8  & ? = ?', fp_vector[8], fp_vector[8])
+    .where('fp9  & ? = ?', fp_vector[9], fp_vector[9])
+    .where('fp10 & ? = ?', fp_vector[10], fp_vector[10])
+    .where('fp11 & ? = ?', fp_vector[11], fp_vector[11])
+    .where('fp12 & ? = ?', fp_vector[12], fp_vector[12])
+    .where('fp13 & ? = ?', fp_vector[13], fp_vector[13])
+    .where('fp14 & ? = ?', fp_vector[14], fp_vector[14])
+    .where('fp15 & ? = ?', fp_vector[15], fp_vector[15])
   }
 
   def self.find_or_create_by_molfile molfile, is_partial = false
@@ -81,22 +106,23 @@ class Molecule < ActiveRecord::Base
     self.cano_smiles = babel_info[:cano_smiles]
 
     fp_vector = babel_info[:fp]
-    self.fp0  = (fp_vector[0]  & 0xffffffffffffffff << 32) + fp_vector[1]
-    self.fp1  = (fp_vector[2]  & 0xffffffffffffffff << 32) + fp_vector[3]
-    self.fp2  = (fp_vector[4]  & 0xffffffffffffffff << 32) + fp_vector[5]
-    self.fp3  = (fp_vector[6]  & 0xffffffffffffffff << 32) + fp_vector[7]
-    self.fp4  = (fp_vector[8]  & 0xffffffffffffffff << 32) + fp_vector[9]
-    self.fp5  = (fp_vector[10] & 0xffffffffffffffff << 32) + fp_vector[11]
-    self.fp6  = (fp_vector[12] & 0xffffffffffffffff << 32) + fp_vector[13]
-    self.fp7  = (fp_vector[14] & 0xffffffffffffffff << 32) + fp_vector[15]
-    self.fp8  = (fp_vector[16] & 0xffffffffffffffff << 32) + fp_vector[17]
-    self.fp9  = (fp_vector[18] & 0xffffffffffffffff << 32) + fp_vector[19]
-    self.fp10 = (fp_vector[20] & 0xffffffffffffffff << 32) + fp_vector[21]
-    self.fp11 = (fp_vector[22] & 0xffffffffffffffff << 32) + fp_vector[23]
-    self.fp12 = (fp_vector[24] & 0xffffffffffffffff << 32) + fp_vector[25]
-    self.fp13 = (fp_vector[26] & 0xffffffffffffffff << 32) + fp_vector[27]
-    self.fp14 = (fp_vector[28] & 0xffffffffffffffff << 32) + fp_vector[29]
-    self.fp15 = (fp_vector[30] & 0xffffffffffffffff << 32) + fp_vector[31]
+
+    self.fp0  = fp_vector[0]
+    self.fp1  = fp_vector[1]
+    self.fp2  = fp_vector[2]
+    self.fp3  = fp_vector[3]
+    self.fp4  = fp_vector[4]
+    self.fp5  = fp_vector[5]
+    self.fp6  = fp_vector[6]
+    self.fp7  = fp_vector[7]
+    self.fp8  = fp_vector[8]
+    self.fp9  = fp_vector[9]
+    self.fp10 = fp_vector[10]
+    self.fp11 = fp_vector[11]
+    self.fp12 = fp_vector[12]
+    self.fp13 = fp_vector[13]
+    self.fp14 = fp_vector[14]
+    self.fp15 = fp_vector[15]
   end
 
   def attach_svg svg_data

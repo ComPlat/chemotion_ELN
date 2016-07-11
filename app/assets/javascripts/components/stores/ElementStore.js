@@ -14,6 +14,7 @@ import Xlisteners from '../extra/ElementStoreXlisteners';
 import Xhandlers from '../extra/ElementStoreXhandlers';
 import Xstate from '../extra/ElementStoreXstate';
 
+import Aviator from 'aviator'
 
 class ElementStore {
   constructor() {
@@ -55,17 +56,20 @@ class ElementStore {
     };
 
 
-    for (let i=0;i<Xlisteners.listenersCount;i++){
-      Object.keys(Xlisteners["listeners"+i]).map((k)=>{
-        this.bindAction(Xlisteners["listeners"+i][k],Xhandlers["handlers"+i][k].bind(this))
+    for (let i = 0; i < Xlisteners.listenersCount; i++){
+      Object.keys(Xlisteners["listeners"+i]).map((k) => {
+        this.bindAction(Xlisteners["listeners" + i][k],
+                        Xhandlers["handlers" + i][k].bind(this))
       });
     }
 
     this.bindListeners({
 
-      handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleFetchBasedOnSearchSelection:
+        ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
-      handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
+      handleFetchSamplesByCollectionId:
+        ElementActions.fetchSamplesByCollectionId,
       handleUpdateSample: ElementActions.updateSample,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
@@ -78,23 +82,30 @@ class ElementStore {
       handleDeselectCurrentReaction: ElementActions.deselectCurrentReaction,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
-      handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+      handleFetchReactionsByCollectionId:
+        ElementActions.fetchReactionsByCollectionId,
       handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
-      handleFetchReactionSvgByMaterialsSvgPaths: ElementActions.fetchReactionSvgByMaterialsSvgPaths,
+      handleFetchReactionSvgByMaterialsSvgPaths:
+        ElementActions.fetchReactionSvgByMaterialsSvgPaths,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
-      handleBulkCreateWellplatesFromSamples: ElementActions.bulkCreateWellplatesFromSamples,
+      handleBulkCreateWellplatesFromSamples:
+        ElementActions.bulkCreateWellplatesFromSamples,
       handleFetchWellplateById: ElementActions.fetchWellplateById,
-      handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
+      handleFetchWellplatesByCollectionId:
+        ElementActions.fetchWellplatesByCollectionId,
       handleUpdateWellplate: ElementActions.updateWellplate,
       handleCreateWellplate: ElementActions.createWellplate,
-      handleGenerateWellplateFromClipboard: ElementActions.generateWellplateFromClipboard,
-      handleGenerateScreenFromClipboard: ElementActions.generateScreenFromClipboard,
+      handleGenerateWellplateFromClipboard:
+        ElementActions.generateWellplateFromClipboard,
+      handleGenerateScreenFromClipboard:
+        ElementActions.generateScreenFromClipboard,
 
       handleFetchScreenById: ElementActions.fetchScreenById,
-      handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
+      handleFetchScreensByCollectionId:
+        ElementActions.fetchScreensByCollectionId,
       handleUpdateScreen: ElementActions.updateScreen,
       handleCreateScreen: ElementActions.createScreen,
 
@@ -102,7 +113,14 @@ class ElementStore {
       // FIXME ElementStore listens to UIActions?
       handleSetPagination: UIActions.setPagination,
       handleRefreshElements: ElementActions.refreshElements,
-      handleGenerateEmptyElement: [ElementActions.generateEmptyWellplate, ElementActions.generateEmptyScreen, ElementActions.generateEmptySample, ElementActions.generateEmptyReaction, ElementActions.showReportContainer],
+      handleGenerateEmptyElement:
+        [
+          ElementActions.generateEmptyWellplate,
+          ElementActions.generateEmptyScreen,
+          ElementActions.generateEmptySample,
+          ElementActions.generateEmptyReaction,
+          ElementActions.showReportContainer
+        ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
 
@@ -110,7 +128,6 @@ class ElementStore {
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
-
     })
   }
 
@@ -121,13 +138,19 @@ class ElementStore {
     });
   }
 
+  handlefetchBasedOnStructureAndCollection(result) {
+    Object.keys(result).forEach((key) => {
+      this.state.elements[key] = result[key];
+    });
+  }
+
   closeElementWhenDeleted(ui_state) {
     let currentElement = this.state.currentElement;
     if (currentElement) {
       let type_state = ui_state[currentElement.type]
       let checked = type_state.checkedIds.indexOf(currentElement.id) > -1
-      let checked_all_and_not_unchecked =
-        type_state.checkedAll && type_state.uncheckedIds.indexOf(currentElement.id) == -1
+      let checked_all_and_not_unchecked = type_state.checkedAll &&
+        type_state.uncheckedIds.indexOf(currentElement.id) == -1
 
       if (checked_all_and_not_unchecked || checked) {
         this.state.currentElement = null;
@@ -223,7 +246,7 @@ class ElementStore {
     this.state.currentReaction = null;
   }
 
-  handleUpdateSampleForReaction(sample) {
+  handleUpdateSampleForReaction() {
     UserActions.fetchCurrentUser();
     let reactionID = this.state.currentReaction;
     this.state.currentElement = null;
@@ -256,7 +279,9 @@ class ElementStore {
   handleCopySampleFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement = Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true)
+    this.state.currentElement =
+      Sample.copyFromSampleAndCollectionId(clipboardSamples[0],
+                                           collection_id, true)
   }
 
   /**
@@ -266,14 +291,16 @@ class ElementStore {
     const { reaction, materialGroup } = params;
     const { temporary_sample_counter } = reaction;
 
-    let sample = Sample.buildReactionSample(reaction.collection_id, temporary_sample_counter, materialGroup);
+    let sample = Sample.buildReactionSample(reaction.collection_id,
+                                            temporary_sample_counter,
+                                            materialGroup);
 
     this.state.currentMaterialGroup = materialGroup;
     this.state.currentReaction = reaction;
     this.state.currentElement = sample;
   }
 
-  handleImportSamplesFromFile(result) {
+  handleImportSamplesFromFile() {
     this.handleRefreshElements('sample');
   }
 
@@ -306,7 +333,8 @@ class ElementStore {
   handleGenerateWellplateFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
+    this.state.currentElement =
+      Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
   // -- Screens --
 
@@ -331,7 +359,9 @@ class ElementStore {
   handleGenerateScreenFromClipboard(collection_id) {
     let clipboardWellplates = ClipboardStore.getState().wellplates;
 
-    this.state.currentElement = Screen.buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id);
+    this.state.currentElement =
+      Screen.buildFromWellplatesAndCollectionId(clipboardWellplates,
+                                                collection_id);
   }
 
   // -- Reactions --
@@ -361,7 +391,9 @@ class ElementStore {
   handleCopyReactionFromId(reaction) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
-    this.state.currentElement = Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id);
+    this.state.currentElement =
+      Reaction.copyFromReactionAndCollectionId(reaction,
+                                               uiState.currentCollection.id);
   }
 
   handleOpenReactionDetails(reaction) {
@@ -401,7 +433,9 @@ class ElementStore {
   handleGenerateEmptyElement(element) {
     let {currentElement} = this.state;
 
-    const newElementOfSameTypeIsPresent = currentElement && currentElement.isNew && currentElement.type == element.type;
+    const newElementOfSameTypeIsPresent =
+      currentElement && currentElement.isNew && currentElement.type ==
+      element.type;
     if(!newElementOfSameTypeIsPresent) {
       this.state.currentElement = element;
     }
@@ -425,22 +459,28 @@ class ElementStore {
     let currentSearchSelection = uiState.currentSearchSelection;
 
     // TODO if page changed -> fetch
-    // if there is a currentSearchSelection we have to execute the respective action
+    // if there is a currentSearchSelection
+    //    we have to execute the respective action
     if(currentSearchSelection != null) {
-      ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, uiState.currentCollection.id, page);
+      ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection,
+        uiState.currentCollection.id, page);
     } else {
-      ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
+      ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id,
+        {page: page, per_page: uiState.number_of_results});
 
       switch (type) {
         // fetch samples to handle creation of split samples
         case 'reaction':
-          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
+          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id,
+            {page: page, per_page: uiState.number_of_results});
           break;
         case 'wellplate':
-          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
+          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id,
+            {page: page, per_page: uiState.number_of_results});
           break;
         case 'screen':
-          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id, {page: page, per_page: uiState.number_of_results});
+          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id,
+            {page: page, per_page: uiState.number_of_results});
           break;
       }
     }

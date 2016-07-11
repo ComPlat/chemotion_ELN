@@ -7,6 +7,7 @@ import Aviator from 'aviator';
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
+
     this.state = {
       showModal: props.showModal,
       showWarning: props.hasChildren || props.hasParent,
@@ -52,14 +53,14 @@ export default class StructureEditorModal extends React.Component {
     return ketcher.getSVG();
   }
 
-  handleCancel() {
+  handleLeftBtn() {
     this.hideModal();
     if(this.props.onCancel) {
       this.props.onCancel()
     }
   }
 
-  handleSave() {
+  handleRightBtn() {
     let molfile = this.getMolfileFromEditor()
     let svg_file = this.getSVGFromEditor()
     this.hideModal();
@@ -81,19 +82,32 @@ export default class StructureEditorModal extends React.Component {
     })
   }
   // TODO: can we catch the ketcher on draw event, instead on close button click?
-  // This woul allow us to show molecule information to the user while he draws, e.g. the IUPAC name
+  // This woul allow us to show molecule information to the user while he draws,
+  //  e.g. the IUPAC name
   // and would give a feedback if the structure is valid or not
 
   render() {
     let editorContent = this.state.showWarning ?
-      <WarningBox handleCancel={this.handleCancel.bind(this)}
+      <WarningBox handleLeftBtn={this.handleLeftBtn.bind(this)}
                   hideWarning={this.hideWarning.bind(this)} />
       :
-      <StructureEditor handleCancel={this.handleCancel.bind(this)}
-                       handleSave={this.handleSave.bind(this)} />
+      <StructureEditor
+        handleLeftBtn = { this.handleLeftBtn.bind(this) }
+        handleRightBtn = { this.handleRightBtn.bind(this) }
+        leftBtnText = {
+          this.props.leftBtnText ? this.props.leftBtnText : "Cancel"
+        }
+        rightBtnText = {
+          this.props.rightBtnText ? this.props.rightBtnText : "Save"
+        }
+      />
     return (
       <div>
-        <Modal dialogClassName="structure-editor" animation show={this.state.showModal} onLoad={this.initializeEditor.bind(this)} onHide={this.handleCancel.bind(this)}>
+        <Modal dialogClassName="structure-editor"
+          animation show={this.state.showModal}
+          onLoad={this.initializeEditor.bind(this)}
+          onHide={this.handleRightBtn.bind(this)}>
+
           <Modal.Header closeButton>
             <Modal.Title>Structure Editor</Modal.Title>
           </Modal.Header>
@@ -106,28 +120,39 @@ export default class StructureEditorModal extends React.Component {
   }
 }
 
-const StructureEditor = ({handleCancel, handleSave}) => {
-  return (
-    <div>
+const StructureEditor =
+  ({handleLeftBtn, handleRightBtn, leftBtnText, rightBtnText}) => {
+    return (
       <div>
-        <iframe id="ifKetcher" src="/ketcher"></iframe>
+        <div>
+          <iframe id="ifKetcher" src="/ketcher"></iframe>
+        </div>
+        <ButtonToolbar>
+          <Button bsStyle="warning" onClick={handleLeftBtn}>
+            {leftBtnText}
+          </Button>
+          <Button bsStyle="primary" onClick={handleRightBtn}>
+            {rightBtnText}
+          </Button>
+        </ButtonToolbar>
       </div>
-      <ButtonToolbar>
-        <Button bsStyle="warning" onClick={handleCancel}>Cancel</Button>
-        <Button bsStyle="primary" onClick={handleSave}>Save</Button>
-      </ButtonToolbar>
-    </div>
-  )
-}
+    )
+  }
 
-const WarningBox = ({handleCancel, hideWarning}) => {
+const WarningBox = ({handleLeftBtn, hideWarning}) => {
   return (
     <Panel header="Parents/Descendants will not be changed!" bsStyle="info">
       <p>This sample has parents or descendants, and they will not be changed.</p>
       <p>Are you sure?</p>
       <br />
-      <Button bsStyle="danger" onClick={handleCancel} className="g-marginLeft--10">Cancel</Button>
-      <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10">Continue Editing</Button>
+      <Button bsStyle="danger" onClick={handleLeftBtn}
+        className="g-marginLeft--10">
+        Cancel
+      </Button>
+      <Button bsStyle="warning" onClick={hideWarning}
+        className="g-marginLeft--10">
+        Continue Editing
+      </Button>
     </Panel>
   )
 }

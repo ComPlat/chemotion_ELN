@@ -1,13 +1,13 @@
 import alt from 'alt'
 import React from 'react'
 import AutoCompleteInput from './AutoCompleteInput'
-import {Glyphicon, Button, Input, DropdownButton, MenuItem}
+import {Glyphicon, Button, DropdownButton, MenuItem}
   from 'react-bootstrap'
-import Select from 'react-select'
 
 import StructureEditorModal from '../structure_editor/StructureEditorModal'
 
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher'
+
 import ElementActions from '../actions/ElementActions'
 import UIStore from '../stores/UIStore'
 import UIActions from '../actions/UIActions'
@@ -41,6 +41,18 @@ export default class Search extends React.Component {
     return promise
   }
 
+  structureSearch(elementType, molfile, userId, collectionId) {
+    let selection = {
+      elementType: elementType,
+      molfile: molfile
+    }
+    UIActions.setSearchSelection(selection)
+
+    let uiState = UIStore.getState()
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
+      collectionId, 1, 'structure')
+  }
+
   handleClearSearchSelection() {
     let uiState = UIStore.getState()
 
@@ -71,12 +83,16 @@ export default class Search extends React.Component {
     })
   }
 
-  handleStructureEditorSave(molfile, svg_file = null) {
+  handleStructureEditorSave(molfile) {
     if (molfile) {
-      this.state.queryMolfile = molfile
+      this.setState({queryMolfile: molfile});
     }
 
-    this.search(molfile)
+    let userState = UserStore.getState()
+    let uiState = UIStore.getState()
+
+    this.structureSearch(this.state.elementType, molfile,
+      userState.currentUser.id, uiState.currentCollection.id)
 
     this.hideStructureEditor()
   }
@@ -88,10 +104,10 @@ export default class Search extends React.Component {
   renderMenuItems() {
     let elements = ["all", "samples", "reactions", "wellplates", "screens"]
 
-    return elements.map((element, index) => {
+    return elements.map((element) => {
       return (
-        <MenuItem
-          key={element} onSelect={() => this.handleElementSelection(element)}>
+        <MenuItem key={element}
+            onSelect = {() => this.handleElementSelection(element)}>
           {element}
         </MenuItem>
       )
@@ -99,9 +115,8 @@ export default class Search extends React.Component {
   }
 
   render() {
-    let molfile = null
     let drawAddon =
-      <Glyphicon glyph='pencil' style={{cursor: 'pointer'}}
+      <Glyphicon glyph='pencil' style={{cursor: 'pointer'}} ref='drawBtn'
         onClick={() => this.showStructureEditor()} />
 
     let searchButton =
@@ -110,7 +125,6 @@ export default class Search extends React.Component {
         <i className="fa fa-times"></i></Button>
     let inputAttributes = {
       placeholder: 'IUPAC, InChI, SMILES, ...',
-      // Uncomment this line to add the draw button
       addonAfter: drawAddon,
       buttonAfter: searchButton,
       style: {
@@ -140,6 +154,7 @@ export default class Search extends React.Component {
             onSave={this.handleStructureEditorSave.bind(this)}
             onCancel={this.handleStructureEditorCancel.bind(this)}
             molfile={this.state.queryMolfile}
+            rightBtnText="Search"
           />
         </div>
         <div className="search-autocomplete">

@@ -73,7 +73,7 @@ module Chemotion
           Sample.for_user(current_user.id).joins(:residues)
             .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
         when 'sum_formula', 'iupac_name', 'sample_name', 'sample_short_label',
-            'inchistring', 'cano_smiles'
+             'inchistring', 'cano_smiles'
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
         when 'reaction_name'
           Reaction.for_user(current_user.id).search_by(search_by_method, arg)
@@ -83,9 +83,14 @@ module Chemotion
           Screen.for_user(current_user.id).search_by(search_by_method, arg)
         when 'substring'
           AllElementSearch.new(arg, current_user.id).search_by_substring
+        when 'structure'
+          fp_vector =
+            Chemotion::OpenBabelService.fingerprint_from_molfile(arg)
+          Sample.for_user(current_user.id).joins(:molecule)
+            .merge(Molecule.by_finger_print(fp_vector)).uniq
         end
 
-        scope = scope.by_collection_id(params[:collection_id].to_i)
+        scope = scope.by_collection_id(collection_id.to_i)
 
         scope
       end
@@ -137,12 +142,23 @@ module Chemotion
         end
 
         post do
-          search_by_method = params[:selection].search_by_method
-          arg = params[:selection].name
+          selection = params[:selection]
+          isStructureSearch = selection.elementType == nil ? false : true
+          if (isStructureSearch)
+            search_by_method = 'structure'
+            arg = selection.molfile
+          else
+            search_by_method = selection.search_by_method
+            arg = selection.name
+          end
 
-          scope = scope_by_search_by_method_arg_and_collection_id(search_by_method, arg, params[:collection_id])
+          scope =
+            scope_by_search_by_method_arg_and_collection_id(search_by_method,
+                                                            arg,
+                                                            params[:collection_id])
 
-          serialization_by_elements_and_page(elements_by_scope(scope), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(scope),
+                                             params[:page])
         end
       end
 
@@ -162,7 +178,8 @@ module Chemotion
 
           samples = scope.by_collection_id(params[:collection_id].to_i)
 
-          serialization_by_elements_and_page(elements_by_scope(samples), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(samples),
+                                             params[:page])
         end
       end
 
@@ -182,7 +199,8 @@ module Chemotion
 
           reactions = scope.by_collection_id(params[:collection_id].to_i)
 
-          serialization_by_elements_and_page(elements_by_scope(reactions), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(reactions),
+                                             params[:page])
         end
       end
 
@@ -202,7 +220,8 @@ module Chemotion
 
           wellplates = scope.by_collection_id(params[:collection_id].to_i)
 
-          serialization_by_elements_and_page(elements_by_scope(wellplates), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(wellplates),
+                                             params[:page])
         end
       end
 
@@ -222,7 +241,8 @@ module Chemotion
 
           screens = scope.by_collection_id(params[:collection_id].to_i)
 
-          serialization_by_elements_and_page(elements_by_scope(screens), params[:page])
+          serialization_by_elements_and_page(elements_by_scope(screens),
+                                             params[:page])
         end
       end
 
