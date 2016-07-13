@@ -36,22 +36,22 @@ class Molecule < ActiveRecord::Base
   }
 
   scope :by_finger_print, -> (fp_vector) {
-    where( 'fp0  & ? = ?', fp_vector[0], fp_vector[0])
-    .where('fp1  & ? = ?', fp_vector[1], fp_vector[1])
-    .where('fp2  & ? = ?', fp_vector[2], fp_vector[2])
-    .where('fp3  & ? = ?', fp_vector[3], fp_vector[3])
-    .where('fp4  & ? = ?', fp_vector[4], fp_vector[4])
-    .where('fp5  & ? = ?', fp_vector[5], fp_vector[5])
-    .where('fp6  & ? = ?', fp_vector[6], fp_vector[6])
-    .where('fp7  & ? = ?', fp_vector[7], fp_vector[7])
-    .where('fp8  & ? = ?', fp_vector[8], fp_vector[8])
-    .where('fp9  & ? = ?', fp_vector[9], fp_vector[9])
-    .where('fp10 & ? = ?', fp_vector[10], fp_vector[10])
-    .where('fp11 & ? = ?', fp_vector[11], fp_vector[11])
-    .where('fp12 & ? = ?', fp_vector[12], fp_vector[12])
-    .where('fp13 & ? = ?', fp_vector[13], fp_vector[13])
-    .where('fp14 & ? = ?', fp_vector[14], fp_vector[14])
-    .where('fp15 & ? = ?', fp_vector[15], fp_vector[15])
+    where( 'fp0  & ? = ?', "%064b" % fp_vector[0], "%064b" % fp_vector[0])
+    .where('fp1  & ? = ?', "%064b" % fp_vector[1], "%064b" % fp_vector[1])
+    .where('fp2  & ? = ?', "%064b" % fp_vector[2], "%064b" % fp_vector[2])
+    .where('fp3  & ? = ?', "%064b" % fp_vector[3], "%064b" % fp_vector[3])
+    .where('fp4  & ? = ?', "%064b" % fp_vector[4], "%064b" % fp_vector[4])
+    .where('fp5  & ? = ?', "%064b" % fp_vector[5], "%064b" % fp_vector[5])
+    .where('fp6  & ? = ?', "%064b" % fp_vector[6], "%064b" % fp_vector[6])
+    .where('fp7  & ? = ?', "%064b" % fp_vector[7], "%064b" % fp_vector[7])
+    .where('fp8  & ? = ?', "%064b" % fp_vector[8], "%064b" % fp_vector[8])
+    .where('fp9  & ? = ?', "%064b" % fp_vector[9], "%064b" % fp_vector[9])
+    .where('fp10 & ? = ?', "%064b" % fp_vector[10], "%064b" % fp_vector[10])
+    .where('fp11 & ? = ?', "%064b" % fp_vector[11], "%064b" % fp_vector[11])
+    .where('fp12 & ? = ?', "%064b" % fp_vector[12], "%064b" % fp_vector[12])
+    .where('fp13 & ? = ?', "%064b" % fp_vector[13], "%064b" % fp_vector[13])
+    .where('fp14 & ? = ?', "%064b" % fp_vector[14], "%064b" % fp_vector[14])
+    .where('fp15 & ? = ?', "%064b" % fp_vector[15], "%064b" % fp_vector[15])
   }
 
   def self.find_or_create_by_molfile molfile, is_partial = false
@@ -107,22 +107,22 @@ class Molecule < ActiveRecord::Base
 
     fp_vector = babel_info[:fp]
 
-    self.fp0  = fp_vector[0]
-    self.fp1  = fp_vector[1]
-    self.fp2  = fp_vector[2]
-    self.fp3  = fp_vector[3]
-    self.fp4  = fp_vector[4]
-    self.fp5  = fp_vector[5]
-    self.fp6  = fp_vector[6]
-    self.fp7  = fp_vector[7]
-    self.fp8  = fp_vector[8]
-    self.fp9  = fp_vector[9]
-    self.fp10 = fp_vector[10]
-    self.fp11 = fp_vector[11]
-    self.fp12 = fp_vector[12]
-    self.fp13 = fp_vector[13]
-    self.fp14 = fp_vector[14]
-    self.fp15 = fp_vector[15]
+    self.fp0  = "%064b" % fp_vector[0]
+    self.fp1  = "%064b" % fp_vector[1]
+    self.fp2  = "%064b" % fp_vector[2]
+    self.fp3  = "%064b" % fp_vector[3]
+    self.fp4  = "%064b" % fp_vector[4]
+    self.fp5  = "%064b" % fp_vector[5]
+    self.fp6  = "%064b" % fp_vector[6]
+    self.fp7  = "%064b" % fp_vector[7]
+    self.fp8  = "%064b" % fp_vector[8]
+    self.fp9  = "%064b" % fp_vector[9]
+    self.fp10 = "%064b" % fp_vector[10]
+    self.fp11 = "%064b" % fp_vector[11]
+    self.fp12 = "%064b" % fp_vector[12]
+    self.fp13 = "%064b" % fp_vector[13]
+    self.fp14 = "%064b" % fp_vector[14]
+    self.fp15 = "%064b" % fp_vector[15]
   end
 
   def attach_svg svg_data

@@ -9,6 +9,7 @@ class AddCanoSmileToMolecules < ActiveRecord::Migration
         Chemotion::OpenBabelService.molecule_info_from_molfile(molecule.molfile)
 
       molecule.cano_smiles = babel_info[:cano_smiles]
+      molecule.save!
     end
 
   end
