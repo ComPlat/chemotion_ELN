@@ -169,23 +169,21 @@ export default class CreateButton extends React.Component {
       <Tooltip id="create_button">Create new Element</Tooltip>
     );
     return (
-      <div style={{marginLeft: '80px', position: 'absolute'}}>
-        {this.createWellplateModal()}
-        <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <DropdownButton id='crate-button-dropdown' bsStyle="primary" title={title} disabled={isDisabled}>
-            <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
-            <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
-            <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
-            <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
-            <MenuItem divider />
-            <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
-            <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
-            <MenuItem divider />
-            <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
-            <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
-          </DropdownButton>
-        </OverlayTrigger>
-      </div>
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <DropdownButton id='crate-button-dropdown' bsStyle="primary" title={title} disabled={isDisabled}>
+          {this.createWellplateModal()}
+          <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
+          <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
+          <MenuItem divider />
+          <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
+          <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
+          <MenuItem divider />
+          <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
+          <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
+        </DropdownButton>
+      </OverlayTrigger>
     )
   }
 }

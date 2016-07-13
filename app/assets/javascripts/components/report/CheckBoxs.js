@@ -1,8 +1,8 @@
 import React, {Component} from 'react'
 import {Table} from 'react-bootstrap'
 
-const Settings = ({settings, toggleCheckbox, toggleCheckAll, checkedAll}) => {
-  let checkBoxs = settings.map( (setting, i) => {
+const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
+  let checkBoxs = items.map( (setting, i) => {
     const {text, checked} = setting
     return(
         <CheckBox key={i}
@@ -44,4 +44,4 @@ const CheckBox = ({text, checked, toggleCheckbox}) => {
   )
 }
 
-export default Settings
+export default CheckBoxs

@@ -6,12 +6,17 @@ module Chemotion
       params do
         requires :id
       end
-      get :rtf do
-        rtf_data = Template::ReactionReport.new(params[:id]).get_rtf_data
+      get :docx do
+        reaction = Reaction.find(params[:id])
+        content = Report::Docx::Document.new(reactions: [reaction]).reactions
 
+        filename = "ELN_Reaction_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
+        template_path = Rails.root.join("lib", "template", "ELN_Reactions.docx")
+
+        content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
-        content_type('text/rtf')
-        body rtf_data.generate_report
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
+        docx = Sablon.template(template_path).render_to_string(merge(content, all_settings, all_configs))
       end
 
       params do
@@ -127,16 +132,73 @@ module Chemotion
       params do
         requires :ids
         requires :settings
+        requires :configs
       end
 
-      get :rtf do
+      get :docx do
         ids = params[:ids].split("_")
-        settings = params[:settings].split("_")
-        rtf_data = Template::ReactionsReport.new(ids, settings).get_rtf_data
+        settings = set_settings(params[:settings].split("_"))
+        configs = set_configs(params[:configs].split("_"))
+        reactions = ids.map { |id| Reaction.find(id) }
+        contents = Report::Docx::Document.new(reactions: reactions).reactions
 
+        filename = "ELN_Reactions_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
+        template_path = Rails.root.join("lib", "template", "ELN_Reactions.docx")
+
+        content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
-        content_type('text/rtf')
-        body rtf_data.generate_report
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
+        docx = Sablon.template(template_path).render_to_string(merge(contents, settings, configs))
+      end
+    end
+
+    helpers do
+      def set_settings(settings)
+        {
+          formula: settings.index("formula"),
+          material: settings.index("material"),
+          description: settings.index("description"),
+          purification: settings.index("purification"),
+          tlc: settings.index("tlc"),
+          observation: settings.index("observation"),
+          analysis: settings.index("analysis"),
+          literature: settings.index("literature"),
+        }
+      end
+
+      def all_settings
+        {
+          formula: true,
+          material: true,
+          description: true,
+          purification: true,
+          tlc: true,
+          observation: true,
+          analysis: true,
+          literature: true,
+        }
+      end
+
+      def set_configs(configs)
+        {
+          pageBreak: configs.index("pagebreak")
+        }
+      end
+
+      def all_configs
+        {
+          pageBreak: true
+        }
+      end
+
+      def merge(contents, settings, configs)
+        {
+          date: Time.now.strftime("%d.%m.%Y"),
+          author: "#{current_user.first_name} #{current_user.last_name}",
+          settings: settings,
+          configs: configs,
+          reactions: contents
+        }
       end
     end
   end

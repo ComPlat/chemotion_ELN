@@ -2,17 +2,6 @@ import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
 import {Label, Table} from 'react-bootstrap';
 
-const DescriptionContent = ({show, description}) => {
-  return (
-    show ?
-      <div>
-        <h4><Label bsStyle="default"> Description </Label></h4>
-        <p>{description}</p>
-      </div>
-      : null
-  )
-}
-
 const SVGContent = ({show, reaction_svg_file}) => {
   const svg_file =reaction_svg_file && `/images/reactions/${reaction_svg_file}`
   return (
@@ -32,16 +21,18 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   const rows = (material) => {
     return material.map((sample, i) => {
       return (
-        <tr key={i}>
-          <td>{sample.molecule.iupac_name}
-              <br/>
-              {sample.molecule.sum_formular}
-              </td>
-          <td>{materailCalc(sample.amount_g, 1000, 4)}</td>
-          <td>{materailCalc(sample.amount_l, 1000, 4)}</td>
-          <td>{materailCalc(sample.amount_mol, 1000, 4)}</td>
-          <td>{materailCalc(sample.equivalent, 1, 4)}</td>
-        </tr>
+        <tbody key={i}>
+          <tr>
+            <td colSpan="5"><i className="fa fa-arrow-circle-right"></i>   {sample.molecule.iupac_name}</td>
+          </tr>
+          <tr>
+            <td>{sample.molecule.sum_formular}</td>
+            <td>{materailCalc(sample.amount_g, 1000, 4)}</td>
+            <td>{materailCalc(sample.amount_l, 1000, 4)}</td>
+            <td>{materailCalc(sample.amount_mol, 1000, 4)}</td>
+            <td>{materailCalc(sample.equivalent, 1, 4)}</td>
+          </tr>
+        </tbody>
       )
     })
   }
@@ -50,16 +41,14 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
       <Table striped condensed hover>
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Formula</th>
             <th>Mass(mg)</th>
             <th>Vol(ml)</th>
             <th>Amount(mmol)</th>
             <th>Equiv/Yield</th>
           </tr>
         </thead>
-        <tbody>
-          {rows}
-        </tbody>
+        {rows}
       </Table>
     )
   }
@@ -77,50 +66,79 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   )
 }
 
-const PropertyContent = ({show, observation, purification, dangerous_products}) => {
-  const list = (items) => {
-    return  (
-      items.length > 0 ?
-        items.map( (item, i) => { return <p key={i}>{i+1}. {item}</p> })
-        : null
-    )
-  }
-  const table = <Table condensed bordered>
-                  <tbody>
-                    <tr>
-                      <td><h5>Observation</h5></td>
-                      <td>{observation}</td>
-                    </tr>
-                    <tr>
-                      <td><h5>Purification</h5></td>
-                      <td>{list(purification)}</td>
-                    </tr>
-                    <tr>
-                      <td><h5>Dangerous<br/>products</h5></td>
-                      <td>{list(dangerous_products)}</td>
-                    </tr>
-                  </tbody>
-                </Table>
+const DescriptionContent = ({show, description}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Properties </Label></h4>
-        <div> {table} </div>
+        <h4><Label bsStyle="default"> Description </Label></h4>
+        <p>{description}</p>
       </div>
       : null
   )
 }
 
-const TLCContent = ({show, tlc_description}) => {
+const PurificationContent = ({show, purification}) => {
+  return (
+    show ?
+      <div>
+        <h4><Label bsStyle="default"> Purification </Label></h4>
+        <div>
+          {purification.join(", ")}
+        </div>
+      </div>
+      : null
+  )
+}
+const TLCContent = ({show, tlc_description, tlc_solvents, rf_value}) => {
   return (
     show ?
       <div>
         <h4><Label bsStyle="default"> TLC - Control </Label></h4>
+        <p> <b>rf_value:</b> {rf_value} </p>
+        <p> <b>TLC_solvents:</b> {tlc_solvents} </p>
         <div> {tlc_description} </div>
       </div>
       : null
   )
 }
+
+const ObservationContent = ({show, observation}) => {
+  return (
+    show ?
+      <div>
+        <h4><Label bsStyle="default"> Observation </Label></h4>
+        <p>{observation}</p>
+      </div>
+      : null
+  )
+}
+
+const AnalysesContent = ({show, products}) => {
+  const analyses = products.map((product, i) => {
+    return (
+      product.analyses.map((analysis, j) => {
+        return (
+          analysis ?
+            <div key={i*100+j}>
+              <p><b>{product.molecule.sum_formular}</b> ({analysis.kind})</p>
+              <p><u>Content:</u> {analysis.content}</p>
+              <p><u>Description:</u> {analysis.description}</p>
+            </div>
+          : null
+        )
+      })
+    )
+  })
+  return (
+    show ?
+      <div>
+        <h4><Label bsStyle="default"> Analysis </Label></h4>
+        <div>{analyses}</div>
+      </div>
+      : null
+  )
+}
+
 const LiteratureContent = ({show, literatures}) => {
   const rows = literatures.map((literature, i) => {
     return (
@@ -151,4 +169,4 @@ const LiteratureContent = ({show, literatures}) => {
   )
 }
 
-export {DescriptionContent, SVGContent, MaterialContent, PropertyContent, TLCContent, LiteratureContent}
+export {SVGContent, MaterialContent, DescriptionContent, PurificationContent, TLCContent, ObservationContent, AnalysesContent, LiteratureContent}

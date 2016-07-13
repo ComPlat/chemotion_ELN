@@ -46,6 +46,7 @@ gem 'awesome_print'
 
 # Report Generator
 gem 'rtf'
+gem 'sablon', github: 'ComPlat/sablon'
 gem 'rmagick'
 gem 'axlsx', git: 'git://github.com/randym/axlsx'
 # Import of elements from XLS and CSV file
@@ -73,6 +74,7 @@ gem "paranoia", "~> 2.0"
 gem "whenever", require: false
 gem "dotenv-rails"
 gem "backup"
+gem 'yaml_db'
 
 if ENV.fetch("RAILS_ENV", "development").match(/^(development|test)\z/)
   gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
