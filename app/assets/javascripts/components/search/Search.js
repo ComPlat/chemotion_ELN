@@ -1,7 +1,8 @@
 import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
-import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
+import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem}
+  from 'react-bootstrap';
 import Select from 'react-select'
 
 import StructureEditorModal from '../structure_editor/StructureEditorModal'

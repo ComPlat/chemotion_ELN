@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem}
+  from 'react-bootstrap';
 import debounce from 'es6-promise-debounce';
 
 export default class AutoCompleteInput extends React.Component {
