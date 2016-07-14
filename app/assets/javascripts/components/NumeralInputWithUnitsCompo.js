@@ -143,7 +143,6 @@ NumeralInputWithUnitsCompo.propTypes = {
   metricPrefix: React.PropTypes.string,
   metricPrefixes: React.PropTypes.array,
   precision: React.PropTypes.number,
-//  value: React.PropTypes.string,
   disabled: React.PropTypes.bool,
   label: React.PropTypes.node
 };
