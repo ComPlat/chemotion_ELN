@@ -26,16 +26,6 @@ export default class AutoCompleteInput extends React.Component {
     let input = ReactDOM.findDOMNode(this.refs.input)
     if (input) {
       this.setState({ inputWidth: input.offsetWidth })
-
-      // Set cursor to the wrapper of drawIcon/Button
-      let drawAddon = document.getElementById("AutoCompletedrawAddon")
-      let drawAddonWrapper = drawAddon.parentNode
-      drawAddonWrapper.style.cursor = "pointer"
-      // Attach the same onClick event
-      let {drawAddonOnClick} = this.props
-      drawAddonWrapper.addEventListener('click', function() {
-        drawAddonOnClick();
-      })
     }
   }
 
@@ -259,35 +249,13 @@ export default class AutoCompleteInput extends React.Component {
 
     return (
       <div>
-        {/*<Input {...this.props.inputAttributes}
-          disabled = {this.state.inputDisabled}
-          type='text'
-          value={value}
-          autoComplete='off'
-          ref='input'
-          onChange={event => this.handleValueChange(event)}
-          onKeyDown={event => this.handleKeyDown(event)}
-          buttonBefore={this.props.buttonBefore}
-        />
-        <Overlay
-          show={showSuggestions}
-          onHide={() => this.abortAutoSelection()}
-          placement='bottom'
-          container={this}
-          rootClose={true}>
-          <div style={containerStyle}>
-            <ListGroup {...this.props.suggestionsAttributes}>
-              {this.renderSuggestions()}
-            </ListGroup>
-          </div>
-        </Overlay>*/}
-
         <FormGroup>
           <InputGroup>
-            {/*<InputGroup.Button>
+            <InputGroup.Button>
               {this.props.buttonBefore}
-            </InputGroup.Button>*/}
+            </InputGroup.Button>
             <FormControl {...this.props.inputAttributes}
+              disabled = {this.state.inputDisabled}
               type='text'
               value={value}
               autoComplete='off'
@@ -295,9 +263,9 @@ export default class AutoCompleteInput extends React.Component {
               onChange={event => this.handleValueChange(event)}
               onKeyDown={event => this.handleKeyDown(event)}
             />
-            {/*<InputGroup.Button>
+            <InputGroup.Button>
               {this.props.buttonAfter}
-            </InputGroup.Button>*/}
+            </InputGroup.Button>
           </InputGroup>
           <Overlay
             show={showSuggestions}

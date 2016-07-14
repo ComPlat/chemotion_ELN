@@ -1,7 +1,7 @@
 import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
-import {Glyphicon, Button, DropdownButton, MenuItem} from 'react-bootstrap';
+import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem} from 'react-bootstrap';
 import Select from 'react-select'
 
 import StructureEditorModal from '../structure_editor/StructureEditorModal'
@@ -128,19 +128,19 @@ export default class Search extends React.Component {
   }
 
   render() {
-    let drawAddon = <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />
+    let buttonAfter =
+      <ButtonGroup>
+        <Button bsStyle = "primary" onClick={() => this.showStructureEditor()}>
+          <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />
+        </Button>
+        <Button bsStyle = "danger"
+                onClick={() => this.handleClearSearchSelection()}>
+          <i className="fa fa-times"></i>
+        </Button>
+      </ButtonGroup>
 
-    let searchButton =
-      <Button onClick={() => this.handleClearSearchSelection()}>
-      {/*bsStyle="danger"*/}
-        <i className="fa fa-times"></i></Button>
     let inputAttributes = {
-// <<<<<<< HEAD
-//       placeholder: 'IUPAC, InChI, SMILES, ...',
-//       addonAfter: drawAddon,
-//       buttonAfter: searchButton,
-// =======
-      placeholder: 'Search for elements...',
+      placeholder: 'IUPAC, InChI, SMILES, ...',
       style: {
         width: 300
       }
@@ -172,23 +172,15 @@ export default class Search extends React.Component {
           />
         </div>
         <div className="search-autocomplete">
-{/*<<<<<<< HEAD
           <AutoCompleteInput
-            drawAddonOnClick = {this.showStructureEditor.bind(this)}
             inputAttributes={inputAttributes}
             suggestionsAttributes={suggestionsAttributes}
             suggestions={input => this.search(input)}
             ref="autoComplete"
             onSelectionChange={selection=>this.handleSelectionChange(selection)}
-            buttonBefore={innerDropdown}/>
-=======*/}
-          <AutoCompleteInput inputAttributes={inputAttributes}
-                             suggestionsAttributes={suggestionsAttributes}
-                             suggestions={input => this.search(input)}
-                             ref="autoComplete"
-                             onSelectionChange={selection => this.handleSelectionChange(selection)}
-                             buttonBefore={innerDropdown}
-                             buttonAfter={searchButton}/>
+            buttonBefore={innerDropdown}
+            buttonAfter={buttonAfter}
+          />
         </div>
       </div>
     )
