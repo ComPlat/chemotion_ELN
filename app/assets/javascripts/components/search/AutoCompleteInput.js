@@ -20,10 +20,10 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   componentDidMount() {
-    this.initSearchBar()
+    this.initInputWidth()
   }
 
-  initSearchBar() {
+  initInputWidth() {
     let input = ReactDOM.findDOMNode(this.refs.input)
     if (input) {
       this.setState({ inputWidth: input.offsetWidth })
