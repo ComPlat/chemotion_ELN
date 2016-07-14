@@ -63,25 +63,12 @@ export default class ReportContainer extends Component {
   }
 
   render() {
-    let showGeneReportBtnIds = this.state.selectedReactionIds.length !== 0 ? true : false
-    let showGeneReportBtnSts = this.state.settings.map(setting => {
-      if(setting.checked){
-        return true
-      }
-    }).filter(r => r!=null).length !== 0 ? true : false
-
     return (
       <StickyDiv zIndex={2}>
         <Panel header="Report Generation"
                bsStyle="default">
           <div className="button-right">
-            <Button bsStyle="primary"
-                    bsSize="xsmall"
-                    className="g-marginLeft--10"
-                    disabled={!(showGeneReportBtnSts && showGeneReportBtnIds)}
-                    onClick={this.generateReports.bind(this)}>
-              <span><i className="fa fa-file-text-o"></i> Generate Report</span>
-            </Button>
+            {this.generateReportsBtn()}
             <Button bsStyle="danger"
                     bsSize="xsmall"
                     className="g-marginLeft--10"
@@ -107,7 +94,8 @@ export default class ReportContainer extends Component {
 
             <Tab eventKey={2} title={"Report"}>
               <div className="panel-fit-screen">
-                <Reports selectedReactions={this.state.selectedReactions} settings={this.state.settings} />
+                <Reports selectedReactions={this.state.selectedReactions}
+                         settings={this.state.settings} />
               </div>
             </Tab>
           </Tabs>
@@ -143,10 +131,43 @@ export default class ReportContainer extends Component {
     const settings = this.chainedItems(this.state.settings)
     const configs = this.chainedItems(this.state.configs)
 
+    this.spinnertProcess()
     Utils.downloadFile({
-      contents: "api/v1/multiple_reports/docx?ids=" + ids + "&settings=" + settings + "&configs=" + configs,
+      contents: "api/v1/multiple_reports/docx?ids=" + ids
+                + "&settings=" + settings + "&configs=" + configs,
       name: "ELN-report_" + new Date().toISOString().slice(0,19)
     })
+  }
+
+  generateReportsBtn() {
+    let showGeneReportBtnIds = this.state.selectedReactionIds.length !== 0 ? true : false
+    let showGeneReportBtnSts = this.state.settings.map(setting => {
+      if(setting.checked){
+        return true
+      }
+    }).filter(r => r!=null).length !== 0 ? true : false
+
+    return (
+      !this.state.processingReport ?
+      <Button bsStyle="primary"
+              bsSize="xsmall"
+              className="g-marginLeft--10"
+              disabled={!(showGeneReportBtnSts && showGeneReportBtnIds)}
+              onClick={this.generateReports.bind(this)}>
+        <span><i className="fa fa-file-text-o"></i> Generate Report</span>
+      </Button>
+      :
+      <Button bsStyle="danger"
+              bsSize="xsmall"
+              className="g-marginLeft--10">
+        <span><i className="fa fa-spinner fa-pulse fa-fw"></i> Processing your report, please wait...</span>
+      </Button>
+    )
+  }
+
+  spinnertProcess() {
+    this.setState({processingReport: !this.state.processingReport})
+    setTimeout(() => this.setState({processingReport: false}), 2500);
   }
 
   chainedItems(items) {

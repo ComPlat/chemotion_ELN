@@ -10,6 +10,9 @@ module SVG
       @reactants = materials_svg_paths[:reactants]
       @products = materials_svg_paths[:products]
       number_of_reactants = (@reactants.size == 0 && @starting_materials.size != 0) ? 1 : @reactants.size
+      number_of_starting_materials = @starting_materials.size
+      number_of_products = @products.size
+      word_size = 4 + (number_of_reactants + number_of_starting_materials + number_of_products) * 1.2
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
       @label = options[:label]
@@ -27,13 +30,13 @@ module SVG
         </svg>
       END
       @temperature = <<-END
-        <svg font-family="sans-serif" font-size="8">
-          <text text-anchor="middle" x="#{@arrow_width / 2}" y="65">#{@temperature}</text>
+        <svg font-family="sans-serif">
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="65" font-size="#{word_size}">#{@temperature}</text>
         </svg>
       END
       @solvent = <<-END
-        <svg font-family="sans-serif" font-size="8">
-          <text text-anchor="middle" x="#{@arrow_width / 2}" y="80">#{@solvent}</text>
+        <svg font-family="sans-serif">
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="80" font-size="#{word_size}">#{@solvent}</text>
         </svg>
       END
       @divider = <<-END

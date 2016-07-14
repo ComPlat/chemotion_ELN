@@ -25,7 +25,9 @@ module Report
           obsevration: observation,
           analyses: analyses,
           literatures: literatures,
-          not_last: id != last_id
+          not_last: id != last_id,
+          show_tlc_rf: rf_value.to_f != 0,
+          show_tlc_solvent: tlc_solvents.present?
         }
       end
 
@@ -73,11 +75,12 @@ module Report
         obj.reactions_starting_material_samples.each do |s|
           sample = s.sample
           output.push({ name: sample.name,
+                        iupac_name: sample.molecule.iupac_name,
                         short_label: sample.short_label,
                         formular: sample.molecule.sum_formular,
-                        molecular_weight: sample.molecule.molecular_weight.try(:round, digit),
+                        mol_w: sample.molecule.molecular_weight.try(:round, digit),
                         mass: sample.target_amount_value.try(:round, digit),
-                        volume: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
+                        vol: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
                         density: sample.density.try(:round, digit),
                         mol: (sample.target_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
                         equiv: s.equivalent.try(:round, digit)
@@ -90,15 +93,16 @@ module Report
         output = Array.new
         obj.reactions_reactant_samples.each do |r|
           sample = r.sample
-          output.push({  name: sample.name,
-                            short_label: sample.short_label,
-                            formular: sample.molecule.sum_formular,
-                            molecular_weight: sample.molecule.molecular_weight.try(:round, digit),
-                            mass: sample.target_amount_value.try(:round, digit),
-                            volume: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
-                            density: sample.density.try(:round, digit),
-                            mol: (sample.target_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
-                            equiv: r.equivalent.try(:round, digit)
+          output.push({ name: sample.name,
+                        iupac_name: sample.molecule.iupac_name,
+                        short_label: sample.short_label,
+                        formular: sample.molecule.sum_formular,
+                        mol_w: sample.molecule.molecular_weight.try(:round, digit),
+                        mass: sample.target_amount_value.try(:round, digit),
+                        vol: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
+                        density: sample.density.try(:round, digit),
+                        mol: (sample.target_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
+                        equiv: r.equivalent.try(:round, digit)
           })
         end
         return output
@@ -108,15 +112,17 @@ module Report
         output = Array.new
         obj.reactions_product_samples.each do |p|
           sample = p.sample
+          sample.real_amount_value ||= 0
           output.push({ name: sample.name,
+                        iupac_name: sample.molecule.iupac_name,
                         short_label: sample.short_label,
                         formular: sample.molecule.sum_formular,
-                        molecular_weight: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.target_amount_value.try(:round, digit),
-                        volume: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
+                        mol_w: sample.molecule.molecular_weight.try(:round, digit),
+                        mass: sample.real_amount_value.try(:round, digit),
+                        vol: (sample.real_amount_value / sample.density.to_f).try(:round, digit),
                         density: sample.density.try(:round, digit),
-                        mol: (sample.target_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
-                        equiv: p.equivalent.try(:round, digit)
+                        mol: (sample.real_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
+                        equiv: "#{((p.equivalent || 0)*100).try(:round, digit)}%"
           })
         end
         return output
