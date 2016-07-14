@@ -19,14 +19,22 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   componentDidMount() {
-    this.initInputWidth()
+    this.initSearchBar()
   }
 
-  initInputWidth() {
+  initSearchBar() {
     let input = ReactDOM.findDOMNode(this.refs.input)
-    if(input) {
-      this.setState({
-        inputWidth: input.offsetWidth
+    if (input) {
+      this.setState({ inputWidth: input.offsetWidth })
+
+      // Set cursor to the wrapper of drawIcon/Button
+      let drawAddon = document.getElementById("AutoCompletedrawAddon")
+      let drawAddonWrapper = drawAddon.parentNode
+      drawAddonWrapper.style.cursor = "pointer"
+      // Attach the same onClick event
+      let {drawAddonOnClick} = this.props
+      drawAddonWrapper.addEventListener('click', function() {
+        drawAddonOnClick();
       })
     }
   }

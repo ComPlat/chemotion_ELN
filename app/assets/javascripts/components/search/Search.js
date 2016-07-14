@@ -127,9 +127,7 @@ export default class Search extends React.Component {
   }
 
   render() {
-    let drawAddon =
-      <Glyphicon glyph='pencil' style={{cursor: 'pointer'}} ref='drawBtn'
-        onClick={() => this.showStructureEditor()} />
+    let drawAddon = <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />      
 
     let searchButton =
       <Button bsStyle="danger"
@@ -171,6 +169,7 @@ export default class Search extends React.Component {
         </div>
         <div className="search-autocomplete">
           <AutoCompleteInput
+            drawAddonOnClick = {this.showStructureEditor.bind(this)}
             inputAttributes={inputAttributes}
             suggestionsAttributes={suggestionsAttributes}
             suggestions={input => this.search(input)}
