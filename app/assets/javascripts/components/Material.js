@@ -66,6 +66,7 @@ export default class Material extends Component {
       )
   }
 
+
   materialLoading(material, inputsStyle, showLoadingColumn) {
     if(!showLoadingColumn) {
       return false;
@@ -197,7 +198,8 @@ export default class Material extends Component {
       );
     } else {
       return (
-        <FormControl type="text"
+        <NumeralInputWithUnitsCompo
+          precision={4}
           value={material.equivalent}
           disabled={material.reference && material.equivalent}
           onChange={(e) => this.handleEquivalentChange(e)}
@@ -280,8 +282,8 @@ export default class Material extends Component {
     return value
   }
 
-  handleEquivalentChange(event) {
-    let equivalent = event.target.value;
+  handleEquivalentChange(e) {
+    let equivalent = e.value;
 
     if(this.props.onChange) {
       let event = {
