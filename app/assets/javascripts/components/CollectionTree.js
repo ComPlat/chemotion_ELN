@@ -1,15 +1,11 @@
 import React from 'react';
 import {Button} from 'react-bootstrap';
-
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
-
 import CollectionSubtree from './CollectionSubtree';
-
 import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
-
 import Xdiv from './extra/CollectionTreeXdiv';
 
 export default class CollectionTree extends React.Component {
@@ -49,49 +45,12 @@ export default class CollectionTree extends React.Component {
 
   sharedSubtrees() {
     let roots = this.state.sharedRoots;
-
-    let sharedWithLabels = roots.map((root) => {
-      return root.label;
-    }).unique();
-
-    let fakeRoots = sharedWithLabels.map((label) => {
-      return {
-        label: label,
-        id: '',
-        children: [],
-        descendant_ids: []
-      }
-    });
-
-    this.assignRootsAsChildrenToFakeRoots(roots, fakeRoots);
-
-    fakeRoots.forEach((root) => {
-      root.label = root.label.replace('project', 'projects');
-    });
-
-    return this.subtrees(fakeRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
+    return this.subtrees(roots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
   }
 
   remoteSubtrees() {
     let roots = this.state.remoteRoots;
-
-    // for unique see below (end of file)
-    let sharedByNames = roots.map((root) => {
-      return root.shared_by_name
-    }).unique();
-
-    let fakeRoots = sharedByNames.map((name) => {
-      return {
-        label: 'From ' + name,
-        id: '',//'from-' + this.convertToSlug(name),
-        children: [],
-        descendant_ids: []
-      }
-    });
-
-    this.assignRootsAsChildrenToFakeRoots(roots, fakeRoots);
-
-    return this.subtrees(fakeRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> Shared with me <i className="fa fa-share-alt" /></div></div>, true)
+    return this.subtrees(roots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> Shared with me <i className="fa fa-share-alt" /></div></div>, false)
   }
 
   convertToSlug(name) {
@@ -125,16 +84,15 @@ export default class CollectionTree extends React.Component {
       return <div></div>;
     }
   }
- collectionManagementButton() {
 
-      return  (
-        <div className="take-ownership-btn">
-          <Button bsStyle="danger" bsSize="xsmall" onClick={() => this.handleCollectionManagementToggle()}>
-            <i className="fa fa-cog"></i>
-          </Button>
-        </div>
-      )
-
+  collectionManagementButton() {
+    return  (
+      <div className="take-ownership-btn">
+        <Button bsStyle="danger" bsSize="xsmall" onClick={() => this.handleCollectionManagementToggle()}>
+          <i className="fa fa-cog"></i>
+        </Button>
+      </div>
+    )
   }
 
   handleCollectionManagementToggle() {

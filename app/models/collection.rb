@@ -23,8 +23,8 @@ class Collection < ActiveRecord::Base
 
   scope :ordered, -> { order("position ASC") }
   scope :unshared, -> { unlocked.where(is_shared: false) }
-  scope :shared, ->(user_id) { unlocked.where('shared_by_id = ? AND is_shared = ?', user_id, true) }
-  scope :remote, ->(user_id) { unlocked.where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
+  scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
+  scope :remote, ->(user_id) { where('is_shared = ? AND NOT shared_by_id = ?', true, user_id) }
   scope :belongs_to_or_shared_by, ->(user_id) { where("user_id = ? OR shared_by_id = ?", user_id, user_id) }
 
   default_scope { ordered }

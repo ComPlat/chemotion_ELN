@@ -15,11 +15,92 @@ ActiveRecord::Schema.define(version: 20160627110544) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
+  end
+
+  create_table "chemstash_chemicals", force: :cascade do |t|
+    t.string   "substance"
+    t.string   "location"
+    t.string   "current_location"
+    t.text     "molfile"
+    t.string   "acronym"
+    t.string   "additional_acronym"
+    t.string   "status"
+    t.string   "cas"
+    t.string   "supplier"
+    t.string   "catalogue_year"
+    t.string   "ordering_number"
+    t.float    "quantity"
+    t.string   "unit"
+    t.float    "price"
+    t.string   "currency",           default: "euro"
+    t.time     "ordered_at"
+    t.string   "bill"
+    t.string   "danger_sign"
+    t.string   "safety_statement"
+    t.string   "risk_statement"
+    t.text     "note"
+    t.hstore   "label"
+    t.integer  "collection_id"
+    t.datetime "created_at",                          null: false
+    t.datetime "updated_at",                          null: false
+  end
+
+  add_index "chemstash_chemicals", ["collection_id"], name: "index_chemstash_chemicals_on_collection_id", using: :btree
+
+  create_table "chemstash_chemicals_molecules", force: :cascade do |t|
+    t.integer "chemstash_chemical_id"
+    t.integer "molecule_id"
+  end
+
+  add_index "chemstash_chemicals_molecules", ["chemstash_chemical_id"], name: "index_chemstash_chemicals_molecules_on_chemstash_chemical_id", using: :btree
+  add_index "chemstash_chemicals_molecules", ["molecule_id"], name: "index_chemstash_chemicals_molecules_on_molecule_id", using: :btree
+
+  create_table "chemstash_chemicals_orders", force: :cascade do |t|
+    t.integer "chemstash_chemical_id"
+    t.integer "chemstash_orders_id"
+    t.integer "sample_id"
+    t.string  "batch_nr"
+  end
+
+  add_index "chemstash_chemicals_orders", ["chemstash_chemical_id"], name: "index_chemstash_chemicals_orders_on_chemstash_chemical_id", using: :btree
+  add_index "chemstash_chemicals_orders", ["chemstash_orders_id"], name: "index_chemstash_chemicals_orders_on_chemstash_orders_id", using: :btree
+  add_index "chemstash_chemicals_orders", ["sample_id"], name: "index_chemstash_chemicals_orders_on_sample_id", using: :btree
+
+  create_table "chemstash_chemicals_statements", id: false, force: :cascade do |t|
+    t.integer "chemstash_chemical_id"
+    t.integer "chemstash_statement_id"
+  end
+
+  add_index "chemstash_chemicals_statements", ["chemstash_chemical_id"], name: "index_chemstash_chemicals_statements_on_chemstash_chemical_id", using: :btree
+  add_index "chemstash_chemicals_statements", ["chemstash_statement_id"], name: "index_chemstash_chemicals_statements_on_chemstash_statement_id", using: :btree
+
+  create_table "chemstash_orders", force: :cascade do |t|
+    t.string   "supplier"
+    t.string   "catalogue_year"
+    t.string   "ordering_number"
+    t.float    "quantity"
+    t.string   "unit"
+    t.float    "price"
+    t.string   "currency",        default: "euro"
+    t.time     "ordered_at"
+    t.string   "ordered_by"
+    t.string   "ordered_for"
+    t.string   "bill"
+    t.datetime "created_at",                       null: false
+    t.datetime "updated_at",                       null: false
+  end
+
+  create_table "chemstash_statements", force: :cascade do |t|
+    t.string   "acronym"
+    t.text     "statement"
+    t.string   "type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "collections", force: :cascade do |t|

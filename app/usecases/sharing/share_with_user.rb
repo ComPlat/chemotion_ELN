@@ -7,7 +7,7 @@ module Usecases
 
       def execute!
         ActiveRecord::Base.transaction do
-          collection_attributes = @params.fetch(:collection_attributes, {})
+          collection_attributes = @params.fetch(:collection_attributes, {}).merge(is_shared: true)
           c = Collection.create(collection_attributes)
           current_user_id = collection_attributes.fetch(:shared_by_id)
 
@@ -24,9 +24,20 @@ module Usecases
           sample_ids = (sample_ids + associated_sample_ids).uniq
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq
 
-          if @params[:current_collection_id]
-            c.update(parent: Collection.find(@params[:current_collection_id]))
-          end
+          # find or create and assign parent collection ()
+          root_label = "with %s" %c.user.name_abbreviation
+          p collection_attributes
+          root_collection_attributes = {
+            label: root_label,
+            user_id: collection_attributes[:user_id],
+            shared_by_id: current_user_id,
+            is_locked: true,
+            is_shared: true
+
+          }
+
+          rc = Collection.find_or_create_by(root_collection_attributes)
+          c.update(parent: rc)
 
           sample_ids.each do |sample_id|
             CollectionsSample.create(collection_id: c.id, sample_id: sample_id)

@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import Numeral from 'numeral';
-import {Input} from 'react-bootstrap';
+import {FormGroup, FormControl, ControlLabel,InputGroup} from 'react-bootstrap';
 
 export default class NumeralInput extends Component {
   constructor(props) {
@@ -54,10 +54,27 @@ export default class NumeralInput extends Component {
   render() {
     let {bsSize, bsStyle, addonAfter, buttonAfter, label, disabled} = this.props;
     let {numeralValue} = this.state;
+    let addonAfterWrapper, buttonAfterWrapper;
+    if(addonAfter) {
+      addonAfterWrapper = <InputGroup.Addon>{addonAfter}</InputGroup.Addon>;
+    }
+
+    if(buttonAfter) {
+      buttonAfterWrapper = <InputGroup.Button>{buttonAfter}</InputGroup.Button>;
+    }
+
     return (
-      <Input type='text' label={label} value={numeralValue} bsSize={bsSize}
-       bsStyle={bsStyle} addonAfter={addonAfter} buttonAfter={buttonAfter}
-       disabled={disabled} onChange={ event => this._handleInputValueChange(event)}/>
+      <FormGroup>
+        <ControlLabel>{label}</ControlLabel>
+        <InputGroup>
+          <FormControl type='text'  value={numeralValue} bsSize={bsSize}
+            bsStyle={bsStyle}
+            disabled={disabled}
+            onChange={ event => this._handleInputValueChange(event)}/>
+          {buttonAfterWrapper}
+          {addonAfterWrapper}
+        </InputGroup>
+      </FormGroup>
     );
   }
 }

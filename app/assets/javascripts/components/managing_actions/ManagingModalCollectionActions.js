@@ -1,6 +1,6 @@
 import React from 'react';
-import {Button, Input, Modal} from 'react-bootstrap';
-import Select from 'react-select';
+import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
+
 
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
@@ -120,15 +120,22 @@ export default class ManagingModalCollectionActions extends React.Component {
   render() {
     return (
       <div>
-        <Input ref='collectionSelect' type='select' label='Select a Collection'>
+      <FormGroup>
+        <ControlLabel>Select a Collection</ControlLabel>
+        <FormControl ref='collectionSelect' componentClass="select">
           {this.collectionEntries()}
-        </Input>
+        </FormControl>
+      </FormGroup>
+
         <table width="100%"><tbody>
           <tr>
             <td width="95%" className="padding-right">
-              <Input type="text" label="Create a new Collection" ref="collectionLabelInput"
-                     placeholder={'-- Please insert collection name --'}
+              <FormGroup>
+                <ControlLabel>Create a Collection</ControlLabel>
+                <FormControl type="text" ref="collectionLabelInput"
+                  placeholder={'-- Please insert collection name --'}
                 />
+              </FormGroup>
             </td>
             <td width="5%">
               <Button bsSize="small" className="managing-actions-add-btn" bsStyle="success" onClick={this.addCollection.bind(this)}>

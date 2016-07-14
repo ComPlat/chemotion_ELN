@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Input} from 'react-bootstrap';
+import {FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 
 export default class WellplateProperties extends Component {
 
@@ -15,33 +15,36 @@ export default class WellplateProperties extends Component {
       <table width="100%"><tbody>
         <tr>
           <td width="70%" className="padding-right">
-            <Input
-              type="text"
-              label="Name"
-              value={name}
-              onChange={event => this.handleInputChange('name', event)}
-              disabled={name == '***'}
+            <FormGroup>
+              <ControlLabel>Name</ControlLabel>
+              <FormControl type="text"
+                value={name}
+                onChange={event => this.handleInputChange('name', event)}
+                disabled={name == '***'}
               />
+            </FormGroup>
           </td>
           <td width="30%">
-            <Input
-              type="text"
-              label="Size"
-              value={size}
-              onChange={event => this.handleInputChange('size', event)}
-              disabled
+            <FormGroup>
+              <ControlLabel>Size</ControlLabel>
+              <FormControl type="text"
+                value={size}
+                onChange={event => this.handleInputChange('size', event)}
+                disabled
               />
+            </FormGroup>
           </td>
         </tr>
         <tr>
           <td colSpan="2">
-            <Input
-              type="textarea"
-              label="Description"
-              value={description}
-              onChange={event => this.handleInputChange('description', event)}
-              disabled={description == '***'}
+            <FormGroup>
+              <ControlLabel>Description</ControlLabel>
+              <FormControl type="textarea"
+                value={description}
+                onChange={event => this.handleInputChange('description', event)}
+                disabled={description == '***'}
               />
+            </FormGroup>
           </td>
         </tr>
       </tbody></table>

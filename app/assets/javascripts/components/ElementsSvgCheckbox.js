@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Input} from 'react-bootstrap';
+import {FormGroup,Checkbox} from 'react-bootstrap';
 import UIActions from './actions/UIActions';
 
 export default class ElementsSvgCheckbox extends Component {
@@ -24,8 +24,16 @@ export default class ElementsSvgCheckbox extends Component {
   }
 
   render() {
-    return <Input label="Show Previews" type="checkbox"
-      onChange={() => this.toggleCheckbox()}
-      checked={this.state.checked ? this.state.checked : false}/>
+    return(
+      <FormGroup>
+        <Checkbox inline
+          className="element-svg-checkbox"
+          onChange={() => this.toggleCheckbox()}
+          checked={this.state.checked ? this.state.checked : false}
+        >
+          Display schemes
+        </Checkbox>
+      </FormGroup>
+    )
   }
 }

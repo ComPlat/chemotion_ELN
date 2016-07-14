@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, ButtonToolbar, Input} from 'react-bootstrap';
+import {Button, ButtonToolbar, Checkbox} from 'react-bootstrap';
 
 export default class ManagingModalDelete extends React.Component {
   constructor(props) {
@@ -27,9 +27,9 @@ export default class ManagingModalDelete extends React.Component {
     const {onHide} = this.props;
     return (
       <div>
-        <Input type="checkbox"
-               label="Also delete reaction subsamples?"
-               onChange={() => this.handleCheck()} />
+        <Checkbox onChange={() => this.handleCheck()} checked={this.state.checked ? this.state.checked : false}>
+          Also delete reaction subsamples?
+        </Checkbox>
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
           <Button bsStyle="warning" onClick={() => this.handleClick()}>Delete</Button>

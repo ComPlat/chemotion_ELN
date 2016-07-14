@@ -1,5 +1,6 @@
 import React from 'react';
-import {Button, ButtonToolbar, DropdownButton, Input, Modal, MenuItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Button, ButtonToolbar, DropdownButton, FormControl,
+  FormGroup, ControlLabel, Modal, MenuItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
 import ElementActions from '../actions/ElementActions';
@@ -120,10 +121,13 @@ export default class CreateButton extends React.Component {
         <Modal.Body>
           You have selected {modalProps.sampleCount} samples. Please fill in the number of wellplates you would like to create.
           <p />
-          <Input type="text"
-                 ref="wellplateInput"
-                 label="Number of wellplates"
-                 defaultValue={modalProps.wellplateCount}/>
+          <FormGroup controlId="wellplateInput">
+            <ControlLabel>Number of wellplates</ControlLabel>
+            <FormControl type="text"
+              ref="wellplateInput"
+              defaultValue={modalProps.wellplateCount}/>
+          </FormGroup>
+
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => this.handleModalHide()}>Cancel</Button>
             <Button bsStyle="warning" onClick={() => this.bulkCreateWellplates()}>Submit</Button>

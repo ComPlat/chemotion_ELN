@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Row, Col, Input, ListGroupItem, ListGroup} from 'react-bootstrap'
+import {Row, Col, FormGroup, FormControl, ControlLabel, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
 import {statusOptions} from './staticDropdownOptions/options'
 
@@ -71,13 +71,15 @@ export default class ReactionDetailsMainProperties extends Component {
         <ListGroupItem header="">
           <Row>
             <Col md={6}>
-              <Input
-                type="text"
-                label="Name"
-                value={reaction.name}
-                placeholder="Name..."
-                disabled={reaction.isMethodDisabled('name')}
-                onChange={event => this.handleInputChange('name', event)}/>
+              <FormGroup>
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.name}
+                  placeholder="Name..."
+                  disabled={reaction.isMethodDisabled('name')}
+                  onChange={event => this.handleInputChange('name', event)}/>
+              </FormGroup>
             </Col>
             <Col md={3}>
               <label>Status</label>
@@ -91,28 +93,32 @@ export default class ReactionDetailsMainProperties extends Component {
                   const wrappedEvent = {target: {value: event}};
                   this.handleInputChange('status', wrappedEvent)
                 }}
-                />
+              />
             </Col>
             <Col md={3}>
-              <Input
-                type="text"
-                label="Temperature"
-                value={reaction.temperature}
-                disabled={reaction.isMethodDisabled('temperature')}
-                placeholder="Temperature..."
-                onChange={event => this.handleInputChange('temperature', event)}/>
+              <FormGroup>
+                <ControlLabel>Temperature</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={reaction.temperature}
+                  disabled={reaction.isMethodDisabled('temperature')}
+                  placeholder="Temperature..."
+                  onChange={event => this.handleInputChange('temperature', event)}/>
+              </FormGroup>
             </Col>
           </Row>
           <Row>
             <Col md={12}>
-              <Input
-                type="textarea"
-                label="Description"
-                value={reaction.description}
-                disabled={reaction.isMethodDisabled('description')}
-                placeholder="Description..."
-                rows={6}
-                onChange={event => this.handleInputChange('description', event)}/>
+              <FormGroup>
+                <ControlLabel>Description</ControlLabel>
+                <FormControl
+                  type="textarea"
+                  value={reaction.description}
+                  disabled={reaction.isMethodDisabled('description')}
+                  placeholder="Description..."
+                  rows={6}
+                  onChange={event => this.handleInputChange('description', event)}/>
+              </FormGroup>
             </Col>
           </Row>
         </ListGroupItem>

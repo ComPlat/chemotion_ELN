@@ -1,5 +1,5 @@
 import React from 'react';
-import {Label, Pagination, Table, Input} from 'react-bootstrap';
+import { Pagination, Table, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -36,7 +36,7 @@ export default class ElementsTable extends React.Component {
   }
 
   initializePagination() {
-    const type = this.props.type;
+
     const {page, pages, perPage, totalElements} = this.state;
 
     this.setState({
@@ -144,10 +144,15 @@ export default class ElementsTable extends React.Component {
   numberOfResultsInput() {
     let {ui} = this.state
     return (
-      <Input className="number-shown-select"
-        onChange={event => this.handleNumberOfResultsChange(event)}
-        label="Show:" type="text" bsSize="small"
-        value={ui.number_of_results ? ui.number_of_results : 0} />
+      <FormGroup >
+        <ControlLabel>Show </ControlLabel>
+        <FormControl
+          className="number-shown-select"
+          onChange={event => this.handleNumberOfResultsChange(event)}
+          type="text"
+          value={ui.number_of_results ? ui.number_of_results : 0} />
+      </FormGroup>
+
     );
   }
 
@@ -202,8 +207,6 @@ export default class ElementsTable extends React.Component {
   }
 
   render() {
-    const {elements, ui, currentElement} = this.state
-    const {overview, type} = this.props
     return (
       <div>
         {this.renderEntries()}
