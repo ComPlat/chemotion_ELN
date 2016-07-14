@@ -250,11 +250,12 @@ export default class SampleDetails extends React.Component {
 
   moleculeCanoSmiles(sample) {
     return (
-      <Input type="text" label="Canonical Smiles"
-             key={'cano_smiles_' + sample.id}
-             defaultValue={sample.molecule_cano_smiles}
-             disabled
-             readOnly
+      <FormControl
+        type="text" label="Canonical Smiles"
+        key={'cano_smiles_' + sample.id}
+        defaultValue={sample.molecule_cano_smiles}
+        disabled
+        readOnly
       />
     )
   }
@@ -442,7 +443,7 @@ export default class SampleDetails extends React.Component {
             </Button>
             {this.sampleHeader(sample)}
             <ListGroup>
-            <Tabs defaultActiveKey={0}>
+            <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
               {tabContents.map((e,i)=>e(i))}
             </Tabs>
             </ListGroup>
