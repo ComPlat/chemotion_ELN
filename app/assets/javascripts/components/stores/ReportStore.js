@@ -16,6 +16,7 @@ class ReportStore {
     this.selectedReactions = [];
     this.checkedAllSettings = true;
     this.checkedAllConfigs = true;
+    this.processingReport = false;
 
     this.bindListeners({
       handleUpdateSettings: ReportActions.updateSettings,

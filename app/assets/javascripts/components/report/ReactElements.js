@@ -7,7 +7,6 @@ const SVGContent = ({show, reaction_svg_file}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Reaction </Label></h4>
         <SVG key={svg_file} src={svg_file} className='reaction-details'/>
       </div>
       : null
@@ -18,19 +17,33 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   const materailCalc = (target, multi, precision) => {
     return (target ? (target*multi).toFixed(precision) : " - ")
   }
-  const rows = (material) => {
+
+  const equiv_or_yield = (s, isProduct) => {
+    return (
+      isProduct ?
+      materailCalc(s.equivalent*100, 1, 2).toString() + "%"
+      :
+      materailCalc(s.equivalent, 1, 4)
+    )
+  }
+
+  const rows = (material, isProduct) => {
     return material.map((sample, i) => {
       return (
         <tbody key={i}>
           <tr>
-            <td colSpan="5"><i className="fa fa-arrow-circle-right"></i>   {sample.molecule.iupac_name}</td>
+            <td colSpan="5">
+              <i className="fa fa-arrow-circle-right"></i>
+              {sample.molecule.iupac_name}
+              ({sample.short_label})
+            </td>
           </tr>
           <tr>
-            <td>{sample.molecule.sum_formular}</td>
-            <td>{materailCalc(sample.amount_g, 1000, 4)}</td>
-            <td>{materailCalc(sample.amount_l, 1000, 4)}</td>
-            <td>{materailCalc(sample.amount_mol, 1000, 4)}</td>
-            <td>{materailCalc(sample.equivalent, 1, 4)}</td>
+            <td style={{width: '20%'}}>{sample.molecule.sum_formular}</td>
+            <td style={{width: '20%'}}>{materailCalc(sample.amount_g, 1000, 4)}</td>
+            <td style={{width: '20%'}}>{materailCalc(sample.amount_l, 1000, 4)}</td>
+            <td style={{width: '20%'}}>{materailCalc(sample.amount_mol, 1000, 4)}</td>
+            <td style={{width: '20%'}}>{equiv_or_yield(sample, isProduct)}</td>
           </tr>
         </tbody>
       )
@@ -56,11 +69,11 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
     show ?
       <div>
         <h4><Label bsStyle="success"> Sarting Materials </Label></h4>
-        <div> {table(rows(starting_materials))} </div>
+        <div> {table(rows(starting_materials, false))} </div>
         <h4><Label bsStyle="warning"> Reactants </Label></h4>
-        <div> {table(rows(reactants))} </div>
+        <div> {table(rows(reactants, false))} </div>
         <h4><Label bsStyle="danger"> Products </Label></h4>
-        <div> {table(rows(products))} </div>
+        <div> {table(rows(products, true))} </div>
       </div>
       : null
   )
@@ -70,7 +83,7 @@ const DescriptionContent = ({show, description}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Description </Label></h4>
+        <h4> Description </h4>
         <p>{description}</p>
       </div>
       : null
@@ -81,7 +94,7 @@ const PurificationContent = ({show, purification}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Purification </Label></h4>
+        <h4> Purification </h4>
         <div>
           {purification.join(", ")}
         </div>
@@ -93,7 +106,7 @@ const TLCContent = ({show, tlc_description, tlc_solvents, rf_value}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> TLC - Control </Label></h4>
+        <h4> TLC - Control </h4>
         <p> <b>rf_value:</b> {rf_value} </p>
         <p> <b>TLC_solvents:</b> {tlc_solvents} </p>
         <div> {tlc_description} </div>
@@ -106,7 +119,7 @@ const ObservationContent = ({show, observation}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Observation </Label></h4>
+        <h4> Observation </h4>
         <p>{observation}</p>
       </div>
       : null
@@ -132,7 +145,7 @@ const AnalysesContent = ({show, products}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Analysis </Label></h4>
+        <h4> Analysis </h4>
         <div>{analyses}</div>
       </div>
       : null
@@ -162,11 +175,13 @@ const LiteratureContent = ({show, literatures}) => {
   return (
     show ?
       <div>
-        <h4><Label bsStyle="default"> Literatures </Label></h4>
+        <h4> Literatures </h4>
         <div> {table} </div>
       </div>
       : null
   )
 }
 
-export {SVGContent, MaterialContent, DescriptionContent, PurificationContent, TLCContent, ObservationContent, AnalysesContent, LiteratureContent}
+export {SVGContent, MaterialContent, DescriptionContent,
+        PurificationContent, TLCContent, ObservationContent,
+        AnalysesContent, LiteratureContent}
