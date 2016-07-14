@@ -1,17 +1,18 @@
-import alt from 'alt'
-import React from 'react'
-import AutoCompleteInput from './AutoCompleteInput'
-import {Glyphicon, Button, DropdownButton, MenuItem}
-  from 'react-bootstrap'
+import alt from 'alt';
+import React from 'react';
+import AutoCompleteInput from './AutoCompleteInput';
+import {Glyphicon, Button, DropdownButton, MenuItem} from 'react-bootstrap';
+import Select from 'react-select'
 
 import StructureEditorModal from '../structure_editor/StructureEditorModal'
 
-import SuggestionsFetcher from '../fetchers/SuggestionsFetcher'
-
-import ElementActions from '../actions/ElementActions'
-import UIStore from '../stores/UIStore'
-import UIActions from '../actions/UIActions'
-import UserStore from '../stores/UserStore'
+import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
+import SuggestionActions from '../actions/SuggestionActions';
+import SuggestionStore from '../stores/SuggestionStore';
+import ElementActions from '../actions/ElementActions';
+import UIStore from '../stores/UIStore';
+import UIActions from '../actions/UIActions';
+import UserStore from '../stores/UserStore';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -127,16 +128,19 @@ export default class Search extends React.Component {
   }
 
   render() {
-    let drawAddon = <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />      
+    let drawAddon = <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />
 
     let searchButton =
-      <Button bsStyle="danger"
-          onClick={() => this.handleClearSearchSelection()}>
+      <Button onClick={() => this.handleClearSearchSelection()}>
+      {/*bsStyle="danger"*/}
         <i className="fa fa-times"></i></Button>
     let inputAttributes = {
-      placeholder: 'IUPAC, InChI, SMILES, ...',
-      addonAfter: drawAddon,
-      buttonAfter: searchButton,
+// <<<<<<< HEAD
+//       placeholder: 'IUPAC, InChI, SMILES, ...',
+//       addonAfter: drawAddon,
+//       buttonAfter: searchButton,
+// =======
+      placeholder: 'Search for elements...',
       style: {
         width: 300
       }
@@ -168,6 +172,7 @@ export default class Search extends React.Component {
           />
         </div>
         <div className="search-autocomplete">
+{/*<<<<<<< HEAD
           <AutoCompleteInput
             drawAddonOnClick = {this.showStructureEditor.bind(this)}
             inputAttributes={inputAttributes}
@@ -176,6 +181,14 @@ export default class Search extends React.Component {
             ref="autoComplete"
             onSelectionChange={selection=>this.handleSelectionChange(selection)}
             buttonBefore={innerDropdown}/>
+=======*/}
+          <AutoCompleteInput inputAttributes={inputAttributes}
+                             suggestionsAttributes={suggestionsAttributes}
+                             suggestions={input => this.search(input)}
+                             ref="autoComplete"
+                             onSelectionChange={selection => this.handleSelectionChange(selection)}
+                             buttonBefore={innerDropdown}
+                             buttonAfter={searchButton}/>
         </div>
       </div>
     )

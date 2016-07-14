@@ -1,5 +1,5 @@
 import React, {Component, PropTypes} from 'react';
-import {Input, Button} from 'react-bootstrap';
+import {Radio,FormControl, Button} from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
@@ -39,7 +39,7 @@ export default class Material extends Component {
   notApplicableInput(inputsStyle) {
     return (
       <td style={inputsStyle}>
-        <Input type="text"
+        <FormControl type="text"
                value="N / A"
                disabled={true}
                />
@@ -120,8 +120,7 @@ export default class Material extends Component {
         {dropEffect: 'copy'}
       )}
       <td>
-        <input
-          type="radio"
+        <Radio
           name="reference"
           checked={material.reference}
           onChange={event => this.handleReferenceChange(event)}
@@ -132,15 +131,13 @@ export default class Material extends Component {
         {material.molecule.iupac_name}
       </td>
       <td>
-        <input
-          type="radio"
+        <Radio
           name={`amount_type_${material.id}`}
           checked={material.amountType === 'target'}
           onChange={event => this.handleAmountTypeChange('target')}
           disabled={this.props.materialGroup == 'products'}
         />
-        <input
-          type="radio"
+        <Radio
           name={`amount_type_${material.id}`}
           checked={material.amountType === 'real'}
           onChange={event => this.handleAmountTypeChange('real')}
@@ -193,16 +190,14 @@ export default class Material extends Component {
   equivalentOrYield(material) {
     if(this.props.materialGroup == 'products') {
       return (
-        <Input
-          type="text"
+        <FormControl type="text"
           value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
           disabled={true}
         />
       );
     } else {
       return (
-        <Input
-          type="text"
+        <FormControl type="text"
           value={material.equivalent}
           disabled={material.reference && material.equivalent}
           onChange={(e) => this.handleEquivalentChange(e)}

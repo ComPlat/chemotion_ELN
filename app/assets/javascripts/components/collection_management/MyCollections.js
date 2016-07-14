@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, Input} from 'react-bootstrap';
+import {Button, ButtonGroup, FormControl} from 'react-bootstrap';
 
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
@@ -66,7 +66,10 @@ export default class MyCollections extends React.Component {
       )
     } else {
       return (
-        <Input className="collection-label" type="text" id={node.id} value={node.label} onChange={this.handleLabelChange.bind(this, node)}/>
+        <FormControl className="collection-label" type="text" id={node.id}
+          value={node.label}
+          onChange={this.handleLabelChange.bind(this, node)}
+        />
       )
     }
   }

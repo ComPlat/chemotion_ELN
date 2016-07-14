@@ -109,11 +109,7 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        permission_level: params.permission_level,
-        sample_detail_level: params.sample_detail_level,
-        reaction_detail_level: params.reaction_detail_level,
-        wellplate_detail_level: params.wellplate_detail_level,
-        screen_detail_level: params.screen_detail_level
+        collection_attributes: params.collection_attributes,
       })
     })
 

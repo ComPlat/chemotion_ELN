@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {SplitButton, MenuItem,Input,Button} from 'react-bootstrap';
+import {FormGroup,FormControl, ControlLabel, InputGroup,Button} from 'react-bootstrap';
 import {metPreConv,metPrefSymbols} from './utils/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -17,7 +17,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let {value, unit,metricPrefix,precision} = nextProps;
+    let {value, unit} = nextProps;
     this.setState({
       unit: unit,
       value: value,
@@ -104,17 +104,23 @@ export default class NumeralInputWithUnitsCompo extends Component {
     // BsStyle-s for Input and buttonAfter have differences
     let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
     if(unit != 'none')
-       prefixSwitch=<Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button>
+       prefixSwitch=<InputGroup.Button><Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button></InputGroup.Button>
 
     return (
       <div >
-        <Input  key={key} type='text' disabled={disabled} bsSize={bsSize} bsStyle={bsStyle} label={label}
-          value={val()}
-          onChange={(event) => this._handleInputValueChange(event)}
-          onFocus={(event) => this._handleInputValueFocus(event)}
-          onBlur={(event)=>this._handleInputValueBlur(event)}
-          buttonAfter={prefixSwitch}
-          />
+        <FormGroup>
+          <ControlLabel>{label}</ControlLabel>
+          <InputGroup>
+            <FormControl type='text'
+              key={key} disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+              value={val()}
+              onChange={(event) => this._handleInputValueChange(event)}
+              onFocus={(event) => this._handleInputValueFocus(event)}
+              onBlur={(event)=>this._handleInputValueBlur(event)}
+            />
+            {prefixSwitch}
+          </InputGroup>
+        </FormGroup>
       </div>
     );
   }

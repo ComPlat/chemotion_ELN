@@ -150,6 +150,7 @@ export default class Sample extends Element {
   }
 
   static buildReactionSample(collection_id, delta, materialGroup = null, molecule = { id: '_none_'}) {
+    let target_molecule = molecule.molecule == undefined ? molecule : molecule.molecule
     let sample = new Sample({
       collection_id: collection_id,
       type: 'sample',
@@ -163,7 +164,7 @@ export default class Sample extends Element {
       impurities: '',
       location: '',
       molfile: molecule.molfile || '',
-      molecule:  molecule,
+      molecule:  target_molecule,
       analyses: [],
       elemental_compositions: [{
         composition_type: 'found',

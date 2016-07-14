@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Table, Input} from 'react-bootstrap';
+import {Table, FormControl} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 export default class WellplateList extends Component {
@@ -49,7 +49,7 @@ export default class WellplateList extends Component {
             if (sample) {
               svgPath = `/images/molecules/${sample.molecule.molecule_svg_file}`;
               svgNode = <SVG className="molecule-small" src={svgPath}/>;
-              let {name, external_label, short_label, imported_readout} = sample
+              let { external_label, short_label, imported_readout} = sample
               sampleName = `${short_label || ""}`
               externalLabel = `${external_label || ""}`
               importedReadout = imported_readout
@@ -63,7 +63,7 @@ export default class WellplateList extends Component {
               <td>{externalLabel}</td>
               <td>{sum_formular}</td>
               <td style={inputContainerStyle}>
-                <Input
+                <FormControl
                   type="textarea"
                   style={style}
                   value={readout}
@@ -72,7 +72,7 @@ export default class WellplateList extends Component {
                 />
               </td>
               <td style={inputContainerStyle}>
-                <Input
+                <FormControl
                   type="textarea"
                   style={style}
                   value={importedReadout}

@@ -11,7 +11,7 @@ import UIStore from '../stores/UIStore';
 import ElementStore from '../stores/ElementStore';
 
 import Reports from './Reports';
-import Settings from './Settings';
+import CheckBoxs from './CheckBoxs';
 
 export default class ReportContainer extends Component {
   constructor(props) {
@@ -35,7 +35,9 @@ export default class ReportContainer extends Component {
   onChange(state) {
     this.setState({
       settings: state.settings,
-      checkedAll: state.checkedAll
+      checkedAllSettings: state.checkedAllSettings,
+      configs: state.configs,
+      checkedAllConfigs: state.checkedAllConfigs
     })
   }
 
@@ -61,9 +63,12 @@ export default class ReportContainer extends Component {
   }
 
   render() {
-    const submitLabel = (true) ? "Create" : "Save"; // TBD
-    const style = {height: '220px'};
-    //let reactions = this.state.reactions.checkedIds.toArray();
+    let showGeneReportBtnIds = this.state.selectedReactionIds.length !== 0 ? true : false
+    let showGeneReportBtnSts = this.state.settings.map(setting => {
+      if(setting.checked){
+        return true
+      }
+    }).filter(r => r!=null).length !== 0 ? true : false
 
     return (
       <StickyDiv zIndex={2}>
@@ -73,6 +78,7 @@ export default class ReportContainer extends Component {
             <Button bsStyle="primary"
                     bsSize="xsmall"
                     className="g-marginLeft--10"
+                    disabled={!(showGeneReportBtnSts && showGeneReportBtnIds)}
                     onClick={this.generateReports.bind(this)}>
               <span><i className="fa fa-file-text-o"></i> Generate Report</span>
             </Button>
@@ -86,13 +92,20 @@ export default class ReportContainer extends Component {
 
           <Tabs defaultActiveKey={0} >
             <Tab eventKey={0} title={"Setting"}>
-              <Settings settings={this.state.settings}
-                        toggleCheckbox={this.toggleCheckbox}
-                        toggleCheckAll={this.toggleCheckAll}
-                        checkedAll={this.state.checkedAll} />
+              <CheckBoxs  items={this.state.settings}
+                          toggleCheckbox={this.toggleSettings}
+                          toggleCheckAll={this.toggleSettingsAll}
+                          checkedAll={this.state.checkedAllSettings} />
             </Tab>
 
-            <Tab eventKey={1} title={"Report"}>
+            <Tab eventKey={1} title={"Config"}>
+              <CheckBoxs  items={this.state.configs}
+                          toggleCheckbox={this.toggleConfigs}
+                          toggleCheckAll={this.toggleConfigsAll}
+                          checkedAll={this.state.checkedAllConfigs} />
+            </Tab>
+
+            <Tab eventKey={2} title={"Report"}>
               <div className="panel-fit-screen">
                 <Reports selectedReactions={this.state.selectedReactions} settings={this.state.settings} />
               </div>
@@ -104,8 +117,12 @@ export default class ReportContainer extends Component {
     );
   }
 
-  toggleCheckbox(text, checked){
+  toggleSettings(text, checked){
     ReportActions.updateSettings({text, checked})
+  }
+
+  toggleConfigs(text, checked){
+    ReportActions.updateConfigs({text, checked})
   }
 
   closeDetails() {
@@ -113,23 +130,32 @@ export default class ReportContainer extends Component {
     Aviator.navigate(`/collection/all`);
   }
 
-  toggleCheckAll() {
+  toggleSettingsAll() {
     ReportActions.toggleSettingsCheckAll()
+  }
+
+  toggleConfigsAll() {
+    ReportActions.toggleConfigsCheckAll()
   }
 
   generateReports() {
     const ids = this.state.selectedReactionIds.join('_')
-    const settings = this.state.settings.map(setting => {
-      if(setting.checked){
-        return setting.text
+    const settings = this.chainedItems(this.state.settings)
+    const configs = this.chainedItems(this.state.configs)
+
+    Utils.downloadFile({
+      contents: "api/v1/multiple_reports/docx?ids=" + ids + "&settings=" + settings + "&configs=" + configs,
+      name: "ELN-report_" + new Date().toISOString().slice(0,19)
+    })
+  }
+
+  chainedItems(items) {
+    return items.map(item => {
+      if(item.checked){
+        return item.text.replace(/\s+/g, '').toLowerCase();
       } else {
         return null
       }
     }).filter(r => r!=null).join('_')
-
-    Utils.downloadFile({
-      contents: "api/v1/multiple_reports/rtf?ids=" + ids + "&settings=" + settings,
-      name: "ELN-report_" + new Date().toISOString().slice(0,19)
-    })
   }
 }

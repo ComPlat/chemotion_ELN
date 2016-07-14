@@ -8,7 +8,7 @@ module Chemotion
           Collection.get_all_collection_for_user(current_user.id)
         end
       end
-      
+
       desc "Return collection by id"
       params do
         requires :id, type: Integer, desc: "Collection id"
@@ -35,9 +35,9 @@ module Chemotion
         end
       end
 
-      desc "Return all locked serialized collection roots of current user"
+      desc "Return all locked and unsared serialized collection roots of current user"
       get :locked do
-        current_user.collections.locked.roots.order('label ASC')
+        current_user.collections.locked.unshared.roots.order('label ASC')
       end
 
       desc "Return all unshared serialized collection roots of current user"
@@ -47,12 +47,12 @@ module Chemotion
 
       desc "Return all shared serialized collections"
       get :shared_roots do
-        Collection.shared(current_user.id)
+        Collection.shared(current_user.id).roots.includes(:user)
       end
 
       desc "Return all remote serialized collections"
-      get :remote_roots, each_serializer: RemoteCollectionSerializer do
-        current_user.collections.remote(current_user.id)
+      get :remote_roots, each_serializer: CollectionRemoteSerializer do
+        current_user.collections.remote(current_user.id).roots
       end
 
       desc "Bulk update and/or create new collections"
@@ -64,20 +64,17 @@ module Chemotion
         desc "Update shared collection"
         params do
           requires :id, type: Integer
-          requires :permission_level, type: Integer
-          requires :sample_detail_level, type: Integer
-          requires :reaction_detail_level, type: Integer
-          requires :wellplate_detail_level, type: Integer
-          requires :screen_detail_level, type: Integer
+          requires :collection_attributes, type: Hash do
+            requires :permission_level, type: Integer
+            requires :sample_detail_level, type: Integer
+            requires :reaction_detail_level, type: Integer
+            requires :wellplate_detail_level, type: Integer
+            requires :screen_detail_level, type: Integer
+          end
         end
+
         put ':id' do
-          Collection.find(params[:id]).update({
-            permission_level: params[:permission_level],
-            sample_detail_level: params[:sample_detail_level],
-            reaction_detail_level: params[:reaction_detail_level],
-            wellplate_detail_level: params[:wellplate_detail_level],
-            screen_detail_level: params[:screen_detail_level]
-          })
+          Collection.find(params[:id]).update(params[:collection_attributes])
         end
 
         desc "Create shared collections"
@@ -116,6 +113,7 @@ module Chemotion
             requires :sample_detail_level, type: Integer
             requires :reaction_detail_level, type: Integer
             requires :wellplate_detail_level, type: Integer
+            requires :screen_detail_level, type: Integer
           end
           requires :user_ids, type: Array
           optional :current_collection_id, type: Integer

@@ -1,7 +1,6 @@
 import React from 'react';
-import {Button, ButtonGroup, ButtonToolbar, FormControls, Input, Modal,
-        Accordion, Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab,
-        FormGroup, Row, Col} from 'react-bootstrap';
+import {Button, InputGroup, ControlLabel, FormGroup, FormControl, Panel,
+  ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
@@ -10,7 +9,6 @@ import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
@@ -19,14 +17,12 @@ import XLabels from "./extra/SampleDetailsXLabels";
 import XTab from "./extra/SampleDetailsXTab";
 import XTabName from "./extra/SampleDetailsXTabName";
 
-import Select from 'react-select';
 import StickyDiv from 'react-stickydiv'
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Aviator from 'aviator';
 
-import {solventOptions} from './staticDropdownOptions/options';
 import Sample from './models/Sample';
 import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
@@ -86,7 +82,7 @@ export default class SampleDetails extends React.Component {
 
   handleImportedReadoutChanged(e) {
     let sample = this.state.sample;
-    sample.imported_readout = this.refs.importedReadoutInput.getValue();
+    sample.imported_readout = e.target.value
     this.setState({
       sample: sample
     });
@@ -137,7 +133,7 @@ export default class SampleDetails extends React.Component {
   }
 
   _submitFunction() {
-  let {sample, materialGroup} = this.state;
+  let {sample} = this.state;
   let { currentReaction } = ElementStore.getState();
 
   if(currentReaction) {
@@ -237,12 +233,18 @@ export default class SampleDetails extends React.Component {
 
   moleculeInchi(sample) {
     return (
-      <Input type="text" label="InChI"
-             key={'inchi_' + sample.id}
+      <FormGroup >
+        <ControlLabel></ControlLabel>
+        <InputGroup>
+          <InputGroup.Addon>InChI</InputGroup.Addon>
+          <FormControl type="text"
+             key={sample.id}
              defaultValue={sample.molecule_inchistring}
              disabled
              readOnly
-      />
+          />
+        </InputGroup>
+      </FormGroup>
     )
   }
 
@@ -368,12 +370,17 @@ export default class SampleDetails extends React.Component {
       <Tab eventKey={ind} title={'Results'}
         key={'Results' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
-        <Input type="text" label="Imported Readout"
-           ref="importedReadoutInput"
-           value={sample.imported_readout || ''}
-           disabled
-           readOnly
-        />
+        <FormGroup controlId="importedReadoutInput">
+          <ControlLabel>Imported Readout</ControlLabel>
+          <InputGroup>
+            <FormControl type="text"
+              ref="importedReadoutInput"
+              value={sample.imported_readout || ''}
+             disabled
+             readOnly
+            />
+          </InputGroup>
+        </FormGroup>
         </ListGroupItem>
       </Tab>
     )
