@@ -13,7 +13,8 @@ export default class AutoCompleteInput extends React.Component {
       suggestions: null,
       suggestionFocus: null,
       error: '',
-      inputWidth: 0
+      inputWidth: 0,
+      inputDisabled: false
     }
   }
 
@@ -251,6 +252,7 @@ export default class AutoCompleteInput extends React.Component {
     return (
       <div>
         <Input {...this.props.inputAttributes}
+          disabled = {this.state.inputDisabled}
           type='text'
           value={value}
           autoComplete='off'

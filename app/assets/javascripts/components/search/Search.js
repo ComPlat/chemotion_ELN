@@ -62,6 +62,12 @@ export default class Search extends React.Component {
 
     UIActions.selectCollection({id: uiState.currentCollection.id})
     UIActions.clearSearchSelection()
+
+    let autoComplete = this.refs.autoComplete
+    autoComplete.setState({
+      value : '',
+      inputDisabled : false
+    })
   }
 
   showStructureEditor() {
@@ -95,6 +101,12 @@ export default class Search extends React.Component {
       userState.currentUser.id, uiState.currentCollection.id)
 
     this.hideStructureEditor()
+
+    let autoComplete = this.refs.autoComplete
+    autoComplete.setState({
+      value : 'Structure Filter',
+      inputDisabled : true
+    })
   }
 
   handleStructureEditorCancel() {
