@@ -13,11 +13,12 @@ import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
 
-
 import XTab from "./extra/ReactionDetailsXTab";
 import XTabName from "./extra/ReactionDetailsXTabName";
 
 import StickyDiv from 'react-stickydiv'
+
+import {setReactionByType} from './ReactionDetailsShare'
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -103,6 +104,14 @@ export default class ReactionDetails extends Component {
     } else{
       this.setState({ reaction });
     }
+  }
+
+  handleInputChange(type, event) {
+    const {value} = event.target;
+    const {reaction} = this.state;
+
+    const {newReaction, options} = setReactionByType(reaction, type, value)
+    this.handleReactionChange(newReaction, options);
   }
 
   handleProductClick(product) {
@@ -223,12 +232,13 @@ export default class ReactionDetails extends Component {
               <ReactionDetailsScheme
                 reaction={reaction}
                 onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+                onInputChange={(type, event) => this.handleInputChange(type, event)}
                 />
             </Tab>
             <Tab eventKey={1} title={'Properties'}>
               <ReactionDetailsProperties
                 reaction={reaction}
-                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+                onInputChange={(type, event) => this.handleInputChange(type, event)}
                 />
             </Tab>
             <Tab eventKey={2} title={'Literatures'}>
@@ -259,4 +269,8 @@ export default class ReactionDetails extends Component {
       </StickyDiv>
     );
   }
+}
+
+ReactionDetails.propTypes = {
+  reaction: React.PropTypes.object
 }
