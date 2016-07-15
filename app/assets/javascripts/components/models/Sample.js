@@ -515,6 +515,10 @@ export default class Sample extends Element {
     return this.molecule && this.molecule.inchistring;
   }
 
+  get molecule_cano_smiles() {
+    return this.molecule && this.molecule.cano_smiles;
+  }
+
   get purity() {
     return this._purity
   }
@@ -540,6 +544,10 @@ export default class Sample extends Element {
   }
 
   get concat_formula() {
+    // TODO Workaround, need to check how can molecule is null
+    if (!this.molecule)
+      return '';
+
     if(this.contains_residues)
       return (this.molecule.sum_formular || '') + this.polymer_formula;
     else

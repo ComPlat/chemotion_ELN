@@ -32,6 +32,14 @@
 /uploads/thumbnails
 !/public/attachments/.keep
 
+# Temp files
+/spec/tmp/*
+
+# Temp rake task file
+.rake_tasks~
+
+# Byebug history
+.byebug_history
 
 #config generated files
 aliasifyConfig.js

@@ -43,6 +43,9 @@ M  END
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
+    c.set_out_format 'can'
+    ca_smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+
     c.set_out_format 'inchi'
     inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
@@ -59,8 +62,11 @@ M  END
       inchikey: inchikey,
       inchi: inchi,
       formula: m.get_formula,
-      svg: svg_from_molfile(molfile)
+      svg: svg_from_molfile(molfile),
+      cano_smiles: ca_smiles,
+      fp: fingerprint_from_molfile(molfile)
     }
+
   end
 
   def self.smiles_to_canon_smiles smiles
@@ -91,6 +97,41 @@ M  END
     #m.do_transformations c.get_options(OpenBabel::OBConversion::GENOPTIONS), c
 
     c.write_string(m, false)
+  end
+
+  # Return an array of 32
+  def self.fingerprint_from_molfile molfile
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+
+    c.set_in_format('mol')
+    c.read_string(m, molfile)
+
+    fp = OpenBabel::VectorUnsignedInt.new
+    # We will gets default size of fingerprint: 1024 bits
+    fprinter = OpenBabel::OBFingerprint.find_fingerprint('FP2')
+    fprinter.get_fingerprint(m, fp)
+
+    fp_16 = []
+    fp_16[0]  = fp[31] << 32 | fp[30]
+    fp_16[1]  = fp[29] << 32 | fp[28]
+    fp_16[2]  = fp[27] << 32 | fp[26]
+    fp_16[3]  = fp[25] << 32 | fp[24]
+    fp_16[4]  = fp[23] << 32 | fp[22]
+    fp_16[5]  = fp[21] << 32 | fp[20]
+    fp_16[6]  = fp[19] << 32 | fp[18]
+    fp_16[7]  = fp[17] << 32 | fp[16]
+    fp_16[8]  = fp[15] << 32 | fp[14]
+    fp_16[9]  = fp[13] << 32 | fp[12]
+    fp_16[10] = fp[11] << 32 | fp[10]
+    fp_16[11] = fp[9]  << 32 | fp[8]
+    fp_16[12] = fp[7]  << 32 | fp[6]
+    fp_16[13] = fp[5]  << 32 | fp[4]
+    fp_16[14] = fp[3]  << 32 | fp[2]
+    fp_16[15] = fp[1]  << 32 | fp[0]
+
+    return fp_16
+
   end
 
 end

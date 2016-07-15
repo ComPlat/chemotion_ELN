@@ -21,6 +21,18 @@ class Reaction < ActiveRecord::Base
     product_molecules: :iupac_name
   }
 
+  pg_search_scope :search_by_inchistring, associated_against: {
+    starting_material_molecules: :inchistring,
+    reactant_molecules: :inchistring,
+    product_molecules: :inchistring
+  }
+
+  pg_search_scope :search_by_cano_smiles, associated_against: {
+    starting_material_molecules: :cano_smiles,
+    reactant_molecules: :cano_smiles,
+    product_molecules: :cano_smiles
+  }
+
   pg_search_scope :search_by_substring, against: :name,
                                         associated_against: {
                                           starting_materials: :name,

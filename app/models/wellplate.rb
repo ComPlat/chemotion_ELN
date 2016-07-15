@@ -16,10 +16,22 @@ class Wellplate < ActiveRecord::Base
     molecules: :iupac_name
   }
 
+  pg_search_scope :search_by_inchistring, associated_against: {
+    molecules: :inchistring
+  }
+
+  pg_search_scope :search_by_cano_smiles, associated_against: {
+    molecules: :cano_smiles
+  }
+
   pg_search_scope :search_by_substring, against: :name,
                                         associated_against: {
                                           samples: :name,
-                                          molecules: :iupac_name
+                                          molecules: [
+                                            :iupac_name,
+                                            :inchistring,
+                                            :cano_smiles
+                                          ]
                                         },
                                         using: {trigram: {threshold:  0.0001}}
 

@@ -20,17 +20,21 @@ class ElementContainer extends Component {
   render() {
     const {connectDragSource, sourceType} = this.props;
     if(sourceType == "") {
-      return <span style={{fontSize: '18pt', cursor: 'not-allowed', color: 'lightgray'}} className='fa fa-arrows'></span>;
+      return <span style={ {fontSize: '18pt', cursor: 'not-allowed',
+                            color: 'lightgray'}}
+                  className='fa fa-arrows'></span>;
     } else {
       return connectDragSource(
-        <span style={{fontSize: '18pt', cursor: 'move'}} className='text-info fa fa-arrows'></span>,
+        <span style={{fontSize: '18pt', cursor: 'move'}}
+          className='text-info fa fa-arrows'></span>,
         {dropEffect: 'copy'}
       );
     }
   }
 }
 
-export default DragSource(props => props.sourceType, sampleSource, collectSource)(ElementContainer);
+export default DragSource(props => props.sourceType, sampleSource,
+  collectSource)(ElementContainer);
 
 ElementContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,

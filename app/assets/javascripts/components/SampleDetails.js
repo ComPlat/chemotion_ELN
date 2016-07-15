@@ -9,7 +9,6 @@ import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 
-
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
@@ -221,7 +220,8 @@ export default class SampleDetails extends React.Component {
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
           <ElementCollectionLabels element={sample} key={sample.id}/>
-          <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+          <ElementAnalysesLabels element={sample}
+            key={sample.id+"_analyses"}/>
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </Col>
         <Col md={8}>
@@ -248,8 +248,26 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  moleculeCanoSmiles(sample) {
+    return (
+      <FormGroup >
+        <ControlLabel></ControlLabel>
+        <InputGroup>
+          <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
+          <FormControl type="text"
+             defaultValue={sample.molecule_cano_smiles}
+             disabled
+             readOnly
+          />
+        </InputGroup>
+      </FormGroup>
+    )
+  }
+
   handleSectionToggle() {
-    this.setState({showElementalComposition: !this.state.showElementalComposition});
+    this.setState({
+      showElementalComposition: !this.state.showElementalComposition
+    });
   }
 
   elementalPropertiesItemHeader(sample) {
@@ -300,27 +318,29 @@ export default class SampleDetails extends React.Component {
   }
 
   elementalPropertiesItem(sample) {
-    if(!sample.molecule.sum_formular) { // avoid empty ListGroupItem
+    // avoid empty ListGroupItem
+    if(!sample.molecule.sum_formular)
       return false;
-    } else {
-      let show = this.state.showElementalComposition;
-      let materialGroup = this.state.materialGroup;
 
-      return(
-        <div width="100%" className="polymer-section">
-          {this.elementalPropertiesItemHeader(sample)}
+    let show = this.state.showElementalComposition;
+    let materialGroup = this.state.materialGroup;
 
-          {this.elementalPropertiesItemContent(sample, materialGroup, show)}
-        </div>
-      )
-    }
+    return(
+      <div width="100%" className="polymer-section">
+        {this.elementalPropertiesItemHeader(sample)}
+
+        {this.elementalPropertiesItemContent(sample, materialGroup, show)}
+      </div>
+    )
+
   }
 
   samplePropertiesTab(ind){
     let sample = this.state.sample || {};
 
     return(
-      <Tab eventKey={ind} title={'Properties'} key={'Props' + sample.id.toString()}>
+      <Tab eventKey={ind} title={'Properties'}
+        key={'Props' + sample.id.toString()}>
         <ListGroupItem>
           <SampleForm sample={sample}
                       parent={this}/>
@@ -328,6 +348,7 @@ export default class SampleDetails extends React.Component {
         {this.elementalPropertiesItem(sample)}
         <ListGroupItem>
           {this.moleculeInchi(sample)}
+          {this.moleculeCanoSmiles(sample)}
         </ListGroupItem>
       </Tab>
     )
@@ -336,7 +357,8 @@ export default class SampleDetails extends React.Component {
   sampleAnalysesTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} title={'Analyses'} key={'Analyses' + sample.id.toString()}>
+      <Tab eventKey={ind} title={'Analyses'}
+        key={'Analyses' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsAnalyses
             sample={sample}
@@ -350,7 +372,8 @@ export default class SampleDetails extends React.Component {
   sampleImportReadoutTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} title={'Results'} key={'Results' + sample.id.toString()}>
+      <Tab eventKey={ind} title={'Results'}
+        key={'Results' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
         <FormGroup controlId="importedReadoutInput">
           <ControlLabel>Imported Readout</ControlLabel>
@@ -418,12 +441,13 @@ export default class SampleDetails extends React.Component {
           <Panel className="panel-fixed"
                  header="Sample Details"
                  bsStyle={sample.isEdited ? 'info' : 'primary'}>
-            <Button bsStyle="danger" bsSize="xsmall" className="button-right" onClick={this.closeDetails.bind(this)}>
+            <Button bsStyle="danger" bsSize="xsmall"
+              className="button-right" onClick={this.closeDetails.bind(this)}>
               <i className="fa fa-times"></i>
             </Button>
             {this.sampleHeader(sample)}
             <ListGroup>
-            <Tabs defaultActiveKey={0}>
+            <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
               {tabContents.map((e,i)=>e(i))}
             </Tabs>
             </ListGroup>
