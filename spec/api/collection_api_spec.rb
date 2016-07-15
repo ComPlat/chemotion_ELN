@@ -15,7 +15,7 @@ describe Chemotion::CollectionAPI do
     let(:u2)    { create(:user) }
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
     let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true) }
-    let!(:c3)   { create(:collection, is_shared: false) }
+    let!(:c3)   { create(:collection, user: user, is_shared: false) }
     let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true) }
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
 
@@ -91,7 +91,7 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (unshared) collection roots of logged in user' do
         get '/api/v1/collections/roots'
 
-        expect(JSON.parse(response.body)['collections']).to eq [c1.as_json(json_options)]
+        expect(JSON.parse(response.body)['collections']).to eq [c1.as_json(json_options),c3.as_json(json_options)]
       end
     end
 
@@ -144,9 +144,8 @@ describe Chemotion::CollectionAPI do
       let(:w2) { create(:wellplate) }
       let(:sc1) { create(:screen) }
 
-      let!(:params) {
-        {
-          ui_state: {
+      let!(:ui_state) {
+         {
             sample: {
               all: true,
               included_ids: [],
@@ -168,7 +167,19 @@ describe Chemotion::CollectionAPI do
               excluded_ids: []
             },
             currentCollectionId: c1.id
-          },
+          }
+      }
+
+      let!(:params) {
+        {
+          ui_state: ui_state,
+          collection_id: c3.id
+        }
+      }
+
+      let!(:params_shared) {
+        {
+          ui_state: ui_state,
           collection_id: c2.id
         }
       }
@@ -186,24 +197,50 @@ describe Chemotion::CollectionAPI do
       end
 
       describe 'PUT /api/v1/collections/elements' do
-        it 'should be able to move elements between collections' do
+        it 'should be able to move elements between unshared collections' do
           put '/api/v1/collections/elements', params
           c1.reload
-          c2.reload
+          c3.reload
           expect(c1.samples).to match_array []
           expect(c1.reactions).to match_array [r2]
           expect(c1.wellplates).to match_array [w2]
           expect(c1.screens).to match_array []
-          expect(c2.samples).to match_array [s1, s2]
-          expect(c2.reactions).to match_array [r1]
-          expect(c2.wellplates).to match_array [w1]
-          expect(c2.screens).to match_array [sc1]
+          expect(c3.samples).to match_array [s1, s2]
+          expect(c3.reactions).to match_array [r1]
+          expect(c3.wellplates).to match_array [w1]
+          expect(c3.screens).to match_array [sc1]
+        end
+        it 'should not be able to move elements to a shared collection' do
+          put '/api/v1/collections/elements', params_shared
+          c1.reload
+          c2.reload
+          expect(c2.samples).to match_array []
+          expect(c2.reactions).to match_array []
+          expect(c2.wellplates).to match_array []
+          expect(c2.screens).to match_array []
+          expect(c1.samples).to match_array [s1, s2]
+          expect(c1.reactions).to match_array [r1, r2]
+          expect(c1.wellplates).to match_array [w1, w2]
+          expect(c1.screens).to match_array [sc1]
         end
       end
 
       describe 'POST /api/v1/collections/elements' do
-        it 'should be able to assign elements to a collection' do
+        it 'should be able to assign elements to an unshared collection' do
           post '/api/v1/collections/elements', params
+          c1.reload
+          c3.reload
+          expect(c1.samples).to match_array [s1, s2]
+          expect(c1.reactions).to match_array [r1, r2]
+          expect(c1.wellplates).to match_array [w1, w2]
+          expect(c1.screens).to match_array [sc1]
+          expect(c3.samples).to match_array [s1, s2]
+          expect(c3.reactions).to match_array [r1]
+          expect(c3.wellplates).to match_array [w1]
+          expect(c3.screens).to match_array [sc1]
+        end
+        it 'should be able to assign elements to a shared collection' do
+          post '/api/v1/collections/elements', params_shared
           c1.reload
           c2.reload
           expect(c1.samples).to match_array [s1, s2]
@@ -372,6 +409,10 @@ describe Chemotion::CollectionAPI do
   end
 
   context 'no user logged in' do
+    before do
+      allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(nil)
+    end
+
     describe 'GET /api/v1/collections/roots' do
       it 'responds with 401 status code' do
         get '/api/v1/collections/roots'
