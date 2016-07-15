@@ -12,3 +12,7 @@ export default class ReactionDetailsAnalyses extends Component {
     );
   }
 }
+
+ReactionDetailsAnalyses.propTypes = {
+  sample: React.PropTypes.object
+}

@@ -334,7 +334,6 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
-
   render() {
     const {reaction} = this.state;
     let addSampleButton = (sampleType)=> <Button bsStyle="success" bsSize="xs" onClick={() => this.addSampleToMaterialGroup(reaction, sampleType)}><Glyphicon glyph="plus" /></Button>
@@ -384,9 +383,14 @@ export default class ReactionDetailsScheme extends Component {
         </ListGroup>
         <ReactionDetailsMainProperties
           reaction={reaction}
-          onReactionChange={reaction => this.onReactionChange(reaction)}
-          />
+          onInputChange={(type, event) => this.props.onInputChange(type, event)} />
       </div>
     );
   }
+}
+
+ReactionDetailsScheme.propTypes = {
+  reaction: React.PropTypes.object,
+  onReactionChange: React.PropTypes.func,
+  onInputChange: React.PropTypes.func
 }
