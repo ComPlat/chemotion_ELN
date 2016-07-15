@@ -66,7 +66,8 @@ export default class MyCollections extends React.Component {
       )
     } else {
       return (
-        <FormControl className="collection-label" type="text" id={node.id}
+        <FormControl className="collection-label" type="text"
+          id={'i_' + node.id}
           value={node.label}
           onChange={this.handleLabelChange.bind(this, node)}
         />
