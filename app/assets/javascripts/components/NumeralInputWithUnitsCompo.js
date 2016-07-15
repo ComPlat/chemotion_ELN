@@ -36,7 +36,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let caretPosition = $(inputField).caret();
     let {value} = inputField;
     let {metricPrefix,valueString} = this.state;
-    let {onChange} = this.props;
     let lastChar =  value[caretPosition-1] || "";
     let md = lastChar.match(/\d/);
     let mc = lastChar.match(/\.|(,)/);
@@ -91,7 +90,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let {units, bsSize, bsStyle, disabled,label, key} = this.props;
+    let { bsSize, bsStyle, disabled,label, key} = this.props;
     let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
     let mp = metPrefSymbols[metricPrefix];
     let val = ()=>{
@@ -103,30 +102,55 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let prefixSwitch;
     // BsStyle-s for Input and buttonAfter have differences
     let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
-    if(unit != 'none')
-       prefixSwitch=<InputGroup.Button><Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button></InputGroup.Button>
-
-    return (
-      <div >
+    if(unit != 'none') {
+      prefixSwitch=<InputGroup.Button><Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button></InputGroup.Button>
+      return (
+          <FormGroup>
+            <ControlLabel>{label}</ControlLabel>
+            <InputGroup>
+              <FormControl type='text'
+                key={key} disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+                value={val()}
+                onChange={(event) => this._handleInputValueChange(event)}
+                onFocus={(event) => this._handleInputValueFocus(event)}
+                onBlur={(event)=>this._handleInputValueBlur(event)}
+              />
+              {prefixSwitch}
+            </InputGroup>
+          </FormGroup>
+      );
+    } else {
+      return(
         <FormGroup>
-          <ControlLabel>{label}</ControlLabel>
-          <InputGroup>
-            <FormControl type='text'
-              key={key} disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
-              value={val()}
-              onChange={(event) => this._handleInputValueChange(event)}
-              onFocus={(event) => this._handleInputValueFocus(event)}
-              onBlur={(event)=>this._handleInputValueBlur(event)}
-            />
-            {prefixSwitch}
-          </InputGroup>
-        </FormGroup>
-      </div>
-    );
+            <ControlLabel>{label}</ControlLabel>
+              <FormControl type='text'
+                key={key} disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+                value={val()}
+                onChange={(event) => this._handleInputValueChange(event)}
+                onFocus={(event) => this._handleInputValueFocus(event)}
+                onBlur={(event)=>this._handleInputValueBlur(event)}
+              />
+          </FormGroup>
+      );
+    }
   }
 }
 
+NumeralInputWithUnitsCompo.propTypes = {
+  onChange: React.PropTypes.func,
+  unit: React.PropTypes.string,
+  units: React.PropTypes.array,
+  metricPrefix: React.PropTypes.string,
+  metricPrefixes: React.PropTypes.array,
+  precision: React.PropTypes.number,
+  disabled: React.PropTypes.bool,
+  label: React.PropTypes.node
+};
+
 NumeralInputWithUnitsCompo.defaultProps = {
+  unit: 'none',
   value: 0,
-  units: []
+  units: [],
+  disabled: false,
+
 };

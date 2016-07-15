@@ -250,13 +250,17 @@ export default class SampleDetails extends React.Component {
 
   moleculeCanoSmiles(sample) {
     return (
-      <FormControl
-        type="text" label="Canonical Smiles"
-        key={'cano_smiles_' + sample.id}
-        defaultValue={sample.molecule_cano_smiles}
-        disabled
-        readOnly
-      />
+      <FormGroup >
+        <ControlLabel></ControlLabel>
+        <InputGroup>
+          <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
+          <FormControl type="text"
+             defaultValue={sample.molecule_cano_smiles}
+             disabled
+             readOnly
+          />
+        </InputGroup>
+      </FormGroup>
     )
   }
 
