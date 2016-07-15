@@ -214,30 +214,30 @@ ActiveRecord::Schema.define(version: 20160630100818) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.string   "sum_formular"
-    t.string   "names",                            default: [],                 array: true
+    t.string   "names",                             default: [],                 array: true
     t.string   "iupac_name"
     t.string   "molecule_svg_file"
-    t.datetime "created_at",                                       null: false
-    t.datetime "updated_at",                                       null: false
+    t.datetime "created_at",                                        null: false
+    t.datetime "updated_at",                                        null: false
     t.datetime "deleted_at"
-    t.boolean  "is_partial",                       default: false, null: false
+    t.boolean  "is_partial",                        default: false, null: false
     t.float    "exact_molecular_weight"
-    t.integer  "fp0",                    limit: 8, default: 0,     null: false
-    t.integer  "fp1",                    limit: 8, default: 0,     null: false
-    t.integer  "fp2",                    limit: 8, default: 0,     null: false
-    t.integer  "fp3",                    limit: 8, default: 0,     null: false
-    t.integer  "fp4",                    limit: 8, default: 0,     null: false
-    t.integer  "fp5",                    limit: 8, default: 0,     null: false
-    t.integer  "fp6",                    limit: 8, default: 0,     null: false
-    t.integer  "fp7",                    limit: 8, default: 0,     null: false
-    t.integer  "fp8",                    limit: 8, default: 0,     null: false
-    t.integer  "fp9",                    limit: 8, default: 0,     null: false
-    t.integer  "fp10",                   limit: 8, default: 0,     null: false
-    t.integer  "fp11",                   limit: 8, default: 0,     null: false
-    t.integer  "fp12",                   limit: 8, default: 0,     null: false
-    t.integer  "fp13",                   limit: 8, default: 0,     null: false
-    t.integer  "fp14",                   limit: 8, default: 0,     null: false
-    t.integer  "fp15",                   limit: 8, default: 0,     null: false
+    t.bit      "fp0",                    limit: 64
+    t.bit      "fp1",                    limit: 64
+    t.bit      "fp2",                    limit: 64
+    t.bit      "fp3",                    limit: 64
+    t.bit      "fp4",                    limit: 64
+    t.bit      "fp5",                    limit: 64
+    t.bit      "fp6",                    limit: 64
+    t.bit      "fp7",                    limit: 64
+    t.bit      "fp8",                    limit: 64
+    t.bit      "fp9",                    limit: 64
+    t.bit      "fp10",                   limit: 64
+    t.bit      "fp11",                   limit: 64
+    t.bit      "fp12",                   limit: 64
+    t.bit      "fp13",                   limit: 64
+    t.bit      "fp14",                   limit: 64
+    t.bit      "fp15",                   limit: 64
     t.string   "cano_smiles"
   end
 
@@ -369,6 +369,28 @@ ActiveRecord::Schema.define(version: 20160630100818) do
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
+  create_table "scifinding_credentials", force: :cascade do |t|
+    t.string   "username"
+    t.string   "encrypted_password"
+    t.string   "encrypted_current_token"
+    t.string   "encrypted_refreshed_token"
+    t.datetime "token_expires_at"
+    t.datetime "token_requested_at"
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+    t.integer  "user_id"
+    t.string   "encrypted_password_iv"
+    t.string   "encrypted_current_token_iv"
+    t.string   "encrypted_refreshed_token_iv"
+  end
+
+  create_table "scifinding_tags", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "count"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
   create_table "screens", force: :cascade do |t|
     t.string   "description"
     t.string   "name"
@@ -394,23 +416,23 @@ ActiveRecord::Schema.define(version: 20160630100818) do
   add_index "screens_wellplates", ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
 
   create_table "users", force: :cascade do |t|
-    t.string   "email",                            default: "",                                    null: false
-    t.string   "encrypted_password",               default: "",                                    null: false
+    t.string   "email",                            default: "",                                                    null: false
+    t.string   "encrypted_password",               default: "",                                                    null: false
     t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.integer  "sign_in_count",                    default: 0,                                     null: false
+    t.integer  "sign_in_count",                    default: 0,                                                     null: false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.inet     "current_sign_in_ip"
     t.inet     "last_sign_in_ip"
-    t.datetime "created_at",                                                                       null: false
-    t.datetime "updated_at",                                                                       null: false
+    t.datetime "created_at",                                                                                       null: false
+    t.datetime "updated_at",                                                                                       null: false
     t.string   "name"
-    t.string   "first_name",                                                                       null: false
-    t.string   "last_name",                                                                        null: false
+    t.string   "first_name",                                                                                       null: false
+    t.string   "last_name",                                                                                        null: false
     t.datetime "deleted_at"
-    t.hstore   "counters",                         default: {"reactions"=>"0", "wellplates"=>"0"}, null: false
+    t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
     t.string   "name_abbreviation",      limit: 3
   end
 
