@@ -90,7 +90,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
 // TODO fix css-issue with wrong z-index
   render() {
-    let { bsSize, bsStyle, disabled,label, key} = this.props;
+    let { bsSize, bsStyle, disabled,label} = this.props;
     let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
     let mp = metPrefSymbols[metricPrefix];
     let val = ()=>{
@@ -109,7 +109,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             <ControlLabel>{label}</ControlLabel>
             <InputGroup>
               <FormControl type='text'
-                key={key} disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+                disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
                 value={val()}
                 onChange={(event) => this._handleInputValueChange(event)}
                 onFocus={(event) => this._handleInputValueFocus(event)}
@@ -124,7 +124,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
         <FormGroup>
             <ControlLabel>{label}</ControlLabel>
               <FormControl type='text'
-                key={key} disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+                disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
                 value={val()}
                 onChange={(event) => this._handleInputValueChange(event)}
                 onFocus={(event) => this._handleInputValueFocus(event)}
