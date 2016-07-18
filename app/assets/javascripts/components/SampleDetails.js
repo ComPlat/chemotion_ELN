@@ -1,7 +1,9 @@
 import React from 'react';
 import {Button, InputGroup, ControlLabel, FormGroup, FormControl, Panel,
-  ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col} from 'react-bootstrap';
+        ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
+        Tooltip, OverlayTrigger} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import Clipboard from 'clipboard';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -44,6 +46,8 @@ export default class SampleDetails extends React.Component {
       loadingMolecule: false,
       showElementalComposition: false
     }
+
+    this.clipboard = new Clipboard('.clipboardBtn');
   }
 
   componentDidMount() {
@@ -52,6 +56,7 @@ export default class SampleDetails extends React.Component {
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange.bind(this));
+    this.clipboard.destroy();
   }
 
   onChange(state) {
@@ -243,8 +248,21 @@ export default class SampleDetails extends React.Component {
              disabled
              readOnly
           />
+          <InputGroup.Button>
+            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+              <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_inchistring || " "} >
+                <i className="fa fa-clipboard"></i>
+              </Button>
+            </OverlayTrigger>
+          </InputGroup.Button>
         </InputGroup>
       </FormGroup>
+    )
+  }
+
+  clipboardTooltip() {
+    return(
+      <Tooltip id="assign_button">copy to clipboard</Tooltip>
     )
   }
 
@@ -259,6 +277,13 @@ export default class SampleDetails extends React.Component {
              disabled
              readOnly
           />
+          <InputGroup.Button>
+            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+              <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_cano_smiles || " "} >
+                <i className="fa fa-clipboard"></i>
+              </Button>
+            </OverlayTrigger>
+          </InputGroup.Button>
         </InputGroup>
       </FormGroup>
     )
