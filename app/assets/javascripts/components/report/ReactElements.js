@@ -84,7 +84,7 @@ const DescriptionContent = ({show, description}) => {
     show ?
       <div>
         <h4> Description </h4>
-        <p>{description}</p>
+        <pre className="noBorder">{description}</pre>
       </div>
       : null
   )
@@ -95,9 +95,7 @@ const PurificationContent = ({show, purification}) => {
     show ?
       <div>
         <h4> Purification </h4>
-        <div>
-          {purification.join(", ")}
-        </div>
+        <pre className="noBorder">{purification.join(", ")}</pre>
       </div>
       : null
   )
@@ -107,9 +105,11 @@ const TLCContent = ({show, tlc_description, tlc_solvents, rf_value}) => {
     show ?
       <div>
         <h4> TLC - Control </h4>
-        <p> <b>rf_value:</b> {rf_value} </p>
-        <p> <b>TLC_solvents:</b> {tlc_solvents} </p>
-        <div> {tlc_description} </div>
+        <pre className="noBorder">
+          <p> <b>rf_value:</b> {rf_value} </p>
+          <p> <b>TLC_solvents:</b> {tlc_solvents} </p>
+          {tlc_description}
+        </pre>
       </div>
       : null
   )
@@ -120,7 +120,7 @@ const ObservationContent = ({show, observation}) => {
     show ?
       <div>
         <h4> Observation </h4>
-        <p>{observation}</p>
+        <pre className="noBorder">{observation}</pre>
       </div>
       : null
   )
@@ -133,9 +133,13 @@ const AnalysesContent = ({show, products}) => {
         return (
           analysis ?
             <div key={i*100+j}>
-              <p><b>{product.molecule.sum_formular}</b> ({analysis.kind})</p>
-              <p><u>Content:</u> {analysis.content}</p>
-              <p><u>Description:</u> {analysis.description}</p>
+              <pre className="noBorder">
+                <p><b>{product.molecule.sum_formular}</b> ({analysis.kind})</p>
+                <pre className="noBorder">
+                  <u>Content:</u> {analysis.content}
+                  <u>Description:</u> {analysis.description}
+                </pre>
+              </pre>
             </div>
           : null
         )
@@ -146,7 +150,7 @@ const AnalysesContent = ({show, products}) => {
     show ?
       <div>
         <h4> Analysis </h4>
-        <div>{analyses}</div>
+        <pre className="noBorder">{analyses}</pre>
       </div>
       : null
   )
