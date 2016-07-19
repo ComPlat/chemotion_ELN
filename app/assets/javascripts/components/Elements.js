@@ -13,14 +13,15 @@ class Elements extends Component {
     this.state = {
       currentElement: null
     };
+    this.handleOnChange = this.handleOnChange.bind(this)
   }
 
   componentDidMount() {
-    ElementStore.listen(state => this.handleOnChange(state));
+    ElementStore.listen(this.handleOnChange);
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(state => this.handleOnChange(state));
+    ElementStore.unlisten(this.handleOnChange);
   }
 
   handleOnChange(state) {

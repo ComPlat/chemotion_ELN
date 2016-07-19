@@ -12,10 +12,11 @@ export default class CollectionTree extends React.Component {
   constructor(props) {
     super(props);
     this.state = CollectionStore.getState();
+    this.onChange = this.onChange.bind(this)
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onChange.bind(this));
+    CollectionStore.listen(this.onChange);
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
@@ -23,7 +24,7 @@ export default class CollectionTree extends React.Component {
   }
 
   componentWillUnmount() {
-    CollectionStore.unlisten(this.onChange.bind(this));
+    CollectionStore.unlisten(this.onChange);
   }
 
   onChange(state) {

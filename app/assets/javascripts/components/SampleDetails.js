@@ -48,14 +48,15 @@ export default class SampleDetails extends React.Component {
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
+    this.onChange = this.onChange.bind(this)
   }
 
   componentDidMount() {
-    ElementStore.listen(this.onChange.bind(this));
+    ElementStore.listen(this.onChange);
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
+    ElementStore.unlisten(this.onChange);
     this.clipboard.destroy();
   }
 

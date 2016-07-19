@@ -12,15 +12,16 @@ export default class UserAuth extends Component {
     this.state = {
       currentUser: props.currentUser || {name: 'unknown'}
     }
+    this.onChange = this.onChange.bind(this)
   }
 
   componentDidMount() {
-    UserStore.listen(this.onChange.bind(this));
+    UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onChange.bind(this));
+    UserStore.unlisten(this.onChange);
   }
 
   onChange(state) {

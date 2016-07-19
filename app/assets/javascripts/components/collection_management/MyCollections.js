@@ -21,15 +21,17 @@ export default class MyCollections extends React.Component {
         children: [{}]
       }
     }
+
+    this.onStoreChange = this.onStoreChange.bind(this);
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onStoreChange.bind(this));
+    CollectionStore.listen(this.onStoreChange);
     CollectionActions.fetchUnsharedCollectionRoots();
   }
 
   componentWillUnmount() {
-    CollectionStore.unlisten(this.onStoreChange.bind(this))
+    CollectionStore.unlisten(this.onStoreChange)
   }
 
   onStoreChange(state) {
