@@ -19,7 +19,7 @@ class UserActions {
   fetchCurrentUser() {
     return (dispatch) => { UsersFetcher.fetchCurrentUser()
       .then((result) => {
-        dispatch(result.user);
+        dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
