@@ -77,3 +77,8 @@ export default class ReactionDetailsLiteratures extends Component {
   }
 
 }
+
+ReactionDetailsLiteratures.propTypes = {
+  reaction: React.PropTypes.object,
+  onReactionChange: React.PropTypes.func
+}

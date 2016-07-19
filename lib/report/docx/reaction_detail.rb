@@ -22,7 +22,7 @@ module Report
           tlc_rf: rf_value,
           tlc_solvent: tlc_solvents,
           tlc_description: tlc_description,
-          obsevration: observation,
+          observation: observation,
           analyses: analyses,
           literatures: literatures,
           not_last: id != last_id,
@@ -122,7 +122,7 @@ module Report
                         vol: (sample.real_amount_value / sample.density.to_f).try(:round, digit),
                         density: sample.density.try(:round, digit),
                         mol: (sample.real_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
-                        equiv: "#{((p.equivalent || 0)*100).try(:round, digit)}%"
+                        equiv: p.equivalent.nil? || (p.equivalent*100).nan? ? "0%" : "#{(p.equivalent*100).try(:round, 0)}%"
           })
         end
         return output
