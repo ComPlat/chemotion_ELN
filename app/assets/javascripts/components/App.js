@@ -24,15 +24,16 @@ class App extends Component {
     this.state= {
       showCollectionManagement: false
     };
+    this.handleUiStoreChange = this.handleUiStoreChange.bind(this)
   }
 
   componentDidMount() {
-    UIStore.listen(state => this.handleUiStoreChange(state));
+    UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(state => this.handleUiStoreChange(state));
+    UIStore.unlisten(this.handleUiStoreChange);
   }
 
   handleUiStoreChange(state) {

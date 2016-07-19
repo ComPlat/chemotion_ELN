@@ -15,6 +15,10 @@ export default class List extends React.Component {
       totalScreenElements: 0,
       currentTab: 1
     }
+
+    this.onChange = this.onChange.bind(this)
+    this.onChangeUI = this.onChangeUI.bind(this)
+    this.initState = this.initState.bind(this)
   }
 
   _checkedElements(type) {
@@ -28,13 +32,18 @@ export default class List extends React.Component {
   }
 
   componentDidMount() {
-    ElementStore.listen(this.onChange.bind(this));
-    UIStore.listen(this.onChangeUI.bind(this));
+    ElementStore.listen(this.onChange);
+    UIStore.listen(this.onChangeUI);
+    this.initState();
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
-    UIStore.unlisten(this.onChangeUI.bind(this));
+    ElementStore.unlisten(this.onChange);
+    UIStore.unlisten(this.onChangeUI);
+  }
+
+  initState(){
+    this.onChange(ElementStore.getState())
   }
 
   onChange(state) {

@@ -17,6 +17,7 @@ export default class CollectionSubtree extends React.Component {
       root: props.root,
       visible: false
     }
+    this.onChange = this.onChange.bind(this)
   }
 
   isVisible(node, uiState) {
@@ -28,7 +29,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   componentDidMount() {
-    UIStore.listen(this.onChange.bind(this));
+    UIStore.listen(this.onChange);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -39,7 +40,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onChange.bind(this));
+    UIStore.unlisten(this.onChange);
   }
 
   onChange(state) {
