@@ -25,15 +25,17 @@ export default class MySharedCollections extends React.Component {
         action: null
       }
     }
+
+    this.onStoreChange = this.onStoreChange.bind(this);
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onStoreChange.bind(this));
+    CollectionStore.listen(this.onStoreChange);
     CollectionActions.fetchSharedCollectionRoots();
   }
 
   componentWillUnmount(){
-    CollectionStore.unlisten(this.onStoreChange.bind(this));
+    CollectionStore.unlisten(this.onStoreChange);
   }
 
   onStoreChange(state) {

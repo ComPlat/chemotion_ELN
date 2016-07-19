@@ -21,28 +21,32 @@ export default class ElementsTable extends React.Component {
       currentElement: null,
       ui: {}
     }
+    this.onChange = this.onChange.bind(this)
+    this.onChangeUI = this.onChangeUI.bind(this)
   }
 
   componentDidMount() {
     UIStore.getState();
-    ElementStore.listen(this.onChange.bind(this));
-    UIStore.listen(this.onChangeUI.bind(this));
+    ElementStore.listen(this.onChange);
+    UIStore.listen(this.onChangeUI);
     this.initializePagination();
+    this.initState();
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.onChange.bind(this));
-    UIStore.unlisten(this.onChangeUI.bind(this));
+    ElementStore.unlisten(this.onChange);
+    UIStore.unlisten(this.onChangeUI);
   }
 
   initializePagination() {
-
     const {page, pages, perPage, totalElements} = this.state;
-
     this.setState({
       page, pages, perPage, totalElements
     });
+  }
 
+  initState(){
+    this.onChange(ElementStore.getState());
   }
 
   onChangeUI(state) {
