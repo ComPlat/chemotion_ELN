@@ -264,6 +264,7 @@ export default class MySharedCollections extends React.Component {
     let trees = ()=> this.state.tree.children.map((e)=> {
       return(
         <Tree
+          key={e.id}
           paddingLeft={20}                         // left padding for children nodes in pixels
           tree={e}                   // tree object
           onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
