@@ -5,6 +5,7 @@ module ReactionLevelSerializable
     attributes *DetailLevels::Reaction.new.base_attributes
     has_many :starting_materials
     has_many :reactants
+    has_many :solvents
     has_many :products
 
     alias_method :original_initialize, :initialize
@@ -28,6 +29,10 @@ module ReactionLevelSerializable
 
     def reactants
       MaterialDecorator.new(object.reactions_reactant_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
+    end
+
+    def solvents
+      MaterialDecorator.new(object.reactions_solvent_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
     end
 
     def products

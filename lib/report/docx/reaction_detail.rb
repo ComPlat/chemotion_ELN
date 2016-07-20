@@ -16,7 +16,7 @@ module Report
           starting_materials: starting_materials,
           reactants: reactants,
           products: products,
-          solvent: solvent,
+          solvents: displayed_solvents,
           description: description,
           purification: purification,
           tlc_rf: rf_value,
@@ -140,8 +140,24 @@ module Report
         obj.description
       end
 
+      def solvents
+        obj.solvents
+      end
+
       def solvent
         obj.solvent
+      end
+
+      def displayed_solvents
+        if solvents.present?
+          solvents.map do |s|
+            volume = " (#{s.target_amount_value}ml)" if s.target_amount_value
+            volume = " (#{s.real_amount_value}ml)" if s.real_amount_value
+            s.preferred_label  + volume
+          end.join(", ")
+        else
+          solvent
+        end
       end
 
       def rf_value

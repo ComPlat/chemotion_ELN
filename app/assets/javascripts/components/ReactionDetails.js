@@ -62,10 +62,18 @@ export default class ReactionDetails extends Component {
       reactants: reaction.reactants.map(material => material.svgPath),
       products: reaction.products.map(material => material.svgPath)
     };
-    const label = [reaction.solvent, reaction.temperature]
-                  .filter(item => item) // omit empty string
-                  .join(', ')
-    ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, label);
+
+    const solvents = reaction.solvents.map(s => {
+      let name = s.preferred_label
+      if(name.length > 20) {
+        return name.substring(0, 20).concat('...')
+      }
+      return name
+    }).filter(s => s)
+
+    const solventsArray = solvents.length !== 0 ? solvents : [reaction.solvent]
+    const temperature = reaction.temperature
+    ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 
   submitFunction() {

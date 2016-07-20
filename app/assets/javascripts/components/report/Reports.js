@@ -3,7 +3,8 @@ import SVG from 'react-inlinesvg';
 import {Alert, Label, Table} from 'react-bootstrap';
 import {SVGContent, MaterialContent, DescriptionContent,
         PurificationContent, TLCContent, ObservationContent,
-        AnalysesContent, LiteratureContent} from './ReactElements';
+        AnalysesContent, LiteratureContent,
+        SolventContent} from './ReactElements';
 
 const Reports = ({selectedReactions, settings}) => {
   let reactions = selectedReactions.map( (reaction, i) => {
@@ -18,7 +19,7 @@ const Reports = ({selectedReactions, settings}) => {
 
 const Report = ({reaction, settings}) => {
   const {name, description, literatures, starting_materials, reactants,
-         products, dangerous_products, purification,
+         products, solvents, solvent, dangerous_products, purification,
          observation, reaction_svg_file, tlc_description,
          tlc_solvents, rf_value } = reaction
 
@@ -46,6 +47,9 @@ const Report = ({reaction, settings}) => {
                         starting_materials={starting_materials}
                         reactants={reactants}
                         products={products} />
+      <SolventContent show={settings_obj.material}
+                      solvents={solvents}
+                      solvent={solvent} />
       <DescriptionContent show={settings_obj.description && description}
                           description={description} />
       <PurificationContent show={settings_obj.purification && purification.length != 0}

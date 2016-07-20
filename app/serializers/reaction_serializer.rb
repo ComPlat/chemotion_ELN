@@ -5,6 +5,7 @@ class ReactionSerializer < ActiveModel::Serializer
 
   has_many :starting_materials, serializer: MaterialSerializer
   has_many :reactants, serializer: MaterialSerializer
+  has_many :solvents, serializer: MaterialSerializer
   has_many :products, serializer: MaterialSerializer
 
   has_many :literatures
@@ -15,6 +16,10 @@ class ReactionSerializer < ActiveModel::Serializer
 
   def reactants
     MaterialDecorator.new(object.reactions_reactant_samples).decorated
+  end
+
+  def solvents
+    MaterialDecorator.new(object.reactions_solvent_samples).decorated
   end
 
   def products
@@ -81,6 +86,7 @@ end
 class ReactionSerializer::Level10 < ReactionSerializer
   has_many :starting_materials
   has_many :reactants
+  has_many :solvents
   has_many :products
 
   alias_method :original_initialize, :initialize
@@ -96,6 +102,10 @@ class ReactionSerializer::Level10 < ReactionSerializer
 
   def reactants
     MaterialDecorator.new(object.reactions_reactant_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
+  end
+
+  def solvents
+    MaterialDecorator.new(object.reactions_solvent_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample]}".constantize.new(s, @nested_dl).serializable_hash }
   end
 
   def products

@@ -15,8 +15,8 @@ ActiveRecord::Schema.define(version: 20160727160203) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -266,6 +266,18 @@ ActiveRecord::Schema.define(version: 20160727160203) do
   add_index "reactions_reactant_samples", ["deleted_at"], name: "index_reactions_reactant_samples_on_deleted_at", using: :btree
   add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
   add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
+
+  create_table "reactions_solvent_samples", force: :cascade do |t|
+    t.integer  "reaction_id"
+    t.integer  "sample_id"
+    t.boolean  "reference"
+    t.float    "equivalent"
+    t.datetime "deleted_at"
+  end
+
+  add_index "reactions_solvent_samples", ["deleted_at"], name: "index_reactions_solvent_samples_on_deleted_at", using: :btree
+  add_index "reactions_solvent_samples", ["reaction_id"], name: "index_reactions_solvent_samples_on_reaction_id", using: :btree
+  add_index "reactions_solvent_samples", ["sample_id"], name: "index_reactions_solvent_samples_on_sample_id", using: :btree
 
   create_table "reactions_starting_material_samples", force: :cascade do |t|
     t.integer  "reaction_id"

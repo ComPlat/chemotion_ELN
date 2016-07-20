@@ -234,6 +234,7 @@ module ReactionUpdator
     materials = {
       starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
       reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
+      solvent: Array(material_attributes['solvents']).map{|m| OSample.new(m)},
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
 
@@ -257,6 +258,7 @@ module ReactionUpdator
               subsample.target_amount_unit = sample.target_amount_unit
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
+              subsample.external_label = sample.external_label if sample.external_label
 
               if ra = (sample.residues_attributes || sample.residues)
                 subsample.residues_attributes = ra.uniq || ra.each do |i|
@@ -304,6 +306,8 @@ module ReactionUpdator
             existing_sample.target_amount_unit = sample.target_amount_unit
             existing_sample.real_amount_value = sample.real_amount_value
             existing_sample.real_amount_unit = sample.real_amount_unit
+            existing_sample.external_label = sample.external_label if sample.external_label
+
             if r = existing_sample.residues[0]
               r.assign_attributes sample.residues_attributes[0]
             end
@@ -324,6 +328,7 @@ module ReactionUpdator
               #clear existing associations
               reaction.reactions_starting_material_samples.find_by(sample_id: sample.id).try(:destroy)
               reaction.reactions_reactant_samples.find_by(sample_id: sample.id).try(:destroy)
+              reaction.reactions_solvent_samples.find_by(sample_id: sample.id).try(:destroy)
               reaction.reactions_product_samples.find_by(sample_id: sample.id).try(:destroy)
 
               #create a new association
@@ -343,6 +348,7 @@ module ReactionUpdator
       current_sample_ids = [
         reaction.reactions_starting_material_samples.pluck(:sample_id),
         reaction.reactions_reactant_samples.pluck(:sample_id),
+        reaction.reactions_solvent_samples.pluck(:sample_id),
         reaction.reactions_product_samples.pluck(:sample_id)
       ].flatten.uniq
 

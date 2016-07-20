@@ -23,6 +23,7 @@ export default class Reaction extends Element {
       tlc_description: "",
       starting_materials: [],
       reactants: [],
+      solvents: [],
       products: [],
       literatures: [],
       solvent: ''
@@ -71,6 +72,7 @@ export default class Reaction extends Element {
       materials: {
         starting_materials: this.starting_materials.map(s=>s.serializeMaterial()),
         reactants: this.reactants.map(s=>s.serializeMaterial()),
+        solvents: this.solvents.map(s=>s.serializeMaterial()),
         products: this.products.map(s=>s.serializeMaterial())
       },
       literatures: this.literatures.map(literature => literature.serialize())
@@ -101,6 +103,14 @@ export default class Reaction extends Element {
     this._starting_materials = this._coerceToSamples(samples);
   }
 
+  get solvents() {
+    return this._solvents
+  }
+
+  set solvents(samples) {
+    this._solvents = this._coerceToSamples(samples);
+  }
+
   get reactants() {
     return this._reactants
   }
@@ -118,7 +128,7 @@ export default class Reaction extends Element {
   }
 
   get samples() {
-    return [...this.starting_materials, ...this.reactants, ...this.products]
+    return [...this.starting_materials, ...this.reactants, ...this.solvents, ...this.products]
   }
 
   static copyFromReactionAndCollectionId(reaction, collection_id) {
@@ -127,6 +137,7 @@ export default class Reaction extends Element {
     copy.collection_id = collection_id;
     copy.starting_materials = reaction.starting_materials.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.reactants = reaction.reactants.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
+    copy.solvents = reaction.solvents.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.products = reaction.products.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
 
     return copy;
@@ -221,13 +232,15 @@ export default class Reaction extends Element {
   }
 
   hasMaterials() {
-    return this.starting_materials.length > 0 || this.reactants.length > 0 || this.products.length > 0;
+    return this.starting_materials.length > 0 || this.reactants.length > 0 || this.solvents.length > 0 || this.products.length > 0;
   }
 
   hasSample(sampleId) {
     return this.starting_materials.find((sample) => {
       return sample.id == sampleId
     }) || this.reactants.find((sample) => {
+      return sample.id == sampleId
+    }) || this.solvents.find((sample) => {
       return sample.id == sampleId
     }) || this.products.find((sample) => {
       return sample.id == sampleId

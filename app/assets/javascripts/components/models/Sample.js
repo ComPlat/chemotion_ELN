@@ -273,6 +273,21 @@ export default class Sample extends Element {
     this._external_label = label;
   }
 
+  get preferred_label() {
+    return this._external_label ?
+            this._external_label
+            :
+            this.molecule.iupac_name;
+  }
+
+  iupac_name_tag(length) {
+    let iupac_name = this.molecule.iupac_name;
+    return iupac_name.length > length ?
+      iupac_name.slice(0, length) + "..."
+      :
+      iupac_name
+  }
+
   get location() {
     return this._location;
   }
