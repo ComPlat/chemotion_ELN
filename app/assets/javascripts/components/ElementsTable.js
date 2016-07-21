@@ -100,12 +100,13 @@ export default class ElementsTable extends React.Component {
     }
   }
 
-  handlePaginationSelect(event, selectedEvent) {
+  handlePaginationSelect(eventKey) {
     const {pages} = this.state;
     const {type} = this.props;
-    if(selectedEvent.eventKey > 0 && selectedEvent.eventKey <= pages) {
+
+    if(eventKey > 0 && eventKey <= pages) {
       this.setState({
-        page: selectedEvent.eventKey
+        page: eventKey
       }, () => UIActions.setPagination({type, page: this.state.page}));
     }
   }
@@ -122,7 +123,7 @@ export default class ElementsTable extends React.Component {
         activePage={page}
         items={pages}
         bsSize="small"
-        onSelect={(event, selectedEvent) => this.handlePaginationSelect(event, selectedEvent)}/>
+        onSelect={(eventKey) => this.handlePaginationSelect(eventKey)}/>
     }
   }
 
