@@ -4,6 +4,8 @@ module SampleLevelSerializable
   included do
     attributes *DetailLevels::Sample.new.base_attributes
     has_one :molecule
+    has_many :residues
+    has_many :elemental_compositions
 
     alias_method :original_initialize, :initialize
 
@@ -25,8 +27,10 @@ module SampleLevelSerializable
       (DetailLevels::Sample.new.base_attributes - DetailLevels::Sample.new.public_send("level#{level}_attributes")).each do |attr|
         define_method(attr) do
           case attr
-          when :analyses
+          when :analyses, :residues, :elemental_compositions
             []
+          when :_contains_residues
+            false
           when :analysis_kinds
             nil
           else

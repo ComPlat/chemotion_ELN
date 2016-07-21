@@ -204,7 +204,10 @@ export default class Reaction extends Element {
   }
 
   get svgPath() {
-    return this.reaction_svg_file && `/images/reactions/${this.reaction_svg_file}`
+    if(this.reaction_svg_file && this.reaction_svg_file != '***')
+      return `/images/reactions/${this.reaction_svg_file}`
+    else
+      return `images/no_image_180.svg`
   }
 
   SMGroupValid() {

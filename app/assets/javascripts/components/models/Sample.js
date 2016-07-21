@@ -595,7 +595,10 @@ export default class Sample extends Element {
 
   get svgPath() {
     if (this.sample_svg_file){
-      return `/images/samples/${this.sample_svg_file}`;
+      if(this.sample_svg_file === '***')
+        return `/images/no_image_180.svg`
+      else
+        return `/images/samples/${this.sample_svg_file}`;
     } else {
       return this.molecule && this.molecule.molecule_svg_file ? `/images/molecules/${this.molecule.molecule_svg_file}` : '';
     }
