@@ -35,23 +35,90 @@ class Molecule < ActiveRecord::Base
     where(id: molecule_ids)
   }
 
-  scope :by_finger_print, -> (fp_vector) {
-    where( 'fp0  & ? = ?', "%064b" % fp_vector[0], "%064b" % fp_vector[0])
-    .where('fp1  & ? = ?', "%064b" % fp_vector[1], "%064b" % fp_vector[1])
-    .where('fp2  & ? = ?', "%064b" % fp_vector[2], "%064b" % fp_vector[2])
-    .where('fp3  & ? = ?', "%064b" % fp_vector[3], "%064b" % fp_vector[3])
-    .where('fp4  & ? = ?', "%064b" % fp_vector[4], "%064b" % fp_vector[4])
-    .where('fp5  & ? = ?', "%064b" % fp_vector[5], "%064b" % fp_vector[5])
-    .where('fp6  & ? = ?', "%064b" % fp_vector[6], "%064b" % fp_vector[6])
-    .where('fp7  & ? = ?', "%064b" % fp_vector[7], "%064b" % fp_vector[7])
-    .where('fp8  & ? = ?', "%064b" % fp_vector[8], "%064b" % fp_vector[8])
-    .where('fp9  & ? = ?', "%064b" % fp_vector[9], "%064b" % fp_vector[9])
-    .where('fp10 & ? = ?', "%064b" % fp_vector[10], "%064b" % fp_vector[10])
-    .where('fp11 & ? = ?', "%064b" % fp_vector[11], "%064b" % fp_vector[11])
-    .where('fp12 & ? = ?', "%064b" % fp_vector[12], "%064b" % fp_vector[12])
-    .where('fp13 & ? = ?', "%064b" % fp_vector[13], "%064b" % fp_vector[13])
-    .where('fp14 & ? = ?', "%064b" % fp_vector[14], "%064b" % fp_vector[14])
-    .where('fp15 & ? = ?', "%064b" % fp_vector[15], "%064b" % fp_vector[15])
+  def self.count_bits_set(fp_vector)
+    query_num_set_bits = 0
+
+    fp_vector.each do |fp|
+      num_bit_on = ("%064b" % fp).count("1")
+      query_num_set_bits = query_num_set_bits + num_bit_on
+    end
+
+    return query_num_set_bits
+  end
+
+  def self.selected
+    unscoped.where("deleted_at IS NOT NULL")
+  end
+
+  scope :by_tanimoto_coefficient, -> (fp_vector,
+                                      threshold = 0.5) {
+    query_num_set_bits = self.count_bits_set(fp_vector)
+
+    query = sanitize_sql_for_conditions(
+      ["id, num_set_bits,
+        fp0 & ? n0, fp1 & ? n1, fp2 & ? n2, fp3 & ? n3, fp4 & ? n4, fp5 & ? n5,
+        fp6 & ? n6, fp7 & ? n7, fp8 & ? n8, fp9 & ? n9, fp10 & ? n10,
+        fp11 & ? n11, fp12 & ? n12, fp13 & ? n13, fp14 & ? n14, fp15 & ? n15",
+        "%064b" % fp_vector[0],
+        "%064b" % fp_vector[1],
+        "%064b" % fp_vector[2],
+        "%064b" % fp_vector[3],
+        "%064b" % fp_vector[4],
+        "%064b" % fp_vector[5],
+        "%064b" % fp_vector[6],
+        "%064b" % fp_vector[7],
+        "%064b" % fp_vector[8],
+        "%064b" % fp_vector[9],
+        "%064b" % fp_vector[10],
+        "%064b" % fp_vector[11],
+        "%064b" % fp_vector[12],
+        "%064b" % fp_vector[13],
+        "%064b" % fp_vector[14],
+        "%064b" % fp_vector[15]
+      ])
+
+    new_fp = Molecule.unscoped.select(query)
+
+    15.times { |i|
+      new_fp = new_fp.where("fp#{i}  & ? = ?",
+                            "%064b" % fp_vector[i],
+                            "%064b" % fp_vector[i])
+    }
+
+    common_set_bits = unscoped.from("(#{new_fp.to_sql}) AS new_fp").select("*,
+        LENGTH(TRANSLATE(
+          CONCAT(new_fp.n0::text, new_fp.n1::text, new_fp.n2::text,
+                 new_fp.n3::text, new_fp.n4::text, new_fp.n5::text,
+                 new_fp.n6::text, new_fp.n7::text, new_fp.n8::text,
+                 new_fp.n9::text, new_fp.n10::text, new_fp.n11::text,
+                 new_fp.n12::text, new_fp.n13::text,
+                 new_fp.n14::text, new_fp.n15::text),
+          '0',
+          '')) as common_set_bit")
+    query = sanitize_sql_for_conditions(["id,
+      (common_set_bit / (? + num_set_bits - common_set_bit)) AS tanimoto",
+      query_num_set_bits])
+    tanimoto = unscoped.from("(#{common_set_bits.to_sql}) AS common_bits").select(query).sort_by(&:tanimoto)
+
+    molecule_ids = tanimoto.map(&:id)
+
+    where(id: molecule_ids)
+  }
+
+  # Return only molecule with Tanimoto coefficient (T) higher than threshold
+  # Default with molecule with T >= 0.6
+  scope :by_finger_print, -> (fp_vector, threshold = 0.6) {
+    query_num_bit_on = self.count_bits_set(fp_vector)
+
+    scope = where('num_set_bits >= ?', (threshold * query_num_bit_on).floor)
+            .where('num_set_bits <= ?', (query_num_bit_on / threshold).floor)
+    15.times { |i|
+      scope = scope.where("fp#{i}  & ? = ?",
+                          "%064b" % fp_vector[i],
+                          "%064b" % fp_vector[i])
+    }
+
+    return scope
   }
 
   def self.find_or_create_by_molfile molfile, is_partial = false
@@ -123,6 +190,8 @@ class Molecule < ActiveRecord::Base
     self.fp13 = "%064b" % fp_vector[13]
     self.fp14 = "%064b" % fp_vector[14]
     self.fp15 = "%064b" % fp_vector[15]
+
+    self.num_set_bits = self.count_bits_set(fp_vector)
   end
 
   def attach_svg svg_data

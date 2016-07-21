@@ -115,8 +115,13 @@ module Chemotion
           fp_vector =
             Chemotion::OpenBabelService.fingerprint_from_molfile(arg)
 
-          Sample.for_user(current_user.id).joins(:molecule)
-            .merge(Molecule.by_finger_print(fp_vector))
+          # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
+
+          Sample.for_user(current_user.id)
+                .joins(:molecule)
+                .merge(
+                  Molecule.by_tanimoto_coefficient(fp_vector)
+                )
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
