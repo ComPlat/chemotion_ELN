@@ -98,7 +98,7 @@ class Molecule < ActiveRecord::Base
           '0',
           '')) as common_set_bit")
     query = sanitize_sql_for_conditions(["id,
-      (common_set_bit / (? + num_set_bits - common_set_bit)) AS tanimoto",
+      (common_set_bit::float8 / (? + num_set_bits - common_set_bit)::float8) AS tanimoto",
       query_num_set_bits])
     tanimoto = unscoped.from("(#{common_set_bits.to_sql}) AS common_bits").select(query).sort_by(&:tanimoto)
 
