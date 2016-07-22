@@ -125,7 +125,11 @@ class Molecule < ActiveRecord::Base
 
   def self.find_or_create_by_molfile molfile, is_partial = false
 
-    new_molfile = self.skip_residues(molfile) if is_partial
+    new_molfile = if is_partial
+                    self.skip_residues(molfile)
+                  else
+                    molfile
+                  end
 
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(new_molfile, is_partial)
     babel_info[:fp] = Chemotion::OpenBabelService.fingerprint_from_molfile(molfile, is_partial)
