@@ -8,6 +8,8 @@ class Molecule < ActiveRecord::Base
 
   validates_uniqueness_of :inchikey, scope: :is_partial
 
+  NUMBER_OF_FINGERPRINT_COL = 16
+
   # scope for suggestions
   scope :by_iupac_name, -> (query) {
     where('iupac_name ILIKE ?', "%#{query}%")
@@ -79,7 +81,7 @@ class Molecule < ActiveRecord::Base
 
     new_fp = Molecule.unscoped.select(query)
 
-    15.times { |i|
+    NUMBER_OF_FINGERPRINT_COL.times { |i|
       new_fp = new_fp.where("fp#{i}  & ? = ?",
                             "%064b" % fp_vector[i],
                             "%064b" % fp_vector[i])
@@ -112,7 +114,7 @@ class Molecule < ActiveRecord::Base
 
     scope = where('num_set_bits >= ?', (threshold * query_num_bit_on).floor)
             .where('num_set_bits <= ?', (query_num_bit_on / threshold).floor)
-    15.times { |i|
+    NUMBER_OF_FINGERPRINT_COL.times { |i|
       scope = scope.where("fp#{i}  & ? = ?",
                           "%064b" % fp_vector[i],
                           "%064b" % fp_vector[i])
@@ -123,9 +125,10 @@ class Molecule < ActiveRecord::Base
 
   def self.find_or_create_by_molfile molfile, is_partial = false
 
-    molfile = self.skip_residues(molfile) if is_partial
+    new_molfile = self.skip_residues(molfile) if is_partial
 
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(new_molfile, is_partial)
+    babel_info[:fp] = Chemotion::OpenBabelService.fingerprint_from_molfile(molfile, is_partial)
 
     inchikey = babel_info[:inchikey]
     unless inchikey.blank?
@@ -137,7 +140,7 @@ class Molecule < ActiveRecord::Base
         pubchem_info =
           Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
-        molecule.molfile = molfile
+        molecule.molfile = new_molfile
         molecule.assign_molecule_data babel_info, pubchem_info
 
       end
@@ -191,7 +194,7 @@ class Molecule < ActiveRecord::Base
     self.fp14 = "%064b" % fp_vector[14]
     self.fp15 = "%064b" % fp_vector[15]
 
-    self.num_set_bits = self.count_bits_set(fp_vector)
+    self.num_set_bits = self.class.count_bits_set(fp_vector)
   end
 
   def attach_svg svg_data

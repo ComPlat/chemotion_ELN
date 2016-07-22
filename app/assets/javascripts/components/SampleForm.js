@@ -123,7 +123,7 @@ export default class SampleForm extends React.Component {
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
         <FormControl type="text"
-          value={sample[field]}
+          value={sample[field] || ''}
           onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}
           disabled={disabled || sample.isMethodDisabled(field)}
           readOnly={disabled || sample.isMethodDisabled(field)}

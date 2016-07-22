@@ -112,8 +112,9 @@ module Chemotion
         when 'substring'
           AllElementSearch.new(arg, current_user.id).search_by_substring
         when 'structure'
+          is_part = arg.include? ' R# '
           fp_vector =
-            Chemotion::OpenBabelService.fingerprint_from_molfile(arg)
+            Chemotion::OpenBabelService.fingerprint_from_molfile(arg, is_part)
 
           # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
 
