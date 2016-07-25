@@ -201,7 +201,7 @@ export default class Material extends Component {
         <NumeralInputWithUnitsCompo
           precision={4}
           value={material.equivalent}
-          disabled={material.reference && material.equivalent}
+          disabled={(material.reference && material.equivalent) !== false}
           onChange={(e) => this.handleEquivalentChange(e)}
         />
       );

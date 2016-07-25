@@ -148,7 +148,7 @@ export default class ReactionDetails extends Component {
            </Tab>
      );
     return(
-        <Tabs defaultActiveKey={0}>
+        <Tabs defaultActiveKey={0} id="product-analyses-tab">
           {tabs}
         </Tabs>
     )
@@ -227,7 +227,7 @@ export default class ReactionDetails extends Component {
             {this.reactionSVG(reaction, svgContainerStyle)}
           </Row>
           <hr/>
-          <Tabs defaultActiveKey={0}>
+          <Tabs defaultActiveKey={0} id="reaction-detail-tab">
             <Tab eventKey={0} title={'Scheme'}>
               <ReactionDetailsScheme
                 reaction={reaction}
@@ -251,7 +251,6 @@ export default class ReactionDetails extends Component {
               {this.productAnalyses()}
             </Tab>
             {extraTabs.map((e,i)=>e(i))}
-
           </Tabs>
           <hr/>
           <ButtonToolbar>
