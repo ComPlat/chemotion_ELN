@@ -1,8 +1,10 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: a05321e8e24f0608cfe6d99f88cd224a776a6eeb
+  revision: 34bef59453646e3a517f8288f08f841f05edaba6
   specs:
     ketcherails (0.1.2)
+      haml-rails (= 0.9.0)
+      jquery-ui-rails (= 5.0.5)
       nokogiri (= 1.6.7.2)
       rails (~> 4.2.0)
 
@@ -111,6 +113,10 @@ GEM
       open4 (~> 1.3.0)
       thor (>= 0.15.4, < 2)
     bcrypt (3.1.11)
+    better_errors (2.1.1)
+      coderay (>= 1.0.0)
+      erubis (>= 2.6.6)
+      rack (>= 0.9.0)
     binding_of_caller (0.7.2)
       debug_inspector (>= 0.0.1)
     bootstrap-sass (3.3.6)
@@ -154,6 +160,7 @@ GEM
     childprocess (0.5.9)
       ffi (~> 1.0, >= 1.0.11)
     chronic (0.10.2)
+    coderay (1.1.1)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
     concurrent-ruby (1.0.2)
@@ -252,6 +259,8 @@ GEM
       rails-dom-testing (>= 1, < 3)
       railties (>= 4.2.0)
       thor (>= 0.14, < 2.0)
+    jquery-ui-rails (5.0.5)
+      railties (>= 3.2.16)
     json (1.8.3)
     jwt (1.5.1)
     kaminari (0.16.3)
@@ -454,6 +463,7 @@ DEPENDENCIES
   awesome_print
   axlsx!
   backup
+  better_errors
   bootstrap-sass (~> 3.3.5)
   browserify-rails (~> 3.0.1)
   byebug

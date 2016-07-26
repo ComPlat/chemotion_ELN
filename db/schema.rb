@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160630100818) do
+ActiveRecord::Schema.define(version: 20160722111824) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -112,6 +112,24 @@ ActiveRecord::Schema.define(version: 20160630100818) do
 
   add_index "elemental_compositions", ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
 
+  create_table "ketcherails_common_templates", force: :cascade do |t|
+    t.integer  "moderated_by"
+    t.integer  "suggested_by"
+    t.string   "name",         null: false
+    t.text     "molfile",      null: false
+    t.string   "icon_path"
+    t.string   "sprite_class"
+    t.text     "notes"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "ketcherails_common_templates", ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by", using: :btree
+  add_index "ketcherails_common_templates", ["name"], name: "index_ketcherails_common_templates_on_name", using: :btree
+  add_index "ketcherails_common_templates", ["suggested_by"], name: "index_ketcherails_common_templates_on_suggested_by", using: :btree
+
   create_table "ketcherails_custom_templates", force: :cascade do |t|
     t.integer  "user_id",      null: false
     t.string   "name",         null: false
@@ -123,6 +141,12 @@ ActiveRecord::Schema.define(version: 20160630100818) do
   end
 
   add_index "ketcherails_custom_templates", ["user_id"], name: "index_ketcherails_custom_templates_on_user_id", using: :btree
+
+  create_table "ketcherails_template_categories", force: :cascade do |t|
+    t.string   "name",       null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "literatures", force: :cascade do |t|
     t.integer  "reaction_id", null: false
@@ -170,6 +194,7 @@ ActiveRecord::Schema.define(version: 20160630100818) do
     t.bit      "fp14",                   limit: 64
     t.bit      "fp15",                   limit: 64
     t.string   "cano_smiles"
+    t.integer  "num_set_bits",           limit: 2
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
@@ -365,6 +390,7 @@ ActiveRecord::Schema.define(version: 20160630100818) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
     t.string   "name_abbreviation",      limit: 3
+    t.boolean  "is_templates_moderator",           default: false,                                                 null: false
   end
 
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
