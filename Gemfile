@@ -88,7 +88,10 @@ group :production do
 
 end
 
-gem 'web-console', '~> 2.0', group: :development
+group :development do
+  gem 'web-console', '~> 2.0'
+  gem 'better_errors' # allows to debug exception on backend from browser
+end
 
 group :development, :test do
 

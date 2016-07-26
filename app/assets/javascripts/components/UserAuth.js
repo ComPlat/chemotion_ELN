@@ -47,10 +47,21 @@ export default class UserAuth extends Component {
     const style = {
       marginRight: '5px'
     };
+
+    let templatesLink;
+    if(this.state.currentUser.is_templates_moderator) {
+      templatesLink = (
+        <MenuItem eventKey="2" href="ketcher/common_templates">
+          Common Templates
+        </MenuItem>
+      );
+    }
+
     return (
       <Nav navbar pullRight>
         <NavDropdown title={`Log in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
           <MenuItem eventKey="1" href="pages/settings" >Account settings</MenuItem>
+          {templatesLink}
           <MenuItem eventKey="2" href="users/edit" >Change Password</MenuItem>
           <MenuItem eventKey="3" href="pages/profiles" >Change profiles</MenuItem>
         </NavDropdown>
