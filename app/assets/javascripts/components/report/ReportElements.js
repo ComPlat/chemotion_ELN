@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
-import {Label, Table} from 'react-bootstrap';
+import {Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 
 const SVGContent = ({show, reaction_svg_file}) => {
   const svg_file =reaction_svg_file && `/images/reactions/${reaction_svg_file}`
@@ -11,6 +11,53 @@ const SVGContent = ({show, reaction_svg_file}) => {
         </div>
       : null
   )
+}
+
+const StatusContent = ({status}) => {
+  let tooltip = null;
+  switch(status) {
+    case "Successful":
+      tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          <a style={{marginLeft: '10px',
+                   padding: '3px',
+                   backgroundColor: 'white',
+                   color:'green'}} >
+            <i className="fa fa-check-circle-o"/>
+          </a>
+        </OverlayTrigger>
+      )
+      break;
+    case "Planned":
+      tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+        <a style={{marginLeft: '10px',
+                   padding: '3px',
+                   backgroundColor: 'white',
+                   color:'orange'}} >
+          <i className="fa fa-clock-o"/>
+        </a>
+        </OverlayTrigger>
+      )
+      break;
+    case "Not Successful":
+      tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+        <a style={{marginLeft: '10px',
+                   padding: '3px',
+                   backgroundColor: 'white',
+                   color:'red'}} >
+          <i className="fa fa-times-circle-o"/>
+        </a>
+        </OverlayTrigger>
+      )
+      break;
+    default:
+      return null;
+  }
 }
 
 const MaterialContent = ({show, starting_materials, reactants, products}) => {
@@ -237,4 +284,5 @@ const LiteratureContent = ({show, literatures}) => {
 
 export {SVGContent, MaterialContent, DescriptionContent,
         PurificationContent, TLCContent, ObservationContent,
-        AnalysesContent, LiteratureContent, SolventContent}
+        AnalysesContent, LiteratureContent, SolventContent,
+        StatusContent}

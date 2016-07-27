@@ -3,8 +3,8 @@ import SVG from 'react-inlinesvg';
 import {Alert, Label, Table} from 'react-bootstrap';
 import {SVGContent, MaterialContent, DescriptionContent,
         PurificationContent, TLCContent, ObservationContent,
-        AnalysesContent, LiteratureContent,
-        SolventContent} from './ReactElements';
+        AnalysesContent, LiteratureContent, SolventContent,
+        StatusContent} from './ReportElements';
 
 const Reports = ({selectedReactions, settings}) => {
   let reactions = selectedReactions.map( (reaction, i) => {
@@ -21,7 +21,7 @@ const Report = ({reaction, settings}) => {
   const {name, description, literatures, starting_materials, reactants,
          products, solvents, solvent, dangerous_products, purification,
          observation, reaction_svg_file, tlc_description,
-         tlc_solvents, rf_value } = reaction
+         tlc_solvents, rf_value, status } = reaction
 
   const settings_obj = settings.reduce((o, {text, checked} ) => {
     o[text] = checked
@@ -39,7 +39,9 @@ const Report = ({reaction, settings}) => {
       <Alert bsStyle='success' style={{ textAlign: 'center',
                                         backgroundColor: '#428bca',
                                         color:'white',
-                                        border:'none'}}> {name} </Alert>
+                                        border:'none'}}> {name}
+        <StatusContent status={status}/>
+      </Alert>
 
       <SVGContent show={settings_obj.formula}
                   reaction_svg_file={reaction_svg_file} />
