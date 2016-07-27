@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: 34bef59453646e3a517f8288f08f841f05edaba6
+  revision: b7279899cc600f73f4d24b4b9da0cd802237b829
   specs:
     ketcherails (0.1.2)
       haml-rails (= 0.9.0)

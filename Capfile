@@ -10,7 +10,7 @@ require 'capistrano/npm' # Node package manager
 require 'capistrano/bundler'
 require 'capistrano/rails/assets'
 require 'capistrano/rails/migrations'
-require 'capistrano/delayed-job'
+require 'capistrano/delayed_job'
 require 'whenever/capistrano'
 
 # Load custom tasks from `lib/capistrano/tasks` if you have any defined
