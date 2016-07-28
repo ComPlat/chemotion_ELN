@@ -113,23 +113,13 @@ export default class SampleDetails extends React.Component {
   handleStructureEditorSave(molfile, svg_file = null) {
     let {sample} = this.state;
 
-    if(sample) {
-      sample.molfile = molfile
+    sample.molfile = molfile
+    sample.contains_residues = molfile.indexOf(' R# ') > -1;
+    sample.formulaChanged = true;
 
-      sample.contains_residues = molfile.indexOf(' R# ') > -1;
-
-      if(sample.contains_residues)
-        sample.sample_svg_file = svg_file;
-
-      sample.formulaChanged = true;
-    }
     this.setState({sample: sample, loadingMolecule: true});
 
-    if(sample.contains_residues > -1){
-      this.updateMolecule(molfile, svg_file);
-    } else {
-      this.updateMolecule(molfile);
-    }
+    this.updateMolecule(molfile, svg_file);
 
     this.hideStructureEditor()
   }
