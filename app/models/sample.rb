@@ -94,8 +94,10 @@ class Sample < ActiveRecord::Base
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, presence: true
 
-  before_save :auto_set_short_label, :attach_svg, :init_elemental_compositions,
+  before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
+
+  before_save :auto_set_short_label, on: :create
 
   after_save :update_data_for_reactions
   after_create :update_counter
@@ -117,6 +119,8 @@ class Sample < ActiveRecord::Base
   end
 
   def auto_set_short_label
+    self.short_label = nil if self.short_label == 'NEW SAMPLE'
+
     if parent
       self.short_label ||= "#{parent.short_label}-#{parent.children.count.to_i + 1}"
     elsif creator
