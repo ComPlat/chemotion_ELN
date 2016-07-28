@@ -1,10 +1,10 @@
 FactoryGirl.define do
-  factory :user do
-    sequence(:email) { |n| "foobar#{n}@bar.de" }
-    first_name 'first_name'
-    last_name 'last_name'
+  factory :group do
+    sequence(:email) { |n| "group#{n}@foo.bar" }
+    first_name 'gro'
+    last_name 'up'
     sequence(:name_abbreviation) do |n|
-      result = 'FL'
+      result = 'GU'
       n.times { result.succ! }
       result
     end
@@ -13,7 +13,7 @@ FactoryGirl.define do
     counters({
       samples: 0,
       reactions: 0,
-      wellplates: 0
+      wellplates: 0,
     })
   end
 end

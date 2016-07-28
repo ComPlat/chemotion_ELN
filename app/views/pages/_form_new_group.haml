@@ -1,0 +1,9 @@
+=form_tag('/api/v1/groups/create', remote: true, id: "formNewGroup") do
+  =label_tag 'name', nil, class: 'small_label'
+  %input{ id:"first_name", name:"group_param[first_name]", type:"text", size:"10",placeholder:"eg: AK"}
+  %input{ id:"last_name", name:"group_param[last_name]", type:"text", size:"10",placeholder:"J. Moriarty"}
+  =label_tag 'name abbreviation', nil, class: 'small_label'
+  %input{ id:"name_abbreviation", name:"group_param[name_abbreviation]", size:"10",type:"text",maxlength:"5",placeholder:"AK-JM"}
+  =submit_tag 'Create new Group'
+
+  %br/

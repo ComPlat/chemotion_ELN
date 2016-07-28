@@ -10,29 +10,24 @@ describe Chemotion::ReactionAPI do
 
     describe 'GET /api/v1/reactions' do
       let(:c1)   { create(:collection, label: 'C1', user: user, is_shared: false) }
-      let(:r1)   { create(:reaction) }
-      let(:r2)   { create(:reaction) }
+      let(:r1)   { create(:reaction, name:'r1')}#,collections: [c1]) }
+      let(:r2)   { create(:reaction, name:'r2')}#,collections: [c1]) }
 
-      before {
+      before do
         CollectionsReaction.create!(reaction: r1, collection: c1)
         CollectionsReaction.create!(reaction: r2, collection: c1)
-
         get '/api/v1/reactions'
-      }
+      end
 
       it 'returns serialized (unshared) reactions roots of logged in user' do
         reactions = JSON.parse(response.body)['reactions']
-        expect(reactions.last.symbolize_keys).to include(
-          id: r1.id,
-          name: r1.name,
-          type: 'reaction',
-          collection_labels: [{"name" => 'C1', "is_shared" => false}]
-        )
+        expect(reactions.map{|r| [r['id'],r['name']]}).to match_array([
+          [r1.id,r1.name], [r2.id,r2.name]])
         expect(reactions.first.symbolize_keys).to include(
           id: r2.id,
           name: r2.name,
           type: 'reaction',
-          collection_labels: [{"name" => 'C1', "is_shared" => false}]
+          collection_labels: [{"name" => 'C1', "is_shared" => false, "id" => c1.id}]
         )
       end
     end
@@ -171,11 +166,11 @@ describe Chemotion::ReactionAPI do
     describe 'PUT /api/v1/reactions', focus: true do
 
       let(:collection_1) { Collection.create!(label: 'Collection #1', user: user) }
-      let(:sample_1) { Sample.create!(name: 'Sample 1') }
-      let(:sample_2) { Sample.create!(name: 'Sample 2') }
-      let(:sample_3) { Sample.create!(name: 'Sample 3') }
-      let(:sample_4) { Sample.create!(name: 'Sample 4') }
-      let(:reaction_1) { Reaction.create(name: 'r1') }
+      let(:sample_1) {create(:sample,name:'Sample 1')}#{ Sample.create!(name: 'Sample 1') }
+      let(:sample_2) {create(:sample,name:'Sample 2')}#{ Sample.create!(name: 'Sample 2') }
+      let(:sample_3) {create(:sample,name:'Sample 3')}#{ Sample.create!(name: 'Sample 3') }
+      let(:sample_4) {create(:sample,name:'Sample 4')}#{ Sample.create!(name: 'Sample 4') }
+      let(:reaction_1) { create(:reaction,name:'r1')}#{Reaction.create(name: 'r1') }
 
       before do
         CollectionsReaction.create(reaction_id: reaction_1.id, collection_id: collection_1.id)
@@ -305,7 +300,8 @@ describe Chemotion::ReactionAPI do
                   "reference" => true,
                  "equivalent" => 1,
                      "is_new" => true,
-                   "is_split" => true
+                   "is_split" => true,
+
               ]
             }
           }
@@ -343,7 +339,7 @@ describe Chemotion::ReactionAPI do
 
     describe 'POST /api/v1/reactions', focus: true do
       let(:collection_1) { Collection.create!(label: 'Collection #1', user: user) }
-      let(:sample_1) { Sample.create!(name: 'Sample 1') }
+      let(:sample_1) {create(:sample,name:'Sample 1')}#{ Sample.create!(name: 'Sample 1') }
 
       context 'creating new materials' do
         let(:params) {

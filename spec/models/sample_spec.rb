@@ -90,7 +90,7 @@ MOLFILE
     let(:sample) { build(:sample, molfile: molfile) }
     before do
       sample.collections << FactoryGirl.build(:collection)
-      sample.creator = FactoryGirl.build(:user)
+      sample.creator = FactoryGirl.build(:person)
     end
     it 'should create a molecule' do
       sample.save!
@@ -126,7 +126,7 @@ MOLFILE
   end
 
   context 'count samples created by user' do
-    let(:user) { create(:user)}
+    let(:user) { create(:person)}
 
     before do
       3.times do

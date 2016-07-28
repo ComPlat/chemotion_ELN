@@ -3,11 +3,11 @@ require 'rails_helper'
 describe Chemotion::MoleculeAPI do
 
   context 'authorized user logged in' do
-    let(:user)  { create(:user) }
+    let(:user)  { create(:person) }
 
     before do
-      allow_any_instance_of(WardenAuthentication).to
-        receive(:current_user).and_return(user)
+      allow_any_instance_of(WardenAuthentication).to(
+        receive(:current_user).and_return(user))
     end
 
     describe 'POST /api/v1/molecules' do

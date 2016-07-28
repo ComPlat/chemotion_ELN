@@ -52,7 +52,8 @@ class ElementPolicy
   end
 
   def user_collections
-    record.collections.where(user_id: user.id)
+    user_ids = user.group_ids + [user.id]
+    record.collections.where(user_id: user_ids)
   end
 
   # TODO move to appropriate class

@@ -79,9 +79,9 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          coll = Collection.belongs_to_or_shared_by(current_user.id)
-          coll.find(params[:collection_id]).samples
-              .includes(:molecule, :residues, :elemental_compositions)
+          Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
+            .find(params[:collection_id]).samples
+            .includes(:molecule, :residues, :elemental_compositions)
         else
           # All collection
           Sample.for_user(current_user.id).includes(:molecule).uniq

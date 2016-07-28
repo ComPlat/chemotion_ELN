@@ -66,7 +66,8 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).wellplates
+          Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
+            find(params[:collection_id]).wellplates
         else
           # All collection of current_user
           Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).uniq

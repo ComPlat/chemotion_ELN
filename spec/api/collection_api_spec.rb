@@ -114,10 +114,21 @@ describe Chemotion::CollectionAPI do
     describe 'GET /api/v1/collections/remote_roots' do
       it 'returns serialized (remote) collection roots of logged in user' do
         get '/api/v1/collections/remote_roots'
-
         expect(JSON.parse(response.body)['collections'].first['label']).to eq c4.label
       end
+      context 'with a collection shared to a group' do
+        let(:p2){create(:person)}
+        let!(:g1){ create(:group,users:[user]) }
+        let!(:c6){ create(:collection, user: g1, is_shared: true,shared_by_id:p2.id, is_locked:false) }
+        before {get '/api/v1/collections/remote_roots'}
+        it 'returns serialized (remote) collection roots of logged in user' do
+          expect(JSON.parse(response.body)['collections'].map{|e| e['id']}).to match_array [c4.id,c6.id]
+        end
+      end
     end
+
+
+
 
     describe 'POST /api/v1/collections/unshared' do
       let(:params) {

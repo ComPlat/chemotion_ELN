@@ -14,11 +14,9 @@ class User < ActiveRecord::Base
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
+
   validates_presence_of :first_name, :last_name, allow_blank: false
-  validates :name_abbreviation, format: {with: /(\A[a-zA-Z]{1,3}\Z)|(\A[a-zA-Z][a-zA-Z0-9\-_][a-zA-Z]\Z)/,
-      message: "can be alphanumeric, middle '_' and '-' are allowed, but leading or trailing digit, '-' and '_' are not."},
-    length: {in: 1..3, message: "1 to 3 characters only"},
-    uniqueness:  {message: " has already been taken." }
+
 
   after_create :create_chemotion_public_collection, :create_all_collection,
                :has_profile
@@ -71,6 +69,21 @@ class User < ActiveRecord::Base
     self.create_profile if !self.profile
   end
 
+  has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
+  has_many :groups, through: :users_groups
+
+  def group_ids
+    self.groups.pluck(:id)
+  end
+
+  def group_collections
+    Collection.where("user_id = ? AND is_locked = ?", self.groups.pluck(:id), false)
+  end
+
+  def all_collections
+    Collection.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -85,4 +98,29 @@ class User < ActiveRecord::Base
   def create_chemotion_public_collection
     Collection.create(user: self, label: 'chemotion.net', is_locked: true)
   end
+end
+
+class Person < User
+  validates :name_abbreviation, format: {with: /(\A[a-zA-Z]{1,3}\Z)|(\A[a-zA-Z][a-zA-Z0-9\-_][a-zA-Z]\Z)/,
+      message: "can be alphanumeric, middle '_' and '-' are allowed, but leading or trailing digit, '-' and '_' are not."},
+    length: {in: 1..3, message: "1 to 3 characters only"},
+    uniqueness:  {message: " has already been taken." }
+
+  has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
+  has_many :groups, through: :users_groups
+
+  has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
+  has_many :administrated_accounts,  through: :users_admins, source: :user
+end
+
+class Group < User
+  validates :name_abbreviation, format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,3}[a-zA-Z]?\Z/,
+      message: "can be alphanumeric, middle '_' and '-' are allowed, but leading or trailing digit, '-' and '_' are not."},
+    length: {in: 1..5, message: "1 to 5 characters only"},
+    uniqueness:  {message: " has already been taken." }
+  has_many :users_groups, dependent: :destroy
+  has_many :users,class_name: "User", through: :users_groups
+
+  has_many :users_admins, dependent: :destroy, foreign_key: :user_id
+  has_many :admins,  through: :users_admins, source: :admin# ,  foreign_key:    association_foreign_key: :admin_id
 end

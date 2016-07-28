@@ -1,0 +1,112 @@
+.container
+  %h2
+    My Groups
+
+
+  %br/
+
+  .jumbotron
+    =render 'form_new_group', users:@users
+
+
+  %br/
+  %table.table.table-striped.table-hover
+    %thead
+      %tr
+        %th Name
+        %th Kürzel
+        %th
+
+    %tbody#myGroupList
+      - @groups.each do |group|
+        %tr{id:"tr_group_#{group['id']}"}
+          %td= group['name']
+          %td= group['initials']
+          %td
+            %span
+              %button.btn.btn-info{ 'data-toggle' =>"collapse", 'data-target' =>".user_list_#{group['id']}"}
+                %i.fa.fa-list{'aria-hidden' =>"true"}
+              - unless group['admins'].select{|admin| admin['id'] == current_user.id}.empty?
+                %button.btn.btn-success.add-users{ id:"group_#{group['id']}",
+                'data-toggle' =>"modal", 'data-target' =>"#add-users-modal",
+                'data-group-users'=> group['users'].to_json }
+                  %i.fa.fa-pencil-square-o{'aria-hidden' =>"true"}
+                =form_tag("/api/v1/groups/upd/#{group['id']}", method:'put', remote: true ,style:"display:inline", class:"destroyMyGroup") do
+                  %input{type:"hidden", name:"destroy_group", value:"true"}
+                  =button_tag(type: "submit", data: { confirm: "Are you sure?" }, class: 'btn btn-danger') do
+                    %i.fa.fa-trash{'aria-hidden' =>"true"}
+        - group['users'].each do |user|
+          %tr.info.collapse{ class: "user_list_#{group['id']}" }
+            %td= user['name']
+            %td= user['initials']
+            %td
+
+
+  = link_to "Back", root_path, options:{"data-no-turbolink" =>true}
+
+#add-users-modal.modal.fade{:tabindex => "-1", role:"dialog", "aria-labelledby"=>"myModalLabel", "aria-hidden"=>"true"}
+  .modal-dialog{ role:"document"}
+    .modal-content
+      =form_tag("/api/v1/groups/upd/", method:'put', remote: true, id:'formAddUser') do
+        .modal-header
+          %button.close{"aria-label"=>"Close", "data-dismiss" => "modal", :type => "button"}
+            %span{"aria-hidden"=>"true"} &times;
+          %h3.modal-title Select users
+        .modal-body
+          %h4 Remove current users
+          %ol{id: 'currentGroupUsers' }
+          %h4 Add more users
+          %ol{id:'allUsers', 'data-all-users' => @users.to_json }
+
+        .modal-footer
+          =submit_tag 'update user list'
+          %button.btn{"data-dismiss" => "modal", :type => "button"} Close
+
+:javascript
+  //
+  $('.add-users').on('click', function(e){
+    var users = JSON.parse(document.getElementById('allUsers').getAttribute('data-all-users'));
+    var id = this.id.slice(6);
+    document.getElementById("formAddUser").setAttribute("action", "/api/v1/groups/upd/"+id);
+    document.getElementById('currentGroupUsers').innerHTML = "";
+    document.getElementById('allUsers').innerHTML = "";
+    JSON.parse(this.getAttribute("data-group-users")).map(function(u){
+      $("#currentGroupUsers").append('<li><input type="checkbox" name="rm_users[]" value="'+
+      u.id+'">'+u.name+' - '+u.initials+'</li>'
+       );
+    });
+    users.map(function(u){
+      $("#allUsers").append('<li><input type="checkbox" name="add_users[]" value="'+
+      u.id+'">'+u.name+' - '+u.initials+'</li>');
+    });
+    }
+  );
+  $('#formAddUser').on('submit', function() {
+    $('#add-users-modal').modal('hide');
+  }).on('ajax:success', function(e, data, status, xhr){
+    if  (data.error){alert(data.error)} else{
+      window.location = "#{root_url}"+'pages/groups/';
+      return false;
+    }
+  }).on('ajax:error', function(xhr, status, error){
+    if  (error){alert(error)} else{
+      window.location = "#{root_url}"+'pages/groups/';
+      return false;
+    }
+  });
+
+  $('.destroyMyGroup').on('submit', function() {
+  }).on('ajax:success', function(e, data){
+    document.getElementById('myGroupList').removeChild(document.getElementById('tr_group_'+data.destroyed_id));
+  });
+
+  $('#formNewGroup').on('submit', function() {
+    //
+  }).on('ajax:success', function(e, data){
+    if  (data.error){alert(data.error)} else{
+      window.location = "#{root_url}"+'pages/groups/';
+      return false;
+    }
+  }).on('ajax:error', function(e, xhr){
+    alert(xhr.responseJSON.error);
+  });
