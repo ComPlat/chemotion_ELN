@@ -11,12 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160727160203) do
+ActiveRecord::Schema.define(version: 20160729105554) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -115,8 +115,8 @@ ActiveRecord::Schema.define(version: 20160727160203) do
   create_table "ketcherails_common_templates", force: :cascade do |t|
     t.integer  "moderated_by"
     t.integer  "suggested_by"
-    t.string   "name",         null: false
-    t.text     "molfile",      null: false
+    t.string   "name",                 null: false
+    t.text     "molfile",              null: false
     t.string   "icon_path"
     t.string   "sprite_class"
     t.text     "notes"
@@ -124,6 +124,8 @@ ActiveRecord::Schema.define(version: 20160727160203) do
     t.datetime "rejected_at"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "template_category_id"
+    t.string   "status"
   end
 
   add_index "ketcherails_common_templates", ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by", using: :btree
@@ -390,8 +392,8 @@ ActiveRecord::Schema.define(version: 20160727160203) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                 null: false
+    t.string   "type",                             default: "Person"
   end
 
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
