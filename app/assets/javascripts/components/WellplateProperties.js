@@ -18,7 +18,7 @@ export default class WellplateProperties extends Component {
             <FormGroup>
               <ControlLabel>Name</ControlLabel>
               <FormControl type="text"
-                value={name}
+                value={name || ''}
                 onChange={event => this.handleInputChange('name', event)}
                 disabled={name == '***'}
               />
@@ -28,7 +28,7 @@ export default class WellplateProperties extends Component {
             <FormGroup>
               <ControlLabel>Size</ControlLabel>
               <FormControl type="text"
-                value={size}
+                value={size || ''}
                 onChange={event => this.handleInputChange('size', event)}
                 disabled
               />
@@ -40,7 +40,7 @@ export default class WellplateProperties extends Component {
             <FormGroup>
               <ControlLabel>Description</ControlLabel>
               <FormControl type="textarea"
-                value={description}
+                value={description || ''}
                 onChange={event => this.handleInputChange('description', event)}
                 disabled={description == '***'}
               />

@@ -5,6 +5,7 @@ import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem}
 import debounce from 'es6-promise-debounce';
 
 export default class AutoCompleteInput extends React.Component {
+
   constructor(props) {
     super(props)
     this.state = {
@@ -15,8 +16,11 @@ export default class AutoCompleteInput extends React.Component {
       suggestionFocus: null,
       error: '',
       inputWidth: 0,
-      inputDisabled: false
+      inputDisabled: false,
+      timeoutReference: null,
     }
+    this.timeout = 6e2 // 600ms timeout for input typing
+    this.doneTyping = this.doneTyping.bind(this)
   }
 
   componentDidMount() {
@@ -62,6 +66,7 @@ export default class AutoCompleteInput extends React.Component {
     } else if(direction == 'down') {
       suggestionFocus = this.getNextSuggestionIndex()
     }
+
     this.focusSuggestion(suggestionFocus)
     this.setState({suggestionFocus: suggestionFocus})
   }
@@ -75,10 +80,19 @@ export default class AutoCompleteInput extends React.Component {
     newState.value = suggestions[newFocus].name
     newState.suggestionFocus = newFocus
     ReactDOM.findDOMNode(this.refs['suggestion_' + suggestionFocus])
-      .classList.remove('active')
-    ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus])
-      .classList.add('active')
+            .classList.remove('active')
+    let newFocusDom = ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus])
+    newFocusDom.classList.add('active')
+
     this.setState(newState)
+    let listSuggestions = ReactDOM.findDOMNode(this.refs.listSuggestions)
+
+    // Scroll to element
+    if (listSuggestions &&
+        (newFocusDom.offsetTop > (listSuggestions.scrollTop + listSuggestions.offsetHeight - 70) ||
+        (newFocusDom.offsetTop < listSuggestions.scrollTop))) {
+      listSuggestions.scrollTop = newFocusDom.offsetTop - (11 * listSuggestions.offsetTop);
+    }
   }
 
   resetComponent() {
@@ -92,6 +106,7 @@ export default class AutoCompleteInput extends React.Component {
     })
   }
 
+  // TODO implement continue fetching in the end of scroll
   fetchSuggestions(value) {
     let debounced = debounce(this.props.suggestions, 200)
     debounced(value).then(result => {
@@ -110,13 +125,35 @@ export default class AutoCompleteInput extends React.Component {
     }).catch(error => console.log(error))
   }
 
-  handleValueChange(event) {
-    let {value} = event.target
+  doneTyping() {
+    let {value} = this.state
     if(!value) {
       this.resetComponent()
     } else {
-      this.setState({value: value})
+      // From https://gist.github.com/lsauer/1312860
+      // TODO Validate if the input is InChi, InChiKey or SMILES
       this.fetchSuggestions(value)
+    }
+  }
+
+  // Keep chaging the input value until user finish typing
+  handleValueChange(event, doneTyping) {
+    let {value} = event.target
+    let {timeoutReference} = this.state
+
+    if(!value) {
+      this.resetComponent()
+    } else {
+      if (timeoutReference) {
+        clearTimeout(timeoutReference)
+      }
+
+      this.setState({
+        value: value,
+        timeoutReference: setTimeout(function(){
+                                      doneTyping()
+                                    }, this.timeout)
+      })
     }
   }
 
@@ -160,11 +197,15 @@ export default class AutoCompleteInput extends React.Component {
       valueBeforeFocus: null
     })
 
-    let selection = (this.state.value == suggestions[suggestionFocus].name)
-      ? suggestions[suggestionFocus]
-      : {name: this.state.value, search_by_method: 'substring'}
+    if (suggestions && suggestionFocus) {
+      let selection = {name: this.state.value, search_by_method: 'substring'}
+      if (suggestions[suggestionFocus] && suggestions[suggestionFocus].name &&
+          this.state.value == suggestions[suggestionFocus].name) {
+        selection = suggestions[suggestionFocus]
+      }
 
-    onSelectionChange(selection)
+      onSelectionChange(selection)
+    }
   }
 
   abortAutoSelection() {
@@ -258,10 +299,10 @@ export default class AutoCompleteInput extends React.Component {
             <FormControl {...this.props.inputAttributes}
               disabled = {this.state.inputDisabled}
               type='text'
-              value={value}
+              value={value || ''}
               autoComplete='off'
               ref='input'
-              onChange={event => this.handleValueChange(event)}
+              onChange={event => this.handleValueChange(event, this.doneTyping)}
               onKeyDown={event => this.handleKeyDown(event)}
             />
             <InputGroup.Button>
@@ -275,7 +316,8 @@ export default class AutoCompleteInput extends React.Component {
             container={this}
             rootClose={true}>
             <div style={containerStyle}>
-              <ListGroup {...this.props.suggestionsAttributes}>
+              <ListGroup {...this.props.suggestionsAttributes}
+                          ref='listSuggestions'>
                 {this.renderSuggestions()}
               </ListGroup>
             </div>

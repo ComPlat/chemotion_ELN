@@ -101,14 +101,14 @@ export default class Analysis extends Component {
           <FormControl
             type="textarea"
             label="Content"
-            value={analysis.content}
+            value={analysis.content || ''}
             disabled={readOnly}
             onChange={event => this.handleInputChange('content', event)}
             />
           <FormControl
             type="textarea"
             label="Description"
-            value={analysis.description}
+            value={analysis.description || ''}
             disabled={readOnly}
             onChange={event => this.handleInputChange('description', event)}
             />

@@ -164,7 +164,7 @@ export default class Dataset extends Component {
               <ControlLabel>Name</ControlLabel>
               <FormControl
                 type="text"
-                value={dataset.name}
+                value={dataset.name || ''}
                 disabled={readOnly}
                 onChange={event => this.handleInputChange('name', event)}
                 />
@@ -176,7 +176,7 @@ export default class Dataset extends Component {
             <ControlLabel>Instrument</ControlLabel>
               <FormControl
                 type="text"
-                value={dataset.instrument}
+                value={dataset.instrument || ''}
                 disabled={readOnly}
                 onChange={event => this.handleInputChange('instrument', event)}
               />
@@ -187,7 +187,7 @@ export default class Dataset extends Component {
               <ControlLabel>Description</ControlLabel>
               <FormControl
                 type="textarea"
-                value={dataset.description}
+                value={dataset.description || ''}
                 disabled={readOnly}
                 onChange={event => this.handleInputChange('description', event)}
                 style={{minHeight: 100}}

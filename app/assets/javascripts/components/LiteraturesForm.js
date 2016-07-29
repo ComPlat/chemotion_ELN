@@ -37,7 +37,7 @@ export default class LiteraturesForm extends Component {
       type="text"
       onChange={event => this.handleInputChange('title', event)}
       placeholder={'Title...'}
-      value={this.state.literature.title}
+      value={this.state.literature.title || ''}
     />
   }
 
@@ -46,7 +46,7 @@ export default class LiteraturesForm extends Component {
       type="text"
       onChange={event => this.handleInputChange('url', event)}
       placeholder={'URL...'}
-      value={this.state.literature.url}
+      value={this.state.literature.url || ''}
     />
   }
 

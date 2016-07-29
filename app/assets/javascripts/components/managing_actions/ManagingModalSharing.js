@@ -140,7 +140,7 @@ export default class ManagingModalSharing extends React.Component {
     if (this.props.collAction == "Create") {
       let userIds = this.refs.userSelect.state.values.map(o => o.value);
       let uiState = UIStore.getState();
-      let currentCollectionId = uiState.currentCollectionId;
+      let currentCollectionId = uiState.currentCollection.Id;
       let filterParams =
         this.isSelectionEmpty(uiState) ?
           this.filterParamsWholeCollection(uiState) :
@@ -219,7 +219,7 @@ export default class ManagingModalSharing extends React.Component {
           <ControlLabel>Role</ControlLabel>
           <FormControl componentClass="select"
             placeholder="Pick a sharing role (optional)"
-            value={this.state.role}
+            value={this.state.role || ''}
             onChange={(e) => this.handleShortcutChange(e)}>
             <option value='Pick a sharing role'>Pick a sharing role (optional)</option>
             <option value='user'>User</option>
@@ -233,7 +233,7 @@ export default class ManagingModalSharing extends React.Component {
           <ControlLabel>Permission level</ControlLabel>
           <FormControl componentClass="select"
             onChange={(e) => this.handlePLChange(e)}
-            value={this.state.permissionLevel}>
+            value={this.state.permissionLevel || ''}>
             <option value='0'>Read</option>
             <option value='1'>Write</option>
             <option value='2'>Share</option>
@@ -246,7 +246,7 @@ export default class ManagingModalSharing extends React.Component {
           <ControlLabel>Sample detail level</ControlLabel>
           <FormControl componentClass="select"
             onChange={(e) => this.handleDLChange(e,'sample')}
-            value={this.state.sampleDetailLevel}>
+            value={this.state.sampleDetailLevel || ''}>
             <option value='0'>Molecular mass of the compound, external label</option>
             <option value='1'>Molecule, structure</option>
             <option value='2'>Analysis Result + Description</option>
@@ -258,7 +258,7 @@ export default class ManagingModalSharing extends React.Component {
           <ControlLabel>Reaction detail level</ControlLabel>
           <FormControl componentClass="select"
             onChange={(e) => this.handleDLChange(e,'reaction')}
-            value={this.state.reactionDetailLevel}>
+            value={this.state.reactionDetailLevel || ''}>
             <option value='0'>Observation, description, calculation</option>
             <option value='10'>Everything</option>
           </FormControl>
@@ -267,7 +267,7 @@ export default class ManagingModalSharing extends React.Component {
           <ControlLabel>Wellplate detail level</ControlLabel>
           <FormControl componentClass="select"
             onChange={(e) => this.handleDLChange(e,'wellplate')}
-            value={this.state.wellplateDetailLevel}>
+            value={this.state.wellplateDetailLevel || ''}>
             <option value='0'>Wells (Positions)</option>
             <option value='1'>Readout</option>
             <option value='10'>Everything</option>
@@ -277,7 +277,7 @@ export default class ManagingModalSharing extends React.Component {
           <ControlLabel>Screen detail level</ControlLabel>
           <FormControl componentClass="select"
             onChange={(e) => this.handleDLChange(e,'screen')}
-            value={this.state.screenDetailLevel}>
+            value={this.state.screenDetailLevel || ''}>
             <option value='0'>Name, description, condition, requirements</option>
             <option value='10'>Everything</option>
           </FormControl>

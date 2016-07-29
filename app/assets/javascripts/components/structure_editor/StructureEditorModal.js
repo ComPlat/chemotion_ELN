@@ -100,6 +100,9 @@ export default class StructureEditorModal extends React.Component {
         rightBtnText = {
           this.props.rightBtnText ? this.props.rightBtnText : "Save"
         }
+        rightDropDown = {
+          this.props.rightDropDown ? this.props.rightDropDown : ""
+        }
       />
     return (
       <div>
@@ -121,7 +124,7 @@ export default class StructureEditorModal extends React.Component {
 }
 
 const StructureEditor =
-  ({handleLeftBtn, handleRightBtn, leftBtnText, rightBtnText}) => {
+  ({handleLeftBtn, handleRightBtn, leftBtnText, rightBtnText, rightDropDown}) => {
     return (
       <div>
         <div>
@@ -134,6 +137,7 @@ const StructureEditor =
           <Button bsStyle="primary" onClick={handleRightBtn}>
             {rightBtnText}
           </Button>
+          {rightDropDown}
         </ButtonToolbar>
       </div>
     )

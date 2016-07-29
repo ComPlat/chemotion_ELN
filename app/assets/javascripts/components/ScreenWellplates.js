@@ -33,7 +33,7 @@ const collect = (connect, monitor) => ({
 class ScreenWellplates extends Component {
   handleWellplateClick(wellplate) {
     const uiState = UiStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}/wellplate/${wellplate.id}`);
+    Aviator.navigate(`/collection/${uiState.currentCollection.id}/wellplate/${wellplate.id}`);
   }
 
   render() {

@@ -33,7 +33,7 @@ M  END
 
   end
 
-  def self.molecule_info_from_molfile molfile, is_partial = false
+  def self.molecule_info_from_molfile molfile
     c = OpenBabel::OBConversion.new
     c.set_in_format 'mol'
 
@@ -64,7 +64,7 @@ M  END
       formula: m.get_formula,
       svg: svg_from_molfile(molfile),
       cano_smiles: ca_smiles,
-      fp: fingerprint_from_molfile(molfile, is_partial)
+      fp: fingerprint_from_molfile(molfile)
     }
 
   end
@@ -100,7 +100,7 @@ M  END
   end
 
   # Return an array of 32
-  def self.fingerprint_from_molfile molfile, is_partial = false
+  def self.fingerprint_from_molfile molfile
     c = OpenBabel::OBConversion.new
     m = OpenBabel::OBMol.new
 
@@ -128,13 +128,7 @@ M  END
     fp_16[12] = fp[7]  << 32 | fp[6]
     fp_16[13] = fp[5]  << 32 | fp[4]
     fp_16[14] = fp[3]  << 32 | fp[2]
-    # Since OpenBabel does not use last 3 bits. We will use it to store Polymer
-    # If molfile contains R# (polymer) then set the last 3 bits
-    if is_partial
-      fp_16[15] = (fp[1]  << 32 | fp[0]) | 7
-    else
-      fp_16[15] = fp[1]  << 32 | fp[0]
-    end
+    fp_16[15] = fp[1]  << 32 | fp[0]
 
     return fp_16
 

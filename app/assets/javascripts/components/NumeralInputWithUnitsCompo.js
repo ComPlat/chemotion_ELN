@@ -111,7 +111,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           <InputGroup>
             <FormControl type='text'
               disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
-              value={val()}
+              value={val() || ''}
               onChange={(event) => this._handleInputValueChange(event)}
               onFocus={(event) => this._handleInputValueFocus(event)}
               onBlur={(event)=>this._handleInputValueBlur(event)}
@@ -126,7 +126,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           {labelWrap}
           <FormControl type='text'
             disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
-            value={val()}
+            value={val() || ''}
             onChange={(event) => this._handleInputValueChange(event)}
             onFocus={(event) => this._handleInputValueFocus(event)}
             onBlur={(event)=>this._handleInputValueBlur(event)}

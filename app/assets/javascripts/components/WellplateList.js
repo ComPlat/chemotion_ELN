@@ -66,7 +66,7 @@ export default class WellplateList extends Component {
                 <FormControl
                   type="textarea"
                   style={style}
-                  value={readout}
+                  value={readout || ''}
                   onChange={event => this.handleReadoutOfWellChange(event, well)}
                   groupClassName="no-margin"
                 />
@@ -75,7 +75,7 @@ export default class WellplateList extends Component {
                 <FormControl
                   type="textarea"
                   style={style}
-                  value={importedReadout}
+                  value={importedReadout || ''}
                   disabled
                   groupClassName="no-margin"
                 />

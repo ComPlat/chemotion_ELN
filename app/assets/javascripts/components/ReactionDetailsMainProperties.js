@@ -13,7 +13,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
               <ControlLabel>Name</ControlLabel>
               <FormControl
                 type="text"
-                value={reaction.name}
+                value={reaction.name || ''}
                 placeholder="Name..."
                 disabled={reaction.isMethodDisabled('name')}
                 onChange={event => onInputChange('name', event)}/>
@@ -25,7 +25,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
               name='solvent'
               multi={false}
               options={solventOptions}
-              value={reaction.solvent}
+              value={reaction.solvent || ''}
               disabled={reaction.isMethodDisabled('solvent')}
               onChange={event => {
                 const wrappedEvent = {target: {value: event}};
@@ -38,7 +38,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
               <ControlLabel>Temperature</ControlLabel>
               <FormControl
                 type="text"
-                value={reaction.temperature}
+                value={reaction.temperature || ''}
                 disabled={reaction.isMethodDisabled('temperature')}
                 placeholder="Temperature..."
                 onChange={event => onInputChange('temperature', event)}/>
@@ -51,7 +51,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
               <ControlLabel>Description</ControlLabel>
               <FormControl
                 componentClass="textarea"
-                value={reaction.description}
+                value={reaction.description || ''}
                 disabled={reaction.isMethodDisabled('description')}
                 placeholder="Description..."
                 onChange={event => onInputChange('description', event)}/>

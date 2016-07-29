@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pagination, Table, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
+import { Pagination, Table, Form, Col,
+         FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -149,14 +150,19 @@ export default class ElementsTable extends React.Component {
   numberOfResultsInput() {
     let {ui} = this.state
     return (
-      <FormGroup >
-        <ControlLabel>Show </ControlLabel>
-        <FormControl
-          className="number-shown-select"
-          onChange={event => this.handleNumberOfResultsChange(event)}
-          type="text"
-          value={ui.number_of_results ? ui.number_of_results : 0} />
-      </FormGroup>
+      <Form horizontal style={{float: 'right'}}>
+        <FormGroup>
+          <Col sm={4} style={{textAlign: 'center', float: 'right'}}>
+            <FormControl type="text" style={{textAlign: 'center', float: 'right'}}
+                         onChange={event => this.handleNumberOfResultsChange(event)}
+                         value={ui.number_of_results ? ui.number_of_results : 0} />
+          </Col>
+          <Col componentClass={ControlLabel} sm={2}
+               style={{textAlign: 'center', float: 'right'}}>
+            Show
+          </Col>
+        </FormGroup>
+      </Form>
 
     );
   }
@@ -215,11 +221,18 @@ export default class ElementsTable extends React.Component {
     return (
       <div>
         {this.renderEntries()}
-        {this.pagination()}
-        <div style={{float: 'right', paddingTop: 4}}>
-          {this.numberOfResultsInput()}
-          {this.previewCheckbox()}
-        </div>
+
+        <table style={{width: '100%'}}><tbody>
+        <tr>
+          <td>{this.pagination()}</td>
+          <td>
+            <div>
+              {this.numberOfResultsInput()}
+              {this.previewCheckbox()}
+            </div>
+          </td>
+        </tr>
+        </tbody></table>
       </div>
     );
   }

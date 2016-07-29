@@ -66,7 +66,7 @@ export default class ReactionDetailsProperties extends Component {
                 <InputGroup>
                   <FormControl
                     type="text"
-                    value={reaction.timestamp_start}
+                    value={reaction.timestamp_start || ''}
                     disabled={reaction.isMethodDisabled('timestamp_start')}
                     placeholder="Start..."
                     onChange={event => this.props.onInputChange('timestampStart', event)}/>
@@ -84,7 +84,7 @@ export default class ReactionDetailsProperties extends Component {
                 <InputGroup>
                   <FormControl
                     type="text"
-                    value={reaction.timestamp_stop}
+                    value={reaction.timestamp_stop || ''}
                     disabled={reaction.isMethodDisabled('timestamp_stop')}
                     placeholder="Stop..."
                     onChange={event => this.props.onInputChange('timestampStop', event)}/>
@@ -103,7 +103,7 @@ export default class ReactionDetailsProperties extends Component {
                 <ControlLabel>Observation</ControlLabel>
                 <FormControl
                   componentClass="textarea"
-                  value={reaction.observation}
+                  value={reaction.observation || ''}
                   disabled={reaction.isMethodDisabled('observation')}
                   placeholder="Observation..."
                   onChange={event => this.props.onInputChange('observation', event)}/>
@@ -145,7 +145,7 @@ export default class ReactionDetailsProperties extends Component {
                 <ControlLabel>Solvents (parts)</ControlLabel>
                 <FormControl
                   type="text"
-                  value={reaction.tlc_solvents}
+                  value={reaction.tlc_solvents || ''}
                   disabled={reaction.isMethodDisabled('tlc_solvents')}
                   placeholder="Solvents as parts..."
                   onChange={event => this.props.onInputChange('tlc_solvents', event)}/>
@@ -156,7 +156,7 @@ export default class ReactionDetailsProperties extends Component {
                 <ControlLabel>Rf-Value</ControlLabel>
                 <FormControl
                   type="text"
-                  value={reaction.rf_value}
+                  value={reaction.rf_value || ''}
                   disabled={reaction.isMethodDisabled('rf_value')}
                   placeholder="Rf-Value..."
                   onChange={event => this.props.onInputChange('rfValue', event)}/>
@@ -169,7 +169,7 @@ export default class ReactionDetailsProperties extends Component {
                 <ControlLabel>TLC-Description</ControlLabel>
                 <FormControl
                   componentClass="textarea"
-                  value={reaction.tlc_description}
+                  value={reaction.tlc_description || ''}
                   disabled={reaction.isMethodDisabled('tlc_description')}
                   placeholder="TLC-Description..."
                   onChange={event => this.props.onInputChange('tlcDescription', event)}/>

@@ -34,7 +34,7 @@ export default class MaterialCalculations extends Component {
         <td style={inputsStyle}>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={material.amount_ml}
+            value={material.amount_ml || ''}
             unit='l'
             metricPrefix='milli'
             metricPrefixes = {['milli','none','micro']}

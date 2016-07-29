@@ -39,7 +39,7 @@ export default class WellplateDetails extends Component {
   closeDetails() {
     let uiState = UIStore.getState();
     UIActions.deselectAllElements();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
+    Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
   }
 
   handleSubmit() {
@@ -107,7 +107,8 @@ export default class WellplateDetails extends Component {
             <ElementCollectionLabels element={wellplate}/>
             <ListGroup fill>
               <ListGroupItem>
-                <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}>
+                <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
+                      id="wellplateDetailsTab">
                   <Tab eventKey={0} title={'Designer'}>
                     <Well>
                       <Wellplate

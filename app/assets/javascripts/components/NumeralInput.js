@@ -67,7 +67,7 @@ export default class NumeralInput extends Component {
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
         <InputGroup>
-          <FormControl type='text'  value={numeralValue} bsSize={bsSize}
+          <FormControl type='text'  value={numeralValue || ''} bsSize={bsSize}
             bsStyle={bsStyle}
             disabled={disabled}
             onChange={ event => this._handleInputValueChange(event)}/>

@@ -181,7 +181,7 @@ export default class SamplesFetcher {
             included_ids: params.sample.checkedIds,
             excluded_ids: params.sample.uncheckedIds
           },
-          currentCollectionId: params.currentCollectionId
+          currentCollectionId: params.currentCollection.id
         }
       })
     }).then((response) => {
@@ -199,7 +199,7 @@ export default class SamplesFetcher {
 
     var data = new FormData();
     data.append("file", params.file);
-    data.append("currentCollectionId", params.currentCollectionId);
+    data.append("currentCollectionId", params.currentCollection.Id);
 
     let promise = fetch('/api/v1/samples/import/', {
       credentials: 'same-origin',
