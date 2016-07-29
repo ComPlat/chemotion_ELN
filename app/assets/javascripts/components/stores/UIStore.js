@@ -39,7 +39,6 @@ class UIStore {
       showPreviews: true,
       number_of_results: 15,
       currentCollection: null,
-      currentCollectionId: null,
       currentTab: 1,
       currentSearchSelection: null,
       showCollectionManagement: false
@@ -162,9 +161,7 @@ class UIStore {
       || (state.currentSearchSelection != null);
 
     if(hasChanged) {
-      // FIXME why both?
       this.state.currentCollection = collection;
-      this.state.currentCollectionId = collection.id;
       this.state.number_of_results = 15;
       if (!collection.noFetch){
         // FIXME state.pagination is undefined
@@ -192,9 +189,7 @@ class UIStore {
   }
 
   handleSelectCollectionWithoutUpdating(collection) {
-    // FIXME why both?
     this.state.currentCollection = collection;
-    this.state.currentCollectionId = collection.id;
   }
 
   handleClearSearchSelection() {

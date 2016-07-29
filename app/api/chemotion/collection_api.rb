@@ -156,7 +156,7 @@ module Chemotion
         put do
 
           ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollectionId]
+          current_collection_id = ui_state[:currentCollection].id
           collection_id = params[:collection_id]
           unless Collection.find(collection_id).is_shared
             sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
@@ -229,7 +229,7 @@ module Chemotion
         post do
           ui_state = params[:ui_state]
           collection_id = params[:collection_id]
-          current_collection_id = ui_state[:currentCollectionId]
+          current_collection_id = ui_state[:currentCollection].id
 
           Sample.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:sample],
@@ -270,7 +270,7 @@ module Chemotion
         end
         delete do
           ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollectionId]
+          current_collection_id = ui_state[:currentCollection].id
 
           sample_ids = Sample.for_ui_state_with_collection(
             ui_state[:sample],

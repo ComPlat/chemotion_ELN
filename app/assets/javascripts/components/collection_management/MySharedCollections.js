@@ -85,13 +85,13 @@ export default class MySharedCollections extends React.Component {
     } else if (node.is_locked) {
       return (
          <FormControl className="collection-label" type="text" id={node.id} disabled
-        value={node.label}/>
+        value={node.label || ''}/>
       )
 
     } else {
       return (
         <FormControl className="collection-label" type="text" id={node.id}
-        value={node.label} onChange={this.handleLabelChange.bind(this, node)}/>
+        value={node.label || ''} onChange={this.handleLabelChange.bind(this, node)}/>
       )
     }
   }

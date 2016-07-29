@@ -6,7 +6,7 @@ import UiStore from './stores/UIStore';
 export default class WellOverlay extends Component {
   handleSampleClick(sample) {
     const uiState = UiStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}/sample/${sample.id}`);
+    Aviator.navigate(`/collection/${uiState.currentCollection.id}/sample/${sample.id}`);
   }
 
   sampleName() {
@@ -106,7 +106,7 @@ export default class WellOverlay extends Component {
                   <ControlLabel>Readout</ControlLabel>
                   <FormControl type="textarea"
                     disabled={true}
-                    value={well.readout}
+                    value={well.readout || ''}
                     style={{height: 100}}
                   />
                 </FormGroup>
@@ -114,7 +114,7 @@ export default class WellOverlay extends Component {
                   <ControlLabel>Imported Readout</ControlLabel>
                   <FormControl type="textarea"
                     disabled={true}
-                    value={this.sampleImportedReadout()}
+                    value={this.sampleImportedReadout() || ''}
                     style={{height: 100}}
                   />
                 </FormGroup>

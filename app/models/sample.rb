@@ -58,6 +58,14 @@ class Sample < ActiveRecord::Base
   scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
   scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
 
+  scope :by_fingerprint, -> (fp_vector, page, page_size, threshold = 0.01) {
+    fp_ids = Fingerprint.by_tanimoto_coefficient(fp_vector, page, page_size, threshold)
+
+    where(:fingerprint_id => fp_ids)
+    .order("position(fingerprint_id::text in '#{fp_ids.join(',')}')")
+  }
+
+
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
@@ -72,6 +80,7 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   belongs_to :molecule
+  belongs_to :fingerprints
   belongs_to :user
 
   has_one :well, dependent: :destroy
@@ -127,7 +136,7 @@ class Sample < ActiveRecord::Base
 
     if parent
       self.short_label ||= "#{parent.short_label}-#{parent.children.count.to_i + 1}"
-    elsif creator
+    elsif creator && creator.counters['samples']
       self.short_label ||= "#{creator.initials}-#{creator.counters['samples'].succ}"
     elsif
       self.short_label ||= 'NEW'
@@ -338,6 +347,7 @@ private
     end
 
     self.molfile = lines.join
+    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile)
   end
 
   def set_loading_from_ea

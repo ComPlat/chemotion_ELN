@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {FormGroup,Checkbox} from 'react-bootstrap';
+import {FormGroup,Checkbox, Label} from 'react-bootstrap';
 import UIActions from './actions/UIActions';
 
 export default class ElementsSvgCheckbox extends Component {
@@ -26,12 +26,11 @@ export default class ElementsSvgCheckbox extends Component {
   render() {
     return(
       <FormGroup>
-        <Checkbox inline
-          className="element-svg-checkbox"
+        <Checkbox //className="element-svg-checkbox"
           onChange={() => this.toggleCheckbox()}
           checked={this.state.checked ? this.state.checked : false}
         >
-          Display schemes
+          <Label style={{fontSize: '100%'}}>Display schemes</Label>
         </Checkbox>
       </FormGroup>
     )

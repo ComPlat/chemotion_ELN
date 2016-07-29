@@ -161,7 +161,7 @@ export default class SampleDetails extends React.Component {
       ElementActions.deselectCurrentElement();
 
       let uiState = UIStore.getState();
-      Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
+      Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
     }
   }
 
@@ -235,7 +235,7 @@ export default class SampleDetails extends React.Component {
           <InputGroup.Addon>InChI</InputGroup.Addon>
           <FormControl type="text"
              key={sample.id}
-             defaultValue={sample.molecule_inchistring}
+             defaultValue={sample.molecule_inchistring || ''}
              disabled
              readOnly
           />
@@ -264,7 +264,7 @@ export default class SampleDetails extends React.Component {
         <InputGroup>
           <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
           <FormControl type="text"
-             defaultValue={sample.molecule_cano_smiles}
+             defaultValue={sample.molecule_cano_smiles || ''}
              disabled
              readOnly
           />

@@ -1,13 +1,20 @@
-.structure-editor .modal-content {
-  width: 900px;
-}
-.structure-editor #ifKetcher {
-  width: 882px;
-  height: 580px;
+.modal-dialog {
+  position: absolute !important;
+  left: 50%;
+  top: 50%;
+  transform: translate(-90%, -60%) !important;
 }
 
-@media screen and (max-height: 768px) {
+.structure-editor .modal-content {
+  width: 1040px;
+}
+.structure-editor #ifKetcher {
+  width: 1010px;
+  height: 588px;
+}
+
+/*@media screen and (max-height: 768px) {
   .structure-editor #ifKetcher {
     height: 520px;
   }
-}
+}*/

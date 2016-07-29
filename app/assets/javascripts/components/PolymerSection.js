@@ -112,7 +112,7 @@ export default class PolymerSection extends React.Component {
       <FormGroup>
         <ControlLabel>Formula</ControlLabel>
         <FormControl type="text"
-          value={residue.custom_info.formula}
+          value={residue.custom_info.formula || ''}
           name="formula"
           key={'polymer_formula_input' + sample.id.toString()}
           onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}
@@ -233,7 +233,7 @@ export default class PolymerSection extends React.Component {
       <FormGroup>
         <ControlLabel>Cross-linkage</ControlLabel>
         <FormControl type="text"
-          value={residue.custom_info.cross_linkage}
+          value={residue.custom_info.cross_linkage || ''}
           name="cross_linkage"
           key={'cross_linkage' + sample.id.toString()}
           onChange={(e) => this.handleCustomInfoChanged(e, residue, sample)}

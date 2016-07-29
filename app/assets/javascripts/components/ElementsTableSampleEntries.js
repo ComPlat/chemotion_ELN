@@ -162,8 +162,8 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   showDetails(element) {
-    const {currentCollectionId} = UIStore.getState()
-    Aviator.navigate(`/collection/${currentCollectionId}/${element.type}/${element.id}`);
+    const {currentCollection} = UIStore.getState()
+    Aviator.navigate(`/collection/${currentCollection.id}/${element.type}/${element.id}`);
   }
 
   topSecretIcon(element) {

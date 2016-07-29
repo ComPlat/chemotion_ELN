@@ -125,7 +125,7 @@ export default class CreateButton extends React.Component {
             <ControlLabel>Number of wellplates</ControlLabel>
             <FormControl type="text"
               ref="wellplateInput"
-              defaultValue={modalProps.wellplateCount}/>
+              defaultValue={modalProps.wellplateCount || ''}/>
           </FormGroup>
 
           <ButtonToolbar>

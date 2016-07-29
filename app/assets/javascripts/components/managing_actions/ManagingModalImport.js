@@ -19,7 +19,7 @@ export default class ManagingModalImport extends React.Component {
     let ui_state = UIStore.getState();
     let params = {
       file: file,
-      currentCollectionId: ui_state.currentCollectionId
+      currentCollectionId: ui_state.currentCollection.id
     }
     action(params);
     onHide();

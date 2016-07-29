@@ -109,7 +109,7 @@ export default class ScreenDetails extends Component {
                       <ControlLabel>Name</ControlLabel>
                       <FormControl
                         type="text"
-                        value={name}
+                        value={name || ''}
                         onChange={event => this.handleInputChange('name', event)}
                         disabled={screen.isMethodDisabled('name')}
                       />
@@ -120,7 +120,7 @@ export default class ScreenDetails extends Component {
                       <ControlLabel>Collaborator</ControlLabel>
                       <FormControl
                         type="text"
-                        value={collaborator}
+                        value={collaborator || ''}
                         onChange={event => this.handleInputChange('collaborator', event)}
                         disabled={screen.isMethodDisabled('collaborator')}
                       />
@@ -133,7 +133,7 @@ export default class ScreenDetails extends Component {
                       <ControlLabel>Requirements</ControlLabel>
                       <FormControl
                         type="text"
-                        value={requirements}
+                        value={requirements || ''}
                         onChange={event => this.handleInputChange('requirements', event)}
                         disabled={screen.isMethodDisabled('requirements')}
                       />
@@ -144,7 +144,7 @@ export default class ScreenDetails extends Component {
                       <ControlLabel>Conditions</ControlLabel>
                       <FormControl
                         type="text"
-                        value={conditions}
+                        value={conditions || ''}
                         onChange={event => this.handleInputChange('conditions', event)}
                         disabled={screen.isMethodDisabled('conditions')}
                       />
@@ -157,7 +157,7 @@ export default class ScreenDetails extends Component {
                       <ControlLabel>Result</ControlLabel>
                       <FormControl
                         type="text"
-                        value={result}
+                        value={result || ''}
                         onChange={event => this.handleInputChange('result', event)}
                         disabled={screen.isMethodDisabled('result')}
                       />
@@ -170,7 +170,7 @@ export default class ScreenDetails extends Component {
                       <ControlLabel>Description</ControlLabel>
                       <FormControl
                         type="textarea"
-                        value={description}
+                        value={description || ''}
                         onChange={event => this.handleInputChange('description', event)}
                         disabled={screen.isMethodDisabled('description')}
                       />

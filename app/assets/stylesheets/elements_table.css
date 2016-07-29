@@ -28,13 +28,12 @@ th.drag {
   overflow: hidden;
 }
 
-.number-shown-select {
+/*.number-shown-select {
   float: right !important;
   text-align: right;
   width: 55% !important;
+}*/
 
-}
-
-.element-svg-checkbox {
+/*.element-svg-checkbox {
   margin: 0px 0 0;
-}
+}*/

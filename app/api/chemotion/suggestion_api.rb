@@ -1,6 +1,12 @@
 module Chemotion
   class SuggestionAPI < Grape::API
+    include Grape::Kaminari
+
     helpers do
+      def page_size
+        7
+      end
+
       def search_possibilities_to_suggestions(search_possibilities)
         suggestions = []
         search_possibilities.each do |k,v|
@@ -17,7 +23,7 @@ module Chemotion
 
         search_by_field = Proc.new do |klass, field, qry|
           scope = d_for.call klass
-          scope.send("by_#{field}", qry).pluck(field).uniq
+          scope.send("by_#{field}", qry).page(1).per(page_size).pluck(field).uniq
         end
 
         qry = params[:query]

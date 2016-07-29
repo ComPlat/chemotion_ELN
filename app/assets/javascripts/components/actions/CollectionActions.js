@@ -87,24 +87,24 @@ class CollectionActions {
   }
 
   downloadReportCollectionSamples(){
-    const {currentCollectionId} = UIStore.getState();
-    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_samples?id=" + currentCollectionId});
+    const {currentCollection} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_samples?id=" + currentCollection.id});
   }
 
   downloadReportCollectionReactions(){
-    const {currentCollectionId} = UIStore.getState();
-    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_reactions?id=" + currentCollectionId});
+    const {currentCollection} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_reactions?id=" + currentCollection.id});
   }
 
   downloadReportCollectionWellplates(){
-    const {currentCollectionId} = UIStore.getState();
-    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_wellplates?id=" + currentCollectionId});
+    const {currentCollection} = UIStore.getState();
+    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_wellplates?id=" + currentCollection.id});
   }
 
   downloadReport(tab){
-    const {currentCollectionId} = UIStore.getState();
+    const {currentCollection} = UIStore.getState();
 
-    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollectionId +"&tab="+tab});
+    Utils.downloadFile({contents: "api/v1/reports/excel?id=" + currentCollection.id +"&tab="+tab});
   }
 
   downloadReportWellplate(wellplateId){

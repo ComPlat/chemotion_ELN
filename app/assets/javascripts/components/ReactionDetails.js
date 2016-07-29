@@ -52,7 +52,7 @@ export default class ReactionDetails extends Component {
     let uiState = UIStore.getState();
     UIActions.deselectAllElements();
     ElementActions.deselectCurrentReaction();
-    Aviator.navigate(`/collection/${uiState.currentCollectionId}`);
+    Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
   }
 
   updateReactionSvg() {

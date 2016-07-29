@@ -92,7 +92,7 @@ export default class SampleForm extends React.Component {
         <ControlLabel>Molecule</ControlLabel>
         <InputGroup>
           <FormControl type="text" ref="moleculeInput"
-            value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular)}
+            value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular || '')}
             disabled={sample.isMethodDisabled('molecule_iupac_name')}
             readOnly={sample.isMethodDisabled('molecule_iupac_name')}
             onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}
@@ -218,7 +218,7 @@ export default class SampleForm extends React.Component {
         <ControlLabel>Description</ControlLabel>
         <FormControl type="textarea"  ref="descriptionInput"
              placeholder={sample.description}
-             value={sample.description}
+             value={sample.description || ''}
              onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}
              rows={2}
              disabled={sample.isMethodDisabled('description')}
