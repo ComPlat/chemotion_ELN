@@ -13,10 +13,11 @@ module Report
           title: title,
           collections: collection_label,
           image: image,
+          status: status,
           starting_materials: starting_materials,
           reactants: reactants,
           products: products,
-          solvent: solvent,
+          solvents: displayed_solvents,
           description: description,
           purification: purification,
           tlc_rf: rf_value,
@@ -42,6 +43,20 @@ module Report
 
       def image
         Image.new(obj: obj).generate_png
+      end
+
+      def status
+        path = case obj.status
+          when "Successful" then
+            Rails.root.join("lib", "template", "status", "successful.png")
+          when "Planned" then
+            Rails.root.join("lib", "template", "status", "planned.png")
+          when "Not Successful" then
+            Rails.root.join("lib", "template", "status", "not_successful.png")
+          else
+            Rails.root.join("lib", "template", "status", "blank.png")
+        end
+        Sablon::Image.create_by_path(path)
       end
 
       def literatures
@@ -140,8 +155,24 @@ module Report
         obj.description
       end
 
+      def solvents
+        obj.solvents
+      end
+
       def solvent
         obj.solvent
+      end
+
+      def displayed_solvents
+        if solvents.present?
+          solvents.map do |s|
+            volume = " (#{s.target_amount_value}ml)" if s.target_amount_value
+            volume = " (#{s.real_amount_value}ml)" if s.real_amount_value
+            s.preferred_label  + volume
+          end.join(", ")
+        else
+          solvent
+        end
       end
 
       def rf_value

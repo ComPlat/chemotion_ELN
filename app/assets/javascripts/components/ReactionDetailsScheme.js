@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {Button, ListGroup, ListGroupItem,Glyphicon} from 'react-bootstrap';
+import {Button, ListGroup, ListGroupItem,Glyphicon,
+        Tabs, Tab, Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
@@ -8,6 +9,9 @@ import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
 import ElementActions from './actions/ElementActions';
 import NotificationActions from './actions/NotificationActions'
+
+import Select from 'react-select'
+import {solventOptions} from './staticDropdownOptions/options'
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -87,7 +91,25 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForEquivalentChange(changeEvent)
         );
         break;
+      case 'externalLabelChanged':
+        this.onReactionChange(
+          this.updatedReactionForExternalLabelChange(changeEvent)
+        );
+        break;
+      case 'externalLabelCompleted':
+        const {reaction} = this.state;
+        this.onReactionChange(reaction, {schemaChanged: true});
+        break;
     }
+  }
+
+  updatedReactionForExternalLabelChange(changeEvent) {
+    let {sampleID, externalLabel} = changeEvent;
+    let updatedSample = this.props.reaction.sampleById(sampleID);
+
+    updatedSample.external_label = externalLabel;
+
+    return this.updatedReactionWithSample(this.updatedSamplesForExternalLabelChange.bind(this), updatedSample)
   }
 
   updatedReactionForReferenceChange(changeEvent) {
@@ -296,6 +318,16 @@ export default class ReactionDetailsScheme extends Component {
     });
   }
 
+  updatedSamplesForExternalLabelChange(samples, updatedSample) {
+    const {referenceMaterial} = this.props.reaction;
+    return samples.map((sample) => {
+      if (sample.id == updatedSample.id) {
+        sample.external_label = updatedSample.external_label;
+      }
+      return sample;
+    });
+  }
+
   updatedSamplesForReferenceChange(samples, referenceMaterial) {
     return samples.map((sample) => {
       if (sample.id == referenceMaterial.id) {
@@ -319,6 +351,7 @@ export default class ReactionDetailsScheme extends Component {
     const {reaction} = this.state;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials');
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants');
+    reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents');
     reaction.products = updateFunction(reaction.products, updatedSample, 'products');
     return reaction;
   }
@@ -337,6 +370,36 @@ export default class ReactionDetailsScheme extends Component {
   render() {
     const {reaction} = this.state;
     let addSampleButton = (sampleType)=> <Button bsStyle="success" bsSize="xs" onClick={() => this.addSampleToMaterialGroup(reaction, sampleType)}><Glyphicon glyph="plus" /></Button>
+    let showMultiSolvents = reaction.solvents.length === 0 ? 'solvent' : 'solvents';
+
+    const solventTp = (
+      <Tooltip id="solventTp">
+        <p>Select one solvent without editing samples.</p>
+      </Tooltip>
+    )
+    const multiSolventsTp = (
+      <Tooltip id="multiSolventsTp">
+        <p>This will overwrite and disable 'solvent'.</p>
+        <p>You need to edit solvents as samples.</p>
+        <p>If you want to use 'solvent', you need to delete all 'multipe solvents'.</p>
+      </Tooltip>
+    )
+    const hintSolvent = (
+      <div>
+        Solvent &nbsp;
+        <OverlayTrigger placement="top" overlay={solventTp}>
+          <i className="fa fa-info-circle"/>
+        </OverlayTrigger>
+      </div>
+    )
+    const hintSolvents = (
+      <div>
+        Multiple Solvents  &nbsp;
+        <OverlayTrigger placement="top" overlay={multiSolventsTp}>
+          <i className="fa fa-info-circle"/>
+        </OverlayTrigger>
+      </div>
+    )
 
     return (
       <div>

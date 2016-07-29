@@ -209,8 +209,8 @@ class ElementActions {
 
   // -- Reactions SVGs --
 
-  fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, label){
-    return (dispatch) => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, label)
+  fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents){
+    return (dispatch) => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents)
       .then((result) => {
         dispatch(result.reaction_svg);
       }).catch((errorMessage) => {

@@ -54,17 +54,21 @@ class Sample < ActiveRecord::Base
   scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_as_reactant).where('reactions.id in (?)', ids) }
   scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
   scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
+  scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_as_solvent).where('reactions.id in (?)', ids) }
   scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
+  scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
 
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
   has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :reactions_reactant_samples, dependent: :destroy
+  has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
 
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
   has_many :reactions_as_reactant, through: :reactions_reactant_samples, source: :reaction
+  has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   belongs_to :molecule
@@ -139,7 +143,7 @@ class Sample < ActiveRecord::Base
   end
 
   def reactions
-    reactions_as_starting_material + reactions_as_reactant + reactions_as_product
+    reactions_as_starting_material + reactions_as_reactant + reactions_as_solvent + reactions_as_product
   end
 
   #todo: find_or_create_molecule_based_on_inchikey
@@ -278,6 +282,18 @@ class Sample < ActiveRecord::Base
     divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
 
     (self["#{type}_amount_value"] || 0.0) / (self.molecule.density || 1.0) / divisor
+  end
+
+  def preferred_label
+    self.external_label.present? ? self.external_label : self.molecule.iupac_name
+  end
+
+  def preferred_tag
+    if (tag = self.preferred_label) && tag && tag.length > 20
+      tag[0, 20] + "..."
+    else
+      tag
+    end
   end
 
 private

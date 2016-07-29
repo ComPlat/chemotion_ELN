@@ -18,8 +18,9 @@ module Report
 
       def set_svg
         @svg_file = SVG::ReactionComposer.new(materials_svg_paths,
-                                              solvent: solvent_svg_paths,
-                                              temperature: temperature_svg_paths).compose_reaction_svg
+                                              solvents: solvents,
+                                              temperature: temperature_svg_paths,
+                                              is_report: true).compose_reaction_svg
       end
 
       def png_path
@@ -45,8 +46,8 @@ module Report
         return paths
       end
 
-      def solvent_svg_paths
-        [obj.solvent].reject{|c| c.blank?}.join(", ")
+      def solvents
+        obj.solvents.present? ? obj.solvents.map{ |s| s.preferred_tag } : [obj.solvent]
       end
 
       def temperature_svg_paths

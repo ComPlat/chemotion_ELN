@@ -102,35 +102,36 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let prefixSwitch;
     // BsStyle-s for Input and buttonAfter have differences
     let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
+    let labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null
     if(unit != 'none') {
       prefixSwitch=<InputGroup.Button><Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button></InputGroup.Button>
       return (
-          <FormGroup>
-            <ControlLabel>{label}</ControlLabel>
-            <InputGroup>
-              <FormControl type='text'
-                disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
-                value={val()}
-                onChange={(event) => this._handleInputValueChange(event)}
-                onFocus={(event) => this._handleInputValueFocus(event)}
-                onBlur={(event)=>this._handleInputValueBlur(event)}
-              />
-              {prefixSwitch}
-            </InputGroup>
-          </FormGroup>
+        <div>
+          {labelWrap}
+          <InputGroup>
+            <FormControl type='text'
+              disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+              value={val()}
+              onChange={(event) => this._handleInputValueChange(event)}
+              onFocus={(event) => this._handleInputValueFocus(event)}
+              onBlur={(event)=>this._handleInputValueBlur(event)}
+            />
+            {prefixSwitch}
+          </InputGroup>
+        </div>
       );
     } else {
       return(
-        <FormGroup>
-            <ControlLabel>{label}</ControlLabel>
-              <FormControl type='text'
-                disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
-                value={val()}
-                onChange={(event) => this._handleInputValueChange(event)}
-                onFocus={(event) => this._handleInputValueFocus(event)}
-                onBlur={(event)=>this._handleInputValueBlur(event)}
-              />
-          </FormGroup>
+        <div>
+          {labelWrap}
+          <FormControl type='text'
+            disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
+            value={val()}
+            onChange={(event) => this._handleInputValueChange(event)}
+            onFocus={(event) => this._handleInputValueFocus(event)}
+            onBlur={(event)=>this._handleInputValueBlur(event)}
+          />
+        </div>
       );
     }
   }

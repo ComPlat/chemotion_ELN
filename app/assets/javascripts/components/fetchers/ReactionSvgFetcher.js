@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 
 export default class ReactionSvgFetcher {
 
-  static fetchByMaterialsSvgPaths(materialsSvgPaths, label) {
+  static fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents) {
     let promise = fetch('/api/v1/reaction_svg', {
       credentials: 'same-origin',
       method: 'post',
@@ -12,7 +12,8 @@ export default class ReactionSvgFetcher {
       },
       body: JSON.stringify({
         materials_svg_paths: materialsSvgPaths,
-        label
+        temperature,
+        solvents
       })
     }).then(response => {
       return response.json()
