@@ -3,13 +3,13 @@ class OSample < OpenStruct
   def initialize data
     # set nested attributes
     %i(residues elemental_compositions).each do |prop|
-      prop_value = data.delete(prop)
+      prop_value = data.delete(prop) || []
       prop_value.each { |i| i.delete :id }
       data.merge!(
         "#{prop}_attributes".to_sym => prop_value
       ) unless prop_value.blank?
     end
-    data[:elemental_compositions_attributes].each { |i| i.delete(:description)}
+    data[:elemental_compositions_attributes].each { |i| i.delete(:description)} if data[:elemental_compositions_attributes]
     super
   end
 
@@ -68,7 +68,8 @@ module Chemotion
 
       get do
         scope = if params[:collection_id]
-          Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id]).reactions
+          Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
+            find(params[:collection_id]).reactions
         else
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")

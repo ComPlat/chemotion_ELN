@@ -11,12 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160722111824) do
+ActiveRecord::Schema.define(version: 20160727160203) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -389,13 +389,30 @@ ActiveRecord::Schema.define(version: 20160722111824) do
     t.string   "last_name",                                                                                        null: false
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
-    t.string   "name_abbreviation",      limit: 3
+    t.string   "name_abbreviation",      limit: 5
+    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                 null: false
   end
 
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
   add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
+
+  create_table "users_admins", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "admin_id"
+  end
+
+  add_index "users_admins", ["admin_id"], name: "index_users_admins_on_admin_id", using: :btree
+  add_index "users_admins", ["user_id"], name: "index_users_admins_on_user_id", using: :btree
+
+  create_table "users_groups", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "group_id"
+  end
+
+  add_index "users_groups", ["group_id"], name: "index_users_groups_on_group_id", using: :btree
+  add_index "users_groups", ["user_id"], name: "index_users_groups_on_user_id", using: :btree
 
   create_table "wellplates", force: :cascade do |t|
     t.string   "name"

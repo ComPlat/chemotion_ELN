@@ -11,5 +11,7 @@ RSpec.describe 'User', type: :model do
     it 'creates an All & chemotion.net collection' do
       expect(user.collections.pluck(:label)).to match_array ['All', 'chemotion.net']
     end
+
+  
   end
 end

@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     get 'pages/settings', to: 'pages#settings'
     get 'pages/profiles', to: 'pages#profiles'
     patch 'pages/update_profiles', to: 'pages#update_profiles'
+    get 'pages/groups', to: 'pages#groups'
   end
 
   mount API => '/'

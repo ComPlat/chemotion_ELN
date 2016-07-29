@@ -19,7 +19,6 @@ class ElementPermissionProxy
   def detail_level_for_element
     # on max level everything can be read
     max_detail_level = max_detail_level_by_element_class
-
     # get collections where element belongs to
     c = user_collections_for_element
 
@@ -61,8 +60,8 @@ class ElementPermissionProxy
 
   def user_collections_for_element
     collection_ids = element.collections.pluck(:id)
-
-    Collection.where("id IN (?) AND user_id = ?", collection_ids, user.id)
+    user_ids = user.group_ids + [user.id]
+    Collection.where("id IN (?) AND user_id IN (?)", collection_ids, user_ids)
   end
 
   def serializer_class_by_element

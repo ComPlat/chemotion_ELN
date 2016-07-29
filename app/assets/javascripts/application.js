@@ -16,3 +16,5 @@
 //= //require turbolinks
 //= require polyfill
 //= require components
+//= require bootstrap
+//= require pages

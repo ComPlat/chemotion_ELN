@@ -23,9 +23,13 @@ RSpec.describe Collection, type: :model do
   end
 
   describe 'scopes' do
+    let(:p1) {create(:person)}
+    let(:g1) {create(:group,users:[p1])}
     let(:collection_1) { create(:collection, is_shared: false) }
     let(:collection_2) { create(:collection, shared_by_id: 2, is_shared: true) }
     let(:collection_3) { create(:collection, shared_by_id: 3, is_shared: true) }
+    let(:collection_4) { create(:collection, user_id: 3, is_shared: false) }
+    let(:collection_5) { create(:collection, user_id: g1.id, is_shared: true, is_locked: false) }
 
     describe 'shared scope' do
       it 'returns collections the specified user has shared' do
@@ -44,6 +48,20 @@ RSpec.describe Collection, type: :model do
         expect(Collection.unshared).to match_array [collection_1]
       end
     end
+
+    describe 'belongs_to_or_shared_by (without group)' do
+      it 'returns collections owned or shared by a user' do
+        expect(Collection.belongs_to_or_shared_by(3)).to match_array [collection_3,collection_4]
+      end
+    end
+
+    describe 'belongs_to_or_shared_by (with a group)' do
+      it 'returns own collections and unlocked collections owned through a group ' do
+        p1.collections.where(label: ['chemotion.net','All']).destroy_all
+        expect(Collection.belongs_to_or_shared_by(p1.id,[g1.id])).to match_array [collection_5]
+      end
+    end
+
   end
 
   describe 'get_all_collection_for_user' do

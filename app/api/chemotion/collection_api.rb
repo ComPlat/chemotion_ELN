@@ -52,7 +52,7 @@ module Chemotion
 
       desc "Return all remote serialized collections"
       get :remote_roots, each_serializer: CollectionRemoteSerializer do
-        current_user.collections.remote(current_user.id).roots
+        current_user.all_collections.remote(current_user.id).roots
       end
 
       desc "Bulk update and/or create new collections"
