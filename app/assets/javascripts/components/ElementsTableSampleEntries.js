@@ -68,8 +68,6 @@ export default class ElementsTableSampleEntries extends Component {
       dragItem = molecule;
     }
 
-    let svgPath = sample.contains_residues ? sample.svgPath : molecule.svgPath;
-
     return (
       <tr
         style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
@@ -77,7 +75,7 @@ export default class ElementsTableSampleEntries extends Component {
       >
         <td colSpan="2">
           <div style={{float: 'left'}}>
-            <SVG src={svgPath} className="molecule" key={svgPath}/>
+            <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
           </div>
           <div style={{float: 'right'}}>
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>}>
