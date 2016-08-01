@@ -79,13 +79,12 @@ class Fingerprint < ActiveRecord::Base
   def self.find_or_create_by_molfile molfile
     fp_vector = Chemotion::OpenBabelService.fingerprint_from_molfile molfile
 
-    old_fp = Fingerprint.where("fp0  & ? = ?", "%064b" % fp_vector[0], "%064b" % fp_vector[0])
+    old_fp = Fingerprint.where("fp0 = ?", "%064b" % fp_vector[0])
     (1..15).each do |i|
-      old_fp = old_fp.where("fp#{i}  & ? = ?",
-                            "%064b" % fp_vector[i],
+      old_fp = old_fp.where("fp#{i} = ?",                            
                             "%064b" % fp_vector[i])
     end
-    
+
     if old_fp.count == 0
       fp = Fingerprint.create()
 
@@ -108,9 +107,10 @@ class Fingerprint < ActiveRecord::Base
 
       fp.num_set_bits = fp.count_bits_set(fp_vector)
       fp.save!
+      return fp.id
     end
-
-    return fp.id
+    # Return id of the existed record
+    return old_fp.first.id
   end
 
   def self.standardized_molfile molfile
