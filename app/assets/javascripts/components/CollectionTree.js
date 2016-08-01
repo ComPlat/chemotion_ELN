@@ -46,7 +46,12 @@ export default class CollectionTree extends React.Component {
 
   sharedSubtrees() {
     let roots = this.state.sharedRoots;
-    return this.subtrees(roots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
+    let labelledRoots = roots.map(e=>{
+      e.label = <span>
+        {this.labelRoot('shared_to',e)}
+        </span>
+      return e});
+    return this.subtrees(labelledRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
   }
 
   remoteSubtrees() {

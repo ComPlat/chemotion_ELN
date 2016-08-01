@@ -18,7 +18,7 @@ class CollectionRemoteSerializer < ActiveModel::Serializer
   end
 
   def shared_to
-    if object.user.is_a?(Group)
+    if object.is_shared && object.user.is_a?(Group)
       UserSerializer.new(object.user).serializable_hash.deep_symbolize_keys
     end
   end
