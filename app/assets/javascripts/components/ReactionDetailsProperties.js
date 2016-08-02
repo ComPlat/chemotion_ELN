@@ -1,10 +1,14 @@
 import React, {Component} from 'react';
 import {Row, Col, FormGroup, ControlLabel, FormControl,
-        ListGroupItem, ListGroup, InputGroup, Button} from 'react-bootstrap'
+        ListGroupItem, ListGroup, InputGroup, Button,
+        OverlayTrigger, Tooltip} from 'react-bootstrap'
 import Select from 'react-select'
 import {solventOptions, purificationOptions, statusOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import Clipboard from 'clipboard';
+import moment from 'moment';
+import momentPreciseRange from 'moment-precise-range-plugin';
 
 export default class ReactionDetailsProperties extends Component {
 
@@ -12,11 +16,20 @@ export default class ReactionDetailsProperties extends Component {
     super(props);
     const {reaction} = props;
     this.state = { reaction };
+    this.clipboard = new Clipboard('.clipboardBtn');
+  }
+
+  componentDidMount() {
+    this.calcTimeDiff()
   }
 
   componentWillReceiveProps(nextProps) {
     const nextReaction = nextProps.reaction;
     this.setState({ reaction: nextReaction });
+  }
+
+  componentWillUnmount() {
+    this.clipboard.destroy()
   }
 
   handleMultiselectChange(type, selectedOptions) {
@@ -33,7 +46,24 @@ export default class ReactionDetailsProperties extends Component {
     } else {
       reaction.timestamp_stop = currentTime
     }
-    this.setState({ reaction: reaction });
+    this.setState({ reaction: reaction })
+    this.calcTimeDiff()
+  }
+
+  calcTimeDiff() {
+    const {reaction} = this.state
+    if(reaction.timestamp_start && reaction.timestamp_stop) {
+      const start = moment(reaction.timestamp_start, "DD-MM-YYYY HH:mm:ss")
+      const stop = moment(reaction.timestamp_stop, "DD-MM-YYYY HH:mm:ss")
+      reaction.duration = moment.preciseDiff(start, stop)
+      this.setState({ reaction: reaction })
+    }
+  }
+
+  clipboardTooltip() {
+    return(
+      <Tooltip id="copy_duration_to_clipboard">copy to clipboard</Tooltip>
+    )
   }
 
   render() {
@@ -68,7 +98,7 @@ export default class ReactionDetailsProperties extends Component {
                     type="text"
                     value={reaction.timestamp_start || ''}
                     disabled={reaction.isMethodDisabled('timestamp_start')}
-                    placeholder="Start..."
+                    placeholder="DD/MM/YYYY hh:mm:ss"
                     onChange={event => this.props.onInputChange('timestampStart', event)}/>
                   <InputGroup.Button>
                     <Button active style={ {padding: '6px'}} onClick={e => this.setCurrentTime('start')} >
@@ -86,7 +116,7 @@ export default class ReactionDetailsProperties extends Component {
                     type="text"
                     value={reaction.timestamp_stop || ''}
                     disabled={reaction.isMethodDisabled('timestamp_stop')}
-                    placeholder="Stop..."
+                    placeholder="DD/MM/YYYY hh:mm:ss"
                     onChange={event => this.props.onInputChange('timestampStop', event)}/>
                   <InputGroup.Button>
                     <Button active style={ {padding: '6px'}} onClick={e => this.setCurrentTime('stop')} >
@@ -97,6 +127,33 @@ export default class ReactionDetailsProperties extends Component {
               </FormGroup>
             </Col>
           </Row>
+
+          <Row>
+            <Col md={4}>
+            </Col>
+            <Col md={8}>
+              <FormGroup>
+                <InputGroup>
+                  <FormControl
+                    type="text"
+                    value={reaction.duration || ''}
+                    disabled="true"
+                    placeholder="Duration" />
+                  <InputGroup.Button>
+                    <Button active onClick={e => this.calcTimeDiff()} >
+                      <i className="fa fa-hourglass-end"></i>
+                    </Button>
+                    <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+                      <Button active className="clipboardBtn" data-clipboard-text={reaction.duration || " "} >
+                        <i className="fa fa-clipboard"></i>
+                      </Button>
+                    </OverlayTrigger>
+                  </InputGroup.Button>
+                </InputGroup>
+              </FormGroup>
+            </Col>
+          </Row>
+
           <Row>
             <Col md={12}>
               <FormGroup>

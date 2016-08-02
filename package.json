@@ -21,6 +21,8 @@
     "eslint-plugin-react": "5.1.1",
     "immutable": "~3.7.6",
     "lodash": "^3.10.1",
+    "moment": "^2.14.1",
+    "moment-precise-range-plugin": "^1.2.0",
     "numeral": "^1.5.3",
     "path": "^0.11.14",
     "react": "15.0.2",
