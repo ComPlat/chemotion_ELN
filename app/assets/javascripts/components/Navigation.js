@@ -1,13 +1,16 @@
 import React from 'react';
-import {Nav, Navbar, NavItem, NavDropdown, MenuItem} from 'react-bootstrap';
+import {Nav, Navbar, NavDropdown, MenuItem} from 'react-bootstrap';
 import UserAuth from './UserAuth';
 import Search from './search/Search';
 import ManagingActions from './managing_actions/ManagingActions';
 import ContextActions from './contextActions/ContextActions';
+import UIActions from './actions/UIActions';
+import ReactDOM from 'react-dom';
 
 export default class Navigation extends React.Component {
   constructor(props) {
     super(props);
+    this.handleResize = this.handleResize.bind(this);
   }
 
   brandDropDown() {
@@ -20,10 +23,26 @@ export default class Navigation extends React.Component {
       </NavDropdown>
     )
   }
+  componentDidMount() {
+    window.addEventListener('resize', this.handleResize);
+    this.handleResize();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  }
+
+  handleResize(e = null) {
+    let offsetHeight = ReactDOM.findDOMNode(this._navbar).offsetHeight ||  1;
+    let windowHeight = window.innerHeight || 1;
+    if (offsetHeight/windowHeight < 0.2) {
+      UIActions.resizeWindow( offsetHeight );
+    }else{UIActions.resizeWindow( false)}
+  }
 
   render() {
     return (
-      <Navbar inverse fluid>
+      <Navbar inverse fluid fixedTop={this.props.fixedTop} ref={(e) => this._navbar = e}>
         <Navbar.Header>
           <Navbar.Brand>
             {this.brandDropDown()}
@@ -40,4 +59,7 @@ export default class Navigation extends React.Component {
       </Navbar>
     )
   }
+}
+Navigation.propTypes = {
+  fixedTop: React.PropTypes.bool,
 }

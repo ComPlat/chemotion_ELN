@@ -22,7 +22,8 @@ class App extends Component {
   constructor(props) {
     super();
     this.state= {
-      showCollectionManagement: false
+      showCollectionManagement: false,
+      navHeight: 70,
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this)
   }
@@ -40,6 +41,9 @@ class App extends Component {
     if(this.state.showCollectionManagement != state.showCollectionManagement) {
       this.setState({showCollectionManagement: state.showCollectionManagement});
     }
+    if(this.state.navHeight != state.navHeight) {
+      this.setState({navHeight: state.navHeight});
+    }
   }
 
   mainContent() {
@@ -53,9 +57,9 @@ class App extends Component {
 
   render() {
     return (
-      <Grid border fluid>
+      <Grid border fluid style={{paddingTop: (this.state.navHeight || 0)}}>
         <Row>
-          <Navigation />
+          <Navigation fixedTop={this.state.navHeight && true} />
         </Row>
         <Row>
           <Col sm={2} md={2} lg={2}>
