@@ -113,12 +113,15 @@ module Chemotion
           AllElementSearch.new(arg, current_user.id).search_by_substring
         when 'structure'
           molfile = Fingerprint.standardized_molfile arg
-          fp_vector =
-            Chemotion::OpenBabelService.fingerprint_from_molfile(molfile)
+          threshold = params[:selection].tanimoto_threshold
+          type = params[:selection].search_type
+          page = params[:page]
+          size = params[:page_size]
 
           # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
           Sample.for_user(current_user.id)
-                .by_fingerprint(fp_vector, params[:page], params[:page_size])
+                .search_by_fingerprint(molfile, current_user.id, collection_id,
+                                       page, size, type, threshold)
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
