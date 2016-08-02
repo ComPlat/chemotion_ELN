@@ -1,7 +1,8 @@
 import alt from 'alt';
 import React from 'react';
 import AutoCompleteInput from './AutoCompleteInput';
-import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem, FormGroup, Radio}
+import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
+        Form, FormGroup, FormControl, HelpBlock, Radio, Grid, Row, Col}
   from 'react-bootstrap';
 import Select from 'react-select'
 
@@ -21,7 +22,9 @@ export default class Search extends React.Component {
     this.state = {
       elementType: 'all',
       showStructureEditor: false,
-      queryMolfile: null
+      queryMolfile: null,
+      searchType: 'similar',
+      tanimotoThreshold: 0.7
     }
   }
 
@@ -43,17 +46,23 @@ export default class Search extends React.Component {
     return promise
   }
 
-  structureSearch(elementType, molfile, userId, collectionId) {
+  structureSearch(molfile) {
     let uiState = UIStore.getState()
+    let userState = UIStore.getState()
+    let tanimoto = this.state.tanimotoThreshold
+    if (tanimoto <= 0 || tanimoto > 1)
+      tanimoto = 0.3
     let selection = {
-      elementType: elementType,
+      elementType: this.state.elementType,
       molfile: molfile,
+      search_type: this.state.searchType,
+      tanimoto_threshold: tanimoto,
       page_size: uiState.number_of_results
     }
     UIActions.setSearchSelection(selection)
 
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
-      collectionId, 1, 'structure')
+      uiState.currentCollection.id, 1, 'structure')
   }
 
   handleClearSearchSelection() {
@@ -100,12 +109,7 @@ export default class Search extends React.Component {
     let molfileLines = molfile.match(/[^\r\n]+/g);
     // If the first character ~ num of atoms is 0, we will not search
     if (molfileLines[1].trim()[0] != 0) {
-      let userState = UserStore.getState()
-      let uiState = UIStore.getState()
-
-      this.structureSearch(this.state.elementType, molfile,
-                           userState.currentUser.id,
-                           uiState.currentCollection.id)
+      this.structureSearch(molfile)
 
       let autoComplete = this.refs.autoComplete
       autoComplete.setState({
@@ -119,6 +123,22 @@ export default class Search extends React.Component {
 
   handleStructureEditorCancel() {
     this.hideStructureEditor()
+  }
+
+  handleTanimotoChange(e) {
+    if (!isNaN(e.target.value - e.target.value)) {
+      let val = e.target.value
+      this.setState({
+        tanimotoThreshold: val
+      })
+    }
+  }
+
+  handleSearchTypeChange(e) {
+    let val = e.target.value
+    this.setState({
+      searchType: e.target.value
+    })
   }
 
   renderMenuItems() {
@@ -146,13 +166,31 @@ export default class Search extends React.Component {
         </Button>
       </ButtonGroup>
 
-    // let rightDropDown =
-    //   <DropdownButton id="btn-search-dropdown" title="Choose"
-    //                   onSelect={this.handleSelect}>
-    //     <MenuItem eventKey="1">Similar Search</MenuItem>
-    //     <MenuItem eventKey="2">Substructure Search</MenuItem>
-    //     <MenuItem eventKey="3">Exact Search</MenuItem>
-    //   </DropdownButton>
+    let rightAddons =
+      <Grid><Row>
+        <Col sm={5} md={3}>
+          <Form inline>
+            <Radio ref="searchSimilarRadio" value="similar"
+                   checked={this.state.searchType == 'similar' ? true : false}
+                   onChange={(e) => this.handleSearchTypeChange(e)}>
+              Similar Search
+            </Radio>
+            &nbsp;&nbsp;
+            <FormControl style={{width: '40%'}} type="text"
+                         value={this.state.tanimotoThreshold}
+                         ref="searchTanimotoInput"
+                         onChange={(e) => this.handleTanimotoChange(e)}
+            />
+          </Form>
+        </Col>
+        <Col sm={4} md={2}>
+          <Radio ref="searchSubstructureRadio" value="sub"
+                 checked={this.state.searchType == 'sub' ? true : false}
+                 onChange={(e) => this.handleSearchTypeChange(e)}>
+            Substructure Search
+          </Radio>
+        </Col>
+      </Row></Grid>
 
     let inputAttributes = {
       placeholder: 'IUPAC, InChI, SMILES, ...',
@@ -184,7 +222,7 @@ export default class Search extends React.Component {
             onCancel={this.handleStructureEditorCancel.bind(this)}
             molfile={this.state.queryMolfile}
             rightBtnText="Search"
-            //rightDropDown={rightDropDown}
+            rightAddons={rightAddons}
           />
         </div>
         <div className="search-autocomplete">

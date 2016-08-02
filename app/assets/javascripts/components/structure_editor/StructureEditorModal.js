@@ -100,8 +100,8 @@ export default class StructureEditorModal extends React.Component {
         rightBtnText = {
           this.props.rightBtnText ? this.props.rightBtnText : "Save"
         }
-        rightDropDown = {
-          this.props.rightDropDown ? this.props.rightDropDown : ""
+        rightAddons = {
+          this.props.rightAddons ? this.props.rightAddons : ""
         }
       />
     return (
@@ -124,21 +124,23 @@ export default class StructureEditorModal extends React.Component {
 }
 
 const StructureEditor =
-  ({handleLeftBtn, handleRightBtn, leftBtnText, rightBtnText, rightDropDown}) => {
+  ({handleLeftBtn, handleRightBtn, leftBtnText, rightBtnText, rightAddons}) => {
     return (
       <div>
         <div>
           <iframe id="ifKetcher" src="/ketcher"></iframe>
         </div>
-        <ButtonToolbar>
-          <Button bsStyle="warning" onClick={handleLeftBtn}>
-            {leftBtnText}
-          </Button>
-          <Button bsStyle="primary" onClick={handleRightBtn}>
-            {rightBtnText}
-          </Button>
-          {rightDropDown}
-        </ButtonToolbar>
+        <div>
+          <ButtonToolbar>
+            <Button bsStyle="warning" onClick={handleLeftBtn}>
+              {leftBtnText}
+            </Button>
+            <Button bsStyle="primary" onClick={handleRightBtn}>
+              {rightBtnText}
+            </Button>
+            {rightAddons}
+          </ButtonToolbar>
+        </div>
       </div>
     )
   }

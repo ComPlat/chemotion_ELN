@@ -58,11 +58,34 @@ class Sample < ActiveRecord::Base
   scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
   scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
 
-  scope :by_fingerprint, -> (fp_vector, page, page_size, threshold = 0.01) {
-    fp_ids = Fingerprint.by_tanimoto_coefficient(fp_vector, page, page_size, threshold)
+  scope :search_by_fingerprint, -> (molfile, userid, collection_id, page,
+                                    page_size, type, threshold = 0.01) {
+    fp_vector =
+      Chemotion::OpenBabelService.fingerprint_from_molfile(molfile)
 
-    where(:fingerprint_id => fp_ids)
-    .order("position(fingerprint_id::text in '#{fp_ids.join(',')}')")
+    if (type == 'similar')
+      threshold = threshold.to_f
+      fp_ids = Fingerprint.search_similar(fp_vector, page, page_size, threshold)
+      scope = where(:fingerprint_id => fp_ids)
+      scope = scope.order("position(fingerprint_id::text in '#{fp_ids.join(',')}')")
+    else # substructure search
+      fp_ids = Fingerprint.screen_sub(fp_vector)
+      list_molfile = Sample.where(:fingerprint_id => fp_ids)
+                           .for_user(userid)
+                           .by_collection_id(collection_id.to_i)
+
+      smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
+
+      sample_ids = []
+      list_molfile.each do |sample|
+        if Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
+          sample_ids << sample.id
+        end
+
+      end
+      scope = Sample.where(:id => sample_ids)
+    end
+    return scope
   }
 
 

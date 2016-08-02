@@ -134,4 +134,40 @@ M  END
 
   end
 
+  def self.get_smiles_from_molfile molfile
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+    f = OpenBabel::OBMol.new
+
+    c.set_in_format('mol')
+    c.read_string(m, molfile)
+
+    c.set_out_format 'can'
+    smi = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+
+    # fragment = OpenBabel::OBBitVec .new
+    # fragment_data = OpenBabel::OBPairData.new
+    # fragment_data.set_attribute(smi)
+    # f.clone_data(fragment_data)
+    #
+    # c.set_in_and_out_formats("smi", "can")
+    # partial_smi = c.write_string(f, true)
+
+    return smi
+  end
+
+  def self.substructure_match query, molfile_target
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+
+    # read molecule
+    c.set_in_format('mol')
+    c.read_string(m, molfile_target)
+
+    sp = OpenBabel::OBSmartsPattern.new
+    sp.init(query)
+
+    return sp.match(m)
+  end
+
 end
