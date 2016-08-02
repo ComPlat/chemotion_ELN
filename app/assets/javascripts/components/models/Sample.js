@@ -281,7 +281,7 @@ export default class Sample extends Element {
   }
 
   iupac_name_tag(length) {
-    let iupac_name = this.molecule.iupac_name;
+    let iupac_name = this.molecule.iupac_name || "";
     return iupac_name.length > length ?
       iupac_name.slice(0, length) + "..."
       :
