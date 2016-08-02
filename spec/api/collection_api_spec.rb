@@ -90,8 +90,10 @@ describe Chemotion::CollectionAPI do
     describe 'GET /api/v1/collections/roots' do
       it 'returns serialized (unshared) collection roots of logged in user' do
         get '/api/v1/collections/roots'
-
-        expect(JSON.parse(response.body)['collections']).to eq [c1.as_json(json_options),c3.as_json(json_options)]
+        collections = JSON.parse(response.body)['collections']
+        shared_to = collections.map{|c| c.delete("shared_to")}
+        expect(collections).to eq [c1.as_json(json_options),c3.as_json(json_options)]
+        expect(shared_to.compact).to be_empty
       end
     end
 
@@ -106,8 +108,11 @@ describe Chemotion::CollectionAPI do
     describe 'GET /api/v1/collections/shared_roots' do
       it 'returns serialized (shared) collection roots of logged in user' do
         get '/api/v1/collections/shared_roots'
-
-        expect(JSON.parse(response.body)['collections']).to eq [c2.as_json(json_options)]
+        collections = JSON.parse(response.body)['collections']
+        shared_to = collections.map{|c| c.delete("shared_to")}
+        shared_by = collections.map{|c| c.delete("shared_by")}
+        expect(collections).to eq [c2.as_json(json_options)]
+        expect(shared_to.map{|u| u&&u['id']||nil}).to eq [c2.user.id]
       end
     end
 
@@ -177,7 +182,9 @@ describe Chemotion::CollectionAPI do
               included_ids: [sc1.id],
               excluded_ids: []
             },
-            currentCollectionId: c1.id
+            currentCollection: {
+              id:c1.id
+            }
           }
       }
 

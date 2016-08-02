@@ -1,5 +1,5 @@
 class UserSerializer < ActiveModel::Serializer
-  attributes :id, :name, :initials, :samples_count, :reactions_count
+  attributes :id, :name, :initials, :samples_count, :reactions_count, :type
 
   def samples_count
     object.counters['samples'].to_i

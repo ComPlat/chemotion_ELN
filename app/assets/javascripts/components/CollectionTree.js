@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
@@ -46,12 +46,63 @@ export default class CollectionTree extends React.Component {
 
   sharedSubtrees() {
     let roots = this.state.sharedRoots;
-    return this.subtrees(roots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
+    let labelledRoots = roots.map(e=>{
+      e.label = <span>
+        {this.labelRoot('shared_to',e)}
+        </span>
+      return e});
+    return this.subtrees(labelledRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
   }
 
   remoteSubtrees() {
     let roots = this.state.remoteRoots;
-    return this.subtrees(roots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> Shared with me <i className="fa fa-share-alt" /></div></div>, false)
+    let labelledRoots = roots.map(e=>{
+      e.label = <span>
+        {this.labelRoot('shared_by',e)}
+        {' '}
+        {this.labelRoot('shared_to',e)}
+        </span>
+      return e});
+    return this.subtrees(labelledRoots, <div className="tree-view"><div
+      className={"title"} style={{backgroundColor:'white'}}>
+      <i className="fa fa-list"/> Shared with me <i className="fa fa-share-alt"/>
+      </div></div>, false)
+  }
+
+
+
+  labelRoot(sharedToOrBy,rootCollection){
+    let shared = rootCollection[sharedToOrBy]
+    if (shared){
+      return(
+        <OverlayTrigger placement="bottom" overlay={this.userInfo(shared)}>
+          <span>{sharedToOrBy=='shared_to'?'with':'by'} {shared.initials}</span>
+        </OverlayTrigger>
+      )
+    } else{
+      return(
+        <span></span>
+      )
+    }
+  }
+
+  userInfo(user){
+    let iconClass =  "fa fa-user"
+    switch(user.type) {
+      case 'Person':
+          iconClass = "fa fa-user"
+          break;
+      case 'Group':
+          iconClass = "fa fa-users"
+          break;
+      default:
+        iconClass =  "fa fa-user"
+    }
+    return(
+      <Tooltip id="tooltip">
+        <i className={iconClass} aria-hidden="true"/>{user.name}
+      </Tooltip>
+    )
   }
 
   convertToSlug(name) {
@@ -61,7 +112,7 @@ export default class CollectionTree extends React.Component {
   assignRootsAsChildrenToFakeRoots(roots, fakeRoots) {
     roots.forEach((root) => {
       let fakeRootForRoot = fakeRoots.filter((fakeRoot) => {
-        return fakeRoot.label == `From ${root.shared_by_name}` || fakeRoot.label == root.label;
+        return fakeRoot.label == `From ${root.shared_by.name}` || fakeRoot.label == root.label;
       })[0];
 
       fakeRootForRoot.children.push(root);
