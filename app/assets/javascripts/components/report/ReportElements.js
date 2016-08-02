@@ -61,15 +61,15 @@ const StatusContent = ({status}) => {
 }
 
 const MaterialContent = ({show, starting_materials, reactants, products}) => {
-  const materailCalc = (target, multi, precision) => {
+  const materialCalc = (target, multi, precision) => {
     return (target ? (target*multi).toFixed(precision) : " - ")
   }
 
   const equiv_or_yield = (s, isProduct) => {
     return (
       isProduct
-        ? materailCalc(s.equivalent*100, 1, 2).toString() + "%"
-        : materailCalc(s.equivalent, 1, 4)
+        ? materialCalc(s.equivalent*100, 1, 0).toString() + "%"
+        : materialCalc(s.equivalent, 1, 3)
     )
   }
 
@@ -88,9 +88,9 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
               </tr>
               <tr>
                 <td style={{width: '20%'}}>{sample.molecule.sum_formular}</td>
-                <td style={{width: '20%'}}>{materailCalc(sample.amount_g, 1000, 4)}</td>
-                <td style={{width: '20%'}}>{materailCalc(sample.amount_l, 1000, 4)}</td>
-                <td style={{width: '20%'}}>{materailCalc(sample.amount_mol, 1000, 4)}</td>
+                <td style={{width: '20%'}}>{materialCalc(sample.amount_g, 1000, 3)}</td>
+                <td style={{width: '20%'}}>{materialCalc(sample.amount_l, 1000, 3)}</td>
+                <td style={{width: '20%'}}>{materialCalc(sample.amount_mol, 1000, 3)}</td>
                 <td style={{width: '20%'}}>{equiv_or_yield(sample, isProduct)}</td>
               </tr>
             </tbody>

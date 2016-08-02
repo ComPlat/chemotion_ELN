@@ -13,7 +13,7 @@ module SVG
       number_of_starting_materials = @starting_materials.size
       number_of_products = @products.size
       is_report = options[:is_report]
-      word_size = is_report ? 4 + (number_of_reactants + number_of_starting_materials + number_of_products) : 8
+      @word_size = is_report ? 4 + (number_of_reactants + number_of_starting_materials + number_of_products) : 8
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
       @solvents = options[:solvents]
@@ -27,7 +27,7 @@ module SVG
       END
       @label_temperature = <<-END
         <svg font-family="sans-serif">
-          <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{65 - @arrow_y_shift}" font-size="#{word_size + 1}">#{@temperature}</text>
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{65 - @arrow_y_shift}" font-size="#{@word_size + 1}">#{@temperature}</text>
         </svg>
       END
       @divider = <<-END
@@ -45,7 +45,7 @@ module SVG
       @label_solvents = @solvents.map.with_index do |solvent, index|
         <<-END
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{80 + index * 12  - @arrow_y_shift}" font-size="#{word_size}">#{solvent}</text>
+            <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{80 + index * 12  - @arrow_y_shift}" font-size="#{@word_size}">#{solvent}</text>
           </svg>
         END
       end.join("  ")
@@ -84,13 +84,29 @@ module SVG
         material_width = options[:material_width]
         scale = options[:scale] || 1
         divider = ''
-        material_group.map do |material|
+        material_group.map do |m|
+          material, yield_amount = separate_material_yield(m)
+          yield_svg = yield_amount ? compose_yield_svg(yield_amount) : ""
+
           content = inner_file_content(material).to_s
-          output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + content + "</g>" + divider
+          output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + content + yield_svg +"</g>" + divider
           divider = "<g transform='translate(#{shift + material_width}, 0) scale(#{scale})'>" + @divider + "</g>"
           shift += material_width
           output
         end
+      end
+
+      def separate_material_yield(element)
+        material, material_yield = element.class == Array ? element : [element, false]
+      end
+
+      def compose_yield_svg(amount)
+        yield_amount = amount && !amount.to_f.nan? ? (amount * 100).try(:round, 0) : 0
+        yield_svg = <<-END
+          <svg font-family="sans-serif">
+            <text text-anchor="middle" font-size="#{@word_size + 1}" y="105" x="55">#{yield_amount} %</text>
+          </svg>
+        END
       end
 
       def compose_arrow_and_reaction_labels( options = {} )

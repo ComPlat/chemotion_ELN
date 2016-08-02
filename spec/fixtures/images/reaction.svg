@@ -43,4 +43,7 @@
 <line x1="40.0" y1="60.0" x2="74.6" y2="40.0" stroke="rgb(0,0,0)" stroke-width="2.0"/>
 <line x1="48.8" y1="63.2" x2="73.0" y2="49.2" stroke="rgb(0,0,0)" stroke-width="2.0"/>
 <line x1="74.6" y1="40.0" x2="109.3" y2="60.0" stroke="rgb(0,0,0)" stroke-width="2.0"/>
-</svg></g></svg>
+</svg>          <svg font-family="sans-serif">
+            <text text-anchor="middle" font-size="9" y="105" x="55">68 %</text>
+          </svg>
+</g></svg>

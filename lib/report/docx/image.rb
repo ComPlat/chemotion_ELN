@@ -42,7 +42,10 @@ module Report
         paths = {}
         paths[:starting_materials] = obj.starting_materials.map(&:get_svg_path)
         paths[:reactants] = obj.reactants.map(&:get_svg_path)
-        paths[:products] = obj.products.map(&:get_svg_path)
+        paths[:products] = obj.products.map do |p|
+          yield_amount = ReactionsProductSample.find_by(reaction_id: obj.id, sample_id: p.id).equivalent
+          [p.get_svg_path, yield_amount]
+        end
         return paths
       end
 

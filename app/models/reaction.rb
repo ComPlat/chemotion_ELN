@@ -102,12 +102,8 @@ class Reaction < ActiveRecord::Base
     paths = {}
     %i(starting_materials reactants products).each do |prop|
       d = self.send(prop).includes(:molecule)
-      paths[prop]= d.pluck(:sample_svg_file,:'molecules.molecule_svg_file').map do |item|
-        if item[0].present?
-          '/images/samples/' + item[0]
-        else
-          "/images/molecules/#{item[1]}"
-        end
+      paths[prop]= d.pluck(:id, :sample_svg_file, :'molecules.molecule_svg_file').map do |item|
+        prop == :products ? [svg_path(item[1], item[2]), yield_amount(item[0])] : svg_path(item[1], item[2])
       end
     end
 
@@ -118,6 +114,14 @@ class Reaction < ActiveRecord::Base
     rescue Exception => e
       Rails.logger.info("**** SVG::ReactionComposer failed ***")
     end
+  end
+
+  def svg_path(sample_svg, molecule_svg)
+    sample_svg.present? ? "/images/samples/#{sample_svg}" : "/images/molecules/#{molecule_svg}"
+  end
+
+  def yield_amount(sample_id)
+    ReactionsProductSample.find_by(reaction_id: self.id, sample_id: sample_id).try(:equivalent)
   end
 
   def solvents_in_svg
