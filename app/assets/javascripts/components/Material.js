@@ -123,7 +123,7 @@ export default class Material extends Component {
     if(this.props.materialGroup == 'products') {
       return (
         <FormControl type="text"
-          value={`${((material.equivalent || 0 ) * 100).toFixed(1)} %`}
+          value={`${((material.equivalent || 0 ) * 100).toFixed(0)} %`}
           disabled={true}
         />
       );
