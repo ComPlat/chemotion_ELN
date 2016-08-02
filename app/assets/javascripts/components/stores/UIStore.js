@@ -41,7 +41,8 @@ class UIStore {
       currentCollection: null,
       currentTab: 1,
       currentSearchSelection: null,
-      showCollectionManagement: false
+      showCollectionManagement: false,
+      navHeight: 70,
     };
 
     this.bindListeners({
@@ -64,8 +65,13 @@ class UIStore {
       handleShowElements: UIActions.showElements,
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
-      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown
+      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
+      handleResizeWindow: UIActions.resizeWindow,
     });
+  }
+
+  handleResizeWindow(offsetHeight){
+    this.state.navHeight = offsetHeight;
   }
 
   handleToggleCollectionManagement() {

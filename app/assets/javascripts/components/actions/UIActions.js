@@ -2,6 +2,10 @@ import alt from '../alt';
 
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {
+  resizeWindow(offsetHeight){
+    return offsetHeight;
+  }
+
   showCollectionManagement() {
     return  null;
   }
