@@ -11,16 +11,23 @@ export default class ElementCollectionLabels extends React.Component {
 
     this.toggleHover = this.toggleHover.bind(this)
     this.handleOnClick = this.handleOnClick.bind(this)
+    this.preventOnClick = this.preventOnClick.bind(this)
   }
 
   toggleHover() {
     this.setState({hover: !this.state.hover})
   }
 
-  handleOnClick(label) {
+  handleOnClick(label, e) {
+    e.stopPropagation()
+
     let url = "/collection/" + label.id + "/" + this.state.element.type +
               "/" + this.state.element.id
-    Aviator.navigate(url)    
+    Aviator.navigate(url)
+  }
+
+  preventOnClick(e) {
+    e.stopPropagation()
   }
 
   render() {
@@ -36,7 +43,7 @@ export default class ElementCollectionLabels extends React.Component {
       return (
         <span className="collection-label" key={index}>
           <Button bsStyle='default' bsSize='xs'
-                  onClick={() => this.handleOnClick(label)} >
+                  onClick={(e) => this.handleOnClick(label, e)} >
             {label.name}
           </Button>
           &nbsp;
@@ -100,7 +107,7 @@ export default class ElementCollectionLabels extends React.Component {
                         : 'Shared Collection';
 
       return (
-        <div style={{display: 'inline-block'}}>
+        <div style={{display: 'inline-block'}} onClick={this.preventOnClick}>
           {this.labelWithPopover(unsharedTitle, labels)}
           {this.labelWithPopover(sharedTitle, shared_labels)}
         </div>

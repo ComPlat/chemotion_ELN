@@ -20,8 +20,8 @@ export default class ElementReactionLabels extends React.Component {
 
   handleOnClick(e) {
     let {element} = this.props
-    // console.log(element.reactions_product_samples)
-    let reaction_id = element.hasOwnProperty("reactions_product_samples")
+
+    let reaction_id = element.reactions_product_samples.length > 0
                       ? element.reactions_product_samples[0].reaction_id
                       : element.reactions_starting_material_samples[0].reaction_id
 
