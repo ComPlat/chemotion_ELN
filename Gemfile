@@ -76,6 +76,9 @@ gem "dotenv-rails"
 gem "backup"
 gem 'yaml_db'
 
+# CI
+gem 'coveralls', require: false
+
 if ENV.fetch("RAILS_ENV", "development").match(/^(development|test)\z/)
   gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
 elsif ENV["RAILS_ENV"] == "production"
