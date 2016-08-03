@@ -82,7 +82,7 @@ module Chemotion
           begin
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
             .find(params[:collection_id]).samples
-            .includes(:molecule, :residues, :elemental_compositions)
+            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples)
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end

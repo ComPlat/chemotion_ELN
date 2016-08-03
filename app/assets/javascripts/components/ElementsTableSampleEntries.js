@@ -4,6 +4,7 @@ import ElementCheckbox from './ElementCheckbox'
 import SVG from 'react-inlinesvg'
 import ElementCollectionLabels from './ElementCollectionLabels'
 import ElementAnalysesLabels from './ElementAnalysesLabels'
+import ElementReactionLabels from './ElementReactionLabels'
 import ArrayUtils from './utils/ArrayUtils'
 import {Tooltip, OverlayTrigger} from 'react-bootstrap'
 import ElementContainer from './ElementContainer'
@@ -109,6 +110,7 @@ export default class ElementsTableSampleEntries extends Component {
             <td style={{cursor: 'pointer'}} onClick={() => this.showDetails(sample)}>
               {sample.title() + " "}
               <div style={{float: 'right'}}>
+                <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
                 <ElementCollectionLabels element={sample} key={sample.id}/>
                 <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
                 {this.topSecretIcon(sample)}

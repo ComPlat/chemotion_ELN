@@ -4,6 +4,8 @@ class SampleSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Sample.new.base_attributes
 
   has_one :molecule
+  has_one :reactions_product_samples
+  has_one :reactions_starting_material_samples
 
   has_many :residues
   has_many :elemental_compositions
