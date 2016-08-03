@@ -54,10 +54,10 @@ class App extends Component {
   render() {
     return (
       <Grid border fluid>
-        <Row>
-          <Navigation />
+        <Row className="card-navigation">
+          <Navigation/>
         </Row>
-        <Row>
+        <Row className="card-content">
           <Col sm={2} md={2} lg={2}>
             <CollectionTree/>
           </Col>
