@@ -22,9 +22,8 @@ const StatusContent = ({status}) => {
         <OverlayTrigger placement="top" overlay={tooltip}>
           <a style={{marginLeft: '10px',
                    padding: '3px',
-                   backgroundColor: 'white',
-                   color:'green'}} >
-            <i className="fa fa-check-circle-o"/>
+                   color:'white'}} >
+            <i className="fa fa-check-circle"/>
           </a>
         </OverlayTrigger>
       )
@@ -117,7 +116,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   return (
     show
       ? <div>
-          <h4><Label bsStyle="success"> Sarting Materials </Label></h4>
+          <h4><Label bsStyle="success"> Starting Materials </Label></h4>
           <div> {table(rows(starting_materials, false))} </div>
           <h4><Label bsStyle="warning"> Reactants </Label></h4>
           <div> {table(rows(reactants, false))} </div>
