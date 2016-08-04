@@ -33,6 +33,13 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 see [INSTALL.md][INSTALL]
 
+
+## Code Status
+
+[![Build Status](https://travis-ci.org/ComPlat/chemotion_ELN.svg?branch=master)](https://travis-ci.org/ComPlat/chemotion_ELN)
+
+[![Coverage Status](https://coveralls.io/repos/github/ComPlat/chemotion_ELN/badge.svg)](https://coveralls.io/github/ComPlat/chemotion_ELN)
+
 ##
 
 
