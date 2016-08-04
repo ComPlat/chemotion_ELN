@@ -17,7 +17,8 @@ export default class SearchFetcher {
         body: JSON.stringify({
           selection: selection,
           collection_id: collectionId,
-          page: currentPage
+          page: currentPage,
+          per_page: selection.page_size
         })
       })
       .then((response) => {

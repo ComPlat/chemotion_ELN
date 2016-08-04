@@ -4,12 +4,10 @@ module Chemotion
 
     # TODO implement search cache?
     helpers do
-      def page_size
-        7
-      end
+      @page_size = 7
 
       def pages(total_elements)
-        total_elements.fdiv(page_size).ceil
+        total_elements.fdiv(@page_size).ceil
       end
 
       def get_arg
@@ -28,6 +26,7 @@ module Chemotion
           params[:selection].molfile == nil ? false : true
 
         if (isStructureSearch)
+          @page_size = params[:per_page].to_i
           return 'structure'
         else
           return params[:selection].search_by_method
@@ -45,19 +44,20 @@ module Chemotion
         else
           tmp = paginate(samples)
         end
+
         serialized_samples = {
           molecules: group_by_molecule(tmp)
         }
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
-          .per(page_size).map {|s|
+          .per(@page_size).map {|s|
             ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
         serialized_wellplates = Kaminari.paginate_array(wellplates).page(page)
-          .per(page_size).map{ |s|
+          .per(@page_size).map{ |s|
             WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
         serialized_screens = Kaminari.paginate_array(screens).page(page)
-          .per(page_size).map{ |s|
+          .per(@page_size).map{ |s|
             ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
 
@@ -67,28 +67,28 @@ module Chemotion
             totalElements: samples.size,
             page: page,
             pages: pages(samples.size),
-            per_page: page_size
+            per_page: @page_size
           },
           reactions: {
             elements: serialized_reactions,
             totalElements: reactions.size,
             page: page,
             pages: pages(reactions.size),
-            per_page: page_size
+            per_page: @page_size
           },
           wellplates: {
             elements: serialized_wellplates,
             totalElements: wellplates.size,
             page: page,
             pages: pages(wellplates.size),
-            per_page: page_size
+            per_page: @page_size
           },
           screens: {
             elements: serialized_screens,
             totalElements: screens.size,
             page: page,
             pages: pages(screens.size),
-            per_page: page_size
+            per_page: @page_size
           }
         }
       end
@@ -115,13 +115,11 @@ module Chemotion
           molfile = Fingerprint.standardized_molfile arg
           threshold = params[:selection].tanimoto_threshold
           type = params[:selection].search_type
-          page = params[:page]
-          size = params[:page_size]
 
           # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
           Sample.for_user(current_user.id)
                 .search_by_fingerprint(molfile, current_user.id, collection_id,
-                                       page, size, type, threshold)
+                                       type, threshold)
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
@@ -186,6 +184,7 @@ module Chemotion
 
           serialization_by_elements_and_page(elements_by_scope(scope),
                                              params[:page])
+
         end
       end
 
