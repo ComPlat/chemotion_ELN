@@ -235,7 +235,7 @@ class Sample < ActiveRecord::Base
 
   def init_elemental_compositions
     residue = self.residues[0]
-    return unless m_formula = self.molecule.sum_formular
+    return unless m_formula = (self.molecule && self.molecule.sum_formular)
 
     if residue.present? && self.molfile.include?(' R# ')# case when residue will be deleted
       p_formula = residue.custom_info['formula']

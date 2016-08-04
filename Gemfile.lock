@@ -1,6 +1,7 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: 10772e248579cf96b4d2dd6dd66181b07d832a65
+  revision: 5b4a1cc0252cda98733771a96a7c3cce54494550
+  branch: extrema_search_safe
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
@@ -196,7 +197,7 @@ GEM
     factory_girl_rails (4.7.0)
       factory_girl (~> 4.7.0)
       railties (>= 3.0.0)
-    faker (1.6.3)
+    faker (1.6.6)
       i18n (~> 0.5)
     ffi (1.9.10)
     font-awesome-rails (4.6.2.0)
@@ -387,7 +388,7 @@ GEM
     sdoc (0.4.1)
       json (~> 1.7, >= 1.7.7)
       rdoc (~> 4.0)
-    selenium-webdriver (2.53.0)
+    selenium-webdriver (2.53.4)
       childprocess (~> 0.5)
       rubyzip (~> 1.0)
       websocket (~> 1.0)
@@ -472,7 +473,7 @@ DEPENDENCIES
   capistrano-rails
   capistrano-rvm
   capistrano3-delayed-job
-  capybara (~> 2.4)
+  capybara (~> 2.7.1)
   coveralls
   daemons
   database_cleaner
@@ -480,7 +481,7 @@ DEPENDENCIES
   devise
   dotenv-rails
   factory_girl_rails
-  faker (~> 1.4)
+  faker (~> 1.6.6)
   font-awesome-rails
   fontcustom
   grape
@@ -492,8 +493,8 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   kaminari
-  ketcherails (= 0.1.3)!
-  launchy (~> 2.4)
+  ketcherails!
+  launchy (~> 2.4.3)
   mailcatcher
   nokogiri
   openbabel (= 2.3.2.1)!
@@ -509,7 +510,7 @@ DEPENDENCIES
   sablon!
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
-  selenium-webdriver (~> 2.43)
+  selenium-webdriver (~> 2.53.4)
   spring
   svg2pdf!
   thin

@@ -54,7 +54,7 @@ gem 'roo', ">2.3.0"
 
 gem 'httparty'
 # Ketcher editor
-gem 'ketcherails', '0.1.3', github: 'ComPlat/ketcher-rails'
+gem 'ketcherails', github: 'ComPlat/ketcher-rails', branch: 'extrema_search_safe'#'0.1.3', github: 'ComPlat/ketcher-rails'
 
 # Free font icons
 gem "font-awesome-rails"
@@ -131,10 +131,10 @@ group :test do
   gem 'factory_girl_rails'
   gem 'database_cleaner'
 
-  gem "faker", "~> 1.4"
-  gem "capybara", "~> 2.4"
-  gem "launchy", "~> 2.4"
-  gem "selenium-webdriver", "~> 2.43"
+  gem "faker", "~> 1.6.6"
+  gem "capybara", "~> 2.7.1"
+  gem "launchy", "~> 2.4.3"
+  gem "selenium-webdriver", "~> 2.53.4"
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here

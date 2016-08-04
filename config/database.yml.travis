@@ -3,4 +3,5 @@ test:
   encoding: unicode
   database: travis_ci_test
   username: postgres
-
+  pool: 5
+  host: localhost

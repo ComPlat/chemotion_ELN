@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 feature 'Pages' do
-  let(:john) { create(:user) }
+  let(:john) { create(:person) }
 
   background do
     sign_in(john)

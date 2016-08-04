@@ -6,9 +6,9 @@ module SVG
 
     def initialize(materials_svg_paths, options = {})
       @svg_path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'molecules')
-      @starting_materials = materials_svg_paths[:starting_materials]
-      @reactants = materials_svg_paths[:reactants]
-      @products = materials_svg_paths[:products]
+      @starting_materials = materials_svg_paths[:starting_materials] || []
+      @reactants = materials_svg_paths[:reactants] || []
+      @products = materials_svg_paths[:products] || []
       number_of_reactants = (@reactants.size == 0 && @starting_materials.size != 0) ? 1 : @reactants.size
       number_of_starting_materials = @starting_materials.size
       number_of_products = @products.size
@@ -16,7 +16,7 @@ module SVG
       @word_size = is_report ? 4 + (number_of_reactants + number_of_starting_materials + number_of_products) : 8
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
-      @solvents = options[:solvents]
+      @solvents = options[:solvents] || []
       @temperature = options[:temperature]
       @arrow_y_shift = @solvents.count > 3 ? (@solvents.count - 3) * 12 : 0
 

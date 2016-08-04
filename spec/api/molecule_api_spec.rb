@@ -44,7 +44,7 @@ M  END"
         let!(:params) {
           {
             inchistring: "InChI=1S/C8H8/c1-2-5-3(1)7-4(1)6(2)8(5)7/h1-8H",
-            molecule_svg_file: "TXWRERCHRDBNLG-UHFFFAOYSA-N.svg",
+            #molecule_svg_file: "TXWRERCHRDBNLG-UHFFFAOYSA-N.svg",
             inchikey: "TXWRERCHRDBNLG-UHFFFAOYSA-N",
             molecular_weight: 104.14912,
             sum_formular: "C8H8",
@@ -62,7 +62,7 @@ M  END"
           params.each do |k, v|
             expect(m.attributes.symbolize_keys[k]).to eq(v)
           end
-
+          expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
         end
 
       end

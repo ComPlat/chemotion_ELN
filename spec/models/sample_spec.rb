@@ -88,10 +88,27 @@ M  END
 MOLFILE
     }
     let(:sample) { build(:sample, molfile: molfile) }
+    let(:mol_attributes){
+      {
+        "boiling_point" => nil,
+              "density" => nil,
+             "inchikey" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+        "inchistring" => "InChI=1S/H2O/h1H2",
+          "iupac_name" => "oxidane",
+       "melting_point" => nil,
+   "molecular_weight" => 18.01528,
+  #  "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg", #todo
+            "molfile" => molfile.rstrip,
+              "names" => ["water", "oxidane"],
+       "sum_formular" => "H2O"
+     }
+    }
+
     before do
       sample.collections << FactoryGirl.build(:collection)
       sample.creator = FactoryGirl.build(:person)
     end
+
     it 'should create a molecule' do
       sample.save!
       molecule = sample.molecule
@@ -101,20 +118,11 @@ MOLFILE
     it 'should retrieve molecule information' do
       sample.save
       molecule = sample.molecule
+      mol_attributes.each do |k, v|
+        expect(molecule.attributes[k]).to eq(v)
+      end
 
-      expect(molecule.attributes).to include(
-        "boiling_point" => nil,
-              "density" => nil,
-             "inchikey" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
-        "inchistring" => "InChI=1S/H2O/h1H2",
-          "iupac_name" => "oxidane",
-       "melting_point" => nil,
-   "molecular_weight" => 18.01528,
-  #  "molecule_svg_file" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N.svg", #todo
-            "molfile" => molfile,
-              "names" => ["water", "oxidane"],
-       "sum_formular" => "H2O",
-      )
+
     end
 
     ##Fixme : now file are anonymised

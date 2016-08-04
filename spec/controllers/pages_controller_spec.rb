@@ -1,21 +1,31 @@
 require 'rails_helper'
 
 RSpec.describe PagesController do
+  #login_user
   let(:user)    { create(:person) }
-  let (:group) {create(:group,users: [user])}
+  let (:g1) {create(:group)}
+  let (:g2) {create(:group)}
+  let(:json_options) {
+    {
+      only: [:id],
+      methods: [:name, :initials]
+    }
+  }
   before do
-    #allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
-    allow(request.env['warden']).to receive(:authenticate!).and_return(user)
-    allow(controller).to receive(:current_user).and_return(user)
+    sign__in(user)
   end
 
   describe "GET groups" do
 
 
     it "assigns @groups" do
-
+      g1.users << user
+      g1.save
+      g2.admins << user
+      g2.save
       get :groups
-      expect(assigns(:groups)).to match_array([group])
+      groups=assigns(:groups).map{|g| g.select{|k| k.match(/id|name|initials/)}}
+      expect(groups).to match_array([g1.as_json(json_options),g2.as_json(json_options)])
     end
 
     it "renders the groups template" do

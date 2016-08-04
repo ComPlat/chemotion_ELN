@@ -221,7 +221,7 @@ describe Chemotion::SampleAPI do
             solvent: '',
             impurities: '',
             location: '',
-            molecule: FactoryGirl.create(:molecule),
+          #  molecule: FactoryGirl.create(:molecule),
             molfile: '',
             is_top_secret: false
           }
