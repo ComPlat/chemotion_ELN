@@ -58,14 +58,14 @@ class Sample < ActiveRecord::Base
   scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
   scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
 
-  scope :search_by_fingerprint, -> (molfile, userid, collection_id, page,
-                                    page_size, type, threshold = 0.01) {
+  scope :search_by_fingerprint, -> (molfile, userid, collection_id,
+                                    type, threshold = 0.01) {
     fp_vector =
       Chemotion::OpenBabelService.fingerprint_from_molfile(molfile)
 
     if (type == 'similar')
       threshold = threshold.to_f
-      fp_ids = Fingerprint.search_similar(fp_vector, page, page_size, threshold)
+      fp_ids = Fingerprint.search_similar(fp_vector, threshold)
       scope = where(:fingerprint_id => fp_ids)
       scope = scope.order("position(fingerprint_id::text in '#{fp_ids.join(',')}')")
     else # substructure search

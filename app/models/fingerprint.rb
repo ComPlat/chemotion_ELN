@@ -17,7 +17,7 @@ class Fingerprint < ActiveRecord::Base
     return query_num_set_bits
   end
 
-  scope :search_similar, -> (fp_vector, page, page_size, threshold) {
+  scope :search_similar, -> (fp_vector, threshold) {
     query = sanitize_sql_for_conditions(
       ["id, num_set_bits,
         fp0 & ? n0, fp1 & ? n1, fp2 & ? n2, fp3 & ? n3, fp4 & ? n4, fp5 & ? n5,
@@ -62,7 +62,7 @@ class Fingerprint < ActiveRecord::Base
       (common_set_bit::float8 / (? + num_set_bits - common_set_bit)::float8) AS tanimoto",
       query_num_set_bits])
     tanimoto = unscoped.from("(#{common_set_bits.to_sql}) AS common_bits ORDER BY tanimoto DESC")
-                       .select(query).page(page).per(page_size)
+                       .select(query)
 
     return tanimoto.map(&:id)
   }
