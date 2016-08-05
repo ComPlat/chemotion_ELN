@@ -4,7 +4,7 @@ FactoryGirl.define do
     first_name 'John'
     last_name 'Doe'
     sequence(:name_abbreviation) do |n|
-      result = 'JD'
+      result = 'J_D'
       n.times { result.succ! }
       result
     end
