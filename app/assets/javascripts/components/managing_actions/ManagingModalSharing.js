@@ -24,16 +24,17 @@ export default class ManagingModalSharing extends React.Component {
       wellplateDetailLevel: props.wellplateDetailLevel,
       screenDetailLevel: props.screenDetailLevel,
     }
+    this.onUserChange = this.onUserChange.bind(this)
   }
 
   componentDidMount() {
-    UserStore.listen(this.onUserChange.bind(this));
+    UserStore.listen(this.onUserChange);
     UserActions.fetchCurrentUser();
     UserActions.fetchUsers();
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onUserChange.bind(this));
+    UserStore.unlisten(this.onUserChange);
   }
 
   onUserChange(state) {
@@ -300,6 +301,7 @@ ManagingModalSharing.propTypes = {
           wellplateDetailLevel: React.PropTypes.number,
           screenDetailLevel: React.PropTypes.number,
           onHide: React.PropTypes.func.isRequired,
+          listSharedCollections: React.PropTypes.bool
 };
 
 ManagingModalSharing.defaultProps = {

@@ -3,7 +3,7 @@ import {Modal} from 'react-bootstrap';
 
 export default class ManagingModal extends React.Component {
   render() {
-    const {show, Component, title, onHide, action} = this.props;
+    const {show, Component, title, onHide, action,listSharedCollections} = this.props;
     if(show) {
       return (
         <Modal animation={false} show={show} onHide={() => onHide()}>
@@ -14,6 +14,7 @@ export default class ManagingModal extends React.Component {
             <Component
               onHide={() => onHide()}
               action={action}
+              listSharedCollections={listSharedCollections}
               />
           </Modal.Body>
         </Modal>

@@ -1,11 +1,9 @@
 import React from 'react';
 import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
-
-
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
-
 import CollectionActions from '../actions/CollectionActions';
+import ReactDOM from 'react-dom';
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
@@ -15,15 +13,16 @@ export default class ManagingModalCollectionActions extends React.Component {
       collection_state: CollectionStore.getState(),
       labelOfNewCollection: null
     }
+    this.onUIChange = this.onUIChange.bind(this)
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange.bind(this));
+    UIStore.listen(this.onUIChange);
     CollectionStore.listen(this.onCollectionChange.bind(this));
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIChange.bind(this));
+    UIStore.unlisten(this.onUIChange);
     CollectionStore.unlisten(this.onCollectionChange.bind(this));
   }
 
@@ -51,14 +50,19 @@ export default class ManagingModalCollectionActions extends React.Component {
     )
 
     return collections.map(
-      (collection) => {
-        return (<option value={collection.id}>{collection.label}</option>)
+      (collection,ind) => {
+        return (<option value={collection.id} key={ind}>{collection.label}</option>)
       }
     ).concat(result);
   }
 
   collectionEntries() {
-    let collections = this.state.collection_state.unsharedRoots.concat(this.state.collection_state.lockedRoots);
+    let cState = this.state.collection_state
+    let collections = cState.unsharedRoots.concat(cState.lockedRoots);
+    if (this.props.listSharedCollections){
+      cState.sharedRoots.map(sharedRoot=>{collections = collections.concat(sharedRoot.children)})
+      cState.remoteRoots.map(remoteRoot=>{collections = collections.concat(remoteRoot.children)})
+    }
     return this.collectionEntriesMap(collections);
   }
 
@@ -73,7 +77,7 @@ export default class ManagingModalCollectionActions extends React.Component {
 
   handleSubmit() {
     let select_ref = this.refs.collectionSelect
-    let collection_id = select_ref ? select_ref.getValue() : undefined;
+    let collection_id = select_ref ? ReactDOM.findDOMNode(select_ref).value : undefined;
     let newLabel = this.state.labelOfNewCollection;
 
     if(newLabel) {
@@ -148,4 +152,10 @@ export default class ManagingModalCollectionActions extends React.Component {
       </div>
     )
   }
+}
+
+ManagingModalCollectionActions.propTypes = {
+  action: React.PropTypes.func,
+  onHide: React.PropTypes.func,
+  listSharedCollections: React.PropTypes.bool,
 }
