@@ -7,6 +7,7 @@ import UIActions from './actions/UIActions';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import Xdiv from './extra/CollectionTreeXdiv';
+import update from 'react-addons-update';
 
 export default class CollectionTree extends React.Component {
   constructor(props) {
@@ -45,24 +46,21 @@ export default class CollectionTree extends React.Component {
   }
 
   sharedSubtrees() {
-    let roots = this.state.sharedRoots;
-    let labelledRoots = roots.map(e=>{
-      e.label = <span>
-        {this.labelRoot('shared_to',e)}
-        </span>
-      return e});
+    let labelledRoots = this.state.sharedRoots.map(e=>{
+      return  update(e,{label: {$set: <span>{this.labelRoot('shared_to',e)}</span>}})
+    });
     return this.subtrees(labelledRoots, <div className="tree-view"><div className={"title "} style={{backgroundColor:'white'}}><i className="fa fa-list" /> My shared projects <i className="fa fa-share-alt" /></div></div>, false);
   }
 
   remoteSubtrees() {
-    let roots = this.state.remoteRoots;
-    let labelledRoots = roots.map(e=>{
-      e.label = <span>
+    let labelledRoots = this.state.remoteRoots.map(e=>{
+      return  update(e,{label: {$set: <span>
         {this.labelRoot('shared_by',e)}
         {' '}
         {this.labelRoot('shared_to',e)}
         </span>
-      return e});
+      }})
+    });
     return this.subtrees(labelledRoots, <div className="tree-view"><div
       className={"title"} style={{backgroundColor:'white'}}>
       <i className="fa fa-list"/> Shared with me <i className="fa fa-share-alt"/>
@@ -153,7 +151,7 @@ export default class CollectionTree extends React.Component {
     if(showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {
-      if( currentCollection.label == 'All' ) {
+      if( currentCollection == null || currentCollection.label == 'All' ) {
         Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
       } else {
         Aviator.navigate(`/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);

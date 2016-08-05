@@ -298,7 +298,7 @@ export default class MySharedCollections extends React.Component {
               selectUsers={false}
               collAction="Update" />
             </Modal.Body>
-        </Modal>,
+        </Modal>
       </div>
     )
   }
