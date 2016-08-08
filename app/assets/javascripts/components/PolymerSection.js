@@ -258,15 +258,7 @@ export default class PolymerSection extends React.Component {
           </Col>
           <Col md={4}>{this.polymerCrossLinkage(sample, residue)}</Col>
 
-          <Col md={3}>{this.polymerFormula(sample, residue)}</Col>
-          <Col md={1}>
-            <Button id="external-save-btn"
-                    bsStyle="warning"
-                    disabled={!sample.isValid}
-                    onClick={this.props.parent._submitFunction.bind(this.props.parent)}>
-             Save
-            </Button>
-          </Col>
+          <Col md={4}>{this.polymerFormula(sample, residue)}</Col>
         </Row>
         <Row>
           <Col md={8}>

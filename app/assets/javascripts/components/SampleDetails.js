@@ -1,6 +1,6 @@
 import React from 'react';
-import {Button, InputGroup, ControlLabel, FormGroup, FormControl, Panel,
-        ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
+import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
+        Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
         Tooltip, OverlayTrigger} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -128,7 +128,7 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
-  _submitFunction() {
+  submitFunction() {
   let {sample} = this.state;
   let { currentReaction } = ElementStore.getState();
 
@@ -428,6 +428,29 @@ export default class SampleDetails extends React.Component {
     return labels;
   }
 
+  sampleIsValid() {
+    const {sample, loadingMolecule} = this.state;
+    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true;
+  }
+
+  sampleFooter() {
+    const {sample} = this.state;
+    const submitLabel = (sample && sample.isNew) ? "Create" : "Save";
+    return (
+      <ButtonToolbar>
+        <Button bsStyle="primary"
+                onClick={() => this.closeDetails()}>
+          Close
+        </Button>
+        <Button bsStyle="warning"
+                onClick={() => this.submitFunction()}
+                disabled={!this.sampleIsValid()}>
+          {submitLabel}
+        </Button>
+      </ButtonToolbar>
+    )
+  }
+
   render() {
     let sample = this.state.sample || {}
     let molfile = sample.molfile;
@@ -467,6 +490,7 @@ export default class SampleDetails extends React.Component {
               {tabContents.map((e,i)=>e(i))}
             </Tabs>
             </ListGroup>
+            {this.sampleFooter()}
           </Panel>
         </StickyDiv>
       </div>
