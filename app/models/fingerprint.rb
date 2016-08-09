@@ -104,7 +104,7 @@ class Fingerprint < ActiveRecord::Base
       fp.fp14 = "%064b" % fp_vector[14]
       fp.fp15 = "%064b" % fp_vector[15]
 
-      fp.num_set_bits = fp.count_bits_set(fp_vector)
+      fp.num_set_bits = self.count_bits_set(fp_vector)
       fp.save!
       return fp.id
     end

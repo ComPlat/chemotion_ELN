@@ -36,7 +36,8 @@ export default class ManagingActions extends React.Component {
         show: false,
         title: "",
         component: "",
-        action: null
+        action: null,
+        listSharedCollections: false,
       }
     }
   }
@@ -176,6 +177,7 @@ export default class ManagingActions extends React.Component {
 
   handleButtonClick(type) {
     let title, component, action = "";
+    let listSharedCollections = false
     switch(type) {
       case 'share':
         if(!this.state.is_top_secret) {
@@ -200,6 +202,7 @@ export default class ManagingActions extends React.Component {
         title = "Assign to Collection";
         component = ManagingModalCollectionActions;
         action = ElementActions.assignElementsCollection;
+        listSharedCollections = true;
         break;
       case 'delete':
         title = "Delete from all Collections?";
@@ -217,7 +220,8 @@ export default class ManagingActions extends React.Component {
         show: true,
         title,
         component,
-        action
+        action,
+        listSharedCollections
       }
     });
   }
@@ -242,6 +246,7 @@ export default class ManagingActions extends React.Component {
           Component={modalProps.component}
           action={modalProps.action}
           onHide={() => this.handleModalHide()}
+          listSharedCollections={modalProps.listSharedCollections}
           />
       </div>
     )

@@ -16,3 +16,8 @@ export default class AssignButton extends React.Component {
     )
   }
 }
+
+AssignButton.propTypes = {
+  isDisabled: React.PropTypes.bool,
+  onClick:    React.PropTypes.func,
+}

@@ -74,7 +74,7 @@ module Chemotion
         end
 
         put ':id' do
-          Collection.find(params[:id]).update(params[:collection_attributes])
+          Collection.shared(current_user.id).find(params[:id]).update!(params[:collection_attributes])
         end
 
         desc "Create shared collections"
