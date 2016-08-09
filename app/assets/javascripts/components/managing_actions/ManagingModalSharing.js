@@ -214,6 +214,7 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   render() {
+
     return (
       <div>
         <FormGroup controlId="shortcutSelect">

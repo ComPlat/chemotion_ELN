@@ -73,10 +73,8 @@ class CollectionStore {
   }
 
   handleUpdateSharedCollection() {
-    CollectionActions.fetchUnsharedCollectionRoots()
     CollectionActions.fetchSharedCollectionRoots();
-    CollectionActions.fetchRemoteCollectionRoots();
-  }
+    }
 
   handleCreateUnsharedCollection(results) {
     CollectionActions.fetchUnsharedCollectionRoots();

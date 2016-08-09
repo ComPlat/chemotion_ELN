@@ -292,7 +292,7 @@ export default class MySharedCollections extends React.Component {
           <Modal.Body>
             <ManagingModalSharing collectionId={actNode.id}
               onHide={this.handleModalHide.bind(this)}
-              permissionLevel={actNode.permissionLevel}
+              permissionLevel={actNode.permission_level}
               sampleDetailLevel={actNode.sample_detail_level} reactionDetailLevel={actNode.reaction_detail_level}
               wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}
               selectUsers={false}
