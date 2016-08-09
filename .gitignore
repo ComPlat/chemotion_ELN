@@ -33,6 +33,8 @@
 /uploads/thumbnails
 !/public/attachments/.keep
 
+/coverage/
+
 # Temp files
 /spec/tmp/*
 

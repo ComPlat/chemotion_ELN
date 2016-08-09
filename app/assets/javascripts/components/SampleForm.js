@@ -51,21 +51,6 @@ export default class SampleForm extends React.Component {
     })
   }
 
-  _submitLabel() {
-    let {sample} = this.state;
-
-    if(sample.isNew) {
-      return "Create";
-    } else {
-      return "Save";
-    }
-  }
-
-  sampleIsValid() {
-    const {sample, loadingMolecule} = this.state;
-    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true;
-  }
-
   structureEditorButton(isDisabled) {
     return (
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
@@ -227,17 +212,6 @@ export default class SampleForm extends React.Component {
     )
   }
 
-  sampleSaveButton() {
-    return (
-      <Button bsStyle="warning"
-              className="external-save-btn"
-              onClick={this.props.parent._submitFunction.bind(this.props.parent)}
-              disabled={!this.sampleIsValid()}>
-        {this._submitLabel()}
-      </Button>
-    )
-  }
-
   render() {
     let sample = this.state.sample || {}
 
@@ -245,10 +219,9 @@ export default class SampleForm extends React.Component {
       <div className="sample-form">
         <Row>
           <Col md={6}>{this.moleculeInput(sample)}</Col>
-          <Col md={5} className="top-secret-checkbox">
+          <Col md={6} className="top-secret-checkbox">
             {this.topSecretCheckbox(sample)}
           </Col>
-          <Col md={1} className="pull-right">{this.sampleSaveButton()}</Col>
         </Row>
 
         <Row>
