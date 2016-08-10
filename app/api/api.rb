@@ -11,6 +11,10 @@ class API < Grape::API
       @current_user = WardenAuthentication.new(env).current_user
     end
 
+    def user_ids
+      @user_ids ||= current_user.group_ids + [current_user.id]
+    end
+
     def authenticate!
       error!('401 Unauthorized', 401) unless current_user
     end
@@ -19,18 +23,29 @@ class API < Grape::API
       request.path.include?('/api/v1/public/')
     end
 
-    def group_by_molecule(samples)
+    def group_by_molecule(samples,own_collection = false)
       groups = Hash.new
-      samples.each do |s|
-        moleculeName = get_molecule_name(s)
-        serialized_sample = ElementPermissionProxy.new(current_user, s).serialized
-        if !groups[moleculeName]
-          groups[moleculeName] = [].push(serialized_sample)
-        else
-          groups[moleculeName] = groups[moleculeName].push(serialized_sample)
+      if own_collection
+        samples.each do |s|
+          moleculeName = get_molecule_name(s)
+          serialized_sample = SampleSerializer::Level10.new(s, 10).serializable_hash
+          if !groups[moleculeName]
+            groups[moleculeName] = [].push(serialized_sample)
+          else
+            groups[moleculeName] = groups[moleculeName].push(serialized_sample)
+          end
+        end
+      else
+        samples.each do |s|
+          moleculeName = get_molecule_name(s)
+          serialized_sample = ElementPermissionProxy.new(current_user, s, user_ids).serialized
+          if !groups[moleculeName]
+            groups[moleculeName] = [].push(serialized_sample)
+          else
+            groups[moleculeName] = groups[moleculeName].push(serialized_sample)
+          end
         end
       end
-
       return to_molecule_array(groups)
     end
 

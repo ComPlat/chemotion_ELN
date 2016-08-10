@@ -36,7 +36,7 @@ export default class ElementReactionLabels extends React.Component {
     let {element} = this.props
 
     // If the Sample has no role in any reaction. Don't display the icon
-    if (element.reactions_product_samples.length == 0 &&
+    if (!element.reactions_product_samples || element.reactions_product_samples.length == 0 &&
         element.reactions_starting_material_samples.length == 0)
       return (<div></div>)
 

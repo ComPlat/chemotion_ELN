@@ -45,7 +45,7 @@ module Chemotion
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
         end
 
         delete do
@@ -66,6 +66,10 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0
 
+      before do
+        params[:per_page].to_i > 100 && (params[:per_page] = 100)
+      end
+      
       get do
         scope = if params[:collection_id]
           begin
@@ -78,7 +82,7 @@ module Chemotion
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
+        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
       desc "Return serialized reaction by id"
@@ -87,12 +91,12 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).read?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).read?
         end
 
         get do
           reaction = Reaction.find(params[:id])
-          {reaction: ElementPermissionProxy.new(current_user, reaction).serialized}
+          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
       end
 
@@ -112,7 +116,7 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).destroy?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).destroy?
         end
 
         delete do
@@ -144,7 +148,7 @@ module Chemotion
       route_param :id do
 
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Reaction.find(params[:id])).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).update?
         end
 
         put do
@@ -160,7 +164,7 @@ module Chemotion
             ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
             reaction.reload
           end
-          {reaction: ElementPermissionProxy.new(current_user, reaction).serialized}
+          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
       end
 

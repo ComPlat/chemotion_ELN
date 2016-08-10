@@ -31,7 +31,7 @@ module Chemotion
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
         end
 
         delete do
@@ -48,7 +48,7 @@ module Chemotion
           end
         end
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(@current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])).read?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])).read?
         end
         # we are using POST because the fetchers don't support GET requests with body data
         post do
@@ -63,7 +63,9 @@ module Chemotion
         optional :collection_id, type: Integer, desc: "Collection id"
       end
       paginate per_page: 5, offset: 0
-
+      before do
+        params[:per_page].to_i > 50 && (params[:per_page] = 50)
+      end
       get do
         scope = if params[:collection_id]
           begin
@@ -77,7 +79,7 @@ module Chemotion
           Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s).serialized}
+        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
       desc "Return serialized wellplate by id"
@@ -86,12 +88,12 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Wellplate.find(params[:id])).read?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).read?
         end
 
         get do
           wellplate = Wellplate.find(params[:id])
-          {wellplate: ElementPermissionProxy.new(current_user, wellplate).serialized}
+          {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
         end
       end
 
@@ -101,7 +103,7 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Wellplate.find(params[:id])).destroy?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).destroy?
         end
 
         delete do
@@ -119,12 +121,12 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(@current_user, Wellplate.find(params[:id])).update?
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Wellplate.find(params[:id])).update?
         end
 
         put do
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
-          {wellplate: ElementPermissionProxy.new(current_user, wellplate).serialized}
+          {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
         end
       end
 
@@ -139,7 +141,7 @@ module Chemotion
       post do
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
         current_user.increment_counter 'wellplates'
-        {wellplate: ElementPermissionProxy.new(current_user, wellplate).serialized}
+        {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
       end
     end
   end
