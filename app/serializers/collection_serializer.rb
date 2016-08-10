@@ -5,6 +5,9 @@ class CollectionSerializer < ActiveModel::Serializer
 
   has_many :children
 
+  has_many :shared_users
+  has_many :shared_collections_users
+
   def children
     object.children.ordered
   end
@@ -14,7 +17,7 @@ class CollectionSerializer < ActiveModel::Serializer
   end
 
   def shared_to
-    if object.is_shared 
+    if object.is_shared
       UserSerializer.new(object.user).serializable_hash.deep_symbolize_keys
     end
   end

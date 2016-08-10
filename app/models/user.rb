@@ -14,6 +14,10 @@ class User < ActiveRecord::Base
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
+  has_many :sync_out_collections_users, foreign_key: :shared_by_id, class_name: 'SyncCollectionsUser'
+  has_many :sync_in_collections_users,  foreign_key: :user_id, class_name: 'SyncCollectionsUser'
+  has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
+  has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
 
   validates_presence_of :first_name, :last_name, allow_blank: false
   validates :name_abbreviation, uniqueness:  {message: " has already been taken." },

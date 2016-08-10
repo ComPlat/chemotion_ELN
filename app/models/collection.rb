@@ -13,6 +13,9 @@ class Collection < ActiveRecord::Base
   has_many :wellplates, through: :collections_wellplates, dependent: :destroy
   has_many :screens, through: :collections_screens, dependent: :destroy
 
+  has_many :shared_collections_users,  foreign_key: :collection_id, class_name: 'SyncCollectionsUser'
+  has_many :shared_users, through: :shared_collections_users, source: :user
+  
   # A collection is locked if it is not allowed to rename or rearrange it
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
