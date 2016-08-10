@@ -66,6 +66,10 @@ module Chemotion
       end
       paginate per_page: 7, offset: 0
 
+      before do
+        params[:per_page].to_i > 100 && (params[:per_page] = 100)
+      end
+      
       get do
         scope = if params[:collection_id]
           begin

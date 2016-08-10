@@ -63,7 +63,9 @@ module Chemotion
         optional :collection_id, type: Integer, desc: "Collection id"
       end
       paginate per_page: 5, offset: 0
-
+      before do
+        params[:per_page].to_i > 50 && (params[:per_page] = 50)
+      end
       get do
         scope = if params[:collection_id]
           begin
