@@ -13,7 +13,7 @@ RSpec.describe ElementPermissionProxy do
       CollectionsSample.create!(sample: sample, collection: c2)
     end
 
-    subject { described_class.new(user, sample) }
+    subject { described_class.new(user, sample,[user.id]) }
 
     context 'element is only in shared collections' do
       before do
