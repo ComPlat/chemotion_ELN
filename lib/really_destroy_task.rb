@@ -1,7 +1,7 @@
 module ReallyDestroyTask
   def self.execute!
     models.each do |model|
-      model.constantize.only_deleted.map(&:really_destroy!)
+      model.constantize.where('deleted_at >= :eight_days_ago', eight_days_ago: Time.now - 8.days).map(&:really_destroy!)
     end
   end
 
