@@ -73,6 +73,7 @@ class API < Grape::API
 
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
+  mount Chemotion::SyncCollectionAPI
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI

@@ -270,7 +270,7 @@ export default class MyCollections extends React.Component {
               sampleDetailLevel={actNode.sample_detail_level} reactionDetailLevel={actNode.reaction_detail_level}
               wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}
               selectUsers={true}
-              collAction="Update" />
+              collAction="CreateSync" />
             </Modal.Body>
         </Modal>
       </div>

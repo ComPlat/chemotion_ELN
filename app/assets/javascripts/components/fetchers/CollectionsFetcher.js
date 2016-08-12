@@ -83,6 +83,23 @@ export default class CollectionsFetcher {
     return promise;
   }
 
+  static createSync(params) {
+    let promise = fetch('/api/v1/syncCollections/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        collection_attributes: params.collection_attributes,
+        user_ids: params.user_ids,
+      })
+    })
+
+    return promise;
+  }
+
   static bulkUpdateUnsharedCollections(params) {
     let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin',

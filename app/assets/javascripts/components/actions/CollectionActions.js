@@ -86,6 +86,15 @@ class CollectionActions {
       });};
   }
 
+  createSync(params){
+    return (dispatch) => { CollectionsFetcher.createSync(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   downloadReportCollectionSamples(){
     const {currentCollection} = UIStore.getState();
     Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_samples?id=" + currentCollection.id});
