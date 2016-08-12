@@ -139,6 +139,6 @@ end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
 
-#gem 'scifinding', '0.1.0', github: 'ComPlat/scifinding' , :group => [:plugins,:development,:production]
+gem 'scifinding', '0.1.0', github: 'ComPlat/scifinding' , :group => [:plugins,:development,:production]
 
 ####
