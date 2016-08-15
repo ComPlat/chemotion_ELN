@@ -2,7 +2,6 @@ import React, {Component} from 'react'
 import {Panel, Button, Tabs, Tab} from 'react-bootstrap';
 import StickyDiv from 'react-stickydiv'
 import Aviator from 'aviator';
-import Utils from '../utils/Functions';
 
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
@@ -16,7 +15,11 @@ import CheckBoxs from './CheckBoxs';
 export default class ReportContainer extends Component {
   constructor(props) {
     super(props);
-    this.state = ReportStore.getState();
+    this.state = {
+      ...ReportStore.getState(),
+      selectedReactionIds: [],
+      selectedReactions: []
+    }
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
   }
@@ -33,12 +36,7 @@ export default class ReportContainer extends Component {
   }
 
   onChange(state) {
-    this.setState({
-      settings: state.settings,
-      checkedAllSettings: state.checkedAllSettings,
-      configs: state.configs,
-      checkedAllConfigs: state.checkedAllConfigs
-    })
+    this.setState({...state})
   }
 
   onChangeUI(state) {
@@ -128,15 +126,7 @@ export default class ReportContainer extends Component {
 
   generateReports() {
     const ids = this.state.selectedReactionIds.join('_')
-    const settings = this.chainedItems(this.state.settings)
-    const configs = this.chainedItems(this.state.configs)
-
-    this.spinnertProcess()
-    Utils.downloadFile({
-      contents: "api/v1/multiple_reports/docx?ids=" + ids
-                + "&settings=" + settings + "&configs=" + configs,
-      name: "ELN-report_" + new Date().toISOString().slice(0,19)
-    })
+    ReportActions.generateReports(ids)
   }
 
   generateReportsBtn() {
@@ -163,20 +153,5 @@ export default class ReportContainer extends Component {
         <span><i className="fa fa-spinner fa-pulse fa-fw"></i> Processing your report, please wait...</span>
       </Button>
     )
-  }
-
-  spinnertProcess() {
-    this.setState({processingReport: !this.state.processingReport})
-    setTimeout(() => this.setState({processingReport: false}), 2500);
-  }
-
-  chainedItems(items) {
-    return items.map(item => {
-      if(item.checked){
-        return item.text.replace(/\s+/g, '').toLowerCase();
-      } else {
-        return null
-      }
-    }).filter(r => r!=null).join('_')
   }
 }
