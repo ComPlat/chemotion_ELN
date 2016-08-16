@@ -25,7 +25,21 @@ class AllElementSearch
     end
 
     def by_collection_id(id)
-      Results.new(@results.select{|r| r.searchable.collections.map(&:id).include?(id)}, @user_id)
+      types = @results.map(&:searchable_type).uniq
+      first_type = types.first
+      query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
+                "SELECT #{first_type}_id FROM collections_#{first_type}s "\
+                "WHERE collection_id = #{id}))"
+
+      types[1..-1].each { |type|
+        query = query +
+                " OR (searchable_type = '#{type}' AND searchable_id IN (" \
+                "SELECT #{type}_id FROM collections_#{type}s "\
+                "WHERE collection_id = #{id}))"
+      }
+
+      @results = @results.where(query)
+      Results.new(@results, @user_id)
     end
 
     def samples
@@ -47,7 +61,7 @@ class AllElementSearch
     private
 
     def filter_results_by_type(type)
-      @results.select{|r| r.searchable_type == type && r.searchable.collections.pluck(:user_id).include?(@user_id)}.map(&:searchable)
+      @results.where(searchable_type: type).includes(:searchable)
     end
   end
 end
