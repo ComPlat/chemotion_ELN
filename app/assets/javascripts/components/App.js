@@ -53,7 +53,7 @@ class App extends Component {
 
   render() {
     return (
-      <Grid border fluid>
+      <Grid fluid>
         <Row className="card-navigation">
           <Navigation/>
         </Row>
