@@ -107,19 +107,19 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   // TODO implement continue fetching in the end of scroll
-  fetchSuggestions(value) {
+  fetchSuggestions(value, show = true) {
     let debounced = debounce(this.props.suggestions, 200)
     debounced(value).then(result => {
       let newState = {}
       if(result.length > 0) {
         newState.suggestions = result
         newState.suggestionFocus = result.length - 1
-        newState.showSuggestions = true
+        newState.showSuggestions = show
       } else {
         newState.suggestions = null
         newState.error = "Nothing was found."
         newState.suggestionFocus = null
-        newState.showSuggestions = true
+        newState.showSuggestions = false
       }
       this.setState(newState)
     }).catch(error => console.log(error))
@@ -190,22 +190,21 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   selectSuggestion() {
-    let {suggestions, suggestionFocus} = this.state
+    let {suggestions, suggestionFocus, timeoutReference, value} = this.state
     let {onSelectionChange} = this.props
     this.setState({
       showSuggestions: false,
       valueBeforeFocus: null
     })
 
-    if (suggestions && suggestionFocus) {
-      let selection = {name: this.state.value, search_by_method: 'substring'}
-      if (suggestions[suggestionFocus] && suggestions[suggestionFocus].name &&
-          this.state.value == suggestions[suggestionFocus].name) {
-        selection = suggestions[suggestionFocus]
-      }
-
-      onSelectionChange(selection)
+    let selection = {name: this.state.value, search_by_method: 'substring'}
+    if (suggestions && suggestionFocus && suggestions[suggestionFocus] &&
+      suggestions[suggestionFocus].name && this.state.value == suggestions[suggestionFocus].name) {
+      selection = suggestions[suggestionFocus]
     }
+
+    clearTimeout(timeoutReference)
+    onSelectionChange(selection)    
   }
 
   abortAutoSelection() {

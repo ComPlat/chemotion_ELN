@@ -4,33 +4,27 @@ module Chemotion
 
     # TODO implement search cache?
     helpers do
-      @page_size = 7
+      def page_size
+        params[:per_page] == nil ? 7 : params[:per_page]
+      end
 
       def pages(total_elements)
-        total_elements.fdiv(@page_size).ceil
+        total_elements.fdiv(page_size).ceil
+      end
+
+      def structure_search
+        params[:selection].molfile == nil ? false : true
       end
 
       def get_arg
-        isStructureSearch =
-          params[:selection].molfile == nil ? false : true
-
-        if (isStructureSearch)
-          return params[:selection].molfile
-        else
-          return params[:selection].name
-        end
+        structure_search ? params[:selection].molfile : params[:selection].name
       end
 
       def get_search_method
-        isStructureSearch =
-          params[:selection].molfile == nil ? false : true
+        return params[:selection].search_by_method unless structure_search
 
-        if (isStructureSearch)
-          @page_size = params[:per_page].to_i
-          return 'structure'
-        else
-          return params[:selection].search_by_method
-        end
+        page_size = params[:per_page].to_i
+        return  'structure'
       end
 
       def serialization_by_elements_and_page(elements, page = 1)
@@ -39,25 +33,27 @@ module Chemotion
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
 
-        if samples.empty?
-          tmp = samples
-        else
-          tmp = paginate(samples)
-        end
+        tmp = samples.empty? ? samples : paginate(samples)
+
+        # After paging, now we can map to searchable for AllElementSearch
+        tmp = tmp.map(&:searchable) if tmp.first.is_a?(PgSearch::Document)
+        reactions = reactions.map(&:searchable) if reactions.first.is_a?(PgSearch::Document)
+        wellplates = wellplates.map(&:searchable) if wellplates.first.is_a?(PgSearch::Document)
+        screens = screens.map(&:searchable) if screens.first.is_a?(PgSearch::Document)
 
         serialized_samples = {
           molecules: group_by_molecule(tmp)
         }
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
-          .per(@page_size).map {|s|
+          .per(page_size).map {|s|
             ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
         serialized_wellplates = Kaminari.paginate_array(wellplates).page(page)
-          .per(@page_size).map{ |s|
+          .per(page_size).map{ |s|
             WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
         serialized_screens = Kaminari.paginate_array(screens).page(page)
-          .per(@page_size).map{ |s|
+          .per(page_size).map{ |s|
             ScreenSerializer.new(s).serializable_hash.deep_symbolize_keys
           }
 
@@ -67,28 +63,28 @@ module Chemotion
             totalElements: samples.size,
             page: page,
             pages: pages(samples.size),
-            per_page: @page_size
+            per_page: page_size
           },
           reactions: {
             elements: serialized_reactions,
             totalElements: reactions.size,
             page: page,
             pages: pages(reactions.size),
-            per_page: @page_size
+            per_page: page_size
           },
           wellplates: {
             elements: serialized_wellplates,
             totalElements: wellplates.size,
             page: page,
             pages: pages(wellplates.size),
-            per_page: @page_size
+            per_page: page_size
           },
           screens: {
             elements: serialized_screens,
             totalElements: screens.size,
             page: page,
             pages: pages(screens.size),
-            per_page: @page_size
+            per_page: page_size
           }
         }
       end
