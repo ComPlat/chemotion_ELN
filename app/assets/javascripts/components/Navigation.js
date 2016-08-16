@@ -29,12 +29,10 @@ export default class Navigation extends React.Component {
             {this.brandDropDown()}
           </Navbar.Brand>
         </Navbar.Header>
-        <Nav navbar>
-          <div className='navbar-form'>
-            <Search />
-            <ManagingActions/>
-            <ContextActions/>
-          </div>
+        <Nav navbar className='navbar-form'>
+          <Search />
+          <ManagingActions/>
+          <ContextActions/>
         </Nav>
         <UserAuth/>
       </Navbar>
