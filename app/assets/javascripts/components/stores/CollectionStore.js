@@ -33,7 +33,10 @@ class CollectionStore {
       handleCreateSharedCollections: CollectionActions.createSharedCollections,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
-      handleCreateUnsharedCollection: CollectionActions.createUnsharedCollection,
+      handleCreateUnsharedCollection: [
+        CollectionActions.createUnsharedCollection,
+        CollectionActions.createSync,
+      ],
 
     })
   }

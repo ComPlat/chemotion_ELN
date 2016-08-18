@@ -3,7 +3,6 @@ import {Tooltip} from 'react-bootstrap';
 
 
 const UserInfos = ({users}) => {
-  console.log(users);
   let iconClass =  "fa fa-user"
   let tipUsers = users.map((user,ind)=>{
     switch(user.type) {

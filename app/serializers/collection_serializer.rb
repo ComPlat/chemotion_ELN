@@ -5,7 +5,7 @@ class CollectionSerializer < ActiveModel::Serializer
 
   has_many :children
 
-  has_many :shared_users
+  has_many :shared_users, :serializer => UserSerializer
   has_many :shared_collections_users
 
   def children

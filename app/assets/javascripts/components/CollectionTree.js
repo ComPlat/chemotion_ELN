@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Button, OverlayTrigger} from 'react-bootstrap';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
@@ -8,6 +8,7 @@ import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import Xdiv from './extra/CollectionTreeXdiv';
 import update from 'react-addons-update';
+import UserInfos from './UserInfos';
 
 export default class CollectionTree extends React.Component {
   constructor(props) {
@@ -73,7 +74,7 @@ export default class CollectionTree extends React.Component {
     let shared = rootCollection[sharedToOrBy]
     if (shared){
       return(
-        <OverlayTrigger placement="bottom" overlay={this.userInfo(shared)}>
+        <OverlayTrigger placement="bottom" overlay={UserInfos({users:[shared]})}>
           <span>{sharedToOrBy=='shared_to'?'with':'by'} {shared.initials}</span>
         </OverlayTrigger>
       )
@@ -82,25 +83,6 @@ export default class CollectionTree extends React.Component {
         <span></span>
       )
     }
-  }
-
-  userInfo(user){
-    let iconClass =  "fa fa-user"
-    switch(user.type) {
-      case 'Person':
-          iconClass = "fa fa-user"
-          break;
-      case 'Group':
-          iconClass = "fa fa-users"
-          break;
-      default:
-        iconClass =  "fa fa-user"
-    }
-    return(
-      <Tooltip id="tooltip">
-        <i className={iconClass} aria-hidden="true"/>{user.name}
-      </Tooltip>
-    )
   }
 
   convertToSlug(name) {

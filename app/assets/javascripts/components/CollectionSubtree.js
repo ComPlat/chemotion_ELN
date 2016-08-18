@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Button, OverlayTrigger} from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import CollectionActions from './actions/CollectionActions';
