@@ -3,19 +3,8 @@ import {Tooltip} from 'react-bootstrap';
 
 
 const UserInfos = ({users}) => {
-  let iconClass =  "fa fa-user"
   let tipUsers = users.map((user,ind)=>{
-    switch(user.type) {
-      case 'Person':
-        iconClass = "fa fa-user"
-        break;
-      case 'Group':
-        iconClass = "fa fa-users"
-        break;
-      default:
-        iconClass =  "fa fa-user"
-    }
-    return <div key={ind}><i className={iconClass} aria-hidden="true"/>{user.name}<br/></div>
+    return <div key={ind}><i className={userIconClass(user.type)} aria-hidden="true"/>{user.name}<br/></div>
   })
   return(
     <Tooltip id="tooltip">
@@ -24,6 +13,16 @@ const UserInfos = ({users}) => {
   )
 }
 
+const userIconClass = (type) =>{
+  switch(type) {
+    case 'Person':
+      return "fa fa-user"
+    case 'Group':
+      return "fa fa-users"
+    default:
+      return  "fa fa-question"
+  }
+}
 
 UserInfos.propTypes = {
   users: React.PropTypes.array.isRequired,

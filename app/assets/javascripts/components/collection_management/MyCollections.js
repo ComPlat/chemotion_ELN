@@ -1,11 +1,10 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
+import {Button, ButtonGroup, FormControl, Modal, Label} from 'react-bootstrap';
 import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
-import ReactDOM from 'react-dom';
-
+import UserInfos from '../UserInfos';
 export default class MyCollections extends React.Component {
   constructor(props) {
     super(props);
@@ -119,7 +118,7 @@ export default class MyCollections extends React.Component {
         <ButtonGroup className="actions">
           <Button bsSize="xsmall" bsStyle="primary"
             onClick={()=>this.newSync(node)}>
-            <i className="fa fa-share-alt"></i>
+              <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
           {this.addButton(node)}
           <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
@@ -127,6 +126,53 @@ export default class MyCollections extends React.Component {
           </Button>
         </ButtonGroup>
       )
+    }
+  }
+
+  sync(node) {
+    let syncOut = node.shared_collections_users;
+    let users = [];
+
+    if (syncOut) {
+      users = syncOut.map((collection,ind)=>{
+        console.log(collection);
+        return(
+          <div key={ind}>
+            <span>
+              <i className={this.fa_user(collection.user.type)}></i> {collection.user.name}
+              &nbsp; : {this.permissionIcons(collection.permission_level)}
+            </span>
+          </div>
+        )
+      })
+    }
+    return(
+      <div>{users.map(u=>u)}</div>
+    )
+  }
+
+  permissionIcons(pl){
+    return(pl>-1 ?
+      <span>
+        <i className="fa fa-newspaper-o"></i>
+        &nbsp;{pl>0 ? <i className="fa fa-pencil-square-o"></i> : null}
+        &nbsp;{pl>1 ? <i className="fa fa-share-alt"></i> : null}
+        &nbsp;{pl>2 ? <i className="fa fa-trash"></i> : null}
+        &nbsp;{pl>3 ? <i className="fa fa-download"></i> : null}
+        &nbsp;{pl>4 ? <i className="fa fa-exchange"></i> : null}
+      </span>
+      : null
+    )
+  }
+
+  fa_user(type){
+    switch(type) {
+      case 'Person':
+        return "fa fa-user"
+      case 'Group':
+        return "fa fa-users"
+      default:
+        return "fa fa-question"
     }
   }
 
@@ -241,10 +287,14 @@ export default class MyCollections extends React.Component {
   renderNode(node) {
     if(!Object.keys(node).length == 0) {
       return (
+        <div>
         <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
           {this.label(node)}
           {this.actions(node)}
+
         </span>
+        {this.sync(node)}
+        </div>
       );
     }
   }
