@@ -73,16 +73,16 @@ module Chemotion
             requires :screen_detail_level, type: Integer
           end
           requires :user_ids, type: Array
-          optional :current_collection_id, type: Integer
+          requires :id, type: Integer
         end
 
         before do
           c = Collection.where(is_shared:false,id: params[:id],user_id: current_user.id).first
           if c
             samples =   c.samples
-            reactions = c.reaction
-            wellplates = c.wellplate
-            screens = c.screen
+            reactions = c.reactions
+            wellplates = c.wellplates
+            screens = c.screens
 
             top_secret_sample = samples.pluck(:is_top_secret).any?
             top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?

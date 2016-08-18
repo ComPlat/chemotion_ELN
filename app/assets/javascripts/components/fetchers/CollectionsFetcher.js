@@ -94,6 +94,7 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         collection_attributes: params.collection_attributes,
         user_ids: params.user_ids,
+        id: params.id,
       })
     })
 
