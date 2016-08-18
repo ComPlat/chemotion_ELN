@@ -16,6 +16,10 @@ class ReportActions {
   toggleConfigsCheckAll() {
     return null;
   }
+
+  generateReports(ids) {
+    return ids;
+  }
 }
 
 export default alt.createActions(ReportActions);
