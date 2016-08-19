@@ -45,23 +45,24 @@ module Chemotion
       #   Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
       # end
 
-    #  namespace :shared do
 
-        # desc "Update Sync collection"
-        # params do
-        #   requires :id, type: Integer
-        #   requires :collection_attributes, type: Hash do
-        #     requires :permission_level, type: Integer
-        #     requires :sample_detail_level, type: Integer
-        #     requires :reaction_detail_level, type: Integer
-        #     requires :wellplate_detail_level, type: Integer
-        #     requires :screen_detail_level, type: Integer
-        #   end
-        # end
-        #
-        # put ':id' do
-        #   Collection.shared(current_user.id).find(params[:id]).update!(params[:collection_attributes])
-        # end
+
+        desc "Update Sync collection"
+        params do
+          requires :id, type: Integer
+          requires :collection_attributes, type: Hash do
+            requires :permission_level, type: Integer
+            requires :sample_detail_level, type: Integer
+            requires :reaction_detail_level, type: Integer
+            requires :wellplate_detail_level, type: Integer
+            requires :screen_detail_level, type: Integer
+          end
+        end
+
+        put ':id' do
+          sync = SyncCollectionsUser.where(id: params[:id],shared_by_id: current_user.id).first
+          sync && sync.update!(params[:collection_attributes])
+        end
 
         desc "Create Sync collections"
         params do
@@ -98,7 +99,18 @@ module Chemotion
         post do
           Usecases::Sharing::SyncWithUsers.new(params, current_user).execute!
         end
-    #  end  #namespace :shared
+
+  #    namespace :delete do
+        desc "delete sync by id"
+        params do
+          requires :id, type: Integer
+        end
+
+        delete ':id' do
+          sync = SyncCollectionsUser.where(id: params[:id],shared_by_id: current_user.id).first
+          sync && sync.destroy
+        end
+  #    end  #namespace :delete
 
 
     end

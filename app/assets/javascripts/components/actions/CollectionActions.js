@@ -95,6 +95,23 @@ class CollectionActions {
       });};
   }
 
+  editSync(params){
+    return (dispatch) => { CollectionsFetcher.editSync(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+  deleteSync(params){
+    return (dispatch) => { CollectionsFetcher.deleteSync(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   downloadReportCollectionSamples(){
     const {currentCollection} = UIStore.getState();
     Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_samples?id=" + currentCollection.id});

@@ -36,6 +36,8 @@ class CollectionStore {
       handleCreateUnsharedCollection: [
         CollectionActions.createUnsharedCollection,
         CollectionActions.createSync,
+        CollectionActions.editSync,
+        CollectionActions.deleteSync
       ],
 
     })

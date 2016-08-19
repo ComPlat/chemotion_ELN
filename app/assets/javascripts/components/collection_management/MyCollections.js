@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
+import {Button, ButtonGroup, FormControl, Modal, Label} from 'react-bootstrap';
 import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
@@ -24,7 +24,9 @@ export default class MyCollections extends React.Component {
         show: false,
         title: "",
         component: "",
-        action: null
+        action: null,
+        collection: {},
+        selectUsers: true,
       }
     }
 
@@ -119,7 +121,7 @@ export default class MyCollections extends React.Component {
       return (
         <ButtonGroup className="actions">
           <Button bsSize="xsmall" bsStyle="primary"
-            onClick={()=>this.newSync(node)}>
+            onClick={()=>this.doSync(node,'CreateSync')}>
               <i className="fa fa-plus"></i> <i className="fa fa-share-alt"></i>
           </Button>
           {this.addButton(node)}
@@ -131,18 +133,31 @@ export default class MyCollections extends React.Component {
     }
   }
 
-  sync(node) {
+  renderSync(node) {
     let syncOut = node.shared_collections_users;
     let users = [];
 
     if (syncOut) {
       users = syncOut.map((collection,ind)=>{
         return(
-          <div key={ind}>
-            <span>
+          <div className="node">
+            <span key={ind} className="collection-sync-info">
               <UserInfoIcon type={collection.user.type}/> {collection.user.name}
               &nbsp; <PermissionIcons pl={collection.permission_level}/>
             </span>
+            <ButtonGroup className="actions">
+              <Button bsSize="xsmall" bsStyle="primary"
+                onClick={()=>this.doSync(collection,'EditSync')}>
+                   <i className="fa fa-share-alt">edit</i>
+              </Button>
+              <Button bsSize="xsmall" bsStyle="danger"
+                onClick={()=>CollectionActions.deleteSync({id: collection.id})}
+              >
+              <i className="fa fa-share-alt"/> <i className="fa fa-trash-o"></i>
+              </Button>
+            </ButtonGroup>
+
+
           </div>
         )
       })
@@ -152,10 +167,17 @@ export default class MyCollections extends React.Component {
     )
   }
 
-  newSync(node){
+  doSync(node,action){
     let {modalProps,active} = this.state
-    modalProps.title = "Synchronize '"+node.label+"'"
+    modalProps.title = action == "CreateSync"
+      ? "Synchronize '"+node.label+"'"
+      : "Edit Synchronization"
     modalProps.show = true
+    modalProps.action = action
+    modalProps.collection = node
+    modalProps.selectUsers =  action == "CreateSync"
+      ? true
+      : false
     active = node
     this.setState({modalProps,active})
   }
@@ -255,7 +277,9 @@ export default class MyCollections extends React.Component {
         show: false,
         title: "",
         component: "",
-        action: null
+        action: null,
+        collection: {},
+        selectUsers: true,
       }
     });
   }
@@ -264,18 +288,18 @@ export default class MyCollections extends React.Component {
     if(!Object.keys(node).length == 0) {
       return (
         <div>
-        <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
-          {this.label(node)}
-          {this.actions(node)}
-
-        </span>
-        {this.sync(node)}
+          <span className={this.isActive(node)} onClick={this.onClickNode.bind(this, node)}>
+            {this.label(node)}
+            {this.actions(node)}
+          </span>
+        {this.renderSync(node)}
         </div>
       );
     }
   }
   render() {
-    let actNode = this.state.active
+    let mPs = this.state.modalProps
+    let mPsC = mPs.collection
     return (
       <div className="tree">
         <Tree
@@ -285,18 +309,18 @@ export default class MyCollections extends React.Component {
           onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed
           renderNode={this.renderNode.bind(this)}  // renderNode(node) return react element
         />
-        <Modal animation show={this.state.modalProps.show} onHide={this.handleModalHide.bind(this)}>
+        <Modal animation show={mPs.show} onHide={this.handleModalHide.bind(this)}>
           <Modal.Header closeButton>
-            <Modal.Title>{this.state.modalProps.title}</Modal.Title>
+            <Modal.Title>{mPs.title}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <ManagingModalSharing collectionId={actNode.id}
+            <ManagingModalSharing collectionId={mPsC.id}
               onHide={this.handleModalHide.bind(this)}
-              permissionLevel={actNode.permission_level}
-              sampleDetailLevel={actNode.sample_detail_level} reactionDetailLevel={actNode.reaction_detail_level}
-              wellplateDetailLevel={actNode.wellplate_detail_level} screenDetailLevel={actNode.screen_detail_level}
-              selectUsers={true}
-              collAction="CreateSync" />
+              permissionLevel={mPsC.permission_level}
+              sampleDetailLevel={mPsC.sample_detail_level} reactionDetailLevel={mPsC.reaction_detail_level}
+              wellplateDetailLevel={mPsC.wellplate_detail_level} screenDetailLevel={mPsC.screen_detail_level}
+              selectUsers={mPs.selectUsers}
+              collAction={mPs.action}/>
             </Modal.Body>
         </Modal>
       </div>

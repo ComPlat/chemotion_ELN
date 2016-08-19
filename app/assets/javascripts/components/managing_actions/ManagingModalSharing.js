@@ -157,6 +157,8 @@ export default class ManagingModalSharing extends React.Component {
 
     if (this.props.collAction == "Update") {CollectionActions.updateSharedCollection(params);}
 
+    if (this.props.collAction == "EditSync") {CollectionActions.editSync(params);}
+
     if (this.props.collAction == "CreateSync"){
       let userIds = this.refs.userSelect.state.values.map(o => o.value);
       params = {

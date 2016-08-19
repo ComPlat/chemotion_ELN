@@ -101,6 +101,39 @@ export default class CollectionsFetcher {
     return promise;
   }
 
+  static editSync(params) {
+    let promise = fetch('/api/v1/syncCollections/' + params.id, {
+      credentials: 'same-origin',
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        collection_attributes: params.collection_attributes,
+        user_ids: params.user_ids,
+      })
+    })
+
+    return promise;
+  }
+
+  static deleteSync(params) {
+    let promise = fetch('/api/v1/syncCollections/' + params.id, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+      })
+    })
+
+    return promise;
+  }
+
+
   static bulkUpdateUnsharedCollections(params) {
     let promise = fetch('/api/v1/collections', {
       credentials: 'same-origin',
