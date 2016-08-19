@@ -166,7 +166,7 @@ export default class Search extends React.Component {
         </Button>
       </ButtonGroup>
 
-    let rightAddons =
+    let submitAddons =
       <Grid><Row>
         <Col sm={5} md={3}>
           <Form inline>
@@ -221,8 +221,8 @@ export default class Search extends React.Component {
             onSave={this.handleStructureEditorSave.bind(this)}
             onCancel={this.handleStructureEditorCancel.bind(this)}
             molfile={this.state.queryMolfile}
-            rightBtnText="Search"
-            rightAddons={rightAddons}
+            submitBtnText="Search"
+            submitAddons={submitAddons}
           />
         </div>
         <div className="search-autocomplete">
