@@ -102,6 +102,10 @@ class User < ActiveRecord::Base
     Collection.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
   end
 
+  def all_sync_in_collections_users
+    SyncCollectionsUser.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:

@@ -63,6 +63,20 @@ export default class CollectionsFetcher {
 
     return promise;
   }
+  static fetchSyncRemoteRoots() {
+    let promise = fetch('/api/v1/syncCollections/sync_remote_roots.json', {
+        credentials: 'same-origin'
+      })
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 
   static createSharedCollections(params) {
     let promise = fetch('/api/v1/collections/shared/', {

@@ -127,7 +127,8 @@ export default class CollectionSubtree extends React.Component {
     if(root.label == 'All') {
       Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
     } else {
-      Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`);
+      (this.props.root.sharer) ? Aviator.navigate(`/scollection/${this.state.root.id}/${this.urlForCurrentElement()}`)
+        : Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`)
     }
   }
 
@@ -192,4 +193,8 @@ CollectionSubtree.propTypes = {
   selected: React.PropTypes.bool,
   root: React.PropTypes.object,
   visible: React.PropTypes.bool,
+  // isSync: React.PropTypes.bool,
 };
+// CollectionSubtree.defaultProps = {
+//   isSync: false,
+// }

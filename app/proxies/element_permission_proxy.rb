@@ -7,6 +7,7 @@ class ElementPermissionProxy
     @user_ids = user_ids
 
     @collections = user_collections_for_element
+    @sync_collections = sync_collections_users_for_element
   end
 
   def serialized
@@ -24,10 +25,10 @@ class ElementPermissionProxy
     max_detail_level = max_detail_level_by_element_class
     # get collections where element belongs to
     c = @collections
-
+    sc= @sync_collections
     # if user owns none of the collections which include the element, return minimum level
     @dl = 0
-    return @dl if c.empty?
+    return @dl if c.empty? && sc.empty?
 
     # Fall 1: User gehört eine unshared Collection, die das Element enthält -> alles
     # Fall 2: User besitzt mindestens einen Share, der das Element enthält...von diesen Shares nutzt man das maximale
@@ -37,6 +38,11 @@ class ElementPermissionProxy
       return (@dl = max_detail_level) if !bool
       @dl = dl if dl > @dl
     end
+
+    sc.public_send(:pluck, "#{element.class.to_s.downcase}_detail_level").each do | dl|
+      @dl = dl if dl > @dl
+    end
+
     @dl
 
   end
@@ -75,6 +81,10 @@ class ElementPermissionProxy
   #    collection_ids = element.collections.pluck(:id)
   #    Collection.where("id IN (?) AND user_id IN (?)", collection_ids, @user_ids)
       element.collections.where("user_id IN (?)",  @user_ids)
+  end
+  def sync_collections_users_for_element
+    coll_ids = element.collections.pluck :id
+    SyncCollectionsUser.where("collection_id IN (?) and user_id IN (?)",coll_ids, @user_ids)
   end
 
   def serializer_class_by_element

@@ -74,6 +74,7 @@ module Chemotion
       desc "Return serialized molecules_samples_groups  of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
+        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
       end
       paginate per_page: 7, offset: 0
 
@@ -88,6 +89,15 @@ module Chemotion
             !c.is_shared && (c.shared_by_id != current_user.id) && (own_collection = true)
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
             .find(params[:collection_id]).samples
+            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections)
+          rescue ActiveRecord::RecordNotFound
+            Sample.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            own_collection = false
+            c = current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+            c.collection.samples
             .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections)
           rescue ActiveRecord::RecordNotFound
             Sample.none

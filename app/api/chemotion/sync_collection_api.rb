@@ -2,16 +2,16 @@ module Chemotion
   class SyncCollectionAPI < Grape::API
     resource :syncCollections do
 
-       ## TODO fectch user id colection id and pl dl
-      # desc "Return collection by id"
-      # params do
-      #   requires :id, type: Integer, desc: "Collection id"
-      # end
-      # route_param :id, requirements: { id: /[0-9]*/ } do
-      #   get do
-      #     Collection.find(params[:id])
-      #   end
-      # end
+
+      desc "Return sync collection by id"
+      params do
+        requires :id, type: Integer, desc: "Collection id"
+      end
+      route_param :id, requirements: { id: /[0-9]*/ } do
+        get do
+          current_user.all_sync_in_collections_users.find(params[:id])
+        end
+      end
 
       # namespace :take_ownership do
       #   desc "Take ownership of collection with specified id"
@@ -40,11 +40,11 @@ module Chemotion
       # end
       #
 
-      # desc "Bulk update and/or create new collections"
-      # patch '/' do
-      #   Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
-      # end
 
+      desc "Return all remote serialized collections"
+        get :sync_remote_roots, each_serializer: SyncCollectionRemoteSerializer do
+        current_user.all_collections.remote(current_user.id).roots
+      end
 
 
         desc "Update Sync collection"

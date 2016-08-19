@@ -45,10 +45,10 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}) {
+  static fetchByCollectionId(id, queryParams={}, isSync=false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || 15;
-    let api = `/api/v1/samples.json?collection_id=${id}&page=${page}&per_page=${per_page}`;
+    let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }collection_id=${id}&page=${page}&per_page=${per_page}`
     let promise = fetch(api, {
         credentials: 'same-origin'
       })

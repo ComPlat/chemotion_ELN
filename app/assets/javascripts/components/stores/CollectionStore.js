@@ -15,6 +15,7 @@ class CollectionStore {
       sharedRoots: [],
       remoteRoots: [],
       lockedRoots: [],
+      syncInRoots: [],
       ...extraThing("state",Xstate)
     };
 
@@ -30,6 +31,7 @@ class CollectionStore {
       handleFetchUnsharedCollectionRoots: CollectionActions.fetchUnsharedCollectionRoots,
       handleFetchSharedCollectionRoots: CollectionActions.fetchSharedCollectionRoots,
       handleFetchRemoteCollectionRoots: CollectionActions.fetchRemoteCollectionRoots,
+      handleFetchSyncInCollectionRoots: CollectionActions.fetchSyncInCollectionRoots,
       handleCreateSharedCollections: CollectionActions.createSharedCollections,
       handleBulkUpdateUnsharedCollections: CollectionActions.bulkUpdateUnsharedCollections,
       handleUpdateSharedCollection: CollectionActions.updateSharedCollection,
@@ -65,6 +67,9 @@ class CollectionStore {
     this.state.remoteRoots = results.collections;
   }
 
+  handleFetchSyncInCollectionRoots(results) {
+    this.state.syncInRoots = results.syncCollections;
+  }
   handleCreateSharedCollections() {
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
@@ -117,6 +122,31 @@ class CollectionStore {
     }
     return promise;
   }
+  static findBySId(collectionId) {
+    let roots = this.state.syncInRoots;
+    let foundCollection = roots.filter((root) => {
+      return root.id == collectionId;
+    }).pop();
+    let promise;
+    if(!foundCollection) {
+      promise = fetch('/api/v1/syncCollections/' + collectionId, {
+        credentials: 'same-origin',
+        method: 'GET'
+      }).then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    } else {
+      promise = new Promise((resolve) => {
+        resolve({collection: foundCollection});
+      });
+    }
+    return promise;
+  }
+
 
   static findAllCollection() {
     let state = this.state;

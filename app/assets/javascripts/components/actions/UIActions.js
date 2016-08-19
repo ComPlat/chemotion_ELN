@@ -22,6 +22,10 @@ class UIActions {
     return  collection
   }
 
+  selectSyncCollection(syncCollection) {
+    return  syncCollection
+  }
+
   checkAllElements(type) {
     return  type;
   }

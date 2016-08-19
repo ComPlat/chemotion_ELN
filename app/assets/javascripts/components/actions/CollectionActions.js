@@ -50,6 +50,15 @@ class CollectionActions {
       });};
   }
 
+  fetchSyncInCollectionRoots() {
+    return (dispatch) => { CollectionsFetcher.fetchSyncRemoteRoots()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   createSharedCollections(params) {
     return (dispatch) => { CollectionsFetcher.createSharedCollections(params)
       .then(() => {

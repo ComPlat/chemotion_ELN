@@ -23,6 +23,7 @@ export default class CollectionTree extends React.Component {
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
+    CollectionActions.fetchSyncInCollectionRoots();
   }
 
   componentWillUnmount() {
@@ -68,6 +69,20 @@ export default class CollectionTree extends React.Component {
       </div></div>, false)
   }
 
+  remoteSyncInSubtrees() {
+    let labelledRoots = this.state.syncInRoots.map(e=>{
+      return  update(e,{label: {$set: <span>
+        {this.labelRoot('shared_by',e)}
+        {' '}
+        {this.labelRoot('shared_to',e)}
+        </span>
+      }})
+    });
+    return this.subtrees(labelledRoots, <div className="tree-view"><div
+      className={"title"} style={{backgroundColor:'white'}}>
+      <i className="fa fa-list"/> Synchronized with me <i className="fa fa-share-alt"/>
+      </div></div>, false)
+  }
 
 
   labelRoot(sharedToOrBy,rootCollection){
@@ -129,14 +144,16 @@ export default class CollectionTree extends React.Component {
 
   handleCollectionManagementToggle() {
     UIActions.toggleCollectionManagement();
-    const {showCollectionManagement, currentCollection} = UIStore.getState();
+    const {showCollectionManagement, currentCollection,isSync} = UIStore.getState();
     if(showCollectionManagement) {
       Aviator.navigate('/collection/management');
     } else {
       if( currentCollection == null || currentCollection.label == 'All' ) {
         Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
       } else {
-        Aviator.navigate(`/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
+        Aviator.navigate(isSync
+          ? `/scollection/${currentCollection.id}/${this.urlForCurrentElement()}`
+          : `/collection/${currentCollection.id}/${this.urlForCurrentElement()}`);
       }
     }
   }
@@ -173,6 +190,9 @@ export default class CollectionTree extends React.Component {
         </div>
         <div className="tree-wrapper">
           {this.remoteSubtrees()}
+        </div>
+        <div className="tree-wrapper">
+          {this.remoteSyncInSubtrees()}
         </div>
         {extraDiv.map((e)=>{return e;})}
       </div>

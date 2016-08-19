@@ -60,6 +60,46 @@ const routes = {
       '/:collectionID': 'show'
     },
 
+    '/scollection': {
+      target: {
+        show: function(e) {
+          UIActions.showElements();
+          let uiState = UIStore.getState();
+          let currentSearchSelection = uiState.currentSearchSelection;
+          let collectionId = e.params['collectionID'];
+          let collectionPromise = null;
+          collectionPromise = CollectionStore.findBySId(collectionId);
+
+          collectionPromise.then((result) => {
+            console.log(result);
+            let collection = result.sync_collections_user;
+
+            if(currentSearchSelection) {
+              // TODO
+              // UIActions.selectCollectionWithoutUpdating(collection)
+              // ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collection.id);
+            } else {
+              UIActions.selectSyncCollection(collection);
+            }
+
+            if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
+              UIActions.uncheckAllElements('sample');
+              UIActions.uncheckAllElements('reaction');
+              UIActions.uncheckAllElements('wellplate');
+              UIActions.uncheckAllElements('screen');
+            }
+          });
+        },
+
+        showCollectionManagement: function(e) {
+          UIActions.showCollectionManagement();
+        }
+      },
+      '/management': 'showCollectionManagement',
+      '/:collectionID': 'show'
+    },
+
+
     '/report': {
       target: {
         show: function(e) {

@@ -62,8 +62,11 @@ export default class ScreenDetails extends Component {
   closeDetails() {
     UIActions.deselectAllElements();
 
-    let uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}`
+      : `/collection/${currentCollection.id}`
+    );
   }
 
   dropWellplate(wellplate) {

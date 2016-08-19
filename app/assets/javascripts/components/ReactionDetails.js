@@ -49,10 +49,13 @@ export default class ReactionDetails extends Component {
   }
 
   closeDetails() {
-    let uiState = UIStore.getState();
     UIActions.deselectAllElements();
     ElementActions.deselectCurrentReaction();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}`
+      : `/collection/${currentCollection.id}`
+    );
   }
 
   updateReactionSvg() {

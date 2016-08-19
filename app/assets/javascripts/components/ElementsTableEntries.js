@@ -34,8 +34,11 @@ export default class ElementsTableEntries extends Component {
   }
 
   showDetails(element) {
-    const uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}/${element.type}/${element.id}`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
+      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
+    );
   }
 
   dragHandle(element) {
