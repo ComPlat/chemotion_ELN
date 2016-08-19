@@ -346,28 +346,6 @@ ActiveRecord::Schema.define(version: 20160809122557) do
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
-  create_table "scifinding_credentials", force: :cascade do |t|
-    t.string   "username"
-    t.string   "encrypted_password"
-    t.string   "encrypted_current_token"
-    t.string   "encrypted_refreshed_token"
-    t.datetime "token_expires_at"
-    t.datetime "token_requested_at"
-    t.datetime "created_at",                   null: false
-    t.datetime "updated_at",                   null: false
-    t.integer  "user_id"
-    t.string   "encrypted_password_iv"
-    t.string   "encrypted_current_token_iv"
-    t.string   "encrypted_refreshed_token_iv"
-  end
-
-  create_table "scifinding_tags", force: :cascade do |t|
-    t.integer  "molecule_id"
-    t.integer  "count"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
-  end
-
   create_table "screens", force: :cascade do |t|
     t.string   "description"
     t.string   "name"

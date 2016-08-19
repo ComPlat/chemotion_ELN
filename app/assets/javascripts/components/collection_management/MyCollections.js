@@ -1,10 +1,12 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, FormControl, Modal, Label} from 'react-bootstrap';
+import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
 import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
-import UserInfos from '../UserInfos';
+import UserInfoIcon from '../UserInfoIcon';
+import PermissionIcons from '../PermissionIcons'
+
 export default class MyCollections extends React.Component {
   constructor(props) {
     super(props);
@@ -135,12 +137,11 @@ export default class MyCollections extends React.Component {
 
     if (syncOut) {
       users = syncOut.map((collection,ind)=>{
-        console.log(collection);
         return(
           <div key={ind}>
             <span>
-              <i className={this.fa_user(collection.user.type)}></i> {collection.user.name}
-              &nbsp; : {this.permissionIcons(collection.permission_level)}
+              <UserInfoIcon type={collection.user.type}/> {collection.user.name}
+              &nbsp; <PermissionIcons pl={collection.permission_level}/>
             </span>
           </div>
         )
@@ -149,31 +150,6 @@ export default class MyCollections extends React.Component {
     return(
       <div>{users.map(u=>u)}</div>
     )
-  }
-
-  permissionIcons(pl){
-    return(pl>-1 ?
-      <span>
-        <i className="fa fa-newspaper-o"></i>
-        &nbsp;{pl>0 ? <i className="fa fa-pencil-square-o"></i> : null}
-        &nbsp;{pl>1 ? <i className="fa fa-share-alt"></i> : null}
-        &nbsp;{pl>2 ? <i className="fa fa-trash"></i> : null}
-        &nbsp;{pl>3 ? <i className="fa fa-download"></i> : null}
-        &nbsp;{pl>4 ? <i className="fa fa-exchange"></i> : null}
-      </span>
-      : null
-    )
-  }
-
-  fa_user(type){
-    switch(type) {
-      case 'Person':
-        return "fa fa-user"
-      case 'Group':
-        return "fa fa-users"
-      default:
-        return "fa fa-question"
-    }
   }
 
   newSync(node){
