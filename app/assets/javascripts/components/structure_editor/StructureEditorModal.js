@@ -53,14 +53,14 @@ export default class StructureEditorModal extends React.Component {
     return ketcher.getSVG();
   }
 
-  handleLeftBtn() {
+  handleCancelBtn() {
     this.hideModal();
     if(this.props.onCancel) {
       this.props.onCancel()
     }
   }
 
-  handleRightBtn() {
+  handleSaveBtn() {
     let molfile = this.getMolfileFromEditor()
     let svg_file = this.getSVGFromEditor()
     this.hideModal();
@@ -88,20 +88,20 @@ export default class StructureEditorModal extends React.Component {
 
   render() {
     let editorContent = this.state.showWarning ?
-      <WarningBox handleLeftBtn={this.handleLeftBtn.bind(this)}
+      <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)}
                   hideWarning={this.hideWarning.bind(this)} />
       :
       <StructureEditor
-        handleLeftBtn = { this.handleLeftBtn.bind(this) }
-        handleRightBtn = { this.handleRightBtn.bind(this) }
-        leftBtnText = {
-          this.props.leftBtnText ? this.props.leftBtnText : "Cancel"
+        handleCancelBtn = { this.handleCancelBtn.bind(this) }
+        handleSaveBtn = { this.handleSaveBtn.bind(this) }
+        cancelBtnText = {
+          this.props.cancelBtnText ? this.props.cancelBtnText : "Cancel"
         }
-        rightBtnText = {
-          this.props.rightBtnText ? this.props.rightBtnText : "Save"
+        submitBtnText = {
+          this.props.submitBtnText ? this.props.submitBtnText : "Save"
         }
-        rightAddons = {
-          this.props.rightAddons ? this.props.rightAddons : ""
+        submitAddons = {
+          this.props.submitAddons ? this.props.submitAddons : ""
         }
       />
     return (
@@ -109,7 +109,7 @@ export default class StructureEditorModal extends React.Component {
         <Modal dialogClassName="structure-editor"
           animation show={this.state.showModal}
           onLoad={this.initializeEditor.bind(this)}
-          onHide={this.handleRightBtn.bind(this)}>
+          onHide={this.handleCancelBtn.bind(this)}>
 
           <Modal.Header closeButton>
             <Modal.Title>Structure Editor</Modal.Title>
@@ -124,7 +124,7 @@ export default class StructureEditorModal extends React.Component {
 }
 
 const StructureEditor =
-  ({handleLeftBtn, handleRightBtn, leftBtnText, rightBtnText, rightAddons}) => {
+  ({handleCancelBtn, handleSaveBtn, cancelBtnText, submitBtnText, submitAddons}) => {
     return (
       <div>
         <div>
@@ -132,26 +132,26 @@ const StructureEditor =
         </div>
         <div>
           <ButtonToolbar>
-            <Button bsStyle="warning" onClick={handleLeftBtn}>
-              {leftBtnText}
+            <Button bsStyle="warning" onClick={handleCancelBtn}>
+              {cancelBtnText}
             </Button>
-            <Button bsStyle="primary" onClick={handleRightBtn}>
-              {rightBtnText}
+            <Button bsStyle="primary" onClick={handleSaveBtn}>
+              {submitBtnText}
             </Button>
-            {rightAddons}
+            {submitAddons}
           </ButtonToolbar>
         </div>
       </div>
     )
   }
 
-const WarningBox = ({handleLeftBtn, hideWarning}) => {
+const WarningBox = ({handleCancelBtn, hideWarning}) => {
   return (
     <Panel header="Parents/Descendants will not be changed!" bsStyle="info">
       <p>This sample has parents or descendants, and they will not be changed.</p>
       <p>Are you sure?</p>
       <br />
-      <Button bsStyle="danger" onClick={handleLeftBtn}
+      <Button bsStyle="danger" onClick={handleCancelBtn}
         className="g-marginLeft--10">
         Cancel
       </Button>
