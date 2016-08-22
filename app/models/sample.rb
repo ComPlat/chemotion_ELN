@@ -111,6 +111,7 @@ class Sample < ActiveRecord::Base
   has_many :residues
   has_many :elemental_compositions
 
+  has_many :shared_collections_users, through: :collections
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
   before_save :auto_set_molfile_to_molecules_molfile
