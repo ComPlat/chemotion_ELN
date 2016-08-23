@@ -60,8 +60,12 @@ export default class Dataset extends Component {
   handleFileDrop(files) {
     const {dataset} = this.state;
 
-    let attachments = files.map(f => Attachment.fromFile(f));
-    dataset.attachments = dataset.attachments.concat(attachments);
+    let attachments = files.map(f => Attachment.fromFile(f))
+    dataset.attachments = dataset.attachments.concat(attachments)
+    let attachment_list = dataset.attachments
+    let attach_name = attachment_list[attachment_list.length - 1].name
+    attach_name = attach_name.slice(0, -4)
+    dataset.name = attach_name
 
     this.setState({dataset});
   }
