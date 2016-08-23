@@ -14,14 +14,16 @@ class ElementsPolicy
 
   def share?
     return true if records.empty?
-
-    records.map { |r| ElementPolicy.new(user, r).share? }.all?
+    return true if records.joins(:collections).where('collections.is_shared IS true').empty?
+    return true if records.joins(:collections).where('collections.permission_level < 2').references(:collections).empty?
+    false
   end
 
   def destroy?
     return true if records.empty?
-
-    records.map { |r| ElementPolicy.new(user, r).destroy? }.all?
+    return true if records.joins(:collections).where('collections.is_shared IS true').empty?
+    return true if records.joins(:collections).where('collections.permission_level < 3').references(:collections).empty?
+    false
   end
 
   def scope
