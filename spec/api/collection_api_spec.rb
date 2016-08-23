@@ -13,6 +13,7 @@ describe Chemotion::CollectionAPI do
   context 'authorized user logged in' do
     let(:user)  { create(:user, first_name: 'Musashi', last_name: 'M') }
     let(:u2)    { create(:user) }
+    let(:group) { create(:group)}
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
     let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true) }
     let!(:c3)   { create(:collection, user: user, is_shared: false) }
@@ -405,6 +406,16 @@ describe Chemotion::CollectionAPI do
                   included_ids: [],
                   excluded_ids: [],
                   collection_id: 2
+                },
+                wellplate: {
+                  all: false,
+                  included_ids: [],
+                  excluded_ids: []
+                },
+                screen: {
+                  all: false,
+                  included_ids: [],
+                  excluded_ids: []
                 }
               }
             }
