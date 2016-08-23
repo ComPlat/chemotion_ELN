@@ -120,10 +120,11 @@ module Chemotion
         end
 
         before do
-          samples = Sample.for_user(current_user.id).for_ui_state(params[:elements_filter][:sample])
-          reactions = Reaction.for_user(current_user.id).for_ui_state(params[:elements_filter][:reaction])
-          wellplates = Wellplate.for_user(current_user.id).for_ui_state(params[:elements_filter][:wellplate])
-          screens = Screen.for_user(current_user.id).for_ui_state(params[:elements_filter][:screen])
+
+          samples = Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])
+          reactions = Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])
+          wellplates = Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])
+          screens = Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])
 
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
