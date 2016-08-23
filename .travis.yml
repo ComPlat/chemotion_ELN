@@ -1,5 +1,9 @@
 language: ruby
-cache: bundler
+cache:
+  bundler: true
+  directories:
+    - node_modules
+    - tmp/cache/assets/test/sprockets
 rvm:
   - 2.2.1
 before_install:
