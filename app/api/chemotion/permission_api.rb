@@ -75,10 +75,10 @@ module Chemotion
         end
 
         post do
-          sharing_allowed_sample = ElementsPolicy.new(current_user, Sample.for_user(current_user.id).for_ui_state(params[:elements_filter][:sample])).share?
-          sharing_allowed_reaction = ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:elements_filter][:reaction])).share?
-          sharing_allowed_wellplate = ElementsPolicy.new(current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:elements_filter][:wellplate])).share?
-          sharing_allowed_screen = ElementsPolicy.new(current_user, Screen.for_user(current_user.id).for_ui_state(params[:elements_filter][:screen])).share?
+          sharing_allowed_sample = ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).share?
+          sharing_allowed_reaction = ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).share?
+          sharing_allowed_wellplate = ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).share?
+          sharing_allowed_screen = ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).share?
 
           sharing_allowed = sharing_allowed_sample && sharing_allowed_reaction && sharing_allowed_wellplate && sharing_allowed_screen
 
@@ -117,10 +117,10 @@ module Chemotion
         end
 
         post do
-          deletion_allowed_sample = ElementsPolicy.new(current_user, Sample.for_user(current_user.id).for_ui_state(params[:elements_filter][:sample])).destroy?
-          deletion_allowed_reaction = ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:elements_filter][:reaction])).destroy?
-          deletion_allowed_wellplate = ElementsPolicy.new(current_user, Wellplate.for_user(current_user.id).for_ui_state(params[:elements_filter][:wellplate])).destroy?
-          deletion_allowed_screen = ElementsPolicy.new(current_user, Screen.for_user(current_user.id).for_ui_state(params[:elements_filter][:screen])).share?
+          deletion_allowed_sample = ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).destroy?
+          deletion_allowed_reaction = ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).destroy?
+          deletion_allowed_wellplate = ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).destroy?
+          deletion_allowed_screen = ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).share?
 
           deletion_allowed = deletion_allowed_sample && deletion_allowed_reaction && deletion_allowed_wellplate && deletion_allowed_screen
 

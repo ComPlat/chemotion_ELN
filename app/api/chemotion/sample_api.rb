@@ -84,7 +84,7 @@ module Chemotion
         own_collection = false
         scope = if params[:collection_id]
           begin
-            c = Collection.belongs_to_or_shared_by(current_user.id).find(params[:collection_id])
+            c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collection_id])
             !c.is_shared && (c.shared_by_id != current_user.id) && (own_collection = true)
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
             .find(params[:collection_id]).samples
