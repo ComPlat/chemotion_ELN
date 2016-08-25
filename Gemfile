@@ -131,6 +131,7 @@ group :test do
   gem 'factory_girl_rails'
   gem 'database_cleaner'
 
+  gem 'webmock'
   gem "faker", "~> 1.6.6"
   gem "capybara", "~> 2.7.1"
   gem "launchy", "~> 2.4.3"
