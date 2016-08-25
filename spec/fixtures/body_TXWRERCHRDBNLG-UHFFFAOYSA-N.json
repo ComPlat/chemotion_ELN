@@ -1,0 +1,493 @@
+{
+  "PC_Compounds": [
+    {
+      "id": {
+        "id": {
+          "cid": 136090
+        }
+      },
+      "atoms": {
+        "aid": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "element": [
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "bonds": {
+        "aid1": [
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2,
+          3,
+          3,
+          3,
+          4,
+          4,
+          4,
+          5,
+          5,
+          6,
+          6,
+          7,
+          7,
+          8
+        ],
+        "aid2": [
+          2,
+          3,
+          4,
+          9,
+          5,
+          6,
+          10,
+          5,
+          7,
+          11,
+          6,
+          7,
+          12,
+          8,
+          13,
+          8,
+          14,
+          8,
+          15,
+          16
+        ],
+        "order": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "coords": [
+        {
+          "type": [
+            1,
+            5,
+            255
+          ],
+          "aid": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "conformers": [
+            {
+              "x": [
+                2,
+                2,
+                3,
+                2.4,
+                3,
+                2.4,
+                3.4,
+                3.4,
+                1.5616,
+                1.4272,
+                3.2373,
+                2.6373,
+                2.7627,
+                2.1627,
+                3.9728,
+                3.8384
+              ],
+              "y": [
+                -0.7,
+                0.3,
+                -0.7,
+                -0.3,
+                0.3,
+                0.7,
+                -0.3,
+                0.7,
+                -1.1384,
+                0.5373,
+                -1.2728,
+                -0.8728,
+                0.8728,
+                1.2728,
+                -0.5373,
+                1.1384
+              ]
+            }
+          ]
+        }
+      ],
+      "charge": 0,
+      "props": [
+        {
+          "urn": {
+            "label": "Compound",
+            "name": "Canonicalized",
+            "datatype": 5,
+            "release": "2011.04.04"
+          },
+          "value": {
+            "ival": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Compound Complexity",
+            "datatype": 7,
+            "implementation": "E_COMPLEXITY",
+            "version": "3.384",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "fval": 110
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Hydrogen Bond Acceptor",
+            "datatype": 5,
+            "implementation": "E_NHACCEPTORS",
+            "version": "3.384",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "ival": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Hydrogen Bond Donor",
+            "datatype": 5,
+            "implementation": "E_NHDONORS",
+            "version": "3.384",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "ival": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Rotatable Bond",
+            "datatype": 5,
+            "implementation": "E_NROTBONDS",
+            "version": "3.384",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "ival": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Fingerprint",
+            "name": "SubStructure Keys",
+            "datatype": 16,
+            "parameters": "extended 2",
+            "implementation": "E_SCREEN",
+            "version": "3.384",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "binary": "00000371C070000000000000000000000000000060C000000000000000000000000000000000001800000000000D008000000000000000000000000000000000000000000000000000000000020000000000000000000000010080800E80000000000000008000000000200000000000000000"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Allowed",
+            "datatype": 1,
+            "version": "2.0.2",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "cubane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "CAS-like Style",
+            "datatype": 1,
+            "version": "2.0.2",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "cubane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Preferred",
+            "datatype": 1,
+            "version": "2.0.2",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "cubane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Systematic",
+            "datatype": 1,
+            "version": "2.0.2",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "cubane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Traditional",
+            "datatype": 1,
+            "version": "2.0.2",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "cubane"
+          }
+        },
+        {
+          "urn": {
+            "label": "InChI",
+            "name": "Standard",
+            "datatype": 1,
+            "version": "1.0.3",
+            "software": "InChI",
+            "source": "nist.gov",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "InChI=1S/C8H8/c1-2-5-3(1)7-4(1)6(2)8(5)7/h1-8H"
+          }
+        },
+        {
+          "urn": {
+            "label": "InChIKey",
+            "name": "Standard",
+            "datatype": 1,
+            "version": "1.0.3",
+            "software": "InChI",
+            "source": "nist.gov",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "TXWRERCHRDBNLG-UHFFFAOYSA-N"
+          }
+        },
+        {
+          "urn": {
+            "label": "Log P",
+            "name": "XLogP3-AA",
+            "datatype": 7,
+            "version": "3.0",
+            "source": "sioc-ccbg.ac.cn",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "fval": 1.2
+          }
+        },
+        {
+          "urn": {
+            "label": "Mass",
+            "name": "Exact",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "fval": 104.0626
+          }
+        },
+        {
+          "urn": {
+            "label": "Molecular Formula",
+            "datatype": 1,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "C8H8"
+          }
+        },
+        {
+          "urn": {
+            "label": "Molecular Weight",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "fval": 104.14912
+          }
+        },
+        {
+          "urn": {
+            "label": "SMILES",
+            "name": "Canonical",
+            "datatype": 1,
+            "version": "1.7.4",
+            "software": "OEChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "C12C3C4C1C5C2C3C45"
+          }
+        },
+        {
+          "urn": {
+            "label": "SMILES",
+            "name": "Isomeric",
+            "datatype": 1,
+            "version": "1.7.4",
+            "software": "OEChem",
+            "source": "openeye.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "sval": "C12C3C4C1C5C2C3C45"
+          }
+        },
+        {
+          "urn": {
+            "label": "Topological",
+            "name": "Polar Surface Area",
+            "datatype": 7,
+            "implementation": "E_TPSA",
+            "version": "3.384",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "fval": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Weight",
+            "name": "MonoIsotopic",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2011.09.13"
+          },
+          "value": {
+            "fval": 104.0626
+          }
+        }
+      ],
+      "count": {
+        "heavy_atom": 8,
+        "atom_chiral": 0,
+        "atom_chiral_def": 0,
+        "atom_chiral_undef": 0,
+        "bond_chiral": 0,
+        "bond_chiral_def": 0,
+        "bond_chiral_undef": 0,
+        "isotope_atom": 0,
+        "covalent_unit": 1,
+        "tautomers": 1
+      }
+    }
+  ]
+}

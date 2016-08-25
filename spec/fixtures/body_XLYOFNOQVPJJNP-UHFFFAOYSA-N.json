@@ -1,0 +1,738 @@
+{
+  "PC_Compounds": [
+    {
+      "id": {
+        "id": {
+          "cid": 962
+        }
+      },
+      "atoms": {
+        "aid": [
+          1,
+          2,
+          3
+        ],
+        "element": [
+          8,
+          1,
+          1
+        ]
+      },
+      "bonds": {
+        "aid1": [
+          1,
+          1
+        ],
+        "aid2": [
+          2,
+          3
+        ],
+        "order": [
+          1,
+          1
+        ]
+      },
+      "coords": [
+        {
+          "type": [
+            1,
+            5,
+            255
+          ],
+          "aid": [
+            1,
+            2,
+            3
+          ],
+          "conformers": [
+            {
+              "x": [
+                2.5369,
+                3.0739,
+                2
+              ],
+              "y": [
+                -0.155,
+                0.155,
+                0.155
+              ]
+            }
+          ]
+        }
+      ],
+      "charge": 0,
+      "props": [
+        {
+          "urn": {
+            "label": "Compound",
+            "name": "Canonicalized",
+            "datatype": 5,
+            "release": "2012.11.26"
+          },
+          "value": {
+            "ival": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Compound Complexity",
+            "datatype": 7,
+            "implementation": "E_COMPLEXITY",
+            "version": "3.408",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "fval": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Hydrogen Bond Acceptor",
+            "datatype": 5,
+            "implementation": "E_NHACCEPTORS",
+            "version": "3.408",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "ival": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Hydrogen Bond Donor",
+            "datatype": 5,
+            "implementation": "E_NHDONORS",
+            "version": "3.408",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "ival": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Rotatable Bond",
+            "datatype": 5,
+            "implementation": "E_NROTBONDS",
+            "version": "3.408",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "ival": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Fingerprint",
+            "name": "SubStructure Keys",
+            "datatype": 16,
+            "parameters": "extended 2",
+            "implementation": "E_SCREEN",
+            "version": "3.408",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "binary": "00000371000020000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Allowed",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "water"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "CAS-like Style",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "oxidane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Preferred",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "oxidane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Systematic",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "oxidane"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Traditional",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "water"
+          }
+        },
+        {
+          "urn": {
+            "label": "InChI",
+            "name": "Standard",
+            "datatype": 1,
+            "version": "1.0.4",
+            "software": "InChI",
+            "source": "iupac.org",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "InChI=1S/H2O/h1H2"
+          }
+        },
+        {
+          "urn": {
+            "label": "InChIKey",
+            "name": "Standard",
+            "datatype": 1,
+            "version": "1.0.4",
+            "software": "InChI",
+            "source": "iupac.org",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "XLYOFNOQVPJJNP-UHFFFAOYSA-N"
+          }
+        },
+        {
+          "urn": {
+            "label": "Log P",
+            "name": "XLogP3-AA",
+            "datatype": 7,
+            "version": "3.0",
+            "source": "sioc-ccbg.ac.cn",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "fval": -0.5
+          }
+        },
+        {
+          "urn": {
+            "label": "Mass",
+            "name": "Exact",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "fval": 18.010565
+          }
+        },
+        {
+          "urn": {
+            "label": "Molecular Formula",
+            "datatype": 1,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "H2O"
+          }
+        },
+        {
+          "urn": {
+            "label": "Molecular Weight",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "fval": 18.01528
+          }
+        },
+        {
+          "urn": {
+            "label": "SMILES",
+            "name": "Canonical",
+            "datatype": 1,
+            "version": "1.9.0",
+            "software": "OEChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "O"
+          }
+        },
+        {
+          "urn": {
+            "label": "SMILES",
+            "name": "Isomeric",
+            "datatype": 1,
+            "version": "1.9.0",
+            "software": "OEChem",
+            "source": "openeye.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "sval": "O"
+          }
+        },
+        {
+          "urn": {
+            "label": "Topological",
+            "name": "Polar Surface Area",
+            "datatype": 7,
+            "implementation": "E_TPSA",
+            "version": "3.408",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "fval": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Weight",
+            "name": "MonoIsotopic",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2012.11.26"
+          },
+          "value": {
+            "fval": 18.010565
+          }
+        }
+      ],
+      "count": {
+        "heavy_atom": 1,
+        "atom_chiral": 0,
+        "atom_chiral_def": 0,
+        "atom_chiral_undef": 0,
+        "bond_chiral": 0,
+        "bond_chiral_def": 0,
+        "bond_chiral_undef": 0,
+        "isotope_atom": 0,
+        "covalent_unit": 1,
+        "tautomers": 1
+      }
+    },
+    {
+      "id": {
+        "id": {
+          "cid": 22247451
+        }
+      },
+      "atoms": {
+        "aid": [
+          1,
+          2,
+          3
+        ],
+        "element": [
+          8,
+          1,
+          1
+        ],
+        "charge": [
+          {
+            "aid": 1,
+            "value": -1
+          },
+          {
+            "aid": 3,
+            "value": 1
+          }
+        ]
+      },
+      "bonds": {
+        "aid1": [
+          1
+        ],
+        "aid2": [
+          2
+        ],
+        "order": [
+          1
+        ]
+      },
+      "coords": [
+        {
+          "type": [
+            1,
+            5,
+            255
+          ],
+          "aid": [
+            1,
+            2,
+            3
+          ],
+          "conformers": [
+            {
+              "x": [
+                2.5369,
+                3.0739,
+                2
+              ],
+              "y": [
+                -0.155,
+                0.155,
+                0.155
+              ]
+            }
+          ]
+        }
+      ],
+      "charge": 0,
+      "props": [
+        {
+          "urn": {
+            "label": "Compound",
+            "name": "Canonicalized",
+            "datatype": 5,
+            "release": "2010.01.29"
+          },
+          "value": {
+            "ival": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Compound Complexity",
+            "datatype": 7,
+            "implementation": "E_COMPLEXITY",
+            "version": "3.444",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "fval": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Hydrogen Bond Acceptor",
+            "datatype": 5,
+            "implementation": "E_NHACCEPTORS",
+            "version": "3.444",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "ival": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Hydrogen Bond Donor",
+            "datatype": 5,
+            "implementation": "E_NHDONORS",
+            "version": "3.444",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "ival": 2
+          }
+        },
+        {
+          "urn": {
+            "label": "Count",
+            "name": "Rotatable Bond",
+            "datatype": 5,
+            "implementation": "E_NROTBONDS",
+            "version": "3.444",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "ival": 0
+          }
+        },
+        {
+          "urn": {
+            "label": "Fingerprint",
+            "name": "SubStructure Keys",
+            "datatype": 16,
+            "parameters": "extended 2",
+            "implementation": "E_SCREEN",
+            "version": "3.444",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "binary": "00000371000020000000000000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Allowed",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "hydron;hydroxide"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "CAS-like Style",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "hydron;hydroxide"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Preferred",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "hydron;hydroxide"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Systematic",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "hydron;hydroxide"
+          }
+        },
+        {
+          "urn": {
+            "label": "IUPAC Name",
+            "name": "Traditional",
+            "datatype": 1,
+            "version": "2.2.0",
+            "software": "LexiChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "hydron;hydroxide"
+          }
+        },
+        {
+          "urn": {
+            "label": "InChI",
+            "name": "Standard",
+            "datatype": 1,
+            "version": "1.0.4",
+            "software": "InChI",
+            "source": "iupac.org",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "InChI=1S/H2O/h1H2"
+          }
+        },
+        {
+          "urn": {
+            "label": "InChIKey",
+            "name": "Standard",
+            "datatype": 1,
+            "version": "1.0.4",
+            "software": "InChI",
+            "source": "iupac.org",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "XLYOFNOQVPJJNP-UHFFFAOYSA-N"
+          }
+        },
+        {
+          "urn": {
+            "label": "Mass",
+            "name": "Exact",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "fval": 18.010565
+          }
+        },
+        {
+          "urn": {
+            "label": "Molecular Formula",
+            "datatype": 1,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "H2O"
+          }
+        },
+        {
+          "urn": {
+            "label": "Molecular Weight",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "fval": 18.01528
+          }
+        },
+        {
+          "urn": {
+            "label": "SMILES",
+            "name": "Canonical",
+            "datatype": 1,
+            "version": "1.9.0",
+            "software": "OEChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "[H+].[OH-]"
+          }
+        },
+        {
+          "urn": {
+            "label": "SMILES",
+            "name": "Isomeric",
+            "datatype": 1,
+            "version": "1.9.0",
+            "software": "OEChem",
+            "source": "openeye.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "sval": "[H+].[OH-]"
+          }
+        },
+        {
+          "urn": {
+            "label": "Topological",
+            "name": "Polar Surface Area",
+            "datatype": 7,
+            "implementation": "E_TPSA",
+            "version": "3.444",
+            "software": "Cactvs",
+            "source": "xemistry.com",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "fval": 1
+          }
+        },
+        {
+          "urn": {
+            "label": "Weight",
+            "name": "MonoIsotopic",
+            "datatype": 7,
+            "version": "2.1",
+            "software": "PubChem",
+            "source": "ncbi.nlm.nih.gov",
+            "release": "2015.09.10"
+          },
+          "value": {
+            "fval": 18.010565
+          }
+        }
+      ],
+      "count": {
+        "heavy_atom": 1,
+        "atom_chiral": 0,
+        "atom_chiral_def": 0,
+        "atom_chiral_undef": 0,
+        "bond_chiral": 0,
+        "bond_chiral_def": 0,
+        "bond_chiral_undef": 0,
+        "isotope_atom": 0,
+        "covalent_unit": 2,
+        "tautomers": 1
+      }
+    }
+  ]
+}
