@@ -1,7 +1,10 @@
 module Chemotion
   class SyncCollectionAPI < Grape::API
     resource :syncCollections do
-
+      rescue_from ActiveRecord::RecordNotFound do |error|
+        message = "Could not find sync Collection"
+        error!(message, 404)
+      end
 
       desc "Return sync collection by id"
       params do
@@ -13,36 +16,26 @@ module Chemotion
         end
       end
 
-      # namespace :take_ownership do
-      #   desc "Take ownership of collection with specified id"
-      #   params do
-      #     requires :id, type: Integer, desc: "Collection id"
-      #   end
-      #   route_param :id do
-      #     before do
+#TODO
+      namespace :take_ownership do
+        desc "Take ownership of collection with specified sync_collections_user id"
+         params do
+           requires :id, type: Integer, desc: "SyncCollectionsUSer id"
+         end
+         route_param :id do
+           before do
       #       error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).take_ownership?
-      #     end
-      #
-      #     post do
+           end
+
+           post do
       #       Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id)).execute!
-      #     end
-      #   end
-      # end
-
-
-      # desc "Return all sync_in serialized collections"
-      # get :sync_in do
-      #
-      # end
-      # desc "Return all sync_out serialized collections"
-      # get :sync_out do
-      #
-      # end
-      #
+           end
+         end
+       end
 
 
       desc "Return all remote serialized collections"
-        get :sync_remote_roots, each_serializer: SyncCollectionRemoteSerializer do
+      get :sync_remote_roots, each_serializer: SyncCollectionRemoteSerializer do
         current_user.all_collections.remote(current_user.id).roots
       end
 
@@ -100,7 +93,6 @@ module Chemotion
           Usecases::Sharing::SyncWithUsers.new(params, current_user).execute!
         end
 
-  #    namespace :delete do
         desc "delete sync by id"
         params do
           requires :id, type: Integer
@@ -110,8 +102,6 @@ module Chemotion
           sync = SyncCollectionsUser.where(id: params[:id],shared_by_id: current_user.id).first
           sync && sync.destroy
         end
-  #    end  #namespace :delete
-
 
     end
   end

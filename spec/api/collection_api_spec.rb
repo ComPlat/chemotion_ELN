@@ -6,7 +6,7 @@ describe Chemotion::CollectionAPI do
       only: [:id, :label],
       methods: [:children, :descendant_ids, :permission_level, :shared_by_id,
         :sample_detail_level, :reaction_detail_level, :wellplate_detail_level,
-        :screen_detail_level, :is_shared, :is_locked]
+        :screen_detail_level, :is_shared, :is_locked, :sync_collections_users, :shared_users]
     }
   }
 
