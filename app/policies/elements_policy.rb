@@ -29,6 +29,8 @@ class ElementsPolicy
     user_ids = [user.id]+ user.group_ids
     return true unless records.where(id: other_record_ids).joins(:collections)
       .where('collections.permission_level >= ? AND collections.user_id in (?)',level,user_ids).empty?
+    return true unless records.where(id: other_record_ids).joins(:sync_collections_users)
+      .where('sync_collections_users.permission_level >= ? AND sync_collections_users.user_id in (?)',level,user_ids).empty?
     false
   end
 

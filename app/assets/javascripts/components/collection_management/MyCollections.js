@@ -1,6 +1,6 @@
 import React from 'react';
 import Tree from 'react-ui-tree';
-import {Button, ButtonGroup, FormControl, Modal, Label} from 'react-bootstrap';
+import {Button, ButtonGroup, FormControl, Modal} from 'react-bootstrap';
 import ManagingModalSharing from '../managing_actions/ManagingModalSharing';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
@@ -134,7 +134,7 @@ export default class MyCollections extends React.Component {
   }
 
   renderSync(node) {
-    let syncOut = node.shared_collections_users;
+    let syncOut = node.sync_collections_users;
     let users = [];
 
     if (syncOut) {
