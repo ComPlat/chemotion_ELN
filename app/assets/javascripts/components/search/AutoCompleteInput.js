@@ -4,6 +4,9 @@ import {FormGroup,InputGroup,FormControl, Overlay, ListGroup, ListGroupItem}
   from 'react-bootstrap';
 import debounce from 'es6-promise-debounce';
 
+import KeyboardActions from '../actions/KeyboardActions';
+import KeyboardStore from '../stores/KeyboardStore';
+
 export default class AutoCompleteInput extends React.Component {
 
   constructor(props) {
@@ -18,6 +21,7 @@ export default class AutoCompleteInput extends React.Component {
       inputWidth: 0,
       inputDisabled: false,
       timeoutReference: null,
+      keyboardContext: ''
     }
     this.timeout = 6e2 // 600ms timeout for input typing
     this.doneTyping = this.doneTyping.bind(this)
@@ -157,6 +161,19 @@ export default class AutoCompleteInput extends React.Component {
     }
   }
 
+  handleFocus() {
+    let keyboardState = KeyboardStore.getState()
+    this.setState({
+      keyboardContext: keyboardState.context
+    })
+
+    KeyboardActions.contextChange("search")
+  }
+
+  handleBlur() {
+    KeyboardActions.contextChange(this.state.keyboardContext)
+  }
+
   handleKeyDown(event) {
     let {value, valueBeforeFocus, showSuggestions, error, suggestions} =
       this.state
@@ -204,7 +221,7 @@ export default class AutoCompleteInput extends React.Component {
     }
 
     clearTimeout(timeoutReference)
-    onSelectionChange(selection)    
+    onSelectionChange(selection)
   }
 
   abortAutoSelection() {
@@ -301,6 +318,8 @@ export default class AutoCompleteInput extends React.Component {
               value={value || ''}
               autoComplete='off'
               ref='input'
+              onFocus={() => this.handleFocus()}
+              onBlur={() => this.handleBlur()}
               onChange={event => this.handleValueChange(event, this.doneTyping)}
               onKeyDown={event => this.handleKeyDown(event)}
             />

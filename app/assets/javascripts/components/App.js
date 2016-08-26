@@ -17,6 +17,7 @@ import initRoutes from './routes';
 import Notifications from './Notifications';
 
 import UserActions from './actions/UserActions';
+import KeyboardActions from './actions/KeyboardActions';
 
 class App extends Component {
   constructor(props) {
@@ -25,20 +26,32 @@ class App extends Component {
       showCollectionManagement: false
     };
     this.handleUiStoreChange = this.handleUiStoreChange.bind(this)
+    this.documentKeyDown = this.documentKeyDown.bind(this)
   }
 
   componentDidMount() {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
+
+    $(document).on('keydown', this.documentKeyDown);
   }
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
+
+    $(document).off('keydown', this.documentKeyDown);
   }
 
   handleUiStoreChange(state) {
     if(this.state.showCollectionManagement != state.showCollectionManagement) {
       this.setState({showCollectionManagement: state.showCollectionManagement});
+    }
+  }
+
+  documentKeyDown(event) {
+    // Only trigger arrow and Enter keys
+    if ([13, 38, 39, 40].includes(event.keyCode)) {
+      KeyboardActions.documentKeyDown(event.keyCode)
     }
   }
 
