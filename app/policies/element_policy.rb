@@ -29,7 +29,7 @@ class ElementPolicy
   end
 
   def scope
-    Pundit.policy_scope!(user, records.first.class)
+    Pundit.policy_scope!(user, record.class)
   end
 
   class Scope
