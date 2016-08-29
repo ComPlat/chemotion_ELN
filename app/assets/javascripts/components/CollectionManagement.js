@@ -12,7 +12,7 @@ export default class CollectionManagement extends React.Component {
   render() {
     return (
       <div id="collection-management">
-        <Tabs defaultActiveKey={1} inverse id="collection-management-tab">
+        <Tabs defaultActiveKey={1} id="collection-management-tab">
           <Tab eventKey={1} title="My Collections">
             <MyCollections />
           </Tab>
