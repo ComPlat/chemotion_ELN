@@ -6,3 +6,7 @@
 every 4.days do
   runner "ReallyDestroyTask.execute!"
 end
+
+every :sunday, at: '12pm' do
+  command "backup perform -t weekly_backup -c backup/config.rb"
+end
