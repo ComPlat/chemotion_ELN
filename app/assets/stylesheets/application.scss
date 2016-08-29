@@ -88,3 +88,26 @@ span.pseudo-link:hover {
 .nav-tabs > li > a {
   margin-right: 0px;
 }
+
+.small-col {
+  float: left;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+}
+
+.no-pad-col {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+}
+
+.main-content {
+  width: 83%
+}
+
+.full-main {
+  width: 98%
+}
+
+.collec-tree {
+  width: 15%
+}
