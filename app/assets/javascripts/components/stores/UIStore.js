@@ -182,7 +182,6 @@ class UIStore {
   }
 
   handleSelectSyncCollection(collection) {
-    // TODO
     let state = this.state;
     let hasChanged =
       (!state.currentCollection || !state.isSync || state.currentCollection.id != collection.id)

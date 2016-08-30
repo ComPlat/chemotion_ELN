@@ -37,7 +37,6 @@ describe Chemotion::SyncCollectionAPI do
     describe 'GET /api/v1/syncCollections/:id, ' do
       context 'on a outgoing sync_collection,' do
         before do
-      #    sc1_2.save!
           get  "/api/v1/syncCollections/%i" % sc1_2.id
         end
         it 'does not return the sync_collections_user' do
@@ -48,7 +47,6 @@ describe Chemotion::SyncCollectionAPI do
       end
       context ', on a incoming sync_collection,' do
         before do
-      #    sc2_1.save!
           get  "/api/v1/syncCollections/%i" % sc2_1.id
         end
         it 'does return the sync_collections_user' do
@@ -59,48 +57,49 @@ describe Chemotion::SyncCollectionAPI do
       end
     end
 
-    #TODO uncomment when take_ownership finished
-    # describe 'POST /api/v1/syncCollections/take_ownership/:id' do
-    #   context 'with appropriate permissions' do
-    #
-    #     describe 'take ownership of c1' do
-    #       before do
-    #         sc1_2.update!(permission_level: 5)
-    #         post "/api/v1/syncCollections/take_ownership/#{sc1_2.id}"
-    #       end
-    #
-    #       it 'is allowed' do
-    #         expect(response.status).to eq 201
-    #       end
-    #
-    #       it 'changes the ownership of the collection' do
-    #         expect(c1.user_id).to eq u2.id
-    #       end
-    #
-    #       it 'swaps the user and sharer of sync_collection' do
-    #         expect(sc1_2.user_id).to eq u1.id
-    #         expect(sc1_2.shared_by_id).to eq u2.id
-    #       end
-    #
-    #     end
-    #
-    #   end
-    #
-    #   context 'with inappropriate permissions' do
-    #
-    #     describe 'take ownership of c1' do
-    #       before do
-    #         sc1_2.update!(permission_level: 4)
-    #         post "/api/v1/syncCollections/take_ownership/#{c1.id}"
-    #       end
-    #
-    #       it 'is not allowed' do
-    #         expect(response.status).to eq 401
-    #       end
-    #     end
-    #
-    #   end
-    # end
+    describe 'POST /api/v1/syncCollections/take_ownership/:id' do
+      context 'with appropriate permissions' do
+
+        describe 'take ownership of c1' do
+          before do
+            sc2_1.update!(permission_level: 5)
+            post "/api/v1/syncCollections/take_ownership/#{sc2_1.id}"
+          end
+
+          it 'is allowed' do
+            expect(response.status).to eq 201
+          end
+
+          it 'changes the ownership of the collection' do
+            c2.reload
+            expect(c2.user_id).to eq u1.id
+          end
+
+          it 'swaps the user and sharer of sync_collection' do
+            sc2_1.reload
+            expect(sc2_1.user_id).to eq u2.id
+            expect(sc2_1.shared_by_id).to eq u1.id
+          end
+
+        end
+
+      end
+
+      context 'with inappropriate permissions' do
+
+        describe 'take ownership of c1' do
+          before do
+            sc2_1.update!(permission_level: 4)
+            post "/api/v1/syncCollections/take_ownership/#{sc2_1.id}"
+          end
+
+          it 'is not allowed' do
+            expect(response.status).to eq 401
+          end
+        end
+
+      end
+    end
 
     describe 'GET /api/v1/syncCollections/sync_remote_roots' do
       before do

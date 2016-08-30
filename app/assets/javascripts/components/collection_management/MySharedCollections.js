@@ -135,7 +135,9 @@ export default class MySharedCollections extends React.Component {
         <ButtonGroup className="actions">
           <Button bsSize="xsmall" bsStyle="danger"
             onClick={this.deleteCollection.bind(this, node)}
-            disabled={(node.children.length>0) ? true :false}>
+            disabled={true} //FIXME syn_coll needs this root locked collection
+            //disabled={(node.children.length>0) ? true : false}
+          >
             <i className="fa fa-trash-o"></i>
           </Button>
         </ButtonGroup>

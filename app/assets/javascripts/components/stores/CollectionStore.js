@@ -49,6 +49,7 @@ class CollectionStore {
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
+    CollectionActions.fetchSyncInCollectionRoots();
   }
 
   handleFetchLockedCollectionRoots(results) {

@@ -16,7 +16,6 @@ module Chemotion
         end
       end
 
-#TODO
       namespace :take_ownership do
         desc "Take ownership of collection with specified sync_collections_user id"
          params do
@@ -24,11 +23,11 @@ module Chemotion
          end
          route_param :id do
            before do
-      #       error!('401 Unauthorized', 401) unless CollectionPolicy.new(current_user, Collection.find(params[:id])).take_ownership?
+             error!('401 Unauthorized', 401) unless SyncCollectionPolicy.new(current_user, SyncCollectionsUser.find(params[:id])).take_ownership?
            end
 
            post do
-      #       Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id)).execute!
+             Usecases::Sharing::TakeOwnership.new(params.merge(current_user_id: current_user.id, is_sync: true)).execute!
            end
          end
        end

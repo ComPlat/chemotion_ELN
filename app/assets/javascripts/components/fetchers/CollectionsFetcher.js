@@ -3,7 +3,8 @@ import BaseFetcher from './BaseFetcher';
 
 export default class CollectionsFetcher {
   static takeOwnership(params) {
-    let promise = fetch('/api/v1/collections/take_ownership/' + params.id, {
+    let sync = params.isSync ? "syncC" : "c"
+    let promise = fetch(`/api/v1/${sync}ollections/take_ownership/${params.id}`, {
       credentials: 'same-origin',
       method: 'POST'
     })

@@ -103,10 +103,11 @@ export default class CollectionSubtree extends React.Component {
   }
 
   takeOwnershipButton() {
+    let root = this.state.root
     let isRemote = this.state.isRemote;
     let isTakeOwnershipAllowed = this.state.root.permission_level == 5;
-
-    if(isRemote && isTakeOwnershipAllowed) {
+    let isSync = (root.sharer && root.user && root.user.type != 'Group') ? true : false
+    if((isRemote||isSync) && isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">
           <Button bsStyle="danger" bsSize="xsmall" onClick={(e) => this.handleTakeOwnership(e)}>
@@ -118,7 +119,8 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleTakeOwnership() {
-    CollectionActions.takeOwnership({id: this.state.root.id});
+    let isSync = this.state.root.sharer ? true : false
+    CollectionActions.takeOwnership({id: this.state.root.id, isSync: isSync});
   }
 
   handleClick() {
@@ -193,8 +195,4 @@ CollectionSubtree.propTypes = {
   selected: React.PropTypes.bool,
   root: React.PropTypes.object,
   visible: React.PropTypes.bool,
-  // isSync: React.PropTypes.bool,
 };
-// CollectionSubtree.defaultProps = {
-//   isSync: false,
-// }
