@@ -1,8 +1,9 @@
 .modal-dialog {
+  width: auto !important;
   position: absolute !important;
   left: 50%;
   top: 50%;
-  transform: translate(-90%, -60%) !important;
+  transform: translate(-50%, -50%) !important;
 }
 
 .structure-editor .modal-content {

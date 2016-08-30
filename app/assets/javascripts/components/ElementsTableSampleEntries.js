@@ -8,8 +8,11 @@ import ElementReactionLabels from './ElementReactionLabels'
 import ArrayUtils from './utils/ArrayUtils'
 import {Tooltip, OverlayTrigger} from 'react-bootstrap'
 import ElementContainer from './ElementContainer'
+
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
+import KeyboardStore from './stores/KeyboardStore';
+
 import DragDropItemTypes from './DragDropItemTypes';
 import SampleName from './common/SampleName'
 import XMolHeadCont from "./extra/ElementsTableSampleEntriesXMolHeadCont";
@@ -20,8 +23,71 @@ export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
     super()
     this.state = {
-      moleculeGroupsShown: []
+      moleculeGroupsShown: [],
+      keyboardIndex: null,
+      keyboardSeletectedElementId: null
     }
+
+    this.sampleOnKeyDown = this.sampleOnKeyDown.bind(this)
+  }
+
+  componentDidMount() {
+    KeyboardStore.listen(this.sampleOnKeyDown)
+  }
+
+  componentWillReceiveProps(nextProps) {
+    let flattenSamplesId = []
+    let flatIndex = 0
+    nextProps.elements.forEach(function(groupSample, index) {
+      for (let i = 0; i < groupSample.length; i++) {
+        flattenSamplesId[flatIndex + i] = groupSample[i].id
+      }
+
+      flatIndex = flatIndex + groupSample.length
+    }, [])
+    this.flattenSamplesId = flattenSamplesId
+  }
+
+  componentWillUnmount() {
+    KeyboardStore.unlisten(this.sampleOnKeyDown)
+  }
+
+  sampleOnKeyDown(state) {
+    let context = state.context
+    if (context != "sample") return false
+
+    let documentKeyDownCode = state.documentKeyDownCode
+    let {keyboardIndex, keyboardSeletectedElementId} = this.state
+
+    switch(documentKeyDownCode) {
+      case 13: // Enter
+      case 39: // Right
+        if (keyboardIndex != null && keyboardSeletectedElementId != null) {
+          this.showDetails(keyboardSeletectedElementId)
+        }
+        break
+      case 38: // Up
+        if (keyboardIndex > 0) {
+          keyboardIndex--
+        } else {
+          keyboardIndex = 0
+        }
+        break
+      case 40: // Down
+        if (keyboardIndex == null) {
+          keyboardIndex = 0
+        } else if (keyboardIndex < (this.flattenSamplesId.length - 1)){
+          keyboardIndex++
+        }
+
+        break
+    }
+
+    keyboardSeletectedElementId = this.flattenSamplesId[keyboardIndex]
+    this.setState({
+      keyboardIndex: keyboardIndex,
+      keyboardSeletectedElementId: keyboardSeletectedElementId
+    })
   }
 
   render() {
@@ -96,18 +162,23 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderSamples(samples, show) {
+    let {keyboardSeletectedElementId} = this.state
+
     if(show) {
       return samples.map((sample, index) => {
         let style = {}
-        if (this.isElementSelected(sample)) {
+
+        if (this.isElementSelected(sample) || keyboardSeletectedElementId == sample.id) {
           style = {color: '#fff', background: '#337ab7'}
         }
+
         return (
           <tr key={index} style={style}>
             <td width="30px">
               <ElementCheckbox element={sample} key={sample.id} checked={this.isElementChecked(sample)}/>
             </td>
-            <td style={{cursor: 'pointer'}} onClick={() => this.showDetails(sample)}>
+            <td style={{cursor: 'pointer'}}
+                onClick={() => this.showDetails(sample.id)}>
               {sample.title() + " "}
               <div style={{float: 'right'}}>
                 <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
@@ -163,11 +234,11 @@ export default class ElementsTableSampleEntries extends Component {
     return type && currentElement && targets[type].includes(currentElement.type)
   }
 
-  showDetails(element) {
+  showDetails(id) {
     const {currentCollection,isSync} = UIStore.getState()
     Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
-      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
+      ? `/scollection/${currentCollection.id}/sample/${id}`
+      : `/collection/${currentCollection.id}/sample/${id}`
     );
   }
 

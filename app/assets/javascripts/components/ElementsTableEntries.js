@@ -5,14 +5,71 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import {Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ArrayUtils from './utils/ArrayUtils';
+
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
+import KeyboardStore from './stores/KeyboardStore';
+
 import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
 import XTdCont from "./extra/ElementsTableEntriesXTdCont";
 
 export default class ElementsTableEntries extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      keyboardElementIndex: null
+    }
+
+    this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this)
+  }
+
+  componentDidMount() {
+    KeyboardStore.listen(this.entriesOnKeyDown)
+  }
+
+  componentWillUnmount() {
+    KeyboardStore.unlisten(this.entriesOnKeyDown)
+  }
+
+  entriesOnKeyDown(state) {
+    let context = state.context
+    const {elements} = this.props;
+
+    if (elements[0] == null || context != elements[0].type)
+      return false
+
+    let documentKeyDownCode = state.documentKeyDownCode
+    let {keyboardElementIndex} = this.state
+
+    switch(documentKeyDownCode) {
+      case 13: // Enter
+      case 39: // Right
+        if (keyboardElementIndex != null && elements[keyboardElementIndex] != null) {
+          this.showDetails(elements[keyboardElementIndex])
+        }
+        break
+
+      case 38: // Up
+        if (keyboardElementIndex > 0) {
+          keyboardElementIndex--
+        } else {
+          keyboardElementIndex = 0
+        }
+        break
+      case 40: // Down
+        if (keyboardElementIndex == null) {
+          keyboardElementIndex = 0
+        } else if (keyboardElementIndex < elements.length - 1){
+          keyboardElementIndex++
+        }
+
+        break
+    }
+    this.setState({keyboardElementIndex})
+  }
+
   isElementChecked(element) {
     let {checkedIds, uncheckedIds, checkedAll} = this.props.ui;
     return (checkedAll && ArrayUtils.isValNotInArray(uncheckedIds || [], element.id))
@@ -164,18 +221,22 @@ export default class ElementsTableEntries extends Component {
 
   render() {
     const {elements} = this.props;
+    let {keyboardElementIndex} = this.state
+
     return (
       <tbody>
       {elements.map((element, index) => {
         const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
         let style = {};
-        if (this.isElementSelected(element)) {
+        if (this.isElementSelected(element) ||
+           (keyboardElementIndex != null && keyboardElementIndex == index)) {
           style = {
           color: '#000',
           background: '#ddd',
           border: '4px solid #337ab7'
           }
         }
+
         return (
           <tr key={index} style={style}>
             <td>

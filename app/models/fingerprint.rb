@@ -6,25 +6,34 @@ class Fingerprint < ActiveRecord::Base
 
   validates :fp0, :fp1, :fp2, :fp3, :fp4, :fp5, :fp6, :fp7, :fp8,
             :fp9, :fp10, :fp11, :fp12, :fp13, :fp14, :fp15,
-            presence: true,
             format: { with: /[01]/, message: "only allows 0 or 1" },
             length: {
               minimum: 64,
               maximum: 64,
               wrong_length: "must be exactly 64 characters"
             },
-            uniqueness: { message: "existed fingerprint" }
+            presence: true
+
+ validates :fp0, uniqueness: {
+                  scope: [
+                    :fp1, :fp2, :fp3, :fp4, :fp5, :fp6, :fp7, :fp8,
+                    :fp9, :fp10, :fp11, :fp12, :fp13, :fp14, :fp15
+                  ],
+                  message: "existed fingerprint"
+                 }
+
 
   validates :num_set_bits,
             presence: true,
             numericality: {
               only_integer: true,
               greater_than: 0,
-              less_than: 64,
-              message: "must be integer between 0 and 64"
+              less_than: 1024,
+              message: "must be integer between 0 and 1024"
             }
 
   after_create :check_num_set_bits
+  before_save :check_fingerprint_exist
 
   NUMBER_OF_FINGERPRINT_COL = 16
 
@@ -107,8 +116,8 @@ class Fingerprint < ActiveRecord::Base
   }
 
   def self.find_or_create_by_molfile molfile
+    molfile = self.standardized_molfile(molfile)
     fp_vector = Chemotion::OpenBabelService.fingerprint_from_molfile molfile
-
     existed_fp = Fingerprint.all
     NUMBER_OF_FINGERPRINT_COL.times do |i|
       existed_fp = existed_fp.where("fp#{i} = ?", "%064b" % fp_vector[i])
@@ -138,7 +147,7 @@ class Fingerprint < ActiveRecord::Base
       lines = molfile.split "\n"
       lines[4..-1].each do |line|
         break if line.match /(M.+END+)/
-        line.gsub! ' R# ', ' R1  ' # replace residues with Hydrogens
+        line.gsub! ' R# ', ' R1  '
       end
       molfile = lines.join "\n"
     end
@@ -158,5 +167,14 @@ class Fingerprint < ActiveRecord::Base
       self.num_set_bits = self.num_set_bits +
                           self.send("fp" + i.to_s).count("1")
     }
+  end
+
+  def check_fingerprint_exist
+    existed_fp = Fingerprint.all
+    NUMBER_OF_FINGERPRINT_COL.times do |i|
+      existed_fp = existed_fp.where("fp#{i} = ?", self["fp" + i.to_s])
+    end
+
+    return (existed_fp.count == 0)
   end
 end
