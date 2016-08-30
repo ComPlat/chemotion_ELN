@@ -176,15 +176,13 @@ export default class ReactionDetails extends Component {
       )
   }
 
-  reactionSVG(reaction, svgContainerStyle) {
+  reactionSVG(reaction) {
     if(!reaction.svgPath) {
       return false;
     } else {
       return (
-        <Col md={9}>
-          <div style={svgContainerStyle}>
-            <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
-          </div>
+        <Col md={12}>
+          <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
         </Col>
       )
     }
@@ -193,9 +191,7 @@ export default class ReactionDetails extends Component {
   render() {
     let {reaction} = this.state;
     reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
-    const svgContainerStyle = {
-      textAlign: 'center'
-    };
+
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     const style = {height: '220px'};
     let extraTabs =[];
@@ -213,28 +209,34 @@ export default class ReactionDetails extends Component {
                   onClick={this.closeDetails.bind(this)}>
             <i className="fa fa-times"></i>
           </Button>
-          <Row>
-            <Col md={3} style={style}>
-              <h3>{reaction.name}</h3>
-              <ElementCollectionLabels element={reaction} key={reaction.id}/><br/>
-              <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/><br/>
-              <Button
-                style={{cursor: 'pointer'}}
-                disabled={reaction.changed || reaction.isNew}
-                title={(reaction.changed || reaction.isNew) ?
+          <Button bsStyle="success" bsSize="xsmall" className="button-right"
+            style={{cursor: 'pointer', marginTop: '-47px', right: '3%'}}
+            disabled={reaction.changed || reaction.isNew}
+            title={(reaction.changed || reaction.isNew) ?
                    "Report can be generated after reaction is saved."
                    : "Generate report for this reaction"}
-                onClick={() => Utils.downloadFile({
-                  contents: "api/v1/reports/docx?id=" + reaction.id,
-                  name: reaction.name
-                })}
-              >
-                Generate Report
-              </Button>
-            </Col>
-            {this.reactionSVG(reaction, svgContainerStyle)}
+            onClick={() => Utils.downloadFile({
+              contents: "api/v1/reports/docx?id=" + reaction.id,
+              name: reaction.name
+            })} > <i className="fa fa-cogs"></i>
+          </Button>
+          <Row>
+            <div style={{marginLeft: '15px', marginTop: '-10px',
+                         display: 'flex', 'alignItems': 'center'}}>
+              <h3 style={{float: 'left'}}>
+                {reaction.name}
+              </h3>
+              <div style={{float: 'left', paddingLeft: '10px', marginTop: '5px'}}>
+                <ElementCollectionLabels element={reaction}
+                                          key={reaction.id} />
+                <ElementAnalysesLabels element={reaction}
+                                       key={reaction.id+"_analyses"} />
+              </div>
+            </div>
           </Row>
-          <hr/>
+          <Row>
+            {this.reactionSVG(reaction)}
+          </Row>
           <Tabs defaultActiveKey={0} id="reaction-detail-tab">
             <Tab eventKey={0} title={'Scheme'}>
               <ReactionDetailsScheme
