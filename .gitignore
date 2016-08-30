@@ -50,6 +50,7 @@ aliasifyConfig.js
 
 # Backups folder
 backup/deploy_backup
+backup/weekly_backup
 
 #mc
 .DS_Store
