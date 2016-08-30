@@ -71,7 +71,6 @@ const routes = {
           collectionPromise = CollectionStore.findBySId(collectionId);
 
           collectionPromise.then((result) => {
-            console.log(result);
             let collection = result.sync_collections_user;
 
             if(currentSearchSelection) {
