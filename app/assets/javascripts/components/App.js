@@ -37,13 +37,13 @@ class App extends Component {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
 
-    // $(document).on('keydown', this.documentKeyDown);
+    $(document).on('keydown', this.documentKeyDown);
   }
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
 
-    // $(document).off('keydown', this.documentKeyDown);
+    $(document).off('keydown', this.documentKeyDown);
   }
 
   handleUiStoreChange(state) {
@@ -53,8 +53,10 @@ class App extends Component {
   }
 
   documentKeyDown(event) {
-    // Only trigger arrow and Enter keys
-    if ([13, 38, 39, 40].includes(event.keyCode)) {
+    // Only trigger arrow and Enter keys ON BODY
+    // Ignore on other element
+    if (event.target.tagName.toUpperCase() == 'BODY' &&
+        [13, 38, 39, 40].includes(event.keyCode)) {
       KeyboardActions.documentKeyDown(event.keyCode)
     }
   }
