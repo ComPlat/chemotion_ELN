@@ -22,3 +22,6 @@ export default class ElementDetails extends Component {
     }
   }
 }
+ElementDetails.propTypes = {
+  currentElement: React.PropTypes.object,
+}

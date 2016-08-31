@@ -200,3 +200,7 @@ export default class ScreenDetails extends Component {
     );
   }
 }
+
+ScreenDetails.propTypes = {
+  screen: React.PropTypes.object,
+}

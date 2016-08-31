@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Col, Row, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
+import {Col, Row, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
@@ -126,7 +126,6 @@ export default class ReactionDetails extends Component {
   }
 
   handleProductClick(product) {
-    const uiState = UIStore.getState();
     let currentURI = Aviator.getCurrentURI();
     Aviator.navigate(`${currentURI}/sample/${product.id}`);
   }
@@ -196,7 +195,6 @@ export default class ReactionDetails extends Component {
     reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
-    const style = {height: '220px'};
     let extraTabs =[];
     for (let j=0;j < XTab.TabCount;j++){
       extraTabs.push((i)=>this.extraTab(i))
