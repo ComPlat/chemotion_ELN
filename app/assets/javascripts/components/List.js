@@ -110,7 +110,7 @@ export default class List extends React.Component {
 
     return (
       <Tabs defaultActiveKey={this.state.currentTab} activeKey={this.state.currentTab}
-            onSelect={(e) => this.handleTabSelect(e)} id="tabList" style={{display: 'table'}}>
+            onSelect={(e) => this.handleTabSelect(e)} id="tabList">
         <Tab eventKey={1} title={samples}>
           <ElementsTable overview={overview} showReport={showReport} type='sample'/>
         </Tab>
