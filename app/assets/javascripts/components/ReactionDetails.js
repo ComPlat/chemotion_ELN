@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Col, Row, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
+import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
@@ -26,9 +26,9 @@ export default class ReactionDetails extends Component {
     const {reaction} = props;
     this.state = {
       reaction,
-      reactionPanelFixed: false
+      offsetTop: 70
     };
-
+    this.handleResize = this.handleResize.bind(this);
     if(reaction.hasMaterials()) {
       this.updateReactionSvg();
     }
@@ -36,6 +36,10 @@ export default class ReactionDetails extends Component {
 
   componentDidMount() {
     const {reaction} = this.state;
+    window.addEventListener('resize', this.handleResize);
+  }
+  componentWillUnmount(){
+    window.removeEventListener('resize', this.handleResize);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -46,6 +50,12 @@ export default class ReactionDetails extends Component {
         reaction: nextReaction
       });
     }
+  }
+  handleResize(e = null) {
+    let windowHeight = window.innerHeight || 1;
+    if (windowHeight < 500) {
+      this.setState({offsetTop:0} );
+    } else {this.setState({offsetTop:70})}
   }
 
   closeDetails() {
@@ -190,6 +200,8 @@ export default class ReactionDetails extends Component {
     }
   }
 
+
+
   render() {
     let {reaction} = this.state;
     reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
@@ -199,45 +211,44 @@ export default class ReactionDetails extends Component {
     for (let j=0;j < XTab.TabCount;j++){
       extraTabs.push((i)=>this.extraTab(i))
     }
+    let hasChanged = reaction.changed ? '' : 'none'
+    const panelHeader =
+      <h4>
+        <i className="icon-reaction"/>&nbsp;{reaction.name}
+        <Button bsStyle="danger" bsSize="xsmall"
+          style={{float: 'right', margin:"0px 2px"}} onClick={this.closeDetails.bind(this)}>
+          <i className="fa fa-times"></i>
+        </Button>
+        <Button bsStyle="warning" bsSize="xsmall"
+          onClick={() => this.submitFunction()} disabled={!this.reactionIsValid()}
+          style={{float: 'right', margin:"0px 2px",display: hasChanged}} >
+          <i className="fa fa-floppy-o "></i>
+        </Button>
+        <Button bsStyle="success" bsSize="xsmall"
+          style={{float: 'right'}}
+          disabled={reaction.changed || reaction.isNew}
+          title={(reaction.changed || reaction.isNew) ?
+               "Report can be generated after reaction is saved."
+               : "Generate report for this reaction"}
+          onClick={() => Utils.downloadFile({
+            contents: "api/v1/reports/docx?id=" + reaction.id,
+            name: reaction.name
+          })} >
+          <i className="fa fa-cogs"></i>
+        </Button>
+      </h4>
+
     return (
-      <StickyDiv zIndex={2}>
-        <Panel className="panel-fixed"
-               header="Reaction Details"
-               bsStyle={reaction.isEdited ? 'info' : 'primary'}>
-          <Button bsStyle="danger"
-                  bsSize="xsmall"
-                  className="button-right"
-                  onClick={this.closeDetails.bind(this)}>
-            <i className="fa fa-times"></i>
-          </Button>
-          <Button bsStyle="success" bsSize="xsmall" className="button-right"
-            style={{cursor: 'pointer', marginTop: '-47px', right: '5px'}}
-            disabled={reaction.changed || reaction.isNew}
-            title={(reaction.changed || reaction.isNew) ?
-                   "Report can be generated after reaction is saved."
-                   : "Generate report for this reaction"}
-            onClick={() => Utils.downloadFile({
-              contents: "api/v1/reports/docx?id=" + reaction.id,
-              name: reaction.name
-            })} > <i className="fa fa-cogs"></i>
-          </Button>
-          <Row>
-            <div style={{marginLeft: '15px', marginTop: '-10px',
-                         display: 'flex', 'alignItems': 'center'}}>
-              <h3 style={{float: 'left'}}>
-                {reaction.name}
-              </h3>
-              <div style={{float: 'left', paddingLeft: '10px', marginTop: '5px'}}>
-                <ElementCollectionLabels element={reaction}
-                                          key={reaction.id} />
-                <ElementAnalysesLabels element={reaction}
-                                       key={reaction.id+"_analyses"} />
-              </div>
-            </div>
-          </Row>
-          <Row>
-            {this.reactionSVG(reaction)}
-          </Row>
+      <StickyDiv zIndex={2} offsetTop={this.state.offsetTop} >
+        <Panel className=" panel-reaction" header={panelHeader}
+          bsStyle={reaction.isEdited ? 'info' : 'primary'}
+        >
+        {this.reactionSVG(reaction)}
+        <div style={{position:"absolute", left: 0, top: 40, margin: "10px"}}>
+          <ElementCollectionLabels element={reaction} key={reaction.id} />
+          <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
+        </div>
+
           <Tabs defaultActiveKey={0} id="reaction-detail-tab">
             <Tab eventKey={0} title={'Scheme'}>
               <ReactionDetailsScheme

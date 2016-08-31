@@ -1,13 +1,10 @@
 import React, {Component} from 'react';
-import {Button, ListGroup, ListGroupItem,Glyphicon,
-        Tabs, Tab, Row, Col, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import { ListGroup, ListGroupItem,Tooltip, OverlayTrigger} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
-import Reaction from './models/Reaction';
 import Sample from './models/Sample';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
-import ElementActions from './actions/ElementActions';
 import NotificationActions from './actions/NotificationActions'
 
 import Select from 'react-select'
@@ -356,20 +353,11 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
-  /**
-   * Add a (not yet persisted) sample to a material group
-   * of the given reaction
-   */
-  addSampleToMaterialGroup(reaction, materialGroup) {
-    ElementActions.addSampleToMaterialGroup({
-      reaction,
-      materialGroup
-    });
-  }
+
 
   render() {
     const {reaction} = this.state;
-    let addSampleButton = (sampleType)=> <Button bsStyle="success" bsSize="xs" onClick={() => this.addSampleToMaterialGroup(reaction, sampleType)}><Glyphicon glyph="plus" /></Button>
+
     let showMultiSolvents = reaction.solvents.length === 0 ? 'solvent' : 'solvents';
 
     const solventTp = (
@@ -401,13 +389,15 @@ export default class ReactionDetailsScheme extends Component {
       </div>
     )
 
+    let minPadding = {padding: "1px 2px 2px 0px"}
+
     return (
       <div>
         <ListGroup fill>
-          <ListGroupItem>
-            <h4 className="list-group-item-heading" >{addSampleButton('starting_materials')}&nbsp;Starting Materials </h4>
+          <ListGroupItem style={minPadding}>
 
             <MaterialGroupContainer
+              reaction={reaction}
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
@@ -417,9 +407,10 @@ export default class ReactionDetailsScheme extends Component {
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
               />
           </ListGroupItem>
-          <ListGroupItem>
-            <h4 className="list-group-item-heading" >{addSampleButton('reactants')}&nbsp;Reactants </h4>
+          <ListGroupItem style={minPadding} >
+
             <MaterialGroupContainer
+              reaction={reaction}
               materialGroup="reactants"
               materials={reaction.reactants}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
@@ -430,9 +421,10 @@ export default class ReactionDetailsScheme extends Component {
               />
 
           </ListGroupItem>
-          <ListGroupItem>
-            <h4 className="list-group-item-heading" > {addSampleButton('products')}&nbsp;Products</h4>
+          <ListGroupItem style={minPadding}>
+
             <MaterialGroupContainer
+              reaction={reaction}
               materialGroup="products"
               materials={reaction.products}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}

@@ -96,7 +96,7 @@ export default class Material extends Component {
     const {material, deleteMaterial, isDragging, connectDragSource,
            showLoadingColumn } = this.props;
 
-    let style = {};
+    let style = {padding: "0"};
     if (isDragging) {
       style.opacity = 0.3;
     }
@@ -106,7 +106,8 @@ export default class Material extends Component {
       verticalAlign: 'middle'
     };
     const inputsStyle = {
-      paddingRight: 5
+      padding: "0px 2px 0px 2px",
+      margin: "0px"
     };
 
     if(this.props.materialGroup == 'products')
@@ -271,17 +272,20 @@ export default class Material extends Component {
           </td>,
           {dropEffect: 'copy'}
         )}
-        <td>
+
+        <td style={inputsStyle}>
+          {this.materialNameWithIupac(material)}
+        </td>
+        <td style={inputsStyle}>
           <Radio
             name="reference"
             checked={material.reference}
             onChange={event => this.handleReferenceChange(event)}
+            bsSize="xsmall"
+            style={{margin: 0}}
           />
         </td>
-        <td>
-          {this.materialNameWithIupac(material)}
-        </td>
-        <td>
+        <td style={inputsStyle} >
           {this.switchTargetReal(isTarget)}
         </td>
 
@@ -318,9 +322,10 @@ export default class Material extends Component {
         <td style={inputsStyle}>
           {this.equivalentOrYield(material)}
         </td>
-        <td>
+        <td style={inputsStyle}>
           <Button
             bsStyle="danger"
+            bsSize="small"
             onClick={() => deleteMaterial(material)} >
             <i className="fa fa-trash-o"></i>
           </Button>
@@ -391,12 +396,14 @@ export default class Material extends Component {
     )
   }
 
-  switchTargetReal(isTarget) {
+  switchTargetReal(isTarget, style={padding: "6px 4px"}) {
     return (
       <Button active
-              style={{padding: '6px'}}
+              style= {style}
               onClick={() => this.toggleTarget(isTarget)}
-              bsStyle={isTarget ? 'success' : 'primary'}>
+              bsStyle={isTarget ? 'success' : 'primary'}
+              bsSize='small'
+              >
         {isTarget ? "T" : "R"}
       </Button>
     )
@@ -407,7 +414,7 @@ export default class Material extends Component {
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div>
           {this.materialName()}<br/>
-          {material.iupac_name_tag(12)}
+          {material.iupac_name_tag(16)}
         </div>
       </OverlayTrigger>
     )
@@ -441,6 +448,6 @@ Material.propTypes = {
   materialGroup: PropTypes.string.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  showLoadingColumn: PropTypes.func,
+  showLoadingColumn: PropTypes.object,
   solventsVolSum: PropTypes.number.isRequired
 };

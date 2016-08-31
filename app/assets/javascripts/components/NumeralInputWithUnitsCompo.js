@@ -104,7 +104,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
     let labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null
     if(unit != 'none') {
-      prefixSwitch=<InputGroup.Button><Button active style={ {padding: '6px'}} onClick={() =>{this.togglePrefix()}} bsStyle={bsStyleBtnAfter} bsSize={bsSize}>{mp+unit}</Button></InputGroup.Button>
+      prefixSwitch = <InputGroup.Button>
+          <Button active  onClick={() =>{this.togglePrefix()}}
+            bsStyle={bsStyleBtnAfter} bsSize={bsSize} style={{padding:"7px 2px", minWidth: 20}}>
+              {mp+unit}
+          </Button>
+        </InputGroup.Button>
       return (
         <div>
           {labelWrap}
@@ -145,7 +150,9 @@ NumeralInputWithUnitsCompo.propTypes = {
   metricPrefixes: React.PropTypes.array,
   precision: React.PropTypes.number,
   disabled: React.PropTypes.bool,
-  label: React.PropTypes.node
+  label: React.PropTypes.node,
+  bsSize: React.PropTypes.string,
+  bsStyle: React.PropTypes.string,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {
@@ -153,5 +160,6 @@ NumeralInputWithUnitsCompo.defaultProps = {
   value: 0,
   units: [],
   disabled: false,
-
+  bsSize: "small",
+  bsStyle: "default"
 };

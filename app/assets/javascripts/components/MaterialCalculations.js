@@ -49,7 +49,8 @@ export default class MaterialCalculations extends Component {
 
     const inputsStyle = {
       paddingTop: 15,
-      paddingRight: 5
+      paddingRight: 2,
+      paddingLeft: 2,
     };
 
     return <tr>
