@@ -41,6 +41,19 @@ export default class StructureEditorModal extends React.Component {
     ketcher.setMolecule(molfile);
   }
 
+  setIframeSize() {
+    let ketcherFrame = document.getElementById("ifKetcher");
+    // Different attributes due to Chrome and FF return value
+    let width = Math.max(ketcherFrame.contentWindow.document.body.scrollWidth,
+                         ketcherFrame.contentWindow.document.documentElement.scrollWidth)
+    let height = Math.max(ketcherFrame.contentWindow.document.body.scrollHeight,
+                          ketcherFrame.contentWindow.document.documentElement.scrollHeight)
+    // The Ketcher increasing width when it has more space, so that we need to
+    //   increase to its maximum width
+    ketcherFrame.style.width = width + 136 + 'px'
+    ketcherFrame.style.height = height + 20 + 'px'
+  }
+
   getMolfileFromEditor() {
     var ketcher = this.getKetcher();
 
@@ -103,6 +116,7 @@ export default class StructureEditorModal extends React.Component {
         submitAddons = {
           this.props.submitAddons ? this.props.submitAddons : ""
         }
+        setIframeSize = {this.setIframeSize.bind(this)}
       />
     return (
       <div>
@@ -124,11 +138,11 @@ export default class StructureEditorModal extends React.Component {
 }
 
 const StructureEditor =
-  ({handleCancelBtn, handleSaveBtn, cancelBtnText, submitBtnText, submitAddons}) => {
+  ({handleCancelBtn, handleSaveBtn, cancelBtnText, submitBtnText, submitAddons, setIframeSize}) => {
     return (
       <div>
         <div>
-          <iframe id="ifKetcher" src="/ketcher"></iframe>
+          <iframe id="ifKetcher" src="/ketcher" onLoad={setIframeSize}></iframe>
         </div>
         <div>
           <ButtonToolbar>

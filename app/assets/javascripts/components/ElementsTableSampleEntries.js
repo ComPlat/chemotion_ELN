@@ -140,20 +140,21 @@ export default class ElementsTableSampleEntries extends Component {
         style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
         onClick={() => this.handleMoleculeToggle(molecule.iupac_name || molecule.inchistring)}
       >
-        <td colSpan="2">
+        <td colSpan="2" style={{position: 'relative'}}>
           <div style={{float: 'left'}}>
             <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
           </div>
-          <div style={{float: 'right'}}>
+          <div style={{position: 'absolute', float: 'right', right: '3px'}}>
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>}>
               <span style={{fontSize: 15, color: '#337ab7', lineHeight: '10px'}}>
                 <i className={`glyphicon ${showIndicator}`}></i>
               </span>
             </OverlayTrigger>
           </div>
-          <div style={{display: 'inherit', paddingLeft: 10}}>
+          <div style={{paddingLeft: 5, wordWrap: 'break-word'}}>
             <h4><SampleName sample={sample}/></h4>
           </div>
+
           {tdExtraContents.map((e)=>{return e;})}
         </td>
           {this.dragColumn(dragItem)}

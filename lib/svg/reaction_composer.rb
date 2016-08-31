@@ -91,7 +91,7 @@ module SVG
           content = inner_file_content(material).to_s
           output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + content + yield_svg +"</g>" + divider
           divider = "<g transform='translate(#{shift + material_width}, 0) scale(#{scale})'>" + @divider + "</g>"
-          shift += material_width
+          shift += material_width + 10 # Add a small space between material
           output
         end
       end
