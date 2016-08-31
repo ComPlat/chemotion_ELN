@@ -1,9 +1,9 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import {Button, OverlayTrigger} from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import CollectionActions from './actions/CollectionActions';
-
+import UserInfos from './UserInfos';
 import Aviator from 'aviator';
 
 export default class CollectionSubtree extends React.Component {
@@ -103,10 +103,11 @@ export default class CollectionSubtree extends React.Component {
   }
 
   takeOwnershipButton() {
+    let root = this.state.root
     let isRemote = this.state.isRemote;
     let isTakeOwnershipAllowed = this.state.root.permission_level == 5;
-
-    if(isRemote && isTakeOwnershipAllowed) {
+    let isSync = (root.sharer && root.user && root.user.type != 'Group') ? true : false
+    if((isRemote||isSync) && isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">
           <Button bsStyle="danger" bsSize="xsmall" onClick={(e) => this.handleTakeOwnership(e)}>
@@ -118,7 +119,8 @@ export default class CollectionSubtree extends React.Component {
   }
 
   handleTakeOwnership() {
-    CollectionActions.takeOwnership({id: this.state.root.id});
+    let isSync = this.state.root.sharer ? true : false
+    CollectionActions.takeOwnership({id: this.state.root.id, isSync: isSync});
   }
 
   handleClick() {
@@ -127,7 +129,8 @@ export default class CollectionSubtree extends React.Component {
     if(root.label == 'All') {
       Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
     } else {
-      Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`);
+      (this.props.root.sharer) ? Aviator.navigate(`/scollection/${this.state.root.id}/${this.urlForCurrentElement()}`)
+        : Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`)
     }
   }
 
@@ -151,6 +154,18 @@ export default class CollectionSubtree extends React.Component {
     this.setState({visible: !this.state.visible});
   }
 
+  synchronizedIcon(){
+    let sharedUsers = this.state.root.shared_users
+    return(
+      sharedUsers && sharedUsers.length > 0
+        ? <OverlayTrigger placement="bottom" overlay={UserInfos({users:sharedUsers})}>
+            <i className="fa fa-share-alt"></i>
+          </OverlayTrigger>
+        : null
+    )
+  }
+
+
   render() {
     let style;
 
@@ -164,6 +179,7 @@ export default class CollectionSubtree extends React.Component {
         <div className={"title " + this.selectedCssClass()} onClick={this.handleClick.bind(this)}>
           {this.expandButton()}
           {this.state.label}
+          {this.synchronizedIcon()}
         </div>
         <ul style={style}>
           {this.subtrees()}

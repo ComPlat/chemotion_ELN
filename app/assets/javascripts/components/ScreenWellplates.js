@@ -2,7 +2,7 @@ import React, {Component, PropTypes} from 'react';
 import {Button} from 'react-bootstrap';
 import {DropTarget} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
-import UiStore from './stores/UIStore';
+import UIStore from './stores/UIStore';
 
 const target = {
   drop(props, monitor){
@@ -32,8 +32,11 @@ const collect = (connect, monitor) => ({
 
 class ScreenWellplates extends Component {
   handleWellplateClick(wellplate) {
-    const uiState = UiStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}/wellplate/${wellplate.id}`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}/wellplate/${wellplate.id}`
+      : `/collection/${currentCollection.id}/wellplate/${wellplate.id}`
+    );
   }
 
   render() {

@@ -37,9 +37,12 @@ export default class WellplateDetails extends Component {
   }
 
   closeDetails() {
-    let uiState = UIStore.getState();
     UIActions.deselectAllElements();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}`
+      : `/collection/${currentCollection.id}`
+    );
   }
 
   handleSubmit() {

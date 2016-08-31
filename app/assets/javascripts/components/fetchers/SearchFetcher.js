@@ -6,7 +6,7 @@ import Screen from '../models/Screen';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-    currentPage) {
+    currentPage, isSync=false) {
     let promise = fetch('/api/v1/search/' + selection.elementType, {
         credentials: 'same-origin',
         method: 'POST',
@@ -18,7 +18,8 @@ export default class SearchFetcher {
           selection: selection,
           collection_id: collectionId,
           page: currentPage,
-          per_page: selection.page_size
+          per_page: selection.page_size,
+          is_sync: isSync,
         })
       })
       .then((response) => {

@@ -91,7 +91,7 @@ module Chemotion
 
       # Generate search query
       def scope_by_search_by_method_arg_and_collection_id(search_by_method,
-          arg, collection_id)
+          arg, collection_id, is_sync = false)
         scope = case search_by_method
         when 'polymer_type'
           Sample.for_user(current_user.id).joins(:residues)
@@ -167,6 +167,7 @@ module Chemotion
           optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
+          optional :is_sync, type: Boolean
         end
 
         post do
@@ -176,7 +177,9 @@ module Chemotion
           scope =
             scope_by_search_by_method_arg_and_collection_id(search_by_method,
                                                             arg,
-                                                            params[:collection_id])
+                                                            params[:collection_id],
+                                                            params[:is_sync])
+
 
           serialization_by_elements_and_page(elements_by_scope(scope),
                                              params[:page])
@@ -190,6 +193,7 @@ module Chemotion
           optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
+          optional :is_sync, type: Boolean
         end
 
         post do
@@ -198,7 +202,7 @@ module Chemotion
 
           scope = Sample.search_by(search_by_method, arg)
 
-          samples = scope.by_collection_id(params[:collection_id].to_i)
+          samples = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
 
           serialization_by_elements_and_page(elements_by_scope(samples),
                                              params[:page])
@@ -211,6 +215,7 @@ module Chemotion
           optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
+          optional :is_sync, type: Boolean
         end
 
         post do
@@ -219,7 +224,7 @@ module Chemotion
 
           scope = Reaction.search_by(search_by_method, arg)
 
-          reactions = scope.by_collection_id(params[:collection_id].to_i)
+          reactions = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
 
           serialization_by_elements_and_page(elements_by_scope(reactions),
                                              params[:page])
@@ -232,6 +237,7 @@ module Chemotion
           optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
+          optional :is_sync, type: Boolean
         end
 
         post do
@@ -240,7 +246,7 @@ module Chemotion
 
           scope = Wellplate.search_by(search_by_method, arg)
 
-          wellplates = scope.by_collection_id(params[:collection_id].to_i)
+          wellplates = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
 
           serialization_by_elements_and_page(elements_by_scope(wellplates),
                                              params[:page])
@@ -253,6 +259,7 @@ module Chemotion
           optional :page, type: Integer
           requires :selection, type: Hash
           requires :collection_id, type: String
+          optional :is_sync, type: Boolean
         end
 
         post do
@@ -261,7 +268,7 @@ module Chemotion
 
           scope = Screen.search_by(search_by_method, arg)
 
-          screens = scope.by_collection_id(params[:collection_id].to_i)
+          screens = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
 
           serialization_by_elements_and_page(elements_by_scope(screens),
                                              params[:page])

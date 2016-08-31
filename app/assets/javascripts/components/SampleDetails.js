@@ -159,9 +159,11 @@ export default class SampleDetails extends React.Component {
     } else {
       UIActions.deselectAllElements();
       ElementActions.deselectCurrentElement();
-
-      let uiState = UIStore.getState();
-      Aviator.navigate(`/collection/${uiState.currentCollection.id}`);
+      const {currentCollection,isSync} = UIStore.getState();
+      Aviator.navigate(isSync
+        ? `/scollection/${currentCollection.id}`
+        : `/collection/${currentCollection.id}`
+      );
     }
   }
 

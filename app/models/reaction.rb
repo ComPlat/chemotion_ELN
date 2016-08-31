@@ -78,6 +78,8 @@ class Reaction < ActiveRecord::Base
 
   has_many :literatures, dependent: :destroy
 
+  has_many :sync_collections_users, through: :collections
+
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :auto_format_temperature!

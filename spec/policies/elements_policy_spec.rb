@@ -5,7 +5,6 @@ RSpec.describe ElementsPolicy do
   let(:u1){create(:person, first_name: 'User', last_name: 'One', name_abbreviation: 'U1x')}
   let(:u2){create(:person, first_name: 'User', last_name: 'Two', name_abbreviation: 'U2x')}
 
-  let(:u3){create(:person, first_name: 'User', last_name: 'Three', name_abbreviation: 'U3x')}
   let(:g1){create(:group,first_name: 'Group', users: [u1,u2], last_name: 'One Two',name_abbreviation: 'G1_2x')}
 
   let(:c1){create(:collection, user_id: u1.id, is_shared: nil, permission_level: 0, label: "U1x's collection")}
@@ -14,11 +13,10 @@ RSpec.describe ElementsPolicy do
   let(:c2_1){create(:collection, user_id: u2.id, is_shared: true, permission_level: 0, shared_by_id: u1.id, label: "U1x'share to U2x")}
   let(:cg1_2){create(:collection, user_id: g1.id, is_shared: true, permission_level: 0, shared_by_id: u2.id, label: "U2x'share to G1_2x")}
 
-  let!(:m){create(:molecule)}
 
-  let(:s1){create(:sample, name: 'sample 1', molecule: m)}
-  let(:s2){create(:sample, name: 'sample 2', molecule: m)}
-  let(:s3){create(:sample, name: 'sample 3', molecule: m)}
+  let(:s1){create(:sample, name: 'sample 1')}
+  let(:s2){create(:sample, name: 'sample 2')}
+  let(:s3){create(:sample, name: 'sample 3')}
 
   let(:samples_1){Sample.where(id: [s1.id])}
   let(:samples_2){Sample.where(id: [s1.id, s2.id])}

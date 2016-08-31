@@ -236,8 +236,11 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   showDetails(id) {
-    const {currentCollection} = UIStore.getState()
-    Aviator.navigate(`/collection/${currentCollection.id}/sample/${id}`);
+    const {currentCollection,isSync} = UIStore.getState()
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}/sample/${id}`
+      : `/collection/${currentCollection.id}/sample/${id}`
+    );
   }
 
   topSecretIcon(element) {

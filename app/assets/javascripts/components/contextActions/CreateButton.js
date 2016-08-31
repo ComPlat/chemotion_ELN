@@ -162,8 +162,11 @@ export default class CreateButton extends React.Component {
   }
 
   createElementOfType(type) {
-    const {currentCollection} = UIStore.getState();
-    Aviator.navigate(`/collection/${currentCollection.id}/${type}/new`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}/${type}/new`
+      : `/collection/${currentCollection.id}/${type}/new`
+    );
   }
 
   render() {

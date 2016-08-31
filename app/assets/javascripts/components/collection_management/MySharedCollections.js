@@ -30,12 +30,12 @@ export default class MySharedCollections extends React.Component {
   }
 
   componentDidMount() {
-    CollectionStore.listen(this.onStoreChange);
-    CollectionActions.fetchSharedCollectionRoots();
+    CollectionStore.listen(this.onStoreChange)
+    CollectionActions.fetchSharedCollectionRoots()
   }
 
-  componentWillUnmount(){
-    CollectionStore.unlisten(this.onStoreChange);
+  componentWillUnmount() {
+    CollectionStore.unlisten(this.onStoreChange)
   }
 
   onStoreChange(state) {
@@ -44,7 +44,7 @@ export default class MySharedCollections extends React.Component {
     this.setState({
       tree: {
         label: 'My Shared Collections',
-        children: children//state.sharedRoots
+        children: children
       }
     });
   }
@@ -60,12 +60,10 @@ export default class MySharedCollections extends React.Component {
     });
     oldTree.children = children
     this.setState({
-        tree: oldTree
+      tree: oldTree
     });
 
   }
-
-
 
   isActive(node) {
     return node === this.state.active ? "node is-active" : "node";
@@ -84,21 +82,24 @@ export default class MySharedCollections extends React.Component {
       )
     } else if (node.is_locked) {
       return (
-         <FormControl className="collection-label" type="text" id={node.id} disabled
-        value={node.label || ''}/>
+        <FormControl className="collection-label" type="text"
+          disabled
+          value={node.label || ''}
+        />
       )
 
     } else {
       return (
-        <FormControl className="collection-label" type="text" id={node.id}
-        value={node.label || ''} onChange={this.handleLabelChange.bind(this, node)}/>
+        <FormControl className="collection-label" type="text"
+          value={node.label || ''}
+          onChange={(e)=>{this.handleLabelChange(e,node)}}
+        />
       )
     }
   }
 
-  handleLabelChange(node) {
-    node.label = document.getElementById(node.id).value;
-
+  handleLabelChange(e,node) {
+    node.label = e.target.value;
     this.setState({
       tree: this.state.tree
     });
@@ -134,7 +135,9 @@ export default class MySharedCollections extends React.Component {
         <ButtonGroup className="actions">
           <Button bsSize="xsmall" bsStyle="danger"
             onClick={this.deleteCollection.bind(this, node)}
-            disabled={(node.children.length>0) ? true :false}>
+            disabled={true} //FIXME syn_coll needs this root locked collection
+            //disabled={(node.children.length>0) ? true : false}
+          >
             <i className="fa fa-trash-o"></i>
           </Button>
         </ButtonGroup>
@@ -142,7 +145,8 @@ export default class MySharedCollections extends React.Component {
     } else {
       return (
         <ButtonGroup className="actions">
-          <Button bsSize="xsmall" bsStyle="primary" onClick={this.editShare.bind(this, node)}>
+          <Button bsSize="xsmall" bsStyle="primary"
+            onClick={()=>this.editShare(node)}>
             <i className="fa fa-share-alt"></i>
           </Button>
           <Button bsSize="xsmall" bsStyle="danger" onClick={this.deleteCollection.bind(this, node)}>
@@ -153,7 +157,13 @@ export default class MySharedCollections extends React.Component {
     }
   }
 
-  // TODO add CollectionManagementStore?
+  editShare(node) {
+    let {modalProps,active} = this.state
+    modalProps.title = "Update Share Settings for '"+node.label+"'"
+    modalProps.show = true
+    active = node
+    this.setState({modalProps,active})
+  }
   deleteCollection(node) {
     let children = node.children || [];
     let parent = this.findParentById(this.state.tree, node.id);
@@ -206,12 +216,16 @@ export default class MySharedCollections extends React.Component {
     });
   }
 
-  editShare(node) {
-    let {modalProps,active} = this.state
-    modalProps.title = "Update Share Settings for '"+node.label+"'"
-    modalProps.show = true
-    active = node
-    this.setState({modalProps,active})
+  onClickNode(node) {
+    if (node.is_locked) {
+      this.setState({
+        active: {id: null}
+      });
+    } else {
+      this.setState({
+        active: node
+      });
+    }
   }
 
   handleModalHide() {
@@ -247,24 +261,14 @@ export default class MySharedCollections extends React.Component {
     }
   }
 
-  onClickNode(node) {
-    if (node.is_locked) {
-      this.setState({
-        active: {id: null}
-      });
-    } else {
-      this.setState({
-        active: node
-      });
-    }
-  }
+
 
   render() {
     let actNode = this.state.active
-    let trees = ()=> this.state.tree.children.map((e)=> {
+    let trees = ()=> this.state.tree.children.map((e,i)=> {
       return(
         <Tree
-          key={e.id}
+          key={i}
           paddingLeft={20}                         // left padding for children nodes in pixels
           tree={e}                   // tree object
           onChange={this.handleChange.bind(this)}  // onChange(tree) tree object changed

@@ -50,6 +50,15 @@ class CollectionActions {
       });};
   }
 
+  fetchSyncInCollectionRoots() {
+    return (dispatch) => { CollectionsFetcher.fetchSyncRemoteRoots()
+      .then((roots) => {
+        dispatch(roots);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   createSharedCollections(params) {
     return (dispatch) => { CollectionsFetcher.createSharedCollections(params)
       .then(() => {
@@ -79,6 +88,32 @@ class CollectionActions {
 
   createUnsharedCollection(params) {
     return (dispatch) => { CollectionsFetcher.createUnsharedCollection(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  createSync(params){
+    return (dispatch) => { CollectionsFetcher.createSync(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  editSync(params){
+    return (dispatch) => { CollectionsFetcher.editSync(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+  deleteSync(params){
+    return (dispatch) => { CollectionsFetcher.deleteSync(params)
       .then(() => {
         dispatch();
       }).catch((errorMessage) => {

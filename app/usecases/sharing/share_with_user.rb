@@ -26,7 +26,6 @@ module Usecases
 
           # find or create and assign parent collection ()
           root_label = "with %s" %c.user.name_abbreviation
-          p collection_attributes
           root_collection_attributes = {
             label: root_label,
             user_id: collection_attributes[:user_id],

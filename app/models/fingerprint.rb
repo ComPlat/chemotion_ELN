@@ -115,7 +115,7 @@ class Fingerprint < ActiveRecord::Base
     return screen.pluck(:id)
   }
 
-  def self.find_or_create_by_molfile molfile    
+  def self.find_or_create_by_molfile molfile
     molfile = self.standardized_molfile(molfile)
     fp_vector = Chemotion::OpenBabelService.fingerprint_from_molfile molfile
     existed_fp = Fingerprint.all

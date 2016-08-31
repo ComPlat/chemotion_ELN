@@ -426,8 +426,11 @@ class ElementStore {
 
   navigateToNewElement(element) {
     this.waitFor(UIStore.dispatchToken);
-    let uiState = UIStore.getState();
-    Aviator.navigate(`/collection/${uiState.currentCollection.id}/${element.type}/${element.id}`);
+    const {currentCollection,isSync} = UIStore.getState();
+    Aviator.navigate(isSync
+      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
+      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
+    );
   }
 
   handleGenerateEmptyElement(element) {
@@ -466,21 +469,21 @@ class ElementStore {
         uiState.currentCollection.id, page);
     } else {
       ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id,
-        {page: page, per_page: uiState.number_of_results});
+        {page: page, per_page: uiState.number_of_results},uiState.isSync);
 
       switch (type) {
         // fetch samples to handle creation of split samples
         case 'reaction':
           ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results});
+            {page: page, per_page: uiState.number_of_results},uiState.isSync);
           break;
         case 'wellplate':
           ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results});
+            {page: page, per_page: uiState.number_of_results},uiState.isSync);
           break;
         case 'screen':
           ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results});
+            {page: page, per_page: uiState.number_of_results},uiState.isSync);
           break;
       }
     }

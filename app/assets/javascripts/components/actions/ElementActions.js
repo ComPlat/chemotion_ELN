@@ -28,10 +28,10 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-      currentPage, searchType = null) {
+      currentPage, searchType = null, isSync=false) {
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(
-        selection, collectionId, currentPage, searchType)
+        selection, collectionId, currentPage, searchType, isSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -43,8 +43,8 @@ class ElementActions {
   // -- Collections --
 
 
-  fetchReactionsByCollectionId(id, queryParams={}) {
-    return (dispatch) => { ReactionsFetcher.fetchByCollectionId(id, queryParams)
+  fetchReactionsByCollectionId(id, queryParams={}, collectionIsSync = false) {
+    return (dispatch) => { ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -72,8 +72,8 @@ class ElementActions {
     return null;
   }
 
-  fetchSamplesByCollectionId(id, queryParams={}) {
-    return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams)
+  fetchSamplesByCollectionId(id, queryParams={}, collectionIsSync = false) {
+    return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -268,8 +268,8 @@ class ElementActions {
       });};
   }
 
-  fetchWellplatesByCollectionId(id, queryParams={}) {
-    return (dispatch) => { WellplatesFetcher.fetchByCollectionId(id, queryParams)
+  fetchWellplatesByCollectionId(id, queryParams={}, collectionIsSync = false) {
+    return (dispatch) => { WellplatesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -294,8 +294,8 @@ class ElementActions {
   }
 
 
-  fetchScreensByCollectionId(id, queryParams={}) {
-    return (dispatch) => { ScreensFetcher.fetchByCollectionId(id, queryParams)
+  fetchScreensByCollectionId(id, queryParams={}, collectionIsSync = false) {
+    return (dispatch) => { ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {

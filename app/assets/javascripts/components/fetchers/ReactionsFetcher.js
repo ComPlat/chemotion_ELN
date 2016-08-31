@@ -19,10 +19,10 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}) {
+  static fetchByCollectionId(id, queryParams={}, isSync=false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || 7;
-    let api = `/api/v1/reactions.json?collection_id=${id}&page=${page}&per_page=${per_page}`;
+    let api = `/api/v1/reactions.json?${isSync ? "sync_" : ""}collection_id=${id}&page=${page}&per_page=${per_page}`;
     let promise = fetch(api, {
         credentials: 'same-origin'
       })

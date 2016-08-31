@@ -41,12 +41,14 @@ class UIStore {
       currentCollection: null,
       currentTab: 1,
       currentSearchSelection: null,
-      showCollectionManagement: false
+      showCollectionManagement: false,
+      isSync: false,
     };
 
     this.bindListeners({
       handleSelectTab: UIActions.selectTab,
       handleSelectCollection: UIActions.selectCollection,
+      handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleToggleShowPreviews: UIActions.toggleShowPreviews,
       handleCheckElement: UIActions.checkElement,
@@ -157,10 +159,11 @@ class UIStore {
   handleSelectCollection(collection) {
     let state = this.state;
     let hasChanged =
-      (!state.currentCollection || state.currentCollection.id != collection.id)
+      (!state.currentCollection || state.isSync || state.currentCollection.id != collection.id)
       || (state.currentSearchSelection != null);
 
     if(hasChanged) {
+      this.state.isSync = false
       this.state.currentCollection = collection;
       this.state.number_of_results = 15;
       if (!collection.noFetch){
@@ -174,6 +177,32 @@ class UIStore {
           state.pagination);
         ElementActions.fetchScreensByCollectionId(collection.id,
           state.pagination);
+      }
+    }
+  }
+
+  handleSelectSyncCollection(collection) {
+    let state = this.state;
+    let hasChanged =
+      (!state.currentCollection || !state.isSync || state.currentCollection.id != collection.id)
+      || (state.currentSearchSelection != null);
+
+    if(hasChanged) {
+      this.state.isSync = true
+      let isSync = this.state.isSync
+      this.state.currentCollection = collection;
+      this.state.number_of_results = 15;
+      if (!collection.noFetch){
+        // FIXME state.pagination is undefined
+        // It should be like {page: 1,per_page: 15}.
+        ElementActions.fetchSamplesByCollectionId(collection.id,
+          state.pagination, isSync);
+        ElementActions.fetchReactionsByCollectionId(collection.id,
+          state.pagination, isSync);
+        ElementActions.fetchWellplatesByCollectionId(collection.id,
+          state.pagination, isSync);
+        ElementActions.fetchScreensByCollectionId(collection.id,
+          state.pagination, isSync);
       }
     }
   }
