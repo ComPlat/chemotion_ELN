@@ -213,7 +213,7 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-times"></i>
           </Button>
           <Button bsStyle="success" bsSize="xsmall" className="button-right"
-            style={{cursor: 'pointer', marginTop: '-47px', right: '3%'}}
+            style={{cursor: 'pointer', marginTop: '-47px', right: '5px'}}
             disabled={reaction.changed || reaction.isNew}
             title={(reaction.changed || reaction.isNew) ?
                    "Report can be generated after reaction is saved."

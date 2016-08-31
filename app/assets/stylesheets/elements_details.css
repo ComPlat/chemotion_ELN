@@ -3,7 +3,7 @@
 }
 
 .button-right {
-  position: absolute;
+  position: relative;;
   margin-right: 25px;
   margin-top: -47px;
   float: right;
