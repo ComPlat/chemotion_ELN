@@ -37,13 +37,13 @@ class App extends Component {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
 
-    $(document).on('keydown', this.documentKeyDown);
+    // $(document).on('keydown', this.documentKeyDown);
   }
 
   componentWillUnmount() {
     UIStore.unlisten(this.handleUiStoreChange);
 
-    $(document).off('keydown', this.documentKeyDown);
+    // $(document).off('keydown', this.documentKeyDown);
   }
 
   handleUiStoreChange(state) {
