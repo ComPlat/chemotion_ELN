@@ -13,3 +13,9 @@ table.reaction-scheme-solvent {
     padding: 2px 0;
   }
 }
+
+.panel-reaction > .panel-body {
+    padding: 5px;
+overflow-y: auto;
+max-height: 85vh;
+}

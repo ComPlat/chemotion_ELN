@@ -499,3 +499,6 @@ export default class SampleDetails extends React.Component {
     )
   }
 }
+SampleDetails.propTypes = {
+  sample: React.PropTypes.object,
+}

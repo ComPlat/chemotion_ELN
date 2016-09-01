@@ -35,9 +35,9 @@ const collect = (connect, monitor) => ({
 class MaterialGroupContainer extends Component {
   render() {
     const {materials, materialGroup, isOver, canDrop, connectDropTarget,
-           showLoadingColumn, deleteMaterial, onChange} = this.props;
+           showLoadingColumn, deleteMaterial, onChange, reaction} = this.props;
     let style = {
-      padding: 10
+      padding: '2px 5px'
     };
     if (isOver && canDrop) {
       style.borderStyle = 'dashed';
@@ -48,6 +48,7 @@ class MaterialGroupContainer extends Component {
     return connectDropTarget(
       <div style={style}>
         <MaterialGroup
+          reaction={reaction}
           onChange={onChange}
           materials={materials}
           materialGroup={materialGroup}
@@ -64,5 +65,8 @@ export default DropTarget([DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL]
 MaterialGroupContainer.propTypes = {
   materials: PropTypes.array.isRequired,
   materialGroup: PropTypes.string.isRequired,
-  deleteMaterial: PropTypes.func.isRequired
+  deleteMaterial: PropTypes.func.isRequired,
+  showLoadingColumn: PropTypes.object,
+  onChange: PropTypes.func,
+  reaction: PropTypes.object,
 };
