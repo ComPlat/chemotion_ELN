@@ -129,7 +129,10 @@ class App extends Component {
 }
 
 $(document).ready(function() {
-  ReactDOM.render(<App />, document.getElementById('app'));
-  initRoutes();
-  Aviator.dispatch();
+  let domElement = document.getElementById('app');
+  if (domElement){
+    ReactDOM.render(<App />, domElement);
+    initRoutes();
+    Aviator.dispatch();
+  }
 });
