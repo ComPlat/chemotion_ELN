@@ -23,11 +23,11 @@ GIT
 
 GIT
   remote: git://github.com/ComPlat/svg2pdf.git
-  revision: 13c070832a45fd70c60726a5888661ccc57f93cd
+  revision: 8b207a7e5bb6d1503b0d5da9d3c4dd74d7b6a43a
   specs:
     svg2pdf (0.2.0)
       activesupport
-      rsvg2
+      rsvg2 (= 3.0.8)
 
 GIT
   remote: git://github.com/cubuslab/openbabel-gem.git
