@@ -15,11 +15,12 @@ namespace :grape do
 
       api_class.routes.each do |grape_route|
         info = grape_route.instance_variable_get :@options
+        path = grape_route.pattern.path
         puts format % [
             info[:description] ? info[:description][0..45] : '',
             info[:version],
             info[:method],
-            mapped_prefix + info[:path],
+            path,
             '# params: ' + info[:params].length.to_s,
             info[:params].first.inspect
         ]
