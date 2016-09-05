@@ -11,12 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160809122557) do
+ActiveRecord::Schema.define(version: 20160901142139) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -149,6 +149,10 @@ ActiveRecord::Schema.define(version: 20160809122557) do
     t.datetime "updated_at"
     t.integer  "template_category_id"
     t.string   "status"
+    t.string   "icon_file_name"
+    t.string   "icon_content_type"
+    t.integer  "icon_file_size"
+    t.datetime "icon_updated_at"
   end
 
   add_index "ketcherails_common_templates", ["moderated_by"], name: "index_ketcherails_common_templates_on_moderated_by", using: :btree
@@ -168,9 +172,14 @@ ActiveRecord::Schema.define(version: 20160809122557) do
   add_index "ketcherails_custom_templates", ["user_id"], name: "index_ketcherails_custom_templates_on_user_id", using: :btree
 
   create_table "ketcherails_template_categories", force: :cascade do |t|
-    t.string   "name",       null: false
+    t.string   "name",              null: false
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "icon_file_name"
+    t.string   "icon_content_type"
+    t.integer  "icon_file_size"
+    t.datetime "icon_updated_at"
+    t.string   "sprite_class"
   end
 
   create_table "literatures", force: :cascade do |t|
@@ -207,6 +216,19 @@ ActiveRecord::Schema.define(version: 20160809122557) do
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
+
+  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.text     "path_1h"
+    t.text     "path_13c"
+    t.text     "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
+  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
 
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
