@@ -20,6 +20,9 @@
 /config/database.yml
 /node_modules
 
+/public/simulations/nmrdb/*
+!/public/simulations/nmrdb/.keep
+
 /public/images/molecules/*
 !/public/images/molecules/.keep
 

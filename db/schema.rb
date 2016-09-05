@@ -15,8 +15,8 @@ ActiveRecord::Schema.define(version: 20160901142139) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
