@@ -18,6 +18,11 @@
  @import "bootstrap";
  @import "icons";
  @import "font-awesome";
+
+
+ <%Bundler.load.current_dependencies.select{  |dep|  dep.groups.include?(:plugins)}.map(&:name).each do |plugin|%>
+ @import "<%=plugin%>";
+ <%end%>
 /*
 Show Bootstrap Grid as overlay for debugging
 
