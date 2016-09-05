@@ -63,18 +63,25 @@ module Chemotion
       desc "Return serialized reactions"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
+        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
       end
       paginate per_page: 7, offset: 0
 
       before do
         params[:per_page].to_i > 100 && (params[:per_page] = 100)
       end
-      
+
       get do
         scope = if params[:collection_id]
           begin
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
               find(params[:collection_id]).reactions
+          rescue ActiveRecord::RecordNotFound
+            Reaction.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
