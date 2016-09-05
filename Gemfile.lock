@@ -13,6 +13,13 @@ GIT
       sprite-factory
 
 GIT
+  remote: git://github.com/ComPlat/nmr_sim.git
+  revision: c3a5e30a6b2bdf563f0f6c1062f1e1d9b8304f73
+  specs:
+    nmr_sim (0.0.1)
+      rails (~> 4.2)
+
+GIT
   remote: git://github.com/ComPlat/sablon.git
   revision: 03130357d526230e36647a0d5d348ed3c5a51d42
   specs:
@@ -231,7 +238,7 @@ GEM
       glib2 (= 3.0.8)
     glib2 (3.0.8)
       pkg-config
-    globalid (0.3.6)
+    globalid (0.3.7)
       activesupport (>= 4.1.0)
     grape (0.16.2)
       activesupport
@@ -306,13 +313,13 @@ GEM
       skinny (~> 0.2.3)
       sqlite3 (~> 1.3)
       thin (~> 1.5.0)
-    mime-types (3.0)
+    mime-types (3.1)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2016.0221)
+    mime-types-data (3.2016.0521)
     mimemagic (0.3.1)
     mini_portile2 (2.0.0)
     minitest (5.9.0)
-    multi_json (1.12.0)
+    multi_json (1.12.1)
     multi_xml (0.5.5)
     multipart-post (2.0.0)
     mustermann19 (0.4.3)
@@ -377,7 +384,7 @@ GEM
       activesupport (= 4.2.0)
       rake (>= 0.8.7)
       thor (>= 0.18.1, < 2.0)
-    rake (11.1.2)
+    rake (11.2.2)
     rb-fsevent (0.9.7)
     rb-inotify (0.9.7)
       ffi (>= 0.5.0)
@@ -444,10 +451,10 @@ GEM
       thin (>= 1.5, < 1.7)
     spring (1.7.1)
     sprite-factory (1.7.1)
-    sprockets (3.6.0)
+    sprockets (3.7.0)
       concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
-    sprockets-rails (3.0.4)
+    sprockets-rails (3.2.0)
       actionpack (>= 4.0)
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
@@ -538,6 +545,7 @@ DEPENDENCIES
   ketcherails (= 0.1.3)!
   launchy (~> 2.4.3)
   mailcatcher
+  nmr_sim!
   nokogiri
   openbabel (= 2.3.2.1)!
   paranoia (~> 2.0)

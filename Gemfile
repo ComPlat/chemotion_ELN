@@ -142,4 +142,7 @@ end
 
 gem 'scifinding', '0.1.0', github: 'ComPlat/scifinding' , :group => [:plugins,:development,:production]
 
+# nmr simulation
+gem "nmr_sim", github: 'ComPlat/nmr_sim', :group => [:plugins,:development,:production]
+
 ####
