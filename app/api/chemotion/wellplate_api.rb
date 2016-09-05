@@ -61,6 +61,7 @@ module Chemotion
       desc "Return serialized wellplates"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
+        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
       end
       paginate per_page: 5, offset: 0
       before do
@@ -72,7 +73,13 @@ module Chemotion
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
               find(params[:collection_id]).wellplates
           rescue ActiveRecord::RecordNotFound
-              Wellplate.none
+            Wellplate.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.wellplates
+          rescue ActiveRecord::RecordNotFound
+            Wellplate.none
           end
         else
           # All collection of current_user

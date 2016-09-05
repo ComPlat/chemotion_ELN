@@ -7,6 +7,7 @@ module Chemotion
       desc "Return serialized screens"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
+        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
       end
       paginate per_page: 5, offset: 0
       before do
@@ -17,6 +18,12 @@ module Chemotion
           begin
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
               find(params[:collection_id]).screens
+          rescue ActiveRecord::RecordNotFound
+            Screen.none
+          end
+        elsif params[:sync_collection_id]
+          begin
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.screens
           rescue ActiveRecord::RecordNotFound
             Screen.none
           end
