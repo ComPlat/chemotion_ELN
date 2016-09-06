@@ -16,7 +16,7 @@ const collect = (connect, monitor) => ({
   isDragging: monitor.isDragging()
 });
 
-export default class Material extends Component {
+class Material extends Component {
   handleMaterialClick(sample) {
     const uiState = UiStore.getState();
     let currentURI = Aviator.getCurrentURI();
