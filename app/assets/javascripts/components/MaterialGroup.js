@@ -45,7 +45,9 @@ export default class MaterialGroup extends Component {
 
     return (
       materialGroup === 'solvents'
-        ? <SolventsMaterialGroup contents={contents} />
+        ? <SolventsMaterialGroup contents={contents}
+                                 materialGroup={materialGroup}
+                                 reaction={reaction} />
         : <GeneralMaterialGroup contents={contents}
                                 materialGroup={materialGroup}
                                 showLoadingColumn={showLoadingColumn}
@@ -109,18 +111,23 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
   )
 }
 
-const SolventsMaterialGroup = ({contents}) => {
+const SolventsMaterialGroup = ({contents, materialGroup, reaction}) => {
+  let addSampleButton = <Button bsStyle="success" bsSize="xs"
+    onClick={() => ElementActions.addSampleToMaterialGroup({reaction, materialGroup})}>
+      <Glyphicon glyph="plus" />
+  </Button>
+
   return (
     <div>
       <table width="100%" className="reaction-scheme">
         <thead><tr>
-        <th width="5%"></th>
-        <th width="14%">Name</th>
-        <th width="5%">T/R</th>
+        <th width="4%">{addSampleButton}</th>
+        <th width="21%">Solvents</th>
+        <th width="4%">T/R</th>
         <th width="27%">Label</th>
-        <th width="16%">Vol</th>
-        <th width="12%">Vol ratio</th>
-        <th width="5%"></th>
+        <th width="13%">Vol</th>
+        <th width="11%">Vol ratio</th>
+        <th width="4%"></th>
         </tr></thead>
         <tbody>
           {contents.map( item => item )}

@@ -18,7 +18,7 @@ module SVG
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
       @solvents = options[:solvents] || []
       @temperature = options[:temperature]
-      @arrow_y_shift = @solvents.count > 3 ? (@solvents.count - 3) * 12 : 0
+      @arrow_y_shift = @solvents.count > 3 ? (@solvents.count - 3) * 4 : 0
 
       @template = <<-END
         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
@@ -42,13 +42,20 @@ module SVG
         </svg>
       END
 
-      @label_solvents = @solvents.map.with_index do |solvent, index|
+      @label_solvents = solvents_lines.map.with_index do |solvent, index|
         <<-END
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{80 + index * 12  - @arrow_y_shift}" font-size="#{@word_size}">#{solvent}</text>
+            <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{80 + index * 12  - @arrow_y_shift}" font-size="#{@word_size - 1}">#{solvent}</text>
           </svg>
         END
       end.join("  ")
+    end
+
+    def solvents_lines
+      group_of_three = @solvents.each_slice(3).to_a
+      group_of_three.map do |i|
+        i.map{ |j| j[0..7] }
+      end.map{ |k| k.join(" / ") }
     end
 
     def compose_reaction_svg_and_save(options = {})
