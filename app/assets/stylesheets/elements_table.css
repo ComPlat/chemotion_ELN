@@ -16,6 +16,7 @@ th.drag {
 
 .collection-label {
   display: inline-block;
+  cursor: pointer;
 }
 
 .fa-user-secret {

@@ -84,6 +84,15 @@ export default class ScreenDetails extends Component {
     this.setState({ screen });
   }
 
+  screenHeader(screen) {
+    return (
+      <div>
+        {screen.name} &nbsp;
+        <ElementCollectionLabels element={screen}/>
+      </div>
+    )
+  }
+
   render() {
     const {screen} = this.state;
     const {id, wellplates, name, collaborator, result, conditions, requirements, description} = screen;
@@ -92,7 +101,7 @@ export default class ScreenDetails extends Component {
     return (
       <StickyDiv zIndex={2}>
       <div key={id}>
-        <Panel header="Screen Details"
+        <Panel header={this.screenHeader(screen)}
                bsStyle={screen.isEdited ? 'info' : 'primary'}
                className="panel-fixed">
           <Button bsStyle="danger"
@@ -101,8 +110,6 @@ export default class ScreenDetails extends Component {
                   onClick={this.closeDetails.bind(this)}>
             <i className="fa fa-times"></i>
           </Button>
-          <h3>{name}</h3>
-          <ElementCollectionLabels element={screen}/>
           <ListGroup fill>
             <ListGroupItem>
               <table width="100%"><tbody>

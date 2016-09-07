@@ -209,11 +209,16 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
+    return (
+      sample.title()
+    )
+  }
+
+  sampleInfo(sample) {
     const style = {height: '200px'};
     return (
       <Row style={style}>
         <Col md={4}>
-          <h3>{sample.title()}</h3>
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
@@ -480,13 +485,13 @@ export default class SampleDetails extends React.Component {
           />
         <StickyDiv zIndex={2}>
           <Panel className="panel-fixed"
-                 header="Sample Details"
+                 header={this.sampleHeader(sample)}
                  bsStyle={sample.isEdited ? 'info' : 'primary'}>
             <Button bsStyle="danger" bsSize="xsmall"
               className="button-right" onClick={this.closeDetails.bind(this)}>
               <i className="fa fa-times"></i>
             </Button>
-            {this.sampleHeader(sample)}
+            {this.sampleInfo(sample)}
             <ListGroup>
             <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
               {tabContents.map((e,i)=>e(i))}

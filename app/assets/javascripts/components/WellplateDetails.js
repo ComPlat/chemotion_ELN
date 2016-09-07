@@ -83,6 +83,15 @@ export default class WellplateDetails extends Component {
     this.setState({activeTab: event, showWellplate});
   }
 
+  wellplateHeader(wellplate) {
+    return(
+      <div>
+      {wellplate.name} &nbsp;
+      <ElementCollectionLabels element={wellplate}/>
+      </div>
+    )
+  }
+
   render() {
     const {wellplate, activeTab, showWellplate} = this.state;
     const {wells, name, size, description} = wellplate;
@@ -97,7 +106,7 @@ export default class WellplateDetails extends Component {
     return (
       <StickyDiv zIndex={2}>
         <div key={wellplate.id}>
-          <Panel header="Wellplate Details"
+          <Panel header={this.wellplateHeader(wellplate)}
                  bsStyle={wellplate.isEdited ? 'info' : 'primary'}
                  className="panel-fixed">
             <Button bsStyle="danger"
@@ -106,8 +115,6 @@ export default class WellplateDetails extends Component {
                     onClick={this.closeDetails.bind(this)}>
               <i className="fa fa-times"></i>
             </Button>
-            <h3>{name}</h3>
-            <ElementCollectionLabels element={wellplate}/>
             <ListGroup fill>
               <ListGroupItem>
                 <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
