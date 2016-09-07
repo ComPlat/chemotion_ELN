@@ -8,7 +8,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
     <ListGroup>
       <ListGroupItem header="">
         <Row>
-          <Col md={5}>
+          <Col md={6}>
             <FormGroup>
               <ControlLabel>Name</ControlLabel>
               <FormControl
@@ -19,21 +19,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
                 onChange={event => onInputChange('name', event)}/>
             </FormGroup>
           </Col>
-          <Col md={4}>
-            <label>Solvent</label>
-            <Select
-              name='solvent'
-              multi={false}
-              options={solventOptions}
-              value={reaction.solvent || ''}
-              disabled={reaction.isMethodDisabled('solvent')}
-              onChange={event => {
-                const wrappedEvent = {target: {value: event}};
-                onInputChange('solvent', wrappedEvent)
-              }}
-            />
-          </Col>
-          <Col md={3}>
+          <Col md={6}>
             <FormGroup>
               <ControlLabel>Temperature</ControlLabel>
               <FormControl

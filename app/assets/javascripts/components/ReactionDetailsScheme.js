@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import { ListGroup, ListGroupItem,Tooltip, OverlayTrigger} from 'react-bootstrap';
+import { ListGroup, ListGroupItem,Tooltip, OverlayTrigger,
+         Tabs, Tab, Row, Col, Collapse, Button, ButtonGroup } from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
 import Molecule from './models/Molecule';
@@ -353,7 +354,21 @@ export default class ReactionDetailsScheme extends Component {
     return reaction;
   }
 
-
+  solventCollapseBtn() {
+    const open = this.state.open;
+    const arrow = open
+      ? <i className="fa fa-angle-double-up"/>
+      : <i className="fa fa-angle-double-down"/>;
+    return (
+      <ButtonGroup vertical block>
+        <Button bsSize="xsmall"
+                style={{ backgroundColor: '#ddd' }}
+                onClick={ () => this.setState({ open: !open }) }>
+          { arrow } &nbsp; Solvent
+        </Button>
+      </ButtonGroup>
+    );
+  }
 
   render() {
     const {reaction} = this.state;
@@ -367,14 +382,13 @@ export default class ReactionDetailsScheme extends Component {
     )
     const multiSolventsTp = (
       <Tooltip id="multiSolventsTp">
-        <p>This will overwrite and disable 'solvent'.</p>
-        <p>You need to edit solvents as samples.</p>
-        <p>If you want to use 'solvent', you need to delete all 'multipe solvents'.</p>
+        <p>This will overwrite and disable 'Single Solvent'.</p>
+        <p>If you want to use 'Single Solvent', you need to delete all 'Multipe Solvents'.</p>
       </Tooltip>
     )
     const hintSolvent = (
       <div>
-        Solvent &nbsp;
+        Single Solvent &nbsp;
         <OverlayTrigger placement="top" overlay={solventTp}>
           <i className="fa fa-info-circle"/>
         </OverlayTrigger>
@@ -435,7 +449,41 @@ export default class ReactionDetailsScheme extends Component {
               />
 
           </ListGroupItem>
+          <ListGroupItem style={minPadding}>
+            { this.solventCollapseBtn() }
+            <Collapse in={ this.state.open }>
+              <Tabs defaultActiveKey={showMultiSolvents} id="reaction-solvents-tab">
+                <Tab eventKey={'solvent'} title={hintSolvent} disabled={showMultiSolvents === 'solvents'}>
+                  <Row>
+                    <Col md={6}>
+                      <Select
+                        name='solvent'
+                        multi={false}
+                        options={solventOptions}
+                        value={reaction.solvent}
+                        disabled={reaction.isMethodDisabled('solvent') || showMultiSolvents === 'solvents'}
+                        onChange={ event => this.props.onInputChange('solvent', {target: {value: event}})}
+                      />
+                    </Col>
+                  </Row>
+                </Tab>
+
+                <Tab eventKey={'solvents'} title={hintSolvents}>
+                  <MaterialGroupContainer
+                    reaction={reaction}
+                    materialGroup="solvents"
+                    materials={reaction.solvents}
+                    dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+                    deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+                    dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+                    showLoadingColumn={reaction.hasPolymers()}
+                    onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
+                </Tab>
+              </Tabs>
+            </Collapse>
+          </ListGroupItem>
         </ListGroup>
+
         <ReactionDetailsMainProperties
           reaction={reaction}
           onInputChange={(type, event) => this.props.onInputChange(type, event)} />

@@ -388,6 +388,7 @@ class Material extends Component {
         <td>
           <Button
             bsStyle="danger"
+            bsSize="small"
             onClick={() => deleteMaterial(material)} >
             <i className="fa fa-trash-o"></i>
           </Button>
