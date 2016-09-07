@@ -127,10 +127,18 @@ export default class StructureEditorModal extends React.Component {
 
 const StructureEditor =
   ({handleCancelBtn, handleSaveBtn, cancelBtnText, submitBtnText, submitAddons}) => {
+    let height = window.innerHeight;
+    let minHeight = 590;//min table height is 590px, each <tr> is 36px
+    let add_tr_count = ((height*0.75 - minHeight)/36).toFixed();// 75% screen
+    add_tr_count = add_tr_count < 0 ? 0 : add_tr_count
+    let adjustedHeight = add_tr_count*36 + minHeight;
     return (
       <div>
         <div>
-          <iframe id="ifKetcher" src="/ketcher"></iframe>
+          <iframe id="ifKetcher"
+                  style={{height: adjustedHeight }}
+                  src={"/ketcher?height=" + height + "&add_tr_count=" + add_tr_count }>
+          </iframe>
         </div>
         <div>
           <ButtonToolbar>
