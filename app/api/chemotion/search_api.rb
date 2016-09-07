@@ -24,7 +24,7 @@ module Chemotion
         return params[:selection].search_by_method unless structure_search
 
         page_size = params[:per_page].to_i
-        return  'structure'
+        return 'structure'
       end
 
       def serialization_by_elements_and_page(elements, page = 1)
@@ -33,16 +33,15 @@ module Chemotion
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
 
-        tmp = samples.empty? ? samples : paginate(samples)
-
+        samples = samples.empty? ? samples : paginate(samples)
         # After paging, now we can map to searchable for AllElementSearch
-        tmp = tmp.map(&:searchable) if tmp.first.is_a?(PgSearch::Document)
-        reactions = reactions.map(&:searchable) if reactions.first.is_a?(PgSearch::Document)
-        wellplates = wellplates.map(&:searchable) if wellplates.first.is_a?(PgSearch::Document)
-        screens = screens.map(&:searchable) if screens.first.is_a?(PgSearch::Document)
+        samples = samples.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
+        reactions = reactions.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
+        wellplates = wellplates.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
+        screens = screens.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
 
         serialized_samples = {
-          molecules: group_by_molecule(tmp)
+          molecules: group_by_molecule(samples)
         }
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
           .per(page_size).map {|s|
