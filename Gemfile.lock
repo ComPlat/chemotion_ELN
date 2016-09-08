@@ -31,7 +31,7 @@ GIT
 
 GIT
   remote: git://github.com/ComPlat/scifinding.git
-  revision: b4c6dcb5bf854682c33126ca41ac1dfd6984543a
+  revision: 8b48e1bc09a562e20e2de8eef45df95e01fe8847
   specs:
     scifinding (0.1.0)
       attr_encrypted (~> 3.0.1)
