@@ -50,7 +50,7 @@ gem 'sablon', github: 'ComPlat/sablon'
 gem 'rmagick'
 gem 'axlsx', git: 'git://github.com/randym/axlsx'
 # Import of elements from XLS and CSV file
-gem 'roo', ">2.3.0"
+gem 'roo', ">2.5.0"
 
 gem 'httparty'
 # Ketcher editor
