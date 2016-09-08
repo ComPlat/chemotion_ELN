@@ -7,12 +7,16 @@ const settings = [  {text: "formula", checked: true},
                   {text: "analysis", checked: true},
                   {text: "literature", checked: true} ]
 
+const configs = [ {text: "Page Break", checked: true},
+                  {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ]
+
 const originalState = {
   settings: settings,
-  configs: [ {text: "Page Break", checked: true} ],
+  configs: [ {text: "Page Break", checked: true},
+             {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ],
   checkedAllSettings: true,
   checkedAllConfigs: true,
   processingReport: false
 }
 
-export { originalState, settings }
+export { originalState, settings, configs }

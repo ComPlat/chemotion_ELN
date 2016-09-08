@@ -188,13 +188,17 @@ module Chemotion
 
       def set_configs(configs)
         {
-          pageBreak: configs.index("pagebreak")
+          pageBreak: configs.index("pagebreak"),
+          wholeFormula: configs.index("showallmater"),
+          productFormula: !configs.index("showallmater")
         }
       end
 
       def all_configs
         {
-          pageBreak: true
+          pageBreak: true,
+          wholeFormula: true,
+          productFormula: false
         }
       end
 

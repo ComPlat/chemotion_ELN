@@ -6,10 +6,10 @@ import {SVGContent, MaterialContent, DescriptionContent,
         AnalysesContent, LiteratureContent, SolventContent,
         StatusContent} from './ReportElements';
 
-const Reports = ({selectedReactions, settings}) => {
+const Reports = ({selectedReactions, settings, configs}) => {
   let reactions = selectedReactions.map( (reaction, i) => {
     return (
-      <Report key={i} reaction={reaction} settings={settings}/>
+      <Report key={i} reaction={reaction} settings={settings} configs={configs}/>
     )
   })
   return (
@@ -17,14 +17,21 @@ const Reports = ({selectedReactions, settings}) => {
   )
 }
 
-const Report = ({reaction, settings}) => {
+const Report = ({reaction, settings, configs}) => {
   const {name, description, literatures, starting_materials, reactants,
          products, solvents, solvent, dangerous_products, purification,
          observation, reaction_svg_file, tlc_description,
          tlc_solvents, rf_value, status } = reaction
 
   const settings_obj = settings.reduce((o, {text, checked} ) => {
-    o[text] = checked
+    const o_title = text.replace(/\s+/g, '').substring(0, 12);
+    o[o_title] = checked
+    return o
+  }, {})
+
+  const configs_obj = configs.reduce((o, {text, checked} ) => {
+    const o_title = text.replace(/\s+/g, '').substring(0, 12);
+    o[o_title] = checked
     return o
   }, {})
 
@@ -44,7 +51,9 @@ const Report = ({reaction, settings}) => {
       </Alert>
 
       <SVGContent show={settings_obj.formula}
-                  reaction_svg_file={reaction_svg_file} />
+                  reaction_svg_file={reaction_svg_file}
+                  isProductOnly={!configs_obj.Showallmater}
+                  products={products} />
       <MaterialContent  show={settings_obj.material}
                         starting_materials={starting_materials}
                         reactants={reactants}

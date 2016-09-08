@@ -93,7 +93,8 @@ export default class ReportContainer extends Component {
             <Tab eventKey={2} title={"Report"}>
               <div className="panel-fit-screen">
                 <Reports selectedReactions={this.state.selectedReactions}
-                         settings={this.state.settings} />
+                         settings={this.state.settings}
+                         configs={this.state.configs} />
               </div>
             </Tab>
           </Tabs>
