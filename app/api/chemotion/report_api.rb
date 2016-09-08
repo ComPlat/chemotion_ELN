@@ -3,6 +3,13 @@ module Chemotion
     resource :reports do
       desc "Build a report using the contents of a JSON file"
 
+      @@excluded_field = [
+        "id", "molecule_id", "analyses_dump", "created_by", "deleted_at",
+        "user_id", "fingerprint_id"
+      ]
+
+      @@included_field = ["molecule.cano_smiles", "molecule.sum_formular"]
+
       params do
         requires :id
       end
@@ -33,7 +40,7 @@ module Chemotion
           excel.add_sample(sample)
         end
 
-        excel.generate_file
+        excel.generate_file @@excluded_field, @@included_field
       end
 
       params do
@@ -58,7 +65,7 @@ module Chemotion
           end
         end
 
-        excel.generate_file
+        excel.generate_file @@excluded_field, @@included_field
       end
 
       params do
@@ -77,7 +84,7 @@ module Chemotion
           end
         end
 
-        excel.generate_file
+        excel.generate_file @@excluded_field, @@included_field
       end
 
       params do
@@ -97,7 +104,7 @@ module Chemotion
           end
         end
 
-        excel.generate_file
+        excel.generate_file @@excluded_field, @@included_field
       end
 
       params do
@@ -122,7 +129,7 @@ module Chemotion
           excel.add_sample(product)
         end
 
-        excel.generate_file
+        excel.generate_file @@excluded_field, @@included_field
       end
     end
 
