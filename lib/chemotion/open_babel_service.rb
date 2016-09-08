@@ -78,6 +78,15 @@ M  END
     smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
   end
 
+  def self.canon_smiles_to_smiles can_smiles
+    c = OpenBabel::OBConversion.new
+    c.set_in_format 'can'
+    c.set_out_format 'smi'
+    m = OpenBabel::OBMol.new
+    c.read_string m, can_smiles.to_s
+    smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+  end
+
   private
 
   def self.svg_from_molfile molfile, options={}
