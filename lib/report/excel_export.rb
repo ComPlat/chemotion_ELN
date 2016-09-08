@@ -7,36 +7,70 @@ class Report::ExcelExport
     @@sample_list << sample
   end
 
-  def generate_file
-    p = Axlsx::Package.new
+  def generate_file excluded_field, included_field
+    return -1 if @@sample_list.empty? || @@sample_list.first == nil
 
+    p = Axlsx::Package.new
     img = File.expand_path('../image1.jpeg', __FILE__)
 
     p.workbook.styles.fonts.first.name = 'Calibri'
     p.workbook.add_worksheet(:name => "ChemOffice") do |sheet|
-      sheet.add_row ["", "", "", "", "", ""]
-      sheet.add_row ["Bild", "", "", "Name", "Short Label", "Smiles Code"], :b => true, :sz => 12
+      header = @@sample_list.first.attribute_names
+      # Exclude field
+      header.delete_if { |x| excluded_field.include?(x) }
+      header = header.reject { |x| x.empty? }
+      header = header.uniq
+      associate_length = header.length
+      # Include field
+      associate_model = included_field.first.split(".")[0]
+      included_field = included_field.map! {|x|
+        x.slice!(associate_model + ".")
+        x
+      }
+      header = ["Image"] + header + included_field
+
+      # Add header
+      sheet.add_row header
 
       width = 0
       files = [] # do not let Tempfile object to be garbage collected
+
       @@sample_list.compact.each_with_index do |sample, row|
-        sample_info = Chemotion::OpenBabelService.molecule_info_from_molfile sample.molecule.molfile
         svg_path = Rails.root.to_s + '/public' + sample.get_svg_path
         image_data = get_image_from_svg(svg_path, files)
-        sheet.add_image(:image_src => image_data[:path], :noMove => true) do |image|
-          image.width = image_data[:width]
-          image.height = image_data[:height]
-          image.start_at 0, row + 2
+        img_src = image_data[:path]
+        sheet.add_image(:image_src => img_src,:noMove => true) do |img|
+          img.width = image_data[:width]
+          img.height = image_data[:height]
+          img.start_at 0, row + 1
         end
 
-        sheet.add_row ["", "A", row+1, sample_info[:title_legacy], sample_info[:formula], sample_info[:smiles]], :sz => 12, :height => image_data[:height] * 3/4 # 3/4 -> The misterious ratio!
+        # 3/4 -> The misterious ratio!
+        # See column explanation below
+        data_hash = [""]
+        (1..header.length - 1).each do |index|
+          key = header[index]
+          data = sample.attributes[key]
+          if index > (associate_length - 1)
+            asso = sample.send(associate_model)
+            data = asso.attributes[key]
+          end
+          data_hash << data
+        end
+        sheet.add_row data_hash,
+                      :sz => 12,
+                      :height => image_data[:height] * 3/4
 
-        if image_data[:width] > width # Get the biggest image size to set the column
+        # Get the biggest image size to set the column
+        if image_data[:width] > width
           width = image_data[:width]
         end
       end
 
-      sheet.column_info.first.width = width/8 # 1/8 -> The second misterious ratio (library bug?)
+      # 1/8 -> The second misterious ratio (library bug?)
+      # The creator mentioned about this
+      # https://github.com/randym/axlsx/issues/125#issuecomment-16834367
+      sheet.column_info.first.width = width/8
     end
 
     p.to_stream().read()
