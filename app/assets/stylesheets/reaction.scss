@@ -15,7 +15,20 @@ table.reaction-scheme-solvent {
 }
 
 .panel-reaction > .panel-body {
-    padding: 5px;
-overflow-y: auto;
-max-height: 85vh;
+  padding: 5px;
+  overflow-y: auto;
+  max-height: 85vh;
+}
+
+.small-padding > [class*='col-']:first-child {
+  padding-right: 5px;
+}
+
+.small-padding > [class*='col-']:last-child {
+  padding-left: 5px;
+}
+
+.small-padding > [class*='col-']:not(:first-child):not(:last-child) {
+  padding-right: 5px;
+  padding-left: 5px;
 }

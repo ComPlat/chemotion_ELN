@@ -75,22 +75,24 @@ export default class ReactionDetailsProperties extends Component {
         onInputChange={(type, event) => this.props.onInputChange(type, event)} />
       <ListGroup>
         <ListGroupItem>
-          <Row>
-            <Col md={4}>
-              <label>Status</label>
-              <Select
-                name='status'
-                multi={false}
-                options={statusOptions}
-                value={reaction.status}
-                disabled={reaction.isMethodDisabled('status')}
-                onChange={event => {
-                  const wrappedEvent = {target: {value: event}};
-                  this.props.onInputChange('status', wrappedEvent)
-                }}
+          <Row className="small-padding">
+            <Col md={3}>
+              <FormGroup>
+                <ControlLabel>Status</ControlLabel>
+                <Select
+                  name='status'
+                  multi={false}
+                  options={statusOptions}
+                  value={reaction.status}
+                  disabled={reaction.isMethodDisabled('status')}
+                  onChange={event => {
+                    const wrappedEvent = {target: {value: event}};
+                    this.props.onInputChange('status', wrappedEvent)
+                  }}
                 />
+              </FormGroup>
             </Col>
-            <Col md={4}>
+            <Col md={3}>
               <FormGroup>
                 <ControlLabel>Start</ControlLabel>
                 <InputGroup>
@@ -108,7 +110,7 @@ export default class ReactionDetailsProperties extends Component {
                 </InputGroup>
               </FormGroup>
             </Col>
-            <Col md={4}>
+            <Col md={3}>
               <FormGroup>
                 <ControlLabel>Stop</ControlLabel>
                 <InputGroup>
@@ -126,13 +128,9 @@ export default class ReactionDetailsProperties extends Component {
                 </InputGroup>
               </FormGroup>
             </Col>
-          </Row>
-
-          <Row>
-            <Col md={4}>
-            </Col>
-            <Col md={8}>
+            <Col md={3}>
               <FormGroup>
+                <ControlLabel>Duration</ControlLabel>
                 <InputGroup>
                   <FormControl
                     type="text"
