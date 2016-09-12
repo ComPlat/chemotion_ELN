@@ -405,6 +405,12 @@ export default class ReactionDetailsScheme extends Component {
 
     let minPadding = {padding: "1px 2px 2px 0px"}
 
+    // if no reference material then mark first starting material
+    let refM = this.props.reaction.starting_materials[0];
+    if(!this.props.reaction.referenceMaterial && refM) {
+      reaction.markSampleAsReference(refM.id);
+    }
+
     return (
       <div>
         <ListGroup fill>
