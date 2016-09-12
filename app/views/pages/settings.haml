@@ -5,11 +5,11 @@
 
   %br/
   %br/
-  - plugin_list.each do |plugin|
+  - plugin_with_setting_view_list.each do |plugin|
     .jumbotron
       .row
         %h3= plugin.to_s
-        = render "#{plugin}/home/account" 
+        = render "#{plugin}/home/account"
 
 
   = link_to "Back", root_path
