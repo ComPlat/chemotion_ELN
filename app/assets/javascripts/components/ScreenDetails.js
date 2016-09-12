@@ -87,7 +87,7 @@ export default class ScreenDetails extends Component {
   screenHeader(screen) {
     return (
       <div>
-        {screen.name} &nbsp;
+        <i className="icon-screen" /> &nbsp; {screen.name} &nbsp;
         <ElementCollectionLabels element={screen}/>
       </div>
     )

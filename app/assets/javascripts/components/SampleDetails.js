@@ -210,7 +210,9 @@ export default class SampleDetails extends React.Component {
 
   sampleHeader(sample) {
     return (
-      sample.title()
+      <div>
+        <i className="icon-sample" /> {sample.title()}
+      </div>
     )
   }
 
