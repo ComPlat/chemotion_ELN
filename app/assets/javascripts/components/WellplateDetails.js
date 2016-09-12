@@ -86,7 +86,7 @@ export default class WellplateDetails extends Component {
   wellplateHeader(wellplate) {
     return(
       <div>
-      {wellplate.name} &nbsp;
+      <i className="icon-wellplate" /> &nbsp; {wellplate.name} &nbsp;
       <ElementCollectionLabels element={wellplate}/>
       </div>
     )
