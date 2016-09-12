@@ -29,6 +29,15 @@
 /public/images/samples/*
 !/public/images/samples/.keep
 
+/public/images/ketcherails/*
+!/public/images/ketcherails/.keep
+
+/public/images/sprites/*
+!/public/images/sprites/.keep
+
+/public/images/templates/*
+!/public/images/templates/.keep
+
 /uploads/attachments/*
 /uploads/thumbnails
 !/public/attachments/.keep
