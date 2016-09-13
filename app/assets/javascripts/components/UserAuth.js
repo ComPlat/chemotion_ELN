@@ -72,3 +72,7 @@ export default class UserAuth extends Component {
     );
   }
 }
+
+UserAuth.propTypes = {
+  currentUser: React.PropTypes.object,
+}

@@ -9,9 +9,11 @@ Rails.application.routes.draw do
     get 'pages/groups', to: 'pages#groups'
   end
 
+  get 'home', to: 'pages#home'
+
   mount API => '/'
 
-  root :to => redirect("/users/sign_in")
+  root :to => redirect("home")
 
   get 'test', to: 'pages#test'
 end

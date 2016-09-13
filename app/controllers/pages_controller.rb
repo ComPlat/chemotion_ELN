@@ -1,5 +1,7 @@
 # TODO Welcoming logged in user; maybe removed later on
 class PagesController < ApplicationController
+  skip_before_action :authenticate_user!, only: [:home]
+
   def welcome
   end
 
@@ -27,6 +29,9 @@ class PagesController < ApplicationController
     @users = Person.all.map{|u| UserSerializer.new(u).serializable_hash.deep_stringify_keys }
   end
 
+  def home
+
+  end
 
   private
   def profile_param
