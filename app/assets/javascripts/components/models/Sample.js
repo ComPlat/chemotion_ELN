@@ -173,6 +173,7 @@ export default class Sample extends Element {
       residues: [],
       imported_readout: ''
     });
+    sample.sample_svg_file = molecule.sample_svg_file
 
     // allow zero loading for reaction product
     sample.reaction_product = (materialGroup == 'products');
