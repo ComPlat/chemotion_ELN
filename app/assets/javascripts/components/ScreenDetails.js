@@ -125,7 +125,7 @@ export default class ScreenDetails extends Component {
       <div key={id}>
         <Panel header={this.screenHeader(screen)}
                bsStyle={screen.isEdited ? 'info' : 'primary'}
-               className="panel-fixed">
+               className="panel-detail">
           <ListGroup fill>
             <ListGroupItem>
               <table width="100%"><tbody>

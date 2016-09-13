@@ -128,7 +128,7 @@ export default class WellplateDetails extends Component {
         <div key={wellplate.id}>
           <Panel header={this.wellplateHeader(wellplate)}
                  bsStyle={wellplate.isEdited ? 'info' : 'primary'}
-                 className="panel-fixed">
+                 className="panel-detail">
             <ListGroup fill>
               <ListGroupItem>
                 <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}

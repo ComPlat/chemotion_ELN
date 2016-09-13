@@ -508,7 +508,7 @@ export default class SampleDetails extends React.Component {
           hasChildren={hasChildren}
           />
         <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
-          <Panel className="panel-fixed"
+          <Panel className="panel-detail"
                  header={this.sampleHeader(sample)}
                  bsStyle={sample.isEdited ? 'info' : 'primary'}>
             {this.sampleInfo(sample)}
