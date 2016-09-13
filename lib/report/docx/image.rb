@@ -11,9 +11,18 @@ module Report
         png
       end
 
+      def generate_product_png
+        product_png
+      end
+
       private
       def png
         Sablon::Image.create_by_path(png_path)
+      end
+
+      def product_png
+        is_product_only = true
+        Sablon::Image.create_by_path(png_path(is_product_only))
       end
 
       def set_svg
@@ -23,8 +32,13 @@ module Report
                                               is_report: true).compose_reaction_svg
       end
 
-      def png_path
-        set_svg
+      def set_product_svg
+        @svg_file = SVG::ProductsComposer.new(materials_svg_paths,
+                                              is_report: true).compose_svg
+      end
+
+      def png_path(is_product_only = false)
+        is_product_only ? set_product_svg : set_svg
         unless svg_file.nil?
           file = Tempfile.new(['image', '.png'])
           svg_to_img("png").write_to_png(file.path)

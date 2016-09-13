@@ -13,6 +13,7 @@ module Report
           title: title,
           collections: collection_label,
           image: image,
+          image_product: image_product,
           status: status,
           starting_materials: starting_materials,
           reactants: reactants,
@@ -43,6 +44,10 @@ module Report
 
       def image
         Image.new(obj: obj).generate_png
+      end
+
+      def image_product
+        Image.new(obj: obj).generate_product_png
       end
 
       def status

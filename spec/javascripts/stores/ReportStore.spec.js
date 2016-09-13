@@ -37,7 +37,8 @@ describe('ReportStore', () => {
                   {text: "observation", checked: false},
                   {text: "analysis", checked: false},
                   {text: "literature", checked: false} ],
-      configs: [ {text: "Page Break", checked: true} ],
+      configs: [ {text: "Page Break", checked: true},
+                 {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ],
       checkedAllSettings: false,
       checkedAllConfigs: true,
       processingReport: false

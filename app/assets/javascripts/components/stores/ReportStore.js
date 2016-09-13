@@ -12,7 +12,8 @@ class ReportStore {
                       {text: "observation", checked: true},
                       {text: "analysis", checked: true},
   	                  {text: "literature", checked: true} ]
-    this.configs = [ {text: "Page Break", checked: true} ]
+    this.configs = [ {text: "Page Break", checked: true},
+                     {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ]
     this.checkedAllSettings = true
     this.checkedAllConfigs = true
     this.processingReport = false
@@ -87,7 +88,7 @@ class ReportStore {
   chainedItems(items) {
     return items.map(item => {
       return item.checked
-        ? item.text.replace(/\s+/g, '').toLowerCase()
+        ? item.text.replace(/\s+/g, '').substring(0, 12).toLowerCase()
         : null
     }).filter(r => r!=null).join('_')
   }

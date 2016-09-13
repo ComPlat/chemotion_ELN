@@ -2,14 +2,26 @@ import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
 import {Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
 
-const SVGContent = ({show, reaction_svg_file}) => {
+const SVGContent = ({show, reaction_svg_file, products, isProductOnly}) => {
   const svg_file =reaction_svg_file && `/images/reactions/${reaction_svg_file}`
+  const products_svg = products.map(s => `/images/molecules/${s.molecule.molecule_svg_file}`)
+  const products_svg_file = products_svg.map( svg => {
+    return (<td key={svg}> <SVG  src={svg} /> </td>)
+  })
+
+  if(!show) {
+    return null;
+  }
   return (
-    show
-      ? <div>
-          <SVG key={svg_file} src={svg_file} className='reaction-details'/>
-        </div>
-      : null
+    isProductOnly
+      ? <Table className='reaction-details'>
+          <tbody>
+            <tr>
+              { products_svg_file }
+            </tr>
+          </tbody>
+        </Table>
+      : <SVG key={svg_file} src={svg_file} className='reaction-details'/>
   )
 }
 
