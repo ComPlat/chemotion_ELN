@@ -44,20 +44,24 @@ export default class SampleDetails extends React.Component {
       materialGroup: null,
       showStructureEditor: false,
       loadingMolecule: false,
-      showElementalComposition: false
+      showElementalComposition: false,
+      offsetTop: 70
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
     this.onChange = this.onChange.bind(this)
+    this.handleResize = this.handleResize.bind(this);
   }
 
   componentDidMount() {
     ElementStore.listen(this.onChange);
+    window.addEventListener('resize', this.handleResize);
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     this.clipboard.destroy();
+    window.removeEventListener('resize', this.handleResize);
   }
 
   onChange(state) {
@@ -70,6 +74,13 @@ export default class SampleDetails extends React.Component {
         loadingMolecule: false
       });
     }
+  }
+
+  handleResize(e = null) {
+    let windowHeight = window.innerHeight || 1;
+    if (windowHeight < 500) {
+      this.setState({offsetTop:0} );
+    } else {this.setState({offsetTop:70})}
   }
 
   handleSampleChanged(sample) {
@@ -209,9 +220,20 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleHeader(sample) {
+    let saveBtnDisplay = sample.isEdited ? '' : 'none'
     return (
       <div>
         <i className="icon-sample" /> {sample.title()}
+        <Button bsStyle="danger" bsSize="xsmall"
+          className="button-right" onClick={() => this.closeDetails()}
+          style={{float: 'right', margin:"0px 2px"}}>
+          <i className="fa fa-times"></i>
+        </Button>
+        <Button bsStyle="warning" bsSize="xsmall"
+          onClick={() => this.submitFunction()} disabled={!this.sampleIsValid()}
+          style={{float: 'right', margin:"0px 2px", display: saveBtnDisplay}} >
+          <i className="fa fa-floppy-o "></i>
+        </Button>
       </div>
     )
   }
@@ -485,14 +507,10 @@ export default class SampleDetails extends React.Component {
           hasParent={hasParent}
           hasChildren={hasChildren}
           />
-        <StickyDiv zIndex={2}>
-          <Panel className="panel-fixed"
+        <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
+          <Panel className="panel-detail"
                  header={this.sampleHeader(sample)}
                  bsStyle={sample.isEdited ? 'info' : 'primary'}>
-            <Button bsStyle="danger" bsSize="xsmall"
-              className="button-right" onClick={this.closeDetails.bind(this)}>
-              <i className="fa fa-times"></i>
-            </Button>
             {this.sampleInfo(sample)}
             <ListGroup>
             <Tabs defaultActiveKey={0} id="SampleDetailsXTab">

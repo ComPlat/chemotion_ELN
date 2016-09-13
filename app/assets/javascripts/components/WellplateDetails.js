@@ -22,8 +22,11 @@ export default class WellplateDetails extends Component {
     this.state = {
       wellplate,
       activeTab: 0,
-      showWellplate: true
-    };
+      showWellplate: true,
+      offsetTop: 70
+    }
+
+    this.handleResize = this.handleResize.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -43,6 +46,13 @@ export default class WellplateDetails extends Component {
       ? `/scollection/${currentCollection.id}`
       : `/collection/${currentCollection.id}`
     );
+  }
+
+  handleResize(e = null) {
+    let windowHeight = window.innerHeight || 1;
+    if (windowHeight < 500) {
+      this.setState({offsetTop:0} );
+    } else {this.setState({offsetTop:70})}
   }
 
   handleSubmit() {
@@ -84,10 +94,20 @@ export default class WellplateDetails extends Component {
   }
 
   wellplateHeader(wellplate) {
+    let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
     return(
       <div>
       <i className="icon-wellplate" /> &nbsp; {wellplate.name} &nbsp;
       <ElementCollectionLabels element={wellplate}/>
+      <Button bsStyle="danger" bsSize="xsmall"
+        className="button-right" onClick={() => this.closeDetails()}
+        style={{float: 'right', margin:"0px 2px"}}>
+        <i className="fa fa-times"></i>
+      </Button>
+      <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.submitFunction()}
+              style={{float: 'right', margin:"0px 2px",display: saveBtnDisplay}} >
+        <i className="fa fa-floppy-o "></i>
+      </Button>
       </div>
     )
   }
@@ -104,17 +124,11 @@ export default class WellplateDetails extends Component {
     };
 
     return (
-      <StickyDiv zIndex={2}>
+      <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
         <div key={wellplate.id}>
           <Panel header={this.wellplateHeader(wellplate)}
                  bsStyle={wellplate.isEdited ? 'info' : 'primary'}
-                 className="panel-fixed">
-            <Button bsStyle="danger"
-                    bsSize="xsmall"
-                    className="button-right"
-                    onClick={this.closeDetails.bind(this)}>
-              <i className="fa fa-times"></i>
-            </Button>
+                 className="panel-detail">
             <ListGroup fill>
               <ListGroupItem>
                 <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}

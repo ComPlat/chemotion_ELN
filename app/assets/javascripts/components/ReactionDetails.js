@@ -240,8 +240,8 @@ export default class ReactionDetails extends Component {
 
     return (
       <StickyDiv zIndex={2} offsetTop={this.state.offsetTop} >
-        <Panel className=" panel-reaction" header={panelHeader}
-          bsStyle={reaction.isEdited ? 'info' : 'primary'}
+        <Panel className="panel-reaction" header={panelHeader}
+          bsStyle={reaction.changed ? 'info' : 'primary'}
         >
         {this.reactionSVG(reaction)}
         <div style={{position:"absolute", left: 0, top: 40, margin: "10px"}}>

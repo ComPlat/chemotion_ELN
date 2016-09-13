@@ -13,12 +13,24 @@ export default class ScreenDetails extends Component {
   constructor(props) {
     super(props);
     const {screen} = props;
-    this.state = { screen };
+    this.state = {
+      screen,
+      offsetTop: 70
+    }
+
+    this.handleResize = this.handleResize.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     const {screen} = nextProps;
     this.setState({ screen });
+  }
+
+  handleResize(e = null) {
+    let windowHeight = window.innerHeight || 1;
+    if (windowHeight < 500) {
+      this.setState({offsetTop:0} );
+    } else {this.setState({offsetTop:70})}
   }
 
   handleSubmit() {
@@ -85,10 +97,20 @@ export default class ScreenDetails extends Component {
   }
 
   screenHeader(screen) {
+    let saveBtnDisplay = screen.isEdited ? '' : 'none'
     return (
       <div>
         <i className="icon-screen" /> &nbsp; {screen.name} &nbsp;
         <ElementCollectionLabels element={screen}/>
+        <Button bsStyle="danger" bsSize="xsmall"
+          className="button-right" onClick={() => this.closeDetails()}
+          style={{float: 'right', margin:"0px 2px"}}>
+          <i className="fa fa-times"></i>
+        </Button>
+        <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.submitFunction()}
+                style={{float: 'right', margin:"0px 2px",display: saveBtnDisplay}} >
+          <i className="fa fa-floppy-o "></i>
+        </Button>
       </div>
     )
   }
@@ -99,17 +121,11 @@ export default class ScreenDetails extends Component {
 
     const submitLabel = screen.isNew ? "Create" : "Save";
     return (
-      <StickyDiv zIndex={2}>
+      <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
       <div key={id}>
         <Panel header={this.screenHeader(screen)}
                bsStyle={screen.isEdited ? 'info' : 'primary'}
-               className="panel-fixed">
-          <Button bsStyle="danger"
-                  bsSize="xsmall"
-                  className="button-right"
-                  onClick={this.closeDetails.bind(this)}>
-            <i className="fa fa-times"></i>
-          </Button>
+               className="panel-detail">
           <ListGroup fill>
             <ListGroupItem>
               <table width="100%"><tbody>
@@ -189,7 +205,8 @@ export default class ScreenDetails extends Component {
                 </tr>
               </tbody></table>
             </ListGroupItem>
-            <ListGroupItem header="Wellplates">
+            <ListGroupItem>
+              <h4 className="list-group-item-heading">Wellplates</h4>
               <ScreenWellplates
                 wellplates={wellplates}
                 dropWellplate={wellplate => this.dropWellplate(wellplate)}
