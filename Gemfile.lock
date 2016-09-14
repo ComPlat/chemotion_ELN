@@ -1,7 +1,6 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: e27a80884cbc8a77a28306a0bfff4ab7e2c10fdd
-  branch: eln_server
+  revision: b35e1162d664ace5a7e82563854359a3fe98db7e
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
