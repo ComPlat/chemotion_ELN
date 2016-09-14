@@ -31,10 +31,10 @@ GIT
 
 GIT
   remote: git://github.com/ComPlat/scifinding.git
-  revision: 8b48e1bc09a562e20e2de8eef45df95e01fe8847
+  revision: 42dc77a269910ce093a16e8445e25d501789421f
   specs:
-    scifinding (0.1.0)
-      attr_encrypted (~> 3.0.1)
+    scifinding (0.1.1)
+      attr_encrypted (= 3.0.1)
       oauth2
       rails (>= 4.2.0)
 
@@ -112,7 +112,7 @@ GEM
     ancestry (2.1.0)
       activerecord (>= 3.0.0)
     arel (6.0.3)
-    attr_encrypted (3.0.3)
+    attr_encrypted (3.0.1)
       encryptor (~> 3.0.0)
     autoprefixer-rails (6.3.6)
       execjs
@@ -560,7 +560,7 @@ DEPENDENCIES
   rtf
   sablon!
   sass-rails (~> 5.0)
-  scifinding (= 0.1.0)!
+  scifinding (= 0.1.1)!
   sdoc (~> 0.4.0)
   selenium-webdriver (~> 2.53.4)
   spring
