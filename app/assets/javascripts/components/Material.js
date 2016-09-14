@@ -273,7 +273,7 @@ class Material extends Component {
           {dropEffect: 'copy'}
         )}
 
-        <td style={inputsStyle}>
+        <td style={inputsStyle} style={{width: "25%", maxWidth: "50px"}}>
           {this.materialNameWithIupac(material)}
         </td>
         <td style={inputsStyle}>
@@ -352,7 +352,7 @@ class Material extends Component {
           {dropEffect: 'copy'}
         )}
 
-        <td>
+        <td style={inputsStyle} style={{width: "25%", maxWidth: "50px"}}>
           {this.materialNameWithIupac(material)}
         </td>
         <td>
@@ -413,9 +413,11 @@ class Material extends Component {
   materialNameWithIupac(material) {
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
-        <div>
-          {this.materialName()}<br/>
-          {material.iupac_name_tag(16)}
+        <div style={{display: "inline-block", maxWidth: "100%"}}>
+          {this.materialName()} <br/>
+          <span style={{display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%"}}>
+            {material.molecule_iupac_name}
+          </span>
         </div>
       </OverlayTrigger>
     )
