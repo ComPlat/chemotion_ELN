@@ -20,6 +20,8 @@ import StickyDiv from 'react-stickydiv'
 
 import {setReactionByType} from './ReactionDetailsShare'
 
+import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
@@ -38,6 +40,7 @@ export default class ReactionDetails extends Component {
     const {reaction} = this.state;
     window.addEventListener('resize', this.handleResize);
   }
+
   componentWillUnmount(){
     window.removeEventListener('resize', this.handleResize);
   }
@@ -194,13 +197,13 @@ export default class ReactionDetails extends Component {
     } else {
       return (
         <Col md={12}>
-          <SVG key={reaction.svgPath} src={reaction.svgPath} className='reaction-details'/>
+          <SvgFileZoomPan svgPath={reaction.svgPath}
+                          duration={300}
+                          resize={true} />
         </Col>
       )
     }
   }
-
-
 
   render() {
     let {reaction} = this.state;
