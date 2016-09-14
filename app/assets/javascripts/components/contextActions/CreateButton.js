@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, ButtonToolbar, DropdownButton, FormControl,
+import {SplitButton, Button, ButtonToolbar, DropdownButton, FormControl,
   FormGroup, ControlLabel, Modal, MenuItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
@@ -19,6 +19,10 @@ export default class CreateButton extends React.Component {
         wellplateCount: 0
       }
     }
+
+    this.createBtn = this.createBtn.bind(this)
+    this.createBtnTooltip = this.createBtnTooltip.bind(this)
+    this.getTabName = this.getTabName.bind(this)
   }
 
   getSampleFilter() {
@@ -169,15 +173,49 @@ export default class CreateButton extends React.Component {
     );
   }
 
-  render() {
-    const {isDisabled} = this.props;
-    const title = <i className="fa fa-plus"></i>;
-    const tooltip = (
-      <Tooltip id="create_button">Create new Element</Tooltip>
-    );
+  getTabName() {
+    let {currentTab} = UIStore.getState()
+    let type = 'sample'
+    switch(currentTab) {
+      case 1:
+        type = 'sample'
+        break;
+      case 2:
+        type = 'reaction'
+        break;
+      case 3:
+        type = 'wellplate'
+        break;
+      case 4:
+        type = 'screen'
+    }
+
+    return type
+  }
+
+  createBtn() {
+    let type = this.getTabName()
     return (
-      <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <DropdownButton id='crate-button-dropdown' bsStyle="primary" title={title} disabled={isDisabled}>
+      <div>
+        <i className={"icon-" + type}></i> &nbsp; <i className="fa fa-plus"></i>
+      </div>
+    )
+  }
+
+  createBtnTooltip() {
+    let type = this.getTabName()
+    return (
+      <Tooltip id="create_button">Create new {type}</Tooltip>
+    )
+  }
+
+  render() {
+    const {isDisabled} = this.props
+    return (
+      <OverlayTrigger placement="bottom" overlay={this.createBtnTooltip()}>
+        <SplitButton id='create-split-button' bsStyle="primary"
+                     title={this.createBtn()} disabled={isDisabled}
+                     onClick={() => this.createElementOfType(this.getTabName())}>
           {this.createWellplateModal()}
           <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
           <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
@@ -189,7 +227,7 @@ export default class CreateButton extends React.Component {
           <MenuItem divider />
           <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
           <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
-        </DropdownButton>
+        </SplitButton>
       </OverlayTrigger>
     )
   }
