@@ -14,7 +14,7 @@ GIT
 
 GIT
   remote: git://github.com/ComPlat/nmr_sim.git
-  revision: c3a5e30a6b2bdf563f0f6c1062f1e1d9b8304f73
+  revision: c3f4e6b99988f62dca589fc170836cfd1ee29ce5
   specs:
     nmr_sim (0.0.1)
       rails (~> 4.2)
