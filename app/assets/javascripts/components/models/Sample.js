@@ -275,10 +275,7 @@ export default class Sample extends Element {
   }
 
   get preferred_label() {
-    return this._external_label ?
-            this._external_label
-            :
-            this.molecule.iupac_name;
+    return this._external_label || this.molecule.iupac_name || this.molecule.sum_formular;
   }
 
   iupac_name_tag(length) {
