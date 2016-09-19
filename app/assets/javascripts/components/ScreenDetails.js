@@ -98,13 +98,16 @@ export default class ScreenDetails extends Component {
 
   screenHeader(screen) {
     let saveBtnDisplay = screen.isEdited ? '' : 'none'
+    let className = "button-right button-right-header "
+    if (screen.isNew)
+      className += "button-right-create"
+
     return (
       <div>
         <i className="icon-screen" /> &nbsp; {screen.name} &nbsp;
         <ElementCollectionLabels element={screen}/>
         <Button bsStyle="danger" bsSize="xsmall"
-          className="button-right" onClick={() => this.closeDetails()}
-          style={{float: 'right', margin:"0px 2px"}}>
+          className={className} onClick={() => this.closeDetails()} >
           <i className="fa fa-times"></i>
         </Button>
         <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.submitFunction()}

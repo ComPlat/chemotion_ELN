@@ -11,6 +11,14 @@
   z-index: 1;
 }
 
+.button-right-header {
+  margin: 0px 2px;
+}
+
+.button-right-create {
+  margin: -22px 2px;
+}
+
 .no-margin {
   margin: 0 !important;
 }
