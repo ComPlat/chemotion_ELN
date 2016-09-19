@@ -160,65 +160,40 @@ module Chemotion
           current_collection_id = ui_state[:currentCollection].id
           collection_id = params[:collection_id]
           unless Collection.find(collection_id).is_shared
+            # Move Sample
             sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
               ui_state[:sample],
               CollectionsSample,
               current_collection_id
-            )
+            ).compact
+            CollectionsSample.move_to_collection(sample_ids,
+              current_collection_id, collection_id)
 
-            CollectionsSample.where(
-              sample_id: sample_ids,
-              collection_id: current_collection_id
-            ).delete_all
-
-            sample_ids.map { |id|
-              CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
-            }
-
+            # Move Reaction
             reaction_ids = Reaction.for_user(current_user.id).for_ui_state_with_collection(
               ui_state[:reaction],
               CollectionsReaction,
               current_collection_id
-            )
+            ).compact
+            CollectionsReaction.move_to_collection(reaction_ids,
+              current_collection_id, collection_id)
 
-            CollectionsReaction.where(
-              reaction_id: reaction_ids,
-              collection_id: current_collection_id
-            ).delete_all
-
-            reaction_ids.map { |id|
-              CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
-            }
-
+            # Move Wellplate
             wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(
               ui_state[:wellplate],
               CollectionsWellplate,
               current_collection_id
-            )
-
-            CollectionsWellplate.where(
-              wellplate_id: wellplate_ids,
-              collection_id: current_collection_id
-            ).delete_all
-
-            wellplate_ids.map { |id|
-              CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
-            }
-
+            ).compact
+            CollectionsWellplate.move_to_collection(wellplate_ids,
+              current_collection_id, collection_id)
+            # Move Screen
             screen_ids = Screen.for_user(current_user.id).for_ui_state_with_collection(
               ui_state[:screen],
               CollectionsScreen,
               current_collection_id
-            )
-
-            CollectionsScreen.where(
-              screen_id: screen_ids,
-              collection_id: current_collection_id
-            ).delete_all
-
-            screen_ids.map { |id|
-              CollectionsScreen.find_or_create_by(screen_id: id, collection_id: collection_id)
-            }
+            ).compact
+            CollectionsScreen.move_to_collection(screen_ids,
+              current_collection_id, collection_id)
           end
         end
 
@@ -231,38 +206,37 @@ module Chemotion
           ui_state = params[:ui_state]
           collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollection].id
-
-          Sample.for_user(current_user.id).for_ui_state_with_collection(
+          # Assign Sample
+          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:sample],
             CollectionsSample,
             current_collection_id
-          ).each do |id|
-            CollectionsSample.find_or_create_by(sample_id: id, collection_id: collection_id)
-          end
+          )
+          CollectionsSample.create_in_collection(sample_ids, collection_id)
 
-          Reaction.for_user(current_user.id).for_ui_state_with_collection(
+          # Assign Reaction
+          reaction_ids = Reaction.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:reaction],
             CollectionsReaction,
             current_collection_id
-          ).each do |id|
-            CollectionsReaction.find_or_create_by(reaction_id: id, collection_id: collection_id)
-          end
+          )
+          CollectionsReaction.create_in_collection(reaction_ids, collection_id)
 
-          Wellplate.for_user(current_user.id).for_ui_state_with_collection(
+          # Assign Wellplate
+          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:wellplate],
             CollectionsWellplate,
             current_collection_id
-          ).each do |id|
-            CollectionsWellplate.find_or_create_by(wellplate_id: id, collection_id: collection_id)
-          end
+          )
+          CollectionsWellplate.create_in_collection(wellplate_ids, collection_id)
 
-          Screen.for_user(current_user.id).for_ui_state_with_collection(
+          # Assign Screen
+          screen_ids = Screen.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:screen],
             CollectionsScreen,
             current_collection_id
-          ).each do |id|
-            CollectionsScreen.find_or_create_by(screen_id: id, collection_id: collection_id)
-          end
+          )
+          CollectionsScreen.create_in_collection(screen_ids, collection_id)
         end
 
         desc "Remove from a collection a set of elements by UI state"
@@ -273,49 +247,37 @@ module Chemotion
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollection].id
 
+          # Remove Sample
           sample_ids = Sample.for_ui_state_with_collection(
             ui_state[:sample],
             CollectionsSample,
             current_collection_id
           )
+          CollectionsSample.remove_in_collection(sample_ids, current_collection_id)
 
-          CollectionsSample.where(
-            sample_id: sample_ids,
-            collection_id: current_collection_id
-          ).delete_all
-
+          # Remove Reaction
           reaction_ids = Reaction.for_ui_state_with_collection(
             ui_state[:reaction],
             CollectionsReaction,
             current_collection_id
           )
+          CollectionsReaction.remove_in_collection(reaction_ids, current_collection_id)
 
-          CollectionsReaction.where(
-            reaction_id: reaction_ids,
-            collection_id: current_collection_id
-          ).delete_all
-
+          # Remove Wellplate
           wellplate_ids = Wellplate.for_ui_state_with_collection(
             ui_state[:wellplate],
             CollectionsWellplate,
             current_collection_id
           )
+          CollectionsWellplate.remove_in_collection(wellplate_ids, current_collection_id)
 
-          CollectionsWellplate.where(
-            wellplate_id: wellplate_ids,
-            collection_id: current_collection_id
-          ).delete_all
-
+          # Remove Screen
           screen_ids = Screen.for_ui_state_with_collection(
             ui_state[:screen],
             CollectionsScreen,
             current_collection_id
           )
-
-          CollectionsScreen.where(
-            screen_id: screen_ids,
-            collection_id: current_collection_id
-          ).delete_all
+          CollectionsScreen.remove_in_collection(screen_ids, current_collection_id)
         end
 
       end
