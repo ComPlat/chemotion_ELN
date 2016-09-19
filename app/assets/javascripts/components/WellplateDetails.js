@@ -95,13 +95,16 @@ export default class WellplateDetails extends Component {
 
   wellplateHeader(wellplate) {
     let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
+    let className = "button-right button-right-header "
+    if (wellplate.isNew)
+      className += "button-right-create"
+
     return(
       <div>
       <i className="icon-wellplate" /> &nbsp; {wellplate.name} &nbsp;
       <ElementCollectionLabels element={wellplate}/>
       <Button bsStyle="danger" bsSize="xsmall"
-        className="button-right" onClick={() => this.closeDetails()}
-        style={{float: 'right', margin:"0px 2px"}}>
+        className={className} onClick={() => this.closeDetails()} >
         <i className="fa fa-times"></i>
       </Button>
       <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.submitFunction()}

@@ -68,7 +68,7 @@ export default class WellplateList extends Component {
                   style={style}
                   value={readout || ''}
                   onChange={event => this.handleReadoutOfWellChange(event, well)}
-                  groupClassName="no-margin"
+                  className="no-margin"
                 />
               </td>
               <td style={inputContainerStyle}>
@@ -77,7 +77,7 @@ export default class WellplateList extends Component {
                   style={style}
                   value={importedReadout || ''}
                   disabled
-                  groupClassName="no-margin"
+                  className="no-margin"
                 />
               </td>
             </tr>
