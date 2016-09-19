@@ -139,6 +139,14 @@ class Sample < ActiveRecord::Base
   after_save :update_data_for_reactions
   after_create :update_counter
 
+  def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
+    (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq
+  end
+
+  def self.associated_by_user_id_and_wellplate_ids(user_id, wellplate_ids)
+    for_user(user_id).by_wellplate_ids(wellplate_ids)
+  end
+
   def create_subsample user, collection_id
     subsample = self.dup
     subsample.short_label = nil # we need to reset it
@@ -165,14 +173,6 @@ class Sample < ActiveRecord::Base
     elsif
       self.short_label ||= 'NEW'
     end
-  end
-
-  def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
-    (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq
-  end
-
-  def self.associated_by_user_id_and_wellplate_ids(user_id, wellplate_ids)
-    for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
   def reactions

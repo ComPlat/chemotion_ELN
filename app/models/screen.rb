@@ -21,7 +21,7 @@ class Screen < ActiveRecord::Base
   has_many :collections_screens, dependent: :destroy
   has_many :collections, through: :collections_screens
   has_many :sync_collections_users, through: :collections
-  
+
   has_many :screens_wellplates, dependent: :destroy
   has_many :wellplates, through: :screens_wellplates
 end

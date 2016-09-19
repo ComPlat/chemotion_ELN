@@ -5,6 +5,10 @@ class ReactionsProductSample < ActiveRecord::Base
 
   include Reactable
 
+  def self.get_samples reaction_ids
+    self.where(reaction_id: reaction_ids).pluck(:sample_id).compact.uniq
+  end
+
   def formatted_yield
     self.equivalent ? (self.equivalent * 100).to_s + " %" : " %"
   end

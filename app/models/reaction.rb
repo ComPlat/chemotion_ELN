@@ -84,6 +84,13 @@ class Reaction < ActiveRecord::Base
   before_save :cleanup_array_fields
   before_save :auto_format_temperature!
 
+  def self.get_associated_samples(reaction_ids)
+    ( ReactionsProductSample.get_samples(reaction_ids) +
+      ReactionsStartingMaterialSample.get_samples(reaction_ids) +
+      ReactionsReactantSample.get_samples(reaction_ids)
+    ).compact
+  end
+
   def samples
     starting_materials + reactants + products + solvents
   end
