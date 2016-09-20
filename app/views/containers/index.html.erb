@@ -1,0 +1,31 @@
+<h1>Listing containers</h1>
+
+<%= link_to 'New container', new_container_path %>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Parent folder</th>
+  </tr>
+
+  <% @containers.each do |container| %>
+    <tr>
+      <td><%= container.name %></td>
+      <td align="center"><%= container.parentFolder %></td>
+      <td><%= link_to 'Show', container_path(container) %> </td>
+      <td> | <%= link_to 'Edit', edit_container_path(container) %> |</td>
+      <td>
+        <%= form_for([container, container.attachments.build]) do |f| %>
+          Add file: <%= f.label :filename %> <%= f.text_field :filename %>  <%= f.submit %>
+        <% end %>
+      </td>
+    </tr>
+
+    <%container.attachments.each do |attachment| %>
+      <tr>
+        <td>---</td>
+        <td colspan="3"><%= attachment.filename %> </td>
+      </tr>
+    <% end %>
+  <% end %>
+</table>

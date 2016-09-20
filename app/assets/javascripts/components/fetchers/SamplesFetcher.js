@@ -40,6 +40,7 @@ export default class SamplesFetcher {
         return response.json()
       }).then((json) => {
         return new Sample(json.sample);
+
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

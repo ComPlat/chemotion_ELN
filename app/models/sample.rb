@@ -99,6 +99,8 @@ class Sample < ActiveRecord::Base
   belongs_to :fingerprints
   belongs_to :user
 
+  has_one :container
+
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
   has_many :residues

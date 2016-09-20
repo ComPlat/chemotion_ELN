@@ -1,0 +1,6 @@
+development:
+  method: pop3
+  address: pop.gmx.net
+  port: 995
+  user: dummy0@gmx.de
+  passwd: 

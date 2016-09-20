@@ -1,0 +1,18 @@
+<h1>Edit container</h1>
+
+<%= form_for :container, url: container_path(@container), method: :patch do |f| %>
+  <p>
+    <%= f.label :name %><br>
+    <%= f.text_field :name %>
+  </p>
+
+  <p>
+    <%= f.label :parentFolder %><br>
+    <%= f.text_field :parentFolder %>
+  </p>
+
+  <p>
+    <%= f.submit %>
+  </p>
+<% end %>
+<%= link_to 'Back', containers_path %>

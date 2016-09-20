@@ -20,6 +20,7 @@
 .coveralls.yml
 
 .env
+/config/mailcollector.yml
 /config/database.yml
 /node_modules
 
