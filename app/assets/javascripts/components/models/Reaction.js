@@ -164,7 +164,9 @@ export default class Reaction extends Element {
     }
 
     materials.push(material);
-    this.temporary_sample_counter += 1;
+    // Skip short_label for reactants and solvents
+    if (materialGroup != "reactants" && materialGroup != "solvents")
+      this.temporary_sample_counter += 1;
   }
 
   deleteMaterial(material, materialGroup) {

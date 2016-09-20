@@ -266,7 +266,15 @@ module ReactionUpdator
               #TODO extract subsample method
               subsample = parent_sample.dup
               subsample.parent = parent_sample
-              subsample.short_label = nil #we don't want to inherit short_label from parent
+
+              if (material_group == :reactant || material_group == :solvent)
+                # Use 'reactants' or 'solvents' as short_label
+                subsample.short_label = sample.short_label
+              else
+                #we don't want to inherit short_label from parent
+                subsample.short_label = nil
+              end
+
               subsample.created_by = current_user.id
               subsample.name = sample.name
               subsample.target_amount_value = sample.target_amount_value
