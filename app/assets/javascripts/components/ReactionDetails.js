@@ -217,7 +217,7 @@ export default class ReactionDetails extends Component {
     let hasChanged = reaction.changed ? '' : 'none'
     const panelHeader =
       <h4>
-        <i className="icon-reaction"/>&nbsp;{reaction.name}
+        <i className="icon-reaction"/>&nbsp;{reaction.title()}
         <Button bsStyle="danger" bsSize="xsmall"
           style={{float: 'right', margin:"0px 2px"}} onClick={this.closeDetails.bind(this)}>
           <i className="fa fa-times"></i>

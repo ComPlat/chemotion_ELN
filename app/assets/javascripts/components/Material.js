@@ -23,6 +23,19 @@ class Material extends Component {
     Aviator.navigate(`${currentURI}/sample/${sample.id}`);
   }
 
+  materialName() {
+    const {material} = this.props;
+    if(!material.isNew) {
+      return (
+        <a onClick={() => this.handleMaterialClick(material)} style={{cursor: 'pointer'}}>
+          {material.title()}
+        </a>
+      );
+    } else {
+      return material.title();
+    }
+  }
+
   notApplicableInput(inputsStyle) {
     return (
       <td style={inputsStyle}>
@@ -398,43 +411,12 @@ class Material extends Component {
   }
 
   materialNameWithIupac(material) {
-    // Skip shortLabel for reactants and solvents
-    let skipShortLabel = this.props.materialGroup == 'reactants' ||
-                         this.props.materialGroup == 'solvents'
-    let materialName = ""
-    let moleculeIupacName = ""
-    var idCheck = /^\d+$/
-
-    if (skipShortLabel) {
-      if (idCheck.test(material.id)) {
-        materialName =
-          <a onClick={() => this.handleMaterialClick(material)}
-             style={{cursor: 'pointer'}}>
-            {material.molecule_iupac_name}
-          </a>
-      } else {
-        materialName =
-          <span>{material.molecule_iupac_name}</span>
-      }
-    } else {
-      moleculeIupacName = material.molecule_iupac_name
-      materialName =
-        <a onClick={() => this.handleMaterialClick(material)} style={{cursor: 'pointer'}}>
-          {material.title()}
-        </a>
-      if (material.isNew)
-        materialName = material.title()
-    }
-
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div style={{display: "inline-block", maxWidth: "100%"}}>
-          {materialName}
-          <br/>
-          <span style={{display: "block", whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis", maxWidth: "100%"}}>
-            {moleculeIupacName}
+          {this.materialName()} <br/>
+          <span style={{display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%"}}>
+            {material.molecule_iupac_name}
           </span>
         </div>
       </OverlayTrigger>
