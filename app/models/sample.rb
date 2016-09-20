@@ -164,8 +164,6 @@ class Sample < ActiveRecord::Base
   end
 
   def auto_set_short_label
-    return if (self.short_label == 'reactants' || self.short_label == 'solvents')
-
     self.short_label = nil if self.short_label == 'NEW SAMPLE'
 
     if parent
@@ -404,7 +402,6 @@ private
   end
 
   def update_counter
-    return if (self.short_label == 'reactants' || self.short_label == 'solvents')
     self.creator.increment_counter 'samples' unless self.parent
   end
 end

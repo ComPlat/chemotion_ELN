@@ -81,9 +81,10 @@ describe Chemotion::ReactionAPI do
 
     describe 'DELETE /api/v1/reactions' do
       context 'with valid parameters' do
+        let(:user) { create(:user) }
 
         it 'should be able to delete a reaction' do
-          r = Reaction.create(name: 'test')
+          r = Reaction.create(name: 'test', created_by: user.id)
           reaction_id = r.id
           CollectionsReaction.create(reaction_id: r.id, collection_id: 1)
           delete "/api/v1/reactions/#{reaction_id}", { id: reaction_id }

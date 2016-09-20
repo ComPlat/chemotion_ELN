@@ -2,14 +2,15 @@ import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
 
+import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 
 export default class Reaction extends Element {
   static buildEmpty(collection_id) {
-    return new Reaction({
+    let reaction = new Reaction({
       collection_id: collection_id,
       type: 'reaction',
-      name: this.buildReactionName(),
+      name: '',
       status: "",
       description: "",
       timestamp_start: "",
@@ -29,14 +30,17 @@ export default class Reaction extends Element {
       literatures: [],
       solvent: ''
     })
+
+    reaction.short_label = this.buildReactionShortLabel()
+    return reaction
   }
 
-  static buildReactionName() {
-    let {currentUser} = UserStore.getState();
+  static buildReactionShortLabel() {
+    let {currentUser} = UserStore.getState()
     if(!currentUser) {
       return 'New Reaction';
     } else {
-      return `${currentUser.initials} Reaction #${currentUser.reactions_count + 1}`;
+      return `${currentUser.initials}-R${currentUser.reactions_count + 1}`;
     }
   }
 
@@ -49,10 +53,6 @@ export default class Reaction extends Element {
   }
 
   serialize() {
-    if(this.name == 'New Reaction') {
-      this.name = Reaction.buildReactionName();
-    }
-
     return super.serialize({
       collection_id: this.collection_id,
       id: this.id,
@@ -69,6 +69,7 @@ export default class Reaction extends Element {
       tlc_description: this.tlc_description,
       rf_value: this.rf_value,
       temperature: this.temperature,
+      short_label: this.short_label,
       status: this.status,
       reaction_svg_file: this.reaction_svg_file,
       materials: {
@@ -87,6 +88,14 @@ export default class Reaction extends Element {
 
   set temperature(temperature) {
     this._temperature = temperature
+  }
+
+  get short_label() {
+    return this._short_label
+  }
+
+  set short_label(short_label) {
+    this._short_label = short_label
   }
 
   get tlc_solvents() {
@@ -145,6 +154,11 @@ export default class Reaction extends Element {
     return copy;
   }
 
+  title() {
+    const short_label = this.short_label ? this.short_label : ''
+    return this.name ? `${short_label} ${this.name}` : short_label
+  }
+
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
     // do not set it as reference material if this is reaction product
@@ -164,9 +178,7 @@ export default class Reaction extends Element {
     }
 
     materials.push(material);
-    // Skip short_label for reactants and solvents
-    if (materialGroup != "reactants" && materialGroup != "solvents")
-      this.temporary_sample_counter += 1;
+    this.temporary_sample_counter += 1;
   }
 
   deleteMaterial(material, materialGroup) {

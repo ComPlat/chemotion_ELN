@@ -80,9 +80,15 @@ class Reaction < ActiveRecord::Base
 
   has_many :sync_collections_users, through: :collections
 
+  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  validates :creator, presence: true
+
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :auto_format_temperature!
+  before_save :auto_set_short_label, on: :create
+
+  after_create :update_counter
 
   def self.get_associated_samples(reaction_ids)
     ( ReactionsProductSample.get_samples(reaction_ids) +
@@ -141,5 +147,13 @@ class Reaction < ActiveRecord::Base
   def cleanup_array_fields
     self.dangerous_products = dangerous_products.reject(&:blank?)
     self.purification = purification.reject(&:blank?)
+  end
+
+  def auto_set_short_label
+    self.short_label = "#{creator.initials}-R#{creator.counters['reactions'].succ}"
+  end
+
+  def update_counter
+    self.creator.increment_counter 'reactions'
   end
 end

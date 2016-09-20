@@ -204,8 +204,8 @@ module Chemotion
         collection_id = attributes.delete(:collection_id)
 
         collection = Collection.find(collection_id)
+        attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
-        current_user.increment_counter 'reactions'
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
@@ -266,15 +266,7 @@ module ReactionUpdator
               #TODO extract subsample method
               subsample = parent_sample.dup
               subsample.parent = parent_sample
-
-              if (material_group == :reactant || material_group == :solvent)
-                # Use 'reactants' or 'solvents' as short_label
-                subsample.short_label = sample.short_label
-              else
-                #we don't want to inherit short_label from parent
-                subsample.short_label = nil
-              end
-
+              subsample.short_label = nil #we don't want to inherit short_label from parent
               subsample.created_by = current_user.id
               subsample.name = sample.name
               subsample.target_amount_value = sample.target_amount_value

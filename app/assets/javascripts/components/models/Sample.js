@@ -83,20 +83,6 @@ export default class Sample extends Element {
     return splitSample;
   }
 
-  buildChildWithoutCounter() {
-    let splitSample = this;
-    splitSample.parent_id = this.id;
-    splitSample.id = Element.buildID();
-    splitSample.name = null;
-    splitSample.created_at = null;
-    splitSample.updated_at = null;
-    splitSample.target_amount_value = 0;
-    splitSample.real_amount_value = null;
-    splitSample.is_split = true;
-    splitSample.is_new = true;
-    return splitSample;
-  }
-
   get isSplit() {
     return this.is_split
   }
@@ -192,11 +178,7 @@ export default class Sample extends Element {
     // allow zero loading for reaction product
     sample.reaction_product = (materialGroup == 'products');
 
-    // Skip short_label for reactants and solvents
-    if (materialGroup != "reactants" && materialGroup != "solvents")
-      sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser(delta)
-    else
-      sample.short_label = materialGroup
+    sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser(delta);
 
     return sample;
   }
