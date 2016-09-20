@@ -28,8 +28,8 @@ set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/
 
 # Default value for linked_dirs is []
 set :linked_dirs, fetch(:linked_dirs, []).push('node_modules','log', 'tmp/pids',
-'tmp/cache', 'tmp/sockets', 'public/images', 'uploads/attachments',
-'backup/deploy_backup', 'backup/weekly_backup')
+'tmp/cache', 'tmp/sockets', 'public/images', 'public/simulations',
+'uploads/attachments', 'backup/deploy_backup', 'backup/weekly_backup')
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }

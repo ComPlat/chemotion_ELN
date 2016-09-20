@@ -14,7 +14,7 @@ GIT
 
 GIT
   remote: git://github.com/ComPlat/nmr_sim.git
-  revision: c3f4e6b99988f62dca589fc170836cfd1ee29ce5
+  revision: d014bce10ff57447fa0bda26ec2802961f8472f8
   specs:
     nmr_sim (0.0.1)
       rails (~> 4.2)
@@ -384,7 +384,7 @@ GEM
       activesupport (= 4.2.0)
       rake (>= 0.8.7)
       thor (>= 0.18.1, < 2.0)
-    rake (11.2.2)
+    rake (11.3.0)
     rb-fsevent (0.9.7)
     rb-inotify (0.9.7)
       ffi (>= 0.5.0)
