@@ -38,14 +38,11 @@ If you like to reset the database (after `cap production deploy`) you have to ex
 
 # JS Setup & Testing
 
-* Install `nvm`: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
-* Copy `.nvmrc.example` to `.nvmrc`.
+* Install `nvm`: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash` (see https://github.com/creationix/nvm#installation)
+  or for OSX: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
 * Execute `nvm install` nvm will automatically use node 0.10.40 (in order to work with current jest-version)
+* Execute `npm install -g npm@3.10.8`
 * Execute `npm install`.
-
-# Available Seeds
-
-Currently 3 users are seeded with respective email `test@ninjaconcept.com`, `hattori@ninjaconcept.com`, `momochi@ninjaconcept.com`, and password `ninjaconcept` (for all 3 the same).
 
 # Mailing in Development Environment
 

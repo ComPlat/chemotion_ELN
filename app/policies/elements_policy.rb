@@ -7,9 +7,7 @@ class ElementsPolicy
   end
 
   def read?
-    return true if records.empty?
-
-    records.map { |r| ElementPolicy.new(user, r).read? }.all?
+    allowed?(0)
   end
 
   def share?
