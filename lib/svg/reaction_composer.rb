@@ -13,6 +13,8 @@ module SVG
       number_of_starting_materials = @starting_materials.size
       number_of_products = @products.size
       is_report = options[:is_report]
+      @min_material_width = 65535 # just a very big number
+      @max_material_width = 0 # just a very big number
       @word_size = is_report ? 4 + (number_of_reactants + number_of_starting_materials + number_of_products) : 8
       @arrow_width = number_of_reactants * 50 + 60
       width = (@starting_materials.size + @products.size) * 100 + @arrow_width
@@ -60,10 +62,26 @@ module SVG
 
     def compose_reaction_svg_and_save(options = {})
       prefix = (options[:temp]) ? "temp-" : ""
+      find_extremum_material_width
       svg = compose_reaction_svg
       file_name = prefix + generate_filename
       File.open(file_path + "/" + file_name, 'w') { |file| file.write(svg) }
       file_name
+    end
+
+    def find_extremum_material_width
+      (@starting_materials + @reactants + @products).flatten.each do |m|
+        material, yield_amount = separate_material_yield(m)
+        content = inner_file_content(material).to_s
+        doc = Nokogiri::XML(content)
+        w = (doc.at_css('svg')['width'] || 0).to_f
+        if w < @min_material_width
+          @min_material_width = w
+        end
+        if w > @max_material_width
+          @max_material_width = w
+        end
+      end
     end
 
     def compose_reaction_svg
@@ -96,7 +114,19 @@ module SVG
           yield_svg = yield_amount ? compose_yield_svg(yield_amount) : ""
 
           content = inner_file_content(material).to_s
-          output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + content + yield_svg +"</g>" + divider
+          doc = Nokogiri::XML(content)
+          svg = doc.at_css('svg')
+          svg['style'] += " vertical-align\: top\;"
+          svg['style'] += " width\: #{material_width}px\;"
+          svg['style'] += " max-height\: 90px\;"
+          current_width = (svg['width'] || 1).to_f
+          scale *= material_width / current_width
+
+          if current_width != @max_material_width
+            scale *= 0.5 * current_width / @max_material_width
+          end
+
+          output = "<g transform='translate(#{shift}, 0) scale(#{scale})'>" + svg.to_s + yield_svg +"</g>" + divider
           divider = "<g transform='translate(#{shift + material_width}, 0) scale(#{scale})'>" + @divider + "</g>"
           shift += material_width + 10 # Add a small space between material
           output

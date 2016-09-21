@@ -1,7 +1,6 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: e27a80884cbc8a77a28306a0bfff4ab7e2c10fdd
-  branch: eln_server
+  revision: 1cb5c8173ea5f8f3aacf6d3afbe96e2ec10b4deb
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
@@ -514,7 +513,7 @@ DEPENDENCIES
   jbuilder (~> 2.0)
   jquery-rails
   kaminari
-  ketcherails (= 0.1.3)!
+  ketcherails!
   launchy (~> 2.4.3)
   mailcatcher
   nokogiri
