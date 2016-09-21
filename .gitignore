@@ -15,7 +15,7 @@
 .ruby-gemset
 .ruby-version
 .coveralls.yml
-.nvmrc
+
 .env
 /config/database.yml
 /node_modules
