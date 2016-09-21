@@ -1,12 +1,9 @@
 import React from 'react';
 import {ButtonGroup} from 'react-bootstrap';
 import ShareButton from './ShareButton';
-import MoveButton from './MoveButton';
-import AssignButton from './AssignButton';
-import RemoveButton from './RemoveButton';
-import DeleteButton from './DeleteButton';
-import ExportButton from './ExportButton';
-import ImportButton from './ImportButton';
+import MoveOrAssignButton from './MoveOrAssignButton';
+import RemoveOrDeleteButton from './RemoveOrDeleteButton';
+
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
 import UserActions from './../actions/UserActions';
@@ -40,6 +37,8 @@ export default class ManagingActions extends React.Component {
         listSharedCollections: false,
       }
     }
+
+    this.handleButtonClick = this.handleButtonClick.bind(this)
   }
 
   componentDidMount() {
@@ -130,31 +129,31 @@ export default class ManagingActions extends React.Component {
     return filterParams;
   }
 
-  isDisabled() {
+  isMoveVisible() {
     const {currentCollection} = this.state;
     if(currentCollection) {
       return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
     }
   }
 
-  isAssignButtonDisabled(selection) {
+  isAssignVisible(selection) {
     const {currentCollection} = this.state;
     if(currentCollection) {
       return !selection || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
     }
   }
 
-  isShareButtonDisabled(selection) {
+  isShareBtnVisible(selection) {
     const {currentCollection} = this.state;
     let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
-    return !selection || in_all_collection || this.state.sharing_allowed == false;
+    return selection && !in_all_collection && this.state.sharing_allowed == true
   }
 
-  isDeleteButtonDisabled(selection) {
+  isDeleteVisible(selection) {
     return !selection || this.state.deletion_allowed == false;
   }
 
-  isRemoveDisabled(selection) {
+  isRemoveVisible(selection) {
     if(this.state.currentCollection) {
       let currentCollection = this.state.currentCollection;
 
@@ -209,11 +208,6 @@ export default class ManagingActions extends React.Component {
         component = ManagingModalDelete;
         action = ElementActions.deleteElements;
         break;
-      case 'import':
-        title = "Import Elements from File";
-        component = ManagingModalImport;
-        action = ElementActions.importSamplesFromFile;
-        break;
     }
     this.setState({
       modalProps: {
@@ -232,13 +226,14 @@ export default class ManagingActions extends React.Component {
     return (
       <div style={{display: 'inline', float: 'left', marginRight: 10}}>
         <ButtonGroup>
-          <MoveButton isDisabled={!sel || this.isDisabled()} onClick={() => this.handleButtonClick('move')}/>
-          <AssignButton isDisabled={this.isAssignButtonDisabled(sel)} onClick={() => this.handleButtonClick('assign')}/>
-          <RemoveButton isDisabled={this.isRemoveDisabled(sel)} onClick={() => this.handleButtonClick('remove')}/>
-          <DeleteButton isDisabled={this.isDeleteButtonDisabled(sel)} onClick={() => this.handleButtonClick('delete')}/>
-          <ShareButton isDisabled={this.isShareButtonDisabled(sel)} onClick={() => this.handleButtonClick('share')}/>
-          <ImportButton isDisabled={this.isDisabled()} onClick={() => this.handleButtonClick('import')}/>
-          <ExportButton isDisabled={this.isDisabled()}/>
+          <MoveOrAssignButton assignVisibility={this.isAssignVisible(sel)}
+            moveVisibility={!sel || this.isMoveVisible()}
+            onClick={this.handleButtonClick}/>
+          <RemoveOrDeleteButton removeVisibility={this.isRemoveVisible(sel)}
+            deleteVisibility={this.isDeleteVisible(sel)}
+            onClick={this.handleButtonClick}/>
+          <ShareButton isVisible={this.isShareBtnVisible(sel)}
+            onClick={this.handleButtonClick}/>
         </ButtonGroup>
         <ManagingModal
           show={modalProps.show}

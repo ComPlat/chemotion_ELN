@@ -161,8 +161,18 @@ export default class CreateButton extends React.Component {
     }
   }
 
-  _splitSelectionAsSubsamples() {
+  splitSelectionAsSubsamples() {
     ElementActions.splitAsSubsamples(UIStore.getState())
+  }
+
+  noSampleSelected() {
+    const {sample} = UIStore.getState()
+    return sample.checkedIds.size == 0 && sample.checkedAll == false
+  }
+
+  isAllCollection() {
+    const {currentCollection} = UIStore.getState()
+    return currentCollection && currentCollection.label == 'All'
   }
 
   createElementOfType(type) {
@@ -210,25 +220,33 @@ export default class CreateButton extends React.Component {
   }
 
   render() {
-    const {isDisabled} = this.props
+    const {isVisible} = this.props
+    let display = isVisible ? "visible" : "hidden"
+
     return (
-      <OverlayTrigger placement="bottom" overlay={this.createBtnTooltip()}>
-        <SplitButton id='create-split-button' bsStyle="primary"
-                     title={this.createBtn()} disabled={isDisabled}
-                     onClick={() => this.createElementOfType(this.getTabName())}>
-          {this.createWellplateModal()}
-          <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
-          <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
-          <MenuItem divider />
-          <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
-          <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
-          <MenuItem divider />
-          <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
-          <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
-        </SplitButton>
-      </OverlayTrigger>
+      <div style={{visibility: display}}>
+        <OverlayTrigger placement="bottom" overlay={this.createBtnTooltip()}>
+          <SplitButton id='create-split-button' bsStyle="primary"
+                       title={this.createBtn()}
+                       onClick={() => this.createElementOfType(this.getTabName())}>
+            {this.createWellplateModal()}
+            <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
+            <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
+            <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
+            <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
+            <MenuItem divider />
+            <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
+            <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>
+            <MenuItem divider />
+            <MenuItem onSelect={() => this.copySample()} disabled={this.isCopySampleDisabled()}>Copy Sample</MenuItem>
+            <MenuItem onSelect={() => this.copyReaction()} disabled={this.isCopyReactionDisabled()}>Copy Reaction</MenuItem>
+            <MenuItem onSelect={() => this.splitSelectionAsSubsamples()}
+                      disabled={this.noSampleSelected() || this.isAllCollection()}>
+              Split Sample
+            </MenuItem>
+          </SplitButton>
+        </OverlayTrigger>
+      </div>
     )
   }
 }

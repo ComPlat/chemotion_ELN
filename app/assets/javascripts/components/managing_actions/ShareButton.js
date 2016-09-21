@@ -1,8 +1,11 @@
 import React from 'react';
-import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
+
 import UIStore from '../stores/UIStore';
 import PermissionStore from '../stores/PermissionStore';
+
 import PermissionActions from '../actions/PermissionActions';
+import ElementActions from 'components/actions/ElementActions';
 
 export default class ShareButton extends React.Component {
   constructor(props) {
@@ -66,7 +69,7 @@ export default class ShareButton extends React.Component {
   }
 
   handleModalShow() {
-    let uiState = UIStore.getState();
+    let uiState = UIStore.getState()
     let elementsFilter = this.filterParamsFromUIState(uiState);
 
     let params = {
@@ -74,17 +77,21 @@ export default class ShareButton extends React.Component {
     };
 
     //PermissionActions.fetchTopSecretStatus(params);
-    this.props.onClick();
+    this.props.onClick("share")
   }
 
+
   render() {
-    const {isDisabled} = this.props;
-    const tooltip = (
-      <Tooltip id="share_button">Share</Tooltip>
-    );
+    const {isVisible} = this.props
+    let display = isVisible ? "visible" : "hidden"
+
+    const tooltip = (<Tooltip id="export_button">Share/Split sample</Tooltip>)
+
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <Button bsStyle="info" onClick={() => this.handleModalShow()} disabled={isDisabled}>
+        <Button bsStyle="info" id="share-btn"
+                onClick={() => this.handleModalShow()}
+                style={{visibility: display}}>
           <i className="fa fa-share-alt"></i>
         </Button>
       </OverlayTrigger>
