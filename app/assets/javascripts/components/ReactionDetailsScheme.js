@@ -29,8 +29,18 @@ export default class ReactionDetailsScheme extends Component {
     let splitSample ;
 
     if (sample instanceof Molecule || materialGroup == 'products'){
-      splitSample = Sample.buildReactionSample(reaction.collection_id, reaction.temporary_sample_counter , materialGroup, sample );
+      // Create new Sample with counter
+      splitSample =
+        Sample.buildReactionSample(reaction.collection_id,
+          reaction.temporary_sample_counter, materialGroup, sample)
+
+      if (materialGroup == 'products') {
+        let productsCount = reaction.products.length
+        splitSample.name = reaction.short_label + "-" +
+          String.fromCharCode('A'.charCodeAt(0) + productsCount)
+      }
     } else if (sample instanceof Sample){
+      // Else split Sample
       if(reaction.hasSample(sample.id)) {
         NotificationActions.add({
           message: 'The sample is already present in current reaction.',
@@ -38,8 +48,18 @@ export default class ReactionDetailsScheme extends Component {
         });
         return false;
       }
-      splitSample = sample.buildChild();
-      if(materialGroup == 'products') {splitSample.reaction_product = true }
+
+      if (materialGroup == 'reactants' || materialGroup == 'solvents') {
+        // Skip counter for reactants or solvents
+        splitSample = sample.buildChildWithoutCounter()
+        splitSample.short_label = materialGroup
+      } else {
+        splitSample = sample.buildChild()
+      }
+
+      if(materialGroup == 'products') {
+        splitSample.reaction_product = true
+      }
     }
     reaction.addMaterial(splitSample, materialGroup);
 
