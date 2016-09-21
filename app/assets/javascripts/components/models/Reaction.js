@@ -2,7 +2,6 @@ import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
 
-import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 
 export default class Reaction extends Element {
@@ -178,7 +177,9 @@ export default class Reaction extends Element {
     }
 
     materials.push(material);
-    this.temporary_sample_counter += 1;
+    // Skip short_label for reactants and solvents
+    if (materialGroup != "reactants" && materialGroup != "solvents")
+      this.temporary_sample_counter += 1;
   }
 
   deleteMaterial(material, materialGroup) {
