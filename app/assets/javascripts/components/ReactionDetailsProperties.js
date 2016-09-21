@@ -15,7 +15,10 @@ export default class ReactionDetailsProperties extends Component {
   constructor(props) {
     super(props);
     const {reaction} = props;
-    this.state = { reaction };
+    this.state = {
+      reaction,
+      durationButtonDisabled: false
+    }
     this.clipboard = new Clipboard('.clipboardBtn');
   }
 
@@ -52,11 +55,21 @@ export default class ReactionDetailsProperties extends Component {
 
   calcTimeDiff() {
     const {reaction} = this.state
+    let {durationButtonDisabled} = this.state
     if(reaction.timestamp_start && reaction.timestamp_stop) {
       const start = moment(reaction.timestamp_start, "DD-MM-YYYY HH:mm:ss")
       const stop = moment(reaction.timestamp_stop, "DD-MM-YYYY HH:mm:ss")
-      reaction.duration = moment.preciseDiff(start, stop)
-      this.setState({ reaction: reaction })
+      if (start > stop) {
+        reaction.duration = "No time traveling here"
+        durationButtonDisabled = true
+      } else {
+        reaction.duration = moment.preciseDiff(start, stop)
+        durationButtonDisabled = false
+      }
+      this.setState({
+        reaction: reaction,
+        durationButtonDisabled: durationButtonDisabled
+      })
     }
   }
 
@@ -68,6 +81,8 @@ export default class ReactionDetailsProperties extends Component {
 
   render() {
     const {reaction} = this.state;
+    const {durationButtonDisabled} = this.state
+
     return (
       <div>
       <ReactionDetailsMainProperties
@@ -142,7 +157,9 @@ export default class ReactionDetailsProperties extends Component {
                       <i className="fa fa-hourglass-end"></i>
                     </Button>
                     <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-                      <Button active className="clipboardBtn" data-clipboard-text={reaction.duration || " "} >
+                      <Button active className="clipboardBtn"
+                              disabled={durationButtonDisabled}
+                              data-clipboard-text={reaction.duration || " "} >
                         <i className="fa fa-clipboard"></i>
                       </Button>
                     </OverlayTrigger>
