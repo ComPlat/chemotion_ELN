@@ -104,6 +104,7 @@ export default class WellplatesFetcher {
       body: JSON.stringify({
         ui_state: {
           all: params.wellplate.checkedAll,
+          collection_id: params.currentCollection.id,
           included_ids: params.wellplate.checkedIds,
           excluded_ids: params.wellplate.uncheckedIds
         }

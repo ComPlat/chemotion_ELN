@@ -88,6 +88,7 @@ export default class ScreensFetcher {
       body: JSON.stringify({
         ui_state: {
           all: ui_state.screen.checkedAll,
+          collection_id: ui_state.currentCollection.id,
           included_ids: ui_state.screen.checkedIds,
           excluded_ids: ui_state.screen.uncheckedIds
         }
