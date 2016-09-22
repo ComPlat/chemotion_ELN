@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {ButtonGroup, Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 
 export default class ReportButton extends React.Component {
   createElementOfType(type) {
@@ -10,11 +10,15 @@ export default class ReportButton extends React.Component {
     const tooltip = (
       <Tooltip id="report_button">Generate report</Tooltip>
     );
+
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
+      <ButtonGroup>
         <Button bsStyle="success" onClick={() => this.createElementOfType('report')} >
-          <i className="fa fa-cogs"></i>
+          <i className="fa fa-file-text-o" style={{marginRight: 4}}></i>
+          <i className="fa fa-pencil"></i>
         </Button>
+        </ButtonGroup>
       </OverlayTrigger>
     )
   }
