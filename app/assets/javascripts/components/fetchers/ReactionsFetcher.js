@@ -56,6 +56,7 @@ export default class ReactionsFetcher {
       body: JSON.stringify({
         ui_state: {
           all: ui_state.reaction.checkedAll,
+          collection_id: ui_state.currentCollection.id,
           included_ids: ui_state.reaction.checkedIds,
           excluded_ids: ui_state.reaction.uncheckedIds
         },

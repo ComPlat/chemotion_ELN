@@ -151,6 +151,7 @@ export default class SamplesFetcher {
       body: JSON.stringify({
         ui_state: {
           all: params.sample.checkedAll,
+          collection_id: params.currentCollection.id,
           included_ids: params.sample.checkedIds,
           excluded_ids: params.sample.uncheckedIds
         }

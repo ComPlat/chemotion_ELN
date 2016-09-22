@@ -35,7 +35,7 @@ module Chemotion
             optional :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
-            optional :collection_id
+            requires :collection_id
           end
         end
 

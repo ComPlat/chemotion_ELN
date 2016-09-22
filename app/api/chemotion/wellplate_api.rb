@@ -25,6 +25,7 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: "Selected wellplates from the UI" do
             requires :all, type: Boolean
+            requires :collection_id
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
           end
