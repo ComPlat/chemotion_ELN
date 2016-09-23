@@ -80,8 +80,8 @@ class Material extends Component {
   }
 
   render() {
-    const {material, deleteMaterial, isDragging, connectDragSource,
-           showLoadingColumn } = this.props;
+    const { material, deleteMaterial, isDragging, connectDragSource,
+            showLoadingColumn, showConcn } = this.props;
 
     let style = {padding: "0"};
     if (isDragging) {
@@ -102,12 +102,25 @@ class Material extends Component {
 
     return (
       this.props.materialGroup !== 'solvents'
-        ? this.generalMaterial(this.props, style, handleStyle, inputsStyle)
+        ? this.generalMaterial(this.props, style, handleStyle, inputsStyle, showConcn)
         : this.solventMaterial(this.props, style, handleStyle, inputsStyle)
     )
   }
 
-  equivalentOrYield(material) {
+  equivalentOrYieldOrConcn(material, concentration, showConcn) {
+    if(showConcn) {
+      return (
+        <NumeralInputWithUnitsCompo
+          key={material.id}
+          value={concentration}
+          unit='mol/l'
+          metricPrefix='milli'
+          metricPrefixes = {['milli','none']}
+          precision={4}
+          disabled={true}
+        />
+      )
+    }
     if(this.props.materialGroup == 'products') {
       return (
         <FormControl type="text"
@@ -246,10 +259,13 @@ class Material extends Component {
     return this.props.material
   }
 
-  generalMaterial(props, style, handleStyle, inputsStyle) {
-    const {material, deleteMaterial, isDragging, connectDragSource,
-           showLoadingColumn } = props;
+  generalMaterial(props, style, handleStyle, inputsStyle, showConcn) {
+    const { material, deleteMaterial, isDragging, connectDragSource,
+            showLoadingColumn, totalVolume } = props;
     const isTarget = material.amountType === 'target'
+
+    const mol = material.amount_mol;
+    const concentration = isNaN(mol / totalVolume) ? 0.0 : mol / totalVolume;
 
     return (
       <tr style={style}>
@@ -307,7 +323,7 @@ class Material extends Component {
         {this.materialLoading(material, inputsStyle, showLoadingColumn)}
 
         <td style={inputsStyle}>
-          {this.equivalentOrYield(material)}
+          {this.equivalentOrYieldOrConcn(material, concentration, showConcn)}
         </td>
         <td style={inputsStyle}>
           <Button
@@ -367,7 +383,7 @@ class Material extends Component {
 
         <td style={inputsStyle}>
           <FormControl type="text"
-            value={`${this.concentration(material, props.solventsVolSum)} %`}
+            value={`${this.solvConcentration(material, props.solventsVolSum)} %`}
             disabled={true}
           />
         </td>
@@ -441,7 +457,7 @@ class Material extends Component {
     )
   }
 
-  concentration(material, solventsVolSum) {
+  solvConcentration(material, solventsVolSum) {
     if(material.amountType === 'real') {
       return (material.real_amount_value / solventsVolSum * 100).toFixed(1)
     } else {
@@ -470,5 +486,7 @@ Material.propTypes = {
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
-  solventsVolSum: PropTypes.number.isRequired
+  solventsVolSum: PropTypes.number.isRequired,
+  totalVolume: PropTypes.number,
+  showConcn: PropTypes.bool,
 };

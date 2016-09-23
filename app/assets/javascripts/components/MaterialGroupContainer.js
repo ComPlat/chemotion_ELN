@@ -35,7 +35,8 @@ const collect = (connect, monitor) => ({
 class MaterialGroupContainer extends Component {
   render() {
     const {materials, materialGroup, isOver, canDrop, connectDropTarget,
-           showLoadingColumn, deleteMaterial, onChange, reaction} = this.props;
+           showLoadingColumn, deleteMaterial, onChange, reaction,
+           totalVolume, showConcn, onSwitchConcn} = this.props;
     let style = {
       padding: '2px 5px'
     };
@@ -52,9 +53,11 @@ class MaterialGroupContainer extends Component {
           onChange={onChange}
           materials={materials}
           materialGroup={materialGroup}
+          totalVolume={totalVolume}
           showLoadingColumn={showLoadingColumn}
           deleteMaterial={deleteMaterial}
-          />
+          showConcn={showConcn}
+          onSwitchConcn={onSwitchConcn} />
       </div>
     );
   }
@@ -65,8 +68,11 @@ export default DropTarget([DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL]
 MaterialGroupContainer.propTypes = {
   materials: PropTypes.array.isRequired,
   materialGroup: PropTypes.string.isRequired,
+  totalVolume: PropTypes.number.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
   onChange: PropTypes.func,
   reaction: PropTypes.object,
+  showConcn: PropTypes.bool,
+  onSwitchConcn: PropTypes.func,
 };
