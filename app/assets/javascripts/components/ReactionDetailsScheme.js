@@ -94,6 +94,11 @@ export default class ReactionDetailsScheme extends Component {
           this.updatedReactionForAmountChange(changeEvent)
         );
         break;
+      case 'amountUnitChanged':
+        this.onReactionChange(
+          this.updatedReactionForAmountUnitChange(changeEvent)
+        );
+        break;
       case 'loadingChanged':
         this.onReactionChange(
           this.updatedReactionForLoadingChange(changeEvent)
@@ -146,6 +151,16 @@ export default class ReactionDetailsScheme extends Component {
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
+
+    return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
+  }
+
+  updatedReactionForAmountUnitChange(changeEvent) {
+    let {sampleID, amount} = changeEvent;
+    let updatedSample = this.props.reaction.sampleById(sampleID);
+
+    // normalize to milligram
+    updatedSample.setAmountAndUnit(amount);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
@@ -289,8 +304,6 @@ export default class ReactionDetailsScheme extends Component {
     const {referenceMaterial} = this.props.reaction;
     return samples.map((sample) => {
       if (sample.id == updatedSample.id) {
-        sample.setAmountAndNormalizeToGram({value:updatedSample.amount_value, unit:updatedSample.amount_unit});
-
         if(referenceMaterial) {
           if(!updatedSample.reference && referenceMaterial.amount_value) {
             if(materialGroup == 'products') {
@@ -390,8 +403,20 @@ export default class ReactionDetailsScheme extends Component {
     );
   }
 
+  totalVolume() {
+    const { reaction } = this.state;
+    let totalVolume = 0.0;
+    const materials = [...reaction.starting_materials,
+                        ...reaction.reactants,
+                        ...reaction.products,
+                        ...reaction.solvents];
+    materials.map(m => totalVolume += m.amount_l);
+    return totalVolume;
+  }
+
   render() {
-    const {reaction} = this.state;
+    const { reaction } = this.state;
+    const totalVolume = this.totalVolume();
 
     let showMultiSolvents = reaction.solvents.length === 0 ? 'solvent' : 'solvents';
 
@@ -440,12 +465,12 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
+              totalVolume={totalVolume}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              />
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
           </ListGroupItem>
           <ListGroupItem style={minPadding} >
 
@@ -453,12 +478,12 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="reactants"
               materials={reaction.reactants}
+              totalVolume={totalVolume}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              />
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
 
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
@@ -467,12 +492,12 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="products"
               materials={reaction.products}
+              totalVolume={totalVolume}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              />
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
 
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
@@ -499,6 +524,7 @@ export default class ReactionDetailsScheme extends Component {
                     reaction={reaction}
                     materialGroup="solvents"
                     materials={reaction.solvents}
+                    totalVolume={totalVolume}
                     dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
                     deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                     dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
