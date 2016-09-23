@@ -3,6 +3,7 @@ import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip} from 're
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import NumInputWithUnitsTypesCompo from './NumInputWithUnitsTypesCompo';
 import UiStore from './stores/UIStore';
 
 const source = {
@@ -189,6 +190,18 @@ class Material extends Component {
     }
   }
 
+  handleAmountUnitChange(amount) {
+    if(this.props.onChange) {
+      let event = {
+        type: 'amountUnitChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        amount: amount
+      };
+      this.props.onChange(event);
+    }
+  }
+
   handleLoadingChange(newLoading) {
     this.props.material.residues[0].custom_info.loading = newLoading.value;
 
@@ -248,8 +261,11 @@ class Material extends Component {
 
   generalMaterial(props, style, handleStyle, inputsStyle) {
     const {material, deleteMaterial, isDragging, connectDragSource,
-           showLoadingColumn } = props;
+           showLoadingColumn, totalVolume } = props;
     const isTarget = material.amountType === 'target'
+
+    const mol = material.amount_mol;
+    const concentration = isNaN(mol / totalVolume) ? 0.0 : mol / totalVolume;
 
     return (
       <tr style={style}>
@@ -277,19 +293,17 @@ class Material extends Component {
         </td>
 
         <td style={inputsStyle}>
-          <NumeralInputWithUnitsCompo
+          <NumInputWithUnitsTypesCompo
             key={material.id}
-            value={material.amount_g}
-            unit='g'
+            material={material}
             metricPrefix='milli'
             metricPrefixes = {['milli','none','micro']}
             precision={5}
-            onChange={(amount) => this.handleAmountChange(amount)}
-            bsStyle={material.error_mass ? 'error' : 'success'}
+            unitTypeSwitch={true}
+            unitTypes={['g', 'l']}
+            onChange={(amount) => this.handleAmountUnitChange(amount)}
           />
         </td>
-
-        {this.materialVolume(material, inputsStyle)}
 
         <td style={inputsStyle}>
           <NumeralInputWithUnitsCompo
@@ -301,6 +315,18 @@ class Material extends Component {
             precision={4}
             disabled={this.props.materialGroup == 'products'}
             onChange={(amount) => this.handleAmountChange(amount)}
+          />
+        </td>
+
+        <td style={inputsStyle}>
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={concentration}
+            unit='mol/l'
+            metricPrefix='milli'
+            metricPrefixes = {['milli','none']}
+            precision={4}
+            disabled={true}
           />
         </td>
 
@@ -367,7 +393,7 @@ class Material extends Component {
 
         <td style={inputsStyle}>
           <FormControl type="text"
-            value={`${this.concentration(material, props.solventsVolSum)} %`}
+            value={`${this.solvConcentration(material, props.solventsVolSum)} %`}
             disabled={true}
           />
         </td>
@@ -441,7 +467,7 @@ class Material extends Component {
     )
   }
 
-  concentration(material, solventsVolSum) {
+  solvConcentration(material, solventsVolSum) {
     if(material.amountType === 'real') {
       return (material.real_amount_value / solventsVolSum * 100).toFixed(1)
     } else {
@@ -470,5 +496,6 @@ Material.propTypes = {
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
-  solventsVolSum: PropTypes.number.isRequired
+  solventsVolSum: PropTypes.number.isRequired,
+  totalVolume: PropTypes.number.isRequired,
 };
