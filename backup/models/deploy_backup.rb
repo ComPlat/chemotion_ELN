@@ -7,7 +7,6 @@
 
     archive :attachments_backup do |archive|
       archive.add "#{Rails.root}/public/images"
-      archive.add "#{Rails.root}/public/stylesheets"
       archive.add "#{Rails.root}/uploads/attachments"
     end
 
