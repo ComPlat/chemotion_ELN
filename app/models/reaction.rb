@@ -86,7 +86,7 @@ class Reaction < ActiveRecord::Base
   before_save :update_svg_file!
   before_save :cleanup_array_fields
   before_save :auto_format_temperature!
-  before_save :auto_set_short_label, on: :create
+  before_create :auto_set_short_label
 
   after_create :update_counter
 

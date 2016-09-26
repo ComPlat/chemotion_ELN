@@ -87,7 +87,8 @@ describe Chemotion::ReactionAPI do
           r = Reaction.create(name: 'test', created_by: user.id)
           reaction_id = r.id
           CollectionsReaction.create(reaction_id: r.id, collection_id: 1)
-          delete "/api/v1/reactions/#{reaction_id}", { id: reaction_id }
+          params = { id: reaction_id, collection_id: 1 }
+          delete "/api/v1/reactions/#{reaction_id}", params
           r = Reaction.find_by(name: 'test')
           expect(r).to be_nil
           a = Literature.where(reaction_id: reaction_id)
@@ -112,6 +113,7 @@ describe Chemotion::ReactionAPI do
         let!(:params_all_false) {
           {
             all: false,
+            collection_id: c1.id,
             included_ids: [reaction_1.id, reaction_2.id],
             excluded_ids: []
           }
@@ -120,6 +122,7 @@ describe Chemotion::ReactionAPI do
         let!(:params_all_true) {
           {
             all: true,
+            collection_id: c1.id,
             included_ids: [],
             excluded_ids: [reaction_3.id]
           }
