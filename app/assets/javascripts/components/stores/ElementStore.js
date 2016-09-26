@@ -384,6 +384,7 @@ class ElementStore {
   }
 
   handleCreateReaction(reaction) {
+    UserActions.fetchCurrentUser();
     this.handleRefreshElements('reaction');
     this.navigateToNewElement(reaction);
   }
