@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160901142139) do
+ActiveRecord::Schema.define(version: 20160920105050) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -269,6 +269,8 @@ ActiveRecord::Schema.define(version: 20160901142139) do
     t.string   "reaction_svg_file"
     t.string   "solvent"
     t.datetime "deleted_at"
+    t.string   "short_label"
+    t.integer  "created_by"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree

@@ -74,6 +74,7 @@ describe Chemotion::WellplateAPI do
         let!(:params_all_false) {
           {
             all: false,
+            collection_id: c1.id,
             included_ids: [wellplate_1.id, wellplate_2.id],
             excluded_ids: []
           }
@@ -82,6 +83,7 @@ describe Chemotion::WellplateAPI do
         let!(:params_all_true) {
           {
             all: true,
+            collection_id: c1.id,
             included_ids: [],
             excluded_ids: [wellplate_3.id]
           }
