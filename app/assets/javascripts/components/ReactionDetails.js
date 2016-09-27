@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
-import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
+import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
+  OverlayTrigger, Tooltip} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
@@ -218,27 +219,36 @@ export default class ReactionDetails extends Component {
     const panelHeader =
       <h4>
         <i className="icon-reaction"/>&nbsp;{reaction.title()}
-        <Button bsStyle="danger" bsSize="xsmall"
-          style={{float: 'right', margin:"0px 2px"}} onClick={this.closeDetails.bind(this)}>
-          <i className="fa fa-times"></i>
-        </Button>
-        <Button bsStyle="warning" bsSize="xsmall"
-          onClick={() => this.submitFunction()} disabled={!this.reactionIsValid()}
-          style={{float: 'right', margin:"0px 2px",display: hasChanged}} >
-          <i className="fa fa-floppy-o "></i>
-        </Button>
-        <Button bsStyle="success" bsSize="xsmall"
-          style={{float: 'right'}}
-          disabled={reaction.changed || reaction.isNew}
-          title={(reaction.changed || reaction.isNew) ?
-               "Report can be generated after reaction is saved."
-               : "Generate report for this reaction"}
-          onClick={() => Utils.downloadFile({
-            contents: "api/v1/reports/docx?id=" + reaction.id,
-            name: reaction.name
-          })} >
-          <i className="fa fa-cogs"></i>
-        </Button>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+              onClick={this.closeDetails.bind(this)}>
+            <i className="fa fa-times"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+              onClick={() => this.submitFunction()}
+              disabled={!this.reactionIsValid()}
+              style={{display: hasChanged}} >
+            <i className="fa fa-floppy-o "></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}>
+          <Button bsStyle="success" bsSize="xsmall" className="button-right"
+            disabled={reaction.changed || reaction.isNew}
+            title={(reaction.changed || reaction.isNew) ?
+                 "Report can be generated after reaction is saved."
+                 : "Generate report for this reaction"}
+            onClick={() => Utils.downloadFile({
+              contents: "api/v1/reports/docx?id=" + reaction.id,
+              name: reaction.name
+            })} >
+            <i className="fa fa-cogs"></i>
+          </Button>
+        </OverlayTrigger>
       </h4>
 
     return (
