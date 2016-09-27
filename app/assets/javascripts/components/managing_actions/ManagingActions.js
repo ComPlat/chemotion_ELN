@@ -129,31 +129,31 @@ export default class ManagingActions extends React.Component {
     return filterParams;
   }
 
-  isMoveVisible() {
+  isMoveDisabled() {
     const {currentCollection} = this.state;
     if(currentCollection) {
-      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
+      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.permission_level < 4)
     }
   }
 
-  isAssignVisible(selection) {
+  isAssignDisabled(selection) {
     const {currentCollection} = this.state;
     if(currentCollection) {
       return !selection || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
     }
   }
 
-  isShareBtnVisible(selection) {
+  isShareBtnDisabled(selection) {
     const {currentCollection} = this.state;
     let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
-    return selection && !in_all_collection && this.state.sharing_allowed == true
+    return !selection || in_all_collection || this.state.sharing_allowed == false;
   }
 
-  isDeleteVisible(selection) {
+  isDeleteDisabled(selection) {
     return !selection || this.state.deletion_allowed == false;
   }
 
-  isRemoveVisible(selection) {
+  isRemoveDisabled(selection) {
     if(this.state.currentCollection) {
       let currentCollection = this.state.currentCollection;
 
@@ -226,13 +226,13 @@ export default class ManagingActions extends React.Component {
     return (
       <div style={{display: 'inline', float: 'left', marginRight: 10}}>
         <ButtonGroup>
-          <MoveOrAssignButton assignVisibility={this.isAssignVisible(sel)}
-            moveVisibility={!sel || this.isMoveVisible()}
+          <MoveOrAssignButton assignDisabled={this.isAssignDisabled(sel)}
+            moveDisabled={!sel || this.isMoveDisabled()}
             onClick={this.handleButtonClick}/>
-          <RemoveOrDeleteButton removeVisibility={this.isRemoveVisible(sel)}
-            deleteVisibility={this.isDeleteVisible(sel)}
+          <RemoveOrDeleteButton removeDisabled={this.isRemoveDisabled(sel)}
+            deleteDisabled={this.isDeleteDisabled(sel)}
             onClick={this.handleButtonClick}/>
-          <ShareButton isVisible={this.isShareBtnVisible(sel)}
+          <ShareButton isDisabled={this.isShareBtnDisabled(sel)}
             onClick={this.handleButtonClick}/>
         </ButtonGroup>
         <ManagingModal

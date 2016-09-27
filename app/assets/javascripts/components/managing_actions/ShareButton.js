@@ -11,8 +11,7 @@ export default class ShareButton extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isTopSecret: false,
-      isDisabled: props.isDisabled
+      isTopSecret: false
     }
   }
 
@@ -22,12 +21,6 @@ export default class ShareButton extends React.Component {
 
   componentWillUnmount() {
     PermissionStore.unlisten(this.onPermissionChange.bind(this));
-  }
-
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      isDisabled: nextProps.isDisabled
-    })
   }
 
   onPermissionChange(state) {
@@ -82,16 +75,14 @@ export default class ShareButton extends React.Component {
 
 
   render() {
-    const {isVisible} = this.props
-    let display = isVisible ? "visible" : "hidden"
+    const {isDisabled} = this.props
 
     const tooltip = (<Tooltip id="export_button">Share/Split sample</Tooltip>)
 
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <Button bsStyle="info" id="share-btn"
-                onClick={() => this.handleModalShow()}
-                style={{visibility: display}}>
+        <Button bsStyle="info" id="share-btn" disabled={isDisabled}
+                onClick={() => this.handleModalShow()}>
           <i className="fa fa-share-alt"></i>
         </Button>
       </OverlayTrigger>

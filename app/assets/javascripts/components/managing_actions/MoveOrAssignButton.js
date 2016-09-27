@@ -3,28 +3,7 @@ import {OverlayTrigger, DropdownButton, MenuItem, Tooltip} from 'react-bootstrap
 
 export default class MoveOrAssignButton extends React.Component {
   render() {
-    const {assignVisibility, moveVisibility, onClick} = this.props
-    let display
-
-    if (assignVisibility && moveVisibility) display = "hidden"
-
-    let moveItem, assignItem
-
-    if (moveVisibility) {
-      moveItem = <div />
-    } else {
-      moveItem = <MenuItem onSelect={() => onClick("move")}>
-                   Move to Collection
-                 </MenuItem>
-    }
-
-    if (assignVisibility) {
-      assignItem = <div />
-    } else {
-      assignItem = <MenuItem onSelect={() => onClick("assign")}>
-                     Assign to Collection
-                   </MenuItem>
-    }
+    const {assignDisabled, moveDisabled, onClick} = this.props
 
     const tooltip = (<Tooltip id="export_button">Move/Assign sample</Tooltip>)
     const title = (<i className="fa fa-arrow-right"></i>)
@@ -32,9 +11,13 @@ export default class MoveOrAssignButton extends React.Component {
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <DropdownButton bsStyle="success" title={title} id="move-or-assign-btn"
-                        style={{visibility: display}}>
-          {moveItem}
-          {assignItem}
+            disabled={assignDisabled && moveDisabled}>
+          <MenuItem onSelect={() => onClick("move")} disabled={moveDisabled}>
+            Move to Collection
+          </MenuItem>
+          <MenuItem onSelect={() => onClick("assign")} disabled={assignDisabled}>
+            Assign to Collection
+          </MenuItem>
         </DropdownButton>
       </OverlayTrigger>
     )
@@ -42,7 +25,7 @@ export default class MoveOrAssignButton extends React.Component {
 }
 
 MoveOrAssignButton.propTypes = {
-  assignVisibility: React.PropTypes.bool,
-  moveVisibility: React.PropTypes.bool,
+  assignDisabled: React.PropTypes.bool,
+  moveDisabled: React.PropTypes.bool,
   onClick: React.PropTypes.func,
 }

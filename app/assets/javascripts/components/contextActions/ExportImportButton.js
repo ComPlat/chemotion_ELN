@@ -5,8 +5,7 @@ import CollectionActions from '../actions/CollectionActions';
 
 export default class ExportImportButton extends Component {
   render() {
-    const {isVisible} = this.props
-    let display = isVisible ? "visible" : "hidden"
+    const {isDisabled} = this.props
 
     const tooltip = (<Tooltip id="export_button">Import Export</Tooltip>)
     let title =
@@ -16,8 +15,7 @@ export default class ExportImportButton extends Component {
 
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <Dropdown id='export-dropdown' title={title}
-                  style={{visibility: display}}>
+        <Dropdown id='export-dropdown' title={title} disabled={isDisabled}>
           <Dropdown.Toggle>
             <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
           </Dropdown.Toggle>
