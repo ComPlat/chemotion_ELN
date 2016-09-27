@@ -14,7 +14,7 @@ module Chemotion
         molfile = params[:molfile]
 
         # write temporary SVG
-        processor = Ketcherails::SVGProcessor.new svg, width: 90, height: 90
+        processor = Ketcherails::SVGProcessor.new svg
         svg = processor.centered_and_scaled_svg
 
         digest = Digest::SHA256.hexdigest molfile

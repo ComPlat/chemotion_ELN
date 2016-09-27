@@ -14,6 +14,10 @@ table.reaction-scheme-solvent {
   }
 }
 
+.svg-file-container > svg {
+  min-height: 250px;
+}
+
 .panel-reaction > .panel-body {
   padding: 5px;
   overflow-y: auto;
