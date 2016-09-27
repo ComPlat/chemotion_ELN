@@ -1,5 +1,6 @@
 import React, {PropTypes, Component} from 'react';
-import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button, Tabs, Tab} from 'react-bootstrap';
+import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button,
+  Tabs, Tab, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
@@ -95,22 +96,27 @@ export default class WellplateDetails extends Component {
 
   wellplateHeader(wellplate) {
     let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
-    let className = "button-right button-right-header "
-    if (wellplate.isNew)
-      className += "button-right-create"
 
     return(
       <div>
-      <i className="icon-wellplate" /> &nbsp; {wellplate.name} &nbsp;
-      <ElementCollectionLabels element={wellplate}/>
-      <Button bsStyle="danger" bsSize="xsmall"
-        className={className} onClick={() => this.closeDetails()} >
-        <i className="fa fa-times"></i>
-      </Button>
-      <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.submitFunction()}
-              style={{float: 'right', margin:"0px 2px",display: saveBtnDisplay}} >
-        <i className="fa fa-floppy-o "></i>
-      </Button>
+        <i className="icon-wellplate" />
+        &nbsp; <span>{wellplate.name}</span> &nbsp;
+        <ElementCollectionLabels element={wellplate}/>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="closeWellplate">Close Wellplate</Tooltip>}>
+          <Button bsStyle="danger" bsSize="xsmall"
+            className="button-right" onClick={() => this.closeDetails()} >
+            <i className="fa fa-times"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+                  onClick={() => this.submitFunction()}
+                  style={{display: saveBtnDisplay}} >
+            <i className="fa fa-floppy-o "></i>
+          </Button>
+        </OverlayTrigger>
       </div>
     )
   }

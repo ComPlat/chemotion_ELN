@@ -3,20 +3,10 @@
 }
 
 .button-right {
-  position: relative;;
-  margin-right: 25px;
-  margin-top: -47px;
   float: right;
   right: 0px;
   z-index: 1;
-}
-
-.button-right-header {
-  margin: 0px 2px;
-}
-
-.button-right-create {
-  margin: -22px 2px;
+  margin-left: 2px;
 }
 
 .no-margin {

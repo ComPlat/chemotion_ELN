@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem, ButtonToolbar, Button} from 'react-bootstrap';
+import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
+  ButtonToolbar, Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -98,22 +99,27 @@ export default class ScreenDetails extends Component {
 
   screenHeader(screen) {
     let saveBtnDisplay = screen.isEdited ? '' : 'none'
-    let className = "button-right button-right-header "
-    if (screen.isNew)
-      className += "button-right-create"
 
     return (
       <div>
-        <i className="icon-screen" /> &nbsp; {screen.name} &nbsp;
+        <i className="icon-screen" />
+        &nbsp; <span>{screen.name}</span> &nbsp;
         <ElementCollectionLabels element={screen}/>
-        <Button bsStyle="danger" bsSize="xsmall"
-          className={className} onClick={() => this.closeDetails()} >
-          <i className="fa fa-times"></i>
-        </Button>
-        <Button bsStyle="warning" bsSize="xsmall" onClick={() => this.submitFunction()}
-                style={{float: 'right', margin:"0px 2px",display: saveBtnDisplay}} >
-          <i className="fa fa-floppy-o "></i>
-        </Button>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="closeScreen">Close Screen</Tooltip>}>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+            onClick={() => this.closeDetails()} >
+            <i className="fa fa-times"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+                  onClick={() => this.submitFunction()}
+                  style={{display: saveBtnDisplay}} >
+            <i className="fa fa-floppy-o "></i>
+          </Button>
+        </OverlayTrigger>
       </div>
     )
   }

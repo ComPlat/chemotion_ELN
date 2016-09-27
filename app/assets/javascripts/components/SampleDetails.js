@@ -224,16 +224,22 @@ export default class SampleDetails extends React.Component {
     return (
       <div>
         <i className="icon-sample" /> {sample.title()}
-        <Button bsStyle="danger" bsSize="xsmall"
-          className="button-right" onClick={() => this.closeDetails()}
-          style={{float: 'right', margin:"0px 2px"}}>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
+        <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+          onClick={() => this.closeDetails()}>
           <i className="fa fa-times"></i>
         </Button>
-        <Button bsStyle="warning" bsSize="xsmall"
-          onClick={() => this.submitFunction()} disabled={!this.sampleIsValid()}
-          style={{float: 'right', margin:"0px 2px", display: saveBtnDisplay}} >
-          <i className="fa fa-floppy-o "></i>
-        </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+            onClick={() => this.submitFunction()}
+            style={{display: saveBtnDisplay}}
+            disabled={!this.sampleIsValid()} >
+            <i className="fa fa-floppy-o "></i>
+          </Button>
+        </OverlayTrigger>
       </div>
     )
   }
