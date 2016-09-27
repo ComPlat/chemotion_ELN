@@ -28,9 +28,7 @@ RSpec.describe SVG::ReactionComposer do
   describe 'composing the SVG' do
 
     let(:svg) { composer.compose_reaction_svg }
-    let(:expected_svg) {
-      "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:cml=\"http://www.xml-cml.org/schema\"\n          width=\"12in\" height=\"3.33in\" viewBox=\"0 0 60 110\">\n        <title>Reaction 1</title><g transform='translate(0, 0)'>        <svg stroke=\"black\" stroke-width=\"1\">\n          <line x1=\"0\" y1=\"50\" x2=\"60\" y2=\"50\" stroke=\"black\"/>\n          <polygon points=\"52,50 50,47 60,50 50,53\"/>\n        </svg>\n</g><g transform='translate(0, 0)'></g><g transform='translate(0, 0)'>        <svg font-family=\"sans-serif\">\n          <text text-anchor=\"middle\" x=\"30\" y=\"65\" font-size=\"9\"></text>\n        </svg>\n</g></svg>"
-      }
+    let(:expected_svg) { File.read(Rails.root.join("spec/fixtures/images/compose_reaction_svg.svg")) }
 
     it 'should generate a svg' do
       expect(svg).to eq(expected_svg)

@@ -7,15 +7,15 @@ xmlns:cml="http://www.xml-cml.org/schema" x="0" y="0" width="200px" height="200p
 <g transform="translate(0,0)">
 <svg width="100" height="100" x="0" y="0" viewBox="0 0 149.281 160.001"
 font-family="sans-serif" stroke="rgb(0,0,0)" stroke-width="2"  stroke-linecap="round">
-<line x1="109.3" y1="60.0" x2="109.3" y2="100.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
-<line x1="102.1" y1="66.0" x2="102.1" y2="94.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
-<line x1="109.3" y1="100.0" x2="74.6" y2="120.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
-<line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
-<line x1="73.0" y1="110.8" x2="48.8" y2="96.8" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
 <line x1="40.0" y1="100.0" x2="40.0" y2="60.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="47.2" y1="94.0" x2="47.2" y2="66.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
 <line x1="40.0" y1="60.0" x2="74.6" y2="40.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
-<line x1="48.8" y1="63.2" x2="73.0" y2="49.2" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
 <line x1="74.6" y1="40.0" x2="109.3" y2="60.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="76.2" y1="49.2" x2="100.5" y2="63.2" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="109.3" y1="60.0" x2="109.3" y2="100.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="109.3" y1="100.0" x2="74.6" y2="120.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="100.5" y1="96.8" x2="76.2" y2="110.8" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
+<line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)"  stroke-width="2.0"/>
 </svg>
 </g>
 </svg>
