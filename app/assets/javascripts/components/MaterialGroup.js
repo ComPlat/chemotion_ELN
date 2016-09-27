@@ -5,8 +5,10 @@ import {Button, Glyphicon} from 'react-bootstrap';
 import ElementActions from './actions/ElementActions';
 
 export default class MaterialGroup extends Component {
+
   render() {
-    const {materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,reaction} = this.props;
+    const { materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,
+            reaction, totalVolume, showConcn, onSwitchConcn } = this.props;
     let contents = [];
     let solventsVolSum = 0.0;
 
@@ -30,8 +32,8 @@ export default class MaterialGroup extends Component {
           showLoadingColumn={showLoadingColumn}
           deleteMaterial={material => deleteMaterial(material, materialGroup)}
           solventsVolSum={solventsVolSum}
-
-          />)
+          totalVolume={totalVolume}
+          showConcn={showConcn} />)
       );
 
       if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
@@ -51,12 +53,14 @@ export default class MaterialGroup extends Component {
         : <GeneralMaterialGroup contents={contents}
                                 materialGroup={materialGroup}
                                 showLoadingColumn={showLoadingColumn}
-                                reaction={reaction} />
+                                reaction={reaction}
+                                showConcn={showConcn}
+                                onSwitchConcn={onSwitchConcn} />
     )
   }
 }
 
-const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reaction}) => {
+const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn, reaction, showConcn, onSwitchConcn}) => {
 
   let headers = {
     ref: 'Ref',
@@ -87,7 +91,6 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
       <Glyphicon glyph="plus" />
   </Button>
 
-
   return (
     <div>
       <table width="100%" className="reaction-scheme">
@@ -96,12 +99,17 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
         <th width="17%">{headers.group}</th>
         <th width="4%">{headers.ref}</th>
         <th width="4%">{headers.tr}</th>
-        <th width="14%">{headers.amount}</th>
+        <th width="13%">{headers.amount}</th>
         <th width={showLoadingColumn ? "11%" : "13%"}></th>
         <th width={showLoadingColumn ? "16%" : "13%"}></th>
         {loadingTHead}
-        <th width="11%">{headers.eq}</th>
-        <th width="4%"></th>
+        <th width="13%">
+          <SwitchConcnEquivYld
+            title={headers.eq}
+            showConcn={showConcn}
+            onSwitchConcn={onSwitchConcn} />
+        </th>
+        <th width="3%"></th>
         </tr></thead>
         <tbody>
           {contents.map( item => item )}
@@ -109,6 +117,25 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
       </table>
     </div>
   )
+}
+
+const SwitchConcnEquivYld = ({title, showConcn, onSwitchConcn}) => {
+  const bsStyle = showConcn ? "primary" : "success"
+  const content = showConcn ? "Concn" : "Equiv"
+  if(title === 'Equiv') {
+    return (
+      <Button bsStyle={bsStyle}
+              bsSize="xs"
+              onClick={onSwitchConcn}>
+        {content}
+      </Button>
+    );
+  } else if(title === 'Yield' && !showConcn) {
+    return(
+      <div>Yield</div>
+    );
+  }
+  return null;
 }
 
 const SolventsMaterialGroup = ({contents, materialGroup, reaction}) => {
@@ -124,10 +151,10 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction}) => {
         <th width="4%">{addSampleButton}</th>
         <th width="21%">Solvents</th>
         <th width="4%">T/R</th>
-        <th width="27%">Label</th>
+        <th width="26%">Label</th>
         <th width="13%">Vol</th>
-        <th width="11%">Vol ratio</th>
-        <th width="4%"></th>
+        <th width="13%">Vol ratio</th>
+        <th width="3%"></th>
         </tr></thead>
         <tbody>
           {contents.map( item => item )}
@@ -140,8 +167,11 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction}) => {
 MaterialGroup.propTypes = {
   materialGroup: PropTypes.string.isRequired,
   materials: PropTypes.array.isRequired,
+  totalVolume: PropTypes.number.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
   reaction: PropTypes.object.isRequired,
+  showConcn: PropTypes.bool,
+  onSwitchConcn: PropTypes.func,
 };
