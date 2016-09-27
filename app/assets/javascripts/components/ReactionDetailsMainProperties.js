@@ -37,6 +37,7 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
               <ControlLabel>Description</ControlLabel>
               <FormControl
                 componentClass="textarea"
+                rows={10}
                 value={reaction.description || ''}
                 disabled={reaction.isMethodDisabled('description')}
                 placeholder="Description..."
