@@ -342,6 +342,11 @@ export default class Sample extends Element {
     this.amount_unit = 'g'
   }
 
+  setAmountAndUnit(amount) {
+    this.amount_value = amount.value
+    this.amount_unit = amount.unit
+  }
+
   get amountType() {
     return this._current_amount_type || this.defaultAmountType();
   }

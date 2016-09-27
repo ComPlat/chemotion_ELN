@@ -5,8 +5,10 @@ import {Button, Glyphicon} from 'react-bootstrap';
 import ElementActions from './actions/ElementActions';
 
 export default class MaterialGroup extends Component {
+
   render() {
-    const {materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,reaction} = this.props;
+    const { materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,
+            reaction, totalVolume } = this.props;
     let contents = [];
     let solventsVolSum = 0.0;
 
@@ -30,8 +32,7 @@ export default class MaterialGroup extends Component {
           showLoadingColumn={showLoadingColumn}
           deleteMaterial={material => deleteMaterial(material, materialGroup)}
           solventsVolSum={solventsVolSum}
-
-          />)
+          totalVolume={totalVolume} />)
       );
 
       if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
@@ -64,6 +65,7 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
     tr: 'T/R',
     mass: 'Mass',
     amount: 'Amount',
+    concentration: 'Concentration',
     loading: 'Loading',
     vol: 'Vol',
     eq: 'Equiv',
@@ -98,7 +100,7 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
         <th width="4%">{headers.tr}</th>
         <th width="14%">{headers.amount}</th>
         <th width={showLoadingColumn ? "11%" : "13%"}></th>
-        <th width={showLoadingColumn ? "16%" : "13%"}></th>
+        <th width={showLoadingColumn ? "16%" : "13%"}>{headers.concentration}</th>
         {loadingTHead}
         <th width="11%">{headers.eq}</th>
         <th width="4%"></th>
@@ -140,6 +142,7 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction}) => {
 MaterialGroup.propTypes = {
   materialGroup: PropTypes.string.isRequired,
   materials: PropTypes.array.isRequired,
+  totalVolume: PropTypes.number.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
