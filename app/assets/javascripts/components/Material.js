@@ -47,7 +47,8 @@ class Material extends Component {
             metricPrefix='milli'
             metricPrefixes = {['milli','none','micro']}
             precision={3}
-            onChange={(amount) => this.handleAmountChange(amount)}
+            onChange={(amount) => this.handleAmountUnitChange(amount)}
+            bsStyle={ material.amount_unit === 'l' ? 'success' : 'default' }
           />
         </td>
       )
@@ -80,8 +81,8 @@ class Material extends Component {
   }
 
   render() {
-    const {material, deleteMaterial, isDragging, connectDragSource,
-           showLoadingColumn } = this.props;
+    const { material, deleteMaterial, isDragging, connectDragSource,
+            showLoadingColumn } = this.props;
 
     let style = {padding: "0"};
     if (isDragging) {
@@ -189,6 +190,18 @@ class Material extends Component {
     }
   }
 
+  handleAmountUnitChange(amount) {
+    if(this.props.onChange) {
+      let event = {
+        type: 'amountUnitChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        amount: amount
+      };
+      this.props.onChange(event);
+    }
+  }
+
   handleLoadingChange(newLoading) {
     this.props.material.residues[0].custom_info.loading = newLoading.value;
 
@@ -247,9 +260,14 @@ class Material extends Component {
   }
 
   generalMaterial(props, style, handleStyle, inputsStyle) {
-    const {material, deleteMaterial, isDragging, connectDragSource,
-           showLoadingColumn } = props;
+    const { material, deleteMaterial, isDragging, connectDragSource,
+            showLoadingColumn, totalVolume } = props;
     const isTarget = material.amountType === 'target'
+    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default'
+
+    const mol = material.amount_mol;
+    const concn = isNaN(mol / totalVolume) ? 0.0 : mol / totalVolume;
+
 
     return (
       <tr style={style}>
@@ -283,9 +301,9 @@ class Material extends Component {
             unit='g'
             metricPrefix='milli'
             metricPrefixes = {['milli','none','micro']}
-            precision={5}
-            onChange={(amount) => this.handleAmountChange(amount)}
-            bsStyle={material.error_mass ? 'error' : 'success'}
+            precision={4}
+            onChange={(amount) => this.handleAmountUnitChange(amount)}
+            bsStyle={material.error_mass ? 'error' : massBsStyle}
           />
         </td>
 
@@ -300,11 +318,25 @@ class Material extends Component {
             metricPrefixes = {['milli','none']}
             precision={4}
             disabled={this.props.materialGroup == 'products'}
-            onChange={(amount) => this.handleAmountChange(amount)}
+            onChange={(amount) => this.handleAmountUnitChange(amount)}
+            bsStyle={ material.amount_unit === 'mol' ? 'success' : 'default' }
           />
         </td>
 
         {this.materialLoading(material, inputsStyle, showLoadingColumn)}
+
+        <td style={inputsStyle}>
+          <NumeralInputWithUnitsCompo
+            key={material.id}
+            value={concn}
+            unit='mol/l'
+            metricPrefix='milli'
+            metricPrefixes = {['milli','none']}
+            precision={4}
+            disabled={true}
+            onChange={(amount) => this.handleAmountUnitChange(amount)}
+          />
+        </td>
 
         <td style={inputsStyle}>
           {this.equivalentOrYield(material)}
@@ -367,7 +399,7 @@ class Material extends Component {
 
         <td style={inputsStyle}>
           <FormControl type="text"
-            value={`${this.concentration(material, props.solventsVolSum)} %`}
+            value={`${this.solvConcentration(material, props.solventsVolSum)} %`}
             disabled={true}
           />
         </td>
@@ -441,7 +473,7 @@ class Material extends Component {
     )
   }
 
-  concentration(material, solventsVolSum) {
+  solvConcentration(material, solventsVolSum) {
     if(material.amountType === 'real') {
       return (material.real_amount_value / solventsVolSum * 100).toFixed(1)
     } else {
@@ -470,5 +502,6 @@ Material.propTypes = {
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
-  solventsVolSum: PropTypes.number.isRequired
+  solventsVolSum: PropTypes.number.isRequired,
+  totalVolume: PropTypes.number,
 };
