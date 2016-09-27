@@ -220,14 +220,13 @@ export default class CreateButton extends React.Component {
   }
 
   render() {
-    const {isVisible} = this.props
-    let display = isVisible ? "visible" : "hidden"
+    const {isDisabled} = this.props
 
     return (
-      <div style={{visibility: display}}>
+      <div>
         <OverlayTrigger placement="bottom" overlay={this.createBtnTooltip()}>
           <SplitButton id='create-split-button' bsStyle="primary"
-                       title={this.createBtn()}
+                       title={this.createBtn()} disabled={isDisabled}
                        onClick={() => this.createElementOfType(this.getTabName())}>
             {this.createWellplateModal()}
             <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>

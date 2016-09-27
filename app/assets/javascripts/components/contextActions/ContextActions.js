@@ -34,16 +34,16 @@ export default class ContextActions extends React.Component {
     return currentCollection && currentCollection.label == 'All';
   }
 
-  isVisible() {
+  isDisabled() {
     const {currentCollection} = this.state.uiState
 
     if (currentCollection) {
       if (currentCollection.label == 'All' ||
           (currentCollection.is_shared == true && currentCollection.permission_level < 4))
-      return false
+      return true
     }
 
-    return true
+    return false
   }
 
   handleImport() {
@@ -68,11 +68,11 @@ export default class ContextActions extends React.Component {
     return (
       <div style={{display: 'inline', float: 'left'}}>
         <ButtonGroup>
-          <ExportImportButton isVisible={this.isVisible()} />
+          <ExportImportButton isDisabled={this.isDisabled()} />
           <ReportButton />
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
-          <CreateButton isVisible={!this.isAllCollection()}/>
+          <CreateButton isDisabled={this.isAllCollection()}/>
         </ButtonGroup>
       </div>
     )
