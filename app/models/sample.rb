@@ -149,7 +149,16 @@ class Sample < ActiveRecord::Base
 
   def create_subsample user, collection_id
     subsample = self.dup
-    subsample.short_label = nil # we need to reset it
+
+    if self.name.to_s != ''
+      subsample.name = self.name + "-split"
+    end
+    if self.external_label.to_s != ''
+      subsample.external_label = self.external_label + "-split"
+    end
+    children_count = self.children.count
+    subsample.short_label = self.short_label + "-" + (children_count + 1).to_s
+
     subsample.parent = self
     subsample.created_by = user.id
     subsample.residues_attributes = self.residues.to_a.map do |r|

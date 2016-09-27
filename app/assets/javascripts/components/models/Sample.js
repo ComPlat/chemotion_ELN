@@ -72,7 +72,11 @@ export default class Sample extends Element {
     let splitSample = this;
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
-    splitSample.name = null;
+
+    if (this.name) splitSample.name = this.name + "-split"
+    if (this.external_label)
+      splitSample.external_label = this.external_label + "-split"
+
     splitSample.short_label += "-" + children_count;
     splitSample.created_at = null;
     splitSample.updated_at = null;
@@ -87,7 +91,11 @@ export default class Sample extends Element {
     let splitSample = this;
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
-    splitSample.name = null;
+
+    if (this.name) splitSample.name = this.name + "-split"
+    if (this.external_label)
+      splitSample.external_label = this.external_label + "-split"
+
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.target_amount_value = 0;
