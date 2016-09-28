@@ -257,7 +257,7 @@ module Chemotion
           end
 
           if sample = Sample.find(params[:id])
-            sample.update(attributes)
+            sample.update!(attributes)
           end
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
         end

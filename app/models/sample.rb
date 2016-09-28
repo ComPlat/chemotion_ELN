@@ -373,16 +373,18 @@ private
       (m_end_index = index) && break if line.match /M\s+END/
     end
 
-    if lines[5 + m_end_index].match /(> <PolymersList>[\W\w.\n]+[\d]+)/m
-      lines[5 + m_end_index] = "> <PolymersList>\n"
-      lines.insert(5 + m_end_index, polymers.join(' ') + "\n")
-    else
-      lines.insert(5 + m_end_index, "> <PolymersList>\n")
-      lines[6 + m_end_index] = polymers.join(' ') + "\n"
+    reg = /(> <PolymersList>[\W\w.\n]+[\d]+)/m
+    unless (lines[5 + m_end_index].to_s + lines[6 + m_end_index].to_s).match reg
+      if lines[5 + m_end_index].to_s.include? '> <PolymersList>'
+        lines.insert(6 + m_end_index, polymers.join(' ') + "\n")
+      else
+        lines.insert(4 + m_end_index, "> <PolymersList>\n")
+        lines.insert(5 + m_end_index, polymers.join(' ') + "\n")
+      end
     end
 
     self.molfile = lines.join
-    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile)
+    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
   end
 
   def set_loading_from_ea
