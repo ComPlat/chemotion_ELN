@@ -8,9 +8,6 @@ import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 
 import NotificationActions from './actions/NotificationActions'
 
-import Select from 'react-select'
-import {solventOptions} from './staticDropdownOptions/options'
-
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
@@ -24,7 +21,7 @@ export default class ReactionDetailsScheme extends Component {
     this.setState({ reaction: nextReaction });
   }
 
-  dropSample(sample, materialGroup) {
+  dropSample(sample, materialGroup, external_label) {
     let {reaction} = this.state;
     let splitSample ;
 
@@ -60,6 +57,10 @@ export default class ReactionDetailsScheme extends Component {
       if(materialGroup == 'products') {
         splitSample.reaction_product = true
       }
+    }
+
+    if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
+      splitSample.external_label = external_label;
     }
     reaction.addMaterial(splitSample, materialGroup);
 
@@ -397,7 +398,7 @@ export default class ReactionDetailsScheme extends Component {
         <Button bsSize="xsmall"
                 style={{ backgroundColor: '#ddd' }}
                 onClick={ () => this.setState({ open: !open }) }>
-          { arrow } &nbsp; Solvent
+          { arrow } &nbsp; Solvents
         </Button>
       </ButtonGroup>
     );
@@ -417,37 +418,6 @@ export default class ReactionDetailsScheme extends Component {
   render() {
     const { reaction } = this.state;
     const totalVolume = this.totalVolume();
-
-    let showMultiSolvents = reaction.solvents.length === 0 ? 'solvent' : 'solvents';
-
-    const solventTp = (
-      <Tooltip id="solventTp">
-        <p>Select one solvent without editing samples.</p>
-      </Tooltip>
-    )
-    const multiSolventsTp = (
-      <Tooltip id="multiSolventsTp">
-        <p>This will overwrite and disable 'Single Solvent'.</p>
-        <p>If you want to use 'Single Solvent', you need to delete all 'Multipe Solvents'.</p>
-      </Tooltip>
-    )
-    const hintSolvent = (
-      <div>
-        Single Solvent &nbsp;
-        <OverlayTrigger placement="top" overlay={solventTp}>
-          <i className="fa fa-info-circle"/>
-        </OverlayTrigger>
-      </div>
-    )
-    const hintSolvents = (
-      <div>
-        Multiple Solvents  &nbsp;
-        <OverlayTrigger placement="top" overlay={multiSolventsTp}>
-          <i className="fa fa-info-circle"/>
-        </OverlayTrigger>
-      </div>
-    )
-
     let minPadding = {padding: "1px 2px 2px 0px"}
 
     // if no reference material then mark first starting material
@@ -503,35 +473,18 @@ export default class ReactionDetailsScheme extends Component {
           <ListGroupItem style={minPadding}>
             { this.solventCollapseBtn() }
             <Collapse in={ this.state.open }>
-              <Tabs defaultActiveKey={showMultiSolvents} id="reaction-solvents-tab">
-                <Tab eventKey={'solvent'} title={hintSolvent} disabled={showMultiSolvents === 'solvents'}>
-                  <Row>
-                    <Col md={6}>
-                      <Select
-                        name='solvent'
-                        multi={false}
-                        options={solventOptions}
-                        value={reaction.solvent}
-                        disabled={reaction.isMethodDisabled('solvent') || showMultiSolvents === 'solvents'}
-                        onChange={ event => this.props.onInputChange('solvent', {target: {value: event}})}
-                      />
-                    </Col>
-                  </Row>
-                </Tab>
-
-                <Tab eventKey={'solvents'} title={hintSolvents}>
-                  <MaterialGroupContainer
-                    reaction={reaction}
-                    materialGroup="solvents"
-                    materials={reaction.solvents}
-                    totalVolume={totalVolume}
-                    dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
-                    deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-                    dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
-                    showLoadingColumn={reaction.hasPolymers()}
-                    onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
-                </Tab>
-              </Tabs>
+              <div>
+                <MaterialGroupContainer
+                  reaction={reaction}
+                  materialGroup="solvents"
+                  materials={reaction.solvents}
+                  totalVolume={totalVolume}
+                  dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+                  deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
+                  dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
+                  showLoadingColumn={reaction.hasPolymers()}
+                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
+              </div>
             </Collapse>
           </ListGroupItem>
         </ListGroup>

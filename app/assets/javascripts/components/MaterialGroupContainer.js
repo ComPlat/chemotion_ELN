@@ -36,7 +36,7 @@ class MaterialGroupContainer extends Component {
   render() {
     const { materials, materialGroup, isOver, canDrop, connectDropTarget,
             showLoadingColumn, deleteMaterial, onChange, reaction,
-            totalVolume } = this.props;
+            totalVolume, dropSample } = this.props;
     let style = {
       padding: '2px 5px'
     };
@@ -55,7 +55,8 @@ class MaterialGroupContainer extends Component {
           materialGroup={materialGroup}
           totalVolume={totalVolume}
           showLoadingColumn={showLoadingColumn}
-          deleteMaterial={deleteMaterial} />
+          deleteMaterial={deleteMaterial}
+          addDefaultSolvent={dropSample} />
       </div>
     );
   }
