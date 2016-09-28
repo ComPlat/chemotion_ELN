@@ -49,13 +49,17 @@ class ElementPermissionProxy
 
   def nested_details_levels_for_element
     nested_detail_levels = {}
-    c = @collections
+    c = @collections.pluck(:sample_detail_level,:wellplate_detail_level) || []
+    sc= @sync_collections.pluck(:sample_detail_level,:wellplate_detail_level) || []
     s_dl,w_dl= 0,0
     if element.is_a?(Sample)
       nested_detail_levels[:sample] = @dl
-      nested_detail_levels[:wellplate] = c.pluck(:wellplate_detail_level).max
+      nested_detail_levels[:wellplate] = (
+        @collections.pluck(:wellplate_detail_level) +
+        @sync_collections.pluck(:wellplate_detail_level)
+        ).max
     else
-      c.pluck(:sample_detail_level,:wellplate_detail_level).each do |dls|
+      (c+sc).each do |dls|
         s_dl < dls[0] && (s_dl = dls[0])
         w_dl < dls[1] && (w_dl = dls[1])
       end
