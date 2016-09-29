@@ -127,12 +127,21 @@ export default class ElementsTableSampleEntries extends Component {
     }
     let dragItem;
     // in molecule dnd we use sample if molecule is a partial
+    const {collId, showPreviews} = UIStore.getState()
     if(sample.contains_residues) {
-      const {collId} = UIStore.getState()
       dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
       dragItem.id = null;
     } else {
       dragItem = molecule;
+    }
+
+    let svgPreview = (<span></span>)
+    if(showPreviews) {
+      svgPreview = (
+        <div style={{float: 'left'}}>
+          <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
+        </div>
+      )
     }
 
     return (
@@ -141,9 +150,7 @@ export default class ElementsTableSampleEntries extends Component {
         onClick={() => this.handleMoleculeToggle(molecule.iupac_name || molecule.inchistring)}
       >
         <td colSpan="2" style={{position: 'relative'}}>
-          <div style={{float: 'left'}}>
-            <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
-          </div>
+          {svgPreview}
           <div style={{position: 'absolute', float: 'right', right: '3px'}}>
             <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>}>
               <span style={{fontSize: 15, color: '#337ab7', lineHeight: '10px'}}>

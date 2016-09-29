@@ -131,7 +131,7 @@ export default class ElementsTable extends React.Component {
   previewCheckbox() {
     const {ui} = this.state;
     const {type} = this.props;
-    if(type == 'reaction' ) {
+    if(type == 'reaction' || type == 'sample') {
       return (
         <div style={{float: 'right'}}>
           <ElementsSvgCheckbox checked={ui.showPreviews}/>
