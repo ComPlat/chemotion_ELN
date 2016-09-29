@@ -4,6 +4,7 @@ describe Chemotion::ReportAPI do
   context 'authorized user logged in' do
     let(:user) { create(:user) }
     let(:docx_mime_type) { "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }
+    let(:excel_mime_type) { "application/vnd.ms-excel" }
 
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
@@ -39,6 +40,31 @@ describe Chemotion::ReportAPI do
       it 'returns a header with docx-type' do
         expect(response["Content-Type"]).to eq(docx_mime_type)
         expect(response["Content-Disposition"]).to include(".docx")
+      end
+    end
+
+    describe 'GET /api/v1/reports/export_samples_from_selections' do
+      let(:c)        { create(:collection, user_id: user.id) }
+      let(:sample_1) { create(:sample) }
+      let(:sample_2) { create(:sample) }
+
+      before do
+        CollectionsSample.create!(sample: sample_1, collection: c)
+        CollectionsSample.create!(sample: sample_2, collection: c)
+      end
+
+      before {
+        params = {  type: "sample",
+                    checkedIds: "#{sample_1.id}",
+                    uncheckedIds: "",
+                    checkedAll: false,
+                    currentCollection: c.id }
+        get '/api/v1/reports/export_samples_from_selections', params
+      }
+
+      it 'returns a header with excel-type' do
+        expect(response["Content-Type"]).to eq(excel_mime_type)
+        expect(response["Content-Disposition"]).to include(".xlsx")
       end
     end
   end

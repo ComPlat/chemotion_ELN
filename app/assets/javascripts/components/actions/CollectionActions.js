@@ -121,21 +121,6 @@ class CollectionActions {
       });};
   }
 
-  downloadReportCollectionSamples(){
-    const {currentCollection} = UIStore.getState();
-    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_samples?id=" + currentCollection.id});
-  }
-
-  downloadReportCollectionReactions(){
-    const {currentCollection} = UIStore.getState();
-    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_reactions?id=" + currentCollection.id});
-  }
-
-  downloadReportCollectionWellplates(){
-    const {currentCollection} = UIStore.getState();
-    Utils.downloadFile({contents: "api/v1/reports/export_samples_from_collection_wellplates?id=" + currentCollection.id});
-  }
-
   downloadReport(tab){
     const {currentCollection} = UIStore.getState();
 

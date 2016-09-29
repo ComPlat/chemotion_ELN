@@ -64,11 +64,13 @@ export default class ContextActions extends React.Component {
   }
 
   render() {
+    const { uiState } = this.state;
     return (
       <div style={{display: 'inline', float: 'left'}}>
         <ButtonGroup>
           <ExportImportButton isDisabled={this.isDisabled()}
-                              importFunction={this.importFunction.bind(this)} />
+                              importFunction={this.importFunction.bind(this)}
+                              uiState={uiState} />
           <ReportButton />
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
