@@ -273,3 +273,7 @@
     -webkit-transform: rotate(1turn);
   }
 }
+
+.solvents-select {
+  width: 220px;
+}
