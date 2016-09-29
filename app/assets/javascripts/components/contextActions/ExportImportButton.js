@@ -5,7 +5,7 @@ import CollectionActions from '../actions/CollectionActions';
 
 export default class ExportImportButton extends Component {
   render() {
-    const {isDisabled} = this.props
+    const { isDisabled, importFunction } = this.props
 
     const tooltip = (<Tooltip id="export_button">Import Export</Tooltip>)
     let title =
@@ -30,7 +30,7 @@ export default class ExportImportButton extends Component {
               Export samples from collection wellplates
             </MenuItem>
             <MenuItem divider />
-            <MenuItem onSelect={this.props.importFunction}>
+            <MenuItem onSelect={() => importFunction()}>
               Import samples to collection
             </MenuItem>
           </Dropdown.Menu>

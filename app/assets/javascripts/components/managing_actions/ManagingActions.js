@@ -13,7 +13,6 @@ import ManagingModal from './ManagingModal';
 import ManagingModalSharing from './ManagingModalSharing';
 import ManagingModalCollectionActions from './ManagingModalCollectionActions';
 import ManagingModalDelete from './ManagingModalDelete';
-import ManagingModalImport from './ManagingModalImport';
 import ManagingModalRemove from './ManagingModalRemove';
 import ManagingModalTopSecret from './ManagingModalTopSecret';
 import ElementActions from '../actions/ElementActions';
@@ -29,13 +28,6 @@ export default class ManagingActions extends React.Component {
       sharing_allowed: false,
       deletion_allowed: false,
       is_top_secret: false,
-      modalProps: {
-        show: false,
-        title: "",
-        component: "",
-        action: null,
-        listSharedCollections: false,
-      }
     }
 
     this.handleButtonClick = this.handleButtonClick.bind(this)
@@ -162,14 +154,13 @@ export default class ManagingActions extends React.Component {
   }
 
   handleModalHide() {
-    this.setState({
-      modalProps: {
-        show: false,
-        title: "",
-        component: "",
-        action: null
-      }
-    });
+    const modalProps = {
+      show: false,
+      title: "",
+      component: "",
+      action: null
+    };
+    this.props.updateModalProps(modalProps);
     // https://github.com/react-bootstrap/react-bootstrap/issues/1137
     document.body.className = document.body.className.replace('modal-open', '');
   }
@@ -209,19 +200,18 @@ export default class ManagingActions extends React.Component {
         action = ElementActions.deleteElements;
         break;
     }
-    this.setState({
-      modalProps: {
-        show: true,
-        title,
-        component,
-        action,
-        listSharedCollections
-      }
-    });
+    const modalProps = {
+      show: true,
+      title,
+      component,
+      action,
+      listSharedCollections
+    };
+    this.props.updateModalProps(modalProps);
   }
 
   render() {
-    const {modalProps} = this.state;
+    const { modalProps } = this.props;
     let sel = this.hasSelection();
     return (
       <div style={{display: 'inline', float: 'left', marginRight: 10}}>
@@ -247,3 +237,8 @@ export default class ManagingActions extends React.Component {
     )
   }
 }
+
+ManagingActions.propTypes = {
+  modalProps: React.PropTypes.object.isRequired,
+  updateModalProps: React.PropTypes.func.isRequired,
+};

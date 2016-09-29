@@ -4,6 +4,8 @@ import UIStore from './../stores/UIStore';
 import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
+import ElementActions from '../actions/ElementActions';
+import ModalImport from './ModalImport';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -46,29 +48,27 @@ export default class ContextActions extends React.Component {
     return false
   }
 
-  handleImport() {
-    let title, component, action = "";
-    let listSharedCollections = false
-    title = "Import Elements from File";
-    component = ManagingModalImport;
-    action = ElementActions.importSamplesFromFile;
-
-    this.setState({
-      modalProps: {
-        show: true,
-        title,
-        component,
-        action,
-        false
-      }
-    });
+  importFunction() {
+    const title = "Import Samples from File";
+    const component = ModalImport;
+    const action = ElementActions.importSamplesFromFile;
+    const listSharedCollections = false
+    const modalProps = {
+      show: true,
+      title,
+      component,
+      action,
+      listSharedCollections,
+    };
+    this.props.updateModalProps(modalProps);
   }
 
   render() {
     return (
       <div style={{display: 'inline', float: 'left'}}>
         <ButtonGroup>
-          <ExportImportButton isDisabled={this.isDisabled()} />
+          <ExportImportButton isDisabled={this.isDisabled()}
+                              importFunction={this.importFunction.bind(this)} />
           <ReportButton />
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
@@ -78,3 +78,8 @@ export default class ContextActions extends React.Component {
     )
   }
 }
+
+ContextActions.propTypes = {
+  modalProps: React.PropTypes.object.isRequired,
+  updateModalProps: React.PropTypes.func.isRequired,
+};
