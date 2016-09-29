@@ -5,7 +5,7 @@ import UIStore from '../stores/UIStore';
 
 import NotificationActions from '../actions/NotificationActions';
 
-export default class ManagingModalImport extends React.Component {
+export default class ModalImport extends React.Component {
   constructor(props) {
     super(props);
     this.state = {

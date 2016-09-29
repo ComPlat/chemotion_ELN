@@ -15,7 +15,14 @@ export default class Navigation extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      currentUser: null
+      currentUser: null,
+      modalProps: {
+        show: false,
+        title: "",
+        component: "",
+        action: null,
+        listSharedCollections: false,
+      }
     }
     this.onChange = this.onChange.bind(this)
   }
@@ -39,7 +46,15 @@ export default class Navigation extends React.Component {
     return DocumentHelper.getMetaContent("csrf-token")
   }
 
+  updateModalProps(modalProps) {
+    this.setState({
+      modalProps: modalProps
+    });
+  }
+
   render() {
+    const { modalProps } = this.state;
+
     return (this.state.currentUser
       ? <Navbar inverse fluid>
           <Navbar.Header>
@@ -47,8 +62,10 @@ export default class Navigation extends React.Component {
           </Navbar.Header>
           <Nav navbar className='navbar-form'>
             <Search />
-            <ManagingActions/>
-            <ContextActions/>
+            <ManagingActions modalProps={modalProps}
+                              updateModalProps={this.updateModalProps.bind(this)} />
+            <ContextActions modalProps={modalProps}
+                            updateModalProps={this.updateModalProps.bind(this)} />
           </Nav>
           <UserAuth/>
         </Navbar>
