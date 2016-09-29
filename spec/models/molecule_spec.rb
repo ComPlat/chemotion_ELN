@@ -10,7 +10,7 @@ RSpec.describe Molecule, type: :model do
     end
 
     it 'should have a unique inchikey' do
-      molecule.save
+      molecule.save!
       invalid_molecule = Molecule.new
       invalid_molecule.inchikey = molecule.inchikey
       expect {invalid_molecule.save!}.to raise_error
@@ -21,7 +21,7 @@ RSpec.describe Molecule, type: :model do
     let (:molecule) { build(:molecule) }
     it 'should persist array of names' do
       molecule.names = %w(foo bar quz)
-      molecule.save
+      molecule.save!
       persisted_molecule = Molecule.last
       expect(persisted_molecule.names).to match_array(molecule.names)
     end
@@ -29,7 +29,7 @@ RSpec.describe Molecule, type: :model do
     it 'should persist the binary molfile' do
       molfile_example =  "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n"#File.open("spec/models/molecule_spec.rb", "rb")
       molecule.assign_attributes(molfile:  molfile_example)
-      molecule.save
+      molecule.save!
       persisted_molecule = Molecule.last
       persisted_molfile_SHA =
         (Digest::SHA256.new << persisted_molecule.molfile).hexdigest

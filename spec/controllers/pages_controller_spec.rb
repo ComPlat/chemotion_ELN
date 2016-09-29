@@ -20,9 +20,9 @@ RSpec.describe PagesController do
 
     it "assigns @groups" do
       g1.users << user
-      g1.save
+      g1.save!
       g2.admins << user
-      g2.save
+      g2.save!
       get :groups
       groups=assigns(:groups).map{|g| g.select{|k| k.match(/id|name|initials/)}}
       expect(groups).to match_array([g1.as_json(json_options),g2.as_json(json_options)])

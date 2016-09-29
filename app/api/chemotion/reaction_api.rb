@@ -166,7 +166,7 @@ module Chemotion
           id = attributes.delete(:id)
 
           if reaction = Reaction.find(id)
-            reaction.update_attributes(attributes)
+            reaction.update_attributes!(attributes)
             reaction.touch
             ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)
             ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
@@ -336,14 +336,14 @@ module ReactionUpdator
               r.assign_attributes sample.residues_attributes[0]
             end
 
-            existing_sample.save
+            existing_sample.save!
             included_sample_ids << existing_sample.id
 
             existing_association = reaction_samples_association.find_by(sample_id: sample.id)
 
             #update existing associations
             if existing_association.present?
-              existing_association.update_attributes(
+              existing_association.update_attributes!(
                 equivalent: sample.equivalent,
                 reference: sample.reference
               )
@@ -385,6 +385,6 @@ module ReactionUpdator
 
     # to update the SVG
     reaction.reload
-    reaction.save
+    reaction.save!
   end
 end

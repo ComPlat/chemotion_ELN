@@ -19,7 +19,7 @@ module Usecases::Wellplates::WellplateUpdater
 
           #assign subsample to all collections
           subsample.collections << collections
-          subsample.save
+          subsample.save!
           subsample.reload
 
           sample_id = subsample.id
