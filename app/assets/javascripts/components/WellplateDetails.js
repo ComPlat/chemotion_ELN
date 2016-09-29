@@ -24,7 +24,8 @@ export default class WellplateDetails extends Component {
       wellplate,
       activeTab: 0,
       showWellplate: true,
-      offsetTop: 70
+      offsetTop: 70,
+      fullScreen: false
     }
 
     this.handleResize = this.handleResize.bind(this);
@@ -94,6 +95,14 @@ export default class WellplateDetails extends Component {
     this.setState({activeTab: event, showWellplate});
   }
 
+  toggleFullScreen() {
+    let {fullScreen} = this.state
+
+    this.setState({
+      fullScreen: !fullScreen
+    })
+  }
+
   wellplateHeader(wellplate) {
     let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
 
@@ -117,14 +126,22 @@ export default class WellplateDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+          onClick={() => this.toggleFullScreen()}>
+          <i className="fa fa-expand"></i>
+        </Button>
+        </OverlayTrigger>
       </div>
     )
   }
 
   render() {
-    const {wellplate, activeTab, showWellplate} = this.state;
+    const {wellplate, activeTab, showWellplate, fullScreen} = this.state;
     const {wells, name, size, description} = wellplate;
     const submitLabel = wellplate.isNew ? "Create" : "Save";
+    const fScrnClass = fullScreen ? "full-screen" : ""
 
     const properties = {
       name,
@@ -133,6 +150,7 @@ export default class WellplateDetails extends Component {
     };
 
     return (
+      <div className={fScrnClass}>
       <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
         <div key={wellplate.id}>
           <Panel header={this.wellplateHeader(wellplate)}
@@ -197,6 +215,7 @@ export default class WellplateDetails extends Component {
           </Panel>
         </div>
       </StickyDiv>
+      </div>
     );
   }
 
