@@ -16,7 +16,8 @@ export default class ScreenDetails extends Component {
     const {screen} = props;
     this.state = {
       screen,
-      offsetTop: 70
+      offsetTop: 70,
+      fullScreen: false
     }
 
     this.handleResize = this.handleResize.bind(this);
@@ -82,6 +83,14 @@ export default class ScreenDetails extends Component {
     );
   }
 
+  toggleFullScreen() {
+    let {fullScreen} = this.state
+
+    this.setState({
+      fullScreen: !fullScreen
+    })
+  }
+
   dropWellplate(wellplate) {
     const {screen} = this.state;
 
@@ -120,16 +129,26 @@ export default class ScreenDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+          onClick={() => this.toggleFullScreen()}>
+          <i className="fa fa-expand"></i>
+        </Button>
+        </OverlayTrigger>
       </div>
     )
   }
 
   render() {
-    const {screen} = this.state;
+    const {screen, fullScreen} = this.state;
     const {id, wellplates, name, collaborator, result, conditions, requirements, description} = screen;
 
     const submitLabel = screen.isNew ? "Create" : "Save";
+    const fScrnClass = fullScreen ? "full-screen" : ""
+
     return (
+      <div className={fScrnClass}>
       <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
       <div key={id}>
         <Panel header={this.screenHeader(screen)}
@@ -230,6 +249,7 @@ export default class ScreenDetails extends Component {
         </Panel>
       </div>
       </StickyDiv>
+      </div>
     );
   }
 }

@@ -178,6 +178,14 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  toggleFullScreen() {
+    let {fullScreen} = this.state
+
+    this.setState({
+      fullScreen: !fullScreen
+    })
+  }
+
   structureEditorButton(isDisabled) {
     return (
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
@@ -239,6 +247,13 @@ export default class SampleDetails extends React.Component {
             disabled={!this.sampleIsValid()} >
             <i className="fa fa-floppy-o "></i>
           </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+          onClick={() => this.toggleFullScreen()}>
+          <i className="fa fa-expand"></i>
+        </Button>
         </OverlayTrigger>
       </div>
     )
@@ -502,8 +517,10 @@ export default class SampleDetails extends React.Component {
       tabContents.push((i)=>this.extraTab(i))
     }
 
+    const fScrnClass = this.state.fullScreen ? "full-screen" : ""
+
     return (
-      <div>
+      <div className={fScrnClass}>
         <StructureEditorModal
           key={sample.id}
           showModal={this.state.showStructureEditor}

@@ -29,7 +29,8 @@ export default class ReactionDetails extends Component {
     const {reaction} = props;
     this.state = {
       reaction,
-      offsetTop: 70
+      offsetTop: 70,
+      fullScreen: false
     };
     this.handleResize = this.handleResize.bind(this);
     if(reaction.hasMaterials()) {
@@ -115,6 +116,15 @@ export default class ReactionDetails extends Component {
     } else {
       ElementActions.updateReaction(reaction);
     }
+  }
+
+
+  toggleFullScreen() {
+    let {fullScreen} = this.state
+
+    this.setState({
+      fullScreen: !fullScreen
+    })
   }
 
   reactionIsValid() {
@@ -207,7 +217,8 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    let {reaction} = this.state;
+    let {reaction, fullScreen} = this.state;
+    let fScrnClass = fullScreen ? "full-screen" : ""
     reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
@@ -236,6 +247,13 @@ export default class ReactionDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
+        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+          onClick={() => this.toggleFullScreen()}>
+          <i className="fa fa-expand"></i>
+        </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}>
           <Button bsStyle="success" bsSize="xsmall" className="button-right"
             disabled={reaction.changed || reaction.isNew}
@@ -252,7 +270,8 @@ export default class ReactionDetails extends Component {
       </h4>
 
     return (
-      <StickyDiv zIndex={2} offsetTop={this.state.offsetTop} >
+      <div className={fScrnClass}>
+      <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
         <Panel className="panel-reaction" header={panelHeader}
           bsStyle={reaction.changed ? 'info' : 'primary'}
         >
@@ -301,6 +320,7 @@ export default class ReactionDetails extends Component {
           </ButtonToolbar>
         </Panel>
       </StickyDiv>
+      </div>
     );
   }
 }
