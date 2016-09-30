@@ -10,7 +10,13 @@ module Chemotion::PubchemService
     interpret_record record
   end
 
-  def self.interpret_record record
+  def self.molecule_info_from_inchikeys inchikey_array
+    records = PubChem.get_records_from_inchikeys(inchikey_array)
+    interpret_record records, true
+  end
+
+  def self.interpret_record(record, as_array = false)
+    record = JSON.parse(record) if record.is_a?(String)
     result = {
       cid: nil,         # optional
       iupac_name: nil,
@@ -19,10 +25,25 @@ module Chemotion::PubchemService
       log_p: nil        # optional
     }
 
-    if record && record['PC_Compounds']
-      result[:cid] = record['PC_Compounds'][0]['id']['id']['cid']
+    results=[]
 
-      record['PC_Compounds'][0]['props'].each do |prop|
+    unless record && record['PC_Compounds']
+      return result unless as_array
+      return results 
+    end
+
+    record['PC_Compounds'].each do |rec|
+      result = {
+        cid: nil,         # optional
+        iupac_name: nil,
+        names: [],
+        topological: nil, # optional
+        log_p: nil        # optional
+      }
+
+      result[:cid] = rec['id']['id']['cid']
+
+      rec['props'].each do |prop|
         if (prop['urn']['label'] == 'IUPAC Name' && prop['urn']['name'] == 'Preferred')
           result[:iupac_name] = prop['value']['sval'].to_s
         end
@@ -39,9 +60,20 @@ module Chemotion::PubchemService
         if (prop['urn']['label'] == 'Log P')
           result[:log_p] = prop['value']['fval'].to_s
         end
+
+        if (prop['urn']['label'] == 'InChIKey')
+          result[:inchikey] = prop['value']['sval'].to_s
+        end
       end
+
+      results << result
     end
-    result
+
+    if record['PC_Compounds'].size == 1 && !as_array
+      result[0]
+    else
+       results
+    end
   end
 
   def self.molfile_from_inchikey inchikey

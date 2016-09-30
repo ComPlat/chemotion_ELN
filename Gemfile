@@ -53,6 +53,7 @@ gem 'axlsx', git: 'git://github.com/randym/axlsx'
 gem 'roo', ">2.5.0"
 
 gem 'httparty'
+gem 'faraday'
 # Ketcher editor
 gem 'ketcherails', github: 'ComPlat/ketcher-rails'
 
