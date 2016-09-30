@@ -3,13 +3,6 @@ module Chemotion
     resource :reports do
       desc "Build a report using the contents of a JSON file"
 
-      @@excluded_field = [
-        "id", "molecule_id", "analyses_dump", "created_by", "deleted_at",
-        "user_id", "fingerprint_id"
-      ]
-
-      @@included_field = ["molecule.cano_smiles", "molecule.sum_formular"]
-
       params do
         requires :id
       end
@@ -27,64 +20,37 @@ module Chemotion
       end
 
       params do
-        requires :id, type: String
+        requires :type, type: String
+        requires :checkedIds
+        requires :uncheckedIds
+        requires :checkedAll, type: Boolean
+        requires :currentCollection, type: Integer
       end
-      get :export_samples_from_collection_samples do
+      get :export_samples_from_selections do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:id]} Samples Excel.xlsx")}"
-
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:type].capitalize}_#{Time.now.strftime("%Y-%m-%dT%H-%M-%S")}.xlsx")}"
         excel = Report::ExcelExport.new
+        # - - - - - - -
+        type = params[:type]
+        checkedIds = params[:checkedIds].split(",")
+        uncheckedIds = params[:uncheckedIds].split(",")
+        checkedAll = params[:checkedAll]
+        currentCollection = params[:currentCollection]
 
-        Collection.find(params[:id]).samples.includes(:molecule).each do |sample|
-          excel.add_sample(sample)
+        elements = selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)
+        samples = if type == "sample"
+          elements.includes(:molecule)
+        elsif type == "reaction"
+          elements.map { |r| r.starting_materials + r.reactants + r.products }.flatten
+        elsif type == "wellplate"
+          elements.map do |wellplate|
+            wellplate.wells.map { |well| well.sample }.flatten
+          end.flatten
         end
 
-        excel.generate_file @@excluded_field, @@included_field
-      end
-
-      params do
-        requires :id, type: String
-      end
-      get :export_samples_from_collection_reactions do
-        env['api.format'] = :binary
-        content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:id]} Reactions Excel.xlsx")}"
-
-        excel = Report::ExcelExport.new
-
-        Collection.find(params[:id]).reactions.each do |reaction|
-          reaction.starting_materials.each do |material|
-            excel.add_sample(material)
-          end
-          reaction.reactants.each do |reactant|
-            excel.add_sample(reactant)
-          end
-          reaction.products.each do |product|
-            excel.add_sample(product)
-          end
-        end
-
-        excel.generate_file @@excluded_field, @@included_field
-      end
-
-      params do
-        requires :id, type: String
-      end
-      get :export_samples_from_collection_wellplates do
-        env['api.format'] = :binary
-        content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:id]} Samples Excel.xlsx")}"
-
-        excel = Report::ExcelExport.new
-
-        Collection.find(params[:id]).wellplates.each do |wellplate|
-          wellplate.wells.each do |well|
-            excel.add_sample(well.sample)
-          end
-        end
-
-        excel.generate_file @@excluded_field, @@included_field
+        samples.each { |sample| excel.add_sample(sample) }
+        excel.generate_file(excluded_field, included_field)
       end
 
       params do
@@ -104,7 +70,7 @@ module Chemotion
           end
         end
 
-        excel.generate_file @@excluded_field, @@included_field
+        excel.generate_file(excluded_field, included_field)
       end
 
       params do
@@ -129,7 +95,7 @@ module Chemotion
           excel.add_sample(product)
         end
 
-        excel.generate_file @@excluded_field, @@included_field
+        excel.generate_file(excluded_field, included_field)
       end
     end
 
@@ -210,6 +176,26 @@ module Chemotion
           configs: configs,
           reactions: contents
         }
+      end
+
+      def excluded_field
+        [
+          "id", "molecule_id", "analyses_dump", "created_by", "deleted_at",
+          "user_id", "fingerprint_id"
+        ]
+      end
+
+      def included_field
+        ["molecule.cano_smiles", "molecule.sum_formular"]
+      end
+
+      def selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)
+        elements = "#{type}s".to_sym
+        if checkedAll
+          Collection.find(currentCollection).send(elements).where.not(id: uncheckedIds)
+        else
+          Collection.find(currentCollection).send(elements).where(id: checkedIds)
+        end
       end
     end
   end
