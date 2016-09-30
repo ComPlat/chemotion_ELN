@@ -19,11 +19,13 @@ const ExportImportButton = ({isDisabled, updateModalProps}) => {
           <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem onSelect={() => exportFunction(updateModalProps)}>
+          <MenuItem onSelect={() => exportFunction(updateModalProps)}
+            title='Export to spreadsheet'>
             Export samples from selection
           </MenuItem>
           <MenuItem divider />
-          <MenuItem onSelect={() => importFunction(updateModalProps)}>
+          <MenuItem onSelect={() => importFunction(updateModalProps)}
+            title='Import from spreadsheet or sdf'>
             Import samples to collection
           </MenuItem>
         </Dropdown.Menu>
