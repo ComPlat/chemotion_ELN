@@ -3,7 +3,7 @@ require 'digest'
 
 module SVG
   class ReactionComposer
-    REACTANT_SCALE = 0.5
+    REACTANT_SCALE = 0.75
     def initialize(materials_svg_paths, options = {})
       @svg_path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'molecules')
       @starting_materials = materials_svg_paths[:starting_materials] || []
@@ -13,20 +13,22 @@ module SVG
       number_of_starting_materials = @starting_materials.size
       number_of_products = @products.size
       is_report = options[:is_report]
-      @word_size = is_report ? 4 + (number_of_reactants + number_of_starting_materials + number_of_products) : 11
-      @arrow_width = number_of_reactants * 50 + 60
+      report_ws = 4 + (number_of_reactants + number_of_starting_materials + number_of_products)
+      svg_ws = 6 + (number_of_reactants + number_of_starting_materials + number_of_products) * 1.7
+      @word_size = is_report ? report_ws : svg_ws
+      @arrow_width = number_of_reactants * 50 + 120
       @solvents = options[:solvents] || []
       @temperature = options[:temperature]
-      @arrow_y_shift = @solvents.count > 3 ? (@solvents.count - 3) * 4 : 0
       pas = options[:preserve_aspect_ratio]
       @preserve_aspect_ratio = pas && pas.match(/(\w| )+/) && "preserveAspectRatio = #{$1}" || ''
       @global_view_box_array = [0,0,50,50]
     end
 
     def solvents_lines
-      group_of_three = @solvents.each_slice(3).to_a
+      s_per_line = @arrow_width < 150 ? 2 : 3
+      group_of_three = @solvents.each_slice(s_per_line).to_a
       group_of_three.map do |i|
-        i.map{ |j| j && j[0..7] }
+        i.map{ |j| j && "#{j[0..7]}.." }
       end.map{ |k| k.join(" / ") } unless @solvents.empty?
     end
 
@@ -49,7 +51,7 @@ module SVG
     def temperature_it
       <<-END
         <svg font-family="sans-serif">
-          <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{65 - @arrow_y_shift}" font-size="#{@word_size + 1}">#{@temperature}</text>
+          <text text-anchor="middle" x="#{@arrow_width / 2}" y="30" font-size="#{@word_size + 1}">#{@temperature}</text>
         </svg>
       END
     end
@@ -58,7 +60,7 @@ module SVG
       (@solvents.size >1 && solvents_lines || @solvents).map.with_index do |solvent, index|
         <<-END
           <svg font-family="sans-serif">
-            <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{80 + index * 12  - @arrow_y_shift}" font-size="#{@word_size + 1}">#{solvent}</text>
+            <text text-anchor="middle" x="#{@arrow_width / 2}" y="#{55 + index * 20}" font-size="#{@word_size + 1}">#{solvent}</text>
           </svg>
         END
       end.join("  ")
@@ -75,7 +77,7 @@ module SVG
 
     def divide_it(x=0,y=0)
       <<-END
-      <svg font-family="sans-serif" font-size="14">
+      <svg font-family="sans-serif" font-size="28">
           <text x="#{x}" y="#{y}">+</text>
       </svg>
       END
@@ -162,7 +164,7 @@ module SVG
         scaled_group_width = (group_width*scale).round
 
         if options[:arrow_width]
-          @arrow_width = [scaled_group_width, 50].max + 15
+          @arrow_width = [scaled_group_width, 50].max + 20
           gvba[2] += @arrow_width
         else
           gvba[2] += scaled_group_width
@@ -198,12 +200,13 @@ module SVG
       def section_it()
         sections = {}
         y_center = (@global_view_box_array[3]/2).round
-        sections[:starting_materials] = compose_material_group @starting_materials, {start_at: 0, y_center: y_center }
-        arrow_x_shift = (@global_view_box_array[2]+=30)
+        sections[:starting_materials] = compose_material_group @starting_materials, { start_at: 0, y_center: y_center }
+        arrow_x_shift = (@global_view_box_array[2]+=50)  # adjust starting material to arrow
         arrow_y_shift = y_center
-        sections[:reactants] = compose_material_group @reactants, start_at: @global_view_box_array[2], scale: REACTANT_SCALE , arrow_width: true,y_center: y_center #TODO rectify y_center for reactnat
+        sections[:reactants] = compose_material_group @reactants, start_at: @global_view_box_array[2], scale: REACTANT_SCALE , arrow_width: true,y_center: y_center - 30 #TODO rectify y_center for reactnat
         sections[:arrow] = compose_arrow_and_reaction_labels start_at: arrow_x_shift, arrow_y_shift: arrow_y_shift
-        sections[:products] = compose_material_group @products, start_at: @global_view_box_array[2],y_center: y_center
+        @global_view_box_array[2] += 40 # adjust arrow to products
+        sections[:products] = compose_material_group @products, { start_at: @global_view_box_array[2], y_center: y_center }
         @sections=sections
       end
 
