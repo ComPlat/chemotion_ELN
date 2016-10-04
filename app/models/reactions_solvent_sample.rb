@@ -4,4 +4,5 @@ class ReactionsSolventSample < ActiveRecord::Base
   belongs_to :sample
 
   include Reactable
+  include ReactionSampleCollections
 end
