@@ -37,7 +37,7 @@ class NotificationStore {
     this.handleRemoveByUid("import_samples_upload");
     let notification = {
       title: "Oops!",
-      message: "There was a problem with the import of smiles for the following Samples:\n"+message+"\n Please check the file and try again.",
+      message: message + "\n Please check the file and try again.",
       level: "error",
       position: "bl",
       autoDismiss: 0
