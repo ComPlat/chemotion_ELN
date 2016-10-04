@@ -30,8 +30,7 @@ class Report::ExcelExport
       header = ["Image"] + header + included_field
 
       # Add header
-      sheet.add_row header
-
+      sheet.add_row(fix_typo(header))
       width = 0
       files = [] # do not let Tempfile object to be garbage collected
 
@@ -92,5 +91,9 @@ class Report::ExcelExport
     files << file # do not let Tempfile object to be garbage collected
 
     return {path: file.path, width: width, height: height}
+  end
+
+  def fix_typo(inputs)
+    inputs.map { |i| i == "sum_formular" ? "sum_formula" : i }
   end
 end
