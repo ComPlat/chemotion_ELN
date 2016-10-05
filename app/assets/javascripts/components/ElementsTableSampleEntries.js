@@ -25,7 +25,8 @@ export default class ElementsTableSampleEntries extends Component {
     this.state = {
       moleculeGroupsShown: [],
       keyboardIndex: null,
-      keyboardSeletectedElementId: null
+      keyboardSeletectedElementId: null,
+      collapseAll: props.collapseAll
     }
 
     this.sampleOnKeyDown = this.sampleOnKeyDown.bind(this)
@@ -46,6 +47,8 @@ export default class ElementsTableSampleEntries extends Component {
       flatIndex = flatIndex + groupSample.length
     }, [])
     this.flattenSamplesId = flattenSamplesId
+
+    this.setState({collapseAll: nextProps.collapseAll})
   }
 
   componentWillUnmount() {
@@ -104,9 +107,11 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderMoleculeGroup(moleculeGroup, index) {
-    let {moleculeGroupsShown} = this.state
+    let {moleculeGroupsShown, collapseAll} = this.state
+
     let moleculeName = moleculeGroup[0].molecule.iupac_name || moleculeGroup[0].molecule.inchistring
-    let showGroup = !moleculeGroupsShown.includes(moleculeName)
+    let showGroup = !moleculeGroupsShown.includes(moleculeName) && !collapseAll
+
     return (
       <tbody key={index}>
         {this.renderMoleculeHeader(moleculeGroup[0], showGroup)}
@@ -211,7 +216,9 @@ export default class ElementsTableSampleEntries extends Component {
     } else {
       moleculeGroupsShown = moleculeGroupsShown.filter(item => item !== moleculeName)
     }
-    this.setState({moleculeGroupsShown})
+    this.setState({moleculeGroupsShown, collapseAll: false})
+
+    this.props.onChangeCollapse(false)
   }
 
   dragColumn(element) {
@@ -271,4 +278,13 @@ export default class ElementsTableSampleEntries extends Component {
     const {currentElement} = this.props
     return (currentElement && currentElement.id == element.id);
   }
+}
+
+ElementsTableSampleEntries.propTypes = {
+  onChangeCollapse: React.PropTypes.func,
+  collapseAll: React.PropTypes.bool,
+  elements: React.PropTypes.array,
+  currentElement: React.PropTypes.object,
+  showDragColumn: React.PropTypes.bool,
+  ui: React.PropTypes.object
 }

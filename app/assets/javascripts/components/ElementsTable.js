@@ -20,10 +20,13 @@ export default class ElementsTable extends React.Component {
     this.state = {
       elements: [],
       currentElement: null,
-      ui: {}
+      ui: {},
+      sampleCollapseAll: false
     }
     this.onChange = this.onChange.bind(this)
     this.onChangeUI = this.onChangeUI.bind(this)
+
+    this.collapseSample = this.collapseSample.bind(this)
   }
 
   componentDidMount() {
@@ -101,6 +104,10 @@ export default class ElementsTable extends React.Component {
     }
   }
 
+  collapseSample(sampelCollapseAll) {
+    this.setState({sampleCollapseAll: !sampelCollapseAll})
+  }
+
   handlePaginationSelect(eventKey) {
     const {pages} = this.state;
     const {type} = this.props;
@@ -168,7 +175,7 @@ export default class ElementsTable extends React.Component {
   }
 
   renderEntries() {
-    const {elements, ui, currentElement} = this.state
+    const {elements, ui, currentElement, sampleCollapseAll} = this.state
     const {overview, showReport, type} = this.props
     if(type == 'sample') {
       return (
@@ -182,14 +189,18 @@ export default class ElementsTable extends React.Component {
               </th>
               <th colSpan={3}>
                 All {type}s
+                <div style={{float: "right"}}>
+                  Collapse all &nbsp;
+                  <input type="checkbox" checked={sampleCollapseAll}
+                    onChange={() => this.collapseSample(sampleCollapseAll)} />
+                </div>
               </th>
             </tr></thead>
           </Table>
-          <ElementsTableSampleEntries
-            elements={elements}
-            currentElement={currentElement}
-            showDragColumn={!overview}
-            ui={ui}
+          <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
+            elements={elements} currentElement={currentElement}
+            showDragColumn={!overview} ui={ui}
+            onChangeCollapse={(checked) => this.collapseSample(!checked)}
           />
         </div>
       )
