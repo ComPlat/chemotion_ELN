@@ -116,7 +116,7 @@ MOLFILE
     end
 
     it 'should retrieve molecule information' do
-      sample.save
+      sample.save!
       molecule = sample.molecule
       mol_attributes.each do |k, v|
         expect(molecule.attributes[k]).to eq(v)

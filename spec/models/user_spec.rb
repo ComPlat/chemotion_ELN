@@ -36,7 +36,7 @@ RSpec.describe 'User', type: :model do
     end
 
     it 'validates the uniqueness of name_abbreviation' do
-      user.save
+      user.save!
       expect(FactoryGirl.build(:user, :name_abbreviation => user.name_abbreviation)).to_not be_valid
     end
 
@@ -67,7 +67,7 @@ RSpec.describe 'User', type: :model do
     end
 
     it 'creates an All & chemotion.net collection' do
-      user.save
+      user.save!
       expect(user.collections.pluck(:label)).to match_array ['All', 'chemotion.net']
     end
 
