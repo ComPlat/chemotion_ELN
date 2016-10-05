@@ -70,6 +70,9 @@ export default class ElementCollectionLabels extends React.Component {
     const {element} = this.state
     const {currentUser} = UserStore.getState()
 
+    let placement = "left"
+    if (this.props.placement) placement = this.props.placement
+
     if(!element.collection_labels) return (<span></span>)
 
     let shared_labels = []
@@ -102,12 +105,12 @@ export default class ElementCollectionLabels extends React.Component {
             {total_shared_collections + " "} <i className="fa fa-share-alt"/>
           </Label>
         </span>
-        <Overlay rootClose placement="left" container={this}
+        <Overlay rootClose placement={placement} container={this}
             show={this.state.showOverlay}
             onHide={() => this.setState({ showOverlay: false })}
             target={() => ReactDOM.findDOMNode(this.refs.overlayTarget)}>
           <div className="custom-overlay">
-            <div className="arrow"></div>
+            <div className={"arrow " + placement}></div>
             {this.renderCollectionsLabels("My Collections", labels)}
             {this.renderCollectionsLabels("Shared Collections", shared_labels)}
             {this.renderCollectionsLabels("Synchronized Collections", sync_labels, true)}

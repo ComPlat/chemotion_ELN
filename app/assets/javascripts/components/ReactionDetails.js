@@ -277,7 +277,7 @@ export default class ReactionDetails extends Component {
         >
         {this.reactionSVG(reaction)}
         <div style={{position:"absolute", left: 0, top: 40, margin: "10px"}}>
-          <ElementCollectionLabels element={reaction} key={reaction.id} />
+          <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
 

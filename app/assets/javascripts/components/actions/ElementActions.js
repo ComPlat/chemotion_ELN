@@ -174,6 +174,21 @@ class ElementActions {
       });};
   }
 
+  tryFetchReactionById(id) {
+    return (dispatch) => {
+      ReactionsFetcher.fetchById(id)
+                      .then((result) => {
+                        dispatch(result)
+                      }).catch((errorMessage) => {
+                        console.log(errorMessage)
+                      })
+    }
+  }
+
+  closeWarning() {
+    return null
+  }
+
   createReaction(params) {
     return (dispatch) => { ReactionsFetcher.create(params)
       .then((result) => {

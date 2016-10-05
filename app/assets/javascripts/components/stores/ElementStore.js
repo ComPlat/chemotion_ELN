@@ -52,6 +52,7 @@ class ElementStore {
       currentElement: null,
       currentReaction: null,
       currentMaterialGroup: null,
+      elementWarning: false,
       ...extraThing("state",Xstate)
     };
 
@@ -82,6 +83,8 @@ class ElementStore {
       handleDeselectCurrentReaction: ElementActions.deselectCurrentReaction,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
+      handleTryFetchReactionById: ElementActions.tryFetchReactionById,
+      handleCloseWarning: ElementActions.closeWarning,
       handleFetchReactionsByCollectionId:
         ElementActions.fetchReactionsByCollectionId,
       handleUpdateReaction: ElementActions.updateReaction,
@@ -369,6 +372,19 @@ class ElementStore {
   handleFetchReactionById(result) {
     this.state.currentElement = result;
     this.navigateToNewElement(result);
+  }
+
+  handleTryFetchReactionById(result) {
+    if (result.hasOwnProperty("error")) {
+      this.state.elementWarning = true
+    } else {
+      this.state.currentElement = result
+      this.navigateToNewElement(result)
+    }
+  }
+
+  handleCloseWarning() {
+    this.state.elementWarning = false
   }
 
   handleFetchReactionsByCollectionId(result) {
