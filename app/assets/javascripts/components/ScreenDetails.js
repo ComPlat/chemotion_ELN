@@ -223,7 +223,7 @@ export default class ScreenDetails extends Component {
                     <FormGroup>
                       <ControlLabel>Description</ControlLabel>
                       <FormControl
-                        type="textarea"
+                        componentClass="textarea"
                         value={description || ''}
                         onChange={event => this.handleInputChange('description', event)}
                         disabled={screen.isMethodDisabled('description')}

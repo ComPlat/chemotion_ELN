@@ -64,7 +64,7 @@ export default class WellplateList extends Component {
               <td>{sum_formular}</td>
               <td style={inputContainerStyle}>
                 <FormControl
-                  type="textarea"
+                  componentClass="textarea"
                   style={style}
                   value={readout || ''}
                   onChange={event => this.handleReadoutOfWellChange(event, well)}
@@ -73,7 +73,7 @@ export default class WellplateList extends Component {
               </td>
               <td style={inputContainerStyle}>
                 <FormControl
-                  type="textarea"
+                  componentClass="textarea"
                   style={style}
                   value={importedReadout || ''}
                   disabled

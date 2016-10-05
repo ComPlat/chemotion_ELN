@@ -190,7 +190,7 @@ export default class Dataset extends Component {
             <FormGroup controlId="datasetDescription">
               <ControlLabel>Description</ControlLabel>
               <FormControl
-                type="textarea"
+                componentClass="textarea"
                 value={dataset.description || ''}
                 disabled={readOnly}
                 onChange={event => this.handleInputChange('description', event)}

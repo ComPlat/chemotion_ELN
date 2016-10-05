@@ -201,7 +201,7 @@ export default class SampleForm extends React.Component {
     return (
       <FormGroup>
         <ControlLabel>Description</ControlLabel>
-        <FormControl type="textarea"  ref="descriptionInput"
+        <FormControl componentClass="textarea"  ref="descriptionInput"
              placeholder={sample.description}
              value={sample.description || ''}
              onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}

@@ -94,7 +94,7 @@ export default class Analysis extends Component {
           <FormGroup>
             <ControlLabel>Content</ControlLabel>
             <FormControl
-              type="textarea"
+              componentClass="textarea"
               label="Content"
               value={analysis.content || ''}
               disabled={readOnly}
@@ -104,7 +104,7 @@ export default class Analysis extends Component {
           <FormGroup>
             <ControlLabel>Description</ControlLabel>
             <FormControl
-              type="textarea"
+              componentClass="textarea"
               label="Description"
               value={analysis.description || ''}
               disabled={readOnly}
