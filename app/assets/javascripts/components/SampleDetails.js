@@ -140,41 +140,45 @@ export default class SampleDetails extends React.Component {
   }
 
   submitFunction() {
-  let {sample} = this.state;
-  let { currentReaction } = ElementStore.getState();
+    let {sample} = this.state
+    let { currentReaction, currentWellplate } = ElementStore.getState()
 
-  if(currentReaction) {
+    if(currentReaction) {
       if(sample.isNew) {
-        ElementActions.createSampleForReaction(sample);
+        ElementActions.createSampleForReaction(sample)
       } else {
-        ElementActions.updateSampleForReaction(sample);
+        ElementActions.updateSampleForReaction(sample)
       }
+    } else if(currentWellplate) {
+      ElementActions.updateSampleForWellplate(sample)
     } else {
       if(sample.isNew) {
-        ElementActions.createSample(sample);
+        ElementActions.createSample(sample)
       } else {
-        ElementActions.updateSample(new Sample(sample));
+        ElementActions.updateSample(new Sample(sample))
       }
     }
   }
 
   closeDetails() {
-    let { currentReaction } = ElementStore.getState();
-    let {sample} = this.state;
+    let { currentReaction, currentWellplate } = ElementStore.getState()
+    let {sample} = this.state
 
     if(currentReaction) {
       if(sample.isNew)
-        ElementActions.openReactionDetails(currentReaction);
+        ElementActions.openReactionDetails(currentReaction)
       else
         ElementActions.fetchReactionById(currentReaction)
+    } else if(currentWellplate) {
+      ElementActions.fetchWellplateById(currentWellplate)
     } else {
-      UIActions.deselectAllElements();
-      ElementActions.deselectCurrentElement();
-      const {currentCollection,isSync} = UIStore.getState();
+      UIActions.deselectAllElements()
+      ElementActions.deselectCurrentElement()
+      const {currentCollection,isSync} = UIStore.getState()
       Aviator.navigate(isSync
         ? `/scollection/${currentCollection.id}`
         : `/collection/${currentCollection.id}`
-      );
+      )
     }
   }
 
