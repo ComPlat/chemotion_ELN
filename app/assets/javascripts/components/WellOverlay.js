@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Button, Popover, Overlay, ControlLabel, FormGroup, FormControl} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import UiStore from './stores/UIStore';
+import UIStore from './stores/UIStore';
 
 export default class WellOverlay extends Component {
   handleSampleClick(sample) {
