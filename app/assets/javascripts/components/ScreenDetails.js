@@ -113,7 +113,7 @@ export default class ScreenDetails extends Component {
       <div>
         <i className="icon-screen" />
         &nbsp; <span>{screen.name}</span> &nbsp;
-        <ElementCollectionLabels element={screen}/>
+        <ElementCollectionLabels element={screen} placement="right"/>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeScreen">Close Screen</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
