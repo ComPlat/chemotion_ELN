@@ -4,6 +4,7 @@ require 'digest'
 module SVG
   class ReactionComposer
     REACTANT_SCALE = 0.75
+    YIELD_YOFFSET = 10
     def initialize(materials_svg_paths, options = {})
       @svg_path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'molecules')
       @starting_materials = materials_svg_paths[:starting_materials] || []
@@ -84,30 +85,21 @@ module SVG
     end
 
 
-    def find_material_max_height
-      (@starting_materials + @reactants + @products).each do |m|
+    def find_material_max_height(materials=(@starting_materials + @reactants + @products))
+      max = 0
+      materials.each do |m|
         material, yield_amount = *separate_material_yield(m)
         svg = inner_file_content(material)
         vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || [0,0,0,0]
-        @global_view_box_array[3] < vb[3] && (@global_view_box_array[3] = vb[3])
+        max < vb[3] && (max = vb[3])
       end
+      max
     end
 
     def set_global_view_box_height
-      reactant_max, material_max = 0, 0
-      (@starting_materials + @products).each do |m|
-        material, yield_amount = *separate_material_yield(m)
-        svg = inner_file_content(material)
-        vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || [0,0,0,0]
-        material_max < vb[3] && (material_max = vb[3])
-      end
-      (@reactants).each do |m|
-        material, yield_amount = *separate_material_yield(m)
-        svg = inner_file_content(material)
-        vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || [0,0,0,0]
-        reactant_max < vb[3] && (reactant_max = vb[3])
-      end
-      @global_view_box_array[3] = [reactant_max*REACTANT_SCALE*2,material_max,@global_view_box_array[3]].max
+      material_max = find_material_max_height(@starting_materials + @products)
+      reactant_max = find_material_max_height(@reactants)
+      @global_view_box_array[3] = [reactant_max*REACTANT_SCALE*2,material_max,@global_view_box_array[3]].max+2*YIELD_YOFFSET
     end
 
     def compose_reaction_svg
@@ -150,10 +142,12 @@ module SVG
           material, yield_amount = *separate_material_yield(m)
           svg = inner_file_content(material)
           vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || []
-          yield_svg = yield_amount ? compose_yield_svg(yield_amount,(vb[2]/2).round,vb[3]) : ""
           unless vb.empty?
             x_shift = group_width + 10 - vb[0]
             y_shift = (y_center - vb[3]/2).round()
+            yield_svg = yield_amount ? compose_yield_svg(
+              yield_amount,(vb[2]/2).round,
+              ((@max_height_for_products + vb[3])/2).round) : ""
             group_width += vb[2] + 10
             svg['width'] = "#{vb[2]}px;"
             svg['height'] = "#{vb[3]}px;"
@@ -178,11 +172,11 @@ module SVG
         element.class == Array ? element : [element, false]
       end
 
-      def compose_yield_svg(amount,x=0,y=0)
+      def compose_yield_svg(amount,x=0,y= @max_height_for_products)
         yield_amount = amount && !amount.to_f.nan? ? (amount * 100).try(:round, 0) : 0
         yield_svg = <<-END
           <svg font-family="sans-serif">
-            <text text-anchor="middle" font-size="#{@word_size + 1}" y="#{y}" x="#{x}">#{yield_amount} %</text>
+            <text text-anchor="middle" font-size="#{@word_size + 1}" y="#{y.to_f+YIELD_YOFFSET}" x="#{x}">#{yield_amount} %</text>
           </svg>
         END
       end
@@ -206,6 +200,7 @@ module SVG
         sections[:reactants] = compose_material_group @reactants, start_at: @global_view_box_array[2], scale: REACTANT_SCALE , arrow_width: true,y_center: y_center - 30 #TODO rectify y_center for reactnat
         sections[:arrow] = compose_arrow_and_reaction_labels start_at: arrow_x_shift, arrow_y_shift: arrow_y_shift
         @global_view_box_array[2] += 40 # adjust arrow to products
+        @max_height_for_products = find_material_max_height(@products)
         sections[:products] = compose_material_group @products, { start_at: @global_view_box_array[2], y_center: y_center }
         @sections=sections
       end
