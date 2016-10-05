@@ -110,7 +110,7 @@ export default class WellplateDetails extends Component {
       <div>
         <i className="icon-wellplate" />
         &nbsp; <span>{wellplate.name}</span> &nbsp;
-        <ElementCollectionLabels element={wellplate}/>
+        <ElementCollectionLabels element={wellplate} placement="right"/>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeWellplate">Close Wellplate</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall"

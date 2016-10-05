@@ -267,7 +267,7 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
-          <ElementCollectionLabels element={sample} key={sample.id}/>
+          <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
           <ElementAnalysesLabels element={sample}
             key={sample.id+"_analyses"}/>
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
