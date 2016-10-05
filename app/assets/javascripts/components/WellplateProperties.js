@@ -39,7 +39,7 @@ export default class WellplateProperties extends Component {
           <td colSpan="2">
             <FormGroup>
               <ControlLabel>Description</ControlLabel>
-              <FormControl type="textarea"
+              <FormControl componentClass="textarea"
                 value={description || ''}
                 onChange={event => this.handleInputChange('description', event)}
                 disabled={description == '***'}

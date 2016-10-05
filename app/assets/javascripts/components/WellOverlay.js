@@ -107,7 +107,7 @@ export default class WellOverlay extends Component {
                 <hr style={{marginTop: 28, marginBottom: 10}}/>
                 <FormGroup>
                   <ControlLabel>Readout</ControlLabel>
-                  <FormControl type="textarea"
+                  <FormControl componentClass="textarea"
                     disabled={true}
                     value={well.readout || ''}
                     style={{height: 100}}
@@ -115,7 +115,7 @@ export default class WellOverlay extends Component {
                 </FormGroup>
                 <FormGroup>
                   <ControlLabel>Imported Readout</ControlLabel>
-                  <FormControl type="textarea"
+                  <FormControl componentClass="textarea"
                     disabled={true}
                     value={this.sampleImportedReadout() || ''}
                     style={{height: 100}}
