@@ -27,3 +27,9 @@
   object-fit: contain;
   background: white;
 }
+
+.center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}

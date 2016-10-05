@@ -11,7 +11,11 @@ export default class ReactionsFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new Reaction(json.reaction);
+        if (json.hasOwnProperty("reaction")) {
+          return new Reaction(json.reaction)
+        } else {
+          return json
+        }
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
