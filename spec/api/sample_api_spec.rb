@@ -205,7 +205,11 @@ describe Chemotion::SampleAPI do
           type: 'sample',
           #collection_labels: [{"name" => 'C1', "is_shared" => false, "id"=>c.id}]
         )
-        expect(first_sample["collection_labels"]).to include({"name" => 'C1', "is_shared" => false, "id"=>c.id})
+        expect(first_sample["collection_labels"]).to include({
+          "name" => 'C1', "is_shared" => false, "id"=>c.id,
+          "user_id" => user.id, "shared_by_id" => c.shared_by_id,
+          "is_synchronized" => c.is_synchronized
+        })
       end
     end
 
