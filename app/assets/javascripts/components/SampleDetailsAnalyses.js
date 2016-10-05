@@ -47,9 +47,9 @@ export default class SampleDetailsAnalyses extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-        <div className="pull-right" style={{marginTop: -12}}>
+        <div className="button-right" >
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            <i className="fa fa-plus"></i>
+            Add analysis
           </Button>
         </div>
       )
@@ -70,6 +70,7 @@ export default class SampleDetailsAnalyses extends Component {
     if(sample.analyses.length > 0) {
       return (
         <div>
+          <p>&nbsp;{this.addButton()}</p>
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
             {sample.analyses.map(
               (analysis, key) =>
@@ -83,15 +84,14 @@ export default class SampleDetailsAnalyses extends Component {
                 </Panel>
             )}
           </PanelGroup>
-          {this.addButton()}
         </div>
       );
     } else {
       return (
-      <div>
-        There are currently no Analyses.<br/>
+      <p>
+        There are currently no Analyses.
         {this.addButton()}
-      </div>
+      </p>
       )
     }
   }
