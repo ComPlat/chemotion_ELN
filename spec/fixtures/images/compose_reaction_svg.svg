@@ -1,10 +1,10 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-          width="12in" height="3.33in"  viewBox="0 0 210 50">
-        <title>Reaction 1</title><g transform='translate(50, 0)'><g transform='scale(1)'></g></g><g transform='translate(100, 0)'><g transform='scale(0.75)'></g></g><g transform='translate(100, 25)'>        <svg stroke="black" stroke-width="1">
+          width="12in" height="3.33in"  viewBox="0 0 210 70">
+        <title>Reaction 1</title><g transform='translate(50, 0)'><g transform='scale(1)'></g></g><g transform='translate(100, 0)'><g transform='scale(0.75)'></g></g><g transform='translate(100, 35)'>        <svg stroke="black" stroke-width="1">
           <line x1="0" y1="4" x2="70" y2="4" stroke="black"/>
           <polygon points="62,4 60,7 70,4 60,1"/>
         </svg>
-</g><g transform='translate(100, 25)'></g><g transform='translate(100, 25)'>        <svg font-family="sans-serif">
+</g><g transform='translate(100, 35)'></g><g transform='translate(100, 35)'>        <svg font-family="sans-serif">
           <text text-anchor="middle" x="35" y="30" font-size="7.0"></text>
         </svg>
 </g><g transform='translate(210, 0)'><g transform='scale(1)'></g></g></svg>
