@@ -59,32 +59,29 @@ export default class SampleDetailsAnalyses extends Component {
   render() {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
+    let analysisHeader = (analysis) => <p style={{width: '100%'}}>{analysis.name}
+      {(analysis.kind && analysis.kind != '') ? (' - Type: ' + analysis.kind) : ''}
+      {(analysis.status && analysis.status != '') ? (' - Status: ' + analysis.status) :''}
+      <Button bsSize="xsmall" bsStyle="danger"
+         className="button-right" disabled={readOnly}
+        onClick={() => {if(confirm('Delete the analysis?')) {this.handleRemove(analysis)}}}>
+        <i className="fa fa-trash"></i>
+      </Button></p>
     if(sample.analyses.length > 0) {
       return (
         <div>
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
-            {sample.analyses.map((analysis, key) => {
-
-              let analysisHeader = analysis.name;
-              if (typeof analysis.kind !== 'undefined' &&
-                  analysis.kind !== null && analysis.kind != '')
-                analysisHeader += ' - Type: ' + analysis.kind;
-              if (typeof analysis.status !== 'undefined' &&
-                  analysis.status !== null && analysis.status != '')
-                analysisHeader += ' - Status: ' + analysis.status;
-
-              return (
-                <Panel header={analysisHeader} eventKey={key}
+            {sample.analyses.map(
+              (analysis, key) =>
+                <Panel header={analysisHeader(analysis)} eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
                   <AnalysisComponent
                     readOnly={readOnly}
                     analysis={analysis}
                     onChange={analysis => this.handleChange(analysis)}
-                    onRemove={analysis => this.handleRemove(analysis)}
                     />
                 </Panel>
-              )
-            })}
+            )}
           </PanelGroup>
           {this.addButton()}
         </div>
@@ -99,3 +96,8 @@ export default class SampleDetailsAnalyses extends Component {
     }
   }
 }
+
+SampleDetailsAnalyses.propTypes = {
+  readOnly: React.PropTypes.bool,
+  parent: React.PropTypes.obj,
+};
