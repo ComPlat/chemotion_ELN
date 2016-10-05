@@ -99,5 +99,5 @@ export default class SampleDetailsAnalyses extends Component {
 
 SampleDetailsAnalyses.propTypes = {
   readOnly: React.PropTypes.bool,
-  parent: React.PropTypes.obj,
+  parent: React.PropTypes.object,
 };

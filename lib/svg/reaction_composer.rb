@@ -148,9 +148,9 @@ module SVG
             group_width += 10
           end
           material, yield_amount = *separate_material_yield(m)
-          yield_svg = yield_amount ? compose_yield_svg(yield_amount) : ""
           svg = inner_file_content(material)
           vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || []
+          yield_svg = yield_amount ? compose_yield_svg(yield_amount,(vb[2]/2).round,vb[3]) : ""
           unless vb.empty?
             x_shift = group_width + 10 - vb[0]
             y_shift = (y_center - vb[3]/2).round()
@@ -178,11 +178,11 @@ module SVG
         element.class == Array ? element : [element, false]
       end
 
-      def compose_yield_svg(amount)
+      def compose_yield_svg(amount,x=0,y=0)
         yield_amount = amount && !amount.to_f.nan? ? (amount * 100).try(:round, 0) : 0
         yield_svg = <<-END
           <svg font-family="sans-serif">
-            <text text-anchor="middle" font-size="#{@word_size + 1}" y="105" x="55">#{yield_amount} %</text>
+            <text text-anchor="middle" font-size="#{@word_size + 1}" y="#{y}" x="#{x}">#{yield_amount} %</text>
           </svg>
         END
       end
