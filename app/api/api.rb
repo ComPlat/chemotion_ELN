@@ -25,26 +25,18 @@ class API < Grape::API
 
     def group_by_molecule(samples,own_collection = false)
       groups = Hash.new
-      if own_collection
-        samples.each do |s|
-          moleculeName = get_molecule_name(s)
-          serialized_sample = SampleSerializer::Level10.new(s, 10).serializable_hash
-          if !groups[moleculeName]
-            groups[moleculeName] = [].push(serialized_sample)
-          else
-            groups[moleculeName] = groups[moleculeName].push(serialized_sample)
-          end
+      sample_serializer_selector =
+        if own_collection
+          lambda { |s| SampleSerializer::Level10.new(s, 10).serializable_hash }
+        else
+          lambda { |s| ElementPermissionProxy.new(current_user, s, user_ids).serialized }
         end
-      else
-        samples.each do |s|
-          moleculeName = get_molecule_name(s)
-          serialized_sample = ElementPermissionProxy.new(current_user, s, user_ids).serialized
-          if !groups[moleculeName]
-            groups[moleculeName] = [].push(serialized_sample)
-          else
-            groups[moleculeName] = groups[moleculeName].push(serialized_sample)
-          end
-        end
+
+      samples.each do |sample|
+        next if sample == nil
+        moleculeName = get_molecule_name(sample)
+        serialized_sample = sample_serializer_selector.call(sample)
+        groups[moleculeName] = (groups[moleculeName] || []).push(serialized_sample)
       end
       return to_molecule_array(groups)
     end
