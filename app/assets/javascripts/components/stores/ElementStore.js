@@ -310,16 +310,18 @@ class ElementStore {
    * @param {Object} params = { reaction, materialGroup }
    */
   handleAddSampleToMaterialGroup(params) {
-    const { reaction, materialGroup } = params;
-    const { temporary_sample_counter } = reaction;
+    const { materialGroup } = params
+    let { reaction } = params
+    const { temporary_sample_counter } = reaction
 
     let sample = Sample.buildReactionSample(reaction.collection_id,
                                             temporary_sample_counter,
-                                            materialGroup);
+                                            materialGroup)
 
-    this.state.currentMaterialGroup = materialGroup;
-    this.state.currentReaction = reaction;
-    this.state.currentElement = sample;
+    this.state.currentMaterialGroup = materialGroup
+    reaction.changed = true
+    this.state.currentReaction = reaction
+    this.state.currentElement = sample
   }
 
   handleImportSamplesFromFile() {
