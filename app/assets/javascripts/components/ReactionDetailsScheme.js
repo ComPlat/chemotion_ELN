@@ -36,6 +36,12 @@ export default class ReactionDetailsScheme extends Component {
         splitSample.name = reaction.short_label + "-" +
           String.fromCharCode('A'.charCodeAt(0) + productsCount)
       }
+
+      if (sample.external_label)
+        splitSample.external_label = sample.external_label
+      if (sample.elemental_compositions)
+        splitSample.elemental_compositions = sample.elemental_compositions
+
     } else if (sample instanceof Sample){
       // Else split Sample
       if(reaction.hasSample(sample.id)) {
@@ -49,7 +55,7 @@ export default class ReactionDetailsScheme extends Component {
       if (materialGroup == 'reactants' || materialGroup == 'solvents') {
         // Skip counter for reactants or solvents
         splitSample = sample.buildChildWithoutCounter()
-        splitSample.short_label = materialGroup
+        splitSample.short_label = materialGroup.slice(0, -1)
       } else {
         splitSample = sample.buildChild()
       }

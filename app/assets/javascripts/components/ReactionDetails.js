@@ -295,7 +295,7 @@ export default class ReactionDetails extends Component {
                 onInputChange={(type, event) => this.handleInputChange(type, event)}
                 />
             </Tab>
-            <Tab eventKey={2} title={'Literatures'}>
+            <Tab eventKey={2} title={'References'}>
               <ReactionDetailsLiteratures
                 reaction={reaction}
                 onReactionChange={reaction => this.handleReactionChange(reaction)}

@@ -151,11 +151,12 @@ class Sample < ActiveRecord::Base
     subsample = self.dup
 
     if self.name.to_s != ''
-      subsample.name = self.name + "-split"
+      subsample.name = self.name
     end
     if self.external_label.to_s != ''
-      subsample.external_label = self.external_label + "-split"
+      subsample.external_label = self.external_label
     end
+
     children_count = self.children.count
     subsample.short_label = self.short_label + "-" + (children_count + 1).to_s
 
@@ -167,13 +168,33 @@ class Sample < ActiveRecord::Base
       result.delete 'sample_id'
       result
     end
+
     subsample.collections << Collection.find(collection_id)
+
+    # Save to generate elemental_compositions
     subsample.save
+    self.elemental_compositions.each_with_index { |ec, index|
+      sub_ec = subsample.elemental_compositions
+                        .find{|i| i.composition_type == ec.composition_type}
+      if sub_ec
+        attrs = {
+          composition_type: ec.composition_type,
+          data: ec.data,
+          loading: ec.loading
+        }
+        sub_ec.assign_attributes attrs
+      else
+        subsample.elemental_compositions << ElementalComposition.new(attrs)
+      end
+    }
+    # Save it again
+    subsample.save
+
     subsample
   end
 
   def auto_set_short_label
-    return if (self.short_label == 'reactants' || self.short_label == 'solvents')
+    return if (self.short_label == 'reactant' || self.short_label == 'solvent')
 
     self.short_label = nil if self.short_label == 'NEW SAMPLE'
 

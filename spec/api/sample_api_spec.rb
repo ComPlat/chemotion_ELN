@@ -381,23 +381,25 @@ describe Chemotion::SampleAPI do
         describe 'POST /api/v1/samples/subsamples' do
           it 'should be able to split Samples into Subsamples' do
             post '/api/v1/samples/subsamples', params
-            subsamples = Sample.where(name: ['s1-split','s2-split']).where.not(id: [s1.id,s2.id])
+            subsamples = Sample.where(name: ['s1','s2']).where.not(id: [s1.id,s2.id])
             s3 = subsamples[0]
             s4 = subsamples[1]
-            except_attr = ["id", "created_at", "updated_at", "ancestry", "created_by",
-              "short_label", "name", "external_label"]
+            except_attr = [
+              "id", "created_at", "updated_at", "ancestry", "created_by",
+              "short_label", "name", "external_label"
+            ]
             s3.attributes.except(*except_attr).each do |k, v|
               expect(s1[k]).to eq(v)
             end
-            expect(s3.name).to eq(s1.name + "-split")
-            expect(s3.external_label).to eq(s1.external_label + "-split")
+            expect(s3.name).to eq(s1.name)
+            expect(s3.external_label).to eq(s1.external_label)
             expect(s3.short_label).to eq(s1.short_label + "-" + s1.children.count.to_s)
 
             s4.attributes.except(*except_attr).each do |k, v|
               expect(s2[k]).to eq(v)
             end
-            expect(s4.name).to eq(s2.name + "-split")
-            expect(s4.external_label).to eq(s2.external_label + "-split")
+            expect(s4.name).to eq(s2.name)
+            expect(s4.external_label).to eq(s2.external_label)
             expect(s4.short_label).to eq(s2.short_label + "-" + s2.children.count.to_s)
 
             expect(s1.id).to_not eq(s3.id)

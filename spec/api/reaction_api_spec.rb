@@ -283,34 +283,33 @@ describe Chemotion::ReactionAPI do
             "name" => "new name",
             "materials" => {
               "starting_materials" => [
-                  {
-                                "id" => sample_1.id,
-                       "target_amount_unit" => "mg",
-                      "target_amount_value" => 76.09596,
-                        "equivalent" => 1,
-                         "reference" => false,
-                            "is_new" => false
-                  },
-                  {
-                                "id" => sample_2.id,
-                       "amount_unit" => "mg",
-                      "amount_value" => 99.08404,
-                        "equivalent" => 5.5,
-                         "reference" => false,
-                            "is_new" => false
-                  }
+                {
+                  "id" => sample_1.id,
+                  "target_amount_unit" => "mg",
+                  "target_amount_value" => 76.09596,
+                  "equivalent" => 1,
+                  "reference" => false,
+                  "is_new" => false
+                },
+                {
+                  "id" => sample_2.id,
+                  "amount_unit" => "mg",
+                  "amount_value" => 99.08404,
+                  "equivalent" => 5.5,
+                  "reference" => false,
+                  "is_new" => false
+                }
               ],
               "products" => [
-                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
-                       "name" => "New Subsample 1",
+                "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
+                "name" => "New Subsample 1",
                 "target_amount_unit" => "mg",
-               "target_amount_value" => 76.09596,
-                  "parent_id" => sample_1.id,
-                  "reference" => true,
-                 "equivalent" => 1,
-                     "is_new" => true,
-                   "is_split" => true,
-
+                "target_amount_value" => 76.09596,
+                "parent_id" => sample_1.id,
+                "reference" => true,
+                "equivalent" => 1,
+                "is_new" => true,
+                "is_split" => true,
               ]
             }
           }
@@ -329,9 +328,9 @@ describe Chemotion::ReactionAPI do
           expect(subsample.parent).to eq(sample_1)
           expect(subsample.attributes).to include(
             {
-                      "name" => "New Subsample 1",
+              "name" => sample_1.name,
               "target_amount_value" => 76.09596,
-               "target_amount_unit" => "mg",
+              "target_amount_unit" => "mg",
             }
           )
 
@@ -398,9 +397,9 @@ describe Chemotion::ReactionAPI do
           expect(subsample.parent).to eq(sample_1)
           expect(subsample.attributes).to include(
             {
-                      "name" => "New Subsample 1",
+              "name" => sample_1.name,
               "target_amount_value" => 76.09596,
-               "target_amount_unit" => "mg"
+              "target_amount_unit" => "mg"
             }
           )
 
@@ -418,10 +417,10 @@ describe Chemotion::ReactionAPI do
 
           expect(reactant.attributes).to include(
             {
-                      "name" => "Copied Sample",
+              "name" => "Copied Sample",
               "target_amount_value" => 86.09596,
-               "target_amount_unit" => "mg",
-                   "solvent" => "solvent1"
+              "target_amount_unit" => "mg",
+              "solvent" => "solvent1"
             }
           )
 

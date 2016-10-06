@@ -11,14 +11,19 @@ export default class Sample extends Element {
   }
 
   static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
-    let newSample = sample.buildCopy();
+    let newSample = sample.buildCopy()
 
     if(structure_only)
       newSample.filterSampleData()
 
-    newSample.collection_id = collection_id;
+    newSample.collection_id = collection_id
+    if (sample.name) newSample.name = sample.name
+    if (sample.external_label)
+      newSample.external_label = sample.external_label
+    if (sample.elemental_compositions)
+      newSample.elemental_compositions = sample.elemental_compositions
 
-    return newSample;
+    return newSample
   }
 
   filterSampleData() {
@@ -56,8 +61,8 @@ export default class Sample extends Element {
   }
 
   buildCopy() {
-    let sample = super.buildCopy();
-    sample.short_label = sample.short_label + " Copy";
+    let sample = super.buildCopy()
+    sample.short_label = sample.short_label + " Copy"
     return sample;
   }
 
@@ -73,9 +78,11 @@ export default class Sample extends Element {
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
-    if (this.name) splitSample.name = this.name + "-split"
+    if (this.name) splitSample.name = this.name
     if (this.external_label)
-      splitSample.external_label = this.external_label + "-split"
+      splitSample.external_label = this.external_label
+    if (this.elemental_compositions)
+      splitSample.elemental_compositions = this.elemental_compositions
 
     splitSample.short_label += "-" + children_count;
     splitSample.created_at = null;
@@ -92,9 +99,11 @@ export default class Sample extends Element {
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
-    if (this.name) splitSample.name = this.name + "-split"
+    if (this.name) splitSample.name = this.name
     if (this.external_label)
-      splitSample.external_label = this.external_label + "-split"
+      splitSample.external_label = this.external_label
+    if (this.elemental_compositions)
+      splitSample.elemental_compositions = this.elemental_compositions
 
     splitSample.created_at = null;
     splitSample.updated_at = null;

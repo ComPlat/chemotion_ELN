@@ -3,6 +3,7 @@ import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip} from 're
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import SampleName from './common/SampleName'
 import UiStore from './stores/UIStore';
 
 const source = {
@@ -431,41 +432,61 @@ class Material extends Component {
 
   materialNameWithIupac(material) {
     // Skip shortLabel for reactants and solvents
-    let skipShortLabel = this.props.materialGroup == 'reactants' ||
+    let skipIupacName = this.props.materialGroup == 'reactants' ||
                          this.props.materialGroup == 'solvents'
     let materialName = ""
     let moleculeIupacName = ""
+    let iupacStyle = {
+      display: "block", whiteSpace: "nowrap", overflow: "hidden",
+      textOverflow: "ellipsis", maxWidth: "100%"
+    }
+
     var idCheck = /^\d+$/
 
-    if (skipShortLabel) {
+    if (skipIupacName) {
+      let materialDisplayName = material.molecule_iupac_name
+      if (materialDisplayName == null || materialDisplayName == "") {
+        materialDisplayName = (
+          <span>
+            <SampleName sample={material}/>
+          </span>
+        )
+      }
+
       if (idCheck.test(material.id)) {
         materialName =
           <a onClick={() => this.handleMaterialClick(material)}
              style={{cursor: 'pointer'}}>
-            {material.molecule_iupac_name}
+            {materialDisplayName}
           </a>
       } else {
-        materialName =
-          <span>{material.molecule_iupac_name}</span>
+        materialName = <span>{materialDisplayName}</span>
       }
     } else {
       moleculeIupacName = material.molecule_iupac_name
-      materialName =
+      let materialDisplayName = material.title() == ""
+                                ? <SampleName sample={material}/>
+                                : material.title()
+      materialName = (
         <a onClick={() => this.handleMaterialClick(material)} style={{cursor: 'pointer'}}>
-          {material.title()}
+          {materialDisplayName}
         </a>
-      if (material.isNew)
-        materialName = material.title()
+      )
+
+      if (material.isNew) materialName = materialDisplayName
+    }
+    let br = <br />
+    if (moleculeIupacName == "") {
+      iupacStyle = {display: "none"}
+      br = ""
     }
 
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div style={{display: "inline-block", maxWidth: "100%"}}>
           {materialName}
-          <br/>
-          <span style={{display: "block", whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis", maxWidth: "100%"}}>
+          {br}
+          <span style={iupacStyle}>
             {moleculeIupacName}
           </span>
         </div>
