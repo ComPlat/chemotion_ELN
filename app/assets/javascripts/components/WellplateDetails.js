@@ -121,7 +121,7 @@ export default class WellplateDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveWellplate">Save Wellplate</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-                  onClick={() => this.submitFunction()}
+                  onClick={() => this.handleSubmit()}
                   style={{display: saveBtnDisplay}} >
             <i className="fa fa-floppy-o "></i>
           </Button>
