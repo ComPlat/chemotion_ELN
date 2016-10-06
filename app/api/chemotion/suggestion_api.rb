@@ -32,6 +32,7 @@ module Chemotion
         when 'sample'
           {
             sample_short_label: search_by_field.call(Sample, :short_label, qry),
+            sample_external_label: search_by_field.call(Sample, :external_label, qry),
             sample_name: search_by_field.call(Sample, :name, qry),
             polymer_type: d_for.call(Sample).joins(:residues)
               .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
@@ -75,6 +76,7 @@ module Chemotion
           {
             sample_name: search_by_field.call(Sample, :name, qry),
             sample_short_label: search_by_field.call(Sample, :short_label, qry),
+            sample_external_label: search_by_field.call(Sample, :external_label, qry),
             polymer_type: d_for.call(Sample).joins(:residues)
               .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
               .pluck("residues.custom_info -> 'polymer_type'").uniq,

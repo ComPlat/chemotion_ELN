@@ -38,12 +38,14 @@ const routes = {
 
             if(currentSearchSelection) {
               UIActions.selectCollectionWithoutUpdating(collection)
-              ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collection.id);
+              ElementActions.fetchBasedOnSearchSelectionAndCollection(
+                currentSearchSelection, collection.id, 1, uiState.isSync)
             } else {
               UIActions.selectCollection(collection);
             }
 
-            if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
+            if (!e.params['sampleID'] && !e.params['reactionID'] &&
+                !e.params['wellplateID'] && !e.params['screenID']) {
               UIActions.uncheckAllElements('sample');
               UIActions.uncheckAllElements('reaction');
               UIActions.uncheckAllElements('wellplate');

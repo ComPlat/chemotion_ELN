@@ -29,12 +29,12 @@ export default class Search extends React.Component {
   }
 
   handleSelectionChange(selection) {
+    let uiState = UIStore.getState()
     selection.elementType = this.state.elementType
     UIActions.setSearchSelection(selection)
 
-    let uiState = UIStore.getState()
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
-      uiState.currentCollection.id, 1)
+      uiState.currentCollection.id, 1, uiState.isSync)
   }
 
   search(query) {
@@ -57,12 +57,13 @@ export default class Search extends React.Component {
       molfile: molfile,
       search_type: this.state.searchType,
       tanimoto_threshold: tanimoto,
-      page_size: uiState.number_of_results
+      page_size: uiState.number_of_results,
+      structure_search: true
     }
     UIActions.setSearchSelection(selection)
 
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
-      uiState.currentCollection.id, 1, 'structure')
+      uiState.currentCollection.id, 1, uiState.isSync)
   }
 
   handleClearSearchSelection() {

@@ -42,7 +42,7 @@ class UIStore {
       currentTab: 1,
       currentSearchSelection: null,
       showCollectionManagement: false,
-      isSync: false,
+      isSync: false
     };
 
     this.bindListeners({

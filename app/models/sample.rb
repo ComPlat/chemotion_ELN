@@ -4,8 +4,10 @@ class Sample < ActiveRecord::Base
   include PgSearch
   include Collectable
 
-  multisearchable against: [:name, :iupac_name, :sum_formular]
-  delegate :sum_formular, :iupac_name, to: :molecule, allow_nil: true
+  multisearchable against: [
+    :name, :short_label, :external_label, :molecule_sum_formular,
+    :molecule_iupac_name, :molecule_inchistring, :molecule_cano_smiles
+  ]
 
   # search scopes for exact matching
   pg_search_scope :search_by_sum_formula, associated_against: {
@@ -26,22 +28,12 @@ class Sample < ActiveRecord::Base
 
   pg_search_scope :search_by_sample_name, against: :name
   pg_search_scope :search_by_sample_short_label, against: :short_label
-
-  # search scope for substrings
-  pg_search_scope :search_by_substring, against: :name,
-                                        associated_against: {
-                                          molecule: [
-                                            :sum_formular,
-                                            :iupac_name,
-                                            :inchistring,
-                                            :cano_smiles
-                                          ]
-                                        },
-                                        using: {trigram: {threshold:  0.0001}}
+  pg_search_scope :search_by_sample_external_label, against: :external_label
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
   scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{query}%") }
+  scope :by_external_label, ->(query) { where('external_label ILIKE ?',"%#{query}%") }
   scope :with_reactions, -> {
     sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
     where(id: sample_ids)
@@ -138,6 +130,38 @@ class Sample < ActiveRecord::Base
 
   after_save :update_data_for_reactions
   after_create :update_counter
+
+  def molecule_sum_formular
+    if self.molecule
+      self.molecule.sum_formular
+    else
+      ""
+    end
+  end
+
+  def molecule_iupac_name
+    if self.molecule
+      self.molecule.iupac_name
+    else
+      ""
+    end
+  end
+
+  def molecule_inchistring
+    if self.molecule
+      self.molecule.inchistring
+    else
+      ""
+    end
+  end
+
+  def molecule_cano_smiles
+    if self.molecule
+      self.molecule.cano_smiles
+    else
+      ""
+    end
+  end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
     (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq

@@ -25,21 +25,29 @@ class AllElementSearch
     end
 
     def by_collection_id(id)
-      types = @results.map(&:searchable_type).uniq
-      first_type = types.first
-      query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
-                "SELECT #{first_type}_id FROM collections_#{first_type}s "\
-                "WHERE collection_id = #{id}))"
+      if (@results.count > 0)
+        types = @results.map(&:searchable_type).uniq
+        first_type = types.first
+        query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
+                  "SELECT #{first_type}_id FROM collections_#{first_type}s "\
+                  "WHERE collection_id = #{id}))"
+        if (types.count > 1)
+          types[1..-1].each { |type|
+            query = query +
+                    " OR (searchable_type = '#{type}' AND searchable_id IN (" \
+                    "SELECT #{type}_id FROM collections_#{type}s "\
+                    "WHERE collection_id = #{id}))"
+          }
+        end
 
-      types[1..-1].each { |type|
-        query = query +
-                " OR (searchable_type = '#{type}' AND searchable_id IN (" \
-                "SELECT #{type}_id FROM collections_#{type}s "\
-                "WHERE collection_id = #{id}))"
-      }
+        @results = @results.where(query)
+      end
 
-      @results = @results.where(query)
       Results.new(@results, @user_id)
+    end
+
+    def molecules
+      filter_results_by_type('Molecule')
     end
 
     def samples

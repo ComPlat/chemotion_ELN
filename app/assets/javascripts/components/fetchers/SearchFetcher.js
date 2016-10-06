@@ -5,8 +5,8 @@ import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 
 export default class SearchFetcher {
-  static fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-    currentPage, isSync=false) {
+  static fetchBasedOnSearchSelectionAndCollection(
+      selection, collectionId, currentPage = 1, isSync = false) {
     let promise = fetch('/api/v1/search/' + selection.elementType, {
         credentials: 'same-origin',
         method: 'POST',
