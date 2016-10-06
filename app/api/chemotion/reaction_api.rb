@@ -265,32 +265,28 @@ module ReactionUpdator
               parent_sample = Sample.find(sample.parent_id)
 
               #TODO extract subsample method
-              subsample = parent_sample.dup
-              subsample.parent = parent_sample
+              first_collection_id = collections.first.id
+              subsample = parent_sample.create_subsample current_user, first_collection_id
 
               if (material_group == :reactant || material_group == :solvent)
-                # Use 'reactants' or 'solvents' as short_label
+                # Use 'reactant' or 'solvent' as short_label
                 subsample.short_label = sample.short_label
               else
                 #we don't want to inherit short_label from parent
                 subsample.short_label = nil
               end
 
-              subsample.created_by = current_user.id
-              subsample.name = sample.name
               subsample.target_amount_value = sample.target_amount_value
               subsample.target_amount_unit = sample.target_amount_unit
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
-              subsample.external_label = sample.external_label if sample.external_label
 
               if ra = (sample.residues_attributes || sample.residues)
-                subsample.residues_attributes = ra.uniq || ra.each do |i|
-                                                             i.delete :id
-                                                           end
+                subsample.residues_attributes =
+                  ra.uniq || ra.each do |i| i.delete :id end
               end
 
-              subsample.collections << collections
+              subsample.collections << collections.where.not(id: first_collection_id)
 
               subsample.save!
               subsample.reload
