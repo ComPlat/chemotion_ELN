@@ -274,10 +274,28 @@ class ElementActions {
       });};
   }
 
+  editWellplateSample(wellplateID, sampleID) {
+    return (dispatch) => { SamplesFetcher.fetchById(sampleID)
+      .then((result) => {
+        dispatch({sample: result, wellplate: wellplateID });
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   updateWellplate(wellplate) {
     return (dispatch) => { WellplatesFetcher.update(wellplate)
       .then(result => {
         dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  updateSampleForWellplate(params) {
+    return (dispatch) => { SamplesFetcher.update(params)
+      .then((result) => {
+        dispatch(result)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};

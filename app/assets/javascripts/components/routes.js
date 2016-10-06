@@ -160,9 +160,14 @@ const routes = {
           } else {
             ElementActions.fetchWellplateById(wellplateID);
           }
+        },
+        showSample: function(e) {
+          const {wellplateID, collectionID, sampleID} = e.params;
+          ElementActions.editWellplateSample(wellplateID, sampleID);
         }
       },
-      '/:wellplateID': 'showOrNew'
+      '/:wellplateID': 'showOrNew',
+      '/sample/:sampleID': 'showSample',
     },
     '/screen': {
       target: {

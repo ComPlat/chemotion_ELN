@@ -5,11 +5,9 @@ import UIStore from './stores/UIStore';
 
 export default class WellOverlay extends Component {
   handleSampleClick(sample) {
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/sample/${sample.id}`
-      : `/collection/${currentCollection.id}/sample/${sample.id}`
-    );
+    const {currentCollection,isSync} = UIStore.getState()
+    let currentURI = Aviator.getCurrentURI()
+    Aviator.navigate(`${currentURI}/sample/${sample.id}`)
   }
 
   sampleName() {

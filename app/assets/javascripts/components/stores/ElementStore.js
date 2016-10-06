@@ -51,6 +51,7 @@ class ElementStore {
       },
       currentElement: null,
       currentReaction: null,
+      currentWellplate: null,
       currentMaterialGroup: null,
       elementWarning: false,
       ...extraThing("state",Xstate)
@@ -75,7 +76,9 @@ class ElementStore {
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
       handleEditReactionSample: ElementActions.editReactionSample,
+      handleEditWellplateSample: ElementActions.editWellplateSample,
       handleUpdateSampleForReaction: ElementActions.updateSampleForReaction,
+      handleUpdateSampleForWellplate: ElementActions.updateSampleForWellplate,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
@@ -241,6 +244,11 @@ class ElementStore {
     this.state.currentElement = result.sample;
   }
 
+  handleEditWellplateSample(result){
+    this.state.currentWellplate = result.wellplate;
+    this.state.currentElement = result.sample;
+  }
+
   handleDeselectCurrentElement() {
     this.state.currentElement = null;
   }
@@ -258,6 +266,17 @@ class ElementStore {
     this.handleRefreshElements('sample');
 
     ElementActions.fetchReactionById(reactionID)
+  }
+
+  handleUpdateSampleForWellplate() {
+    UserActions.fetchCurrentUser()
+    let wellplateID = this.state.currentWellplate
+    this.state.currentElement = null
+    this.state.currentWellplate = null
+
+    this.handleRefreshElements('sample')
+
+    ElementActions.fetchWellplateById(wellplateID)
   }
 
   handleSplitAsSubsamples(ui_state) {
@@ -316,6 +335,7 @@ class ElementStore {
 
   handleFetchWellplateById(result) {
     this.state.currentElement = result;
+    this.navigateToNewElement(result)
   }
 
   handleFetchWellplatesByCollectionId(result) {
