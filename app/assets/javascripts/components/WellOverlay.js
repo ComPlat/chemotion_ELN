@@ -45,7 +45,7 @@ export default class WellOverlay extends Component {
       lineHeight: 2
     };
     if (sample) {
-      svg = <SVG key={sample.id} className="molecule-mid" src={`/images/molecules/${sample.molecule.molecule_svg_file}`}/>;
+      svg = <SVG key={sample.id} className="molecule-mid" src={sample.svgPath}/>;
       moleculeName = sample.molecule.iupac_name;
       removeButton = (
         <div className="pull-right">
