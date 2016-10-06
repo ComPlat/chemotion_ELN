@@ -13,9 +13,15 @@ export default class SampleDetailsAnalyses extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      sample: nextProps.sample
+    })
+  }
+
   handleChange(analysis) {
-    const {sample} = this.state;
-    sample.updateAnalysis(analysis);
+    const {sample} = this.state
+    sample.updateAnalysis(analysis)
     this.props.parent.handleSampleChanged(sample)
   }
 
@@ -59,6 +65,7 @@ export default class SampleDetailsAnalyses extends Component {
   render() {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
+
     let analysisHeader = (analysis) => <p style={{width: '100%'}}>{analysis.name}
       {(analysis.kind && analysis.kind != '') ? (' - Type: ' + analysis.kind) : ''}
       {(analysis.status && analysis.status != '') ? (' - Status: ' + analysis.status) :''}
@@ -67,6 +74,7 @@ export default class SampleDetailsAnalyses extends Component {
         onClick={() => {if(confirm('Delete the analysis?')) {this.handleRemove(analysis)}}}>
         <i className="fa fa-trash"></i>
       </Button></p>
+
     if(sample.analyses.length > 0) {
       return (
         <div>

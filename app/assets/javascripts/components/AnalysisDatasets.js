@@ -16,6 +16,12 @@ export default class AnalysisDatasets extends Component {
     };
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      analysis: nextProps.analysis
+    })
+  }
+
   handleModalOpen(dataset) {
     const {modal} = this.state;
     modal.dataset = dataset;
