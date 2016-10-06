@@ -39,21 +39,25 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   collectionEntriesMap(collections) {
-
     if (collections == undefined) return []
 
-    let result = collections.reduce(
-      (result, collection, index, array) => {
-        return result.concat(this.collectionEntriesMap(collection.children))
-      },
-      []
-    )
+    let tree = [];
+    let depth = 0;
+    this.makeTree(tree, collections, depth);
 
-    return collections.map(
-      (collection,ind) => {
-        return (<option value={collection.id} key={ind}>{collection.label}</option>)
+    return tree.map( leaf => {
+      const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
+      return (<option value={leaf.id} key={leaf.id}>{ indent + leaf.label}</option>)
+    });
+  }
+
+  makeTree(tree, collections, depth) {
+    collections.forEach(collection => {
+      tree.push({ id: collection.id, abel: collection.label, depth: depth});
+      if(collection.children && collection.children.length > 0) {
+        this.makeTree(tree, collection.children, depth + 1)
       }
-    ).concat(result);
+    });
   }
 
   collectionEntries() {
