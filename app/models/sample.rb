@@ -399,6 +399,11 @@ private
   end
 
   def update_data_for_reactions
+    update_equivalent_for_reactions
+    update_svg_for_reactions
+  end
+
+  def update_equivalent_for_reactions
     %w(product reactant).each do |name|
       self.send("reactions_#{name}_samples").each do |record|
         record.update_equivalent
@@ -411,6 +416,12 @@ private
           record.update_equivalent
         end
       end
+    end
+  end
+
+  def update_svg_for_reactions
+    reactions.each do |reaction|
+      reaction.save
     end
   end
 

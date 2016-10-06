@@ -393,7 +393,16 @@ class ElementStore {
 
   handleFetchReactionById(result) {
     this.state.currentElement = result;
+    this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
     this.navigateToNewElement(result);
+  }
+
+  refreshReactionsListForSpecificReaction(newReaction) {
+    return this.state.elements.reactions.elements.map( reaction => {
+      return reaction.id === newReaction.id
+        ? newReaction
+        : reaction
+    });
   }
 
   handleTryFetchReactionById(result) {
