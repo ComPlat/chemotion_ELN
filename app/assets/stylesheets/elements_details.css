@@ -33,3 +33,58 @@
   top: 50%;
   left: 50%;
 }
+
+#line-chart {
+  width: 100%;
+}
+
+#line-chart .plot {
+  fill: rgba(250, 250, 255, 0.6);
+}
+
+#line-chart .grid .tick {
+  stroke: lightgrey;
+  opacity: 0.7;
+}
+
+#line-chart .grid path {
+  stroke-width: 0;
+}
+
+#line-chart .axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+#line-chart .x.axis path {
+  display: none;
+}
+
+#line-chart .line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.table-cell {
+  border: none;
+  width: 100%;
+  padding: 0 !important;
+}
+
+.editable-table td input {
+  width: 100%;
+  border: none;
+}
+
+.editable-selected {
+  border: 2px solid #1e6337
+}
+
+.clickable-icon {
+  cursor: pointer;
+  float: right;
+  margin-top: 4px;
+  margin-right: 4px;
+}

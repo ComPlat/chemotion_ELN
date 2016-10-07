@@ -33,7 +33,7 @@ const setReactionByType = (reaction, type, value) => {
       reaction.tlc_description = value;
       break;
     case 'temperature':
-      reaction.temperature = value;
+      reaction.temperature.data[0].value = value;
       options = {schemaChanged: true}
       break;
     case 'dangerousProducts':

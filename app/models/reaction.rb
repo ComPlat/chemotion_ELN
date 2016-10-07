@@ -4,6 +4,8 @@ class Reaction < ActiveRecord::Base
   include PgSearch
   include Collectable
 
+  serialize :temperature, Hash
+
   multisearchable against: :name
 
   # search scopes for exact matching
@@ -85,7 +87,7 @@ class Reaction < ActiveRecord::Base
 
   before_save :update_svg_file!
   before_save :cleanup_array_fields
-  before_save :auto_format_temperature!
+  before_save :auto_format_temperature_time!
   before_create :auto_set_short_label
 
   after_create :update_counter
@@ -101,16 +103,20 @@ class Reaction < ActiveRecord::Base
     starting_materials + reactants + products + solvents
   end
 
-  def auto_format_temperature!
-    valid_input = (temperature =~ /^-?\s*\d*(\.\d+)?\s*°?\s*[c|f|k]?\s*$/i).present?
-    if (valid_input)
-      sign   = (temperature =~ /^-/).present? ? "-" : ""
-      number = temperature[ /\d+(\.\d+)?/ ].to_f
-      unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
-      self.temperature = "#{sign}#{number} °#{unit}"
-    else
-      self.temperature = "21.0 °C"
-    end
+  def auto_format_temperature_time!
+    # temperature["data"].map! do |t|
+    #   valid_time = (t.time =~ /^((?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$)/i).present?
+    #   t.time = "0:00:00" if (!valid_time)
+    #
+    #   valid_input = (t.value =~ /^-?\s*\d*(\.\d+)?\s*$/i).present?
+    #   if (valid_input)
+    #     sign   = (t.value =~ /^-/).present? ? "-" : ""
+    #     number = t.value[ /\d+(\.\d+)?/ ].to_f
+    #     t.value = "#{sign}#{number}".to_s
+    #   else
+    #     t.value = "21"
+    #   end
+    # end
   end
 
   def update_svg_file!

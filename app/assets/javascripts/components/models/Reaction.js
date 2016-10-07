@@ -6,6 +6,13 @@ import UserStore from '../stores/UserStore';
 
 export default class Reaction extends Element {
   static buildEmpty(collection_id) {
+    let temperature_default = {
+      "valueUnit": "C",
+      "data": [
+        {"time": "00:00:00", "value": "21"}
+      ]
+    }
+
     let reaction = new Reaction({
       collection_id: collection_id,
       type: 'reaction',
@@ -20,7 +27,7 @@ export default class Reaction extends Element {
       dangerous_products: "",
       tlc_solvents: "",
       rf_value: 0.00,
-      temperature: "21.0 °C",
+      temperature: temperature_default,
       tlc_description: "",
       starting_materials: [],
       reactants: [],
@@ -79,6 +86,17 @@ export default class Reaction extends Element {
       },
       literatures: this.literatures.map(literature => literature.serialize())
     })
+  }
+
+  get temperature_display() {
+    let arrayData = this._temperature.data
+    let maxTemp = Math.max.apply(Math,arrayData.map(function(o){return o.value}))
+    let minTemp = Math.min.apply(Math,arrayData.map(function(o){return o.value}))
+
+    if (minTemp == maxTemp)
+      return minTemp
+    else
+      return minTemp + " ~ " + maxTemp
   }
 
   get temperature() {
