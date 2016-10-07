@@ -272,7 +272,7 @@ export default class ReactionDetails extends Component {
     return (
       <div className={fScrnClass}>
       <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
-        <Panel className="panel-reaction" header={panelHeader}
+        <Panel className='panel-detail' header={panelHeader}
           bsStyle={reaction.changed ? 'info' : 'primary'}
         >
         {this.reactionSVG(reaction)}
