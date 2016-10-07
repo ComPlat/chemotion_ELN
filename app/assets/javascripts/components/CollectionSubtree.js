@@ -2,6 +2,7 @@ import React from 'react';
 import {Button, OverlayTrigger} from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
+import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import UserInfos from './UserInfos';
 import Aviator from 'aviator';
@@ -22,10 +23,12 @@ export default class CollectionSubtree extends React.Component {
 
   isVisible(node, uiState) {
     if(node.descendant_ids) {
-      return node.descendant_ids.indexOf(parseInt(uiState.currentCollection.id)) > -1;
-    } else {
-      return false;
+      let currentCollectionId = parseInt(uiState.currentCollection.id)
+      return (node.descendant_ids.indexOf(currentCollectionId) > -1)
     }
+
+    let {visibleRootsIds} = CollectionStore.getState()
+    return (visibleRootsIds.indexOf(node.id) > -1)
   }
 
   componentDidMount() {
@@ -45,7 +48,7 @@ export default class CollectionSubtree extends React.Component {
 
   onChange(state) {
     if(state.currentCollection) {
-      let visible = this.isVisible(this.state.root, state);
+      let visible = this.isVisible(this.state.root, state)
 
       if(state.currentCollection.id == this.state.root.id) {
         this.setState({
@@ -95,7 +98,8 @@ export default class CollectionSubtree extends React.Component {
 
     if(this.hasChildren()) {
       return (
-        <Button bsStyle="success" bsSize="xsmall" onClick={this.toggleExpansion.bind(this)}>
+        <Button bsStyle="success" bsSize="xsmall" style={{width: "20px"}}
+                onClick={this.toggleExpansion.bind(this)}>
           {label}
         </Button>
       )
@@ -107,12 +111,11 @@ export default class CollectionSubtree extends React.Component {
     let isRemote = this.state.isRemote;
     let isTakeOwnershipAllowed = this.state.root.permission_level == 5;
     let isSync = (root.sharer && root.user && root.user.type != 'Group') ? true : false
-    if((isRemote||isSync) && isTakeOwnershipAllowed) {
+    if ((isRemote || isSync) && isTakeOwnershipAllowed) {
       return (
         <div className="take-ownership-btn">
-          <Button bsStyle="danger" bsSize="xsmall" onClick={(e) => this.handleTakeOwnership(e)}>
-            <i className="fa fa-exchange"></i>
-          </Button>
+          <i className="fa fa-exchange"
+             onClick={(e) => this.handleTakeOwnership(e)} />
         </div>
       )
     }
@@ -123,24 +126,33 @@ export default class CollectionSubtree extends React.Component {
     CollectionActions.takeOwnership({id: this.state.root.id, isSync: isSync});
   }
 
-  handleClick() {
-    const { root } = this.state;
+  handleClick(e) {
+    const {fakeRoot} = this.props
+    if (fakeRoot) {
+      e.stopPropagation()
+      return
+    }
+
+    const { root } = this.state
 
     if(root.label == 'All') {
       Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
     } else {
-      (this.props.root.sharer) ? Aviator.navigate(`/scollection/${this.state.root.id}/${this.urlForCurrentElement()}`)
-        : Aviator.navigate(`/collection/${this.state.root.id}/${this.urlForCurrentElement()}`)
+      let url = (this.props.root.sharer)
+        ? `/scollection/${this.state.root.id}/${this.urlForCurrentElement()}`
+        : `/collection/${this.state.root.id}/${this.urlForCurrentElement()}`
+
+      Aviator.navigate(url)
     }
   }
 
   urlForCurrentElement() {
     const {currentElement} = ElementStore.getState();
-    if(currentElement) {
-      if(currentElement.isNew) {
+    if (currentElement) {
+      if (currentElement.isNew) {
         return `${currentElement.type}/new`;
       }
-      else{
+      else {
         return `${currentElement.type}/${currentElement.id}`;
       }
     }
@@ -150,8 +162,25 @@ export default class CollectionSubtree extends React.Component {
   }
 
   toggleExpansion(e) {
-    e.stopPropagation();
-    this.setState({visible: !this.state.visible});
+    e.stopPropagation()
+    let {visible, root} = this.state
+    visible = !visible
+    this.setState({visible: visible})
+
+    let {visibleRootsIds} = CollectionStore.getState()
+    if (visible) {
+      visibleRootsIds.push(root.id)
+    } else {
+      let descendantIds = root.descendant_ids
+                          ? root.descendant_ids
+                          : root.children.map(function(s) {return s.id})
+      descendantIds.push(root.id)
+      visibleRootsIds = visibleRootsIds.filter(x => descendantIds.indexOf(x) == -1)
+    }
+
+    // Remove duplicate
+    let newIds = Array.from(new Set(visibleRootsIds))
+    CollectionActions.updateCollectrionTree(newIds)
   }
 
   synchronizedIcon(){
@@ -167,18 +196,21 @@ export default class CollectionSubtree extends React.Component {
 
 
   render() {
-    let style;
+    const {fakeRoot} = this.props
+    const {visible, label, root} = this.state
 
-    if (!this.state.visible) {
+    let style
+    if (!visible) {
       style = {display: "none"};
     }
 
     return (
-      <div className="tree-view" key={this.state.root.id}>
+      <div className="tree-view" key={root.id}>
         {this.takeOwnershipButton()}
-        <div className={"title " + this.selectedCssClass()} onClick={this.handleClick.bind(this)}>
+        <div className={"title " + this.selectedCssClass()}
+             onClick={this.handleClick.bind(this)}>
           {this.expandButton()}
-          {this.state.label}
+          {label}
           {this.synchronizedIcon()}
         </div>
         <ul style={style}>
@@ -191,8 +223,6 @@ export default class CollectionSubtree extends React.Component {
 
 CollectionSubtree.propTypes = {
   isRemote: React.PropTypes.bool,
-  label: React.PropTypes.string,
-  selected: React.PropTypes.bool,
   root: React.PropTypes.object,
-  visible: React.PropTypes.bool,
-};
+  visible: React.PropTypes.bool
+}

@@ -16,12 +16,14 @@ class CollectionStore {
       remoteRoots: [],
       lockedRoots: [],
       syncInRoots: [],
-      ...extraThing("state",Xstate)
+      visibleRootsIds: [],
+      ...extraThing("state", Xstate)
     };
 
-    for (let i=0;i<Xlisteners.listenersCount;i++){
+    for (let i = 0 ; i < Xlisteners.listenersCount; i++){
      Object.keys(Xlisteners["listeners"+i]).map((k)=>{
-        this.bindAction(Xlisteners["listeners"+i][k],Xhandlers["handlers"+i][k].bind(this))
+        this.bindAction(Xlisteners["listeners" + i][k],
+                        Xhandlers["handlers" + i][k].bind(this))
       });
     }
 
@@ -41,7 +43,7 @@ class CollectionStore {
         CollectionActions.editSync,
         CollectionActions.deleteSync
       ],
-
+      handleUpdateCollectrionTree: CollectionActions.updateCollectrionTree
     })
   }
 
@@ -89,6 +91,10 @@ class CollectionStore {
 
   handleCreateUnsharedCollection(results) {
     CollectionActions.fetchUnsharedCollectionRoots();
+  }
+
+  handleUpdateCollectrionTree(visibleRootsIds) {
+    this.state.visibleRootsIds = visibleRootsIds
   }
 
 

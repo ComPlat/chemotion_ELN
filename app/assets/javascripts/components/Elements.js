@@ -46,7 +46,7 @@ class Elements extends Component {
     } else {
       return (
         <div>
-          <Col md={12}>
+          <Col md={12} style={{paddingLeft: "10px"}}>
             <List overview={true} showReport={showReport}/>
           </Col>
         </div>

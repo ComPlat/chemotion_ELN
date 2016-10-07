@@ -113,9 +113,10 @@ class App extends Component {
         </Row>
         <Row className="card-content">
           <div onClick={this.toggleCollectionTree}
-               style={{float: "left", cursor: "pointer", marginTop: "3px"}}>
-            <i className={this.state.indicatorClassName}
-               style={{marginTop: "7px", marginLeft: "5px"}}/>
+               style={{
+                 float: "left", cursor: "pointer", margin: "12px 3px 3px 3px"
+               }}>
+            <i className={this.state.indicatorClassName} />
           </div>
           {this.collectionTree()}
           {this.mainContent()}

@@ -121,6 +121,10 @@ class CollectionActions {
       });};
   }
 
+  updateCollectrionTree(visibleRootsIds) {
+    return visibleRootsIds
+  }
+
   downloadReport(tab){
     const {currentCollection} = UIStore.getState();
 
