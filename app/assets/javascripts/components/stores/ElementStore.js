@@ -514,7 +514,7 @@ class ElementStore {
     //    we have to execute the respective action
     if(currentSearchSelection != null) {
       ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection,
-        uiState.currentCollection.id, page);
+        uiState.currentCollection.id, page, uiState.isSync)
     } else {
       ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id,
         {page: page, per_page: uiState.number_of_results},uiState.isSync);

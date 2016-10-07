@@ -7,6 +7,9 @@ import debounce from 'es6-promise-debounce';
 import KeyboardActions from '../actions/KeyboardActions';
 import KeyboardStore from '../stores/KeyboardStore';
 
+import UIActions from '../actions/UIActions';
+import UIStore from '../stores/UIStore';
+
 export default class AutoCompleteInput extends React.Component {
 
   constructor(props) {
@@ -214,10 +217,21 @@ export default class AutoCompleteInput extends React.Component {
       valueBeforeFocus: null
     })
 
+    if (!this.state.value || this.state.value.trim() == '') {
+      this.setState({
+        value: ''
+      })
+      UIActions.selectCollection({id: UIStore.getState().currentCollection.id})
+
+      return 0
+    }
+
     let selection = {name: this.state.value, search_by_method: 'substring'}
-    if (suggestions && suggestionFocus && suggestions[suggestionFocus] &&
-      suggestions[suggestionFocus].name && this.state.value == suggestions[suggestionFocus].name) {
-      selection = suggestions[suggestionFocus]
+    if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
+      let selectedSuggestion = suggestions[suggestionFocus]
+      let selectedName = selectedSuggestion.name
+      if (selectedName && selectedName.trim() != '' && this.state.value == selectedName)
+        selection = selectedSuggestion
     }
 
     clearTimeout(timeoutReference)
@@ -237,18 +251,19 @@ export default class AutoCompleteInput extends React.Component {
   renderSuggestions() {
     let {suggestions, error} = this.state
     let types = {
-      sample_name       : {icon: 'icon-sample'   , label: 'Sample'          },
-      sample_short_label: {icon: 'icon-sample'   , label: 'Sample Label'    },
-      polymer_type      : {icon: 'icon-polymer'  , label: 'Polymer'         },
-      reaction_name     : {icon: 'icon-reaction' , label: 'Reaction'        },
-      wellplate_name    : {icon: 'icon-wellplate', label: 'Wellplate'       },
-      screen_name       : {icon: 'icon-screen'   , label: 'Screen'          },
-      iupac_name        : {icon: 'icon-sample'   , label: 'Molecule'        },
-      inchistring       : {icon: 'icon-sample'   , label: 'InChI'           },
-      cano_smiles       : {icon: 'icon-sample'   , label: 'Canonical Smiles'},
-      sum_formula       : {icon: 'icon-sample'   , label: 'Sum Formula'     },
-      requirements      : {icon: 'icon-screen'   , label: 'Requirement'     },
-      conditions        : {icon: 'icon-screen'   , label: 'Condition'       },
+      sample_name : {icon: 'icon-sample', label: 'Sample Name'},
+      sample_short_label : {icon: 'icon-sample', label: 'Sample Short Label'},
+      sample_external_label : {icon: 'icon-sample', label: 'Sample External Label'},
+      polymer_type : {icon: 'icon-polymer', label: 'Polymer'},
+      reaction_name : {icon: 'icon-reaction', label: 'Reaction'},
+      wellplate_name : {icon: 'icon-wellplate', label: 'Wellplate'},
+      screen_name : {icon: 'icon-screen', label: 'Screen'},
+      iupac_name : {icon: 'icon-sample', label: 'Molecule'},
+      inchistring : {icon: 'icon-sample', label: 'InChI'},
+      cano_smiles : {icon: 'icon-sample', label: 'Canonical Smiles'},
+      sum_formula : {icon: 'icon-sample', label: 'Sum Formula'},
+      requirements : {icon: 'icon-screen', label: 'Requirement'},
+      conditions : {icon: 'icon-screen', label: 'Condition'}
     }
     if(suggestions) {
       return (

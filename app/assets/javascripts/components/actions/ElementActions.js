@@ -28,15 +28,14 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-      currentPage, searchType = null, isSync=false) {
+                                           currentPage, isSync = false) {
     return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(
-        selection, collectionId, currentPage, searchType, isSync)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      })
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage, isSync)
+                   .then((result) => {
+                     dispatch(result);
+                   }).catch((errorMessage) => {
+                     console.log(errorMessage);
+                   })
     }
   }
 

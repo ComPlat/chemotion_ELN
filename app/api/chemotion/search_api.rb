@@ -13,7 +13,7 @@ module Chemotion
       end
 
       def structure_search
-        params[:selection].molfile == nil ? false : true
+        params[:selection].structure_search
       end
 
       def get_arg
@@ -33,7 +33,7 @@ module Chemotion
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
 
-        samples = samples.empty? ? samples : paginate(samples)
+        samples = samples.empty? ? samples : Kaminari.paginate_array(samples)
         # After paging, now we can map to searchable for AllElementSearch
         samples = samples.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         reactions = reactions.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
@@ -95,8 +95,8 @@ module Chemotion
         when 'polymer_type'
           Sample.for_user(current_user.id).joins(:residues)
             .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
-        when 'sum_formula', 'iupac_name', 'sample_name', 'sample_short_label',
-             'inchistring', 'cano_smiles'
+        when 'sum_formula', 'iupac_name', 'inchistring', 'cano_smiles',
+             'sample_name', 'sample_short_label', 'sample_external_label'
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
         when 'reaction_name'
           Reaction.for_user(current_user.id).search_by(search_by_method, arg)
@@ -149,7 +149,7 @@ module Chemotion
           elements[:samples] = Sample.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id)).uniq
           elements[:reactions] = (Reaction.for_user(current_user.id).by_material_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_reactant_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_product_ids(elements[:samples].map(&:id))).uniq
         when AllElementSearch::Results
-          elements[:samples] = scope.samples
+          elements[:samples] = scope.samples + scope.molecules
           elements[:reactions] = (scope.reactions + (Reaction.for_user(current_user.id).by_material_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_reactant_ids(elements[:samples].map(&:id)) + Reaction.for_user(current_user.id).by_product_ids(elements[:samples].map(&:id)))).uniq
           elements[:wellplates] = (scope.wellplates + Wellplate.for_user(current_user.id).by_sample_ids(elements[:samples].map(&:id))).uniq
           elements[:screens] = (scope.screens + Screen.for_user(current_user.id).by_wellplate_ids(elements[:wellplates].map(&:id))).uniq
@@ -172,6 +172,7 @@ module Chemotion
         post do
           search_by_method = get_search_method()
           arg = get_arg()
+          return if arg.to_s.strip.length == 0
 
           scope =
             scope_by_search_by_method_arg_and_collection_id(search_by_method,
