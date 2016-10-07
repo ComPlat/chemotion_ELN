@@ -156,62 +156,56 @@ export default class WellplateDetails extends Component {
           <Panel header={this.wellplateHeader(wellplate)}
                  bsStyle={wellplate.isEdited ? 'info' : 'primary'}
                  className="panel-detail">
-            <ListGroup fill>
-              <ListGroupItem>
-                <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
-                      id="wellplateDetailsTab">
-                  <Tab eventKey={0} title={'Designer'}>
-                    <Well>
-                      <Wellplate
-                        show={showWellplate}
-                        size={size}
-                        wells={wells}
-                        handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                        cols={cols}
-                        width={60}
-                        />
-                    </Well>
-                  </Tab>
-                  <Tab eventKey={1} title={'List'}>
-                    <Well>
-                      <WellplateList
-                        wells={wells}
-                        handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                        />
-                    </Well>
-                  </Tab>
-                  <Tab eventKey={2} title={'Properties'}>
-                    <WellplateProperties
-                      {...properties}
-                      changeProperties={(change) => this.handleChangeProperties(change)}
-                      />
-                  </Tab>
-                </Tabs>
-              </ListGroupItem>
-              <ListGroupItem>
-                <ButtonToolbar>
-                  <Button
-                    bsStyle="primary"
-                    onClick={() => this.closeDetails()}
-                    >
-                    Close
-                  </Button>
-                  <Button
-                    bsStyle="warning"
-                    onClick={() => this.handleSubmit()}
-                    >
-                    {submitLabel}
-                  </Button>
+            <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
+                  id="wellplateDetailsTab">
+              <Tab eventKey={0} title={'Designer'}>
+                <Well>
+                  <Wellplate
+                    show={showWellplate}
+                    size={size}
+                    wells={wells}
+                    handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                    cols={cols}
+                    width={60}
+                    />
+                </Well>
+              </Tab>
+              <Tab eventKey={1} title={'List'}>
+                <Well>
+                  <WellplateList
+                    wells={wells}
+                    handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                    />
+                </Well>
+              </Tab>
+              <Tab eventKey={2} title={'Properties'}>
+                <WellplateProperties
+                  {...properties}
+                  changeProperties={(change) => this.handleChangeProperties(change)}
+                  />
+              </Tab>
+            </Tabs>
+            <ButtonToolbar>
+              <Button
+                bsStyle="primary"
+                onClick={() => this.closeDetails()}
+                >
+                Close
+              </Button>
+              <Button
+                bsStyle="warning"
+                onClick={() => this.handleSubmit()}
+                >
+                {submitLabel}
+              </Button>
 
-                  <Button
-                    bsStyle="default"
-                    onClick={() => CollectionActions.downloadReportWellplate(wellplate.id)}
-                    >
-                    Export samples
-                  </Button>
-                </ButtonToolbar>
-              </ListGroupItem>
-            </ListGroup>
+              <Button
+                bsStyle="default"
+                onClick={() => CollectionActions.downloadReportWellplate(wellplate.id)}
+                >
+                Export samples
+              </Button>
+            </ButtonToolbar>
           </Panel>
         </div>
       </StickyDiv>

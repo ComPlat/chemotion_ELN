@@ -13,14 +13,34 @@ export default class Wellplate extends Component {
       showOverlay: false,
       overlayTarget: {},
       overlayWell: {},
-      overlayPlacement: 'top'
+      overlayPlacement: 'right'
     }
+  }
+
+  componentDidMount() {
+    window.addEventListener('scroll', this.onScroll.bind(this));
+    document.getElementsByClassName('panel-body')[0].addEventListener('scroll', this.onScroll.bind(this));
   }
 
   componentWillReceiveProps(nextProps) {
     const {show} = nextProps;
     if(!show) {
       this.hideOverlay();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this.onScroll.bind(this));
+    document.getElementsByClassName('panel-body')[0].removeEventListener('scroll', this.onScroll.bind(this));
+  }
+
+  onScroll() {
+    const {showOverlay, overlayTarget, overlayWell} = this.state;
+    if(showOverlay) {
+      this.hideOverlay();
+      setTimeout(() => {
+        this.showOverlay(overlayTarget, overlayWell)
+      }, 700);
     }
   }
 
@@ -63,9 +83,9 @@ export default class Wellplate extends Component {
   }
 
   showOverlay(key, well) {
-    const {size} = this.props;
-    const isWellInUpperHalf = (size / 2) <= key;
-    const placement = (isWellInUpperHalf) ? 'top' : 'bottom';
+    const {cols} = this.props;
+    const isWellInUpperHalf = Math.ceil(cols / 2) > key % cols;
+    const placement = (isWellInUpperHalf) ? 'right' : 'left';
     this.setState({
       showOverlay: true,
       overlayTarget: key,
@@ -100,6 +120,7 @@ export default class Wellplate extends Component {
       height: width,
       fontSize: 8
     };
+
     return (
       <div style={style}>
         <WellplateLabels

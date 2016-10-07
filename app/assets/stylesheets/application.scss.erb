@@ -64,12 +64,14 @@ div[class^="col-"] {
   background: transparent;  /* optional: just make scrollbar invisible */
 }
 
-.panel-detail > .panel-body {
-  overflow-y: auto;
-  max-height: 85vh;
+.panel-detail {
+  max-height: calc(100vh - 80px);
 }
 
-
+.panel-detail > .panel-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 150px);
+}
 
 .panel-fit-screen {
   overflow-y: scroll;
