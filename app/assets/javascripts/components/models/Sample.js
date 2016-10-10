@@ -476,7 +476,7 @@ export default class Sample extends Element {
 	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
 	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
-  convertGramToUnit(amount_g, unit) {
+  convertGramToUnit(amount_g = 0, unit) {
     if(this.contains_residues) {
       let loading = this.residues[0].custom_info.loading;
       switch (unit) {
