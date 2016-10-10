@@ -262,13 +262,12 @@ class Material extends Component {
 
   generalMaterial(props, style, handleStyle, inputsStyle) {
     const { material, deleteMaterial, isDragging, connectDragSource,
-            showLoadingColumn, totalVolume } = props;
+            showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target'
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default'
 
     const mol = material.amount_mol;
-    const concn = isNaN(mol / totalVolume) ? 0.0 : mol / totalVolume;
-
+    const concn = mol / reaction.solventVolume;
 
     return (
       <tr style={style}>
@@ -400,7 +399,7 @@ class Material extends Component {
 
         <td style={inputsStyle}>
           <FormControl type="text"
-            value={`${this.solvConcentration(material, props.solventsVolSum)} %`}
+            value={this.solvConcentration(material, props.reaction.solventVolume)}
             disabled={true}
           />
         </td>
@@ -494,11 +493,13 @@ class Material extends Component {
     )
   }
 
-  solvConcentration(material, solventsVolSum) {
-    if(material.amountType === 'real') {
-      return (material.real_amount_value / solventsVolSum * 100).toFixed(1)
+  solvConcentration(material, solventVolume) {
+    const concn = (material.amount_l / solventVolume * 100).toFixed(1);
+    const nanOrInfinity = isNaN(concn) || !isFinite(concn)
+    if (nanOrInfinity){
+      return 'n.d.';
     } else {
-      return (material.target_amount_value / solventsVolSum * 100).toFixed(1)
+      return `${concn} %`;
     }
   }
 
@@ -518,11 +519,10 @@ class Material extends Component {
 export default DragSource(DragDropItemTypes.MATERIAL, source, collect)(Material);
 
 Material.propTypes = {
+  reaction: PropTypes.object.isRequired,
   material: PropTypes.object.isRequired,
   materialGroup: PropTypes.string.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
-  solventsVolSum: PropTypes.number.isRequired,
-  totalVolume: PropTypes.number,
 };

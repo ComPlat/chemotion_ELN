@@ -36,7 +36,7 @@ class MaterialGroupContainer extends Component {
   render() {
     const { materials, materialGroup, isOver, canDrop, connectDropTarget,
             showLoadingColumn, deleteMaterial, onChange, reaction,
-            totalVolume, dropSample } = this.props;
+            dropSample } = this.props;
     let style = {
       padding: '2px 5px'
     };
@@ -53,7 +53,6 @@ class MaterialGroupContainer extends Component {
           onChange={onChange}
           materials={materials}
           materialGroup={materialGroup}
-          totalVolume={totalVolume}
           showLoadingColumn={showLoadingColumn}
           deleteMaterial={deleteMaterial}
           addDefaultSolvent={dropSample} />
@@ -67,7 +66,6 @@ export default DropTarget([DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL]
 MaterialGroupContainer.propTypes = {
   materials: PropTypes.array.isRequired,
   materialGroup: PropTypes.string.isRequired,
-  totalVolume: PropTypes.number.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
   onChange: PropTypes.func,

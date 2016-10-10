@@ -94,9 +94,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
     let mp = metPrefSymbols[metricPrefix];
     let val = ()=>{
-      if (!showString){
+      const nanOrInfinity = isNaN(value) || !isFinite(value)
+      if (!showString && nanOrInfinity){
+        return 'n.d.'
+      } else if (!showString) {
         return  metPreConv(value,"none",metricPrefix).toPrecision(currentPrecision);
-      }else{return valueString}
+      } else {return valueString}
     };
 
     let prefixSwitch;
