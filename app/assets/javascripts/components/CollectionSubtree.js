@@ -13,6 +13,7 @@ export default class CollectionSubtree extends React.Component {
 
     this.state = {
       isRemote: props.isRemote,
+      isSynchronized: false,
       label: props.root.label,
       selected: false,
       root: props.root,
@@ -24,7 +25,7 @@ export default class CollectionSubtree extends React.Component {
   isVisible(node, uiState) {
     if(node.descendant_ids) {
       let currentCollectionId = parseInt(uiState.currentCollection.id)
-      return (node.descendant_ids.indexOf(currentCollectionId) > -1)
+      if (node.descendant_ids.indexOf(currentCollectionId) > -1) return true
     }
 
     let {visibleRootsIds} = CollectionStore.getState()
@@ -49,23 +50,27 @@ export default class CollectionSubtree extends React.Component {
   onChange(state) {
     if(state.currentCollection) {
       let visible = this.isVisible(this.state.root, state)
+      const {root} = this.state
 
-      if(state.currentCollection.id == this.state.root.id) {
+      if(state.currentCollection.id == root.id &&
+         state.currentCollection.is_synchronized == root.is_synchronized) {
         this.setState({
           selected: true,
-          visible: visible
-        });
+          visible: visible,
+          isSynchronized: root.is_synchronized
+        })
       } else {
         this.setState({
           selected: false,
-          visible: visible
-        });
+          visible: visible,
+          isSynchronized: root.is_synchronized
+        })
       }
     }
   }
 
   selectedCssClass() {
-    return this.state.selected ? "selected" : "";
+    return (this.state.selected) ? "selected" : "";
   }
 
   children() {
@@ -134,6 +139,11 @@ export default class CollectionSubtree extends React.Component {
     }
 
     const { root } = this.state
+    let {visible} = this.state
+    const uiState = UIStore.getState()
+
+    visible = visible || this.isVisible(root, uiState)
+    this.setState({visible: visible, isClicked: true})
 
     if(root.label == 'All') {
       Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
@@ -197,7 +207,8 @@ export default class CollectionSubtree extends React.Component {
 
   render() {
     const {fakeRoot} = this.props
-    const {visible, label, root} = this.state
+    const {label, root} = this.state
+    let {visible} = this.state
 
     let style
     if (!visible) {
@@ -223,6 +234,5 @@ export default class CollectionSubtree extends React.Component {
 
 CollectionSubtree.propTypes = {
   isRemote: React.PropTypes.bool,
-  root: React.PropTypes.object,
-  visible: React.PropTypes.bool
+  root: React.PropTypes.object
 }

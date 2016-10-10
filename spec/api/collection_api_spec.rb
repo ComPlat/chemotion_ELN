@@ -4,9 +4,12 @@ describe Chemotion::CollectionAPI do
   let(:json_options) {
     {
       only: [:id, :label],
-      methods: [:children, :descendant_ids, :permission_level, :shared_by_id,
+      methods: [
+        :children, :descendant_ids, :permission_level, :shared_by_id,
         :sample_detail_level, :reaction_detail_level, :wellplate_detail_level,
-        :screen_detail_level, :is_shared, :is_locked, :sync_collections_users, :shared_users]
+        :screen_detail_level, :is_shared, :is_locked, :sync_collections_users,
+        :shared_users, :is_synchronized
+      ]
     }
   }
 
@@ -30,7 +33,11 @@ describe Chemotion::CollectionAPI do
         let(:s)   { create(:sample) }
         let(:r)   { create(:reaction) }
         let(:w)   { create(:wellplate) }
-        let!(:c2) { create(:collection, user: user, is_shared: true, shared_by_id: u2.id, permission_level: 5, parent: c1) }
+        let!(:c2) {
+          create(:collection, user: user,
+          is_shared: true, shared_by_id: u2.id,
+          permission_level: 5, parent: c1)
+        }
 
         describe 'take ownership of c1' do
           before { post "/api/v1/collections/take_ownership/#{c1.id}" }
@@ -68,7 +75,10 @@ describe Chemotion::CollectionAPI do
       context 'with inappropriate permissions' do
         let(:u2)  { create(:user) }
         let!(:c1) { create(:collection, user: u2) }
-        let!(:c2) { create(:collection, user: user, is_shared: true, permission_level: 3) }
+        let!(:c2) {
+          create(:collection, user: user,
+          is_shared: true, permission_level: 3)
+        }
 
         describe 'take ownership of c1' do
           before { post "/api/v1/collections/take_ownership/#{c1.id}" }
@@ -92,8 +102,13 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (unshared) collection roots of logged in user' do
         get '/api/v1/collections/roots'
         collections = JSON.parse(response.body)['collections']
-        shared_to = collections.map{|c| c.delete("shared_to")}
-        expect(collections).to eq [c1.as_json(json_options),c3.as_json(json_options)]
+        shared_to = collections.map{ |c| c.delete("shared_to") }
+
+        expect(collections).to eq [
+          c1.as_json(json_options),
+          c3.as_json(json_options)
+        ]
+
         expect(shared_to.compact).to be_empty
       end
     end
@@ -123,12 +138,17 @@ describe Chemotion::CollectionAPI do
         expect(JSON.parse(response.body)['collections'].first['label']).to eq c4.label
       end
       context 'with a collection shared to a group' do
-        let(:p2){create(:person)}
+        let(:p2){ create(:person) }
         let!(:g1){ create(:group,users:[user]) }
-        let!(:c6){ create(:collection, user: g1, is_shared: true,shared_by_id:p2.id, is_locked:false) }
+        let!(:c6){ create(
+          :collection, user: g1, is_shared: true,
+          shared_by_id: p2.id, is_locked:false
+        )}
+
         before {get '/api/v1/collections/remote_roots'}
         it 'returns serialized (remote) collection roots of logged in user' do
-          expect(JSON.parse(response.body)['collections'].map{|e| e['id']}).to match_array [c4.id,c6.id]
+          serialized = JSON.parse(response.body)['collections'].map{ |e| e['id']}
+          expect(serialized).to match_array [c4.id, c6.id]
         end
       end
     end

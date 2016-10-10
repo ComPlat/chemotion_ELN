@@ -1,7 +1,7 @@
 class CollectionSerializer < ActiveModel::Serializer
-  attributes :id, :label, :descendant_ids, :is_shared, :shared_by_id, :is_locked,
-    :permission_level, :sample_detail_level, :reaction_detail_level,
-    :wellplate_detail_level, :screen_detail_level, :shared_to
+  attributes :id, :label, :shared_to, :is_shared, :shared_by_id, :is_locked,
+    :descendant_ids, :is_synchronized, :permission_level, :sample_detail_level,
+    :wellplate_detail_level, :screen_detail_level, :reaction_detail_level
 
   has_many :children
 
