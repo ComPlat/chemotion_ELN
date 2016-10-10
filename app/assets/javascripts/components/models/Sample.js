@@ -204,7 +204,15 @@ export default class Sample extends Element {
       residues: [],
       imported_readout: ''
     });
-    sample.sample_svg_file = molecule.sample_svg_file
+    sample.sample_svg_file = molecule.sample_svg_file;
+
+    if(molecule.residues.length > 0) {
+      sample.residues = molecule.residues;
+      sample.contains_residues = true;
+
+      if(materialGroup == 'products')
+        sample.loading = 0;
+    }
 
     // allow zero loading for reaction product
     sample.reaction_product = (materialGroup == 'products');
