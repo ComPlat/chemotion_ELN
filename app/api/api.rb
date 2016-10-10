@@ -23,7 +23,7 @@ class API < Grape::API
       request.path.include?('/api/v1/public/')
     end
 
-    def group_by_molecule(samples,own_collection = false)
+    def group_by_molecule(samples, own_collection = false)
       groups = Hash.new
       sample_serializer_selector =
         if own_collection
