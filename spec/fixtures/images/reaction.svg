@@ -25,7 +25,10 @@
           <polygon points="131,4 129,7 139,4 129,1"/>
         </svg>
 </g><g transform='translate(259, 130)'>          <svg font-family="sans-serif">
-            <text text-anchor="middle" x="69" y="55" font-size="12.1">Water.. / Aceton..</text>
+            <text text-anchor="middle" x="69" y="55" font-size="12.1">Water</text>
+          </svg>
+            <svg font-family="sans-serif">
+            <text text-anchor="middle" x="69" y="75" font-size="12.1">Aceton</text>
           </svg>
 </g><g transform='translate(259, 130)'>        <svg font-family="sans-serif">
           <text text-anchor="middle" x="69" y="30" font-size="12.1">37.5 °C</text>

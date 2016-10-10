@@ -5,6 +5,7 @@ module SVG
   class ReactionComposer
     REACTANT_SCALE = 0.75
     YIELD_YOFFSET = 10
+    SOLVENT_LENGTH_LIMIT = 15
     def initialize(materials_svg_paths, options = {})
       @svg_path = File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'molecules')
       @starting_materials = materials_svg_paths[:starting_materials] || []
@@ -26,11 +27,25 @@ module SVG
     end
 
     def solvents_lines
-      s_per_line = @arrow_width < 150 ? 2 : 3
-      group_of_three = @solvents.each_slice(s_per_line).to_a
-      group_of_three.map do |i|
-        i.map{ |j| j && "#{j[0..7]}.." }
-      end.map{ |k| k.join(" / ") } unless @solvents.empty?
+      groups = @solvents.each_slice(num_solvents_per_line).to_a
+      groups.map do |g|
+        solvents_string(g)
+      end.map{ |k| k.join("  /  ") } unless @solvents.empty?
+    end
+
+    def num_solvents_per_line
+      reactants_size = @reactants.size > 0 ? @reactants.size : 1
+      reactants_size > 3 ? 3 : reactants_size
+    end
+
+    def solvents_string(group)
+      group.map do |j|
+        if j && j.size > SOLVENT_LENGTH_LIMIT
+          j && "#{j[0..SOLVENT_LENGTH_LIMIT-1]}.."
+        elsif j
+          j
+        end
+      end
     end
 
     def compose_reaction_svg_and_save(options = {})
