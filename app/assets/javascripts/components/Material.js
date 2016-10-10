@@ -444,7 +444,7 @@ class Material extends Component {
     var idCheck = /^\d+$/
 
     if (skipIupacName) {
-      let materialDisplayName = material.molecule_iupac_name
+      let materialDisplayName = material.molecule_iupac_name || material.name
       if (materialDisplayName == null || materialDisplayName == "") {
         materialDisplayName = (
           <span>
