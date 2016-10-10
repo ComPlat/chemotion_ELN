@@ -206,7 +206,7 @@ export default class Sample extends Element {
     });
     sample.sample_svg_file = molecule.sample_svg_file;
 
-    if(molecule.residues.length > 0) {
+    if(molecule.residues && molecule.residues.length > 0) {
       sample.residues = molecule.residues;
       sample.contains_residues = true;
 
