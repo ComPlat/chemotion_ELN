@@ -216,18 +216,10 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  render() {
-    let {reaction, fullScreen} = this.state;
-    let fScrnClass = fullScreen ? "full-screen" : ""
-    reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
-
-    const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
-    let extraTabs =[];
-    for (let j=0;j < XTab.TabCount;j++){
-      extraTabs.push((i)=>this.extraTab(i))
-    }
+  reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
-    const panelHeader =
+
+    return (
       <h4>
         <i className="icon-reaction"/>&nbsp;{reaction.title()}
         <OverlayTrigger placement="bottom"
@@ -267,20 +259,31 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-cogs"></i>
           </Button>
         </OverlayTrigger>
+        <div style={{display: "inline-block", marginLeft: "10px"}}>
+          <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
+          <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
+        </div>
       </h4>
+    )
+  }
+
+  render() {
+    let {reaction, fullScreen} = this.state;
+    let fScrnClass = fullScreen ? "full-screen" : ""
+    reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
+
+    const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
+    let extraTabs =[];
+    for (let j=0;j < XTab.TabCount;j++){
+      extraTabs.push((i)=>this.extraTab(i))
+    }
 
     return (
       <div className={fScrnClass}>
       <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
-        <Panel className='panel-detail' header={panelHeader}
-          bsStyle={reaction.changed ? 'info' : 'primary'}
-        >
-        {this.reactionSVG(reaction)}
-        <div style={{position:"absolute", left: 0, top: 40, margin: "10px"}}>
-          <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
-          <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
-        </div>
-
+        <Panel className='panel-detail' header={this.reactionHeader(reaction)}
+               bsStyle={reaction.changed ? 'info' : 'primary'}>
+          {this.reactionSVG(reaction)}
           <Tabs defaultActiveKey={0} id="reaction-detail-tab">
             <Tab eventKey={0} title={'Scheme'}>
               <ReactionDetailsScheme
