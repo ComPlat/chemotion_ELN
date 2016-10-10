@@ -74,7 +74,7 @@ export default class Sample extends Element {
     children_count += 1;
     Sample.children_count[this.id] = children_count;
 
-    let splitSample = this;
+    let splitSample = this.clone();
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
@@ -95,7 +95,7 @@ export default class Sample extends Element {
   }
 
   buildChildWithoutCounter() {
-    let splitSample = this;
+    let splitSample = this.clone();
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
