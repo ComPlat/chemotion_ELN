@@ -61,7 +61,8 @@ export default class ReactionDetailsScheme extends Component {
       }
 
       if(materialGroup == 'products') {
-        splitSample.reaction_product = true
+        splitSample.reaction_product = true;
+        splitSample.equivalent = 0;
       }
     }
 
