@@ -12,31 +12,19 @@ export default class MaterialGroup extends Component {
 
   render() {
     const { materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,
-            reaction, totalVolume, addDefaultSolvent } = this.props;
+            reaction, addDefaultSolvent } = this.props;
     let contents = [];
-    let solventsVolSum = 0.0;
-
-    if(materialGroup === 'solvents') {
-      materials.map(material => {
-        if(material.amountType === 'real') {
-          solventsVolSum += material.real_amount_value;
-        } else {
-          solventsVolSum += material.target_amount_value;
-        }
-      })
-    }
 
     materials.map((material, key) => {
       contents.push(
         (<Material
+          reaction={reaction}
           onChange={onChange}
           key={key}
           material={material}
           materialGroup={materialGroup}
           showLoadingColumn={showLoadingColumn}
-          deleteMaterial={material => deleteMaterial(material, materialGroup)}
-          solventsVolSum={solventsVolSum}
-          totalVolume={totalVolume} />)
+          deleteMaterial={material => deleteMaterial(material, materialGroup)} />)
       );
 
       if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
@@ -164,7 +152,6 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction, addDefaultSol
 MaterialGroup.propTypes = {
   materialGroup: PropTypes.string.isRequired,
   materials: PropTypes.array.isRequired,
-  totalVolume: PropTypes.number.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,

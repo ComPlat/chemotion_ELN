@@ -292,4 +292,21 @@ export default class Reaction extends Element {
   addLiterature(literature) {
     this._literatures.push(literature);
   }
+
+  get totalVolume() {
+    let totalVolume = 0.0;
+    const materials = [...this.starting_materials,
+                        ...this.reactants,
+                        ...this.products,
+                        ...this.solvents];
+    materials.map(m => totalVolume += m.amount_l);
+    return totalVolume;
+  }
+
+  get solventVolume() {
+    let solventVolume = 0.0;
+    const materials = [...this.solvents];
+    materials.map(m => solventVolume += m.amount_l);
+    return solventVolume;
+  }
 }

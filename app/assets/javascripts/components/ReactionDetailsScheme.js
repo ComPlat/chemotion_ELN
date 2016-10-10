@@ -410,20 +410,8 @@ export default class ReactionDetailsScheme extends Component {
     );
   }
 
-  totalVolume() {
-    const { reaction } = this.state;
-    let totalVolume = 0.0;
-    const materials = [...reaction.starting_materials,
-                        ...reaction.reactants,
-                        ...reaction.products,
-                        ...reaction.solvents];
-    materials.map(m => totalVolume += m.amount_l);
-    return totalVolume;
-  }
-
   render() {
     const { reaction } = this.state;
-    const totalVolume = this.totalVolume();
     let minPadding = {padding: "1px 2px 2px 0px"}
 
     // if no reference material then mark first starting material
@@ -441,7 +429,6 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
-              totalVolume={totalVolume}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
@@ -454,7 +441,6 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="reactants"
               materials={reaction.reactants}
-              totalVolume={totalVolume}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
@@ -468,7 +454,6 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="products"
               materials={reaction.products}
-              totalVolume={totalVolume}
               dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
@@ -484,7 +469,6 @@ export default class ReactionDetailsScheme extends Component {
                   reaction={reaction}
                   materialGroup="solvents"
                   materials={reaction.solvents}
-                  totalVolume={totalVolume}
                   dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
                   deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                   dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
