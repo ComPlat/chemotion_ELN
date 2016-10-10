@@ -77,7 +77,7 @@ export default class ShareButton extends React.Component {
   render() {
     const {isDisabled} = this.props
 
-    const tooltip = (<Tooltip id="export_button">Share/Split sample</Tooltip>)
+    const tooltip = (<Tooltip id="export_button">Share elements</Tooltip>)
 
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
