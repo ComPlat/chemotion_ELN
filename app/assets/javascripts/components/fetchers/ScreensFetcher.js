@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Screen from '../models/Screen';
+import UIStore from '../stores/UIStore'
 
 export default class ScreensFetcher {
   static fetchById(id) {
@@ -18,7 +19,7 @@ export default class ScreensFetcher {
 
   static fetchByCollectionId(id, queryParams = {}, isSync=false) {
     let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || 7;
+    let per_page = queryParams.per_page || UIStore.getState().number_of_results
     let api = `/api/v1/screens.json?${isSync ? "sync_" : ""}collection_id=${id}&page=${page}&per_page=${per_page}`;
     let promise = fetch(api, {
       credentials: 'same-origin'

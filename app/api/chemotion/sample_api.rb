@@ -110,7 +110,7 @@ module Chemotion
         end.uniq.not_reactant.not_solvents.order("updated_at DESC")
 
         return {
-          molecules: group_by_molecule(paginate(scope),own_collection)
+          molecules: group_by_molecule(paginate(scope), own_collection)
         }
       end
 
@@ -125,7 +125,7 @@ module Chemotion
 
         get do
           sample= Sample.includes(:molecule, :residues, :elemental_compositions)
-                         .find(params[:id])
+                        .find(params[:id])
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
         end
       end

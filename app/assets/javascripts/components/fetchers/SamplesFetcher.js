@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Sample from '../models/Sample';
+import UIStore from '../stores/UIStore'
 import _ from 'lodash';
 
 export default class SamplesFetcher {
@@ -47,7 +48,7 @@ export default class SamplesFetcher {
 
   static fetchByCollectionId(id, queryParams={}, isSync=false) {
     let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || 15;
+    let per_page = queryParams.per_page || UIStore.getState().number_of_results
     let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }collection_id=${id}&page=${page}&per_page=${per_page}`
     let promise = fetch(api, {
         credentials: 'same-origin'

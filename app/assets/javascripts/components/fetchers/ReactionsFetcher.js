@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
 import Literature from '../models/Literature';
+import UIStore from '../stores/UIStore'
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -25,7 +26,7 @@ export default class ReactionsFetcher {
 
   static fetchByCollectionId(id, queryParams={}, isSync=false) {
     let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || 7;
+    let per_page = queryParams.per_page || UIStore.getState().number_of_results
     let api = `/api/v1/reactions.json?${isSync ? "sync_" : ""}collection_id=${id}&page=${page}&per_page=${per_page}`;
     let promise = fetch(api, {
         credentials: 'same-origin'
