@@ -22,7 +22,8 @@ export default class CollectionTree extends React.Component {
       lockedRoots: collecState.lockedRoots,
       syncInRoots: collecState.syncInRoots,
       ownCollectionVisible: true,
-      sharedCollectionVisible: true,
+      sharedWithCollectionVisible: true,
+      sharedToCollectionVisible: true,
       syncCollectionVisible: true
     }
 
@@ -63,7 +64,7 @@ export default class CollectionTree extends React.Component {
 
     if (sharedRoots.length < 1 || sharedRoots[0].children.length < 1)
       return <span />
-    sharedToCollectionVisible = !sharedToCollectionVisible
+
     let labelledRoots = sharedRoots.map(e => {
       return update(e, {label: {$set:
         <span>{this.labelRoot('shared_to', e)}</span>
@@ -73,7 +74,7 @@ export default class CollectionTree extends React.Component {
     let subTreeLabels = (
       <div className="tree-view">
         <div className="title" style={{backgroundColor:'white'}}
-             onClick={() => this.setState({sharedToCollectionVisible: sharedToCollectionVisible})}>
+             onClick={() => this.setState({sharedToCollectionVisible: !sharedToCollectionVisible})}>
           <i className="fa fa-list" /> &nbsp;
           My shared projects &nbsp;
           <i className="fa fa-share-alt share-icon" />
@@ -88,7 +89,7 @@ export default class CollectionTree extends React.Component {
     let {remoteRoots, sharedWithCollectionVisible} = this.state
     if (remoteRoots.length < 1 || remoteRoots[0].children.length < 1)
       return <span />
-    sharedWithCollectionVisible = !sharedWithCollectionVisible
+
     let labelledRoots = remoteRoots.map(e => {
       return update(e, {label: {$set:
         <span>
@@ -102,7 +103,7 @@ export default class CollectionTree extends React.Component {
     let subTreeLabels = (
       <div className="tree-view">
         <div className="title" style={{backgroundColor:'white'}}
-             onClick={() => this.setState({sharedWithCollectionVisible: sharedWithCollectionVisible})}>
+             onClick={() => this.setState({sharedWithCollectionVisible: !sharedWithCollectionVisible})}>
           <i className="fa fa-list"/> &nbsp;
           Shared with me &nbsp;
           <i className="fa fa-share-alt share-icon"/>
@@ -118,7 +119,7 @@ export default class CollectionTree extends React.Component {
     let {syncInRoots, syncCollectionVisible} = this.state
     if (syncInRoots.length < 1 || syncInRoots[0].children.length < 1)
       return <span />
-    syncCollectionVisible = !syncCollectionVisible
+
     let labelledRoots = syncInRoots.map(e => {
       return update(e, {label: {$set:
         <span>
@@ -132,7 +133,7 @@ export default class CollectionTree extends React.Component {
     let subTreeLabels = (
       <div className="tree-view">
         <div className="title" style={{backgroundColor:'white'}}
-             onClick={() => this.setState({syncCollectionVisible: syncCollectionVisible})}>
+             onClick={() => this.setState({syncCollectionVisible: !syncCollectionVisible})}>
           <i className="fa fa-list"/> &nbsp;
           Synchronized with me &nbsp;
           <i className="fa fa-share-alt"/>
@@ -170,15 +171,16 @@ export default class CollectionTree extends React.Component {
   subtrees(roots, label, isRemote, visible = true) {
     if(roots.length > 0) {
       let subtrees = roots.map((root, index) => {
-        return <CollectionSubtree root={root} key={index}
-                                  isRemote={isRemote} visible={visible}/>
+        return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
       })
 
-      let subtreesRender = visible ? subtrees : ""
+      let subtreesVisible = visible ? "" : "none"
       return (
         <div>
           {label}
-          {subtreesRender}
+          <div style={{display: subtreesVisible}}>
+            {subtrees}
+          </div>
         </div>
       )
     } else {
@@ -236,6 +238,8 @@ export default class CollectionTree extends React.Component {
       extraDiv.push(<NoName key={"Xdiv"+j} />);
     }
 
+    let ownCollectionDisplay = ownCollectionVisible ? "" : "none"
+
     return (
       <div>
         <div className="tree-view">
@@ -245,9 +249,9 @@ export default class CollectionTree extends React.Component {
             <i className="fa fa-list" /> &nbsp; Collections
           </div>
         </div>
-        <div className="tree-wrapper">
-          {ownCollectionVisible && this.lockedSubtrees()}
-          {ownCollectionVisible && this.unsharedSubtrees()}
+        <div className="tree-wrapper" style={{display: ownCollectionDisplay}}>
+          {this.lockedSubtrees()}
+          {this.unsharedSubtrees()}
         </div>
         <div className="tree-wrapper">
           {this.sharedSubtrees()}
