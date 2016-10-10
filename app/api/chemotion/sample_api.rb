@@ -316,6 +316,7 @@ module Chemotion
         # otherwise ActiveRecord::UnknownAttributeError appears
         attributes[:elemental_compositions].each do |i|
           i.delete :description
+          i.delete :id
         end if attributes[:elemental_compositions]
 
         # set nested attributes
