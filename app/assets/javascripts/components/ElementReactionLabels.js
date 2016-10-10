@@ -36,11 +36,11 @@ export default class ElementReactionLabels extends React.Component {
   }
 
   getReactionId(element) {
-    if (element.reactions_product_samples.length > 0) {
+    if (element.reactions_product_samples && element.reactions_product_samples.length > 0) {
       return element.reactions_product_samples[0].reaction_id
     }
 
-    if (element.reactions_starting_material_samples.length > 0) {
+    if (element.reactions_starting_material_samples && element.reactions_starting_material_samples.length > 0) {
       return element.reactions_starting_material_samples[0].reaction_id
     }
   }
@@ -86,7 +86,7 @@ export default class ElementReactionLabels extends React.Component {
       <div style={{display: 'inline-block'}}>
         <div onClick={this.handleOnClick}>
           <span className="collection-label" key={element.id}>
-          <Label>{reaction}</Label>
+            <Label>{reaction}</Label>
           </span>
         </div>
         {/* <div style={{clear: 'both'}} /> */}

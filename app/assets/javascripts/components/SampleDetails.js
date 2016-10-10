@@ -13,6 +13,7 @@ import UIActions from './actions/UIActions';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
+import ElementReactionLabels from './ElementReactionLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
 
 import XLabels from "./extra/SampleDetailsXLabels";
@@ -259,6 +260,12 @@ export default class SampleDetails extends React.Component {
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
+        <div style={{display: "inline-block", marginLeft: "10px"}}>
+          <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
+          <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
+          <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+          {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
+        </div>
       </div>
     )
   }
@@ -271,10 +278,6 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
-          <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
-          <ElementAnalysesLabels element={sample}
-            key={sample.id+"_analyses"}/>
-          {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </Col>
         <Col md={8}>
           {this.svgOrLoading(sample)}
