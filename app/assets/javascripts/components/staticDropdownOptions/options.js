@@ -14,6 +14,9 @@ export const solventOptions = [{
     label: 'Butanol',
     value: 'Butanol'
   }, {
+    label: 'Carbon tetrachloride (CCl4)',
+    value: 'Carbon tetrachloride'
+  }, {
     label: 'Chloroform',
     value: 'Chloroform'
   }, {
@@ -104,6 +107,10 @@ export const defaultMultiSolventsOptions = [{
     label: 'Butanol',
     value: ['Butanol',
             '\n  Ketcher 09281616592D 1   1.00000     0.00000     0\n\n  5  4  0     0  0            999 V2000\n    3.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n    1.5000    0.8660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    2.5000    0.8660    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  4  1  0     0  0\n  2  3  1  0     0  0\n  2  4  1  0     0  0\n  3  5  1  0     0  0\nM  END\n']
+  }, {
+    label: 'Carbon tetrachloride (CCl4)',
+    value: ['CCl4',
+            '\n  Ketcher 10101611292D 1   1.00000     0.00000     0\n\n  5  4  0     0  0            999 V2000\n    3.7321    0.5000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n    2.0000   -0.5000    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n    2.3661    0.8660    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n    3.3661   -0.8660    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0\n    2.8661    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  5  1  0     0  0\n  2  5  1  0     0  0\n  3  5  1  0     0  0\n  4  5  1  0     0  0\nM  END\n']
   }, {
     label: 'Chloroform',
     value: ['Chloroform',
