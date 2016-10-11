@@ -58,9 +58,9 @@ export default class ReactionDetails extends Component {
   }
   handleResize(e = null) {
     let windowHeight = window.innerHeight || 1;
-    if (windowHeight < 500) {
-      this.setState({offsetTop:0} );
-    } else {this.setState({offsetTop:70})}
+    if (this.state.fullScreen || windowHeight < 500) {
+      this.setState({offsetTop:0});
+    } else { this.setState( {offsetTop:70}) }
   }
 
   closeDetails() {
