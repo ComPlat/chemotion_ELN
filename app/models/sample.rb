@@ -120,7 +120,7 @@ class Sample < ActiveRecord::Base
   validate :has_collections
 
   accepts_nested_attributes_for :molecule, update_only: true
-  accepts_nested_attributes_for :residues, :elemental_compositions,
+  accepts_nested_attributes_for :residues, :elemental_compositions, :container,
                                 allow_destroy: true
   accepts_nested_attributes_for :collections_samples
 

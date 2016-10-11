@@ -15,6 +15,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
 import SampleDetailsAnalyses from './SampleDetailsAnalyses';
+import SampleDetailsContainers from './SampleDetailsContainers';
 
 import XLabels from "./extra/SampleDetailsXLabels";
 import XTab from "./extra/SampleDetailsXTab";
@@ -401,6 +402,21 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  sampleContainerTab(ind){
+    let sample = this.state.sample || {}
+    return(
+      <Tab eventKey={ind} title={'Analyses *'}
+        key={'Container' + sample.id.toString()}>
+        <ListGroupItem style={{paddingBottom: 20}}>
+          <SampleDetailsContainers
+            sample={sample}
+            parent={this}
+            />
+        </ListGroupItem>
+      </Tab>
+    )
+  }
+
   sampleImportReadoutTab(ind){
     let sample = this.state.sample || {}
     return(
@@ -425,7 +441,7 @@ export default class SampleDetails extends React.Component {
 
   extraTab(ind){
     let sample = this.state.sample || {}
-    let num = ind - 3 ;
+    let num = ind - 4 ;
     let NoName =  XTab["Tab"+num];
     let TabName = XTabName["TabName"+num];
     return(
@@ -505,6 +521,7 @@ export default class SampleDetails extends React.Component {
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
                        (i)=>(this.sampleAnalysesTab(i)),
+                       (i)=>(this.sampleContainerTab(i)),
                        (i)=>(this.sampleImportReadoutTab(i))
                       ];
     for (let j=0;j < XTab.TabCount;j++){

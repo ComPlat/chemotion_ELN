@@ -320,7 +320,7 @@ module Chemotion
               content: ana.content,
               description: ana.description,
               #Datasets
-              dataset: Array(ana.datasets).map do |dataset|
+              datasets: Array(ana.datasets).map do |dataset|
                 if Container.exists?(:id => dataset.id)
                   data_container = Container.find_by id: dataset.id
                   data_container.name = dataset.name
