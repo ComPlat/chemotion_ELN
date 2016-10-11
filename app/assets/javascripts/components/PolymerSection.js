@@ -136,7 +136,8 @@ export default class PolymerSection extends React.Component {
             precision={3}
             key={'polymer_loading_input' + sample.id.toString()}
             name="polymer_loading"
-            bsStyle={this.checkInputStatus(sample, 'loading')}
+            // TODO: enable again
+            //bsStyle={this.checkInputStatus(sample, 'loading')}
             onChange={(e) => this.handleCustomInfoNumericChanged(e, 'loading', residue, sample)}
             disabled={disabled}
             readOnly={disabled}

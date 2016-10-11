@@ -30,7 +30,7 @@ class ElementalComposition < ActiveRecord::Base
       return if product_yield == 0.0
 
       new_amount = sm_data.sample.amount_mmol * product_yield
-      amount = if self.sample.real_amount_value.zero? || self.sample.real_amount_value.nil?
+      amount = if self.sample.real_amount_value.nil? || self.sample.real_amount_value.zero?
         self.sample.amount_mg
       else
         self.sample.amount_mg :real
