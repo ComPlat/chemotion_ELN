@@ -214,6 +214,7 @@ export default class SampleForm extends React.Component {
 
   render() {
     let sample = this.state.sample || {}
+    let isPolymer = sample.molfile.indexOf(" R# ") !== -1
 
     return (
       <div className="sample-form">
@@ -234,18 +235,18 @@ export default class SampleForm extends React.Component {
 
         <Row className="visible-hd">
           {this.sampleAmount(sample)}
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density')}
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer)}
           {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point')}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point')}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer)}
         </Row>
 
         <Row className="hidden-hd">
           {this.sampleAmount(sample, 4)}
         </Row>
         <Row className="hidden-hd">
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', false, '', 4)}
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 4)}
           {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', false, '', 4)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', false, '', 4)}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 4)}
         </Row>
 
         <Row>
