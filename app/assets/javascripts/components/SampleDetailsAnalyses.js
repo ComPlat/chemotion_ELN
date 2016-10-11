@@ -96,10 +96,12 @@ export default class SampleDetailsAnalyses extends Component {
       );
     } else {
       return (
-      <p>
-        There are currently no Analyses.
-        {this.addButton()}
-      </p>
+        <div>
+          <p className='noAnalyses-warning'>
+            There are currently no Analyses.
+            {this.addButton()}
+          </p>
+        </div>
       )
     }
   }
