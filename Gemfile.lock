@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: 83635122771ee8179a036d2e68bb345c9ed4dcf0
+  revision: 46f6b516208b407d99598d44b371876b1cb5ead3
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
@@ -540,3 +540,6 @@ DEPENDENCIES
   webmock
   whenever
   yaml_db
+
+BUNDLED WITH
+   1.13.2

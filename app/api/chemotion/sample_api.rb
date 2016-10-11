@@ -55,10 +55,10 @@ module Chemotion
         end
         post do
           ui_state = params[:ui_state]
-          currentCollectionId = ui_state[:currentCollectionId]
-          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, currentCollectionId)
+          col_id = ui_state[:currentCollectionId]
+          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(ui_state[:sample], CollectionsSample, col_id)
           Sample.where(id: sample_ids).each do |sample|
-            subsample = sample.create_subsample current_user, currentCollectionId
+            subsample = sample.create_subsample current_user, col_id, true
           end
         end
       end

@@ -663,7 +663,9 @@ export default class Sample extends Element {
   }
 
   get error_loading() {
-    return this.contains_residues && !this.loading && !this.reaction_product;
+    // TODO: temporary disabled
+    //return this.contains_residues && !this.loading && !this.reaction_product;
+    return false;
   }
 
 

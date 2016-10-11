@@ -171,7 +171,7 @@ class Sample < ActiveRecord::Base
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_subsample user, collection_id
+  def create_subsample user, collection_id, copy_ea = false
     subsample = self.dup
 
     if self.name.to_s != ''
@@ -193,26 +193,18 @@ class Sample < ActiveRecord::Base
       result
     end
 
+    if copy_ea
+      subsample.elemental_compositions_attributes = self.elemental_compositions.map do |ea|
+        result = ea.attributes.to_h
+        result.delete 'id'
+        result.delete 'sample_id'
+        result
+      end
+    end
+
     subsample.collections << Collection.find(collection_id)
 
-    # Save to generate elemental_compositions
-    subsample.save
-    self.elemental_compositions.each_with_index { |ec, index|
-      sub_ec = subsample.elemental_compositions
-                        .find{|i| i.composition_type == ec.composition_type}
-      if sub_ec
-        attrs = {
-          composition_type: ec.composition_type,
-          data: ec.data,
-          loading: ec.loading
-        }
-        sub_ec.assign_attributes attrs
-      else
-        subsample.elemental_compositions << ElementalComposition.new(attrs)
-      end
-    }
-    # Save it again
-    subsample.save
+    subsample.save!
 
     subsample
   end
