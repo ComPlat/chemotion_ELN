@@ -170,6 +170,10 @@ export default class Reaction extends Element {
     if(materialGroup == "products") {
       material.amountType = 'real';
 
+      let productsCount = this.products.length
+      material.name = this.short_label + "-" +
+        String.fromCharCode('A'.charCodeAt(0) + productsCount);
+
       // we don't want to copy loading from sample
       if(material.contains_residues) {
         material.loading = 0.0;
