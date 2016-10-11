@@ -31,12 +31,6 @@ export default class ReactionDetailsScheme extends Component {
         Sample.buildReactionSample(reaction.collection_id,
           reaction.temporary_sample_counter, materialGroup, sample)
 
-      if (materialGroup == 'products') {
-        let productsCount = reaction.products.length
-        splitSample.name = reaction.short_label + "-" +
-          String.fromCharCode('A'.charCodeAt(0) + productsCount)
-      }
-
       if (sample.external_label)
         splitSample.external_label = sample.external_label
       if (sample.elemental_compositions)
