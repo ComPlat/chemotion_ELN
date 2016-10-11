@@ -71,7 +71,9 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
     headers.group = 'Products'
     headers.eq = 'Yield'
   }
+
   let loadingTHead = (showLoadingColumn) ? <th width="15%">{headers.loading}</th> : null;
+  let refTHead = (materialGroup != 'products') ? <th width="4%">{headers.ref}</th> : null;
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction
@@ -87,7 +89,7 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
         <thead><tr>
         <th width="4%">{addSampleButton}</th>
         <th width="15%">{headers.group}</th>
-        <th width="4%">{headers.ref}</th>
+        {refTHead}
         <th width="3%">{headers.tr}</th>
         <th width="10%">{headers.amount}</th>
         <th width={showLoadingColumn ? "8%" : "10%"}></th>
