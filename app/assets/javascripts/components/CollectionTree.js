@@ -52,6 +52,15 @@ export default class CollectionTree extends React.Component {
     return this.subtrees(roots, null, false);
   }
 
+  removeOrphanRoots(roots) {
+    let newRoots =[]
+    roots.forEach((root) => {
+      if (root.children.length > 0) newRoots.push(root)
+    })
+
+    return newRoots;
+  }
+
   unsharedSubtrees() {
     let roots = this.state.unsharedRoots;
     roots = roots.filter(function(item) { return !item.isNew})
@@ -61,9 +70,7 @@ export default class CollectionTree extends React.Component {
 
   sharedSubtrees() {
     let {sharedRoots, sharedToCollectionVisible} = this.state
-
-    if (sharedRoots.length < 1 || sharedRoots[0].children.length < 1)
-      return <span />
+    sharedRoots = this.removeOrphanRoots(sharedRoots)
 
     let labelledRoots = sharedRoots.map(e => {
       return update(e, {label: {$set:
@@ -87,8 +94,7 @@ export default class CollectionTree extends React.Component {
 
   remoteSubtrees() {
     let {remoteRoots, sharedWithCollectionVisible} = this.state
-    if (remoteRoots.length < 1 || remoteRoots[0].children.length < 1)
-      return <span />
+    remoteRoots = this.removeOrphanRoots(remoteRoots)
 
     let labelledRoots = remoteRoots.map(e => {
       return update(e, {label: {$set:
@@ -117,15 +123,14 @@ export default class CollectionTree extends React.Component {
 
   remoteSyncInSubtrees() {
     let {syncInRoots, syncCollectionVisible} = this.state
-    if (syncInRoots.length < 1 || syncInRoots[0].children.length < 1)
-      return <span />
+    syncInRoots = this.removeOrphanRoots(syncInRoots)
 
     let labelledRoots = syncInRoots.map(e => {
       return update(e, {label: {$set:
         <span>
-          {this.labelRoot('shared_by',e)}
+          {this.labelRoot('shared_by', e)}
           {' '}
-          {this.labelRoot('shared_to',e)}
+          {this.labelRoot('shared_to', e)}
         </span>
       }})
     })
@@ -146,22 +151,18 @@ export default class CollectionTree extends React.Component {
   }
 
 
-  labelRoot(sharedToOrBy,rootCollection){
+  labelRoot(sharedToOrBy, rootCollection) {
     let shared = rootCollection[sharedToOrBy]
-    if (shared){
-      return(
-        <OverlayTrigger placement="bottom" overlay={UserInfos({users:[shared]})}>
-          <span>
-            &nbsp; {sharedToOrBy == 'shared_to' ? 'with' : 'by'}
-            &nbsp; {shared.initials}
-          </span>
-        </OverlayTrigger>
-      )
-    } else{
-      return(
-        <span></span>
-      )
-    }
+    if (!shared) return <span />
+
+    return(
+      <OverlayTrigger placement="bottom" overlay={UserInfos({users:[shared]})}>
+        <span>
+          &nbsp; {sharedToOrBy == 'shared_to' ? 'with' : 'by'}
+          &nbsp; {shared.initials}
+        </span>
+      </OverlayTrigger>
+    )
   }
 
   convertToSlug(name) {
@@ -169,23 +170,19 @@ export default class CollectionTree extends React.Component {
   }
 
   subtrees(roots, label, isRemote, visible = true) {
-    if(roots.length > 0) {
-      let subtrees = roots.map((root, index) => {
-        return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
-      })
+    let subtrees = roots.map((root, index) => {
+      return <CollectionSubtree root={root} key={index} isRemote={isRemote}/>
+    })
 
-      let subtreesVisible = visible ? "" : "none"
-      return (
-        <div>
-          {label}
-          <div style={{display: subtreesVisible}}>
-            {subtrees}
-          </div>
+    let subtreesVisible = visible ? "" : "none"
+    return (
+      <div>
+        {label}
+        <div style={{display: subtreesVisible}}>
+          {subtrees}
         </div>
-      )
-    } else {
-      return <span></span>;
-    }
+      </div>
+    )
   }
 
   collectionManagementButton() {
