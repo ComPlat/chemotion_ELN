@@ -328,9 +328,7 @@ export default class ReactionDetailsScheme extends Component {
         }
       } else {
         // calculate equivalent, don't touch real amount
-        if(updatedSample.reference) {
-          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
-        }
+        sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
       }
 
       if(isNaN(sample.equivalent) || !isFinite(sample.equivalent)){
