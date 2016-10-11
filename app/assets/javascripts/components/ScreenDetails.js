@@ -28,11 +28,19 @@ export default class ScreenDetails extends Component {
     this.setState({ screen });
   }
 
+  componentDidMount() {
+    window.addEventListener('resize', this.handleResize);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.handleResize);
+  }
+
   handleResize(e = null) {
     let windowHeight = window.innerHeight || 1;
-    if (windowHeight < 500) {
-      this.setState({offsetTop:0} );
-    } else {this.setState({offsetTop:70})}
+    if (this.state.fullScreen || windowHeight < 500) {
+      this.setState({offsetTop:0});
+    } else {this.setState( {offsetTop:70}) }
   }
 
   handleSubmit() {
