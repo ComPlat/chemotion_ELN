@@ -1,3 +1,4 @@
+import React from 'react'
 import Element from './Element';
 import Molecule from './Molecule';
 import Analysis from './Analysis';
@@ -280,17 +281,34 @@ export default class Sample extends Element {
     return this._contains_residues;
   }
 
-  title() {
+  title(atList=false, selected=false) {
     const profile = UserStore.getState().profile
     const show_external_name = profile ? profile.show_external_name : false
-    const short_label = this.name ? `${this.short_label} ${this.name}` : this.short_label
-    const external_label = this.external_label
+    const external_label = this.external_label;
+    const extLabelClass =  this.highlight_label(atList, !selected);
+    const nameClass =  this.highlight_label(atList, false);
+    const short_label = this.name
+      ? <span>
+          <span>{this.short_label}</span>
+          <span className={nameClass}>{`  ${this.name}`}</span>
+        </span>
+      : this.short_label
 
     if(show_external_name) {
-      return external_label || short_label;
+      return (external_label ? <span className={extLabelClass}>{external_label}</span> : short_label);
     } else {
       return short_label;
     }
+  }
+
+  highlight_label(atList, gray) {
+    let cssClass = null;
+    if(atList && !gray) {
+      cssClass = 'label--bold';
+    } else if(atList && gray) {
+      cssClass = 'label--bold c-text--grey';
+    }
+    return cssClass;
   }
 
   get name() {

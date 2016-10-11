@@ -179,9 +179,11 @@ export default class ElementsTableSampleEntries extends Component {
 
     if(show) {
       return samples.map((sample, index) => {
-        let style = {}
+        const selected = this.isElementSelected(sample);
+        const atList = true;
+        let style = {};
 
-        if (this.isElementSelected(sample) || keyboardSeletectedElementId == sample.id) {
+        if (selected || keyboardSeletectedElementId == sample.id) {
           style = {color: '#fff', background: '#337ab7'}
         }
 
@@ -192,7 +194,7 @@ export default class ElementsTableSampleEntries extends Component {
             </td>
             <td style={{cursor: 'pointer'}}
                 onClick={() => this.showDetails(sample.id)}>
-              {sample.title() + " "}
+              {sample.title(atList, selected)}
               <div style={{float: 'right'}}>
                 <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
                 <ElementCollectionLabels element={sample} key={sample.id}/>
