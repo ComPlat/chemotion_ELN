@@ -81,6 +81,22 @@ class Material extends Component {
     }
   }
 
+  materialRef(material, inputsStyle) {
+    if (this.props.materialGroup == 'products') return false;
+
+    return (
+      <td style={inputsStyle}>
+        <Radio
+          name="reference"
+          checked={material.reference}
+          onChange={event => this.handleReferenceChange(event)}
+          bsSize="xsmall"
+          style={{margin: 0}}
+        />
+      </td>
+    )
+  }
+
   render() {
     const { material, deleteMaterial, isDragging, connectDragSource,
             showLoadingColumn } = this.props;
@@ -281,15 +297,9 @@ class Material extends Component {
         <td style={inputsStyle} style={{width: "25%", maxWidth: "50px"}}>
           {this.materialNameWithIupac(material)}
         </td>
-        <td style={inputsStyle}>
-          <Radio
-            name="reference"
-            checked={material.reference}
-            onChange={event => this.handleReferenceChange(event)}
-            bsSize="xsmall"
-            style={{margin: 0}}
-          />
-        </td>
+
+        {this.materialRef(material, inputsStyle)}
+
         <td style={inputsStyle} >
           {this.switchTargetReal(isTarget)}
         </td>
