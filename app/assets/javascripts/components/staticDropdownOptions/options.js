@@ -215,6 +215,9 @@ export const purificationOptions = [{
   label: 'HPLC',
   value: 'HPLC'
 }, {
+  label: 'Extraction',
+  value: 'Extraction'
+}, {
   label: 'Distillation',
   value: 'Distillation'
 }, {
