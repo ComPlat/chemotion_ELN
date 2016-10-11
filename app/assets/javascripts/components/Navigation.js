@@ -6,10 +6,10 @@ import ManagingActions from './managing_actions/ManagingActions';
 import ContextActions from './contextActions/ContextActions';
 import UserStore from './stores/UserStore';
 import UserActions from './actions/UserActions';
-
 import NavNewSession from '../libHome/NavNewSession'
 import NavHead from '../libHome/NavHead'
 import DocumentHelper from '../components/utils/DocumentHelper';
+import NavigationModal from './NavigationModal';
 
 export default class Navigation extends React.Component {
   constructor(props) {
@@ -52,6 +52,18 @@ export default class Navigation extends React.Component {
     });
   }
 
+  handleModalHide() {
+    const modalProps = {
+      show: false,
+      title: "",
+      component: "",
+      action: null
+    };
+    this.updateModalProps(modalProps);
+    // https://github.com/react-bootstrap/react-bootstrap/issues/1137
+    document.body.className = document.body.className.replace('modal-open', '');
+  }
+
   render() {
     const { modalProps } = this.state;
 
@@ -62,10 +74,14 @@ export default class Navigation extends React.Component {
           </Navbar.Header>
           <Nav navbar className='navbar-form'>
             <Search />
-            <ManagingActions modalProps={modalProps}
-                              updateModalProps={this.updateModalProps.bind(this)} />
-            <ContextActions modalProps={modalProps}
-                            updateModalProps={this.updateModalProps.bind(this)} />
+            <ManagingActions updateModalProps={this.updateModalProps.bind(this)} />
+            <ContextActions updateModalProps={this.updateModalProps.bind(this)} />
+            <NavigationModal show={modalProps.show}
+                              title={modalProps.title}
+                              Component={modalProps.component}
+                              action={modalProps.action}
+                              onHide={() => this.handleModalHide()}
+                              listSharedCollections={modalProps.listSharedCollections} />
           </Nav>
           <UserAuth/>
         </Navbar>

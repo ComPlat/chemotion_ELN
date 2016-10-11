@@ -1,9 +1,11 @@
 import React, {Component} from 'react';
 import {OverlayTrigger, Dropdown, Button, MenuItem, Tooltip, Glyphicon}
   from 'react-bootstrap';
-import Utils from '../utils/Functions';
+import ElementActions from '../actions/ElementActions';
+import ModalImport from './ModalImport';
+import ModalExport from './ModalExport';
 
-const ExportImportButton = ({isDisabled, importFunction, uiState}) => {
+const ExportImportButton = ({isDisabled, updateModalProps}) => {
   const tooltip = (<Tooltip id="export_button">Import Export</Tooltip>)
   const title =
     <div>
@@ -17,11 +19,11 @@ const ExportImportButton = ({isDisabled, importFunction, uiState}) => {
           <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
         </Dropdown.Toggle>
         <Dropdown.Menu>
-          <MenuItem onSelect={() => exportSelections(uiState)}>
+          <MenuItem onSelect={() => exportFunction(updateModalProps)}>
             Export samples from selection
           </MenuItem>
           <MenuItem divider />
-          <MenuItem onSelect={() => importFunction()}>
+          <MenuItem onSelect={() => importFunction(updateModalProps)}>
             Import samples to collection
           </MenuItem>
         </Dropdown.Menu>
@@ -30,29 +32,30 @@ const ExportImportButton = ({isDisabled, importFunction, uiState}) => {
   )
 }
 
-const exportSelections = (uiState) => {
-  const { currentTab, currentCollection, sample, reaction, wellplate } = uiState;
-  let url_params;
-  switch(currentTab) {
-    case 1:
-      url_params = "type=sample" + selectedStringfy(sample, currentCollection);
-      break;
-    case 2:
-      url_params = "type=reaction" + selectedStringfy(reaction, currentCollection);
-      break;
-    case 3:
-      url_params = "type=wellplate" + selectedStringfy(wellplate, currentCollection);
-      break;
-  }
-  Utils.downloadFile({ contents: "api/v1/reports/export_samples_from_selections?" + url_params });
+const importFunction = (updateModalProps) => {
+  const title = "Import Samples from File";
+  const component = ModalImport;
+  const action = ElementActions.importSamplesFromFile;
+  const listSharedCollections = false
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    action,
+    listSharedCollections,
+  };
+  updateModalProps(modalProps);
 }
 
-const selectedStringfy = (input, currentCollection) => {
-  const { checkedIds, uncheckedIds, checkedAll } = input;
-  return "&checkedIds=" + checkedIds.toArray() +
-          "&uncheckedIds=" + uncheckedIds.toArray() +
-          "&checkedAll=" + checkedAll +
-          "&currentCollection=" + currentCollection.id
+const exportFunction = (updateModalProps) => {
+  const title = "Select Export columns";
+  const component = ModalExport;
+  const modalProps = {
+    show: true,
+    title,
+    component,
+  };
+  updateModalProps(modalProps);
 }
 
 export default ExportImportButton

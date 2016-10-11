@@ -2,7 +2,7 @@ import React from 'react'
 import expect from 'expect'
 import { mount } from 'enzyme'
 import sinon from 'sinon'
-import CheckBoxs from '../../../app/assets/javascripts/components/report/CheckBoxs'
+import CheckBoxs from '../../../app/assets/javascripts/components/common/CheckBoxs'
 
 describe('CheckBoxs', () => {
   const items = [ {text: "formula", checked: true},

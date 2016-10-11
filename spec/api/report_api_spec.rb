@@ -58,7 +58,8 @@ describe Chemotion::ReportAPI do
                     checkedIds: "#{sample_1.id}",
                     uncheckedIds: "",
                     checkedAll: false,
-                    currentCollection: c.id }
+                    currentCollection: c.id,
+                    removedColumns: "target_amount_value,target_amount_unit,created_at,updated_at,molfile" }
         get '/api/v1/reports/export_samples_from_selections', params
       }
 
