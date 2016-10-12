@@ -138,14 +138,15 @@ export default class SampleForm extends React.Component {
     ['milli','none'], 4, 'Attached', 'attachedAmountMg', true, "Weight of the defined part", size)
   }
 
-  numInput(sample, field, unit, prefixes, precision, label, ref = '', disabled = false, title='', size=2) {
+  numInput(sample, field, unit, prefixes, precision, label, ref = '',
+    disabled = false, title='', size=2, notApplicable = false) {
     if(sample.contains_residues && unit == 'l')
       return false;
-
+    let value = notApplicable ? 'N/A' : (!isNaN(sample[field]) ? sample[field] : null)
     return (
       <Col md={size} key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
-          value={!isNaN(sample[field]) ? sample[field] : null}
+          value={value}
           unit={unit}
           label={label}
           ref={ref}
@@ -155,7 +156,7 @@ export default class SampleForm extends React.Component {
           title={title}
           disabled={disabled}
           onChange={(e) => this.handleFieldChanged(sample, field, e)}
-          />
+        />
       </Col>
     )
   }
@@ -235,18 +236,18 @@ export default class SampleForm extends React.Component {
 
         <Row className="visible-hd">
           {this.sampleAmount(sample)}
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point')}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer)}
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 2, isPolymer)}
+          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer, '', 2, isPolymer)}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 2, isPolymer)}
         </Row>
 
         <Row className="hidden-hd">
           {this.sampleAmount(sample, 4)}
         </Row>
         <Row className="hidden-hd">
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 4)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', false, '', 4)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 4)}
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 4, isPolymer)}
+          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer, '', 4, isPolymer)}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 4, isPolymer)}
         </Row>
 
         <Row>
