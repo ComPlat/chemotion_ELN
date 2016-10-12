@@ -9,7 +9,6 @@ import UserStore from './../stores/UserStore';
 import UserActions from './../actions/UserActions';
 import PermissionStore from './../stores/PermissionStore';
 import PermissionActions from './../actions/PermissionActions';
-import ManagingModal from './ManagingModal';
 import ManagingModalSharing from './ManagingModalSharing';
 import ManagingModalCollectionActions from './ManagingModalCollectionActions';
 import ManagingModalDelete from './ManagingModalDelete';
@@ -153,18 +152,6 @@ export default class ManagingActions extends React.Component {
     }
   }
 
-  handleModalHide() {
-    const modalProps = {
-      show: false,
-      title: "",
-      component: "",
-      action: null
-    };
-    this.props.updateModalProps(modalProps);
-    // https://github.com/react-bootstrap/react-bootstrap/issues/1137
-    document.body.className = document.body.className.replace('modal-open', '');
-  }
-
   handleButtonClick(type) {
     let title, component, action = "";
     let listSharedCollections = false
@@ -211,7 +198,6 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
-    const { modalProps } = this.props;
     let sel = this.hasSelection();
     return (
       <div style={{display: 'inline', float: 'left', marginRight: 10}}>
@@ -225,20 +211,11 @@ export default class ManagingActions extends React.Component {
           <ShareButton isDisabled={this.isShareBtnDisabled(sel)}
             onClick={this.handleButtonClick}/>
         </ButtonGroup>
-        <ManagingModal
-          show={modalProps.show}
-          title={modalProps.title}
-          Component={modalProps.component}
-          action={modalProps.action}
-          onHide={() => this.handleModalHide()}
-          listSharedCollections={modalProps.listSharedCollections}
-          />
       </div>
     )
   }
 }
 
 ManagingActions.propTypes = {
-  modalProps: React.PropTypes.object.isRequired,
   updateModalProps: React.PropTypes.func.isRequired,
 };

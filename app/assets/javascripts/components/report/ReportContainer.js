@@ -10,7 +10,7 @@ import UIStore from '../stores/UIStore';
 import ElementStore from '../stores/ElementStore';
 
 import Reports from './Reports';
-import CheckBoxs from './CheckBoxs';
+import CheckBoxs from '../common/CheckBoxs';
 
 export default class ReportContainer extends Component {
   constructor(props) {

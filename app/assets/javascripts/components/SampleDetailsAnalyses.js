@@ -53,11 +53,9 @@ export default class SampleDetailsAnalyses extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-        <div className="button-right" >
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            Add analysis
-          </Button>
-        </div>
+        <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          Add analysis
+        </Button>
       )
     }
   }

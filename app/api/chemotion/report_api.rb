@@ -25,6 +25,7 @@ module Chemotion
         requires :uncheckedIds
         requires :checkedAll, type: Boolean
         requires :currentCollection, type: Integer
+        requires :removedColumns, type: String
       end
       get :export_samples_from_selections do
         env['api.format'] = :binary
@@ -37,6 +38,7 @@ module Chemotion
         uncheckedIds = params[:uncheckedIds].split(",")
         checkedAll = params[:checkedAll]
         currentCollection = params[:currentCollection]
+        removed_field = params[:removedColumns].split(",")
 
         elements = selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)
         samples = if type == "sample"
@@ -50,7 +52,7 @@ module Chemotion
         end
 
         samples.each { |sample| excel.add_sample(sample) }
-        excel.generate_file(excluded_field, included_field)
+        excel.generate_file(excluded_field, included_field, removed_field)
       end
 
       params do
