@@ -3,6 +3,8 @@ import alt from '../alt';
 import UIActions from './UIActions';
 import UserActions from './UserActions';
 
+import NotificationActions from './NotificationActions';
+
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ResidueFetcher from '../fetchers/ResidueFetcher';
@@ -29,10 +31,19 @@ class ElementActions {
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
                                            currentPage, isSync = false) {
+    let uid;
+    NotificationActions.add({
+      title: "Searching ...",
+      level: "info",
+      position: "tc",
+      onAdd: function(notificationObject) { uid = notificationObject.uid; }
+    });
+
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage, isSync)
                    .then((result) => {
                      dispatch(result);
+                     NotificationActions.removeByUid(uid);
                    }).catch((errorMessage) => {
                      console.log(errorMessage);
                    })
