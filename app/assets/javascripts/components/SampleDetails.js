@@ -405,7 +405,7 @@ export default class SampleDetails extends React.Component {
   sampleContainerTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} title={'Analyses *'}
+      <Tab eventKey={ind} title={'Data'}
         key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsContainers

@@ -395,6 +395,7 @@ module Chemotion
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        optional :container, type: Array
       end
       route_param :id do
         before do
@@ -404,8 +405,8 @@ module Chemotion
 
         put do
           attributes = declared(params, include_missing: false)
-          #embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
-          #attributes.merge!(analyses: embedded_analyses)
+          embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
+          attributes.merge!(analyses: embedded_analyses)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
@@ -421,8 +422,8 @@ module Chemotion
           end
 
           if sample = Sample.find(params[:id])
-            embedded_analyses = SampleUpdator.updated_analyses(current_user, sample, params[:analyses])
-            attributes.merge!(analyses: embedded_analyses)
+            #embedded_analyses = SampleUpdator.updated_analyses(current_user, sample, params[:analyses])
+            #attributes.merge!(analyses: embedded_analyses)
             sample.update!(attributes)
           end
 
@@ -511,6 +512,7 @@ module Chemotion
 
         root_container = Container.new
         root_container.name = "root"
+        root_container.container_type = "root"
         root_container.save!
 
         sample.container = root_container

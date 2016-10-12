@@ -1,0 +1,70 @@
+import React, {Component} from 'react';
+import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
+import Select from 'react-select'
+import AnalysisDatasets from './AnalysisDatasets';
+
+export default class Analysis extends Component {
+  constructor(props) {
+    super();
+    const {container} = props;
+    this.state = {
+      container
+    };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      container: nextProps.container
+    });
+  }
+
+  handleInputChange(type, event) {
+    const {container} = this.state;
+    const {value} = event.target;
+    switch(type) {
+      case 'name':
+        container.name = value;
+        break;
+    }
+    this.props.onChange(container);
+
+  }
+
+  handleAdd() {
+    const {container} = this.state;
+    let subcontainer = Container.buildEmpty();
+    container.children.push(subcontainer);
+
+    this.props.parent.setState({container: container})
+  }
+
+  addButton() {
+    const {readOnly} = this.props;
+    if(! readOnly) {
+      return (
+          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+            Add container
+          </Button>
+      )
+    }
+  }
+
+  render() {
+    const {container} = this.state;
+    const {readOnly} = this.props;
+    return (
+      <div>
+        <Col md={4}>
+          <label>Name</label>
+          <FormControl
+            type="text"
+            label="Name"
+            value={container.name || '***'}
+            onChange={event => this.handleInputChange('name', event)}
+            //disabled={readOnly || analysis.isMethodDisabled('name')}
+            />
+        </Col>
+      </div>
+    );
+  }
+}
