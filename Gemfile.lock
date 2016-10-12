@@ -540,6 +540,3 @@ DEPENDENCIES
   webmock
   whenever
   yaml_db
-
-BUNDLED WITH
-   1.13.2

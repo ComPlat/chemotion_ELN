@@ -299,7 +299,6 @@ module ReactionUpdator
               )
             #create new sample
             else
-
               attributes = sample.to_h
                 .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
                 .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
@@ -327,6 +326,7 @@ module ReactionUpdator
             existing_sample.real_amount_value = sample.real_amount_value
             existing_sample.real_amount_unit = sample.real_amount_unit
             existing_sample.external_label = sample.external_label if sample.external_label
+            existing_sample.name = sample.name if sample.name
 
             if r = existing_sample.residues[0]
               r.assign_attributes sample.residues_attributes[0]

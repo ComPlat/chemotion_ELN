@@ -160,26 +160,9 @@ export default class Reaction extends Element {
 
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
-    // do not set it as reference material if this is reaction product
-    if(!this.referenceMaterial && materialGroup == 'starting_materials') {
-      this._setAsReferenceMaterial(material);
-    } else {
-      this._updateEquivalentForMaterial(material);
-    }
 
-    if(materialGroup == "products") {
-      material.amountType = 'real';
-
-      // we don't want to copy loading from sample
-      if(material.contains_residues) {
-        material.loading = 0.0;
-      }
-    }
-
+    material = this.materialPolicy(material, null, materialGroup);
     materials.push(material);
-    // Skip short_label for reactants and solvents
-    if (materialGroup != "reactants" && materialGroup != "solvents")
-      this.temporary_sample_counter += 1;
   }
 
   deleteMaterial(material, materialGroup) {
@@ -191,7 +174,105 @@ export default class Reaction extends Element {
   moveMaterial(material, previousMaterialGroup, materialGroup) {
     const materials = this[materialGroup];
     this.deleteMaterial(material, previousMaterialGroup);
+    material = this.materialPolicy(material, previousMaterialGroup, materialGroup);
     materials.push(material);
+  }
+
+  // We will process all reaction policy here
+  // If oldGroup = null -> drag new Sample into Reaction
+  // Else -> moving between Material Group
+  materialPolicy(material, oldGroup, newGroup) {
+    this.rebuildProductName();
+
+    if (newGroup == "products") {
+      material.amountType = 'real';
+
+      // we don't want to copy loading from sample
+      if(material.contains_residues) {
+        material.loading = 0.0;
+      }
+
+      material.isSplit = false
+
+      material.reaction_product = true;
+      material.equivalent = 0;
+      if (oldGroup == null) this.temporary_sample_counter += 1;
+
+      let referenceCheck = !this.referenceMaterial ||
+                           this.referenceMaterial.id == material.id
+
+      if (referenceCheck && this.starting_materials.length > 0) {
+        this._setAsReferenceMaterial(this.starting_materials[0])
+      }
+
+      let productName = String.fromCharCode('A'.charCodeAt(0) + this.products.length);
+      material.name = this.short_label + "-" + productName;
+
+      if (oldGroup) {
+        if (oldGroup == "starting_materials") {
+          material[oldGroup + "_short_label"] = material.short_label;
+        } else {
+          material.short_label =
+            Sample.buildNewShortLabel(this.temporary_sample_counter);
+        }
+      }
+      if (material[newGroup + "_short_label"]) {
+        material.short_label = material[newGroup + "_short_label"]
+      } else {
+        // If moving saved material from starting_materials, keep short_label
+        // Else rebuild new short_label
+        if (oldGroup && oldGroup == "starting_materials" && material.is_new) {
+          material.short_label =
+            Sample.buildNewShortLabel(this.temporary_sample_counter);
+        }
+      }
+    } else if (newGroup == "reactants" || newGroup == "solvents") {
+      material.isSplit = false
+      material.reaction_product = false;
+
+      if (oldGroup) {
+        material[oldGroup + "_short_label"] = material.short_label;
+        if (oldGroup == "products") material.name = "";
+      }
+
+      material.short_label = newGroup.slice(0, -1) // "reactant" or "solvent"
+    } else if (newGroup == "starting_materials") {
+      material.isSplit = true
+      material.reaction_product = false;
+      if (oldGroup == null) {
+        this.temporary_sample_counter += 1;
+      }
+
+      // Reference checking
+      if (!this.referenceMaterial || this.starting_materials.length == 0) {
+        this._setAsReferenceMaterial(material);
+      } else {
+        this._updateEquivalentForMaterial(material);
+      }
+
+      if (oldGroup) {
+        // Restore old_label if exitsed
+        material[oldGroup + "_short_label"] = material.short_label;
+        // Blank the name if material is FROM "products"
+        if (oldGroup == "products") material.name = "";
+      }
+
+      if (material.split_label) {
+        material.short_label = material.split_label
+      } else if (material[newGroup + "_short_label"]) {
+        material.short_label = material[newGroup + "_short_label"]
+      }
+    }
+
+    return material;
+  }
+
+  rebuildProductName() {
+    let short_label = this.short_label
+    this.products.forEach(function(product, index, arr) {
+      let productName = String.fromCharCode('A'.charCodeAt(0) + index);
+      arr[index].name = short_label + "-" + productName;
+    })
   }
 
   _coerceToSamples(samples) {
@@ -249,7 +330,8 @@ export default class Reaction extends Element {
   }
 
   hasMaterials() {
-    return this.starting_materials.length > 0 || this.reactants.length > 0 || this.solvents.length > 0 || this.products.length > 0;
+    return this.starting_materials.length > 0 || this.products.length > 0 ||
+           this.reactants.length > 0 || this.solvents.length > 0;
   }
 
   hasSample(sampleId) {
