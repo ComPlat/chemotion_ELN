@@ -59,6 +59,7 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
     mass: 'Mass',
     amount: 'Amount',
     loading: 'Loading',
+    concn: 'Conc',
     vol: 'Vol',
     eq: 'Equiv',
   }
@@ -72,8 +73,8 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
     headers.eq = 'Yield'
   }
 
-  let loadingTHead = (showLoadingColumn) ? <th width="15%">{headers.loading}</th> : null;
-  let refTHead = (materialGroup != 'products') ? <th width="4%">{headers.ref}</th> : null;
+  let loadingTHead = (showLoadingColumn) ? <th width="11%">{headers.loading}</th> : null;
+  let refTHead = (materialGroup != 'products') ? headers.ref : null;
   /**
    * Add a (not yet persisted) sample to a material group
    * of the given reaction
@@ -88,15 +89,15 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
       <table width="100%" className="reaction-scheme">
         <thead><tr>
         <th width="4%">{addSampleButton}</th>
-        <th width="15%">{headers.group}</th>
-        {refTHead}
+        <th width={showLoadingColumn ? "8%" : "15%"}>{headers.group}</th>
+        <th width="4%">{refTHead}</th>
         <th width="3%">{headers.tr}</th>
         <th width="10%">{headers.amount}</th>
-        <th width={showLoadingColumn ? "8%" : "10%"}></th>
-        <th width={showLoadingColumn ? "13%" : "12%"}></th>
+        <th width={showLoadingColumn ? "9%" : "10%"}></th>
+        <th width={showLoadingColumn ? "11%" : "12%"}></th>
         {loadingTHead}
-        <th width="12%">{headers.concn}</th>
-        <th width="9%">{headers.eq}</th>
+        <th width={showLoadingColumn ? "11%" : "12%"}>{headers.concn}</th>
+        <th width={showLoadingColumn ? "8%" : "9%"}>{headers.eq}</th>
         <th width="4%"></th>
         </tr></thead>
         <tbody>

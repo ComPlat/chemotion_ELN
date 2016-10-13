@@ -108,8 +108,12 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null
     if(unit != 'none') {
       prefixSwitch = <InputGroup.Button>
-          <Button active  onClick={() =>{this.togglePrefix()}}
-            bsStyle={bsStyleBtnAfter} bsSize={bsSize} style={{padding:"7px 2px", minWidth: 20}}>
+          <Button active
+            onClick={() =>{this.togglePrefix()}}
+            bsClass='bs-btnTxt--small btn'
+            bsStyle={bsStyleBtnAfter}
+            bsSize={bsSize}
+            style={{padding:"8px 2px 7px 2px", minWidth: 20}} >
               {mp+unit}
           </Button>
         </InputGroup.Button>
@@ -118,6 +122,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
           {labelWrap}
           <InputGroup>
             <FormControl type='text'
+              bsClass='bs-form--compact form-control'
               disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
               value={val() || ''}
               onChange={(event) => this._handleInputValueChange(event)}
@@ -133,6 +138,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
         <div>
           {labelWrap}
           <FormControl type='text'
+            bsClass='bs-form--compact form-control'
             disabled={disabled} bsSize={bsSize} bsStyle={bsStyle}
             value={val() || ''}
             onChange={(event) => this._handleInputValueChange(event)}
