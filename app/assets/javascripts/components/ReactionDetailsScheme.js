@@ -23,26 +23,12 @@ export default class ReactionDetailsScheme extends Component {
 
   dropSample(sample, materialGroup, external_label) {
     let {reaction} = this.state;
-    let splitSample ;
+    let splitSample;
 
     if (sample instanceof Molecule || materialGroup == 'products'){
       // Create new Sample with counter
-      splitSample =
-        Sample.buildReactionSample(reaction.collection_id,
-          reaction.temporary_sample_counter, materialGroup, sample)
-
-      if (materialGroup == 'products') {
-        let productsCount = reaction.products.length
-        splitSample.name = reaction.short_label + "-" +
-          String.fromCharCode('A'.charCodeAt(0) + productsCount)
-      }
-
-      if (sample.external_label)
-        splitSample.external_label = sample.external_label
-      if (sample.elemental_compositions)
-        splitSample.elemental_compositions = sample.elemental_compositions
-
-    } else if (sample instanceof Sample){
+      splitSample = Sample.buildNew(sample, reaction.collection_id);
+    } else if (sample instanceof Sample) {
       // Else split Sample
       if(reaction.hasSample(sample.id)) {
         NotificationActions.add({
@@ -54,21 +40,12 @@ export default class ReactionDetailsScheme extends Component {
 
       if (materialGroup == 'reactants' || materialGroup == 'solvents') {
         // Skip counter for reactants or solvents
-        splitSample = sample.buildChildWithoutCounter()
-        splitSample.short_label = materialGroup.slice(0, -1)
+        splitSample = sample.buildChildWithoutCounter();
       } else {
-        splitSample = sample.buildChild()
-      }
-
-      if(materialGroup == 'products') {
-        splitSample.reaction_product = true;
-        splitSample.equivalent = 0;
+        splitSample = sample.buildChild();
       }
     }
 
-    if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
-      splitSample.external_label = external_label;
-    }
     reaction.addMaterial(splitSample, materialGroup);
 
     this.onReactionChange(reaction, {schemaChanged: true});
