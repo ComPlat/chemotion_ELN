@@ -82,18 +82,18 @@ class Material extends Component {
   }
 
   materialRef(material, inputsStyle) {
-    if (this.props.materialGroup == 'products') return false;
-
     return (
-      <td style={inputsStyle}>
-        <Radio
-          name="reference"
-          checked={material.reference}
-          onChange={event => this.handleReferenceChange(event)}
-          bsSize="xsmall"
-          style={{margin: 0}}
-        />
-      </td>
+      this.props.materialGroup == 'products'
+      ? <td style={inputsStyle}></td>
+      : <td style={inputsStyle}>
+          <Radio
+            name="reference"
+            checked={material.reference}
+            onChange={event => this.handleReferenceChange(event)}
+            bsSize="xsmall"
+            style={{margin: 0}}
+          />
+        </td>
     )
   }
 
@@ -129,7 +129,8 @@ class Material extends Component {
     if(this.props.materialGroup == 'products') {
       return (
         <FormControl type="text"
-          value={`${((material.equivalent || 0 ) * 100).toFixed(0)} %`}
+          bsClass='bs-form--compact form-control'
+          value={`${((material.equivalent || 0 ) * 100).toFixed(0)}%`}
           disabled={true}
         />
       );
@@ -509,7 +510,7 @@ class Material extends Component {
     if (nanOrInfinity){
       return 'n.d.';
     } else {
-      return `${concn} %`;
+      return `${concn}%`;
     }
   }
 
