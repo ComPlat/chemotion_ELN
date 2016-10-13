@@ -61,37 +61,81 @@ export default class Sample extends Element {
     ];
   }
 
+  static buildNewShortLabel(delta = 0) {
+    let {currentUser} = UserStore.getState();
+    if(!currentUser) {
+      return 'NEW SAMPLE';
+    } else {
+      return `${currentUser.initials}-${currentUser.samples_count + delta +  1}`;
+    }
+  }
+
+  static buildEmpty(collection_id) {
+    let sample = new Sample({
+      collection_id: collection_id,
+      type: 'sample',
+      external_label: '',
+      target_amount_value: 0,
+      target_amount_unit: 'g',
+      description: '',
+      purity: 1,
+      density: 1,
+      solvent: '',
+      impurities: '',
+      location: '',
+      molfile: '',
+      molecule: { id: '_none_' },
+      analyses: [],
+      residues: [],
+      elemental_compositions: [{
+        composition_type: 'found',
+        data: {}
+      }],
+      imported_readout: '',
+      attached_amount_mg: '' // field for polymers calculations
+    });
+
+    sample.short_label = Sample.buildNewShortLabel();
+    return sample;
+  }
+
+  getChildrenCount() {
+    return parseInt(Sample.children_count[this.id] || this.children_count);
+  }
+
+  buildSplitShortLabel() {
+    let children_count = this.getChildrenCount() + 1;
+    return this.short_label + "-" + children_count;
+  }
+
   buildCopy() {
     let sample = super.buildCopy()
     sample.short_label = sample.short_label + " Copy"
     return sample;
   }
 
+  static buildNew(sample, collection_id) {
+    let newSample = Sample.buildEmpty(collection_id)
+
+    newSample.molecule = sample.molecule == undefined ? sample : sample.molecule
+
+    if (sample instanceof Sample)
+      newSample.split_label = sample.buildSplitShortLabel();
+
+    newSample.molfile = sample.molfile || '';
+    newSample.sample_svg_file = sample.sample_svg_file;
+    newSample.residues = sample.residues || [];
+    newSample.contains_residues = sample.contains_residues;
+
+    return newSample;
+  }
+
   buildChild() {
     Sample.counter += 1;
+    let splitSample = this.buildChildWithoutCounter();
+    splitSample.short_label = splitSample.split_label;
+    Sample.children_count[this.id] = this.getChildrenCount() + 1;
 
-    //increase subsample count per sample on client side, as we have no persisted data at this moment
-    let children_count = parseInt(Sample.children_count[this.id] || this.children_count);
-    children_count += 1;
-    Sample.children_count[this.id] = children_count;
-
-    let splitSample = this.clone();
-    splitSample.parent_id = this.id;
-    splitSample.id = Element.buildID();
-
-    if (this.name) splitSample.name = this.name
-    if (this.external_label)
-      splitSample.external_label = this.external_label
-    if (this.elemental_compositions)
-      splitSample.elemental_compositions = this.elemental_compositions
-
-    splitSample.short_label += "-" + children_count;
-    splitSample.created_at = null;
-    splitSample.updated_at = null;
-    splitSample.target_amount_value = 0;
-    splitSample.real_amount_value = null;
-    splitSample.is_split = true;
-    splitSample.is_new = true;
     return splitSample;
   }
 
@@ -101,8 +145,7 @@ export default class Sample extends Element {
     splitSample.id = Element.buildID();
 
     if (this.name) splitSample.name = this.name
-    if (this.external_label)
-      splitSample.external_label = this.external_label
+    if (this.external_label) splitSample.external_label = this.external_label
     if (this.elemental_compositions)
       splitSample.elemental_compositions = this.elemental_compositions
 
@@ -112,11 +155,18 @@ export default class Sample extends Element {
     splitSample.real_amount_value = null;
     splitSample.is_split = true;
     splitSample.is_new = true;
+
+    splitSample.split_label = splitSample.buildSplitShortLabel();
+
     return splitSample;
   }
 
   get isSplit() {
     return this.is_split
+  }
+
+  set isSplit(is_split) {
+    this.is_split = is_split;
   }
 
   serialize() {
@@ -150,96 +200,6 @@ export default class Sample extends Element {
     });
 
     return serialized;
-  }
-
-  static buildEmpty(collection_id) {
-    let sample = new Sample({
-      collection_id: collection_id,
-      type: 'sample',
-      external_label: '',
-      target_amount_value: 0,
-      target_amount_unit: 'g',
-      description: '',
-      purity: 1,
-      density: 1,
-      solvent: '',
-      impurities: '',
-      location: '',
-      molfile: '',
-      molecule: { id: '_none_' },
-      analyses: [],
-      residues: [],
-      elemental_compositions: [{
-        composition_type: 'found',
-        data: {}
-      }],
-      imported_readout: '',
-      attached_amount_mg: '' // field for polymers calculations
-    });
-
-    sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser();
-    return sample;
-  }
-
-  static buildReactionSample(collection_id, delta, materialGroup = null, molecule = { id: '_none_'}) {
-    let target_molecule = molecule.molecule == undefined ? molecule : molecule.molecule
-    let sample = new Sample({
-      collection_id: collection_id,
-      type: 'sample',
-      external_label: '',
-      target_amount_value: 0,
-      target_amount_unit: 'g',
-      description: '',
-      purity: 1,
-      density: 1,
-      solvent: '',
-      impurities: '',
-      location: '',
-      molfile: molecule.molfile || '',
-      molecule:  target_molecule,
-      analyses: [],
-      elemental_compositions: [{
-        composition_type: 'found',
-        data: {}
-      }],
-      residues: [],
-      imported_readout: ''
-    });
-    sample.sample_svg_file = molecule.sample_svg_file;
-
-    if(molecule.residues && molecule.residues.length > 0) {
-      sample.residues = molecule.residues;
-      sample.contains_residues = true;
-
-      if(materialGroup == 'products')
-        sample.loading = 0;
-    }
-
-    // allow zero loading for reaction product
-    sample.reaction_product = (materialGroup == 'products');
-
-    // Skip short_label for reactants and solvents
-    if (materialGroup != "reactants" && materialGroup != "solvents")
-      sample.short_label = Sample.buildNewSampleShortLabelForCurrentUser(delta)
-    else
-      sample.short_label = materialGroup
-
-    return sample;
-  }
-
-  static buildNewSampleShortLabelWithCounter(counter) {
-    let {currentUser} = UserStore.getState();
-
-    return `${currentUser.initials}-${counter}`;
-  }
-
-  static buildNewSampleShortLabelForCurrentUser(delta = 0) {
-    let {currentUser} = UserStore.getState();
-    if(!currentUser) {
-      return 'NEW SAMPLE';
-    } else {
-      return `${currentUser.initials}-${currentUser.samples_count + delta +  1}`;
-    }
   }
 
   get is_top_secret() {
