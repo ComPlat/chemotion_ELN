@@ -312,11 +312,11 @@ class ElementStore {
   handleAddSampleToMaterialGroup(params) {
     const { materialGroup } = params
     let { reaction } = params
-    const { temporary_sample_counter } = reaction
 
-    let sample = Sample.buildReactionSample(reaction.collection_id,
-                                            temporary_sample_counter,
-                                            materialGroup)
+    let sample = Sample.buildEmpty(reaction.collection_id)
+    sample.molfile = sample.molfile || ''
+    sample.molecule = sample.molecule == undefined ? sample : sample.molecule
+    sample.sample_svg_file = sample.sample_svg_file
 
     this.state.currentMaterialGroup = materialGroup
     reaction.changed = true

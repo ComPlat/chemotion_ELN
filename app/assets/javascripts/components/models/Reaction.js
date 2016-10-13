@@ -160,38 +160,148 @@ export default class Reaction extends Element {
 
   addMaterial(material, materialGroup) {
     const materials = this[materialGroup];
-    // do not set it as reference material if this is reaction product
-    if(!this.referenceMaterial && materialGroup == 'starting_materials') {
-      this._setAsReferenceMaterial(material);
-    } else {
-      this._updateEquivalentForMaterial(material);
-    }
 
-    if(materialGroup == "products") {
-      material.amountType = 'real';
-
-      // we don't want to copy loading from sample
-      if(material.contains_residues) {
-        material.loading = 0.0;
-      }
-    }
-
+    material = this.materialPolicy(material, null, materialGroup);
     materials.push(material);
-    // Skip short_label for reactants and solvents
-    if (materialGroup != "reactants" && materialGroup != "solvents")
-      this.temporary_sample_counter += 1;
+
+    this.rebuildReference(material);
   }
 
   deleteMaterial(material, materialGroup) {
     const materials = this[materialGroup];
     const materialIndex = materials.indexOf(material);
     materials.splice(materialIndex, 1);
+
+    this.rebuildReference(material);
   }
 
   moveMaterial(material, previousMaterialGroup, materialGroup) {
     const materials = this[materialGroup];
     this.deleteMaterial(material, previousMaterialGroup);
+    material = this.materialPolicy(material, previousMaterialGroup, materialGroup);
     materials.push(material);
+
+    this.rebuildReference(material);
+  }
+
+  // We will process all reaction policy here
+  // If oldGroup = null -> drag new Sample into Reaction
+  // Else -> moving between Material Group
+  materialPolicy(material, oldGroup, newGroup) {
+    if (newGroup == "products") {
+      material.amountType = 'real';
+
+      // we don't want to copy loading from sample
+      if(material.contains_residues) {
+        material.loading = 0.0;
+      }
+
+      material.isSplit = false;
+      material.reaction_product = true;
+      material.equivalent = 0;
+      material.reference = false;
+
+      if (material.parent_id) {
+        material.start_parent = material.parent_id
+        material.parent_id = null
+      }
+      if (oldGroup == null) this.temporary_sample_counter += 1;
+    } else if (newGroup == "reactants" || newGroup == "solvents") {
+      // Temporary set true, to fit with server side logical
+      material.isSplit = true;
+      material.reaction_product = false;
+    } else if (newGroup == "starting_materials") {
+      material.isSplit = true;
+      material.reaction_product = false;
+
+      if (material.start_parent && material.parent_id == null) {
+        material.parent_id = material.start_parent
+      }
+
+      if (oldGroup == null) this.temporary_sample_counter += 1;
+    }
+
+    this.shortLabelPolicy(material, oldGroup, newGroup);
+    this.namePolicy(material, oldGroup, newGroup);
+
+    return material;
+  }
+
+  shortLabelPolicy(material, oldGroup, newGroup) {
+    if (oldGroup) {
+      // Save old short_label
+      material[oldGroup + "_short_label"] = material.short_label;
+      if (material[newGroup + "_short_label"]) {
+        material.short_label = material[newGroup + "_short_label"];
+        return 0;
+      }
+
+      if (newGroup == "products") {
+        let savedStartingMaterial = oldGroup == "starting_materials" && !material.isNew
+        if (!savedStartingMaterial) {
+          material.short_label =
+            Sample.buildNewShortLabel(this.temporary_sample_counter);
+        }
+      } else if (newGroup == "starting_materials") {
+        if (material.split_label) {
+          material.short_label = material.split_label;
+        } else {
+          material.short_label =
+            Sample.buildNewShortLabel(this.temporary_sample_counter);
+        }
+      }
+    } else {
+      if (newGroup == "starting_materials") {
+        if (material.split_label) material.short_label = material.split_label;
+      } else if (newGroup == "products") {
+        material.short_label =
+          Sample.buildNewShortLabel(this.temporary_sample_counter);
+      } else {
+        material.short_label = newGroup.slice(0, -1); // "reactant" or "solvent"
+      }
+    }
+  }
+
+  namePolicy(material, oldGroup, newGroup) {
+    this.rebuildProductName();
+
+    if (oldGroup && oldGroup == "products"){
+      // Blank name if FROM "products"
+      material.name = "";
+      return 0;
+    }
+
+    if (newGroup == "products") {
+      let productName = String.fromCharCode('A'.charCodeAt(0) + this.products.length);
+      material.name = this.short_label + "-" + productName;
+    }
+  }
+
+  rebuildProductName() {
+    let short_label = this.short_label
+    this.products.forEach(function(product, index, arr) {
+      let productName = String.fromCharCode('A'.charCodeAt(0) + index);
+      arr[index].name = short_label + "-" + productName;
+    })
+  }
+
+  rebuildReference(material) {
+    if (this.referenceMaterial) {
+      let referenceMaterial = this.referenceMaterial
+      let reference = this.starting_materials.find(function(m) {
+        return referenceMaterial.id === m.id;
+      })
+
+      if (!reference && this.starting_materials.length > 0) {
+        this._setAsReferenceMaterial(this.starting_materials[0]);
+      } else {
+        this._updateEquivalentForMaterial(material);
+      }
+    }
+
+    this.products.forEach(function(product, index, arr) {
+      arr[index].reference = false;
+    })
   }
 
   _coerceToSamples(samples) {
@@ -222,7 +332,7 @@ export default class Reaction extends Element {
 
   _setAsReferenceMaterial(sample) {
     sample.equivalent = 1;
-    sample.reference = 1;
+    sample.reference = true;
   }
 
   _updateEquivalentForMaterial(sample) {

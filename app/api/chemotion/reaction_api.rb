@@ -327,6 +327,8 @@ module ReactionUpdator
             existing_sample.real_amount_value = sample.real_amount_value
             existing_sample.real_amount_unit = sample.real_amount_unit
             existing_sample.external_label = sample.external_label if sample.external_label
+            existing_sample.short_label = sample.short_label if sample.short_label
+            existing_sample.name = sample.name if sample.name
 
             if r = existing_sample.residues[0]
               r.assign_attributes sample.residues_attributes[0]
