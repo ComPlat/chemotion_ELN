@@ -14,14 +14,14 @@ export default class Sample extends Element {
   static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
     let newSample = sample.buildCopy()
 
-    if(structure_only)
-      newSample.filterSampleData()
-
     newSample.collection_id = collection_id
     if (sample.name) newSample.name = sample.name
     if (sample.external_label)
       newSample.external_label = sample.external_label
-    if (sample.elemental_compositions)
+
+    if(structure_only)
+      newSample = newSample.filterSampleData()
+    else if (sample.elemental_compositions)
       newSample.elemental_compositions = sample.elemental_compositions
 
     return newSample
@@ -42,6 +42,8 @@ export default class Sample extends Element {
     });
 
     if(this.contains_residues) { this.setDefaultResidue(); }
+    this.analyses = [];
+    return this;
   }
 
   setDefaultResidue() {
