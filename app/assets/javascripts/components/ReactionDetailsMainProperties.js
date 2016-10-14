@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import {Row, Col, FormGroup, FormControl, ControlLabel, ListGroupItem, ListGroup} from 'react-bootstrap'
 import Select from 'react-select'
-import {solventOptions} from './staticDropdownOptions/options'
+import {solventOptions, statusOptions} from './staticDropdownOptions/options'
 
 const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
+
   return (
     <ListGroup>
       <ListGroupItem header="">
@@ -19,7 +20,23 @@ const ReactionDetailsMainProperties = ({reaction, onInputChange}) => {
                 onChange={event => onInputChange('name', event)}/>
             </FormGroup>
           </Col>
-          <Col md={6}>
+          <Col md={3}>
+            <FormGroup>
+              <ControlLabel>Status</ControlLabel>
+              <Select
+                name='status'
+                multi={false}
+                options={statusOptions}
+                value={reaction.status}
+                disabled={reaction.isMethodDisabled('status')}
+                onChange={event => {
+                  const wrappedEvent = {target: {value: event}};
+                  onInputChange('status', wrappedEvent)
+                }}
+              />
+            </FormGroup>
+          </Col>
+          <Col md={3}>
             <FormGroup>
               <ControlLabel>Temperature</ControlLabel>
               <FormControl

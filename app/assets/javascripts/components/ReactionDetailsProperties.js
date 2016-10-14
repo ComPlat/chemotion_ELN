@@ -3,7 +3,7 @@ import {Row, Col, FormGroup, ControlLabel, FormControl,
         ListGroupItem, ListGroup, InputGroup, Button,
         OverlayTrigger, Tooltip} from 'react-bootstrap'
 import Select from 'react-select'
-import {solventOptions, purificationOptions, statusOptions,
+import {purificationOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import Clipboard from 'clipboard';
@@ -28,6 +28,7 @@ export default class ReactionDetailsProperties extends Component {
 
   componentWillReceiveProps(nextProps) {
     const nextReaction = nextProps.reaction;
+    this.calcTimeDiff()
     this.setState({ reaction: nextReaction });
   }
 
@@ -91,23 +92,7 @@ export default class ReactionDetailsProperties extends Component {
       <ListGroup>
         <ListGroupItem>
           <Row className="small-padding">
-            <Col md={3}>
-              <FormGroup>
-                <ControlLabel>Status</ControlLabel>
-                <Select
-                  name='status'
-                  multi={false}
-                  options={statusOptions}
-                  value={reaction.status}
-                  disabled={reaction.isMethodDisabled('status')}
-                  onChange={event => {
-                    const wrappedEvent = {target: {value: event}};
-                    this.props.onInputChange('status', wrappedEvent)
-                  }}
-                />
-              </FormGroup>
-            </Col>
-            <Col md={3}>
+            <Col md={4}>
               <FormGroup>
                 <ControlLabel>Start</ControlLabel>
                 <InputGroup>
@@ -125,7 +110,7 @@ export default class ReactionDetailsProperties extends Component {
                 </InputGroup>
               </FormGroup>
             </Col>
-            <Col md={3}>
+            <Col md={4}>
               <FormGroup>
                 <ControlLabel>Stop</ControlLabel>
                 <InputGroup>
@@ -143,7 +128,7 @@ export default class ReactionDetailsProperties extends Component {
                 </InputGroup>
               </FormGroup>
             </Col>
-            <Col md={3}>
+            <Col md={4}>
               <FormGroup>
                 <ControlLabel>Duration</ControlLabel>
                 <InputGroup>
