@@ -241,12 +241,12 @@ export default class Sample extends Element {
     return this._contains_residues;
   }
 
-  title(atList=false, selected=false) {
+  title(selected=false) {
     const profile = UserStore.getState().profile
     const show_external_name = profile ? profile.show_external_name : false
     const external_label = this.external_label;
-    const extLabelClass =  this.highlight_label(atList, !selected);
-    const nameClass =  this.highlight_label(atList, false);
+    const extLabelClass =  this.highlight_label(!selected);
+    const nameClass =  this.highlight_label(false);
     const short_label = this.name
       ? <span>
           <span>{this.short_label}</span>
@@ -261,11 +261,11 @@ export default class Sample extends Element {
     }
   }
 
-  highlight_label(atList, gray) {
+  highlight_label(gray) {
     let cssClass = null;
-    if(atList && !gray) {
+    if(!gray) {
       cssClass = 'label--bold';
-    } else if(atList && gray) {
+    } else {
       cssClass = 'label--bold c-text--grey';
     }
     return cssClass;
