@@ -141,7 +141,7 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
-  submitFunction() {
+  submitFunction(closeView = false) {
     let {sample} = this.state
     let { currentReaction, currentWellplate } = ElementStore.getState()
 
@@ -149,7 +149,11 @@ export default class SampleDetails extends React.Component {
       if(sample.isNew) {
         ElementActions.createSampleForReaction(sample)
       } else {
-        ElementActions.updateSampleForReaction(sample)
+        if(closeView) {
+          ElementActions.updateSampleForReaction(sample)
+        } else {
+          ElementActions.updateSample(new Sample(sample));
+        }
       }
     } else if(currentWellplate) {
       ElementActions.updateSampleForWellplate(sample)
@@ -493,20 +497,37 @@ export default class SampleDetails extends React.Component {
     return (sample.isValid && !loadingMolecule) || sample.is_scoped == true;
   }
 
+  saveBtn(sample, closeView = false) {
+    let submitLabel = (sample && sample.isNew) ? "Create" : "Save";
+
+    if(closeView) submitLabel += ' and close';
+
+    return (
+      <Button bsStyle="warning"
+              onClick={() => this.submitFunction(closeView)}
+              disabled={!this.sampleIsValid()}>
+              {submitLabel}
+      </Button>
+    )
+  }
+
   sampleFooter() {
     const {sample} = this.state;
-    const submitLabel = (sample && sample.isNew) ? "Create" : "Save";
+    let { currentReaction } = ElementStore.getState()
+
+    let saveAndCloseBtn = currentReaction && !sample.isNew
+                            ?
+                              this.saveBtn(sample, true)
+                            :
+                              null;
     return (
       <ButtonToolbar>
         <Button bsStyle="primary"
                 onClick={() => this.closeDetails()}>
           Close
         </Button>
-        <Button bsStyle="warning"
-                onClick={() => this.submitFunction()}
-                disabled={!this.sampleIsValid()}>
-          {submitLabel}
-        </Button>
+        {this.saveBtn(sample)}
+        {saveAndCloseBtn}
       </ButtonToolbar>
     )
   }
