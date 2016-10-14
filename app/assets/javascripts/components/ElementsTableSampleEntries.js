@@ -180,7 +180,6 @@ export default class ElementsTableSampleEntries extends Component {
     if(show) {
       return samples.map((sample, index) => {
         const selected = this.isElementSelected(sample);
-        const atList = true;
         let style = {};
 
         if (selected || keyboardSeletectedElementId == sample.id) {
@@ -194,7 +193,7 @@ export default class ElementsTableSampleEntries extends Component {
             </td>
             <td style={{cursor: 'pointer'}}
                 onClick={() => this.showDetails(sample.id)}>
-              {sample.title(atList, selected)}
+              {sample.title(selected)}
               <div style={{float: 'right'}}>
                 <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
                 <ElementCollectionLabels element={sample} key={sample.id}/>
