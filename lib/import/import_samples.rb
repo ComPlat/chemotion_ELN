@@ -150,8 +150,9 @@ class Import::ImportSamples
   def get_data_from_smiles(row)
     smiles = mandatory_check["smiles"] ? row["smiles"] : Chemotion::OpenBabelService.canon_smiles_to_smiles(row["cano_smiles"])
     inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
-    molfile = Chemotion::OpenBabelService.smiles_to_molfile smiles
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
+    molfile_coord = Chemotion::OpenBabelService.add_molfile_coordinate(ori_molf)
     if inchikey.blank?
       @unprocessable << { row: row, index: i }
       go_to_next = true
@@ -159,10 +160,11 @@ class Import::ImportSamples
       molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: false) do |molecule|
         pubchem_info =
           Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+        molecule.molfile = molfile_coord
         molecule.assign_molecule_data babel_info, pubchem_info
       end
     end
-    return molfile, molecule, go_to_next
+    return molfile_coord, molecule, go_to_next
   end
 
   def molecule_not_exist(molecule)
