@@ -244,13 +244,12 @@ export default class SampleForm extends React.Component {
         <Row className="hidden-hd">
           {this.sampleAmount(sample, 4)}
         </Row>
-        <Row className="hidden-hd">
+        <Row className="hidden-hd" style={ { 'padding-top': 15  }}>
           {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 4, isPolymer)}
           {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer, '', 4, isPolymer)}
           {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 4, isPolymer)}
         </Row>
-
-        <Row>
+        <Row style={ { 'padding-top': 15  } }>
           <Col md={4}>{this.sampleDescription(sample)}</Col>
           {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity')}
           <Col md={2}>{this.textInput(sample, 'impurities', 'Impurities')}</Col>
