@@ -104,7 +104,20 @@ M  END
     c.read_string m, smi
 
     c.set_out_format 'mol'
-    molfile = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+    molfile = c.write_string(m, false).to_s.rstrip
+  end
+
+  def self.add_molfile_coordinate(mol_data)
+    c = OpenBabel::OBConversion.new
+    opts = OpenBabel::OBConversion::GENOPTIONS
+    c.add_option 'gen2D', opts
+    c.set_in_format 'mol'
+    c.set_out_format 'mol'
+    m = OpenBabel::OBMol.new
+    c.read_string m, mol_data
+    m.do_transformations c.get_options(opts), c
+
+    c.write_string(m, false)
   end
 
   private
