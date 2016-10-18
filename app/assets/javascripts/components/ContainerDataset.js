@@ -7,7 +7,7 @@ import Attachment from './models/Attachment';
 import SamplesFetcher from './fetchers/SamplesFetcher';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
 
-export default class Dataset extends Component {
+export default class ContainerDataset extends Component {
   constructor(props) {
     super();
     let dataset_container = props.dataset_container.clone();
@@ -23,7 +23,7 @@ export default class Dataset extends Component {
     const {value} = event.target;
     switch(type) {
       case 'name':
-        dataset.name = value;
+        dataset_container.name = value;
         break;
     }
     this.setState({dataset_container});
@@ -33,11 +33,11 @@ export default class Dataset extends Component {
     const {dataset_container} = this.state;
 
     let attachments = files.map(f => Attachment.fromFile(f))
-    dataset_container.attachments = dataset.attachments.concat(attachments)
-    let attachment_list = dataset.attachments
+    dataset_container.attachments = dataset_container.attachments.concat(attachments)
+    let attachment_list = dataset_container.attachments
     let attach_name = attachment_list[attachment_list.length - 1].name
     attach_name = attach_name.slice(0, -4)
-    dataset.name = attach_name
+    dataset_container.name = attach_name
 
     this.setState({dataset_container});
   }
@@ -53,8 +53,8 @@ export default class Dataset extends Component {
 
   handleAttachmentRemove(attachments) {
     const {dataset_container} = this.state;
-    const index = dataset.attachments.indexOf(attachments);
-    dataset.attachments.splice(index, 1);
+    const index = dataset_container.attachments.indexOf(attachments);
+    dataset_container.attachments.splice(index, 1);
     this.setState({dataset_container});
   }
 

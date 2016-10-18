@@ -38,9 +38,26 @@ export default class ContainerDatasets extends Component {
 
   }
 
+  handleRemove(dataset_container) {
+    let {container} = this.state;
 
-  handleRemove(dataset) {
+    const index = container.children.indexOf(dataset_container);
+    container.children.splice(index, 1);
 
+    this.props.parent.setState({container: container});
+  }
+
+  handleChange(dataset_container){
+    let {container} = this.state;
+
+    container.children.find(dataset => {
+      if(dataset.id == dataset_container.id) {
+        const datasetId = container.children.indexOf(dataset);
+        container.children[datasetId] = dataset_container;
+      }
+    });
+
+    this.setState(container);
   }
 
   handleModalHide() {
@@ -65,7 +82,7 @@ export default class ContainerDatasets extends Component {
     }
   }
 
-  removeButton(dataset) {
+  removeButton(dataset_container) {
     const {readOnly} = this.props;
     if(!readOnly) {
       return (
@@ -103,6 +120,7 @@ export default class ContainerDatasets extends Component {
           </Well>
           <ContainerDatasetModal
             onHide={() => this.handleModalHide()}
+            onChange = {dataset_container => this.handleChange(dataset_container)}
             show={modal.show}
             readOnly={this.props.readOnly}
             dataset_container={modal.dataset_container}
