@@ -421,6 +421,7 @@ module Chemotion
             ) unless prop_value.blank?
           end
 
+
           if sample = Sample.find(params[:id])
             #embedded_analyses = SampleUpdator.updated_analyses(current_user, sample, params[:analyses])
             #attributes.merge!(analyses: embedded_analyses)

@@ -1,9 +1,9 @@
 import React, {Component} from 'react';
 import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
 import Select from 'react-select'
-import AnalysisDatasets from './AnalysisDatasets';
+import ContainerDatasets from './ContainerDatasets';
 
-export default class Analysis extends Component {
+export default class ContainerComponent extends Component {
   constructor(props) {
     super();
     const {container} = props;
@@ -42,10 +42,10 @@ export default class Analysis extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            Add container
-          </Button>
-      )
+            <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+              Add container
+            </Button>
+      );
     }
   }
 
@@ -60,8 +60,13 @@ export default class Analysis extends Component {
             type="text"
             label="Name"
             value={container.name || '***'}
-            onChange={event => this.handleInputChange('name', event)}
-            //disabled={readOnly || analysis.isMethodDisabled('name')}
+            onChange={event => this.handleInputChange('name', event)}/>
+        </Col>
+        <Col md={12}>
+          <label>Datasets</label>
+          <ContainerDatasets
+            container={container}
+            readOnly={readOnly}
             />
         </Col>
       </div>
