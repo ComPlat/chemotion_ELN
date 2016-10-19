@@ -66,6 +66,15 @@ module Chemotion
       namespace :import do
         desc "Import Samples from a File"
         post do
+          extname = File.extname(params[:file].filename)
+          if extname.match(/\.sdf?/i)
+            sdf_import = Import::ImportSdf.new(file_path: params[:file].tempfile.path,
+            collection_id: params[:currentCollectionId],
+            current_user_id: current_user.id)
+            sdf_import.find_or_create_mol_by_batch
+            sdf_import.create_samples
+            return {sdf:true, message: sdf_import.message, data: sdf_import.inchikeys, status: sdf_import.status}
+          end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
           import = Import::ImportSamples.new.from_file(params[:file].tempfile.path,
             params[:currentCollectionId], current_user.id).process

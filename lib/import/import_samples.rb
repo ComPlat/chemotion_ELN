@@ -59,7 +59,7 @@ class Import::ImportSamples
       end
     end
     if mandatory_check.length == 0
-      raise "Column headers should have: molfile, or Smiles (Canonical smiles)"
+      raise "Column headers should have: molfile, or Smiles (or cano_smiles)"
     end
   end
 

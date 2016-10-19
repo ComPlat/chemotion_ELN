@@ -6,6 +6,7 @@ class Molecule < ActiveRecord::Base
   has_many :collections, through: :samples
 
   before_save :sanitize_molfile
+  skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
 
   validates_uniqueness_of :inchikey, scope: :is_partial
 
@@ -58,6 +59,36 @@ class Molecule < ActiveRecord::Base
       end
       molecule
     end
+  end
+
+  def self.find_or_create_by_molfiles molfiles, is_partial = false
+
+    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
+
+    inchikeys = bi.map.with_index do |babel_info,i|
+      inchikey = babel_info[:inchikey]
+      !inchikey.blank? && inchikey || nil
+    end
+    compact_iks = inchikeys.compact
+    existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
+    mol_to_get = compact_iks - existing_ik
+
+    unless mol_to_get.empty?
+      pi = Chemotion::PubchemService.molecule_info_from_inchikeys(mol_to_get)
+      pi.each do |pubchem_info|
+        ik = pubchem_info[:inchikey]
+        Molecule.find_or_create_by(inchikey: ik,
+          is_partial: is_partial) do |molecule|
+          i =  inchikeys.index(ik)
+          inchikeys[i] = nil
+          babel_info = bi[i]
+          molecule.molfile = molfiles[i]
+          molecule.assign_molecule_data babel_info, pubchem_info
+        end
+      end
+    end
+
+    where('inchikey IN (?)',compact_iks)
   end
 
   def refresh_molecule_data
