@@ -56,10 +56,8 @@ describe('ReportContainer', () => {
       const spy = sinon.spy(ReportContainer.prototype, 'generateReports')
       const component = initState()
       const target = component.find('Button').first()
-      /* To be updated
       target.simulate('click')
       expect(spy.callCount).toEqual(1)
-      */
     })
   })
 })
