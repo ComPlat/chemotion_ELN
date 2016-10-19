@@ -68,7 +68,7 @@ module Report
       end
 
       def temperature_svg_paths
-        [obj.temperature].reject{|c| c.blank?}.join(", ")
+        [obj.temperature_display].reject{|c| c.blank?}.join(", ")
       end
     end
   end

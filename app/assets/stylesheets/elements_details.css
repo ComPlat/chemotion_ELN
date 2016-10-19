@@ -33,3 +33,89 @@
   top: 50%;
   left: 50%;
 }
+
+#line-chart {
+  width: 100%;
+}
+
+#line-chart .plot {
+  fill: rgba(250, 250, 255, 0.6);
+}
+
+#line-chart .grid .tick {
+  stroke: lightgrey;
+  opacity: 0.7;
+}
+
+#line-chart .grid path {
+  stroke-width: 0;
+}
+
+#line-chart .axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+#line-chart .x.axis path {
+  display: none;
+}
+
+#line-chart .line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.editable-table td input {
+  width: 100%;
+  border: none;
+}
+
+.editable-selected {
+  border: 2px solid #1e6337
+}
+
+.editable-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 0px !important;
+}
+
+.editable-table thead > tr > th{
+  padding: 0px !important;
+  text-align: center !important;
+  width: 90px;
+}
+
+.editable-table tbody td:nth-child(1), .editable-table tbody th:nth-child(1) {
+  width: 90px;
+  text-align: center;
+}
+.editable-table tbody td:nth-child(2), .editable-table tbody th:nth-child(2) {
+  width: 90px;
+}
+
+.editable-table thead tr {
+  display: block;
+  position: relative;
+}
+
+.editable-table tbody {
+  display: block;
+  overflow: auto;
+  height: 280px;
+}
+
+.table-cell {
+  border: none;
+  width: 100%;
+  padding: 0 !important;
+}
+
+.clickable-icon {
+  cursor: pointer;
+  float: right;
+  margin-top: 4px;
+  margin-right: 4px;
+}

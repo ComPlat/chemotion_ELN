@@ -4,6 +4,8 @@ class Reaction < ActiveRecord::Base
   include PgSearch
   include Collectable
 
+  serialize :temperature, Hash
+
   multisearchable against: :name
 
   # search scopes for exact matching
@@ -102,15 +104,30 @@ class Reaction < ActiveRecord::Base
   end
 
   def auto_format_temperature!
-    valid_input = (temperature =~ /^-?\s*\d*(\.\d+)?\s*°?\s*[c|f|k]?\s*$/i).present?
-    if (valid_input)
-      sign   = (temperature =~ /^-/).present? ? "-" : ""
-      number = temperature[ /\d+(\.\d+)?/ ].to_f
-      unit   = (temperature[ /[c|f|k]/i ] || "C").upcase
-      self.temperature = "#{sign}#{number} °#{unit}"
-    else
-      self.temperature = "21.0 °C"
+    valueUnitCheck = (temperature["valueUnit"] =~ /^(°C|°F|K)$/).present?
+    temperature["valueUnit"] = "°C" if (!valueUnitCheck)
+
+    temperature["data"].each do |t|
+      valid_time = (t["time"] =~ /^((?:\d\d):[0-5]\d:[0-5]\d$)/i).present?
+      t["time"] = "00:00:00" if (!valid_time)
+      t["value"] = t["value"].gsub(/[^0-9.-]/, '')
     end
+  end
+
+  def temperature_display
+    userText = temperature["userText"]
+    return userText if (userText != "")
+
+    return "" if (temperature["data"].length == 0)
+
+    arrayData = temperature["data"]
+    maxTemp = (arrayData.max_by { |x| x["value"] })["value"]
+    minTemp = (arrayData.min_by { |x| x["value"] })["value"]
+
+    return ""  if (minTemp == nil || maxTemp == nil)
+
+    return minTemp + " " + temperature["valueUnit"] if (minTemp.to_i == maxTemp.to_i)
+    return minTemp + " ~ " + maxTemp + " " + temperature["valueUnit"]
   end
 
   def update_svg_file!
@@ -123,7 +140,8 @@ class Reaction < ActiveRecord::Base
     end
 
     begin
-      composer = SVG::ReactionComposer.new(paths, temperature: temperature,
+      temperature_display = self.temperature_display
+      composer = SVG::ReactionComposer.new(paths, temperature: temperature_display,
                                                   solvents: solvents_in_svg)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e

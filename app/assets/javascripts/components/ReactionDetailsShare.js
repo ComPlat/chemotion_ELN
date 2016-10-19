@@ -33,6 +33,14 @@ const setReactionByType = (reaction, type, value) => {
       reaction.tlc_description = value;
       break;
     case 'temperature':
+      reaction.temperature.userText = value;
+      options = {schemaChanged: true}
+      break;
+    case 'temperatureUnit':
+      reaction.temperature = reaction.convertTemperature(value);
+      options = {schemaChanged: true}
+      break;
+    case 'temperatureData':
       reaction.temperature = value;
       options = {schemaChanged: true}
       break;

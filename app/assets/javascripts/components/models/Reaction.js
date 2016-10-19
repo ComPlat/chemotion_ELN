@@ -4,8 +4,16 @@ import Literature from './Literature';
 
 import UserStore from '../stores/UserStore';
 
+const TemperatureUnit = ["°C", "°F", "K"]
+
 export default class Reaction extends Element {
   static buildEmpty(collection_id) {
+    let temperature_default = {
+      "valueUnit": "°C",
+      "userText": "",
+      "data": []
+    }
+
     let reaction = new Reaction({
       collection_id: collection_id,
       type: 'reaction',
@@ -20,7 +28,7 @@ export default class Reaction extends Element {
       dangerous_products: "",
       tlc_solvents: "",
       rf_value: 0.00,
-      temperature: "21.0 °C",
+      temperature: temperature_default,
       tlc_description: "",
       starting_materials: [],
       reactants: [],
@@ -41,6 +49,10 @@ export default class Reaction extends Element {
     } else {
       return `${currentUser.initials}-R${currentUser.reactions_count + 1}`;
     }
+  }
+
+  static get temperature_unit() {
+    return TemperatureUnit;
   }
 
   get name() {
@@ -81,12 +93,77 @@ export default class Reaction extends Element {
     })
   }
 
+  get temperature_display() {
+    let userText = this._temperature.userText
+    if (userText !== "") return userText
+
+    if (this._temperature.data.length == 0) return ""
+
+    let arrayData = this._temperature.data
+    let maxTemp = Math.max.apply(Math, arrayData.map(function(o){return o.value}))
+    let minTemp = Math.min.apply(Math, arrayData.map(function(o){return o.value}))
+
+    if (minTemp == maxTemp)
+      return minTemp + " " + this._temperature.valueUnit
+    else
+      return minTemp + " ~ " + maxTemp + " " + this._temperature.valueUnit
+  }
+
   get temperature() {
     return this._temperature
   }
 
   set temperature(temperature) {
     this._temperature = temperature
+  }
+
+  convertTemperature(newUnit) {
+    let temperature = this._temperature
+    let oldUnit = temperature.valueUnit
+    temperature.valueUnit = newUnit
+
+    let convertFunc
+    switch (oldUnit) {
+      case "K":
+        convertFunc = this.convertFromKelvin
+        break
+      case "°F":
+        convertFunc = this.convertFromFarenheit
+        break
+      default:
+        convertFunc = this.convertFromCelcius
+        break
+    }
+
+    temperature.data.forEach(function(data, index, theArray) {
+      theArray[index].value = convertFunc(newUnit, data.value).toFixed(2)
+    })
+
+    return temperature
+  }
+
+  convertFromKelvin(unit, temperature) {
+    if (unit == "°C") {
+      return (parseFloat(temperature) - 273.15)
+    } else { // Farenheit
+      return ((parseFloat(temperature) * 9 / 5) - 459.67)
+    }
+  }
+
+  convertFromFarenheit(unit, temperature) {
+    if (unit == "°C") {
+      return ((parseFloat(temperature) - 32) / 1.8)
+    } else { // Kelvin
+      return ((parseFloat(temperature) + 459.67) * 5 / 9)
+    }
+  }
+
+  convertFromCelcius(unit, temperature) {
+    if (unit == "°F") {
+      return ((parseFloat(temperature) * 1.8) + 32)
+    } else { // Kelvin
+      return (parseFloat(temperature) + 273.15)
+    }
   }
 
   get short_label() {

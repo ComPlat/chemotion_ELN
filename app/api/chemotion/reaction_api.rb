@@ -146,7 +146,7 @@ module Chemotion
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
-        optional :temperature, type: String
+        optional :temperature, type: Hash
         optional :status, type: String
         optional :reaction_svg_file, type: String
 
@@ -190,7 +190,7 @@ module Chemotion
         optional :solvent, type: String
         optional :tlc_description, type: String
         optional :rf_value, type: String
-        optional :temperature, type: String
+        optional :temperature, type: Hash
         optional :status, type: String
         optional :reaction_svg_file, type: String
 
