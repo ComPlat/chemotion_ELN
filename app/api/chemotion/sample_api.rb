@@ -367,6 +367,35 @@ module Chemotion
           end
         end
 
+        def self.update_datamodel(container)
+          if Container.exists?(:id => container.id)
+            root_container = Container.find_by id: container.id
+          else
+            root_container = Container.new
+            root_container.name = "root";
+            root_container.save!
+          end
+
+          self.create_containers(container.children, root_container)
+
+          return root_container
+        end
+
+        def self.create_containers(children, root_container)
+          children.each do |child|
+            if Container.exists?(:id => child.id)
+              #Update container
+              tmp = Container.find_by id: child.id
+              tmp.name = child.name
+              tmp.save!
+            else
+              tmp = Container.create! :name => child.name, :parent => root_container
+            end
+            if(child.children.length > 0)
+              create_containers(child.children, tmp)
+            end
+          end
+        end
       end #module
 
 
@@ -395,7 +424,7 @@ module Chemotion
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
-        optional :container, type: Array
+        optional :container, type: Hash
       end
       route_param :id do
         before do
@@ -404,7 +433,14 @@ module Chemotion
         end
 
         put do
+
+
+
           attributes = declared(params, include_missing: false)
+
+          SampleUpdator.update_datamodel(attributes[:container]);
+          attributes.delete(:container);
+
           embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
           attributes.merge!(analyses: embedded_analyses)
 
@@ -458,6 +494,7 @@ module Chemotion
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        optional :container, type: Hash
       end
       post do
         filter_datasets_params
@@ -511,16 +548,9 @@ module Chemotion
         all_coll = Collection.get_all_collection_for_user(current_user.id)
         sample.collections << all_coll
 
-        root_container = Container.new
-        root_container.name = "root"
-        root_container.container_type = "root"
-        root_container.save!
-
-        sample.container = root_container
+        sample.container =  SampleUpdator.update_datamodel(params[:container])
 
         sample.save!
-
-
 
         sample
       end

@@ -5,6 +5,7 @@ import Analysis from './Analysis';
 import _ from 'lodash';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
+import Container from './Container.js'
 
 export default class Sample extends Element {
   isMethodRestricted(m) {
@@ -94,7 +95,8 @@ export default class Sample extends Element {
         data: {}
       }],
       imported_readout: '',
-      attached_amount_mg: '' // field for polymers calculations
+      attached_amount_mg: '', // field for polymers calculations
+      container: Container.buildRoot(),
     });
 
     sample.short_label = Sample.buildNewShortLabel();
