@@ -39,7 +39,6 @@ export default class ReactionDetails extends Component {
   }
 
   componentDidMount() {
-    const {reaction} = this.state;
     window.addEventListener('resize', this.handleResize);
   }
 
@@ -50,12 +49,15 @@ export default class ReactionDetails extends Component {
   componentWillReceiveProps(nextProps) {
     const {reaction} = this.state;
     const nextReaction = nextProps.reaction;
-    if (nextReaction.id != reaction.id || nextReaction.updated_at != reaction.updated_at) {
+    if (nextReaction.id != reaction.id ||
+        nextReaction.updated_at != reaction.updated_at ||
+        nextReaction.temperature != reaction.temperature) {
       this.setState({
         reaction: nextReaction
       });
     }
   }
+
   handleResize(e = null) {
     let windowHeight = window.innerHeight || 1;
     if (this.state.fullScreen || windowHeight < 500) {
@@ -90,7 +92,7 @@ export default class ReactionDetails extends Component {
     }).filter(s => s)
 
     const solventsArray = solvents.length !== 0 ? solvents : [reaction.solvent]
-    const temperature = reaction.temperature
+    const temperature = reaction.temperature_display
     ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 
@@ -142,7 +144,13 @@ export default class ReactionDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    const {value} = event.target;
+    let value
+    if (type == "temperatureUnit" || type == "temperatureData")  {
+      value = event;
+    } else {
+      value = event.target.value;
+    }
+
     const {reaction} = this.state;
 
     const {newReaction, options} = setReactionByType(reaction, type, value)
