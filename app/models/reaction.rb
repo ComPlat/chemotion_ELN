@@ -126,8 +126,8 @@ class Reaction < ActiveRecord::Base
 
     return ""  if (minTemp == nil || maxTemp == nil)
 
-    return minTemp + " " + temperature["valueUnit"] if (minTemp.to_i == maxTemp.to_i)
-    return minTemp + " ~ " + maxTemp + " " + temperature["valueUnit"]
+    return minTemp
+    return minTemp + " ~ " + maxTemp
   end
 
   def update_svg_file!
@@ -141,6 +141,11 @@ class Reaction < ActiveRecord::Base
 
     begin
       temperature_display = self.temperature_display
+      if ((temperature_display =~ /^\-?\d*\.{0,1}\d{0,2}$/).present?)
+        temperature_display = temperature_display + " " +
+                              self.temperature["valueUnit"]
+      end
+
       composer = SVG::ReactionComposer.new(paths, temperature: temperature_display,
                                                   solvents: solvents_in_svg)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
