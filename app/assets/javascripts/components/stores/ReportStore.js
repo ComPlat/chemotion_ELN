@@ -28,6 +28,7 @@ class ReportStore {
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
       handleGenerateReports: ReportActions.generateReports,
       handleUpdateCheckedIds: ReportActions.updateCheckedIds,
+      handleMove: ReportActions.move,
     })
   }
 
@@ -74,7 +75,7 @@ class ReportStore {
   }
 
   handleGenerateReports() {
-    const ids = this.state.selectedReactionIds.join('_')
+    const ids = this.selectedReactionIds.join('_')
     const settings = this.chainedItems(this.settings)
     const configs = this.chainedItems(this.configs)
     this.spinnerProcess()
@@ -115,6 +116,15 @@ class ReportStore {
       }).filter(r => r!=null)[0];
     });
     this.setState({selectedReactions: selectedReaction});
+  }
+
+  handleMove({sourceId, targetId}) {
+    let selectedIds = this.selectedReactionIds;
+    const sourceIndex = selectedIds.indexOf(sourceId);
+    const targetIndex = selectedIds.indexOf(targetId);
+    selectedIds.splice(sourceIndex, 1);
+    selectedIds.splice(targetIndex, 0, sourceId);
+    this.handleUpdateCheckedIds(selectedIds);
   }
 }
 

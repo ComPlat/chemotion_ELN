@@ -16,7 +16,9 @@ const originalState = {
              {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ],
   checkedAllSettings: true,
   checkedAllConfigs: true,
-  processingReport: false
+  processingReport: false,
+  selectedReactionIds: [],
+  selectedReactions: [],
 }
 
 export { originalState, settings, configs }

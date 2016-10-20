@@ -9,6 +9,7 @@ import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
 
 import Reports from './Reports';
+import Orders from './Orders';
 import CheckBoxs from '../common/CheckBoxs';
 
 export default class ReportContainer extends Component {
@@ -71,7 +72,13 @@ export default class ReportContainer extends Component {
                           checkedAll={this.state.checkedAllConfigs} />
             </Tab>
 
-            <Tab eventKey={2} title={"Report"}>
+            <Tab eventKey={2} title={"Order"}>
+              <div className="panel-fit-screen">
+                <Orders selectedReactions={this.state.selectedReactions} />
+              </div>
+            </Tab>
+
+            <Tab eventKey={3} title={"Report"}>
               <div className="panel-fit-screen">
                 <Reports selectedReactions={this.state.selectedReactions}
                          settings={this.state.settings}

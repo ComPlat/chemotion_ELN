@@ -18,7 +18,7 @@ const Reports = ({selectedReactions, settings, configs}) => {
 }
 
 const Report = ({reaction, settings, configs}) => {
-  const {name, description, literatures, starting_materials, reactants,
+  const {description, literatures, starting_materials, reactants,
          products, solvents, solvent, dangerous_products, purification,
          observation, reaction_svg_file, tlc_description,
          tlc_solvents, rf_value, status } = reaction
@@ -46,7 +46,7 @@ const Report = ({reaction, settings, configs}) => {
       <Alert bsStyle='success' style={{ textAlign: 'center',
                                         backgroundColor: '#428bca',
                                         color:'white',
-                                        border:'none'}}> {name}
+                                        border:'none'}}> {reaction.short_label}
         <StatusContent status={status}/>
       </Alert>
 

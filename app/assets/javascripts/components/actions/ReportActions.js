@@ -24,6 +24,10 @@ class ReportActions {
   updateCheckedIds(ids) {
     return ids;
   }
+
+  move({sourceId, targetId}) {
+    return {sourceId, targetId};
+  }
 }
 
 export default alt.createActions(ReportActions);
