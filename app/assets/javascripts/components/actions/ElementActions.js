@@ -92,6 +92,7 @@ class ElementActions {
   }
 
   createSample(params) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(params.serialize())
     return (dispatch) => { SamplesFetcher.create(params)
       .then((result) => {
         dispatch(result)
@@ -99,6 +100,7 @@ class ElementActions {
   }
 
   createSampleForReaction(params) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(params.serialize())
     return (dispatch) => { SamplesFetcher.create(params)
       .then((result) => {
         dispatch(result)
@@ -115,6 +117,7 @@ class ElementActions {
   }
 
   updateSampleForReaction(params) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(params.serialize())
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
         dispatch(result)
@@ -124,6 +127,7 @@ class ElementActions {
   }
 
   updateSample(params) {
+    SamplesFetcher.uploadDatasetAttachmentsForSample(params.serialize())
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
         dispatch(result)

@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import Sample from '../models/Sample';
 import UIStore from '../stores/UIStore'
+import NotificationActions from '../actions/NotificationActions'
 import _ from 'lodash';
 
 export default class SamplesFetcher {
@@ -81,6 +82,20 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'post',
       body: data
+    }).then((response) => {
+      if(response.ok == false) {
+        let msg = 'Files uploading failed: ';
+        if(response.status == 413) {
+          msg += 'File size limit exceeded. Max size is 10MB'
+        } else {
+          msg += response.statusText;
+        }
+
+        NotificationActions.add({
+          message: msg,
+          level: 'error'
+        });
+      }
     })
   }
 
@@ -100,7 +115,6 @@ export default class SamplesFetcher {
   }
 
   static update(sample) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(sample.serialize());
     let promise = fetch('/api/v1/samples/' + sample.id, {
       credentials: 'same-origin',
       method: 'put',
@@ -121,7 +135,6 @@ export default class SamplesFetcher {
   }
 
   static create(sample) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(sample.serialize());
     let promise = fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
