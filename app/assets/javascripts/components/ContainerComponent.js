@@ -30,7 +30,7 @@ export default class ContainerComponent extends Component {
 
   }
 
-  handleAdd() {
+/*  handleAdd() {
     const {container} = this.state;
     let subcontainer = Container.buildEmpty();
     container.children.push(subcontainer);
@@ -48,7 +48,7 @@ export default class ContainerComponent extends Component {
       );
     }
   }
-
+*/
   render() {
     const {container} = this.state;
     const {readOnly} = this.props;
@@ -67,6 +67,7 @@ export default class ContainerComponent extends Component {
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
+            onChange={container => this.props.onChange(container)}
             />
         </Col>
       </div>

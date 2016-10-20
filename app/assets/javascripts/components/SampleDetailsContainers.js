@@ -13,8 +13,16 @@ export default class SampleDetailsContainers extends Component {
     };
   }
 
-  handleAccordionOpen(key) {
-    this.setState({activeContainer: key});
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      sample: nextProps.sample
+    })
+  }
+
+  handleChange(container) {
+    const {sample} = this.state
+    //sample.updateAnalysis(analysis)
+    this.props.parent.handleSampleChanged(sample)
   }
 
   handleAdd() {
@@ -35,7 +43,10 @@ export default class SampleDetailsContainers extends Component {
     sample.container.children.splice(index, 1);
 
     this.props.parent.setState({sample: sample})
+  }
 
+  handleAccordionOpen(key) {
+    this.setState({activeContainer: key});
   }
 
   addButton() {
@@ -79,6 +90,7 @@ export default class SampleDetailsContainers extends Component {
                 <ContainerComponent
                   readOnly={readOnly}
                   container={container}
+                  onChange={container => this.handleChange(container)}
                 />
               </Panel>
             )}
