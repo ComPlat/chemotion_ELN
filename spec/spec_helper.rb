@@ -26,6 +26,13 @@ RSpec.configure do |config|
         :body => File.read(Rails.root+'spec/fixtures/body_TXWRERCHRDBNLG-UHFFFAOYSA-N.json'),
         :headers => {"Content-Type"=> "application/json"}
       )
+    stub_request(:post, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/record/JSON").
+      with(:headers => {'Content-Type'=>'text/json'}, :body =>{"inchikey"=>"RDHQFKQIGNGIED-UHFFFAOYSA-N,RDHQFKQIGNGIED-UHFFFAOYSA-O"}).
+      to_return(
+        :status => 200,
+        :body => File.read(Rails.root+'spec/fixtures/body_two_compounds.json'),
+        :headers => {"Content-Type"=> "application/json"}
+      )
 
   end
 

@@ -41,10 +41,10 @@ M  END
     c.read_string m, molfile
 
     c.set_out_format 'smi'
-    smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+    smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
     c.set_out_format 'can'
-    ca_smiles = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+    ca_smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
 
     c.set_out_format 'inchi'
     inchi = c.write_string(m, false).to_s.gsub(/\n/, "").strip
@@ -67,6 +67,15 @@ M  END
       fp: fingerprint_from_molfile(molfile)
     }
 
+  end
+
+  def self.molecule_info_from_molfiles molfile_array
+    molecule_info = []
+    molfile_array.each do |molfile|
+      molfile = Molecule.skip_residues(molfile)
+      molecule_info << self.molecule_info_from_molfile(molfile)
+    end
+    molecule_info
   end
 
   def self.smiles_to_canon_smiles smiles
