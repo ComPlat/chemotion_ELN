@@ -141,7 +141,7 @@ class Reaction < ActiveRecord::Base
 
     begin
       temperature_display = self.temperature_display
-      if ((temperature_display =~ /^\-?\d*\.{0,1}\d{0,2}$/).present?)
+      if ((temperature_display =~ /^[\-|\d]\d*\.{0,1}\d{0,2}$/).present?)
         temperature_display = temperature_display + " " +
                               self.temperature["valueUnit"]
       end

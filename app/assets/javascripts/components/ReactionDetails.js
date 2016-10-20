@@ -93,7 +93,7 @@ export default class ReactionDetails extends Component {
 
     const solventsArray = solvents.length !== 0 ? solvents : [reaction.solvent]
     let temperature = reaction.temperature_display
-    if (/^\-?\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature)) {
       temperature = temperature + " " + reaction.temperature.valueUnit
     }
 
