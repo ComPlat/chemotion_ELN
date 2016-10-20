@@ -104,9 +104,9 @@ export default class Reaction extends Element {
     let minTemp = Math.min.apply(Math, arrayData.map(function(o){return o.value}))
 
     if (minTemp == maxTemp)
-      return minTemp + " " + this._temperature.valueUnit
+      return minTemp
     else
-      return minTemp + " ~ " + maxTemp + " " + this._temperature.valueUnit
+      return minTemp + " ~ " + maxTemp
   }
 
   get temperature() {
@@ -133,6 +133,14 @@ export default class Reaction extends Element {
       default:
         convertFunc = this.convertFromCelcius
         break
+    }
+
+    // If userText is number only, treat as normal temperature value
+    if (/^\-?\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
+      temperature.userText =
+        convertFunc(newUnit, temperature.userText).toFixed(2)
+
+      return temperature
     }
 
     temperature.data.forEach(function(data, index, theArray) {

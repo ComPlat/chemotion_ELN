@@ -92,7 +92,11 @@ export default class ReactionDetails extends Component {
     }).filter(s => s)
 
     const solventsArray = solvents.length !== 0 ? solvents : [reaction.solvent]
-    const temperature = reaction.temperature_display
+    let temperature = reaction.temperature_display
+    if (/^\-?\d*\.{0,1}\d{0,2}$/.test(temperature)) {
+      temperature = temperature + " " + reaction.temperature.valueUnit
+    }
+
     ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 

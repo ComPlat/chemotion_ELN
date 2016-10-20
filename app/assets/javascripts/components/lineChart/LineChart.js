@@ -53,10 +53,10 @@ class D3LineChart {
     const margin = this.margin
 
     const xExtent = d3.extent(decimalData, d => d.time)
-    const yExtent = [
-      d3.min(decimalData, d => parseFloat(d.value)),
-      d3.max(decimalData, d => parseFloat(d.value))
-    ]
+    const yMin = d3.min(decimalData, d => parseFloat(d.value))
+    const yMax = d3.max(decimalData, d => parseFloat(d.value))
+    const delta = (yMax - yMin) * 0.1
+    const yExtent = [yMin - delta, yMax + delta]
 
     const xScale = d3.scale.linear().range([0, width]).domain(xExtent)
     const yScale = d3.scale.linear().range([height, 0]).domain(yExtent)
