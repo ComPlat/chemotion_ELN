@@ -73,7 +73,12 @@ M  END
     molecule_info = []
     molfile_array.each do |molfile|
       molfile = Molecule.skip_residues(molfile)
-      molecule_info << self.molecule_info_from_molfile(molfile)
+      begin
+        ob_info = self.molecule_info_from_molfile(molfile)
+      rescue
+        {}
+      end
+      molecule_info << ob_info
     end
     molecule_info
   end
