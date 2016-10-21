@@ -113,6 +113,10 @@ module Chemotion
         requires :id, type: Integer, desc: "Reaction id"
       end
       route_param :id do
+        before do
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).destroy?
+        end
+
         delete do
           Reaction.find(params[:id]).destroy
         end
@@ -124,7 +128,7 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).destroy?
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
         end
 
         delete do
