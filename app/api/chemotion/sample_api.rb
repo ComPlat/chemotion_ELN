@@ -2,6 +2,30 @@ module Chemotion
   class SampleAPI < Grape::API
     include Grape::Kaminari
 
+    helpers do
+      def filter_datasets_params
+        return if params[:analyses].blank?
+
+        params[:analyses].each do |i|
+          i['datasets'].each do |j|
+            j['attachments'].reject! do |k|
+              path = Rails.root.to_s + '/uploads/attachments/'
+              file = k['file']['id'].to_s + File.extname(k['name']) rescue ''
+              !File.exists?(path +  file) && k['is_new']
+            end
+          end
+        end
+      end
+
+      def create_thumbnail file_path, file_id
+        thumbnail_path = Thumbnailer.create(file_path)
+        if thumbnail_path && File.exists?(thumbnail_path)
+          dest = File.join('uploads', 'thumbnails', "#{file_id}.png")
+          FileUtils.mv(thumbnail_path, dest)
+        end
+      end
+    end
+
     resource :samples do
 
       # TODO Refactoring: Use Grape Entities
@@ -151,15 +175,12 @@ module Chemotion
               FileUtils.mkdir_p(thumbnail_dir) unless Dir.exist?(thumbnail_dir)
             begin
               FileUtils.cp(tempfile.path, upload_path)
-              thumbnail_path = Thumbnailer.create(upload_path)
-              FileUtils.mv(thumbnail_path, File.join('uploads', 'thumbnails', "#{file_id}.png"))
             ensure
               tempfile.close
               tempfile.unlink   # deletes the temp file
             end
             begin
-              thumbnail_path = Thumbnailer.create(upload_path)
-              FileUtils.mv(thumbnail_path, File.join('uploads', 'thumbnails', "#{file_id}.png"))
+              create_thumbnail(upload_path, file_id)
             end
           end
         end
@@ -250,6 +271,7 @@ module Chemotion
       route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Sample.find(params[:id])).update?
+          filter_datasets_params
         end
 
         put do
@@ -305,6 +327,8 @@ module Chemotion
         optional :elemental_compositions, type: Array
       end
       post do
+        filter_datasets_params
+
         attributes = {
           name: params[:name],
           short_label: params[:short_label],

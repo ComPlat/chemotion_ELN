@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import Sample from '../models/Sample';
 import UIStore from '../stores/UIStore'
+import NotificationActions from '../actions/NotificationActions'
 import _ from 'lodash';
 
 export default class SamplesFetcher {
@@ -77,14 +78,27 @@ export default class SamplesFetcher {
     files.forEach((file)=> {
       data.append(file.id || file.name, file);
     });
-    fetch('/api/v1/samples/upload_dataset_attachments', {
+    return ()=>fetch('/api/v1/samples/upload_dataset_attachments', {
       credentials: 'same-origin',
       method: 'post',
       body: data
+    }).then((response) => {
+      if(response.ok == false) {
+        let msg = 'Files uploading failed: ';
+        if(response.status == 413) {
+          msg += 'File size limit exceeded. Max size is 10MB'
+        } else {
+          msg += response.statusText;
+        }
+        NotificationActions.add({
+          message: msg,
+          level: 'error'
+        });
+      }
     })
   }
 
-  static uploadDatasetAttachmentsForSample(sample) {
+  static getFileListfrom(sample){
     let datasets = _.flatten(sample.analyses.map(a=>a.datasets));
     let attachments = _.flatten(datasets.map(d=>d.attachments));
     const fileFromAttachment = function(attachment) {
@@ -93,15 +107,12 @@ export default class SamplesFetcher {
       return file;
     }
     let files = _.compact(_.flatten(attachments.filter(a=>a.is_new).map(a=>fileFromAttachment(a))));
-
-    if(files.length > 0) {
-      SamplesFetcher.uploadFiles(files);
-    }
+    return files
   }
 
   static update(sample) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(sample.serialize());
-    let promise = fetch('/api/v1/samples/' + sample.id, {
+    let files = SamplesFetcher.getFileListfrom(sample.serialize())
+    let promise = ()=> fetch('/api/v1/samples/' + sample.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -117,12 +128,17 @@ export default class SamplesFetcher {
       console.log(errorMessage);
     });
 
-    return promise;
+    if(files.length > 0) {
+      return SamplesFetcher.uploadFiles(files)().then(()=> promise());
+    } else {
+      return promise()
+    }
+
   }
 
   static create(sample) {
-    SamplesFetcher.uploadDatasetAttachmentsForSample(sample.serialize());
-    let promise = fetch('/api/v1/samples', {
+    let files = SamplesFetcher.getFileListfrom(sample.serialize())
+    let promise = ()=> fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -137,8 +153,11 @@ export default class SamplesFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-
-    return promise;
+    if(files.length > 0) {
+      return SamplesFetcher.uploadFiles(files)().then(()=> promise());
+    } else {
+      return promise()
+    }
   }
 
   static deleteSamplesByUIState(params) {
