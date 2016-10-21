@@ -142,13 +142,12 @@ class Molecule < ActiveRecord::Base
     molfile.gsub! /(> <PolymersList>[\W\w.\n]+[\d]+)/m, ''
 
     lines = molfile.split "\n"
-
-    lines[4..-1].each do |line|
-      break if line.match /(M.+END+)/
-
-      line.gsub! ' R# ', ' H  ' # replace residues with Hydrogens
+    if lines.size > 3
+      lines[4..-1].each do |line|
+        break if line.match /(M.+END+)/
+        line.gsub! ' R# ', ' H  ' # replace residues with Hydrogens
+      end
     end
-
     lines.join "\n"
   end
 
