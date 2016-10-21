@@ -136,7 +136,7 @@ export default class Reaction extends Element {
     }
 
     // If userText is number only, treat as normal temperature value
-    if (/^\-?\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
+    if (/^[\-|\d]\d*\.{0,1}\d{0,2}$/.test(temperature.userText)) {
       temperature.userText =
         convertFunc(newUnit, temperature.userText).toFixed(2)
 
