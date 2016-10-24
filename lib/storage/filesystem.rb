@@ -19,15 +19,11 @@ class Filesystem
   end
 
   def move_from_temp_to_storage(user, file_id)
-      begin
         folder = File.join(@upload_root_folder, user.id.to_s)
         FileUtils.mkdir_p(folder) unless Dir.exist?(folder)
         path = File.join(folder, file_id)
         tpath = File.join(@temp_folder, file_id)
         FileUtils.mv(tpath, path)
-      rescue
-        #TODO
-      end
   end
 
   def read(user, attachment)

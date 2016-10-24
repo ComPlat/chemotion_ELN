@@ -367,7 +367,7 @@ module Chemotion
           end
         end
 
-        def self.update_datamodel(container)
+        def self.update_datamodel(user, container)
           if Container.exists?(:id => container.id)
             root_container = Container.find_by id: container.id
           else
@@ -376,12 +376,12 @@ module Chemotion
             root_container.save!
           end
 
-          self.create_containers(container.children, root_container)
+          self.create_containers(user, container.children, root_container)
 
           return root_container
         end
 
-        def self.create_containers(children, root_container)
+        def self.create_containers(user, children, root_container)
           children.each do |child|
             if Container.exists?(:id => child.id)
               #Update container
@@ -391,11 +391,33 @@ module Chemotion
             else
               tmp = Container.create! :name => child.name, :parent => root_container
             end
-            if(child.children.length > 0)
-              create_containers(child.children, tmp)
+
+            child.attachments.each do |attachment|
+              #Save files
+              begin
+                if(attachment.is_new)
+                  storage = Filesystem.new
+                  storage.move_from_temp_to_storage(user, attachment.id)
+                  #Speichern wo es liegt
+                  attachment_link = Attachment.new
+                  attachment_link.filename = attachment.id
+                  attachment_link.container = tmp
+                  attachment_link.save!
+                end
+              end
+
+
             end
+
+
+            if(child.children.length > 0)
+              create_containers(user, child.children, tmp)
+            end
+
           end
         end
+
+
       end #module
 
 
@@ -438,7 +460,7 @@ module Chemotion
 
           attributes = declared(params, include_missing: false)
 
-          SampleUpdator.update_datamodel(attributes[:container]);
+          SampleUpdator.update_datamodel(current_user, attributes[:container]);
           attributes.delete(:container);
 
           embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
@@ -548,7 +570,7 @@ module Chemotion
         all_coll = Collection.get_all_collection_for_user(current_user.id)
         sample.collections << all_coll
 
-        sample.container =  SampleUpdator.update_datamodel(params[:container])
+        sample.container =  SampleUpdator.update_datamodel(current_user, params[:container])
 
         sample.save!
 

@@ -40,9 +40,9 @@ export default class Container extends Element {
     return this.attachments;
   }
 
-//  set attachments(attachments) {
-//      this._attachments = attachments.map(a => new Attachment(a));;
-//  }
+  //set attachments(attachments) {
+  //    this.attachments = attachments.map(a => new Attachment(a));;
+  //}
 
   serialize() {
     return super.serialize({
