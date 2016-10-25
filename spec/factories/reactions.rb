@@ -8,7 +8,7 @@ FactoryGirl.define do
     sequence(:name) { |i| "Reaction #{i}" }
     status "Successful"
     solvent "Aceton"
-    description "I am description"
+    description {{ "ops" => [{ "insert" => "I am description" }] }}
     purification "{TLC,Distillation}"
     rf_value 0.99
     tlc_solvents "D2O"

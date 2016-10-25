@@ -14,12 +14,16 @@ export default class Reaction extends Element {
       "data": []
     }
 
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     let reaction = new Reaction({
       collection_id: collection_id,
       type: 'reaction',
       name: '',
       status: "",
-      description: "",
+      description: description_default,
       timestamp_start: "",
       timestamp_stop: "",
       duration: "",
@@ -115,6 +119,10 @@ export default class Reaction extends Element {
 
   set temperature(temperature) {
     this._temperature = temperature
+  }
+
+  get description_contents() {
+    return this.description.ops.map(s => s.insert).join()
   }
 
   convertTemperature(newUnit) {
