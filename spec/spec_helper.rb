@@ -6,7 +6,10 @@ WebMock.disable_net_connect!(allow_localhost: true)
 
 require 'factory_girl_rails'
 
-
+require 'capybara'
+Capybara.register_driver :selenium do |app|
+  Capybara::Selenium::Driver.new(app, browser: :chrome)
+end
 
 RSpec.configure do |config|
   config.include FactoryGirl::Syntax::Methods
