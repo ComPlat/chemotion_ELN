@@ -1,6 +1,8 @@
 <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-            width="12in" height="3.33in"  viewBox="0 0 597 260.0">
-          <title>Reaction 1</title><g transform='translate(50, 0)'><g transform='scale(1)'><g transform='translate(10, 50)'>
+            width="1560" height="440" >
+            <rect  width="1560" height="440" stroke-width="1" stroke="white" fill="none"/>
+            <svg width="100%"  viewBox="0 0 657 260.0" >
+            <title>Reaction 1</title><g transform='translate(50, 0)'><g transform='scale(1)'><g transform='translate(10, 50)'>
 <line x1="40.0" y1="100.0" x2="40.0" y2="60.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="47.2" y1="94.0" x2="47.2" y2="66.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="40.0" y1="60.0" x2="74.6" y2="40.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
@@ -10,7 +12,7 @@
 <line x1="109.3" y1="100.0" x2="74.6" y2="120.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="100.5" y1="96.8" x2="76.2" y2="110.8" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
-</g></g></g><g transform='translate(259, 0)'><g transform='scale(0.75)'><g transform='translate(10, 20)'>
+</g></g></g><g transform='translate(289, 0)'><g transform='scale(0.75)'><g transform='translate(10, 20)'>
 <line x1="40.0" y1="100.0" x2="40.0" y2="60.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="47.2" y1="94.0" x2="47.2" y2="66.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="40.0" y1="60.0" x2="74.6" y2="40.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
@@ -21,19 +23,19 @@
 <line x1="100.5" y1="96.8" x2="76.2" y2="110.8" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="74.6" y1="120.0" x2="40.0" y2="100.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 </g></g></g><g transform='translate(259, 130)'>          <svg stroke="black" stroke-width="1">
-            <line x1="0" y1="4" x2="139" y2="4" stroke="black"/>
-            <polygon points="131,4 129,7 139,4 129,1"/>
+            <line x1="0" y1="4" x2="199" y2="4" stroke="black"/>
+            <polygon points="191,4 189,7 199,4 189,1"/>
           </svg>
 </g><g transform='translate(259, 130)'>            <svg font-family="sans-serif">
-              <text text-anchor="middle" x="69" y="55" font-size="13.1">Water</text>
+              <text text-anchor="middle" x="99" y="55" font-size="13.1">Water</text>
             </svg>
               <svg font-family="sans-serif">
-              <text text-anchor="middle" x="69" y="75" font-size="13.1">Aceton</text>
+              <text text-anchor="middle" x="99" y="80" font-size="13.1">Aceton</text>
             </svg>
 </g><g transform='translate(259, 130)'>          <svg font-family="sans-serif">
-            <text text-anchor="middle" x="69" y="30" font-size="15.1">37.5 °C</text>
+            <text text-anchor="middle" x="99" y="30" font-size="15.1">37.5 °C</text>
           </svg>
-</g><g transform='translate(438, 0)'><g transform='scale(1)'><g transform='translate(10, 50)'>
+</g><g transform='translate(498, 0)'><g transform='scale(1)'><g transform='translate(10, 50)'>
 <line x1="40.0" y1="100.0" x2="40.0" y2="60.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="47.2" y1="94.0" x2="47.2" y2="66.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
 <line x1="40.0" y1="60.0" x2="74.6" y2="40.0" stroke="rgb(0,0,0)" stroke-width="2.0"></line>
@@ -46,4 +48,4 @@
           <svg font-family="sans-serif">
             <text text-anchor="middle" font-size="14.1" y="170.0" x="74">68 %</text>
           </svg>
-</g></g></g></svg>
+</g></g></g></svg></svg>

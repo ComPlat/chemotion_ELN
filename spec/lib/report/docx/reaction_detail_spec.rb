@@ -28,9 +28,9 @@ describe 'Report::Docx::ReactionDetail instance' do
       expect(content.class).to eq(Hash)
     end
 
-    it "has a png image" do
+    it "has a eps image" do
       expect(content[:image].class).to eq(Sablon::Image::Definition)
-      expect(content[:image].name.split('.').last).to eq('png')
+      expect(content[:image].name.split('.').last).to eq('eps')
     end
 
     it "has a correct status" do

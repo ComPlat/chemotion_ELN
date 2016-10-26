@@ -43,11 +43,11 @@ module Report
       end
 
       def image
-        Image.new(obj: obj).generate_png
+        Image.new(obj: obj).generate_img
       end
 
       def image_product
-        Image.new(obj: obj).generate_product_png
+        Image.new(obj: obj).generate_product_img
       end
 
       def status

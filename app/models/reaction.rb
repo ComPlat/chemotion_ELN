@@ -130,6 +130,13 @@ class Reaction < ActiveRecord::Base
     return minTemp + " ~ " + maxTemp
   end
 
+  def temperature_display_with_unit
+    tp = temperature_display
+    if (tp =~ /^[\-|\d]\d*\.{0,1}\d{0,2}$/).present?
+      tp + " " + temperature["valueUnit"]
+    end
+  end
+
   def update_svg_file!
     paths = {}
     %i(starting_materials reactants products).each do |prop|
@@ -140,13 +147,7 @@ class Reaction < ActiveRecord::Base
     end
 
     begin
-      temperature_display = self.temperature_display
-      if ((temperature_display =~ /^[\-|\d]\d*\.{0,1}\d{0,2}$/).present?)
-        temperature_display = temperature_display + " " +
-                              self.temperature["valueUnit"]
-      end
-
-      composer = SVG::ReactionComposer.new(paths, temperature: temperature_display,
+      composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
                                                   solvents: solvents_in_svg)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
