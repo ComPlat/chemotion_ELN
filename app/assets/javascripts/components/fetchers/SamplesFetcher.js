@@ -113,6 +113,34 @@ export default class SamplesFetcher {
     return files
   }
 
+  static uploadDatasetAttachmentsForSample2(sample){
+
+    var allFiles = new Array();
+    this.filterAllAttachments(allFiles, sample.container.children);
+    if(allFiles.length > 1){
+      if(allFiles[1].length > 0){
+        SamplesFetcher.uploadFiles(allFiles[1]);
+      }
+    }
+  }
+
+  static filterAllAttachments(files, containers){
+
+    containers.forEach( (container) => {
+      const fileFromAttachment = function(attachment) {
+        let file = attachment.file;
+        file.id = attachment.id;
+        return file;
+      }
+      files.push(container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a))  );
+      if(container.children.length > 0){
+        this.filterAllAttachments(files, container.children);
+      }
+    });
+  }
+
+
+
   static update(sample) {
     let files = SamplesFetcher.getFileListfrom(sample.serialize())
     let promise = ()=> fetch('/api/v1/samples/' + sample.id, {

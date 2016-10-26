@@ -6,7 +6,8 @@ export default class Attachment extends Element {
     return new Attachment(
       {
         file: file,
-        name: file.name,
+        //name: file.name,
+        filename: file.name, //neu
         preview: file.preview
       }
     )
@@ -22,7 +23,7 @@ export default class Attachment extends Element {
 
   serialize() {
     return super.serialize({
-      name: this.name,
+      //name: this.name,
       filename: this.filename,
       file: this.file
     })

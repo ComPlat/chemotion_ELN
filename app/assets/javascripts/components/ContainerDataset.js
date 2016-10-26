@@ -35,7 +35,7 @@ export default class ContainerDataset extends Component {
     let attachments = files.map(f => Attachment.fromFile(f))
     dataset_container.attachments = dataset_container.attachments.concat(attachments)
     let attachment_list = dataset_container.attachments
-    let attach_name = attachment_list[attachment_list.length - 1].name
+    let attach_name = attachment_list[attachment_list.length - 1].filename
     attach_name = attach_name.slice(0, -4)
     dataset_container.name = attach_name
 
@@ -44,10 +44,10 @@ export default class ContainerDataset extends Component {
 
   handleAttachmentDownload(attachment) {
     if(attachment.preview) {
-      Utils.downloadFile({contents: attachment.preview, name: attachment.name});
+      Utils.downloadFile({contents: attachment.preview, name: attachment.filename});
     }
     else {
-      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.filename}/?filename=${attachment.name}`, name: attachment.name});
+      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.filename}/?filename=${attachment.filename}`, name: attachment.filename});
     }
   }
 
@@ -79,7 +79,7 @@ export default class ContainerDataset extends Component {
                     <img src={attachment.previewImage} />
                   </td>
                   <td>
-                    <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.name}</a>
+                    <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
                   </td>
                 </tr>
                 <tr>

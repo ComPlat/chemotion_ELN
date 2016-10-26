@@ -395,15 +395,23 @@ module Chemotion
             child.attachments.each do |attachment|
               #Save files
               begin
-                if(attachment.is_new)
-                  storage = Filesystem.new
-                  storage.move_from_temp_to_storage(user, attachment.id)
-                  #Speichern wo es liegt
-                  attachment_link = Attachment.new
-                  attachment_link.filename = attachment.id
-                  attachment_link.container = tmp
-                  attachment_link.save!
+                storage = Filesystem.new
+                storage.move_from_temp_to_storage(user, attachment.id)
+
+                if Attachment.exists?(:id => attachment.id)
+                    currentAttachment = Attachment.find_by id: attachment.id
+                    currentAttachment.filename = attachment.filename
+                    currentAttachment.save!
+                else
+                    newAttachment = Attachment.new
+                    newAttachment.identifier = attachment.file.id
+                    newAttachment.filename = attachment.filename
+                    newAttachment.container = tmp
+                    newAttachment.save!
                 end
+                
+              rescue
+                #TODO
               end
 
 
@@ -414,8 +422,9 @@ module Chemotion
               create_containers(user, child.children, tmp)
             end
 
-          end
-        end
+          end #method
+        end #class
+
 
 
       end #module
