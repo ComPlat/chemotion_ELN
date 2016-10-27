@@ -42,8 +42,9 @@ export default class ContainerDatasets extends Component {
   handleRemove(dataset_container) {
     let {container} = this.state;
 
-    const index = container.children.indexOf(dataset_container);
-    container.children.splice(index, 1);
+    //const index = container.children.indexOf(dataset_container);
+    //container.children.splice(index, 1);
+    dataset_container.is_deleted = true;
 
     this.props.onChange(container);
   }

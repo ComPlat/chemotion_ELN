@@ -113,14 +113,14 @@ export default class SamplesFetcher {
     return files
   }
 
+
   static uploadDatasetAttachmentsForSample2(sample){
 
     var allFiles = new Array();
     this.filterAllAttachments(allFiles, sample.container.children);
-    if(allFiles.length > 1){
-      if(allFiles[1].length > 0){
-        SamplesFetcher.uploadFiles(allFiles[1]);
-      }
+
+    if(allFiles.length > 0){
+        SamplesFetcher.uploadFiles(allFiles);
     }
   }
 
@@ -132,7 +132,9 @@ export default class SamplesFetcher {
         file.id = attachment.id;
         return file;
       }
-      files.push(container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a))  );
+      var tmpArray = container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a));
+      files.push.apply(files, tmpArray)
+
       if(container.children.length > 0){
         this.filterAllAttachments(files, container.children);
       }

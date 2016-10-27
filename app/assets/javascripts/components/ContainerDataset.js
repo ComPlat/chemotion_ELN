@@ -44,10 +44,12 @@ export default class ContainerDataset extends Component {
 
   handleAttachmentDownload(attachment) {
     if(attachment.preview) {
-      Utils.downloadFile({contents: attachment.preview, name: attachment.filename});
+      Utils.downloadFile({contents: attachment.preview,
+        filename: attachment.filename,
+        identifier: attachment,identifier});
     }
     else {
-      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.filename}/?filename=${attachment.filename}`, name: attachment.filename});
+      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.id}/?filename=${attachment.filename}`, name: attachment.filename});
     }
   }
 

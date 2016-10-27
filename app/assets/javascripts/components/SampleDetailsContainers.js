@@ -39,9 +39,10 @@ export default class SampleDetailsContainers extends Component {
   handleRemove(container) {
     let {sample} = this.state;
 
-    const index = sample.container.children.indexOf(container);
-    sample.container.children.splice(index, 1);
-
+    //const index = sample.container.children.indexOf(container);
+    //sample.container.children.splice(index, 1);
+    container.is_deleted = true;
+    
     this.props.parent.setState({sample: sample})
   }
 

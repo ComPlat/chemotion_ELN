@@ -1,4 +1,5 @@
 require 'open-uri'
+#require './helpers'
 
 module Chemotion
   class SampleAPI < Grape::API
@@ -250,9 +251,12 @@ module Chemotion
         env['api.format'] = :binary
         #File.open(File.join('uploads', 'attachments', "#{file_id}#{File.extname(filename)}")).read
 
-        attachment = Attachment.find_by identifier: file_id
-        storage = Filesystem.new
-        storage.read(current_user, attachment)
+        if Attachment.exists?(:id => file_id)
+          attachment = Attachment.find_by id: file_id
+          storage = Filesystem.new
+          storage.read(current_user, attachment)
+        end
+
       end
 
       module SampleUpdator
@@ -298,136 +302,8 @@ module Chemotion
           end
         end
 
-        def self.updated_analyses(user, sample, analyses)
-          root_container = sample.container
 
-          Array(analyses).map do |ana|
-            if Container.exists?(:id => ana.id)
-              ana_container = Container.find_by id: ana.id
-              ana_container.name = ana.name
-            else
-              #New entrie
-              ana_container = Container.create! :name => ana.name, :parent => root_container
-              ana_container.container_type = ana.type
-            end
-            ana_container.save!
-            {
-              id: ana_container.id,
-              type: ana_container.container_type,
-              name: ana.name,
-              kind: ana.kind,
-              status: ana.status,
-              content: ana.content,
-              description: ana.description,
-              #Datasets
-              datasets: Array(ana.datasets).map do |dataset|
-                if Container.exists?(:id => dataset.id)
-                  data_container = Container.find_by id: dataset.id
-                  data_container.name = dataset.name
-                else
-                 #New entrie
-                 data_container = Container.create! :name => dataset.name, :parent => ana_container
-                 data_container.container_type = dataset.type
-                end
-                data_container.save!
-                {
-                    id: data_container.id,
-                    type: data_container.container_type,
-                    name: dataset.name,
-                    instrument: dataset.instrument,
-                    description: dataset.description,
-                    #Attachments
-                    attachments: Array(dataset.attachments).map do |attachment|
-                      attachment_link = Attachment.where(id: attachment.id).first_or_create
-                      attachment_link.filename = attachment.name
-                      if(attachment.is_new)
-                        storage = Filesystem.new
-                        storage.move_from_temp_to_storage(user, attachment.file.id)
-                        #Speichern wo es liegt
-                      end
-                      attachment_link.container = data_container
-                      attachment_link.save!
-                      if(attachment.file)
-                        {
-                          id: attachment_link.id,
-                          name: attachment.name,
-                          filename: attachment.file.id
-                        }
-                      else
-                        {
-                          id: attachment_link.id,
-                          name: attachment.name,
-                          filename: attachment.filename
-                        }
-                      end
-                    end
-                }
-              end
-            }
-          end
-        end
-
-        def self.update_datamodel(user, container)
-          if Container.exists?(:id => container.id)
-            root_container = Container.find_by id: container.id
-          else
-            root_container = Container.new
-            root_container.name = "root";
-            root_container.save!
-          end
-
-          self.create_containers(user, container.children, root_container)
-
-          return root_container
-        end
-
-        def self.create_containers(user, children, root_container)
-          children.each do |child|
-            if Container.exists?(:id => child.id)
-              #Update container
-              tmp = Container.find_by id: child.id
-              tmp.name = child.name
-              tmp.save!
-            else
-              tmp = Container.create! :name => child.name, :parent => root_container
-            end
-
-            child.attachments.each do |attachment|
-              #Save files
-              begin
-                storage = Filesystem.new
-                storage.move_from_temp_to_storage(user, attachment.id)
-
-                if Attachment.exists?(:id => attachment.id)
-                    currentAttachment = Attachment.find_by id: attachment.id
-                    currentAttachment.filename = attachment.filename
-                    currentAttachment.save!
-                else
-                    newAttachment = Attachment.new
-                    newAttachment.identifier = attachment.file.id
-                    newAttachment.filename = attachment.filename
-                    newAttachment.container = tmp
-                    newAttachment.save!
-                end
-                
-              rescue
-                #TODO
-              end
-
-
-            end
-
-
-            if(child.children.length > 0)
-              create_containers(user, child.children, tmp)
-            end
-
-          end #method
-        end #class
-
-
-
-      end #module
+    end #module
 
 
       desc "Update sample by id"
@@ -465,11 +341,9 @@ module Chemotion
 
         put do
 
-
-
           attributes = declared(params, include_missing: false)
 
-          SampleUpdator.update_datamodel(current_user, attributes[:container]);
+          ContainerHelper.update_datamodel(current_user, attributes[:container]);
           attributes.delete(:container);
 
           embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
@@ -488,10 +362,7 @@ module Chemotion
             ) unless prop_value.blank?
           end
 
-
           if sample = Sample.find(params[:id])
-            #embedded_analyses = SampleUpdator.updated_analyses(current_user, sample, params[:analyses])
-            #attributes.merge!(analyses: embedded_analyses)
             sample.update!(attributes)
           end
 
@@ -579,7 +450,7 @@ module Chemotion
         all_coll = Collection.get_all_collection_for_user(current_user.id)
         sample.collections << all_coll
 
-        sample.container =  SampleUpdator.update_datamodel(current_user, params[:container])
+        sample.container =  ContainerHelper.update_datamodel(current_user, params[:container])
 
         sample.save!
 
