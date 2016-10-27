@@ -136,7 +136,7 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Reaction id"
         optional :name, type: String
-        optional :description, type: String
+        optional :description, type: Hash
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
         optional :observation, type: String
@@ -180,7 +180,7 @@ module Chemotion
       params do
         requires :collection_id, type: Integer, desc: "Collection id"
         optional :name, type: String
-        optional :description, type: String
+        optional :description, type: Hash
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
         optional :observation, type: String

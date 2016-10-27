@@ -5,6 +5,7 @@ class Reaction < ActiveRecord::Base
   include Collectable
 
   serialize :temperature, Hash
+  serialize :description, Hash
 
   multisearchable against: :name
 
@@ -135,6 +136,10 @@ class Reaction < ActiveRecord::Base
     if (tp =~ /^[\-|\d]\d*\.{0,1}\d{0,2}$/).present?
       tp + " " + temperature["valueUnit"]
     end
+  end
+
+  def description_contents
+    return description["ops"].map{|s| s["insert"]}.join()
   end
 
   def update_svg_file!
