@@ -34,7 +34,6 @@ describe Chemotion::ReactionSvgAPI do
       it 'returns svg with correct temperatrue, solvents & svg' do
         reaction_svg_path = JSON.parse(response.body)['reaction_svg']
         output_svg = File.read(Rails.root.join("public", "images", "reactions", reaction_svg_path))
-
         expect(output_svg).to include(solvent_1)
         expect(output_svg).to include(solvent_2)
         expect(output_svg).to include(temperature)

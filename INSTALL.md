@@ -17,6 +17,10 @@ if there are errors with nokogiri compilation with new xcode7:
 * `apt-get install libmagickcore-dev libmagickwand-dev` for linux
 * if installing the rmagick gem fails you may try: `IM_PREFIX=$(brew list imagemagick 2>&1 | grep -E 'identify$' | sed 's/bin\/identify$//g') PKG_CONFIG_PATH=${IM_PREFIX}lib/pkgconfig/ C_INCLUDE_PATH=${IM_PREFIX}include/ImageMagick*/ gem install rmagick` (OSX only)
 
+## inkscape
+* `sudo apt-get install inkscape` for Linux
+* For Mac OSX, you need to install XQuartz before inkscape: `brew install Caskroom/cask/xquartz`, and `brew install homebrew/gui/inkscape`.
+
 ## Dataset previews
 * `brew install imagemagick mplayer` for OSX
 * `sudo apt-get -y install imagemagick mplayer` for Linux

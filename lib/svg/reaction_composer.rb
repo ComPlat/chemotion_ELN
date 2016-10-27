@@ -6,12 +6,14 @@ module SVG
     REACTANT_SCALE = 0.75
     YIELD_YOFFSET = 10
     SOLVENT_LENGTH_LIMIT = 15
-    WORD_SIZE_BASE_REPORT = 10
-    WORD_SIZE_REPORT_SCALE = 3
+    WORD_SIZE_BASE_REPORT = 6
+    WORD_SIZE_REPORT_SCALE = 2
     WORD_SIZE_BASE_SVG = 8
     WORD_SIZE_SVG_SCALE = 1.7
     ARROW_LENGTH_BASE = 120
     ARROW_LENGTH_SCALE = 50
+    BOX_WIDTH = 1560
+    BOX_HEIGHT = 440
 
     attr_reader :starting_materials, :reactants, :products,
                 :num_starting_materials, :num_reactants, :num_products,
@@ -38,7 +40,7 @@ module SVG
     def compose_reaction_svg
       set_global_view_box_height
       section_it
-      template_it.strip + @sections.values.flatten.map(&:strip).join + "</svg>"
+      template_it.strip + @sections.values.flatten.map(&:strip).join.gsub("R#", "") + "</svg></svg>"
     end
 
     private
@@ -99,8 +101,10 @@ module SVG
       def template_it
         <<-END
           <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-            width="12in" height="3.33in" #{preserve_aspect_ratio} viewBox="#{global_view_box_array.join(' ')}">
-          <title>Reaction 1</title>
+            width="#{BOX_WIDTH}" height="#{BOX_HEIGHT}" >
+            <rect  width="#{BOX_WIDTH}" height="#{BOX_HEIGHT}" stroke-width="1" stroke="white" fill="none"/>
+            <svg width="100%" #{preserve_aspect_ratio} viewBox="#{global_view_box_array.join(' ')}" >
+            <title>Reaction 1</title>
         END
       end
 
@@ -116,7 +120,7 @@ module SVG
         (solvents.size >1 && solvents_lines || solvents).map.with_index do |solvent, index|
           <<-END
             <svg font-family="sans-serif">
-              <text text-anchor="middle" x="#{arrow_width / 2}" y="#{55 + index * 20}" font-size="#{word_size}">#{solvent}</text>
+              <text text-anchor="middle" x="#{arrow_width / 2}" y="#{55 + index * 25}" font-size="#{word_size}">#{solvent}</text>
             </svg>
           END
         end.join("  ")
@@ -184,7 +188,7 @@ module SVG
           if ind > 0
             group_width += 10
             output += divide_it(group_width,y_center)
-            group_width += 10
+            group_width += 50
           end
           material, yield_amount = *separate_material_yield(m)
           svg = inner_file_content(material)
@@ -201,11 +205,12 @@ module SVG
             output += "<g transform='translate(#{x_shift}, #{y_shift})'>" + svg.inner_html.to_s + yield_svg +"</g>"
           end
         end
-        output = "<g transform='translate(#{gvba[2]}, 0)'><g transform='scale(#{scale})'>" + output +"</g></g>"
+        reactant_shift = options[:is_reactants] ? 30 : 0
+        output = "<g transform='translate(#{gvba[2] + reactant_shift}, 0)'><g transform='scale(#{scale})'>" + output +"</g></g>"
         scaled_group_width = (group_width*scale).round
 
         if options[:arrow_width]
-          @arrow_width = [scaled_group_width, 50].max + 20
+          @arrow_width = [scaled_group_width, 50].max + 80
           gvba[2] += arrow_width
         else
           gvba[2] += scaled_group_width
@@ -237,7 +242,7 @@ module SVG
         output
       end
 
-      def section_it()
+      def section_it
         sections = {}
         y_center = (global_view_box_array[3]/2).round
         sections[:starting_materials] = compose_material_group(starting_materials, { start_at: 0, y_center: y_center })

@@ -1,55 +1,67 @@
 module Report
   module Docx
     class Image
-      attr_accessor :obj, :svg_file
+      attr_accessor :obj, :svg_data
       def initialize(args)
         @obj = args[:obj]
-        @svg_file = args.fetch(:svg_file, nil)
       end
 
-      def generate_png
-        png
+      def generate_img
+        img
       end
 
-      def generate_product_png
-        product_png
+      def generate_product_img
+        product_img
       end
 
       private
-      def png
-        Sablon::Image.create_by_path(png_path)
+      def img
+        Sablon::Image.create_by_path(img_path)
       end
 
-      def product_png
+      def product_img
         is_product_only = true
-        Sablon::Image.create_by_path(png_path(is_product_only))
+        Sablon::Image.create_by_path(img_path(is_product_only))
       end
 
       def set_svg
-        @svg_file = SVG::ReactionComposer.new(materials_svg_paths,
+        @svg_data = SVG::ReactionComposer.new(materials_svg_paths,
                                               solvents: solvents,
                                               temperature: temperature_svg_paths,
                                               is_report: true).compose_reaction_svg
       end
 
       def set_product_svg
-        @svg_file = SVG::ProductsComposer.new(materials_svg_paths,
+        @svg_data = SVG::ProductsComposer.new(materials_svg_paths,
                                               is_report: true).compose_svg
       end
 
-      def png_path(is_product_only = false)
+      def img_path(is_product_only = false)
         is_product_only ? set_product_svg : set_svg
-        unless svg_file.nil?
-          file = Tempfile.new(['image', '.png'])
-          svg_to_img("png").write_to_png(file.path)
-          return file.path
+        unless svg_data.nil?
+          svg_path = generate_svg_file_path
+          output_path = generate_ouput_file_path
+          inkscape_convert(svg_path, output_path)
+          return output_path
         else
           raise "Fehler: Kein Bild angegeben"
         end
       end
 
-      def svg_to_img(type)
-        Svg2pdf.convert_to_img_data(svg_file, type.to_sym)
+      def generate_svg_file_path
+        svg_file = Tempfile.new(['image', '.svg'])
+        File.open(svg_file.path, 'w') { |file| file.write(svg_data) }
+        svg_file.path
+      end
+
+      def generate_ouput_file_path
+        output_file = Tempfile.new(['image', '.eps'])
+        File.open(output_file.path, 'w')
+        output_file.path
+      end
+
+      def inkscape_convert(input, output)
+        system "inkscape --export-text-to-path --without-gui --file=#{input} --export-eps=#{output} --export-width=1550 --export-height=440"
       end
 
       def materials_svg_paths
@@ -68,7 +80,7 @@ module Report
       end
 
       def temperature_svg_paths
-        [obj.temperature_display].reject{|c| c.blank?}.join(", ")
+        [obj.temperature_display_with_unit].reject{|c| c.blank?}.join(", ")
       end
     end
   end
