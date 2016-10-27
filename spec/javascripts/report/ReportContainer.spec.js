@@ -27,12 +27,12 @@ describe('ReportContainer', () => {
     expect(actual).toInclude(expectedGenerateBtn).toInclude(expectedCancelBtn)
   })
 
-  it('should render Setting/Config/Report Tabs', () => {
+  it('should render Setting/Config/Order/Report Tabs', () => {
     const component = initState()
     const actualPanel = component.find('Panel').html()
     const actualTab = component.find('Tab').length
-    expect(actualPanel).toInclude('Setting').toInclude('Config').toInclude('Report')
-    expect(actualTab).toEqual(3)
+    expect(actualPanel).toInclude('Setting').toInclude('Config')
+      .toInclude('Order').toInclude('Report')
   })
 
   it('should render Reports', () => {
