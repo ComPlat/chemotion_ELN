@@ -5,6 +5,7 @@ class Reaction < ActiveRecord::Base
   include Collectable
 
   serialize :temperature, Hash
+  serialize :description, Hash
 
   multisearchable against: :name
 
@@ -128,6 +129,10 @@ class Reaction < ActiveRecord::Base
 
     return minTemp
     return minTemp + " ~ " + maxTemp
+  end
+
+  def description_contents
+    return description["ops"].map{|s| s["insert"]}.join()
   end
 
   def update_svg_file!

@@ -33,7 +33,7 @@ describe('Reports', () => {
           toInclude(fakeReaction.products[0].short_label).
           toInclude(fakeReaction.products[0].molecule.sum_formular).
           toInclude(fakeReaction.solvent).
-          toInclude(fakeReaction.description).
+          toInclude(fakeReaction.description_contents).
           toInclude(fakeReaction.purification[0]).
           toInclude(fakeReaction.tlc_solvents).
           toInclude(fakeReaction.tlc_description).
@@ -56,7 +56,7 @@ describe('Reports', () => {
         const expected = fakeReaction
         const actual = wrapper([fakeReaction], [], []).html()
         expect(actual).toNotInclude(fakeReaction.solvent).
-          toNotInclude(fakeReaction.description).
+          toNotInclude(fakeReaction.description_contents).
           toNotInclude(fakeReaction.purification[0]).
           toNotInclude(fakeReaction.tlc_solvents).
           toNotInclude(fakeReaction.tlc_description).

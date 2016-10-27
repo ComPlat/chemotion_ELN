@@ -10,6 +10,7 @@ import {solventOptions, statusOptions} from './staticDropdownOptions/options'
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import LineChartContainer from './lineChart/LineChartContainer'
 import EditableTable from './lineChart/EditableTable'
+import QuillEditor from './QuillEditor'
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
@@ -145,13 +146,8 @@ export default class ReactionDetailsMainProperties extends Component {
             <Col md={12}>
               <FormGroup>
                 <ControlLabel>Description</ControlLabel>
-                <FormControl
-                  componentClass="textarea"
-                  rows={10}
-                  value={reaction.description || ''}
-                  disabled={reaction.isMethodDisabled('description')}
-                  placeholder="Description..."
-                  onChange={event => onInputChange('description', event)}/>
+                <QuillEditor value={reaction.description}
+                  onChange={event => onInputChange('description', event)} />
               </FormGroup>
             </Col>
           </Row>

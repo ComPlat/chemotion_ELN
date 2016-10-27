@@ -157,7 +157,7 @@ module Report
       end
 
       def description
-        obj.description
+        obj.description_contents
       end
 
       def solvents

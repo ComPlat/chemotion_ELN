@@ -18,7 +18,7 @@ const Reports = ({selectedReactions, settings, configs}) => {
 }
 
 const Report = ({reaction, settings, configs}) => {
-  const {description, literatures, starting_materials, reactants,
+  const {description_contents, literatures, starting_materials, reactants,
          products, solvents, solvent, dangerous_products, purification,
          observation, reaction_svg_file, tlc_description,
          tlc_solvents, rf_value, status } = reaction
@@ -61,8 +61,8 @@ const Report = ({reaction, settings, configs}) => {
       <SolventContent show={settings_obj.material}
                       solvents={solvents}
                       solvent={solvent} />
-      <DescriptionContent show={settings_obj.description && description}
-                          description={description} />
+      <DescriptionContent show={settings_obj.description && description_contents}
+                          description={description_contents} />
       <PurificationContent show={settings_obj.purification && purification.length != 0}
                            purification={purification} />
       <TLCContent show={settings_obj.tlc && tlc_description}

@@ -3,6 +3,7 @@ import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
   OverlayTrigger, Tooltip} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
+import QuillEditor from './QuillEditor'
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
@@ -149,7 +150,8 @@ export default class ReactionDetails extends Component {
 
   handleInputChange(type, event) {
     let value
-    if (type == "temperatureUnit" || type == "temperatureData")  {
+    if (type == "temperatureUnit" || type == "temperatureData" ||
+        type == "description")  {
       value = event;
     } else {
       value = event.target.value;
