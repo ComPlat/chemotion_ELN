@@ -7,9 +7,9 @@ import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
 import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
-import ElementStore from '../stores/ElementStore';
 
 import Reports from './Reports';
+import Orders from './Orders';
 import CheckBoxs from '../common/CheckBoxs';
 
 export default class ReportContainer extends Component {
@@ -17,8 +17,6 @@ export default class ReportContainer extends Component {
     super(props);
     this.state = {
       ...ReportStore.getState(),
-      selectedReactionIds: [],
-      selectedReactions: []
     }
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
@@ -40,24 +38,8 @@ export default class ReportContainer extends Component {
   }
 
   onChangeUI(state) {
-    let checkedIds = state['reaction'].checkedIds.toArray()
-    this.setState({selectedReactionIds: checkedIds})
-    this.setSelectedReactions(checkedIds)
-  }
-
-  setSelectedReactions(selectedReactionIds) {
-    let preSelectedReactions = this.state.selectedReactions
-    let allReactions = preSelectedReactions.concat(ElementStore.state.elements.reactions.elements) || []
-
-    let selectedReaction = selectedReactionIds.map( id => {
-      return allReactions.map( reaction => {
-        if(reaction.id === id){
-          return reaction
-        }
-        return null
-      }).filter(r => r!=null)[0]
-    })
-    this.setState({selectedReactions: selectedReaction})
+    const checkedIds = state['reaction'].checkedIds.toArray()
+    ReportActions.updateCheckedIds.defer(checkedIds);
   }
 
   render() {
@@ -90,7 +72,13 @@ export default class ReportContainer extends Component {
                           checkedAll={this.state.checkedAllConfigs} />
             </Tab>
 
-            <Tab eventKey={2} title={"Report"}>
+            <Tab eventKey={2} title={"Order"}>
+              <div className="panel-fit-screen">
+                <Orders selectedReactions={this.state.selectedReactions} />
+              </div>
+            </Tab>
+
+            <Tab eventKey={3} title={"Report"}>
               <div className="panel-fit-screen">
                 <Reports selectedReactions={this.state.selectedReactions}
                          settings={this.state.settings}
@@ -126,8 +114,7 @@ export default class ReportContainer extends Component {
   }
 
   generateReports() {
-    const ids = this.state.selectedReactionIds.join('_')
-    ReportActions.generateReports(ids)
+    ReportActions.generateReports()
   }
 
   generateReportsBtn() {

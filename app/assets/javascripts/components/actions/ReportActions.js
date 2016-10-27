@@ -17,8 +17,16 @@ class ReportActions {
     return null;
   }
 
-  generateReports(ids) {
+  generateReports() {
+    return null;
+  }
+
+  updateCheckedIds(ids) {
     return ids;
+  }
+
+  move({sourceId, targetId}) {
+    return {sourceId, targetId};
   }
 }
 

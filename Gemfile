@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+ruby '2.3.1'
+
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.0'
 
@@ -137,6 +139,7 @@ group :test do
   gem "capybara", "~> 2.7.1"
   gem "launchy", "~> 2.4.3"
   gem "selenium-webdriver", "~> 2.53.4"
+  gem "chromedriver-helper", "1.0.0"
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here

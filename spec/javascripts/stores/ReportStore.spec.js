@@ -41,7 +41,9 @@ describe('ReportStore', () => {
                  {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ],
       checkedAllSettings: false,
       checkedAllConfigs: true,
-      processingReport: false
+      processingReport: false,
+      selectedReactionIds: [],
+      selectedReactions: [],
     }
     expect(newState).toEqual(expected)
   })

@@ -1,8 +1,8 @@
 module LoginMacros
   def sign_in(user)
     visit root_path
-    fill_in 'Email', with: user.email
-    fill_in 'Password', with: user.password
-    click_button 'Log in'
+    fill_in 'email', with: user.email
+    fill_in 'password', with: user.password
+    find('button[type="submit"]').click
   end
 end

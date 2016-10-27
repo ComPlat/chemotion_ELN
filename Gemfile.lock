@@ -94,6 +94,8 @@ GEM
     addressable (2.4.0)
     ancestry (2.1.0)
       activerecord (>= 3.0.0)
+    archive-zip (0.7.0)
+      io-like (~> 0.3.0)
     arel (6.0.3)
     autoprefixer-rails (6.3.6)
       execjs
@@ -155,6 +157,9 @@ GEM
       timers (~> 4.0.0)
     childprocess (0.5.9)
       ffi (~> 1.0, >= 1.0.11)
+    chromedriver-helper (1.0.0)
+      archive-zip (~> 0.7.0)
+      nokogiri (~> 1.6)
     chronic (0.10.2)
     climate_control (0.0.3)
       activesupport (>= 3.0)
@@ -261,6 +266,7 @@ GEM
       multi_xml (>= 0.5.2)
     i18n (0.7.0)
     ice_nine (0.11.2)
+    io-like (0.3.0)
     jbuilder (2.4.1)
       activesupport (>= 3.0.0, < 5.1)
       multi_json (~> 1.2)
@@ -497,6 +503,7 @@ DEPENDENCIES
   capistrano-rvm
   capistrano3-delayed-job
   capybara (~> 2.7.1)
+  chromedriver-helper (= 1.0.0)
   coveralls
   daemons
   database_cleaner
@@ -544,3 +551,9 @@ DEPENDENCIES
   webmock
   whenever
   yaml_db
+
+RUBY VERSION
+   ruby 2.3.1p112
+
+BUNDLED WITH
+   1.13.6

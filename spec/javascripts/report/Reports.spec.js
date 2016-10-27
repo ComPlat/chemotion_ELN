@@ -26,8 +26,7 @@ describe('Reports', () => {
       it('should render a report header, materials, solvent, description, purification, tlc, observation', () => {
         const expected = fakeReaction
         const actual = wrapper([fakeReaction], settings, configs).html()
-        expect(actual).toInclude(fakeReaction.name).
-          toInclude(fakeReaction.starting_materials[0].short_label).
+        expect(actual).toInclude(fakeReaction.starting_materials[0].short_label).
           toInclude(fakeReaction.starting_materials[0].molecule.sum_formular).
           toInclude(fakeReaction.reactants[0].short_label).
           toInclude(fakeReaction.reactants[0].molecule.sum_formular).
@@ -56,8 +55,7 @@ describe('Reports', () => {
       it('should render a report header only', () => {
         const expected = fakeReaction
         const actual = wrapper([fakeReaction], [], []).html()
-        expect(actual).toInclude(fakeReaction.name).
-          toNotInclude(fakeReaction.solvent).
+        expect(actual).toNotInclude(fakeReaction.solvent).
           toNotInclude(fakeReaction.description_contents).
           toNotInclude(fakeReaction.purification[0]).
           toNotInclude(fakeReaction.tlc_solvents).

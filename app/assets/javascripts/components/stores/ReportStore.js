@@ -1,5 +1,6 @@
 import alt from '../alt'
 import ReportActions from '../actions/ReportActions'
+import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
 
 class ReportStore {
@@ -17,13 +18,17 @@ class ReportStore {
     this.checkedAllSettings = true
     this.checkedAllConfigs = true
     this.processingReport = false
+    this.selectedReactionIds = []
+    this.selectedReactions = []
 
     this.bindListeners({
       handleUpdateSettings: ReportActions.updateSettings,
       handleToggleSettingsCheckAll: ReportActions.toggleSettingsCheckAll,
       handleUpdateConfigs: ReportActions.updateConfigs,
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
-      handleGenerateReports: ReportActions.generateReports
+      handleGenerateReports: ReportActions.generateReports,
+      handleUpdateCheckedIds: ReportActions.updateCheckedIds,
+      handleMove: ReportActions.move,
     })
   }
 
@@ -69,7 +74,8 @@ class ReportStore {
     })
   }
 
-  handleGenerateReports(ids) {
+  handleGenerateReports() {
+    const ids = this.selectedReactionIds.join('_')
     const settings = this.chainedItems(this.settings)
     const configs = this.chainedItems(this.configs)
     this.spinnerProcess()
@@ -92,6 +98,34 @@ class ReportStore {
         : null
     }).filter(r => r!=null).join('_')
   }
+
+  handleUpdateCheckedIds(ids) {
+    this.setState({selectedReactionIds: ids});
+    this.setReactions();
+  }
+
+  setReactions() {
+    const preSelectedReactions = this.selectedReactions;
+    const allReactions = preSelectedReactions.concat(ElementStore.state.elements.reactions.elements) || [];
+    const selectedReaction = this.selectedReactionIds.map( id => {
+      return allReactions.map( reaction => {
+        if(reaction.id === id){
+          return reaction;
+        }
+        return null;
+      }).filter(r => r!=null)[0];
+    });
+    this.setState({selectedReactions: selectedReaction});
+  }
+
+  handleMove({sourceId, targetId}) {
+    let selectedIds = this.selectedReactionIds;
+    const sourceIndex = selectedIds.indexOf(sourceId);
+    const targetIndex = selectedIds.indexOf(targetId);
+    selectedIds.splice(sourceIndex, 1);
+    selectedIds.splice(targetIndex, 0, sourceId);
+    this.handleUpdateCheckedIds(selectedIds);
+  }
 }
 
-export default alt.createStore(ReportStore, 'ReportStore')
+export default alt.createStore(ReportStore, 'ReportStore');
