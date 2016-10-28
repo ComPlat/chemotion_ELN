@@ -6,6 +6,7 @@ module Report
         @obj = args[:reaction]
         @last_id = args[:last_id]
         @digit = args.fetch(:digit, 3)
+        @img_format = args[:img_format]
       end
 
       def content
@@ -43,11 +44,11 @@ module Report
       end
 
       def image
-        Image.new(obj: obj).generate_img
+        Image.new(obj: obj, format: @img_format).generate_img
       end
 
       def image_product
-        Image.new(obj: obj).generate_product_img
+        Image.new(obj: obj, format: @img_format).generate_product_img
       end
 
       def status
@@ -198,5 +199,3 @@ module Report
     end
   end
 end
-
-

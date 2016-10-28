@@ -5,6 +5,7 @@ module Report
       def initialize(args)
         @objs = args[:reactions]
         @contents = Array.new
+        @img_format = args[:img_format]
       end
 
       def reactions
@@ -16,7 +17,11 @@ module Report
 
       private
       def reaction_content(reaction)
-        ReactionDetail.new(reaction: reaction, last_id: last_id).content
+        ReactionDetail.new(
+            reaction: reaction,
+            last_id: last_id,
+            img_format: @img_format
+          ).content
       end
 
       def last_id

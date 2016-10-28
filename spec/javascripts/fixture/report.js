@@ -19,6 +19,7 @@ const originalState = {
   processingReport: false,
   selectedReactionIds: [],
   selectedReactions: [],
+  imgFormat: 'png'
 }
 
 export { originalState, settings, configs }

@@ -108,6 +108,7 @@ module Chemotion
         requires :ids
         requires :settings
         requires :configs
+        optional :img_format, default: 'png', values: %w(png eps emf)
       end
 
       get :docx do
@@ -115,7 +116,10 @@ module Chemotion
         settings = set_settings(params[:settings].split("_"))
         configs = set_configs(params[:configs].split("_"))
         reactions = ids.map { |id| Reaction.find(id) }
-        contents = Report::Docx::Document.new(reactions: reactions).reactions
+        contents = Report::Docx::Document.new(
+                      reactions: reactions,
+                      img_format: params[:img_format]
+                    ).reactions
 
         filename = "ELN_Reactions_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
         template_path = Rails.root.join("lib", "template", "ELN_Reactions.docx")
