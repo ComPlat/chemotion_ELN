@@ -1,0 +1,10 @@
+server 'my-server.example.com', user: 'dev', roles: %w{app web db}
+
+set :ssh_options, {
+  forward_agent: false,
+  auth_methods: %w(publickey)
+}
+
+set :deploy_to, '/home/dev/path/to/deploy'
+set :user, 'dev'
+set :tmp_dir, '/home/dev/tmp_dir'
