@@ -2,7 +2,7 @@
 class Filesystem
 
   def initialize
-    @upload_root_folder = "uploadNew4711"
+    @upload_root_folder = "uploadNew"
     @thumbnail_folder = "thumbnails"
 
     @temp_folder = "temp"
@@ -18,15 +18,21 @@ class Filesystem
     end
   end
 
-  def move_from_temp_to_storage(user, file_id)
+  def move_from_temp_to_storage(user, file_id, thumbnail)
     begin
         folder = File.join(@upload_root_folder, user.id.to_s)
         FileUtils.mkdir_p(folder) unless Dir.exist?(folder)
-        path = File.join(folder, file_id)
-        tpath = File.join(@temp_folder, file_id)
-        FileUtils.mv(tpath, path)
+        dest_path = File.join(folder, file_id)
+        source_path = File.join(@temp_folder, file_id)
+        FileUtils.mv(source_path, dest_path)
+
+        if thumbnail
+          create_thumbnail(user, dest_path)
+        end
+
       rescue Exception => e
         puts "ERROR: Can not copy tmp-file to storage: " + e.message
+        raise e.message
       end
   end
 
@@ -53,16 +59,20 @@ class Filesystem
   end
 
 
+private
 
-
-
-  def create_thumbnail(file_id, file_path)
+  def create_thumbnail(user, file_path)
     begin
+      dest_folder = File.join(@upload_root_folder, user.id.to_s, @thumbnail_folder)
+      FileUtils.mkdir_p(dest_folder) unless Dir.exist?(dest_folder)
+
       thumbnail_path = Thumbnailer.create(file_path)
-      FileUtils.mv(thumbnail_path, File.join(@upload_root_folder, @thumbnail_folder, "#{file_id}.png"))
-    rescue
-      #Thumbnail konnte nicht erzeugt werden
-      puts "Thumbnail Fehler !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
+      if thumbnail_path && File.exists?(thumbnail_path)
+        FileUtils.mv(thumbnail_path, dest_folder)
+      end
+    rescue Exception => e
+      puts "ERROR: Can not create thumbnail: " + e.message
     end
   end
 end

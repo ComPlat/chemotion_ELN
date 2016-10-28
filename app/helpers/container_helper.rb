@@ -41,23 +41,23 @@ private
 
   def self.create_or_update_attachments(user, parent_container_id, attachments)
     attachments.each do |attachment|
-      begin
-        storage = Filesystem.new
-        storage.move_from_temp_to_storage(user, attachment.id)
+      if Attachment.exists?(:id => attachment.id)
+        currentAttachment = Attachment.find_by id: attachment.id
+        currentAttachment.filename = attachment.filename
+        currentAttachment.save!
+      else
+        begin
+          storage = Filesystem.new
+          storage.move_from_temp_to_storage(user, attachment.id, true)
 
-        if Attachment.exists?(:id => attachment.id)
-          currentAttachment = Attachment.find_by id: attachment.id
-          currentAttachment.filename = attachment.filename
-          currentAttachment.save!
-        else
           newAttachment = Attachment.new
           newAttachment.identifier = attachment.file.id
           newAttachment.filename = attachment.filename
           newAttachment.container_id = parent_container_id
           newAttachment.save!
+        rescue Exception => e
+          puts "ERROR: Can not create attachment: " + e.message
         end
-      rescue Exception => e
-        puts "ERROR: Can not create attachment: " + e.message
       end
     end
   end

@@ -226,9 +226,9 @@ module Chemotion
               #FileUtils.cp(tempfile.path, upload_path)
               storage = Filesystem.new
               storage.temp(file_id, IO.binread(tempfile))
-            end
-            begin
-              create_thumbnail(tempfile.path, file_id)
+            #end
+            #begin
+            #  create_thumbnail(tempfile.path, file_id)
             ensure
               tempfile.close
               tempfile.unlink   # deletes the temp file
