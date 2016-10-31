@@ -46,9 +46,17 @@ export default class ReactionDetailsScheme extends Component {
       }
     }
 
+    this.insertSolventExtLabel(splitSample, materialGroup, external_label);
+
     reaction.addMaterial(splitSample, materialGroup);
 
     this.onReactionChange(reaction, {schemaChanged: true});
+  }
+
+  insertSolventExtLabel(splitSample, materialGroup, external_label) {
+    if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
+      splitSample.external_label = external_label;
+    }
   }
 
   deleteMaterial(material, materialGroup) {
