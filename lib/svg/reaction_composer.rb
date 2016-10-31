@@ -40,7 +40,7 @@ module SVG
     def compose_reaction_svg
       set_global_view_box_height
       section_it
-      template_it.strip + @sections.values.flatten.map(&:strip).join.gsub("R#", "") + "</svg></svg>"
+      template_it.strip + sections_string_filtered + "</svg></svg>"
     end
 
     private
@@ -261,6 +261,14 @@ module SVG
         key_base = "#{filenames.to_a.flatten.join}#{solvents.join('_')}#{temperature}"
         hash_of_filenames = Digest::SHA256.hexdigest(key_base)
         hash_of_filenames + '.svg'
+      end
+
+      def sections_string
+        @sections.values.flatten.map(&:strip).join
+      end
+
+      def sections_string_filtered
+        sections_string.gsub("R#", "").gsub("font=\'30px \"Arial\"\'", "")
       end
   end
 end
