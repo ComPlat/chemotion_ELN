@@ -6,13 +6,13 @@ import Utils from '../utils/Functions'
 class ReportStore {
   constructor() {
     this.settings = [ {text: "formula", checked: true},
-  	                  {text: "material", checked: true},
-  	                  {text: "description", checked: true},
+                      {text: "material", checked: true},
+                      {text: "description", checked: true},
                       {text: "purification", checked: true},
                       {text: "tlc", checked: true},
                       {text: "observation", checked: true},
                       {text: "analysis", checked: true},
-  	                  {text: "literature", checked: true} ]
+                      {text: "literature", checked: true} ]
     this.configs = [ {text: "Page Break", checked: true},
                      {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ]
     this.checkedAllSettings = true
@@ -20,6 +20,7 @@ class ReportStore {
     this.processingReport = false
     this.selectedReactionIds = []
     this.selectedReactions = []
+    this.imgFormat = 'png'
 
     this.bindListeners({
       handleUpdateSettings: ReportActions.updateSettings,
@@ -29,7 +30,12 @@ class ReportStore {
       handleGenerateReports: ReportActions.generateReports,
       handleUpdateCheckedIds: ReportActions.updateCheckedIds,
       handleMove: ReportActions.move,
+      handleUpdateImgFormat: ReportActions.updateImgFormat
     })
+  }
+
+  handleUpdateImgFormat(value) {
+    this.setState({ imgFormat: value })
   }
 
   handleUpdateSettings(target) {
@@ -81,7 +87,8 @@ class ReportStore {
     this.spinnerProcess()
     Utils.downloadFile({
       contents: "api/v1/multiple_reports/docx?ids=" + ids
-                + "&settings=" + settings + "&configs=" + configs,
+                + "&settings=" + settings + "&configs=" + configs
+                + "&img_format=" + this.imgFormat,
       name: "ELN-report_" + new Date().toISOString().slice(0,19)
     })
   }

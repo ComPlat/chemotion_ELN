@@ -1,6 +1,11 @@
 import alt from '../alt';
 
 class ReportActions {
+
+  updateImgFormat(value) {
+    return value;
+  }
+
   updateSettings(target) {
     return target;
   }

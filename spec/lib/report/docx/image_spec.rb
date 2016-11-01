@@ -5,14 +5,14 @@ describe 'Report::Docx::Image instance' do
   let(:instance) { Report::Docx::Image.new(obj: r1) }
 
   context '.generate_eps' do
-    let(:eps) { instance.generate_img }
+    let(:png) { instance.generate_img }
 
     it "returns an image class" do
-      expect(eps.class).to eq(Sablon::Image::Definition)
+      expect(png.class).to eq(Sablon::Image::Definition)
     end
 
-    it "returns a eps file" do
-      expect(eps.name.split('.').last).to eq('eps')
+    it "returns a png file" do
+      expect(png.name.split('.').last).to eq('png')
     end
   end
 end

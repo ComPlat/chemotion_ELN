@@ -4,6 +4,7 @@ module Report
       attr_accessor :obj, :svg_data
       def initialize(args)
         @obj = args[:obj]
+        @format = args[:format] || 'png'
       end
 
       def generate_img
@@ -55,13 +56,13 @@ module Report
       end
 
       def generate_ouput_file_path
-        output_file = Tempfile.new(['image', '.eps'])
+        output_file = Tempfile.new(['image', ".#{@format}"])
         File.open(output_file.path, 'w')
         output_file.path
       end
 
       def inkscape_convert(input, output)
-        system "inkscape --export-text-to-path --without-gui --file=#{input} --export-eps=#{output} --export-width=1550 --export-height=440"
+        system "inkscape --export-text-to-path --without-gui --file=#{input} --export-#{@format}=#{output} --export-width=1550 --export-height=440"
       end
 
       def materials_svg_paths

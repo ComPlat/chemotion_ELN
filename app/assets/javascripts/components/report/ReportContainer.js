@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Panel, Button, Tabs, Tab} from 'react-bootstrap';
+import {Panel, Button, Tabs, Tab, Row, Col} from 'react-bootstrap';
 import StickyDiv from 'react-stickydiv'
 import Aviator from 'aviator';
 
@@ -11,6 +11,7 @@ import UIStore from '../stores/UIStore';
 import Reports from './Reports';
 import Orders from './Orders';
 import CheckBoxs from '../common/CheckBoxs';
+import Select from 'react-select';
 
 export default class ReportContainer extends Component {
   constructor(props) {
@@ -42,7 +43,23 @@ export default class ReportContainer extends Component {
     ReportActions.updateCheckedIds.defer(checkedIds);
   }
 
+  handleImgFormatChanged(e) {
+    ReportActions.updateImgFormat(e);
+  }
+
   render() {
+    const imgFormatOpts = [
+      { label: 'PNG', value: 'png'},
+      { label: 'EPS', value: 'eps'},
+      { label: 'EMF', value: 'emf'}
+    ];
+    let EPSwarning = (this.state.imgFormat == 'eps')
+                    ?
+                      <p className="text-danger" style={{paddingTop: 12}}>
+                        WARNING: EPS format is not supported by Microsoft Office
+                      </p>
+                    :
+                      null;
     return (
       <StickyDiv zIndex={2}>
         <Panel header="Report Generation"
@@ -70,6 +87,20 @@ export default class ReportContainer extends Component {
                           toggleCheckbox={this.toggleConfigs}
                           toggleCheckAll={this.toggleConfigsAll}
                           checkedAll={this.state.checkedAllConfigs} />
+              <Row>
+                <Col md={3} sm={8}>
+                  <label>Images format</label>
+                  <Select options={imgFormatOpts}
+                          value={this.state.imgFormat}
+                          clearable={false}
+                          style={{width: 100}}
+                          onChange={(e) => this.handleImgFormatChanged(e)}/>
+                </Col>
+                <Col md={9} sm={16}>
+                  <label></label>
+                  {EPSwarning}
+                </Col>
+              </Row>
             </Tab>
 
             <Tab eventKey={2} title={"Order"}>

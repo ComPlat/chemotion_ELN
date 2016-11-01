@@ -42,6 +42,7 @@ describe('ReportStore', () => {
       checkedAllSettings: false,
       checkedAllConfigs: true,
       processingReport: false,
+      imgFormat: 'png',
       selectedReactionIds: [],
       selectedReactions: [],
     }
