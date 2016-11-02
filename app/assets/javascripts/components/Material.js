@@ -455,6 +455,9 @@ class Material extends Component {
 
     if (skipIupacName) {
       let materialDisplayName = material.molecule_iupac_name || material.name
+      if(this.props.materialGroup == 'solvents') {
+        materialDisplayName = material.external_label || materialDisplayName
+      }
       if (materialDisplayName == null || materialDisplayName == "") {
         materialDisplayName = (
           <span>
