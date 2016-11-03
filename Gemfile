@@ -47,16 +47,16 @@ gem 'awesome_print'
 
 # Report Generator
 gem 'rtf'
-gem 'sablon', github: 'ComPlat/sablon'
+gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 gem 'rmagick'
-gem 'axlsx', git: 'git://github.com/randym/axlsx'
+gem 'axlsx', git: 'https://github.com/randym/axlsx'
 # Import of elements from XLS and CSV file
 gem 'roo', ">2.5.0"
 
 gem 'httparty'
 gem 'faraday'
 # Ketcher editor
-gem 'ketcherails', github: 'ComPlat/ketcher-rails'
+gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails'
 
 # Free font icons
 gem "font-awesome-rails"
@@ -82,9 +82,9 @@ gem 'yaml_db'
 gem 'coveralls', require: false
 
 if ENV.fetch("RAILS_ENV", "development").match(/^(development|test)\z/)
-  gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
+  gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
 elsif ENV["RAILS_ENV"] == "production"
-  gem 'openbabel', '2.3.2.1', github: 'cubuslab/openbabel-gem'
+  gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
 end
 
 group :production do
@@ -143,6 +143,6 @@ end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
 
-#gem 'scifinding', '0.1.0', github: 'ComPlat/scifinding' , :group => [:plugins,:development,:production]
+#gem 'scifinding', '0.1.0', git: 'https://github.com/ComPlat/scifinding' , :group => [:plugins,:development,:production]
 
 ####

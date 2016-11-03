@@ -1,6 +1,6 @@
 GIT
-  remote: git://github.com/ComPlat/ketcher-rails.git
-  revision: e861040d117cb52d8c1a170142433b8f3830a14d
+  remote: https://github.com/ComPlat/ketcher-rails
+  revision: 2b2bab56fc9e98962fd4ad89f5e91ba33c6dceb6
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
@@ -13,7 +13,7 @@ GIT
       sprite-factory
 
 GIT
-  remote: git://github.com/ComPlat/sablon.git
+  remote: https://github.com/ComPlat/sablon
   revision: 03130357d526230e36647a0d5d348ed3c5a51d42
   specs:
     sablon (0.0.19)
@@ -22,26 +22,26 @@ GIT
       rubyzip (>= 1.1)
 
 GIT
-  remote: git://github.com/cubuslab/openbabel-gem.git
+  remote: https://github.com/cubuslab/openbabel-gem
   revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
   specs:
     openbabel (2.3.2.1)
-
-GIT
-  remote: git://github.com/randym/axlsx
-  revision: d136835f3a3a54831ad2c7c793a51d3a57273892
-  specs:
-    axlsx (2.1.0.pre)
-      htmlentities (~> 4.3.4)
-      mimemagic (~> 0.3)
-      nokogiri (>= 1.6.6)
-      rubyzip (~> 1.1.7)
 
 GIT
   remote: https://github.com/merlin-p/thumbnailer.git
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
     thumbnailer (0.2.0)
+
+GIT
+  remote: https://github.com/randym/axlsx
+  revision: b7b65c0a49abceccda380222cd08bc28307e89f4
+  specs:
+    axlsx (2.1.0.pre)
+      htmlentities (~> 4.3.4)
+      mimemagic (~> 0.3)
+      nokogiri (>= 1.6.6)
+      rubyzip (~> 1.1.7)
 
 GEM
   remote: https://rubygems.org/
@@ -288,7 +288,7 @@ GEM
     mime-types (3.0)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0221)
-    mimemagic (0.3.1)
+    mimemagic (0.3.2)
     mini_portile2 (2.0.0)
     minitest (5.9.0)
     multi_json (1.12.0)
