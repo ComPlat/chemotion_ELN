@@ -225,7 +225,9 @@ module Chemotion
             begin
               #FileUtils.cp(tempfile.path, upload_path)
               storage = Filesystem.new
-              storage.temp(file_id, IO.binread(tempfile))
+              file_id_filename = file_id + file.filename
+
+              storage.temp(file_id_filename, IO.binread(tempfile))
             #end
             #begin
             #  create_thumbnail(tempfile.path, file_id)

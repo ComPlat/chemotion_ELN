@@ -8,26 +8,28 @@ class Filesystem
     @temp_folder = "temp"
   end
 
-  def temp(file_id, file)
+  def temp(file_id_filename, file)
     begin
       FileUtils.mkdir_p(@temp_folder) unless Dir.exist?(@temp_folder)
-      path = File.join(@temp_folder, file_id)
+      path = File.join(@temp_folder, file_id_filename)
       IO.binwrite(path, file)
     rescue Exception => e
       puts "ERROR: Can not write tmp-file: " + e.message
     end
   end
 
-  def move_from_temp_to_storage(user, file_id, thumbnail)
+  def move_from_temp_to_storage(user, file_id_filename, thumbnail)
     begin
         folder = File.join(@upload_root_folder, user.id.to_s)
         FileUtils.mkdir_p(folder) unless Dir.exist?(folder)
-        dest_path = File.join(folder, file_id)
-        source_path = File.join(@temp_folder, file_id)
+
+        dest_path = File.join(folder, file_id_filename)
+
+        source_path = File.join(@temp_folder, file_id_filename)
         FileUtils.mv(source_path, dest_path)
 
         if thumbnail
-          create_thumbnail(user, dest_path)
+          create_thumbnail(user, dest_path, file_id_filename)
         end
 
       rescue Exception => e
@@ -61,15 +63,21 @@ class Filesystem
 
 private
 
-  def create_thumbnail(user, file_path)
+  def create_thumbnail(user, file_path, file_id)
     begin
       dest_folder = File.join(@upload_root_folder, user.id.to_s, @thumbnail_folder)
       FileUtils.mkdir_p(dest_folder) unless Dir.exist?(dest_folder)
 
       thumbnail_path = Thumbnailer.create(file_path)
 
+      puts "!!!!!!!!!!!!!!!!!!!! TM PATH " + thumbnail_path
+
+      dest = File.join(dest_folder, "#{file_id}.png")
+
+      puts "!!!!!!!!!!!!!!!!!!!!!!! DEST " + dest
+
       if thumbnail_path && File.exists?(thumbnail_path)
-        FileUtils.mv(thumbnail_path, dest_folder)
+        FileUtils.mv(thumbnail_path, dest)
       end
     rescue Exception => e
       puts "ERROR: Can not create thumbnail: " + e.message

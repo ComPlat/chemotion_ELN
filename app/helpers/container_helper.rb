@@ -48,10 +48,12 @@ private
       else
         begin
           storage = Filesystem.new
-          storage.move_from_temp_to_storage(user, attachment.id, true)
+          file_id_filename = attachment.id + attachment.filename
+          storage.move_from_temp_to_storage(user, file_id_filename, true)
 
           newAttachment = Attachment.new
-          newAttachment.identifier = attachment.file.id
+
+          newAttachment.identifier = file_id_filename
           newAttachment.filename = attachment.filename
           newAttachment.container_id = parent_container_id
           newAttachment.save!
