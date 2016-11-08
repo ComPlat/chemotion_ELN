@@ -4,7 +4,7 @@ import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName'
-import UiStore from './stores/UIStore';
+import ElementActions from './actions/ElementActions'
 
 const source = {
   beginDrag(props) {
@@ -19,9 +19,8 @@ const collect = (connect, monitor) => ({
 
 class Material extends Component {
   handleMaterialClick(sample) {
-    const uiState = UiStore.getState();
-    let currentURI = Aviator.getCurrentURI();
-    Aviator.navigate(`${currentURI}/sample/${sample.id}`);
+    let { reaction } = this.props;
+    ElementActions.showReactionMaterial({ sample: sample, reaction: reaction })
   }
 
   notApplicableInput(inputsStyle) {
