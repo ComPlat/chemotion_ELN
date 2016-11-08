@@ -81,6 +81,7 @@ class ElementStore {
       handleUpdateSampleForWellplate: ElementActions.updateSampleForWellplate,
       handleCopySampleFromClipboard: ElementActions.copySampleFromClipboard,
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
+      handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
       handleDeselectCurrentReaction: ElementActions.deselectCurrentReaction,
@@ -259,13 +260,11 @@ class ElementStore {
 
   handleUpdateSampleForReaction() {
     UserActions.fetchCurrentUser();
-    let reactionID = this.state.currentReaction;
-    this.state.currentElement = null;
+    let reaction = this.state.currentReaction;
     this.state.currentReaction = null;
+    this.state.currentElement = reaction;
 
     this.handleRefreshElements('sample');
-
-    ElementActions.fetchReactionById(reactionID)
   }
 
   handleUpdateSampleForWellplate() {
@@ -320,6 +319,13 @@ class ElementStore {
 
     this.state.currentMaterialGroup = materialGroup
     reaction.changed = true
+    this.state.currentReaction = reaction
+    this.state.currentElement = sample
+  }
+
+  handleShowReactionMaterial(params) {
+    let { reaction, sample } = params
+
     this.state.currentReaction = reaction
     this.state.currentElement = sample
   }
@@ -446,7 +452,9 @@ class ElementStore {
 
   handleOpenReactionDetails(reaction) {
     this.state.currentReaction = null;
-    this.state.currentElement = reaction;
+    this.state.currentElement = reaction
+
+    this.handleRefreshElements('sample')
   }
 
   // -- Reactions Literatures --

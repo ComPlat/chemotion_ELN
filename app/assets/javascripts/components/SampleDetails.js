@@ -168,13 +168,9 @@ export default class SampleDetails extends React.Component {
 
   closeDetails() {
     let { currentReaction, currentWellplate } = ElementStore.getState()
-    let {sample} = this.state
 
     if(currentReaction) {
-      if(sample.isNew)
-        ElementActions.openReactionDetails(currentReaction)
-      else
-        ElementActions.fetchReactionById(currentReaction)
+      ElementActions.openReactionDetails(currentReaction)
     } else if(currentWellplate) {
       ElementActions.fetchWellplateById(currentWellplate)
     } else {

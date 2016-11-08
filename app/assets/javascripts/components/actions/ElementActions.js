@@ -153,6 +153,10 @@ class ElementActions {
     return  params;
   }
 
+  showReactionMaterial(params) {
+    return  params;
+  }
+
   importSamplesFromFile(params) {
     return (dispatch) => { SamplesFetcher.importSamplesFromFile(params)
       .then((result) => {
