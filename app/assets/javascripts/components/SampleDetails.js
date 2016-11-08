@@ -47,28 +47,17 @@ export default class SampleDetails extends React.Component {
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
-    this.onChange = this.onChange.bind(this);
   }
 
-  componentDidMount() {
-    ElementStore.listen(this.onChange);
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      sample: nextProps.sample,
+      loadingMolecule: false,
+    });
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.onChange);
     this.clipboard.destroy();
-  }
-
-  onChange(state) {
-    if(state.currentElement && state.currentElement.type == 'sample') {
-      this.setState({
-        sample: state.currentElement,
-        reaction: state.currentReaction,
-        materialGroup: state.currentMaterialGroup,
-        samplePanelFixed: false,
-        loadingMolecule: false
-      });
-    }
   }
 
   handleSampleChanged(sample) {
@@ -127,7 +116,7 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
-  submitFunction(closeView = false) {
+  handleSubmit(closeView = false) {
     let {sample} = this.state
     let { currentReaction, currentWellplate } = ElementStore.getState()
 
@@ -151,24 +140,10 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(new Sample(sample))
       }
     }
-  }
-
-  closeDetails() {
-    let { currentReaction, currentWellplate } = ElementStore.getState()
-
-    if(currentReaction) {
-      ElementActions.openReactionDetails(currentReaction)
-    } else if(currentWellplate) {
-      ElementActions.fetchWellplateById(currentWellplate)
-    } else {
-      UIActions.deselectAllElements()
-      ElementActions.deselectCurrentElement()
-      const {currentCollection,isSync} = UIStore.getState()
-      Aviator.navigate(isSync
-        ? `/scollection/${currentCollection.id}`
-        : `/collection/${currentCollection.id}`
-      )
+    if(sample.is_new) {
+      this.props.closeDetails(sample);
     }
+    sample.updateChecksum();
   }
 
   structureEditorButton(isDisabled) {
@@ -220,14 +195,14 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-          onClick={() => this.closeDetails()}>
+          onClick={() => this.props.closeDetails(sample)}>
           <i className="fa fa-times"></i>
         </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-            onClick={() => this.submitFunction()}
+            onClick={() => this.handleSubmit()}
             style={{display: saveBtnDisplay}}
             disabled={!this.sampleIsValid()} >
             <i className="fa fa-floppy-o "></i>
@@ -479,7 +454,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Button bsStyle="warning"
-              onClick={() => this.submitFunction(closeView)}
+              onClick={() => this.handleSubmit(closeView)}
               disabled={!this.sampleIsValid()}>
               {submitLabel}
       </Button>
@@ -498,7 +473,7 @@ export default class SampleDetails extends React.Component {
     return (
       <ButtonToolbar>
         <Button bsStyle="primary"
-                onClick={() => this.closeDetails()}>
+                onClick={() => this.props.closeDetails(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
@@ -537,7 +512,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Panel className="panel-detail"
              header={this.sampleHeader(sample)}
-             bsStyle={sample.isEdited ? 'info' : 'primary'}>
+             bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
         {this.sampleInfo(sample)}
         <ListGroup>
         <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
@@ -552,5 +527,6 @@ export default class SampleDetails extends React.Component {
 }
 SampleDetails.propTypes = {
   sample: React.PropTypes.object,
+  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }
