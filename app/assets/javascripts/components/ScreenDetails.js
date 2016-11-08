@@ -2,9 +2,6 @@ import React, {Component} from 'react';
 import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
-import Aviator from 'aviator';
 import ScreenWellplates from './ScreenWellplates';
 
 import ElementActions from './actions/ElementActions';
@@ -31,6 +28,9 @@ export default class ScreenDetails extends Component {
       ElementActions.createScreen(screen);
     } else {
       ElementActions.updateScreen(screen);
+    }
+    if(screen.is_new) {
+      this.props.closeDetails(screen);
     }
   }
 
@@ -62,16 +62,6 @@ export default class ScreenDetails extends Component {
     });
   }
 
-  closeDetails() {
-    UIActions.deselectAllElements();
-
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}`
-      : `/collection/${currentCollection.id}`
-    );
-  }
-
   dropWellplate(wellplate) {
     const {screen} = this.state;
 
@@ -98,14 +88,14 @@ export default class ScreenDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeScreen">Close Screen</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => this.closeDetails()} >
+            onClick={() => this.props.closeDetails(screen)} >
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveScreen">Save Screen</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-                  onClick={() => this.submitFunction()}
+                  onClick={() => this.handleSubmit()}
                   style={{display: saveBtnDisplay}} >
             <i className="fa fa-floppy-o "></i>
           </Button>
@@ -129,7 +119,7 @@ export default class ScreenDetails extends Component {
 
     return (
       <Panel header={this.screenHeader(screen)}
-             bsStyle={screen.isEdited ? 'info' : 'primary'}
+             bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
              className="panel-detail">
         <ListGroup fill>
           <ListGroupItem>
@@ -220,7 +210,7 @@ export default class ScreenDetails extends Component {
           </ListGroupItem>
         </ListGroup>
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => this.closeDetails()}>Close</Button>
+          <Button bsStyle="primary" onClick={() => this.props.closeDetails(screen)}>Close</Button>
           <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
         </ButtonToolbar>
       </Panel>
@@ -230,5 +220,6 @@ export default class ScreenDetails extends Component {
 
 ScreenDetails.propTypes = {
   screen: React.PropTypes.object,
+  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }

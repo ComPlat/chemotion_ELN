@@ -9,7 +9,6 @@ import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
 
 import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
 
 const cols = 12;
 
@@ -22,8 +21,6 @@ export default class WellplateDetails extends Component {
       activeTab: 0,
       showWellplate: true,
     }
-
-    this.handleResize = this.handleResize.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -36,15 +33,6 @@ export default class WellplateDetails extends Component {
     }
   }
 
-  closeDetails() {
-    UIActions.deselectAllElements();
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}`
-      : `/collection/${currentCollection.id}`
-    );
-  }
-
   handleSubmit() {
     const {currentCollection} = UIStore.getState();
     const {wellplate} = this.state;
@@ -53,6 +41,9 @@ export default class WellplateDetails extends Component {
       ElementActions.createWellplate(wellplate.serialize());
     } else {
       ElementActions.updateWellplate(wellplate.serialize());
+    }
+    if(wellplate.is_new) {
+      this.props.closeDetails(wellplate);
     }
   }
 
@@ -94,7 +85,7 @@ export default class WellplateDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeWellplate">Close Wellplate</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall"
-            className="button-right" onClick={() => this.closeDetails()} >
+            className="button-right" onClick={() => this.props.closeDetails(wellplate)} >
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -121,7 +112,6 @@ export default class WellplateDetails extends Component {
     const {wellplate, activeTab, showWellplate} = this.state;
     const {wells, name, size, description} = wellplate;
     const submitLabel = wellplate.isNew ? "Create" : "Save";
-
     const properties = {
       name,
       size,
@@ -130,7 +120,7 @@ export default class WellplateDetails extends Component {
 
     return (
       <Panel header={this.wellplateHeader(wellplate)}
-             bsStyle={wellplate.isEdited ? 'info' : 'primary'}
+             bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'}
              className="panel-detail">
         <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
               id="wellplateDetailsTab">
@@ -164,7 +154,7 @@ export default class WellplateDetails extends Component {
         <ButtonToolbar>
           <Button
             bsStyle="primary"
-            onClick={() => this.closeDetails()}
+            onClick={() => this.props.closeDetails(wellplate)}
             >
             Close
           </Button>
@@ -189,5 +179,6 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.object.isRequired,
+  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 };

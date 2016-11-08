@@ -10,8 +10,6 @@ import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
 
@@ -46,16 +44,6 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  closeDetails() {
-    UIActions.deselectAllElements();
-    ElementActions.deselectCurrentReaction();
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}`
-      : `/collection/${currentCollection.id}`
-    );
-  }
-
   updateReactionSvg() {
     const {reaction} = this.state;
     const materialsSvgPaths = {
@@ -81,7 +69,7 @@ export default class ReactionDetails extends Component {
     ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 
-  submitFunction() {
+  handleSubmit() {
     const {reaction} = this.state;
 
     // set corrected values before we save the reaction
@@ -102,6 +90,9 @@ export default class ReactionDetails extends Component {
       ElementActions.createReaction(reaction);
     } else {
       ElementActions.updateReaction(reaction);
+    }
+    if(reaction.is_new) {
+      this.props.closeDetails(reaction);
     }
   }
 
@@ -210,14 +201,14 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-              onClick={this.closeDetails.bind(this)}>
+              onClick={() => this.props.closeDetails(reaction)}>
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-              onClick={() => this.submitFunction()}
+              onClick={() => this.handleSubmit()}
               disabled={!this.reactionIsValid()}
               style={{display: hasChanged}} >
             <i className="fa fa-floppy-o "></i>
@@ -263,7 +254,7 @@ export default class ReactionDetails extends Component {
 
     return (
       <Panel className='panel-detail' header={this.reactionHeader(reaction)}
-             bsStyle={reaction.changed ? 'info' : 'primary'}>
+             bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         {this.reactionSVG(reaction)}
         <Tabs defaultActiveKey={0} id="reaction-detail-tab">
           <Tab eventKey={0} title={'Scheme'}>
@@ -292,10 +283,10 @@ export default class ReactionDetails extends Component {
         </Tabs>
         <hr/>
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => this.closeDetails()}>
+          <Button bsStyle="primary" onClick={() => this.props.closeDetails(reaction)}>
             Close
           </Button>
-          <Button bsStyle="warning" onClick={() => this.submitFunction()} disabled={!this.reactionIsValid()}>
+          <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
             {submitLabel}
           </Button>
           <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
@@ -309,5 +300,6 @@ export default class ReactionDetails extends Component {
 
 ReactionDetails.propTypes = {
   reaction: React.PropTypes.object,
+  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }
