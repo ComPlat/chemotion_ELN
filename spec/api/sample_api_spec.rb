@@ -225,6 +225,9 @@ describe Chemotion::SampleAPI do
             solvent: '',
             impurities: '',
             location: '',
+            density: 0.5,
+            boiling_point: 100,
+            melting_point: 200,
           #  molecule: FactoryGirl.create(:molecule),
             molfile: '',
             is_top_secret: false
