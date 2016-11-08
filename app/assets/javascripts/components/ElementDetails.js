@@ -5,7 +5,6 @@ import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
-import ReportContainer from './report/ReportContainer';
 
 export default class ElementDetails extends Component {
   constructor(props) {
@@ -58,9 +57,6 @@ export default class ElementDetails extends Component {
       case 'screen':
         return <ScreenDetails
                   screen={currentElement}
-                  toggleFullScreen={this.toggleFullScreen}/>;
-      case 'report':
-        return <ReportContainer
                   toggleFullScreen={this.toggleFullScreen}/>;
     }
   }
