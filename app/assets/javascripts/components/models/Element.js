@@ -33,6 +33,10 @@ export default class Element {
     return this.is_new == true
   }
 
+  get isPendingToSave() {
+    return !_.isEmpty(this) && (this.isNew || this.isEdited);
+  }
+
   updateChecksum() {
     this._checksum = this.checksum();
   }

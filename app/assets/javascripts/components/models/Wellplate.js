@@ -105,4 +105,7 @@ export default class Wellplate extends Element {
     };
   }
 
+  title() {
+    return this.name;
+  }
 }
