@@ -43,7 +43,8 @@ export default class WellplateDetails extends Component {
       ElementActions.updateWellplate(wellplate.serialize());
     }
     if(wellplate.is_new) {
-      this.props.closeDetails(wellplate);
+      const force = true;
+      this.props.closeDetails(wellplate, force);
     }
   }
 

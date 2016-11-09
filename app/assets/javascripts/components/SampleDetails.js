@@ -141,7 +141,8 @@ export default class SampleDetails extends React.Component {
       }
     }
     if(sample.is_new) {
-      this.props.closeDetails(sample);
+      const force = true;
+      this.props.closeDetails(sample, force);
     }
     sample.updateChecksum();
   }
@@ -194,10 +195,10 @@ export default class SampleDetails extends React.Component {
         <i className="icon-sample" /> {sample.title()}
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
-        <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-          onClick={() => this.props.closeDetails(sample)}>
-          <i className="fa fa-times"></i>
-        </Button>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+            onClick={() => this.props.closeDetails(sample)}>
+            <i className="fa fa-times"></i>
+          </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}>

@@ -92,7 +92,8 @@ export default class ReactionDetails extends Component {
       ElementActions.updateReaction(reaction);
     }
     if(reaction.is_new) {
-      this.props.closeDetails(reaction);
+      const force = true;
+      this.props.closeDetails(reaction, force);
     }
   }
 

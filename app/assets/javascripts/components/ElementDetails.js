@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import StickyDiv from 'react-stickydiv'
-import {Tabs, Tab, Button, Label} from 'react-bootstrap';
+import {Tabs, Tab, Label} from 'react-bootstrap';
 import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
@@ -8,6 +8,7 @@ import ScreenDetails from './ScreenDetails';
 import { SameEleTypId } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
+import { ConfirmModal } from './common/ConfirmModal';
 
 export default class ElementDetails extends Component {
   constructor(props) {
@@ -17,11 +18,13 @@ export default class ElementDetails extends Component {
       offsetTop: 70,
       fullScreen: false,
       activeKey: 0,
+      deletingElement: null,
     }
     this.handleResize = this.handleResize.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
-    this.deleteCurrentElement = this.deleteCurrentElement.bind(this);
+    this.closeDetails = this.closeDetails.bind(this);
     this.selectTab = this.selectTab.bind(this);
+    this.confirmDelete = this.confirmDelete.bind(this);
   }
 
   componentDidMount() {
@@ -100,6 +103,36 @@ export default class ElementDetails extends Component {
     );
   }
 
+  isDeletable(deleteEl) {
+    return deleteEl.isPendingToSave ? false : true;
+  }
+
+  closeDetails(deleteEl, force = false) {
+    const isDeletable = this.isDeletable(deleteEl);
+    if(force || isDeletable) {
+      this.deleteCurrentElement(deleteEl);
+    } else {
+      this.setState({ deletingElement: deleteEl });
+    }
+  }
+
+  confirmDelete(confirm) {
+    const deleteEl = this.state.deletingElement;
+    if(confirm) {
+      this.deleteCurrentElement(deleteEl);
+    }
+    this.setState({ deletingElement: null });
+  }
+
+  confirmDeleteContent() {
+    return (
+      <div>
+        <p>If you select Yes, you will lose the unsaved data.</p>
+        <p>Are you sure to close it?</p>
+      </div>
+    );
+  }
+
   selectTab(index) {
     this.resetCurrentElement(index, this.state.selecteds);
   }
@@ -124,19 +157,19 @@ export default class ElementDetails extends Component {
     switch (el.type) {
       case 'sample':
         return <SampleDetails sample={el}
-                  closeDetails={this.deleteCurrentElement}
+                  closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
       case 'reaction':
         return <ReactionDetails reaction={el}
-                  closeDetails={this.deleteCurrentElement}
+                  closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
       case 'wellplate':
         return <WellplateDetails wellplate={el}
-                  closeDetails={this.deleteCurrentElement}
+                  closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
       case 'screen':
         return <ScreenDetails screen={el}
-                  closeDetails={this.deleteCurrentElement}
+                  closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
     }
   }
@@ -172,7 +205,7 @@ export default class ElementDetails extends Component {
   }
 
   render() {
-    const { fullScreen, selecteds, activeKey, offsetTop } = this.state;
+    const { fullScreen, selecteds, activeKey, offsetTop, deletingElement } = this.state;
     const fScrnClass = fullScreen ? "full-screen" : "";
 
     return(
@@ -188,6 +221,10 @@ export default class ElementDetails extends Component {
             })}
           </Tabs>
         </StickyDiv>
+        <ConfirmModal showModal={deletingElement !== null}
+          title="Confirm Delete"
+          content={this.confirmDeleteContent()}
+          onClick={this.confirmDelete} />
       </div>
     )
   }

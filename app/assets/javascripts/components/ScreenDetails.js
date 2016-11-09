@@ -30,7 +30,8 @@ export default class ScreenDetails extends Component {
       ElementActions.updateScreen(screen);
     }
     if(screen.is_new) {
-      this.props.closeDetails(screen);
+      const force = true;
+      this.props.closeDetails(screen, force);
     }
   }
 
