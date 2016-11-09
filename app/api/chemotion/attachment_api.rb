@@ -16,6 +16,20 @@ module Chemotion
         end
       end
 
+
+      resource :thumbnail do
+        desc 'Return Base64 encoded thumbnail'
+        get do
+          if Attachment.exists?(:id => params[:id])
+            attachment = Attachment.find_by id: params[:id]
+            storage = Filesystem.new
+            storage.read_thumbnail(current_user, attachment)
+          else
+            nil
+          end
+        end
+      end
+
     end
   end
 end

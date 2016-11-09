@@ -9,7 +9,8 @@ export default class Container extends Element {
       name: 'new Container',
       children: [],
       attachments: [],
-      is_deleted: false
+      is_deleted: false,
+      description: '',
     })
   }
 
@@ -18,7 +19,8 @@ export default class Container extends Element {
       name: 'root',
       children: [],
       attachments: [],
-      is_deleted: false
+      is_deleted: false,
+      descrption: '',
     })
   }
 
@@ -54,6 +56,7 @@ export default class Container extends Element {
       attachments: this.attachments.map(a => a.serialize()),
       is_new: this.isNew || false,
       is_deleted: this.deleted,
+      description: this.description,
     })
   }
 

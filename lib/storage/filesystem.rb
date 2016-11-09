@@ -55,11 +55,32 @@ class Filesystem
       path = File.join(folder, attachment.identifier)
 
       File.delete(path)
+
+      folder_thumbnail = File.join(@upload_root_folder, user.id.to_s, @thumbnail_folder)
+      path_thumbnail = File.join(folder_thumbnail, "#{attachment.identifier}.png")
+
+      if File.exist?(path_thumbnail)
+        File.delete(path_thumbnail)
+      end
     rescue Exception => e
       puts "ERROR: Can not delete file: " + e.message
     end
   end
 
+  def read_thumbnail(user, attachment)
+    begin
+      folder = File.join(@upload_root_folder, user.id.to_s, @thumbnail_folder)
+      path = File.join(folder, "#{attachment.identifier}.png")
+
+      if File.exist?(path)
+        Base64.encode64(File.open(path, 'rb').read)
+      else
+        nil
+      end
+    rescue
+      puts "ERROR: Can not read thumbnail: " + e.message
+    end
+  end
 
 private
 
@@ -70,11 +91,7 @@ private
 
       thumbnail_path = Thumbnailer.create(file_path)
 
-      puts "!!!!!!!!!!!!!!!!!!!! TM PATH " + thumbnail_path
-
       dest = File.join(dest_folder, "#{file_id}.png")
-
-      puts "!!!!!!!!!!!!!!!!!!!!!!! DEST " + dest
 
       if thumbnail_path && File.exists?(thumbnail_path)
         FileUtils.mv(thumbnail_path, dest)
@@ -83,4 +100,5 @@ private
       puts "ERROR: Can not create thumbnail: " + e.message
     end
   end
+
 end

@@ -25,6 +25,9 @@ export default class ContainerComponent extends Component {
       case 'name':
         container.name = value;
         break;
+      case 'description':
+        container.description = value;
+        break;
     }
     this.props.onChange(container);
 
@@ -61,6 +64,18 @@ export default class ContainerComponent extends Component {
             label="Name"
             value={container.name || '***'}
             onChange={event => this.handleInputChange('name', event)}/>
+        </Col>
+        <Col md={12}>
+          <FormGroup>
+            <ControlLabel>Description</ControlLabel>
+            <FormControl
+              componentClass="textarea"
+              label="Description"
+              value={container.description || ''}
+              disabled={readOnly}
+              onChange={event => this.handleInputChange('description', event)}
+              />
+          </FormGroup>
         </Col>
         <Col md={12}>
           <label>Datasets</label>

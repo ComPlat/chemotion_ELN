@@ -95,6 +95,30 @@ export default class ContainerDatasets extends Component {
     }
   }
 
+  datasetField(dataset_container){
+    if(dataset_container.is_deleted){
+      return (
+        <strike>
+        {dataset_container.name}
+        </strike>
+      )
+    }else{
+      return(
+        <div>
+        <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset_container)}>
+          {dataset_container.name}
+        </a>
+        <ButtonToolbar className="pull-right">
+          <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
+            <i className="fa fa-download"></i>
+          </Button>
+          {this.removeButton(dataset_container)}
+        </ButtonToolbar>
+        </div>
+      )
+    }
+  }
+
   render() {
     const {container, modal} = this.state;
     if(container.children.length > 0) {
@@ -105,15 +129,7 @@ export default class ContainerDatasets extends Component {
               {container.children.map((dataset_container, key) => {
                 return (
                   <ListGroupItem key={key}>
-                    <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset_container)}>
-                      {dataset_container.name}
-                    </a>
-                    <ButtonToolbar className="pull-right">
-                      <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
-                        <i className="fa fa-download"></i>
-                      </Button>
-                      {this.removeButton(dataset_container)}
-                    </ButtonToolbar>
+                    {this.datasetField(dataset_container)}
                   </ListGroupItem>
                 )
               })}

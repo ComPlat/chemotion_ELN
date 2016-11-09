@@ -42,7 +42,7 @@ export default class SampleDetailsContainers extends Component {
     //const index = sample.container.children.indexOf(container);
     //sample.container.children.splice(index, 1);
     container.is_deleted = true;
-    
+
     this.props.parent.setState({sample: sample})
   }
 
@@ -63,7 +63,6 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
-
   render() {
     const {sample, activeContainer} = this.state;
     const {readOnly} = this.props;
@@ -77,25 +76,23 @@ export default class SampleDetailsContainers extends Component {
         <i className="fa fa-trash"></i>
       </Button></p>
 
-
     var c = sample.container.children.length;
     if(c > 0 ){
       return (
         <div>
         <p>&nbsp;{this.addButton()}</p>
         <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-          {sample.container.children.map(
-              (container, key) =>
-              <Panel header={containerHeader(container)} eventKey={key}
-                  key={key} onClick={() => this.handleAccordionOpen(key)}>
-                <ContainerComponent
-                  readOnly={readOnly}
-                  container={container}
-                  onChange={container => this.handleChange(container)}
-                />
-              </Panel>
-            )}
-          </PanelGroup>
+          {sample.container.children.map((container, key) =>
+            <Panel header={containerHeader(container)} eventKey={key}
+                key={key} onClick={() => this.handleAccordionOpen(key)}>
+              <ContainerComponent
+                readOnly={readOnly}
+                container={container}
+                onChange={container => this.handleChange(container)}
+              />
+            </Panel>
+          )}
+        </PanelGroup>
         </div>
       )
     }else {

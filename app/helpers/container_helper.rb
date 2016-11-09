@@ -6,6 +6,8 @@ module ContainerHelper
     else
       root_container = Container.new
       root_container.name = "root";
+      root_container.description = container.description
+
       root_container.save!
     end
 
@@ -24,6 +26,8 @@ private
           #Update container
           tmp = Container.find_by id: child.id
           tmp.name = child.name
+          tmp.description = child.description
+
           tmp.save!
           create_or_update_attachments(user, tmp.id, child.attachments)
           create_or_update_containers(user, child.children, tmp)

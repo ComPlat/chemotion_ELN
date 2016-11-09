@@ -18,12 +18,39 @@ export default class ContainerDataset extends Component {
     };
   }
 
+  componentDidMount() {
+    this.createAttachmentPreviews(this.state.dataset_container);
+  }
+
+  createAttachmentPreviews(dataset_container) {
+    const { attachments } = dataset_container;
+    let updatedAttachments = attachments.map((attachment) => {
+      return AttachmentFetcher.fetchThumbnail2({id: attachment.id}).then((result) => {
+        if(result != null) {
+          attachment.preview = `data:image/png;base64,${result}`;
+        }
+        return attachment;
+      });
+    });
+
+    Promise.all(updatedAttachments).then((attachments) => {
+      dataset_container.attachments = attachments;
+
+      this.setState({
+        dataset_container: dataset_container
+      });
+    });
+  }
+
  handleInputChange(type, event) {
     const {dataset_container} = this.state;
     const {value} = event.target;
     switch(type) {
       case 'name':
         dataset_container.name = value;
+        break;
+      case 'description':
+        dataset_container.description = value;
         break;
     }
     this.setState({dataset_container});
@@ -78,7 +105,7 @@ export default class ContainerDataset extends Component {
               <Table className="borderless"><tbody>
                 <tr>
                   <td rowSpan="2" width="128">
-                    <img src={attachment.previewImage} />
+                    <img src={attachment.preview} />
                   </td>
                   <td>
                     <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
@@ -148,6 +175,18 @@ export default class ContainerDataset extends Component {
                 />
             </FormGroup>
 
+          </Col>
+          <Col md={12} style={{padding: 0}}>
+            <FormGroup controlId="datasetDescription">
+              <ControlLabel>Description</ControlLabel>
+              <FormControl
+                componentClass="textarea"
+                value={dataset_container.description || ''}
+                disabled={readOnly}
+                onChange={event => this.handleInputChange('description', event)}
+                style={{minHeight: 100}}
+              />
+            </FormGroup>
           </Col>
         </Col>
         <Col md={6}>

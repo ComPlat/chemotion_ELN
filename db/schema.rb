@@ -111,6 +111,7 @@ ActiveRecord::Schema.define(version: 20170201113437) do
     t.string   "ancestry"
     t.integer  "sample_id"
     t.string   "container_type"
+    t.text     "description"
   end
 
   add_index "containers", ["sample_id"], name: "index_containers_on_sample_id", using: :btree
