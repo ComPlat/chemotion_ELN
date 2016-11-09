@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     get 'pages/settings', to: 'pages#settings'
     get 'pages/profiles', to: 'pages#profiles'
     patch 'pages/update_profiles', to: 'pages#update_profiles'
+    patch 'pages/update_user', to: 'pages#update_user'
     get 'pages/groups', to: 'pages#groups'
   end
 

@@ -5,6 +5,19 @@ class PagesController < ApplicationController
   def welcome
   end
 
+  def update_user
+    @user = current_user
+    @user.counters['reactions'] = params[:reactions_count].to_i
+    @user.reaction_name_prefix = params[:reaction_name_prefix]
+    if @user.save
+      flash["success"] = "User settings is successfully saved!"
+      redirect_to root_path
+    else
+      flash.now["danger"] = "Not saved! Please check input fields."
+      render "user"
+    end
+  end
+
   def profiles
     current_user.has_profile
     @profile = current_user.profile

@@ -129,6 +129,7 @@ class Sample < ActiveRecord::Base
   before_save :auto_set_short_label, on: :create
 
   after_save :update_data_for_reactions
+  before_create :check_short_label
   after_create :update_counter
 
   def molecule_sum_formular
@@ -459,6 +460,16 @@ private
   def update_svg_for_reactions
     reactions.each do |reaction|
       reaction.save
+    end
+  end
+
+  def check_short_label
+    return if self.parent
+    return if !!(self.short_label =~ /(solvent|solvents|reactant|reactants)/)
+
+    abbr = self.creator.name_abbreviation
+    if Sample.where(short_label: self.short_label).count > 0
+      self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i + 1}"
     end
   end
 

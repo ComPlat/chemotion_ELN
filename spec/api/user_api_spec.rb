@@ -3,7 +3,7 @@ require 'rails_helper'
 describe Chemotion::UserAPI do
   let(:json_options) {
     {
-      only: [:id,:is_templates_moderator,:type],
+      only: [:id,:is_templates_moderator,:type, :reaction_name_prefix],
       methods: [:name, :initials]
     }
   }
