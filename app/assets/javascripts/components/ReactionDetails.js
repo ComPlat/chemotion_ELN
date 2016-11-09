@@ -284,7 +284,6 @@ export default class ReactionDetails extends Component {
   render() {
     let {reaction, fullScreen} = this.state;
     let fScrnClass = fullScreen ? "full-screen" : ""
-    reaction.temporary_sample_counter = reaction.temporary_sample_counter || 0;
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     let extraTabs =[];

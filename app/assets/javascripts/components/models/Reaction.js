@@ -298,7 +298,6 @@ export default class Reaction extends Element {
         material.start_parent = material.parent_id
         material.parent_id = null
       }
-      if (oldGroup == null) this.temporary_sample_counter += 1;
     } else if (newGroup == "reactants" || newGroup == "solvents") {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
@@ -310,8 +309,6 @@ export default class Reaction extends Element {
       if (material.start_parent && material.parent_id == null) {
         material.parent_id = material.start_parent
       }
-
-      if (oldGroup == null) this.temporary_sample_counter += 1;
     }
 
     this.shortLabelPolicy(material, oldGroup, newGroup);
@@ -333,14 +330,14 @@ export default class Reaction extends Element {
         let savedStartingMaterial = oldGroup == "starting_materials" && !material.isNew
         if (!savedStartingMaterial) {
           material.short_label =
-            Sample.buildNewShortLabel(this.temporary_sample_counter);
+            Sample.buildNewShortLabel();
         }
       } else if (newGroup == "starting_materials") {
         if (material.split_label) {
           material.short_label = material.split_label;
         } else {
           material.short_label =
-            Sample.buildNewShortLabel(this.temporary_sample_counter);
+            Sample.buildNewShortLabel();
         }
       }
     } else {
@@ -348,7 +345,7 @@ export default class Reaction extends Element {
         if (material.split_label) material.short_label = material.split_label;
       } else if (newGroup == "products") {
         material.short_label =
-          Sample.buildNewShortLabel(this.temporary_sample_counter);
+          Sample.buildNewShortLabel();
       } else {
         material.short_label = newGroup.slice(0, -1); // "reactant" or "solvent"
       }
