@@ -63,12 +63,12 @@ export default class Sample extends Element {
     ];
   }
 
-  static buildNewShortLabel(delta = 0) {
+  static buildNewShortLabel() {
     let {currentUser} = UserStore.getState();
     if(!currentUser) {
       return 'NEW SAMPLE';
     } else {
-      return `${currentUser.initials}-${currentUser.samples_count + delta +  1}`;
+      return `${currentUser.initials}-${currentUser.samples_count + 1}`;
     }
   }
 

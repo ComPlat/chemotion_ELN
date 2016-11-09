@@ -232,7 +232,6 @@ class ElementStore {
     let reaction = this.state.currentReaction;
 
     reaction.addMaterial(sample, materialGroup);
-    reaction.temporary_sample_counter += 1;
 
     this.handleRefreshElements('sample');
 
