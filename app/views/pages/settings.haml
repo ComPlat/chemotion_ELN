@@ -5,6 +5,40 @@
 
   %br/
   %br/
+  .jumbotron
+    %h2
+      Reaction Label
+    %br/
+    .form-horizontal
+      = form_for current_user, url: pages_update_user_path do |f|
+        .form-group
+          = f.label 'Counter prefix', class: 'control-label col-sm-2'
+          .col-sm-2
+            = text_field_tag :reaction_name_prefix,
+                             current_user.reaction_name_prefix,
+                             maxlength: 3,
+                             class: 'form-control',
+                             id: 'reaction-name-prefix',
+                             oninput: 'showExampleLabel();'
+        .form-group
+          = f.label 'Counter starts at', class: 'control-label col-sm-2'
+          .col-sm-2
+            = number_field_tag :reactions_count,
+                               current_user.counters['reactions'],
+                               min: 0,
+                               class: 'form-control',
+                               id: 'reactions-count',
+                               oninput: 'showExampleLabel();'
+        = hidden_field_tag :name_abbreviation, current_user.name_abbreviation
+
+        %h4
+          Next reaction label will be:
+          %span{id: 'reaction-label-example'}
+
+        %br/
+
+        .actions
+          = f.submit "Update user settings", class: "btn btn-primary"
   - plugin_with_setting_view_list.each do |plugin|
     .jumbotron
       .row

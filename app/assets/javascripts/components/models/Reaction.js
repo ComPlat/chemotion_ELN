@@ -51,7 +51,9 @@ export default class Reaction extends Element {
     if(!currentUser) {
       return 'New Reaction';
     } else {
-      return `${currentUser.initials}-R${currentUser.reactions_count + 1}`;
+      let number = currentUser.reactions_count + 1;
+      let prefix = currentUser.reaction_name_prefix;
+      return `${currentUser.initials}-${prefix}${number}`;
     }
   }
 
