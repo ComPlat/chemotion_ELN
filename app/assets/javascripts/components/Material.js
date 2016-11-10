@@ -364,7 +364,8 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-    this.handleAmountTypeChange(!isTarget ? 'target' : 'real')
+    if(this.props.materialGroup != 'products')
+      this.handleAmountTypeChange(!isTarget ? 'target' : 'real')
   }
 
   solventMaterial(props, style, handleStyle, inputsStyle) {

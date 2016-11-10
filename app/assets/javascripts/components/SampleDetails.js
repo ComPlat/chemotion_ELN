@@ -146,6 +146,7 @@ export default class SampleDetails extends React.Component {
     let { currentReaction, currentWellplate } = ElementStore.getState()
 
     if(currentReaction) {
+      currentReaction.editedSample = sample;
       if(sample.isNew) {
         ElementActions.createSampleForReaction(sample)
       } else {
