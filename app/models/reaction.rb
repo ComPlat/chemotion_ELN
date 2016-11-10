@@ -179,7 +179,9 @@ class Reaction < ActiveRecord::Base
   end
 
   def auto_set_short_label
-    self.short_label = "#{creator.initials}-R#{creator.counters['reactions'].succ}"
+    prefix = creator.reaction_name_prefix
+    counter = creator.counters['reactions'].succ
+    self.short_label = "#{creator.initials}-#{prefix}#{counter}"
   end
 
   def update_counter
