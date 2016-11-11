@@ -68,8 +68,8 @@ export default class SampleDetailsContainers extends Component {
     const {readOnly} = this.props;
 
     let containerHeader = (container) => <p style={{width: '100%'}}>{container.name}
-      {('Platzhalter' && 'Platzhalter' != '') ? (' - Type: ' + 'Platzhalter') : ''}
-      {('Platzhalter' && 'Platzhalter' != '') ? (' - Status: ' + 'Platzhalter') :''}
+      {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+      {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
       <Button bsSize="xsmall" bsStyle="danger"
          className="button-right" disabled={readOnly}
         onClick={() => {if(confirm('Delete the container?')) {this.handleRemove(container)}}}>

@@ -49,6 +49,9 @@ export default class ContainerDataset extends Component {
       case 'name':
         dataset_container.name = value;
         break;
+      case 'instrument':
+        dataset_container.extended_metadata['instrument'] = value;
+        break;
       case 'description':
         dataset_container.description = value;
         break;
@@ -175,6 +178,17 @@ export default class ContainerDataset extends Component {
                 />
             </FormGroup>
 
+          </Col>
+          <Col md={12} style={{padding: 0}}>
+          <FormGroup controlId="datasetInstrument">
+            <ControlLabel>Instrument</ControlLabel>
+              <FormControl
+                type="text"
+                value={dataset_container.extended_metadata['instrument'] || ''}
+                disabled={readOnly}
+                onChange={event => this.handleInputChange('instrument', event)}
+              />
+            </FormGroup>
           </Col>
           <Col md={12} style={{padding: 0}}>
             <FormGroup controlId="datasetDescription">

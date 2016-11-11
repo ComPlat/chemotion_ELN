@@ -11,6 +11,7 @@ export default class Container extends Element {
       attachments: [],
       is_deleted: false,
       description: '',
+      extended_metadata: {},
     })
   }
 
@@ -21,6 +22,7 @@ export default class Container extends Element {
       attachments: [],
       is_deleted: false,
       descrption: '',
+      extended_metadata: {},
     })
   }
 
@@ -57,6 +59,7 @@ export default class Container extends Element {
       is_new: this.isNew || false,
       is_deleted: this.deleted,
       description: this.description,
+      extended_metadata: this.extended_metadata,
     })
   }
 

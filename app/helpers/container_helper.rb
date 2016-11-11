@@ -6,7 +6,6 @@ module ContainerHelper
     else
       root_container = Container.new
       root_container.name = "root";
-      root_container.description = container.description
 
       root_container.save!
     end
@@ -24,20 +23,27 @@ private
           delete_containers_and_attachments(user, child)
         else
           #Update container
-          tmp = Container.find_by id: child.id
-          tmp.name = child.name
-          tmp.description = child.description
+          oldcon = Container.find_by id: child.id
+          oldcon.name = child.name
+          oldcon.description = child.description
+          oldcon.extended_metadata = child.extended_metadata
 
-          tmp.save!
-          create_or_update_attachments(user, tmp.id, child.attachments)
-          create_or_update_containers(user, child.children, tmp)
+          oldcon.save!
+
+          create_or_update_attachments(user, oldcon.id, child.attachments)
+          create_or_update_containers(user, child.children, oldcon)
         end
       else
         if !child.is_deleted
           #Create container
-          tmp = Container.create! :name => child.name, :parent => root_container
-          create_or_update_attachments(user, tmp.id, child.attachments)
-          create_or_update_containers(user, child.children, tmp)
+          newcon = Container.create! :name => child.name, :parent => root_container
+          newcon.description = child.description
+          newcon.extended_metadata = child.extended_metadata
+
+          newcon.save!
+
+          create_or_update_attachments(user, newcon.id, child.attachments)
+          create_or_update_containers(user, child.children, newcon)
         end
       end
     end
