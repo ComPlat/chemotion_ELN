@@ -63,6 +63,9 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
+  funfun(){
+
+  }
   render() {
     const {sample, activeContainer} = this.state;
     const {readOnly} = this.props;
@@ -76,22 +79,39 @@ export default class SampleDetailsContainers extends Component {
         <i className="fa fa-trash"></i>
       </Button></p>
 
+      let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
+        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+        {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
+        </strike></p>
+
     var c = sample.container.children.length;
     if(c > 0 ){
       return (
         <div>
         <p>&nbsp;{this.addButton()}</p>
         <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-          {sample.container.children.map((container, key) =>
-            <Panel header={containerHeader(container)} eventKey={key}
-                key={key} onClick={() => this.handleAccordionOpen(key)}>
-              <ContainerComponent
-                readOnly={readOnly}
-                container={container}
-                onChange={container => this.handleChange(container)}
-              />
-            </Panel>
-          )}
+        {sample.container.children.map((container, key) => {
+          if (container.is_deleted){
+            return (
+              <Panel header={containerHeaderDeleted(container)} eventKey={key}
+                  key={key} >
+              </Panel>
+            );
+          }else {
+            return (
+              <Panel header={containerHeader(container)} eventKey={key}
+                  key={key} onClick={() => this.handleAccordionOpen(key)}>
+                <ContainerComponent
+                  readOnly={readOnly}
+                  container={container}
+                  onChange={container => this.handleChange(container)}
+                />
+              </Panel>
+            );
+          }
+
+          }
+        )}
         </PanelGroup>
         </div>
       )
