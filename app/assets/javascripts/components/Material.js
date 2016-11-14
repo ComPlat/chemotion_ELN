@@ -22,6 +22,7 @@ class Material extends Component {
   handleMaterialClick(sample) {
     let { reaction } = this.props;
     UrlSilentNavigation(sample);
+    sample.updateChecksum();
     ElementActions.showReactionMaterial({ sample: sample, reaction: reaction })
   }
 

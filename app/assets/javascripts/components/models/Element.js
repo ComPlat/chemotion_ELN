@@ -26,7 +26,8 @@ export default class Element {
   }
 
   checksum() {
-    return sha256(JSON.stringify(_.omit(_.omit(this, '_checksum'), _.isEmpty)));
+    return sha256(JSON.stringify(_.omit(_.omit(this,
+            ['_checksum', 'belongTo', 'matGroup']), _.isEmpty)));
   }
 
   get isNew() {

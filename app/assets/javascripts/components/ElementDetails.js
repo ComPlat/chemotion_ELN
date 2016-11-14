@@ -72,15 +72,16 @@ export default class ElementDetails extends Component {
   deleteElement(deleteEl) {
     const { selecteds } = this.state;
     return selecteds.map( s => {
-      return (deleteEl.type === s.type && deleteEl.id === s.id) ? null : s
+      const isSame = SameEleTypId(s, deleteEl);
+      return isSame ? null : s;
     }).filter(r => r != null);
   }
 
   elementIndex(selecteds, newSelected) {
     let index = -1;
     selecteds.forEach( (s, i) => {
-      const same = SameEleTypId(s, newSelected);
-      if(same) { index = i; }
+      const isSame = SameEleTypId(s, newSelected);
+      if(isSame) { index = i; }
     });
     return index;
   }
@@ -88,7 +89,7 @@ export default class ElementDetails extends Component {
   resetCurrentElement(newKey, newSelecteds) {
     const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey];
     if(newSelecteds.length === 0) {
-      ElementActions.clearCurrentElement();
+      ElementActions.deselectCurrentElement();
     } else {
       ElementActions.setCurrentElement(newCurrentElement);
     }

@@ -117,22 +117,23 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
-    let {sample} = this.state
-    let { currentReaction, currentWellplate } = ElementStore.getState()
-
-    if(currentReaction) {
-      currentReaction.editedSample = sample;
+    let {sample} = this.state;
+    if(sample.belongTo && sample.belongTo.type === 'reaction') {
+      let reaction = sample.belongTo;
+      reaction.editedSample = sample;
+      const materialGroup = sample.matGroup;
       if(sample.isNew) {
-        ElementActions.createSampleForReaction(sample)
+        ElementActions.createSampleForReaction(sample, reaction, materialGroup);
       } else {
         if(closeView) {
-          ElementActions.updateSampleForReaction(sample)
+          ElementActions.updateSampleForReaction(sample, reaction);
         } else {
           ElementActions.updateSample(new Sample(sample));
         }
       }
-    } else if(currentWellplate) {
-      ElementActions.updateSampleForWellplate(sample)
+    } else if(sample.belongTo && sample.belongTo.type === 'wellplate') {
+      const wellplate = sample.belongTo;
+      ElementActions.updateSampleForWellplate(sample, wellplate)
     } else {
       if(sample.isNew) {
         ElementActions.createSample(sample)
@@ -140,7 +141,7 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(new Sample(sample))
       }
     }
-    if(sample.is_new) {
+    if(sample.is_new || closeView) {
       const force = true;
       this.props.closeDetails(sample, force);
     }
@@ -464,9 +465,9 @@ export default class SampleDetails extends React.Component {
 
   sampleFooter() {
     const {sample} = this.state;
-    let { currentReaction } = ElementStore.getState()
+    const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
 
-    let saveAndCloseBtn = currentReaction && !sample.isNew
+    let saveAndCloseBtn = belongToReaction && !sample.isNew
                             ?
                               this.saveBtn(sample, true)
                             :

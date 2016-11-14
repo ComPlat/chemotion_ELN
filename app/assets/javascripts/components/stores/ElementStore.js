@@ -50,9 +50,6 @@ class ElementStore {
         }
       },
       currentElement: null,
-      currentReaction: null,
-      currentWellplate: null,
-      currentMaterialGroup: null,
       elementWarning: false,
       ...extraThing("state",Xstate)
     };
@@ -83,8 +80,8 @@ class ElementStore {
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
+      handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
-      handleDeselectCurrentReaction: ElementActions.deselectCurrentReaction,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleTryFetchReactionById: ElementActions.tryFetchReactionById,
@@ -228,54 +225,40 @@ class ElementStore {
     this.navigateToNewElement(sample);
   }
 
-  handleCreateSampleForReaction(sample) {
+  handleCreateSampleForReaction({newSample, reaction, materialGroup}) {
     UserActions.fetchCurrentUser();
-    let materialGroup = this.state.currentMaterialGroup;
-    let reaction = this.state.currentReaction;
 
-    reaction.addMaterial(sample, materialGroup);
+    reaction.addMaterial(newSample, materialGroup);
 
     this.handleRefreshElements('sample');
 
-    this.state.currentReaction = null;
     this.state.currentElement = reaction;
   }
 
   handleEditReactionSample(result){
-    this.state.currentReaction = result.reaction;
-    this.state.currentElement = result.sample;
+    const sample = result.sample;
+    sample.belongTo = result.reaction;
+    this.state.currentElement = sample;
   }
 
   handleEditWellplateSample(result){
-    this.state.currentWellplate = result.wellplate;
-    this.state.currentElement = result.sample;
+    const sample = result.sample;
+    sample.belongTo = result.wellplate;
+    this.state.currentElement = sample;
   }
 
-  handleDeselectCurrentElement() {
-    this.state.currentElement = null;
-  }
-
-  handleDeselectCurrentReaction() {
-    this.state.currentReaction = null;
-  }
-
-  handleUpdateSampleForReaction() {
+  handleUpdateSampleForReaction(reaction) {
     UserActions.fetchCurrentUser();
-    let reaction = this.state.currentReaction;
-    this.state.currentReaction = null;
     this.state.currentElement = reaction;
-
     this.handleRefreshElements('sample');
   }
 
-  handleUpdateSampleForWellplate() {
+  handleUpdateSampleForWellplate(wellplate) {
     UserActions.fetchCurrentUser()
-    let wellplateID = this.state.currentWellplate
-    this.state.currentElement = null
-    this.state.currentWellplate = null
-
+    this.state.currentElement = null;
     this.handleRefreshElements('sample')
 
+    const wellplateID = wellplate.id;
     ElementActions.fetchWellplateById(wellplateID)
   }
 
@@ -317,18 +300,16 @@ class ElementStore {
     sample.molfile = sample.molfile || ''
     sample.molecule = sample.molecule == undefined ? sample : sample.molecule
     sample.sample_svg_file = sample.sample_svg_file
-
-    this.state.currentMaterialGroup = materialGroup
+    sample.belongTo = reaction;
+    sample.matGroup = materialGroup;
     reaction.changed = true
-    this.state.currentReaction = reaction
-    this.state.currentElement = sample
+    this.state.currentElement = sample;
   }
 
   handleShowReactionMaterial(params) {
-    let { reaction, sample } = params
-
-    this.state.currentReaction = reaction
-    this.state.currentElement = sample
+    const { reaction, sample } = params;
+    sample.belongTo = reaction;
+    this.state.currentElement = sample;
   }
 
   handleImportSamplesFromFile() {
@@ -456,9 +437,7 @@ class ElementStore {
   }
 
   handleOpenReactionDetails(reaction) {
-    this.state.currentReaction = null;
-    this.state.currentElement = reaction
-
+    this.state.currentElement = reaction;
     this.handleRefreshElements('sample')
   }
 
@@ -548,6 +527,15 @@ class ElementStore {
           break;
       }
     }
+  }
+
+  // CurrentElement
+  handleSetCurrentElement(result) {
+    this.state.currentElement = result;
+  }
+
+  handleDeselectCurrentElement() {
+    this.state.currentElement = null;
   }
 }
 
