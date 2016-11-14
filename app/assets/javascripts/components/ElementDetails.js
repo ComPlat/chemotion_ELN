@@ -5,7 +5,7 @@ import SampleDetails from './SampleDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
-import { SameEleTypId } from './utils/ElementUtils';
+import { SameEleTypId, UrlSilentNavigation } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import { ConfirmModal } from './common/ConfirmModal';
@@ -92,6 +92,7 @@ export default class ElementDetails extends Component {
     } else {
       ElementActions.setCurrentElement(newCurrentElement);
     }
+    UrlSilentNavigation(newCurrentElement);
   }
 
   deleteCurrentElement(deleteEl) {
