@@ -207,7 +207,9 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    this.state.currentElement = result;
+    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+      this.state.currentElement = result;
+    }
   }
 
   handleFetchSamplesByCollectionId(result) {
@@ -369,7 +371,9 @@ class ElementStore {
   // -- Screens --
 
   handleFetchScreenById(result) {
-    this.state.currentElement = result;
+    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+      this.state.currentElement = result;
+    }
   }
 
   handleFetchScreensByCollectionId(result) {
@@ -397,9 +401,11 @@ class ElementStore {
   // -- Reactions --
 
   handleFetchReactionById(result) {
-    this.state.currentElement = result;
-    this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
-    this.navigateToNewElement(result);
+    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+      this.state.currentElement = result;
+      this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
+      this.navigateToNewElement(result);
+    }
   }
 
   refreshReactionsListForSpecificReaction(newReaction) {
