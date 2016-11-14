@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
-import {Panel, Button, Tabs, Tab, Row, Col} from 'react-bootstrap';
+import {Panel, Button, Tabs, Tab, Row, Col,
+        Tooltip, OverlayTrigger} from 'react-bootstrap';
 import StickyDiv from 'react-stickydiv'
 import Aviator from 'aviator';
 
@@ -61,65 +62,63 @@ export default class ReportContainer extends Component {
                     :
                       null;
     return (
-      <StickyDiv zIndex={2}>
-        <Panel header="Report Generation"
-               bsStyle="default">
-          <div className="button-right">
-            {this.generateReportsBtn()}
-            <Button bsStyle="danger"
-                    bsSize="xsmall"
-                    className="g-marginLeft--10"
-                    onClick={this.closeDetails.bind(this)}>
-              <i className="fa fa-times"></i>
-            </Button>
-          </div>
+      <Panel header="Report Generation"
+             bsStyle="default">
+        <div className="button-right">
+          {this.generateReportsBtn()}
+          <Button bsStyle="danger"
+                  bsSize="xsmall"
+                  className="g-marginLeft--10"
+                  onClick={this.closeDetails.bind(this)}>
+            <i className="fa fa-times"></i>
+          </Button>
+        </div>
 
-          <Tabs defaultActiveKey={0} id="report-tabs" >
-            <Tab eventKey={0} title={"Setting"}>
-              <CheckBoxs  items={this.state.settings}
-                          toggleCheckbox={this.toggleSettings}
-                          toggleCheckAll={this.toggleSettingsAll}
-                          checkedAll={this.state.checkedAllSettings} />
-            </Tab>
+        <Tabs defaultActiveKey={0} id="report-tabs" >
+          <Tab eventKey={0} title={"Setting"}>
+            <CheckBoxs  items={this.state.settings}
+                        toggleCheckbox={this.toggleSettings}
+                        toggleCheckAll={this.toggleSettingsAll}
+                        checkedAll={this.state.checkedAllSettings} />
+          </Tab>
 
-            <Tab eventKey={1} title={"Config"}>
-              <CheckBoxs  items={this.state.configs}
-                          toggleCheckbox={this.toggleConfigs}
-                          toggleCheckAll={this.toggleConfigsAll}
-                          checkedAll={this.state.checkedAllConfigs} />
-              <Row>
-                <Col md={3} sm={8}>
-                  <label>Images format</label>
-                  <Select options={imgFormatOpts}
-                          value={this.state.imgFormat}
-                          clearable={false}
-                          style={{width: 100}}
-                          onChange={(e) => this.handleImgFormatChanged(e)}/>
-                </Col>
-                <Col md={9} sm={16}>
-                  <label></label>
-                  {EPSwarning}
-                </Col>
-              </Row>
-            </Tab>
+          <Tab eventKey={1} title={"Config"}>
+            <CheckBoxs  items={this.state.configs}
+                        toggleCheckbox={this.toggleConfigs}
+                        toggleCheckAll={this.toggleConfigsAll}
+                        checkedAll={this.state.checkedAllConfigs} />
+            <Row>
+              <Col md={3} sm={8}>
+                <label>Images format</label>
+                <Select options={imgFormatOpts}
+                        value={this.state.imgFormat}
+                        clearable={false}
+                        style={{width: 100}}
+                        onChange={(e) => this.handleImgFormatChanged(e)}/>
+              </Col>
+              <Col md={9} sm={16}>
+                <label></label>
+                {EPSwarning}
+              </Col>
+            </Row>
+          </Tab>
 
-            <Tab eventKey={2} title={"Order"}>
-              <div className="panel-fit-screen">
-                <Orders selectedReactions={this.state.selectedReactions} />
-              </div>
-            </Tab>
+          <Tab eventKey={2} title={"Order"}>
+            <div className="panel-fit-screen">
+              <Orders selectedReactions={this.state.selectedReactions} />
+            </div>
+          </Tab>
 
-            <Tab eventKey={3} title={"Report"}>
-              <div className="panel-fit-screen">
-                <Reports selectedReactions={this.state.selectedReactions}
-                         settings={this.state.settings}
-                         configs={this.state.configs} />
-              </div>
-            </Tab>
-          </Tabs>
+          <Tab eventKey={3} title={"Report"}>
+            <div className="panel-fit-screen">
+              <Reports selectedReactions={this.state.selectedReactions}
+                       settings={this.state.settings}
+                       configs={this.state.configs} />
+            </div>
+          </Tab>
+        </Tabs>
 
-        </Panel>
-      </StickyDiv>
+      </Panel>
     );
   }
 
@@ -160,7 +159,7 @@ export default class ReportContainer extends Component {
       !this.state.processingReport ?
       <Button bsStyle="primary"
               bsSize="xsmall"
-              className="g-marginLeft--10"
+              className="button-right"
               disabled={!(showGeneReportBtnSts && showGeneReportBtnIds)}
               onClick={this.generateReports.bind(this)}>
         <span><i className="fa fa-file-text-o"></i> Generate Report</span>
@@ -168,7 +167,7 @@ export default class ReportContainer extends Component {
       :
       <Button bsStyle="danger"
               bsSize="xsmall"
-              className="g-marginLeft--10">
+              className="button-right">
         <span><i className="fa fa-spinner fa-pulse fa-fw"></i> Processing your report, please wait...</span>
       </Button>
     )

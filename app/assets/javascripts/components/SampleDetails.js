@@ -20,8 +20,6 @@ import XLabels from "./extra/SampleDetailsXLabels";
 import XTab from "./extra/SampleDetailsXTab";
 import XTabName from "./extra/SampleDetailsXTabName";
 
-import StickyDiv from 'react-stickydiv'
-
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Aviator from 'aviator';
@@ -46,24 +44,19 @@ export default class SampleDetails extends React.Component {
       showStructureEditor: false,
       loadingMolecule: false,
       showElementalComposition: false,
-      offsetTop: 70,
-      fullScreen: false
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
-    this.onChange = this.onChange.bind(this)
-    this.handleResize = this.handleResize.bind(this);
+    this.onChange = this.onChange.bind(this);
   }
 
   componentDidMount() {
     ElementStore.listen(this.onChange);
-    window.addEventListener('resize', this.handleResize);
   }
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     this.clipboard.destroy();
-    window.removeEventListener('resize', this.handleResize);
   }
 
   onChange(state) {
@@ -76,13 +69,6 @@ export default class SampleDetails extends React.Component {
         loadingMolecule: false
       });
     }
-  }
-
-  handleResize(e = null) {
-    let windowHeight = window.innerHeight || 1;
-    if (this.state.fullScreen || windowHeight < 500) {
-      this.setState({offsetTop: 0});
-    } else {this.setState( {offsetTop: 70}) }
   }
 
   handleSampleChanged(sample) {
@@ -185,14 +171,6 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  toggleFullScreen() {
-    let {fullScreen} = this.state
-
-    this.setState({
-      fullScreen: !fullScreen
-    })
-  }
-
   structureEditorButton(isDisabled) {
     return (
       <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
@@ -258,7 +236,7 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
         <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.toggleFullScreen()}>
+          onClick={() => this.props.toggleFullScreen()}>
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
@@ -529,11 +507,24 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  structureEditorModal(sample) {
+    const molfile = sample.molfile;
+    const hasParent = sample && sample.parent_id;
+    const hasChildren = sample && sample.children_count > 0;
+    return(
+      <StructureEditorModal
+        key={sample.id}
+        showModal={this.state.showStructureEditor}
+        onSave={this.handleStructureEditorSave.bind(this)}
+        onCancel={this.handleStructureEditorCancel.bind(this)}
+        molfile={molfile}
+        hasParent={hasParent}
+        hasChildren={hasChildren} />
+    )
+  }
+
   render() {
     let sample = this.state.sample || {}
-    let molfile = sample.molfile;
-    let hasParent = sample && sample.parent_id
-    let hasChildren = sample && sample.children_count > 0
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
                        (i)=>(this.sampleAnalysesTab(i)),
@@ -543,36 +534,23 @@ export default class SampleDetails extends React.Component {
       tabContents.push((i)=>this.extraTab(i))
     }
 
-    const fScrnClass = this.state.fullScreen ? "full-screen" : ""
-
     return (
-      <div className={fScrnClass}>
-        <StructureEditorModal
-          key={sample.id}
-          showModal={this.state.showStructureEditor}
-          onSave={this.handleStructureEditorSave.bind(this)}
-          onCancel={this.handleStructureEditorCancel.bind(this)}
-          molfile={molfile}
-          hasParent={hasParent}
-          hasChildren={hasChildren}
-          />
-        <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
-          <Panel className="panel-detail"
-                 header={this.sampleHeader(sample)}
-                 bsStyle={sample.isEdited ? 'info' : 'primary'}>
-            {this.sampleInfo(sample)}
-            <ListGroup>
-            <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
-              {tabContents.map((e,i)=>e(i))}
-            </Tabs>
-            </ListGroup>
-            {this.sampleFooter()}
-          </Panel>
-        </StickyDiv>
-      </div>
+      <Panel className="panel-detail"
+             header={this.sampleHeader(sample)}
+             bsStyle={sample.isEdited ? 'info' : 'primary'}>
+        {this.sampleInfo(sample)}
+        <ListGroup>
+        <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
+          {tabContents.map((e,i)=>e(i))}
+        </Tabs>
+        </ListGroup>
+        {this.sampleFooter()}
+        {this.structureEditorModal(sample)}
+      </Panel>
     )
   }
 }
 SampleDetails.propTypes = {
   sample: React.PropTypes.object,
+  toggleFullScreen: React.PropTypes.func,
 }
