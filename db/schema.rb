@@ -13,6 +13,8 @@
 
 ActiveRecord::Schema.define(version: 20170201113437) do
 
+
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
@@ -109,13 +111,14 @@ ActiveRecord::Schema.define(version: 20170201113437) do
     t.datetime "updated_at",                     null: false
     t.string   "identifier"
     t.string   "ancestry"
-    t.integer  "sample_id"
+    t.integer  "element_id"
     t.string   "container_type"
     t.text     "description"
     t.hstore   "extended_metadata", default: {}, null: false
+    t.string   "element_type"
   end
 
-  add_index "containers", ["sample_id"], name: "index_containers_on_sample_id", using: :btree
+  add_index "containers", ["element_id"], name: "index_containers_on_element_id", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -583,6 +586,6 @@ ActiveRecord::Schema.define(version: 20170201113437) do
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
 
   add_foreign_key "attachments", "containers"
-  add_foreign_key "containers", "samples"
+  add_foreign_key "containers", "samples", column: "element_id"
   add_foreign_key "samples", "containers"
 end

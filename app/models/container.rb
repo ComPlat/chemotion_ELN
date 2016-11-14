@@ -1,5 +1,5 @@
 class Container < ActiveRecord::Base
-  belongs_to :sample
+  belongs_to :element, :polymorphic => true
   has_many :attachments
   has_ancestry
 

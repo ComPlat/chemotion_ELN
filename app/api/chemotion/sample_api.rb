@@ -333,7 +333,7 @@ module Chemotion
         optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
-        optional :container, type: Hash
+        requires :container, type: Hash
       end
       route_param :id do
         before do

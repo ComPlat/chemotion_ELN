@@ -156,6 +156,8 @@ module Chemotion
 
         requires :materials, type: Hash
         optional :literatures, type: Array
+
+        requires :container, type: Hash
       end
       route_param :id do
 
@@ -164,10 +166,16 @@ module Chemotion
         end
 
         put do
+
+
+
           attributes = declared(params, include_missing: false).symbolize_keys
           materials = attributes.delete(:materials)
           literatures = attributes.delete(:literatures)
           id = attributes.delete(:id)
+
+          ContainerHelper.update_datamodel(current_user, attributes[:container]);
+          attributes.delete(:container);
 
           if reaction = Reaction.find(id)
             reaction.update_attributes!(attributes)
@@ -200,6 +208,7 @@ module Chemotion
 
         requires :materials, type: Hash
         optional :literatures, type: Array
+        requires :container, type: Hash
       end
 
       post do
@@ -208,9 +217,15 @@ module Chemotion
         literatures = attributes.delete(:literatures)
         collection_id = attributes.delete(:collection_id)
 
+        container = ContainerHelper.update_datamodel(current_user, attributes[:container]);
+        attributes.delete(:container);
+
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
+
+        reaction.container = container
+        reaction.save!
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))

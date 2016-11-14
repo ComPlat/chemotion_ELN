@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
 import Literature from '../models/Literature';
 import UIStore from '../stores/UIStore'
+import AttachmentFetcher from './AttachmentFetcher'
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -81,7 +82,8 @@ export default class ReactionsFetcher {
   }
 
   static update(reaction) {
-    let promise = fetch('/api/v1/reactions/' + reaction.id, {
+    let files = AttachmentFetcher.getFileListfrom(reaction.container)
+    let promise = ()=> fetch('/api/v1/reactions/' + reaction.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -97,11 +99,16 @@ export default class ReactionsFetcher {
       console.log(errorMessage);
     });
 
-    return promise;
+    if(files.length > 0 ){
+        return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+    }else{
+      return promise()
+    }
   }
 
   static create(reaction) {
-    let promise = fetch('/api/v1/reactions/', {
+    let files = AttachmentFetcher.getFileListfrom(reaction.container)
+    let promise = ()=> fetch('/api/v1/reactions/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -117,6 +124,10 @@ export default class ReactionsFetcher {
       console.log(errorMessage);
     });
 
-    return promise;
+    if(files.length > 0){
+      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+    }else{
+      return promise()
+    }
   }
 }

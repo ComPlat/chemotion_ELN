@@ -2,6 +2,7 @@ import _ from 'lodash';
 import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
+import Container from './Container.js'
 
 import UserStore from '../stores/UserStore';
 
@@ -40,7 +41,8 @@ export default class Reaction extends Element {
       solvents: [],
       products: [],
       literatures: [],
-      solvent: ''
+      solvent: '',
+      container: Container.buildRoot(),
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -96,7 +98,8 @@ export default class Reaction extends Element {
         solvents: this.solvents.map(s=>s.serializeMaterial()),
         products: this.products.map(s=>s.serializeMaterial())
       },
-      literatures: this.literatures.map(literature => literature.serialize())
+      literatures: this.literatures.map(literature => literature.serialize()),
+      container: this.container,
     })
   }
 

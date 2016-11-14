@@ -10,6 +10,8 @@ class ReactionSerializer < ActiveModel::Serializer
 
   has_many :literatures
 
+  has_one :container
+  
   def starting_materials
     MaterialDecorator.new(object.reactions_starting_material_samples).decorated
   end

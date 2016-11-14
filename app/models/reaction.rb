@@ -93,6 +93,8 @@ class Reaction < ActiveRecord::Base
 
   after_create :update_counter
 
+  has_one :container, :as => :element
+
   def self.get_associated_samples(reaction_ids)
     ( ReactionsProductSample.get_samples(reaction_ids) +
       ReactionsStartingMaterialSample.get_samples(reaction_ids) +

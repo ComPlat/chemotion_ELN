@@ -2,6 +2,25 @@ module Chemotion
   class AttachmentAPI < Grape::API
     resource :attachments do
 
+      #todo: move to AttachmentAPI
+      desc "Upload attachments"
+      post 'upload_dataset_attachments' do
+        params.each do |file_id, file|
+          if tempfile = file.tempfile
+            begin
+              storage = Filesystem.new
+              file_id_filename = file_id + file.filename
+
+              storage.temp(file_id_filename, IO.binread(tempfile))
+            ensure
+              tempfile.close
+              tempfile.unlink   # deletes the temp file
+            end
+          end
+        end
+        true
+      end
+
       resource :thumbnails do
         desc 'Return Base64 encoded thumbnail'
         get do
