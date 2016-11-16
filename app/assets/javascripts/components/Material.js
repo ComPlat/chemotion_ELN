@@ -5,6 +5,7 @@ import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName'
 import ElementActions from './actions/ElementActions'
+import { UrlSilentNavigation } from './utils/ElementUtils';
 
 const source = {
   beginDrag(props) {
@@ -20,6 +21,8 @@ const collect = (connect, monitor) => ({
 class Material extends Component {
   handleMaterialClick(sample) {
     let { reaction } = this.props;
+    UrlSilentNavigation(sample);
+    sample.updateChecksum();
     ElementActions.showReactionMaterial({ sample: sample, reaction: reaction })
   }
 

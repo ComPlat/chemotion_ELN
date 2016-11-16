@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
@@ -510,5 +511,10 @@ export default class Reaction extends Element {
     const materials = [...this.solvents];
     materials.map(m => solventVolume += m.amount_l);
     return solventVolume;
+  }
+
+  // overwrite isPendingToSave method in models/Element.js
+  get isPendingToSave() {
+    return !_.isEmpty(this) && (this.isNew || this.changed);
   }
 }

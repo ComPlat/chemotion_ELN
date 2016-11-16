@@ -74,14 +74,6 @@ class ElementActions {
       });};
   }
 
-  deselectCurrentElement() {
-    return null;
-  }
-
-  deselectCurrentReaction() {
-    return null;
-  }
-
   fetchSamplesByCollectionId(id, queryParams={}, collectionIsSync = false) {
     return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
       .then((result) => {
@@ -98,10 +90,10 @@ class ElementActions {
       });};
   }
 
-  createSampleForReaction(params) {
-    return (dispatch) => { SamplesFetcher.create(params)
-      .then((result) => {
-        dispatch(result)
+  createSampleForReaction(sample, reaction, materialGroup) {
+    return (dispatch) => { SamplesFetcher.create(sample)
+      .then((newSample) => {
+        dispatch({newSample, reaction, materialGroup})
       });};
   }
 
@@ -114,10 +106,10 @@ class ElementActions {
       });};
   }
 
-  updateSampleForReaction(params) {
-    return (dispatch) => { SamplesFetcher.update(params)
-      .then((result) => {
-        dispatch(result)
+  updateSampleForReaction(sample, reaction) {
+    return (dispatch) => { SamplesFetcher.update(sample)
+      .then((newSample) => {
+        dispatch(reaction)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -306,10 +298,10 @@ class ElementActions {
       });};
   }
 
-  updateSampleForWellplate(params) {
-    return (dispatch) => { SamplesFetcher.update(params)
-      .then((result) => {
-        dispatch(result)
+  updateSampleForWellplate(sample, wellplate) {
+    return (dispatch) => { SamplesFetcher.update(sample)
+      .then((newSample) => {
+        dispatch(wellplate)
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -402,6 +394,15 @@ class ElementActions {
 
   removeElements() {
     return  ;
+  }
+
+  // Current Element
+  setCurrentElement(newCurrentElement) {
+    return newCurrentElement;
+  }
+
+  deselectCurrentElement() {
+    return null;
   }
 
   // - ...

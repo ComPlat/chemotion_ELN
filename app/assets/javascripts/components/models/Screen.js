@@ -101,4 +101,8 @@ export default class Screen extends Element {
   get wellplate_ids() {
     return this._wellplates.map(w => w.id);
   }
+
+  title() {
+    return this.name;
+  }
 }

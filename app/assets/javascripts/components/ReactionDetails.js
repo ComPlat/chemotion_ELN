@@ -10,15 +10,11 @@ import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
-import UIStore from './stores/UIStore';
-import UIActions from './actions/UIActions';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
 
 import XTab from "./extra/ReactionDetailsXTab";
 import XTabName from "./extra/ReactionDetailsXTabName";
-
-import StickyDiv from 'react-stickydiv'
 
 import {setReactionByType} from './ReactionDetailsShare'
 
@@ -30,21 +26,10 @@ export default class ReactionDetails extends Component {
     const {reaction} = props;
     this.state = {
       reaction,
-      offsetTop: 70,
-      fullScreen: false
     };
-    this.handleResize = this.handleResize.bind(this);
     if(reaction.hasMaterials()) {
       this.updateReactionSvg();
     }
-  }
-
-  componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  componentWillUnmount(){
-    window.removeEventListener('resize', this.handleResize);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -57,23 +42,6 @@ export default class ReactionDetails extends Component {
         reaction: nextReaction
       });
     }
-  }
-
-  handleResize(e = null) {
-    let windowHeight = window.innerHeight || 1;
-    if (this.state.fullScreen || windowHeight < 500) {
-      this.setState({offsetTop:0});
-    } else { this.setState( {offsetTop:70}) }
-  }
-
-  closeDetails() {
-    UIActions.deselectAllElements();
-    ElementActions.deselectCurrentReaction();
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}`
-      : `/collection/${currentCollection.id}`
-    );
   }
 
   updateReactionSvg() {
@@ -101,7 +69,7 @@ export default class ReactionDetails extends Component {
     ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 
-  submitFunction() {
+  handleSubmit() {
     const {reaction} = this.state;
 
     // set corrected values before we save the reaction
@@ -123,15 +91,10 @@ export default class ReactionDetails extends Component {
     } else {
       ElementActions.updateReaction(reaction);
     }
-  }
-
-
-  toggleFullScreen() {
-    let {fullScreen} = this.state
-
-    this.setState({
-      fullScreen: !fullScreen
-    })
+    if(reaction.is_new) {
+      const force = true;
+      this.props.closeDetails(reaction, force);
+    }
   }
 
   reactionIsValid() {
@@ -239,14 +202,14 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-              onClick={this.closeDetails.bind(this)}>
+              onClick={() => this.props.closeDetails(reaction)}>
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-              onClick={() => this.submitFunction()}
+              onClick={() => this.handleSubmit()}
               disabled={!this.reactionIsValid()}
               style={{display: hasChanged}} >
             <i className="fa fa-floppy-o "></i>
@@ -255,7 +218,7 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
         <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.toggleFullScreen()}>
+          onClick={() => this.props.toggleFullScreen()}>
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
@@ -282,8 +245,7 @@ export default class ReactionDetails extends Component {
   }
 
   render() {
-    let {reaction, fullScreen} = this.state;
-    let fScrnClass = fullScreen ? "full-screen" : ""
+    const {reaction} = this.state;
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     let extraTabs =[];
@@ -292,55 +254,53 @@ export default class ReactionDetails extends Component {
     }
 
     return (
-      <div className={fScrnClass}>
-      <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
-        <Panel className='panel-detail' header={this.reactionHeader(reaction)}
-               bsStyle={reaction.changed ? 'info' : 'primary'}>
-          {this.reactionSVG(reaction)}
-          <Tabs defaultActiveKey={0} id="reaction-detail-tab">
-            <Tab eventKey={0} title={'Scheme'}>
-              <ReactionDetailsScheme
-                reaction={reaction}
-                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
-                onInputChange={(type, event) => this.handleInputChange(type, event)}
-                />
-            </Tab>
-            <Tab eventKey={1} title={'Properties'}>
-              <ReactionDetailsProperties
-                reaction={reaction}
-                onInputChange={(type, event) => this.handleInputChange(type, event)}
-                />
-            </Tab>
-            <Tab eventKey={2} title={'References'}>
-              <ReactionDetailsLiteratures
-                reaction={reaction}
-                onReactionChange={reaction => this.handleReactionChange(reaction)}
-                />
-            </Tab>
-            <Tab eventKey={3} title={'Analyses'}>
-              {this.productAnalyses()}
-            </Tab>
-            {extraTabs.map((e,i)=>e(i))}
-          </Tabs>
-          <hr/>
-          <ButtonToolbar>
-            <Button bsStyle="primary" onClick={() => this.closeDetails()}>
-              Close
-            </Button>
-            <Button bsStyle="warning" onClick={() => this.submitFunction()} disabled={!this.reactionIsValid()}>
-              {submitLabel}
-            </Button>
-            <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
-              Export samples
-            </Button>
-          </ButtonToolbar>
-        </Panel>
-      </StickyDiv>
-      </div>
+      <Panel className='panel-detail' header={this.reactionHeader(reaction)}
+             bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
+        {this.reactionSVG(reaction)}
+        <Tabs defaultActiveKey={0} id="reaction-detail-tab">
+          <Tab eventKey={0} title={'Scheme'}>
+            <ReactionDetailsScheme
+              reaction={reaction}
+              onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+              onInputChange={(type, event) => this.handleInputChange(type, event)}
+              />
+          </Tab>
+          <Tab eventKey={1} title={'Properties'}>
+            <ReactionDetailsProperties
+              reaction={reaction}
+              onInputChange={(type, event) => this.handleInputChange(type, event)}
+              />
+          </Tab>
+          <Tab eventKey={2} title={'References'}>
+            <ReactionDetailsLiteratures
+              reaction={reaction}
+              onReactionChange={reaction => this.handleReactionChange(reaction)}
+              />
+          </Tab>
+          <Tab eventKey={3} title={'Analyses'}>
+            {this.productAnalyses()}
+          </Tab>
+          {extraTabs.map((e,i)=>e(i))}
+        </Tabs>
+        <hr/>
+        <ButtonToolbar>
+          <Button bsStyle="primary" onClick={() => this.props.closeDetails(reaction)}>
+            Close
+          </Button>
+          <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
+            {submitLabel}
+          </Button>
+          <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
+            Export samples
+          </Button>
+        </ButtonToolbar>
+      </Panel>
     );
   }
 }
 
 ReactionDetails.propTypes = {
-  reaction: React.PropTypes.object
+  reaction: React.PropTypes.object,
+  closeDetails: React.PropTypes.func,
+  toggleFullScreen: React.PropTypes.func,
 }

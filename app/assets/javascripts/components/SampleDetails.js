@@ -20,8 +20,6 @@ import XLabels from "./extra/SampleDetailsXLabels";
 import XTab from "./extra/SampleDetailsXTab";
 import XTabName from "./extra/SampleDetailsXTabName";
 
-import StickyDiv from 'react-stickydiv'
-
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
 import Aviator from 'aviator';
@@ -46,43 +44,20 @@ export default class SampleDetails extends React.Component {
       showStructureEditor: false,
       loadingMolecule: false,
       showElementalComposition: false,
-      offsetTop: 70,
-      fullScreen: false
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
-    this.onChange = this.onChange.bind(this)
-    this.handleResize = this.handleResize.bind(this);
   }
 
-  componentDidMount() {
-    ElementStore.listen(this.onChange);
-    window.addEventListener('resize', this.handleResize);
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      sample: nextProps.sample,
+      loadingMolecule: false,
+    });
   }
 
   componentWillUnmount() {
-    ElementStore.unlisten(this.onChange);
     this.clipboard.destroy();
-    window.removeEventListener('resize', this.handleResize);
-  }
-
-  onChange(state) {
-    if(state.currentElement && state.currentElement.type == 'sample') {
-      this.setState({
-        sample: state.currentElement,
-        reaction: state.currentReaction,
-        materialGroup: state.currentMaterialGroup,
-        samplePanelFixed: false,
-        loadingMolecule: false
-      });
-    }
-  }
-
-  handleResize(e = null) {
-    let windowHeight = window.innerHeight || 1;
-    if (this.state.fullScreen || windowHeight < 500) {
-      this.setState({offsetTop: 0});
-    } else {this.setState( {offsetTop: 70}) }
   }
 
   handleSampleChanged(sample) {
@@ -141,23 +116,24 @@ export default class SampleDetails extends React.Component {
     this.hideStructureEditor()
   }
 
-  submitFunction(closeView = false) {
-    let {sample} = this.state
-    let { currentReaction, currentWellplate } = ElementStore.getState()
-
-    if(currentReaction) {
-      currentReaction.editedSample = sample;
+  handleSubmit(closeView = false) {
+    let {sample} = this.state;
+    if(sample.belongTo && sample.belongTo.type === 'reaction') {
+      let reaction = sample.belongTo;
+      reaction.editedSample = sample;
+      const materialGroup = sample.matGroup;
       if(sample.isNew) {
-        ElementActions.createSampleForReaction(sample)
+        ElementActions.createSampleForReaction(sample, reaction, materialGroup);
       } else {
         if(closeView) {
-          ElementActions.updateSampleForReaction(sample)
+          ElementActions.updateSampleForReaction(sample, reaction);
         } else {
           ElementActions.updateSample(new Sample(sample));
         }
       }
-    } else if(currentWellplate) {
-      ElementActions.updateSampleForWellplate(sample)
+    } else if(sample.belongTo && sample.belongTo.type === 'wellplate') {
+      const wellplate = sample.belongTo;
+      ElementActions.updateSampleForWellplate(sample, wellplate)
     } else {
       if(sample.isNew) {
         ElementActions.createSample(sample)
@@ -165,32 +141,11 @@ export default class SampleDetails extends React.Component {
         ElementActions.updateSample(new Sample(sample))
       }
     }
-  }
-
-  closeDetails() {
-    let { currentReaction, currentWellplate } = ElementStore.getState()
-
-    if(currentReaction) {
-      ElementActions.openReactionDetails(currentReaction)
-    } else if(currentWellplate) {
-      ElementActions.fetchWellplateById(currentWellplate)
-    } else {
-      UIActions.deselectAllElements()
-      ElementActions.deselectCurrentElement()
-      const {currentCollection,isSync} = UIStore.getState()
-      Aviator.navigate(isSync
-        ? `/scollection/${currentCollection.id}`
-        : `/collection/${currentCollection.id}`
-      )
+    if(sample.is_new || closeView) {
+      const force = true;
+      this.props.closeDetails(sample, force);
     }
-  }
-
-  toggleFullScreen() {
-    let {fullScreen} = this.state
-
-    this.setState({
-      fullScreen: !fullScreen
-    })
+    sample.updateChecksum();
   }
 
   structureEditorButton(isDisabled) {
@@ -241,15 +196,15 @@ export default class SampleDetails extends React.Component {
         <i className="icon-sample" /> {sample.title()}
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
-        <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-          onClick={() => this.closeDetails()}>
-          <i className="fa fa-times"></i>
-        </Button>
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+            onClick={() => this.props.closeDetails(sample)}>
+            <i className="fa fa-times"></i>
+          </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-            onClick={() => this.submitFunction()}
+            onClick={() => this.handleSubmit()}
             style={{display: saveBtnDisplay}}
             disabled={!this.sampleIsValid()} >
             <i className="fa fa-floppy-o "></i>
@@ -258,7 +213,7 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
         <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.toggleFullScreen()}>
+          onClick={() => this.props.toggleFullScreen()}>
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
@@ -501,7 +456,7 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Button bsStyle="warning"
-              onClick={() => this.submitFunction(closeView)}
+              onClick={() => this.handleSubmit(closeView)}
               disabled={!this.sampleIsValid()}>
               {submitLabel}
       </Button>
@@ -510,9 +465,9 @@ export default class SampleDetails extends React.Component {
 
   sampleFooter() {
     const {sample} = this.state;
-    let { currentReaction } = ElementStore.getState()
+    const belongToReaction = sample.belongTo && sample.belongTo.type === 'reaction';
 
-    let saveAndCloseBtn = currentReaction && !sample.isNew
+    let saveAndCloseBtn = belongToReaction && !sample.isNew
                             ?
                               this.saveBtn(sample, true)
                             :
@@ -520,7 +475,7 @@ export default class SampleDetails extends React.Component {
     return (
       <ButtonToolbar>
         <Button bsStyle="primary"
-                onClick={() => this.closeDetails()}>
+                onClick={() => this.props.closeDetails(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
@@ -529,11 +484,24 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  structureEditorModal(sample) {
+    const molfile = sample.molfile;
+    const hasParent = sample && sample.parent_id;
+    const hasChildren = sample && sample.children_count > 0;
+    return(
+      <StructureEditorModal
+        key={sample.id}
+        showModal={this.state.showStructureEditor}
+        onSave={this.handleStructureEditorSave.bind(this)}
+        onCancel={this.handleStructureEditorCancel.bind(this)}
+        molfile={molfile}
+        hasParent={hasParent}
+        hasChildren={hasChildren} />
+    )
+  }
+
   render() {
     let sample = this.state.sample || {}
-    let molfile = sample.molfile;
-    let hasParent = sample && sample.parent_id
-    let hasChildren = sample && sample.children_count > 0
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
                        (i)=>(this.sampleAnalysesTab(i)),
@@ -543,36 +511,24 @@ export default class SampleDetails extends React.Component {
       tabContents.push((i)=>this.extraTab(i))
     }
 
-    const fScrnClass = this.state.fullScreen ? "full-screen" : ""
-
     return (
-      <div className={fScrnClass}>
-        <StructureEditorModal
-          key={sample.id}
-          showModal={this.state.showStructureEditor}
-          onSave={this.handleStructureEditorSave.bind(this)}
-          onCancel={this.handleStructureEditorCancel.bind(this)}
-          molfile={molfile}
-          hasParent={hasParent}
-          hasChildren={hasChildren}
-          />
-        <StickyDiv zIndex={2} offsetTop={this.state.offsetTop}>
-          <Panel className="panel-detail"
-                 header={this.sampleHeader(sample)}
-                 bsStyle={sample.isEdited ? 'info' : 'primary'}>
-            {this.sampleInfo(sample)}
-            <ListGroup>
-            <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
-              {tabContents.map((e,i)=>e(i))}
-            </Tabs>
-            </ListGroup>
-            {this.sampleFooter()}
-          </Panel>
-        </StickyDiv>
-      </div>
+      <Panel className="panel-detail"
+             header={this.sampleHeader(sample)}
+             bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
+        {this.sampleInfo(sample)}
+        <ListGroup>
+        <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
+          {tabContents.map((e,i)=>e(i))}
+        </Tabs>
+        </ListGroup>
+        {this.sampleFooter()}
+        {this.structureEditorModal(sample)}
+      </Panel>
     )
   }
 }
 SampleDetails.propTypes = {
   sample: React.PropTypes.object,
+  closeDetails: React.PropTypes.func,
+  toggleFullScreen: React.PropTypes.func,
 }
