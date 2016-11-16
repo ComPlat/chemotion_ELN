@@ -395,8 +395,16 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   render() {
-    const { reaction } = this.state;
+    let { reaction } = this.state;
     let minPadding = {padding: "1px 2px 2px 0px"}
+    if(reaction.editedSample != undefined) {
+      if(reaction.editedSample.amountType == 'target') {
+        this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
+      } else { // real amount, so that we update amount in mmol
+        this.updatedSamplesForAmountChange(reaction.samples, reaction.editedSample);
+      }
+      reaction.editedSample = undefined;
+    }
 
     // if no reference material then mark first starting material
     let refM = this.props.reaction.starting_materials[0];
