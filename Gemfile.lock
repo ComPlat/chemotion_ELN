@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/ComPlat/ketcher-rails
-  revision: ede7340b3028d02dfe6eee5a6abee22af9f4e673
+  revision: 0d8ddf63de85a909e4c39449cf5b4c5ffc8d7e20
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
