@@ -15,7 +15,7 @@ export default class ReactionDetailsContainers extends Component {
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      sample: nextProps.reaction
+      reaction: nextProps.reaction
     })
   }
 
@@ -61,9 +61,6 @@ export default class ReactionDetailsContainers extends Component {
     }
   }
 
-  funfun(){
-
-  }
   render() {
     const {reaction, activeContainer} = this.state;
     const {readOnly} = this.props;

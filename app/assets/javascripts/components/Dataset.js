@@ -72,10 +72,13 @@ export default class Dataset extends Component {
 
   handleAttachmentDownload(attachment) {
     if(attachment.preview) {
-      Utils.downloadFile({contents: attachment.preview, name: attachment.name});
+      //Utils.downloadFile({contents: attachment.preview, name: attachment.name});
+      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.identifier}`, name: attachment.name});
     }
     else {
       Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.filename}/?filename=${attachment.name}`, name: attachment.name});
+
+
     }
   }
 

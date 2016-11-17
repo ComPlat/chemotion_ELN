@@ -1,7 +1,7 @@
 module ContainerHelper
 
   def self.update_datamodel(user, container)
-    if Container.exists?(:id => container.id)
+    if !container.is_new #Container.exists?(id: container.id)
       root_container = Container.find_by id: container.id
     else
       root_container = Container.new
@@ -18,7 +18,7 @@ module ContainerHelper
 private
   def self.create_or_update_containers(user, children, root_container)
     children.each do |child|
-      if Container.exists?(:id => child.id)
+      if !child.is_new #Container.exists?(id: child.id)
         if child.is_deleted
           delete_containers_and_attachments(user, child)
         else
@@ -51,7 +51,7 @@ private
 
   def self.create_or_update_attachments(user, parent_container_id, attachments)
     attachments.each do |attachment|
-      if Attachment.exists?(:id => attachment.id)
+      if !attachment.is_new #Attachment.exists?(id: attachment.id)
         currentAttachment = Attachment.find_by id: attachment.id
         currentAttachment.filename = attachment.filename
         currentAttachment.save!
