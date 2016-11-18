@@ -38,10 +38,14 @@ export default class SampleDetailsContainers extends Component {
 
   handleRemove(container) {
     let {sample} = this.state;
-
-    //const index = sample.container.children.indexOf(container);
-    //sample.container.children.splice(index, 1);
     container.is_deleted = true;
+
+    this.props.parent.setState({sample: sample})
+  }
+
+  handleUndo(container) {
+    let {sample} = this.state;
+    container.is_deleted = false;
 
     this.props.parent.setState({sample: sample})
   }
@@ -54,18 +58,15 @@ export default class SampleDetailsContainers extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-        <div className="button-right" >
+        //<div className="button-right" >
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            Add container
+            Add analysis
           </Button>
-        </div>
+        //</div>
       )
     }
   }
 
-  funfun(){
-
-  }
   render() {
     const {sample, activeContainer} = this.state;
     const {readOnly} = this.props;
@@ -82,7 +83,11 @@ export default class SampleDetailsContainers extends Component {
       let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
         {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
         {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
-        </strike></p>
+        </strike>
+        <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
+          <i className="fa fa-undo"></i>
+        </Button>
+        </p>
 
     var c = sample.container.children.length;
     if(c > 0 ){

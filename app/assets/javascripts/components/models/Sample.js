@@ -96,7 +96,7 @@ export default class Sample extends Element {
       }],
       imported_readout: '',
       attached_amount_mg: '', // field for polymers calculations
-      container: Container.buildRoot(),
+      container: Container.buildEmpty(),
     });
 
     sample.short_label = Sample.buildNewShortLabel();

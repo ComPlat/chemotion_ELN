@@ -42,10 +42,14 @@ export default class ContainerDatasets extends Component {
   handleRemove(dataset_container) {
     let {container} = this.state;
 
-    //const index = container.children.indexOf(dataset_container);
-    //container.children.splice(index, 1);
     dataset_container.is_deleted = true;
+    this.props.onChange(container);
+  }
 
+  handleUndo(dataset_container) {
+    let {container} = this.state;
+
+    dataset_container.is_deleted = false;
     this.props.onChange(container);
   }
 
@@ -98,9 +102,13 @@ export default class ContainerDatasets extends Component {
   datasetField(dataset_container){
     if(dataset_container.is_deleted){
       return (
-        <strike>
-        {dataset_container.name}
-        </strike>
+        <div><strike>{dataset_container.name}</strike>
+
+            <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(dataset_container)}>
+              <i className="fa fa-undo"></i>
+            </Button>
+
+        </div>
       )
     }else{
       return(

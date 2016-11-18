@@ -215,51 +215,51 @@ module Chemotion
       end
 
       #todo: move to AttachmentAPI
-      desc "Upload attachments"
-      post 'upload_dataset_attachments' do
-        params.each do |file_id, file|
-          if tempfile = file.tempfile
-              #upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
-              #upload_dir = File.join('uploads', 'attachments')
-              #FileUtils.mkdir_p(upload_dir) unless Dir.exist?(upload_dir)
-            begin
-              #FileUtils.cp(tempfile.path, upload_path)
-              storage = Filesystem.new
-              file_id_filename = file_id + file.filename
-
-              storage.temp(file_id_filename, IO.binread(tempfile))
+      #desc "Upload attachments"
+      #post 'upload_dataset_attachments' do
+      #  params.each do |file_id, file|
+      #    if tempfile = file.tempfile
+      #        #upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
+      #        #upload_dir = File.join('uploads', 'attachments')
+      #        #FileUtils.mkdir_p(upload_dir) unless Dir.exist?(upload_dir)
+      #      begin
+      #        #FileUtils.cp(tempfile.path, upload_path)
+      #        storage = Filesystem.new
+      #        file_id_filename = file_id + file.filename
+      #
+      #        storage.temp(file_id_filename, IO.binread(tempfile))
             #end
             #begin
             #  create_thumbnail(tempfile.path, file_id)
-            ensure
-              tempfile.close
-              tempfile.unlink   # deletes the temp file
-            end
-          end
-        end
-        true
-      end
+      #      ensure
+      #        tempfile.close
+      #        tempfile.unlink   # deletes the temp file
+      #      end
+      #    end
+      #  end
+      #  true
+      #end
 
       #todo: authorize attachment download
-      desc "Download the attachment file"
-      params do
-        optional :filename, type: String
-      end
-      get 'download_attachement/:attachment_id' do
-        file_id = params[:attachment_id]
-        filename = params[:filename] || file_id
-        content_type "application/octet-stream"
-        header['Content-Disposition'] = "attachment; filename=#{filename}"
-        env['api.format'] = :binary
+      #desc "Download the attachment file"
+      #params do
+      #  optional :filename, type: String
+      #end
+      #get 'download_attachement/:attachment_id' do
+      #  file_id = params[:attachment_id]
+      #  filename = params[:filename] || file_id
+      #  content_type "application/octet-stream"
+      #  header['Content-Disposition'] = "attachment; filename=#{filename}"
+      #  env['api.format'] = :binary
         #File.open(File.join('uploads', 'attachments', "#{file_id}#{File.extname(filename)}")).read
 
-        if Attachment.exists?(:id => file_id)
-          attachment = Attachment.find_by id: file_id
-          storage = Filesystem.new
-          storage.read(current_user, attachment)
-        end
+      #  if Attachment.exists?(:id => file_id)
+      #    attachment = Attachment.find_by id: file_id
+      #    storage = Filesystem.new
+      #    storage.read(current_user, attachment)
+      #  end
 
-      end
+      #end
 
       module SampleUpdator
 

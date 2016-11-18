@@ -21,6 +21,34 @@ module Chemotion
         true
       end
 
+      #todo: authorize attachment download
+      desc "Download the attachment file"
+      get ':attachment_id' do
+        attachment_id = params[:attachment_id]
+        if Attachment.exists?(id: attachment_id)
+          attachment = Attachment.find_by id: attachment_id
+          storage = Filesystem.new
+
+          content_type "application/octet-stream"
+          header['Content-Disposition'] = "attachment; filename="+attachment.filename
+          env['api.format'] = :binary
+
+          storage.read(current_user, attachment)
+        else
+          #ToDo: File not found
+        end
+      end
+
+      #todo: authorize attachment download
+      desc "Download the zip attachment file"
+      get 'zip/:container_id' do
+        container_id = params[:container_id]
+
+        if Container.exists?(id: container_id)
+
+        end
+      end
+
       resource :thumbnails do
         desc 'Return Base64 encoded thumbnail'
         get do

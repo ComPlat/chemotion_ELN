@@ -42,7 +42,7 @@ export default class Reaction extends Element {
       products: [],
       literatures: [],
       solvent: '',
-      container: Container.buildRoot(),
+      container: Container.buildEmpty(),
     })
 
     reaction.short_label = this.buildReactionShortLabel()

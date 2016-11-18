@@ -6,7 +6,7 @@ import Utils from './utils/Functions';
 import Attachment from './models/Attachment';
 import SamplesFetcher from './fetchers/SamplesFetcher';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
-import Container from './models/Container';
+//import Container from './models/Container';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
@@ -76,10 +76,10 @@ export default class ContainerDataset extends Component {
     if(attachment.preview) {
       Utils.downloadFile({contents: attachment.preview,
         filename: attachment.filename,
-        identifier: attachment,identifier});
+        identifier: attachment.identifier});
     }
     else {
-      Utils.downloadFile({contents: `/api/v1/samples/download_attachement/${attachment.id}/?filename=${attachment.filename}`, name: attachment.filename});
+      Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
     }
   }
 

@@ -1,7 +1,5 @@
 import Element from './Element';
-import Dataset from './Dataset';
 import Attachment from './Attachment';
-import _ from 'lodash';
 
 export default class Container extends Element {
   static buildEmpty() {
@@ -11,17 +9,6 @@ export default class Container extends Element {
       attachments: [],
       is_deleted: false,
       description: '',
-      extended_metadata: {},
-    })
-  }
-
-  static buildRoot() {
-    return new Container({
-      name: 'root',
-      children: [],
-      attachments: [],
-      is_deleted: false,
-      descrption: '',
       extended_metadata: {},
     })
   }
@@ -42,13 +29,13 @@ export default class Container extends Element {
   //    this._children = children;
   //}
 
-  attachments() {
+  get attachments() {
     return this.attachments;
   }
 
-  //set attachments(attachments) {
-  //    this.attachments = attachments.map(a => new Attachment(a));;
-  //}
+  set attachments(attachments) {
+      this.attachments = attachments.map(a => new Attachment(a));;
+  }
 
   serialize() {
     return super.serialize({

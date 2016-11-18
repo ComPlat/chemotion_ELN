@@ -209,6 +209,10 @@ class Sample < ActiveRecord::Base
 
     subsample.collections << Collection.find(collection_id)
 
+    root_container = Container.new
+    root_container.name = "root"
+    subsample.container = root_container
+
     subsample.save!
 
     subsample
