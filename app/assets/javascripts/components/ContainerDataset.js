@@ -83,10 +83,19 @@ export default class ContainerDataset extends Component {
     }
   }
 
-  handleAttachmentRemove(attachments) {
+  handleAttachmentRemove(attachment) {
     const {dataset_container} = this.state;
-    const index = dataset_container.attachments.indexOf(attachments);
-    dataset_container.attachments.splice(index, 1);
+    const index = dataset_container.attachments.indexOf(attachment);
+    //dataset_container.attachments.splice(index, 1);
+    dataset_container.attachments[index].is_deleted = true;
+    this.setState({dataset_container});
+  }
+
+  handleUndo(attachment) {
+    const {dataset_container} = this.state;
+    const index = dataset_container.attachments.indexOf(attachment);
+    //dataset_container.attachments.splice(index, 1);
+    dataset_container.attachments[index].is_deleted = false;
     this.setState({dataset_container});
   }
 
@@ -97,6 +106,55 @@ export default class ContainerDataset extends Component {
     onModalHide();
   }
 
+  listGroupItem(attachment){
+    if(attachment.is_deleted){
+      return(
+        <Table className="borderless"><tbody>
+          <tr>
+            <td rowSpan="2" width="128">
+              <img src={attachment.preview} />
+            </td>
+            <td>
+              <strike>{attachment.filename}</strike>
+            </td>
+          </tr>
+          <tr>
+            <td>
+            <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(attachment)}>
+              <i className="fa fa-undo"></i>
+            </Button>
+            </td>
+          </tr>
+        </tbody></Table>
+      );
+    }else{
+      return(
+        <Table className="borderless"><tbody>
+          <tr>
+            <td rowSpan="2" width="128">
+              <img src={attachment.preview} />
+            </td>
+            <td>
+              <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              {this.removeAttachmentButton(attachment)}
+            </td>
+          </tr>
+        </tbody></Table>
+      );
+    }
+  }
+
+
+
+
+
+
+
+
   attachments() {
     const {dataset_container} = this.state;
     if(dataset_container.attachments && dataset_container.attachments.length > 0) {
@@ -105,21 +163,7 @@ export default class ContainerDataset extends Component {
         {dataset_container.attachments.map(attachment => {
           return (
             <ListGroupItem key={attachment.id}>
-              <Table className="borderless"><tbody>
-                <tr>
-                  <td rowSpan="2" width="128">
-                    <img src={attachment.preview} />
-                  </td>
-                  <td>
-                    <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    {this.removeAttachmentButton(attachment)}
-                  </td>
-                </tr>
-              </tbody></Table>
+              {this.listGroupItem(attachment)}
             </ListGroupItem>
           )
         })}

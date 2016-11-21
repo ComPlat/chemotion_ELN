@@ -52,23 +52,34 @@ private
   def self.create_or_update_attachments(user, parent_container_id, attachments)
     attachments.each do |attachment|
       if !attachment.is_new #Attachment.exists?(id: attachment.id)
-        currentAttachment = Attachment.find_by id: attachment.id
-        currentAttachment.filename = attachment.filename
-        currentAttachment.save!
-      else
-        begin
+        if !attachment.is_deleted
+          #update
+          currentAttachment = Attachment.find_by id: attachment.id
+          currentAttachment.filename = attachment.filename
+          currentAttachment.save!
+        else
+          #delete
           storage = Filesystem.new
-          file_id_filename = attachment.id + attachment.filename
-          storage.move_from_temp_to_storage(user, file_id_filename, true)
+          storage.delete(user, attachment)
+          Attachment.where(id: attachment.id).destroy_all
+        end
+      else
+        if !attachment.is_deleted
+          #create
+          begin
+            storage = Filesystem.new
+            file_id_filename = attachment.id + attachment.filename
+            storage.move_from_temp_to_storage(user, file_id_filename, true)
 
-          newAttachment = Attachment.new
+            newAttachment = Attachment.new
 
-          newAttachment.identifier = file_id_filename
-          newAttachment.filename = attachment.filename
-          newAttachment.container_id = parent_container_id
-          newAttachment.save!
-        rescue Exception => e
-          puts "ERROR: Can not create attachment: " + e.message
+            newAttachment.identifier = file_id_filename
+            newAttachment.filename = attachment.filename
+            newAttachment.container_id = parent_container_id
+            newAttachment.save!
+          rescue Exception => e
+            puts "ERROR: Can not create attachment: " + e.message
+          end
         end
       end
     end

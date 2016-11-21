@@ -9,7 +9,8 @@ export default class Attachment extends Element {
         //name: file.name,
         filename: file.name, //neu
         identifier: file.id,
-        preview: file.preview
+        preview: file.preview,
+        is_deleted: false,
       }
     )
   }
@@ -27,7 +28,8 @@ export default class Attachment extends Element {
       //name: this.name,
       filename: this.filename,
       identifier: this.identifier,
-      file: this.file
+      file: this.file,
+      is_deleted: this.is_deleted,
     })
   }
 
