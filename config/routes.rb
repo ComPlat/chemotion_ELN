@@ -18,7 +18,5 @@ Rails.application.routes.draw do
 
   get 'test', to: 'pages#test'
 
-  resources :containers do
-    resources :attachments
-  end
+
 end
