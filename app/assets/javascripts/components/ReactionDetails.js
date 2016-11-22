@@ -37,11 +37,21 @@ export default class ReactionDetails extends Component {
     const nextReaction = nextProps.reaction;
     if (nextReaction.id != reaction.id ||
         nextReaction.updated_at != reaction.updated_at ||
-        nextReaction.temperature != reaction.temperature) {
+        nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+        nextReaction.changed || nextReaction.editedSample) {
       this.setState({
         reaction: nextReaction
       });
     }
+  }
+
+  shouldComponentUpdate(nextProps) {
+    let nextReaction = nextProps.reaction;
+    const {reaction} = this.state;
+    return (nextReaction.id != reaction.id ||
+        nextReaction.updated_at != reaction.updated_at ||
+        nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+        !!nextReaction.changed || !!nextReaction.editedSample)
   }
 
   updateReactionSvg() {
