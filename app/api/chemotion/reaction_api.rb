@@ -217,15 +217,15 @@ module Chemotion
         literatures = attributes.delete(:literatures)
         collection_id = attributes.delete(:collection_id)
 
-        container = ContainerHelper.update_datamodel(current_user, params[:container]);
+        container_info = params[:container]
         attributes.delete(:container)
 
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
 
-        reaction.container = container
-
+        reaction.container = ContainerHelper.update_datamodel(current_user, container_info)
+        reaction.save!
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))

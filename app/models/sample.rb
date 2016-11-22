@@ -209,9 +209,13 @@ class Sample < ActiveRecord::Base
 
     subsample.collections << Collection.find(collection_id)
 
-    root_container = Container.new
-    root_container.name = "root"
-    subsample.container = root_container
+    #root_container = Container.new
+    #root_container.name = "root"
+    #root_container.container_type = "root"
+
+    #Container.create! :container_type => "analyses", :parent => root_container
+
+    #subsample.container = root_container
 
     subsample.save!
 

@@ -28,9 +28,11 @@ export default class SampleDetailsContainers extends Component {
   handleAdd() {
     const {sample} = this.state;
     let container = Container.buildEmpty();
-    sample.container.children.push(container);
 
-    const newKey = sample.container.children.length - 1;
+    sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+
+    const newKey = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
+
     this.handleAccordionOpen(newKey);
 
     this.props.parent.setState({sample: sample})
@@ -89,13 +91,18 @@ export default class SampleDetailsContainers extends Component {
         </Button>
         </p>
 
-    var c = sample.container.children.length;
-    if(c > 0 ){
+
+    //var c = sample.container.children.length;
+    var analyses_container = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+
+    //console.log(analyses_container);
+
+    if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
       return (
         <div>
         <p>&nbsp;{this.addButton()}</p>
         <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-        {sample.container.children.map((container, key) => {
+        {analyses_container[0].children.map((container, key) => {
           if (container.is_deleted){
             return (
               <Panel header={containerHeaderDeleted(container)} eventKey={key}

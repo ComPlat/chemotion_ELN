@@ -6,7 +6,8 @@ module ContainerHelper
       root_container.name = "root" #if it is created from client.side
     else
       root_container = Container.new
-      root_container.name = "root";
+      root_container.name = "root"
+      root_container.container_type = container.container_type
     end
     root_container.save!
 
@@ -14,6 +15,7 @@ module ContainerHelper
 
     return root_container
   end
+
 
 private
   def self.create_or_update_containers(user, children, root_container)
@@ -25,6 +27,7 @@ private
           #Update container
           oldcon = Container.find_by id: child.id
           oldcon.name = child.name
+          oldcon.container_type = child.container_type
           oldcon.description = child.description
           oldcon.extended_metadata = child.extended_metadata
 
@@ -37,6 +40,7 @@ private
         if !child.is_deleted
           #Create container
           newcon = Container.create! :name => child.name, :parent => root_container
+          newcon.container_type = child.container_type
           newcon.description = child.description
           newcon.extended_metadata = child.extended_metadata
 
