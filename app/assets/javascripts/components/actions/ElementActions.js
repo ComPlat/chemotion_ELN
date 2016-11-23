@@ -109,6 +109,8 @@ class ElementActions {
   updateSampleForReaction(sample, reaction) {
     return (dispatch) => { SamplesFetcher.update(sample)
       .then((newSample) => {
+        reaction.updateMaterial(newSample);
+        reaction.changed = true;
         dispatch(reaction)
       }).catch((errorMessage) => {
         console.log(errorMessage);

@@ -456,25 +456,26 @@ export default class Reaction extends Element {
   }
 
   hasSample(sampleId) {
-    return this.starting_materials.find((sample) => {
-      return sample.id == sampleId
-    }) || this.reactants.find((sample) => {
-      return sample.id == sampleId
-    }) || this.solvents.find((sample) => {
-      return sample.id == sampleId
-    }) || this.products.find((sample) => {
+    return this.samples.find((sample) => {
       return sample.id == sampleId
     });
   }
 
   hasPolymers() {
-    return this.starting_materials.find((sample) => {
-      return sample.contains_residues
-    }) || this.reactants.find((sample) => {
-      return sample.contains_residues
-    }) || this.products.find((sample) => {
+    return this.samples.find((sample) => {
       return sample.contains_residues
     });
+  }
+
+  updateMaterial(material) {
+    var cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    for(let i = 0; i < cats.length; i++) {
+      this['_' + cats[i]].map((sample, index) => {
+        if(sample.id == material.id) {
+          this['_' + cats[i]][index] = material;
+        }
+      })
+    }
   }
 
   // literatures
