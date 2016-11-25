@@ -28,6 +28,7 @@ export default class SampleDetailsContainers extends Component {
   handleAdd() {
     const {sample} = this.state;
     let container = Container.buildEmpty();
+    container.container_type = "analysis";
 
     sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
@@ -61,7 +62,7 @@ export default class SampleDetailsContainers extends Component {
     if(! readOnly) {
       return (
         //<div className="button-right" >
-          <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             Add analysis
           </Button>
         //</div>
@@ -91,11 +92,7 @@ export default class SampleDetailsContainers extends Component {
         </Button>
         </p>
 
-
-    //var c = sample.container.children.length;
     var analyses_container = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
-
-    //console.log(analyses_container);
 
     if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
       return (

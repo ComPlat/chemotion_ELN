@@ -304,6 +304,9 @@ module ReactionUpdator
 
               subsample.collections << collections.where.not(id: first_collection_id)
 
+              #add new data container
+              subsample.container = ContainerHelper.create_root_container
+
               subsample.save!
               subsample.reload
               included_sample_ids << subsample.id
@@ -329,6 +332,9 @@ module ReactionUpdator
               new_sample = Sample.new(
                 attributes
               )
+
+              #add new data container
+              new_sample.container = ContainerHelper.create_root_container
 
               new_sample.collections << collections
               new_sample.save!

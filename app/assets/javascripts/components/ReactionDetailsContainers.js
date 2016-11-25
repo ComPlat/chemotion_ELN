@@ -28,8 +28,9 @@ export default class ReactionDetailsContainers extends Component {
   handleAdd() {
     const {reaction} = this.state;
     let container = Container.buildEmpty();
-    reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+    container.container_type = "analysis";
 
+    reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
     const newKey = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
 

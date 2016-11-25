@@ -6,13 +6,17 @@ import Utils from './utils/Functions';
 import Attachment from './models/Attachment';
 import SamplesFetcher from './fetchers/SamplesFetcher';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
-//import Container from './models/Container';
+import Container from './models/Container';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
     super();
+    //console.log(props);
+    //console.log(props.dataset_container.constructor == Container);
+    //console.log(props.dataset_container.constructor == Object);
     //let dataset_container = props.dataset_container.clone();
-    let dataset_container = props.dataset_container;
+    let dataset_container = Object.assign({}, props.dataset_container);
+    //let dataset_container = props.dataset_container;
     this.state = {
       dataset_container: dataset_container
     };

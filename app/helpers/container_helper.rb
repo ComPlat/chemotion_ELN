@@ -16,8 +16,34 @@ module ContainerHelper
     return root_container
   end
 
+  def self.export_datamodel(user, container)
+
+  end
+
+  def self.create_root_container
+    root_con = Container.new
+    root_con.name = "root"
+    root_con.container_type = "root"
+    root_con.save!
+
+    analyses_con = Container.create! :container_type => "analyses", :parent => root_con
+
+    return root_con
+  end
 
 private
+  def self.read_Attachments(user, folder, container)
+    path = File.join(folder, container.name) #wenn leer neue namen
+
+    container.attachments.each do |attachment|
+    end
+
+    container.children.each do |child|
+      read_Attachments(user, path, child)
+    end
+
+  end
+
   def self.create_or_update_containers(user, children, root_container)
     children.each do |child|
       if !child.is_new #Container.exists?(id: child.id)

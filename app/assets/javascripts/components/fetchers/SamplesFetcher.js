@@ -5,6 +5,8 @@ import NotificationActions from '../actions/NotificationActions'
 import AttachmentFetcher from './AttachmentFetcher'
 import _ from 'lodash';
 
+import Container from '../models/Container';
+
 export default class SamplesFetcher {
   static fetchByUIState(params) {
     let promise = fetch('/api/v1/samples/ui_state/', {

@@ -32,6 +32,8 @@ export default class ContainerDatasets extends Component {
   handleAdd(){
     const {container} = this.state;
     let dataset_container = Container.buildEmpty();
+    dataset_container.container_type = "dataset";
+
     container.children.push(dataset_container);
 
     this.handleModalOpen(dataset_container);
