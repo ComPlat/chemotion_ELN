@@ -150,7 +150,7 @@ module Report
       end
 
       def title
-        obj.name
+        obj.name.present? ? obj.name : obj.short_label
       end
 
       def purification
