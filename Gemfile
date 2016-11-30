@@ -1,7 +1,5 @@
 source 'https://rubygems.org'
 
-ruby '2.3.1'
-
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.0'
 
@@ -81,17 +79,7 @@ gem 'yaml_db'
 # CI
 gem 'coveralls', require: false
 
-if ENV.fetch("RAILS_ENV", "development").match(/^(development|test)\z/)
-  gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
-elsif ENV["RAILS_ENV"] == "production"
-  gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
-end
-
-group :production do
-
-#  gem 'unicorn'
-
-end
+gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
 
 group :development do
   gem 'web-console', '~> 2.0'
@@ -141,7 +129,7 @@ group :test do
   gem "chromedriver-helper", "1.0.0"
 end
 
-# Chemotion plugins: lsit your chemotion specific plugin gems here
+# Chemotion plugins: list your chemotion specific plugin gems here
 
 #gem 'scifinding', '0.1.0', git: 'https://github.com/ComPlat/scifinding' , :group => [:plugins,:development,:production]
 
