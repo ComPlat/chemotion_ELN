@@ -1,5 +1,5 @@
 # create initial test user
-u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Test', last_name: 'Ninja')
+u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Test', last_name: 'Ninja', name_abbreviation: 'TN')
 
 # hattori = User.create!(email: 'hattori@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Hattori', last_name: 'Hanzo')
 # momochi = User.create!(email: 'momochi@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Momochi', last_name: 'Sandayu')
