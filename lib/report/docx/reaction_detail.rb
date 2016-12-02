@@ -158,7 +158,7 @@ module Report
       end
 
       def description
-        obj.description_contents
+        Sablon.content(:html, Delta.new(obj.description).getHTML())
       end
 
       def solvents

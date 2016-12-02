@@ -43,7 +43,7 @@ describe 'Report::Docx::ReactionDetail instance' do
     it "has correct content" do
       expect(content[:title]).to eq(tit)
       expect(content[:solvents]).to eq(sol)
-      expect(content[:description]).to eq("correct description")
+      expect(content[:description]).to eq(Sablon.content(:html, Report::Delta.new(des).getHTML()))
       expect(content[:tlc_rf]).to eq(rf)
       expect(content[:tlc_solvent]).to eq(t_sol)
       expect(content[:tlc_description]).to eq(t_des)

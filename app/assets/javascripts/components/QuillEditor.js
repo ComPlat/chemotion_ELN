@@ -17,17 +17,17 @@ export default class QuillEditor extends React.Component {
       modules: {
         toolbar: [
           ['bold', 'italic', 'underline'], //, 'strike'
-          // ['blockquote', 'code-block'],
-          // [{ 'header': 1 }, { 'header': 2 }],
           [{ 'list': 'ordered'}, { 'list': 'bullet' }],
           [{ 'script': 'sub'}, { 'script': 'super' }],
-          [{ 'indent': '-1'}, { 'indent': '+1' }],
-          // [{ 'direction': 'rtl' }],
-          // [{ 'size': ['small', false, 'large', 'huge'] }],
           [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
           [{ 'color': [] }, { 'background': [] }],
-          [{ 'font': [] }],
-          [{ 'align': [] }],
+          // [{ 'font': [] }],
+          // ['blockquote', 'code-block'],
+          // [{ 'header': 1 }, { 'header': 2 }],
+          // [{ 'indent': '-1'}, { 'indent': '+1' }],
+          // [{ 'direction': 'rtl' }],
+          // [{ 'size': ['small', false, 'large', 'huge'] }],
+          // [{ 'align': [] }],
           // ['clean']
         ]
       },
@@ -43,9 +43,12 @@ export default class QuillEditor extends React.Component {
   componentWillReceiveProps(nextProps) {
     let {value} = this.state
 
-    if (this.editor && 'value' in nextProps && nextProps.value !== value) {
+    if (this.editor && nextProps.value &&
+        nextProps.value !== this.getContents() ) {
       this.setState({value: nextProps.value})
+      let sel = this.editor.getSelection()
       this.editor.setContents(nextProps.value)
+      if (sel) this.editor.setSelection(sel)
     }
 
     this.clearTypingTimeout()
@@ -65,6 +68,14 @@ export default class QuillEditor extends React.Component {
       // init Quill
       this.editor = new Quill(quillEditor, this.defaultOptions)
 
+      // Resolve compability with Grammarly Chrome add-on
+      // Fromm https://github.com/quilljs/quill/issues/574
+      // let GrammarlyInline = Quill.import('blots/inline');
+      // GrammarlyInline.tagName = 'G';
+      // GrammarlyInline.blotName = 'grammarly-inline';
+      // GrammarlyInline.className = 'gr_';
+      // Quill.register({'formats/grammarly-inline': GrammarlyInline})
+
       // onChange
       this.editor.on('text-change', (delta, oldDelta, source) => {
         if (source == 'user' && this.props.onChange) {
@@ -73,12 +84,14 @@ export default class QuillEditor extends React.Component {
           let contents = this.editor.getContents()
           let onChangeFunc = this.props.onChange
 
-          this.setState({
-            value: contents,
-            timeoutReference: setTimeout(function(){
-              onChangeFunc(contents)
-            }, this.timeout)
-          })
+          if (this.state.value !== contents) {
+            this.setState({
+              value: contents,
+              timeoutReference: setTimeout(function(){
+                onChangeFunc(contents)
+              }, this.timeout)
+            })
+          }
         }
       })
     }
