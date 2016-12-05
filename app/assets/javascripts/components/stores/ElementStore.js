@@ -3,11 +3,13 @@ import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
+import UIStoreActions from '../actions/UIActions'
 import ClipboardStore from './ClipboardStore';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import ModalImportConfirm from '../contextActions/ModalImportConfirm'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -81,6 +83,8 @@ class ElementStore {
       handleAddSampleToMaterialGroup: ElementActions.addSampleToMaterialGroup,
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
+      handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
+
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
       handleChangeSorting: ElementActions.changeSorting,
@@ -320,8 +324,29 @@ class ElementStore {
     this.state.currentElement = sample;
   }
 
-  handleImportSamplesFromFile() {
+  handleImportSamplesFromFile(data) {
+    if (data.sdf){
+      UIActions.updateModalProps.defer({
+        show: true,
+        component: ModalImportConfirm,
+        title: "Sample Import Confirmation",
+        action: null,
+        listSharedCollections: false,
+        customModal: "custom-modal",
+        data: data.data,
+        raw_data: data.raw_data,
+      })
+    } else {
+      this.handleRefreshElements('sample');
+    }
+
     this.handleRefreshElements('sample');
+  }
+
+  handleImportSamplesFromFileConfirm(data) {
+    if (data.sdf){
+      this.handleRefreshElements('sample');
+    }
   }
 
   // -- Wellplates --

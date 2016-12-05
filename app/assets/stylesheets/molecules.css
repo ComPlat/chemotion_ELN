@@ -33,6 +33,12 @@
   height: 200px;
 }
 
+.molecule-fixed-data svg {
+  max-width: 100%;
+  height: 100px;
+}
+
+
 .molecule-mid rect {
   opacity: 0;
 }

@@ -42,7 +42,9 @@ class UIStore {
       currentTab: 1,
       currentSearchSelection: null,
       showCollectionManagement: false,
-      isSync: false
+      isSync: false,
+      showModal: false,
+      modalParams: {},
     };
 
     this.bindListeners({
@@ -66,7 +68,9 @@ class UIStore {
       handleShowElements: UIActions.showElements,
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
-      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown
+      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
+      handleShowModalChange: UIActions.updateModalProps,
+      handleHideModal: UIActions.hideModal,
     });
   }
 
@@ -227,6 +231,20 @@ class UIStore {
 
   handleChangeNumberOfResultsShown(value) {
     this.state.number_of_results = value;
+  }
+  handleShowModalChange(params){
+    this.state.showModal = params.show ? true : false
+    this.state.modalParams = params
+  }
+
+  handleHideModal(){
+    this.state.showModal = false
+    this.state.modalParams = {
+      show: false,
+      title: "",
+      component: "",
+      action: null
+    }
   }
 }
 

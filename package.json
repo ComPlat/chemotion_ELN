@@ -19,6 +19,7 @@
     "es6-promise-debounce": "^1.0.1",
     "eslint": "2.10.2",
     "eslint-plugin-react": "5.1.1",
+    "fixed-data-table": "0.6.3",
     "immutable": "~3.8.1",
     "jsdom": "^9.8.0",
     "lodash": "^4.15.0",

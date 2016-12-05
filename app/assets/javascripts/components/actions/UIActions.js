@@ -81,6 +81,13 @@ class UIActions {
   changeNumberOfResultsShown(value) {
     return  value;
   }
+
+  updateModalProps(params){
+    return params
+  }
+  hideModal(){
+    return null
+  }
 }
 
 export default alt.createActions(UIActions);
