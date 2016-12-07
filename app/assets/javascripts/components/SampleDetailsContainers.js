@@ -92,48 +92,62 @@ export default class SampleDetailsContainers extends Component {
         </Button>
         </p>
 
-    var analyses_container = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+    if(sample.container != null){
 
-    if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
-      return (
-        <div>
-        <p>&nbsp;{this.addButton()}</p>
-        <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-        {analyses_container[0].children.map((container, key) => {
-          if (container.is_deleted){
-            return (
-              <Panel header={containerHeaderDeleted(container)} eventKey={key}
-                  key={key} >
-              </Panel>
-            );
-          }else {
-            return (
-              <Panel header={containerHeader(container)} eventKey={key}
-                  key={key} onClick={() => this.handleAccordionOpen(key)}>
-                <ContainerComponent
-                  readOnly={readOnly}
-                  container={container}
-                  onChange={container => this.handleChange(container)}
-                />
-              </Panel>
-            );
-          }
+      var analyses_container = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
 
-          }
-        )}
-        </PanelGroup>
-        </div>
-      )
-    }else {
+      if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
+        return (
+          <div>
+          <p>&nbsp;{this.addButton()}</p>
+          <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
+          {analyses_container[0].children.map((container, key) => {
+            if (container.is_deleted){
+              return (
+                <Panel header={containerHeaderDeleted(container)} eventKey={key}
+                    key={key} >
+                    </Panel>
+                  );
+                }else {
+              return (
+                <Panel header={containerHeader(container)} eventKey={key}
+                    key={key} onClick={() => this.handleAccordionOpen(key)}>
+                  <ContainerComponent
+                    readOnly={readOnly}
+                    container={container}
+                    onChange={container => this.handleChange(container)}
+                  />
+                </Panel>
+              );
+            }
+
+            }
+          )}
+          </PanelGroup>
+          </div>
+        )
+      }else {
+        return (
+          <div>
+            <p className='noAnalyses-warning'>
+              There are currently no Analyses.
+              {this.addButton()}
+            </p>
+          </div>
+        )
+      }
+
+    }else{
+
       return (
         <div>
           <p className='noAnalyses-warning'>
             There are currently no Analyses.
-            {this.addButton()}
           </p>
         </div>
       )
     }
+
   }
 
 }

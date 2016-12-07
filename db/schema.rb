@@ -15,20 +15,19 @@ ActiveRecord::Schema.define(version: 20170201113437) do
 
 
 
+
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
   enable_extension "pg_trgm"
 
   create_table "attachments", force: :cascade do |t|
-    t.string   "filename"
-    t.integer  "container_id"
+    t.integer  "container_id", null: false
+    t.string   "filename",     null: false
+    t.string   "identifier",   null: false
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
-    t.string   "identifier"
   end
-
-  add_index "attachments", ["container_id"], name: "index_attachments_on_container_id", using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -106,19 +105,18 @@ ActiveRecord::Schema.define(version: 20170201113437) do
   add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
 
   create_table "containers", force: :cascade do |t|
-    t.string   "name"
-    t.datetime "created_at",                     null: false
-    t.datetime "updated_at",                     null: false
-    t.string   "identifier"
     t.string   "ancestry"
     t.integer  "element_id"
+    t.string   "element_type"
+    t.string   "name"
     t.string   "container_type"
     t.text     "description"
-    t.hstore   "extended_metadata", default: {}, null: false
-    t.string   "element_type"
+    t.hstore   "extended_metadata", default: {}
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
   end
 
-  add_index "containers", ["element_id"], name: "index_containers_on_element_id", using: :btree
+  add_index "containers", ["ancestry"], name: "index_containers_on_ancestry", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -441,10 +439,8 @@ ActiveRecord::Schema.define(version: 20170201113437) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
-    t.integer  "container_id"
   end
 
-  add_index "samples", ["container_id"], name: "index_samples_on_container_id", using: :btree
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
   add_index "samples", ["identifier"], name: "index_samples_on_identifier", using: :btree
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
@@ -585,7 +581,4 @@ ActiveRecord::Schema.define(version: 20170201113437) do
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
 
-  add_foreign_key "attachments", "containers"
-  add_foreign_key "containers", "samples", column: "element_id"
-  add_foreign_key "samples", "containers"
 end

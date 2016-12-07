@@ -82,32 +82,34 @@ export default class ReactionDetailsContainers extends Component {
         {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
         </strike></p>
 
-    var analyses_container = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+    if(reaction.container != null){
 
-    if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
-      return (
-        <div>
-        <p>&nbsp;{this.addButton()}</p>
-        <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-        {analyses_container[0].children.map((container, key) => {
-          if (container.is_deleted){
-            return (
-              <Panel header={containerHeaderDeleted(container)} eventKey={key}
-                  key={key} >
-              </Panel>
-            );
-          }else {
-            return (
-              <Panel header={containerHeader(container)} eventKey={key}
-                  key={key} onClick={() => this.handleAccordionOpen(key)}>
-                <ContainerComponent
-                  readOnly={readOnly}
-                  container={container}
-                  onChange={container => this.handleChange(container)}
-                />
-              </Panel>
-            );
-          }
+      var analyses_container = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+
+      if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
+        return (
+          <div>
+          <p>&nbsp;{this.addButton()}</p>
+          <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
+          {analyses_container[0].children.map((container, key) => {
+            if (container.is_deleted){
+              return (
+                <Panel header={containerHeaderDeleted(container)} eventKey={key}
+                    key={key} >
+                    </Panel>
+                  );
+                }else {
+                  return (
+                    <Panel header={containerHeader(container)} eventKey={key}
+                    key={key} onClick={() => this.handleAccordionOpen(key)}>
+                    <ContainerComponent
+                    readOnly={readOnly}
+                    container={container}
+                    onChange={container => this.handleChange(container)}
+                    />
+                    </Panel>
+                  );
+                }
 
           }
         )}
@@ -124,6 +126,17 @@ export default class ReactionDetailsContainers extends Component {
         </div>
       )
     }
+
+  }else{
+    return (
+      <div>
+        <p className='noAnalyses-warning'>
+          There are currently no Analyses.
+
+        </p>
+      </div>
+    )
+  }
   }
 
 }
