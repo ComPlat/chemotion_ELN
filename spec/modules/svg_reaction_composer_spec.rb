@@ -31,7 +31,7 @@ RSpec.describe SVG::ReactionComposer do
     let(:expected_svg) { File.read(Rails.root.join("spec/fixtures/images/compose_reaction_svg.svg")).gsub(/\s/,'') }
 
     it 'should generate a svg' do
-      expect(svg).to eq(expected_svg)
+      expect(svg.strip).to eq(expected_svg.strip)
     end
 
     it 'should save the svg' do
