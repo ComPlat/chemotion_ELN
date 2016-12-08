@@ -30,7 +30,7 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-                                           currentPage, isSync = false) {
+      currentPage, isSync = false, moleculeSort = false) {
     let uid;
     NotificationActions.add({
       title: "Searching ...",
@@ -40,7 +40,8 @@ class ElementActions {
     });
 
     return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage, isSync)
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection,
+        collectionId, currentPage, isSync, moleculeSort)
                    .then((result) => {
                      dispatch(result);
                      NotificationActions.removeByUid(uid);
@@ -74,8 +75,10 @@ class ElementActions {
       });};
   }
 
-  fetchSamplesByCollectionId(id, queryParams={}, collectionIsSync = false) {
-    return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+      moleculeSort = false) {
+    return (dispatch) => {
+      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -473,6 +476,10 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  changeSorting(sort) {
+    return sort;
   }
 
 }

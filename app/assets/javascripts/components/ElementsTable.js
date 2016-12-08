@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pagination, Table, Form, Col,
+import { Pagination, Table, Form, Col, Button,
          FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
@@ -21,7 +21,8 @@ export default class ElementsTable extends React.Component {
       elements: [],
       currentElement: null,
       ui: {},
-      sampleCollapseAll: false
+      sampleCollapseAll: false,
+      moleculeSort: false
     }
     this.onChange = this.onChange.bind(this)
     this.onChangeUI = this.onChangeUI.bind(this)
@@ -108,6 +109,15 @@ export default class ElementsTable extends React.Component {
     this.setState({sampleCollapseAll: !sampelCollapseAll})
   }
 
+  changeSort() {
+    let {moleculeSort} = this.state
+    moleculeSort = !moleculeSort
+
+    this.setState({
+      moleculeSort
+    }, () => ElementActions.changeSorting(moleculeSort))
+  }
+
   handlePaginationSelect(eventKey) {
     const {pages} = this.state;
     const {type} = this.props;
@@ -175,31 +185,39 @@ export default class ElementsTable extends React.Component {
   }
 
   renderEntries() {
-    const {elements, ui, currentElement, sampleCollapseAll} = this.state
+    const {elements, ui, currentElement, sampleCollapseAll, moleculeSort} = this.state
     const {overview, showReport, type} = this.props
     if(type == 'sample') {
       return (
         <div>
           <Table className="elements" bordered hover style={{marginBottom: 0}}>
             <thead><tr>
-              <th className="check">
+              <th className="check" style={{verticalAlign: "middle"}}>
                 <ElementAllCheckbox type={this.props.type}
                   checked={ui.checkedAll}
                   showReport={showReport}/>
               </th>
-              <th colSpan={3}>
+              <th colSpan={3} style={{verticalAlign: "middle"}}>
                 All {type}s
-                <div style={{float: "right"}}>
-                  Collapse all &nbsp;
-                  <input type="checkbox" checked={sampleCollapseAll}
-                    onChange={() => this.collapseSample(sampleCollapseAll)} />
+                <div style={{display: "inline-block", verticalAlign: "middle", width: "92%"}}>
+                  <div style={{float: "right"}}>
+                    <Button bsStyle="info" style={{width: "130px"}}
+                        onClick={() => this.changeSort()}>
+                      {moleculeSort ? "Sort by Sample" : "Sort by Molecule"}
+                    </Button>
+                    &nbsp;&nbsp;
+                    Collapse all &nbsp;
+                    <input type="checkbox" checked={sampleCollapseAll}
+                      style={{margin: 0}}
+                      onChange={() => this.collapseSample(sampleCollapseAll)} />
+                  </div>
                 </div>
               </th>
             </tr></thead>
           </Table>
           <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
             elements={elements} currentElement={currentElement}
-            showDragColumn={!overview} ui={ui}
+            showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
             onChangeCollapse={(checked) => this.collapseSample(!checked)}
           />
         </div>

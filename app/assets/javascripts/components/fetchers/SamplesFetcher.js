@@ -47,10 +47,12 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}, isSync=false) {
+  static fetchByCollectionId(id, queryParams={}, isSync = false, moleculeSort = false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || UIStore.getState().number_of_results
-    let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }collection_id=${id}&page=${page}&per_page=${per_page}`
+    let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }` +
+               `collection_id=${id}&page=${page}&per_page=${per_page}&` +
+               `molecule_sort=${moleculeSort ? 1 : 0}`
     let promise = fetch(api, {
         credentials: 'same-origin'
       })

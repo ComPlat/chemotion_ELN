@@ -90,13 +90,17 @@ module Chemotion
 
       # Generate search query
       def scope_by_search_by_method_arg_and_collection_id(search_by_method,
-          arg, collection_id, is_sync = false)
+          arg, collection_id, is_sync = false, molecule_sort = false)
+        sample_search = false
+
         scope = case search_by_method
         when 'polymer_type'
+          sample_search = true
           Sample.for_user(current_user.id).joins(:residues)
             .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
         when 'sum_formula', 'iupac_name', 'inchistring', 'cano_smiles',
              'sample_name', 'sample_short_label', 'sample_external_label'
+          sample_search = true
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
         when 'reaction_name'
           Reaction.for_user(current_user.id).search_by(search_by_method, arg)
@@ -105,6 +109,7 @@ module Chemotion
         when 'screen_name'
           Screen.for_user(current_user.id).search_by(search_by_method, arg)
         when 'substring'
+          sample_search = true
           AllElementSearch.new(arg, current_user.id).search_by_substring
         when 'structure'
           molfile = Fingerprint.standardized_molfile arg
@@ -118,6 +123,17 @@ module Chemotion
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
+
+        if sample_search
+          scope =
+            if molecule_sort
+              scope.includes(:molecule)
+                   .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                   .order(:sum_formular)
+            else
+              scope.order("updated_at DESC")
+            end
+        end
 
         scope
       end
@@ -167,6 +183,7 @@ module Chemotion
           requires :selection, type: Hash
           requires :collection_id, type: String
           optional :is_sync, type: Boolean
+          optional :molecule_sort, type: Integer
         end
 
         post do
@@ -174,12 +191,9 @@ module Chemotion
           arg = get_arg()
           return if arg.to_s.strip.length == 0
 
-          scope =
-            scope_by_search_by_method_arg_and_collection_id(search_by_method,
-                                                            arg,
-                                                            params[:collection_id],
-                                                            params[:is_sync])
-
+          molecule_sort = params[:molecule_sort] == 1 ? true : false
+          scope = scope_by_search_by_method_arg_and_collection_id(search_by_method,
+            arg, params[:collection_id], params[:is_sync], molecule_sort)
 
           serialization_by_elements_and_page(elements_by_scope(scope),
                                              params[:page])

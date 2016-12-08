@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import {Table} from 'react-bootstrap'
+import {Table, Button} from 'react-bootstrap'
 import ElementCheckbox from './ElementCheckbox'
 import SVG from 'react-inlinesvg'
 import ElementCollectionLabels from './ElementCollectionLabels'
@@ -23,7 +23,9 @@ export default class ElementsTableSampleEntries extends Component {
   constructor(props) {
     super()
     this.state = {
+      displayedMoleculeGroup: [],
       moleculeGroupsShown: [],
+      flattenSamplesId: [],
       keyboardIndex: null,
       keyboardSeletectedElementId: null,
       collapseAll: props.collapseAll
@@ -37,22 +39,41 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let flattenSamplesId = []
-    let flatIndex = 0
+    let displayedMoleculeGroup = []
+
     nextProps.elements.forEach(function(groupSample, index) {
-      for (let i = 0; i < groupSample.length; i++) {
-        flattenSamplesId[flatIndex + i] = groupSample[i].id
-      }
+      let numSamples = groupSample.length
+      displayedMoleculeGroup[index] = groupSample
+      if (nextProps.moleculeSort && numSamples > 3) numSamples = 3
+      displayedMoleculeGroup[index].numSamples = numSamples
+    })
 
-      flatIndex = flatIndex + groupSample.length
-    }, [])
-    this.flattenSamplesId = flattenSamplesId
-
-    this.setState({collapseAll: nextProps.collapseAll})
+    this.setState({
+      collapseAll: nextProps.collapseAll,
+      displayedMoleculeGroup
+    }, () => this.buildFlattenSampleIds())
   }
 
   componentWillUnmount() {
     KeyboardStore.unlisten(this.sampleOnKeyDown)
+  }
+
+  buildFlattenSampleIds() {
+    let {displayedMoleculeGroup} = this.state
+    let flatIndex = 0
+    let flattenSamplesId = []
+
+    displayedMoleculeGroup.forEach(function(groupSample, index) {
+      let length = displayedMoleculeGroup[index].numSamples
+
+      for (let i = 0; i < length; i++) {
+        flattenSamplesId[flatIndex + i] = groupSample[i].id
+      }
+
+      flatIndex = flatIndex + length
+    })
+
+    this.setState({flattenSamplesId})
   }
 
   sampleOnKeyDown(state) {
@@ -60,7 +81,7 @@ export default class ElementsTableSampleEntries extends Component {
     if (context != "sample") return false
 
     let documentKeyDownCode = state.documentKeyDownCode
-    let {keyboardIndex, keyboardSeletectedElementId} = this.state
+    let {keyboardIndex, keyboardSeletectedElementId, flattenSamplesId} = this.state
 
     switch(documentKeyDownCode) {
       case 13: // Enter
@@ -79,34 +100,48 @@ export default class ElementsTableSampleEntries extends Component {
       case 40: // Down
         if (keyboardIndex == null) {
           keyboardIndex = 0
-        } else if (keyboardIndex < (this.flattenSamplesId.length - 1)){
+        } else if (keyboardIndex < (flattenSamplesId.length - 1)){
           keyboardIndex++
         }
 
         break
     }
 
-    keyboardSeletectedElementId = this.flattenSamplesId[keyboardIndex]
+    keyboardSeletectedElementId = flattenSamplesId[keyboardIndex]
     this.setState({
       keyboardIndex: keyboardIndex,
       keyboardSeletectedElementId: keyboardSeletectedElementId
     })
   }
 
+  showMoreSamples(index) {
+    let {displayedMoleculeGroup} = this.state
+    let length = displayedMoleculeGroup[index].numSamples
+    length += 3
+    if (displayedMoleculeGroup[index].length < length) {
+      length = displayedMoleculeGroup[index].length
+    }
+    displayedMoleculeGroup[index].numSamples = length
+
+    this.setState({displayedMoleculeGroup}, () => this.buildFlattenSampleIds())
+  }
+
   render() {
-    let {elements: samples, currentElement, showDragColumn, ui} = this.props
+    let {currentElement, showDragColumn, ui} = this.props
+    let {displayedMoleculeGroup} = this.state
 
     return (
       <Table className="elements" bordered hover style={{borderTop: 0}}>
-        {Object.keys(samples).map((group, index) => {
-          let moleculeGroup = samples[group]
-          return this.renderMoleculeGroup(moleculeGroup, index)
+        {Object.keys(displayedMoleculeGroup).map((group, index) => {
+          let moleculeGroup = displayedMoleculeGroup[group]
+          let numSamples = displayedMoleculeGroup[group].numSamples
+          return this.renderMoleculeGroup(moleculeGroup, index, numSamples)
         })}
       </Table>
     )
   }
 
-  renderMoleculeGroup(moleculeGroup, index) {
+  renderMoleculeGroup(moleculeGroup, index, numSamples) {
     let {moleculeGroupsShown, collapseAll} = this.state
 
     let moleculeName = moleculeGroup[0].molecule.iupac_name || moleculeGroup[0].molecule.inchistring
@@ -115,7 +150,7 @@ export default class ElementsTableSampleEntries extends Component {
     return (
       <tbody key={index}>
         {this.renderMoleculeHeader(moleculeGroup[0], showGroup)}
-        {this.renderSamples(moleculeGroup, showGroup)}
+        {this.renderSamples(moleculeGroup, showGroup, index)}
       </tbody>
     )
   }
@@ -174,40 +209,62 @@ export default class ElementsTableSampleEntries extends Component {
     )
   }
 
-  renderSamples(samples, show) {
-    let {keyboardSeletectedElementId} = this.state
+  renderSamples(samples, show, index) {
+    let {keyboardSeletectedElementId, displayedMoleculeGroup} = this.state
 
-    if(show) {
-      return samples.map((sample, index) => {
-        const selected = this.isElementSelected(sample);
-        let style = {};
+    if(!show) return null
 
-        if (selected || keyboardSeletectedElementId == sample.id) {
-          style = {color: '#fff', background: '#337ab7'}
-        }
+    const length = samples.length
+    let numSamples = displayedMoleculeGroup[index].numSamples
 
-        return (
-          <tr key={index} style={style}>
-            <td width="30px">
-              <ElementCheckbox element={sample} key={sample.id} checked={this.isElementChecked(sample)}/>
-            </td>
-            <td style={{cursor: 'pointer'}}
-                onClick={() => this.showDetails(sample.id)}>
-              {sample.title(selected)}
-              <div style={{float: 'right'}}>
-                <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
-                <ElementCollectionLabels element={sample} key={sample.id}/>
-                <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
-                {this.topSecretIcon(sample)}
-              </div>
-            </td>
-            {this.dragColumn(sample)}
-          </tr>
-        )
-      })
-    } else {
-      return null
+    samples = samples.slice(0, numSamples)
+    let sampleRows = samples.map((sample, index) => {
+      const selected = this.isElementSelected(sample);
+      let style = {};
+
+      if (selected || keyboardSeletectedElementId == sample.id) {
+        style = {color: '#fff', background: '#337ab7'}
+      }
+
+      return (
+        <tr key={index} style={style}>
+          <td width="30px">
+            <ElementCheckbox element={sample} key={sample.id}
+                             checked={this.isElementChecked(sample)}/>
+          </td>
+          <td style={{cursor: 'pointer'}}
+              onClick={() => this.showDetails(sample.id)}>
+            {sample.title(selected)}
+            <div style={{float: 'right'}}>
+              <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
+              <ElementCollectionLabels element={sample} key={sample.id}/>
+              <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+              {this.topSecretIcon(sample)}
+            </div>
+          </td>
+          {this.dragColumn(sample)}
+        </tr>
+      )
+    })
+
+    if (numSamples < length) {
+      let showMoreSamples = (
+        <tr key={index + "_showMore"}><td colSpan="2"  style={{padding: 0}}>
+          <Button bsStyle="info"
+                  onClick={() => this.showMoreSamples(index)}
+                  style={{
+                    fontSize: '14px', width: '100%',
+                    float: 'left', borderRadius: '0px'
+                  }}>
+            Show more samples
+          </Button>
+        </td></tr>
+      )
+
+      sampleRows.push(showMoreSamples)
     }
+
+    return sampleRows;
   }
 
   handleMoleculeToggle(moleculeName) {
