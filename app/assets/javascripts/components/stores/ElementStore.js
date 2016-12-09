@@ -51,6 +51,7 @@ class ElementStore {
       },
       currentElement: null,
       elementWarning: false,
+      moleculeSort: false,
       ...extraThing("state",Xstate)
     };
 
@@ -82,6 +83,7 @@ class ElementStore {
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
+      handleChangeSorting: ElementActions.changeSorting,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleTryFetchReactionById: ElementActions.tryFetchReactionById,
@@ -113,9 +115,10 @@ class ElementStore {
       handleUpdateScreen: ElementActions.updateScreen,
       handleCreateScreen: ElementActions.createScreen,
 
-      handleUnselectCurrentElement: UIActions.deselectAllElements,
       // FIXME ElementStore listens to UIActions?
+      handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
+
       handleRefreshElements: ElementActions.refreshElements,
       handleGenerateEmptyElement:
         [
@@ -490,13 +493,14 @@ class ElementStore {
 
   handleSetPagination(pagination) {
     this.waitFor(UIStore.dispatchToken);
-    this.handleRefreshElements(pagination.type);
+    this.handleRefreshElements(pagination.type, pagination.sortBy);
   }
 
   handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
     let uiState = UIStore.getState();
     let page = uiState[type].page;
+    const moleculeSort = this.state.moleculeSort
 
     this.state.elements[type+'s'].page = page;
     let currentSearchSelection = uiState.currentSearchSelection;
@@ -505,11 +509,12 @@ class ElementStore {
     // if there is a currentSearchSelection
     //    we have to execute the respective action
     if(currentSearchSelection != null) {
-      ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection,
-        uiState.currentCollection.id, page, uiState.isSync)
+      ElementActions.fetchBasedOnSearchSelectionAndCollection.defer(currentSearchSelection,
+        uiState.currentCollection.id, page, uiState.isSync, moleculeSort)
     } else {
       ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id,
-        {page: page, per_page: uiState.number_of_results},uiState.isSync);
+        {page: page, per_page: uiState.number_of_results},
+        uiState.isSync, moleculeSort);
 
       switch (type) {
         // fetch samples to handle creation of split samples
@@ -536,6 +541,12 @@ class ElementStore {
 
   handleDeselectCurrentElement() {
     this.state.currentElement = null;
+  }
+
+  handleChangeSorting(sort) {
+    this.state.moleculeSort = sort;
+    this.waitFor(UIStore.dispatchToken);
+    this.handleRefreshElements("sample");
   }
 }
 

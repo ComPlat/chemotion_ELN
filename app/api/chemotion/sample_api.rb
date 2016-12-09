@@ -105,16 +105,14 @@ module Chemotion
         end
       end
 
-      desc "Return serialized molecules_samples_groups  of current user"
+      desc "Return serialized molecules_samples_groups of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :molecule_sort, type: Integer, desc: "Sort by parameter"
       end
-      paginate per_page: 7, offset: 0
+      paginate per_page: 7, offset: 0, max_per_page: 100
 
-      before do
-        params[:per_page].to_i > 100 && (params[:per_page] = 100)
-      end
       get do
         own_collection = false
         scope = if params[:collection_id]
@@ -140,11 +138,26 @@ module Chemotion
           # All collection
           own_collection = true
           Sample.for_user(current_user.id).includes(:molecule).uniq
-        end.uniq.not_reactant.not_solvents.order("updated_at DESC")
+        end
 
-        return {
-          molecules: group_by_molecule(paginate(scope), own_collection)
-        }
+        scope = scope.uniq.not_reactant.not_solvents
+
+        if params[:molecule_sort] == 1
+          molecule_scope = Molecule.where(id: (scope.pluck :molecule_id))
+            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+            .order(:sum_formular)
+
+          results = {
+            molecules: create_group_molecule(paginate(molecule_scope), scope, own_collection)
+          }
+        else
+          scope = scope.order("updated_at DESC")
+          results = {
+            molecules: group_by_molecule(paginate(scope), own_collection)
+          }
+        end
+
+        return results
       end
 
       desc "Return serialized sample by id"
