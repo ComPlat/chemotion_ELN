@@ -197,18 +197,17 @@ export default class ElementsTable extends React.Component {
                   checked={ui.checkedAll}
                   showReport={showReport}/>
               </th>
-              <th colSpan={3} style={{verticalAlign: "middle"}}>
-                All {type}s
-                <div style={{display: "inline-block", verticalAlign: "middle", width: "92%"}}>
+              <th colSpan={3} style={{verticalAlign: "middle", position: "relative"}}>
+                <span style={{position: "absolute", top: "30%"}}>All {type}s</span>
+                <div style={{display: "initial", verticalAlign: "middle", width: "100%"}}>
                   <div style={{float: "right"}}>
-                    <Button bsStyle="info" style={{width: "130px"}}
+                    <Button bsStyle="info" style={{width: "120px", padding: "5px"}}
                         onClick={() => this.changeSort()}>
                       {moleculeSort ? "Sort by Sample" : "Sort by Molecule"}
                     </Button>
                     &nbsp;&nbsp;
-                    Collapse all &nbsp;
+                    <span>Collapse all</span> &nbsp;
                     <input type="checkbox" checked={sampleCollapseAll}
-                      style={{margin: 0}}
                       onChange={() => this.collapseSample(sampleCollapseAll)} />
                   </div>
                 </div>

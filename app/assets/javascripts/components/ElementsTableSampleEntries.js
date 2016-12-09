@@ -249,7 +249,7 @@ export default class ElementsTableSampleEntries extends Component {
 
     if (numSamples < length) {
       let showMoreSamples = (
-        <tr key={index + "_showMore"}><td colSpan="2"  style={{padding: 0}}>
+        <tr key={index + "_showMore"}><td colSpan="3"  style={{padding: 0}}>
           <Button bsStyle="info"
                   onClick={() => this.showMoreSamples(index)}
                   style={{
