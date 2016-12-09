@@ -65,8 +65,11 @@ class Molecule < ActiveRecord::Base
       inchikey = babel_info[:inchikey]
       !inchikey.blank? && inchikey || nil
     end
+
     compact_iks = inchikeys.compact
     mol_to_get = []
+    
+    iks = inchikeys.dup
     unless compact_iks.empty?
       existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
       mol_to_get = compact_iks - existing_ik
@@ -77,8 +80,8 @@ class Molecule < ActiveRecord::Base
         ik = pubchem_info[:inchikey]
         Molecule.find_or_create_by(inchikey: ik,
           is_partial: is_partial) do |molecule|
-          i =  inchikeys.index(ik)
-          inchikeys[i] = nil
+          i =  iks.index(ik)
+          iks[i] = nil
           babel_info = bi[i]
           molecule.molfile = molfiles[i]
           molecule.assign_molecule_data babel_info, pubchem_info
@@ -86,6 +89,23 @@ class Molecule < ActiveRecord::Base
       end
     end
 
+    iks = inchikeys.dup
+    unless compact_iks.empty?
+      existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
+      mol_to_get = compact_iks - existing_ik
+    end
+    unless mol_to_get.empty?
+      mol_to_get.each do |ik|
+        Molecule.find_or_create_by(inchikey: ik,
+          is_partial: is_partial) do |molecule|
+          i =  iks.index(ik)
+          iks[i] = nil
+          babel_info = bi[i]
+          molecule.molfile = molfiles[i]
+          molecule.assign_molecule_data babel_info
+        end
+      end
+    end
     where('inchikey IN (?)',compact_iks)
   end
 
@@ -102,7 +122,7 @@ class Molecule < ActiveRecord::Base
     end
   end
 
-  def assign_molecule_data babel_info, pubchem_info
+  def assign_molecule_data babel_info, pubchem_info={}
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
