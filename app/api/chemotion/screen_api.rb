@@ -60,6 +60,7 @@ module Chemotion
         optional :result, type: String
         optional :description, type: Hash
         requires :wellplate_ids, type: Array
+        requires :container, type: Hash
       end
       route_param :id do
         before do
@@ -67,7 +68,11 @@ module Chemotion
         end
 
         put do
+          ContainerHelper.update_datamodel(current_user, params[:container]);
+          params.delete(:container);
+
           attributes = declared(params.except(:wellplate_ids), include_missing: false)
+
           screen = Screen.find(params[:id])
           screen.update(attributes)
           old_wellplate_ids = screen.wellplates.pluck(:id)
@@ -93,6 +98,7 @@ module Chemotion
         optional :description, type: Hash
         optional :collection_id, type: Integer
         requires :wellplate_ids, type: Array
+        requires :container, type: Hash
       end
       post do
         attributes = {
@@ -103,7 +109,11 @@ module Chemotion
           result: params[:result],
           description: params[:description]
         }
+
         screen = Screen.create(attributes)
+
+        screen.container = ContainerHelper.update_datamodel(current_user, params[:container])
+        screen.save!
 
         collection = Collection.find(params[:collection_id])
         CollectionsScreen.create(screen: screen, collection: collection)

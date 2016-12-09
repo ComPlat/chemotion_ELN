@@ -26,4 +26,6 @@ class Screen < ActiveRecord::Base
 
   has_many :screens_wellplates, dependent: :destroy
   has_many :wellplates, through: :screens_wellplates
+
+  has_one :container, :as => :element
 end

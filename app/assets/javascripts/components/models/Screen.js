@@ -1,5 +1,6 @@
 import Element from './Element';
 import Wellplate from './Wellplate';
+import Container from './Container';
 
 export default class Screen extends Element {
   static buildEmpty(collection_id) {
@@ -16,7 +17,8 @@ export default class Screen extends Element {
       conditions: '',
       result: '',
       description: description_default,
-      wellplates: []
+      wellplates: [],
+      container: Container.init(),
     })
   }
 
@@ -34,7 +36,8 @@ export default class Screen extends Element {
       conditions: '',
       result: '',
       description: description_default,
-      wellplates: clipboardWellplates
+      wellplates: clipboardWellplates,
+      container: Container.init(),
     })
   }
 
@@ -46,7 +49,8 @@ export default class Screen extends Element {
       conditions: this.conditions,
       requirements: this.requirements,
       description: this.description,
-      wellplate_ids: this.wellplate_ids
+      wellplate_ids: this.wellplate_ids,
+      container: this.container,
     })
   }
 
