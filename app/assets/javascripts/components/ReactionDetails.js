@@ -8,6 +8,7 @@ import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
+import SampleDetailsContainers from './SampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import SVG from 'react-inlinesvg';
@@ -175,6 +176,35 @@ export default class ReactionDetails extends Component {
     )
   }
 
+  productData(reaction) {
+    const {products} = this.state.reaction;
+
+
+    let tabs = products.map((product, key) =>
+           <Tab key={product.short_label}
+                eventKey={key}
+                title={this.productLink(product)}>
+
+             <SampleDetailsContainers
+                sample={product}
+                />
+           </Tab>
+     );
+    return(
+      <Tabs defaultActiveKey={4.1} id="data-detail-tab">
+        <Tab eventKey={4.1} title={reaction.short_label}>
+          <ListGroupItem style={{paddingBottom: 20}}>
+            <ReactionDetailsContainers
+              reaction={reaction}
+              parent={this}
+              />
+            </ListGroupItem>
+        </Tab>
+        {tabs}
+      </Tabs>
+    )
+  }
+
   extraTab(ind){
     let reaction = this.state.reaction || {}
     let num = ind  ;
@@ -291,12 +321,7 @@ export default class ReactionDetails extends Component {
             {this.productAnalyses()}
           </Tab>
           <Tab eventKey={4} title={'Data'}>
-            <ListGroupItem style={{paddingBottom: 20}}>
-              <ReactionDetailsContainers
-                  reaction={reaction}
-                  parent={this}
-              />
-          </ListGroupItem>
+              {this.productData(reaction)}
           </Tab>
           {extraTabs.map((e,i)=>e(i))}
         </Tabs>

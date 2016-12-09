@@ -328,6 +328,8 @@ module ReactionUpdator
                 named_by_reaction += "-#{attributes[:name].split("-").last}"
                 attributes.merge!(name: named_by_reaction)
               end
+              ####
+              attributes.delete(:container)
 
               new_sample = Sample.new(
                 attributes

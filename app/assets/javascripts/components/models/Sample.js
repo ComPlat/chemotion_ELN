@@ -5,7 +5,7 @@ import Analysis from './Analysis';
 import _ from 'lodash';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
-import Container from './Container.js'
+import Container from './Container.js';
 
 export default class Sample extends Element {
   isMethodRestricted(m) {

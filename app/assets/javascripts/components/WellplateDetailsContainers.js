@@ -3,55 +3,53 @@ import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 
-export default class ReactionDetailsContainers extends Component {
+export default class WellplateDetailsContainers extends Component {
   constructor(props) {
     super();
-    const {reaction} = props;
+    const {wellplate} = props;
     this.state = {
-      reaction,
+      wellplate,
       activeContainer: 0
     };
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      reaction: nextProps.reaction
+      wellplate: nextProps.wellplate
     })
   }
 
   handleChange(container) {
-    const {reaction} = this.state
-
-    this.props.parent.handleReactionChange(reaction)
-  }
-
-  handleUndo(container) {
-    let {reaction} = this.state;
-    container.is_deleted = false;
-
-    this.props.parent.setState({reaction: reaction})
+    const {wellplate} = this.state
+    this.props.parent.handleWellplateChanged(wellplate)
   }
 
   handleAdd() {
-    const {reaction} = this.state;
+    const {wellplate} = this.state;
     let container = Container.buildEmpty();
     container.container_type = "analysis";
 
-    reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+    wellplate.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
-    const newKey = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
+    const newKey = wellplate.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
 
-    this.props.parent.setState({reaction: reaction})
+    this.props.parent.setState({wellplate: wellplate})
   }
 
   handleRemove(container) {
-    let {reaction} = this.state;
-
+    let {wellplate} = this.state;
     container.is_deleted = true;
 
-    this.props.parent.setState({reaction: reaction})
+    this.props.parent.setState({wellplate: wellplate})
+  }
+
+  handleUndo(container) {
+    let {wellplate} = this.state;
+    container.is_deleted = false;
+
+    this.props.parent.setState({wellplate: wellplate})
   }
 
   handleAccordionOpen(key) {
@@ -64,7 +62,7 @@ export default class ReactionDetailsContainers extends Component {
       return (
         //<div className="button-right" >
           <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            Add container
+            Add analysis
           </Button>
         //</div>
       )
@@ -72,7 +70,7 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   render() {
-    const {reaction, activeContainer} = this.state;
+    const {wellplate, activeContainer} = this.state;
     const {readOnly} = this.props;
 
     let containerHeader = (container) => <p style={{width: '100%'}}>{container.name}
@@ -93,9 +91,9 @@ export default class ReactionDetailsContainers extends Component {
         </Button>
         </p>
 
-    if(reaction.container != null){
+    if(wellplate.container != null){
 
-      var analyses_container = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+      var analyses_container = wellplate.container.children.filter(element => ~element.container_type.indexOf('analyses'));
 
       if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
         return (
@@ -110,49 +108,50 @@ export default class ReactionDetailsContainers extends Component {
                     </Panel>
                   );
                 }else {
-                  return (
-                    <Panel header={containerHeader(container)} eventKey={key}
+              return (
+                <Panel header={containerHeader(container)} eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
-                    <ContainerComponent
+                  <ContainerComponent
                     readOnly={readOnly}
                     container={container}
                     onChange={container => this.handleChange(container)}
-                    />
-                    </Panel>
-                  );
-                }
+                  />
+                </Panel>
+              );
+            }
 
-          }
-        )}
-        </PanelGroup>
-        </div>
-      )
-    }else {
+            }
+          )}
+          </PanelGroup>
+          </div>
+        )
+      }else {
+        return (
+          <div>
+            <p className='noAnalyses-warning'>
+              There are currently no Analyses.
+              {this.addButton()}
+            </p>
+          </div>
+        )
+      }
+
+    }else{
+
       return (
         <div>
           <p className='noAnalyses-warning'>
             There are currently no Analyses.
-            {this.addButton()}
           </p>
         </div>
       )
     }
 
-  }else{
-    return (
-      <div>
-        <p className='noAnalyses-warning'>
-          There are currently no Analyses.
-
-        </p>
-      </div>
-    )
-  }
   }
 
 }
 
-ReactionDetailsContainers.propTypes = {
+WellplateDetailsContainers.propTypes = {
   readOnly: React.PropTypes.bool,
   parent: React.PropTypes.object,
 };

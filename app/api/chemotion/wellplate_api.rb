@@ -126,6 +126,7 @@ module Chemotion
         optional :size, type: Integer
         optional :description, type: Hash
         optional :wells, type: Array
+        requires :container, type: Hash
       end
       route_param :id do
         before do
@@ -133,6 +134,9 @@ module Chemotion
         end
 
         put do
+          ContainerHelper.update_datamodel(current_user, params[:container]);
+          params.delete(:container);
+
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
           {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
         end
@@ -145,9 +149,18 @@ module Chemotion
         optional :description, type: Hash
         optional :wells, type: Array
         optional :collection_id, type: Integer
+        requires :container, type: Hash
       end
       post do
+
+        container = params[:container]
+        params.delete(:container)
+
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
+        wellplate.container =  ContainerHelper.update_datamodel(current_user, container)
+
+        wellplate.save!
+
         current_user.increment_counter 'wellplates'
         {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
       end

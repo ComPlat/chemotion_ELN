@@ -4,6 +4,7 @@ class WellplateSerializer < ActiveModel::Serializer
   attributes *DetailLevels::Wellplate.new.base_attributes
 
   has_many :wells
+  has_one :container
 
   def wells
     object.wells.order("id asc")

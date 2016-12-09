@@ -7,6 +7,7 @@ import CollectionActions from './actions/CollectionActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
+import WellplateDetailsContainers from './WellplateDetailsContainers';
 
 import UIStore from './stores/UIStore';
 
@@ -46,6 +47,12 @@ export default class WellplateDetails extends Component {
       const force = true;
       this.props.closeDetails(wellplate, force);
     }
+  }
+
+  handleWellplateChanged(wellplate) {
+    this.setState({
+      wellplate
+    });
   }
 
   handleWellsChange(wells) {
@@ -150,6 +157,14 @@ export default class WellplateDetails extends Component {
               {...properties}
               changeProperties={(change) => this.handleChangeProperties(change)}
               />
+          </Tab>
+          <Tab eventKey={3} title={'Data'}>
+            <ListGroupItem style={{paddingBottom: 20}}>
+              <WellplateDetailsContainers
+                wellplate={wellplate}
+                parent={this}
+              />
+            </ListGroupItem>
           </Tab>
         </Tabs>
         <ButtonToolbar>
