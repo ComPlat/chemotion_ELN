@@ -509,6 +509,7 @@ class ElementStore {
     // if there is a currentSearchSelection
     //    we have to execute the respective action
     if(currentSearchSelection != null) {
+      currentSearchSelection.page_size = uiState.number_of_results
       ElementActions.fetchBasedOnSearchSelectionAndCollection.defer(currentSearchSelection,
         uiState.currentCollection.id, page, uiState.isSync, moleculeSort)
     } else {

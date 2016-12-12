@@ -5,7 +5,7 @@ module Chemotion
     # TODO implement search cache?
     helpers do
       def page_size
-        params[:per_page] == nil ? 7 : params[:per_page]
+        params[:per_page] == nil ? 7 : params[:per_page].to_i
       end
 
       def pages(total_elements)
@@ -27,22 +27,40 @@ module Chemotion
         return 'structure'
       end
 
-      def serialization_by_elements_and_page(elements, page = 1)
+      def serialization_by_elements_and_page(elements, page = 1, moleculeSort = false)
         samples = elements.fetch(:samples, [])
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
 
-        samples = samples.empty? ? samples : Kaminari.paginate_array(samples)
         # After paging, now we can map to searchable for AllElementSearch
         samples = samples.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         reactions = reactions.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         wellplates = wellplates.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         screens = screens.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
 
-        serialized_samples = {
-          molecules: group_by_molecule(samples)
-        }
+        samples_size = samples.size
+        if samples.empty? == false
+          if moleculeSort
+            molecule_scope =
+              Molecule.where(id: (samples.map(&:molecule_id)))
+                      .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                      .order(:sum_formular)
+            samples_size = molecule_scope.size
+            molecule_scope = molecule_scope.page(page).per(page_size)
+
+            serialized_samples = {
+              molecules: create_group_molecule(molecule_scope, samples)
+            }
+          else
+            paging_samples = Kaminari.paginate_array(samples).page(page).per(page_size)
+            paging_samples = paging_samples.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
+            serialized_samples = {
+              molecules: group_by_molecule(paging_samples)
+            }
+          end
+        end
+
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
           .per(page_size).map {|s|
             ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys
@@ -59,9 +77,9 @@ module Chemotion
         {
           samples: {
             elements: serialized_samples,
-            totalElements: samples.size,
+            totalElements: samples_size,
             page: page,
-            pages: pages(samples.size),
+            pages: pages(samples_size),
             per_page: page_size
           },
           reactions: {
@@ -109,8 +127,7 @@ module Chemotion
         when 'screen_name'
           Screen.for_user(current_user.id).search_by(search_by_method, arg)
         when 'substring'
-          sample_search = true
-          AllElementSearch.new(arg, current_user.id).search_by_substring
+          all_element = AllElementSearch.new(arg, current_user.id).search_by_substring
         when 'structure'
           molfile = Fingerprint.standardized_molfile arg
           threshold = params[:selection].tanimoto_threshold
@@ -196,7 +213,7 @@ module Chemotion
             arg, params[:collection_id], params[:is_sync], molecule_sort)
 
           serialization_by_elements_and_page(elements_by_scope(scope),
-                                             params[:page])
+            params[:page], molecule_sort)
 
         end
       end

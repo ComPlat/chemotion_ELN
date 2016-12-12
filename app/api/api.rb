@@ -54,8 +54,8 @@ class API < Grape::API
         next if molecule == nil
         moleculeName = molecule.iupac_name || molecule.inchistring
 
-        samplesGroup = samples.where("molecule_id = ?", molecule.id)
-                              .order("updated_at DESC")
+        samplesGroup = samples.select {|v| v.molecule_id == molecule.id}
+        samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
 
         samplesGroup.each do |sample|
           name = moleculeName
