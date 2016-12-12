@@ -63,3 +63,8 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 
 * `brew install fontforge --with-python`
 * `brew install eot-utils`
+
+# Docker setup
+* Initial setup: `docker-compose up`
+* For Linux users: use docker-compose run with user docker, e.g., `docker-compose run --user=docker bundle exec rails g migration new_migration`
+
