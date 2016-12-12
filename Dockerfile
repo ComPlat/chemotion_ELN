@@ -9,12 +9,6 @@ RUN apt-get -y install build-essential wget git cmake nodejs sudo --fix-missing
 RUN apt-get -y install curl
 RUN curl -sL https://deb.nodesource.com/setup_4.x | bash
 
-# install & configure postgres
-RUN apt-get -y install postgresql-9.4 postgresql-contrib-9.4 libpq-dev
-RUN /bin/bash -lc 'echo "local   all   all     trust" > /etc/postgresql/9.4/main/pg_hba.conf'
-RUN service postgresql start && psql -U postgres -c "CREATE ROLE root WITH CREATEDB LOGIN SUPERUSER PASSWORD '';"
-
-
 # install rmagick
 RUN apt-get -y install libmagickcore-dev libmagickwand-dev
 

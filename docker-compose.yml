@@ -1,14 +1,21 @@
-app:
-  build: .
-  volumes:
-    - .:/usr/src/app
-    - /usr/src/app/node_modules
-  volumes_from:
-    - box
-  ports:
-    - "3000:3000"
+version: '2'
+services:
+  app:
+    build: .
+    depends_on:
+      - postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    volumes_from:
+      - box
+    ports:
+      - "3000:3000"
 
-box:
-  image: busybox
-  volumes:
-    - /box
+  box:
+    image: busybox
+    volumes:
+      - /box
+
+  postgres:
+    image: 'postgres:9.5'

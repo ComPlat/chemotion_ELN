@@ -6,6 +6,8 @@ development:
   username: postgres
   password:
   template: template0
+  host: postgres
+  port: 5432
 
 test:
   adapter: postgresql
@@ -15,6 +17,8 @@ test:
   username: postgres
   password:
   template: template0
+  host: postgres
+  port: 5432
 
 production:
   adapter: postgresql
