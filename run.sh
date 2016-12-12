@@ -1,5 +1,4 @@
 #!/bin/bash
-service postgresql start
 source ~/.nvm/nvm.sh
 
 bundle check || bundle install
