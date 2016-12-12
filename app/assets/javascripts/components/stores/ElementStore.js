@@ -176,7 +176,8 @@ class ElementStore {
     });
     ElementActions.deleteWellplatesByUIState(ui_state);
     ElementActions.deleteScreensByUIState(ui_state);
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
+      ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
@@ -185,21 +186,24 @@ class ElementStore {
 
   handleUpdateElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
-    ElementActions.fetchSamplesByCollectionId(collection_id);
+    ElementActions.fetchSamplesByCollectionId(collection_id, {},
+      ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
   handleAssignElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
-    ElementActions.fetchSamplesByCollectionId(collection_id);
+    ElementActions.fetchSamplesByCollectionId(collection_id, {},
+      ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
 
   handleRemoveElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
-    ElementActions.fetchSamplesByCollectionId(collection_id);
+    ElementActions.fetchSamplesByCollectionId(collection_id, {},
+      ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
@@ -266,7 +270,8 @@ class ElementStore {
   }
 
   handleSplitAsSubsamples(ui_state) {
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
+      ui_state.isSync, this.state.moleculeSort);
   }
 
   // Molecules
