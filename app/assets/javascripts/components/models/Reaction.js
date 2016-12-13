@@ -249,6 +249,8 @@ export default class Reaction extends Element {
     copy.solvents = reaction.solvents.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.products = reaction.products.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
 
+    copy.container = Container.init();
+
     return copy;
   }
 

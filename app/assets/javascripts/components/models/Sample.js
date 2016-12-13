@@ -115,6 +115,9 @@ export default class Sample extends Element {
   buildCopy() {
     let sample = super.buildCopy()
     sample.short_label = sample.short_label + " Copy"
+
+    sample.container = Container.init();
+
     return sample;
   }
 
