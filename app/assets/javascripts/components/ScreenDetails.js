@@ -71,6 +71,10 @@ export default class ScreenDetails extends Component {
     this.setState({ screen });
   }
 
+  handleScreenChanged(screen) {
+    this.setState({ screen });
+  }
+
   deleteWellplate(wellplate){
     const {screen} = this.state;
     const wellplateIndex = screen.wellplates.indexOf(wellplate);

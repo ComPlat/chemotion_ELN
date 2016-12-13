@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import Wellplate from '../models/Wellplate';
 import UIStore from '../stores/UIStore'
+import AttachmentFetcher from './AttachmentFetcher'
 
 export default class WellplatesFetcher {
   static fetchById(id) {
@@ -56,8 +57,11 @@ export default class WellplatesFetcher {
   }
 
   static update(params) {
+
     const wellplate = new Wellplate(params);
-    let promise = fetch('/api/v1/wellplates/' + wellplate.id, {
+    let files = AttachmentFetcher.getFileListfrom(wellplate.container)
+
+    let promise = () => fetch('/api/v1/wellplates/' + wellplate.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -72,11 +76,18 @@ export default class WellplatesFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    return promise;
+
+    if(files.length > 0 ){
+        return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+    }else{
+      return promise()
+    }
   }
 
   static create(params) {
-    let promise = fetch('/api/v1/wellplates/', {
+    let files = AttachmentFetcher.getFileListfrom(wellplate.container)
+
+    let promise = () => fetch('/api/v1/wellplates/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -91,7 +102,12 @@ export default class WellplatesFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    return promise;
+
+    if(files.length > 0){
+      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+    }else{
+      return promise()
+    }
   }
 
   static deleteWellplatesByUIState(params) {

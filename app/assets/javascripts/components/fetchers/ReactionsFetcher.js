@@ -83,6 +83,7 @@ export default class ReactionsFetcher {
 
   static update(reaction) {
     let files = AttachmentFetcher.getFileListfrom(reaction.container)
+
     let promise = ()=> fetch('/api/v1/reactions/' + reaction.id, {
       credentials: 'same-origin',
       method: 'put',
@@ -108,6 +109,7 @@ export default class ReactionsFetcher {
 
   static create(reaction) {
     let files = AttachmentFetcher.getFileListfrom(reaction.container)
+
     let promise = ()=> fetch('/api/v1/reactions/', {
       credentials: 'same-origin',
       method: 'post',
