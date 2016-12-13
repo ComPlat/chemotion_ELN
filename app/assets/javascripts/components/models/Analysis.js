@@ -10,7 +10,10 @@ export default class Analysis extends Element {
       status: '',
       content: '',
       description: '',
-      datasets: []
+      datasets: [],
+      bar_code: null,
+      qr_code: null,
+      bar_code_bruker: null
     })
   }
 
@@ -54,7 +57,10 @@ export default class Analysis extends Element {
       status: this.status,
       content: this.content,
       description: this.description,
-      datasets: this.datasets.map(d => d.serialize())
+      datasets: this.datasets.map(d => d.serialize()),
+      bar_code: this.barcode,
+      qr_code: this.qr_code,
+      bar_code_bruker: this.bar_code_bruker
     })
   }
 

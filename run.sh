@@ -1,13 +1,8 @@
 #!/bin/bash
-source ~/.nvm/nvm.sh
+source /usr/local/nvm/nvm.sh
 
 bundle check || bundle install
 
-if psql -lqt | cut -d \| -f 1 | grep -qw chemotion_dev; then
-  echo "Development DB already exists"
-else
-  bundle exec rake db:setup
-fi
-
+echo "Starting rails server"
 bundle exec rails s -b 0.0.0.0
 

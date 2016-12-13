@@ -389,7 +389,7 @@ describe Chemotion::SampleAPI do
             s4 = subsamples[1]
             except_attr = [
               "id", "created_at", "updated_at", "ancestry", "created_by",
-              "short_label", "name", "external_label"
+              "short_label", "name", "external_label", "bar_code", "qr_code"
             ]
             s3.attributes.except(*except_attr).each do |k, v|
               expect(s1[k]).to eq(v)

@@ -9,6 +9,15 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe 'after creation' do
+    let(:reaction) { create(:reaction) }
+
+    it 'has a bar and qr code' do
+      expect(reaction.bar_code).to be_a(String)
+      expect(reaction.qr_code).to be_a(String)
+    end
+  end
+
   describe 'deletion' do
     let(:reaction)   { create(:reaction) }
     let(:literature) { create(:literature, reaction: reaction) }

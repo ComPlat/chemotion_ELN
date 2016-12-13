@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161109141353) do
+ActiveRecord::Schema.define(version: 20161214131916) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -20,6 +20,13 @@ ActiveRecord::Schema.define(version: 20161109141353) do
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
+  end
+
+  create_table "code_logs", force: :cascade do |t|
+    t.string  "code_type", null: false
+    t.string  "value",     null: false
+    t.string  "source"
+    t.integer "source_id"
   end
 
   create_table "collections", force: :cascade do |t|
@@ -259,6 +266,8 @@ ActiveRecord::Schema.define(version: 20161109141353) do
     t.datetime "deleted_at"
     t.string   "short_label"
     t.integer  "created_by"
+    t.string   "bar_code"
+    t.string   "qr_code"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
@@ -351,6 +360,8 @@ ActiveRecord::Schema.define(version: 20161109141353) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
+    t.string   "bar_code"
+    t.string   "qr_code"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
@@ -368,6 +379,8 @@ ActiveRecord::Schema.define(version: 20161109141353) do
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
     t.datetime "deleted_at"
+    t.string   "bar_code"
+    t.string   "qr_code"
   end
 
   add_index "screens", ["deleted_at"], name: "index_screens_on_deleted_at", using: :btree
@@ -418,8 +431,8 @@ ActiveRecord::Schema.define(version: 20161109141353) do
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
     t.string   "name_abbreviation",      limit: 5
     t.string   "type",                             default: "Person"
-    t.boolean  "is_templates_moderator",           default: false,                                                 null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.boolean  "is_templates_moderator",           default: false,                                                 null: false
   end
 
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
@@ -449,6 +462,8 @@ ActiveRecord::Schema.define(version: 20161109141353) do
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
     t.datetime "deleted_at"
+    t.string   "bar_code"
+    t.string   "qr_code"
   end
 
   add_index "wellplates", ["deleted_at"], name: "index_wellplates_on_deleted_at", using: :btree

@@ -1,6 +1,9 @@
 import React, {PropTypes, Component} from 'react';
 import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger} from 'react-bootstrap';
+  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row} from 'react-bootstrap';
+import QRCode from 'qrcode.react';
+import Barcode from 'react-barcode';
+
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
@@ -109,6 +112,29 @@ export default class WellplateDetails extends Component {
     )
   }
 
+  wellplateQrCode(wellplate) {
+    let qrCode = wellplate.qr_code
+    if(qrCode != null)
+      return <QRCode value={qrCode} size="80"/>;
+    else
+      return '';
+  }
+
+  wellplateBarCode(wellplate) {
+    let barCode = wellplate.bar_code
+    if(barCode != null)
+      return <Barcode
+                value={barCode}
+                width={1}
+                height={80}
+                fontSize={13}
+                marginTop={10}
+                marginBottom={10}
+                margin={0}/>;
+    else
+      return '';
+  }
+
   render() {
     const {wellplate, activeTab, showWellplate} = this.state;
     const {wells, name, size, description} = wellplate;
@@ -126,16 +152,24 @@ export default class WellplateDetails extends Component {
         <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
               id="wellplateDetailsTab">
           <Tab eventKey={0} title={'Designer'}>
-            <Well>
-              <Wellplate
-                show={showWellplate}
-                size={size}
-                wells={wells}
-                handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                cols={cols}
-                width={60}
-                />
-            </Well>
+            <Row>
+              <Col md={10}>
+                <Well>
+                  <Wellplate
+                    show={showWellplate}
+                    size={size}
+                    wells={wells}
+                    handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                    cols={cols}
+                    width={60}
+                    />
+                </Well>
+              </Col>
+              <Col md={2}>
+                {this.wellplateBarCode(wellplate)}
+                {this.wellplateQrCode(wellplate)}
+              </Col>
+            </Row>
           </Tab>
           <Tab eventKey={1} title={'List'}>
             <Well>

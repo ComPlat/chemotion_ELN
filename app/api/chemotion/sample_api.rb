@@ -105,7 +105,7 @@ module Chemotion
         end
       end
 
-      desc "Return serialized molecules_samples_groups  of current user"
+      desc "Return serialized molecules_samples_groups of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
@@ -213,6 +213,9 @@ module Chemotion
               status: ana.status,
               content: ana.content,
               description: ana.description,
+              bar_code: ana.bar_code,
+              qr_code: ana.qr_code,
+              bar_code_bruker: ana.bar_code_bruker,
               datasets: Array(ana.datasets).map do |dataset|
                 {
                   id: dataset.id,
