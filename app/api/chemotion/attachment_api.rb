@@ -8,10 +8,11 @@ module Chemotion
         params.each do |file_id, file|
           if tempfile = file.tempfile
             begin
-              storage = Filesystem.new
-              file_id_filename = file_id + file.filename
-
-              storage.temp(file_id_filename, IO.binread(tempfile))
+              #storage = Filesystem.new
+              #file_id_filename = file_id + file.filename
+              storage = Storage.new
+              storage.create(file_id, file.filename, IO.binread(tempfile), current_user.id, current_user.id)
+              #storage.temp(file_id_filename, IO.binread(tempfile))
             ensure
               tempfile.close
               tempfile.unlink   # deletes the temp file
@@ -25,17 +26,18 @@ module Chemotion
       desc "Download the attachment file"
       get ':attachment_id' do
         attachment_id = params[:attachment_id]
-        if Attachment.exists?(id: attachment_id)
-          attachment = Attachment.find_by id: attachment_id
-          storage = Filesystem.new
+
+        attachment = Attachment.find_by id: attachment_id
+        if attachment != nil
+          storage = Storage.new
 
           content_type "application/octet-stream"
           header['Content-Disposition'] = "attachment; filename="+attachment.filename
           env['api.format'] = :binary
 
-          storage.read(current_user, attachment)
+          storage.read(attachment)
         else
-          #ToDo: File not found
+          nil
         end
       end
 
@@ -69,8 +71,8 @@ module Chemotion
         get do
           if Attachment.exists?(:id => params[:id])
             attachment = Attachment.find_by id: params[:id]
-            storage = Filesystem.new
-            storage.read_thumbnail(current_user, attachment)
+            storage = Storage.new
+            storage.read_thumbnail(attachment)
           else
             nil
           end

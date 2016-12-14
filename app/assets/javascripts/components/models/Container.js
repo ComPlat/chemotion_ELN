@@ -55,7 +55,7 @@ export default class Container extends Element {
       id: this.id,
       name: this.name,
       children: this.children,
-      attachments: this.attachments, //.map(a => a.serialize()),
+      attachments: this.attachments.map(a => a.serialize()),
       is_new: this.isNew || false,
       is_deleted: this.deleted || false,
       description: this.description,

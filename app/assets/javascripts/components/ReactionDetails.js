@@ -8,7 +8,7 @@ import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
-import SampleDetailsContainers from './SampleDetailsContainers';
+import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import SVG from 'react-inlinesvg';
@@ -185,7 +185,7 @@ export default class ReactionDetails extends Component {
                 eventKey={key}
                 title={this.productLink(product)}>
 
-             <SampleDetailsContainers
+             <ReactionSampleDetailsContainers
                 sample={product}
                 />
            </Tab>

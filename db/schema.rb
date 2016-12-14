@@ -22,9 +22,14 @@ ActiveRecord::Schema.define(version: 20170201113437) do
   enable_extension "pg_trgm"
 
   create_table "attachments", force: :cascade do |t|
-    t.integer  "container_id", null: false
+    t.integer  "container_id"
     t.string   "filename",     null: false
     t.string   "identifier",   null: false
+    t.string   "checksum",     null: false
+    t.string   "storage",      null: false
+    t.integer  "created_by",   null: false
+    t.integer  "created_for"
+    t.integer  "version",      null: false
     t.datetime "created_at",   null: false
     t.datetime "updated_at",   null: false
   end

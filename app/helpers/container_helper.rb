@@ -84,9 +84,9 @@ private
       if !attachment.is_new #Attachment.exists?(id: attachment.id)
         if !attachment.is_deleted
           #update
-          currentAttachment = Attachment.find_by id: attachment.id
-          currentAttachment.filename = attachment.filename
-          currentAttachment.save!
+          #currentAttachment = Attachment.find_by id: attachment.id
+          #currentAttachment.filename = attachment.filename
+          #currentAttachment.save!
         else
           #delete
           storage = Filesystem.new
@@ -97,16 +97,19 @@ private
         if !attachment.is_deleted
           #create
           begin
-            storage = Filesystem.new
-            file_id_filename = attachment.id + attachment.filename
-            storage.move_from_temp_to_storage(user, file_id_filename, true)
+            #storage = Filesystem.new
+            #file_id_filename = attachment.id + attachment.filename
+            #storage.move_from_temp_to_storage(user, file_id_filename, true)
 
-            newAttachment = Attachment.new
+            #newAttachment = Attachment.new
 
-            newAttachment.identifier = file_id_filename
-            newAttachment.filename = attachment.filename
-            newAttachment.container_id = parent_container_id
-            newAttachment.save!
+            #newAttachment.identifier = file_id_filename
+            #newAttachment.filename = attachment.filename
+            #newAttachment.container_id = parent_container_id
+            #newAttachment.save!
+            storage = Storage.new
+            storage.update(attachment.id, parent_container_id)
+
           rescue Exception => e
             puts "ERROR: Can not create attachment: " + e.message
           end

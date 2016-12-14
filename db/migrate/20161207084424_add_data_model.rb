@@ -13,9 +13,14 @@ class AddDataModel < ActiveRecord::Migration
     end
 
     create_table :attachments do |t|
-      t.integer :container_id, null: false
+      t.integer :container_id
       t.string :filename, null: false
       t.string :identifier, null: false
+      t.string :checksum, null: false
+      t.string :storage, null: false
+      t.integer :created_by, null: false
+      t.integer :created_for
+      t.integer :version, null: false
 
       t.timestamps null: false
     end
