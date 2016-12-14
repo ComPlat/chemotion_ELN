@@ -275,9 +275,6 @@ module ReactionUpdator
               if (material_group == :reactant || material_group == :solvent)
                 # Use 'reactant' or 'solvent' as short_label
                 subsample.short_label = sample.short_label
-              else
-                #we don't want to inherit short_label from parent
-                subsample.short_label = nil
               end
 
               subsample.target_amount_value = sample.target_amount_value
