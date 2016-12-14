@@ -65,10 +65,9 @@ class Import::ImportSamples
 
   def insert_rows
     (2..xlsx.last_row).each do |i|
-      next unless xlsx.row(i)[0]
       row = Hash[[header, xlsx.row(i)].transpose]
-      row.each_key{ |x| row[x] = row[x].to_s if row[x] }
-      rows << row
+      next unless has_structure(row)
+      rows << row.each_pair{|k,v| v && row[k] = v.to_s }
     end
   end
 
@@ -104,6 +103,10 @@ class Import::ImportSamples
       end
       raise "More than 1 row can not be processed" if unprocessable_count > 0
     end
+  end
+
+  def has_structure row
+    has_molfile(row) || has_smiles(row)
   end
 
   def has_molfile(row)
