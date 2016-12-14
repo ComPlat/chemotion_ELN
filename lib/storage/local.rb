@@ -3,9 +3,9 @@ class Local
 
   def initialize
     @upload_root_folder = Rails.configuration.storage.root_folder
-    @thumbnail_folder = "thumbnails"
+    @thumbnail_folder = Rails.cinfiguration.storage.thumbnail_folder
 
-    @temp_folder = "temp"
+    @temp_folder = Rails.cinfiguration.storage.temp_folder
   end
 
   def storage_id

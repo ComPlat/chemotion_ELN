@@ -1,2 +1,4 @@
 development:
   :root_folder: 'uploadNew2'
+  :thumbnail_folder: 'thumbnails'
+  :temp_folder: 'temp'
