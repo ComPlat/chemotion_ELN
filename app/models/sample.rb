@@ -126,7 +126,7 @@ class Sample < ActiveRecord::Base
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
 
-  before_save :auto_set_short_label, on: :create
+  before_create :auto_set_short_label
 
   after_save :update_data_for_reactions
   before_create :check_short_label
