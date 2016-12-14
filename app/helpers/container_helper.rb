@@ -89,8 +89,8 @@ private
           #currentAttachment.save!
         else
           #delete
-          storage = Filesystem.new
-          storage.delete(user, attachment)
+          storage = Storage.new
+          storage.delete(attachment)
           Attachment.where(id: attachment.id).destroy_all
         end
       else
@@ -121,9 +121,9 @@ private
   def self.delete_containers_and_attachments(user, container)
     attachments = Attachment.where(container_id: container.id)
 
-    storage = Filesystem.new
+    storage = Storage.new
     attachments.each do |attach|
-      storage.delete(user, attach)
+      storage.delete(attach)
     end
     Attachment.where(container_id: container.id).destroy_all
 
