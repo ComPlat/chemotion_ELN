@@ -32,6 +32,7 @@ import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 import SampleForm from './SampleForm'
+import Utils from './utils/Functions';
 
 const MWPrecision = 6;
 
@@ -212,6 +213,25 @@ export default class SampleDetails extends React.Component {
       return '';
   }
 
+  sampleCodePrintButtons(sample) {
+    if(sample.isNew)
+      return ''
+    else
+      return (
+        <div style={{display: "inline-block", marginLeft: "60%"}}>
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/samples/codes?id=" + sample.id + "&size=small"})}>
+            <i className="fa fa-barcode fa-lg"></i>
+          </Button>
+          &nbsp;
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/samples/codes?id=" + sample.id + "&size=big"})}>
+            <i className="fa fa-barcode fa-2x"></i>
+          </Button>
+        </div>
+      )
+  }
+
   sampleHeader(sample) {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
     return (
@@ -246,6 +266,7 @@ export default class SampleDetails extends React.Component {
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
+        {this.sampleCodePrintButtons(sample)}
       </div>
     )
   }

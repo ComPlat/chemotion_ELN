@@ -81,6 +81,11 @@ gem 'coveralls', require: false
 
 gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
 
+gem 'prawn'
+gem 'prawn-svg'
+gem 'barby'
+gem 'rqrcode'
+
 group :development do
   gem 'web-console', '~> 2.0'
   gem 'better_errors' # allows to debug exception on backend from browser
