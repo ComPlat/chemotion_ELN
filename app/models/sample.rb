@@ -3,6 +3,8 @@ class Sample < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include Barcode
+  include BrukerNMR
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
@@ -330,7 +332,7 @@ class Sample < ActiveRecord::Base
     end
   end
 
-  # -- fake analyes
+  # -- fake analyses
   def analyses
     unless analyses_dump.blank?
       JSON.parse(analyses_dump)

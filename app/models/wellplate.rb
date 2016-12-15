@@ -3,6 +3,7 @@ class Wellplate < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include Barcode
 
   multisearchable against: :name
 
@@ -50,7 +51,6 @@ class Wellplate < ActiveRecord::Base
   has_many :screens, through: :screens_wellplates
 
   has_many :sync_collections_users, through: :collections
-
 
   def self.associated_by_user_id_and_screen_ids(user_id, screen_ids)
     for_user(user_id).by_screen_ids(screen_ids)

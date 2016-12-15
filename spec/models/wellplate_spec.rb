@@ -9,6 +9,15 @@ RSpec.describe Wellplate, type: :model do
     end
   end
 
+  describe 'after creation' do
+    let(:wellplate) { create(:wellplate) }
+
+    it 'has a bar and qr code' do
+      expect(wellplate.bar_code).to be_a(String)
+      expect(wellplate.qr_code).to be_a(String)
+    end
+  end
+
   describe 'deletion' do
     let(:screen)     { create(:screen) }
     let(:wellplate)  { create(:wellplate) }

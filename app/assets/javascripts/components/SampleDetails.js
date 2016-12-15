@@ -4,6 +4,8 @@ import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
         Tooltip, OverlayTrigger} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
+import QRCode from 'qrcode.react';
+import Barcode from 'react-barcode';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -189,6 +191,27 @@ export default class SampleDetails extends React.Component {
       return '';
   }
 
+  sampleQrCode(sample) {
+    let qrCode = sample.qr_code
+    if(qrCode != null)
+      return <QRCode value={qrCode} size="80"/>;
+    else
+      return '';
+  }
+
+  sampleBarCode(sample) {
+    let barCode = sample.bar_code
+    if(barCode != null)
+      return <Barcode
+                value={barCode}
+                width={1}
+                height={80}
+                fontSize={13}
+                margin={0}/>;
+    else
+      return '';
+  }
+
   sampleHeader(sample) {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
     return (
@@ -235,6 +258,12 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
+          <Col md={6}>
+            {this.sampleBarCode(sample)}
+          </Col>
+          <Col md={6}>
+            {this.sampleQrCode(sample)}
+          </Col>
         </Col>
         <Col md={8}>
           {this.svgOrLoading(sample)}

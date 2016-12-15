@@ -9,6 +9,22 @@ RSpec.describe Sample, type: :model do
     end
   end
 
+  describe 'after creation' do
+    let(:sample)  { create(:sample) }
+    let(:samples) { create_list(:sample, 500) }
+
+    it 'has a bar and qr code' do
+      expect(sample.bar_code).to be_a(String)
+      expect(sample.qr_code).to be_a(String)
+    end
+
+    # test on 500 samples as indicator
+    it 'has "unique" bar & qr codes' do
+      expect(samples.map(&:bar_code).size).to eq(samples.map(&:bar_code).uniq.size)
+      expect(samples.map(&:qr_code).size).to eq(samples.map(&:qr_code).uniq.size)
+    end
+  end
+
   describe 'deletion' do
     let(:sample)     { create(:sample) }
     let(:reaction_1) { create(:reaction) }
