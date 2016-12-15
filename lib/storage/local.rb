@@ -1,12 +1,6 @@
+require 'datahandler'
 
-class Local
-
-  def initialize
-    @upload_root_folder = Rails.configuration.storage.root_folder
-    @thumbnail_folder = Rails.configuration.storage.thumbnail_folder
-
-    @temp_folder = Rails.configuration.storage.temp_folder
-  end
+class Local < DataHandler
 
   def storage_id
     "local"
@@ -23,7 +17,7 @@ class Local
     end
   end
 
-  def move_from_temp(created_by, file_id_filename, thumbnail)
+  def move(created_by, file_id_filename, thumbnail)
     begin
         folder = File.join(@upload_root_folder, created_by.to_s)
         FileUtils.mkdir_p(folder) unless Dir.exist?(folder)
@@ -73,6 +67,7 @@ class Local
       end
     rescue Exception => e
       puts "ERROR: Can not delete file: " + e.message
+      raise e.message
     end
   end
 
@@ -89,6 +84,7 @@ class Local
       end
     rescue
       puts "ERROR: Can not read thumbnail: " + e.message
+      raise e.message
     end
   end
 

@@ -17,7 +17,7 @@ export default class AttachmentFetcher {
   }
 
   static fetchThumbnail2(params) {
-    let promise = fetch(`/api/v1/attachments/thumbnail?id=${params.id}`, {
+    let promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
       credentials: 'same-origin',
       method: 'GET'
     }).then((response) => {

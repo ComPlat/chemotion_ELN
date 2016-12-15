@@ -2,3 +2,7 @@ development:
   :root_folder: 'uploadNew2'
   :thumbnail_folder: 'thumbnails'
   :temp_folder: 'temp'
+  :remote_enable: true
+  :host: 'host'
+  :username: 'username'
+  :password: 'password'

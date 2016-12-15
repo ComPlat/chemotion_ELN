@@ -300,6 +300,8 @@ GEM
       enumerable-lazy
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
+    net-sftp (2.1.2)
+      net-ssh (>= 2.6.5)
     net-ssh (3.1.1)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
@@ -518,6 +520,8 @@ DEPENDENCIES
   launchy (~> 2.4.3)
   mailcatcher
   memory_profiler
+  net-sftp
+  net-ssh
   nokogiri
   openbabel (= 2.4.0.1)!
   paranoia (~> 2.0)

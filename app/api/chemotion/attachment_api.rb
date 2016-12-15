@@ -1,3 +1,5 @@
+require 'digest'
+
 module Chemotion
   class AttachmentAPI < Grape::API
     resource :attachments do
@@ -8,11 +10,10 @@ module Chemotion
         params.each do |file_id, file|
           if tempfile = file.tempfile
             begin
-              #storage = Filesystem.new
-              #file_id_filename = file_id + file.filename
+              sha256 = Digest::SHA256.file(tempfile).hexdigest
+
               storage = Storage.new
-              storage.create(file_id, file.filename, IO.binread(tempfile), current_user.id, current_user.id)
-              #storage.temp(file_id_filename, IO.binread(tempfile))
+              storage.create(file_id, file.filename, IO.binread(tempfile), sha256, current_user.id, current_user.id)
             ensure
               tempfile.close
               tempfile.unlink   # deletes the temp file
@@ -68,7 +69,8 @@ module Chemotion
 
       resource :thumbnail do
         desc 'Return Base64 encoded thumbnail'
-        get do
+        get ':id' do
+
           if Attachment.exists?(:id => params[:id])
             attachment = Attachment.find_by id: params[:id]
             storage = Storage.new
@@ -78,6 +80,22 @@ module Chemotion
           end
         end
       end
+
+      resource :move do
+        desc 'Return Base64 encoded thumbnail'
+        get ':id' do
+
+          if Attachment.exists?(:id => params[:id])
+            attachment = Attachment.find_by id: params[:id]
+            storage = Storage.new
+            storage.move(attachment)
+          else
+            nil
+          end
+        end
+      end
+
+
 
     end
   end

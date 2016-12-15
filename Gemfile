@@ -43,6 +43,9 @@ gem 'browserify-rails' , '~> 3.0.1'
 # for collection tree structure
 gem 'ancestry'
 
+gem 'net-ssh'
+gem 'net-sftp'
+
 # svg composer
 gem 'nokogiri'
 
