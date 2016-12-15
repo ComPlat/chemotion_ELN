@@ -126,16 +126,12 @@ class Reaction < ActiveRecord::Base
     minTemp = (arrayData.min_by { |x| x["value"] })["value"]
 
     return ""  if (minTemp == nil || maxTemp == nil)
-
-    return minTemp
     return minTemp + " ~ " + maxTemp
   end
 
   def temperature_display_with_unit
     tp = temperature_display
-    if (tp =~ /^[\-|\d]\d*\.{0,1}\d{0,2}$/).present?
-      tp + " " + temperature["valueUnit"]
-    end
+    tp.length != 0 ? tp + " " + temperature["valueUnit"] : ""
   end
 
   def description_contents

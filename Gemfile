@@ -78,6 +78,8 @@ gem "dotenv-rails"
 gem "backup"
 gem 'yaml_db'
 
+gem "ruby-ole"
+
 # CI
 gem 'coveralls', require: false
 

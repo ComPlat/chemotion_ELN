@@ -13,8 +13,8 @@ module Report
         {
           title: title,
           collections: collection_label,
-          image: image,
-          image_product: image_product,
+          equation: equation,
+          equation_product: equation_product,
           status: status,
           starting_materials: starting_materials,
           reactants: reactants,
@@ -43,12 +43,12 @@ module Report
         obj.collections.map { |c| c.label if c.label != "All" }.compact.join(", ")
       end
 
-      def image
-        Image.new(obj: obj, format: @img_format).generate_img
+      def equation
+        Equation.new(obj: obj, format: @img_format).generate
       end
 
-      def image_product
-        Image.new(obj: obj, format: @img_format).generate_product_img
+      def equation_product
+        Equation.new(obj: obj, format: @img_format).generate_products
       end
 
       def status
