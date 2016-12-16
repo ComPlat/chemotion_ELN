@@ -1,17 +1,17 @@
 import React from 'react';
 import {Modal} from 'react-bootstrap';
+import UIActions from './actions/UIActions'
 
-const NavigationModal = ({show, title, Component, action, onHide, listSharedCollections}) => {
+const NavigationModal = ({show, title, component, customModal, ...props}) => {
+  const Component = component
   return(
     show
-      ? <Modal animation={false} show={show} onHide={() => onHide()}>
+      ? <Modal  dialogClassName={customModal} animation={false} show={show} onHide={() => UIActions.hideModal()}>
           <Modal.Header closeButton>
             <Modal.Title>{title}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Component onHide={() => onHide()}
-                        action={action}
-                        listSharedCollections={listSharedCollections} />
+            <Component onHide={() => UIActions.hideModal()} {...props} />
           </Modal.Body>
         </Modal>
       : <div></div>

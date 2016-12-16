@@ -58,9 +58,9 @@ class Molecule < ActiveRecord::Base
     end
   end
 
-  def self.find_or_create_by_molfiles molfiles, is_partial = false
-    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
+  def self.find_or_create_by_molfiles molfiles, is_partial = false, is_compact = true
 
+    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
     inchikeys = bi.map do |babel_info|
       inchikey = babel_info[:inchikey]
       !inchikey.blank? && inchikey || nil
@@ -68,7 +68,7 @@ class Molecule < ActiveRecord::Base
 
     compact_iks = inchikeys.compact
     mol_to_get = []
-    
+
     iks = inchikeys.dup
     unless compact_iks.empty?
       existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
@@ -106,7 +106,22 @@ class Molecule < ActiveRecord::Base
         end
       end
     end
-    where('inchikey IN (?)',compact_iks)
+
+    molecules = where('inchikey IN (?)',compact_iks)
+    if is_compact
+      molecules
+    else
+      iks = inchikeys.dup
+      mol_array = Array.new(iks.size)
+      molecules.each do |mol|
+        i = iks.index(mol.inchikey)
+        if i
+          iks[i] = nil
+          mol_array[i]=mol
+        end
+      end
+      mol_array
+    end
   end
 
   def refresh_molecule_data

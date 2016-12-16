@@ -89,21 +89,54 @@ module Chemotion
 
       namespace :import do
         desc "Import Samples from a File"
+
+        before do
+          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+        end
         post do
           extname = File.extname(params[:file].filename)
           if extname.match(/\.sdf?/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file].tempfile.path,
-            collection_id: params[:currentCollectionId],
-            current_user_id: current_user.id)
+              collection_id: params[:currentCollectionId],
+              current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
-            sdf_import.create_samples
-            return {sdf:true, message: sdf_import.message, data:[] ,status: sdf_import.status}
+            return {
+               sdf: true, message: sdf_import.message,
+               data: sdf_import.processed_mol, status: sdf_import.status,
+               raw_data: sdf_import.raw_data
+             }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
           import = Import::ImportSamples.new.from_file(params[:file].tempfile.path,
             params[:currentCollectionId], current_user.id).process
         end
       end
+
+      namespace :confirm_import do
+        desc "Create Samples from an Array of inchikeys"
+        params do
+          requires :inchikeys, type: Array, desc: "Selected Molecule inchikeys from the UI"
+          requires :currentCollectionId, type: Integer
+        end
+
+        before do
+          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+        end
+
+        post do
+          sdf_import = Import::ImportSdf.new(
+            inchikeys: params[:inchikeys],
+            collection_id: params[:currentCollectionId],
+            current_user_id: current_user.id,
+            raw_data: params[:raw_data]
+          )
+          sdf_import.create_samples
+          return {
+            sdf: true, message: sdf_import.message, status: sdf_import.status,
+          }
+        end
+      end
+
 
       desc "Return serialized molecules_samples_groups of current user"
       params do

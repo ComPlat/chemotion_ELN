@@ -162,6 +162,15 @@ class ElementActions {
         console.log(errorMessage);
       });};
   }
+  
+  importSamplesFromFileConfirm(params) {
+    return (dispatch) => { SamplesFetcher.importSamplesFromFileConfirm(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
 
   // -- Molecules --
 

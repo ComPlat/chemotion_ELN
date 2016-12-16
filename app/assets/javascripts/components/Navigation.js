@@ -5,6 +5,7 @@ import Search from './search/Search';
 import ManagingActions from './managing_actions/ManagingActions';
 import ContextActions from './contextActions/ContextActions';
 import UserStore from './stores/UserStore';
+import UIStore from './stores/UIStore'
 import UserActions from './actions/UserActions';
 import NavNewSession from '../libHome/NavNewSession'
 import NavHead from '../libHome/NavHead'
@@ -25,20 +26,29 @@ export default class Navigation extends React.Component {
       }
     }
     this.onChange = this.onChange.bind(this)
+    this.onUIChange = this.onUIChange.bind(this)
   }
 
   componentDidMount() {
+    UIStore.listen(this.onUIChange)
     UserStore.listen(this.onChange);
     UserActions.fetchCurrentUser();
   }
 
   componentWillUnmount() {
+    UIStore.unlisten(this.onUIChange)
     UserStore.unlisten(this.onChange);
   }
 
   onChange(state) {
     this.setState({
       currentUser: state.currentUser
+    });
+  }
+
+  onUIChange(state) {
+    this.setState({
+      modalProps: state.modalParams
     });
   }
 
@@ -50,18 +60,6 @@ export default class Navigation extends React.Component {
     this.setState({
       modalProps: modalProps
     });
-  }
-
-  handleModalHide() {
-    const modalProps = {
-      show: false,
-      title: "",
-      component: "",
-      action: null
-    };
-    this.updateModalProps(modalProps);
-    // https://github.com/react-bootstrap/react-bootstrap/issues/1137
-    document.body.className = document.body.className.replace('modal-open', '');
   }
 
   render() {
@@ -76,12 +74,7 @@ export default class Navigation extends React.Component {
             <Search />
             <ManagingActions updateModalProps={this.updateModalProps.bind(this)} />
             <ContextActions updateModalProps={this.updateModalProps.bind(this)} />
-            <NavigationModal show={modalProps.show}
-                              title={modalProps.title}
-                              Component={modalProps.component}
-                              action={modalProps.action}
-                              onHide={() => this.handleModalHide()}
-                              listSharedCollections={modalProps.listSharedCollections} />
+            <NavigationModal {...modalProps} />
           </Nav>
           <UserAuth/>
         </Navbar>

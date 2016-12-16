@@ -238,4 +238,29 @@ export default class SamplesFetcher {
 
     return promise;
   }
+
+  static importSamplesFromFileConfirm(params) {
+
+    let promise = fetch('/api/v1/samples/confirm_import/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        currentCollectionId: params.currentCollectionId,
+        raw_data: params.raw_data,
+        inchikeys: params.inchikeys,
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }
