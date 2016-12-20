@@ -191,7 +191,7 @@ class ElementStore {
   handleUpdateElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
-      ui_state.isSync, this.state.moleculeSort);
+      params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
@@ -199,7 +199,7 @@ class ElementStore {
   handleAssignElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
-      ui_state.isSync, this.state.moleculeSort);
+      params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
@@ -207,7 +207,7 @@ class ElementStore {
   handleRemoveElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
-      ui_state.isSync, this.state.moleculeSort);
+      params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
   }
