@@ -1,7 +1,9 @@
 import alt from '../alt';
 import UIActions from '../actions/UIActions';
+import UserActions from '../actions/UserActions';
 import ElementActions from '../actions/ElementActions';
 import ElementStore from './ElementStore';
+import UserStore from './UserStore';
 import ArrayUtils from '../utils/ArrayUtils';
 import Immutable from 'immutable';
 
@@ -39,7 +41,6 @@ class UIStore {
       showPreviews: true,
       number_of_results: 15,
       currentCollection: null,
-      currentTab: 1,
       currentSearchSelection: null,
       showCollectionManagement: false,
       isSync: false,
@@ -48,7 +49,6 @@ class UIStore {
     };
 
     this.bindListeners({
-      handleSelectTab: UIActions.selectTab,
       handleSelectCollection: UIActions.selectCollection,
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
@@ -84,10 +84,6 @@ class UIStore {
 
   handleShowElements() {
     this.state.showCollectionManagement = false;
-  }
-
-  handleSelectTab(tab) {
-    this.state.currentTab = tab;
   }
 
   handleCheckAllElements(type) {

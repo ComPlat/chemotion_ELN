@@ -1,6 +1,8 @@
 import UIStore from './stores/UIStore';
 import CollectionStore from './stores/CollectionStore';
+import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
+import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import rXr from './extra/routesXroutes';
 
@@ -23,6 +25,7 @@ const routes = {
       target: {
         show: function(e) {
           UIActions.showElements();
+          UserActions.fetchCurrentUser();
           let uiState = UIStore.getState();
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];
@@ -66,6 +69,7 @@ const routes = {
       target: {
         show: function(e) {
           UIActions.showElements();
+          UserActions.fetchCurrentUser();
           let uiState = UIStore.getState();
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];

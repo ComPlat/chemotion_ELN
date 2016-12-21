@@ -2,6 +2,7 @@ import React from 'react';
 import {Button, ButtonToolbar, Input} from 'react-bootstrap';
 import CheckBoxs from '../common/CheckBoxs';
 import UIStore from './../stores/UIStore';
+import UserStore from './../stores/UserStore';
 import Utils from '../utils/Functions';
 
 export default class ModalExport extends React.Component {
@@ -73,10 +74,11 @@ export default class ModalExport extends React.Component {
 
   handleClick() {
     const uiState = UIStore.getState();
+    const userState = UserStore.getState();
     const { onHide } = this.props;
     onHide();
     const removedColumns = this.removedColumns();
-    exportSelections(uiState, removedColumns);
+    exportSelections(uiState, userState, removedColumns);
   }
 
   removedColumns() {
@@ -107,20 +109,13 @@ export default class ModalExport extends React.Component {
   }
 }
 
-const exportSelections = (uiState, removedColumns) => {
-  const { currentTab, currentCollection, sample, reaction, wellplate } = uiState;
-  let url_params;
-  switch(currentTab) {
-    case 1:
-      url_params = "type=sample" + selectedStringfy(sample, currentCollection, removedColumns);
-      break;
-    case 2:
-      url_params = "type=reaction" + selectedStringfy(reaction, currentCollection, removedColumns);
-      break;
-    case 3:
-      url_params = "type=wellplate" + selectedStringfy(wellplate, currentCollection, removedColumns);
-      break;
-  }
+const exportSelections = (uiState, userState, removedColumns) => {
+  const { currentCollection, sample, reaction, wellplate } = uiState;
+  const { currentType } = userState;
+
+  let url_params = "type=" + currentType +
+      selectedStringfy(sample, currentCollection, removedColumns);
+
   Utils.downloadFile({ contents: "api/v1/reports/export_samples_from_selections?" + url_params });
 }
 

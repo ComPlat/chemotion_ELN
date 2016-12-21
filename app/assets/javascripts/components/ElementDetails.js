@@ -216,7 +216,7 @@ export default class ElementDetails extends Component {
           <Tabs activeKey={activeKey} onSelect={this.selectTab} id="elements-tabs" >
             {selecteds.map( (el, i) => {
               return el
-                ? <Tab eventKey={i} title={this.tabTitle(el, i)} unmountOnExit={true} >
+                ? <Tab key={i} eventKey={i} title={this.tabTitle(el, i)} unmountOnExit={true}>
                     {this.content(el)}
                   </Tab>
                 : null;

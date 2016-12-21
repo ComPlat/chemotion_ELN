@@ -8,7 +8,10 @@ describe Chemotion::UserAPI do
     }
   }
   let(:srlzr){
-    {'samples_count' => 0, 'reactions_count'=>0}
+    {'samples_count' => 0, 'reactions_count' => 0}
+  }
+  let(:layout){
+    {'sample' => '1', 'reaction' => '2', 'wellplate' => '3', 'screen' => '4'}
   }
 
   context 'authorized user-person logged in' do
@@ -52,8 +55,7 @@ describe Chemotion::UserAPI do
         get "/api/v1/users/current"
       end
       it "Returns current user" do
-        #expect(JSON.parse(response.body)).to eq user.as_json(json_options)
-        expect(JSON.parse(response.body)['user']).to eq p1.as_json(json_options).merge(srlzr)
+        expect(JSON.parse(response.body)['user']).to eq p1.as_json(json_options).merge(srlzr).merge("layout" => layout)
       end
     end
 

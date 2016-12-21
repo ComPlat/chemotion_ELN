@@ -529,6 +529,9 @@ class ElementStore {
   handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
     let uiState = UIStore.getState();
+
+    if (!uiState.currentCollection || !uiState.currentCollection.id) return;
+
     let page = uiState[type].page;
     const moleculeSort = this.state.moleculeSort
 
