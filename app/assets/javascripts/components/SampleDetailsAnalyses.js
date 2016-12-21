@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
 import AnalysisComponent from './Analysis';
 import Analysis from './models/Analysis';
+import Utils from './utils/Functions';
 
 export default class SampleDetailsAnalyses extends Component {
   constructor(props) {
@@ -60,6 +61,34 @@ export default class SampleDetailsAnalyses extends Component {
     }
   }
 
+  analysisCodePrintButtons(analysis, sample) {
+    if(analysis.isNew)
+      return ''
+    else if(analysis.kind.includes("NMR"))
+      return (
+        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})}>
+            <i className="fa fa-barcode fa-lg"></i>
+          </Button>
+        </div>
+      )
+    else
+      return (
+        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=analysis&size=small"})}>
+            <i className="fa fa-barcode fa-lg"></i>
+          </Button>
+          &nbsp;
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=analysis&size=big"})}>
+            <i className="fa fa-barcode fa-2x"></i>
+          </Button>
+        </div>
+      )
+  }
+
   render() {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
@@ -71,7 +100,7 @@ export default class SampleDetailsAnalyses extends Component {
          className="button-right" disabled={readOnly}
         onClick={() => {if(confirm('Delete the analysis?')) {this.handleRemove(analysis)}}}>
         <i className="fa fa-trash"></i>
-      </Button></p>
+      </Button>{this.analysisCodePrintButtons(analysis, sample)}</p>
 
     if(sample.analyses.length > 0) {
       return (

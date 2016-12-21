@@ -203,6 +203,25 @@ export default class ReactionDetails extends Component {
     }
   }
 
+  reactionCodePrintButtons(reaction) {
+    if(reaction.isNew)
+      return ''
+    else
+      return (
+        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + reaction.id + "&type=reaction&size=small"})}>
+            <i className="fa fa-barcode fa-lg"></i>
+          </Button>
+          &nbsp;
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + reaction.id + "&type=reaction&size=big"})}>
+            <i className="fa fa-barcode fa-2x"></i>
+          </Button>
+        </div>
+      )
+  }
+
   reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
 
@@ -250,6 +269,7 @@ export default class ReactionDetails extends Component {
           <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
+        {this.reactionCodePrintButtons(reaction)}
       </h4>
     )
   }

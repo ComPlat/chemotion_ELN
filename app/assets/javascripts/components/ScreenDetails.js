@@ -3,6 +3,7 @@ import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
+import Utils from './utils/Functions';
 
 import ElementActions from './actions/ElementActions';
 import StickyDiv from 'react-stickydiv'
@@ -78,6 +79,26 @@ export default class ScreenDetails extends Component {
     this.setState({ screen });
   }
 
+  screenCodePrintButtons(screen) {
+    if(screen.isNew)
+      return ''
+    else
+      console.log(screen)
+      return (
+        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + screen.id + "&type=screen&size=small"})}>
+            <i className="fa fa-barcode fa-lg"></i>
+          </Button>
+          &nbsp;
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + screen.id + "&type=screen&size=big"})}>
+            <i className="fa fa-barcode fa-2x"></i>
+          </Button>
+        </div>
+      )
+  }
+
   screenHeader(screen) {
     let saveBtnDisplay = screen.isEdited ? '' : 'none'
 
@@ -108,6 +129,7 @@ export default class ScreenDetails extends Component {
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
+        {this.screenCodePrintButtons(screen)}
       </div>
     )
   }

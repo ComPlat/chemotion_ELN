@@ -1,7 +1,7 @@
 import React from 'react';
 import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
         Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
-        Tooltip, OverlayTrigger} from 'react-bootstrap';
+        Tooltip, OverlayTrigger, DropdownButton, MenuItem} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
 import QRCode from 'qrcode.react';
@@ -33,6 +33,7 @@ import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 import SampleForm from './SampleForm'
 import Utils from './utils/Functions';
+import Analysis from './models/Analysis';
 
 const MWPrecision = 6;
 
@@ -218,18 +219,92 @@ export default class SampleDetails extends React.Component {
       return ''
     else
       return (
-        <div style={{display: "inline-block", marginLeft: "60%"}}>
+        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
           <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/samples/codes?id=" + sample.id + "&size=small"})}>
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + sample.id + "&type=sample&size=small"})}>
             <i className="fa fa-barcode fa-lg"></i>
           </Button>
           &nbsp;
           <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/samples/codes?id=" + sample.id + "&size=big"})}>
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + sample.id + "&type=sample&size=big"})}>
             <i className="fa fa-barcode fa-2x"></i>
           </Button>
         </div>
       )
+  }
+
+  initiateAnalysisButton(sample) {
+    return (
+      <div style={{display: "inline-block", marginLeft: "100px"}}>
+        <DropdownButton bsStyle="info" bsSize="xsmall" title="Initiate Analysis">
+          <MenuItem eventKey="1" onClick={() => this.initiateAnalysisWithKind(sample, "1H NMR")}>1H NMR</MenuItem>
+          <MenuItem eventKey="2" onClick={() => this.initiateAnalysisWithKind(sample, "13C NMR")}>13C NMR</MenuItem>
+          <MenuItem eventKey="3" onClick={() => this.initiateAnalysisWithKind(sample, "Others")}>others</MenuItem>
+          <MenuItem eventKey="4" onClick={() => this.initiateAnalysisWithKind(sample, "Others2x")}>others 2x</MenuItem>
+          <MenuItem eventKey="5" onClick={() => this.initiateAnalysisWithKind(sample, "Others3x")}>others 3x</MenuItem>
+        </DropdownButton>
+      </div>
+    )
+  }
+
+  initiateAnalysisWithKind(sample, kind) {
+    switch(kind) {
+      case "1H NMR": case "13C NMR":
+        var analysis = Analysis.buildEmpty();
+        analysis.kind = kind
+
+        sample.addAnalysis(analysis);
+
+        ElementActions.updateSample(sample);
+
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
+
+        break;
+      case "Others":
+        var analysis = Analysis.buildEmpty();
+        analysis.kind = kind
+
+        sample.addAnalysis(analysis);
+
+        ElementActions.updateSample(sample);
+
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=analysis&size=small"})
+
+        break;
+      case "Others2x":
+        var a1 = Analysis.buildEmpty(),
+            a2 = Analysis.buildEmpty();
+
+        a1.kind = "Others"
+        a2.kind = "Others"
+
+        sample.addAnalysis(a1);
+        sample.addAnalysis(a2);
+
+        ElementActions.updateSample(sample);
+
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
+
+        break;
+      case "Others3x":
+        var a1 = Analysis.buildEmpty(),
+            a2 = Analysis.buildEmpty(),
+            a3 = Analysis.buildEmpty();
+
+        a1.kind = "Others"
+        a2.kind = "Others"
+        a3.kind = "Others"
+
+        sample.addAnalysis(a1);
+        sample.addAnalysis(a2);
+        sample.addAnalysis(a3);
+
+        ElementActions.updateSample(sample);
+
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
+
+        break;
+    }
   }
 
   sampleHeader(sample) {
@@ -266,6 +341,7 @@ export default class SampleDetails extends React.Component {
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
+        {this.initiateAnalysisButton(sample)}
         {this.sampleCodePrintButtons(sample)}
       </div>
     )
