@@ -4,6 +4,7 @@ import UIStore from './../stores/UIStore';
 import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
+import ScanCodeButton from './ScanCodeButton';
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -57,6 +58,9 @@ export default class ContextActions extends React.Component {
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
           <CreateButton isDisabled={this.isAllCollection()}/>
+        </ButtonGroup>
+        <ButtonGroup style={{marginLeft: '10px'}}>
+          <ScanCodeButton/>
         </ButtonGroup>
       </div>
     )
