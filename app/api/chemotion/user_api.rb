@@ -18,6 +18,25 @@ module Chemotion
         status 204
       end
 
+      namespace :layout do
+        desc "Update user layout"
+        params do
+          requires :layout, type: Hash
+        end
+
+        post do
+          current_user.layout = params[:layout]
+          current_user.layout = {
+            sample: 1, reaction: 2, wellplate: 3, screen: 4
+          } if current_user.layout.size == 0
+
+          current_user.save!
+
+          current_user.layout
+        end
+
+      end
+
     end
 
     resource :groups do

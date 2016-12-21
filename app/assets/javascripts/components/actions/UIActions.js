@@ -14,10 +14,6 @@ class UIActions {
     return  null;
   }
 
-  selectTab(tab) {
-    return  tab;
-  }
-
   selectCollection(collection) {
     return  collection
   }
