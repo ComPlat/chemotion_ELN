@@ -1,5 +1,5 @@
 import React from 'react';
-import {ButtonGroup} from 'react-bootstrap';
+import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
 import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
@@ -62,6 +62,7 @@ export default class ContextActions extends React.Component {
         <ButtonGroup style={{marginLeft: '10px'}}>
           <ScanCodeButton/>
         </ButtonGroup>
+        <DeviceButtonSplit/>
       </div>
     )
   }
@@ -70,3 +71,54 @@ export default class ContextActions extends React.Component {
 ContextActions.propTypes = {
   updateModalProps: React.PropTypes.func.isRequired,
 };
+
+const DeviceButtonSplit = () => {
+  return (
+  <ButtonGroup style={{marginLeft: '10px'}}>
+    <OverlayTrigger placement="bottom" overlay={<DeviceTooltip/>}>
+      <Button 
+        bsStyle="warning"
+        disabled={true}
+        onClick={() => {}}
+      >
+        UI
+      </Button>
+      </OverlayTrigger>
+      <DropdownButton
+        bsStyle="warning"
+        title={<DropdownButtonTitle/>}
+        style={{width: "26px", paddingLeft: "8px"}}
+      >
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 1
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 2
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device Management
+        </MenuItem>
+      </DropdownButton>
+    </ButtonGroup>
+  )
+}
+
+const DeviceTooltip = () =>
+  <Tooltip id="create_button">
+    Open Device
+  </Tooltip>
+
+const DropdownButtonTitle = () =>
+  <div></div>
