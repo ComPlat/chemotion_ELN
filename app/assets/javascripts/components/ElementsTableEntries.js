@@ -133,6 +133,9 @@ export default class ElementsTableEntries extends Component {
       },
       {
         'reaction': element.type == 'reaction' && this.isElementSelected(element)
+      },
+      {
+        'research_plan': element.type == 'research_plan'
       }
     );
 
@@ -147,7 +150,7 @@ export default class ElementsTableEntries extends Component {
       tdExtraContents.push(<NoName element={element}/>);
     }
 
-    if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
+    if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction' || element.type == 'research_plan')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>

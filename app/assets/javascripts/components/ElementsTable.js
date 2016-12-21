@@ -231,7 +231,7 @@ export default class ElementsTable extends React.Component {
                 showReport={showReport}/>
             </th>
             <th colSpan={3}>
-              All {type}s
+              All {type.replace('_', ' ')}s
             </th>
           </tr></thead>
           <ElementsTableEntries

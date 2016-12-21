@@ -86,7 +86,13 @@ export default class ManagingModalSharing extends React.Component {
         included_ids: [],
         excluded_ids: [],
         collection_id: collectionId
-      }
+      },
+      research_plan: {
+        all: true,
+        included_ids: [],
+        excluded_ids: [],
+        collection_id: collectionId
+      },
     };
     return filterParams;
   }

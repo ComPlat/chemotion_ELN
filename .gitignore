@@ -41,6 +41,9 @@
 /public/images/templates/*
 !/public/images/templates/.keep
 
+/public/images/research_plans/*
+!/public/images/research_plans/.keep
+
 /uploads/attachments/*
 /uploads/thumbnails
 !/public/attachments/.keep

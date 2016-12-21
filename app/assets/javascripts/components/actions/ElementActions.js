@@ -7,20 +7,19 @@ import NotificationActions from './NotificationActions';
 
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
-import ResidueFetcher from '../fetchers/ResidueFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 
-import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
-
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
 
 import _ from 'lodash';
@@ -387,6 +386,47 @@ class ElementActions {
       });};
   }
 
+  // -- ResearchPlans --
+  fetchResearchPlansByCollectionId(id, queryParams={}, collectionIsSync = false) {
+    return (dispatch) => { ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  fetchResearchPlanById(id) {
+    return (dispatch) => { ResearchPlansFetcher.fetchById(id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  updateResearchPlan(params) {
+    return (dispatch) => { ResearchPlansFetcher.update(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  generateEmptyResearchPlan(collection_id) {
+    return ResearchPlan.buildEmpty(collection_id);
+  }
+
+  createResearchPlan(params) {
+    return (dispatch) => { ResearchPlansFetcher.create(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   // -- Report --
   showReportContainer() {
     return  Report.buildEmpty()
@@ -450,6 +490,15 @@ class ElementActions {
 
   deleteScreensByUIState(ui_state) {
     return (dispatch) => { ScreensFetcher.deleteScreensByUIState(ui_state)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  deleteResearchPlansByUIState(ui_state) {
+    return (dispatch) => { ResearchPlansFetcher.deleteResearchPlansByUIState(ui_state)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {

@@ -11,7 +11,13 @@ describe Chemotion::UserAPI do
     {'samples_count' => 0, 'reactions_count' => 0}
   }
   let(:layout){
-    {'sample' => '1', 'reaction' => '2', 'wellplate' => '3', 'screen' => '4'}
+    {
+      'sample' => '1',
+      'reaction' => '2',
+      'wellplate' => '3',
+      'screen' => '4',
+      'research_plan' => '5'
+    }
   }
 
   context 'authorized user-person logged in' do

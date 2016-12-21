@@ -3,5 +3,6 @@ export default {
   SAMPLE: 'sample',
   MATERIAL: 'material',
   WELLPLATE: 'wellplate',
+  RESEARCH_PLAN: 'research_plan',
   LAYOUT: 'layout'
 };

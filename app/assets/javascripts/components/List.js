@@ -23,6 +23,7 @@ export default class List extends React.Component {
       totalReactionElements: 0,
       totalWellplateElements: 0,
       totalScreenElements: 0,
+      totalResearchPlanElements: 0,
       visible: [],
       hidden: [],
       currentTab: 0
@@ -66,7 +67,8 @@ export default class List extends React.Component {
       totalSampleElements: state.elements.samples.totalElements,
       totalReactionElements: state.elements.reactions.totalElements,
       totalWellplateElements: state.elements.wellplates.totalElements,
-      totalScreenElements: state.elements.screens.totalElements
+      totalScreenElements: state.elements.screens.totalElements,
+      totalResearchPlanElements: state.elements.research_plans.totalElements,
     });
   }
 
