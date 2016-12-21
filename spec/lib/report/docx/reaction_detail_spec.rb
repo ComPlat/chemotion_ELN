@@ -30,9 +30,10 @@ describe 'Report::Docx::ReactionDetail instance' do
       expect(content.class).to eq(Hash)
     end
 
-    it "has a png image" do
-      expect(content[:image].class).to eq(Sablon::Image::Definition)
-      expect(content[:image].name.split('.').last).to eq('png')
+    it "has a png image & a bin file" do
+      expect(content[:equation].class).to eq(Sablon::Chem::Definition)
+      expect(content[:equation].img.name.split('.').last).to eq('png')
+      expect(content[:equation].ole.name.split('.').last).to eq('bin')
     end
 
     it "has a correct status" do
