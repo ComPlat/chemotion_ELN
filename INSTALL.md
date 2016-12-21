@@ -68,3 +68,13 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 * Initial setup: `docker-compose up`
 * For Linux users: use docker-compose run with user docker, e.g., `docker-compose run --user=docker bundle exec rails g migration new_migration`
 
+## workarounds:
+* npm packages, database.yml und migrations still need to be performed manually
+* `cp config/database.yml.example config/database.yml`
+* `docker-compose run app bash`
+* im container: `$ npm i && bundle exec rake db:setup`
+
+* if app-container starts before postgres:
+* start db in deamon-mode
+* `docker-compose run -d postgres`
+* `docker-compose run app`
