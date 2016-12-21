@@ -96,6 +96,8 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
+  has_many :devices_samples
+
   belongs_to :molecule
   belongs_to :fingerprints
   belongs_to :user
