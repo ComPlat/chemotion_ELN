@@ -179,6 +179,8 @@ export default class ReactionDetails extends Component {
   productData(reaction) {
     const {products} = this.state.reaction;
 
+    //const reaction = this.state.reaction;
+    console.log(reaction);
 
     let tabs = products.map((product, key) =>
            <Tab key={product.short_label}

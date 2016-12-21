@@ -345,7 +345,7 @@ module Chemotion
 
           attributes = declared(params, include_missing: false)
 
-          ContainerHelper.update_datamodel(current_user, attributes[:container]);
+          ContainerHelper.update_datamodel(attributes[:container]);
           attributes.delete(:container);
 
           embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
@@ -452,7 +452,7 @@ module Chemotion
         all_coll = Collection.get_all_collection_for_user(current_user.id)
         sample.collections << all_coll
 
-        sample.container =  ContainerHelper.update_datamodel(current_user, params[:container])
+        sample.container =  ContainerHelper.update_datamodel(params[:container])
 
         sample.save!
 

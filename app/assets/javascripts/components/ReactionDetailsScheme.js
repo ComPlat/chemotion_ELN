@@ -45,7 +45,7 @@ export default class ReactionDetailsScheme extends Component {
         splitSample = sample.buildChild();
       }
     }
-
+  
     this.insertSolventExtLabel(splitSample, materialGroup, external_label);
 
     reaction.addMaterial(splitSample, materialGroup);

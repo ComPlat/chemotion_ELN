@@ -68,7 +68,7 @@ module Chemotion
         end
 
         put do
-          ContainerHelper.update_datamodel(current_user, params[:container]);
+          ContainerHelper.update_datamodel(params[:container]);
           params.delete(:container);
 
           attributes = declared(params.except(:wellplate_ids), include_missing: false)
@@ -112,7 +112,7 @@ module Chemotion
 
         screen = Screen.create(attributes)
 
-        screen.container = ContainerHelper.update_datamodel(current_user, params[:container])
+        screen.container = ContainerHelper.update_datamodel(params[:container])
         screen.save!
 
         collection = Collection.find(params[:collection_id])

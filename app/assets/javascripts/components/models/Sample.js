@@ -165,6 +165,9 @@ export default class Sample extends Element {
 
     splitSample.split_label = splitSample.buildSplitShortLabel();
 
+    //Todo ???
+    splitSample.container = Container.init();
+
     return splitSample;
   }
 

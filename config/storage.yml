@@ -1,5 +1,5 @@
 development:
-  :root_folder: 'uploadNew2'
+  :root_folder: 'uploadNew'
   :thumbnail_folder: 'thumbnails'
   :temp_folder: 'temp'
   :remote_enable: true

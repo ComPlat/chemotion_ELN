@@ -174,7 +174,7 @@ module Chemotion
           literatures = attributes.delete(:literatures)
           id = attributes.delete(:id)
 
-          ContainerHelper.update_datamodel(current_user, attributes[:container]);
+          ContainerHelper.update_datamodel(attributes[:container]);
           attributes.delete(:container);
 
           if reaction = Reaction.find(id)
@@ -212,6 +212,7 @@ module Chemotion
       end
 
       post do
+byebug
         attributes = declared(params, include_missing: false).symbolize_keys
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
@@ -224,7 +225,7 @@ module Chemotion
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
 
-        reaction.container = ContainerHelper.update_datamodel(current_user, container_info)
+        reaction.container = ContainerHelper.update_datamodel(container_info)
         reaction.save!
 
         CollectionsReaction.create(reaction: reaction, collection: collection)

@@ -136,6 +136,8 @@ class Sample < ActiveRecord::Base
   before_create :check_short_label
   after_create :update_counter
 
+  #after_create :create_root_container
+
   def molecule_sum_formular
     if self.molecule
       self.molecule.sum_formular
@@ -209,7 +211,7 @@ class Sample < ActiveRecord::Base
 
     subsample.collections << Collection.find(collection_id)
 
-    subsample.container = ContainerHelper.create_root_container
+    #subsample.container = ContainerHelper.create_root_container
 
     subsample.save!
 
@@ -474,5 +476,11 @@ private
   def update_counter
     return if (self.short_label == 'reactants' || self.short_label == 'solvents')
     self.creator.increment_counter 'samples' unless self.parent
+  end
+
+  def create_root_container
+    if self.container == nil
+      self.container = ContainerHelper.create_root_container
+    end
   end
 end

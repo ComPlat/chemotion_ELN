@@ -39,6 +39,20 @@ class AddDataModel < ActiveRecord::Migration
       end
     end
 
+    Wellplate.find_each do |w|
+      if w.container == nil
+        w.container = ContainerHelper.create_root_container
+        w.save!
+      end
+    end
+
+    Screen.find_each do |s|
+      if s.container == nil
+        s.container = ContainerHelper.create_root_container
+        s.save!
+      end
+    end
+
   end
 
   def down

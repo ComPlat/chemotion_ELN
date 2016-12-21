@@ -1,6 +1,6 @@
 module ContainerHelper
 
-  def self.update_datamodel(user, container)
+  def self.update_datamodel(container)
     if !container.is_new #Container.exists?(id: container.id)
       root_container = Container.find_by id: container.id
       root_container.name = "root" #if it is created from client.side
@@ -11,12 +11,12 @@ module ContainerHelper
     end
     root_container.save!
 
-    create_or_update_containers(user, container.children, root_container)
+    create_or_update_containers(container.children, root_container)
 
     return root_container
   end
 
-  def self.export_datamodel(user, container)
+  def self.export_datamodel(container)
 
   end
 
@@ -32,23 +32,23 @@ module ContainerHelper
   end
 
 private
-  def self.read_Attachments(user, folder, container)
+  def self.read_Attachments(folder, container)
     path = File.join(folder, container.name) #wenn leer neue namen
 
     container.attachments.each do |attachment|
     end
 
     container.children.each do |child|
-      read_Attachments(user, path, child)
+      read_Attachments(path, child)
     end
 
   end
 
-  def self.create_or_update_containers(user, children, root_container)
+  def self.create_or_update_containers(children, root_container)
     children.each do |child|
       if !child.is_new #Container.exists?(id: child.id)
         if child.is_deleted
-          delete_containers_and_attachments(user, child)
+          delete_containers_and_attachments(child)
         else
           #Update container
           oldcon = Container.find_by id: child.id
@@ -59,8 +59,8 @@ private
 
           oldcon.save!
 
-          create_or_update_attachments(user, oldcon.id, child.attachments)
-          create_or_update_containers(user, child.children, oldcon)
+          create_or_update_attachments(oldcon.id, child.attachments)
+          create_or_update_containers(child.children, oldcon)
         end
       else
         if !child.is_deleted
@@ -72,14 +72,14 @@ private
 
           newcon.save!
 
-          create_or_update_attachments(user, newcon.id, child.attachments)
-          create_or_update_containers(user, child.children, newcon)
+          create_or_update_attachments(newcon.id, child.attachments)
+          create_or_update_containers(child.children, newcon)
         end
       end
     end
   end
 
-  def self.create_or_update_attachments(user, parent_container_id, attachments)
+  def self.create_or_update_attachments(parent_container_id, attachments)
     attachments.each do |attachment|
       if !attachment.is_new #Attachment.exists?(id: attachment.id)
         if !attachment.is_deleted
@@ -118,7 +118,7 @@ private
     end
   end
 
-  def self.delete_containers_and_attachments(user, container)
+  def self.delete_containers_and_attachments(container)
     attachments = Attachment.where(container_id: container.id)
 
     storage = Storage.new
@@ -129,7 +129,7 @@ private
 
     if container.children.length > 0
       container.children.each do |tmp|
-        delete_containers_and_attachments(user, tmp)
+        delete_containers_and_attachments(tmp)
       end
     end
     Container.where(id: container.id).destroy_all
