@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import StickyDiv from 'react-stickydiv'
 import {Tabs, Tab, Label} from 'react-bootstrap';
 import SampleDetails from './SampleDetails';
+import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
@@ -171,6 +172,10 @@ export default class ElementDetails extends Component {
                   toggleFullScreen={this.toggleFullScreen}/>;
       case 'screen':
         return <ScreenDetails screen={el}
+                  closeDetails={this.closeDetails}
+                  toggleFullScreen={this.toggleFullScreen}/>;
+      case 'device':
+        return <DeviceDetails device={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
     }

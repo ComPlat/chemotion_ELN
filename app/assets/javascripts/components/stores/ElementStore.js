@@ -123,7 +123,8 @@ class ElementStore {
           ElementActions.generateEmptyScreen,
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
-          ElementActions.showReportContainer
+          ElementActions.showReportContainer,
+          ElementActions.showDeviceContainer
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,

@@ -22,6 +22,7 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import Report from '../models/Report';
+import Device from '../models/Device';
 
 import _ from 'lodash';
 
@@ -378,6 +379,10 @@ class ElementActions {
   // -- Report --
   showReportContainer() {
     return  Report.buildEmpty()
+  }
+  
+  showDeviceContainer() {
+    return Device.buildEmpty()
   }
 
   // -- General --
