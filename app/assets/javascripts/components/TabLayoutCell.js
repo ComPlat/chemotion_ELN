@@ -27,7 +27,7 @@ class TabLayoutCell extends Component {
 
     let layoutCell = (
       <td className={isHidden ? "hidden-layout" : "" }>
-        <i className={"icon-" + cell }/>
+        <div><i className={"icon-" + cell }/></div>
       </td>
     )
 

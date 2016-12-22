@@ -2,10 +2,11 @@ table.layout-container {
   td {
     font-size: 25pt;
     color: #337ab7;
-    padding: 5pt;
-    width: 50px;
-    text-align: center;
     border: 1px solid #ddd;
+    div {
+      text-align: center;
+      width: 50px;
+    }
   }
 
   .hidden-layout {
