@@ -11,6 +11,7 @@ class User < ActiveRecord::Base
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
   has_many :wellplates, through: :collections
+  has_many :research_plans, :through => :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 

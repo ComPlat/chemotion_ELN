@@ -189,6 +189,19 @@ const routes = {
         }
       },
       '/:screenID': 'showOrNew'
+    },
+    '/research_plan': {
+      target: {
+        showOrNew(e) {
+          const {researchPlanID, collectionID} = e.params;
+          if (researchPlanID == 'new') {
+            ElementActions.generateEmptyResearchPlan(collectionID);
+          } else {
+            ElementActions.fetchResearchPlanById(researchPlanID);
+          }
+        }
+      },
+      '/:researchPlanID': 'showOrNew'
     }
 }
 

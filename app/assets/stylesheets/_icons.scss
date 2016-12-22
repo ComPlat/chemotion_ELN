@@ -27,7 +27,8 @@
 .icon-reaction:before,
 .icon-sample:before,
 .icon-screen:before,
-.icon-wellplate:before {
+.icon-wellplate:before,
+.icon-research_plan:before {
   display: inline-block;
   font-family: "icons";
   font-style: normal;
@@ -47,9 +48,11 @@
 .icon-sample:before { content: "\f101"; }
 .icon-screen:before { content: "\f103"; }
 .icon-wellplate:before { content: "\f102"; }
+.icon-research_plan:before { content: "\f0f6"; }
 
 $font-icons-polymer: "\f104";
 $font-icons-reaction: "\f100";
 $font-icons-sample: "\f101";
 $font-icons-screen: "\f103";
 $font-icons-wellplate: "\f102";
+$font-icons-research_plan: "\f0f6";

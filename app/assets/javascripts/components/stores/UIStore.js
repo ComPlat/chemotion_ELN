@@ -38,6 +38,13 @@ class UIStore {
         currentId: null,
         page: 1
       },
+      research_plan: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null,
+        page: 1
+      },
       showPreviews: true,
       number_of_results: 15,
       currentCollection: null,
@@ -176,6 +183,8 @@ class UIStore {
         ElementActions.fetchWellplatesByCollectionId(collection.id,
           state.pagination);
         ElementActions.fetchScreensByCollectionId(collection.id,
+          state.pagination);
+        ElementActions.fetchResearchPlansByCollectionId(collection.id,
           state.pagination);
       }
     }

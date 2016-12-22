@@ -78,6 +78,8 @@ class ElementPermissionProxy
       10
     when Screen
       10
+    when ResearchPlan
+      10
     end
   end
 
@@ -101,6 +103,8 @@ class ElementPermissionProxy
       WellplateSerializer
     when Screen
       ScreenSerializer
+    when ResearchPlan
+      ResearchPlanSerializer
     end
   end
 

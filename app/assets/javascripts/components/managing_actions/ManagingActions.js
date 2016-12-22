@@ -66,7 +66,7 @@ export default class ManagingActions extends React.Component {
     const uiState = UIStore.getState();
     let elementsFilter = this.filterParamsFromUIState(uiState);
     let result = false;
-    ['sample', 'reaction', 'wellplate', 'screen'].map(function(prop){
+    ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'].map(function(prop){
       if(elementsFilter[prop].included_ids.size > 0 || elementsFilter[prop].all)
         result = true;
     });
@@ -114,6 +114,12 @@ export default class ManagingActions extends React.Component {
         all: uiState.screen.checkedAll,
         included_ids: uiState.screen.checkedIds,
         excluded_ids: uiState.screen.uncheckedIds,
+        collection_id: collectionId
+      },
+      research_plan: {
+        all: uiState.research_plan.checkedAll,
+        included_ids: uiState.research_plan.checkedIds,
+        excluded_ids: uiState.research_plan.uncheckedIds,
         collection_id: collectionId
       }
     };

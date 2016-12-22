@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161215133014) do
+ActiveRecord::Schema.define(version: 20161221143217) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -23,22 +23,23 @@ ActiveRecord::Schema.define(version: 20161215133014) do
   end
 
   create_table "collections", force: :cascade do |t|
-    t.integer  "user_id",                                null: false
+    t.integer  "user_id",                                   null: false
     t.string   "ancestry"
-    t.text     "label",                                  null: false
+    t.text     "label",                                     null: false
     t.integer  "shared_by_id"
-    t.boolean  "is_shared",              default: false
-    t.integer  "permission_level",       default: 0
-    t.integer  "sample_detail_level",    default: 10
-    t.integer  "reaction_detail_level",  default: 10
-    t.integer  "wellplate_detail_level", default: 10
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
+    t.boolean  "is_shared",                 default: false
+    t.integer  "permission_level",          default: 0
+    t.integer  "sample_detail_level",       default: 10
+    t.integer  "reaction_detail_level",     default: 10
+    t.integer  "wellplate_detail_level",    default: 10
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
     t.integer  "position"
-    t.integer  "screen_detail_level",    default: 10
-    t.boolean  "is_locked",              default: false
+    t.integer  "screen_detail_level",       default: 10
+    t.boolean  "is_locked",                 default: false
     t.datetime "deleted_at"
-    t.boolean  "is_synchronized",        default: false, null: false
+    t.boolean  "is_synchronized",           default: false, null: false
+    t.integer  "researchplan_detail_level", default: 10
   end
 
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
@@ -54,6 +55,12 @@ ActiveRecord::Schema.define(version: 20161215133014) do
   add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
   add_index "collections_reactions", ["deleted_at"], name: "index_collections_reactions_on_deleted_at", using: :btree
   add_index "collections_reactions", ["reaction_id"], name: "index_collections_reactions_on_reaction_id", using: :btree
+
+  create_table "collections_research_plans", force: :cascade do |t|
+    t.integer  "collection_id"
+    t.integer  "research_plan_id"
+    t.datetime "deleted_at"
+  end
 
   create_table "collections_samples", force: :cascade do |t|
     t.integer  "collection_id"
@@ -311,6 +318,17 @@ ActiveRecord::Schema.define(version: 20161215133014) do
   add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
   add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
+  create_table "research_plans", force: :cascade do |t|
+    t.string   "name",        null: false
+    t.text     "description"
+    t.string   "sdf_file"
+    t.string   "svg_file"
+    t.integer  "created_by",  null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
   create_table "residues", force: :cascade do |t|
     t.integer  "sample_id"
     t.string   "residue_type"
@@ -399,28 +417,28 @@ ActiveRecord::Schema.define(version: 20161215133014) do
   add_index "sync_collections_users", ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
 
   create_table "users", force: :cascade do |t|
-    t.string   "email",                            default: "",                                                                null: false
-    t.string   "encrypted_password",               default: "",                                                                null: false
+    t.string   "email",                            default: "",                                                                                      null: false
+    t.string   "encrypted_password",               default: "",                                                                                      null: false
     t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.integer  "sign_in_count",                    default: 0,                                                                 null: false
+    t.integer  "sign_in_count",                    default: 0,                                                                                       null: false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.inet     "current_sign_in_ip"
     t.inet     "last_sign_in_ip"
-    t.datetime "created_at",                                                                                                   null: false
-    t.datetime "updated_at",                                                                                                   null: false
+    t.datetime "created_at",                                                                                                                         null: false
+    t.datetime "updated_at",                                                                                                                         null: false
     t.string   "name"
-    t.string   "first_name",                                                                                                   null: false
-    t.string   "last_name",                                                                                                    null: false
+    t.string   "first_name",                                                                                                                         null: false
+    t.string   "last_name",                                                                                                                          null: false
     t.datetime "deleted_at"
-    t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},             null: false
+    t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
     t.string   "type",                             default: "Person"
-    t.boolean  "is_templates_moderator",           default: false,                                                             null: false
+    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3"}, null: false
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
   end
 
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree

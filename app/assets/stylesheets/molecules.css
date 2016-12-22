@@ -49,7 +49,7 @@
   fill: white;
 }
 
-.reaction svg {
+.reaction svg, .research_plan svg {
   max-height: 90px;
   height: 100%;
   width: 90%;

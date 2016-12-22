@@ -10,6 +10,7 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import ModalImportConfirm from '../contextActions/ModalImportConfirm'
+import ResearchPlan from '../models/ResearchPlan'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -44,6 +45,13 @@ class ElementStore {
           perPage: null
         },
         screens: {
+          elements: [],
+          totalElements: 0,
+          page: null,
+          pages: null,
+          perPage: null
+        },
+        research_plans: {
           elements: [],
           totalElements: 0,
           page: null,
@@ -119,6 +127,11 @@ class ElementStore {
       handleUpdateScreen: ElementActions.updateScreen,
       handleCreateScreen: ElementActions.createScreen,
 
+      handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+      handlefetchResearchPlanById: ElementActions.fetchResearchPlanById,
+      handleUpdateResearchPlan: ElementActions.updateResearchPlan,
+      handleCreateResearchPlan: ElementActions.createResearchPlan,
+
       // FIXME ElementStore listens to UIActions?
       handleUnselectCurrentElement: UIActions.deselectAllElements,
       handleSetPagination: UIActions.setPagination,
@@ -128,6 +141,7 @@ class ElementStore {
         [
           ElementActions.generateEmptyWellplate,
           ElementActions.generateEmptyScreen,
+          ElementActions.generateEmptyResearchPlan,
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
           ElementActions.showReportContainer
@@ -180,11 +194,13 @@ class ElementStore {
     });
     ElementActions.deleteWellplatesByUIState(ui_state);
     ElementActions.deleteScreensByUIState(ui_state);
+    ElementActions.deleteResearchPlansByUIState(ui_state);
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
     this.closeElementWhenDeleted(ui_state);
   }
 
@@ -412,6 +428,25 @@ class ElementStore {
                                                 collection_id);
   }
 
+  // -- ResearchPlans --
+  handlefetchResearchPlansByCollectionId(result) {
+    this.state.elements.research_plans = result;
+  }
+
+  handlefetchResearchPlanById(result) {
+    this.state.currentElement = result;
+  }
+
+  handleUpdateResearchPlan(research_plan) {
+    this.state.currentElement = research_plan;
+    this.handleRefreshElements('research_plan');
+  }
+
+  handleCreateResearchPlan(research_plan) {
+    this.handleRefreshElements('research_plan');
+    this.navigateToNewElement(research_plan);
+  }
+
   // -- Reactions --
 
   handleFetchReactionById(result) {
@@ -562,6 +597,10 @@ class ElementStore {
           break;
         case 'screen':
           ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id,
+            {page: page, per_page: uiState.number_of_results},uiState.isSync);
+          break;
+        case 'research_plan':
+          ElementActions.fetchResearchPlansByCollectionId(uiState.currentCollection.id,
             {page: page, per_page: uiState.number_of_results},uiState.isSync);
           break;
       }
