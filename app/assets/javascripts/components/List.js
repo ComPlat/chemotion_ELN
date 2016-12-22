@@ -71,7 +71,7 @@ export default class List extends React.Component {
       totalReactionElements: state.elements.reactions.totalElements,
       totalWellplateElements: state.elements.wellplates.totalElements,
       totalScreenElements: state.elements.screens.totalElements,
-      totalResearchPlanElements: state.elements.research_plans.totalElements,
+      totalResearchPlanElements: state.elements.research_plans.totalElements
     });
   }
 
@@ -163,10 +163,14 @@ export default class List extends React.Component {
     let tabContents = []
     for (let i = 0; i < visible.size; i++) {
       let value = visible.get(i)
+      let camelized_value = value.split('_').map(function(word){
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }).join('');
+
       let navItem = (
         <NavItem eventKey={i} key={value + "_navItem"}>
           <i className={"icon-" + value}>
-            {elementState["total" + _.upperFirst(value) + "Elements"]}
+            {elementState["total" + camelized_value + "Elements"]}
             ({checkedElements(value)})
           </i>
         </NavItem>

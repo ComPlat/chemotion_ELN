@@ -5,48 +5,37 @@ class CollectionsResearchPlan < ActiveRecord::Base
   validates :collection, :research_plan, presence: true
   validate :collection_research_plan_id_uniqueness
 
-  def self.move_to_collection(screen_ids, old_col_id, new_col_id)
-    # Get associated wellplates
-    wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
+  def self.move_to_collection(research_plan_ids, old_col_id, new_col_id)
+    # Delete research_plans in old collection
+    self.delete_in_collection(research_plan_ids, old_col_id)
 
-    # Delete screens in old collection
-    self.delete_in_collection(screen_ids, old_col_id)
-
-    # Move associated wellplates in current collection
-    CollectionsWellplate.move_to_collection(wellplate_ids, old_col_id, new_col_id)
-
-    # Create new screens in target collection
-    self.static_create_in_collection(screen_ids, new_col_id)
+    # Create new research_plans in target collection
+    self.static_create_in_collection(research_plan_ids, new_col_id)
   end
 
   # Static delete without checking associated
-  def self.delete_in_collection(screen_ids, collection_id)
+  def self.delete_in_collection(research_plan_ids, collection_id)
     self.where(
-      screen_id: screen_ids,
+      research_plan_id: research_plan_ids,
       collection_id: collection_id
     ).delete_all
   end
 
   # Remove from collection and process associated elements
-  def self.remove_in_collection(screen_ids, collection_id)
-    self.delete_in_collection(screen_ids, collection_id)
+  def self.remove_in_collection(research_plan_ids, collection_id)
+    self.delete_in_collection(research_plan_ids, collection_id)
   end
 
   # Static create without checking associated
-  def self.static_create_in_collection(screen_ids, collection_id)
-    screen_ids.map { |id|
-      self.find_or_create_by(screen_id: id, collection_id: collection_id)
+  def self.static_create_in_collection(research_plan_ids, collection_id)
+    research_plan_ids.map { |id|
+      self.find_or_create_by(research_plan_id: id, collection_id: collection_id)
     }
   end
 
-  def self.create_in_collection(screen_ids, collection_id)
-    # Get associated wellplates
-    wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
-
-    # Create associated wellplates in collection
-    CollectionsWellplate.create_in_collection(wellplate_ids, collection_id)
-    # Create new screens in collection
-    self.static_create_in_collection(screen_ids, collection_id)
+  def self.create_in_collection(research_plan_ids, collection_id)
+    # Create new research_plans in collection
+    self.static_create_in_collection(research_plan_ids, collection_id)
   end
 
 private

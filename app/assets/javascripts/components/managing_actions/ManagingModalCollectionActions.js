@@ -117,6 +117,11 @@ export default class ManagingModalCollectionActions extends React.Component {
         included_ids: this.state.ui_state.screen.checkedIds,
         excluded_ids: this.state.ui_state.screen.uncheckedIds
       },
+      research_plan: {
+        all: this.state.ui_state.research_plan.checkedAll,
+        included_ids: this.state.ui_state.research_plan.checkedIds,
+        excluded_ids: this.state.ui_state.research_plan.uncheckedIds
+      },
       currentCollection: this.state.ui_state.currentCollection,
       currentCollectionId: this.state.ui_state.currentCollection.id
     }

@@ -193,7 +193,7 @@ export default class CreateButton extends React.Component {
 
   createBtnTooltip(type) {
     return (
-      <Tooltip id="create_button">Create new {type}</Tooltip>
+      <Tooltip id="create_button">Create new {type.replace('_', ' ')}</Tooltip>
     )
   }
 

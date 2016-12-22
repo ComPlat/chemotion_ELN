@@ -25,6 +25,7 @@ module Usecases
             reaction_ids: Reaction.for_user(current_user_id).for_ui_state(elements_filter.fetch(:reaction, [])).pluck(:id),
             wellplate_ids: Wellplate.for_user(current_user_id).for_ui_state(elements_filter.fetch(:wellplate, [])).pluck(:id),
             screen_ids: Screen.for_user(current_user_id).for_ui_state(elements_filter.fetch(:screen, [])).pluck(:id),
+            research_plan_ids: ResearchPlan.for_user(current_user_id).for_ui_state(elements_filter.fetch(:research_plan, [])).pluck(:id),
             current_collection_id: current_collection_id
           }
 
