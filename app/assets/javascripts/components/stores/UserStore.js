@@ -37,7 +37,7 @@ class UserStore {
       let currentTab = this.state.currentTab
       let type = Object.keys(layout).filter(function(e) {
         return layout[e] == currentTab + 1
-      })
+      })[0]
 
       this.state.currentType = type
     }
@@ -56,7 +56,7 @@ class UserStore {
     let layout = this.state.currentUser.layout
     let type = Object.keys(layout).filter(function(e) {
       return layout[e] == tab + 1
-    })
+    })[0]
 
     this.state.currentTab = tab
     this.state.currentType = type

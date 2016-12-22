@@ -10,6 +10,10 @@ export default class ArrayUtils {
   static removeFromListByValue(list, value) {
     let index = list.indexOf(value);
 
+    return this.removeFromListByIndex(list, index);
+  }
+
+  static removeFromListByIndex(list, index) {
     if(index != -1) {
       return list.delete(index);
     } else {

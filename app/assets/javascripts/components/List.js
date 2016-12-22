@@ -1,7 +1,10 @@
 import React from 'react';
 import _ from 'lodash';
+import Immutable from 'immutable';
 import {Tab, Button, Row, Col, Nav, NavItem,
         Popover, OverlayTrigger, ButtonToolbar} from 'react-bootstrap';
+
+import ArrayUtils from './utils/ArrayUtils';
 
 import ElementsTable from './ElementsTable';
 import TabLayoutContainer from './TabLayoutContainer';
@@ -24,8 +27,8 @@ export default class List extends React.Component {
       totalWellplateElements: 0,
       totalScreenElements: 0,
       totalResearchPlanElements: 0,
-      visible: [],
-      hidden: [],
+      visible: Immutable.List(),
+      hidden: Immutable.List(),
       currentTab: 0
     }
 
@@ -75,19 +78,17 @@ export default class List extends React.Component {
   onChangeUser(state) {
     let visible = this.getArrayFromLayout(state.currentUser.layout, true)
     let hidden = this.getArrayFromLayout(state.currentUser.layout, false)
-    if (hidden.length == 0) {
-      hidden.push("hidden")
+    if (hidden.size == 0) {
+      hidden = ArrayUtils.pushUniq(hidden, "hidden")
     }
 
-    let currentType = this.state.visible[this.state.currentTab]
-    let currentTabIndex = _.findKey(visible, function (e) {
-      return e == currentType
-    })
-    if (!currentTabIndex) currentTabIndex = 0;
+    let currentType = state.currentType
+    let currentTabIndex = visible.findIndex((e) => e === currentType)
+    if (currentTabIndex < 0) currentTabIndex = 0;
 
     let uiState = UIStore.getState()
     let type = state.currentType
-    if (type == "") type = visible[0]
+    if (type == "") type = visible.get(0)
 
     if (!uiState[type] || !uiState[type].page) return;
 
@@ -97,7 +98,7 @@ export default class List extends React.Component {
     KeyboardActions.contextChange.defer(type)
 
     this.setState({
-      currentTab: state.currentTab,
+      currentTab: currentTabIndex,
       visible: visible,
       hidden: hidden
     })
@@ -123,7 +124,7 @@ export default class List extends React.Component {
 
     // TODO sollte in tab action handler
     let uiState = UIStore.getState();
-    let type = this.state.visible[tab];
+    let type = this.state.visible.get(tab);
 
     if (!uiState[type] || !uiState[type].page) return;
 
@@ -134,14 +135,14 @@ export default class List extends React.Component {
   }
 
   getArrayFromLayout(layout, isVisible) {
-    let array = []
+    let array = Immutable.List()
 
     Object.keys(layout).forEach(function (key) {
       let order = layout[key]
       if (isVisible && order < 0) return;
       if (!isVisible && order > 0) return;
 
-      array[Math.abs(order)] = key
+      array = array.set(Math.abs(order), key)
     })
 
     array = array.filter(function(n){ return n != undefined })
@@ -157,7 +158,8 @@ export default class List extends React.Component {
     let checkedElements = this._checkedElements
 
     let popoverLayout = (
-      <Popover id="popover-layout" title="Tab Layout Editing">
+      <Popover id="popover-layout" title="Tab Layout Editing"
+               style={{maxWidth: "none"}}>
         <TabLayoutContainer visible={visible} hidden={hidden}
                             ref="tabLayoutContainer"/>
       </Popover>
@@ -165,8 +167,8 @@ export default class List extends React.Component {
 
     let navItems = []
     let tabContents = []
-    for (let i = 0; i < visible.length; i++) {
-      let value = visible[i]
+    for (let i = 0; i < visible.size; i++) {
+      let value = visible.get(i)
       let navItem = (
         <NavItem eventKey={i} key={value + "_navItem"}>
           <i className={"icon-" + value}>
