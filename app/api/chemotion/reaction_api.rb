@@ -212,7 +212,7 @@ module Chemotion
       end
 
       post do
-byebug
+
         attributes = declared(params, include_missing: false).symbolize_keys
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
