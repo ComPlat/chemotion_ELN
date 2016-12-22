@@ -11,6 +11,7 @@ class ReactionsProductSample < ActiveRecord::Base
   end
 
   def formatted_yield
-    self.equivalent ? (self.equivalent * 100).to_s + " %" : " %"
+    eq = self.equivalent
+    eq && !eq.nan? ? "#{(eq * 100).round.to_s} %" : "0 %"
   end
 end

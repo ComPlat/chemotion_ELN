@@ -1,28 +1,28 @@
 module Report
   module Docx
-    class Image
+    class Equation
       attr_accessor :obj, :svg_data
       def initialize(args)
         @obj = args[:obj]
         @format = args[:format] || 'png'
       end
 
-      def generate_img
-        img
+      def generate
+        img = Sablon::Image.create_by_path(img_path)
+        ole = Sablon::Ole.create_by_path(ole_path)
+        Sablon::Chem.create(ole, img)
       end
 
-      def generate_product_img
-        product_img
+      def generate_products
+        is_product_only = true
+        img = Sablon::Image.create_by_path(img_path(is_product_only))
+        ole = Sablon::Ole.create_by_path(ole_path)
+        Sablon::Chem.create(ole, img)
       end
 
       private
-      def img
-        Sablon::Image.create_by_path(img_path)
-      end
-
-      def product_img
-        is_product_only = true
-        Sablon::Image.create_by_path(img_path(is_product_only))
+      def ole_path
+        OleCreator.new(obj: obj).path
       end
 
       def set_svg
@@ -50,13 +50,13 @@ module Report
       end
 
       def generate_svg_file_path
-        svg_file = Tempfile.new(['image', '.svg'])
+        svg_file = Tempfile.new(['equation', '.svg'])
         File.open(svg_file.path, 'w') { |file| file.write(svg_data) }
         svg_file.path
       end
 
       def generate_ouput_file_path
-        output_file = Tempfile.new(['image', ".#{@format}"])
+        output_file = Tempfile.new(['equation', ".#{@format}"])
         File.open(output_file.path, 'w')
         output_file.path
       end

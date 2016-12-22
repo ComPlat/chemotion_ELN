@@ -14,7 +14,7 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/sablon
-  revision: d76de3c1c42e50f9b585bcb1bd97782c1cf49e0f
+  revision: c42a12401dc034d871a374e2da08d620ed3ac5d0
   specs:
     sablon (0.0.19)
       nokogiri (>= 1.6.0)
@@ -380,6 +380,7 @@ GEM
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
     rtf (0.3.3)
+    ruby-ole (1.2.12)
     ruby_parser (3.8.2)
       sexp_processor (~> 4.1)
     rubyzip (1.1.7)
@@ -520,6 +521,7 @@ DEPENDENCIES
   roo (> 2.5.0)
   rspec-rails
   rtf
+  ruby-ole
   sablon!
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
