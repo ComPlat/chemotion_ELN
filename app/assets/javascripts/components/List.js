@@ -86,15 +86,9 @@ export default class List extends React.Component {
     let currentTabIndex = visible.findIndex((e) => e === currentType)
     if (currentTabIndex < 0) currentTabIndex = 0;
 
-    let uiState = UIStore.getState()
     let type = state.currentType
     if (type == "") type = visible.get(0)
 
-    if (!uiState[type] || !uiState[type].page) return;
-
-    let page = uiState[type].page;
-
-    UIActions.setPagination.defer({type: type, page: page})
     KeyboardActions.contextChange.defer(type)
 
     this.setState({
