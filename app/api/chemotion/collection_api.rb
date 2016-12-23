@@ -70,6 +70,7 @@ module Chemotion
             requires :reaction_detail_level, type: Integer
             requires :wellplate_detail_level, type: Integer
             requires :screen_detail_level, type: Integer
+            optional :research_plan_detail_level, type: Integer
           end
         end
 
@@ -107,6 +108,13 @@ module Chemotion
               optional :excluded_ids, type: Array
               optional :collection_id
             end
+
+            requires :research_plan, type: Hash do
+              requires :all, type: Boolean
+              optional :included_ids, type: Array
+              optional :excluded_ids, type: Array
+              optional :collection_id
+            end
           end
           requires :collection_attributes, type: Hash do
             requires :permission_level, type: Integer
@@ -114,6 +122,7 @@ module Chemotion
             requires :reaction_detail_level, type: Integer
             requires :wellplate_detail_level, type: Integer
             requires :screen_detail_level, type: Integer
+            optional :research_plan_detail_level, type: Integer
           end
           requires :user_ids, type: Array
           optional :current_collection_id, type: Integer
@@ -125,6 +134,7 @@ module Chemotion
           reactions = Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])
           wellplates = Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])
           screens = Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])
+          research_plans = ResearchPlan.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:research_plan])
 
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
@@ -137,8 +147,9 @@ module Chemotion
           share_reactions = ElementsPolicy.new(current_user, reactions).share?
           share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
           share_screens = ElementsPolicy.new(current_user, screens).share?
+          share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
 
-          sharing_allowed = share_samples && share_reactions && share_wellplates && share_screens
+          sharing_allowed = share_samples && share_reactions && share_wellplates && share_screens && share_research_plans
 
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
         end
@@ -194,6 +205,15 @@ module Chemotion
             ).compact
             CollectionsScreen.move_to_collection(screen_ids,
               current_collection_id, collection_id)
+
+            # Move ResearchPlan
+            research_plan_ids = ResearchPlan.for_user(current_user.id).for_ui_state_with_collection(
+              ui_state[:research_plan],
+              CollectionsResearchPlan,
+              current_collection_id
+            ).compact
+            CollectionsResearchPlan.move_to_collection(research_plan_ids,
+              current_collection_id, collection_id)
           end
         end
 
@@ -236,7 +256,14 @@ module Chemotion
             CollectionsScreen,
             current_collection_id
           )
-          CollectionsScreen.create_in_collection(screen_ids, collection_id)
+
+          # Assign ResearchPlan
+          research_plan_ids = ResearchPlan.for_user(current_user.id).for_ui_state_with_collection(
+            ui_state[:research_plan],
+            CollectionsResearchPlan,
+            current_collection_id
+          )
+          CollectionsResearchPlan.create_in_collection(research_plan_ids, collection_id)
         end
 
         desc "Remove from a collection a set of elements by UI state"

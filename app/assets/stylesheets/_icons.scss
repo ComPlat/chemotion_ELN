@@ -48,7 +48,10 @@
 .icon-sample:before { content: "\f101"; }
 .icon-screen:before { content: "\f103"; }
 .icon-wellplate:before { content: "\f102"; }
-.icon-research_plan:before { content: "\f0f6"; }
+.icon-research_plan:before {
+  font-family: FontAwesome;
+  content: "\f0f6";
+}
 
 $font-icons-polymer: "\f104";
 $font-icons-reaction: "\f100";

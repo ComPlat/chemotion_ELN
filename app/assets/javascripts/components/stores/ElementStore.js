@@ -210,6 +210,7 @@ class ElementStore {
       params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
+    ElementActions.fetchResearchPlansByCollectionId(collection_id);
   }
 
   handleAssignElementsCollection(params) {
@@ -218,6 +219,7 @@ class ElementStore {
       params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
+    ElementActions.fetchResearchPlansByCollectionId(collection_id);
   }
 
   handleRemoveElementsCollection(params) {
@@ -226,6 +228,7 @@ class ElementStore {
       params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);
     ElementActions.fetchWellplatesByCollectionId(collection_id);
+    ElementActions.fetchResearchPlansByCollectionId(collection_id);
   }
 
   // -- Samples --
