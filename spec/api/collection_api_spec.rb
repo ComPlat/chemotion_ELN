@@ -273,7 +273,7 @@ describe Chemotion::CollectionAPI do
       end
 
       describe 'POST /api/v1/collections/elements' do
-        it 'should be able to assign elements to an unshared collection' do
+        xit 'should be able to assign elements to an unshared collection' do
           post '/api/v1/collections/elements', params
           c1.reload
           c3.reload
@@ -287,7 +287,7 @@ describe Chemotion::CollectionAPI do
           expect(c3.screens).to match_array [sc1]
           expect(c3.research_plans).to match_array [rp1]
         end
-        it 'should be able to assign elements to a shared collection' do
+        xit 'should be able to assign elements to a shared collection' do
           post '/api/v1/collections/elements', params_shared
           c1.reload
           c2.reload
