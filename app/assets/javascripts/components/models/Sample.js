@@ -273,6 +273,18 @@ export default class Sample extends Element {
     return cssClass;
   }
 
+  get molecule_name(){
+    if (this.contains_residues) {
+      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
+          + this.polymer_type.slice(1);
+      let val = polymer_name.replace('_', '-') + ' - ';
+      val += this.molecule.sum_formular;
+      return val;
+    }
+    else
+      return this.molecule && (this.molecule.iupac_name || this.molecule.sum_formular || '')
+  }
+
   get name() {
     return this._name;
   }
