@@ -77,7 +77,7 @@ export default class SampleForm extends React.Component {
         <ControlLabel>Molecule</ControlLabel>
         <InputGroup>
           <FormControl type="text" ref="moleculeInput"
-            value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular || '')}
+            value={sample.molecule_name}
             disabled={sample.isMethodDisabled('molecule_iupac_name')}
             readOnly={sample.isMethodDisabled('molecule_iupac_name')}
             onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}

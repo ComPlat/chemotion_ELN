@@ -180,7 +180,7 @@ class Molecule < ActiveRecord::Base
     if lines.size > 3
       lines[4..-1].each do |line|
         break if line.match /(M.+END+)/
-        line.gsub! ' R# ', ' H  ' # replace residues with Hydrogens
+        line.gsub! ' R# ', ' C  ' # replace residues with Carbons
       end
     end
     lines.join "\n"
@@ -190,9 +190,13 @@ class Molecule < ActiveRecord::Base
   def check_sum_formular
     return unless self.is_partial
 
-    atomic_weight_h = Chemotion::PeriodicTable.get_atomic_weight 'H'
-    self.molecular_weight -= atomic_weight_h
-    self.exact_molecular_weight -= atomic_weight_h
+    atomic_weight_h = Chemotion::PeriodicTable.get_atomic_weight('H') * 3
+    self.molecular_weight -= atomic_weight_h # remove CH3
+    self.exact_molecular_weight -= atomic_weight_h # remove CH3
+
+    atomic_weight_c = Chemotion::PeriodicTable.get_atomic_weight 'C'
+    self.molecular_weight -= atomic_weight_c # remove CH3
+    self.exact_molecular_weight -= atomic_weight_c # remove CH3
 
     fdata = Chemotion::Calculations.parse_formula self.sum_formular, true
     self.sum_formular = fdata.map do |key, value|

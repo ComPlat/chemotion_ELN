@@ -28,7 +28,8 @@ module Chemotion::Calculations
 
       atoms_number = (atom.last.blank? ? 1 : atom.last).to_i
 
-      atoms_number -= 1 if atom_label == 'H' && is_partial
+      atoms_number -= 1 if atom_label == 'C' && is_partial # remove 1 C
+      atoms_number -= 3 if atom_label == 'H' && is_partial # remove 3 H
 
       if elements.has_key? atom_label
         old_val = elements[atom_label]
