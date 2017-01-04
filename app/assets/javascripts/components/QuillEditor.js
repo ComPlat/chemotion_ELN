@@ -13,6 +13,8 @@ export default class QuillEditor extends React.Component {
       timeoutReference: null
     }
 
+    let theme = (props.theme === undefined || props.theme == "") ? "snow" : props.theme
+    let readOnly = (props.disabled === undefined || props.disabled == false) ? false : true
     this.defaultOptions = {
       modules: {
         toolbar: [
@@ -31,7 +33,8 @@ export default class QuillEditor extends React.Component {
           // ['clean']
         ]
       },
-      theme: 'snow'
+      theme: theme,
+      readOnly: readOnly
     }
     this.editor = false
     this.timeout = 3e2 // 600ms
@@ -67,6 +70,8 @@ export default class QuillEditor extends React.Component {
 
       // init Quill
       this.editor = new Quill(quillEditor, this.defaultOptions)
+
+      // this.editor.enable(!this.props.disabled);
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574
@@ -116,9 +121,14 @@ export default class QuillEditor extends React.Component {
   }
 
   render () {
+    let height =
+        (this.props.height === undefined || this.props.height == "")
+        ? "230px"
+        : this.props.height
+
     return (
       <div>
-        <div ref="quillEditor" style={{height: "230px"}}></div>
+        <div ref="quillEditor" style={{height: height}}></div>
       </div>
     )
   }

@@ -7,6 +7,7 @@ import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
 import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher'
+import QuillEditor from './QuillEditor'
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -200,10 +201,8 @@ export default class ResearchPlanDetails extends Component {
               <Col md={12}>
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
-                  <FormControl
-                    componentClass="textarea"
-                    value={description || ''}
-                    onChange={event => this.handleInputChange('description', event)}
+                  <QuillEditor value={research_plan.description}
+                    onChange={event => this.handleInputChange('description', {target: {value: event}})}
                     disabled={research_plan.isMethodDisabled('description')}
                   />
                 </FormGroup>

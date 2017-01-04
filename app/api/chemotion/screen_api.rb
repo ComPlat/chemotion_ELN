@@ -58,7 +58,7 @@ module Chemotion
         optional :requirements, type: String
         optional :conditions, type: String
         optional :result, type: String
-        optional :description, type: String
+        optional :description, type: Hash
         requires :wellplate_ids, type: Array
       end
       route_param :id do
@@ -90,7 +90,7 @@ module Chemotion
         optional :requirements, type: String
         optional :conditions, type: String
         optional :result, type: String
-        optional :description, type: String
+        optional :description, type: Hash
         optional :collection_id, type: Integer
         requires :wellplate_ids, type: Array
       end

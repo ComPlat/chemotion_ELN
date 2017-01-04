@@ -55,7 +55,7 @@ module Chemotion
       desc "Create a research plan"
       params do
         requires :name, type: String, desc: "Research plan name"
-        optional :description, type: String, desc: "Research plan description"
+        optional :description, type: Hash, desc: "Research plan description"
         requires :sdf_file, type: String, desc: "Research plan SDF file"
         requires :svg_file, type: String, desc: "Research plan SVG file"
         optional :collection_id, type: Integer, desc: "Collection ID"
@@ -102,7 +102,7 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Research plan id"
         optional :name, type: String, desc: "Research plan name"
-        optional :description, type: String, desc: "Research plan description"
+        optional :description, type: Hash, desc: "Research plan description"
         optional :svg_file, type: String, desc: "Research plan SVG file"
         optional :sdf_file, type: String, desc: "Research plan SDF file"
       end

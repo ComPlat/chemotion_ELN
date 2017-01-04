@@ -3,6 +3,8 @@ class ResearchPlan < ActiveRecord::Base
   include ElementUIStateScopes
   include Collectable
 
+  serialize :description, Hash
+
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, :name, presence: true
 

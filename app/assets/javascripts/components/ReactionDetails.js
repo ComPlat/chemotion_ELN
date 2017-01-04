@@ -3,7 +3,6 @@ import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
   OverlayTrigger, Tooltip} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
-import QuillEditor from './QuillEditor'
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';

@@ -3,6 +3,10 @@ import Wellplate from './Wellplate';
 
 export default class Screen extends Element {
   static buildEmpty(collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new Screen({
       collection_id: collection_id,
       type: 'screen',
@@ -11,12 +15,16 @@ export default class Screen extends Element {
       requirements: '',
       conditions: '',
       result: '',
-      description: '',
+      description: description_default,
       wellplates: []
     })
   }
 
   static buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new Screen({
       collection_id: collection_id,
       type: 'screen',
@@ -25,7 +33,7 @@ export default class Screen extends Element {
       requirements: '',
       conditions: '',
       result: '',
-      description: '',
+      description: description_default,
       wellplates: clipboardWellplates
     })
   }

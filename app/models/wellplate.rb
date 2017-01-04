@@ -4,6 +4,8 @@ class Wellplate < ActiveRecord::Base
   include PgSearch
   include Collectable
 
+  serialize :description, Hash
+
   multisearchable against: :name
 
   pg_search_scope :search_by_wellplate_name, against: :name
