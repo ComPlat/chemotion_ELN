@@ -4,6 +4,8 @@ import {DropTarget} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
 
+import QuillEditor from './QuillEditor'
+
 const target = {
   drop(props, monitor){
     const {dropWellplate} = props;
@@ -60,14 +62,17 @@ class ScreenWellplates extends Component {
           </tr></thead>
           <tbody>
           {wellplates.map((wellplate, key) => {
-            return <tr key={key} height="40px">
+            return <tr key={key} style={{height: "80px"}}>
               <td>
                 <a onClick={() => this.handleWellplateClick(wellplate)} style={{cursor: 'pointer'}}>
                   {wellplate.name}
                 </a>
               </td>
-              <td>{wellplate.description}</td>
-              <td style={{verticalAlign: 'top'}}>
+              <td>
+                <QuillEditor value={wellplate.description} disabled={true}
+                  theme="bubble" height="44px"/>
+              </td>
+              <td style={{verticalAlign: 'middle'}}>
                 <Button
                   bsStyle="danger"
                   onClick={() => deleteWellplate(wellplate)}

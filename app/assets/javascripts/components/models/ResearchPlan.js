@@ -6,11 +6,15 @@ export default class ResearchPlan extends Element {
   }*/
 
   static buildEmpty(collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new ResearchPlan({
       collection_id: collection_id,
       type: 'research_plan',
       name: 'New Research Plan',
-      description: '',
+      description: description_default,
       svg_file: '',
       sdf_file: ''
     });

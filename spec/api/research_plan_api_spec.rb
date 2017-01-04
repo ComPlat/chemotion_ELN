@@ -56,7 +56,7 @@ describe Chemotion::ResearchPlanAPI do
         let(:params) {
           {
             name: 'test',
-            description: 'test description',
+            description: { "ops" => [{ "insert" => "test description" }] },
             sdf_file: 'test_inline_content',
             svg_file: 'test_inline_svg_content'
           }

@@ -4,6 +4,8 @@ class Screen < ActiveRecord::Base
   include PgSearch
   include Collectable
 
+  serialize :description, Hash
+
   multisearchable against: [:name, :conditions, :requirements]
 
   # search related

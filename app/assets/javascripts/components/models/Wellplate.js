@@ -10,13 +10,17 @@ export default class Wellplate extends Element {
   }
 
   static buildEmpty(collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new Wellplate(
       {
         collection_id: collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
         size: 96,
-        description: '',
+        description: description_default,
         wells: []
       }
     )

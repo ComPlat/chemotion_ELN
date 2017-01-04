@@ -3,6 +3,7 @@ import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
+import QuillEditor from './QuillEditor'
 
 import ElementActions from './actions/ElementActions';
 import StickyDiv from 'react-stickydiv'
@@ -190,10 +191,8 @@ export default class ScreenDetails extends Component {
                 <td colSpan="2">
                   <FormGroup>
                     <ControlLabel>Description</ControlLabel>
-                    <FormControl
-                      componentClass="textarea"
-                      value={description || ''}
-                      onChange={event => this.handleInputChange('description', event)}
+                    <QuillEditor value={description}
+                      onChange={event => this.handleInputChange('description', {target: {value: event}})}
                       disabled={screen.isMethodDisabled('description')}
                     />
                   </FormGroup>

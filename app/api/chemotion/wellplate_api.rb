@@ -9,7 +9,7 @@ module Chemotion
           requires :wellplates, type: Array do
             requires :name, type: String
             optional :size, type: Integer
-            optional :description, type: String
+            optional :description, type: Hash
             optional :wells, type: Array
             optional :collection_id, type: Integer
           end
@@ -124,7 +124,7 @@ module Chemotion
         requires :id, type: Integer
         optional :name, type: String
         optional :size, type: Integer
-        optional :description, type: String
+        optional :description, type: Hash
         optional :wells, type: Array
       end
       route_param :id do
@@ -142,7 +142,7 @@ module Chemotion
       params do
         requires :name, type: String
         optional :size, type: Integer
-        optional :description, type: String
+        optional :description, type: Hash
         optional :wells, type: Array
         optional :collection_id, type: Integer
       end

@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import {FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 
+import QuillEditor from './QuillEditor'
+
 export default class WellplateProperties extends Component {
 
   handleInputChange(type, event) {
@@ -39,9 +41,8 @@ export default class WellplateProperties extends Component {
           <td colSpan="2">
             <FormGroup>
               <ControlLabel>Description</ControlLabel>
-              <FormControl componentClass="textarea"
-                value={description || ''}
-                onChange={event => this.handleInputChange('description', event)}
+              <QuillEditor value={description}
+                onChange={event => this.handleInputChange('description', {target: {value: event}})}
                 disabled={description == '***'}
               />
             </FormGroup>
