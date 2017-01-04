@@ -59,6 +59,10 @@ module Chemotion
               molecules: group_by_molecule(paging_samples)
             }
           end
+        else
+          serialized_samples = {
+            molecules: []
+          }
         end
 
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
