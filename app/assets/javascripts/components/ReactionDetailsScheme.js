@@ -313,8 +313,8 @@ export default class ReactionDetailsScheme extends Component {
         sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
       }
 
-      if(isNaN(sample.equivalent) || !isFinite(sample.equivalent)){
-        sample.equivalent = 0.0;
+      if(sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent)){
+        sample.equivalent = 1.0;
       }
 
       return sample;
