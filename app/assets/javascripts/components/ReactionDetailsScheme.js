@@ -211,11 +211,8 @@ export default class ReactionDetailsScheme extends Component {
     let mw_diff = mwb - mwa;
     let equivalent = (1000.0 / loading) * (mass_koef - 1.0) / mw_diff;
 
-
-    if(isNaN(equivalent) || !isFinite(equivalent)){
-      updatedSample.adjusted_equivalent = 1.0;
-      updatedSample.adjusted_amount_mol = refM.amount_mol;
-      updatedSample.setAmountAndNormalizeToGram({ value: refM.amount_value, unit: refM.amount_unit });
+    if(equivalent < 0.0 || equivalent > 1.0 || isNaN(equivalent) || !isFinite(equivalent)){
+      equivalent = 1.0;
     }
 
     return equivalent;
