@@ -83,7 +83,7 @@ export default class ReactionDetails extends Component {
 
     // set corrected values before we save the reaction
     reaction.products.map(function(product) {
-      if(product.adjusted_loading && product.error_mass) {
+      if(false && product.adjusted_equivalent) { // TODO: cleanup
         product.loading = product.adjusted_loading;
         product.equivalent = product.adjusted_equivalent;
         product.setAmountAndNormalizeToGram(

@@ -109,7 +109,7 @@ module Chemotion
               optional :collection_id
             end
 
-            requires :research_plan, type: Hash do
+            optional :research_plan, type: Hash do
               requires :all, type: Boolean
               optional :included_ids, type: Array
               optional :excluded_ids, type: Array
