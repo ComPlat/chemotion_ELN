@@ -31,6 +31,8 @@ export default class ElementDetails extends Component {
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
     this.onChangeCurrentElement(null, this.props.currentElement);
+    // imitate scroll event to make StickyDiv element visible in current area
+    window.scrollTo(window.scrollX, window.scrollY);
   }
 
   componentWillReceiveProps(nextProps) {
