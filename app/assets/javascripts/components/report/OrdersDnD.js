@@ -3,22 +3,22 @@ import SVG from 'react-inlinesvg';
 import classnames from 'classnames';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import { ItemTypes } from '../constant/ItemTypes';
+import DragDropItemTypes from '../DragDropItemTypes'
 import ReportActions from '../actions/ReportActions';
 
 const orderSource = {
   beginDrag(props) {
-    return { id: props.id };
+    return { id: props.id, type: props.element.type };
   }
 };
 
 const orderTarget = {
   hover(targetProps, monitor) {
-    const targetId = targetProps.id;
+    const targetTag = { id: targetProps.id, type: targetProps.element.type };
     const sourceProps = monitor.getItem();
-    const sourceId = sourceProps.id;
-    if(sourceId !== targetId) {
-      ReportActions.move({sourceId, targetId});
+    const sourceTag = { id: sourceProps.id, type: sourceProps.type };
+    if(targetTag.type !== sourceTag.type || targetTag.id !== sourceTag.id) {
+      ReportActions.move({sourceTag, targetTag});
     }
   }
 };
@@ -38,9 +38,12 @@ const orderDropCollect = (connect, monitor) => {
   }
 }
 
-const ReactionRow = ({element, connectDragSource, connectDropTarget, isDragging, isOver, canDrop}) => {
+const ObjRow = ({element, connectDragSource, connectDropTarget, isDragging, isOver, canDrop}) => {
   const classNames = classnames('reaction');
   const style = {verticalAlign: 'middle', textAlign: 'center'};
+  const bgColor = element.type === 'sample' ? '#000000' : '#428bca'
+  const titleStyle = Object.assign({},
+                      style, { backgroundColor: bgColor, color:'white' });
   if (canDrop) {
     style.borderStyle = 'dashed';
     style.borderWidth = 3;
@@ -54,7 +57,7 @@ const ReactionRow = ({element, connectDragSource, connectDropTarget, isDragging,
 
   return compose(connectDragSource, connectDropTarget)(
     <tr>
-      <td style={style} width="10%">
+      <td style={titleStyle} width="10%">
         {element.title()}
       </td>
       <td style={style} width="80%">
@@ -69,6 +72,6 @@ const ReactionRow = ({element, connectDragSource, connectDropTarget, isDragging,
 }
 
 export default compose(
-  DragSource(ItemTypes.REACTION, orderSource, orderDragCollect),
-  DropTarget(ItemTypes.REACTION, orderTarget, orderDropCollect)
-)(ReactionRow);
+  DragSource(DragDropItemTypes.GENERAL, orderSource, orderDragCollect),
+  DropTarget(DragDropItemTypes.GENERAL, orderTarget, orderDropCollect)
+)(ObjRow);

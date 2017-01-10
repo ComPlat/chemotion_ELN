@@ -2,33 +2,41 @@ import alt from '../alt'
 import ReportActions from '../actions/ReportActions'
 import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
+import ArrayUtils from '../utils/ArrayUtils';
 
 class ReportStore {
   constructor() {
-    this.settings = [ {text: "formula", checked: true},
-                      {text: "material", checked: true},
-                      {text: "description", checked: true},
-                      {text: "purification", checked: true},
-                      {text: "tlc", checked: true},
-                      {text: "observation", checked: true},
-                      {text: "analysis", checked: true},
-                      {text: "literature", checked: true} ]
+    this.splSettings = [ {text: "diagram", checked: true},
+                          {text: "collection", checked: true},
+                          {text: "analyses content", checked: true},
+                          {text: "analyses description", checked: true} ]
+    this.rxnSettings = [ {text: "diagram", checked: true},
+                          {text: "material", checked: true},
+                          {text: "description", checked: true},
+                          {text: "purification", checked: true},
+                          {text: "tlc", checked: true},
+                          {text: "observation", checked: true},
+                          {text: "analysis", checked: true},
+                          {text: "literature", checked: true} ]
     this.configs = [ {text: "Page Break", checked: true},
-                     {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ]
-    this.checkedAllSettings = true
+                     {text: "Show all material in diagrams (unchecked to show Products only)", checked: true} ]
+    this.checkedAllSplSettings = true
+    this.checkedAllRxnSettings = true
     this.checkedAllConfigs = true
     this.processingReport = false
-    this.selectedReactionIds = []
-    this.selectedReactions = []
+    this.selectedObjTags = { sampleIds: [], reactionIds: [] }
+    this.selectedObjs = []
     this.imgFormat = 'png'
 
     this.bindListeners({
-      handleUpdateSettings: ReportActions.updateSettings,
-      handleToggleSettingsCheckAll: ReportActions.toggleSettingsCheckAll,
+      handleUpdateSplSettings: ReportActions.updateSplSettings,
+      handleToggleSplSettingsCheckAll: ReportActions.toggleSplSettingsCheckAll,
+      handleUpdateRxnSettings: ReportActions.updateRxnSettings,
+      handleToggleRxnSettingsCheckAll: ReportActions.toggleRxnSettingsCheckAll,
       handleUpdateConfigs: ReportActions.updateConfigs,
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
       handleGenerateReports: ReportActions.generateReports,
-      handleUpdateCheckedIds: ReportActions.updateCheckedIds,
+      handleUpdateCheckedTags: ReportActions.updateCheckedTags,
       handleMove: ReportActions.move,
       handleUpdateImgFormat: ReportActions.updateImgFormat
     })
@@ -38,9 +46,9 @@ class ReportStore {
     this.setState({ imgFormat: value })
   }
 
-  handleUpdateSettings(target) {
+  handleUpdateSplSettings(target) {
     this.setState({
-      settings: this.settings.map( s => {
+      splSettings: this.splSettings.map( s => {
         if(s.text === target.text) {
           return Object.assign({}, s, {checked: !target.checked})
         }
@@ -49,13 +57,34 @@ class ReportStore {
     })
   }
 
-  handleToggleSettingsCheckAll() {
-    const newCheckValue = !this.checkedAllSettings
+  handleToggleSplSettingsCheckAll() {
+    const newCheckValue = !this.checkedAllSplSettings
     this.setState({
-      settings: this.settings.map( s => {
+      splSettings: this.splSettings.map( s => {
         return Object.assign({}, s, {checked: newCheckValue})
       }),
-      checkedAllSettings: newCheckValue
+      checkedAllSplSettings: newCheckValue
+    })
+  }
+
+  handleUpdateRxnSettings(target) {
+    this.setState({
+      rxnSettings: this.rxnSettings.map( s => {
+        if(s.text === target.text) {
+          return Object.assign({}, s, {checked: !target.checked})
+        }
+        return s
+      })
+    })
+  }
+
+  handleToggleRxnSettingsCheckAll() {
+    const newCheckValue = !this.checkedAllRxnSettings
+    this.setState({
+      rxnSettings: this.rxnSettings.map( s => {
+        return Object.assign({}, s, {checked: newCheckValue})
+      }),
+      checkedAllRxnSettings: newCheckValue
     })
   }
 
@@ -81,16 +110,44 @@ class ReportStore {
   }
 
   handleGenerateReports() {
-    const ids = this.selectedReactionIds.join('_')
-    const settings = this.chainedItems(this.settings)
-    const configs = this.chainedItems(this.configs)
-    this.spinnerProcess()
+    const objTags = this.selectedObjs.map(obj => {
+      return { id: obj.id, type: obj.type };
+    });
+    this.spinnerProcess();
+
     Utils.downloadFile({
-      contents: "api/v1/multiple_reports/docx?ids=" + ids
-                + "&settings=" + settings + "&configs=" + configs
+      contents: "api/v1/multiple_reports/docx?objTags=" + JSON.stringify(objTags)
+                + "&splSettings=" + JSON.stringify(this.abstractSplSettings())
+                + "&rxnSettings=" + JSON.stringify(this.rxnSettings)
+                + "&configs=" + JSON.stringify(this.abstractConfigs())
                 + "&img_format=" + this.imgFormat,
       name: "ELN-report_" + new Date().toISOString().slice(0,19)
     })
+  }
+
+  abstractSplSettings() {
+    return this.splSettings.map(obj => {
+      return { text: obj.text.replace(" ", "_"), checked: obj.checked };
+    });
+  }
+
+  abstractConfigs() {
+    return this.configs.map(obj => {
+      switch(obj.text) {
+        case 'Page Break':
+          return { text: "page_break", checked: obj.checked };
+          break;
+        case 'Show all material in diagrams (unchecked to show Products only)':
+          if(obj.checked) {
+            return { text: "whole_diagram", checked: obj.checked };
+          } else {
+            return { text: "product_diagram", checked: !obj.checked };
+          }
+          break;
+        default:
+          return obj;
+      }
+    });
   }
 
   spinnerProcess() {
@@ -98,40 +155,60 @@ class ReportStore {
     setTimeout(() => this.setState({processingReport: false}), 2500)
   }
 
-  chainedItems(items) {
-    return items.map(item => {
-      return item.checked
-        ? item.text.replace(/\s+/g, '').substring(0, 12).toLowerCase()
-        : null
-    }).filter(r => r!=null).join('_')
+  handleUpdateCheckedTags(tags) {
+    this.setState({selectedObjTags: tags});
+    this.setObjs();
   }
 
-  handleUpdateCheckedIds(ids) {
-    this.setState({selectedReactionIds: ids});
-    this.setReactions();
+  setObjs() {
+    const oriSelectedObjs = this.selectedObjs || [];
+    const { sampleIds, reactionIds } = this.selectedObjTags;
+    const samples = ArrayUtils.flatten2D(ElementStore.state.elements.samples.elements);
+    const reactions = ElementStore.state.elements.reactions.elements;
+    let selectedObjs = this.keepObjsAsIds(oriSelectedObjs, samples, sampleIds, 'sample');
+    selectedObjs = this.keepObjsAsIds(selectedObjs, reactions, reactionIds, 'reaction');
+    this.setState({selectedObjs: selectedObjs});
   }
 
-  setReactions() {
-    const preSelectedReactions = this.selectedReactions;
-    const allReactions = preSelectedReactions.concat(ElementStore.state.elements.reactions.elements) || [];
-    const selectedReaction = this.selectedReactionIds.map( id => {
-      return allReactions.map( reaction => {
-        if(reaction.id === id){
-          return reaction;
-        }
-        return null;
-      }).filter(r => r!=null)[0];
+  keepObjsAsIds(oriSelectedObjs, allElems, ids, type) {
+    const allObjs = oriSelectedObjs.concat(allElems) || [];
+    return allObjs.map( obj => {
+      if(obj.type !== type){
+        return obj;
+      }
+      if(obj.type === type && ids.indexOf(obj.id) !== -1){
+        const index = ids.indexOf(obj.id);
+        ids = [ ...ids.slice(0, index), ...ids.slice(index + 1) ]
+        return obj;
+      }
+      return null;
+    }).filter(obj => obj != null) || [];
+  }
+
+  handleMove({sourceTag, targetTag}) {
+    const sourceIndex = this.findIndexFromObjs(sourceTag);
+    const targetIndex = this.findIndexFromObjs(targetTag);
+    const indexOne = sourceIndex > targetIndex ? targetIndex : sourceIndex;
+    const indexTwo = sourceIndex > targetIndex ? sourceIndex : targetIndex;
+    const objs = this.selectedObjs || [];
+
+    const newObjs = [ ...objs.slice(0, indexOne),
+                      objs[indexTwo],
+                      ...objs.slice(indexOne + 1, indexTwo),
+                      objs[indexOne],
+                      ...objs.slice(indexTwo + 1) ].filter(obj => obj != null) || [];
+    this.setState({selectedObjs: newObjs});
+  }
+
+  findIndexFromObjs(tag) {
+    let objIndex;
+    const objs = this.selectedObjs || [];
+    objs.forEach( (obj, i) => {
+      if(obj.type === tag.type && obj.id === tag.id) {
+        objIndex = i;
+      }
     });
-    this.setState({selectedReactions: selectedReaction});
-  }
-
-  handleMove({sourceId, targetId}) {
-    let selectedIds = this.selectedReactionIds;
-    const sourceIndex = selectedIds.indexOf(sourceId);
-    const targetIndex = selectedIds.indexOf(targetId);
-    selectedIds.splice(sourceIndex, 1);
-    selectedIds.splice(targetIndex, 0, sourceId);
-    this.handleUpdateCheckedIds(selectedIds);
+    return objIndex;
   }
 }
 

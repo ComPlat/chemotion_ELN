@@ -6,11 +6,19 @@ class ReportActions {
     return value;
   }
 
-  updateSettings(target) {
+  updateSplSettings(target) {
     return target;
   }
 
-  toggleSettingsCheckAll() {
+  toggleSplSettingsCheckAll() {
+    return null;
+  }
+
+  updateRxnSettings(target) {
+    return target;
+  }
+
+  toggleRxnSettingsCheckAll() {
     return null;
   }
 
@@ -26,12 +34,12 @@ class ReportActions {
     return null;
   }
 
-  updateCheckedIds(ids) {
-    return ids;
+  updateCheckedTags(tags) {
+    return tags;
   }
 
-  move({sourceId, targetId}) {
-    return {sourceId, targetId};
+  move({sourceTag, targetTag}) {
+    return {sourceTag, targetTag};
   }
 }
 

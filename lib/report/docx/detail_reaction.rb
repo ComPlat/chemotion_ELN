@@ -1,20 +1,17 @@
 module Report
   module Docx
-    class ReactionDetail
-      attr_reader :obj, :digit, :last_id
+    class DetailReaction < Detail
       def initialize(args)
+        super
         @obj = args[:reaction]
-        @last_id = args[:last_id]
-        @digit = args.fetch(:digit, 3)
-        @img_format = args[:img_format]
       end
 
       def content
         {
           title: title,
           collections: collection_label,
-          equation: equation,
-          equation_product: equation_product,
+          equation_reaction: equation_reaction,
+          equation_products: equation_products,
           status: status,
           starting_materials: starting_materials,
           reactants: reactants,
@@ -30,25 +27,24 @@ module Report
           literatures: literatures,
           not_last: id != last_id,
           show_tlc_rf: rf_value.to_f != 0,
-          show_tlc_solvent: tlc_solvents.present?
+          show_tlc_solvent: tlc_solvents.present?,
+          is_reaction: true,
         }
       end
 
       private
-      def id
-        obj.id
+
+      def title
+        obj.name.present? ? obj.name : obj.short_label
       end
 
-      def collection_label
-        obj.collections.map { |c| c.label if c.label != "All" }.compact.join(", ")
+      def equation_reaction
+        DiagramReaction.new(obj: obj, format: @img_format).generate
       end
 
-      def equation
-        Equation.new(obj: obj, format: @img_format).generate
-      end
-
-      def equation_product
-        Equation.new(obj: obj, format: @img_format).generate_products
+      def equation_products
+        products_only = true
+        DiagramReaction.new(obj: obj, format: @img_format).generate(products_only)
       end
 
       def status
@@ -83,7 +79,7 @@ module Report
                           name: a["name"],
                           kind: a["kind"],
                           status: a["status"],
-                          content: a["content"],
+                          content: Sablon.content(:html, Delta.new(a["content"]).getHTML()),
                           description:  a["description"]
             })
           end
@@ -147,10 +143,6 @@ module Report
           })
         end
         return output
-      end
-
-      def title
-        obj.name.present? ? obj.name : obj.short_label
       end
 
       def purification

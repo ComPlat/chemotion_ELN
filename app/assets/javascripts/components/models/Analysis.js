@@ -3,12 +3,14 @@ import Dataset from './Dataset';
 
 export default class Analysis extends Element {
   static buildEmpty() {
+    const content_default = { "ops": [{ "insert": "" }] }
     return new Analysis({
       name: 'new Analysis',
       type: 'analysis',
+      report: true,
       kind: '',
       status: '',
-      content: '',
+      content: content_default,
       description: '',
       datasets: []
     })
@@ -50,6 +52,7 @@ export default class Analysis extends Element {
   serialize() {
     return super.serialize({
       name: this.name,
+      report: this.report,
       kind: this.kind,
       status: this.status,
       content: this.content,

@@ -9,14 +9,17 @@ module Report
       end
 
       def path
-        cdx = reaction_to_cdx
+        cdx = obj_to_cdx
         generate_ole_path(cdx)
       end
 
       private
-      def reaction_to_cdx
-        cdxml = Cdx::CdxmlReactionCreator.new({reaction: obj}).convert
-        Cdx::CdxmlToCdx.new({cdxml: cdxml}).convert
+
+      def obj_to_cdx
+        klass = obj.class.to_s
+        cdxml = "Cdxml::Create#{klass}".constantize
+                  .new({ klass.downcase.to_sym => obj }).to_cdxml
+        Cdx::Creator.new({cdxml: cdxml}).to_cdx
       end
 
       def generate_ole_path(cdx)

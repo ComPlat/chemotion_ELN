@@ -8,15 +8,15 @@ module Chemotion
       end
       get :docx do
         reaction = Reaction.find(params[:id])
-        content = Report::Docx::Document.new(reactions: [reaction]).reactions
+        content = Report::Docx::Document.new(objs: [reaction]).convert
 
         filename = "ELN_Reaction_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
-        template_path = Rails.root.join("lib", "template", "ELN_Reactions.docx")
+        template_path = Rails.root.join("lib", "template", "ELN_Objs.docx")
 
         content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
         header 'Content-Disposition', "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
-        docx = Sablon.template(template_path).render_to_string(merge(content, all_settings, all_configs))
+        docx = Sablon.template(template_path).render_to_string(merge(content, all_spl_settings, all_rxn_settings, all_configs))
       end
 
       params do
@@ -102,52 +102,63 @@ module Chemotion
     end
 
     resource :multiple_reports do
-      desc "Build a multi-reactions report using the contents of a JSON file"
+      desc "Build a multi-objects report using the contents of a JSON file"
 
       params do
-        requires :ids
-        requires :settings
+        requires :objTags
+        requires :splSettings
+        requires :rxnSettings
         requires :configs
         optional :img_format, default: 'png', values: %w(png eps emf)
       end
 
       get :docx do
-        ids = params[:ids].split("_")
-        settings = set_settings(params[:settings].split("_"))
-        configs = set_configs(params[:configs].split("_"))
-        reactions = ids.map { |id| Reaction.find(id) }
-        contents = Report::Docx::Document.new(
-                      reactions: reactions,
-                      img_format: params[:img_format]
-                    ).reactions
+        objTags = JSON.parse(params[:objTags])
+        spl_settings = hashize(JSON.parse(params[:splSettings]))
+        rxn_settings = hashize(JSON.parse(params[:rxnSettings]))
+        configs = hashize(JSON.parse(params[:configs]))
+        puts "- - -- - - "
+        puts spl_settings
 
-        filename = "ELN_Reactions_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
-        template_path = Rails.root.join("lib", "template", "ELN_Reactions.docx")
+        objs = objTags.map { |tag| tag["type"].camelize.constantize.find(tag["id"]) }
+        contents = Report::Docx::Document.new(
+                      objs: objs,
+                      img_format: params[:img_format]
+                    ).convert
+
+        filename = "ELN_Report_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
+        template_path = Rails.root.join("lib", "template", "ELN_Objs.docx")
 
         content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
         header 'Content-Disposition', "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
-        docx = Sablon.template(template_path).render_to_string(merge(contents, settings, configs))
+        docx = Sablon.template(template_path).render_to_string(merge(contents, spl_settings, rxn_settings, configs))
       end
     end
 
     helpers do
-      def set_settings(settings)
+      def hashize(inputs)
+        output = {}
+        inputs.each do |inp|
+          key = inp["text"].to_sym
+          val = inp["checked"]
+          output[key] = val
+        end
+        output
+      end
+
+      def all_spl_settings
         {
-          formula: settings.index("formula"),
-          material: settings.index("material"),
-          description: settings.index("description"),
-          purification: settings.index("purification"),
-          tlc: settings.index("tlc"),
-          observation: settings.index("observation"),
-          analysis: settings.index("analysis"),
-          literature: settings.index("literature"),
+          diagram: true,
+          collection: true,
+          analyses_description: true,
+          analyses_content: true,
         }
       end
 
-      def all_settings
+      def all_rxn_settings
         {
-          formula: true,
+          diagram: true,
           material: true,
           description: true,
           purification: true,
@@ -158,29 +169,21 @@ module Chemotion
         }
       end
 
-      def set_configs(configs)
-        {
-          pageBreak: configs.index("pagebreak"),
-          wholeFormula: configs.index("showallmater"),
-          productFormula: !configs.index("showallmater")
-        }
-      end
-
       def all_configs
         {
-          pageBreak: true,
-          wholeFormula: true,
-          productFormula: false
+          page_break: true,
+          whole_diagram: true,
         }
       end
 
-      def merge(contents, settings, configs)
+      def merge(contents, spl_settings, rxn_settings, configs)
         {
           date: Time.now.strftime("%d.%m.%Y"),
           author: "#{current_user.first_name} #{current_user.last_name}",
-          settings: settings,
+          spl_settings: spl_settings,
+          rxn_settings: rxn_settings,
           configs: configs,
-          reactions: contents
+          objs: contents
         }
       end
 

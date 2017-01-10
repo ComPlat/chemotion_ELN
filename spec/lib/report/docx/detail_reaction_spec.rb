@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe 'Report::Docx::ReactionDetail instance' do
+describe 'Report::Docx::DetailReaction instance' do
   let(:tit)   { 'correct title' }
   let(:sta)   { 'Planned' }
   let(:sol)   { 'correct solvent' }
@@ -21,7 +21,7 @@ describe 'Report::Docx::ReactionDetail instance' do
                                   tlc_solvents: t_sol,
                                   tlc_description: t_des,
                                   observation: obs) }
-  let(:instance) { Report::Docx::ReactionDetail.new(reaction: r1) }
+  let(:instance) { Report::Docx::DetailReaction.new(reaction: r1) }
 
   context '.content' do
     let(:content) { instance.content }
@@ -31,9 +31,9 @@ describe 'Report::Docx::ReactionDetail instance' do
     end
 
     it "has a png image & a bin file" do
-      expect(content[:equation].class).to eq(Sablon::Chem::Definition)
-      expect(content[:equation].img.name.split('.').last).to eq('png')
-      expect(content[:equation].ole.name.split('.').last).to eq('bin')
+      expect(content[:equation_reaction].class).to eq(Sablon::Chem::Definition)
+      expect(content[:equation_reaction].img.name.split('.').last).to eq('png')
+      expect(content[:equation_reaction].ole.name.split('.').last).to eq('bin')
     end
 
     it "has a correct status" do

@@ -1,10 +1,10 @@
 import React, {Component} from 'react'
 import { Table } from 'react-bootstrap';
-import ReactionRow from './OrdersDnD';
+import ObjRow from './OrdersDnD';
 
-const Orders = ({selectedReactions}) => {
-  const content = selectedReactions.map( r => {
-    return <ReactionRow id={r.id} key={r.id} element={r} />
+const Orders = ({selectedObjs}) => {
+  const content = selectedObjs.map( obj => {
+    return <ObjRow id={obj.id} key={obj.id} element={obj} />
   })
 
   return (

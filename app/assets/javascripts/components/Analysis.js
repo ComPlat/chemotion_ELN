@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
 import Select from 'react-select'
 import AnalysisDatasets from './AnalysisDatasets';
+import QuillEditor from './QuillEditor'
 
 export default class Analysis extends Component {
   constructor(props) {
@@ -93,13 +94,10 @@ export default class Analysis extends Component {
         <Col md={12}>
           <FormGroup>
             <ControlLabel>Content</ControlLabel>
-            <FormControl
-              componentClass="textarea"
-              label="Content"
-              value={analysis.content || ''}
+            <QuillEditor
+              value={analysis.content || { "ops": [{ "insert": "" }] }}
               disabled={readOnly}
-              onChange={event => this.handleInputChange('content', event)}
-              />
+              onChange={event => this.handleInputChange('content', {target: {value: event}})} />
           </FormGroup>
           <FormGroup>
             <ControlLabel>Description</ControlLabel>

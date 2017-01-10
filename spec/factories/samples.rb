@@ -12,7 +12,7 @@ FactoryGirl.define do
         "name"=>"1234121",
         "kind"=>"13C NMR",
         "status"=>"Confirmed",
-        "content"=>"",
+        "content"=>{ "ops": [{ "insert": "" }] },
         "description"=>"",
         "datasets"=>[]
         }
