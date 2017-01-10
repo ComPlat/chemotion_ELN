@@ -27,6 +27,17 @@ module Chemotion
     end
 
     resource :samples do
+      namespace :get_analysis_index do
+        desc "Get analysis index for sample and analysis id"
+        params do
+          requires :sample_id, type: Integer
+          requires :analysis_id, type: String
+        end
+        get do
+          sample = Sample.find(params[:sample_id])
+          sample.analyses.index { |a| a["id"] == params[:analysis_id]}
+        end
+      end
 
       # TODO Refactoring: Use Grape Entities
       namespace :ui_state do

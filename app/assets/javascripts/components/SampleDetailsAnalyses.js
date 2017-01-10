@@ -3,6 +3,8 @@ import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
 import AnalysisComponent from './Analysis';
 import Analysis from './models/Analysis';
 import Utils from './utils/Functions';
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 
 export default class SampleDetailsAnalyses extends Component {
   constructor(props) {
@@ -10,13 +12,29 @@ export default class SampleDetailsAnalyses extends Component {
     const {sample} = props;
     this.state = {
       sample,
-      activeAnalysis: 0
+      activeAnalysis: UIStore.getState().sample.activeAnalysis
     };
+
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       sample: nextProps.sample
+    })
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    this.setState({
+      activeAnalysis: state.sample.activeAnalysis
     })
   }
 
@@ -47,7 +65,7 @@ export default class SampleDetailsAnalyses extends Component {
   }
 
   handleAccordionOpen(key) {
-    this.setState({activeAnalysis: key});
+    UIActions.selectActiveAnalysis(key);
   }
 
   addButton() {

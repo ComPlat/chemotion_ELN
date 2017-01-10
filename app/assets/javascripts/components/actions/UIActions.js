@@ -26,6 +26,14 @@ class UIActions {
     return  tab;
   }
 
+  selectSampleTab(tab) {
+    return tab;
+  }
+
+  selectActiveAnalysis(index) {
+    return index;
+  }
+
   selectCollection(collection) {
     return  collection
   }

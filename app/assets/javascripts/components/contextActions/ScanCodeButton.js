@@ -2,6 +2,7 @@ import React from 'react';
 import {Button, Modal, OverlayTrigger, Tooltip} from 'react-bootstrap';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
+import UIActions from '../actions/UIActions';
 import 'whatwg-fetch';
 
 export default class ScanCodeButton extends React.Component {
@@ -37,7 +38,7 @@ export default class ScanCodeButton extends React.Component {
         return
       }
       console.log("Initialization finished. Ready to start");
-        Quagga.start();
+      Quagga.start();
     });
   }
 
@@ -53,11 +54,26 @@ export default class ScanCodeButton extends React.Component {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        console.log(json)
-        let {source, source_id} = json
+        let {source, source_id, analysis_id} = json
 
         if(source == "analysis") {
-          // TODO goto analysis tab
+          Quagga.stop();
+          Aviator.navigate(`/collection/all/sample/${source_id}`)
+          this.close();
+          UIActions.selectSampleTab(1)
+
+          // open active analysis
+          fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}`, {
+            credentials: 'same-origin'
+          })
+          .then((response) => {
+            return response.json()
+          }).then((json) => {
+            UIActions.selectActiveAnalysis(json)
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+
         } else {
           Quagga.stop();
           Aviator.navigate(`/collection/all/${source}/${source_id}`)
