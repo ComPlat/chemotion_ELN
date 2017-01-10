@@ -4,6 +4,8 @@ services:
     build: .
     depends_on:
       - postgres
+    command:
+      ["./run.sh", "postgres"]
     volumes:
       - .:/usr/src/app
     volumes_from:
