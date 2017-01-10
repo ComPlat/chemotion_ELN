@@ -10,6 +10,7 @@ import CollectionActions from './actions/CollectionActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
+import Utils from './utils/Functions';
 
 import UIStore from './stores/UIStore';
 
@@ -78,6 +79,25 @@ export default class WellplateDetails extends Component {
     this.setState({activeTab: event, showWellplate});
   }
 
+  wellplateCodePrintButtons(wellplate) {
+    if(wellplate.isNew)
+      return ''
+    else
+      return (
+        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + wellplate.id + "&type=wellplate&size=small"})}>
+            <i className="fa fa-barcode fa-lg"></i>
+          </Button>
+          &nbsp;
+          <Button bsSize="xsmall"
+            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + wellplate.id + "&type=wellplate&size=big"})}>
+            <i className="fa fa-barcode fa-2x"></i>
+          </Button>
+        </div>
+      )
+  }
+
   wellplateHeader(wellplate) {
     let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
 
@@ -108,6 +128,7 @@ export default class WellplateDetails extends Component {
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
+        {this.wellplateCodePrintButtons(wellplate)}
       </div>
     )
   }

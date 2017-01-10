@@ -105,23 +105,6 @@ module Chemotion
         end
       end
 
-      namespace :codes do
-        desc "Build PDF with sample bar & qr code"
-        params do
-          requires :id, type: Integer
-          requires :size, type: String, values: ["small", "big"]
-        end
-        get do
-          sample = Sample.find(params[:id])
-
-          content_type('application/pdf')
-          #header 'Content-Disposition', "attachment; filename*=UTF-8''sample_#{params[:id]}_codes_#{params[:size]}.pdf"
-          env["api.format"] = :binary
-
-          body CodePDF.new(sample, params[:size]).render
-        end
-      end
-
       desc "Return serialized molecules_samples_groups of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
