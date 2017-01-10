@@ -3,7 +3,7 @@ FROM ruby:2.3.1
 # prepare
 RUN apt-get -y update --fix-missing
 RUN apt-get -y install apt-utils
-RUN apt-get -y install build-essential wget git cmake nodejs sudo --fix-missing
+RUN apt-get -y install build-essential wget git cmake nodejs sudo postgresql-client --fix-missing
 
 # install curl
 RUN apt-get -y install curl
@@ -35,4 +35,3 @@ RUN cp -a /tmp/node_modules /usr/src/app/
 RUN sudo chown -R docker:nogroup /usr/src/app
 RUN cp -a config/database.yml.example config/database.yml
 RUN chmod +x run.sh
-CMD ./run.sh
