@@ -62,25 +62,26 @@ class ScreenWellplates extends Component {
           </tr></thead>
           <tbody>
           {wellplates.map((wellplate, key) => {
-            return <tr key={key} style={{height: "80px"}}>
-              <td>
-                <a onClick={() => this.handleWellplateClick(wellplate)} style={{cursor: 'pointer'}}>
-                  {wellplate.name}
-                </a>
-              </td>
-              <td>
-                <QuillEditor value={wellplate.description} disabled={true}
-                  theme="bubble" height="44px"/>
-              </td>
-              <td style={{verticalAlign: 'middle'}}>
-                <Button
-                  bsStyle="danger"
-                  onClick={() => deleteWellplate(wellplate)}
-                  >
-                  <i className="fa fa-trash-o"></i>
-                </Button>
-              </td>
-            </tr>
+            return (
+              <tr key={key} style={{height: "80px", verticalAlign: 'middle'}}>
+                <td>
+                  <a onClick={() => this.handleWellplateClick(wellplate)}
+                     style={{cursor: 'pointer'}}>
+                    {wellplate.name}
+                  </a>
+                </td>
+                <td>
+                  <QuillEditor value={wellplate.description} disabled={true}
+                               theme="bubble" height="44px"/>
+                </td>
+                <td style={{verticalAlign: 'middle'}}>
+                  <Button bsStyle="danger" style={{marginLeft: "10px"}}
+                          onClick={() => deleteWellplate(wellplate)}>
+                    <i className="fa fa-trash-o"></i>
+                  </Button>
+                </td>
+              </tr>
+            )
           })}
           </tbody>
         </table>

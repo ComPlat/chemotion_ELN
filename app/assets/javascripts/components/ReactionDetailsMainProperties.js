@@ -12,6 +12,8 @@ import LineChartContainer from './lineChart/LineChartContainer'
 import EditableTable from './lineChart/EditableTable'
 import QuillEditor from './QuillEditor'
 
+import {reactionToolbarSymbol} from './utils/quillToolbarSymbol';
+
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
     super(props)
@@ -147,7 +149,8 @@ export default class ReactionDetailsMainProperties extends Component {
               <FormGroup>
                 <ControlLabel>Description</ControlLabel>
                 <QuillEditor value={reaction.description}
-                  onChange={event => onInputChange('description', event)} />
+                  onChange={event => onInputChange('description', event)}
+                  toolbarSymbol={reactionToolbarSymbol}/>
               </FormGroup>
             </Col>
           </Row>
