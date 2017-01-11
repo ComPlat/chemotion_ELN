@@ -14,6 +14,10 @@ class UIActions {
     return  null;
   }
 
+  showDeviceManagement() {
+    return null
+  }
+
   selectTab(tab) {
     return  tab;
   }

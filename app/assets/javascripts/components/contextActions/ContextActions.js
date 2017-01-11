@@ -1,6 +1,7 @@
 import React from 'react';
 import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
+import UIActions from './../actions/UIActions'
 import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
@@ -106,7 +107,7 @@ const DeviceButtonSplit = () => {
         </MenuItem>
         <MenuItem divider />
         <MenuItem
-          onSelect={() => {}}
+          onSelect={UIActions.showDeviceManagement()}
         >
           Device Management
         </MenuItem>
