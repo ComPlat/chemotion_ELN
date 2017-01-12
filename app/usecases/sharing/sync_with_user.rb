@@ -28,7 +28,7 @@ module Usecases
           rc = Collection.find_or_create_by(root_collection_attributes)
           c.update(fake_ancestry: rc.id.to_s)
 
-          SendSharingNotificationJob.perform_later(@user, '')
+          # SendSharingNotificationJob.perform_later(@user, '')
         end
       end
     end
