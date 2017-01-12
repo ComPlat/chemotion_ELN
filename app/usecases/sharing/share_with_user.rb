@@ -15,7 +15,7 @@ module Usecases
           reaction_ids =  @params.fetch(:reaction_ids, [])
           wellplate_ids = @params.fetch(:wellplate_ids, [])
           screen_ids = @params.fetch(:screen_ids, [])
-          research_plan_ids = @params.fetch(:research_plan_ids, [])
+          #research_plan_ids = @params.fetch(:research_plan_ids, [])
 
           # Reactions and Wellplates have associated Samples
           associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(current_user_id, wellplate_ids).map(&:id)
@@ -55,9 +55,9 @@ module Usecases
             CollectionsScreen.create(collection_id: c.id, screen_id: screen_id)
           end
 
-          research_plan_ids.each do |research_plan_id|
-            CollectionsResearchPlan.create(collection_id: c.id, research_plan_id: research_plan_id)
-          end
+          #research_plan_ids.each do |research_plan_id|
+          #  CollectionsResearchPlan.create(collection_id: c.id, research_plan_id: research_plan_id)
+          #end
 
           SendSharingNotificationJob.perform_later(@user, '')
         end
