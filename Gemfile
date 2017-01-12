@@ -62,10 +62,10 @@ gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails'
 gem "font-awesome-rails"
 
 # Email notifications and so on
-gem 'delayed_job_active_record'
+# gem 'delayed_job_active_record'
 
 # required by cap3 delayed-job but has to be specified manually
-gem 'daemons'
+# gem 'daemons'
 
 # dataset previews
 gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
@@ -128,7 +128,7 @@ group :development, :test do
   gem 'capistrano-rails'
   gem 'capistrano-nvm', require: false
   gem 'capistrano-npm'
-  gem 'capistrano3-delayed-job'
+  # gem 'capistrano3-delayed-job'
 end
 
 group :test do

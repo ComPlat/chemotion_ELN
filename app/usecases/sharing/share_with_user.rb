@@ -59,7 +59,7 @@ module Usecases
             CollectionsResearchPlan.create(collection_id: c.id, research_plan_id: research_plan_id)
           end
 
-          SendSharingNotificationJob.perform_later(@user, '')
+          # SendSharingNotificationJob.perform_later(@user, '')
         end
       end
     end
