@@ -134,7 +134,7 @@ module Chemotion
           reactions = Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])
           wellplates = Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])
           screens = Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])
-          # research_plans = ResearchPlan.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:research_plan])
+          research_plans = ResearchPlan.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:research_plan])
 
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
@@ -147,7 +147,7 @@ module Chemotion
           share_reactions = ElementsPolicy.new(current_user, reactions).share?
           share_wellplates = ElementsPolicy.new(current_user, wellplates).share?
           share_screens = ElementsPolicy.new(current_user, screens).share?
-          # share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
+          share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
 
           sharing_allowed = share_samples && share_reactions && share_wellplates && share_screens
 
@@ -256,6 +256,7 @@ module Chemotion
             CollectionsScreen,
             current_collection_id
           )
+          CollectionsScreen.create_in_collection(screen_ids, collection_id)
 
           # Assign ResearchPlan
           research_plan_ids = ResearchPlan.for_user(current_user.id).for_ui_state_with_collection(

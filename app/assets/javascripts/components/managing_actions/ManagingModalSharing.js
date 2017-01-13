@@ -124,6 +124,12 @@ export default class ManagingModalSharing extends React.Component {
         included_ids: uiState.screen.checkedIds,
         excluded_ids: uiState.screen.uncheckedIds,
         collection_id: collectionId
+      },
+      research_plan: {
+        all: uiState.research_plan.checkedAll,
+        included_ids: uiState.research_plan.checkedIds,
+        excluded_ids: uiState.research_plan.uncheckedIds,
+        collection_id: collectionId
       }
     };
     return filterParams;
