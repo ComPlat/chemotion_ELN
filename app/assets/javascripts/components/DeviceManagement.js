@@ -46,7 +46,7 @@ const Devices = ({state, onChangeState}) => {
                 eventKey={key}
                 key={key}
                 onClick={() => handleOpenAccordion(key)}
-                style={{cursor: "pointer"}}
+                bsStyle={device.is_new ? "info" : ""}
               >
                 <Device
                   state={state}
@@ -133,7 +133,10 @@ const DeviceHeader = ({device, state, onChangeState}) => {
   }
 
   return (
-    <p style={{width: '100%'}}>
+    <p style={{
+      width: '100%',
+      cursor: "pointer"
+    }}>
       {device.code}
       <Button 
         bsSize="xsmall"
