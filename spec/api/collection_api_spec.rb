@@ -243,7 +243,7 @@ describe Chemotion::CollectionAPI do
       end
 
       describe 'PUT /api/v1/collections/elements' do
-        xit 'should be able to move elements between unshared collections' do
+        it 'should be able to move elements between unshared collections' do
           put '/api/v1/collections/elements', params
           c1.reload
           c3.reload
@@ -257,7 +257,7 @@ describe Chemotion::CollectionAPI do
           expect(c3.screens).to match_array [sc1]
           expect(c3.research_plans).to match_array [rp1]
         end
-        xit 'should not be able to move elements to a shared collection' do
+        it 'should not be able to move elements to a shared collection' do
           put '/api/v1/collections/elements', params_shared
           c1.reload
           c2.reload
@@ -273,7 +273,7 @@ describe Chemotion::CollectionAPI do
       end
 
       describe 'POST /api/v1/collections/elements' do
-        xit 'should be able to assign elements to an unshared collection' do
+        it 'should be able to assign elements to an unshared collection' do
           post '/api/v1/collections/elements', params
           c1.reload
           c3.reload
@@ -287,7 +287,7 @@ describe Chemotion::CollectionAPI do
           expect(c3.screens).to match_array [sc1]
           expect(c3.research_plans).to match_array [rp1]
         end
-        xit 'should be able to assign elements to a shared collection' do
+        it 'should be able to assign elements to a shared collection' do
           post '/api/v1/collections/elements', params_shared
           c1.reload
           c2.reload
@@ -295,11 +295,12 @@ describe Chemotion::CollectionAPI do
           expect(c1.reactions).to match_array [r1, r2]
           expect(c1.wellplates).to match_array [w1, w2]
           expect(c1.screens).to match_array [sc1]
+          expect(c1.research_plans).to match_array [rp1]
           expect(c2.samples).to match_array [s1, s2]
           expect(c2.reactions).to match_array [r1]
           expect(c2.wellplates).to match_array [w1]
           expect(c2.screens).to match_array [sc1]
-          expect(c3.research_plans).to match_array [rp1]
+          expect(c2.research_plans).to match_array [rp1]
         end
       end
 
