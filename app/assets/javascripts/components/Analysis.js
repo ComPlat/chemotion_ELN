@@ -1,8 +1,10 @@
 import React, {Component} from 'react';
-import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
+import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap'
 import Select from 'react-select'
 import AnalysisDatasets from './AnalysisDatasets';
 import QuillEditor from './QuillEditor'
+
+import {sampleAnalysesContentSymbol} from './utils/quillToolbarSymbol'
 
 export default class Analysis extends Component {
   constructor(props) {
@@ -94,10 +96,11 @@ export default class Analysis extends Component {
         <Col md={12}>
           <FormGroup>
             <ControlLabel>Content</ControlLabel>
-            <QuillEditor
-              value={analysis.content || { "ops": [{ "insert": "" }] }}
+            <QuillEditor value={analysis.content}
+              onChange={event => this.handleInputChange('content', {target: {value: event}})}
               disabled={readOnly}
-              onChange={event => this.handleInputChange('content', {target: {value: event}})} />
+              toolbarSymbol={sampleAnalysesContentSymbol}
+            />
           </FormGroup>
           <FormGroup>
             <ControlLabel>Description</ControlLabel>

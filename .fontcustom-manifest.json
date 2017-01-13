@@ -1,7 +1,7 @@
 {
   "checksum": {
-    "previous": "55796165b020cfefed443f9910afc948e0cd4c7fbba28d85b58cdeff0470bcf7",
-    "current": "55796165b020cfefed443f9910afc948e0cd4c7fbba28d85b58cdeff0470bcf7"
+    "previous": "417dad6cdf934ea81e730514ceec3a01ed1da98de89f7b5818a0e341360edda4",
+    "current": "417dad6cdf934ea81e730514ceec3a01ed1da98de89f7b5818a0e341360edda4"
   },
   "fonts": [
     "app/assets/fonts/icons.ttf",
@@ -14,9 +14,21 @@
       "codepoint": 61706,
       "source": "app/assets/images/svg_icons/acidified-hcl.svg"
     },
+    "c-nmr": {
+      "codepoint": 61718,
+      "source": "app/assets/images/svg_icons/c-nmr.svg"
+    },
     "dried": {
       "codepoint": 61717,
       "source": "app/assets/images/svg_icons/dried.svg"
+    },
+    "ea": {
+      "codepoint": 61719,
+      "source": "app/assets/images/svg_icons/ea.svg"
+    },
+    "ei": {
+      "codepoint": 61720,
+      "source": "app/assets/images/svg_icons/ei.svg"
     },
     "gpx-a": {
       "codepoint": 61708,
@@ -26,9 +38,21 @@
       "codepoint": 61709,
       "source": "app/assets/images/svg_icons/gpx-b.svg"
     },
+    "h-nmr": {
+      "codepoint": 61721,
+      "source": "app/assets/images/svg_icons/h-nmr.svg"
+    },
     "hand-stop": {
       "codepoint": 61701,
       "source": "app/assets/images/svg_icons/hand-stop.svg"
+    },
+    "hr": {
+      "codepoint": 61722,
+      "source": "app/assets/images/svg_icons/hr.svg"
+    },
+    "ir": {
+      "codepoint": 61723,
+      "source": "app/assets/images/svg_icons/ir.svg"
     },
     "isolated": {
       "codepoint": 61710,
@@ -77,6 +101,10 @@
     "tlc-control": {
       "codepoint": 61714,
       "source": "app/assets/images/svg_icons/tlc-control.svg"
+    },
+    "uv": {
+      "codepoint": 61724,
+      "source": "app/assets/images/svg_icons/uv.svg"
     },
     "washed-nahco3": {
       "codepoint": 61715,

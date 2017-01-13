@@ -27,36 +27,45 @@ export default class QuillEditor extends React.Component {
     super(props)
 
     this.state = {
-      value: null,    // Editor contents
-      timeoutReference: null,
-      toolbarId: 0
+      value: props.value,    // Editor contents
+      timeoutReference: null
     }
 
+    this.theme = props.theme
+    if (!props.theme || props.theme == "") this.theme = "snow"
+
+    this.readOnly = true
+    if (!props.disabled || props.disabled == false) this.readOnly = false
+
+    this.height = props.height
+    if (!props.height || props.height == "") this.height = "230px"
+
+    this.toolbar = (props.toolbarSymbol || []).map(x => x.name)
+
     this.editor = false
-    this.timeout = 3e2 // 300ms
+    this.timeout = 3e2
+    this.id = _.uniqueId("quill-editor-")
 
     this.getContents = this.getContents.bind(this)
     this.clearTypingTimeout = this.clearTypingTimeout.bind(this)
+    this.updateEditorValue = this.updateEditorValue.bind(this)
   }
 
   componentWillReceiveProps(nextProps) {
     let {value} = this.state
+    let nextVal = nextProps.value
 
-    if (this.editor) {
-      if (nextProps.value && nextProps.value !== this.getContents() ) {
-        this.setState({value: nextProps.value})
-        let sel = this.editor.getSelection()
-        this.editor.setContents(nextProps.value)
-        if (sel) this.editor.setSelection(sel)
-      }
+    if (this.editor && nextVal && nextVal !== this.getContents() ) {
+      this.setState({value: nextProps.value})
+      let sel = this.editor.getSelection()
+      this.editor.setContents(nextProps.value)
+      if (sel) this.editor.setSelection(sel)
     }
 
     this.clearTypingTimeout()
   }
 
   componentWillMount() {
-    const id = _.uniqueId("prefix-");
-    this.setState({toolbarId: id});
   }
 
   componentDidMount() {
@@ -65,6 +74,7 @@ export default class QuillEditor extends React.Component {
 
   componentWillUnmount() {
     // Don't set the state to null, it would generate a loop.
+    this.clearTypingTimeout()
   }
 
   componentWillUpdate() {
@@ -76,46 +86,33 @@ export default class QuillEditor extends React.Component {
   }
 
   updateEditorValue(contents) {
-    let onChangeFunc = this.props.onChange
+    let onChange = this.props.onChange
 
-    if (this.state.value !== contents) {
-      this.setState({
-        value: contents,
-        timeoutReference: setTimeout(function(){
-          onChangeFunc(contents)
-        }, this.timeout)
-      })
-    }
+    this.setState({
+      value: contents,
+      timeoutReference: setTimeout(onChange.bind(this, contents), this.timeout)
+    })
   }
 
   clearTypingTimeout() {
     let {timeoutReference} = this.state
-    if (timeoutReference) {
-      clearTimeout(timeoutReference)
-    }
+    if (timeoutReference) clearTimeout(timeoutReference)
   }
 
   initQuill() {
-    let {toolbarSymbol} = this.props
-    let {toolbarId} = this.state
-
-    toolbarSymbol = toolbarSymbol || []
-    let symbolNameArray = toolbarSymbol.map(x => x.name)
-    this.toolbar = symbolNameArray
-
     if (!this.editor) {
-      let quillEditor = ReactDOM.findDOMNode(this.refs.quillEditor)
+      let quillEditor = ReactDOM.findDOMNode(this.refs[this.id])
 
-      let defaultOptions = {
+      let quillOptions = {
         modules: {
-          toolbar: '#' + toolbarId
+          toolbar: "#toolbar-" + this.id
         },
         theme: this.theme,
         readOnly: this.readOnly
       }
 
       // init Quill
-      this.editor = new Quill(quillEditor, defaultOptions)
+      this.editor = new Quill(quillEditor, quillOptions)
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574
@@ -125,50 +122,44 @@ export default class QuillEditor extends React.Component {
       // GrammarlyInline.className = 'gr_';
       // Quill.register({'formats/grammarly-inline': GrammarlyInline})
 
-      // onChange
       this.editor.on('text-change', (delta, oldDelta, source) => {
         if (source == 'user' && this.props.onChange) {
           this.clearTypingTimeout()
 
-          let contents = this.editor.getContents()
+          let contents = this.getContents()
           this.updateEditorValue(contents)
         }
       })
-    }
 
-    if (this.editor) {
+      let updateEditorValue = this.updateEditorValue
       let editor = this.editor
-      let self = this
+      let id = this.id
+      let toolbarSymbol = this.props.toolbarSymbol
 
-      symbolNameArray.forEach(function(element) {
-        let customButtons = document.querySelectorAll('.ql-' + element)
+      this.toolbar.forEach(function(element) {
+        let selector = '#toolbar-' + id + ' #' + element + "_id"
+        let btn = document.querySelector(selector)
         let elementIcon = "icon-" + element
 
-        customButtons.forEach(function(btn) {
-          if (btn.className.includes(elementIcon)) return
+        btn.addEventListener('click', function() {
+          let range = editor.getSelection()
 
-          btn.className = btn.className + " icon-" + element
+          if (range) {
+            let contents = editor.getContents()
+            let elementOps = toolbarSymbol.find(x => x.name === element).ops
+            let insertDelta = new Delta(elementOps)
+            elementOps = [{retain: range.index}].concat(elementOps)
+            let elementDelta = new Delta(elementOps)
+            contents = contents.compose(elementDelta)
 
-          btn.addEventListener('click', function() {
-            let range = editor.getSelection()
+            editor.setContents(contents)
 
-            if (range) {
-              let contents = editor.getContents()
-              let elementOps = toolbarSymbol.find(x => x.name === element).ops
-              let insertDelta = new Delta(elementOps)
-              elementOps = [{retain: range.index}].concat(elementOps)
-              let elementDelta = new Delta(elementOps)
+            range.length = 0
+            range.index = range.index + insertDelta.length()
+            editor.setSelection(range)
 
-              contents = contents.compose(elementDelta)
-              editor.setContents(contents)
-
-              range.length = 0
-              range.index = range.index + insertDelta.length()
-              editor.setSelection(range)
-
-              self.updateEditorValue(contents)
-            }
-          })
+            updateEditorValue(contents)
+          }
         })
       })
     }
@@ -223,9 +214,10 @@ export default class QuillEditor extends React.Component {
       return (<span />)
     }
 
-    let customToolbarElement = this.toolbar.map(function (element) {
+    let customToolbarElement = this.toolbar.map(function(element) {
       return (
-        <button className={"ql-" + element} key={element + "_key"}
+        <button className={"icon-" + element} key={element + "_key"}
+                id={element + "_id"}
                 style={{margin: "0px 3px 3px 3px"}}/>
       )
     })
@@ -239,28 +231,15 @@ export default class QuillEditor extends React.Component {
   }
 
   render() {
-    let {toolbarId} = this.state
-
-    this.theme = !this.props.theme || this.props.theme == ""
-                 ? "snow"
-                 : this.props.theme
-    this.readOnly = !this.props.disabled || this.props.disabled == false
-                    ? false
-                    : true
-
-    let height = !this.props.height || this.props.height == ""
-                 ? "230px"
-                 : this.props.height
-
     let quillToolbar = this.renderQuillToolbarGroup()
 
     return (
       <div>
-        <div id={toolbarId}>
+        <div id={"toolbar-" + this.id}>
           {quillToolbar}
           {this.renderCustomToolbar()}
         </div>
-        <div ref="quillEditor" style={{height: height}}></div>
+        <div ref={this.id} style={{height: this.height}}></div>
       </div>
     )
   }
