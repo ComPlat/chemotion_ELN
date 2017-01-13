@@ -255,6 +255,7 @@ module Chemotion
               id: ana.id,
               type: ana.type,
               name: ana.name,
+              report: ana.report,
               kind: ana.kind,
               status: ana.status,
               content: ana.content,

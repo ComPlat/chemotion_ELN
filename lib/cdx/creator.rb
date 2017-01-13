@@ -1,7 +1,7 @@
 require "cdx_helper"
 
 module Cdx
-  class CdxmlToCdx
+  class Creator
     include Common
     attr_reader :doc, :str, :bond_length
     def initialize(args)
@@ -11,7 +11,7 @@ module Cdx
       @tmp_id = 1000
     end
 
-    def convert
+    def to_cdx
       lines = doc.split("\n")
       lines[3..-1].each do |line|
         translation(line)

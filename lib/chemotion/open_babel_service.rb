@@ -238,7 +238,7 @@ M  END
     c.convert
 
     orig_cdxml = File.read(output)
-    shifted_cdxml, geometry = Cdx::CdxmlShifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).process
+    shifted_cdxml, geometry = Cdxml::Shifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).convey
     return { content: shifted_cdxml, geometry: geometry, path: output }
   end
 end

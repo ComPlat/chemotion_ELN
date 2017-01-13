@@ -34,4 +34,8 @@ export default class ArrayUtils {
   static isValNotInArray(array, value) {
     return !ArrayUtils.isValInArray(array, value)
   }
+
+  static flatten2D(array_2d) {
+    return array_2d.reduce((a, b) => a.concat(b), []);
+  }
 }

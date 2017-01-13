@@ -30,9 +30,10 @@ describe Chemotion::ReportAPI do
 
       before {
         params = {
-          ids: "#{r1.id}_#{r2.id}",
-          settings: "formula_material_description_purification_tlc_observation_analysis_literature",
-          configs: "pagebreak"
+          objTags: "[{\"id\":#{r1.id},\"type\":\"reaction\"}, {\"id\":#{r2.id},\"type\":\"reaction\"}]",
+          splSettings: "[{\"text\":\"diagram\",\"checked\":true},{\"text\":\"analyses\",\"checked\":true}]",
+          rxnSettings: "[{\"text\":\"diagram\",\"checked\":true},{\"text\":\"material\",\"checked\":true}]",
+          configs: "[{\"text\":\"page_break\",\"checked\":true},{\"text\":\"whole_diagram\",\"checked\":true}]"
         }
         get '/api/v1/multiple_reports/docx', params
       }

@@ -40,8 +40,9 @@ export default class ReportContainer extends Component {
   }
 
   onChangeUI(state) {
-    const checkedIds = state['reaction'].checkedIds.toArray()
-    ReportActions.updateCheckedIds.defer(checkedIds);
+    const checkedTags = { sampleIds: state['sample'].checkedIds.toArray(),
+                          reactionIds: state['reaction'].checkedIds.toArray() }
+    ReportActions.updateCheckedTags.defer(checkedTags);
   }
 
   handleImgFormatChanged(e) {
@@ -75,14 +76,21 @@ export default class ReportContainer extends Component {
         </div>
 
         <Tabs defaultActiveKey={0} id="report-tabs" >
-          <Tab eventKey={0} title={"Setting"}>
-            <CheckBoxs  items={this.state.settings}
-                        toggleCheckbox={this.toggleSettings}
-                        toggleCheckAll={this.toggleSettingsAll}
-                        checkedAll={this.state.checkedAllSettings} />
+          <Tab eventKey={0} title={"Sample Setting"}>
+            <CheckBoxs  items={this.state.splSettings}
+                        toggleCheckbox={this.toggleSplSettings}
+                        toggleCheckAll={this.toggleSplSettingsAll}
+                        checkedAll={this.state.checkedAllSplSettings} />
           </Tab>
 
-          <Tab eventKey={1} title={"Config"}>
+          <Tab eventKey={1} title={"Reaction Setting"}>
+            <CheckBoxs  items={this.state.rxnSettings}
+                        toggleCheckbox={this.toggleRxnSettings}
+                        toggleCheckAll={this.toggleRxnSettingsAll}
+                        checkedAll={this.state.checkedAllRxnSettings} />
+          </Tab>
+
+          <Tab eventKey={2} title={"Config"}>
             <CheckBoxs  items={this.state.configs}
                         toggleCheckbox={this.toggleConfigs}
                         toggleCheckAll={this.toggleConfigsAll}
@@ -103,16 +111,17 @@ export default class ReportContainer extends Component {
             </Row>
           </Tab>
 
-          <Tab eventKey={2} title={"Order"}>
+          <Tab eventKey={3} title={"Order"}>
             <div className="panel-fit-screen">
-              <Orders selectedReactions={this.state.selectedReactions} />
+              <Orders selectedObjs={this.state.selectedObjs} />
             </div>
           </Tab>
 
-          <Tab eventKey={3} title={"Report"}>
+          <Tab eventKey={4} title={"Report"}>
             <div className="panel-fit-screen">
-              <Reports selectedReactions={this.state.selectedReactions}
-                       settings={this.state.settings}
+              <Reports selectedObjs={this.state.selectedObjs}
+                       splSettings={this.state.splSettings}
+                       rxnSettings={this.state.rxnSettings}
                        configs={this.state.configs} />
             </div>
           </Tab>
@@ -122,8 +131,12 @@ export default class ReportContainer extends Component {
     );
   }
 
-  toggleSettings(text, checked){
-    ReportActions.updateSettings({text, checked})
+  toggleSplSettings(text, checked){
+    ReportActions.updateSplSettings({text, checked})
+  }
+
+  toggleRxnSettings(text, checked){
+    ReportActions.updateRxnSettings({text, checked})
   }
 
   toggleConfigs(text, checked){
@@ -135,8 +148,12 @@ export default class ReportContainer extends Component {
     Aviator.navigate(`/collection/all`);
   }
 
-  toggleSettingsAll() {
-    ReportActions.toggleSettingsCheckAll()
+  toggleSplSettingsAll() {
+    ReportActions.toggleSplSettingsCheckAll()
+  }
+
+  toggleRxnSettingsAll() {
+    ReportActions.toggleRxnSettingsCheckAll()
   }
 
   toggleConfigsAll() {
@@ -148,8 +165,11 @@ export default class ReportContainer extends Component {
   }
 
   generateReportsBtn() {
-    let showGeneReportBtnIds = this.state.selectedReactionIds.length !== 0 ? true : false
-    let showGeneReportBtnSts = this.state.settings.map(setting => {
+    const { sampleIds, reactionIds } = this.state.selectedObjTags;
+    const hasObj = [...sampleIds, ...reactionIds].length !== 0 ? true : false;
+
+    const showGeneReportBtn = [...this.state.splSettings,
+                               ...this.state.rxnSettings].map(setting => {
       if(setting.checked){
         return true
       }
@@ -160,7 +180,7 @@ export default class ReportContainer extends Component {
       <Button bsStyle="primary"
               bsSize="xsmall"
               className="button-right"
-              disabled={!(showGeneReportBtnSts && showGeneReportBtnIds)}
+              disabled={!(showGeneReportBtn && hasObj)}
               onClick={this.generateReports.bind(this)}>
         <span><i className="fa fa-file-text-o"></i> Generate Report</span>
       </Button>

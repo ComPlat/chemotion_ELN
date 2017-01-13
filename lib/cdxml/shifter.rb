@@ -1,5 +1,5 @@
-module Cdx
-  class CdxmlShifter
+module Cdxml
+  class Shifter
     REACTANT_Y_SHIFT = 20
 
     attr_reader :orig_cdxml, :shifter, :lines, :geometry
@@ -9,7 +9,7 @@ module Cdx
       @lines = Nokogiri::XML(orig_cdxml)
     end
 
-    def process
+    def convey
       calculate_geometry
       shift_cdxml
       return lines.to_xml, geometry

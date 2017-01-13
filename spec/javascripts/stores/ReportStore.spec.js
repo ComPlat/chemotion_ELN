@@ -17,34 +17,49 @@ describe('ReportStore', () => {
     expect(actual).toEqual(expected)
   })
 
-  it('should handleUpdateSettings', () => {
+  it('should handleUpdateSplSettings', () => {
     const oldState = ReportStore.getState()
-    const payload = {text: "formula", checked: true}
-    ReportActions.updateSettings(payload)
+    const payload = {text: "diagram", checked: true}
+    ReportActions.updateSplSettings(payload)
     const newState = ReportStore.getState()
-    expect(newState.settings[0].checked).toEqual(!oldState.settings[0].checked)
+    expect(newState.splSettings[0].checked).toEqual(!oldState.splSettings[0].checked)
   })
 
-  it('should handleToggleSettingsCheckAll', () => {
-    ReportActions.toggleSettingsCheckAll()
+  it('should handleUpdateRxnSettings', () => {
+    const oldState = ReportStore.getState()
+    const payload = {text: "diagram", checked: true}
+    ReportActions.updateRxnSettings(payload)
     const newState = ReportStore.getState()
-    const expected = {
-      settings: [ {text: "formula", checked: false},
-                  {text: "material", checked: false},
-                  {text: "description", checked: false},
-                  {text: "purification", checked: false},
-                  {text: "tlc", checked: false},
-                  {text: "observation", checked: false},
-                  {text: "analysis", checked: false},
-                  {text: "literature", checked: false} ],
-      configs: [ {text: "Page Break", checked: true},
-                 {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ],
-      checkedAllSettings: false,
-      checkedAllConfigs: true,
-      processingReport: false,
-      imgFormat: 'png',
-      selectedReactionIds: [],
-      selectedReactions: [],
+    expect(newState.rxnSettings[0].checked).toEqual(!oldState.rxnSettings[0].checked)
+  })
+
+  it('should handleToggleSplSettingsCheckAll', () => {
+    ReportActions.toggleSplSettingsCheckAll()
+    const newState = ReportStore.getState()
+    const expected = { ...originalState,
+      checkedAllSplSettings: false,
+      splSettings: [ {text: "diagram", checked: false},
+                      {text: "collection", checked: false},
+                      {text: "analyses content", checked: false},
+                      {text: "analyses description", checked: false} ]
+
+    }
+    expect(newState).toEqual(expected)
+  })
+
+  it('should handleToggleRxnSettingsCheckAll', () => {
+    ReportActions.toggleRxnSettingsCheckAll()
+    const newState = ReportStore.getState()
+    const expected = { ...originalState,
+      checkedAllRxnSettings: false,
+      rxnSettings: [ {text: "diagram", checked: false},
+                      {text: "material", checked: false},
+                      {text: "description", checked: false},
+                      {text: "purification", checked: false},
+                      {text: "tlc", checked: false},
+                      {text: "observation", checked: false},
+                      {text: "analysis", checked: false},
+                      {text: "literature", checked: false} ]
     }
     expect(newState).toEqual(expected)
   })

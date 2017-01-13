@@ -1,6 +1,57 @@
 import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
-import {Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Alert, Label, Table, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import QuillViewer from '../QuillViewer'
+
+const SectionReaction = ({reaction, settings, configs}) => {
+  const {description, literatures, starting_materials, reactants,
+         products, solvents, solvent, dangerous_products, purification,
+         observation, reaction_svg_file, tlc_description,
+         tlc_solvents, rf_value, status } = reaction;
+
+  const has_analyses = products.map( sample => {
+    if(sample.analyses.length != 0) {
+      return true;
+    }
+  }).filter(r => r!=null).length != 0;
+
+  return (
+    <div>
+      <Alert style={{ textAlign: 'center',
+                      backgroundColor: '#428bca',
+                      color:'white',
+                      border:'none'}}> {reaction.short_label}
+        <StatusContent status={status}/>
+      </Alert>
+
+      <SVGContent show={settings.diagram}
+                  reaction_svg_file={reaction_svg_file}
+                  isProductOnly={!configs.Showallmater}
+                  products={products} />
+      <MaterialContent  show={settings.material}
+                        starting_materials={starting_materials}
+                        reactants={reactants}
+                        products={products} />
+      <SolventContent show={settings.material}
+                      solvents={solvents}
+                      solvent={solvent} />
+      <DescriptionContent show={settings.description && description}
+                          description={description} />
+      <PurificationContent show={settings.purification && purification.length != 0}
+                           purification={purification} />
+      <TLCContent show={settings.tlc && tlc_description}
+                  tlc_description={tlc_description}
+                  tlc_solvents={tlc_solvents}
+                  rf_value={rf_value} />
+      <ObservationContent show={settings.observation && observation}
+                          observation={observation} />
+      <AnalysesContent show={settings.analysis && has_analyses}
+                       products={products} />
+      <LiteratureContent show={settings.literature && literatures.length != 0}
+                         literatures={literatures} />
+    </div>
+  )
+}
 
 const SVGContent = ({show, reaction_svg_file, products, isProductOnly}) => {
   const svg_file =reaction_svg_file && `/images/reactions/${reaction_svg_file}`
@@ -191,7 +242,7 @@ const DescriptionContent = ({show, description}) => {
     show
       ? <div>
           <h4> Description </h4>
-          <pre className="noBorder">{description}</pre>
+          <QuillViewer value={description} />
         </div>
       : null
   )
@@ -240,13 +291,14 @@ const AnalysesContent = ({show, products}) => {
         return (
           analysis
             ? <div key={i*100+j}>
-                <pre className="noBorder">
+                <div className="noBorder">
                   <p><b>{product.molecule.sum_formular}</b> ({analysis.kind})</p>
-                  <pre className="noBorder">
-                    <u>Content:</u> {analysis.content}
+                  <div className="noBorder">
+                    <u>Content:</u>
+                    <QuillViewer value={analysis.content} />
                     <u>Description:</u> {analysis.description}
-                  </pre>
-                </pre>
+                  </div>
+                </div>
               </div>
             : null
         )
@@ -257,7 +309,7 @@ const AnalysesContent = ({show, products}) => {
     show
       ? <div>
           <h4> Analysis </h4>
-          <pre className="noBorder">{analyses}</pre>
+          <div className="noBorder">{analyses}</div>
         </div>
       : null
   )
@@ -293,7 +345,4 @@ const LiteratureContent = ({show, literatures}) => {
   )
 }
 
-export {SVGContent, MaterialContent, DescriptionContent,
-        PurificationContent, TLCContent, ObservationContent,
-        AnalysesContent, LiteratureContent, SolventContent,
-        StatusContent}
+export default SectionReaction;
