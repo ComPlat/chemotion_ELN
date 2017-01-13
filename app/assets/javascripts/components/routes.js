@@ -114,9 +114,13 @@ const routes = {
       target: {
         show: function(e) {
           ElementActions.showDeviceContainer();
+        },
+        showDeviceManagement: function(e) {
+          UIActions.showDeviceManagement()
         }
       },
-      '/:deviceId': 'show'
+      '/management': 'showDeviceManagement',
+      '/:deviceId': 'show',
     },
 
     '/sample': {

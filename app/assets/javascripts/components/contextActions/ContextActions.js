@@ -73,6 +73,11 @@ ContextActions.propTypes = {
   updateModalProps: React.PropTypes.func.isRequired,
 };
 
+const handleShowDeviceManagement = () => {
+  UIActions.showDeviceManagement()
+  Aviator.navigate("/device/management")
+}
+
 const DeviceButtonSplit = () => {
   return (
   <ButtonGroup style={{marginLeft: '10px'}}>
@@ -89,6 +94,7 @@ const DeviceButtonSplit = () => {
         bsStyle="warning"
         title={<DropdownButtonTitle/>}
         style={{width: "26px", paddingLeft: "8px"}}
+        id="device-selection"
       >
         <MenuItem
           onSelect={() => {}}
@@ -107,7 +113,7 @@ const DeviceButtonSplit = () => {
         </MenuItem>
         <MenuItem divider />
         <MenuItem
-          onSelect={UIActions.showDeviceManagement()}
+          onSelect={() => handleShowDeviceManagement()}
         >
           Device Management
         </MenuItem>
