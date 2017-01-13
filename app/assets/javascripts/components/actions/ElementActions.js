@@ -14,6 +14,7 @@ import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
+import DeviceFetcher from '../fetchers/DeviceFetcher'
 
 import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
@@ -22,12 +23,41 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import Report from '../models/Report';
-import Device from '../models/Device';
+import Device from '../models/Device'
 
 import _ from 'lodash';
 
-class ElementActions {
+const handleDispatch = (dispatch, fetch) => {
+  return (dispatch) => {
+     fetch()
+      .then((result) => {dispatch(result)})
+      .catch((errorMessage) => {console.log(errorMessage)})
+   }
+}
 
+class ElementActions {
+  // -- Devices --
+  //
+  fetchAllDevices() {
+    return handleDispatch(dispatch, () => DeviceFetcher.fetchAll())
+  }
+
+  fetchDeviceById() {
+    return handleDispatch(dispatch, () => DeviceFetcher.fetchById())
+  }
+
+  createDevice() {
+    return handleDispatch(dispatch, () => DeviceFetcher.create(device))
+  }
+
+  updateDevice(device) {
+    return handleDispatch(dispatch, () => DeviceFetcher.update(device))
+  }
+
+  deleteDevice(device) {
+    return handleDispatch(dispatch, () => DeviceFetcher.delete(device))
+  }
+  
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

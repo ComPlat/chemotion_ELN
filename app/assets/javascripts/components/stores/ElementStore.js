@@ -64,6 +64,12 @@ class ElementStore {
 
     this.bindListeners({
 
+      handleFetchAllDevices: ElementActions.fetchAllDevices,
+      handleFetchDeviceById: ElementActions.fetchDeviceById,
+      handleCreateDevice: ElementActions.createDevice,
+      handleUpdateDevice: ElementActions.updateDevice,
+      handleDeleteDevice: ElementActions.deleteDevice,
+      
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
@@ -134,6 +140,25 @@ class ElementStore {
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
     })
+  }
+
+  handleFetchAllDevices(devices) {
+    this.state.elements['device'] = devices
+  }
+
+  handleFetchDeviceById(device) {
+    this.state.currentElement = device
+  }
+
+  handleCreateDevice(device) {
+    // update id from backend
+  }
+
+  handleUpdateDevice() {
+  }
+
+  handleDeleteDevice() {
+    // delete from elements
   }
 
 
