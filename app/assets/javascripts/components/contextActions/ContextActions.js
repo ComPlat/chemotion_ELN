@@ -29,9 +29,10 @@ export default class ContextActions extends React.Component {
     });
   }
 
-  isAllCollection() {
+  isCreateDisabled() {
     const {currentCollection} = this.state.uiState;
-    return currentCollection && currentCollection.label == 'All';
+    return currentCollection && (currentCollection.label == 'All' ||
+                             currentCollection.is_shared);
   }
 
   isDisabled() {
@@ -56,7 +57,7 @@ export default class ContextActions extends React.Component {
           <ReportButton />
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
-          <CreateButton isDisabled={this.isAllCollection()}/>
+          <CreateButton isDisabled={this.isCreateDisabled()}/>
         </ButtonGroup>
       </div>
     )
