@@ -228,6 +228,10 @@ class Sample < ActiveRecord::Base
     reactions_as_starting_material + reactions_as_reactant + reactions_as_solvent + reactions_as_product
   end
 
+  def reaction_description
+    reactions.first.try(:description)
+  end
+
   #todo: find_or_create_molecule_based_on_inchikey
   def auto_set_molfile_to_molecules_molfile
     if molecule && molecule.molfile

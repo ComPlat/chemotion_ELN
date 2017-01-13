@@ -28,9 +28,31 @@ module Report
       end
 
       def analyses
-        obj.analyses.map do |a|
-          { content: Sablon.content(:html, Delta.new(a["content"]).getHTML()),
-            description: a["description"] }
+        paragraphs = merge_items(init_item, obj.analyses)
+        paragraph = remove_line_break(paragraphs)
+        Sablon.content(:html, Delta.new({"ops" => paragraph}).getHTML())
+      end
+
+      def init_item
+        item = []
+        need_rxn_desc = @spl_settings[:reaction_description]
+        has_description = obj.reactions.first.try(:description)
+        if need_rxn_desc && has_description
+          item += obj.reactions.first.description["ops"].map(&:to_h)
+        end
+        item
+      end
+
+      def merge_items(init, items)
+        items.reduce(init) do |sum, i|
+          sum + i["content"]["ops"]
+        end
+      end
+
+      def remove_line_break(paragraphs)
+        paragraphs.map do |p|
+          p["insert"] = p["insert"].tr("\n", " ")
+          p
         end
       end
     end

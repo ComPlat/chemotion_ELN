@@ -4,6 +4,9 @@ module Report
       attr_reader :objs, :contents
       def initialize(args)
         @objs = args[:objs]
+        @spl_settings = args[:spl_settings]
+        @rxn_settings = args[:rxn_settings]
+        @configs = args[:configs]
         @contents = Array.new
         @img_format = args[:img_format]
       end
@@ -20,6 +23,9 @@ module Report
         type_name = obj.class.to_s
         "Report::Docx::Detail#{type_name}".constantize.new(
           "#{type_name.downcase}": obj,
+          spl_settings: @spl_settings,
+          rxn_settings: @rxn_settings,
+          configs: @configs,
           last_id: last_id,
           img_format: @img_format
         ).content

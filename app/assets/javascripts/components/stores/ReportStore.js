@@ -8,8 +8,8 @@ class ReportStore {
   constructor() {
     this.splSettings = [ {text: "diagram", checked: true},
                           {text: "collection", checked: true},
-                          {text: "analyses content", checked: true},
-                          {text: "analyses description", checked: true} ]
+                          {text: "analyses", checked: true},
+                          {text: "reaction description", checked: true} ]
     this.rxnSettings = [ {text: "diagram", checked: true},
                           {text: "material", checked: true},
                           {text: "description", checked: true},
