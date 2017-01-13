@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170104085233) do
+ActiveRecord::Schema.define(version: 20170113154425) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -404,12 +404,13 @@ ActiveRecord::Schema.define(version: 20170104085233) do
     t.integer "user_id"
     t.integer "collection_id"
     t.integer "shared_by_id"
-    t.integer "permission_level",       default: 0
-    t.integer "sample_detail_level",    default: 0
-    t.integer "reaction_detail_level",  default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level",    default: 0
+    t.integer "permission_level",          default: 0
+    t.integer "sample_detail_level",       default: 0
+    t.integer "reaction_detail_level",     default: 0
+    t.integer "wellplate_detail_level",    default: 0
+    t.integer "screen_detail_level",       default: 0
     t.string  "fake_ancestry"
+    t.integer "researchplan_detail_level", default: 10
   end
 
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
