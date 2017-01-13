@@ -74,7 +74,7 @@ const reactionToolbarSymbol = [
         "attributes": {"script":"sub"},
         "insert": "4"
       },
-      { "insert": ". The mixture was filtered through a glass funnel and the solvent was evaporated under reduced pressure.\n" }
+      { "insert": ". The mixture was filtered through a glass funnel and the solvent was evaporated under reduced pressure." }
     ]
   },
   {
@@ -100,7 +100,7 @@ const reactionToolbarSymbol = [
         "attributes": {"script":"sub"},
         "insert": "4"
       },
-      { "insert": ". The mixture was filtered through a glass funnel and the solvent was evaporated under reduced pressure.\n" }
+      { "insert": ". The mixture was filtered through a glass funnel and the solvent was evaporated under reduced pressure." }
     ]
   },
   {
@@ -114,7 +114,7 @@ const reactionToolbarSymbol = [
         },
         "insert": "f = "
       },
-      { "insert":"0.XX)\n" }
+      { "insert":"0.XX)." }
     ]
   },
   {
@@ -135,7 +135,7 @@ const reactionToolbarSymbol = [
         "attributes": { "script":"sub" },
         "insert": "4"
       },
-      { "insert":". The mixture was filtered through a glass funnel and the solvent was evaporated under reduced pressure.\n" }
+      { "insert":". The mixture was filtered through a glass funnel and the solvent was evaporated under reduced pressure." }
     ]
   },
   {
@@ -160,7 +160,7 @@ const reactionToolbarSymbol = [
         },
         "insert":"f = "
       },
-      { "insert":"0.XX (cyclohexane:ethyl acetate)\n" }
+      { "insert":"0.XX (cyclohexane:ethyl acetate)." }
     ]
   },
   {
@@ -179,7 +179,7 @@ const reactionToolbarSymbol = [
         },
         "insert":"f = "
       },
-      { "insert":"0.XX (cyclohexane:ethyl acetate)\n" }
+      { "insert":"0.XX (cyclohexane:ethyl acetate)." }
     ]
   },
   {
@@ -198,9 +198,71 @@ const reactionToolbarSymbol = [
         },
         "insert": "f = "
       },
-      { "insert":"0.XX (cyclohexane:ethyl acetate)\n" }
+      { "insert":"0.XX (cyclohexane:ethyl acetate)." }
     ]
   },
 ]
 
-module.exports = {reactionToolbarSymbol};
+const sampleAnalysesContentSymbol = [
+  {
+    name: "h-nmr",
+    ops: [
+      { "attributes": { "script":"super" }, "insert": "1" },
+      { "insert":"H NMR (400 MHz, CDCl" },
+      { "attributes": { "script":"sub" }, "insert": "3" },
+      { "insert": "[MeOD/DMSO-d" },
+      { "attributes": { "script":"sub" }, "insert": "6" },
+      { "insert":"], ppm), δ =" }
+    ]
+  },
+  {
+    name: "c-nmr",
+    ops: [
+      { "attributes": { "script": "super" }, "insert": "13" },
+      { "insert":"C NMR (100 MHz, CDCl" },
+      { "attributes": { "script": "sub" }, "insert": "3" },
+      { "insert": "[MeOD/DMSO-d" },
+      { "attributes": { "script": "sub" }, "insert": "6" },
+      { "insert":"], ppm),  δ =" }
+    ]
+  },
+  {
+    name: "ir",
+    ops: [
+      { "insert": "IR (ATR, ṽ) = cm" },
+      { "attributes": { "script": "super" }, "insert": "-1" },
+      { "insert": "." }
+    ]
+  },
+  {
+    name: "ei",
+    ops: [
+      { "insert": "EI (m/z, 70 eV, XX °C): XXX (XX)." }
+    ]
+  },
+  {
+    name: "hr",
+    ops: [
+      { "insert": "HRMS (): calc. , found ." }
+    ]
+  },
+  {
+    name: "uv",
+    ops: [
+      { "insert": "UV-VIS (CH" },
+      { "attributes": { "script": "sub" }, "insert": "2" },
+      { "insert": "Cl" },
+      { "attributes": { "script": "sub" }, "insert": "2" },
+      { "insert": "), λ" },
+      { "attributes": { "script": "sub" }, "insert": "max" },
+      { "insert": "(log ε) = ." }    ]
+  },
+  {
+    name: "ea",
+    ops: [
+      { "insert":"EA (): calc. C H N O, found C H N O." }
+    ]
+  }
+]
+
+module.exports = {reactionToolbarSymbol, sampleAnalysesContentSymbol};
