@@ -6,8 +6,13 @@ describe 'Report::Docx::Document instance' do
   let(:r1) { create(:reaction, name: t1)}
   let(:r2) { create(:reaction, name: t2)}
   let(:s1) { create(:sample) }
-  let(:instance) { Report::Docx::Document.new(objs: [r1, r2, s1]) }
-  let(:content) { instance.convert }
+  let(:instance) do
+    Report::Docx::Document.new(objs: [r1, r2, s1],
+      spl_settings: all_spl_settings,
+      rxn_settings: all_rxn_settings,
+      configs: all_configs)
+  end
+  let!(:content) { instance.convert }
 
   it "returns an array class" do
     expect(content.class).to eq(Array)

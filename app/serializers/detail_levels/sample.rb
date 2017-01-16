@@ -6,7 +6,7 @@ class DetailLevels::Sample
       :real_amount_unit, :molfile, :purity, :solvent, :impurities, :location,
       :is_top_secret, :is_restricted, :external_label, :analyses,
       :analysis_kinds, :children_count, :parent_id, :imported_readout, :_contains_residues,
-      :sample_svg_file, :density, :boiling_point, :melting_point
+      :sample_svg_file, :density, :boiling_point, :melting_point, :reaction_description
     ]
   end
 

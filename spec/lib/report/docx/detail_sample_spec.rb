@@ -12,8 +12,14 @@ describe 'Report::Docx::DetailSample instance' do
       "description"=>"correct description",
       "datasets"=>[]}]
   end
+
   let(:s1)  { create(:sample, analyses: analyses) }
-  let(:instance) { Report::Docx::DetailSample.new(sample: s1) }
+  let(:instance) do
+    Report::Docx::DetailSample.new(sample: s1,
+      spl_settings: all_spl_settings,
+      rxn_settings: all_rxn_settings,
+      configs: all_configs)
+  end
 
   context '.content' do
     let!(:content) { instance.content }
@@ -28,14 +34,10 @@ describe 'Report::Docx::DetailSample instance' do
       expect(content[:structure].ole.name.split('.').last).to eq('bin')
     end
 
-    it "has correct analyses content" do
+    it "has correct content" do
       target_html = Sablon.content(:html,
                       Report::Delta.new(analyses[0]["content"]).getHTML)
-      expect(content[:analyses][0][:content]).to eq(target_html)
-    end
-
-    it "has correct analyses description" do
-      expect(content[:analyses][0][:description]).to eq(analyses[0]["description"])
+      expect(content[:analyses]).to eq(target_html)
     end
   end
 end

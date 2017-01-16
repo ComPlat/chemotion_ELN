@@ -117,12 +117,13 @@ module Chemotion
         spl_settings = hashize(JSON.parse(params[:splSettings]))
         rxn_settings = hashize(JSON.parse(params[:rxnSettings]))
         configs = hashize(JSON.parse(params[:configs]))
-        puts "- - -- - - "
-        puts spl_settings
 
         objs = objTags.map { |tag| tag["type"].camelize.constantize.find(tag["id"]) }
         contents = Report::Docx::Document.new(
                       objs: objs,
+                      spl_settings: spl_settings,
+                      rxn_settings: rxn_settings,
+                      configs: configs,
                       img_format: params[:img_format]
                     ).convert
 
@@ -151,8 +152,8 @@ module Chemotion
         {
           diagram: true,
           collection: true,
-          analyses_description: true,
-          analyses_content: true,
+          analyses: true,
+          reaction_description: true,
         }
       end
 
