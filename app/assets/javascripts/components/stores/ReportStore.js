@@ -136,14 +136,12 @@ class ReportStore {
       switch(obj.text) {
         case 'Page Break':
           return { text: "page_break", checked: obj.checked };
-          break;
         case 'Show all material in diagrams (unchecked to show Products only)':
           if(obj.checked) {
             return { text: "whole_diagram", checked: obj.checked };
           } else {
             return { text: "product_diagram", checked: !obj.checked };
           }
-          break;
         default:
           return obj;
       }
