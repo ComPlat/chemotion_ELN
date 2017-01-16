@@ -3,6 +3,7 @@ class Sample < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include UnitConvertable
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
@@ -344,26 +345,8 @@ class Sample < ActiveRecord::Base
     self.analyses_dump = json_dump
   end
 
-  def amount_mmol type = 'target'
-    divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
-    if self.loading
-      (self["#{type}_amount_value"] || 0.0) * loading.to_f
-    else
-      1000.0 * (self["#{type}_amount_value"] || 0.0) / self.molecule.molecular_weight
-    end / divisor
-  end
-
-  def amount_mg type = 'target'
-    multiplier = self["#{type}_amount_unit"] == 'g' ? 1000.0 : 1.0
-    (self["#{type}_amount_value"] || 0.0) * multiplier
-  end
-
-  def amount_ml type = 'target'
-    return if self.molecule.is_partial
-
-    divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
-
-    (self["#{type}_amount_value"] || 0.0) / (self.molecule.density || 1.0) / divisor
+  def contains_residues
+    self.residues.any?
   end
 
   def preferred_label
