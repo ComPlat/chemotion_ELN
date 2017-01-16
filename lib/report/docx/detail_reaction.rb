@@ -96,10 +96,10 @@ module Report
                         short_label: sample.short_label,
                         formular: sample.molecule.sum_formular,
                         mol_w: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.target_amount_value.try(:round, digit),
-                        vol: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
+                        mass: sample.amount_g.try(:round, digit),
+                        vol: sample.amount_ml.try(:round, digit),
                         density: sample.density.try(:round, digit),
-                        mol: (sample.target_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
+                        mol: sample.amount_mmol.try(:round, digit),
                         equiv: s.equivalent.try(:round, digit)
           })
         end
@@ -115,10 +115,10 @@ module Report
                         short_label: sample.short_label,
                         formular: sample.molecule.sum_formular,
                         mol_w: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.target_amount_value.try(:round, digit),
-                        vol: (sample.target_amount_value / sample.density.to_f).try(:round, digit),
+                        mass: sample.amount_g.try(:round, digit),
+                        vol: sample.amount_ml.try(:round, digit),
                         density: sample.density.try(:round, digit),
-                        mol: (sample.target_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
+                        mol: sample.amount_mmol.try(:round, digit),
                         equiv: r.equivalent.try(:round, digit)
           })
         end
@@ -135,10 +135,10 @@ module Report
                         short_label: sample.short_label,
                         formular: sample.molecule.sum_formular,
                         mol_w: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.real_amount_value.try(:round, digit),
-                        vol: (sample.real_amount_value / sample.density.to_f).try(:round, digit),
+                        mass: sample.amount_g(:real).try(:round, digit),
+                        vol: sample.amount_ml(:real).try(:round, digit),
                         density: sample.density.try(:round, digit),
-                        mol: (sample.real_amount_value / sample.molecule.molecular_weight.to_f).try(:round, digit),
+                        mol: sample.amount_mmol(:real).try(:round, digit),
                         equiv: p.equivalent.nil? || (p.equivalent*100).nan? ? "0%" : "#{(p.equivalent*100).try(:round, 0)}%"
           })
         end
