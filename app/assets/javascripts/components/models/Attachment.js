@@ -9,7 +9,7 @@ export default class Attachment extends Element {
         //name: file.name,
         filename: file.name, //neu
         identifier: file.id,
-        preview: file.preview,
+        //preview: file.preview,
         is_deleted: false,
       }
     )

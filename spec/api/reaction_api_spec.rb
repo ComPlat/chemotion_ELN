@@ -366,7 +366,8 @@ describe Chemotion::ReactionAPI do
                  "equivalent" => 1,
                      "is_new" => true,
                    "is_split" => true,
-                   "molecule" => {molfile: ""}
+                   "molecule" => {molfile: ""},
+                   "container" => sample_1.container
               ],
               "reactants" => [
                          "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336",
@@ -379,7 +380,8 @@ describe Chemotion::ReactionAPI do
                  "equivalent" => 2,
                      "is_new" => true,
                    "is_split" => false,
-                   "molecule" => {molfile: ""}
+                   "molecule" => {molfile: ""},
+                   "container" => sample_1.container
               ]
             }
           }

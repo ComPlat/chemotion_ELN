@@ -77,15 +77,7 @@ export default class ContainerDataset extends Component {
   }
 
   handleAttachmentDownload(attachment) {
-    if(attachment.preview) {
-      //Utils.downloadFile({contents: attachment.preview,
-      //  filename: attachment.filename,
-      //  identifier: attachment.identifier});
       Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
-    }
-    else {
-      Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
-    }
   }
 
   handleAttachmentRemove(attachment) {

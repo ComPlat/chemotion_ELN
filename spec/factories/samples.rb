@@ -22,6 +22,9 @@ FactoryGirl.define do
       sample.creator = FactoryGirl.build(:user) unless sample.creator
       sample.collections << FactoryGirl.build(:collection) #if sample.collections.blank?
       sample.molecule = FactoryGirl.build(:molecule) unless sample.molecule
+
+      sample.container = FactoryGirl.build(:container) unless sample.container
+
     end
   end
 end

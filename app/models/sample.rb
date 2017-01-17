@@ -211,7 +211,7 @@ class Sample < ActiveRecord::Base
 
     subsample.collections << Collection.find(collection_id)
 
-    #subsample.container = ContainerHelper.create_root_container
+    subsample.container = ContainerHelper.create_root_container
 
     subsample.save!
 

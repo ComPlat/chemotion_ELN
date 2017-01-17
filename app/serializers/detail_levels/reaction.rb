@@ -3,7 +3,7 @@ class DetailLevels::Reaction
     [
       :id, :type, :name, :created_at, :updated_at, :description, :timestamp_start, :timestamp_stop,
       :observation, :purification, :dangerous_products, :solvent, :tlc_solvents, :tlc_description,
-      :rf_value, :temperature, :status, :reaction_svg_file, :analysis_kinds, :short_label
+      :rf_value, :temperature, :status, :reaction_svg_file, :analysis_kinds, :short_label, :container
     ]
   end
 

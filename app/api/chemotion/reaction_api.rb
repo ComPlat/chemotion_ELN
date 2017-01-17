@@ -274,6 +274,7 @@ module ReactionUpdator
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
 
+
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
@@ -306,7 +307,7 @@ module ReactionUpdator
               subsample.collections << collections.where.not(id: first_collection_id)
 
               #add new data container
-              subsample.container = ContainerHelper.create_root_container
+              #subsample.container = ContainerHelper.create_root_container
 
               subsample.save!
               subsample.reload
@@ -330,6 +331,7 @@ module ReactionUpdator
                 attributes.merge!(name: named_by_reaction)
               end
               ####
+              container_info = attributes[:container]
               attributes.delete(:container)
 
               new_sample = Sample.new(
@@ -337,7 +339,7 @@ module ReactionUpdator
               )
 
               #add new data container
-              new_sample.container = ContainerHelper.create_root_container
+              new_sample.container = ContainerHelper.update_datamodel(container_info)
 
               new_sample.collections << collections
               new_sample.save!

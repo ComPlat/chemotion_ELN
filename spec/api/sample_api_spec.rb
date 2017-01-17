@@ -118,7 +118,14 @@ describe Chemotion::SampleAPI do
             impurities: '',
             location: '',
             molfile: '',
-            is_top_secret: false
+            is_top_secret: false,
+            container: {
+              attachments: [],
+              children: [],
+              is_new: true,
+              is_deleted: false,
+              name: 'new'
+            }
           }
         }
 
@@ -231,7 +238,14 @@ describe Chemotion::SampleAPI do
             melting_point: 200,
           #  molecule: FactoryGirl.create(:molecule),
             molfile: '',
-            is_top_secret: false
+            is_top_secret: false,
+            container: {
+              attachments: [],
+              children: [],
+              is_new: true,
+              is_deleted: false,
+              name: 'new'
+            }
           }
         }
 
@@ -240,6 +254,10 @@ describe Chemotion::SampleAPI do
         it 'should be able to create a new sample' do
           s = Sample.find_by(name: 'test')
           expect(s).to_not be_nil
+
+          #TODO Correct?
+          params.delete(:container)
+          #end
 
           params.each do |k, v|
             expect(s.attributes.symbolize_keys[k]).to eq(v)

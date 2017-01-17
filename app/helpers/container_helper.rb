@@ -11,7 +11,12 @@ module ContainerHelper
     end
     root_container.save!
 
-    create_or_update_containers(container.children, root_container)
+    if container.children != nil
+      create_or_update_containers(container.children, root_container)
+    end
+
+    #root-Container can not contain attachments!!
+
 
     return root_container
   end
