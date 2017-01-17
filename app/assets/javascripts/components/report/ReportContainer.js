@@ -1,8 +1,5 @@
 import React, {Component} from 'react'
-import {Panel, Button, Tabs, Tab, Row, Col,
-        Tooltip, OverlayTrigger} from 'react-bootstrap';
-import StickyDiv from 'react-stickydiv'
-import Aviator from 'aviator';
+import {Panel, Button, Tabs, Tab, Row, Col } from 'react-bootstrap';
 
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
@@ -27,7 +24,8 @@ export default class ReportContainer extends Component {
   componentDidMount() {
     ReportStore.listen(this.onChange)
     UIStore.listen(this.onChangeUI)
-    UIActions.selectTab.defer(2)
+    let state = UIStore.getState();
+    this.onChangeUI(state)
   }
 
   componentWillUnmount() {
@@ -144,8 +142,8 @@ export default class ReportContainer extends Component {
   }
 
   closeDetails() {
-    UIActions.deselectAllElements();
-    Aviator.navigate(`/collection/all`);
+    UIActions.uncheckWholeSelection();
+    UIActions.deselectAllElements()
   }
 
   toggleSplSettingsAll() {

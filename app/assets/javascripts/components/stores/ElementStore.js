@@ -10,7 +10,6 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import ModalImportConfirm from '../contextActions/ModalImportConfirm'
-import ResearchPlan from '../models/ResearchPlan'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
