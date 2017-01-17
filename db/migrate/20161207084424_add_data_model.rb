@@ -1,6 +1,9 @@
 class AddDataModel < ActiveRecord::Migration
   def up
 
+    drop_table :containers, if_exists: true
+    drop_table :attachments, if_exists: true
+    
     create_table :containers do |t|
       t.string :ancestry, index: true
       t.integer :element_id
