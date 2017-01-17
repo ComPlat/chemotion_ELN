@@ -220,6 +220,7 @@ describe Chemotion::SampleAPI do
             name: 'test',
             target_amount_value: 0,
             target_amount_unit: 'g',
+            external_label: 'test extlabel',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
