@@ -379,6 +379,7 @@ module Chemotion
         attributes = {
           name: params[:name],
           short_label: params[:short_label],
+          external_label: params[:external_label],
           target_amount_value: params[:target_amount_value],
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],
