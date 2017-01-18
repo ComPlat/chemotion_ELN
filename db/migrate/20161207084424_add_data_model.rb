@@ -103,9 +103,6 @@ class AddDataModel < ActiveRecord::Migration
             storage.update(uuid, d_con.id)
           end
 
-          ###THUMBNAIL ???
-
-
         end
 
       end

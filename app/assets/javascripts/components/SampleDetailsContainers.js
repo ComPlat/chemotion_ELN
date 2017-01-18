@@ -70,27 +70,77 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
+  toggleAddToReport(e, container) {
+    e.stopPropagation();
+    container.report = !container.report;
+    this.handleChange(container);
+  }
+
+  analysisHeader(container, readOnly) {
+    const confirmDelete = () => {
+      if(confirm('Delete the analysis?')) {
+        this.handleRemove(container)
+      }
+    };
+    const kind = (container.extended_metadata['kind'] && container.extended_metadata['kind'] != '')
+      ? (' - Type: ' + container.extended_metadata['kind'])
+      : ''
+    const status = (container.extended_metadata['status'] && container.extended_metadata['status'] != '')
+      ? (' - Status: ' + container.extended_metadata['status'])
+      :''
+    const inReport = container.report === true;
+
+    return (
+      <div style={{width: '100%'}}>
+        {container.name}
+        {kind}
+        {status}
+        <div className="button-right">
+          <label>
+            <input onClick={(e) => this.toggleAddToReport(e, container)}
+                   type="checkbox"
+                   checked={inReport} />
+            <span>Add to Report</span>
+          </label>
+          <Button bsSize="xsmall"
+                  bsStyle="danger"
+                  className="g-marginLeft--20"
+                  disabled={readOnly}
+                  onClick={confirmDelete}>
+            <i className="fa fa-trash"></i>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  analysisHeaderDeleted(container, readOnly) {
+
+    const kind = (container.extended_metadata['kind'] && container.extended_metadata['kind'] != '')
+      ? (' - Type: ' + container.extended_metadata['kind'])
+      : ''
+    const status = (container.extended_metadata['status'] && container.extended_metadata['status'] != '')
+      ? (' - Status: ' + container.extended_metadata['status'])
+      :''
+    const inReport = container.report === true;
+
+    return (
+      <div style={{width: '100%'}}>
+        <strike>{container.name}
+        {kind}
+        {status}</strike>
+        <div className="button-right">
+          <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
+            <i className="fa fa-undo"></i>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const {sample, activeContainer} = this.state;
     const {readOnly} = this.props;
-
-    let containerHeader = (container) => <p style={{width: '100%'}}>{container.name}
-      {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
-      {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
-      <Button bsSize="xsmall" bsStyle="danger"
-         className="button-right" disabled={readOnly}
-        onClick={() => {if(confirm('Delete the container?')) {this.handleRemove(container)}}}>
-        <i className="fa fa-trash"></i>
-      </Button></p>
-
-      let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
-        {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
-        </strike>
-        <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
-          <i className="fa fa-undo"></i>
-        </Button>
-        </p>
 
     if(sample.container != null){
 
@@ -104,13 +154,13 @@ export default class SampleDetailsContainers extends Component {
           {analyses_container[0].children.map((container, key) => {
             if (container.is_deleted){
               return (
-                <Panel header={containerHeaderDeleted(container)} eventKey={key}
+                <Panel header={this.analysisHeaderDeleted(container, readOnly)} eventKey={key}
                     key={key} >
                     </Panel>
                   );
                 }else {
               return (
-                <Panel header={containerHeader(container)} eventKey={key}
+                <Panel header={this.analysisHeader(container, readOnly)} eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
                   <ContainerComponent
                     readOnly={readOnly}

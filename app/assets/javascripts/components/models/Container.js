@@ -3,13 +3,17 @@ import Attachment from './Attachment';
 
 export default class Container extends Element {
   static buildEmpty() {
+    const content_default = { "ops": [{ "insert": "" }] }
     return new Container({
       name: 'new',
       children: [],
       attachments: [],
       is_deleted: false,
       description: '',
-      extended_metadata: {},
+      content: content_default,
+      extended_metadata: {
+        content: content_default
+      },
       container_type: '',
       report: true,
     })

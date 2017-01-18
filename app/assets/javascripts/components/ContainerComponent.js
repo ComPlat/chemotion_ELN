@@ -2,6 +2,9 @@ import React, {Component} from 'react';
 import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
 import Select from 'react-select'
 import ContainerDatasets from './ContainerDatasets';
+import QuillEditor from './QuillEditor'
+
+import {sampleAnalysesContentSymbol} from './utils/quillToolbarSymbol'
 
 export default class ContainerComponent extends Component {
   constructor(props) {
@@ -32,7 +35,7 @@ export default class ContainerComponent extends Component {
         container.extended_metadata['status'] = value;
         break;
       case 'content':
-        container.extended_metadata['content'] = value;
+        container.content = value;
         break;
       case 'description':
         container.description = value;
@@ -92,12 +95,10 @@ export default class ContainerComponent extends Component {
         <Col md={12}>
         <FormGroup>
           <ControlLabel>Content</ControlLabel>
-          <FormControl
-            componentClass="textarea"
-            label="Content"
-            value={container.extended_metadata['content'] || ''}
+          <QuillEditor value={container.content}
+            onChange={event => this.handleInputChange('content', {target: {value: event}})}
             disabled={readOnly}
-            onChange={event => this.handleInputChange('content', event)}
+            toolbarSymbol={sampleAnalysesContentSymbol}
             />
         </FormGroup>
           <FormGroup>
