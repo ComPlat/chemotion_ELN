@@ -26,7 +26,7 @@ class Import::ImportSdf
     if file_path
       size = File.size(file_path)
       if size.to_f < SIZE_LIMIT*10**6
-        @raw_data = File.readlines(file_path,"$$$$\n")
+        @raw_data = File.read(file_path).split(/\${4}\r?\n/)
       else
         @message[:error] << "File too large (over #{SIZE_LIMIT}MB). "
       end
