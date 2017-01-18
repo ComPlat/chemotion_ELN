@@ -89,12 +89,23 @@ class AddDataModel < ActiveRecord::Migration
         d_con.save!
 
         dataset["attachments"].each do |attach|
-          sha256 = Digest::SHA256.file("uploads/check.pdf").hexdigest
 
-          storage = Storage.new
-          uuid = SecureRandom.uuid
-          storage.create(uuid, "filename", IO.binread("uploads/check.pdf"), sha256, user_id, user_id)
-          storage.update(uuid, d_con.id)
+          file_ext = attach["name"].split('.')[1]
+
+          file_id = "uploads/attachments/" + attach["filename"] + "." + file_ext
+
+          if File.exists?(file_id)
+            sha256 = Digest::SHA256.file(file_id).hexdigest
+
+            storage = Storage.new
+            uuid = SecureRandom.uuid
+            storage.create(uuid, attach["name"], IO.binread(file_id), sha256, user_id, user_id)
+            storage.update(uuid, d_con.id)
+          end
+
+          ###THUMBNAIL ???
+
+
         end
 
       end
