@@ -11,6 +11,7 @@ export default class Container extends Element {
       description: '',
       extended_metadata: {},
       container_type: '',
+      report: true,
     })
   }
 
@@ -61,6 +62,7 @@ export default class Container extends Element {
       description: this.description,
       extended_metadata: this.extended_metadata,
       container_type: this.container_type,
+      report: this.report,
     })
   }
 

@@ -6,7 +6,7 @@ export default class Attachment extends Element {
     return new Attachment(
       {
         file: file,
-        //name: file.name,
+        name: file.name,
         filename: file.name, //neu
         identifier: file.id,
         //preview: file.preview,

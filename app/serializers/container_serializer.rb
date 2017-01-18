@@ -1,5 +1,5 @@
 class ContainerSerializer < ActiveModel::Serializer
-  attributes :id, :name, :container_type, :description, :extended_metadata, :descendant_ids
+  attributes :id, :name, :container_type, :description, :extended_metadata, :descendant_ids, :report
 
   has_many :children
   has_many :attachments, :serializer => AttachmentSerializer

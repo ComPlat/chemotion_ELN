@@ -1,9 +1,7 @@
+
+
 class AddDataModel < ActiveRecord::Migration
   def up
-
-    drop_table :containers, if_exists: true
-    drop_table :attachments, if_exists: true
-    
     create_table :containers do |t|
       t.string :ancestry, index: true
       t.integer :element_id
@@ -11,6 +9,7 @@ class AddDataModel < ActiveRecord::Migration
       t.string :name
       t.string :container_type
       t.text :description
+      t.boolean :report
       t.hstore :extended_metadata, default: ''
 
       t.timestamps null: false
@@ -33,6 +32,10 @@ class AddDataModel < ActiveRecord::Migration
       if s.container == nil
         s.container = ContainerHelper.create_root_container
         s.save!
+
+        ana_con = s.container.children.detect { |con| con.container_type == "analyses" }
+
+        data_migration(s.created_by, ana_con, s.analyses)
       end
     end
 
@@ -60,5 +63,44 @@ class AddDataModel < ActiveRecord::Migration
   end
 
   def down
+    drop_table :containers
+    drop_table :attachments
   end
+
+  def data_migration(user_id, analyses_con, old_analyses)
+
+    old_analyses.each do |ana|
+      ana_con = Container.create! :parent => analyses_con
+      ana_con.container_type = ana["type"]
+      ana_con.name = ana["name"]
+      ana_con.description = ana["description"]
+      ana_con.report = ana["report"]
+      ana_con.extended_metadata["kind"] = ana["kind"]
+      ana_con.extended_metadata["status"] = ana["status"]
+
+      ana_con.save!
+
+      ana["datasets"].each do |dataset|
+        d_con = Container.create! :parent => ana_con
+        d_con.container_type = dataset["type"]
+        d_con.name = dataset["name"]
+        d_con.description = dataset["description"]
+        d_con.extended_metadata["instrument"] = dataset["instrument"]
+        d_con.save!
+
+        dataset["attachments"].each do |attach|
+          sha256 = Digest::SHA256.file("uploads/check.pdf").hexdigest
+
+          storage = Storage.new
+          uuid = SecureRandom.uuid
+          storage.create(uuid, "filename", IO.binread("uploads/check.pdf"), sha256, user_id, user_id)
+          storage.update(uuid, d_con.id)
+        end
+
+      end
+
+    end
+  end
+
+
 end
