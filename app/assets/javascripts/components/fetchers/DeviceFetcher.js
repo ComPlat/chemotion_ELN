@@ -40,7 +40,7 @@ export default class DeviceFetcher {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'DELETE',
-      jsonTranformation: (json) => {}
+      jsonTranformation: (json) => {new Device(json)}
     })
   }
 }

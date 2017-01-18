@@ -8,6 +8,7 @@ import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import Device from '../models/Device'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -49,7 +50,8 @@ class ElementStore {
           perPage: null
         },
         devices: {
-          elements: []
+          devices: [],
+          activeDevice: 0
         }
       },
       currentElement: null,
@@ -70,8 +72,10 @@ class ElementStore {
       handleFetchAllDevices: ElementActions.fetchAllDevices,
       handleFetchDeviceById: ElementActions.fetchDeviceById,
       handleCreateDevice: ElementActions.createDevice,
-      handleUpdateDevice: ElementActions.updateDevice,
+      handleSaveDevice: ElementActions.saveDevice,
       handleDeleteDevice: ElementActions.deleteDevice,
+      handleToggleDeviceType: ElementActions.toggleDeviceType,
+      handleChangeActiveDevice: ElementActions.changeActiveDevice,
       
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -146,35 +150,49 @@ class ElementStore {
   }
 
   handleFetchAllDevices(devices) {
-    this.state.elements['devices'].elements = devices
+    this.state.elements['devices'].devices = devices
   }
 
   handleFetchDeviceById(device) {
     this.state.currentElement = device
   }
 
-  handleCreateDevice(device) {
-    const deviceId = this.state.elements['devices'].elements.findIndex(
-      (e) => e._checksum === device._checksum
-    )
+  handleSaveDevice(device) {
+    const {devices} = this.state.elements['devices']
+    const deviceId = devices.findIndex((e) => e.code === device.code)
     if (deviceId == -1) {
-      this.state.elements['devices'].elements.push(device)
+      this.state.elements['devices'].devices.push(device)
     } else {
-      this.state.elements['devices'].elements[deviceId] = device
+      this.state.elements['devices'].devices[deviceId] = device
     }
   }
 
-  handleUpdateDevice(device) {
-    const deviceId = this.state.elements['devices'].elements.findIndex(
-      (e) => e.id === device.id
-    )
-    this.state.elements['devices'].elements[deviceId] = device
+  handleToggleDeviceType({device, type}) {
+    const {devices} = this.state.elements['devices']
+    if (device.types.includes(type)) {
+      device.types = device.types.filter((e) => e !== type)
+    } else {
+      device.types.push(type)
+    }
+    const deviceKey = devices.findIndex((e) => e.id === device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
   }
 
-  handleDeleteDevice(deviceId) {
-    const {elements} = this.state.elements['devices']
-    console.log(deviceId)
-    this.state.elements['devices'].elements = elements.filter((e) => e.id !== deviceId)
+  handleChangeActiveDevice(key) {
+    this.state.elements['devices'].activeDevice = key
+  }
+
+  handleCreateDevice() {
+    const {devices} = this.state.elements['devices']
+    const newDevice = Device.buildEmpty()
+    const newKey = devices.length
+    this.state.elements['devices'].activeDevice = newKey
+    this.state.elements['devices'].devices.push(newDevice)
+  }
+
+  handleDeleteDevice(device) {
+    const {devices} = this.state.elements['devices']
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
 

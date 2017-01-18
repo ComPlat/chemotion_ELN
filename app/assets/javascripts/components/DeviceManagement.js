@@ -1,73 +1,50 @@
 import React, {Component} from 'react'
-import DeviceModel from './models/Device'
+import connectToStores from 'alt-utils/lib/connectToStores'
 import {PanelGroup, Panel, ButtonGroup, Button, Row, Col} from 'react-bootstrap';
 import ElementActions from './actions/ElementActions'
 import ElementStore from './stores/ElementStore'
 
-export default class DeviceManagement extends Component {
-  constructor(props) {
-    super()
-    this.state = {
-      devices: [],
-      activeDevice: 0
-    };
-  }
+const DeviceManagement = ({devices, activeDevice}) => {
+  return (
+    <div>
+      <h1>Devices</h1>
+      <AddDeviceButton
+        activeDevice={activeDevice}
+      />
+      <Devices
+        devices={devices}
+        activeDevice={activeDevice}
+      />
+    </div>
+  )
+}  
 
-  componentDidMount() {
-    ElementStore.listen((state) => this.onChange(state))
-    ElementActions.fetchAllDevices()
-  }
-
-  componentWillUnmount() {
-    LocationStore.unlisten((state) => this.onChange(state))
-  }
-  
-  onChange(state) {
-    const {devices} = state.elements
-    this.setState({devices: devices.elements})
-  }
-
-  render() {
-    return (
-      <div>
-        <h1>Devices</h1>
-        <AddDeviceButton
-          state={this.state}
-          onChangeState={(state) => this.setState(state)}
-        />
-        <Devices
-          state={this.state}
-          onChangeState={(state) => this.setState(state)}
-        />
-      </div>
-    )
-  }
+DeviceManagement.getStores = () => {
+  ElementActions.fetchAllDevices()
+  return [ElementStore]
 }
 
-const Devices = ({state, onChangeState}) => {
-  const {devices, activeDevice} = state
+DeviceManagement.getPropsFromStores = () => {
+  return ElementStore.getState().elements.devices
+}
 
-  const handleOpenAccordion = (key) => {
-    state.activeDevice = key
-    onChangeState(state)
-  }
+export default connectToStores(DeviceManagement)
 
+const Devices = ({devices, activeDevice}) => {
   if(devices.length > 0) {
     return (
         <PanelGroup defaultActiveKey={0} activeKey={activeDevice} accordion>
           {devices.map(
             (device, key) =>
               <Panel
-                header={<DeviceHeader device={device} state={state} onChangeState={onChangeState}/>}
+                header={<DeviceHeader device={device}/>}
                 eventKey={key}
                 key={key}
-                onClick={() => handleOpenAccordion(key)}
+                onClick={() => ElementActions.changeActiveDevice(key)}
                 bsStyle={device.is_new ? "info" : "default"}
               >
                 <Device
-                  state={state}
                   device={device}
-                  onChangeState={onChangeState}
                 />
               </Panel>
           )}
@@ -82,8 +59,7 @@ const Devices = ({state, onChangeState}) => {
   }
 }
 
-const Device = ({device, state, onChangeState}) => {
-  
+const Device = ({device}) => {
   const styleBySelectedType = (type) => {
     return device.types.includes(type) 
       ? {background: "lightblue"}
@@ -91,22 +67,11 @@ const Device = ({device, state, onChangeState}) => {
   }
 
   const handleTypeClick = (type) => {
-    if (device.types.includes(type)) {
-      device.types = device.types.filter((e) => e !== type)
-    } else {
-      device.types.push(type)
-    }
-    const deviceKey = state.devices.findIndex((e) => e.id === device.id)
-    state.devices[deviceKey] = device
-    onChangeState(state)
+    ElementActions.toggleDeviceType(device, type)
   }
 
   const handleSave = () => {
-    if(device.is_new) {
-      ElementActions.createDevice(device)
-    } else {
-      ElementActions.updateDevice(device)
-    }
+    ElementActions.saveDevice(device)
   }
 
   return (
@@ -153,18 +118,15 @@ const Device = ({device, state, onChangeState}) => {
 }
 
 const DeviceHeader = ({device, state, onChangeState}) => {
-  const handleRemoveDevice = () => {
+  const handleRemoveDevice = (e) => {
     if(confirm('Delete the Device?')) {
-      if(!device.is_new) {
-        ElementActions.deleteDevice(device)
-      }
-      state.devices = state.devices.filter((e) => e.id !== device.id)
-      onChangeState(state)
+      ElementActions.deleteDevice(device)
     }
+    e.preventDefault()
   }
 
   return (
-    <p style={{
+    <div style={{
       width: '100%',
       cursor: "pointer"
     }}>
@@ -173,28 +135,19 @@ const DeviceHeader = ({device, state, onChangeState}) => {
         bsSize="xsmall"
         bsStyle="danger"
         className="button-right"
-        onClick={() => handleRemoveDevice()}
+        onClick={(e) => handleRemoveDevice(e)}
       >
         <i className="fa fa-trash"></i>
       </Button>
-    </p>
+    </div>
   )
 }
 
-const AddDeviceButton = (props) => {
-  const handleAddDevice = ({state, onChangeState}) => {
-    const {devices, activeDevice} = state
-    const newDevice = DeviceModel.buildEmpty()
-    const newKey = devices.length
-    state.activeDevice = newKey
-    state.devices.push(newDevice)
-    onChangeState(state)
-  }
-
+const AddDeviceButton = () => {
   return (
     <p>
       &nbsp;
-      <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => handleAddDevice(props)}>
+      <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => ElementActions.createDevice()}>
         Add device
       </Button>
     </p>
