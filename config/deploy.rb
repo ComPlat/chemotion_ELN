@@ -46,7 +46,9 @@ after 'deploy:publishing', 'deploy:restart'
 namespace :deploy do
 
   task :backup do
-    on roles :app do
+    server_name = ""
+    on roles :app do |server|
+      server_name = server.hostname
       within "#{fetch(:deploy_to)}/current/" do
         with RAILS_ENV: fetch(:rails_env) do
           execute :bundle, 'exec backup perform -t deploy_backup -c backup/config.rb'
@@ -55,8 +57,10 @@ namespace :deploy do
     end
 
     # RSync local folder with server backups
-    backup_dir = "#{fetch(:user)}@#{fetch(:server)}:#{fetch(:deploy_to)}/shared/backup"
-    system("rsync -r #{backup_dir}/deploy_backup backup")
+    backup_dir = "#{fetch(:user)}@#{server_name}:#{fetch(:deploy_to)}/shared/backup"
+    unless system("rsync -r #{backup_dir}/deploy_backup backup")
+      raise 'Error while sync backup folder'
+    end
   end
 
   task :restart do
