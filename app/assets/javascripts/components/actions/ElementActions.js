@@ -28,34 +28,36 @@ import Device from '../models/Device'
 import _ from 'lodash';
 
 const handleDispatch = (dispatch, fetch) => {
-  return (dispatch) => {
-     fetch()
-      .then((result) => {dispatch(result)})
-      .catch((errorMessage) => {console.log(errorMessage)})
-   }
+  return fetch()
+    .then((result) => {dispatch(result)})
+    .catch((errorMessage) => {console.log(errorMessage)})
 }
 
 class ElementActions {
   // -- Devices --
   //
   fetchAllDevices() {
-    return handleDispatch(dispatch, () => DeviceFetcher.fetchAll())
+    return (dispatch) => handleDispatch(dispatch, () => DeviceFetcher.fetchAll())
   }
 
-  fetchDeviceById() {
-    return handleDispatch(dispatch, () => DeviceFetcher.fetchById())
+  fetchDeviceById(deviceId) {
+    return (dispatch) => handleDispatch(dispatch, () => DeviceFetcher.fetchById(deviceId))
   }
 
-  createDevice() {
-    return handleDispatch(dispatch, () => DeviceFetcher.create(device))
+  createDevice(device) {
+    return (dispatch) => handleDispatch(dispatch, () => DeviceFetcher.create(device))
   }
 
   updateDevice(device) {
-    return handleDispatch(dispatch, () => DeviceFetcher.update(device))
+    return (dispatch) => handleDispatch(dispatch, () => DeviceFetcher.update(device))
   }
 
   deleteDevice(device) {
-    return handleDispatch(dispatch, () => DeviceFetcher.delete(device))
+    console.log(device)
+    if (!device.isNew) {
+      return (dispatch) => handleDispatch(dispatch, () => DeviceFetcher.delete(device))
+    }
+    return device.id
   }
   
   // -- Search --

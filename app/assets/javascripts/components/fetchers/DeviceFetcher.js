@@ -20,18 +20,27 @@ export default class DeviceFetcher {
 
   static create(device) {
     return BaseFetcher.withBodyData({
-      apiEndpoint: `/api/v1/devices/${device.id}`,
+      apiEndpoint: '/api/v1/devices',
       requestMethod: 'POST',
-      body: device,
+      bodyData: device,
       jsonTranformation: (json) => new Device(json)
     })
   }
 
   static update(device) {
-  
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/devices/${device.id}`,
+      requestMethod: 'PUT',
+      bodyData: device,
+      jsonTranformation: (json) => new Device(json)
+    })
   }
 
   static delete(device) {
-  
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/devices/${device.id}`,
+      requestMethod: 'DELETE',
+      jsonTranformation: (json) => {}
+    })
   }
 }

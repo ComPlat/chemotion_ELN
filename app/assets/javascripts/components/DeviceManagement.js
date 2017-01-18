@@ -1,6 +1,8 @@
 import React, {Component} from 'react'
 import DeviceModel from './models/Device'
 import {PanelGroup, Panel, ButtonGroup, Button, Row, Col} from 'react-bootstrap';
+import ElementActions from './actions/ElementActions'
+import ElementStore from './stores/ElementStore'
 
 export default class DeviceManagement extends Component {
   constructor(props) {
@@ -9,6 +11,20 @@ export default class DeviceManagement extends Component {
       devices: [],
       activeDevice: 0
     };
+  }
+
+  componentDidMount() {
+    ElementStore.listen((state) => this.onChange(state))
+    ElementActions.fetchAllDevices()
+  }
+
+  componentWillUnmount() {
+    LocationStore.unlisten((state) => this.onChange(state))
+  }
+  
+  onChange(state) {
+    const {devices} = state.elements
+    this.setState({devices: devices.elements})
   }
 
   render() {
@@ -46,7 +62,7 @@ const Devices = ({state, onChangeState}) => {
                 eventKey={key}
                 key={key}
                 onClick={() => handleOpenAccordion(key)}
-                bsStyle={device.is_new ? "info" : ""}
+                bsStyle={device.is_new ? "info" : "default"}
               >
                 <Device
                   state={state}
@@ -85,6 +101,14 @@ const Device = ({device, state, onChangeState}) => {
     onChangeState(state)
   }
 
+  const handleSave = () => {
+    if(device.is_new) {
+      ElementActions.createDevice(device)
+    } else {
+      ElementActions.updateDevice(device)
+    }
+  }
+
   return (
     <div>
       <div
@@ -119,7 +143,11 @@ const Device = ({device, state, onChangeState}) => {
         </Button>
       </ButtonGroup>
       <br/>
-      <Button>Save</Button>
+      <Button
+        onClick={(e) => handleSave()}
+      >
+        Save
+      </Button>
     </div>
   )
 }
@@ -127,6 +155,9 @@ const Device = ({device, state, onChangeState}) => {
 const DeviceHeader = ({device, state, onChangeState}) => {
   const handleRemoveDevice = () => {
     if(confirm('Delete the Device?')) {
+      if(!device.is_new) {
+        ElementActions.deleteDevice(device)
+      }
       state.devices = state.devices.filter((e) => e.id !== device.id)
       onChangeState(state)
     }

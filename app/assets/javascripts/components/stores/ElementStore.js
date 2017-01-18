@@ -47,6 +47,9 @@ class ElementStore {
           page: null,
           pages: null,
           perPage: null
+        },
+        devices: {
+          elements: []
         }
       },
       currentElement: null,
@@ -143,7 +146,7 @@ class ElementStore {
   }
 
   handleFetchAllDevices(devices) {
-    this.state.elements['device'] = devices
+    this.state.elements['devices'].elements = devices
   }
 
   handleFetchDeviceById(device) {
@@ -151,14 +154,27 @@ class ElementStore {
   }
 
   handleCreateDevice(device) {
-    // update id from backend
+    const deviceId = this.state.elements['devices'].elements.findIndex(
+      (e) => e._checksum === device._checksum
+    )
+    if (deviceId == -1) {
+      this.state.elements['devices'].elements.push(device)
+    } else {
+      this.state.elements['devices'].elements[deviceId] = device
+    }
   }
 
-  handleUpdateDevice() {
+  handleUpdateDevice(device) {
+    const deviceId = this.state.elements['devices'].elements.findIndex(
+      (e) => e.id === device.id
+    )
+    this.state.elements['devices'].elements[deviceId] = device
   }
 
-  handleDeleteDevice() {
-    // delete from elements
+  handleDeleteDevice(deviceId) {
+    const {elements} = this.state.elements['devices']
+    console.log(deviceId)
+    this.state.elements['devices'].elements = elements.filter((e) => e.id !== deviceId)
   }
 
 
