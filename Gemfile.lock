@@ -196,7 +196,9 @@ GEM
       i18n (~> 0.5)
     faraday (0.9.2)
       multipart-post (>= 1.2, < 3)
+    fast_stack (0.2.0)
     ffi (1.9.10)
+    flamegraph (0.9.5)
     font-awesome-rails (4.6.2.0)
       railties (>= 3.2, < 5.1)
     fontcustom (1.3.8)
@@ -278,6 +280,7 @@ GEM
       skinny (~> 0.2.3)
       sqlite3 (~> 1.3)
       thin (~> 1.5.0)
+    memory_profiler (0.9.7)
     mime-types (3.0)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0221)
@@ -314,6 +317,8 @@ GEM
     rack (1.6.4)
     rack-accept (0.4.5)
       rack (>= 0.4)
+    rack-mini-profiler (0.10.1)
+      rack (>= 1.2.0)
     rack-protection (1.5.3)
       rack
     rack-test (0.6.3)
@@ -418,6 +423,7 @@ GEM
     sshkit (1.10.0)
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
+    stackprof (0.2.10)
     term-ansicolor (1.3.2)
       tins (~> 1.0)
     thin (1.5.1)
@@ -486,6 +492,8 @@ DEPENDENCIES
   factory_girl_rails
   faker (~> 1.6.6)
   faraday
+  fast_stack
+  flamegraph
   font-awesome-rails
   fontcustom
   grape
@@ -500,12 +508,14 @@ DEPENDENCIES
   ketcherails!
   launchy (~> 2.4.3)
   mailcatcher
+  memory_profiler
   nokogiri
   openbabel (= 2.3.2.1)!
   paranoia (~> 2.0)
   pg
   pg_search
   pundit
+  rack-mini-profiler
   rails (= 4.2.0)
   rmagick
   roo (> 2.5.0)
@@ -517,6 +527,7 @@ DEPENDENCIES
   sdoc (~> 0.4.0)
   selenium-webdriver (~> 2.53.4)
   spring
+  stackprof
   thin
   thumbnailer!
   uglifier (>= 1.3.0)
