@@ -10,12 +10,11 @@ export default class Container extends Element {
       attachments: [],
       is_deleted: false,
       description: '',
-      content: content_default,
       extended_metadata: {
-        content: content_default
+        content: content_default,
+        report: true
       },
       container_type: '',
-      report: true,
     })
   }
 
@@ -66,7 +65,6 @@ export default class Container extends Element {
       description: this.description,
       extended_metadata: this.extended_metadata,
       container_type: this.container_type,
-      report: this.report,
     })
   }
 

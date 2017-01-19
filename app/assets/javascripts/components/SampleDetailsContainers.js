@@ -72,7 +72,7 @@ export default class SampleDetailsContainers extends Component {
 
   toggleAddToReport(e, container) {
     e.stopPropagation();
-    container.report = !container.report;
+    container.extended_metadata['report'] = !container.extended_metadata['report'];
     this.handleChange(container);
   }
 
@@ -88,7 +88,14 @@ export default class SampleDetailsContainers extends Component {
     const status = (container.extended_metadata['status'] && container.extended_metadata['status'] != '')
       ? (' - Status: ' + container.extended_metadata['status'])
       :''
-    const inReport = container.report === true;
+
+    var inReport;
+    if(typeof container.extended_metadata['report'] == 'string'){
+      inReport = container.extended_metadata['report'] === 'true'
+      container.extended_metadata['report'] = inReport;
+    }else{
+      inReport = container.extended_metadata['report'];
+    }
 
     return (
       <div style={{width: '100%'}}>
@@ -122,7 +129,6 @@ export default class SampleDetailsContainers extends Component {
     const status = (container.extended_metadata['status'] && container.extended_metadata['status'] != '')
       ? (' - Status: ' + container.extended_metadata['status'])
       :''
-    const inReport = container.report === true;
 
     return (
       <div style={{width: '100%'}}>
@@ -192,7 +198,7 @@ export default class SampleDetailsContainers extends Component {
       return (
         <div>
           <p className='noAnalyses-warning'>
-            There are currently no Analyses.
+            Not available.
           </p>
         </div>
       )

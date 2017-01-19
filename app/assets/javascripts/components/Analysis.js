@@ -96,11 +96,11 @@ export default class Analysis extends Component {
         <Col md={12}>
           <FormGroup>
             <ControlLabel>Content</ControlLabel>
-            <QuillEditor value={analysis.content}
-              onChange={event => this.handleInputChange('content', {target: {value: event}})}
-              disabled={readOnly}
-              toolbarSymbol={sampleAnalysesContentSymbol}
-            />
+              <QuillEditor value={analysis.content}
+                onChange={event => this.handleInputChange('content', {target: {value: event}})}
+                disabled={readOnly}
+                toolbarSymbol={sampleAnalysesContentSymbol}
+              />
           </FormGroup>
           <FormGroup>
             <ControlLabel>Description</ControlLabel>

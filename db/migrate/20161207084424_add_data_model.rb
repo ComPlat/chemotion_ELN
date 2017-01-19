@@ -9,7 +9,6 @@ class AddDataModel < ActiveRecord::Migration
       t.string :name
       t.string :container_type
       t.text :description
-      t.boolean :report
       t.hstore :extended_metadata, default: ''
 
       t.timestamps null: false
@@ -74,9 +73,10 @@ class AddDataModel < ActiveRecord::Migration
       ana_con.container_type = ana["type"]
       ana_con.name = ana["name"]
       ana_con.description = ana["description"]
-      ana_con.report = ana["report"]
+      ana_con.extended_metadata['report'] = ana["report"]
       ana_con.extended_metadata["kind"] = ana["kind"]
       ana_con.extended_metadata["status"] = ana["status"]
+      ana_con.extended_metadata["report"] = ana["report"]
 
       ana_con.save!
 
@@ -86,21 +86,26 @@ class AddDataModel < ActiveRecord::Migration
         d_con.name = dataset["name"]
         d_con.description = dataset["description"]
         d_con.extended_metadata["instrument"] = dataset["instrument"]
+
         d_con.save!
 
         dataset["attachments"].each do |attach|
 
-          file_ext = attach["name"].split('.')[1]
+          if attach['name']
+            split = attach["name"].split('.')
+            if split.length == 2
+              file_ext = split[1]
+              file_id = "uploads/attachments/" + attach["filename"] + "." + file_ext
 
-          file_id = "uploads/attachments/" + attach["filename"] + "." + file_ext
+              if File.exists?(file_id)
+                sha256 = Digest::SHA256.file(file_id).hexdigest
 
-          if File.exists?(file_id)
-            sha256 = Digest::SHA256.file(file_id).hexdigest
-
-            storage = Storage.new
-            uuid = SecureRandom.uuid
-            storage.create(uuid, attach["name"], IO.binread(file_id), sha256, user_id, user_id)
-            storage.update(uuid, d_con.id)
+                storage = Storage.new
+                uuid = SecureRandom.uuid
+                storage.create(uuid, attach["name"], IO.binread(file_id), sha256, user_id, user_id)
+                storage.update(uuid, d_con.id)
+              end
+            end
           end
 
         end

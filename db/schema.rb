@@ -114,7 +114,6 @@ ActiveRecord::Schema.define(version: 20170201113437) do
     t.string   "name"
     t.string   "container_type"
     t.text     "description"
-    t.boolean  "report"
     t.hstore   "extended_metadata", default: {}
     t.datetime "created_at",                     null: false
     t.datetime "updated_at",                     null: false

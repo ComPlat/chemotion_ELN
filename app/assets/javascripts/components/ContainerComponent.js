@@ -35,7 +35,7 @@ export default class ContainerComponent extends Component {
         container.extended_metadata['status'] = value;
         break;
       case 'content':
-        container.content = value;
+        container.extended_metadata['content'] = value;
         break;
       case 'description':
         container.description = value;
@@ -95,7 +95,7 @@ export default class ContainerComponent extends Component {
         <Col md={12}>
         <FormGroup>
           <ControlLabel>Content</ControlLabel>
-          <QuillEditor value={container.content}
+          <QuillEditor value={container.extended_metadata['content']}
             onChange={event => this.handleInputChange('content', {target: {value: event}})}
             disabled={readOnly}
             toolbarSymbol={sampleAnalysesContentSymbol}
