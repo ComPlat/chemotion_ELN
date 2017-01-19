@@ -43,6 +43,17 @@ set :rvm_ruby_version, (`cat .ruby-version`).strip
 before 'deploy:migrate', 'deploy:backup'
 after 'deploy:publishing', 'deploy:restart'
 
+
+namespace :git do
+  task :update_repo_url do
+    on roles(:all) do
+      within repo_path do
+        execute :git, 'remote', 'set-url', 'origin', fetch(:repo_url)
+      end
+    end
+  end
+end
+
 namespace :deploy do
 
   task :backup do
