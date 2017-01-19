@@ -5,6 +5,7 @@ import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor'
 
 import {sampleAnalysesContentSymbol} from './utils/quillToolbarSymbol'
+import {confirmOptions, kindOptions} from './staticDropdownOptions/options';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
@@ -81,7 +82,7 @@ export default class ContainerComponent extends Component {
             <Select
               name='status'
               multi={false}
-              options={statusOptions}
+              options={confirmOptions}
               value={container.extended_metadata['status']}
               disabled={readOnly}
               onChange={(event, selectedOptions) => {
@@ -124,43 +125,3 @@ export default class ContainerComponent extends Component {
     );
   }
 }
-
-const statusOptions = [{
-  label: "Confirmed",
-  value: "Confirmed"
-},{
-  label: "Unconfirmed",
-  value: "Unconfirmed"
-}];
-
-const kindOptions = [{
-  label: "1H NMR",
-  value: "1H NMR"
-},{
-  label: "13C NMR",
-  value: "13C NMR"
-},{
-  label: "Mass",
-  value: "Mass"
-},{
-  label: "IR",
-  value: "IR"
-},{
-  label: "EA",
-  value: "EA"
-},{
-  label: "GCMS",
-  value: "GCMS"
-},{
-  label: "HPLC",
-  value: "HPLC"
-},{
-  label: "TLC",
-  value: "TLC"
-},{
-  label: "Crystall-Structure",
-  value: "Crystall-Structure"
-},{
-  label: "Others",
-  value: "Others"
-}];

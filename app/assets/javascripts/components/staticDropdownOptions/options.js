@@ -288,3 +288,45 @@ export const dangerousProductsOptions = [{
   label: 'Diverse (Class 9)',
   value: 'Diverse (Class 9)'
 }];
+
+
+
+export const confirmOptions = [{
+  label: "Confirmed",
+  value: "Confirmed"
+},{
+  label: "Unconfirmed",
+  value: "Unconfirmed"
+}];
+
+export const kindOptions = [{
+  label: "1H NMR",
+  value: "1H NMR"
+},{
+  label: "13C NMR",
+  value: "13C NMR"
+},{
+  label: "Mass",
+  value: "Mass"
+},{
+  label: "IR",
+  value: "IR"
+},{
+  label: "EA",
+  value: "EA"
+},{
+  label: "GCMS",
+  value: "GCMS"
+},{
+  label: "HPLC",
+  value: "HPLC"
+},{
+  label: "TLC",
+  value: "TLC"
+},{
+  label: "Crystall-Structure",
+  value: "Crystall-Structure"
+},{
+  label: "Others",
+  value: "Others"
+}];
