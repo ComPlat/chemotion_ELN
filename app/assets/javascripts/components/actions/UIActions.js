@@ -18,6 +18,10 @@ class UIActions {
     return null
   }
 
+  closeDeviceManagement() {
+    return null
+  }
+
   selectTab(tab) {
     return  tab;
   }

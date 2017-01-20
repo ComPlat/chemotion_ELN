@@ -6,6 +6,7 @@ import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
 import ScanCodeButton from './ScanCodeButton';
+import DeviceButtonSplit from './DeviceButtonSplit'
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -73,110 +74,3 @@ ContextActions.propTypes = {
   updateModalProps: React.PropTypes.func.isRequired,
 };
 
-const handleShowDeviceManagement = () => {
-  UIActions.showDeviceManagement()
-  Aviator.navigate("/device/management")
-}
-
-const DeviceButtonSplit = () => {
-  return (
-  <ButtonGroup style={{marginLeft: '10px'}}>
-    <OverlayTrigger placement="bottom" overlay={<DeviceTooltip/>}>
-      <Button 
-        bsStyle="warning"
-        disabled={true}
-        onClick={() => {}}
-      >
-        UI
-      </Button>
-      </OverlayTrigger>
-      <DropdownButton
-        bsStyle="warning"
-        title={<DropdownButtonTitle/>}
-        style={{width: "26px", paddingLeft: "8px"}}
-        id="device-selection"
-      >
-        <MenuItem
-          onSelect={() => handleShowDeviceManagement()}
-        >
-          Device Management
-        </MenuItem>
-        <MenuItem divider />
-        <MenuItem
-          onSelect={() => {}}
-          className="selected"
-        >
-          Device 1
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 2
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-      </DropdownButton>
-    </ButtonGroup>
-  )
-}
-
-const DeviceTooltip = () =>
-  <Tooltip id="create_button">
-    Open Device
-  </Tooltip>
-
-const DropdownButtonTitle = () =>
-  <div></div>

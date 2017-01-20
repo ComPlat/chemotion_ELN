@@ -47,7 +47,7 @@ class ElementActions {
     return null
   }
 
-  changeActiveDevice(key) {
+  changeActiveAccordionDevice(key) {
     return (dispatch) => dispatch(key)
   }
 

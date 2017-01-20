@@ -101,7 +101,6 @@ class App extends Component {
 
   mainContent() {
     const {showCollectionManagement, showDeviceManagement, mainContentClassName} = this.state;
-
     return (
       <Col className={mainContentClassName} >
         {showCollectionManagement 

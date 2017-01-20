@@ -68,7 +68,8 @@ class UIStore {
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
-      handleShowDeviceManagement: UIActions.showCollectionManagement
+      handleShowDeviceManagement: UIActions.showDeviceManagement,
+      handleCloseDeviceManagement: UIActions.closeDeviceManagement
     });
   }
 
@@ -82,6 +83,10 @@ class UIStore {
 
   handleShowDeviceManagement() {
     this.state.showDeviceManagement = true
+  }
+  
+  handleCloseDeviceManagement() {
+    this.state.showDeviceManagement = false
   }
 
   handleShowElements() {

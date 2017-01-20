@@ -51,7 +51,8 @@ class ElementStore {
         },
         devices: {
           devices: [],
-          activeDevice: 0
+          activeAccordionDevice: 0,
+          selectedDevice: 0
         }
       },
       currentElement: null,
@@ -75,7 +76,7 @@ class ElementStore {
       handleSaveDevice: ElementActions.saveDevice,
       handleDeleteDevice: ElementActions.deleteDevice,
       handleToggleDeviceType: ElementActions.toggleDeviceType,
-      handleChangeActiveDevice: ElementActions.changeActiveDevice,
+      handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
       
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -178,20 +179,20 @@ class ElementStore {
     this.state.elements['devices'].devices[deviceKey] = device
   }
 
-  handleChangeActiveDevice(key) {
-    this.state.elements['devices'].activeDevice = key
+  handleChangeActiveAccordionDevice(key) {
+    this.state.elements['devices'].activeAccordionDevice = key
   }
 
   handleCreateDevice() {
     const {devices} = this.state.elements['devices']
     const newDevice = Device.buildEmpty()
     const newKey = devices.length
-    this.state.elements['devices'].activeDevice = newKey
+    this.state.elements['devices'].activeAccordionDevice = newKey
     this.state.elements['devices'].devices.push(newDevice)
   }
 
   handleDeleteDevice(device) {
-    const {devices} = this.state.elements['devices']
+    const {devices, activeAccordionDevice} = this.state.elements['devices']
     this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
