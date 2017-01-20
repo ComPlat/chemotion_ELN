@@ -97,7 +97,14 @@ const DeviceButtonSplit = () => {
         id="device-selection"
       >
         <MenuItem
+          onSelect={() => handleShowDeviceManagement()}
+        >
+          Device Management
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem
           onSelect={() => {}}
+          className="selected"
         >
           Device 1
         </MenuItem>
@@ -111,11 +118,55 @@ const DeviceButtonSplit = () => {
         >
           Device 3
         </MenuItem>
-        <MenuItem divider />
         <MenuItem
-          onSelect={() => handleShowDeviceManagement()}
+          onSelect={() => {}}
         >
-          Device Management
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
+        </MenuItem>
+        <MenuItem
+          onSelect={() => {}}
+        >
+          Device 3
         </MenuItem>
       </DropdownButton>
     </ButtonGroup>
