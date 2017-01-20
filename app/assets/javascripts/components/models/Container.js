@@ -24,6 +24,7 @@ export default class Container extends Element {
 
     var analyses = this.buildEmpty();
     analyses.container_type = 'analyses';
+    analyses.extended_metadata = '';
 
     root.children.push(analyses);
 

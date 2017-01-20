@@ -78,7 +78,12 @@ private
           newcon = Container.create! :name => child.name, :parent => root_container
           newcon.container_type = child.container_type
           newcon.description = child.description
-          newcon.extended_metadata = child.extended_metadata
+
+          extended_metadata = child.extended_metadata
+          if child.container_type == "analysis" && extended_metadata.key?("content")
+            extended_metadata["content"] = extended_metadata["content"].to_json
+          end
+          newcon.extended_metadata = extended_metadata
 
           newcon.save!
 
