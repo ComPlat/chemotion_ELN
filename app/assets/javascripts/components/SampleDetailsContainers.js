@@ -53,8 +53,11 @@ export default class SampleDetailsContainers extends Component {
     this.props.parent.setState({sample: sample})
   }
 
-  handleAccordionOpen(key) {
-    this.setState({activeContainer: key});
+  handleAccordionOpen(newKey) {
+    const currentKey = this.state.activeAnalysis;
+    if(currentKey !== newKey) {
+      this.setState({activeAnalysis: newKey});
+    }
   }
 
   addButton() {

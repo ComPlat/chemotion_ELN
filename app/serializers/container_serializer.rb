@@ -12,4 +12,14 @@ class ContainerSerializer < ActiveModel::Serializer
     object.descendant_ids
   end
 
+  def extended_metadata
+    extended_metadata = object.extended_metadata
+
+    unless extended_metadata["content"].blank?
+      extended_metadata["content"] = JSON.parse(object.extended_metadata["content"])
+    end
+
+    extended_metadata
+  end
+
 end

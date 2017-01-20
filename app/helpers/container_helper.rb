@@ -60,7 +60,12 @@ private
           oldcon.name = child.name
           oldcon.container_type = child.container_type
           oldcon.description = child.description
-          oldcon.extended_metadata = child.extended_metadata
+
+          extended_metadata = child.extended_metadata
+          if extended_metadata.key?("content")
+            extended_metadata["content"] = extended_metadata["content"].to_json
+          end
+          oldcon.extended_metadata = extended_metadata
 
           oldcon.save!
 

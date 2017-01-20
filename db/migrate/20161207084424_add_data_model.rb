@@ -73,10 +73,12 @@ class AddDataModel < ActiveRecord::Migration
       ana_con.container_type = ana["type"]
       ana_con.name = ana["name"]
       ana_con.description = ana["description"]
+
       ana_con.extended_metadata['report'] = ana["report"]
       ana_con.extended_metadata["kind"] = ana["kind"]
       ana_con.extended_metadata["status"] = ana["status"]
       ana_con.extended_metadata["report"] = ana["report"]
+      ana_con.extended_metadata["content"] = ana["content"].to_json.to_s
 
       ana_con.save!
 
