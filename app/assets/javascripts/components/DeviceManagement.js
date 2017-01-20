@@ -31,6 +31,12 @@ DeviceManagement.getPropsFromStores = () => {
 export default connectToStores(DeviceManagement)
 
 const Devices = ({devices, activeDevice}) => {
+  const styleByDeviceState = (device) => {
+    console.log(device)
+    return device.isNew || device.isEdited
+      ? "info" 
+      : "default"
+  }
   if(devices.length > 0) {
     return (
         <PanelGroup defaultActiveKey={0} activeKey={activeDevice} accordion>
@@ -41,7 +47,7 @@ const Devices = ({devices, activeDevice}) => {
                 eventKey={key}
                 key={key}
                 onClick={() => ElementActions.changeActiveDevice(key)}
-                bsStyle={device.is_new ? "info" : "default"}
+                bsStyle={styleByDeviceState(device)}
               >
                 <Device
                   device={device}
@@ -62,8 +68,8 @@ const Devices = ({devices, activeDevice}) => {
 const Device = ({device}) => {
   const styleBySelectedType = (type) => {
     return device.types.includes(type) 
-      ? {background: "lightblue"}
-      : {}
+      ? "primary"
+      : "default"
   }
 
   const handleTypeClick = (type) => {
@@ -77,31 +83,38 @@ const Device = ({device}) => {
   return (
     <div>
       <div
-        style={{display: "inline-block", border: "1px solid lightblue", padding:"5px"}}
+        style={{
+          display: "inline-block",
+          border: "1px solid #ddd",
+          padding:"6px",
+          borderRadius: "4px",
+          marginRight: "5px",
+          verticalAlign: "middle"
+        }}
       >
         {device.code}
       </div>
       <ButtonGroup>
         <Button
-          style={styleBySelectedType("NMR")}
+          bsStyle={styleBySelectedType("NMR")}
           onClick={() => handleTypeClick("NMR")}
         >
           NMR
         </Button>
         <Button
-          style={styleBySelectedType("EA")}
+          bsStyle={styleBySelectedType("EA")}
           onClick={() => handleTypeClick("EA")}
         >
           EA
         </Button>
         <Button
-          style={styleBySelectedType("MS")}
+          bsStyle={styleBySelectedType("MS")}
           onClick={() => handleTypeClick("MS")}
         >
           MS
         </Button>
         <Button
-          style={styleBySelectedType("IR")}
+          bsStyle={styleBySelectedType("IR")}
           onClick={() => handleTypeClick("IR")}
         >
           IR
@@ -109,6 +122,7 @@ const Device = ({device}) => {
       </ButtonGroup>
       <br/>
       <Button
+        style={{marginTop: "5px"}}
         onClick={(e) => handleSave()}
       >
         Save
