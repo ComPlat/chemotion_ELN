@@ -62,7 +62,7 @@ private
           oldcon.description = child.description
 
           extended_metadata = child.extended_metadata
-          if extended_metadata.key?("content")
+          if child.container_type == "analysis" && extended_metadata.key?("content")
             extended_metadata["content"] = extended_metadata["content"].to_json
           end
           oldcon.extended_metadata = extended_metadata
