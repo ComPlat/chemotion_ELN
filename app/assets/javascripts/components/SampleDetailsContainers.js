@@ -92,13 +92,7 @@ export default class SampleDetailsContainers extends Component {
       ? (' - Status: ' + container.extended_metadata['status'])
       :''
 
-    var inReport;
-    if(typeof container.extended_metadata['report'] == 'string'){
-      inReport = container.extended_metadata['report'] === 'true'
-      container.extended_metadata['report'] = inReport;
-    }else{
-      inReport = container.extended_metadata['report'];
-    }
+    const inReport = container.extended_metadata['report'];
 
     return (
       <div style={{width: '100%'}}>

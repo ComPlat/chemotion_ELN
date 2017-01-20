@@ -14,6 +14,7 @@ class ContainerSerializer < ActiveModel::Serializer
 
   def extended_metadata
     extended_metadata = object.extended_metadata
+    extended_metadata["report"] = extended_metadata["report"] == "true"
 
     unless extended_metadata["content"].blank?
       extended_metadata["content"] = JSON.parse(object.extended_metadata["content"])
