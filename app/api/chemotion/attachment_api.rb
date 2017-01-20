@@ -71,8 +71,8 @@ module Chemotion
         desc 'Return Base64 encoded thumbnail'
         get ':id' do
 
-          if Attachment.exists?(:id => params[:id])
-            attachment = Attachment.find_by id: params[:id]
+          attachment = Attachment.find_by id: params[:id]
+          if attachment
             storage = Storage.new
             storage.read_thumbnail(attachment)
           else
@@ -85,8 +85,8 @@ module Chemotion
         desc 'Return Base64 encoded thumbnail'
         get ':id' do
 
-          if Attachment.exists?(:id => params[:id])
-            attachment = Attachment.find_by id: params[:id]
+          attachment = Attachment.find_by(id: params[:id])
+          if attachment
             storage = Storage.new
             storage.move(attachment)
           else
