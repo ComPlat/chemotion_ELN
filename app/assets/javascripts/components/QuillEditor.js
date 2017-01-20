@@ -113,6 +113,8 @@ export default class QuillEditor extends React.Component {
 
       // init Quill
       this.editor = new Quill(quillEditor, quillOptions)
+      let {value} = this.state
+      if (value) this.editor.setContents(value)
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574

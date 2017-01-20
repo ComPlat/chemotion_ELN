@@ -54,9 +54,9 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleAccordionOpen(newKey) {
-    const currentKey = this.state.activeAnalysis;
+    const currentKey = this.state.activeContainer;
     if(currentKey !== newKey) {
-      this.setState({activeAnalysis: newKey});
+      this.setState({activeContainer: newKey});
     }
   }
 
@@ -109,7 +109,7 @@ export default class SampleDetailsContainers extends Component {
           <label>
             <input onClick={(e) => this.toggleAddToReport(e, container)}
                    type="checkbox"
-                   checked={inReport} />
+                   defaultChecked={inReport} />
             <span>Add to Report</span>
           </label>
           <Button bsSize="xsmall"
@@ -151,62 +151,54 @@ export default class SampleDetailsContainers extends Component {
     const {sample, activeContainer} = this.state;
     const {readOnly} = this.props;
 
-    if(sample.container != null){
+    if (sample.container == null) {
+      return (
+        <div><p className='noAnalyses-warning'>Not available.</p></div>
+      )
+    }
 
-      var analyses_container = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+    let analyses_container =
+      sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
 
-      if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
-        return (
-          <div>
+    if (analyses_container.length == 1 && analyses_container[0].children.length > 0) {
+      return (
+        <div>
           <p>&nbsp;{this.addButton()}</p>
           <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
           {analyses_container[0].children.map((container, key) => {
-            if (container.is_deleted){
+            if (container.is_deleted) {
               return (
-                <Panel header={this.analysisHeaderDeleted(container, readOnly)} eventKey={key}
-                    key={key} >
-                    </Panel>
-                  );
-                }else {
-              return (
-                <Panel header={this.analysisHeader(container, readOnly)} eventKey={key}
-                    key={key} onClick={() => this.handleAccordionOpen(key)}>
-                  <ContainerComponent
-                    readOnly={readOnly}
-                    container={container}
-                    onChange={container => this.handleChange(container)}
-                  />
+                <Panel header={this.analysisHeaderDeleted(container, readOnly)}
+                       eventKey={key} key={key + "_analysis"} >
                 </Panel>
               );
             }
 
-            }
-          )}
+            return (
+              <Panel header={this.analysisHeader(container, readOnly)}
+                     eventKey={key} key={key + "_analysis"}
+                     onClick={() => this.handleAccordionOpen(key)}>
+                <ContainerComponent
+                  readOnly={readOnly}
+                  container={container}
+                  onChange={container => this.handleChange(container)}
+                />
+              </Panel>
+            );
+          })}
           </PanelGroup>
-          </div>
-        )
-      }else {
-        return (
-          <div>
-            <p className='noAnalyses-warning'>
-              There are currently no Analyses.
-              {this.addButton()}
-            </p>
-          </div>
-        )
-      }
-
-    }else{
-
+        </div>
+      )
+    } else {
       return (
         <div>
           <p className='noAnalyses-warning'>
-            Not available.
+            There are currently no Analyses.
+            {this.addButton()}
           </p>
         </div>
       )
     }
-
   }
 
 }
