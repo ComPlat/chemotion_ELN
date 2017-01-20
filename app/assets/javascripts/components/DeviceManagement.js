@@ -59,8 +59,6 @@ const DeviceManagement = ({devices, activeAccordionDevice}) => {
 }  
 
 DeviceManagement.getStores = () => {
-  // FIXME better place to fetch?
-  ElementActions.fetchAllDevices()
   return [ElementStore]
 }
 

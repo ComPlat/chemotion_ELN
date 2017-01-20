@@ -18,6 +18,7 @@ import initRoutes from './routes';
 import Notifications from './Notifications';
 
 import UserActions from './actions/UserActions';
+import ElementActions from './actions/ElementActions';
 import KeyboardActions from './actions/KeyboardActions';
 
 class App extends Component {
@@ -38,6 +39,7 @@ class App extends Component {
   componentDidMount() {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
+    ElementActions.fetchAllDevices()
 
     $(document).on('keydown', this.documentKeyDown);
   }

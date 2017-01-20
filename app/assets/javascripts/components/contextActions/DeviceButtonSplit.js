@@ -1,28 +1,37 @@
 import React from 'react'
-import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'react-bootstrap'
+import {ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem} from 'react-bootstrap'
 import UIActions from './../actions/UIActions'
+import ElementActions from './../actions/ElementActions'
 import ElementStore from './../stores/ElementStore'
+import connectToStores from 'alt-utils/lib/connectToStores'
 
-const DeviceButtonSplit = () => {
+const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
   const handleShowDeviceManagement = () => {
     UIActions.showDeviceManagement()
     Aviator.navigate('/device/management')
   }
 
+  const handleOpenDevice = () => {
+    Aviator.navigate(`/device/${selectedDeviceId}`)
+  }
+
   return (
-  <ButtonGroup style={{marginLeft: '10px'}}>
-    <OverlayTrigger placement="bottom" overlay={<DeviceTooltip/>}>
-      <Button 
-        bsStyle="warning"
-        disabled={true}
-        onClick={() => {}}
+    <ButtonGroup style={{marginLeft: '10px'}}>
+      <OverlayTrigger 
+        placement="bottom"
+        overlay={<Tooltip id="open-device">Open Device</Tooltip>}
       >
-        UI
-      </Button>
+        <Button 
+          bsStyle="warning"
+          disabled={selectedDeviceId === -1}
+          onClick={() => handleOpenDevice()}
+        >
+          UI
+        </Button>
       </OverlayTrigger>
       <DropdownButton
         bsStyle="warning"
-        title={<DropdownButtonTitle/>}
+        title={<div></div>}
         style={{width: "26px", paddingLeft: "8px"}}
         id="device-selection"
       >
@@ -32,83 +41,29 @@ const DeviceButtonSplit = () => {
           Device Management
         </MenuItem>
         <MenuItem divider />
-        <MenuItem
-          onSelect={() => {}}
-          className="selected"
-        >
-          Device 1
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 2
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
-        <MenuItem
-          onSelect={() => {}}
-        >
-          Device 3
-        </MenuItem>
+        {devices.map((device) => {
+          return (
+            <MenuItem
+              onSelect={() => ElementActions.changeSelectedDeviceId(device.id)}
+              className={device.id === selectedDeviceId ? "selected" : ""}
+              key={device.id}
+            >
+              {device.code}
+            </MenuItem>
+          )
+        })}
       </DropdownButton>
     </ButtonGroup>
   )
 }
 
-export default DeviceButtonSplit
+DeviceButtonSplit.getStores = () => {
+  return [ElementStore]
+}
 
-const DeviceTooltip = () =>
-  <Tooltip id="create_button">
-    Open Device
-  </Tooltip>
+DeviceButtonSplit.getPropsFromStores = () => {
+  return ElementStore.getState().elements.devices
+}
 
-const DropdownButtonTitle = () =>
-  <div></div>
+export default connectToStores(DeviceButtonSplit)
+

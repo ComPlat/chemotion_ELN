@@ -52,7 +52,7 @@ class ElementStore {
         devices: {
           devices: [],
           activeAccordionDevice: 0,
-          selectedDevice: 0
+          selectedDeviceId: -1
         }
       },
       currentElement: null,
@@ -77,6 +77,7 @@ class ElementStore {
       handleDeleteDevice: ElementActions.deleteDevice,
       handleToggleDeviceType: ElementActions.toggleDeviceType,
       handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
+      handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
       
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -181,6 +182,10 @@ class ElementStore {
 
   handleChangeActiveAccordionDevice(key) {
     this.state.elements['devices'].activeAccordionDevice = key
+  }
+  
+  handleChangeSelectedDeviceId(deviceId) {
+    this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
   handleCreateDevice() {

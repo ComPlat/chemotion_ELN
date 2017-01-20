@@ -51,6 +51,10 @@ class ElementActions {
     return (dispatch) => dispatch(key)
   }
 
+  changeSelectedDeviceId(deviceId) {
+    return (dispatch) => dispatch(deviceId)
+  }
+
   toggleDeviceType(device, type) {
     return (dispatch) => dispatch({device, type})
   }
