@@ -330,7 +330,7 @@ module ReactionUpdator
                 named_by_reaction += "-#{attributes[:name].split("-").last}"
                 attributes.merge!(name: named_by_reaction)
               end
-              ####
+
               container_info = attributes[:container]
               attributes.delete(:container)
 

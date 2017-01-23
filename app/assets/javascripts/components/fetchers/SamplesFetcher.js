@@ -104,50 +104,7 @@ export default class SamplesFetcher {
     })
   }
 
-  static getFileListfrom(sample){
-    let datasets = _.flatten(sample.analyses.map(a=>a.datasets));
-    let attachments = _.flatten(datasets.map(d=>d.attachments));
-    const fileFromAttachment = function(attachment) {
-      let file = attachment.file;
-      file.id = attachment.id;
-      return file;
-    }
-    let files = _.compact(_.flatten(attachments.filter(a=>a.is_new).map(a=>fileFromAttachment(a))));
-    return files
-  }
-
-
-  static getFileListfrom2(sample){
-
-    var allFiles = new Array();
-    this.filterAllAttachments(allFiles, sample.container.children);
-
-    return allFiles
-
-  }
-
-  static filterAllAttachments(files, containers){
-
-    containers.forEach( (container) => {
-      const fileFromAttachment = function(attachment) {
-        let file = attachment.file;
-        file.id = attachment.id;
-        return file;
-      }
-      var tmpArray = container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a));
-      files.push.apply(files, tmpArray)
-
-      if(container.children.length > 0){
-        this.filterAllAttachments(files, container.children);
-      }
-    });
-  }
-
-
-
   static update(sample) {
-    //let files = SamplesFetcher.getFileListfrom(sample.serialize())
-    //let files = SamplesFetcher.getFileListfrom2(sample)
     let files = AttachmentFetcher.getFileListfrom(sample.container)
     let promise = ()=> fetch('/api/v1/samples/' + sample.id, {
       credentials: 'same-origin',
@@ -174,7 +131,6 @@ export default class SamplesFetcher {
   }
 
   static create(sample) {
-    //let files = SamplesFetcher.getFileListfrom(sample.serialize())
     let files = AttachmentFetcher.getFileListfrom(sample.container)
     let promise = ()=> fetch('/api/v1/samples', {
       credentials: 'same-origin',

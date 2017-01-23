@@ -14,7 +14,6 @@ import UIActions from './actions/UIActions';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
-import SampleDetailsAnalyses from './SampleDetailsAnalyses';
 import SampleDetailsContainers from './SampleDetailsContainers';
 
 import XLabels from "./extra/SampleDetailsXLabels";
@@ -387,25 +386,10 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  sampleAnalysesTab(ind){
-    let sample = this.state.sample || {}
-    return(
-      <Tab eventKey={ind} title={'Analyses'}
-        key={'Analyses' + sample.id.toString()}>
-        <ListGroupItem style={{paddingBottom: 20}}>
-          <SampleDetailsAnalyses
-            sample={sample}
-            parent={this}
-            />
-        </ListGroupItem>
-      </Tab>
-    )
-  }
-
   sampleContainerTab(ind){
     let sample = this.state.sample || {}
     return(
-      <Tab eventKey={ind} title={'Data'}
+      <Tab eventKey={ind} title={'Analyses'}
         key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsContainers
@@ -520,7 +504,6 @@ export default class SampleDetails extends React.Component {
     let sample = this.state.sample || {}
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
-                       (i)=>(this.sampleAnalysesTab(i)),
                        (i)=>(this.sampleContainerTab(i)),
                        (i)=>(this.sampleImportReadoutTab(i))
                       ];

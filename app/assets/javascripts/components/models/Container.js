@@ -35,26 +35,6 @@ export default class Container extends Element {
       return this.name;
     }
 
-  //  set name(name) {
-  //    this._name = name;
-  //  }
-
-  //  children() {
-  //    return this.children;
-  //  }
-
-    //set children(children) {
-    //    this._children = children;
-    //}
-
-  //  get attachments() {
-  //    return this.attachments;
-  //  }
-
-  //  set attachments(attachments) {
-  //      this.attachments = attachments.map(a => new Attachment(a));;
-  //    }
-
   serialize() {
     return super.serialize({
       id: this.id,

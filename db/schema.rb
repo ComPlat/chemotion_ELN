@@ -109,8 +109,8 @@ ActiveRecord::Schema.define(version: 20170201113437) do
 
   create_table "containers", force: :cascade do |t|
     t.string   "ancestry"
-    t.integer  "element_id"
-    t.string   "element_type"
+    t.integer  "containable_id"
+    t.string   "containable_type"
     t.string   "name"
     t.string   "container_type"
     t.text     "description"

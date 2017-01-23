@@ -21,7 +21,7 @@ export default class SampleDetailsContainers extends Component {
 
   handleChange(container) {
     const {sample} = this.state
-    //sample.updateAnalysis(analysis)
+
     this.props.parent.handleSampleChanged(sample)
   }
 
@@ -64,11 +64,9 @@ export default class SampleDetailsContainers extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-        //<div className="button-right" >
           <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             Add analysis
           </Button>
-        //</div>
       )
     }
   }

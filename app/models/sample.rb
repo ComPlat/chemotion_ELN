@@ -99,7 +99,7 @@ class Sample < ActiveRecord::Base
   belongs_to :fingerprints
   belongs_to :user
 
-  has_one :container, :as => :element
+  has_one :container, :as => :containable
 
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
@@ -346,20 +346,6 @@ class Sample < ActiveRecord::Base
 
       set_elem_composition_data 'found', clone_data, 0.0
     end
-  end
-
-  # -- fake analyes
-  def analyses
-    unless analyses_dump.blank?
-      JSON.parse(analyses_dump)
-    else
-      []
-    end
-  end
-
-  def analyses= analyses
-    json_dump = JSON.dump(analyses)
-    self.analyses_dump = json_dump
   end
 
   def contains_residues

@@ -53,7 +53,7 @@ class Wellplate < ActiveRecord::Base
 
   has_many :sync_collections_users, through: :collections
 
-  has_one :container, :as => :element
+  has_one :container, :as => :containable
 
   def self.associated_by_user_id_and_screen_ids(user_id, screen_ids)
     for_user(user_id).by_screen_ids(screen_ids)

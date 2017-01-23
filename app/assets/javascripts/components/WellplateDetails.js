@@ -158,7 +158,7 @@ export default class WellplateDetails extends Component {
               changeProperties={(change) => this.handleChangeProperties(change)}
               />
           </Tab>
-          <Tab eventKey={3} title={'Data'}>
+          <Tab eventKey={3} title={'Analyses'}>
             <ListGroupItem style={{paddingBottom: 20}}>
               <WellplateDetailsContainers
                 wellplate={wellplate}

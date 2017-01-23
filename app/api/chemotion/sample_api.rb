@@ -5,32 +5,6 @@ module Chemotion
   class SampleAPI < Grape::API
     include Grape::Kaminari
 
-    helpers do
-      def filter_datasets_params
-        return if params[:analyses].blank?
-
-        params[:analyses].each do |i|
-          i['datasets'].each do |j|
-            j['attachments'].reject! do |k|
-              path = Rails.root.to_s + '/uploads/attachments/'
-              file = k['file']['id'].to_s + File.extname(k['name']) rescue ''
-              !File.exists?(path +  file) && k['is_new']
-            end
-          end
-        end
-      end
-
-      def create_thumbnail file_path, file_id
-        thumbnail_dir = File.join('uploads', 'thumbnails')
-        FileUtils.mkdir_p(thumbnail_dir) unless Dir.exist?(thumbnail_dir)
-        thumbnail_path = Thumbnailer.create(file_path)
-        if thumbnail_path && File.exists?(thumbnail_path)
-          dest = File.join('uploads', 'thumbnails', "#{file_id}.png")
-          FileUtils.mv(thumbnail_path, dest)
-        end
-      end
-    end
-
     resource :samples do
 
       # TODO Refactoring: Use Grape Entities
@@ -214,100 +188,6 @@ module Chemotion
         end
       end
 
-      #todo: move to AttachmentAPI
-      #desc "Upload attachments"
-      #post 'upload_dataset_attachments' do
-      #  params.each do |file_id, file|
-      #    if tempfile = file.tempfile
-      #        #upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
-      #        #upload_dir = File.join('uploads', 'attachments')
-      #        #FileUtils.mkdir_p(upload_dir) unless Dir.exist?(upload_dir)
-      #      begin
-      #        #FileUtils.cp(tempfile.path, upload_path)
-      #        storage = Filesystem.new
-      #        file_id_filename = file_id + file.filename
-      #
-      #        storage.temp(file_id_filename, IO.binread(tempfile))
-            #end
-            #begin
-            #  create_thumbnail(tempfile.path, file_id)
-      #      ensure
-      #        tempfile.close
-      #        tempfile.unlink   # deletes the temp file
-      #      end
-      #    end
-      #  end
-      #  true
-      #end
-
-      #todo: authorize attachment download
-      #desc "Download the attachment file"
-      #params do
-      #  optional :filename, type: String
-      #end
-      #get 'download_attachement/:attachment_id' do
-      #  file_id = params[:attachment_id]
-      #  filename = params[:filename] || file_id
-      #  content_type "application/octet-stream"
-      #  header['Content-Disposition'] = "attachment; filename=#{filename}"
-      #  env['api.format'] = :binary
-        #File.open(File.join('uploads', 'attachments', "#{file_id}#{File.extname(filename)}")).read
-
-      #  if Attachment.exists?(:id => file_id)
-      #    attachment = Attachment.find_by id: file_id
-      #    storage = Filesystem.new
-      #    storage.read(current_user, attachment)
-      #  end
-
-      #end
-
-      module SampleUpdator
-
-        def self.updated_embedded_analyses(analyses)
-
-          Array(analyses).map do |ana|
-            {
-              id: ana.id,
-              type: ana.type,
-              name: ana.name,
-              report: ana.report,
-              kind: ana.kind,
-              status: ana.status,
-              content: ana.content,
-              description: ana.description,
-              datasets: Array(ana.datasets).map do |dataset|
-                {
-
-                  id: dataset.id,
-                  type: dataset.type,
-                  name: dataset.name,
-                  instrument: dataset.instrument,
-                  description: dataset.description,
-                  attachments: Array(dataset.attachments).map do |attachment|
-                    if(attachment.file)
-                      {
-                        id: attachment.id,
-                        name: attachment.name,
-                        filename: attachment.file.id
-                      }
-                    else
-                      {
-                        id: attachment.id,
-                        name: attachment.name,
-                        filename: attachment.filename
-                      }
-                    end
-                  end
-                }
-              end
-            }
-          end
-        end
-
-
-    end #module
-
-
       desc "Update sample by id"
       params do
         requires :id, type: Integer, desc: "Sample id"
@@ -330,7 +210,6 @@ module Chemotion
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
         optional :melting_point, type: Float, desc: "Sample melting point"
-        optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         requires :container, type: Hash
@@ -347,9 +226,6 @@ module Chemotion
 
           ContainerHelper.update_datamodel(attributes[:container]);
           attributes.delete(:container);
-
-          embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
-          attributes.merge!(analyses: embedded_analyses)
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
@@ -395,7 +271,6 @@ module Chemotion
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
         optional :melting_point, type: Float, desc: "Sample melting point"
-        optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         requires :container, type: Hash
@@ -422,7 +297,6 @@ module Chemotion
           density: params[:density],
           boiling_point: params[:boiling_point],
           melting_point: params[:melting_point],
-          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id

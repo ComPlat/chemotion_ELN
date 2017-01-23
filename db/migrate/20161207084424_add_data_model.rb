@@ -4,8 +4,8 @@ class AddDataModel < ActiveRecord::Migration
   def up
     create_table :containers do |t|
       t.string :ancestry, index: true
-      t.integer :element_id
-      t.string :element_type
+      t.integer :containable_id
+      t.string :containable_type
       t.string :name
       t.string :container_type
       t.text :description

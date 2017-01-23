@@ -62,11 +62,9 @@ export default class ReactionDetailsContainers extends Component {
     const {readOnly} = this.props;
     if(! readOnly) {
       return (
-        //<div className="button-right" >
           <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             Add container
           </Button>
-        //</div>
       )
     }
   }

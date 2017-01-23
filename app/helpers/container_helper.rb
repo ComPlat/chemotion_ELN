@@ -1,7 +1,7 @@
 module ContainerHelper
 
   def self.update_datamodel(container)
-    if !container.is_new #Container.exists?(id: container.id)
+    if !container.is_new 
       root_container = Container.find_by id: container.id
       root_container.name = "root" #if it is created from client.side
     else
@@ -51,7 +51,7 @@ private
 
   def self.create_or_update_containers(children, root_container)
     children.each do |child|
-      if !child.is_new #Container.exists?(id: child.id)
+      if !child.is_new
         if child.is_deleted
           delete_containers_and_attachments(child)
         else
@@ -96,12 +96,9 @@ private
 
   def self.create_or_update_attachments(parent_container_id, attachments)
     attachments.each do |attachment|
-      if !attachment.is_new #Attachment.exists?(id: attachment.id)
+      if !attachment.is_new
         if !attachment.is_deleted
-          #update
-          #currentAttachment = Attachment.find_by id: attachment.id
-          #currentAttachment.filename = attachment.filename
-          #currentAttachment.save!
+          #todo: update
         else
           #delete
           storage = Storage.new
@@ -112,16 +109,6 @@ private
         if !attachment.is_deleted
           #create
           begin
-            #storage = Filesystem.new
-            #file_id_filename = attachment.id + attachment.filename
-            #storage.move_from_temp_to_storage(user, file_id_filename, true)
-
-            #newAttachment = Attachment.new
-
-            #newAttachment.identifier = file_id_filename
-            #newAttachment.filename = attachment.filename
-            #newAttachment.container_id = parent_container_id
-            #newAttachment.save!
             storage = Storage.new
             storage.update(attachment.id, parent_container_id)
 

@@ -6,7 +6,6 @@ import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
-import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
 import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
@@ -157,30 +156,8 @@ export default class ReactionDetails extends Component {
     )
   }
 
-  productAnalyses() {
-    const {products} = this.state.reaction;
-    let tabs = products.map((product, key) =>
-           <Tab key={product.short_label}
-                eventKey={key}
-                title={this.productLink(product)}>
-
-             <ReactionDetailsAnalyses
-                sample={product}
-                />
-           </Tab>
-     );
-    return(
-        <Tabs defaultActiveKey={0} id="product-analyses-tab">
-          {tabs}
-        </Tabs>
-    )
-  }
-
   productData(reaction) {
     const {products} = this.state.reaction;
-
-    //const reaction = this.state.reaction;
-
     let tabs = products.map((product, key) =>
            <Tab key={product.short_label}
                 eventKey={key}
@@ -319,9 +296,6 @@ export default class ReactionDetails extends Component {
               />
           </Tab>
           <Tab eventKey={3} title={'Analyses'}>
-            {this.productAnalyses()}
-          </Tab>
-          <Tab eventKey={4} title={'Data'}>
               {this.productData(reaction)}
           </Tab>
           {extraTabs.map((e,i)=>e(i))}

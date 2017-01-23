@@ -11,12 +11,7 @@ import Container from './models/Container';
 export default class ContainerDataset extends Component {
   constructor(props) {
     super();
-    //console.log(props);
-    //console.log(props.dataset_container.constructor == Container);
-    //console.log(props.dataset_container.constructor == Object);
-    //let dataset_container = props.dataset_container.clone();
     let dataset_container = Object.assign({}, props.dataset_container);
-    //let dataset_container = props.dataset_container;
     this.state = {
       dataset_container: dataset_container
     };
@@ -29,7 +24,7 @@ export default class ContainerDataset extends Component {
   createAttachmentPreviews(dataset_container) {
     const { attachments } = dataset_container;
     let updatedAttachments = attachments.map((attachment) => {
-      return AttachmentFetcher.fetchThumbnail2({id: attachment.id}).then((result) => {
+      return AttachmentFetcher.fetchThumbnail({id: attachment.id}).then((result) => {
         if(result != null) {
           attachment.preview = `data:image/png;base64,${result}`;
         }
@@ -83,7 +78,7 @@ export default class ContainerDataset extends Component {
   handleAttachmentRemove(attachment) {
     const {dataset_container} = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
-    //dataset_container.attachments.splice(index, 1);
+
     dataset_container.attachments[index].is_deleted = true;
     this.setState({dataset_container});
   }
@@ -91,7 +86,7 @@ export default class ContainerDataset extends Component {
   handleUndo(attachment) {
     const {dataset_container} = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
-    //dataset_container.attachments.splice(index, 1);
+
     dataset_container.attachments[index].is_deleted = false;
     this.setState({dataset_container});
   }
@@ -144,13 +139,6 @@ export default class ContainerDataset extends Component {
       );
     }
   }
-
-
-
-
-
-
-
 
   attachments() {
     const {dataset_container} = this.state;

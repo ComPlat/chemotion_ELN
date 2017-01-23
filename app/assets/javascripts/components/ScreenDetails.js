@@ -224,7 +224,7 @@ export default class ScreenDetails extends Component {
           <Tab eventKey={0} title={'Properties'}>
             {this.propertiesFields(screen)}
           </Tab>
-          <Tab eventKey={1} title={'Data'}>
+          <Tab eventKey={1} title={'Analyses'}>
             <ScreenDetailsContainers
               screen={screen}
               parent={this}

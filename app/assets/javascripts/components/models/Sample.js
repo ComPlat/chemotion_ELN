@@ -1,7 +1,6 @@
 import React from 'react'
 import Element from './Element';
 import Molecule from './Molecule';
-import Analysis from './Analysis';
 import _ from 'lodash';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
@@ -43,7 +42,7 @@ export default class Sample extends Element {
     });
 
     if(this.contains_residues) { this.setDefaultResidue(); }
-    this.analyses = [];
+
     return this;
   }
 
@@ -88,7 +87,6 @@ export default class Sample extends Element {
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
-      analyses: [],
       residues: [],
       elemental_compositions: [{
         composition_type: 'found',
@@ -201,7 +199,6 @@ export default class Sample extends Element {
       density: this.density,
       boiling_point: this.boiling_point,
       melting_point: this.melting_point,
-      analyses: this.analyses.map(a => a.serialize()),
       residues: this.residues,
       elemental_compositions: this.elemental_compositions,
       is_split: this.is_split || false,
@@ -687,36 +684,7 @@ export default class Sample extends Element {
     return params;
   }
 
-  // -- Analyses --
 
-  get analyses() {
-    return (this._analyses || []).map(a => new Analysis(a));
-  }
-
-  set analyses(analyses) {
-    this._analyses = analyses.map(a => new Analysis(a));
-  }
-
-  addAnalysis(analysis) {
-    let analyses = this.analyses;
-    analyses.push(analysis);
-    this.analyses = analyses;
-  }
-
-  removeAnalysis(analysis) {
-    let analyses = this.analyses;
-    _.remove(analyses, (a) => { return a.id == analysis.id});
-    this.analyses = analyses;
-  }
-
-  updateAnalysis(changedAnalysis) {
-    this.analyses.find(analysis => {
-      if(analysis.id == changedAnalysis.id) {
-        const analysisPosition = _.findIndex(this.analyses, (a) => { return a.id == analysis.id});
-        this._analyses[analysisPosition] = changedAnalysis;
-      }
-    });
-  }
 };
 
 Sample.counter = 0;
