@@ -3,7 +3,6 @@ import Attachment from './Attachment';
 
 export default class Container extends Element {
   static buildEmpty() {
-    const content_default = { "ops": [{ "insert": "" }] }
     return new Container({
       name: 'new',
       children: [],
@@ -11,7 +10,6 @@ export default class Container extends Element {
       is_deleted: false,
       description: '',
       extended_metadata: {
-        content: content_default,
         report: true
       },
       container_type: '',
@@ -24,7 +22,6 @@ export default class Container extends Element {
 
     var analyses = this.buildEmpty();
     analyses.container_type = 'analyses';
-    analyses.extended_metadata = '';
 
     root.children.push(analyses);
 

@@ -170,6 +170,10 @@ class Sample < ActiveRecord::Base
     end
   end
 
+  def analyses
+    self.container.children.where(container_type: "Analyses")
+   end
+
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
     (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq
   end

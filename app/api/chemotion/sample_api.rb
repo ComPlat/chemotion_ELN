@@ -217,7 +217,6 @@ module Chemotion
       route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Sample.find(params[:id])).update?
-          filter_datasets_params
         end
 
         put do
@@ -276,7 +275,6 @@ module Chemotion
         requires :container, type: Hash
       end
       post do
-        filter_datasets_params
 
         attributes = {
           name: params[:name],
@@ -326,7 +324,7 @@ module Chemotion
         all_coll = Collection.get_all_collection_for_user(current_user.id)
         sample.collections << all_coll
 
-        sample.container =  ContainerHelper.update_datamodel(params[:container])
+        sample.container = ContainerHelper.update_datamodel(params[:container])
 
         sample.save!
 

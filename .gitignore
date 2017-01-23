@@ -54,6 +54,8 @@
 
 /coverage/
 
+/uploadNew/
+
 # Temp files
 /spec/tmp/*
 
