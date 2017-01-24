@@ -234,6 +234,7 @@ GEM
     hashie (3.4.4)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
+    headless (2.0.0)
     hitimes (1.2.4)
     html2haml (2.0.0)
       erubis (~> 2.7.0)
@@ -392,7 +393,7 @@ GEM
     sdoc (0.4.1)
       json (~> 1.7, >= 1.7.7)
       rdoc (~> 4.0)
-    selenium-webdriver (2.53.4)
+    selenium-webdriver (3.0.5)
       childprocess (~> 0.5)
       rubyzip (~> 1.0)
       websocket (~> 1.0)
@@ -500,6 +501,7 @@ DEPENDENCIES
   grape-kaminari
   haml-rails (~> 0.9)
   hashie-forbidden_attributes
+  headless (= 2.0.0)
   httparty
   jbuilder (~> 2.0)
   jquery-rails
@@ -524,7 +526,7 @@ DEPENDENCIES
   sablon!
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
-  selenium-webdriver (~> 2.53.4)
+  selenium-webdriver (~> 3.0.5)
   spring
   stackprof
   thin

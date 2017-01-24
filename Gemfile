@@ -151,8 +151,9 @@ group :test do
   gem "faker", "~> 1.6.6"
   gem "capybara", "~> 2.7.1"
   gem "launchy", "~> 2.4.3"
-  gem "selenium-webdriver", "~> 2.53.4"
+  gem "selenium-webdriver", "~> 3.0.5"
   gem "chromedriver-helper", "1.0.0"
+  gem "headless", "2.0.0"
 end
 
 # Chemotion plugins: lsit your chemotion specific plugin gems here
