@@ -164,8 +164,8 @@ module Report
       def displayed_solvents
         if solvents.present?
           solvents.map do |s|
-            volume = " (#{s.target_amount_value}ml)" if s.target_amount_value
-            volume = " (#{s.real_amount_value}ml)" if s.real_amount_value
+            volume = " (#{s.amount_ml.try(:round, digit)}ml)" if s.target_amount_value
+            volume = " (#{s.amount_ml.try(:round, digit)}ml)" if s.real_amount_value
             s.preferred_label  + volume
           end.join(", ")
         else
