@@ -171,7 +171,15 @@ class Sample < ActiveRecord::Base
   end
 
   def analyses
-    self.container.children.where(container_type: "Analyses")
+    if self.container && self.container.children
+      analyses = self.container.children.where(container_type: "analyses").first
+
+      if analyses
+        return analyses.children.where(container_type: "analysis")
+      end
+    end
+
+    return []
    end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
