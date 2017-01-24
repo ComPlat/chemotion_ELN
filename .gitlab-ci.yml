@@ -1,0 +1,32 @@
+image: "complat/ubuntu-runner"
+
+services:
+  - postgres:9.3-alpine
+
+variables:
+  POSTGRES_DB: chemotion_test
+  POSTGRES_USER: chemotion_test
+  POSTGRES_PASSWORD: "123456"
+
+cache:
+  untracked: true
+  key: "$CI_BUILD_REF_NAME"
+  paths:
+    - node_modules/
+    - public/
+    - .bundle/
+
+# stages:
+  # - rspec
+  # - npm
+
+test:
+  # stage: rspec
+  script:
+    - cp config/database.yml.gitlab config/database.yml
+    - /bin/bash -l -c "gem install bundle && bundle install && source ~/.nvm/nvm.sh &&
+        npm install && bundle exec rake db:test:prepare && bundle exec rake && npm test"
+# npm:
+#   stage: npm
+#   script:
+#     - /bin/bash -l -c "source ~/.nvm/nvm.sh && npm install && npm test"
