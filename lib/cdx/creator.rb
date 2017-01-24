@@ -2,7 +2,7 @@ require "cdx_helper"
 
 module Cdx
   class Creator
-    include Common
+    include Cdx::Common
     attr_reader :doc, :str, :bond_length
     def initialize(args)
       @doc = args[:cdxml]
