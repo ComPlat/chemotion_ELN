@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161214131916) do
+ActiveRecord::Schema.define(version: 20161221130945) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -108,6 +108,19 @@ ActiveRecord::Schema.define(version: 20161214131916) do
   end
 
   add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
+
+  create_table "devices", force: :cascade do |t|
+    t.string "code",  default: ""
+    t.string "types", default: [], array: true
+  end
+
+  create_table "devices_samples", force: :cascade do |t|
+    t.integer "device_id", null: false
+    t.integer "sample_id", null: false
+  end
+
+  add_index "devices_samples", ["device_id"], name: "index_devices_samples_on_device_id", using: :btree
+  add_index "devices_samples", ["sample_id"], name: "index_devices_samples_on_sample_id", using: :btree
 
   create_table "elemental_compositions", force: :cascade do |t|
     t.integer  "sample_id",                     null: false

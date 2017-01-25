@@ -8,6 +8,7 @@ import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import Device from '../models/Device'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -47,6 +48,11 @@ class ElementStore {
           page: null,
           pages: null,
           perPage: null
+        },
+        devices: {
+          devices: [],
+          activeAccordionDevice: 0,
+          selectedDeviceId: -1
         }
       },
       currentElement: null,
@@ -64,6 +70,15 @@ class ElementStore {
 
     this.bindListeners({
 
+      handleFetchAllDevices: ElementActions.fetchAllDevices,
+      handleFetchDeviceById: ElementActions.fetchDeviceById,
+      handleCreateDevice: ElementActions.createDevice,
+      handleSaveDevice: ElementActions.saveDevice,
+      handleDeleteDevice: ElementActions.deleteDevice,
+      handleToggleDeviceType: ElementActions.toggleDeviceType,
+      handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
+      handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
+      
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
@@ -123,7 +138,8 @@ class ElementStore {
           ElementActions.generateEmptyScreen,
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
-          ElementActions.showReportContainer
+          ElementActions.showReportContainer,
+          ElementActions.showDeviceContainer
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
@@ -133,6 +149,56 @@ class ElementStore {
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
     })
+  }
+
+  handleFetchAllDevices(devices) {
+    this.state.elements['devices'].devices = devices
+  }
+
+  handleFetchDeviceById(device) {
+    this.state.currentElement = device
+  }
+
+  handleSaveDevice(device) {
+    const {devices} = this.state.elements['devices']
+    const deviceId = devices.findIndex((e) => e.code === device.code)
+    if (deviceId == -1) {
+      this.state.elements['devices'].devices.push(device)
+    } else {
+      this.state.elements['devices'].devices[deviceId] = device
+    }
+  }
+
+  handleToggleDeviceType({device, type}) {
+    const {devices} = this.state.elements['devices']
+    if (device.types.includes(type)) {
+      device.types = device.types.filter((e) => e !== type)
+    } else {
+      device.types.push(type)
+    }
+    const deviceKey = devices.findIndex((e) => e.id === device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+
+  handleChangeActiveAccordionDevice(key) {
+    this.state.elements['devices'].activeAccordionDevice = key
+  }
+  
+  handleChangeSelectedDeviceId(deviceId) {
+    this.state.elements['devices'].selectedDeviceId = deviceId
+  }
+
+  handleCreateDevice() {
+    const {devices} = this.state.elements['devices']
+    const newDevice = Device.buildEmpty()
+    const newKey = devices.length
+    this.state.elements['devices'].activeAccordionDevice = newKey
+    this.state.elements['devices'].devices.push(newDevice)
+  }
+
+  handleDeleteDevice(device) {
+    const {devices, activeAccordionDevice} = this.state.elements['devices']
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
 

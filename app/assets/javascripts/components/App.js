@@ -7,6 +7,7 @@ import {Col, Grid, Row} from 'react-bootstrap';
 import Navigation from './Navigation';
 import CollectionTree from './CollectionTree';
 import CollectionManagement from './CollectionManagement';
+import DeviceManagement from './DeviceManagement';
 import Elements from './Elements';
 
 import UIStore from './stores/UIStore';
@@ -17,6 +18,7 @@ import initRoutes from './routes';
 import Notifications from './Notifications';
 
 import UserActions from './actions/UserActions';
+import ElementActions from './actions/ElementActions';
 import KeyboardActions from './actions/KeyboardActions';
 
 class App extends Component {
@@ -24,6 +26,7 @@ class App extends Component {
     super();
     this.state= {
       showCollectionManagement: false,
+      showDeviceManagement: false,
       indicatorClassName: "fa fa-chevron-circle-left",
       showCollectionTree: true,
       mainContentClassName: "small-col main-content",
@@ -36,6 +39,7 @@ class App extends Component {
   componentDidMount() {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
+    ElementActions.fetchAllDevices()
 
     $(document).on('keydown', this.documentKeyDown);
   }
@@ -49,6 +53,9 @@ class App extends Component {
   handleUiStoreChange(state) {
     if(this.state.showCollectionManagement != state.showCollectionManagement) {
       this.setState({showCollectionManagement: state.showCollectionManagement});
+    }
+    if(this.state.showDeviceManagement != state.showDeviceManagement) {
+      this.setState({showDeviceManagement: state.showDeviceManagement});
     }
   }
 
@@ -95,11 +102,15 @@ class App extends Component {
   }
 
   mainContent() {
-    const {showCollectionManagement, mainContentClassName} = this.state;
-
+    const {showCollectionManagement, showDeviceManagement, mainContentClassName} = this.state;
     return (
       <Col className={mainContentClassName} >
-        {showCollectionManagement ? <CollectionManagement/> : <Elements/>}
+        {showCollectionManagement 
+          ? <CollectionManagement/>
+          : showDeviceManagement
+            ? <DeviceManagement/>
+            : <Elements/>
+        }
       </Col>
     )
   }

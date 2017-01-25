@@ -42,6 +42,7 @@ class UIStore {
       currentTab: 1,
       currentSearchSelection: null,
       showCollectionManagement: false,
+      showDeviceManagement: false,
       isSync: false
     };
 
@@ -66,7 +67,9 @@ class UIStore {
       handleShowElements: UIActions.showElements,
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
-      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown
+      handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
+      handleShowDeviceManagement: UIActions.showDeviceManagement,
+      handleCloseDeviceManagement: UIActions.closeDeviceManagement
     });
   }
 
@@ -76,6 +79,14 @@ class UIStore {
 
   handleShowCollectionManagement() {
     this.state.showCollectionManagement = true;
+  }
+
+  handleShowDeviceManagement() {
+    this.state.showDeviceManagement = true
+  }
+  
+  handleCloseDeviceManagement() {
+    this.state.showDeviceManagement = false
   }
 
   handleShowElements() {

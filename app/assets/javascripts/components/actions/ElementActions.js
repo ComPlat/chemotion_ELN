@@ -14,6 +14,7 @@ import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
+import DeviceFetcher from '../fetchers/DeviceFetcher'
 
 import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
@@ -22,11 +23,57 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import Report from '../models/Report';
+import Device from '../models/Device'
 
 import _ from 'lodash';
 
-class ElementActions {
+const handleFetch = (dispatch, fetch) => {
+  return fetch()
+    .then((result) => {dispatch(result)})
+    .catch((errorMessage) => {console.log(errorMessage)})
+}
 
+class ElementActions {
+  // -- Devices --
+  fetchAllDevices() {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
+  }
+
+  fetchDeviceById(deviceId) {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
+  }
+
+  createDevice() {
+    return null
+  }
+
+  changeActiveAccordionDevice(key) {
+    return (dispatch) => dispatch(key)
+  }
+
+  changeSelectedDeviceId(deviceId) {
+    return (dispatch) => dispatch(deviceId)
+  }
+
+  toggleDeviceType(device, type) {
+    return (dispatch) => dispatch({device, type})
+  }
+
+  saveDevice(device) {
+    if (device.isNew) {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device))
+    } else {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device))
+    }
+  }
+
+  deleteDevice(device) {
+    if (!device.isNew) {
+      DeviceFetcher.delete(device)
+    }
+    return (dispatch) => dispatch(device)
+  }
+  
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
@@ -378,6 +425,10 @@ class ElementActions {
   // -- Report --
   showReportContainer() {
     return  Report.buildEmpty()
+  }
+  
+  showDeviceContainer() {
+    return Device.buildEmpty()
   }
 
   // -- General --

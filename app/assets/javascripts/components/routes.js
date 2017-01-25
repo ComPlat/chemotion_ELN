@@ -109,6 +109,19 @@ const routes = {
       },
       '/:reportID': 'show'
     },
+    
+    '/device': {
+      target: {
+        show: function(e) {
+          ElementActions.showDeviceContainer();
+        },
+        showDeviceManagement: function(e) {
+          UIActions.showDeviceManagement()
+        }
+      },
+      '/management': 'showDeviceManagement',
+      '/:deviceId': 'show',
+    },
 
     '/sample': {
       target: {

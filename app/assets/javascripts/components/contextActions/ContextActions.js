@@ -1,10 +1,12 @@
 import React from 'react';
-import {ButtonGroup} from 'react-bootstrap';
+import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
+import UIActions from './../actions/UIActions'
 import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
 import ScanCodeButton from './ScanCodeButton';
+import DeviceButtonSplit from './DeviceButtonSplit'
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -62,6 +64,7 @@ export default class ContextActions extends React.Component {
         <ButtonGroup style={{marginLeft: '10px'}}>
           <ScanCodeButton/>
         </ButtonGroup>
+        <DeviceButtonSplit/>
       </div>
     )
   }
@@ -70,3 +73,4 @@ export default class ContextActions extends React.Component {
 ContextActions.propTypes = {
   updateModalProps: React.PropTypes.func.isRequired,
 };
+
