@@ -6,7 +6,9 @@ export default class Device extends Element{
     return new Device({
       type: 'device',
       code: uuid.v1(),
-      types: []
+      types: [],
+      samples: [],
+      // title: ""
     })
   }
 }

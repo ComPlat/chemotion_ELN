@@ -1,5 +1,6 @@
 import React from 'react'
 import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
+import DeviceSampleContainer from './DeviceSampleContainer'
 
 const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
   return (
@@ -8,6 +9,9 @@ const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
       header={<Header device={device} closeDetails={closeDetails} toggleFullScreen={toggleFullScreen}/>}
       bsStyle={device.isPendingToSave ? 'info' : 'primary'}
     >
+      <DeviceSampleContainer
+        device={device}
+      />
       <ButtonToolbar>
         <Button bsStyle="primary" onClick={() => closeDetails()}>
           Close

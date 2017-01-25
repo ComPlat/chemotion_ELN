@@ -73,7 +73,15 @@ class ElementActions {
     }
     return (dispatch) => dispatch(device)
   }
+
+  addSampleToDevice(sample, device) {
+    return (dispatch) => dispatch({sample, device})
+  }
   
+  removeSampleFromDevice(sample, device) {
+    return (dispatch) => dispatch({sample, device})
+  }
+
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

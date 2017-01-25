@@ -78,7 +78,9 @@ class ElementStore {
       handleToggleDeviceType: ElementActions.toggleDeviceType,
       handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
-      
+      handleAddSampleToDevice: ElementActions.addSampleToDevice,
+      handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
+
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
@@ -177,6 +179,20 @@ class ElementStore {
       device.types.push(type)
     }
     const deviceKey = devices.findIndex((e) => e.id === device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+
+  handleAddSampleToDevice({sample, device}) {
+    const {devices} = this.state.elements['devices']
+    device.samples.push(sample)
+    const deviceKey = devices.findIndex((e) => e.id === device)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+  
+  handleRemoveSampleFromDevice({sample, device}) {
+    const {devices} = this.state.elements['devices']
+    device.samples = device.samples.filter((e) => e.id !== sample.id)
+    const deviceKey = devices.findIndex((e) => e.id === device)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 

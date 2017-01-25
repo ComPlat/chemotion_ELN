@@ -12,6 +12,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
   }
 
   const handleOpenDevice = () => {
+    UIActions.closeDeviceManagement()
     Aviator.navigate(`/device/${selectedDeviceId}`)
   }
 
