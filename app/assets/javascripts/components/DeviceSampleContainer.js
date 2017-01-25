@@ -9,7 +9,14 @@ const target = {
     const {device} = props
     const item = monitor.getItem()
     const itemType = monitor.getItemType()
-    if (itemType == 'sample') { // TODO without analysis
+    const deviceHasSample = device.samples.findIndex(
+      (sample) => sample.id === item.element.id
+    ) !== -1 
+
+    if (itemType == 'sample' && 
+        !deviceHasSample
+    ) { 
+      // TODO without analysis
       ElementActions.addSampleToDevice(item.element, device)
     }
   },
@@ -31,6 +38,10 @@ const collect = (connect, monitor) => ({
 
 const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => {
   const handleTypeClick = (type) => {
+  }
+
+  const handleRemoveSample = (sample) => {
+    ElementActions.removeSampleFromDevice(sample, device)
   }
 
   let style = {
@@ -55,6 +66,7 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
             >
               <Button
                 bsStyle={"danger"}
+                onClick={() => handleRemoveSample(sample)}
               >
                 <i className="fa fa-trash-o"></i>
               </Button>
@@ -129,7 +141,6 @@ const TypeButtonsHeader = () => {
 }
 
 const TypeButtons = ({device, onTypeClick}) => {
-  console.log(device)
   const isDisabled = (type) => !device.types.includes(type)
 
   return (
