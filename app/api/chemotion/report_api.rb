@@ -26,12 +26,27 @@ module Chemotion
         requires :checkedAll, type: Boolean
         requires :currentCollection, type: Integer
         requires :removedColumns, type: String
+        requires :exportType, type: Integer
       end
       get :export_samples_from_selections do
         env['api.format'] = :binary
-        content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("#{params[:type].capitalize}_#{Time.now.strftime("%Y-%m-%dT%H-%M-%S")}.xlsx")}"
-        excel = Report::ExcelExport.new
+
+        fileType = ""
+        case params[:exportType]
+        when 1 # XLSX export
+          content_type('application/vnd.ms-excel')
+          fileType = ".xlsx"
+          export = Report::ExcelExport.new
+        when 2 # SDF export
+          content_type('chemical/x-mdl-sdfile')
+          fileType = ".sdf"
+          export = Report::SdfExport.new
+        end
+        fileName = params[:type].capitalize + "_" +
+                   Time.now.strftime("%Y-%m-%dT%H-%M-%S") + fileType
+        fileURI = URI.escape(fileName)
+        header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
+
         # - - - - - - -
         type = params[:type]
         checkedIds = params[:checkedIds].split(",")
@@ -51,8 +66,8 @@ module Chemotion
           end.flatten
         end
 
-        samples.each { |sample| excel.add_sample(sample) }
-        excel.generate_file(excluded_field, included_field, removed_field)
+        samples.each { |sample| export.add_sample(sample) }
+        export.generate_file(excluded_field, included_field, removed_field)
       end
 
       params do
