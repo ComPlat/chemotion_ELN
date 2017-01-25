@@ -1,19 +1,9 @@
 require 'rails_helper'
 
 describe 'Reporter::Docx::DetailSample instance' do
-  let(:analyses)   do
-    [{"id"=>"1",
-      "type"=>"analysis",
-      "name"=>"new Analysis",
-      "report"=>true,
-      "kind"=>"13C NMR",
-      "status"=>"Confirmed",
-      "content"=>{"ops"=>[{"insert"=>"correct analyses"}]},
-      "description"=>"correct description",
-      "datasets"=>[]}]
-  end
 
-  let(:s1)  { create(:sample, analyses: analyses) }
+  let(:s1) { create(:sample) }
+
   let(:instance) do
     Reporter::Docx::DetailSample.new(sample: s1,
       spl_settings: all_spl_settings,
@@ -35,8 +25,8 @@ describe 'Reporter::Docx::DetailSample instance' do
     end
 
     it "has correct content" do
-      target_html = Sablon.content(:html,
-                      Reporter::Delta.new(analyses[0]["content"]).getHTML)
+      analyses_content = JSON.parse(s1.analyses[0]["extended_metadata"]["content"])
+      target_html = Sablon.content(:html, Report::Delta.new(analyses_content).getHTML)
       expect(content[:analyses]).to eq(target_html)
     end
   end

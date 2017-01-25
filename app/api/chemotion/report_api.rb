@@ -53,7 +53,7 @@ module Chemotion
 
       def excluded_field
         [
-          "id", "molecule_id", "analyses_dump", "created_by", "deleted_at",
+          "id", "molecule_id", "created_by", "deleted_at",
           "user_id", "fingerprint_id", "sample_svg_file"
         ]
       end

@@ -45,7 +45,14 @@ module Reporter
 
       def merge_items(init, items)
         items.reduce(init) do |sum, i|
-          sum + i["content"]["ops"]
+          ops =
+            if i["extended_metadata"] && i["extended_metadata"]["content"]
+              JSON.parse(i["extended_metadata"]["content"])["ops"]
+            else
+              []
+            end
+
+          sum + ops
         end
       end
 

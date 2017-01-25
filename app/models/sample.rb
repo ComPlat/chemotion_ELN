@@ -139,48 +139,24 @@ class Sample < ActiveRecord::Base
   #after_create :create_root_container
 
   def molecule_sum_formular
-    if self.molecule
-      self.molecule.sum_formular
-    else
-      ""
-    end
+    self.molecule ? self.molecule.sum_formular : ""
   end
 
   def molecule_iupac_name
-    if self.molecule
-      self.molecule.iupac_name
-    else
-      ""
-    end
+    self.molecule ? self.molecule.iupac_name : ""
   end
 
   def molecule_inchistring
-    if self.molecule
-      self.molecule.inchistring
-    else
-      ""
-    end
+    self.molecule ? self.molecule.inchistring : ""
   end
 
   def molecule_cano_smiles
-    if self.molecule
-      self.molecule.cano_smiles
-    else
-      ""
-    end
+    self.molecule ? self.molecule.cano_smiles : ""
   end
 
   def analyses
-    if self.container && self.container.children
-      analyses = self.container.children.where(container_type: "analyses").first
-
-      if analyses
-        return analyses.children.where(container_type: "analysis")
-      end
-    end
-
-    return []
-   end
+    self.container ? self.container.analyses : []
+  end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
     (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq

@@ -1,13 +1,13 @@
 module ContainerHelper
 
   def self.update_datamodel(container)
-    if !container.is_new
-      root_container = Container.find_by id: container.id
-      root_container.name = "root" #if it is created from client.side
-    else
+    if container.is_new
       root_container = Container.new
       root_container.name = "root"
       root_container.container_type = container.container_type
+    else
+      root_container = Container.find_by id: container.id
+      root_container.name = "root" #if it is created from client.side
     end
     root_container.save!
 

@@ -36,7 +36,8 @@ const AnalysesContent = ({show, showRecDes, analyses, reactionDescription}) => {
   const init = showRecDes ? reactionDescription.ops : [];
   const analysesParagraph = () => {
     const dataMerged = analyses.reduce( (sum, a) => {
-      return [...sum, ...a.content.ops];
+      let contentJSON = JSON.parse(a.extended_metadata.content)
+      return [...sum, ...contentJSON.ops];
     } , init);
     const data = dataMerged.map(d => {
       d.insert = d.insert.replace(/\n/g,' ');
