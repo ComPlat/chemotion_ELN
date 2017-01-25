@@ -13,7 +13,9 @@ class UIStore {
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
+        activeAnalysis: 0
       },
       reaction: {
         checkedAll: false,
@@ -48,6 +50,8 @@ class UIStore {
 
     this.bindListeners({
       handleSelectTab: UIActions.selectTab,
+      handleSelectSampleTab: UIActions.selectSampleTab,
+      handleSelectActiveAnalysis: UIActions.selectActiveAnalysis,
       handleSelectCollection: UIActions.selectCollection,
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
@@ -95,6 +99,14 @@ class UIStore {
 
   handleSelectTab(tab) {
     this.state.currentTab = tab;
+  }
+
+  handleSelectSampleTab(tab) {
+    this.state.sample.activeTab = tab;
+  }
+
+  handleSelectActiveAnalysis(index) {
+    this.state.sample.activeAnalysis = index;
   }
 
   handleCheckAllElements(type) {

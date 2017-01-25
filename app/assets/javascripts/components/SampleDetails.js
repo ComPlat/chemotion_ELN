@@ -48,9 +48,11 @@ export default class SampleDetails extends React.Component {
       showStructureEditor: false,
       loadingMolecule: false,
       showElementalComposition: false,
+      activeTab: UIStore.getState().sample.activeTab
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -60,8 +62,19 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
   componentWillUnmount() {
+    UIStore.listen(this.onUIStoreChange)
     this.clipboard.destroy();
+  }
+
+  onUIStoreChange(state) {
+    this.setState({
+      activeTab: state.sample.activeTab
+    })
   }
 
   handleSampleChanged(sample) {
@@ -626,6 +639,10 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  handleSelect(key) {
+    UIActions.selectSampleTab(key);
+  }
+
   render() {
     let sample = this.state.sample || {}
     let tabContents = [
@@ -643,7 +660,7 @@ export default class SampleDetails extends React.Component {
              bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
         {this.sampleInfo(sample)}
         <ListGroup>
-        <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
+        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
           {tabContents.map((e,i)=>e(i))}
         </Tabs>
         </ListGroup>

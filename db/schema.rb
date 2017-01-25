@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20161221130945) do
+ActiveRecord::Schema.define(version: 20170111100223) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -23,10 +23,11 @@ ActiveRecord::Schema.define(version: 20161221130945) do
   end
 
   create_table "code_logs", force: :cascade do |t|
-    t.string  "code_type", null: false
-    t.string  "value",     null: false
+    t.string  "code_type",   null: false
+    t.string  "value",       null: false
     t.string  "source"
     t.integer "source_id"
+    t.string  "analysis_id"
   end
 
   create_table "collections", force: :cascade do |t|
