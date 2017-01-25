@@ -59,6 +59,7 @@ module Chemotion
             error!("404 Device with supplied id not found", 404)
           else
             device.update!(attributes)
+            device
           end
         end
       end
