@@ -10,22 +10,15 @@ class PermissionStore {
     };
 
     this.bindListeners({
-      handleFetchTopSecretStatus: PermissionActions.fetchTopSecretStatus,
-      handleFetchSharingAllowedStatus: PermissionActions.fetchSharingAllowedStatus,
-      handleFetchDeletionAllowedStatus: PermissionActions.fetchDeletionAllowedStatus
+      handleFetchPermissionStatus: PermissionActions.fetchPermissionStatus
     })
   }
 
-  handleFetchTopSecretStatus(result) {
-    this.state.is_top_secret = result.is_top_secret;
-  }
 
-  handleFetchSharingAllowedStatus(result) {
-    this.state.sharing_allowed = result.sharing_allowed;
-  }
-
-  handleFetchDeletionAllowedStatus(result) {
-    this.state.deletion_allowed = result.deletion_allowed;
+  handleFetchPermissionStatus(result) {
+    if (result.is_top_secret != null) {this.state.is_top_secret = result.is_top_secret}
+    if (result.sharing_allowed !=null) {this.state.sharing_allowed = result.sharing_allowed}
+    if (result.deletion_allowed !=null) {this.state.deletion_allowed = result.deletion_allowed}
   }
 }
 

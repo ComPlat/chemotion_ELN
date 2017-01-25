@@ -41,9 +41,13 @@ export default class Navigation extends React.Component {
   }
 
   onChange(state) {
-    this.setState({
-      currentUser: state.currentUser
-    });
+    let newId = state.currentUser ? state.currentUser.id : null
+    let oldId =this.state.currentUser ?  this.state.currentUser.id : null
+    if (newId !== oldId){
+      this.setState({
+        currentUser: state.currentUser
+      });
+    }
   }
 
   onUIChange(state) {
