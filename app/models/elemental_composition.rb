@@ -26,7 +26,10 @@ class ElementalComposition < ActiveRecord::Base
       return unless ea_sm = sm_data.sample.elemental_compositions
                        .where(composition_type: ['loading', 'formula', 'mass_diff']).first
 
-      product_yield = Chemotion::Calculations.get_yield self.data, ea_sm.data
+      return unless ea_exp = sample.elemental_compositions
+                       .where(composition_type: 'full_conv').first
+
+      product_yield = Chemotion::Calculations.get_yield self.data, ea_sm.data, ea_exp.data
       return if product_yield == 0.0
 
       new_amount = sm_data.sample.amount_mmol * product_yield
