@@ -56,6 +56,7 @@ describe Chemotion::ReportAPI do
 
       before {
         params = {  type: "sample",
+                    exportType: 1,
                     checkedIds: "#{sample_1.id}",
                     uncheckedIds: "",
                     checkedAll: false,

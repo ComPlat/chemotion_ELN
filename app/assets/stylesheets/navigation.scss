@@ -44,5 +44,6 @@
 
 .export-container {
   height: 70vh;
-  overflow: scroll;
+  overflow: auto;
+  margin-bottom: 10px;
 }
