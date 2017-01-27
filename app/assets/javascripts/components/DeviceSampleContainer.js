@@ -58,42 +58,54 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
     <div>
       <TypeButtonsHeader/>
       <div style={style}>
-        {device.samples.map((sample, key) => {
-          return (
-            <div
+        {device.samples.length > 0
+          ? device.samples.map((sample, key) => (
+            <DeviceSample
+              sample={sample}
+              device={device}
               key={key}
-              style={{display: "flex", marginBottom: "5px"}}
-            >
-              <Button
-                bsStyle={"danger"}
-                onClick={() => handleRemoveSample(sample)}
-              >
-                <i className="fa fa-trash-o"></i>
-              </Button>
-              <div
-                style={{
-                  padding: "6px",
-                  borderRadius: "4px",
-                  border: "1px solid #ddd",
-                  margin: "0 5px",
-                  flex: 1
-                }}
-              >
-                {sample._short_label}
-              </div>
-              <TypeButtons
-                device={device}
-                onTypeClick={(type) => handleTypeClick(type, sample)}
-              />
+            />
+          ))
+          : <div>
+              There are currently no Samples associated with this Device.
             </div>
-          )
-        })}
+        }
       </div>
     </div>
   )
 }
 
 export default DropTarget([DragDropItemTypes.SAMPLE], target, collect)(DeviceSampleContainer)
+
+const DeviceSample = ({sample, device}) => {
+  return (
+    <div
+      style={{display: "flex", marginBottom: "5px"}}
+    >
+      <Button
+        bsStyle={"danger"}
+        onClick={() => handleRemoveSample(sample)}
+      >
+        <i className="fa fa-trash-o"></i>
+      </Button>
+      <div
+        style={{
+          padding: "6px",
+          borderRadius: "4px",
+          border: "1px solid #ddd",
+          margin: "0 5px",
+          flex: 1
+        }}
+      >
+        {sample._short_label}
+      </div>
+      <TypeButtons
+        device={device}
+        onTypeClick={(type) => handleTypeClick(type, sample)}
+      />
+    </div>
+  )
+}
 
 const TypeButtonsHeader = () => {
   const style = {
