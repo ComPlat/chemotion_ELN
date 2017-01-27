@@ -99,6 +99,7 @@ class ElementStore {
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
+      handleChangeDeviceProp: ElementActions.changeDeviceProp,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleTryFetchReactionById: ElementActions.tryFetchReactionById,
@@ -193,6 +194,13 @@ class ElementStore {
     const {devices} = this.state.elements['devices']
     device.samples = device.samples.filter((e) => e.id !== sample.id)
     const deviceKey = devices.findIndex((e) => e.id === device)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+
+  handleChangeDeviceProp({device, prop, value}) {
+    const {devices} = this.state.elements['devices']
+    device[prop] = value
+    const deviceKey = devices.findIndex((e) => e.id === device.id)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 

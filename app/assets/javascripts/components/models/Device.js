@@ -5,10 +5,10 @@ export default class Device extends Element{
   static buildEmpty() {
     return new Device({
       type: 'device',
-      code: uuid.v1(),
+      code: "",
       types: [],
       samples: [],
-      // title: ""
+      title: "New Device"
     })
   }
 }

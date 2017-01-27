@@ -82,6 +82,10 @@ class ElementActions {
     return (dispatch) => dispatch({sample, device})
   }
 
+  changeDeviceProp(device, prop, value) {
+    return (dispatch) => dispatch({device, prop, value})
+  }
+
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

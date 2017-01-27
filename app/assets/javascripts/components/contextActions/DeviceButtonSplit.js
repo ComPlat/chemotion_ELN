@@ -42,17 +42,27 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
           Device Management
         </MenuItem>
         <MenuItem divider />
-        {devices.map((device) => {
-          return (
-            <MenuItem
-              onSelect={() => ElementActions.changeSelectedDeviceId(device.id)}
-              className={device.id === selectedDeviceId ? "selected" : ""}
-              key={device.id}
-            >
-              {device.code}
-            </MenuItem>
+        {devices.length > 0 
+          ? devices.map((device) => {
+              return (
+                <MenuItem
+                  onSelect={() => ElementActions.changeSelectedDeviceId(device.id)}
+                  className={device.id === selectedDeviceId ? "selected" : ""}
+                  key={device.id}
+                >
+                  {device.title !== "" ? device.title : device.code}
+                </MenuItem>
+              )
+            })
+          : (
+              <MenuItem
+                disabled={true}
+                key={'no-devices'}
+              >
+                No Devices created yet.
+              </MenuItem>
           )
-        })}
+        }
       </DropdownButton>
     </ButtonGroup>
   )

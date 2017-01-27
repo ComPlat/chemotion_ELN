@@ -3,7 +3,7 @@ module Chemotion
     resource :devices do
       desc "Create Device"
       params do
-        # optional :name, type: String, desc: "device name"
+        optional :title, type: String, desc: "device name"
         optional :code, type: String, desc: "device code hash"
         optional :types, type: Array, desc: "device types"
       end
@@ -11,6 +11,7 @@ module Chemotion
         attributes = declared(params, include_missing: false)
         device = Device.new(attributes)
         device.save!
+        current_user.devices << device
         device
       end
 
@@ -47,7 +48,7 @@ module Chemotion
       desc "Update Device by id"
       params do
         requires :id, type: Integer, desc: "device id"
-        # optional :name, type: String, desc: "device name"
+        optional :title, type: String, desc: "device name"
         optional :code, type: String, desc: "device code hash"
         optional :types, type: Array, desc: "device types"
       end
