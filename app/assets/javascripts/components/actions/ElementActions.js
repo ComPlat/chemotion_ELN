@@ -29,8 +29,12 @@ import _ from 'lodash';
 
 const handleFetch = (dispatch, fetch) => {
   return fetch()
-    .then((result) => {dispatch(result)})
-    .catch((errorMessage) => {console.log(errorMessage)})
+    .then((result) => {
+      dispatch(result)
+    })
+    .catch((errorMessage) => {
+      console.log(errorMessage)
+    })
 }
 
 class ElementActions {
@@ -51,7 +55,11 @@ class ElementActions {
     return (dispatch) => dispatch(key)
   }
 
-  changeSelectedDeviceId(deviceId) {
+  changeSelectedDeviceId(device) {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device))
+  }
+
+  setSelectedDeviceId(deviceId) {
     return (dispatch) => dispatch(deviceId)
   }
 

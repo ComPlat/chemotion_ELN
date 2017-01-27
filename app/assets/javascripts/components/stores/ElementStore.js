@@ -1,8 +1,8 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
-import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
+import UserStore from './UserStore';
 import ClipboardStore from './ClipboardStore';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -52,7 +52,7 @@ class ElementStore {
         devices: {
           devices: [],
           activeAccordionDevice: 0,
-          selectedDeviceId: -1
+          selectedDeviceId: -1 
         }
       },
       currentElement: null,
@@ -67,7 +67,7 @@ class ElementStore {
                         Xhandlers["handlers" + i][k].bind(this))
       });
     }
-
+    
     this.bindListeners({
 
       handleFetchAllDevices: ElementActions.fetchAllDevices,
@@ -78,8 +78,10 @@ class ElementStore {
       handleToggleDeviceType: ElementActions.toggleDeviceType,
       handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
+      handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
       handleAddSampleToDevice: ElementActions.addSampleToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
+      handleChangeDeviceProp: ElementActions.changeDeviceProp,
 
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -99,7 +101,6 @@ class ElementStore {
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
-      handleChangeDeviceProp: ElementActions.changeDeviceProp,
 
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleTryFetchReactionById: ElementActions.tryFetchReactionById,
@@ -209,6 +210,10 @@ class ElementStore {
   }
   
   handleChangeSelectedDeviceId(deviceId) {
+    this.state.elements['devices'].selectedDeviceId = deviceId
+  }
+  
+  handleSetSelectedDeviceId(deviceId) {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 

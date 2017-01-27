@@ -30,6 +30,23 @@ module Chemotion
         end
       end
 
+      desc "set selected_device of user"
+      route_param :id do
+        post 'selected' do 
+          device = Device.find_by(id: params[:id])
+          if device.nil?
+            error!("404 Device with supplied id not found", 404)
+          else
+            user = User.find_by(id: device.user_id)
+            unless user.nil?
+              user.selected_device = device
+              user.save!
+              device.id
+            end
+          end
+        end
+      end
+
       desc "Delete a device by id"
       params do
         requires :id, type: Integer, desc: "device id"

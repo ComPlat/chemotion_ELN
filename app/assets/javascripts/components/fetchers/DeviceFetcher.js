@@ -27,6 +27,14 @@ export default class DeviceFetcher {
     })
   }
 
+  static changeSelectedDevice(device) {
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/devices/${device.id}/selected`,
+      requestMethod: 'POST',
+      jsonTranformation: (json) => json
+    })
+  }
+
   static update(device) {
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}`,

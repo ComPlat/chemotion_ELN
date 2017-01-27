@@ -2,7 +2,10 @@ import React from 'react'
 import {ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem} from 'react-bootstrap'
 import UIActions from './../actions/UIActions'
 import ElementActions from './../actions/ElementActions'
+import UserActions from './../actions/UserActions'
 import ElementStore from './../stores/ElementStore'
+import UserStore from './../stores/UserStore'
+import UIStore from './../stores/UIStore'
 import connectToStores from 'alt-utils/lib/connectToStores'
 
 const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
@@ -12,8 +15,8 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
   }
 
   const handleOpenDevice = () => {
-    UIActions.closeDeviceManagement()
-    Aviator.navigate(`/device/${selectedDeviceId}`)
+    const {currentCollection} = UIStore.getState()
+    Aviator.navigate(`/collection/${currentCollection.id}/device/${selectedDeviceId}`)
   }
 
   return (
@@ -46,7 +49,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
           ? devices.map((device) => {
               return (
                 <MenuItem
-                  onSelect={() => ElementActions.changeSelectedDeviceId(device.id)}
+                  onSelect={() => ElementActions.changeSelectedDeviceId(device)}
                   className={device.id === selectedDeviceId ? "selected" : ""}
                   key={device.id}
                 >
@@ -69,6 +72,13 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
 }
 
 DeviceButtonSplit.getStores = () => {
+  // FIXME hacky
+  const userStore = UserStore.getState()
+  if (userStore && userStore.currentUser) {
+    const {selected_device_id} = userStore.currentUser
+    ElementActions.setSelectedDeviceId.defer(selected_device_id)
+  }
+
   return [ElementStore]
 }
 

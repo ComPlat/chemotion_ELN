@@ -29,8 +29,8 @@ export default DeviceDetails
 
 const Header = ({device, closeDetails, toggleFullScreen}) => {
   return (
-    <h4>
-      {device.code}
+    <div>
+      {device.title}
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="closeReaction">Close Device</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"
@@ -52,7 +52,7 @@ const Header = ({device, closeDetails, toggleFullScreen}) => {
         <i className="fa fa-expand"></i>
       </Button>
       </OverlayTrigger>
-    </h4>
+    </div>
   )
 }
 
