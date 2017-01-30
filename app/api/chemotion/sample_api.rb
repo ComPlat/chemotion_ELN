@@ -32,10 +32,17 @@ module Chemotion
         params do
           requires :sample_id, type: Integer
           requires :analysis_id, type: String
+          optional :code, type: String
         end
         get do
           sample = Sample.find(params[:sample_id])
-          sample.analyses.index { |a| a["id"] == params[:analysis_id]}
+          index = sample.analyses.index { |a| a["id"] == params[:analysis_id]}
+
+          if index.nil?
+            error!("Analysis with code #{params[:code]} not found", 404)
+          else
+            index
+          end
         end
       end
 

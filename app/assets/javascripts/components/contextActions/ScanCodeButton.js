@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Modal, OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {Alert, Button, Modal, OverlayTrigger, Tooltip} from 'react-bootstrap';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
 import UIActions from '../actions/UIActions';
@@ -10,7 +10,8 @@ export default class ScanCodeButton extends React.Component {
     super(props);
     this.state = {
       showModal: false,
-      showQrReader: false
+      showQrReader: false,
+      scanError: null
     }
   }
 
@@ -19,7 +20,7 @@ export default class ScanCodeButton extends React.Component {
   }
 
   close() {
-    this.setState({ showModal: false, showQrReader: false });
+    this.setState({ showModal: false, showQrReader: false, scanError: null });
   }
 
   initializeBarcodeScan() {
@@ -53,25 +54,29 @@ export default class ScanCodeButton extends React.Component {
       })
       .then((response) => {
         return response.json()
-      }).then((json) => {
+      })
+      .then(this.checkJSONResponse)
+      .then((json) => {
         let {source, source_id, analysis_id} = json
 
         if(source == "analysis") {
-          Quagga.stop();
-          Aviator.navigate(`/collection/all/sample/${source_id}`)
-          this.close();
-          UIActions.selectSampleTab(1)
-
           // open active analysis
           fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}`, {
             credentials: 'same-origin'
           })
           .then((response) => {
             return response.json()
-          }).then((json) => {
+          })
+          .then(this.checkJSONResponse)
+          .then((json) => {
+            Quagga.stop();
+            Aviator.navigate(`/collection/all/sample/${source_id}`)
+            this.close();
+            UIActions.selectSampleTab(1)
             UIActions.selectActiveAnalysis(json)
           }).catch((errorMessage) => {
             console.log(errorMessage);
+            this.setState({scanError: errorMessage.message})
           });
 
         } else {
@@ -81,6 +86,7 @@ export default class ScanCodeButton extends React.Component {
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);
+        this.setState({scanError: errorMessage.message})
       });
     })
   }
@@ -102,6 +108,17 @@ export default class ScanCodeButton extends React.Component {
     }
   }
 
+  checkJSONResponse(json) {
+    if(json.error) {
+      console.log(json)
+      var error = new Error(json.error)
+      error.response = json
+      throw error
+    } else {
+      return json
+    }
+  }
+
   handleQrScan(data) {
     console.log(data)
     fetch(`/api/v1/code_logs/with_qr_code?code=${data}`, {
@@ -109,18 +126,37 @@ export default class ScanCodeButton extends React.Component {
     })
     .then((response) => {
       return response.json()
-    }).then((json) => {
+    })
+    .then(this.checkJSONResponse)
+    .then((json) => {
       console.log(json)
-      let {source, source_id} = json
+      let {source, source_id, analysis_id} = json
 
       if(source == "analysis") {
-        // TODO goto analysis tab
+        // open active analysis
+        fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}&code=${data}`, {
+          credentials: 'same-origin'
+        })
+        .then((response) => {
+          return response.json()
+        })
+        .then(this.checkJSONResponse)
+        .then((json) => {
+          Aviator.navigate(`/collection/all/sample/${source_id}`)
+          this.close();
+          UIActions.selectSampleTab(1)
+          UIActions.selectActiveAnalysis(json)
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          this.setState({scanError: errorMessage.message})
+        });
       } else {
         Aviator.navigate(`/collection/all/${source}/${source_id}`)
         this.close();
       }
     }).catch((errorMessage) => {
-      console.log(errorMessage);
+      console.log(errorMessage.message);
+      this.setState({scanError: errorMessage.message})
     });
   }
 
@@ -139,6 +175,8 @@ export default class ScanCodeButton extends React.Component {
             <div id="code-scanner" style={{maxHeight: '400px', overflow: 'hidden'}}>
               {this.qrReader(this.state)}
             </div>
+            <br/>
+            {this.scanAlert()}
           </Modal.Body>
           <Modal.Footer>
             <Button onClick={() => this.startBarcodeScan()}>Start barcode scan</Button>
@@ -148,6 +186,16 @@ export default class ScanCodeButton extends React.Component {
       )
     } else {
       return ""
+    }
+  }
+
+  scanAlert() {
+    if(this.state.scanError) {
+      return (
+        <Alert bsStyle="danger">
+          {this.state.scanError}
+        </Alert>
+      )
     }
   }
 

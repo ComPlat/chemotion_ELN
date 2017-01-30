@@ -10,7 +10,7 @@ module Chemotion
           code_log = CodeLog.find_by(code_type: "bar_code", value: params[:code])
 
           if code_log.nil?
-            error!("404 Element with supplied code not found", 404)
+            error!("Element with barcode #{params[:code]} not found", 404)
           else
             code_log
           end
@@ -26,7 +26,7 @@ module Chemotion
           code_log = CodeLog.find_by(code_type: "qr_code", value: params[:code])
 
           if code_log.nil?
-            error!("404 Element with supplied code not found", 404)
+            error!("Element with QR code #{params[:code]} not found", 404)
           else
             code_log
           end
@@ -55,7 +55,7 @@ module Chemotion
                      end
 
           content_type('application/pdf')
-          #header 'Content-Disposition', "attachment; filename*=UTF-8''sample_#{params[:id]}_codes_#{params[:size]}.pdf"
+          header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
           body CodePDF.new(elements, params[:size], params[:type]).render
@@ -81,7 +81,7 @@ module Chemotion
 
 
           content_type('application/pdf')
-          #header 'Content-Disposition', "attachment; filename*=UTF-8''sample_#{params[:id]}_codes_#{params[:size]}.pdf"
+          header 'Content-Disposition', "attachment; filename*=UTF-8''analysis_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
           body CodePDF.new(elements, params[:size], params[:type]).render
