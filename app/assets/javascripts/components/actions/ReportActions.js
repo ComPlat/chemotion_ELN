@@ -1,4 +1,5 @@
 import alt from '../alt';
+import ReportsFetcher from '../fetchers/ReportsFetcher';
 
 class ReportActions {
 
@@ -30,8 +31,14 @@ class ReportActions {
     return null;
   }
 
-  generateReports() {
-    return null;
+  generateReport(report) {
+    return (dispatch) => { ReportsFetcher.create(report)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
   updateCheckedTags(tags) {
@@ -40,6 +47,42 @@ class ReportActions {
 
   move({sourceTag, targetTag}) {
     return {sourceTag, targetTag};
+  }
+
+  getArchives() {
+    return (dispatch) => { ReportsFetcher.fetchArchives()
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  updateProcessQueue(oriQueue) {
+    return (dispatch) => { ReportsFetcher.fetchDownloadable(oriQueue)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  updateFileName(value) {
+    return value;
+  }
+
+  updateFileDescription(value) {
+    return value;
+  }
+
+  updateActiveKey(key) {
+    return key;
+  }
+
+  downloadReport(id) {
+    return id;
   }
 }
 

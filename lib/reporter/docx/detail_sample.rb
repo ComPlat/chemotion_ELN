@@ -1,4 +1,4 @@
-module Report
+module Reporter
   module Docx
     class DetailSample < Detail
       def initialize(args)

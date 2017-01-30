@@ -1,9 +1,9 @@
 require 'rails_helper'
 
-describe 'Report::Docx::' do
+describe 'Reporter::Docx::' do
   context 'DiagramReaction instance' do
     let(:r1) { create(:reaction, name: 't1')}
-    let(:instance) { Report::Docx::DiagramReaction.new(obj: r1) }
+    let(:instance) { Reporter::Docx::DiagramReaction.new(obj: r1) }
 
     context '.generate_eps' do
       let(:diagram) { instance.generate }
@@ -21,7 +21,7 @@ describe 'Report::Docx::' do
 
   context 'DiagramSample instance' do
     let(:s1) { create(:sample, name: 's1')}
-    let(:instance) { Report::Docx::DiagramSample.new(obj: s1) }
+    let(:instance) { Reporter::Docx::DiagramSample.new(obj: s1) }
 
     context '.generate_eps' do
       let(:diagram) { instance.generate }

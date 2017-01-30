@@ -48,6 +48,9 @@
 /uploads/thumbnails
 !/public/attachments/.keep
 
+/public/docx/*
+!/public/docx/.keep
+
 /coverage/
 
 # Temp files

@@ -1,6 +1,6 @@
 require 'ole/storage'
 
-module Report
+module Reporter
   module Docx
     class OleCreator
       attr_accessor :obj, :ole_instance

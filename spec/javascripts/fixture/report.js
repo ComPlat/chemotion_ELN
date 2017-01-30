@@ -23,7 +23,12 @@ const originalState = {
   processingReport: false,
   selectedObjTags: { sampleIds: [], reactionIds: [] },
   selectedObjs: [],
-  imgFormat: 'png'
+  imgFormat: 'png',
+  archives: [],
+  fileName: 'ELN_report',
+  fileDescription: '',
+  activeKey: 0,
+  processings: [],
 }
 
 export { originalState, splSettings, rxnSettings, configs }

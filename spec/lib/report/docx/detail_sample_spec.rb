@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe 'Report::Docx::DetailSample instance' do
+describe 'Reporter::Docx::DetailSample instance' do
   let(:analyses)   do
     [{"id"=>"1",
       "type"=>"analysis",
@@ -15,7 +15,7 @@ describe 'Report::Docx::DetailSample instance' do
 
   let(:s1)  { create(:sample, analyses: analyses) }
   let(:instance) do
-    Report::Docx::DetailSample.new(sample: s1,
+    Reporter::Docx::DetailSample.new(sample: s1,
       spl_settings: all_spl_settings,
       rxn_settings: all_rxn_settings,
       configs: all_configs)
@@ -36,7 +36,7 @@ describe 'Report::Docx::DetailSample instance' do
 
     it "has correct content" do
       target_html = Sablon.content(:html,
-                      Report::Delta.new(analyses[0]["content"]).getHTML)
+                      Reporter::Delta.new(analyses[0]["content"]).getHTML)
       expect(content[:analyses]).to eq(target_html)
     end
   end

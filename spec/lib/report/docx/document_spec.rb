@@ -1,13 +1,13 @@
 require 'rails_helper'
 
-describe 'Report::Docx::Document instance' do
+describe 'Reporter::Docx::Document instance' do
   let(:t1) { "title 1" }
   let(:t2) { "title 2" }
   let(:r1) { create(:reaction, name: t1)}
   let(:r2) { create(:reaction, name: t2)}
   let(:s1) { create(:sample) }
   let(:instance) do
-    Report::Docx::Document.new(objs: [r1, r2, s1],
+    Reporter::Docx::Document.new(objs: [r1, r2, s1],
       spl_settings: all_spl_settings,
       rxn_settings: all_rxn_settings,
       configs: all_configs)

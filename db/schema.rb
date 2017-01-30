@@ -11,12 +11,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170113154425) do
+ActiveRecord::Schema.define(version: 20170123094157) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "pg_trgm"
   enable_extension "hstore"
+
+  create_table "attachments", force: :cascade do |t|
+    t.integer  "container_id"
+    t.string   "filename",     null: false
+    t.string   "identifier",   null: false
+    t.string   "checksum",     null: false
+    t.string   "storage",      null: false
+    t.integer  "created_by",   null: false
+    t.integer  "created_for"
+    t.integer  "version",      null: false
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -92,6 +105,20 @@ ActiveRecord::Schema.define(version: 20170113154425) do
   add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
   add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
   add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
+
+  create_table "containers", force: :cascade do |t|
+    t.string   "ancestry"
+    t.integer  "element_id"
+    t.string   "element_type"
+    t.string   "name"
+    t.string   "container_type"
+    t.text     "description"
+    t.hstore   "extended_metadata", default: {}
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+  end
+
+  add_index "containers", ["ancestry"], name: "index_containers_on_ancestry", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -317,6 +344,38 @@ ActiveRecord::Schema.define(version: 20170113154425) do
   add_index "reactions_starting_material_samples", ["deleted_at"], name: "index_reactions_starting_material_samples_on_deleted_at", using: :btree
   add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
   add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
+
+  create_table "reports", force: :cascade do |t|
+    t.integer  "author_id"
+    t.string   "file_name"
+    t.text     "file_description"
+    t.text     "configs"
+    t.text     "sample_settings"
+    t.text     "reaction_settings"
+    t.text     "objects"
+    t.string   "img_format"
+    t.string   "file_path"
+    t.datetime "generated_at"
+    t.datetime "deleted_at"
+    t.datetime "created_at",        null: false
+    t.datetime "updated_at",        null: false
+  end
+
+  add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
+  add_index "reports", ["file_name"], name: "index_reports_on_file_name", using: :btree
+
+  create_table "reports_users", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "report_id"
+    t.datetime "downloaded_at"
+    t.datetime "deleted_at"
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
+  end
+
+  add_index "reports_users", ["deleted_at"], name: "index_reports_users_on_deleted_at", using: :btree
+  add_index "reports_users", ["report_id"], name: "index_reports_users_on_report_id", using: :btree
+  add_index "reports_users", ["user_id"], name: "index_reports_users_on_user_id", using: :btree
 
   create_table "research_plans", force: :cascade do |t|
     t.string   "name",        null: false

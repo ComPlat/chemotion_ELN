@@ -13,3 +13,18 @@
   white-space: pre-wrap;
   word-break: keep-all;
 }
+
+.badge-danger {
+  background: #d9534f;
+  border-radius: 15px;
+  color: white;
+  display: inline-block;
+  font-weight: bold;
+  text-align: center;
+  width: 35px;
+}
+
+.text-comment {
+  color: gray;
+  font-style: italic;
+}

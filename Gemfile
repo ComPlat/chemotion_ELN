@@ -73,11 +73,11 @@ gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails'
 # Free font icons
 gem "font-awesome-rails"
 
-# Email notifications and so on
-# gem 'delayed_job_active_record'
+# delayed job
+gem 'delayed_job_active_record'
 
 # required by cap3 delayed-job but has to be specified manually
-# gem 'daemons'
+gem 'daemons'
 
 # dataset previews
 gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'

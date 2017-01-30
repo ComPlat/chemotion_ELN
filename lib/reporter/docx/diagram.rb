@@ -1,4 +1,4 @@
-module Report
+module Reporter
   module Docx
     class Diagram
       attr_accessor :obj, :svg_data
