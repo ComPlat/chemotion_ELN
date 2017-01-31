@@ -1,5 +1,6 @@
 import React from 'react'
 import expect from 'expect'
+import sinon from 'sinon'
 import {originalState} from '../fixture/report'
 import alt from '../../../app/assets/javascripts/components/alt'
 import ReportActions from '../../../app/assets/javascripts/components/actions/ReportActions'
@@ -7,13 +8,13 @@ import ReportStore from '../../../app/assets/javascripts/components/stores/Repor
 
 describe('ReportStore', () => {
   beforeEach(() => {
-     alt.flush()
+    alt.flush()
   })
 
   it('should initialize', () => {
-    //const ReportStore = alt.stores.ReportStore
     const actual = ReportStore.getState()
     const expected = originalState
+    expected.fileName = actual.fileName
     expect(actual).toEqual(expected)
   })
 

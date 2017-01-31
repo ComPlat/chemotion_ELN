@@ -1,4 +1,4 @@
-module Report
+module Reporter
   class Delta
     attr_reader :delta, :html
 

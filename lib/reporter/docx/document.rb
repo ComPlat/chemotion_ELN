@@ -1,4 +1,4 @@
-module Report
+module Reporter
   module Docx
     class Document
       attr_reader :objs, :contents
@@ -21,7 +21,7 @@ module Report
       private
       def to_content(obj)
         type_name = obj.class.to_s
-        "Report::Docx::Detail#{type_name}".constantize.new(
+        "Reporter::Docx::Detail#{type_name}".constantize.new(
           "#{type_name.downcase}": obj,
           spl_settings: @spl_settings,
           rxn_settings: @rxn_settings,

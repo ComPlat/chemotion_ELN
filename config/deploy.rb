@@ -29,7 +29,7 @@ set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/
 
 # Default value for linked_dirs is []
 set :linked_dirs, fetch(:linked_dirs, []).push('node_modules','log', 'tmp/pids',
-'tmp/cache', 'tmp/sockets', 'public/images', 'uploads/attachments',
+'tmp/cache', 'tmp/sockets', 'public/images', 'public/docx', 'uploads/attachments',
 'uploads/thumbnails', 'backup/deploy_backup', 'backup/weekly_backup')
 
 set :rvm_ruby_version, (`cat .ruby-version`).strip
@@ -89,4 +89,52 @@ namespace :deploy do
     end
   end
 
+  task :restart do
+    on roles :app do
+      invoke 'delayed_job:restart'
+    end
+  end
+end
+
+namespace :delayed_job do
+  def args
+    fetch(:delayed_job_args, "")
+  end
+
+  def delayed_job_roles
+    fetch(:delayed_job_server_role, :app)
+  end
+
+  desc 'Stop the delayed_job process'
+  task :stop do
+    on roles(delayed_job_roles) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'bin/delayed_job', :stop
+        end
+      end
+    end
+  end
+
+  desc 'Start the delayed_job process'
+  task :start do
+    on roles(delayed_job_roles) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'bin/delayed_job', args, :start
+        end
+      end
+    end
+  end
+
+  desc 'Restart the delayed_job process'
+  task :restart do
+    on roles(delayed_job_roles) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'bin/delayed_job', args, :restart
+        end
+      end
+    end
+  end
 end

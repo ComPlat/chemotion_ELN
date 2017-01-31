@@ -1,4 +1,4 @@
-class Report::ExcelExport
+class Reporter::ExcelExport
   DEFAULT_ROW_WIDTH = 100
   DEFAULT_ROW_HEIGHT = 20
 

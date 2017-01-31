@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-describe 'Report::Docx::DetailReaction instance' do
+describe 'Reporter::Docx::DetailReaction instance' do
   let(:tit)   { 'correct title' }
   let(:sta)   { 'Planned' }
   let(:sol)   { 'correct solvent' }
@@ -21,7 +21,7 @@ describe 'Report::Docx::DetailReaction instance' do
                                   tlc_solvents: t_sol,
                                   tlc_description: t_des,
                                   observation: obs) }
-  let(:instance) { Report::Docx::DetailReaction.new(reaction: r1) }
+  let(:instance) { Reporter::Docx::DetailReaction.new(reaction: r1) }
 
   context '.content' do
     let(:content) { instance.content }
@@ -44,7 +44,7 @@ describe 'Report::Docx::DetailReaction instance' do
     it "has correct content" do
       expect(content[:title]).to eq(tit)
       expect(content[:solvents]).to eq(sol)
-      expect(content[:description]).to eq(Sablon.content(:html, Report::Delta.new(des).getHTML()))
+      expect(content[:description]).to eq(Sablon.content(:html, Reporter::Delta.new(des).getHTML()))
       expect(content[:tlc_rf]).to eq(rf)
       expect(content[:tlc_solvent]).to eq(t_sol)
       expect(content[:tlc_description]).to eq(t_des)

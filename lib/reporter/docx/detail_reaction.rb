@@ -1,4 +1,4 @@
-module Report
+module Reporter
   module Docx
     class DetailReaction < Detail
       def initialize(args)
@@ -38,13 +38,17 @@ module Report
         obj.name.present? ? obj.name : obj.short_label
       end
 
+      def whole_equation
+        @configs[:whole_diagram]
+      end
+
       def equation_reaction
-        DiagramReaction.new(obj: obj, format: @img_format).generate
+        DiagramReaction.new(obj: obj, format: @img_format).generate if whole_equation
       end
 
       def equation_products
         products_only = true
-        DiagramReaction.new(obj: obj, format: @img_format).generate(products_only)
+        DiagramReaction.new(obj: obj, format: @img_format).generate(products_only) if !whole_equation
       end
 
       def status

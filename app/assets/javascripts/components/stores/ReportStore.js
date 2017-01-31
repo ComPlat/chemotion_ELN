@@ -27,6 +27,11 @@ class ReportStore {
     this.selectedObjTags = { sampleIds: [], reactionIds: [] }
     this.selectedObjs = []
     this.imgFormat = 'png'
+    this.archives = []
+    this.fileName = this.initFileName()
+    this.fileDescription = ''
+    this.activeKey = 0
+    this.processings = []
 
     this.bindListeners({
       handleUpdateSplSettings: ReportActions.updateSplSettings,
@@ -35,10 +40,16 @@ class ReportStore {
       handleToggleRxnSettingsCheckAll: ReportActions.toggleRxnSettingsCheckAll,
       handleUpdateConfigs: ReportActions.updateConfigs,
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
-      handleGenerateReports: ReportActions.generateReports,
+      handleGenerateReport: ReportActions.generateReport,
       handleUpdateCheckedTags: ReportActions.updateCheckedTags,
       handleMove: ReportActions.move,
-      handleUpdateImgFormat: ReportActions.updateImgFormat
+      handleUpdateImgFormat: ReportActions.updateImgFormat,
+      handleGetArchives: ReportActions.getArchives,
+      handleUpdateFileName: ReportActions.updateFileName,
+      handleUpdateFileDescription: ReportActions.updateFileDescription,
+      handleUpdateActiveKey: ReportActions.updateActiveKey,
+      handleDownloadReport: ReportActions.downloadReport,
+      handleUpdateProcessQueue: ReportActions.updateProcessQueue,
     })
   }
 
@@ -109,48 +120,28 @@ class ReportStore {
     })
   }
 
-  handleGenerateReports() {
-    const objTags = this.selectedObjs.map(obj => {
-      return { id: obj.id, type: obj.type };
-    });
-    this.spinnerProcess();
-
-    Utils.downloadFile({
-      contents: "api/v1/multiple_reports/docx?objTags=" + JSON.stringify(objTags)
-                + "&splSettings=" + JSON.stringify(this.abstractSplSettings())
-                + "&rxnSettings=" + JSON.stringify(this.rxnSettings)
-                + "&configs=" + JSON.stringify(this.abstractConfigs())
-                + "&img_format=" + this.imgFormat,
-      name: "ELN-report_" + new Date().toISOString().slice(0,19)
-    })
+  handleGenerateReport(result) {
+    const newArchives = [result.report, ...this.archives];
+    this.setState({ processingReport: !this.processingReport,
+                    activeKey: 5,
+                    archives: newArchives,
+                    processings: this.getProcessings(newArchives),
+                    fileName: this.initFileName() });
+    this.loadingIcon();
   }
 
-  abstractSplSettings() {
-    return this.splSettings.map(obj => {
-      return { text: obj.text.replace(" ", "_"), checked: obj.checked };
-    });
-  }
-
-  abstractConfigs() {
-    return this.configs.map(obj => {
-      switch(obj.text) {
-        case 'Page Break':
-          return { text: "page_break", checked: obj.checked };
-        case 'Show all material in diagrams (unchecked to show Products only)':
-          if(obj.checked) {
-            return { text: "whole_diagram", checked: obj.checked };
-          } else {
-            return { text: "product_diagram", checked: !obj.checked };
-          }
-        default:
-          return obj;
+  getProcessings(archives) {
+    let ids = [];
+    archives.forEach( a => {
+      if(!a.downloadable) {
+        ids = [...ids, a.id];
       }
     });
+    return ids;
   }
 
-  spinnerProcess() {
-    this.setState({processingReport: !this.processingReport})
-    setTimeout(() => this.setState({processingReport: false}), 2500)
+  loadingIcon() {
+    setTimeout(() => this.setState({processingReport: false}), 2500);
   }
 
   handleUpdateCheckedTags(tags) {
@@ -207,6 +198,71 @@ class ReportStore {
       }
     });
     return objIndex;
+  }
+
+  initFileName() {
+    const dt = new Date();
+    const datetime =  dt.getFullYear() + "-"
+                        + (dt.getMonth()+1)  + "-"
+                        + dt.getDate() + "H"
+                        + dt.getHours() + "M"
+                        + dt.getMinutes() + "S"
+                        + dt.getSeconds();
+    return "ELN_Report_" + datetime;
+  }
+
+  handleGetArchives({archives}) {
+    this.setState({archives: archives});
+  }
+
+  handleUpdateFileName(value) {
+    const validValue = this.validName(value);
+    this.setState({fileName: validValue});
+  }
+
+  validName(text) {
+    if(text.length > 40) {
+      text = text.substring(0, 40);
+    }
+    text = text.replace(/[^a-zA-Z0-9\-\_]/g, '');
+    return text;
+  }
+
+  handleUpdateFileDescription(value) {
+    this.setState({fileDescription: value});
+  }
+
+  handleUpdateActiveKey(key) {
+    this.setState({activeKey: key});
+  }
+
+  handleDownloadReport(id) {
+    this.markReaded(id);
+    Utils.downloadFile({
+      contents: "api/v1/download_report/docx?id=" + JSON.stringify(id),
+    })
+  }
+
+  markReaded(id) {
+    const newArchives = this.archives.map(archive => {
+      if(archive.id === id) {
+        archive.unread = false;
+      }
+      return archive;
+    });
+    this.setState({ archives: newArchives });
+  }
+
+  handleUpdateProcessQueue(result) {
+    const updatedArchives = result.archives;
+    const updatedIds = updatedArchives.map(a => a.id);
+    const newProcessings = this.processings.filter(x => updatedIds.indexOf(x) === -1);
+    const newArchives = this.archives.map(a => {
+      const index = updatedIds.indexOf(a.id);
+      return index === -1 ? a : updatedArchives[index];
+    });
+    this.setState({ archives: newArchives,
+                    processings: newProcessings });
   }
 }
 

@@ -20,6 +20,9 @@ class User < ActiveRecord::Base
   has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
   has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
 
+  has_many :reports_users
+  has_many :reports, through: :reports_users
+
   validates_presence_of :first_name, :last_name, allow_blank: false
   validates :name_abbreviation, uniqueness:  {message: " has already been taken." },
     format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,3}[a-zA-Z]\Z/,

@@ -167,6 +167,11 @@ GEM
     daemons (1.2.3)
     database_cleaner (1.5.3)
     debug_inspector (0.0.2)
+    delayed_job (4.1.1)
+      activesupport (>= 3.0, < 5.0)
+    delayed_job_active_record (4.1.0)
+      activerecord (>= 3.0, < 5)
+      delayed_job (>= 3.0, < 5)
     descendants_tracker (0.0.4)
       thread_safe (~> 0.3, >= 0.3.1)
     devise (4.2.0)
@@ -486,7 +491,9 @@ DEPENDENCIES
   capybara (~> 2.7.1)
   chromedriver-helper (= 1.0.0)
   coveralls
+  daemons
   database_cleaner
+  delayed_job_active_record
   devise
   dotenv-rails
   factory_girl_rails

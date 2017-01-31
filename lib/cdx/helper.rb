@@ -1,5 +1,5 @@
 module Cdx
-  module Common
+  module Helper
     def pt(input)
       hex = "#{"%04X" % input.to_i }"
       little_endian(hex)
@@ -21,7 +21,7 @@ module Cdx
   end
 
   class CdxBasic
-    include Common
+    include Helper
     attr_reader :root, :id
     def initialize(root, id)
       @root = root

@@ -1,4 +1,4 @@
-module Report
+module Reporter
   module Docx
     class DiagramReaction < Diagram
 
