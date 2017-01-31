@@ -95,11 +95,13 @@ gem "ruby-ole"
 # CI
 gem 'coveralls', require: false
 
-if ENV.fetch("RAILS_ENV", "development").match(/^(development|test)\z/)
-  gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
-elsif ENV["RAILS_ENV"] == "production"
-  gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
-end
+
+# openbabel
+# to compile from github/openbabel/openbabel master
+#gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem'
+# to compile from github/openbabel/openbabel branch openbabel-2-4-x
+gem 'openbabel', '2.4.0.1', git: 'https://github.com/ComPlat/openbabel-gem', branch: 'openbabel-2-4-x'
+
 
 group :production do
 
