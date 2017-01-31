@@ -7,7 +7,7 @@ module Chemotion
           requires :code, type: String
         end
         get do
-          code_log = CodeLog.find_by(code_type: "bar_code", value: params[:code])
+          code_log = CodeLog.where(code_type: ["bar_code", "bar_code_bruker"]).find_by(value: params[:code])
 
           if code_log.nil?
             error!("Element with barcode #{params[:code]} not found", 404)
@@ -63,7 +63,7 @@ module Chemotion
       end
 
       namespace :print_analyses_codes do
-        desc "Build PDF with analyses codes"
+        desc "Build PDF with analyses codes of one analysis type"
         params do
           requires :sample_id, type: Integer
           requires :analyses_ids, type: Array[String]
@@ -76,7 +76,7 @@ module Chemotion
 
           params[:analyses_ids].each do |analysis_id|
             analysis = sample.analyses.detect { |a| a["id"] == analysis_id }
-            elements << OpenStruct.new(analysis) unless analysis.nil?
+            elements << OpenStruct.new(analysis.merge(sample_id: params[:sample_id])) unless analysis.nil?
           end
 
 
@@ -84,7 +84,14 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''analysis_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePDF.new(elements, params[:size], params[:type]).render
+          case params[:type]
+          when "nmr_analysis"
+            body AnalysisNmrPdf.new(elements).render
+          when "analysis"
+            body AnalysisPdf.new(elements, params[:size]).render
+          else
+            error!("Analysis with #{params[:type]} not defined", 500)
+          end
         end
       end
     end
