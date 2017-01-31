@@ -13,6 +13,13 @@ GIT
       sprite-factory
 
 GIT
+  remote: https://github.com/ComPlat/openbabel-gem
+  revision: 837eec9e660b6dbc9d2517889de39a6e93bb4b98
+  branch: openbabel-2-4-x
+  specs:
+    openbabel (2.4.0.1)
+
+GIT
   remote: https://github.com/ComPlat/sablon
   revision: ce06ae287674f8fb06dbb0d8c95df5c76dbb47ad
   specs:
@@ -20,12 +27,6 @@ GIT
       nokogiri (>= 1.6.0)
       redcarpet (>= 3.2)
       rubyzip (>= 1.1)
-
-GIT
-  remote: https://github.com/cubuslab/openbabel-gem
-  revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
-  specs:
-    openbabel (2.3.2.1)
 
 GIT
   remote: https://github.com/merlin-p/thumbnailer.git
@@ -518,7 +519,7 @@ DEPENDENCIES
   mailcatcher
   memory_profiler
   nokogiri
-  openbabel (= 2.3.2.1)!
+  openbabel (= 2.4.0.1)!
   paranoia (~> 2.0)
   pg
   pg_search
