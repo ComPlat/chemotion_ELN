@@ -127,13 +127,14 @@ module Chemotion
 
       get do
         own_collection = false
+byebug
         scope = if params[:collection_id]
           begin
             c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collection_id])
             !c.is_shared && (c.shared_by_id != current_user.id) && (own_collection = true)
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
             .find(params[:collection_id]).samples
-            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections)
+            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections, :container)
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
@@ -142,7 +143,7 @@ module Chemotion
             own_collection = false
             c = current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
             c.collection.samples
-            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections)
+            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections, :container)
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
@@ -182,8 +183,9 @@ module Chemotion
         end
 
         get do
-          sample= Sample.includes(:molecule, :residues, :elemental_compositions)
+          sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
+          #sample = Sample.where(:id => params[:id]).first
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
         end
       end

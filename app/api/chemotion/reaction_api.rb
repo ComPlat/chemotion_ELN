@@ -76,13 +76,13 @@ module Chemotion
         scope = if params[:collection_id]
           begin
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).reactions
+              find(params[:collection_id]).reactions.includes(:container)
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
         elsif params[:sync_collection_id]
           begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions.includes(:container)
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
