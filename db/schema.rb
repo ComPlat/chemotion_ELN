@@ -11,25 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170123094157) do
+ActiveRecord::Schema.define(version: 20170201113437) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
-
-  create_table "attachments", force: :cascade do |t|
-    t.integer  "container_id"
-    t.string   "filename",     null: false
-    t.string   "identifier",   null: false
-    t.string   "checksum",     null: false
-    t.string   "storage",      null: false
-    t.integer  "created_by",   null: false
-    t.integer  "created_for"
-    t.integer  "version",      null: false
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
-  end
+  enable_extension "pg_trgm"
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -105,20 +92,6 @@ ActiveRecord::Schema.define(version: 20170123094157) do
   add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
   add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
   add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
-
-  create_table "containers", force: :cascade do |t|
-    t.string   "ancestry"
-    t.integer  "element_id"
-    t.string   "element_type"
-    t.string   "name"
-    t.string   "container_type"
-    t.text     "description"
-    t.hstore   "extended_metadata", default: {}
-    t.datetime "created_at",                     null: false
-    t.datetime "updated_at",                     null: false
-  end
-
-  add_index "containers", ["ancestry"], name: "index_containers_on_ancestry", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -251,6 +224,19 @@ ActiveRecord::Schema.define(version: 20170123094157) do
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
+
+  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.text     "path_1h"
+    t.text     "path_13c"
+    t.text     "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
+  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
 
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
@@ -435,6 +421,28 @@ ActiveRecord::Schema.define(version: 20170123094157) do
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
+  create_table "scifinding_credentials", force: :cascade do |t|
+    t.string   "username"
+    t.string   "encrypted_password"
+    t.string   "encrypted_current_token"
+    t.string   "encrypted_refreshed_token"
+    t.datetime "token_expires_at"
+    t.datetime "token_requested_at"
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+    t.integer  "user_id"
+    t.string   "encrypted_password_iv"
+    t.string   "encrypted_current_token_iv"
+    t.string   "encrypted_refreshed_token_iv"
+  end
+
+  create_table "scifinding_tags", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "count"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
   create_table "screens", force: :cascade do |t|
     t.string   "description"
     t.string   "name"
@@ -495,8 +503,8 @@ ActiveRecord::Schema.define(version: 20170123094157) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
     t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
   end
