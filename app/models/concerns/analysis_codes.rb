@@ -1,4 +1,4 @@
-module BrukerNMR
+module AnalysisCodes
   extend ActiveSupport::Concern
 
   included do

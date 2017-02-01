@@ -3,8 +3,8 @@ class Sample < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
-  include Barcode
-  include BrukerNMR
+  include ElementCodes
+  include AnalysisCodes
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
