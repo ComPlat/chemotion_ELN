@@ -1,8 +1,8 @@
 import React, {PropTypes, Component} from 'react';
 import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger, Col, Row} from 'react-bootstrap';
-import QRCode from 'qrcode.react';
 import Barcode from 'react-barcode';
+import SVGInline from 'react-svg-inline'
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
@@ -24,7 +24,26 @@ export default class WellplateDetails extends Component {
       wellplate,
       activeTab: 0,
       showWellplate: true,
+      qrCodeSVG: ""
     }
+  }
+
+  componentDidMount() {
+    this.fetchQrCodeSVG(this.state.wellplate)
+  }
+
+  fetchQrCodeSVG(wellplate) {
+    fetch(`/api/v1/attachments/svgs?element_id=${wellplate.id}&element_type=wellplate`, {
+      credentials: 'same-origin'
+    })
+    .then((response) => {
+      return response.json()
+    })
+    .then((json) => {
+      this.setState({qrCodeSVG: json})
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -133,12 +152,8 @@ export default class WellplateDetails extends Component {
     )
   }
 
-  wellplateQrCode(wellplate) {
-    let qrCode = wellplate.qr_code
-    if(qrCode != null)
-      return <QRCode value={qrCode} size="80"/>;
-    else
-      return '';
+  wellplateQrCode() {
+    return <SVGInline svg={this.state.qrCodeSVG} height="80" width="80"/>
   }
 
   wellplateBarCode(wellplate) {
@@ -188,7 +203,7 @@ export default class WellplateDetails extends Component {
               </Col>
               <Col md={2}>
                 {this.wellplateBarCode(wellplate)}
-                {this.wellplateQrCode(wellplate)}
+                {this.wellplateQrCode()}
               </Col>
             </Row>
           </Tab>
