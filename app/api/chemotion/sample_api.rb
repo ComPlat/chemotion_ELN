@@ -127,7 +127,6 @@ module Chemotion
 
       get do
         own_collection = false
-byebug
         scope = if params[:collection_id]
           begin
             c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collection_id])
