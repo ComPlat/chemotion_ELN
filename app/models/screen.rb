@@ -3,7 +3,7 @@ class Screen < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
-  include Barcode
+  include ElementCodes
 
   multisearchable against: [:name, :conditions, :requirements]
 

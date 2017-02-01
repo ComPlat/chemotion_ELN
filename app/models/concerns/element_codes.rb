@@ -1,4 +1,4 @@
-module Barcode
+module ElementCodes
   extend ActiveSupport::Concern
 
   included do
