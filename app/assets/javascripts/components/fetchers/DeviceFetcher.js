@@ -14,7 +14,7 @@ export default class DeviceFetcher {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices/${deviceId}`,
       requestMethod: 'GET',
-      jsonTranformation: (json) => new Device(json)
+      jsonTranformation: (json) => new Device(json.device)
     })
   }
 
@@ -23,7 +23,7 @@ export default class DeviceFetcher {
       apiEndpoint: '/api/v1/devices',
       requestMethod: 'POST',
       bodyData: device,
-      jsonTranformation: (json) => new Device(json)
+      jsonTranformation: (json) => new Device(json.device)
     })
   }
 
@@ -40,7 +40,7 @@ export default class DeviceFetcher {
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'PUT',
       bodyData: device,
-      jsonTranformation: (json) => new Device(json)
+      jsonTranformation: (json) => new Device(json.device)
     })
   }
 
@@ -48,7 +48,7 @@ export default class DeviceFetcher {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'DELETE',
-      jsonTranformation: (json) => {new Device(json)}
+      jsonTranformation: (json) => {new Device(json.device)}
     })
   }
 }

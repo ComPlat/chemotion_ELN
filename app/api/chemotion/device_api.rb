@@ -61,6 +61,7 @@ module Chemotion
           if device.nil?
             error!("404 Device with supplied id not found", 404)
           else
+            device.devices_samples.destroy_all
             device.destroy
           end
         end
@@ -81,11 +82,19 @@ module Chemotion
           if device.nil?
             error!("404 Device with supplied id not found", 404)
           else
-            params[:samples].map {|sample|
+            # update devices_samples
+            old_sample_ids = device.devices_samples.map {|devices_sample| devices_sample.sample_id}
+            new_sample_ids = params[:samples].map {|sample|
               DevicesSample.create({sample_id: sample.id, device_id: device.id})
+              sample.id
             }
-            device.update!(attributes.except!(:samples))
-            device
+            to_remove_sample_ids = old_sample_ids - new_sample_ids
+            to_remove_sample_ids.map{|sample_id| 
+              device.devices_samples.find_by(sample_id: sample_id).destroy
+            }
+            device.update(attributes.except!(:samples))
+            # FIXME how to prevent this?
+            Device.find(params[:id])
           end
         end
       end

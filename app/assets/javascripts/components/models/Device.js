@@ -1,14 +1,19 @@
 import Element from './Element';
+import Sample from './Sample';
 import uuid from 'uuid';
 
 export default class Device extends Element{
-  constructor(args) {
-    super({
+  constructor({id, title, code, types, user_id, samples}) {
+    const device = {
+      id,
+      title,
+      code,
+      types,
+      user_id,
       type: 'device',
-      types: [],
-      samples: [],
-      ...args,
-    })
+      samples: samples.map(sample => new Sample(sample)),
+    }
+    super(device)
   }
 
   static buildEmpty() {
