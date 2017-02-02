@@ -3,8 +3,8 @@ import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
         Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
         Tooltip, OverlayTrigger, DropdownButton, MenuItem} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
+import SVGInline from 'react-svg-inline'
 import Clipboard from 'clipboard';
-import QRCode from 'qrcode.react';
 import Barcode from 'react-barcode';
 
 import ElementActions from './actions/ElementActions';
@@ -48,7 +48,8 @@ export default class SampleDetails extends React.Component {
       showStructureEditor: false,
       loadingMolecule: false,
       showElementalComposition: false,
-      activeTab: UIStore.getState().sample.activeTab
+      activeTab: UIStore.getState().sample.activeTab,
+      qrCodeSVG: ""
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -62,8 +63,23 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+  fetchQrCodeSVG(sample) {
+    fetch(`/api/v1/attachments/svgs?element_id=${sample.id}&element_type=sample`, {
+      credentials: 'same-origin'
+    })
+    .then((response) => {
+      return response.json()
+    })
+    .then((json) => {
+      this.setState({qrCodeSVG: json})
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+  }
+
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange)
+    this.fetchQrCodeSVG(this.state.sample)
   }
 
   componentWillUnmount() {
@@ -206,12 +222,8 @@ export default class SampleDetails extends React.Component {
       return '';
   }
 
-  sampleQrCode(sample) {
-    let qrCode = sample.qr_code
-    if(qrCode != null)
-      return <QRCode value={qrCode} size="80"/>;
-    else
-      return '';
+  sampleQrCode() {
+    return <SVGInline svg={this.state.qrCodeSVG} height="80" width="80"/>
   }
 
   sampleBarCode(sample) {
@@ -372,7 +384,7 @@ export default class SampleDetails extends React.Component {
             {this.sampleBarCode(sample)}
           </Col>
           <Col md={6}>
-            {this.sampleQrCode(sample)}
+            {this.sampleQrCode()}
           </Col>
         </Col>
         <Col md={8}>
