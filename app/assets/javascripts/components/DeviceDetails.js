@@ -1,6 +1,7 @@
 import React from 'react'
 import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from './DeviceSampleContainer'
+import ElementActions from './actions/ElementActions'
 
 const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
   return (
@@ -13,10 +14,10 @@ const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
         device={device}
       />
       <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => closeDetails()}>
+        <Button bsStyle="primary" onClick={() => closeDetails(device)}>
           Close
         </Button>
-        <Button bsStyle="warning" onClick={() => this.handleSubmit()}>
+        <Button bsStyle="warning" onClick={() => handleSubmit(device)}>
           Save
         </Button>
       </ButtonToolbar>
@@ -26,6 +27,9 @@ const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
 
 export default DeviceDetails
 
+const handleSubmit = (device) => {
+  ElementActions.saveDevice(device)
+}
 
 const Header = ({device, closeDetails, toggleFullScreen}) => {
   return (

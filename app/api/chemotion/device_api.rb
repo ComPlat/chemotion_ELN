@@ -6,10 +6,14 @@ module Chemotion
         optional :title, type: String, desc: "device name"
         optional :code, type: String, desc: "device code hash"
         optional :types, type: Array, desc: "device types"
+        optional :samples, type: Array, desc: "device samples"
       end
       post do
         attributes = declared(params, include_missing: false)
-        device = Device.new(attributes)
+        device = Device.new(attributes.except!(:samples))
+        params[:samples].map {|sample|
+          DevicesSample.create({sample_id: sample.id, device_id: device.id})
+        }
         device.save!
         current_user.devices << device
         device
@@ -68,6 +72,7 @@ module Chemotion
         optional :title, type: String, desc: "device name"
         optional :code, type: String, desc: "device code hash"
         optional :types, type: Array, desc: "device types"
+        optional :samples, type: Array, desc: "device samples"
       end
       route_param :id do
         put do
@@ -76,7 +81,10 @@ module Chemotion
           if device.nil?
             error!("404 Device with supplied id not found", 404)
           else
-            device.update!(attributes)
+            params[:samples].map {|sample|
+              DevicesSample.create({sample_id: sample.id, device_id: device.id})
+            }
+            device.update!(attributes.except!(:samples))
             device
           end
         end

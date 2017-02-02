@@ -37,13 +37,6 @@ const collect = (connect, monitor) => ({
 })
 
 const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => {
-  const handleTypeClick = (type) => {
-  }
-
-  const handleRemoveSample = (sample) => {
-    ElementActions.removeSampleFromDevice(sample, device)
-  }
-
   let style = {
     marginBottom: "10px",
     minHeight: "39px"
@@ -56,7 +49,9 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
   }
   return connectDropTarget(
     <div>
-      <TypeButtonsHeader/>
+      <TypeButtonsHeader
+        device={device}
+      />
       <div style={style}>
         {device.samples.length > 0
           ? device.samples.map((sample, key) => (
@@ -77,6 +72,14 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
 
 export default DropTarget([DragDropItemTypes.SAMPLE], target, collect)(DeviceSampleContainer)
 
+const handleTypeClick = (type, sample) => {
+  alert(`${sample.title()} ${type}`)
+}
+
+const handleRemoveSample = (sample, device) => {
+  ElementActions.removeSampleFromDevice(sample, device)
+}
+
 const DeviceSample = ({sample, device}) => {
   return (
     <div
@@ -84,7 +87,7 @@ const DeviceSample = ({sample, device}) => {
     >
       <Button
         bsStyle={"danger"}
-        onClick={() => handleRemoveSample(sample)}
+        onClick={() => handleRemoveSample(sample, device)}
       >
         <i className="fa fa-trash-o"></i>
       </Button>
@@ -107,10 +110,9 @@ const DeviceSample = ({sample, device}) => {
   )
 }
 
-const TypeButtonsHeader = () => {
-  const style = {
-    cursor:'default'
-  }
+const TypeButtonsHeader = ({device}) => {
+  const opacityByExistentType = (type) => device.types.includes(type) ? 1 : 0.65
+
   return (
     <div
       style={{display: "flex"}}
@@ -122,28 +124,40 @@ const TypeButtonsHeader = () => {
         <Button
           bsStyle={"primary"}
           disabled={true}
-          style={{cursor: "default"}}
+          style={{
+            cursor: "default",
+            opacity: opacityByExistentType("NMR")
+          }}
         >
           NMR
         </Button>
         <Button
           bsStyle={"primary"}
           disabled={true}
-          style={{cursor: "default"}}
+          style={{
+            cursor: "default",
+            opacity: opacityByExistentType("EA")
+          }}
         >
           EA
         </Button>
         <Button
           bsStyle={"primary"}
           disabled={true}
-          style={{cursor: "default"}}
+          style={{
+            cursor: "default",
+            opacity: opacityByExistentType("MS")
+          }}
         >
           MS
         </Button>
         <Button
           bsStyle={"primary"}
           disabled={true}
-          style={{cursor: "default"}}
+          style={{
+            cursor: "default",
+            opacity: opacityByExistentType("IR")
+          }}
         >
           IR
         </Button>
