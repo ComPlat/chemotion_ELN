@@ -1,4 +1,5 @@
 import UIStore from './stores/UIStore';
+import ElementStore from './stores/ElementStore';
 import CollectionStore from './stores/CollectionStore';
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
@@ -113,7 +114,8 @@ const routes = {
     '/device': {
       target: {
         show: function(e) {
-          ElementActions.showDeviceContainer();
+          const {deviceId} = e.params;
+          ElementActions.fetchDeviceById(deviceId)
         },
         showDeviceManagement: function(e) {
           UIActions.showDeviceManagement()

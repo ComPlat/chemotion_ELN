@@ -10,9 +10,9 @@ export default class DeviceFetcher {
     })
   }
 
-  static fetchById(device) {
+  static fetchById(deviceId) {
     return BaseFetcher.withoutBodyData({
-      apiEndpoint: `/api/v1/devices/${device.id}`,
+      apiEndpoint: `/api/v1/devices/${deviceId}`,
       requestMethod: 'GET',
       jsonTranformation: (json) => new Device(json)
     })

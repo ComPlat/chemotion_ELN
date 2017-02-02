@@ -15,6 +15,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
   }
 
   const handleOpenDevice = () => {
+    UIActions.closeDeviceManagement()
     const {currentCollection} = UIStore.getState()
     Aviator.navigate(`/collection/${currentCollection.id}/device/${selectedDeviceId}`)
   }
