@@ -208,9 +208,15 @@ export default class ScanCodeButton extends React.Component {
       <div>
         <OverlayTrigger placement="bottom" overlay={tooltip}>
           <Button onClick={() => this.open()} style={{height: 35}}>
-            <span className="fa-stack">
-              <i className="fa fa-barcode fa-stack-1x"></i>
-              <i className="fa fa-search fa-stack-2x"></i>
+            <span className="fa-stack" style={{lineHeight: "1.7em"}}>
+              <i
+                className="fa fa-barcode fa-stack-1x" 
+                style={{fontSize: 11, top: -1}}
+              ></i>
+              <i
+                className="fa fa-search fa-stack-2x"
+                style={{fontSize: 21, left: 1}}
+              ></i>
             </span>
           </Button>
         </OverlayTrigger>
