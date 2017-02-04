@@ -167,7 +167,14 @@ const TypeButtonsHeader = ({device}) => {
 }
 
 const TypeButtons = ({device, onTypeClick}) => {
-  const isDisabled = (type) => !device.types.includes(type)
+  const isDisabled = (type) => {
+    // TODO remove this after implementing other Analysis-Type-UIs
+    if(type === "EA" || type === "MS" || type === "IR") {
+      return true
+    } else {
+      return !device.types.includes(type)
+    }
+  }
 
   return (
     <ButtonGroup>

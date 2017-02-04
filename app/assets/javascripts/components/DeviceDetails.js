@@ -4,6 +4,7 @@ import DeviceSampleContainer from './DeviceSampleContainer'
 import ElementActions from './actions/ElementActions'
 
 const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
+  console.log(device)
   return (
     <Panel
       className='panel-detail'
@@ -45,7 +46,7 @@ const Header = ({device, closeDetails, toggleFullScreen}) => {
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save Device</Tooltip>}>
         <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-            onClick={() => this.handleSubmit()}>
+            onClick={() => handleSubmit(device)}>
           <i className="fa fa-floppy-o "></i>
         </Button>
       </OverlayTrigger>
