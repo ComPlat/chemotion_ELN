@@ -28,6 +28,14 @@ GIT
     openbabel (2.3.2.1)
 
 GIT
+  remote: https://github.com/fl9/fun_sftp.git
+  revision: 24edb517e0196c83fe21f6b229c76841fe7ab2ca
+  branch: allow-port-option
+  specs:
+    fun_sftp (1.0.0)
+      net-sftp
+
+GIT
   remote: https://github.com/merlin-p/thumbnailer.git
   revision: 4935ef8836d097f22c7b6402978a93956fa5ed64
   specs:
@@ -302,6 +310,8 @@ GEM
       enumerable-lazy
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
+    net-sftp (2.1.2)
+      net-ssh (>= 2.6.5)
     net-ssh (3.1.1)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
@@ -512,6 +522,7 @@ DEPENDENCIES
   faraday
   font-awesome-rails
   fontcustom
+  fun_sftp!
   grape
   grape-active_model_serializers
   grape-kaminari
