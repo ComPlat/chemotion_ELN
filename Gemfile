@@ -24,6 +24,8 @@ gem 'pg_search'
 
 gem 'devise'
 
+gem 'dotenv-rails', require: 'dotenv/rails-now'
+
 gem 'browserify-rails' , '~> 3.0.1'
 
 # for collection tree structure
@@ -31,6 +33,9 @@ gem 'ancestry'
 
 # svg composer
 gem 'nokogiri'
+
+# SFTP client
+gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 
 # API
 gem 'grape'
@@ -72,7 +77,6 @@ gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
 gem "paranoia", "~> 2.0"
 
 gem "whenever", require: false
-gem "dotenv-rails"
 gem "backup"
 gem 'yaml_db'
 

@@ -12,6 +12,10 @@ services:
       - box
     ports:
       - "3000:3000"
+    links:
+      - sftp
+    environment:
+      DOCKER: 'true'
 
   box:
     image: busybox
@@ -20,3 +24,9 @@ services:
 
   postgres:
     image: 'postgres:9.5'
+
+  sftp:
+    image: atmoz/sftp
+    ports:
+      - "2222:22"
+    command: sftp_test:sftp_test:::uploads

@@ -16,6 +16,9 @@ RUN apt-get -y install libmagickcore-dev libmagickwand-dev
 RUN useradd -ms /bin/bash docker
 RUN echo 'docker ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
+# disable ssh strict host key checking; should not be disabled in production
+RUN sed -i '/StrictHostKeyChecking/c\StrictHostKeyChecking no' /etc/ssh/ssh_config
+
 # node + npm via nvm; install npm packages
 WORKDIR /tmp
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.3/install.sh | NVM_DIR=/usr/local/nvm bash
