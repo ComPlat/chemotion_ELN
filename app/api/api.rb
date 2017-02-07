@@ -81,4 +81,5 @@ class API < Grape::API
   mount Chemotion::ProfileAPI
   mount Chemotion::CodeLogAPI
   mount Chemotion::DeviceAPI
+  mount Chemotion::IconNmrAPI
 end
