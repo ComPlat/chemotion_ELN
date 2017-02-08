@@ -434,7 +434,38 @@ describe Chemotion::ReactionAPI do
 
       end
 
-    end
+      context 'creating a copied reaction' do
+        let(:params) {
+          {
+            "name" => " Copy",
+            "collection_id" => collection_1.id,
+            "materials" => {
+              "products" => [
+                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
+                       "name" => "JHX-1-A",
+                "target_amount_unit" => "mg",
+               "target_amount_value" => 76.09596,
+                  "reference" => true,
+                 "equivalent" => 1,
+                     "is_new" => true,
+                   "is_split" => true,
+                   "molecule" => {molfile: ""}
+              ]
+            }
+          }
+        }
 
+        before do
+          post "/api/v1/reactions", params
+        end
+
+        let(:r) { Reaction.last }
+
+        it 'create products with name realted to teh reaction short_label' do
+          product = r.products.first
+          expect(product.name).to include(r.short_label)
+        end
+      end
+    end
   end
 end
