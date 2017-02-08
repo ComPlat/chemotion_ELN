@@ -70,7 +70,7 @@ export default class Navigation extends React.Component {
     const { modalProps } = this.state;
 
     return (this.state.currentUser
-      ? <Navbar inverse fluid>
+      ? <Navbar fluid className='navbar-custom'>
           <Navbar.Header>
             <NavHead/>
           </Navbar.Header>
@@ -82,7 +82,7 @@ export default class Navigation extends React.Component {
           </Nav>
           <UserAuth/>
         </Navbar>
-      : <Navbar inverse fluid>
+      : <Navbar fluid className='navbar-custom'>
           <Navbar.Header>
             <Navbar.Brand>
               <NavHead/>
