@@ -80,6 +80,7 @@ class ElementStore {
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
       handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
       handleAddSampleToDevice: ElementActions.addSampleToDevice,
+      handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
 
@@ -163,29 +164,31 @@ class ElementStore {
     this.state.currentElement = device
   }
 
-  handleSaveDevice(device) {
+  findDeviceIndexById(deviceId) {
     const {devices} = this.state.elements['devices']
-    const deviceId = devices.findIndex((e) => e.id === device.id)
-    if (deviceId == -1) {
+    return devices.findIndex((e) => e.id === deviceId)
+  }
+
+  handleSaveDevice(device) {
+    const deviceKey = this.findDeviceIndexById(device.id)
+    if (deviceKey === -1) {
       this.state.elements['devices'].devices.push(device)
     } else {
-      this.state.elements['devices'].devices[deviceId] = device
+      this.state.elements['devices'].devices[deviceKey] = device
     }
   }
 
   handleToggleDeviceType({device, type}) {
-    const {devices} = this.state.elements['devices']
     if (device.types.includes(type)) {
       device.types = device.types.filter((e) => e !== type)
     } else {
       device.types.push(type)
     }
-    const deviceKey = devices.findIndex((e) => e.id === device.id)
+    const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 
   handleAddSampleToDevice({sample, device}) {
-    const {devices} = this.state.elements['devices']
     const deviceHasSample = device.samples.findIndex(
       (s) => s.id === sample.id
     ) !== -1 
@@ -197,23 +200,25 @@ class ElementStore {
     if (!deviceHasSample &&
         !sampleHasAnalysisOfTypeNMR
     ) { 
-      device.samples.push(sample)
-      const deviceKey = devices.findIndex((e) => e.id === device.id)
-      this.state.elements['devices'].devices[deviceKey] = device
+      this.handleAddSampleWithAnalysisToDevice({sample, device})
     }
+  }
+
+  handleAddSampleWithAnalysisToDevice({sample, device}) { 
+    device.samples.push(sample)
+    const deviceKey = this.findDeviceIndexById(device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
   }
   
   handleRemoveSampleFromDevice({sample, device}) {
-    const {devices} = this.state.elements['devices']
     device.samples = device.samples.filter((e) => e.id !== sample.id)
-    const deviceKey = devices.findIndex((e) => e.id === device)
+    const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 
   handleChangeDeviceProp({device, prop, value}) {
-    const {devices} = this.state.elements['devices']
     device[prop] = value
-    const deviceKey = devices.findIndex((e) => e.id === device.id)
+    const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 

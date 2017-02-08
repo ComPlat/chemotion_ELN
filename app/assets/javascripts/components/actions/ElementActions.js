@@ -86,6 +86,10 @@ class ElementActions {
     return (dispatch) => dispatch({sample, device})
   }
   
+  addSampleWithAnalysisToDevice(sample, device) {
+    return (dispatch) => dispatch({sample, device})
+  }
+  
   removeSampleFromDevice(sample, device) {
     return (dispatch) => dispatch({sample, device})
   }
