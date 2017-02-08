@@ -367,8 +367,27 @@ export default class SampleDetails extends React.Component {
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
         {this.initiateAnalysisButton(sample)}
+        {this.transferToDeviceButton(sample)}
         {this.sampleCodePrintButtons(sample)}
       </div>
+    )
+  }
+
+  transferToDeviceButton(sample) {
+    return ( 
+      <Button bsSize="xsmall"
+        onClick={() => {
+          const {selectedDeviceId, devices} =
+            ElementStore.getState().elements.devices
+          const device = devices.find((d) => d.id === selectedDeviceId)
+          ElementActions.addSampleToDevice(sample, device)
+          ElementActions.saveDevice.defer(device)
+          ElementActions.fetchDeviceById.defer(device.id)
+        }}
+        style={{marginLeft: 25}}
+      >
+        Transfer to Device
+      </Button>
     )
   }
 

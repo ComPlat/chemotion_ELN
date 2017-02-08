@@ -3,20 +3,14 @@ import {DropTarget} from 'react-dnd'
 import DragDropItemTypes from './DragDropItemTypes'
 import ElementActions from './actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
+import Analysis from './models/Analysis'
 
 const target = {
   drop(props, monitor){
     const {device} = props
     const item = monitor.getItem()
     const itemType = monitor.getItemType()
-    const deviceHasSample = device.samples.findIndex(
-      (sample) => sample.id === item.element.id
-    ) !== -1 
-
-    if (itemType == 'sample' && 
-        !deviceHasSample
-    ) { 
-      // TODO without analysis
+    if (itemType == 'sample') {
       ElementActions.addSampleToDevice(item.element, device)
     }
   },
@@ -72,8 +66,26 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
 
 export default DropTarget([DragDropItemTypes.SAMPLE], target, collect)(DeviceSampleContainer)
 
-const handleTypeClick = (type, sample) => {
-  alert(`${sample.title()} ${type}`)
+const handleTypeClick = (type, sample, device) => { 
+  switch(type) {
+    case "NMR":
+      const hasAnalysisOfTypeNMR =
+        sample.analyses.length !== 0 &&
+        sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
+
+      if(!hasAnalysisOfTypeNMR) {
+        console.log("creating analysis")
+        let analysis = Analysis.buildEmpty()
+        // TODO right kind?
+        analysis.kind = "1H NMR"
+        sample.addAnalysis(analysis)
+        ElementActions.updateSample(sample)
+        ElementActions.saveDevice.defer(device)
+        ElementActions.fetchDeviceById.defer(device.id)
+      }
+      alert(type)
+      break;
+  }
 }
 
 const handleRemoveSample = (sample, device) => {
@@ -104,7 +116,7 @@ const DeviceSample = ({sample, device}) => {
       </div>
       <TypeButtons
         device={device}
-        onTypeClick={(type) => handleTypeClick(type, sample)}
+        onTypeClick={(type) => handleTypeClick(type, sample, device)}
       />
     </div>
   )

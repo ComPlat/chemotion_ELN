@@ -176,7 +176,6 @@ class UIStore {
   }
 
   handleSelectElement(element) {
-    console.log(element)
     this.state[element.type].currentId = element.id;
   }
 

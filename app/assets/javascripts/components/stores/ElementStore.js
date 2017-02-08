@@ -186,9 +186,21 @@ class ElementStore {
 
   handleAddSampleToDevice({sample, device}) {
     const {devices} = this.state.elements['devices']
-    device.samples.push(sample)
-    const deviceKey = devices.findIndex((e) => e.id === device)
-    this.state.elements['devices'].devices[deviceKey] = device
+    const deviceHasSample = device.samples.findIndex(
+      (s) => s.id === sample.id
+    ) !== -1 
+    const sampleHasAnalysisOfTypeNMR =
+      sample.analyses.length !== 0 &&
+      sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
+
+    // FIXME show notification for user, why drop is prevented
+    if (!deviceHasSample &&
+        !sampleHasAnalysisOfTypeNMR
+    ) { 
+      device.samples.push(sample)
+      const deviceKey = devices.findIndex((e) => e.id === device.id)
+      this.state.elements['devices'].devices[deviceKey] = device
+    }
   }
   
   handleRemoveSampleFromDevice({sample, device}) {
