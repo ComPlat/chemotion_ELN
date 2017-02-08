@@ -4,7 +4,6 @@ import DeviceSampleContainer from './DeviceSampleContainer'
 import ElementActions from './actions/ElementActions'
 
 const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
-  console.log(device)
   return (
     <Panel
       className='panel-detail'
@@ -29,6 +28,7 @@ const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
 export default DeviceDetails
 
 const handleSubmit = (device) => {
+  device.updateChecksum()
   ElementActions.saveDevice(device)
 }
 
