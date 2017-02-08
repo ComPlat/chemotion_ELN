@@ -4,7 +4,9 @@ import AnalysisComponent from './Analysis';
 import Analysis from './models/Analysis';
 import Utils from './utils/Functions';
 import UIStore from './stores/UIStore';
+import ElementStore from './stores/ElementStore';
 import UIActions from './actions/UIActions';
+import ElementActions from './actions/ElementActions';
 
 export default class SampleDetailsAnalyses extends Component {
   constructor(props) {
@@ -111,14 +113,33 @@ export default class SampleDetailsAnalyses extends Component {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
 
-    let analysisHeader = (analysis) => <p style={{width: '100%'}}>{analysis.name}
-      {(analysis.kind && analysis.kind != '') ? (' - Type: ' + analysis.kind) : ''}
-      {(analysis.status && analysis.status != '') ? (' - Status: ' + analysis.status) :''}
-      <Button bsSize="xsmall" bsStyle="danger"
-         className="button-right" disabled={readOnly}
-        onClick={() => {if(confirm('Delete the analysis?')) {this.handleRemove(analysis)}}}>
-        <i className="fa fa-trash"></i>
-      </Button>{this.analysisCodePrintButtons(analysis, sample)}</p>
+    let analysisHeader = (analysis, sample) => {
+      return (
+      <p style={{width: '100%'}}>{analysis.name}
+        {(analysis.kind && analysis.kind != '') ? (' - Type: ' + analysis.kind) : ''}
+        {(analysis.status && analysis.status != '') ? (' - Status: ' + analysis.status) :''}
+        <Button bsSize="xsmall" bsStyle="danger"
+           className="button-right" disabled={readOnly}
+          onClick={() => {if(confirm('Delete the analysis?')) {this.handleRemove(analysis)}}}>
+          <i className="fa fa-trash"></i>
+        </Button>
+        <Button bsSize="xsmall"
+          onClick={() => {
+            const {selectedDeviceId, devices} =
+              ElementStore.getState().elements.devices
+            const device = devices.find((d) => d.id === selectedDeviceId)
+            ElementActions.addSampleWithAnalysisToDevice(sample, device)
+            ElementActions.saveDevice.defer(device)
+            ElementActions.fetchDeviceById.defer(device.id)
+          }}
+          style={{marginLeft: 25}}
+        >
+          Transfer to Device
+        </Button>
+        {this.analysisCodePrintButtons(analysis, sample)}
+        </p>
+      )
+    }
 
     if(sample.analyses.length > 0) {
       return (
@@ -127,7 +148,7 @@ export default class SampleDetailsAnalyses extends Component {
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
             {sample.analyses.map(
               (analysis, key) =>
-                <Panel header={analysisHeader(analysis)} eventKey={key}
+                <Panel header={analysisHeader(analysis, sample)} eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
                   <AnalysisComponent
                     readOnly={readOnly}

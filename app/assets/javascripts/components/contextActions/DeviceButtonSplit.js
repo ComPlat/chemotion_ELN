@@ -2,7 +2,10 @@ import React from 'react'
 import {ButtonGroup, OverlayTrigger, Tooltip, DropdownButton, Button, MenuItem} from 'react-bootstrap'
 import UIActions from './../actions/UIActions'
 import ElementActions from './../actions/ElementActions'
+import UserActions from './../actions/UserActions'
 import ElementStore from './../stores/ElementStore'
+import UserStore from './../stores/UserStore'
+import UIStore from './../stores/UIStore'
 import connectToStores from 'alt-utils/lib/connectToStores'
 
 const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
@@ -12,7 +15,9 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
   }
 
   const handleOpenDevice = () => {
-    Aviator.navigate(`/device/${selectedDeviceId}`)
+    UIActions.closeDeviceManagement()
+    const {currentCollection} = UIStore.getState()
+    Aviator.navigate(`/collection/${currentCollection.id}/device/${selectedDeviceId}`)
   }
 
   return (
@@ -41,23 +46,40 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
           Device Management
         </MenuItem>
         <MenuItem divider />
-        {devices.map((device) => {
-          return (
-            <MenuItem
-              onSelect={() => ElementActions.changeSelectedDeviceId(device.id)}
-              className={device.id === selectedDeviceId ? "selected" : ""}
-              key={device.id}
-            >
-              {device.code}
-            </MenuItem>
+        {devices.length > 0 
+          ? devices.map((device) => {
+              return (
+                <MenuItem
+                  onSelect={() => ElementActions.changeSelectedDeviceId(device)}
+                  className={device.id === selectedDeviceId ? "selected" : ""}
+                  key={device.id}
+                >
+                  {device.title !== "" ? device.title : device.code}
+                </MenuItem>
+              )
+            })
+          : (
+              <MenuItem
+                disabled={true}
+                key={'no-devices'}
+              >
+                No Devices created yet.
+              </MenuItem>
           )
-        })}
+        }
       </DropdownButton>
     </ButtonGroup>
   )
 }
 
 DeviceButtonSplit.getStores = () => {
+  // FIXME hacky
+  const userStore = UserStore.getState()
+  if (userStore && userStore.currentUser) {
+    const {selected_device_id} = userStore.currentUser
+    ElementActions.setSelectedDeviceId.defer(selected_device_id)
+  }
+
   return [ElementStore]
 }
 

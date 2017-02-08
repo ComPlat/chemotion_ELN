@@ -203,12 +203,13 @@ export default class ElementDetails extends Component {
   tabTitle(el, elKey) {
     const bsStyle = el.isPendingToSave ? 'info' : 'primary';
     const focusing = elKey === this.state.activeKey;
+    const title = typeof el.title === "string" ? el.title : el.title()
     const icon = focusing
       ? <i className={`icon-${el.type}`}/>
       : <Label bsStyle={bsStyle}>
           <i className={`icon-${el.type}`}/>
         </Label>
-    return <div>{icon} &nbsp; {el.title()} </div>
+    return <div>{icon} &nbsp; {title} </div>
   }
 
   render() {

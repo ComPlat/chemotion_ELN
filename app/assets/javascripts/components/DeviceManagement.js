@@ -1,6 +1,8 @@
 import React, {Component} from 'react'
 import connectToStores from 'alt-utils/lib/connectToStores'
-import {PanelGroup, Panel, ButtonGroup, Button, Row, Col} from 'react-bootstrap';
+import {
+  PanelGroup, Panel, ButtonGroup, Button, Row, Col, ControlLabel, FormControl
+} from 'react-bootstrap';
 import ElementActions from './actions/ElementActions'
 import UIActions from './actions/UIActions'
 import ElementStore from './stores/ElementStore'
@@ -117,21 +119,36 @@ const Device = ({device}) => {
     ElementActions.saveDevice(device)
   }
 
+  const handleChangeDeviceProp = (prop, value) => {
+    ElementActions.changeDeviceProp(device, prop, value)
+  }
+
+  const bottomSpacer = {
+    marginBottom: "10px"
+  }
+
   return (
     <div>
-      <div
-        style={{
-          display: "inline-block",
-          border: "1px solid #ddd",
-          padding:"6px",
-          borderRadius: "4px",
-          marginRight: "5px",
-          verticalAlign: "middle"
-        }}
+      <ControlLabel>Title</ControlLabel>
+      <FormControl
+        type="text"
+        value={device.title}
+        placeholder="Enter device-title.."
+        onChange={(e) => handleChangeDeviceProp("title", e.target.value)}
+        style={bottomSpacer}
+      />
+      <ControlLabel>Code</ControlLabel>
+      <FormControl
+        type="text"
+        value={device.code}
+        placeholder="Enter device-code.."
+        onChange={(e) => handleChangeDeviceProp("code", e.target.value)}
+        style={bottomSpacer}
+      />
+      <ControlLabel>Types</ControlLabel><br/>
+      <ButtonGroup
+        style={bottomSpacer}
       >
-        {device.code}
-      </div>
-      <ButtonGroup>
         <Button
           bsStyle={styleBySelectedType("NMR")}
           onClick={() => handleTypeClick("NMR")}
@@ -181,7 +198,7 @@ const DeviceHeader = ({device, state, onChangeState}) => {
       width: '100%',
       cursor: "pointer"
     }}>
-      {device.code}
+      {device.title}
       <Button 
         bsSize="xsmall"
         bsStyle="danger"

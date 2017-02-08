@@ -1,8 +1,8 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
-import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
+import UserStore from './UserStore';
 import ClipboardStore from './ClipboardStore';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -52,7 +52,7 @@ class ElementStore {
         devices: {
           devices: [],
           activeAccordionDevice: 0,
-          selectedDeviceId: -1
+          selectedDeviceId: -1 
         }
       },
       currentElement: null,
@@ -67,7 +67,7 @@ class ElementStore {
                         Xhandlers["handlers" + i][k].bind(this))
       });
     }
-
+    
     this.bindListeners({
 
       handleFetchAllDevices: ElementActions.fetchAllDevices,
@@ -78,7 +78,12 @@ class ElementStore {
       handleToggleDeviceType: ElementActions.toggleDeviceType,
       handleChangeActiveAccordionDevice: ElementActions.changeActiveAccordionDevice,
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
-      
+      handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
+      handleAddSampleToDevice: ElementActions.addSampleToDevice,
+      handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
+      handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
+      handleChangeDeviceProp: ElementActions.changeDeviceProp,
+
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
       handleFetchSampleById: ElementActions.fetchSampleById,
@@ -159,24 +164,61 @@ class ElementStore {
     this.state.currentElement = device
   }
 
-  handleSaveDevice(device) {
+  findDeviceIndexById(deviceId) {
     const {devices} = this.state.elements['devices']
-    const deviceId = devices.findIndex((e) => e.code === device.code)
-    if (deviceId == -1) {
+    return devices.findIndex((e) => e.id === deviceId)
+  }
+
+  handleSaveDevice(device) {
+    const deviceKey = this.findDeviceIndexById(device.id)
+    if (deviceKey === -1) {
       this.state.elements['devices'].devices.push(device)
     } else {
-      this.state.elements['devices'].devices[deviceId] = device
+      this.state.elements['devices'].devices[deviceKey] = device
     }
   }
 
   handleToggleDeviceType({device, type}) {
-    const {devices} = this.state.elements['devices']
     if (device.types.includes(type)) {
       device.types = device.types.filter((e) => e !== type)
     } else {
       device.types.push(type)
     }
-    const deviceKey = devices.findIndex((e) => e.id === device.id)
+    const deviceKey = this.findDeviceIndexById(device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+
+  handleAddSampleToDevice({sample, device}) {
+    const deviceHasSample = device.samples.findIndex(
+      (s) => s.id === sample.id
+    ) !== -1 
+    const sampleHasAnalysisOfTypeNMR =
+      sample.analyses.length !== 0 &&
+      sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
+
+    // FIXME show notification for user, why drop is prevented
+    if (!deviceHasSample &&
+        !sampleHasAnalysisOfTypeNMR
+    ) { 
+      this.handleAddSampleWithAnalysisToDevice({sample, device})
+    }
+  }
+
+  handleAddSampleWithAnalysisToDevice({sample, device}) { 
+    device.samples.push(sample)
+    const deviceKey = this.findDeviceIndexById(device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+  
+  handleRemoveSampleFromDevice({sample, device}) {
+    device.samples = device.samples.filter((e) => e.id !== sample.id)
+    const deviceKey = this.findDeviceIndexById(device.id)
+    this.state.elements['devices'].devices[deviceKey] = device
+  }
+
+  handleChangeDeviceProp({device, prop, value}) {
+    device[prop] = value
+    const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
   }
 
@@ -185,6 +227,10 @@ class ElementStore {
   }
   
   handleChangeSelectedDeviceId(deviceId) {
+    this.state.elements['devices'].selectedDeviceId = deviceId
+  }
+  
+  handleSetSelectedDeviceId(deviceId) {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
