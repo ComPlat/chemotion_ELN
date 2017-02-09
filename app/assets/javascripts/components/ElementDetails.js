@@ -178,6 +178,10 @@ export default class ElementDetails extends Component {
         return <DeviceDetails device={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
+      case 'deviceAnalysis':
+        return <DeviceAnalysisDetails analysis={el}
+                  closeDetails={this.closeDetails}
+                  toggleFullScreen={this.toggleFullScreen}/>;
     }
   }
 

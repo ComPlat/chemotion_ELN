@@ -72,6 +72,7 @@ class ElementStore {
 
       handleFetchAllDevices: ElementActions.fetchAllDevices,
       handleFetchDeviceById: ElementActions.fetchDeviceById,
+      handleFetchDeviceAnalysisByIdAndType: ElementActions.fetchDeviceAnalysisByIdAndType,
       handleCreateDevice: ElementActions.createDevice,
       handleSaveDevice: ElementActions.saveDevice,
       handleDeleteDevice: ElementActions.deleteDevice,
@@ -162,6 +163,10 @@ class ElementStore {
 
   handleFetchDeviceById(device) {
     this.state.currentElement = device
+  }
+  
+  handleFetchDeviceAnalysisByIdAndType(analysis) {
+    this.state.currentElement = analysis
   }
 
   findDeviceIndexById(deviceId) {

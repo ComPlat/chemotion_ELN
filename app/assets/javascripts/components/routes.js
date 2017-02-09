@@ -119,9 +119,21 @@ const routes = {
         },
         showDeviceManagement: function(e) {
           UIActions.showDeviceManagement()
+        },
+        showAnalysisType: function(e) {
+          const {deviceId, analysisType} = e.params;
+          switch(analysisType) {
+            case 'nmr':
+              ElementActions.fetchDeviceAnalysisByIdAndType(deviceId, analysisType)
+              break
+            default:
+              ElementActions.fetchDeviceById(deviceId)
+              break
+          }
         }
       },
       '/management': 'showDeviceManagement',
+      '/:deviceId/:analysisType': 'showAnalysisType',
       '/:deviceId': 'show',
     },
 

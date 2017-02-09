@@ -47,6 +47,13 @@ class ElementActions {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
   }
 
+  fetchDeviceAnalysisByIdAndType(deviceId, analysisType) { 
+    return (dispatch) => handleFetch(
+      dispatch,
+      () => DeviceFetcher.fetchAnalysisByIdAndType(deviceId, analysisType)
+    )
+  }
+
   createDevice() {
     return null
   }

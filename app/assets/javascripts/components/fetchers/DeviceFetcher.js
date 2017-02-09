@@ -1,5 +1,6 @@
 import BaseFetcher from './BaseFetcher'
-import Device from '../models/Device';
+import Device from '../models/Device'
+import DeviceAnalysis from '../models/DeviceAnalysis'
 
 export default class DeviceFetcher {
   static fetchAll() {
@@ -15,6 +16,14 @@ export default class DeviceFetcher {
       apiEndpoint: `/api/v1/devices/${deviceId}`,
       requestMethod: 'GET',
       jsonTranformation: (json) => new Device(json.device)
+    })
+  }
+
+  static fetchAnalysisByIdAndType(deviceId, analysisType) { 
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/devices/${deviceId}/${analysisType}`,
+      requestMethod: 'GET',
+      jsonTranformation: (json) => new DeviceAnalysis(json.device)
     })
   }
 
