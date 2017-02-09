@@ -11,8 +11,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170201113437) do
 
+ActiveRecord::Schema.define(version: 20170202080000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -107,6 +107,15 @@ ActiveRecord::Schema.define(version: 20170201113437) do
   add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
   add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
 
+  create_table "container_hierarchies", id: false, force: :cascade do |t|
+    t.integer "ancestor_id",   null: false
+    t.integer "descendant_id", null: false
+    t.integer "generations",   null: false
+  end
+
+  add_index "container_hierarchies", ["ancestor_id", "descendant_id", "generations"], name: "container_anc_desc_udx", unique: true, using: :btree
+  add_index "container_hierarchies", ["descendant_id"], name: "container_desc_idx", using: :btree
+
   create_table "containers", force: :cascade do |t|
     t.string   "ancestry"
     t.integer  "containable_id"
@@ -117,6 +126,7 @@ ActiveRecord::Schema.define(version: 20170201113437) do
     t.hstore   "extended_metadata", default: {}
     t.datetime "created_at",                     null: false
     t.datetime "updated_at",                     null: false
+    t.integer  "parent_id"
   end
 
   add_index "containers", ["ancestry"], name: "index_containers_on_ancestry", using: :btree

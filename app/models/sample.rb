@@ -100,7 +100,7 @@ class Sample < ActiveRecord::Base
   belongs_to :user
 
   has_one :container, :as => :containable
-
+  
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
   has_many :residues

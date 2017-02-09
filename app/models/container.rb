@@ -1,11 +1,10 @@
 class Container < ActiveRecord::Base
   belongs_to :element, :polymorphic => true
   has_many :attachments
-  has_ancestry
-
+  #has_ancestry
+  has_closure_tree
   #accepts_nested_attributes_for :container
-  scope :ordered, -> { order("name ASC") }
-
+  #scope :ordered, -> { order("name ASC") }
 
   def analyses
     if self.children
@@ -16,4 +15,5 @@ class Container < ActiveRecord::Base
 
     return []
   end
+
 end

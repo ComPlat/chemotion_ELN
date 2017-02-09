@@ -182,9 +182,10 @@ module Chemotion
         end
 
         get do
+
           sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
-          #sample = Sample.where(:id => params[:id]).first
+
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
         end
       end

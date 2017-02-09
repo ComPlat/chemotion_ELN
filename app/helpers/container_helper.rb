@@ -2,9 +2,7 @@ module ContainerHelper
 
   def self.update_datamodel(container)
     if container.is_new
-      root_container = Container.new
-      root_container.name = "root"
-      root_container.container_type = container.container_type
+      root_container = Container.create(name: "root", container_type: container.containable_type)
     else
       root_container = Container.find_by id: container.id
       root_container.name = "root" #if it is created from client.side
@@ -26,12 +24,8 @@ module ContainerHelper
   end
 
   def self.create_root_container
-    root_con = Container.new
-    root_con.name = "root"
-    root_con.container_type = "root"
-    root_con.save!
-
-    analyses_con = Container.create! :container_type => "analyses", :parent => root_con
+    root_con = Container.create(name: "root", container_type: "root")
+    root_con.children.create(container_type: "analyses")
 
     return root_con
   end
@@ -75,7 +69,7 @@ private
       else
         if !child.is_deleted
           #Create container
-          newcon = Container.create! :name => child.name, :parent => root_container
+          newcon = root_container.children.create(name: child.name)
           newcon.container_type = child.container_type
           newcon.description = child.description
 
