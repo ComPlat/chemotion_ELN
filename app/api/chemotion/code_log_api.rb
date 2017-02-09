@@ -1,6 +1,17 @@
 module Chemotion
   class CodeLogAPI < Grape::API
     resource :code_logs do
+      desc "Delete code logs by analysis ID"
+      params do
+        requires :analysis_id, type: String, desc: "Analysis ID"
+      end
+      route_param :analysis_id do
+        delete do
+          code_logs = CodeLog.where(analysis_id: params[:analysis_id])
+          code_logs.destroy_all
+        end
+      end
+
       namespace :with_bar_code do
         desc "Return code log by bar code"
         params do
@@ -58,7 +69,7 @@ module Chemotion
           header 'Content-Disposition', "attachment; filename*=UTF-8''#{params[:type]}_codes_#{params[:size]}.pdf"
           env["api.format"] = :binary
 
-          body CodePDF.new(elements, params[:size], params[:type]).render
+          body CodePdf.new(elements, params[:size], params[:type]).render
         end
       end
 

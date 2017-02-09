@@ -3,8 +3,8 @@ module Chemotion::CodeCreator
     all_bar_codes = CodeLog.get_bar_codes
 
     begin
-      # this generates a 9 digit number string
-      bar_code = rand.to_s[2..10]
+      # this generates a 8 digit number string
+      bar_code = rand.to_s[2..9]
     end while all_bar_codes.include?(bar_code)
 
     bar_code
@@ -14,7 +14,7 @@ module Chemotion::CodeCreator
     all_qr_codes = CodeLog.get_qr_codes
 
     begin
-      qr_code = rand.to_s[2..10]
+      qr_code = rand.to_s[2..9]
     end while all_qr_codes.include?(qr_code)
 
     qr_code

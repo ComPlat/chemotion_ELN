@@ -4,8 +4,8 @@ require 'barby/barcode/qr_code'
 require 'barby/outputter/svg_outputter'
 require "prawn/measurement_extensions"
 
-class CodePdf < Prawn::Document
-  def initialize(elements, size, type)
+class AnalysisPdf < Prawn::Document
+  def initialize(elements, size)
     super(
       page_size: page_size(size),
       margin: [0, 0, 0, 0]
@@ -14,9 +14,9 @@ class CodePdf < Prawn::Document
     elements.each_with_index do |element, i|
       start_new_page unless i == 0
 
-      qr_code_label(element, size, type)
+      qr_code_label(element, size)
       qr_code(element, size)
-      bar_code_label(element, size, type)
+      bar_code_label(element, size)
       bar_code(element, size)
       stroke_bounds
     end
@@ -47,8 +47,8 @@ class CodePdf < Prawn::Document
       end
     end
 
-    def qr_code_label(element, size, type)
-      text = "#{type.capitalize} ID: #{element.id}\n#{element.name}"
+    def qr_code_label(element, size)
+      text = "Sample ID: #{element.sample_id}\n#{element.name}"
       text_box text, qr_code_label_options(size)
     end
 
@@ -87,8 +87,8 @@ class CodePdf < Prawn::Document
       end
     end
 
-    def bar_code_label(element, size, type)
-      text = "#{type.capitalize} ID: #{element.id}\n#{element.name}"
+    def bar_code_label(element, size)
+      text = "Sample ID: #{element.sample_id}\n#{element.name}"
       text_box text, bar_code_label_options(size)[:text]
       text_box element.bar_code, bar_code_label_options(size)[:code]
     end

@@ -32,7 +32,7 @@ class AnalysisNmrPdf < Prawn::Document
 
   def qr_code_label(element)
     text = "Sample ID: #{element.sample_id}\n#{element.name}"
-    text_box text, at: [5.5.mm + 8, self.bounds.top - 3], size: 5
+    text_box text, at: [5.5.mm + 10, self.bounds.top - 3], size: 5
   end
 
   def qr_code(element)
@@ -47,7 +47,7 @@ class AnalysisNmrPdf < Prawn::Document
     outputter = outputter(Barby::Code128C.new(element.bar_code_bruker))
     height = 25.mm
     width = 14.mm
-    # xdim 0.72 = 10mil
+    # xdim 0.254mm = 10mil
     svg outputter.to_svg(margin: 0, height: height, xdim: 0.254.mm, width: width), at: [3.mm, 19.mm], height: height, width: width
   end
 

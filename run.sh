@@ -16,5 +16,5 @@ done
 >&2 echo "Postgres is up"
 
 echo "Starting rails server"
-bundle exec rails s -b 0.0.0.0
+rm -f tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0
 
