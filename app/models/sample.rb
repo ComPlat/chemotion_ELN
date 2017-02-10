@@ -110,6 +110,7 @@ class Sample < ActiveRecord::Base
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :check_molfile_polymer_section
+  before_save :find_or_create_fingerprint
 
   has_ancestry
 
@@ -253,6 +254,12 @@ class Sample < ActiveRecord::Base
           end
         end
       end
+    end
+  end
+
+  def find_or_create_fingerprint
+    if self.fingerprint_id == nil
+      self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
     end
   end
 

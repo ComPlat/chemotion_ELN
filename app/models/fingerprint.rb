@@ -27,7 +27,7 @@ class Fingerprint < ActiveRecord::Base
             presence: true,
             numericality: {
               only_integer: true,
-              greater_than: 0,
+              greater_than_or_equal_to: 0,
               less_than: 1024,
               message: "must be integer between 0 and 1024"
             }
