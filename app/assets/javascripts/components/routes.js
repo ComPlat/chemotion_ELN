@@ -121,10 +121,10 @@ const routes = {
           UIActions.showDeviceManagement()
         },
         showAnalysisType: function(e) {
-          const {deviceId, analysisType} = e.params;
+          const {deviceId, sampleId, analysisType} = e.params;
           switch(analysisType) {
             case 'nmr':
-              ElementActions.fetchDeviceAnalysisByIdAndType(deviceId, analysisType)
+              ElementActions.fetchDeviceAnalysisByIdAndType(deviceId, sampleId, analysisType)
               break
             default:
               ElementActions.fetchDeviceById(deviceId)
@@ -133,7 +133,7 @@ const routes = {
         }
       },
       '/management': 'showDeviceManagement',
-      '/:deviceId/:analysisType': 'showAnalysisType',
+      '/:deviceId/samples/:sampleId/:analysisType': 'showAnalysisType',
       '/:deviceId': 'show',
     },
 

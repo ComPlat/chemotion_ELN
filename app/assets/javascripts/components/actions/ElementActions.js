@@ -47,10 +47,10 @@ class ElementActions {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
   }
 
-  fetchDeviceAnalysisByIdAndType(deviceId, analysisType) { 
+  fetchDeviceAnalysisByIdAndType(deviceId, sampleId, analysisType) { 
     return (dispatch) => handleFetch(
       dispatch,
-      () => DeviceFetcher.fetchAnalysisByIdAndType(deviceId, analysisType)
+      () => DeviceFetcher.fetchAnalysisByIdAndType(deviceId, sampleId, analysisType)
     )
   }
 

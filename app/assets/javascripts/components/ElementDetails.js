@@ -6,6 +6,7 @@ import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
+import DeviceAnalysisDetails from './DeviceAnalysisDetails'
 import { SameEleTypId, UrlSilentNavigation } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';

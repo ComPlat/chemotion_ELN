@@ -2,6 +2,7 @@ import React from 'react'
 import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from './DeviceSampleContainer'
 import ElementActions from './actions/ElementActions'
+import AnalysisNMR from './AnalysisNMR'
 
 const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
   return (
@@ -14,14 +15,14 @@ const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
           toggleFullScreen={toggleFullScreen}
         />
       }
-      bsStyle={device.isPendingToSave ? 'info' : 'primary'}
+      bsStyle={analysis.isPendingToSave ? 'info' : 'primary'}
     >
       <MainContent analysis={analysis}/>
       <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => closeDetails(device)}>
+        <Button bsStyle="primary" onClick={() => closeDetails(analysis)}>
           Close
         </Button>
-        <Button bsStyle="warning" onClick={() => handleSubmit(device)}>
+        <Button bsStyle="warning" onClick={() => handleSubmit(analysis)}>
           Save
         </Button>
       </ButtonToolbar>
@@ -31,15 +32,15 @@ const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
 
 export default DeviceAnalysisDetails
 
-const handleSubmit = (device) => {
+const handleSubmit = (analysis) => {
   // device.updateChecksum()
-  ElementActions.saveDeviceAnalysis(device)
+  ElementActions.saveDeviceAnalysis(analysis)
 }
 
 const Header = ({analysis, closeDetails, toggleFullScreen}) => {
   return (
     <div>
-      {`${analysis.analysisType} Analysis: Device-Sample`}
+      {`${analysis.analysisType} Analysis: ${analysis.title}`}
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="closeReaction">Close</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"
@@ -67,7 +68,7 @@ const Header = ({analysis, closeDetails, toggleFullScreen}) => {
 
 const MainContent = ({analysis}) => {
   switch(analysis.analysisType) {
-    case 'nmr':
+    case 'NMR':
       return <AnalysisNMR analysis={analysis}/>
       break
     default:

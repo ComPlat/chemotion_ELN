@@ -19,11 +19,11 @@ export default class DeviceFetcher {
     })
   }
 
-  static fetchAnalysisByIdAndType(deviceId, analysisType) { 
+  static fetchAnalysisByIdAndType(deviceId, sampleId, analysisType) { 
     return BaseFetcher.withoutBodyData({
-      apiEndpoint: `/api/v1/devices/${deviceId}/${analysisType}`,
+      apiEndpoint: `/api/v1/devices/${deviceId}/samples/${sampleId}/${analysisType}`,
       requestMethod: 'GET',
-      jsonTranformation: (json) => new DeviceAnalysis(json.device)
+      jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
 

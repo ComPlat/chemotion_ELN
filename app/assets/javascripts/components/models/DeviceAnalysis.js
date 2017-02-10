@@ -1,42 +1,28 @@
 import Element from './Element'
-import Sample from './Sample'
+import AnalysesExperiment from './AnalysesExperiment'
 
 export default class DeviceAnalysis extends Element{
   constructor({
-    holderId, status, name, solvent, experiment, checkbox, day,
-    numberOfScans, numeric, time, analysisType
+     id, sample_id, device_id, analysis_type, title, experiments
   }) {
     const device = {
-      holderId,
-      status,
-      name,
-      solvent,
-      experiment,
-      checkbox,
-      day,
-      numberOfScans,
-      numeric,
-      time,
+      id: id,
+      sampleId: sample_id,
+      deviceId: device_id,
+      experiments: experiments.map((e) => new AnalysesExperiment(e, sample_id)),
       type: 'deviceAnalysis',
-      analysisType
+      analysisType: analysis_type,
+      title
     }
     super(device)
   }
 
   static buildEmpty(sample, analysisType) {
     return new DeviceAnalysis({
-      holderId: null,
-      status: "",
-      name: sample.id,
-      solvent: "",
-      experiment: "",
-      checkbox: false,
-      day: true,
-      numberOfScans: 0,
-      numeric: 0,
-      time: "",
       type: 'deviceAnalysis',
-      analysisType
+      analysisType,
+      title: "",
+      experiments: []
     })
   }
 }

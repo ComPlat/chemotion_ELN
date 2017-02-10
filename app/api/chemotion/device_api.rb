@@ -23,15 +23,13 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Device id"
       end
-      route_param :id do
-        get do
+        get '/:id' do
           device = Device.find_by(id: params[:id])
           if device.nil?
             error!("404 Device with supplied id not found", 404)
           else
             device
           end
-        end
       end
 
       desc "set selected_device of user"
@@ -102,6 +100,24 @@ module Chemotion
       desc "get Devices"
       get do
         Device.all
+      end
+
+      desc "get nmr Analyses"
+      params do
+        requires :id, type: Integer, desc: "device id"
+        requires :sample_id, type: Integer, desc: "sample id"
+      end
+      get '/:id/samples/:sample_id/nmr' do
+        analysis = DevicesAnalysis.find_by(
+          device_id: params[:id],
+          sample_id: params[:sample_id],
+          analysis_type: 'NMR'
+        )
+        if analysis.nil?
+          error!("404 NMR-Analysis of Device not found", 404)
+        else
+          analysis
+        end
       end
     end
   end

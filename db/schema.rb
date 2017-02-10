@@ -11,12 +11,27 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170201123538) do
+ActiveRecord::Schema.define(version: 20170209094545) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "pg_trgm"
   enable_extension "hstore"
+
+  create_table "analyses_experiments", force: :cascade do |t|
+    t.integer  "holder_id"
+    t.string   "status"
+    t.integer  "devices_analysis_id", null: false
+    t.string   "solvent"
+    t.string   "experiment"
+    t.boolean  "checkbox"
+    t.boolean  "on_day"
+    t.integer  "number_of_scans"
+    t.integer  "numeric"
+    t.string   "time"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
+  end
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -117,6 +132,14 @@ ActiveRecord::Schema.define(version: 20170201123538) do
     t.string  "types",   default: [], array: true
     t.string  "title",   default: ""
     t.integer "user_id"
+  end
+
+  create_table "devices_analyses", force: :cascade do |t|
+    t.integer  "sample_id",     null: false
+    t.integer  "device_id",     null: false
+    t.string   "analysis_type"
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
   end
 
   create_table "devices_samples", force: :cascade do |t|
