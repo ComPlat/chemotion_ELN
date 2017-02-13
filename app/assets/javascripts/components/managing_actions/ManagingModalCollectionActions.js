@@ -71,7 +71,8 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   addCollection() {
-    let label = this.refs.collectionLabelInput.getValue() || ''; //TODO: Don't allow empty labels.
+    let label = ReactDOM.findDOMNode(this.refs["collectionLabelInput"]).value || '';
+    //TODO: Don't allow empty labels.
     CollectionActions.createUnsharedCollection({label: label});
 
     this.setState({
@@ -151,7 +152,8 @@ export default class ManagingModalCollectionActions extends React.Component {
               </FormGroup>
             </td>
             <td width="5%">
-              <Button bsSize="small" className="managing-actions-add-btn" bsStyle="success" onClick={this.addCollection.bind(this)}>
+              <Button bsSize="small" className="managing-actions-add-btn"
+                      bsStyle="success" onClick={this.addCollection.bind(this)}>
                 <i className="fa fa-plus"></i>
               </Button>
             </td>

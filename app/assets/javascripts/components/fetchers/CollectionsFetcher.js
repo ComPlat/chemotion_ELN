@@ -205,8 +205,6 @@ export default class CollectionsFetcher {
   }
 
   static updateElementsCollection(params) {
-    console.log('updateElementsCollection called');
-    console.log(params);
     let promise = fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'PUT',
