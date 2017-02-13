@@ -47,12 +47,7 @@ describe Chemotion::ReactionAPI do
           id: r2.id,
           name: r2.name,
           type: 'reaction',
-          collection_labels: [{
-            "name" => 'C1', "is_shared" => false,
-            "id" => c1.id, "user_id" => user.id,
-            "shared_by_id" => c1.shared_by_id,
-            "is_synchronized" => c1.is_synchronized
-          }]
+          collection_labels: nil
         )
       end
     end

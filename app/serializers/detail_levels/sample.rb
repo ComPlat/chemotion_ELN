@@ -27,4 +27,16 @@ class DetailLevels::Sample
   def level3_attributes
     level2_attributes
   end
+
+  def list_removed_attributes
+    [
+      :description,
+      :target_amount_value, :target_amount_unit, :real_amount_value,
+      :real_amount_unit, :molfile, :purity, :solvent, :impurities, :location,
+      :analyses,
+      :analysis_kinds, :children_count, :parent_id, :imported_readout,
+      :density, :boiling_point, :melting_point, :reaction_description, :container,
+      :collection_labels
+    ]
+  end
 end

@@ -27,9 +27,9 @@ class API < Grape::API
       groups = Hash.new
       sample_serializer_selector =
         if own_collection
-          lambda { |s| SampleSerializer::Level10.new(s, 10).serializable_hash }
+          lambda { |s| SampleListSerializer::Level10.new(s, 10).serializable_hash }
         else
-          lambda { |s| ElementPermissionProxy.new(current_user, s, user_ids).serialized }
+          lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
         end
 
       samples.each do |sample|
@@ -45,9 +45,9 @@ class API < Grape::API
       groups = Hash.new
       sample_serializer_selector =
         if own_collection
-          lambda { |s| SampleSerializer::Level10.new(s, 10).serializable_hash }
+          lambda { |s| SampleListSerializer::Level10.new(s, 10).serializable_hash }
         else
-          lambda { |s| ElementPermissionProxy.new(current_user, s, user_ids).serialized }
+          lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
         end
 
       molecules.each do |molecule|

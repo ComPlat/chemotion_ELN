@@ -12,4 +12,13 @@ class DetailLevels::Reaction
       :id, :type, :is_restricted, :observation, :description
     ]
   end
+
+  def list_removed_attributes
+    [
+      :description, :timestamp_start, :timestamp_stop,
+      :observation, :purification, :dangerous_products, :solvent, :tlc_solvents, :tlc_description,
+      :rf_value, :temperature, :status, :analysis_kinds, :container,
+      :collection_labels
+    ]
+  end
 end
