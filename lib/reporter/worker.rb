@@ -8,7 +8,7 @@ module Reporter
       @rxn_settings = @report.reaction_settings
       @configs = @report.configs
       @img_format = @report.img_format
-      @user_id = @report.author_id
+      @user_name = User.find(@report.author_id).name
     end
 
     def process
@@ -61,7 +61,7 @@ module Reporter
     def substance
       @substance ||= {
         date: Time.now.strftime("%d.%m.%Y"),
-        author: "#{@user_id}",
+        author: "#{@user_name}",
         spl_settings: @spl_settings,
         rxn_settings: @rxn_settings,
         configs: @configs,
