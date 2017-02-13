@@ -53,20 +53,20 @@ module Chemotion
 
           is_top_secret = top_secret_screen
 
-          deletion_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).destroy? : false
-          deletion_allowed_reaction = deletion_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).destroy? : false
-          deletion_allowed_wellplate = deletion_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).destroy? : false
-          deletion_allowed_screen = deletion_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).destroy? : false
+          deletion_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).destroy? : true
+          deletion_allowed_reaction = deletion_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).destroy? : true
+          deletion_allowed_wellplate = deletion_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).destroy? : true
+          deletion_allowed_screen = deletion_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).destroy? : true
 
           deletion_allowed = deletion_allowed_screen
 
           if deletion_allowed
             sharing_allowed = true
           else
-            sharing_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).share? : false
-            sharing_allowed_reaction = sharing_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).share? : false
-            sharing_allowed_wellplate = sharing_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).share? : false
-            sharing_allowed_screen = sharing_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).share? : false
+            sharing_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).share? : true
+            sharing_allowed_reaction = sharing_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).share? : true
+            sharing_allowed_wellplate = sharing_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).share? : true
+            sharing_allowed_screen = sharing_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).share? : true
 
             sharing_allowed = sharing_allowed_screen
           end
