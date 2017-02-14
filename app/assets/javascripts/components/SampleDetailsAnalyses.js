@@ -92,7 +92,7 @@ export default class SampleDetailsAnalyses extends Component {
           <label>
             <input onClick={(e) => this.toggleAddToReport(e, analysis)}
                    type="checkbox"
-                   checked={inReport} />
+                   defaultChecked={inReport} />
             <span>Add to Report</span>
           </label>
           <Button bsSize="xsmall"
