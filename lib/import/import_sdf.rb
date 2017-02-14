@@ -2,7 +2,7 @@
 class Import::ImportSdf
 
   attr_reader  :collection_id, :current_user_id, :processed_mol, :file_path,
-   :inchi_array, :raw_data
+   :inchi_array, :raw_data , :rows
 
   SIZE_LIMIT = 40 #MB
 
@@ -12,9 +12,10 @@ class Import::ImportSdf
     @collection_id = args[:collection_id]
     @current_user_id = args[:current_user_id]
     @file_path = args[:file_path]
-    @inchi_array = args[:inchikeys]
+    @inchi_array = args[:inchikeys] || []
+    @rows = args[:rows] || []
     read_data
-    @count = @raw_data.size
+    @count = @raw_data.empty? && @rows.size || @raw_data.size
     if @count == 0
       @message[:error] << 'No Molecule found!'
     else
@@ -61,29 +62,54 @@ class Import::ImportSdf
     else
       @message[:error] << "No Molecule processed. "
     end
+    @inchi_array += inchikeys.compact
   end
 
   def create_samples
-    ids = []
-    read_data if raw_data.empty?
 
-    ActiveRecord::Base.transaction do
-      raw_data.each do |molfile|
-        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
-        inchikey = babel_info[:inchikey]
-        unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
-          next unless i=inchi_array.index(inchikey)
-          @inchi_array[i]=nil
-          sample = Sample.new(created_by: current_user_id)
-          sample.molfile = molfile
-          sample.molecule = molecule
-          sample.collections << Collection.find(collection_id)
-          sample.collections << Collection.get_all_collection_for_user(current_user_id)
-          sample.save!
-          ids << sample.id
+    ids = []
+    read_data if (raw_data.empty? && rows.empty?)
+
+    if !raw_data.empty? && inchi_array.empty?
+      ActiveRecord::Base.transaction do
+        raw_data.each do |molfile|
+          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
+          inchikey = babel_info[:inchikey]
+          unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
+            next unless i=inchi_array.index(inchikey)
+            @inchi_array[i]=nil
+            sample = Sample.new(created_by: current_user_id)
+            sample.molfile = molfile
+            sample.molecule = molecule
+            sample.collections << Collection.find(collection_id)
+            sample.collections << Collection.get_all_collection_for_user(current_user_id)
+            sample.save!
+            ids << sample.id
+          end
         end
       end
+    elsif !rows.empty?
+      ActiveRecord::Base.transaction do
+        rows.each do |row|
+          next unless row
+          molfile = row["molfile"]
+          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
+          inchikey = babel_info[:inchikey]
+          unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
+            sample = Sample.new(created_by: current_user_id)
+            sample.molfile = molfile
+            sample.molecule = molecule
+            sample.collections << Collection.find(collection_id)
+            sample.collections << Collection.get_all_collection_for_user(current_user_id)
+            sample.save!
+            ids << sample.id
+          end
+        end
+      end
+    else
+      @message[:error] << 'No sample selected. '
     end
+
     ids.compact!
     samples = Sample.where('id IN (?)',ids)
     s = ids.size
@@ -150,7 +176,7 @@ class Import::ImportSdf
       i = iks.index(mol[0])
       if i
         iks[i] = nil
-        mol_array[i]={name: mol[2],inchikey: mol[0],svg: mol[1]}
+        mol_array[i]={name: mol[2],inchikey: mol[0],svg: mol[1],molfile: molfiles[i]}
       end
     end
     mol_array

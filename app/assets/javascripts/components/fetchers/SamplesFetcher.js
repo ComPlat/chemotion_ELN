@@ -242,8 +242,7 @@ export default class SamplesFetcher {
       },
       body: JSON.stringify({
         currentCollectionId: params.currentCollectionId,
-        raw_data: params.raw_data,
-        inchikeys: params.inchikeys,
+        rows: params.rows,
       })
     }).then((response) => {
       return response.json()
