@@ -89,7 +89,6 @@ export default class ModalImportConfirm extends React.Component {
   componentDidMount(){
   }
 
-
   handleClick() {
     const {onHide, action} = this.props
 
