@@ -79,7 +79,9 @@ export default class SampleDetails extends React.Component {
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange)
-    this.fetchQrCodeSVG(this.state.sample)
+    if(!this.state.sample.isNew) {
+      this.fetchQrCodeSVG(this.state.sample)
+    }
   }
 
   componentWillUnmount() {
