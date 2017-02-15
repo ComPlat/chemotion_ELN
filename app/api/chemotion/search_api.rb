@@ -135,7 +135,7 @@ module Chemotion
              'sample_name', 'sample_short_label', 'sample_external_label'
           sample_search = true
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
-        when 'reaction_name'
+        when 'reaction_name', 'reaction_short_label'
           Reaction.for_user(current_user.id).search_by(search_by_method, arg)
         when 'wellplate_name'
           Wellplate.for_user(current_user.id).search_by(search_by_method, arg)

@@ -8,9 +8,11 @@ class Reaction < ActiveRecord::Base
   serialize :description, Hash
 
   multisearchable against: :name
+  multisearchable against: :short_label
 
   # search scopes for exact matching
   pg_search_scope :search_by_reaction_name, against: :name
+  pg_search_scope :search_by_reaction_short_label, against: :short_label
 
   pg_search_scope :search_by_sample_name, associated_against: {
     starting_materials: :name,
@@ -55,6 +57,7 @@ class Reaction < ActiveRecord::Base
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{query}%") }
   scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
