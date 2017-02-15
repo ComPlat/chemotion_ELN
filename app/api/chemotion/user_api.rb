@@ -26,6 +26,9 @@ module Chemotion
 
         post do
           current_user.layout = params[:layout]
+          visible_count = current_user.layout.find_all{ |key, value|
+            value.to_i > 0
+          }.count
 
           current_user.layout = {
             sample: 1,
@@ -33,7 +36,7 @@ module Chemotion
             wellplate: 3,
             screen: 4,
             research_plan: 5
-          } if current_user.layout.size == 0 || layout.find_all{ |key, value| value > 0 }.count == 0
+          } if current_user.layout.size == 0 || visible_count == 0
 
           current_user.save!
 
