@@ -111,32 +111,6 @@ const routes = {
       '/:reportID': 'show'
     },
     
-    '/device': {
-      target: {
-        show: function(e) {
-          const {deviceId} = e.params;
-          ElementActions.fetchDeviceById(deviceId)
-        },
-        showDeviceManagement: function(e) {
-          UIActions.showDeviceManagement()
-        },
-        showAnalysisType: function(e) {
-          const {deviceId, sampleId, analysisType} = e.params;
-          switch(analysisType) {
-            case 'nmr':
-              ElementActions.fetchDeviceAnalysisByIdAndType(deviceId, sampleId, analysisType)
-              break
-            default:
-              ElementActions.fetchDeviceById(deviceId)
-              break
-          }
-        }
-      },
-      '/management': 'showDeviceManagement',
-      '/:deviceId/samples/:sampleId/:analysisType': 'showAnalysisType',
-      '/:deviceId': 'show',
-    },
-
     '/sample': {
       target: {
         showOrNew: function(e) {
@@ -212,7 +186,33 @@ const routes = {
         }
       },
       '/:screenID': 'showOrNew'
-    }
+    },
+
+    '/device': {
+      target: {
+        show: function(e) {
+          const {deviceId} = e.params;
+          ElementActions.fetchDeviceById(deviceId)
+        },
+        showDeviceManagement: function(e) {
+          UIActions.showDeviceManagement()
+        },
+        showAnalysisType: function(e) {
+          const {deviceId, sampleId, analysisType} = e.params;
+          switch(analysisType) {
+            case 'nmr':
+              ElementActions.fetchDeviceAnalysisByIdAndType(deviceId, sampleId, analysisType)
+              break
+            default:
+              ElementActions.fetchDeviceById(deviceId)
+              break
+          }
+        }
+      },
+      '/management': 'showDeviceManagement',
+      '/:deviceId/samples/:sampleId/:analysisType': 'showAnalysisType',
+      '/:deviceId': 'show',
+    },
 }
 
 export default function() {
