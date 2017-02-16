@@ -126,6 +126,10 @@ class ElementActions {
     return (dispatch) => dispatch({analysis, experiment})
   }
   
+  changeActiveAccordionExperiment(analysis, key) {
+    return (dispatch) => dispatch({analysis, key})
+  }
+  
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

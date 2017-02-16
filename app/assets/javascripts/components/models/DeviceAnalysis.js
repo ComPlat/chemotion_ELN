@@ -12,7 +12,8 @@ export default class DeviceAnalysis extends Element{
       experiments: experiments.map((e) => new AnalysesExperiment(e, sample_id)),
       type: 'deviceAnalysis',
       analysisType: analysis_type,
-      title
+      title,
+      activeAccordionExperiment: 0,
     }
     super(device)
   }
@@ -20,7 +21,8 @@ export default class DeviceAnalysis extends Element{
   static buildEmpty(sample, analysisType) {
     return new DeviceAnalysis({
       type: 'deviceAnalysis',
-      analysisType,
+      sample_id: sample.id,
+      analysis_type: analysisType,
       title: "",
       experiments: []
     })

@@ -91,6 +91,7 @@ class ElementStore {
       handleCreateAnalysisExperiment: ElementActions.createAnalysisExperiment,
       handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
       handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
+      handleChangeActiveAccordionExperiment: ElementActions.changeActiveAccordionExperiment,
 
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -261,6 +262,7 @@ class ElementStore {
   }
 
   handleCreateDeviceAnalysis(analysis) {
+    // do nothing
   }
 
   handleSaveDeviceAnalysis(analysis) {
@@ -270,6 +272,7 @@ class ElementStore {
     const experiment = AnalysesExperiment.buildEmpty(analysis.id, analysis.sampleId)
     console.log(experiment)
     analysis.experiments.push(experiment)
+    analysis.activeAccordionExperiment = analysis.experiments.length - 1
     this.state.currentElement = analysis
   }
 
@@ -281,6 +284,11 @@ class ElementStore {
 
   handleDeleteAnalysisExperiment({analysis, experiment}) {
     analysis.experiments = analysis.experiments.filter((a) => a.id !== experiment.id)
+    this.state.currentElement = analysis
+  }
+  
+  handleChangeActiveAccordionExperiment({analysis, key}) {
+    analysis.activeAccordionExperiment = key
     this.state.currentElement = analysis
   }
 
