@@ -7,13 +7,14 @@ RSpec.describe ElementPermissionProxy do
 
   context 'element is a sample' do
     let(:sample) { create(:sample) }
+    let(:sample_with_associations) { Sample.where(id: sample.id).includes(collections: :sync_collections_users).first }
 
     before do
       CollectionsSample.create!(sample: sample, collection: c1)
       CollectionsSample.create!(sample: sample, collection: c2)
     end
 
-    subject { described_class.new(user, sample, [user.id]) }
+    subject { described_class.new(user, sample_with_associations, [user.id]) }
 
     context 'element is only in shared collections' do
       before do
