@@ -1,5 +1,5 @@
 class DeviceSerializer < ActiveModel::Serializer
-  attributes :id, :title, :code, :types, :user_id, :samples
+  attributes :id, :title, :code, :types, :user_id, :samples, :devices_analyses
   
   def samples
     object.devices_samples.map {|devices_sample|

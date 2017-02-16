@@ -60,6 +60,7 @@ module Chemotion
             error!("404 Device with supplied id not found", 404)
           else
             device.devices_samples.destroy_all
+            device.devices_analyses.destroy_all
             device.destroy
           end
         end
@@ -90,6 +91,10 @@ module Chemotion
             to_remove_sample_ids.map{|sample_id| 
               device.devices_samples.find_by(sample_id: sample_id).destroy
             }
+
+            #update devices_analyses
+            # TODO
+
             device.update(attributes.except!(:samples))
             # FIXME how to prevent this?
             Device.find(params[:id])
@@ -102,19 +107,40 @@ module Chemotion
         Device.all
       end
 
+      desc "Create Device Analysis"
+      params do
+        requires :id, type: Integer, desc: "device id"
+        requires :sample_id, type: Integer, desc: "sample id"
+        requires :analysis_type, type: String, desc: "analysis type"
+      end
+      post '/:id/samples/:sample_id/:analysis_type' do
+        analysis = DevicesAnalysis.new(
+          device_id: params[:id],
+          sample_id: params[:sample_id],
+          analysis_type: params[:analysis_type]
+        )
+        analysis.save!
+        
+        device = Device.find(params[:id])
+        device.devices_analyses << analysis
+        device.save!
+        analysis
+      end
+
       desc "get nmr Analyses"
       params do
         requires :id, type: Integer, desc: "device id"
         requires :sample_id, type: Integer, desc: "sample id"
+        requires :analysis_type, type: String, desc: "analysis type"
       end
-      get '/:id/samples/:sample_id/nmr' do
+      get '/:id/samples/:sample_id/:analysis_type' do
         analysis = DevicesAnalysis.find_by(
           device_id: params[:id],
           sample_id: params[:sample_id],
-          analysis_type: 'NMR'
+          analysis_type: params[:analysis_type]
         )
         if analysis.nil?
-          error!("404 NMR-Analysis of Device not found", 404)
+          error!("404 Analysis of Device not found", 404)
         else
           analysis
         end

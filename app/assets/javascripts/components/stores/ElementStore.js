@@ -9,6 +9,8 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import Device from '../models/Device'
+import Analysis from '../models/Analysis'
+import AnalysesExperiment from '../models/AnalysesExperiment'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -84,6 +86,11 @@ class ElementStore {
       handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
+      handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
+      handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
+      handleCreateAnalysisExperiment: ElementActions.createAnalysisExperiment,
+      handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
+      handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
 
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -194,6 +201,19 @@ class ElementStore {
     this.state.elements['devices'].devices[deviceKey] = device
   }
 
+  handleCreateDevice() {
+    const {devices} = this.state.elements['devices']
+    const newDevice = Device.buildEmpty()
+    const newKey = devices.length
+    this.state.elements['devices'].activeAccordionDevice = newKey
+    this.state.elements['devices'].devices.push(newDevice)
+  }
+  
+  handleDeleteDevice(device) {
+    const {devices, activeAccordionDevice} = this.state.elements['devices']
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
+  }
+
   handleAddSampleToDevice({sample, device}) {
     const deviceHasSample = device.samples.findIndex(
       (s) => s.id === sample.id
@@ -240,19 +260,32 @@ class ElementStore {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
-  handleCreateDevice() {
-    const {devices} = this.state.elements['devices']
-    const newDevice = Device.buildEmpty()
-    const newKey = devices.length
-    this.state.elements['devices'].activeAccordionDevice = newKey
-    this.state.elements['devices'].devices.push(newDevice)
+  handleCreateDeviceAnalysis(analysis) {
   }
 
-  handleDeleteDevice(device) {
-    const {devices, activeAccordionDevice} = this.state.elements['devices']
-    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
+  handleSaveDeviceAnalysis(analysis) {
+  }
+  
+  handleCreateAnalysisExperiment(analysis) {
+    const experiment = AnalysesExperiment.buildEmpty(analysis.id, analysis.sampleId)
+    console.log(experiment)
+    analysis.experiments.push(experiment)
+    this.state.currentElement = analysis
   }
 
+  handleChangeAnalysisExperimentProp({analysis, experiment, prop, value}) {
+    const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id)
+    analysis.experiments[experimentKey][prop] = value
+    this.state.currentElement = analysis
+  }
+
+  handleDeleteAnalysisExperiment({analysis, experiment}) {
+    analysis.experiments = analysis.experiments.filter((a) => a.id !== experiment.id)
+    this.state.currentElement = analysis
+  }
+
+
+  // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
     Object.keys(result).forEach((key) => {

@@ -44,14 +44,14 @@ const Header = ({analysis, closeDetails, toggleFullScreen}) => {
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="closeReaction">Close</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => closeDetails(device)}>
+            onClick={() => closeDetails(analysis)}>
           <i className="fa fa-times"></i>
         </Button>
       </OverlayTrigger>
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="saveReaction">Save</Tooltip>}>
         <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-            onClick={() => handleSubmit(device)}>
+            onClick={() => handleSubmit(analysis)}>
           <i className="fa fa-floppy-o "></i>
         </Button>
       </OverlayTrigger>

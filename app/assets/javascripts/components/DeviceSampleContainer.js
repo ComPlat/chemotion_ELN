@@ -4,6 +4,7 @@ import DragDropItemTypes from './DragDropItemTypes'
 import ElementActions from './actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
 import Analysis from './models/Analysis'
+import UIStore from './stores/UIStore'
 
 const target = {
   drop(props, monitor){
@@ -67,6 +68,8 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
 export default DropTarget([DragDropItemTypes.SAMPLE], target, collect)(DeviceSampleContainer)
 
 const handleTypeClick = (type, sample, device) => { 
+  const {currentCollection, isSync} = UIStore.getState();
+
   switch(type) {
     case "NMR":
       const hasAnalysisOfTypeNMR =
@@ -75,16 +78,21 @@ const handleTypeClick = (type, sample, device) => {
 
       if(!hasAnalysisOfTypeNMR) {
         console.log("creating analysis")
+        ElementActions.createDeviceAnalysis(device, sample, 'NMR')
+
         let analysis = Analysis.buildEmpty()
-        // TODO right kind?
         analysis.kind = "1H NMR"
         sample.addAnalysis(analysis)
-        ElementActions.updateSample(sample)
+        ElementActions.updateSample.defer(sample)
         ElementActions.saveDevice.defer(device)
         ElementActions.fetchDeviceById.defer(device.id)
       }
-      alert(type)
-      break;
+
+      Aviator.navigate(isSync
+        ? `/scollection/${currentCollection.id}/device/${device.id}/samples/${sample.id}/nmr/`
+        : `/collection/${currentCollection.id}/device/${device.id}/samples/${sample.id}/nmr/`
+      )
+      break
   }
 }
 

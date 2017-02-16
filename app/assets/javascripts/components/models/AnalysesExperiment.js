@@ -23,16 +23,16 @@ export default class AnalysesExperiment extends Element{
   }
 
   static buildEmpty(deviceAnalysisId, sampleId) {
-    return new DeviceAnalysis({
-      deviceAnalysisId: deviceAnalysisId,
-      holderId: null,
+    return new AnalysesExperiment({
+      devices_analysis_id: deviceAnalysisId,
+      holder_id: null,
       status: "",
-      sampleId: sampleId,
+      sample_id: sampleId,
       solvent: "",
       experiment: "",
       checkbox: false,
-      onDay: true,
-      numberOfScans: 0,
+      on_day: true,
+      number_of_scans: 0,
       numeric: 0,
       time: "",
     })

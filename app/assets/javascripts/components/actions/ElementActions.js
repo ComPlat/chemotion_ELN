@@ -105,6 +105,27 @@ class ElementActions {
     return (dispatch) => dispatch({device, prop, value})
   }
 
+  createDeviceAnalysis(device, sample, analysisType) {
+    return (dispatch) =>
+      handleFetch(dispatch, () => DeviceFetcher.createAnalysis(device, sample, analysisType))
+  }
+  
+  saveDeviceAnalysis(analysis) {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
+  }
+  
+  createAnalysisExperiment(analysis) {
+    return (dispatch) => dispatch(analysis)
+  }
+  
+  changeAnalysisExperimentProp(analysis, experiment, prop, value) {
+    return (dispatch) => dispatch({analysis, experiment, prop, value})
+  }
+  
+  deleteAnalysisExperiment(analysis, experiment) {
+    return (dispatch) => dispatch({analysis, experiment})
+  }
+  
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
