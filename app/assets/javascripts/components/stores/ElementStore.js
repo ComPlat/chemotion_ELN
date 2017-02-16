@@ -270,7 +270,7 @@ class ElementStore {
   }
   
   handleCreateAnalysisExperiment(analysis) {
-    const experiment = AnalysesExperiment.buildEmpty(analysis.id, analysis.sampleId)
+    const experiment = AnalysesExperiment.buildEmpty(analysis.id)
     console.log(experiment)
     analysis.experiments.push(experiment)
     analysis.activeAccordionExperiment = analysis.experiments.length - 1

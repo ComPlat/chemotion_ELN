@@ -111,7 +111,10 @@ class ElementActions {
   }
   
   saveDeviceAnalysis(analysis) {
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
+    return (dispatch) => handleFetch(
+      dispatch,
+      () => DeviceFetcher.updateAnalysis(analysis)
+    )
   }
   
   createAnalysisExperiment(analysis) {

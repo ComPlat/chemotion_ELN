@@ -127,7 +127,7 @@ module Chemotion
         analysis
       end
 
-      desc "get nmr Analyses"
+      desc "get nmr Analysis"
       params do
         requires :id, type: Integer, desc: "device id"
         requires :sample_id, type: Integer, desc: "sample id"
@@ -143,6 +143,55 @@ module Chemotion
           error!("404 Analysis of Device not found", 404)
         else
           analysis
+        end
+      end
+      
+      desc "Update analysis"
+      params do
+        requires :id, type: Integer, desc: "device id"
+        requires :sample_id, type: Integer, desc: "sample id"
+        requires :analysis_type, type: String, desc: "analysis type"
+        optional :experiments, type: Array, desc: "analysis experiments"
+      end
+      put '/:id/samples/:sample_id/:analysis_type' do
+        analysis = DevicesAnalysis.find_by(
+          device_id: params[:id],
+          sample_id: params[:sample_id],
+          analysis_type: params[:analysis_type]
+        )
+        if analysis.nil?
+          error!("404 Analysis of Device not found", 404)
+        else
+          # update analyses_experiments
+          old_experiment_ids = analysis.analyses_experiments.map {|experiment| experiment.id}
+          new_experiment_ids = params[:experiments].map {|experiment|
+            new_experiment = AnalysesExperiment.create({
+              devices_analysis_id: analysis.id,
+              holder_id: experiment.holder_id,
+              status: experiment.status,
+              solvent: experiment.solvent,
+              experiment: experiment.experiment,
+              checkbox: experiment.checkbox,
+              on_day: experiment.on_day,
+              number_of_scans: experiment.number_of_scans, 
+              numeric: experiment.numeric,
+              time: experiment.time,
+            })
+            analysis.analyses_experiments << new_experiment
+            new_experiment.id
+          }
+          to_remove_experiment_ids = old_experiment_ids - new_experiment_ids
+          to_remove_experiment_ids.map{|experiment_id| 
+            analysis.analyses_experiments.find_by(id: experiment_id).destroy
+          }
+
+          analysis.save!
+          # FIXME how to prevent this extra query? data has changed!
+          DevicesAnalysis.find_by(
+            device_id: params[:id],
+            sample_id: params[:sample_id],
+            analysis_type: params[:analysis_type]
+          )
         end
       end
     end

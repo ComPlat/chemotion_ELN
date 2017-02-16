@@ -70,11 +70,12 @@ export default class DeviceFetcher {
     })
   }
   
-  static updateAnalysis(device) {
+  static updateAnalysis(analysis) {
+    const {deviceId, sampleId, analysisType, experiments} = analysis
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/devices/${deviceId}/samples/${sampleId}/${_.toUpper(analysisType)}`,
       requestMethod: 'PUT',
-      bodyData: device,
+      bodyData: analysis.serialize(),
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }

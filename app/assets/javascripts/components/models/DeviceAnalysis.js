@@ -1,5 +1,6 @@
 import Element from './Element'
 import AnalysesExperiment from './AnalysesExperiment'
+import _ from 'lodash'
 
 export default class DeviceAnalysis extends Element{
   constructor({
@@ -17,6 +18,10 @@ export default class DeviceAnalysis extends Element{
     }
     super(device)
   }
+  
+  checksum() {
+    return super.checksum(['activeAccordionExperiment'])
+  }
 
   static buildEmpty(sample, analysisType) {
     return new DeviceAnalysis({
@@ -26,5 +31,15 @@ export default class DeviceAnalysis extends Element{
       title: "",
       experiments: []
     })
+  }
+  
+  serialize() {
+    const serialized = super.serialize({
+      sample_id: this.sampleId,
+      experiments: this.experiments.map((e) => e.serialize()),
+      analysis_type: this.analysisType,
+      title: this.title,
+    })
+    return serialized 
   }
 }

@@ -3,14 +3,13 @@ import Element from './Element'
 export default class AnalysesExperiment extends Element{
   constructor({
     id, devices_analysis_id, holder_id, status, solvent, experiment, checkbox, on_day,
-    number_of_scans, numeric, time, sample_id
+    number_of_scans, numeric, time
   }, sampleId) {
     const device = {
       id: id,
       deviceAnalysisId: devices_analysis_id,
       holderId: holder_id,
       status: status,
-      sampleId: sample_id,
       solvent: solvent,
       experiment: experiment,
       checkbox: checkbox,
@@ -22,12 +21,11 @@ export default class AnalysesExperiment extends Element{
     super(device)
   }
 
-  static buildEmpty(deviceAnalysisId, sampleId) {
+  static buildEmpty(deviceAnalysisId) {
     return new AnalysesExperiment({
       devices_analysis_id: deviceAnalysisId,
       holder_id: null,
       status: "",
-      sample_id: sampleId,
       solvent: "",
       experiment: "",
       checkbox: false,
@@ -36,6 +34,22 @@ export default class AnalysesExperiment extends Element{
       numeric: 0,
       time: "",
     })
+  }
+
+  serialize() {
+    const serialized = super.serialize({ 
+      devices_analysis_id: this.deviceAnalysisId,
+      holder_id: this.holderId,
+      status: this.status,
+      solvent: this.solvent,
+      experiment: this.experiment,
+      checkbox: this.checkbox,
+      on_day: this.onDay,
+      number_of_scans: parseInt(this.numberOfScans, 10),
+      numeric: parseInt(this.numeric, 10),
+      time: this.time,
+    })
+    return serialized
   }
 }
 
