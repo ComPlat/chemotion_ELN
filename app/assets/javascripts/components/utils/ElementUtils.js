@@ -1,4 +1,5 @@
 import UIStore from '../stores/UIStore';
+import _ from 'lodash'
 
 const SameEleTypId = (orig, next) => {
   let same = false;
@@ -15,8 +16,8 @@ const UrlSilentNavigation = (element) => {
       case 'deviceAnalysis':
         const {deviceId, sampleId, analysisType} = element
         Aviator.navigate(isSync
-          ? `/scollection/${currentCollection.id}/device/${deviceId}/samples/${sampleId}/${analysisType}/`
-          : `/collection/${currentCollection.id}/device/${deviceId}/samples/${sampleId}/${analysisType}/`,
+          ? `/scollection/${currentCollection.id}/device/${deviceId}/samples/${sampleId}/${_.toLower(analysisType)}/`
+          : `/collection/${currentCollection.id}/device/${deviceId}/samples/${sampleId}/${_.toLower(analysisType)}/`,
           { silent: true }
         )
         break

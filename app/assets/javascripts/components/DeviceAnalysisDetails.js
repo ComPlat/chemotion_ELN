@@ -39,13 +39,6 @@ const Header = ({analysis, closeDetails, toggleFullScreen}) => {
         </Button>
       </OverlayTrigger>
       <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="saveReaction">Save</Tooltip>}>
-        <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-            onClick={() => handleSubmit(analysis)}>
-          <i className="fa fa-floppy-o "></i>
-        </Button>
-      </OverlayTrigger>
-      <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
       <Button bsStyle="info" bsSize="xsmall" className="button-right"
         onClick={() => toggleFullScreen()}>
@@ -56,10 +49,10 @@ const Header = ({analysis, closeDetails, toggleFullScreen}) => {
   )
 }
 
-const MainContent = ({analysis}) => {
+const MainContent = ({analysis, closeDetails}) => {
   switch(analysis.analysisType) {
     case 'NMR':
-      return <AnalysisNMR analysis={analysis}/>
+      return <AnalysisNMR analysis={analysis} closeDetails={closeDetails}/>
       break
     default:
       return <div>Device-Analysis not found!</div>
