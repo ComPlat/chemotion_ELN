@@ -1,11 +1,14 @@
 import React from 'react'
-import {Col, Form, FormGroup, ControlLabel, FormControl, Button, Radio, Checkbox, PanelGroup, Panel} from 'react-bootstrap'
+import{
+  Col, Form, FormGroup, ControlLabel, FormControl, ButtonToolbar,
+  Button, Radio, Checkbox, PanelGroup, Panel
+} from 'react-bootstrap'
 import Select from 'react-select'
 import ElementActions from './actions/ElementActions'
 
 import {solvents, experiments} from './staticDropdownOptions/device_options'
 
-const AnalysisNMR = ({analysis}) => {
+const AnalysisNMR = ({analysis, closeDetails}) => {
   const styleByExperimentState = (experiment) => {
     return experiment.isNew || experiment.isEdited
       ? "info" 
@@ -46,6 +49,25 @@ const AnalysisNMR = ({analysis}) => {
           : <div>This analysis has no experiments yet.</div>
         }
       </PanelGroup>
+      <ButtonToolbar>
+        <Button bsStyle="primary" onClick={() => closeDetails(analysis)}>
+          Close
+        </Button>
+        <Button
+          bsStyle="warning"
+          disabled={!analysis.isEdited}
+          onClick={() => ElementActions.saveDeviceAnalysis(analysis)}
+        >
+          Save
+        </Button>
+        <Button
+          bsStyle="success"
+          disabled={analysis.experiments.length === 0}
+          onClick={() => ElementActions.generateDeviceAnalysisConfig(analysis)}
+        >
+          Generate Config
+        </Button>
+      </ButtonToolbar>
     </div>
   )
 }
@@ -54,8 +76,14 @@ export default AnalysisNMR
 
 const Experiment = ({analysis, experiment}) => {
   const handlePropChange = (prop, value) => {
-    console.log(prop, value)
     ElementActions.changeAnalysisExperimentProp(analysis, experiment, prop, value)
+  }
+  const handleSelectChange = (prop, e) => {
+    if(e && e.value) {
+      handlePropChange(prop, e.value)
+    } else {
+      handlePropChange(prop, "")
+    }
   }
 
   return (
@@ -99,7 +127,7 @@ const Experiment = ({analysis, experiment}) => {
             name='solvent'
             multi={false}
             options={solvents}
-            onChange={(e) => handlePropChange('solvent', e.value)}
+            onChange={(e) => handleSelectChange('solvent', e)}
             value={experiment.solvent}
           />
         </Col>
@@ -109,7 +137,7 @@ const Experiment = ({analysis, experiment}) => {
             name='experiment'
             multi={false}
             options={experiments}
-            onChange={(e) => handlePropChange('experiment', e.value)}
+            onChange={(e) => handleSelectChange('experiment', e)}
             value={experiment.experiment}
           />
         </Col>
@@ -178,7 +206,7 @@ const Experiment = ({analysis, experiment}) => {
   )
 }
 
-const ExperimentHeader = ({analysis, experiement, id}) => {
+const ExperimentHeader = ({analysis, experiment, id}) => {
   const handleRemoveDevice = (e) => {
     if(confirm('Delete the Experiment?')) {
       ElementActions.deleteAnalysisExperiment(analysis, experiment)

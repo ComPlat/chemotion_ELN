@@ -3,14 +3,14 @@ import Element from './Element'
 export default class AnalysesExperiment extends Element{
   constructor({
     id, devices_analysis_id, holder_id, status, solvent, experiment, checkbox, on_day,
-    number_of_scans, numeric, time
+    number_of_scans, numeric, time, sample_id
   }, sampleId) {
     const device = {
       id: id,
       deviceAnalysisId: devices_analysis_id,
       holderId: holder_id,
       status: status,
-      sampleId: sampleId,
+      sampleId: sample_id,
       solvent: solvent,
       experiment: experiment,
       checkbox: checkbox,

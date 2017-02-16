@@ -266,6 +266,7 @@ class ElementStore {
   }
 
   handleSaveDeviceAnalysis(analysis) {
+    this.state.currentElement = analysis
   }
   
   handleCreateAnalysisExperiment(analysis) {

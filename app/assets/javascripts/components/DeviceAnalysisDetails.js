@@ -17,25 +17,15 @@ const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
       }
       bsStyle={analysis.isPendingToSave ? 'info' : 'primary'}
     >
-      <MainContent analysis={analysis}/>
-      <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => closeDetails(analysis)}>
-          Close
-        </Button>
-        <Button bsStyle="warning" onClick={() => handleSubmit(analysis)}>
-          Save
-        </Button>
-      </ButtonToolbar>
+      <MainContent
+        analysis={analysis}
+        closeDetails={closeDetails}
+      />
     </Panel>
   )
 }
 
 export default DeviceAnalysisDetails
-
-const handleSubmit = (analysis) => {
-  // device.updateChecksum()
-  ElementActions.saveDeviceAnalysis(analysis)
-}
 
 const Header = ({analysis, closeDetails, toggleFullScreen}) => {
   return (
