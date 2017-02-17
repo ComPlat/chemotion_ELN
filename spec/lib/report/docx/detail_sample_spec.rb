@@ -26,7 +26,7 @@ describe 'Reporter::Docx::DetailSample instance' do
 
     it "has correct content" do
       analyses_content = JSON.parse(s1.analyses[0]["extended_metadata"]["content"])
-      target_html = Sablon.content(:html, Report::Delta.new(analyses_content).getHTML)
+      target_html = Sablon.content(:html, Reporter::Delta.new(analyses_content).getHTML)
       expect(content[:analyses]).to eq(target_html)
     end
   end

@@ -469,10 +469,24 @@ describe Chemotion::ReactionAPI do
       end
 
       context 'creating a copied reaction' do
+        let! (:new_container) {{
+          "name" => "new",
+          "attachments" => [],
+          "is_deleted" => false,
+          "is_new" => false,
+          "containable_type" => "Reaction",
+          "containable_id" => 1,
+          "description" => "",
+          "container_type" => "root",
+          "extended_metadata" => {},
+          "children" => [],
+        }}
+
         let(:params) {
           {
             "name" => " Copy",
             "collection_id" => collection_1.id,
+            "container" => new_container,
             "materials" => {
               "products" => [
                          "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
@@ -483,7 +497,8 @@ describe Chemotion::ReactionAPI do
                  "equivalent" => 1,
                      "is_new" => true,
                    "is_split" => true,
-                   "molecule" => {molfile: ""}
+                   "molecule" => {molfile: ""},
+                  "container" => new_container
               ]
             }
           }
