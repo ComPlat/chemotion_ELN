@@ -77,11 +77,20 @@ module Chemotion
           if extname.match(/\.sdf?/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file].tempfile.path,
               collection_id: params[:currentCollectionId],
+              mapped_keys: {
+                description: {field: "description", displayName: "Description", multiple: true},
+                location: {field: "location", displayName: "Location"},
+                name: {field: "name", displayName: "Name"},
+                external_label: {field: "external_label", displayName: "External label"},
+                purity: {field: "purity", displayName: "Purity"},
+              },
               current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
             return {
                sdf: true, message: sdf_import.message,
                data: sdf_import.processed_mol, status: sdf_import.status,
+               custom_data_keys: sdf_import.custom_data_keys.keys,
+               mapped_keys: sdf_import.mapped_keys
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
@@ -95,6 +104,7 @@ module Chemotion
         params do
           requires :rows, type: Array, desc: "Selected Molecule from the UI"
           requires :currentCollectionId, type: Integer
+          requires :mapped_keys, type: Hash
         end
 
         before do
@@ -105,7 +115,9 @@ module Chemotion
           sdf_import = Import::ImportSdf.new(
             collection_id: params[:currentCollectionId],
             current_user_id: current_user.id,
-            rows: params[:rows]
+            rows: params[:rows],
+            mapped_keys: params[:mapped_keys]
+
           )
           sdf_import.create_samples
           return {

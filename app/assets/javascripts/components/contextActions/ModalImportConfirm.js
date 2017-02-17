@@ -68,6 +68,33 @@ class SelectCellEditor extends React.Component {
 
 }
 
+class CustomHeader extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+    }
+  }
+
+
+  render(){
+    let {column,displayName,defaultSelected,mapped_keys}= this.props
+
+    return(
+        <div className="ag-header-cell-label">
+          {displayName} &nbsp;
+          <select onChange={event=>this.props.onHeaderSelect(event.target.value,displayName)} defaultValue={defaultSelected}>
+            <option value=""               >do not import</option>
+            {Object.keys(mapped_keys).map(k=>{
+              return <option value={mapped_keys[k].field}>
+                {mapped_keys[k].multiple ? "add to ": "use as "}{mapped_keys[k].displayName}
+              </option>})
+            }
+          </select>
+        </div>
+    )
+  }
+}
+
 export default class ModalImportConfirm extends React.Component {
   constructor(props) {
     super(props);
@@ -80,23 +107,57 @@ export default class ModalImportConfirm extends React.Component {
           ...e
         })
       })
+    let defaultSelected = {}
+    props.custom_data_keys.map(e=>{defaultSelected[e]=""})
     this.state = {
-      rows:rows
-    };
+      rows:rows,
+      defaultSelected: defaultSelected,
+    }
     this.onSelectChange = this.onSelectChange.bind(this)
+    this.onHeaderSelect = this.onHeaderSelect.bind(this)
   }
 
-  componentDidMount(){
-  }
 
   handleClick() {
-    const {onHide, action} = this.props
-
+    const {onHide, action, custom_data_keys} = this.props
+    let mapped_keys = this.props.mapped_keys
     let ui_state = UIStore.getState();
+
+    let {rows,defaultSelected} = this.state
+
+    let filtered_mapped_keys = {}
+
+    custom_data_keys.map(e=>{
+      let field = defaultSelected[e]
+      if (mapped_keys[field] && mapped_keys[field].multiple ){
+        filtered_mapped_keys[field] = filtered_mapped_keys[field] ? filtered_mapped_keys[field] : []
+        filtered_mapped_keys[field].push(e)
+      } else if (field !== "") {
+        filtered_mapped_keys[field] = e
+      }
+    })
+
+    let processRows = rows.map(row=>{
+      if (row.checked){
+        let newRow = {
+          inchikey: row.inchikey,
+          molfile: row.molfile,
+        }
+        Object.keys(filtered_mapped_keys).map(e=>{
+          let k=filtered_mapped_keys[e]
+          newRow[e] = mapped_keys[e].multiple ? k.map(f=>{return(f+"\n"+row[f]+"\n")}).join("\n")
+           : row[k]
+        })
+        return newRow
+      }
+    })
+
     let params = {
       currentCollectionId: ui_state.currentCollection.id,
-      rows: this.state.rows.map(e=>{if (e.checked){return e}}),
+      rows: processRows,
+      mapped_keys: filtered_mapped_keys,
     }
+
     ElementActions.importSamplesFromFileConfirm(params)
     onHide();
 
@@ -108,17 +169,28 @@ export default class ModalImportConfirm extends React.Component {
     this.setState({rows: rows})
   }
 
+  onHeaderSelect(target,customHeader){
+    let {defaultSelected} = this.state
+    let {custom_data_keys, mapped_keys} = this.props
+    if (mapped_keys[target] && !mapped_keys[target].multiple){
+      custom_data_keys.map(k =>{if (defaultSelected[k]== target){defaultSelected[k]=""} })
+    }
+    defaultSelected[customHeader]=target
+    this.setState({defaultSelected:defaultSelected})
+  }
+
   isDisabled() {
     false
   }
 
   render() {
-    let {rows} = this.state
+    let {rows,defaultSelected} = this.state
+    const {onHide,custom_data_keys} = this.props
 
     let columns={
           columnDefs: [
-            {headerName: '#', field: 'index', width: 60},
-            {headerName: 'Structure', field: 'svg', cellRendererFramework: SvgCellRenderer },
+            {headerName: '#', field: 'index', width: 60, pinned: 'left'},
+            {headerName: 'Structure', field: 'svg', cellRendererFramework: SvgCellRenderer, pinned: 'left' },
             {headerName: 'name', field: 'name', editable:true},
             {headerName: 'Select', field: 'checked', cellRendererFramework: SelectCellRenderer,
               cellRendererParams:{onSelectChange: this.onSelectChange}, width: 30,
@@ -129,11 +201,21 @@ export default class ModalImportConfirm extends React.Component {
           defaultColDef: {
             editable:  false,
             filter: 'number',
-            width: 150,
+            width: 250,
           },
         }
 
-    const {onHide} = this.props;
+    custom_data_keys.map((e)=>{columns.columnDefs.push(
+      {
+        headerName: e, field: e ,
+        headerComponentFramework: CustomHeader,
+        headerComponentParams:{
+          onHeaderSelect: this.onHeaderSelect,
+          defaultSelected: defaultSelected[e],
+          mapped_keys: this.props.mapped_keys,
+        }
+      }
+    )})
 
     return (
       <div style={{width:'80%',height:'80%', margin:'auto'}}>
@@ -149,6 +231,8 @@ export default class ModalImportConfirm extends React.Component {
             rowSelection="single"
             getRowStyle={(params)=>{if (params.data.checked) {return null}
              else {return {'background-color': 'red'}}}}
+            enableColResize= {true}
+
           />
         </div>
 

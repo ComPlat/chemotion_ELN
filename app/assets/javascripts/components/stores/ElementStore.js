@@ -352,7 +352,9 @@ class ElementStore {
         listSharedCollections: false,
         customModal: "custom-modal",
         data: data.data,
-        raw_data: data.raw_data,
+        //raw_data: data.raw_data,
+        custom_data_keys: data.custom_data_keys,
+        mapped_keys: data.mapped_keys,
       })
     } else {
       this.handleRefreshElements('sample');
