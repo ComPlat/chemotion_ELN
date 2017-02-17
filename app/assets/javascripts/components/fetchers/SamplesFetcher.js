@@ -92,7 +92,7 @@ export default class SamplesFetcher {
       if(response.ok == false) {
         let msg = 'Files uploading failed: ';
         if(response.status == 413) {
-          msg += 'File size limit exceeded. Max size is 10MB'
+          msg += 'File size limit exceeded. Max size is 50MB'
         } else {
           msg += response.statusText;
         }
