@@ -132,6 +132,11 @@ class ElementActions {
   changeActiveAccordionExperiment(analysis, key) {
     return (dispatch) => dispatch({analysis, key})
   }
+
+  generateDeviceAnalysisConfig(analysis) {
+    return (dispatch) =>
+      handleFetch(dispatch, () => DeviceFetcher.generateAnalysisConfig(analysis)) 
+  }
   
   // -- Search --
 

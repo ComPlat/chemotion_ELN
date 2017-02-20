@@ -79,4 +79,13 @@ export default class DeviceFetcher {
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
+
+  static generateAnalysisConfig(analysis) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/icon_nmr/config`,
+      requestMethod: 'POST',
+      bodyData: analysis.buildConfig(),
+      jsonTranformation: (json) => json
+    })
+  }
 }

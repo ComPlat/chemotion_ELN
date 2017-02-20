@@ -42,4 +42,24 @@ export default class DeviceAnalysis extends Element{
     })
     return serialized 
   }
+
+  buildConfig() {
+    return {
+      sample_id: this.sampleId,
+      // FIXME multiple experiments
+      data: this.buildExperimentsConfig()[0]
+    }
+  }
+
+  buildExperimentsConfig() {
+    return this.experiments.map((e) => ({
+      'SOLVENT': e.solvent,
+      'EXPERIMENT': e.experiment,
+      'NAME': `Sample ${this.sampleId}`,
+      'NUMERIC': e.numeric,
+      'NUMBER_OF_SCANS': e.numberOfScans,
+      // FIXME key of night-analysis?
+      'DAY': e.onDay
+    }))
+  }
 }
