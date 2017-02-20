@@ -85,3 +85,14 @@ NumeralInput.defaultProps = {
   onChange: () => {
   }
 };
+
+NumeralInput.propTypes = {
+  onChange: React.PropTypes.func,
+  numeralFormat: React.PropTypes.number,
+  disabled: React.PropTypes.bool,
+  addonAfter: React.PropTypes.node,
+  buttonAfter: React.PropTypes.node,
+  label: React.PropTypes.node,
+  bsSize: React.PropTypes.string,
+  bsStyle: React.PropTypes.string,
+};
