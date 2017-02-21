@@ -32,10 +32,10 @@ class DetailLevels::Sample
     [
       :description,
       :target_amount_value, :target_amount_unit, :real_amount_value,
-      :real_amount_unit, :molfile, :purity, :solvent, :impurities, :location,
+      :real_amount_unit, :purity, :solvent, :impurities, :location,
       :analyses,
       :analysis_kinds, :children_count, :parent_id, :imported_readout,
-      :density, :boiling_point, :melting_point, :reaction_description, :container,
+      :boiling_point, :melting_point, :reaction_description, :container,
       :collection_labels
     ]
   end
