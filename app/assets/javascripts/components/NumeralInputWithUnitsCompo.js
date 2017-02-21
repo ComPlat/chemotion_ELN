@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {FormGroup,FormControl, ControlLabel, InputGroup,Button} from 'react-bootstrap';
+import {FormControl, ControlLabel, InputGroup,Button} from 'react-bootstrap';
 import {metPreConv,metPrefSymbols} from './utils/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
@@ -37,15 +37,25 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let {value} = inputField;
     let {metricPrefix,valueString} = this.state;
     let lastChar =  value[caretPosition-1] || "";
-    let md = lastChar.match(/\d/);
+
+    if(lastChar != "" && !lastChar.match(/-|\d|\.|(,)/)) return false;
+
+    let md = lastChar.match(/-|\d/);
     let mc = lastChar.match(/\.|(,)/);
 
     if (mc && mc[1]){value = value.slice(0,caretPosition-1)+'.'+value.slice(caretPosition)}
 
-    if (md||mc){valueString=value}
+    value = value.replace('--', '');
+    let matchMinus = value.match(/\d+(\-+)\d*/);
+    if(matchMinus && matchMinus[1])
+    value = value.replace(matchMinus[1], '');
 
+    if (md||mc){ valueString=value }
+
+    let val = metPreConv(value, metricPrefix, "none");
     this.setState({
-        value:  metPreConv(value,metricPrefix,"none"),
+        value:  val,
+        showString: !(val == 0),
         valueString: valueString
       }, () => {
         this._onChangeCallback();
@@ -55,7 +65,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   }
 
-  _handleInputValueFocus(event){
+  _handleInputValueFocus(){
     this.setState({
       currentPrecision: undefined,
       showString: true,
@@ -64,7 +74,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     );
   }
 
-  _handleInputValueBlur(event){
+  _handleInputValueBlur(){
      this.setState({
         currentPrecision: this.props.precision,
         showString: false
