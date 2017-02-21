@@ -2,7 +2,7 @@
 class Import::ImportSdf
 
   attr_reader  :collection_id, :current_user_id, :processed_mol, :file_path,
-   :inchi_array, :raw_data , :rows
+   :inchi_array, :raw_data , :rows, :custom_data_keys, :mapped_keys
 
   SIZE_LIMIT = 40 #MB
 
@@ -14,7 +14,10 @@ class Import::ImportSdf
     @file_path = args[:file_path]
     @inchi_array = args[:inchikeys] || []
     @rows = args[:rows] || []
+    @custom_data_keys = {}
+    @mapped_keys =  args[:mapped_keys] || {}
     read_data
+
     @count = @raw_data.empty? && @rows.size || @raw_data.size
     if @count == 0
       @message[:error] << 'No Molecule found!'
@@ -90,6 +93,7 @@ class Import::ImportSdf
       end
     elsif !rows.empty?
       ActiveRecord::Base.transaction do
+        attribs = Sample.attribute_names & @mapped_keys.keys
         rows.each do |row|
           next unless row
           molfile = row["molfile"]
@@ -99,6 +103,11 @@ class Import::ImportSdf
             sample = Sample.new(created_by: current_user_id)
             sample.molfile = molfile
             sample.molecule = molecule
+
+            attribs.each do |attrib|
+              sample[attrib] = row[attrib] if row[attrib] && !row[attrib].empty?
+            end
+
             sample.collections << Collection.find(collection_id)
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
@@ -176,10 +185,20 @@ class Import::ImportSdf
       i = iks.index(mol[0])
       if i
         iks[i] = nil
-        mol_array[i]={name: mol[2],inchikey: mol[0],svg: mol[1],molfile: molfiles[i]}
+        mol_array[i]={name: mol[2],inchikey: mol[0],svg: mol[1],molfile: molfiles[i]}.merge( process_molfile_opt_data( molfiles[i]))
       end
     end
     mol_array
+  end
+
+  def process_molfile_opt_data molfile
+    mf = molfile.to_s
+    custom_data = mf.scan(/^\>[^\n]*\<(\S+)\>[\n]*([^>]*)/m)
+    Hash[custom_data.map do |key, value|
+      k = key.to_s.strip.upcase.gsub(/\s/, '_')
+      @custom_data_keys[k] = true
+      [k, value.strip]
+    end]
   end
 
 end

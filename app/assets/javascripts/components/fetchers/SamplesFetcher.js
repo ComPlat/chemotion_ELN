@@ -243,6 +243,7 @@ export default class SamplesFetcher {
       body: JSON.stringify({
         currentCollectionId: params.currentCollectionId,
         rows: params.rows,
+        mapped_keys: params.mapped_keys,
       })
     }).then((response) => {
       return response.json()
