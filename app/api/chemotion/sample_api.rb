@@ -82,7 +82,6 @@ module Chemotion
             return {
                sdf: true, message: sdf_import.message,
                data: sdf_import.processed_mol, status: sdf_import.status,
-               raw_data: sdf_import.raw_data
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
@@ -94,7 +93,7 @@ module Chemotion
       namespace :confirm_import do
         desc "Create Samples from an Array of inchikeys"
         params do
-          requires :inchikeys, type: Array, desc: "Selected Molecule inchikeys from the UI"
+          requires :rows, type: Array, desc: "Selected Molecule from the UI"
           requires :currentCollectionId, type: Integer
         end
 
@@ -104,10 +103,9 @@ module Chemotion
 
         post do
           sdf_import = Import::ImportSdf.new(
-            inchikeys: params[:inchikeys],
             collection_id: params[:currentCollectionId],
             current_user_id: current_user.id,
-            raw_data: params[:raw_data]
+            rows: params[:rows]
           )
           sdf_import.create_samples
           return {
@@ -181,10 +179,8 @@ module Chemotion
         end
 
         get do
-
           sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
-
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
         end
       end
