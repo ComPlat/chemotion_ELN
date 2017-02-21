@@ -355,6 +355,7 @@ class ElementStore {
         //raw_data: data.raw_data,
         custom_data_keys: data.custom_data_keys,
         mapped_keys: data.mapped_keys,
+        collection_id: data.collection_id,
       })
     } else {
       this.handleRefreshElements('sample');

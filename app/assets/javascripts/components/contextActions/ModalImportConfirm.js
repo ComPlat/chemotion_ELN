@@ -1,6 +1,5 @@
 import React from 'react'
 import {Button, ButtonToolbar, FormGroup,FormControl,Checkbox} from 'react-bootstrap'
-import UIStore from '../stores/UIStore'
 import {AgGridReact} from 'ag-grid-react'
 import SVG from 'react-inlinesvg'
 import ElementActions from '../actions/ElementActions'
@@ -119,9 +118,8 @@ export default class ModalImportConfirm extends React.Component {
 
 
   handleClick() {
-    const {onHide, action, custom_data_keys} = this.props
+    const {onHide, action, custom_data_keys,collection_id} = this.props
     let mapped_keys = this.props.mapped_keys
-    let ui_state = UIStore.getState();
 
     let {rows,defaultSelected} = this.state
 
@@ -153,7 +151,7 @@ export default class ModalImportConfirm extends React.Component {
     })
 
     let params = {
-      currentCollectionId: ui_state.currentCollection.id,
+      currentCollectionId: collection_id,
       rows: processRows,
       mapped_keys: filtered_mapped_keys,
     }

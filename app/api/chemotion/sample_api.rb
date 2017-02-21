@@ -90,7 +90,8 @@ module Chemotion
                sdf: true, message: sdf_import.message,
                data: sdf_import.processed_mol, status: sdf_import.status,
                custom_data_keys: sdf_import.custom_data_keys.keys,
-               mapped_keys: sdf_import.mapped_keys
+               mapped_keys: sdf_import.mapped_keys,
+               collection_id: sdf_import.collection_id
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
