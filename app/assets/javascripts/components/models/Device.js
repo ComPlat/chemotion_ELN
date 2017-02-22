@@ -15,6 +15,12 @@ export default class Device extends Element{
     }
     super(device)
   }
+  
+  checksum() {
+    return super.checksum(
+      ['user_id', 'id', 'is_new']
+    )
+  }
 
   static buildEmpty() {
     return new Device({

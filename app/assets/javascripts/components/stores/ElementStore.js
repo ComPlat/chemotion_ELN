@@ -184,7 +184,8 @@ class ElementStore {
   }
 
   handleSaveDevice(device) {
-    const deviceKey = this.findDeviceIndexById(device.id)
+    const {devices} = this.state.elements['devices']
+    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum)
     if (deviceKey === -1) {
       this.state.elements['devices'].devices.push(device)
     } else {
