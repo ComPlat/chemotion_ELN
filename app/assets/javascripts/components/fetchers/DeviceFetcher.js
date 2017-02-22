@@ -66,7 +66,7 @@ export default class DeviceFetcher {
     return BaseFetcher.withoutBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}/samples/${sample.id}/${_.toUpper(analysisType)}`,
       requestMethod: 'POST',
-      jsonTranformation: (json) => new DeviceAnalysis(json.device_analysis)
+      jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
   

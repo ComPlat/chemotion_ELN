@@ -110,7 +110,7 @@ const Experiment = ({analysis, experiment}) => {
         </Col>
         <Col sm={4}>
           <FormControl.Static>
-            {analysis.sampleId}
+            {`Sample ${analysis.sampleId}`}
           </FormControl.Static>
         </Col>
       </FormGroup>

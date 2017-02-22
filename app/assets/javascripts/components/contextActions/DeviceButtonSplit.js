@@ -29,7 +29,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
       >
         <Button 
           bsStyle="warning"
-          disabled={selectedDeviceId === -1}
+          disabled={selectedDeviceId === -1 || selectedDeviceId === null}
           onClick={() => handleOpenDevice()}
         >
           UI

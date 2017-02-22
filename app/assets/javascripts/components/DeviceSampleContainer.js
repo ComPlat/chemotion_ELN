@@ -76,15 +76,23 @@ const handleTypeClick = (type, sample, device) => {
         sample.analyses.length !== 0 &&
         sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
 
-      if(!hasAnalysisOfTypeNMR) {
-        console.log("creating analysis")
-        ElementActions.createDeviceAnalysis(device, sample, 'NMR')
+      const hasDeviceAnalysisOfTypeNMR =
+        device.devicesAnalyses.length !== 0 &&
+        device.devicesAnalyses.findIndex(
+          (a) => a.analysis_type === "NMR" && a.sampleId === sample.id
+        ) !== -1
 
+      if(!hasAnalysisOfTypeNMR) {
         let analysis = Analysis.buildEmpty()
         analysis.kind = "1H NMR"
         sample.addAnalysis(analysis)
         ElementActions.updateSample.defer(sample)
         ElementActions.saveDevice.defer(device)
+        ElementActions.fetchDeviceById.defer(device.id)
+      }
+
+      if(!hasDeviceAnalysisOfTypeNMR) {
+        ElementActions.createDeviceAnalysis.defer(device, sample, 'NMR')
         ElementActions.fetchDeviceById.defer(device.id)
       }
 

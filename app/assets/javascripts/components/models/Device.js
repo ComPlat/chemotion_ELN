@@ -3,15 +3,16 @@ import Sample from './Sample';
 import uuid from 'uuid';
 
 export default class Device extends Element{
-  constructor({id, title, code, types, user_id, samples}) {
+  constructor({id, title, code, types, user_id, samples, devices_analyses}) {
     const device = {
-      id,
-      title,
+    id,
+    title,
       code,
       types,
       user_id,
       type: 'device',
       samples: samples.map(sample => new Sample(sample)),
+      devicesAnalyses: devices_analyses
     }
     super(device)
   }
@@ -28,7 +29,8 @@ export default class Device extends Element{
       code: "",
       types: [],
       samples: [],
-      title: "New Device"
+      title: "New Device",
+      devicesAnalyses: []
     })
   }
 }
