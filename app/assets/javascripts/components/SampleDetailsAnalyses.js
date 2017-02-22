@@ -7,6 +7,7 @@ import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import UIActions from './actions/UIActions';
 import ElementActions from './actions/ElementActions';
+import BaseFetcher from './fetchers/BaseFetcher'
 
 export default class SampleDetailsAnalyses extends Component {
   constructor(props) {
@@ -63,6 +64,11 @@ export default class SampleDetailsAnalyses extends Component {
   handleRemove(analysis) {
     let {sample} = this.state;
     sample.removeAnalysis(analysis);
+    BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/code_logs/${analysis.id}`,
+      requestMethod: 'DELETE',
+      jsonTranformation: (json) => null
+    })
     this.props.parent.setState({sample: sample})
   }
 

@@ -55,6 +55,11 @@ RSpec.describe Sample, type: :model do
     it 'only soft deletes sample' do
       expect(Sample.with_deleted).to eq [sample]
     end
+
+    it 'also destroys corresponding CodeLog' do
+      expect(CodeLog.get_bar_codes).to_not include sample.bar_code
+      expect(CodeLog.get_qr_codes).to_not include sample.qr_code
+    end
   end
 
   describe 'for_ui_state scope' do

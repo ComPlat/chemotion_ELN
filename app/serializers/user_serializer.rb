@@ -3,7 +3,7 @@ class UserSerializer < ActiveModel::Serializer
             :reaction_name_prefix, :selected_device_id
 
   def selected_device_id
-    object.selected_device.id
+    object.selected_device.try(:id)
   end
 
   def samples_count
