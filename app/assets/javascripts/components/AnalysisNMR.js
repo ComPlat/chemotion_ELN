@@ -154,8 +154,8 @@ const Experiment = ({analysis, experiment}) => {
         </Col>
         <Col sm={4}>
           <Checkbox
-            checked={experiment.checkbox}
-            onChange={(e) => handlePropChange('checkbox', !experiment.checkbox)}
+            checked={experiment.priority}
+            onChange={(e) => handlePropChange('priority', !experiment.priority)}
           >
           </Checkbox>
         </Col>
@@ -191,8 +191,8 @@ const Experiment = ({analysis, experiment}) => {
         </Col>
         <Col sm={6}>
           <FormControl
-            value={experiment.numeric}
-            onChange={(e) => handlePropChange('numeric', e.target.value)}
+            value={experiment.sweepWidth}
+            onChange={(e) => handlePropChange('sweepWidth', e.target.value)}
           />
         </Col>
         <Col sm={6}>

@@ -24,10 +24,10 @@ ActiveRecord::Schema.define(version: 20170209094545) do
     t.integer  "devices_analysis_id", null: false
     t.string   "solvent"
     t.string   "experiment"
-    t.boolean  "checkbox"
+    t.boolean  "priority"
     t.boolean  "on_day"
     t.integer  "number_of_scans"
-    t.integer  "numeric"
+    t.integer  "sweep_width"
     t.string   "time"
     t.datetime "created_at",          null: false
     t.datetime "updated_at",          null: false

@@ -181,10 +181,10 @@ module Chemotion
               status: experiment.status,
               solvent: experiment.solvent,
               experiment: experiment.experiment,
-              checkbox: experiment.checkbox,
+              priority: experiment.priority,
               on_day: experiment.on_day,
               number_of_scans: experiment.number_of_scans, 
-              numeric: experiment.numeric,
+              sweep_width: experiment.sweep_width,
               time: experiment.time,
             })
             analysis.analyses_experiments << new_experiment

@@ -14,10 +14,10 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
       t.integer :devices_analysis_id, null: false
       t.string :solvent
       t.string :experiment
-      t.boolean :checkbox
+      t.boolean :priority
       t.boolean :on_day
       t.integer :number_of_scans
-      t.integer :numeric
+      t.integer :sweep_width
       t.string :time
 
       t.timestamps null: false

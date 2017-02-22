@@ -2,23 +2,23 @@ import Element from './Element'
 
 export default class AnalysesExperiment extends Element{
   constructor({
-    id, devices_analysis_id, holder_id, status, solvent, experiment, checkbox, on_day,
-    number_of_scans, numeric, time
+    id, devices_analysis_id, holder_id, status, solvent, experiment, priority, on_day,
+    number_of_scans, sweep_width, time
   }, sampleId) {
-    const device = {
+    const analysis = {
       id: id,
       deviceAnalysisId: devices_analysis_id,
       holderId: holder_id,
       status: status,
       solvent: solvent,
       experiment: experiment,
-      checkbox: checkbox,
+      priority: priority,
       onDay: on_day,
       numberOfScans: number_of_scans,
-      numeric: numeric,
+      sweepWidth: sweep_width,
       time: time,
     }
-    super(device)
+    super(analysis)
   }
 
   static buildEmpty(deviceAnalysisId) {
@@ -28,10 +28,10 @@ export default class AnalysesExperiment extends Element{
       status: "",
       solvent: "",
       experiment: "",
-      checkbox: false,
+      priority: false,
       on_day: true,
       number_of_scans: 0,
-      numeric: 0,
+      sweep_width: 0,
       time: "",
     })
   }
@@ -43,10 +43,10 @@ export default class AnalysesExperiment extends Element{
       status: this.status,
       solvent: this.solvent,
       experiment: this.experiment,
-      checkbox: this.checkbox,
+      priority: this.priority,
       on_day: this.onDay,
       number_of_scans: parseInt(this.numberOfScans, 10),
-      numeric: parseInt(this.numeric, 10),
+      sweep_width: parseInt(this.sweepWidth, 10),
       time: this.time,
     })
     return serialized
