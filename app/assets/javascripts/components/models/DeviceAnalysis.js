@@ -4,11 +4,12 @@ import _ from 'lodash'
 
 export default class DeviceAnalysis extends Element{
   constructor({
-     id, sample_id, device_id, analysis_type, title, experiments
+     id, sample_id, device_id, analysis_type, title, experiments, analysis_barcode
   }) {
     const device = {
       id: id,
       sampleId: sample_id,
+      analysisBarcode: analysis_barcode,
       deviceId: device_id,
       experiments: experiments.map((e) => new AnalysesExperiment(e, sample_id)),
       type: 'deviceAnalysis',
@@ -22,20 +23,11 @@ export default class DeviceAnalysis extends Element{
   checksum() {
     return super.checksum(['activeAccordionExperiment'])
   }
-
-  static buildEmpty(sample, analysisType) {
-    return new DeviceAnalysis({
-      type: 'deviceAnalysis',
-      sample_id: sample.id,
-      analysis_type: analysisType,
-      title: "",
-      experiments: []
-    })
-  }
-  
+ 
   serialize() {
     const serialized = super.serialize({
       sample_id: this.sampleId,
+      analysis_barcode: this.analysisBarcode,
       experiments: this.experiments.map((e) => e.serialize()),
       analysis_type: this.analysisType,
       title: this.title,
@@ -46,20 +38,28 @@ export default class DeviceAnalysis extends Element{
   buildConfig() {
     return {
       sample_id: this.sampleId,
-      // FIXME multiple experiments
-      data: this.buildExperimentsConfig()[0]
+      data: this.buildExperimentsConfig()
     }
   }
 
   buildExperimentsConfig() {
-    return this.experiments.map((e) => ({
-      'SOLVENT': e.solvent,
-      'EXPERIMENT': e.experiment,
-      'NAME': `Sample ${this.sampleId}`,
-      'NUMERIC': e.numeric,
-      'NUMBER_OF_SCANS': e.numberOfScans,
-      // FIXME key of night-analysis?
-      'DAY': e.onDay
-    }))
+    return this.experiments.map((e) => {
+      const configMap = {
+        'SOLVENT': e.solvent,
+        'EXPERIMENT': e.experiment,
+        'NAME': `Sample ${this.sampleId}`,
+        'BARCODE': this.analysisBarcode,
+        // FIXME PARAMETERS What is to do here?
+        // 'NUMERIC': e.numeric,
+        // 'NUMBER_OF_SCANS': e.numberOfScans,
+      }
+      const conditionedNight = !e.onDay ? {'NIGHT': null} : {}
+      const conditionedPriority = e.checkbox ? {'PRIORITY': null} : {}
+      return {
+        ...configMap,
+        ...conditionedNight,
+        ...conditionedPriority
+      }
+    })
   }
 }

@@ -144,7 +144,7 @@ const Experiment = ({analysis, experiment}) => {
       </FormGroup>
       <FormGroup>
         <Col sm={4}>
-          <ControlLabel>Checkbox</ControlLabel>
+          <ControlLabel>Priority</ControlLabel>
         </Col>
         <Col sm={4}>
           <ControlLabel>Daytime</ControlLabel>
@@ -184,7 +184,7 @@ const Experiment = ({analysis, experiment}) => {
       </FormGroup>
       <FormGroup>
         <Col sm={6}>
-          <ControlLabel>Numeric</ControlLabel>
+          <ControlLabel>Sweep Width</ControlLabel>
         </Col>
         <Col sm={6}>
           <ControlLabel>Time</ControlLabel>

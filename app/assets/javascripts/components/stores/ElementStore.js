@@ -175,7 +175,7 @@ class ElementStore {
   
   handleFetchDeviceAnalysisByIdAndType(analysis) {
     this.state.currentElement = analysis
-    console.log(analysis)
+    // console.log(analysis)
   }
 
   findDeviceIndexById(deviceId) {

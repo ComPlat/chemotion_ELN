@@ -1,5 +1,5 @@
 class DevicesAnalysisSerializer < ActiveModel::Serializer
-  attributes :id, :sample_id, :device_id, :analysis_type, :title, :experiments
+  attributes :id, :sample_id, :device_id, :analysis_type, :title, :experiments, :analysis_barcode
   
   def title
     device_title = Device.find(object.device_id).title
@@ -11,6 +11,14 @@ class DevicesAnalysisSerializer < ActiveModel::Serializer
       sample_title = object.sample_id
     end
     "#{device_title}-#{sample_title}"
+  end
+
+  def analysis_barcode
+    sample = Sample.find(object.sample_id)
+    case object.analysis_type
+      when "NMR" then sample.analyses.select{|a| a['kind'] == "1H NMR"}.first['bar_code_bruker']
+      else nil
+    end
   end
 
   def experiments
