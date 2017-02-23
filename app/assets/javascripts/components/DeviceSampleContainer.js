@@ -88,8 +88,8 @@ const handleTypeClick = (type, sample, device) => {
         SamplesFetcher.update(sample)
       }
       
-      ElementActions.saveDevice.defer(device)
-      ElementActions.fetchDeviceById.defer(device.id)
+      device.updateChecksum()
+      ElementActions.saveDevice(device)
      
       if (deviceAnalysis) {
         Aviator.navigate(isSync

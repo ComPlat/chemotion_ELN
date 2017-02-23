@@ -108,10 +108,12 @@ export const solvents = [{
 
 export const experiments = [{
     label: 'Proton, 1H experiment 16 scans',
-    value: 'Proton'
+    value: 'Proton',
+    time: 42
   }, {
     label: 'Proton128, 1H experiment 128 scans',
-    value: 'Proton128'
+    value: 'Proton128',
+    time: 22
   }, {
     label: 'COSYGPSW, Sw opt. COSY with gradients (magn. mode)',
     value: 'COSYGPSW'

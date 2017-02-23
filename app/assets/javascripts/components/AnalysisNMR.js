@@ -58,7 +58,9 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
           disabled={!analysis.isEdited}
           onClick={() => {
             ElementActions.saveDeviceAnalysis(analysis)
-            closeDetails(analysis, true)
+            if (analysis.isNew) {
+              closeDetails(analysis, true)
+            }
           }}
         >
           Save
@@ -140,7 +142,10 @@ const Experiment = ({analysis, experiment}) => {
             name='experiment'
             multi={false}
             options={experiments}
-            onChange={(e) => handleSelectChange('experiment', e)}
+            onChange={(e) => {
+              handlePropChange('time', e.time)
+              handleSelectChange('experiment', e)
+            }}
             value={experiment.experiment}
           />
         </Col>
@@ -199,10 +204,9 @@ const Experiment = ({analysis, experiment}) => {
           />
         </Col>
         <Col sm={6}>
-          <FormControl
-            value={experiment.time}
-            onChange={(e) => handlePropChange('time', e.target.value)}
-          />
+          <FormControl.Static>
+            {experiment.time && experiment.time !== "" ? experiment.time : "-"}
+          </FormControl.Static>
         </Col>
       </FormGroup>
     </Form>
