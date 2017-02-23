@@ -169,12 +169,12 @@ export default class Search extends React.Component {
 
     let submitAddons =
       <Grid><Row>
-        <Col sm={5} md={3}>
+        <Col sm={6} md={4}>
           <Form inline>
             <Radio ref="searchSimilarRadio" value="similar"
                    checked={this.state.searchType == 'similar' ? true : false}
                    onChange={(e) => this.handleSearchTypeChange(e)}>
-              Similar Search
+              &nbsp; Similarity Search &nbsp;
             </Radio>
             &nbsp;&nbsp;
             <FormControl style={{width: '40%'}} type="text"
