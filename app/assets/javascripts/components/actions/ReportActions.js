@@ -1,5 +1,6 @@
 import alt from '../alt';
 import ReportsFetcher from '../fetchers/ReportsFetcher';
+import _ from 'lodash';
 
 class ReportActions {
 
@@ -41,8 +42,16 @@ class ReportActions {
     };
   }
 
-  updateCheckedTags(tags) {
-    return tags;
+  updateCheckedTags(oldTags, newTags) {
+    const diffTags = {  sample: _.difference(newTags.sampleIds, oldTags.sampleIds),
+                        reaction: _.difference(newTags.reactionIds, oldTags.reactionIds) };
+    return (dispatch) => { ReportsFetcher.fetchContent(diffTags)
+      .then((result) => {
+        dispatch({newTags: newTags, newObjs: result});
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
   move({sourceTag, targetTag}) {
