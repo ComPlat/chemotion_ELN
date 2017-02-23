@@ -185,7 +185,7 @@ class Import::ImportSdf
       i = iks.index(mol[0])
       if i
         iks[i] = nil
-        mol_array[i]={name: mol[2],inchikey: mol[0],svg: mol[1],molfile: molfiles[i]}.merge( process_molfile_opt_data( molfiles[i]))
+        mol_array[i]={name: mol[2],inchikey: mol[0],svg: "molecules/"+mol[1].to_s,molfile: molfiles[i]}.merge( process_molfile_opt_data( molfiles[i]))
       end
     end
     mol_array

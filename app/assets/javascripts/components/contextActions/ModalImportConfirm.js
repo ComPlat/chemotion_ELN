@@ -10,7 +10,7 @@ const MyCell = ({col,data,rowIndex, ...props})=>{
 
 }
 const SvgCellRenderer = ({ value, ...props})=>{
-  return <SVG src={"/images/molecules/"+value} className="molecule-fixed-data" />
+  return <SVG src={"/images/"+value} className="molecule-fixed-data" />
 }
 
 SvgCellRenderer.propTypes = {
