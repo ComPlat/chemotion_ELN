@@ -1,4 +1,4 @@
-class Report::SdfExport
+class Reporter::SdfExport
   def initialize
     @@sample_list = Array.new
   end
