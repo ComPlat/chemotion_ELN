@@ -6,4 +6,10 @@ class DeviceSerializer < ActiveModel::Serializer
       SampleSerializer.new(Sample.find(devices_sample.sample_id)).serializable_hash
     }
   end
+
+  def devices_analyses
+    object.devices_analyses.map{|analysis|
+      DevicesAnalysisSerializer.new(DevicesAnalysis.find(analysis.id)).serializable_hash
+    }
+  end
 end

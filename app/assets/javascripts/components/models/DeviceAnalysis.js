@@ -6,7 +6,7 @@ export default class DeviceAnalysis extends Element{
   constructor({
      id, sample_id, device_id, analysis_type, title, experiments, analysis_barcode
   }) {
-    const device = {
+    const analysis = {
       id: id,
       sampleId: sample_id,
       analysisBarcode: analysis_barcode,
@@ -17,7 +17,7 @@ export default class DeviceAnalysis extends Element{
       title,
       activeAccordionExperiment: 0,
     }
-    super(device)
+    super(analysis)
   }
 
   static buildEmpty(deviceId, sampleId, analysisType) {
