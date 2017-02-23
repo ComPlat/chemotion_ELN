@@ -62,6 +62,17 @@ module Chemotion
             error!("404 Device with supplied id not found", 404)
           else
             device.devices_samples.destroy_all
+            device.devices_analyses.map{|d_a|
+              d_a.analyses_experiments.destroy_all
+              d_a.destroy
+            }
+            # delete as selected_device
+            user = User.find_by(id: device.user_id)
+            if !user.nil? && user.selected_device == device
+              user.selected_device = nil
+              user.save!
+            end
+
             device.destroy
           end
         end
@@ -90,8 +101,12 @@ module Chemotion
             }
             to_remove_sample_ids = old_sample_ids - new_sample_ids
             to_remove_sample_ids.map{|sample_id| 
+              #samples
               device.devices_samples.find_by(sample_id: sample_id).destroy
+              #analyses
+              device.devices_analyses.where(sample_id: sample_id).destroy_all
             }
+
             device.update(attributes.except!(:samples))
             # FIXME how to prevent this?
             Device.find(params[:id])

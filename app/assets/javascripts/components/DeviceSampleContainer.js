@@ -4,6 +4,7 @@ import DragDropItemTypes from './DragDropItemTypes'
 import ElementActions from './actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
 import Analysis from './models/Analysis'
+import UIStore from './stores/UIStore'
 
 const target = {
   drop(props, monitor){
@@ -67,24 +68,42 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
 export default DropTarget([DragDropItemTypes.SAMPLE], target, collect)(DeviceSampleContainer)
 
 const handleTypeClick = (type, sample, device) => { 
+  const {currentCollection, isSync} = UIStore.getState();
+
   switch(type) {
     case "NMR":
       const hasAnalysisOfTypeNMR =
         sample.analyses.length !== 0 &&
         sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
 
+      const deviceAnalysis = device.devicesAnalyses.find(
+          (a) => a.analysis_type === "NMR" && a.sampleId === sample.id
+      )
+
       if(!hasAnalysisOfTypeNMR) {
-        console.log("creating analysis")
         let analysis = Analysis.buildEmpty()
-        // TODO right kind?
         analysis.kind = "1H NMR"
         sample.addAnalysis(analysis)
         ElementActions.updateSample(sample)
-        ElementActions.saveDevice.defer(device)
-        ElementActions.fetchDeviceById.defer(device.id)
       }
-      alert(type)
-      break;
+      
+      ElementActions.saveDevice(device)
+      ElementActions.fetchDeviceById.defer(device.id)
+     
+      // FIXME wait until saved!
+      if (deviceAnalysis) {
+        Aviator.navigate(isSync
+          ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
+          : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
+        )
+      } else {
+        Aviator.navigate(isSync
+          ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+          : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+        )
+      }
+
+      break
   }
 }
 

@@ -25,9 +25,9 @@ export default class Element {
     return this._checksum != this.checksum();
   }
 
-  checksum() {
+  checksum(fieldsToOmit = []) {
     return sha256(JSON.stringify(_.omit(_.omit(this,
-            ['_checksum', 'belongTo', 'matGroup']), _.isEmpty)));
+            ['_checksum', 'belongTo', 'matGroup', ...fieldsToOmit]), _.isEmpty)));
   }
 
   get isNew() {

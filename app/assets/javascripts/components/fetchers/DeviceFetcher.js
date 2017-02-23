@@ -1,5 +1,7 @@
 import BaseFetcher from './BaseFetcher'
-import Device from '../models/Device';
+import Device from '../models/Device'
+import DeviceAnalysis from '../models/DeviceAnalysis'
+import _ from 'lodash'
 
 export default class DeviceFetcher {
   static fetchAll() {
@@ -49,6 +51,42 @@ export default class DeviceFetcher {
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'DELETE',
       jsonTranformation: (json) => {new Device(json.device)}
+    })
+  }
+  
+  static fetchAnalysisById(analysisId) { 
+    return BaseFetcher.withoutBodyData({
+      apiEndpoint: `/api/v1/devices_analysis/${analysisId}`,
+      requestMethod: 'GET',
+      jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
+    })
+  }
+  
+  static createAnalysis(analysis) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/devices_analysis`,
+      requestMethod: 'POST',
+      bodyData: analysis.serialize(),
+      jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
+    })
+  }
+  
+  static updateAnalysis(analysis) {
+    const {deviceId, sampleId, analysisType, experiments} = analysis
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/devices_analysis/${analysis.id}`,
+      requestMethod: 'PUT',
+      bodyData: analysis.serialize(),
+      jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
+    })
+  }
+
+  static generateAnalysisConfig(analysis) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/icon_nmr/config`,
+      requestMethod: 'POST',
+      bodyData: analysis.buildConfig(),
+      jsonTranformation: (json) => json
     })
   }
 }

@@ -6,6 +6,7 @@ import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
+import DeviceAnalysisDetails from './DeviceAnalysisDetails'
 import { SameEleTypId, UrlSilentNavigation } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -176,6 +177,10 @@ export default class ElementDetails extends Component {
                   toggleFullScreen={this.toggleFullScreen}/>;
       case 'device':
         return <DeviceDetails device={el}
+                  closeDetails={this.closeDetails}
+                  toggleFullScreen={this.toggleFullScreen}/>;
+      case 'deviceAnalysis':
+        return <DeviceAnalysisDetails analysis={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
     }

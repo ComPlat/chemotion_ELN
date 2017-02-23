@@ -17,7 +17,8 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
   const handleOpenDevice = () => {
     UIActions.closeDeviceManagement()
     const {currentCollection} = UIStore.getState()
-    Aviator.navigate(`/collection/${currentCollection.id}/device/${selectedDeviceId}`)
+    // ending slash is needed!
+    Aviator.navigate(`/collection/${currentCollection.id}/device/${selectedDeviceId}/`)
   }
 
   return (
@@ -28,7 +29,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
       >
         <Button 
           bsStyle="warning"
-          disabled={selectedDeviceId === -1}
+          disabled={selectedDeviceId === -1 || selectedDeviceId === null}
           onClick={() => handleOpenDevice()}
         >
           UI

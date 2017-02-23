@@ -116,6 +116,7 @@ const Device = ({device}) => {
   }
 
   const handleSave = () => {
+    device.updateChecksum()
     ElementActions.saveDevice(device)
   }
 

@@ -1,6 +1,7 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
+import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
 import UserStore from './UserStore';
 import ClipboardStore from './ClipboardStore';
@@ -9,6 +10,9 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import Device from '../models/Device'
+import Analysis from '../models/Analysis'
+import AnalysesExperiment from '../models/AnalysesExperiment'
+import DeviceAnalysis from '../models/DeviceAnalysis'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -69,7 +73,7 @@ class ElementStore {
     }
     
     this.bindListeners({
-
+      //
       handleFetchAllDevices: ElementActions.fetchAllDevices,
       handleFetchDeviceById: ElementActions.fetchDeviceById,
       handleCreateDevice: ElementActions.createDevice,
@@ -83,6 +87,13 @@ class ElementStore {
       handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
+      handleFetchDeviceAnalysisById: ElementActions.fetchDeviceAnalysisById,
+      handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
+      handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
+      handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
+      handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
+      handleCreateAnalysisExperiment: ElementActions.createAnalysisExperiment,
+      handleChangeActiveAccordionExperiment: ElementActions.changeActiveAccordionExperiment,
 
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -163,6 +174,11 @@ class ElementStore {
   handleFetchDeviceById(device) {
     this.state.currentElement = device
   }
+  
+  handleFetchDeviceAnalysisById(analysis) {
+    this.state.currentElement = analysis
+    // console.log(analysis)
+  }
 
   findDeviceIndexById(deviceId) {
     const {devices} = this.state.elements['devices']
@@ -170,7 +186,8 @@ class ElementStore {
   }
 
   handleSaveDevice(device) {
-    const deviceKey = this.findDeviceIndexById(device.id)
+    const {devices} = this.state.elements['devices']
+    const deviceKey = devices.findIndex((e) => e._checksum === device._checksum)
     if (deviceKey === -1) {
       this.state.elements['devices'].devices.push(device)
     } else {
@@ -186,6 +203,19 @@ class ElementStore {
     }
     const deviceKey = this.findDeviceIndexById(device.id)
     this.state.elements['devices'].devices[deviceKey] = device
+  }
+
+  handleCreateDevice() {
+    const {devices} = this.state.elements['devices']
+    const newDevice = Device.buildEmpty()
+    const newKey = devices.length
+    this.state.elements['devices'].activeAccordionDevice = newKey
+    this.state.elements['devices'].devices.push(newDevice)
+  }
+  
+  handleDeleteDevice(device) {
+    const {devices, activeAccordionDevice} = this.state.elements['devices']
+    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
   handleAddSampleToDevice({sample, device}) {
@@ -234,19 +264,45 @@ class ElementStore {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
-  handleCreateDevice() {
-    const {devices} = this.state.elements['devices']
-    const newDevice = Device.buildEmpty()
-    const newKey = devices.length
-    this.state.elements['devices'].activeAccordionDevice = newKey
-    this.state.elements['devices'].devices.push(newDevice)
+  handleCreateDeviceAnalysis({deviceId, sampleId, analysisType}) {
+    this.state.currentElement = DeviceAnalysis.buildEmpty(deviceId, sampleId, analysisType)
   }
 
-  handleDeleteDevice(device) {
-    const {devices, activeAccordionDevice} = this.state.elements['devices']
-    this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
+  handleSaveDeviceAnalysis(analysis) {
+    const {currentCollection, isSync} = UIStore.getState();
+    this.state.currentElement = analysis
+
+    Aviator.navigate( isSync
+      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
+      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
+    )
+  }
+  
+  handleCreateAnalysisExperiment(analysis) {
+    const experiment = AnalysesExperiment.buildEmpty(analysis.id)
+    analysis.experiments.push(experiment)
+    analysis.activeAccordionExperiment = analysis.experiments.length - 1
+    this.state.currentElement = analysis
   }
 
+  handleChangeAnalysisExperimentProp({analysis, experiment, prop, value}) {
+    const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id)
+    analysis.experiments[experimentKey][prop] = value
+    this.state.currentElement = analysis
+  }
+
+  handleDeleteAnalysisExperiment({analysis, experiment}) {
+    analysis.experiments = analysis.experiments.filter((a) => a.id !== experiment.id)
+    this.state.currentElement = analysis
+  }
+  
+  handleChangeActiveAccordionExperiment({analysis, key}) {
+    analysis.activeAccordionExperiment = key
+    this.state.currentElement = analysis
+  }
+
+
+  // SEARCH
 
   handleFetchBasedOnSearchSelection(result) {
     Object.keys(result).forEach((key) => {

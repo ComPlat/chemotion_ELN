@@ -111,20 +111,6 @@ const routes = {
       '/:reportID': 'show'
     },
     
-    '/device': {
-      target: {
-        show: function(e) {
-          const {deviceId} = e.params;
-          ElementActions.fetchDeviceById(deviceId)
-        },
-        showDeviceManagement: function(e) {
-          UIActions.showDeviceManagement()
-        }
-      },
-      '/management': 'showDeviceManagement',
-      '/:deviceId': 'show',
-    },
-
     '/sample': {
       target: {
         showOrNew: function(e) {
@@ -200,7 +186,34 @@ const routes = {
         }
       },
       '/:screenID': 'showOrNew'
-    }
+    },
+
+    '/devicesAnalysis': {
+      target: {
+        show: function(e) {
+          const {analysisId, deviceId, sampleId, analysisType} = e.params;
+          if (analysisId === 'new') {
+            ElementActions.createDeviceAnalysis(deviceId, sampleId, analysisType)
+          } else {
+            ElementActions.fetchDeviceAnalysisById(analysisId)
+          }
+        },
+      },
+      '/:analysisId/:deviceId/:sampleId/:analysisType': 'show',
+    },
+    '/device': {
+      target: {
+        show: function(e) {
+          const {deviceId} = e.params;
+          ElementActions.fetchDeviceById(deviceId)
+        },
+        showDeviceManagement: function(e) {
+          UIActions.showDeviceManagement()
+        },
+      },
+      '/management': 'showDeviceManagement',
+      '/:deviceId': 'show',
+    },
 }
 
 export default function() {

@@ -5,6 +5,7 @@ class Sample < ActiveRecord::Base
   include Collectable
   include ElementCodes
   include AnalysisCodes
+  has_many :devices_analyses
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,

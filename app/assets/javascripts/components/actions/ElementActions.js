@@ -47,7 +47,7 @@ class ElementActions {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
   }
 
-  createDevice() {
+  createDevice () {
     return null
   }
 
@@ -97,7 +97,44 @@ class ElementActions {
   changeDeviceProp(device, prop, value) {
     return (dispatch) => dispatch({device, prop, value})
   }
-
+  
+  fetchDeviceAnalysisById(analysisId) { 
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAnalysisById(analysisId))
+  }
+ 
+  saveDeviceAnalysis(analysis) {
+    if (analysis.isNew) {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
+    } else {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
+    }
+  }
+  
+  createDeviceAnalysis(deviceId, sampleId, analysisType) {
+    return (dispatch) => dispatch({deviceId, sampleId, analysisType})
+  }
+  
+  generateDeviceAnalysisConfig(analysis) {
+    return (dispatch) =>
+      handleFetch(dispatch, () => DeviceFetcher.generateAnalysisConfig(analysis)) 
+  }
+  
+  createAnalysisExperiment(analysis) {
+    return (dispatch) => dispatch(analysis)
+  }
+  
+  changeAnalysisExperimentProp(analysis, experiment, prop, value) {
+    return (dispatch) => dispatch({analysis, experiment, prop, value})
+  }
+  
+  deleteAnalysisExperiment(analysis, experiment) {
+    return (dispatch) => dispatch({analysis, experiment})
+  }
+  
+  changeActiveAccordionExperiment(analysis, key) {
+    return (dispatch) => dispatch({analysis, key})
+  }
+ 
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
