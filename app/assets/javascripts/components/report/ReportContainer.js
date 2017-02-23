@@ -174,7 +174,7 @@ export default class ReportContainer extends Component {
 
   fileNameRule() {
     return (
-      <Tooltip>
+      <Tooltip id="file-name-rule" >
         <p>Max 40 characters.</p>
         <p>allowed: a to z, A to Z, 0 to 9, -, _</p>
       </Tooltip>
