@@ -190,16 +190,17 @@ const routes = {
 
     '/devicesAnalysis': {
       target: {
+        create: function(e) {
+          const {deviceId, sampleId, analysisType} = e.params;
+          ElementActions.createDeviceAnalysis(deviceId, sampleId, analysisType)
+        },
         show: function(e) {
-          const {analysisId, deviceId, sampleId, analysisType} = e.params;
-          if (analysisId === 'new') {
-            ElementActions.createDeviceAnalysis(deviceId, sampleId, analysisType)
-          } else {
-            ElementActions.fetchDeviceAnalysisById(analysisId)
-          }
+          const {analysisId} = e.params;
+          ElementActions.fetchDeviceAnalysisById(analysisId)
         },
       },
-      '/:analysisId/:deviceId/:sampleId/:analysisType': 'show',
+      '/new/:deviceId/:sampleId/:analysisType': 'create',
+      '/:analysisId': 'show',
     },
     '/device': {
       target: {

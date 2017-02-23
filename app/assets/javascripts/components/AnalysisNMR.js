@@ -56,7 +56,10 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
         <Button
           bsStyle="warning"
           disabled={!analysis.isEdited}
-          onClick={() => ElementActions.saveDeviceAnalysis(analysis)}
+          onClick={() => {
+            ElementActions.saveDeviceAnalysis(analysis)
+            closeDetails(analysis, true)
+          }}
         >
           Save
         </Button>

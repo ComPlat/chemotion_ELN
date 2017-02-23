@@ -15,8 +15,8 @@ const UrlSilentNavigation = (element) => {
     switch (element.type) {
       case 'deviceAnalysis':
         Aviator.navigate(isSync
-          ? `/scollection/${currentCollection.id}/devicesAnalyses/${element.id}/`
-          : `/collection/${currentCollection.id}/devicesAnalyses/${element.id}/`,
+          ? `/scollection/${currentCollection.id}/devicesAnalysis/${element.id}/`
+          : `/collection/${currentCollection.id}/devicesAnalysis/${element.id}/`,
           { silent: true }
         )
         break
