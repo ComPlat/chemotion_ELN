@@ -49,9 +49,7 @@ export default class DeviceAnalysis extends Element{
         'EXPERIMENT': e.experiment,
         'NAME': `Sample ${this.sampleId}`,
         'BARCODE': this.analysisBarcode,
-        // FIXME PARAMETERS What is to do here?
-        // 'NUMERIC': e.numeric,
-        // 'NUMBER_OF_SCANS': e.numberOfScans,
+        'PARAMETERS': `ns, ${e.numberOfScans}, sw, ${e.sweepWidth}`
       }
       const conditionedNight = !e.onDay ? {'NIGHT': null} : {}
       const conditionedPriority = e.checkbox ? {'PRIORITY': null} : {}
