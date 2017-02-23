@@ -1,6 +1,7 @@
 import alt from '../alt';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
+import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
 import UserStore from './UserStore';
 import ClipboardStore from './ClipboardStore';
@@ -11,6 +12,7 @@ import Screen from '../models/Screen';
 import Device from '../models/Device'
 import Analysis from '../models/Analysis'
 import AnalysesExperiment from '../models/AnalysesExperiment'
+import DeviceAnalysis from '../models/DeviceAnalysis'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -71,10 +73,9 @@ class ElementStore {
     }
     
     this.bindListeners({
-
+      //
       handleFetchAllDevices: ElementActions.fetchAllDevices,
       handleFetchDeviceById: ElementActions.fetchDeviceById,
-      handleFetchDeviceAnalysisByIdAndType: ElementActions.fetchDeviceAnalysisByIdAndType,
       handleCreateDevice: ElementActions.createDevice,
       handleSaveDevice: ElementActions.saveDevice,
       handleDeleteDevice: ElementActions.deleteDevice,
@@ -86,11 +87,12 @@ class ElementStore {
       handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
+      handleFetchDeviceAnalysisById: ElementActions.fetchDeviceAnalysisById,
+      handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
+      handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
       handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
       handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
       handleCreateAnalysisExperiment: ElementActions.createAnalysisExperiment,
-      handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
-      handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
       handleChangeActiveAccordionExperiment: ElementActions.changeActiveAccordionExperiment,
 
       handleFetchBasedOnSearchSelection:
@@ -173,7 +175,7 @@ class ElementStore {
     this.state.currentElement = device
   }
   
-  handleFetchDeviceAnalysisByIdAndType(analysis) {
+  handleFetchDeviceAnalysisById(analysis) {
     this.state.currentElement = analysis
     // console.log(analysis)
   }
@@ -262,12 +264,18 @@ class ElementStore {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
-  handleCreateDeviceAnalysis(analysis) {
-    // do nothing
+  handleCreateDeviceAnalysis({deviceId, sampleId, analysisType}) {
+    this.state.currentElement = DeviceAnalysis.buildEmpty(deviceId, sampleId, analysisType)
   }
 
   handleSaveDeviceAnalysis(analysis) {
+    const {currentCollection, isSync} = UIStore.getState();
     this.state.currentElement = analysis
+
+    Aviator.navigate( isSync
+      ? `/scollection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
+      : `/collection/${currentCollection.id}/devicesAnalysis/${analysis.id}`
+    )
   }
   
   handleCreateAnalysisExperiment(analysis) {

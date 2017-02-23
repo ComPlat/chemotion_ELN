@@ -47,14 +47,7 @@ class ElementActions {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
   }
 
-  fetchDeviceAnalysisByIdAndType(deviceId, sampleId, analysisType) { 
-    return (dispatch) => handleFetch(
-      dispatch,
-      () => DeviceFetcher.fetchAnalysisByIdAndType(deviceId, sampleId, analysisType)
-    )
-  }
-
-  createDevice() {
+  createDevice () {
     return null
   }
 
@@ -104,17 +97,26 @@ class ElementActions {
   changeDeviceProp(device, prop, value) {
     return (dispatch) => dispatch({device, prop, value})
   }
-
-  createDeviceAnalysis(device, sample, analysisType) {
-    return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.createAnalysis(device, sample, analysisType))
+  
+  fetchDeviceAnalysisById(analysisId) { 
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAnalysisById(analysisId))
+  }
+ 
+  saveDeviceAnalysis(analysis) {
+    if (analysis.isNew) {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
+    } else {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
+    }
   }
   
-  saveDeviceAnalysis(analysis) {
-    return (dispatch) => handleFetch(
-      dispatch,
-      () => DeviceFetcher.updateAnalysis(analysis)
-    )
+  createDeviceAnalysis(deviceId, sampleId, analysisType) {
+    return (dispatch) => dispatch({deviceId, sampleId, analysisType})
+  }
+  
+  generateDeviceAnalysisConfig(analysis) {
+    return (dispatch) =>
+      handleFetch(dispatch, () => DeviceFetcher.generateAnalysisConfig(analysis)) 
   }
   
   createAnalysisExperiment(analysis) {
@@ -132,12 +134,7 @@ class ElementActions {
   changeActiveAccordionExperiment(analysis, key) {
     return (dispatch) => dispatch({analysis, key})
   }
-
-  generateDeviceAnalysisConfig(analysis) {
-    return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateAnalysisConfig(analysis)) 
-  }
-  
+ 
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

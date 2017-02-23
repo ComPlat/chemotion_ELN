@@ -54,18 +54,19 @@ export default class DeviceFetcher {
     })
   }
   
-  static fetchAnalysisByIdAndType(deviceId, sampleId, analysisType) { 
+  static fetchAnalysisById(analysisId) { 
     return BaseFetcher.withoutBodyData({
-      apiEndpoint: `/api/v1/devices/${deviceId}/samples/${sampleId}/${_.toUpper(analysisType)}`,
+      apiEndpoint: `/api/v1/devices_analysis/${analysisId}`,
       requestMethod: 'GET',
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
   
-  static createAnalysis(device, sample, analysisType) {
-    return BaseFetcher.withoutBodyData({
-      apiEndpoint: `/api/v1/devices/${device.id}/samples/${sample.id}/${_.toUpper(analysisType)}`,
+  static createAnalysis(analysis) {
+    return BaseFetcher.withBodyData({
+      apiEndpoint: `/api/v1/devices_analysis`,
       requestMethod: 'POST',
+      bodyData: analysis.serialize(),
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)
     })
   }
@@ -73,7 +74,7 @@ export default class DeviceFetcher {
   static updateAnalysis(analysis) {
     const {deviceId, sampleId, analysisType, experiments} = analysis
     return BaseFetcher.withBodyData({
-      apiEndpoint: `/api/v1/devices/${deviceId}/samples/${sampleId}/${_.toUpper(analysisType)}`,
+      apiEndpoint: `/api/v1/devices_analysis/${analysis.id}`,
       requestMethod: 'PUT',
       bodyData: analysis.serialize(),
       jsonTranformation: (json) => new DeviceAnalysis(json.devices_analysis)

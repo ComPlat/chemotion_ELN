@@ -19,6 +19,19 @@ export default class DeviceAnalysis extends Element{
     }
     super(device)
   }
+
+  static buildEmpty(deviceId, sampleId, analysisType) {
+    return new DeviceAnalysis({
+      sample_id: sampleId,
+      analysisBarcode: null,
+      device_id: deviceId,
+      experiments: [],
+      type: 'deviceAnalysis',
+      analysis_type: analysisType,
+      title: `${deviceId}-${sampleId}`,
+      activeAccordionExperiment: 0
+    })
+  }
   
   checksum() {
     return super.checksum(['activeAccordionExperiment'])
@@ -27,6 +40,7 @@ export default class DeviceAnalysis extends Element{
   serialize() {
     const serialized = super.serialize({
       sample_id: this.sampleId,
+      device_id: this.deviceId,
       analysis_barcode: this.analysisBarcode,
       experiments: this.experiments.map((e) => e.serialize()),
       analysis_type: this.analysisType,

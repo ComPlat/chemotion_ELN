@@ -76,30 +76,33 @@ const handleTypeClick = (type, sample, device) => {
         sample.analyses.length !== 0 &&
         sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
 
-      const hasDeviceAnalysisOfTypeNMR =
-        device.devicesAnalyses.length !== 0 &&
-        device.devicesAnalyses.findIndex(
+      const deviceAnalysis = device.devicesAnalyses.find(
           (a) => a.analysis_type === "NMR" && a.sampleId === sample.id
-        ) !== -1
+      )
 
       if(!hasAnalysisOfTypeNMR) {
         let analysis = Analysis.buildEmpty()
         analysis.kind = "1H NMR"
         sample.addAnalysis(analysis)
-        ElementActions.updateSample.defer(sample)
-        ElementActions.saveDevice.defer(device)
-        ElementActions.fetchDeviceById.defer(device.id)
+        ElementActions.updateSample(sample)
+      }
+      
+      ElementActions.saveDevice(device)
+      ElementActions.fetchDeviceById.defer(device.id)
+     
+      // FIXME wait until saved!
+      if (deviceAnalysis) {
+        Aviator.navigate(isSync
+          ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
+          : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
+        )
+      } else {
+        Aviator.navigate(isSync
+          ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+          : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+        )
       }
 
-      if(!hasDeviceAnalysisOfTypeNMR) {
-        ElementActions.createDeviceAnalysis.defer(device, sample, 'NMR')
-        ElementActions.fetchDeviceById.defer(device.id)
-      }
-
-      Aviator.navigate(isSync
-        ? `/scollection/${currentCollection.id}/device/${device.id}/samples/${sample.id}/nmr/`
-        : `/collection/${currentCollection.id}/device/${device.id}/samples/${sample.id}/nmr/`
-      )
       break
   }
 }

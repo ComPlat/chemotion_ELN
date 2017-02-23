@@ -12,12 +12,11 @@ const SameEleTypId = (orig, next) => {
 const UrlSilentNavigation = (element) => {
   const {currentCollection, isSync} = UIStore.getState();
   if(element) {
-    switch(element.type) {
+    switch (element.type) {
       case 'deviceAnalysis':
-        const {deviceId, sampleId, analysisType} = element
         Aviator.navigate(isSync
-          ? `/scollection/${currentCollection.id}/device/${deviceId}/samples/${sampleId}/${_.toLower(analysisType)}/`
-          : `/collection/${currentCollection.id}/device/${deviceId}/samples/${sampleId}/${_.toLower(analysisType)}/`,
+          ? `/scollection/${currentCollection.id}/devicesAnalyses/${element.id}/`
+          : `/collection/${currentCollection.id}/devicesAnalyses/${element.id}/`,
           { silent: true }
         )
         break

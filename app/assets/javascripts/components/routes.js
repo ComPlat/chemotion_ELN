@@ -188,6 +188,19 @@ const routes = {
       '/:screenID': 'showOrNew'
     },
 
+    '/devicesAnalysis': {
+      target: {
+        show: function(e) {
+          const {analysisId, deviceId, sampleId, analysisType} = e.params;
+          if (analysisId === 'new') {
+            ElementActions.createDeviceAnalysis(deviceId, sampleId, analysisType)
+          } else {
+            ElementActions.fetchDeviceAnalysisById(analysisId)
+          }
+        },
+      },
+      '/:analysisId/:deviceId/:sampleId/:analysisType': 'show',
+    },
     '/device': {
       target: {
         show: function(e) {
@@ -197,20 +210,8 @@ const routes = {
         showDeviceManagement: function(e) {
           UIActions.showDeviceManagement()
         },
-        showAnalysisType: function(e) {
-          const {deviceId, sampleId, analysisType} = e.params;
-          switch(analysisType) {
-            case 'nmr':
-              ElementActions.fetchDeviceAnalysisByIdAndType(deviceId, sampleId, analysisType)
-              break
-            default:
-              ElementActions.fetchDeviceById(deviceId)
-              break
-          }
-        }
       },
       '/management': 'showDeviceManagement',
-      '/:deviceId/samples/:sampleId/:analysisType': 'showAnalysisType',
       '/:deviceId': 'show',
     },
 }
