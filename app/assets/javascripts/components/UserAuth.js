@@ -59,7 +59,7 @@ export default class UserAuth extends Component {
 
     return (
       <Nav navbar pullRight>
-        <NavDropdown title={`Log in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
+        <NavDropdown title={`Logged in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
           <MenuItem eventKey="1" href="pages/settings" >Account settings</MenuItem>
           {templatesLink}
           <MenuItem eventKey="2" href="users/edit" >Change Password</MenuItem>
