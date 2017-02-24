@@ -82,14 +82,10 @@ class ElementActions {
     return (dispatch) => dispatch(device)
   }
 
-  addSampleToDevice(sample, device) {
-    return (dispatch) => dispatch({sample, device})
+  addSampleToDevice(sample, device, options) {
+    return (dispatch) => dispatch({sample, device, options})
   }
-  
-  addSampleWithAnalysisToDevice(sample, device) {
-    return (dispatch) => dispatch({sample, device})
-  }
-  
+   
   removeSampleFromDevice(sample, device) {
     return (dispatch) => dispatch({sample, device})
   }
@@ -100,6 +96,10 @@ class ElementActions {
   
   fetchDeviceAnalysisById(analysisId) { 
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAnalysisById(analysisId))
+  }
+
+  openDeviceAnalysis(device, sample, type) {
+    return (dispatch) => dispatch({device, sample, type})
   }
  
   saveDeviceAnalysis(analysis) {

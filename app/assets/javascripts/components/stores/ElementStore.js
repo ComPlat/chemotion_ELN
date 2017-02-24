@@ -13,6 +13,8 @@ import Device from '../models/Device'
 import Analysis from '../models/Analysis'
 import AnalysesExperiment from '../models/AnalysesExperiment'
 import DeviceAnalysis from '../models/DeviceAnalysis'
+import NotificationActions from '../actions/NotificationActions'
+import SamplesFetcher from '../fetchers/SamplesFetcher'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -84,11 +86,11 @@ class ElementStore {
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
       handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
       handleAddSampleToDevice: ElementActions.addSampleToDevice,
-      handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
       handleFetchDeviceAnalysisById: ElementActions.fetchDeviceAnalysisById,
       handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
+      handleOpenDeviceAnalysis: ElementActions.openDeviceAnalysis,
       handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
       handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
       handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
@@ -218,7 +220,8 @@ class ElementStore {
     this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
-  handleAddSampleToDevice({sample, device}) {
+  handleAddSampleToDevice({sample, device, options = {useExistingAnalysis: false}}) {
+    const {useExistingAnalysis} = options
     const deviceHasSample = device.samples.findIndex(
       (s) => s.id === sample.id
     ) !== -1 
@@ -226,19 +229,59 @@ class ElementStore {
       sample.analyses.length !== 0 &&
       sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
 
-    // FIXME show notification for user, why drop is prevented
-    if (!deviceHasSample &&
-        !sampleHasAnalysisOfTypeNMR
-    ) { 
-      this.handleAddSampleWithAnalysisToDevice({sample, device})
+    if(deviceHasSample){
+      NotificationActions.add.defer({
+        message: "Sample is already contained in Device.",
+        level: 'error'
+      });
+    } else if(sampleHasAnalysisOfTypeNMR && !useExistingAnalysis) {
+      NotificationActions.add.defer({
+        message: "Sample has already an NMR-Analysis.",
+        level: 'error'
+      });
+    } else {
+      device.samples.push(sample)
+      ElementActions.saveDevice(device)
+      ElementActions.fetchDeviceById.defer(device.id)
     }
   }
 
-  handleAddSampleWithAnalysisToDevice({sample, device}) { 
-    device.samples.push(sample)
-    const deviceKey = this.findDeviceIndexById(device.id)
-    this.state.elements['devices'].devices[deviceKey] = device
-  }
+  handleOpenDeviceAnalysis({device, sample, type}){
+    switch(type) {
+      case "NMR":
+        const hasAnalysisOfTypeNMR =
+          sample.analyses.length !== 0 &&
+          sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
+        const {currentCollection, isSync} = UIStore.getState();
+        const deviceAnalysis = device.devicesAnalyses.find(
+            (a) => a.analysisType === "NMR" && a.sampleId === sample.id
+        )
+
+        if(!hasAnalysisOfTypeNMR) {
+          let analysis = Analysis.buildEmpty()
+          analysis.kind = "1H NMR"
+          sample.addAnalysis(analysis)
+          SamplesFetcher.update(sample)
+        }
+        
+        // update Device in case of sample was added by dnd and device was not saved
+        device.updateChecksum()
+        ElementActions.saveDevice(device)
+       
+        if (deviceAnalysis) {
+          Aviator.navigate(isSync
+            ? `/scollection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
+            : `/collection/${currentCollection.id}/devicesAnalysis/${deviceAnalysis.id}`
+          )
+        } else {
+          Aviator.navigate(isSync
+            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+          )
+        }
+        break
+    }
+  } 
   
   handleRemoveSampleFromDevice({sample, device}) {
     device.samples = device.samples.filter((e) => e.id !== sample.id)
