@@ -379,12 +379,9 @@ export default class SampleDetails extends React.Component {
     return ( 
       <Button bsSize="xsmall"
         onClick={() => {
-          const {selectedDeviceId, devices} =
-            ElementStore.getState().elements.devices
+          const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
           const device = devices.find((d) => d.id === selectedDeviceId)
           ElementActions.addSampleToDevice(sample, device)
-          ElementActions.saveDevice.defer(device)
-          ElementActions.fetchDeviceById.defer(device.id)
         }}
         style={{marginLeft: 25}}
       >

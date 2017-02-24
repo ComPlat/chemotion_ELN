@@ -131,12 +131,9 @@ export default class SampleDetailsAnalyses extends Component {
         </Button>
         <Button bsSize="xsmall"
           onClick={() => {
-            const {selectedDeviceId, devices} =
-              ElementStore.getState().elements.devices
+            const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
             const device = devices.find((d) => d.id === selectedDeviceId)
-            ElementActions.addSampleWithAnalysisToDevice(sample, device)
-            ElementActions.saveDevice.defer(device)
-            ElementActions.fetchDeviceById.defer(device.id)
+            ElementActions.addSampleToDevice(sample, device, {useExistingAnalysis: true})
           }}
           style={{marginLeft: 25}}
         >
