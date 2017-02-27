@@ -58,35 +58,51 @@ export default class ScanCodeButton extends React.Component {
       .then(this.checkJSONResponse)
       .then((json) => {
         let {source, source_id, analysis_id} = json
+        var apiSource;
 
         if(source == "analysis") {
-          // open active analysis
-          fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}`, {
-            credentials: 'same-origin'
-          })
-          .then((response) => {
-            return response.json()
-          })
-          .then(this.checkJSONResponse)
-          .then((json) => {
-            Quagga.stop();
-            Aviator.navigate(`/collection/all/sample/${source_id}`)
-            this.close();
-            UIActions.selectSampleTab(1)
-            UIActions.selectActiveAnalysis(json)
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-            this.setState({scanError: errorMessage.message})
-          });
-
+          apiSource = "samples";
         } else {
-          Quagga.stop();
-          Aviator.navigate(`/collection/all/${source}/${source_id}`)
-          this.close();
+          apiSource = source + 's';
         }
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-        this.setState({scanError: errorMessage.message})
+
+        fetch(`/api/v1/${apiSource}/${source_id}.json`, {
+          credentials: 'same-origin'
+        })
+        .then((response) => {
+          return response.json()
+        })
+        .then(this.checkJSONResponse)
+        .then(() => {
+          if(source == "analysis") {
+            // open active analysis
+            fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}`, {
+              credentials: 'same-origin'
+            })
+            .then((response) => {
+              return response.json()
+            })
+            .then(this.checkJSONResponse)
+            .then((json) => {
+              Quagga.stop();
+              Aviator.navigate(`/collection/all/sample/${source_id}`)
+              this.close();
+              UIActions.selectSampleTab(1)
+              UIActions.selectActiveAnalysis(json)
+            }).catch((errorMessage) => {
+              console.log(errorMessage);
+              this.setState({scanError: errorMessage.message})
+            });
+
+          } else {
+            Quagga.stop();
+            Aviator.navigate(`/collection/all/${source}/${source_id}`)
+            this.close();
+          }
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+          this.setState({scanError: errorMessage.message})
+        });
       });
     })
   }
@@ -110,7 +126,6 @@ export default class ScanCodeButton extends React.Component {
 
   checkJSONResponse(json) {
     if(json.error) {
-      console.log(json)
       var error = new Error(json.error)
       error.response = json
       throw error
@@ -120,7 +135,6 @@ export default class ScanCodeButton extends React.Component {
   }
 
   handleQrScan(data) {
-    console.log(data)
     fetch(`/api/v1/code_logs/with_qr_code?code=${data}`, {
       credentials: 'same-origin'
     })
@@ -129,34 +143,49 @@ export default class ScanCodeButton extends React.Component {
     })
     .then(this.checkJSONResponse)
     .then((json) => {
-      console.log(json)
       let {source, source_id, analysis_id} = json
+      var apiSource;
 
       if(source == "analysis") {
-        // open active analysis
-        fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}&code=${data}`, {
-          credentials: 'same-origin'
-        })
-        .then((response) => {
-          return response.json()
-        })
-        .then(this.checkJSONResponse)
-        .then((json) => {
-          Aviator.navigate(`/collection/all/sample/${source_id}`)
-          this.close();
-          UIActions.selectSampleTab(1)
-          UIActions.selectActiveAnalysis(json)
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-          this.setState({scanError: errorMessage.message})
-        });
+        apiSource = "samples";
       } else {
-        Aviator.navigate(`/collection/all/${source}/${source_id}`)
-        this.close();
+        apiSource = source + 's';
       }
-    }).catch((errorMessage) => {
-      console.log(errorMessage.message);
-      this.setState({scanError: errorMessage.message})
+
+      fetch(`/api/v1/${apiSource}/${source_id}.json`, {
+        credentials: 'same-origin'
+      })
+      .then((response) => {
+        return response.json()
+      })
+      .then(this.checkJSONResponse)
+      .then(() => {
+        if(source == "analysis") {
+          // open active analysis
+          fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}&code=${data}`, {
+            credentials: 'same-origin'
+          })
+          .then((response) => {
+            return response.json()
+          })
+          .then(this.checkJSONResponse)
+          .then((json) => {
+            Aviator.navigate(`/collection/all/sample/${source_id}`)
+            this.close();
+            UIActions.selectSampleTab(1)
+            UIActions.selectActiveAnalysis(json)
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+            this.setState({scanError: errorMessage.message})
+          });
+        } else {
+          Aviator.navigate(`/collection/all/${source}/${source_id}`)
+          this.close();
+        }
+      }).catch((errorMessage) => {
+        console.log(errorMessage.message);
+        this.setState({scanError: errorMessage.message})
+      });
     });
   }
 
@@ -210,7 +239,7 @@ export default class ScanCodeButton extends React.Component {
           <Button onClick={() => this.open()} style={{height: 35}}>
             <span className="fa-stack" style={{lineHeight: "1.7em"}}>
               <i
-                className="fa fa-barcode fa-stack-1x" 
+                className="fa fa-barcode fa-stack-1x"
                 style={{fontSize: 11, top: -1}}
               ></i>
               <i
