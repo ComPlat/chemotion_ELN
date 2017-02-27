@@ -87,6 +87,7 @@ class ElementStore {
       handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
       handleAddSampleToDevice: ElementActions.addSampleToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
+      handleToggleTypeOfDeviceSample: ElementActions.toggleTypeOfDeviceSample,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
       handleFetchDeviceAnalysisById: ElementActions.fetchDeviceAnalysisById,
       handleSaveDeviceAnalysis: ElementActions.saveDeviceAnalysis,
@@ -95,7 +96,6 @@ class ElementStore {
       handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
       handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
       handleCreateAnalysisExperiment: ElementActions.createAnalysisExperiment,
-      handleChangeActiveAccordionExperiment: ElementActions.changeActiveAccordionExperiment,
 
       handleFetchBasedOnSearchSelection:
         ElementActions.fetchBasedOnSearchSelectionAndCollection,
@@ -220,49 +220,39 @@ class ElementStore {
     this.state.elements['devices'].devices = devices.filter((e) => e.id !== device.id)
   }
 
-  handleAddSampleToDevice({sample, device, options = {useExistingAnalysis: false}}) {
-    const {useExistingAnalysis} = options
-    const deviceHasSample = device.samples.findIndex(
-      (s) => s.id === sample.id
-    ) !== -1 
-    const sampleHasAnalysisOfTypeNMR =
-      sample.analyses.length !== 0 &&
-      sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
-
-    if(deviceHasSample){
-      NotificationActions.add.defer({
-        message: "Sample is already contained in Device.",
-        level: 'error'
-      });
-    } else if(sampleHasAnalysisOfTypeNMR && !useExistingAnalysis) {
-      NotificationActions.add.defer({
-        message: "Sample has already an NMR-Analysis.",
-        level: 'error'
-      });
-    } else {
-      device.samples.push(sample)
+  handleAddSampleToDevice({sample, device, options = {save: false}}) {
+    device.samples.push({id: sample.id, short_label: sample.short_label, types: []})
+    if(options.save) { 
       ElementActions.saveDevice(device)
       ElementActions.fetchDeviceById.defer(device.id)
     }
   }
 
-  handleOpenDeviceAnalysis({device, sample, type}){
+  handleToggleTypeOfDeviceSample({device, sample, type}) {
+    const sampleKey = device.samples.findIndex(s => s.id === sample.id)
+    if (sample.types.includes(type)) {
+      sample.types = sample.types.filter(t => t !== type)
+    } else {
+      sample.types.push(type)
+    }
+    device.samples[sampleKey] = sample
+  }
+
+  handleOpenDeviceAnalysis({device, type}){
     switch(type) {
       case "NMR":
-        const hasAnalysisOfTypeNMR =
-          sample.analyses.length !== 0 &&
-          sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
         const {currentCollection, isSync} = UIStore.getState();
-        const deviceAnalysis = device.devicesAnalyses.find(
-            (a) => a.analysisType === "NMR" && a.sampleId === sample.id
-        )
-
-        if(!hasAnalysisOfTypeNMR) {
-          let analysis = Analysis.buildEmpty()
-          analysis.kind = "1H NMR"
-          sample.addAnalysis(analysis)
-          SamplesFetcher.update(sample)
-        }
+        const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
+        //
+        // const hasAnalysisOfTypeNMR =
+        //   sample.analyses.length !== 0 &&
+        //   sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
+        // if(!hasAnalysisOfTypeNMR) {
+        //   let analysis = Analysis.buildEmpty()
+        //   analysis.kind = "1H NMR"
+        //   sample.addAnalysis(analysis)
+        //   SamplesFetcher.update(sample)
+        // }
         
         // update Device in case of sample was added by dnd and device was not saved
         device.updateChecksum()
@@ -275,8 +265,8 @@ class ElementStore {
           )
         } else {
           Aviator.navigate(isSync
-            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
-            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${sample.id}/${type}`
+            ? `/scollection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
+            : `/collection/${currentCollection.id}/devicesAnalysis/new/${device.id}/${type}`
           )
         }
         break
@@ -307,8 +297,8 @@ class ElementStore {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
-  handleCreateDeviceAnalysis({deviceId, sampleId, analysisType}) {
-    this.state.currentElement = DeviceAnalysis.buildEmpty(deviceId, sampleId, analysisType)
+  handleCreateDeviceAnalysis({deviceId, analysisType}) {
+    this.state.currentElement = DeviceAnalysis.buildEmpty(deviceId, analysisType)
   }
 
   handleSaveDeviceAnalysis(analysis) {
@@ -338,12 +328,6 @@ class ElementStore {
     analysis.experiments = analysis.experiments.filter((a) => a.id !== experiment.id)
     this.state.currentElement = analysis
   }
-  
-  handleChangeActiveAccordionExperiment({analysis, key}) {
-    analysis.activeAccordionExperiment = key
-    this.state.currentElement = analysis
-  }
-
 
   // SEARCH
 

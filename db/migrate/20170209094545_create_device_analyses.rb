@@ -23,5 +23,8 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
       t.timestamps null: false
     end
 
+    change_table :devices_samples do |t|
+       t.string :types, array: true, default: []
+    end
   end
 end

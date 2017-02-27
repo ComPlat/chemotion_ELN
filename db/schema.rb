@@ -143,8 +143,9 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   end
 
   create_table "devices_samples", force: :cascade do |t|
-    t.integer "device_id", null: false
-    t.integer "sample_id", null: false
+    t.integer "device_id",              null: false
+    t.integer "sample_id",              null: false
+    t.string  "types",     default: [],              array: true
   end
 
   add_index "devices_samples", ["device_id"], name: "index_devices_samples_on_device_id", using: :btree

@@ -191,15 +191,15 @@ const routes = {
     '/devicesAnalysis': {
       target: {
         create: function(e) {
-          const {deviceId, sampleId, analysisType} = e.params;
-          ElementActions.createDeviceAnalysis(deviceId, sampleId, analysisType)
+          const {deviceId, analysisType} = e.params;
+          ElementActions.createDeviceAnalysis(deviceId, analysisType)
         },
         show: function(e) {
           const {analysisId} = e.params;
           ElementActions.fetchDeviceAnalysisById(analysisId)
         },
       },
-      '/new/:deviceId/:sampleId/:analysisType': 'create',
+      '/new/:deviceId/:analysisType': 'create',
       '/:analysisId': 'show',
     },
     '/device': {

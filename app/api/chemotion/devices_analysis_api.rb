@@ -72,7 +72,7 @@ module Chemotion
             # update analyses_experiments
             old_experiment_ids = analysis.analyses_experiments.map {|experiment| experiment.id}
             new_experiment_ids = params[:experiments].map {|experiment|
-              analysis = AnalysesExperiment.find_by(id: experiment.analysis.id)
+              experiment = AnalysesExperiment.find_by(id: experiment.analysis.id)
               params = {
                 devices_analysis_id: analysis.id,
                 holder_id: experiment.holder_id,
@@ -86,14 +86,13 @@ module Chemotion
                 time: experiment.time,
                 sample_id: experiment.sample_id
               }
-              if analysis.nil?
-                new_experiment = AnalysesExperiment.create(params)
+              if experiment.nil?
+                experiment = AnalysesExperiment.create(params)
                 analysis.analyses_experiments << new_experiment
-                new_experiment.id
               else
                 analysis.update(params)
-                analysis.id
               end
+              experiment.id
             }
             to_remove_experiment_ids = old_experiment_ids - new_experiment_ids
             to_remove_experiment_ids.map{|experiment_id| 

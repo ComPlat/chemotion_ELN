@@ -3,7 +3,8 @@ class DeviceSerializer < ActiveModel::Serializer
   
   def samples
     object.devices_samples.map {|devices_sample|
-      SampleSerializer.new(Sample.find(devices_sample.sample_id)).serializable_hash
+      sample = Sample.find(devices_sample.sample_id)
+      {id: sample.id, short_label: sample.short_label, types: devices_sample.types}
     }
   end
 

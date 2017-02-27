@@ -46,13 +46,14 @@ const DeviceSampleContainer = ({device, isOver, canDrop, connectDropTarget}) => 
     <div>
       <TypeButtonsHeader
         device={device}
+        onTypeClick={(type) => ElementActions.openDeviceAnalysis(device, type)}
       />
       <div style={style}>
         {device.samples.length > 0
           ? device.samples.map((sample, key) => (
             <DeviceSample
-              sample={sample}
               device={device}
+              sample={sample}
               key={key}
             />
           ))
@@ -74,7 +75,7 @@ const DeviceSample = ({sample, device}) => {
     >
       <Button
         bsStyle={"danger"}
-        onClick={() => ElementActions.removeSampleFromDevice(sample, device)}
+        onClick={() => ElementActions.removeSampleFromDevice(id, device)}
       >
         <i className="fa fa-trash-o"></i>
       </Button>
@@ -87,19 +88,18 @@ const DeviceSample = ({sample, device}) => {
           flex: 1
         }}
       >
-        {sample._short_label}
+        {sample.short_label}
       </div>
       <TypeButtons
         device={device}
-        onTypeClick={(type) => ElementActions.openDeviceAnalysis(device, sample, type)}
+        sample={sample}
+        onTypeClick={(type) => ElementActions.toggleTypeOfDeviceSample(device, sample, type)}
       />
     </div>
   )
 }
 
-const TypeButtonsHeader = ({device}) => {
-  const opacityByExistentType = (type) => device.types.includes(type) ? 1 : 0.65
-
+const TypeButtonsHeader = ({device, onTypeClick}) => {
   return (
     <div
       style={{display: "flex"}}
@@ -110,41 +110,29 @@ const TypeButtonsHeader = ({device}) => {
       >
         <Button
           bsStyle={"primary"}
-          disabled={true}
-          style={{
-            cursor: "default",
-            opacity: opacityByExistentType("NMR")
-          }}
+          disabled={isDisabled(device, "NMR")}
+          onClick={() => onTypeClick("NMR")}
         >
           NMR
         </Button>
         <Button
           bsStyle={"primary"}
-          disabled={true}
-          style={{
-            cursor: "default",
-            opacity: opacityByExistentType("EA")
-          }}
+          disabled={isDisabled(device, "EA")}
+          onClick={() => onTypeClick("EA")}
         >
           EA
         </Button>
         <Button
           bsStyle={"primary"}
-          disabled={true}
-          style={{
-            cursor: "default",
-            opacity: opacityByExistentType("MS")
-          }}
+          disabled={isDisabled(device, "MS")}
+          onClick={() => onTypeClick("MS")}
         >
           MS
         </Button>
         <Button
           bsStyle={"primary"}
-          disabled={true}
-          style={{
-            cursor: "default",
-            opacity: opacityByExistentType("IR")
-          }}
+          disabled={isDisabled(device, "IR")}
+          onClick={() => onTypeClick("IR")}
         >
           IR
         </Button>
@@ -153,45 +141,50 @@ const TypeButtonsHeader = ({device}) => {
   )
 }
 
-const TypeButtons = ({device, onTypeClick}) => {
-  const isDisabled = (type) => {
-    // TODO remove this after implementing other Analysis-Type-UIs
-    if(type === "EA" || type === "MS" || type === "IR") {
-      return true
-    } else {
-      return !device.types.includes(type)
-    }
+const isDisabled = (device, type) => {
+  // TODO remove this after implementing other Analysis-Type-UIs
+  if(type === "EA" || type === "MS" || type === "IR") {
+    return true
+  } else {
+    return !device.types.includes(type)
   }
+}
 
+const TypeButtons = ({device, sample, onTypeClick}) => {
+  const labelBySampleType = (type) => (
+    sample.types.includes(type)
+      ? <i className="fa fa-check"></i>
+      : <i>&nbsp;</i>
+  )
   return (
     <ButtonGroup>
       <Button
         onClick={() => onTypeClick("NMR")}
-        disabled={isDisabled("NMR")}
+        disabled={isDisabled(device, "NMR")}
         style={{width: "57.91px"}}
       >
-        &nbsp;
+        {labelBySampleType("NMR")}
       </Button>
       <Button
         onClick={() => onTypeClick("EA")}
-        disabled={isDisabled("EA")}
+        disabled={isDisabled(device, "EA")}
         style={{width: "43.64px"}}
       >
-        &nbsp;
+        {labelBySampleType("EA")}
       </Button>
       <Button
         onClick={() => onTypeClick("MS")}
-        disabled={isDisabled("MS")}
+        disabled={isDisabled(device, "MS")}
         style={{width: "47.28px"}}
       >
-        &nbsp;
+      {labelBySampleType("MS")}
       </Button>
       <Button
         onClick={() => onTypeClick("IR")}
-        disabled={isDisabled("IR")}
+        disabled={isDisabled(device, "IR")}
         style={{width: "39.22px"}}
       >
-        &nbsp;
+        {labelBySampleType("IR")}
       </Button>
     </ButtonGroup>
   )
