@@ -55,7 +55,7 @@ class CodePdf < Prawn::Document
     def qr_code_options(size)
       case size
       when "small"
-        {height: 5.5.mm, width: 5.5.mm, margin: 0, at: [5, self.bounds.top - 3]}
+        {height: 6.mm, width: 6.mm, margin: 0, at: [5, self.bounds.top - 3]}
       when "big"
         {height: 10.mm, width: 10.mm, margin: 0, at: [5, self.bounds.top - 3]}
       else
@@ -75,15 +75,18 @@ class CodePdf < Prawn::Document
       when "small"
         {
           text: {at: [6.mm + 8, 19.mm], size: 5, width: 20.mm, height: 5.4.mm},
-          code: {at: [9.mm, self.bounds.bottom + 2.mm], size: 4}
+          code: {at: [9.mm, self.bounds.bottom + 2.mm], size: 5}
         }
       when "big"
         {
           text: {at: [10.mm + 8, 19.mm], size: 5, width: 20.mm, height: 5.4.mm},
-          code: {at: [15.mm, self.bounds.bottom + 2.mm], size: 4}
+          code: {at: [15.mm, self.bounds.bottom + 2.mm], size: 5}
         }
       else
-        {at: [68, 19.mm], size: 5, rotate: 270, width: 20.mm, height: 5.4.mm}
+        {
+          text: {at: [6.mm + 8, 19.mm], size: 5, width: 20.mm, height: 5.4.mm},
+          code: {at: [9.mm, self.bounds.bottom + 2.mm], size: 5}
+        }
       end
     end
 

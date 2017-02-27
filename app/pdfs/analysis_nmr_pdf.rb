@@ -38,8 +38,8 @@ class AnalysisNmrPdf < Prawn::Document
   def qr_code(element)
     qr_code = Barby::QrCode.new(element.qr_code, size: 1, level: :l)
     outputter = outputter(qr_code)
-    height = 5.5.mm
-    width = 5.5.mm
+    height = 6.mm
+    width = 6.mm
     svg outputter.to_svg(margin: 0, height: height, width: width), at: [5, self.bounds.top - 3], width: width, height: height
   end
 
