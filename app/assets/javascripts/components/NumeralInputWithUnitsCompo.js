@@ -123,7 +123,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
             bsClass='bs-btnTxt--small btn'
             bsStyle={bsStyleBtnAfter}
             bsSize={bsSize}
-            style={{padding:"8px 2px 7px 2px", minWidth: 20}} >
+            style={{padding:"8px 2px 7px 2px"}} >
               {mp+unit}
           </Button>
         </InputGroup.Button>

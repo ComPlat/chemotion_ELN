@@ -37,7 +37,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
                       solvent={solvent} />
       <DescriptionContent show={settings.description && description}
                           description={description} />
-      <PurificationContent show={settings.purification && purification.length != 0}
+      <PurificationContent show={settings.purification && purification && purification.length != 0}
                            purification={purification} />
       <TLCContent show={settings.tlc && tlc_description}
                   tlc_description={tlc_description}
@@ -47,7 +47,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
                           observation={observation} />
       <AnalysesContent show={settings.analysis && has_analyses}
                        products={products} />
-      <LiteratureContent show={settings.literature && literatures.length != 0}
+      <LiteratureContent show={settings.literature && literatures && literatures.length != 0}
                          literatures={literatures} />
     </div>
   )

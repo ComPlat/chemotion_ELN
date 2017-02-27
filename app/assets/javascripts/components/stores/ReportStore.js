@@ -144,23 +144,22 @@ class ReportStore {
     setTimeout(() => this.setState({processingReport: false}), 2500);
   }
 
-  handleUpdateCheckedTags(tags) {
-    this.setState({selectedObjTags: tags});
-    this.setObjs();
+  handleUpdateCheckedTags({newTags, newObjs}) {
+    this.setState({selectedObjTags: newTags});
+    this.setObjs(newTags, newObjs);
   }
 
-  setObjs() {
+  setObjs(newTags, newObjs) {
     const oriSelectedObjs = this.selectedObjs || [];
-    const { sampleIds, reactionIds } = this.selectedObjTags;
-    const samples = ArrayUtils.flatten2D(ElementStore.state.elements.samples.elements);
-    const reactions = ElementStore.state.elements.reactions.elements;
+    const { sampleIds, reactionIds } = newTags;
+    const { samples, reactions } = newObjs;
     let selectedObjs = this.keepObjsAsIds(oriSelectedObjs, samples, sampleIds, 'sample');
     selectedObjs = this.keepObjsAsIds(selectedObjs, reactions, reactionIds, 'reaction');
     this.setState({selectedObjs: selectedObjs});
   }
 
-  keepObjsAsIds(oriSelectedObjs, allElems, ids, type) {
-    const allObjs = oriSelectedObjs.concat(allElems) || [];
+  keepObjsAsIds(oriSelectedObjs, newElems, ids, type) {
+    const allObjs = oriSelectedObjs.concat(newElems).filter(obj => obj != null) || [];
     return allObjs.map( obj => {
       if(obj.type !== type){
         return obj;

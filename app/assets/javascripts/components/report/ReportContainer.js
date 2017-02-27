@@ -43,9 +43,10 @@ export default class ReportContainer extends Component {
   }
 
   onChangeUI(state) {
-    const checkedTags = { sampleIds: state['sample'].checkedIds.toArray(),
-                          reactionIds: state['reaction'].checkedIds.toArray() }
-    ReportActions.updateCheckedTags.defer(checkedTags);
+    const newTags = { sampleIds: state['sample'].checkedIds.toArray(),
+                      reactionIds: state['reaction'].checkedIds.toArray() };
+    const oldTags = this.state.selectedObjTags;
+    ReportActions.updateCheckedTags.defer(oldTags, newTags);
   }
 
   render() {
@@ -173,7 +174,7 @@ export default class ReportContainer extends Component {
 
   fileNameRule() {
     return (
-      <Tooltip>
+      <Tooltip id="file-name-rule" >
         <p>Max 40 characters.</p>
         <p>allowed: a to z, A to Z, 0 to 9, -, _</p>
       </Tooltip>
