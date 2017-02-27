@@ -11,8 +11,9 @@ module Chemotion
       post do
         attributes = declared(params, include_missing: false)
         device = Device.new(attributes.except!(:samples))
-        params[:samples].map {|sample|
-          DevicesSample.create({sample_id: sample.id, device_id: device.id})
+        params[:samples].map {|s|
+          sample = DevicesSample.create({sample_id: s.id, device_id: device.id, types: s.types})
+          device.devices_samples << sample
         }
         device.save!
         current_user.devices << device
@@ -95,16 +96,20 @@ module Chemotion
           else
             # update devices_samples
             old_sample_ids = device.devices_samples.map {|devices_sample| devices_sample.sample_id}
-            new_sample_ids = params[:samples].map {|sample|
-              DevicesSample.create({sample_id: sample.id, device_id: device.id})
-              sample.id
+            new_sample_ids = params[:samples].map {|s|
+              sample = DevicesSample.find_by(sample_id: s.id)
+              params = {sample_id: s.id, device_id: device.id, types: s.types}
+              if sample.nil?
+                sample = DevicesSample.create(params)
+                device.devices_samples << sample
+              else
+                sample.update(params)
+              end
+              sample.sample_id
             }
             to_remove_sample_ids = old_sample_ids - new_sample_ids
             to_remove_sample_ids.map{|sample_id| 
-              #samples
               device.devices_samples.find_by(sample_id: sample_id).destroy
-              #analyses
-              device.devices_analyses.where(sample_id: sample_id).destroy_all
             }
 
             device.update(attributes.except!(:samples))

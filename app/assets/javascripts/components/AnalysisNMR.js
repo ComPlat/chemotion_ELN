@@ -63,7 +63,11 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
                   />
               )
             })
-          : <div>This analysis has no experiments yet.</div>
+          : (
+            <FormGroup style={{marginLeft: 0}}>
+              This analysis has no experiments yet.
+            </FormGroup>
+          )
         }
       </Form>
       <ButtonToolbar>

@@ -82,12 +82,16 @@ class ElementActions {
     return (dispatch) => dispatch(device)
   }
 
-  addSampleToDevice(sample, device, options) {
-    return (dispatch) => dispatch({sample, device, options})
+  addSampleToDevice(sample, device) {
+    return (dispatch) => dispatch({sample, device})
   }
    
   removeSampleFromDevice(sample, device) {
     return (dispatch) => dispatch({sample, device})
+  }
+
+  toggleTypeOfDeviceSample(device, sample, type) {
+    return (dispatch) => dispatch({device, sample, type})
   }
 
   changeDeviceProp(device, prop, value) {
@@ -98,8 +102,8 @@ class ElementActions {
     return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAnalysisById(analysisId))
   }
 
-  openDeviceAnalysis(device, sample, type) {
-    return (dispatch) => dispatch({device, sample, type})
+  openDeviceAnalysis(device, type) {
+    return (dispatch) => dispatch({device, type})
   }
  
   saveDeviceAnalysis(analysis) {
@@ -110,8 +114,8 @@ class ElementActions {
     }
   }
   
-  createDeviceAnalysis(deviceId, sampleId, analysisType) {
-    return (dispatch) => dispatch({deviceId, sampleId, analysisType})
+  createDeviceAnalysis(deviceId, analysisType) {
+    return (dispatch) => dispatch({deviceId, analysisType})
   }
   
   generateDeviceAnalysisConfig(analysis) {
@@ -131,10 +135,6 @@ class ElementActions {
     return (dispatch) => dispatch({analysis, experiment})
   }
   
-  changeActiveAccordionExperiment(analysis, key) {
-    return (dispatch) => dispatch({analysis, key})
-  }
- 
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

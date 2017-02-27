@@ -381,7 +381,7 @@ export default class SampleDetails extends React.Component {
         onClick={() => {
           const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
           const device = devices.find((d) => d.id === selectedDeviceId)
-          ElementActions.addSampleToDevice(sample, device)
+          ElementActions.addSampleToDevice(sample, device, {save: true})
         }}
         style={{marginLeft: 25}}
       >
