@@ -18,37 +18,54 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
     <div
       style={{marginBottom: 10}}
     >
-      <AddExperimentButton
-        analysis={analysis}
-      />
-      <PanelGroup defaultActiveKey={0} activeKey={analysis.activeAccordionExperiment} accordion>
+      <Form horizontal>
+        <FormGroup>
+          <Col sm={1}>
+            <ControlLabel>Holder</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Status</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Name</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Solvent</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Experiment</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Priority</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Daytime</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Number of Scans</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Sweep Width</ControlLabel>
+          </Col>
+          <Col sm={1}>
+            <ControlLabel>Time</ControlLabel>
+          </Col>
+          <Col sm={2}>
+          </Col>
+        </FormGroup>
         {analysis.experiments.length > 0
           ? analysis.experiments.map((experiment, key) => {
               return (
-                <Panel
-                  header={
-                    <ExperimentHeader
-                      experiment={experiment}
-                      analysis={analysis}
-                      id={key + 1}
-                    />
-                  }
-                  eventKey={key}
-                  key={key}
-                  onClick={() => ElementActions.changeActiveAccordionExperiment(analysis, key)}
-                  bsStyle={styleByExperimentState(experiment)}
-                >
                   <Experiment
                     key={key}
                     experiment={experiment}
                     analysis={analysis}
                   />
-                </Panel>
               )
             })
           : <div>This analysis has no experiments yet.</div>
         }
-      </PanelGroup>
+      </Form>
       <ButtonToolbar>
         <Button bsStyle="primary" onClick={() => closeDetails(analysis)}>
           Close
@@ -64,13 +81,6 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
           }}
         >
           Save
-        </Button>
-        <Button
-          bsStyle="success"
-          disabled={analysis.experiments.length === 0}
-          onClick={() => ElementActions.generateDeviceAnalysisConfig(analysis)}
-        >
-          Generate Config
         </Button>
       </ButtonToolbar>
     </div>
@@ -92,165 +102,111 @@ const Experiment = ({analysis, experiment}) => {
   }
 
   return (
-    <Form horizontal>
-      <FormGroup>
-        <Col sm={4}>
-          <ControlLabel>Holder</ControlLabel>
-        </Col>
-        <Col sm={4}>
-          <ControlLabel>Status</ControlLabel>
-        </Col>
-        <Col sm={4}>
-          <ControlLabel>Name</ControlLabel>
-        </Col>
-        <Col sm={4}>
-          <FormControl.Static>
-            {experiment.holderId ? experiment.holderId : "-"}
-          </FormControl.Static>
-        </Col>
-        <Col sm={4}>
-          <FormControl.Static>
-            {experiment.status ? experiment.status : "-"}
-          </FormControl.Static>
-        </Col>
-        <Col sm={4}>
-          <FormControl.Static>
-            {`Sample ${analysis.sampleId}`}
-          </FormControl.Static>
-        </Col>
-      </FormGroup>
-      <FormGroup>
-        <Col sm={6}>
-          <ControlLabel>Solvent</ControlLabel>
-        </Col>
-        <Col sm={6}>
-          <ControlLabel>Experiment</ControlLabel>
-        </Col>
-        <Col sm={6}>
-          <Select
-            id="solvent"
-            name='solvent'
-            multi={false}
-            options={solvents}
-            onChange={(e) => handleSelectChange('solvent', e)}
-            value={experiment.solvent}
-          />
-        </Col>
-        <Col sm={6}>
-          <Select
-            id="experiment"
-            name='experiment'
-            multi={false}
-            options={experiments}
-            onChange={(e) => {
-              handlePropChange('time', e.time)
-              handleSelectChange('experiment', e)
-            }}
-            value={experiment.experiment}
-          />
-        </Col>
-      </FormGroup>
-      <FormGroup>
-        <Col sm={4}>
-          <ControlLabel>Priority</ControlLabel>
-        </Col>
-        <Col sm={4}>
-          <ControlLabel>Daytime</ControlLabel>
-        </Col>
-        <Col sm={4}>
-          <ControlLabel>Number of Scans</ControlLabel>
-        </Col>
-        <Col sm={4}>
-          <Checkbox
-            checked={experiment.priority}
-            onChange={(e) => handlePropChange('priority', !experiment.priority)}
+    <FormGroup>
+      <Col sm={1}>
+        <FormControl.Static>
+          {experiment.holderId ? experiment.holderId : "-"}
+        </FormControl.Static>
+      </Col>
+      <Col sm={1}>
+        <FormControl.Static>
+          {experiment.status ? experiment.status : "-"}
+        </FormControl.Static>
+      </Col>
+      <Col sm={1}>
+        <FormControl.Static>
+          {`${analysis.sampleId}`}
+        </FormControl.Static>
+      </Col>
+      <Col sm={1}>
+        <Select
+          id="solvent"
+          name='solvent'
+          multi={false}
+          options={solvents}
+          onChange={(e) => handleSelectChange('solvent', e)}
+          value={experiment.solvent}
+        />
+      </Col>
+      <Col sm={1}>
+        <Select
+          id="experiment"
+          name='experiment'
+          multi={false}
+          options={experiments}
+          onChange={(e) => {
+            handlePropChange('time', e.time)
+            handleSelectChange('experiment', e)
+          }}
+          value={experiment.experiment}
+        />
+      </Col>
+      <Col sm={1}>
+        <Checkbox
+          checked={experiment.priority}
+          onChange={(e) => handlePropChange('priority', !experiment.priority)}
+        >
+        </Checkbox>
+      </Col>
+      <Col sm={1}>
+        <Radio
+          checked={experiment.onDay}
+          onChange={(e) => handlePropChange('onDay', true)}
+          style={{minHeight: 20, marginBottom: -3, paddingTop: 0}}
+        >
+          Day
+        </Radio>
+        <Radio
+          checked={!experiment.onDay}
+          onChange={(e) => handlePropChange('onDay', false)}
+          style={{minHeight: 20, marginBottom: -3, paddingTop: 0}}
+        >
+          Night
+        </Radio>
+      </Col>
+      <Col sm={1}>
+        <FormControl
+          value={experiment.numberOfScans}
+          onChange={(e) => handlePropChange('numberOfScans', e.target.value)}
+        />
+      </Col>
+      <Col sm={1}>
+        <FormControl
+          value={experiment.sweepWidth}
+          onChange={(e) => handlePropChange('sweepWidth', e.target.value)}
+        />
+      </Col>
+      <Col sm={1}>
+        <FormControl.Static>
+          {experiment.time && experiment.time !== "" ? experiment.time : "-"}
+        </FormControl.Static>
+      </Col>
+      <Col sm={2}>
+        <ButtonToolbar>
+          <Button 
+            bsSize="xsmall"
+            bsStyle="danger"
+            onClick={(e) => handleRemoveDevice(e)}
           >
-          </Checkbox>
-        </Col>
-        <Col sm={4}>
-          <Radio
-            checked={experiment.onDay}
-            onChange={(e) => handlePropChange('onDay', true)}
-            inline
+            <i className="fa fa-trash"></i>
+          </Button>
+          <Button 
+            bsSize="xsmall"
+            bsStyle="info"
+            onClick={(e) => handleRemoveDevice(e)}
           >
-            Day
-          </Radio>
-          <Radio
-            checked={!experiment.onDay}
-            onChange={(e) => handlePropChange('onDay', false)}
-            inline
+            Add
+          </Button>
+          <Button 
+            bsSize="xsmall"
+            bsStyle="success"
+            onClick={(e) => handleRemoveDevice(e)}
           >
-            Night
-          </Radio>
-        </Col>
-        <Col sm={4}>
-          <FormControl
-            value={experiment.numberOfScans}
-            onChange={(e) => handlePropChange('numberOfScans', e.target.value)}
-          />
-        </Col>
-      </FormGroup>
-      <FormGroup>
-        <Col sm={6}>
-          <ControlLabel>Sweep Width</ControlLabel>
-        </Col>
-        <Col sm={6}>
-          <ControlLabel>Time</ControlLabel>
-        </Col>
-        <Col sm={6}>
-          <FormControl
-            value={experiment.sweepWidth}
-            onChange={(e) => handlePropChange('sweepWidth', e.target.value)}
-          />
-        </Col>
-        <Col sm={6}>
-          <FormControl.Static>
-            {experiment.time && experiment.time !== "" ? experiment.time : "-"}
-          </FormControl.Static>
-        </Col>
-      </FormGroup>
-    </Form>
+            Submit
+          </Button>
+        </ButtonToolbar>
+      </Col>
+    </FormGroup>
   )
 }
 
-const ExperimentHeader = ({analysis, experiment, id}) => {
-  const handleRemoveDevice = (e) => {
-    if(confirm('Delete the Experiment?')) {
-      ElementActions.deleteAnalysisExperiment(analysis, experiment)
-    }
-    e.preventDefault()
-  }
-
-  return (
-    <div style={{
-      width: '100%',
-      cursor: "pointer"
-    }}>
-      {id}
-      <Button 
-        bsSize="xsmall"
-        bsStyle="danger"
-        className="button-right"
-        onClick={(e) => handleRemoveDevice(e)}
-      >
-        <i className="fa fa-trash"></i>
-      </Button>
-    </div>
-  )
-}
-
-const AddExperimentButton = ({analysis}) => {
-  return (
-    <p>
-      &nbsp;
-      <Button
-        className="button-right"
-        bsSize="xsmall"
-        bsStyle="success"
-        onClick={() => ElementActions.createAnalysisExperiment(analysis)}
-      >
-        Add experiment
-      </Button>
-    </p>
-  )
-}
