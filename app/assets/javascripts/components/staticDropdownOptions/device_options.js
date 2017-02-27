@@ -1,4 +1,4 @@
-export const solvents = [{
+const solventsWithDescription = [{
     label: 'Acetic, Acetic acid-d4',
     value: 'Acetic'
   }, {
@@ -106,7 +106,12 @@ export const solvents = [{
   }
 ]
 
-export const experiments = [{
+export const solvents = solventsWithDescription.map((solvent) => ({
+  label: solvent.value,
+  value: solvent.value
+}))
+
+const experimentsWithDescription = [{
     label: 'Proton, 1H experiment 16 scans',
     value: 'Proton',
     time: 42
@@ -192,3 +197,8 @@ export const experiments = [{
   }
 ]
 
+export const experiments = experimentsWithDescription.map((e) => ({
+  label: e.value,
+  value: e.value,
+  time: e.time || ""
+}))
