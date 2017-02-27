@@ -44,6 +44,9 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let mc = lastChar.match(/\.|(,)/);
 
     if (mc && mc[1]){value = value.slice(0,caretPosition-1)+'.'+value.slice(caretPosition)}
+    else if (value == '0.' || value == '00'){
+      value = '0.0';
+    }
 
     value = value.replace('--', '');
     let matchMinus = value.match(/\d+(\-+)\d*/);
@@ -55,7 +58,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let val = metPreConv(value, metricPrefix, "none");
     this.setState({
         value:  val,
-        showString: !(val == 0),
+        showString: true,
         valueString: valueString
       }, () => {
         this._onChangeCallback();
