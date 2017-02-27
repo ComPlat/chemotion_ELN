@@ -3,6 +3,7 @@ class Reaction < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include Taggable
 
   serialize :temperature, Hash
   serialize :description, Hash

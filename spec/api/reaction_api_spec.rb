@@ -47,7 +47,10 @@ describe Chemotion::ReactionAPI do
           id: r2.id,
           name: r2.name,
           type: 'reaction',
-          collection_labels: nil
+          tag: include(
+            "taggable_id" => r2.id,
+            "taggable_type" => "Reaction"
+          )
         )
       end
     end

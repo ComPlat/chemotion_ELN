@@ -85,7 +85,7 @@ export default class WellplatesFetcher {
   }
 
   static create(params) {
-    let files = AttachmentFetcher.getFileListfrom(wellplate.container)
+    let files = AttachmentFetcher.getFileListfrom(params.container)
 
     let promise = () => fetch('/api/v1/wellplates/', {
       credentials: 'same-origin',

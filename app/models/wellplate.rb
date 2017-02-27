@@ -3,6 +3,7 @@ class Wellplate < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include Taggable
 
   serialize :description, Hash
 

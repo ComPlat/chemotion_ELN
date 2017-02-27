@@ -1,10 +1,9 @@
 class WellplateSerializer < ActiveModel::Serializer
-  include Labeled
-
   attributes *DetailLevels::Wellplate.new.base_attributes
 
   has_many :wells
   has_one :container
+  has_one :tag
 
   def wells
     object.wells.order("id asc")

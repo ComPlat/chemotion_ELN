@@ -75,3 +75,6 @@ backup/weekly_backup
 
 #mc
 .DS_Store
+
+# vim tags
+tags

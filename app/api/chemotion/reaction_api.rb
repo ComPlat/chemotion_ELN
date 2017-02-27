@@ -75,21 +75,24 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).reactions.includes(collections: :sync_collections_users)
+            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
+              .find(params[:collection_id])
+              .reactions
+              .includes(:tag, collections: :sync_collections_users)
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
         elsif params[:sync_collection_id]
           begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions
-              .includes(collections: :sync_collections_users)
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+              .collection.reactions
+              .includes(:tag, collections: :sync_collections_users)
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
         else
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
-            .includes(collections: :sync_collections_users)
+            .includes(:tag, collections: :sync_collections_users)
         end.order("created_at DESC")
         paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end

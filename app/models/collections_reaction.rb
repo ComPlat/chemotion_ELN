@@ -4,6 +4,8 @@ class CollectionsReaction < ActiveRecord::Base
   belongs_to :reaction
   validate :collection_reaction_id_uniqueness
 
+  include Tagging
+
   def self.move_to_collection(reaction_ids, old_col_id, new_col_id)
     # Get associated: starting_materials, reactants, and product samples
     sample_ids = Reaction.get_associated_samples(reaction_ids)
@@ -23,7 +25,7 @@ class CollectionsReaction < ActiveRecord::Base
     self.where(
       reaction_id: reaction_ids,
       collection_id: collection_id
-    ).delete_all
+    ).destroy_all
   end
 
   # Remove from collection and process associated elements

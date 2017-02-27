@@ -1,7 +1,8 @@
 class DetailLevels::Screen
   def base_attributes
     [
-      :id, :type, :name, :description, :result, :collaborator, :conditions, :requirements, :created_at
+      :id, :type, :name, :description, :result, :collaborator, :conditions, 
+      :requirements, :created_at
     ]
   end
 

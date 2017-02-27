@@ -14,7 +14,6 @@ export default class ElementReactionLabels extends React.Component {
     }
 
     let {element} = props
-    this.reaction_id = this.getReactionId(element)
 
     this.handleOnClick = this.handleOnClick.bind(this)
     this.closeWarning = this.closeWarning.bind(this)
@@ -24,7 +23,6 @@ export default class ElementReactionLabels extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     let {element} = nextProps
-    this.reaction_id = this.getReactionId(element)
   }
 
   componentDidMount() {
@@ -33,16 +31,6 @@ export default class ElementReactionLabels extends React.Component {
 
   componentWillUnmount() {
     ElementStore.unlisten(this.onStoreChange)
-  }
-
-  getReactionId(element) {
-    if (element.reactions_product_samples && element.reactions_product_samples.length > 0) {
-      return element.reactions_product_samples[0].reaction_id
-    }
-
-    if (element.reactions_starting_material_samples && element.reactions_starting_material_samples.length > 0) {
-      return element.reactions_starting_material_samples[0].reaction_id
-    }
   }
 
   onStoreChange(state) {
@@ -61,19 +49,19 @@ export default class ElementReactionLabels extends React.Component {
   handleOnClick(e) {
     let {element} = this.props
 
-    ElementActions.tryFetchReactionById(this.reaction_id)
+    ElementActions.tryFetchReactionById(element.tag.taggable_data.reaction_id)
     this.setState({clicked: true})
     e.stopPropagation()
   }
 
   render() {
     let {element} = this.props
-    let {showWarning, clicked} = this.state
 
-    // If the Sample has no role in any reaction. Don't display the icon
-    if ((!element.reactions_product_samples || element.reactions_product_samples.length == 0) &&
-       (!element.reactions_starting_material_samples || element.reactions_starting_material_samples.length == 0))
+    if (!element.tag || !element.tag.taggable_data ||
+        !element.tag.taggable_data.reaction_id)
       return (<span></span>)
+
+    let {showWarning, clicked} = this.state
 
     let reaction = <i className='icon-reaction'/>
     let labelStyle = {

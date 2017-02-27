@@ -5,7 +5,7 @@ module SampleLevelListSerializable
     has_one :molecule, serializer: MoleculeListSerializer
     has_many :residues, serializer: ResidueSerializer
 
-    [:reactions_product_samples, :reactions_starting_material_samples, :elemental_compositions].each do |attr|
+    [:elemental_compositions].each do |attr|
       define_method(attr) do
         []
       end
