@@ -19,6 +19,7 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   enable_extension "hstore"
 
   create_table "analyses_experiments", force: :cascade do |t|
+    t.integer  "sample_id"
     t.integer  "holder_id"
     t.string   "status"
     t.integer  "devices_analysis_id", null: false
@@ -135,7 +136,6 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   end
 
   create_table "devices_analyses", force: :cascade do |t|
-    t.integer  "sample_id",     null: false
     t.integer  "device_id",     null: false
     t.string   "analysis_type"
     t.datetime "created_at",    null: false
