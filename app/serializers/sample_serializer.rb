@@ -1,12 +1,9 @@
 class SampleSerializer < ActiveModel::Serializer
-  include Labeled
-
   attributes *DetailLevels::Sample.new.base_attributes
 
   has_one :molecule
   has_one :container, :serializer => ContainerSerializer
-  has_one :reactions_product_samples
-  has_one :reactions_starting_material_samples
+  has_one :tag
 
   has_many :residues
   has_many :elemental_compositions
@@ -39,45 +36,6 @@ class SampleSerializer < ActiveModel::Serializer
 
   def parent_id
     object.parent.id if object.parent
-  end
-
-  def analysis_kinds
-    analyses = object.analyses
-    analyses.inject({confirmed: {}, unconfirmed: {}, other: {}, count:{confirmed: 0, unconfirmed:0, other: 0}}) do |result, analysis|
-      ext_metadata = analysis["extended_metadata"]
-      if ext_metadata["status"] == "Confirmed"
-        if result[:confirmed][ext_metadata["kind"]] then
-          result[:confirmed][ext_metadata["kind"]][:count] += 1
-        else
-          result[:confirmed][ext_metadata["kind"]] = {
-            label: ext_metadata["kind"],
-            count: 1
-          }
-        end
-        result[:count][:confirmed] +=1
-      elsif ext_metadata["status"] == "Unconfirmed"
-        if result[:unconfirmed][ext_metadata["kind"]] then
-          result[:unconfirmed][ext_metadata["kind"]][:count] += 1
-        else
-          result[:unconfirmed][ext_metadata["kind"]] = {
-            label: ext_metadata["kind"],
-            count: 1
-          }
-        end
-        result[:count][:unconfirmed] +=1
-      else
-        if result[:other][ext_metadata["kind"]] then
-          result[:other][ext_metadata["kind"]][:count] += 1
-        else
-          result[:other][ext_metadata["kind"]] = {
-            label: ext_metadata["kind"],
-            count: 1
-          }
-        end
-        result[:count][:other] +=1
-      end
-      result
-    end
   end
 
   class Level0 < ActiveModel::Serializer

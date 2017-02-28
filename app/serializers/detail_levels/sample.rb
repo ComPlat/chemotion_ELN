@@ -5,8 +5,9 @@ class DetailLevels::Sample
       :target_amount_value, :target_amount_unit, :real_amount_value,
       :real_amount_unit, :molfile, :purity, :solvent, :impurities, :location,
       :is_top_secret, :is_restricted, :external_label, :analyses,
-      :analysis_kinds, :children_count, :parent_id, :imported_readout, :_contains_residues,
-      :sample_svg_file, :density, :boiling_point, :melting_point, :reaction_description, :container
+      :children_count, :parent_id, :imported_readout,
+      :_contains_residues, :sample_svg_file, :density, :boiling_point,
+      :melting_point, :reaction_description, :container
     ]
   end
 
@@ -21,22 +22,21 @@ class DetailLevels::Sample
   end
 
   def level2_attributes
-    level1_attributes + [:analyses,:container]
+    level1_attributes + [:analyses, :container]
   end
 
   def level3_attributes
     level2_attributes
   end
 
+  # We dont need these attributes for Element List, take them out
   def list_removed_attributes
     [
-      :description,
+      :description, :container, :analyses, :elemental_compositions,
       :target_amount_value, :target_amount_unit, :real_amount_value,
       :real_amount_unit, :purity, :solvent, :impurities, :location,
-      :analyses,
-      :analysis_kinds, :children_count, :parent_id, :imported_readout,
-      :boiling_point, :melting_point, :reaction_description, :container,
-      :collection_labels
+      :children_count, :parent_id, :imported_readout,
+      :boiling_point, :melting_point, :reaction_description
     ]
   end
 end

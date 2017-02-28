@@ -186,6 +186,7 @@ export default class ElementsTable extends React.Component {
 
   renderEntries() {
     const {elements, ui, currentElement, sampleCollapseAll, moleculeSort} = this.state
+
     const {overview, showReport, type} = this.props
     if(type == 'sample') {
       return (

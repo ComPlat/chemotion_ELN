@@ -1,10 +1,9 @@
 class ScreenSerializer < ActiveModel::Serializer
-  include Labeled
-
   attributes *DetailLevels::Screen.new.base_attributes
 
   has_many :wellplates
   has_one :container
+  has_one :tag
   
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")

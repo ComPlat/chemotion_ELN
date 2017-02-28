@@ -4,6 +4,8 @@ class CollectionsWellplate < ActiveRecord::Base
   belongs_to :wellplate
   validate :collection_wellplate_id_uniqueness
 
+  include Tagging
+
   def self.move_to_collection(wellplate_ids, old_col_id, new_col_id)
     # Get associated samples
     sample_ids = Well.get_samples_in_wellplates(wellplate_ids)
@@ -23,7 +25,7 @@ class CollectionsWellplate < ActiveRecord::Base
     self.where(
       wellplate_id: wellplate_ids,
       collection_id: collection_id
-    ).delete_all
+    ).destroy_all
   end
 
   # Remove from collection and process associated elements

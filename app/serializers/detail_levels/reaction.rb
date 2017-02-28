@@ -1,9 +1,12 @@
 class DetailLevels::Reaction
   def base_attributes
     [
-      :id, :type, :name, :created_at, :updated_at, :description, :timestamp_start, :timestamp_stop,
-      :observation, :purification, :dangerous_products, :solvent, :tlc_solvents, :tlc_description,
-      :rf_value, :temperature, :status, :reaction_svg_file, :analysis_kinds, :short_label, :container
+      :id, :type, :name, :created_at, :updated_at, :description,
+      :timestamp_start, :timestamp_stop,
+      :observation, :purification, :dangerous_products, :solvent,
+      :tlc_solvents, :tlc_description,
+      :rf_value, :temperature, :status, :reaction_svg_file,
+      :short_label, :container
     ]
   end
 
@@ -15,10 +18,9 @@ class DetailLevels::Reaction
 
   def list_removed_attributes
     [
-      :description, :timestamp_start, :timestamp_stop,
-      :observation, :purification, :dangerous_products, :solvent, :tlc_solvents, :tlc_description,
-      :rf_value, :temperature, :status, :analysis_kinds, :container,
-      :collection_labels
+      :description, :timestamp_start, :timestamp_stop, :dangerous_products,
+      :observation, :purification, :solvent, :tlc_solvents, :tlc_description,
+      :rf_value, :temperature, :status, :container
     ]
   end
 end

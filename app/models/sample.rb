@@ -4,6 +4,7 @@ class Sample < ActiveRecord::Base
   include PgSearch
   include Collectable
   include UnitConvertable
+  include Taggable
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,

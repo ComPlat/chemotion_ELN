@@ -4,6 +4,8 @@ class CollectionsSample < ActiveRecord::Base
   belongs_to :sample
   validates :collection, :sample, presence: true
 
+  include Tagging
+
   def self.move_to_collection(sample_ids, old_col_id, new_col_id)
     # Delete in collection
     self.delete_in_collection(sample_ids, old_col_id)
@@ -15,7 +17,7 @@ class CollectionsSample < ActiveRecord::Base
     self.where(
       sample_id: sample_ids,
       collection_id: collection_id
-    ).delete_all
+    ).destroy_all
   end
 
   def self.remove_in_collection(sample_ids, collection_id)
