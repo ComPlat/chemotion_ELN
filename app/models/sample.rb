@@ -137,7 +137,7 @@ class Sample < ActiveRecord::Base
   before_create :check_short_label
   after_create :update_counter
 
-  #after_create :create_root_container
+  after_create :create_root_container
 
   def molecule_sum_formular
     self.molecule ? self.molecule.sum_formular : ""
