@@ -30,9 +30,9 @@ module Chemotion
         else
           # All collection of current_user
           Screen.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
-        end.order("created_at DESC")
+        end.includes(collections: :sync_collections_users).order("created_at DESC")
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
       desc "Return serialized screen by id"

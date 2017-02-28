@@ -11,7 +11,7 @@ class ElementListPermissionProxy < ElementPermissionProxy
     when Wellplate
       WellplateListSerializer
     when Screen
-      ScreenSerializer
+      ScreenListSerializer
     when ResearchPlan
       ResearchPlanListSerializer
     end
