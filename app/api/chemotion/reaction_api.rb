@@ -78,7 +78,6 @@ module Chemotion
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
               .find(params[:collection_id])
               .reactions
-              .includes(:tag, collections: :sync_collections_users)
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
@@ -86,14 +85,12 @@ module Chemotion
           begin
             current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
               .collection.reactions
-              .includes(:tag, collections: :sync_collections_users)
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
         else
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
-            .includes(:tag, collections: :sync_collections_users)
-        end.order("created_at DESC")
+        end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
         paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 

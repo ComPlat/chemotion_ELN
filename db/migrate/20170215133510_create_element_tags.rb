@@ -55,7 +55,7 @@ class CreateElementTags < ActiveRecord::Migration
                       .group_by{|x| x["status"]}
         analyses = group.map { |key, val|
           new_val = val.group_by{|x| x["kind"]}.map{|k, v| [k, v.length]}
-          [key.downcase, new_val.to_h]
+          [key.to_s.downcase, new_val.to_h]
         }.to_h
       end
 

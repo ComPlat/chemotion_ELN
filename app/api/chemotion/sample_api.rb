@@ -142,14 +142,12 @@ module Chemotion
           begin
             c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
                 .find(params[:collection_id])
-            
+
             !c.is_shared && (c.shared_by_id != current_user.id) && (own_collection = true)
 
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
                       .find(params[:collection_id])
                       .samples
-                      .includes(:molecule, :residues, :tag => :taggable,
-                                collections: :sync_collections_users)
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
@@ -161,18 +159,14 @@ module Chemotion
 
             c.collection
              .samples
-             .includes(:molecule, :residues, :tag => :taggable,
-                       collections: :sync_collections_users)
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
           own_collection = true
-          Sample.for_user(current_user.id)
-                .includes(:molecule, :residues, :tag => :taggable,
-                          collections: :sync_collections_users).uniq
-        end
+          Sample.for_user(current_user.id).uniq
+        end.includes(:molecule, :residues, tag: :taggable, collections: :sync_collections_users)
 
         scope = scope.uniq.not_reactant.not_solvents
 

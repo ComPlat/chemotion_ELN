@@ -11,4 +11,8 @@ class DetailLevels::Screen
       :id, :type, :is_restricted, :name, :description, :conditions, :requirements
     ]
   end
+
+  def list_removed_attributes
+    []
+  end
 end
