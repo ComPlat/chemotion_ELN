@@ -26,11 +26,11 @@ module Chemotion
             number_of_scans: experiment.number_of_scans, 
             sweep_width: experiment.sweep_width,
             time: experiment.time,
-            sample_id: experiment.sample_id
+            sample_id: experiment.sample_id,
+            devices_sample_id: experiment.devices_sample_id,
           })
           analysis.analyses_experiments << new_experiment
         }
-
 
         device = Device.find(params[:device_id])
         device.devices_analyses << analysis
@@ -72,7 +72,7 @@ module Chemotion
             # update analyses_experiments
             old_experiment_ids = analysis.analyses_experiments.map {|experiment| experiment.id}
             new_experiment_ids = params[:experiments].map {|experiment|
-              experiment = AnalysesExperiment.find_by(id: experiment.analysis.id)
+              analysis_experiment = AnalysesExperiment.find_by(id: experiment.id)
               params = {
                 devices_analysis_id: analysis.id,
                 holder_id: experiment.holder_id,
@@ -84,15 +84,16 @@ module Chemotion
                 number_of_scans: experiment.number_of_scans, 
                 sweep_width: experiment.sweep_width,
                 time: experiment.time,
-                sample_id: experiment.sample_id
+                sample_id: experiment.sample_id,
+                devices_sample_id: experiment.devices_sample_id,
               }
-              if experiment.nil?
-                experiment = AnalysesExperiment.create(params)
-                analysis.analyses_experiments << new_experiment
+              if analysis_experiment.nil?
+                analysis_experiment = AnalysesExperiment.create(params)
+                analysis.analyses_experiments << analysis_experiment
               else
-                analysis.update(params)
+                analysis_experiment.update(params)
               end
-              experiment.id
+              analysis_experiment.id
             }
             to_remove_experiment_ids = old_experiment_ids - new_experiment_ids
             to_remove_experiment_ids.map{|experiment_id| 

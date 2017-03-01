@@ -12,6 +12,7 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
       t.integer :holder_id
       t.string :status
       t.integer :devices_analysis_id, null: false
+      t.integer :devices_sample_id, null: false
       t.string :solvent
       t.string :experiment
       t.boolean :priority

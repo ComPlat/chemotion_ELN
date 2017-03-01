@@ -99,7 +99,18 @@ class ElementActions {
   }
   
   fetchDeviceAnalysisById(analysisId) { 
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAnalysisById(analysisId))
+    return (dispatch) => {
+      DeviceFetcher.fetchAnalysisById(analysisId)
+      .then(analysis => {
+        DeviceFetcher.fetchById(analysis.deviceId)
+        .then(device => {
+          dispatch({analysis, device})
+        })
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage)
+      })
+    }
   }
 
   openDeviceAnalysis(device, type) {
@@ -115,16 +126,28 @@ class ElementActions {
   }
   
   createDeviceAnalysis(deviceId, analysisType) {
-    return (dispatch) => dispatch({deviceId, analysisType})
+    return (dispatch) => {
+      DeviceFetcher.fetchById(deviceId)
+      .then((device) => {
+        dispatch({device, analysisType})
+      })
+      .catch((errorMessage) => {
+        console.log(errorMessage)
+      })
+    }
   }
   
-  generateDeviceAnalysisConfig(analysis) {
+  generateExperimentConfig(experiment) {
     return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateAnalysisConfig(analysis)) 
+      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment)) 
   }
   
   createAnalysisExperiment(analysis) {
     return (dispatch) => dispatch(analysis)
+  }
+  
+  duplicateAnalysisExperiment(analysis, experiment) {
+    return (dispatch) => dispatch({analysis, experiment})
   }
   
   changeAnalysisExperimentProp(analysis, experiment, prop, value) {

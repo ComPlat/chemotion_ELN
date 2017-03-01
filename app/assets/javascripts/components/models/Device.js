@@ -1,5 +1,6 @@
 import Element from './Element';
 import DeviceAnalysis from './DeviceAnalysis';
+import DeviceSample from './DeviceSample';
 
 export default class Device extends Element{
   constructor({id, title, code, types, user_id, samples, devices_analyses}) {
@@ -10,7 +11,7 @@ export default class Device extends Element{
       types,
       user_id,
       type: 'device',
-      samples: samples,
+      samples: samples.map(s => new DeviceSample(s)),
       devicesAnalyses: devices_analyses.map(analysis => new DeviceAnalysis(analysis))
     }
     super(device)
@@ -31,5 +32,16 @@ export default class Device extends Element{
       title: "New Device",
       devices_analyses: []
     })
+  }
+  
+  serialize() {
+    const serialized = super.serialize({ 
+      id: this.id,
+      code: this.code,
+      types: this.types,
+      samples: this.samples.map(s => s.serialize()),
+      title: this.title,
+    })
+    return serialized
   }
 }

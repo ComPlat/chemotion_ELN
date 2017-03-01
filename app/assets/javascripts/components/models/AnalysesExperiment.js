@@ -1,9 +1,10 @@
 import Element from './Element'
+import uuid from 'uuid';
 
 export default class AnalysesExperiment extends Element{
   constructor({
     id, devices_analysis_id, holder_id, status, solvent, experiment, priority, on_day,
-    number_of_scans, sweep_width, time, analysis_barcode, sample_short_label, sample_id
+    number_of_scans, sweep_width, time, analysis_barcode, sample_short_label, sample_id, devices_sample_id
   }) {
     const analysis = {
       id: id,
@@ -20,13 +21,16 @@ export default class AnalysesExperiment extends Element{
       analysisBarcode: analysis_barcode,
       sampleShortLabel: sample_short_label,
       sampleId: sample_id,
+      deviceSampleId: devices_sample_id
     }
     super(analysis)
   }
 
-  static buildEmpty(deviceAnalysisId) {
+  static buildEmpty(sampleId, sampleShortLabel, deviceSampleId) {
     return new AnalysesExperiment({
-      devices_analysis_id: deviceAnalysisId,
+      id: uuid.v1(),
+      devices_sample_id: deviceSampleId,
+      devices_analysis_id: null,
       holder_id: null,
       status: "",
       solvent: "",
@@ -36,9 +40,9 @@ export default class AnalysesExperiment extends Element{
       number_of_scans: 0,
       sweep_width: 0,
       time: "",
-      analysisBarcode: "",
-      sampleShortLabel: "",
-      sample_id: null,
+      analysis_barcode: "",
+      sample_short_label: sampleShortLabel,
+      sample_id: sampleId,
     })
   }
 
@@ -54,7 +58,8 @@ export default class AnalysesExperiment extends Element{
       number_of_scans: parseInt(this.numberOfScans, 10),
       sweep_width: parseInt(this.sweepWidth, 10),
       time: this.time,
-      sample_id: this.sampleId
+      sample_id: this.sampleId,
+      devices_sample_id: this.deviceSampleId,
     })
     return serialized
   }
@@ -68,11 +73,14 @@ export default class AnalysesExperiment extends Element{
         'PARAMETERS': `ns, ${this.numberOfScans}, sw, ${this.sweepWidth}`
       }
       const conditionedNight = !this.onDay ? {'NIGHT': null} : {}
-      const conditionedPriority = this.checkbox ? {'PRIORITY': null} : {}
+      const conditionedPriority = this.priority ? {'PRIORITY': null} : {}
       return {
+        sample_id: this.sampleId,
+        data: [{
         ...configMap,
         ...conditionedNight,
         ...conditionedPriority
+        }]
       }
   }
 }

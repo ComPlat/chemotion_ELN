@@ -4,7 +4,13 @@ class DeviceSerializer < ActiveModel::Serializer
   def samples
     object.devices_samples.map {|devices_sample|
       sample = Sample.find(devices_sample.sample_id)
-      {id: sample.id, short_label: sample.short_label, types: devices_sample.types}
+      {
+        id: devices_sample.id,
+        device_id: object.id,
+        sample_id: sample.id,
+        short_label: sample.short_label,
+        types: devices_sample.types
+      }
     }
   end
 

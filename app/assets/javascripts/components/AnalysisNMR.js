@@ -119,7 +119,7 @@ const Experiment = ({analysis, experiment}) => {
       </Col>
       <Col sm={1}>
         <FormControl.Static>
-          {`${analysis.sampleId}`}
+          {experiment.sampleShortLabel}
         </FormControl.Static>
       </Col>
       <Col sm={1}>
@@ -190,21 +190,21 @@ const Experiment = ({analysis, experiment}) => {
           <Button 
             bsSize="xsmall"
             bsStyle="danger"
-            onClick={(e) => handleRemoveDevice(e)}
+            onClick={(e) => ElementActions.deleteAnalysisExperiment(analysis, experiment)}
           >
             <i className="fa fa-trash"></i>
           </Button>
           <Button 
             bsSize="xsmall"
             bsStyle="info"
-            onClick={(e) => handleRemoveDevice(e)}
+            onClick={(e) => ElementActions.duplicateAnalysisExperiment(analysis, experiment)}
           >
             Add
           </Button>
           <Button 
             bsSize="xsmall"
             bsStyle="success"
-            onClick={(e) => handleRemoveDevice(e)}
+            onClick={(e) => ElementActions.generateExperimentConfig(experiment)}
           >
             Submit
           </Button>

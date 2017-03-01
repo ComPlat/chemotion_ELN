@@ -75,7 +75,7 @@ const DeviceSample = ({sample, device}) => {
     >
       <Button
         bsStyle={"danger"}
-        onClick={() => ElementActions.removeSampleFromDevice(id, device)}
+        onClick={() => ElementActions.removeSampleFromDevice(sample, device)}
       >
         <i className="fa fa-trash-o"></i>
       </Button>
@@ -88,7 +88,7 @@ const DeviceSample = ({sample, device}) => {
           flex: 1
         }}
       >
-        {sample.short_label}
+        {sample.shortLabel}
       </div>
       <TypeButtons
         device={device}

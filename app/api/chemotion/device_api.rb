@@ -12,7 +12,7 @@ module Chemotion
         attributes = declared(params, include_missing: false)
         device = Device.new(attributes.except!(:samples))
         params[:samples].map {|s|
-          sample = DevicesSample.create({sample_id: s.id, device_id: device.id, types: s.types})
+          sample = DevicesSample.create({sample_id: s.sample_id, device_id: device.id, types: s.types})
           device.devices_samples << sample
         }
         device.save!
@@ -95,21 +95,29 @@ module Chemotion
             error!("404 Device with supplied id not found", 404)
           else
             # update devices_samples
-            old_sample_ids = device.devices_samples.map {|devices_sample| devices_sample.sample_id}
+            old_sample_ids = device.devices_samples.map {|devices_sample| devices_sample.id}
             new_sample_ids = params[:samples].map {|s|
-              sample = DevicesSample.find_by(sample_id: s.id)
-              params = {sample_id: s.id, device_id: device.id, types: s.types}
+              sample = DevicesSample.find_by(id: s.id)
+              params = {sample_id: s.sample_id, device_id: device.id, types: s.types}
               if sample.nil?
-                sample = DevicesSample.create(params)
+                sample = DevicesSample.create!(params)
                 device.devices_samples << sample
               else
-                sample.update(params)
+                # were types deleted?
+                deleted_types = sample.types - s.types
+                deleted_types.map {|type|
+                  analysis = device.devices_analyses.find_by(analysis_type: type)
+                  experiment = analysis.analyses_experiments.find_by(devices_sample_id: s.id)
+                  experiment.destroy!
+                }
+                
+                sample.update!(params)
               end
-              sample.sample_id
+              sample.id
             }
             to_remove_sample_ids = old_sample_ids - new_sample_ids
             to_remove_sample_ids.map{|sample_id| 
-              device.devices_samples.find_by(sample_id: sample_id).destroy
+              device.devices_samples.find_by(id: sample_id).destroy
             }
 
             device.update(attributes.except!(:samples))

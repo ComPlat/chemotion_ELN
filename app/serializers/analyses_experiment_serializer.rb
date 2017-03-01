@@ -1,5 +1,5 @@
 class AnalysesExperimentSerializer < ActiveModel::Serializer
-  attributes :id, :devices_analysis_id, :on_day, :holder_id, :status, :solvent, :experiment, :priority, :number_of_scans, :sweep_width, :time, :analysis_barcode, :sample_short_label, :sample_id
+  attributes :id, :devices_analysis_id, :on_day, :holder_id, :status, :solvent, :experiment, :priority, :number_of_scans, :sweep_width, :time, :analysis_barcode, :sample_short_label, :sample_id, :devices_sample_id
   
   def analysis_barcode
     analysis = DevicesAnalysis.find(object.devices_analysis_id)
