@@ -14,7 +14,8 @@ module Taggable
 
     et.taggable_id = self.id
     et.taggable_type = self.class
-    
+
+    # Populate Collections tag
     collections = self.collections.where.not(label: 'All')
     collection_labels = collections.map { |c|
       collection_id =
@@ -30,6 +31,17 @@ module Taggable
         is_synchronized: c.is_synchronized
       }
     }.uniq
+
+    # Populate PubChem tag
+    pubchem_cid = nil
+    if self.class.to_s === 'Molecule' && !self.tag && 
+       self.inchikey && !self.inchikey.to_s.empty?
+      pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([self.inchikey]))
+      pubchem = pubchem_json["PropertyTable"]["Properties"].first
+      if pubchem["CID"] && Float(pubchem["CID"])
+        pubchem_cid = pubchem["CID"]
+      end
+    end
 
     # Populate Sample - Reaction tag
     reaction_id = nil
@@ -62,8 +74,10 @@ module Taggable
     et.taggable_data = {
       collection_labels: collection_labels,
       reaction_id: reaction_id,
-      analyses: analyses
+      analyses: analyses,
+      pubchem_cid: nil
     }
+    et.taggable_data.delete_if { |key, value| value.blank? }
 
     et.save!
   end

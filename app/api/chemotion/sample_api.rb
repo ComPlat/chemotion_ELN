@@ -166,7 +166,7 @@ module Chemotion
           # All collection
           own_collection = true
           Sample.for_user(current_user.id).uniq
-        end.includes(:molecule, :residues, tag: :taggable, collections: :sync_collections_users)
+        end.includes(:residues, collections: :sync_collections_users, molecule: :tag, tag: :taggable)
 
         scope = scope.uniq.not_reactant.not_solvents
 

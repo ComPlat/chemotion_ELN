@@ -24,6 +24,16 @@ module PubChem
     HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/record/JSON', options)
   end
 
+  def self.get_cids_from_inchikeys(inchikeys)
+    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
+      faraday.request  :url_encoded             # form-encode POST params
+      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
+    end
+
+    conn.post('/rest/pug/compound/inchikey/property/InChIKey/JSON',
+              {"inchikey"=>"#{inchikeys.join(',')}"}).body
+  end
+
   def self.get_records_from_inchikeys(inchikeys)
     conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
       faraday.request  :url_encoded             # form-encode POST params

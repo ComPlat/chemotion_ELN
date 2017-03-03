@@ -28,6 +28,13 @@ RSpec.configure do |config|
         :body => File.read(Rails.root+'spec/fixtures/body_XLYOFNOQVPJJNP-UHFFFAOYSA-N.json'),
         :headers => {"Content-Type"=> "application/json"}
       )
+    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/YJTKZCDBKVTVBY-UHFFFAOYSA-N/record/JSON").
+      with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(
+        :status => 200,
+        :body => File.read(Rails.root+'spec/fixtures/body_YJTKZCDBKVTVBY-UHFFFAOYSA-N.json'),
+        :headers => {"Content-Type"=> "application/json"}
+      )
     stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/TXWRERCHRDBNLG-UHFFFAOYSA-N/record/JSON").
       with(:headers => {'Content-Type'=>'text/json'}).
       to_return(

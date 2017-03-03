@@ -210,7 +210,18 @@ describe Chemotion::SampleAPI do
           id: s.id,
           name: s.name,
           type: 'sample',
-          #collection_labels: [{"name" => 'C1', "is_shared" => false, "id"=>c.id}]
+          tag: include(
+            "taggable_data" => include(
+              "collection_labels" => include({
+                "name" => 'C1',
+                "is_shared" => false,
+                "id"=>c.id,
+                "user_id" => user.id,
+                "shared_by_id" => c.shared_by_id,
+                "is_synchronized" => c.is_synchronized
+              })
+            )
+          )
         )
       end
     end
@@ -231,8 +242,7 @@ describe Chemotion::SampleAPI do
             density: 0.5,
             boiling_point: 100,
             melting_point: 200,
-          #  molecule: FactoryGirl.create(:molecule),
-            molfile: '',
+            molfile: File.read(Rails.root + "spec/fixtures/test_2.mol"),
             is_top_secret: false,
             container: {
               attachments: [],

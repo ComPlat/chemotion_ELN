@@ -1,6 +1,8 @@
 class Molecule < ActiveRecord::Base
   acts_as_paranoid
+
   include Collectable
+  include Taggable
 
   has_many :samples
   has_many :collections, through: :samples

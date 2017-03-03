@@ -1,8 +1,6 @@
-
-
 FactoryGirl.define do
   factory :molecule do
-    inchikey          "inchikey"
+    sequence(:inchikey) { |i| "XLYOFNOQVPJJNP-UHFFFAOYSA-#{i}" }
     inchistring       "inchistring"
     density           0.12345
     molecular_weight  0.54321

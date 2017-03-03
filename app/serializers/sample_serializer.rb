@@ -38,6 +38,14 @@ class SampleSerializer < ActiveModel::Serializer
     object.parent.id if object.parent
   end
 
+  def pubchem_tag
+    unless molecule
+      nil
+    else
+      molecule.tag ? molecule.tag.taggable_data : nil
+    end
+  end
+
   class Level0 < ActiveModel::Serializer
     include SampleLevelSerializable
     define_restricted_methods_for_level(0)
