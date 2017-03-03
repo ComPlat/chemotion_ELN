@@ -162,8 +162,8 @@ export default class ElementsTableSampleEntries extends Component {
 
     let tdExtraContents = []
 
-    for (let j=0;j < XMolHeadCont.MolHeadContCount;j++){
-      let NoName = XMolHeadCont["MolHeadCont"+j];
+    for (let j=0;j < XMolHeadCont.count;j++){
+      let NoName = XMolHeadCont["content"+j];
       tdExtraContents.push(<NoName element={sample} key={"exMolHead"+j}/>);
     }
     let dragItem;

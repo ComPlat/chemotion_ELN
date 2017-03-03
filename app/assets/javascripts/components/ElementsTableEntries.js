@@ -145,8 +145,8 @@ export default class ElementsTableEntries extends Component {
       cursor: 'pointer'
     };
     let tdExtraContents = [];
-    for (let j=0;j < XTdCont.TdContCount;j++){
-      let NoName = XTdCont["TdCont"+j];
+    for (let j=0;j < XTdCont.count;j++){
+      let NoName = XTdCont["content"+j];
       tdExtraContents.push(<NoName element={element}/>);
     }
 
