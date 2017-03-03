@@ -61,14 +61,14 @@ class ElementStore {
       currentElement: null,
       elementWarning: false,
       moleculeSort: false,
-      ...extraThing("state",Xstate)
+      ...extraThing(Xstate)
     };
 
 
-    for (let i = 0; i < Xlisteners.listenersCount; i++){
-      Object.keys(Xlisteners["listeners"+i]).map((k) => {
-        this.bindAction(Xlisteners["listeners" + i][k],
-                        Xhandlers["handlers" + i][k].bind(this))
+    for (let i = 0; i < Xlisteners.count; i++){
+      Object.keys(Xlisteners["content"+i]).map((k) => {
+        this.bindAction(Xlisteners["content" + i][k],
+                        Xhandlers["content" + i][k].bind(this))
       });
     }
 

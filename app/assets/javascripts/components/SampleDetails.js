@@ -18,8 +18,7 @@ import ElementReactionLabels from './ElementReactionLabels';
 import SampleDetailsContainers from './SampleDetailsContainers';
 
 import XLabels from "./extra/SampleDetailsXLabels";
-import XTab from "./extra/SampleDetailsXTab";
-import XTabName from "./extra/SampleDetailsXTabName";
+import XTabs from "./extra/SampleDetailsXTabs";
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
@@ -222,7 +221,7 @@ export default class SampleDetails extends React.Component {
           <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
           <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
-          <PubchemLabels element={sample} /> 
+          <PubchemLabels element={sample} />
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
       </div>
@@ -427,11 +426,11 @@ export default class SampleDetails extends React.Component {
 
   extraTab(ind){
     let sample = this.state.sample || {}
-    let num = ind - 4 ;
-    let NoName =  XTab["Tab"+num];
-    let TabName = XTabName["TabName"+num];
+    let num = ind - 3 ;
+    let NoName =  XTabs["content"+num];
+    let Title = XTabs["title"+num];
     return(
-       <Tab eventKey={ind} key={ind} title={TabName} >
+       <Tab eventKey={ind} key={ind} title={Title} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  sample={sample}/>
          </ListGroupItem>
@@ -440,8 +439,8 @@ export default class SampleDetails extends React.Component {
   }
   extraLabels(){
     let labels = [];
-    for (let j=0;j < XLabels.LabelsCount;j++){
-      labels.push(XLabels["Labels"+j])
+    for (let j=0;j < XLabels.count;j++){
+      labels.push(XLabels["content"+j])
     }
     return labels;
   }
@@ -509,8 +508,10 @@ export default class SampleDetails extends React.Component {
                        (i)=>(this.sampleContainerTab(i)),
                        (i)=>(this.sampleImportReadoutTab(i))
                       ];
-    for (let j=0;j < XTab.TabCount;j++){
-      tabContents.push((i)=>this.extraTab(i))
+    for (let j=0;j < XTabs.count;j++){
+      if (XTabs['on'+j](sample)){
+        tabContents.push((i)=>this.extraTab(i))
+      }
     }
 
     return (

@@ -8,7 +8,7 @@ import rXr from './extra/routesXroutes';
 
 let allRoutes = (r)=>{
   let rts ={...r};
-  for (let i=0;i<rXr.routesCount;i++){rts={...rts,...rXr['routes'+i]} }
+  for (let i=0;i<rXr.count;i++){rts={...rts,...rXr['content'+i]} }
   return rts;
 }
 

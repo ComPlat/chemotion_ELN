@@ -35,7 +35,9 @@ module Chemotion
     # Chemotion Plugin configuration
 
     # list of registered plugins (from the plugins group of the Gemfile):
-    PLUGS = Bundler.load.current_dependencies.select{  |dep|  dep.groups.include?(:plugins)}.map(&:name)
+    PLUGS = Bundler.load.current_dependencies.select do |dep|
+      dep.groups.include?(:plugins)
+    end.map(&:name)
 
     config.before_configuration do
 
@@ -49,38 +51,58 @@ module Chemotion
         `ln -s #{node_modules_dir} #{plugin_path}` # unless File.exist?(File.join(plugin_path,"node_modules"))
       end
 
-   # Extra module import/export mapping for each registered plugin
-      module_config =YAML.load(File.read(File.join(Rails.root,"config","module_config.yml")))
-      PLUGS.each_with_index do |plugin,i|
-        module_config_file = File.join(Gem.loaded_specs[plugin].full_gem_path,"config","module_config.yml")
-        YAML.load(File.read(module_config_file)).each do |main_comp, extra_comps|
-          if module_config.has_key?(main_comp) #|| module_config.has_key?(main_comp.to_sym)
-            extra_comps.each do |extra_comp, plug_comps|
-              if module_config[main_comp].has_key?(extra_comp)
-                module_config[main_comp][extra_comp][plugin]||=plug_comps
-              end
-            end if extra_comps
-          end
-        end if File.exists?(module_config_file)
-      end
+     # Extra module import/export mapping for each registered plugin
+
       extra_dir = File.join(Rails.root,"app","assets","javascripts","components","extra")
       !File.directory?(extra_dir) && FileUtils.mkdir_p(extra_dir)
 
-      module_config.each do |main_comp, extra_comps|
-        extra_comps.each do |extra_comp, plugins|
+      module_config_json =JSON.parse(File.read(File.join(Rails.root,"config","module_config.json")))
+      PLUGS.each_with_index do |plugin,i|
+        module_config_file_json = File.join(Gem.loaded_specs[plugin].full_gem_path,"config","module_config.json")
+        JSON.parse(File.read(module_config_file_json)).each do |main_comp, extra_comps|
+          if module_config_json.has_key?(main_comp) #|| module_config.has_key?(main_comp.to_sym)
+            extra_comps.each do |extra_comp, plug_comps|
+              if module_config_json[main_comp].has_key?(extra_comp)
+                module_config_json[main_comp][extra_comp][plugin]||= plug_comps
+              end
+            end if extra_comps
+          end
+        end if File.exists?(module_config_file_json)
+
+      end
+
+      module_config_json.each do |jsmodule, hooks|
+        hooks.each do |hook, plugins|
           i = 0
-          x_imp_exp_file = File.join(extra_dir,main_comp.to_s.strip+"X"+extra_comp.to_s.strip+".js")
+          x_imp_exp_file = File.join(extra_dir,jsmodule.to_s.strip+"X"+hook.to_s.strip+".js")
           x_import||=""
           x_export||= "export default {\n"
-
-          plugins.each do |plugin, plug_comps|
-            plug_comps.each do |plug_comp|
-              x_import<<" import %s%i from 'lib%s/%s';\n" %[extra_comp,i,plugin.classify,plug_comp]
-              x_export<<"  %s%i : %s%i,\n" %[extra_comp,i,extra_comp,i]
-              i+=1
+          prototype = plugins["prototype"]
+          if prototype
+            (plugins.keys - ["prototype"]).each do |plugin_name|
+              plugin_modules = plugins[plugin_name]
+              plugin_modules.each do |key, plugin_module|
+                prototype.each do |k,default_value|
+                  if plugin_module[k]
+                    x_import<<"import %s%i from 'lib%s/%s';\n" %[k,i,plugin_name.classify,plugin_module[k]]
+                    x_export<<"  %s%i : %s%i,\n" %[k,i,k,i]
+                  else
+                    x_export<<"  %s%i : %s,\n" %[k,i,default_value]
+                  end
+                end
+                i+=1
+              end
+            end
+          else
+            plugins.each do |plugin_name, plugin_modules|
+              plugin_modules.each do |key,plugin_module|
+                x_import<<"import content%i from 'lib%s/%s';\n" %[i,plugin_name.classify,plugin_module["content"]]
+                x_export<<"  content%i : content%i,\n" %[i,i]
+                i+=1
+              end
             end
           end
-          x_export << "  %sCount : %i,\n}" %[extra_comp,i]
+          x_export << "  count : %i,\n}" %[i]
           File.write(x_imp_exp_file,x_import+x_export)
         end
       end
@@ -105,5 +127,9 @@ module Chemotion
     # The default locale is :en and all translations from config/locales/*.rb,yml are auto loaded.
     # config.i18n.load_path += Dir[Rails.root.join('my', 'locales', '*.{rb,yml}').to_s]
     # config.i18n.default_locale = :de
+
+    private
+
+
   end
 end
