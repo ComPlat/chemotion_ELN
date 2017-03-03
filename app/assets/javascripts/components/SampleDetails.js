@@ -13,6 +13,7 @@ import UIActions from './actions/UIActions';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
+import PubchemLabels from './PubchemLabels';
 import ElementReactionLabels from './ElementReactionLabels';
 import SampleDetailsContainers from './SampleDetailsContainers';
 
@@ -221,6 +222,7 @@ export default class SampleDetails extends React.Component {
           <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
           <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+          <PubchemLabels element={sample} /> 
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
       </div>

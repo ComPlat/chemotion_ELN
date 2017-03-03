@@ -37,7 +37,7 @@ namespace :data do
       # Populate Sample - Analyses tag
       analyses = nil
       if sample.analyses.count > 0
-        group = sample.analyses.map(&:extended_metadata)
+        group = sample.analyses
                       .map {|x| x.extract!("kind", "status") }
                       .group_by{|x| x["status"]}
         analyses = group.map { |key, val|
@@ -52,6 +52,30 @@ namespace :data do
         analyses: analyses
       }
       et.save!
+    end
+
+    Molecule.all.each_slice(50) do |molecules|
+      # Populate Molecule - PubChem tag
+      pubchem_cids = nil
+      iks = molecules.map(&:inchikey)
+      pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys(iks))
+      pubchem_list = pubchem_json["PropertyTable"]["Properties"]
+      molecule_pubchem = pubchem_list.map { |pub|
+        { 
+          id: Molecule.find_by(inchikey: pub["InChIKey"]).id,
+          cid: pub["CID"]
+        }
+      }
+
+      molecule_pubchem.each do |pub|
+        et = ElementTag.new
+        et.taggable_id = pub[:id]
+        et.taggable_type = "Molecule"
+        et.taggable_data = {
+          pubchem_cid: pub[:cid]
+        }
+        et.save!
+      end
     end
 
     Reaction.find_each do |reaction|
@@ -129,6 +153,33 @@ namespace :data do
       et = ElementTag.new
       et.taggable_id = screen.id
       et.taggable_type = "Screen"
+      et.taggable_data = {
+        collection_labels: collection_labels
+      }
+      et.save!
+    end
+
+    ResearchPlan.find_each do |rp|
+      # Populate ResearchPlan - Collection tag
+      collections = rp.collections.where.not(label: 'All')
+      collection_labels = collections.map { |c|
+        collection_id =
+          if c.is_synchronized
+            SyncCollectionsUser.where(collection_id: c.id).first.id
+          else
+            c.id
+          end
+
+        {
+          name: c.label, is_shared: c.is_shared, user_id: c.user_id,
+          id: collection_id, shared_by_id: c.shared_by_id,
+          is_synchronized: c.is_synchronized
+        }
+      }.uniq
+
+      et = ElementTag.new
+      et.taggable_id = rp.id
+      et.taggable_type = "ResearchPlan"
       et.taggable_data = {
         collection_labels: collection_labels
       }

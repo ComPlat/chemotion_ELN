@@ -5,6 +5,7 @@ import SVG from 'react-inlinesvg'
 import ElementCollectionLabels from './ElementCollectionLabels'
 import ElementAnalysesLabels from './ElementAnalysesLabels'
 import ElementReactionLabels from './ElementReactionLabels'
+import PubchemLabels from './PubchemLabels'
 import ArrayUtils from './utils/ArrayUtils'
 import {Tooltip, OverlayTrigger} from 'react-bootstrap'
 import ElementContainer from './ElementContainer'
@@ -159,7 +160,7 @@ export default class ElementsTableSampleEntries extends Component {
     let {molecule} = sample
     let showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'
 
-    let tdExtraContents = [];
+    let tdExtraContents = []
 
     for (let j=0;j < XMolHeadCont.MolHeadContCount;j++){
       let NoName = XMolHeadCont["MolHeadCont"+j];
@@ -184,27 +185,32 @@ export default class ElementsTableSampleEntries extends Component {
       )
     }
 
+    let moleculeToggle = molecule.iupac_name || molecule.inchistring
+    let overlayToggle = (
+      <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>
+    )
+
     return (
-      <tr
-        style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
-        onClick={() => this.handleMoleculeToggle(molecule.iupac_name || molecule.inchistring)}
-      >
+      <tr style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
+          onClick={() => this.handleMoleculeToggle(moleculeToggle)}>
         <td colSpan="2" style={{position: 'relative'}}>
           {svgPreview}
-          <div style={{position: 'absolute', float: 'right', right: '3px'}}>
-            <OverlayTrigger placement="bottom" overlay={<Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>}>
+          <div style={{position: 'absolute', right: '3px', top: '14px'}}>
+            <OverlayTrigger placement="bottom" overlay={overlayToggle}>
               <span style={{fontSize: 15, color: '#337ab7', lineHeight: '10px'}}>
-                <i className={`glyphicon ${showIndicator}`}></i>
+                <i className={"glyphicon " + showIndicator}></i>
               </span>
             </OverlayTrigger>
           </div>
           <div style={{paddingLeft: 5, wordWrap: 'break-word'}}>
             <h4><SampleName sample={sample}/></h4>
           </div>
-
-          {tdExtraContents.map((e)=>{return e;})}
+          <div style={{position: 'absolute', top: '10px', right: '25px', float: 'right'}} >
+            {tdExtraContents.map((e)=>{return e;})}
+            <PubchemLabels element={sample} />
+          </div>
         </td>
-          {this.dragColumn(dragItem)}
+        {this.dragColumn(dragItem)}
       </tr>
     )
   }

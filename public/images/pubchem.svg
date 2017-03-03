@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="247.94049"
+   height="227.10352"
+   viewBox="0 0 69.97432 64.093654"
+   id="svg4933"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="pubchem.svg">
+  <metadata
+     id="metadata4188">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs4190" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2556"
+     inkscape:window-height="1560"
+     id="namedview4188"
+     showgrid="false"
+     inkscape:zoom="3.8126556"
+     inkscape:cx="35.351663"
+     inkscape:cy="85.924263"
+     inkscape:window-x="0"
+     inkscape:window-y="38"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     units="px"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <path
+       d="m 35.029907,2.7707747 c 0,0 32.28265,14.6671993 32.28265,14.6671993 0,0 0,29.3342 0,29.3342 0,0 -32.28265,14.6672 -32.28265,14.6672 0,0 -32.2826602,-14.6672 -32.2826602,-14.6672 0,0 0,-29.3342 0,-29.3342 0,0 32.2826602,-14.6671993 32.2826602,-14.6671993"
+       id="path4442"
+       style="fill:#ffffff;stroke:#336699;stroke-width:5.40899992;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       inkscape:connector-curvature="0" />
+    <path
+       d="m 50.995507,43.502858 c -5.52773,5.9092 -14.80631,8.1866 -23.14771,5.6814 -8.34141,-2.5051 -13.9295,-9.2474 -13.94088,-16.8202 -0.0114,-7.5728 5.55643,-14.3273 13.89028,-16.8508 8.33385,-2.5236 17.61924,-0.2667 23.16471,5.6303"
+       id="path4537"
+       style="fill:none;stroke:#336699;stroke-width:4.0073204;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:none;marker-end:none"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

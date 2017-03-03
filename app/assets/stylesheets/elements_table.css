@@ -109,6 +109,16 @@ th.drag {
   overflow: hidden;
 }
 
+.pubchem-logo {
+  max-height: 22px;
+}
+
+/* .panel-title div:empty:after {
+  content: ".";
+  visibility: hidden;
+} */
+
+
 /*.number-shown-select {
   float: right !important;
   text-align: right;
