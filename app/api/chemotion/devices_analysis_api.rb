@@ -28,6 +28,7 @@ module Chemotion
             time: experiment.time,
             sample_id: experiment.sample_id,
             devices_sample_id: experiment.devices_sample_id,
+            sample_analysis_id: experiment.sample_analysis_id,
           })
           analysis.analyses_experiments << new_experiment
         }
@@ -86,6 +87,7 @@ module Chemotion
                 time: experiment.time,
                 sample_id: experiment.sample_id,
                 devices_sample_id: experiment.devices_sample_id,
+                sample_analysis_id: experiment.sample_analysis_id,
               }
               if analysis_experiment.nil?
                 analysis_experiment = AnalysesExperiment.create(params)

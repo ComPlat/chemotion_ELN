@@ -13,6 +13,7 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
       t.string :status
       t.integer :devices_analysis_id, null: false
       t.integer :devices_sample_id, null: false
+      t.string :sample_analysis_id, null: false
       t.string :solvent
       t.string :experiment
       t.boolean :priority
@@ -23,9 +24,7 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
 
       t.timestamps null: false
     end
-
-    change_table :devices_samples do |t|
-       t.string :types, array: true, default: []
-    end
+    
+    add_column :devices_samples, :types, :string, array: true, default: []
   end
 end

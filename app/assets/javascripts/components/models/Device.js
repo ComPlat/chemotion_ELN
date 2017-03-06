@@ -19,7 +19,7 @@ export default class Device extends Element{
   
   checksum() {
     return super.checksum(
-      ['user_id', 'id', 'is_new', 'isNew', 'isEdited', 'isPendingToSave']
+      ['user_id', 'id', 'is_new', 'isNew', 'isEdited', 'isPendingToSave', 'devicesAnalyses', 'samples']
     )
   }
 

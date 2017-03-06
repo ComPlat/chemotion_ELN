@@ -3,7 +3,7 @@ import uuid from 'uuid';
 
 export default class AnalysesExperiment extends Element{
   constructor({
-    id, devices_analysis_id, holder_id, status, solvent, experiment, priority, on_day,
+    id, devices_analysis_id, holder_id, status, solvent, experiment, priority, on_day, sample_analysis_id,
     number_of_scans, sweep_width, time, analysis_barcode, sample_short_label, sample_id, devices_sample_id
   }) {
     const analysis = {
@@ -21,12 +21,13 @@ export default class AnalysesExperiment extends Element{
       analysisBarcode: analysis_barcode,
       sampleShortLabel: sample_short_label,
       sampleId: sample_id,
-      deviceSampleId: devices_sample_id
+      deviceSampleId: devices_sample_id,
+      sampleAnalysisId: sample_analysis_id,
     }
     super(analysis)
   }
 
-  static buildEmpty(sampleId, sampleShortLabel, deviceSampleId) {
+  static buildEmpty(sampleId, sampleShortLabel, sampleAnalysisId, deviceSampleId) {
     return new AnalysesExperiment({
       id: uuid.v1(),
       devices_sample_id: deviceSampleId,
@@ -43,6 +44,7 @@ export default class AnalysesExperiment extends Element{
       analysis_barcode: "",
       sample_short_label: sampleShortLabel,
       sample_id: sampleId,
+      sample_analysis_id: sampleAnalysisId,
     })
   }
 
@@ -60,6 +62,7 @@ export default class AnalysesExperiment extends Element{
       time: this.time,
       sample_id: this.sampleId,
       devices_sample_id: this.deviceSampleId,
+      sample_analysis_id: this.sampleAnalysisId,
     })
     return serialized
   }

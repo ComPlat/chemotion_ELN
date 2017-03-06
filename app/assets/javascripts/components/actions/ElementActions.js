@@ -82,10 +82,14 @@ class ElementActions {
     return (dispatch) => dispatch(device)
   }
 
-  addSampleToDevice(sample, device) {
-    return (dispatch) => dispatch({sample, device})
+  addSampleToDevice(sample, device, options) {
+    return (dispatch) => dispatch({sample, device, options})
   }
    
+  addSampleWithAnalysisToDevice(sample, analysis, device) {
+    return (dispatch) => dispatch({sample, analysis, device})
+  }
+
   removeSampleFromDevice(sample, device) {
     return (dispatch) => dispatch({sample, device})
   }
@@ -106,9 +110,6 @@ class ElementActions {
         .then(device => {
           dispatch({analysis, device})
         })
-      })
-      .catch((errorMessage) => {
-        console.log(errorMessage)
       })
     }
   }
@@ -131,9 +132,6 @@ class ElementActions {
       .then((device) => {
         dispatch({device, analysisType})
       })
-      .catch((errorMessage) => {
-        console.log(errorMessage)
-      })
     }
   }
   
@@ -141,13 +139,13 @@ class ElementActions {
     return (dispatch) =>
       handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment)) 
   }
-  
-  createAnalysisExperiment(analysis) {
-    return (dispatch) => dispatch(analysis)
-  }
-  
+   
   duplicateAnalysisExperiment(analysis, experiment) {
-    return (dispatch) => dispatch({analysis, experiment})
+    return (dispatch) =>
+      DeviceFetcher.fetchById(analysis.deviceId)
+      .then((device) => {
+        dispatch({device, analysis, experiment})
+      })
   }
   
   changeAnalysisExperimentProp(analysis, experiment, prop, value) {
@@ -155,7 +153,11 @@ class ElementActions {
   }
   
   deleteAnalysisExperiment(analysis, experiment) {
-    return (dispatch) => dispatch({analysis, experiment})
+    return (dispatch) =>
+      DeviceFetcher.fetchById(analysis.deviceId)
+      .then((device) => {
+        dispatch({device, analysis, experiment})
+      })
   }
   
   // -- Search --

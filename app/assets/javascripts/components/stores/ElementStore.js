@@ -17,6 +17,7 @@ import DeviceAnalysis from '../models/DeviceAnalysis'
 import DeviceSample from '../models/DeviceSample';
 import NotificationActions from '../actions/NotificationActions'
 import SamplesFetcher from '../fetchers/SamplesFetcher'
+import DeviceFetcher from '../fetchers/DeviceFetcher'
 
 import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -87,6 +88,7 @@ class ElementStore {
       handleChangeSelectedDeviceId: ElementActions.changeSelectedDeviceId,
       handleSetSelectedDeviceId: ElementActions.setSelectedDeviceId,
       handleAddSampleToDevice: ElementActions.addSampleToDevice,
+      handleAddSampleWithAnalysisToDevice: ElementActions.addSampleWithAnalysisToDevice,
       handleRemoveSampleFromDevice: ElementActions.removeSampleFromDevice,
       handleToggleTypeOfDeviceSample: ElementActions.toggleTypeOfDeviceSample,
       handleChangeDeviceProp: ElementActions.changeDeviceProp,
@@ -96,7 +98,6 @@ class ElementStore {
       handleCreateDeviceAnalysis: ElementActions.createDeviceAnalysis,
       handleChangeAnalysisExperimentProp: ElementActions.changeAnalysisExperimentProp,
       handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
-      handleCreateAnalysisExperiment: ElementActions.createAnalysisExperiment,
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
       handleFetchBasedOnSearchSelection:
@@ -179,17 +180,6 @@ class ElementStore {
     this.state.currentElement = device
   }
   
-  handleFetchDeviceAnalysisById({analysis, device}) {
-    const {experiments} = analysis
-    const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysis.analysisType))
-    const samplesWithoutOld = _.slice(samplesOfAnalysisType, experiments.length)
-    samplesWithoutOld.map(s => {
-      const experiment = AnalysesExperiment.buildEmpty(s.sampleId, s.shortLabel, s.id)
-      analysis.experiments.push(experiment)
-    })
-    this.state.currentElement = analysis
-  }
-
   findDeviceIndexById(deviceId) {
     const {devices} = this.state.elements['devices']
     return devices.findIndex((e) => e.id === deviceId)
@@ -237,6 +227,29 @@ class ElementStore {
     }
   }
 
+  handleAddSampleWithAnalysisToDevice({sample, analysis, device}) {
+    switch (analysis.kind) {
+      case '1H NMR':
+        // add sample to device
+        const deviceSample = DeviceSample.buildEmpty(device.id, {id: sample.id, short_label: sample.short_label})
+        deviceSample.types = ["NMR"]
+        device.samples.push(deviceSample)
+        DeviceFetcher.update(device)
+        .then(device => {
+          const savedDeviceSample = _.last(device.samples)
+          // add sampleAnalysis to experiments 
+          let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === "NMR")
+          if(!deviceAnalysis) {
+            deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, "NMR")
+          }
+          const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id)
+          deviceAnalysis.experiments.push(newExperiment)
+          ElementActions.saveDeviceAnalysis.defer(deviceAnalysis)
+        })
+        break
+    }
+  }
+
   handleToggleTypeOfDeviceSample({device, sample, type}) {
     const sampleKey = device.samples.findIndex(s => s.id === sample.id)
     if (sample.types.includes(type)) {
@@ -252,16 +265,6 @@ class ElementStore {
       case "NMR":
         const {currentCollection, isSync} = UIStore.getState();
         const deviceAnalysis = device.devicesAnalyses.find((a) => a.analysisType === "NMR")
-        //
-        // const hasAnalysisOfTypeNMR =
-        //   sample.analyses.length !== 0 &&
-        //   sample.analyses.findIndex((a) => a.kind === "1H NMR") !== -1
-        // if(!hasAnalysisOfTypeNMR) {
-        //   let analysis = Analysis.buildEmpty()
-        //   analysis.kind = "1H NMR"
-        //   sample.addAnalysis(analysis)
-        //   SamplesFetcher.update(sample)
-        // }
         
         // update Device in case of sample was added by dnd and device was not saved
         device.updateChecksum()
@@ -306,14 +309,60 @@ class ElementStore {
     this.state.elements['devices'].selectedDeviceId = deviceId
   }
 
+  createSampleAnalysis(sampleId, type) {
+    return new Promise((resolve, reject) => {
+      SamplesFetcher.fetchById(sampleId)
+      .then(sample => {
+        let analysis = Analysis.buildEmpty()
+        switch (type) {
+          case 'NMR':
+            analysis.kind = "1H NMR"
+            break
+        }
+        sample.addAnalysis(analysis)
+        SamplesFetcher.update(sample) 
+        resolve(analysis)
+      })
+    })
+  }
+
+  createAnalysisExperiment (deviceSample, deviceAnalysis) {
+    return new Promise((resolve, reject) => {
+      this.createSampleAnalysis(deviceSample.sampleId, deviceAnalysis.analysisType)
+      .then(sampleAnalysis => {
+        const experiment = AnalysesExperiment.buildEmpty(
+          deviceSample.sampleId,
+          deviceSample.shortLabel,
+          sampleAnalysis.id,
+          deviceSample.id
+        )
+        resolve(experiment)
+      })
+    })
+  }
+
   handleCreateDeviceAnalysis({device, analysisType}) {
     const analysis = DeviceAnalysis.buildEmpty(device.id, analysisType)
     const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysisType))
-    samplesOfAnalysisType.map(s => {
-      const experiment = AnalysesExperiment.buildEmpty(s.sampleId, s.shortLabel, s.id)
-      analysis.experiments.push(experiment)
+    const promises = samplesOfAnalysisType.map(s => this.createAnalysisExperiment(s, analysis))
+    Promise.all(promises)
+    .then(experiments => {
+      experiments.map(experiment => analysis.experiments.push(experiment))
+      console.log(analysis)
+      ElementActions.saveDeviceAnalysis(analysis)
     })
-    this.state.currentElement = analysis
+  }
+  
+  handleFetchDeviceAnalysisById({analysis, device}) {
+    const {experiments} = analysis
+    const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysis.analysisType))
+    const samplesWithoutOld = _.slice(samplesOfAnalysisType, experiments.length)
+    const promises = samplesWithoutOld.map(s => this.createAnalysisExperiment(s, analysis))
+    Promise.all(promises)
+    .then(experiments => {
+      experiments.map(experiment => analysis.experiments.push(experiment))
+      ElementActions.saveDeviceAnalysis(analysis)
+    })
   }
 
   handleSaveDeviceAnalysis(analysis) {
@@ -326,22 +375,13 @@ class ElementStore {
     )
   }
   
-  handleCreateAnalysisExperiment(analysis) {
-    const experiment = AnalysesExperiment.buildEmpty(analysis.id)
-    analysis.experiments.push(experiment)
-    analysis.activeAccordionExperiment = analysis.experiments.length - 1
-    this.state.currentElement = analysis
-  }
-
   handleChangeAnalysisExperimentProp({analysis, experiment, prop, value}) {
     const experimentKey = analysis.experiments.findIndex((e) => e.id === experiment.id)
     analysis.experiments[experimentKey][prop] = value
     this.state.currentElement = analysis
   }
 
-  handleDeleteAnalysisExperiment({analysis, experiment}) {
-    const {devices} = this.state.elements['devices']
-    const device = devices.find((e) => e.id === analysis.deviceId)
+  handleDeleteAnalysisExperiment({device, analysis, experiment}) {
     const sample = device.samples.find(s => s.id === experiment.deviceSampleId)
     const sampleKey = device.samples.findIndex(s => s.id === experiment.deviceSampleId)
     device.samples[sampleKey].types = sample.types.filter(t => t !== analysis.analysisType) 
@@ -349,11 +389,9 @@ class ElementStore {
     ElementActions.fetchDeviceAnalysisById.defer(analysis.id)
   }
 
-  handleDuplicateAnalysisExperiment({analysis, experiment}) {
-    const {devices} = this.state.elements['devices']
-    const device = devices.find((e) => e.id === analysis.deviceId)
+  handleDuplicateAnalysisExperiment({device, analysis, experiment}) {
     const sample = device.samples.find(s => s.id === experiment.deviceSampleId)
-    const newSample = DeviceSample.buildEmpty(sample.deviceId, {id: sample.sampleId, short_label: sample.shortLabel})
+    const newSample = DeviceSample.buildEmpty(analysis.deviceId, {id: sample.sampleId, short_label: sample.shortLabel})
     newSample.types = [analysis.analysisType]
     device.samples.push(newSample)
     ElementActions.saveDevice(device)

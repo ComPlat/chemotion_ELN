@@ -24,6 +24,7 @@ ActiveRecord::Schema.define(version: 20170209094545) do
     t.string   "status"
     t.integer  "devices_analysis_id", null: false
     t.integer  "devices_sample_id",   null: false
+    t.string   "sample_analysis_id",  null: false
     t.string   "solvent"
     t.string   "experiment"
     t.boolean  "priority"
