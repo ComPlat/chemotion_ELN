@@ -65,9 +65,8 @@ export default class Analysis extends Component {
               options={kindOptions}
               value={analysis.kind}
               disabled={readOnly}
-              onChange={(event, selectedOptions) => {
-                const values = selectedOptions.map(o => o.value);
-                const wrappedEvent = {target: {value: values[0]}};
+              onChange={(event) => {
+                const wrappedEvent = {target: {value: event.value}};
                 this.handleInputChange('kind', wrappedEvent)
               }}
               />
@@ -82,9 +81,8 @@ export default class Analysis extends Component {
               options={statusOptions}
               value={analysis.status}
               disabled={readOnly}
-              onChange={(event, selectedOptions) => {
-                const values = selectedOptions.map(o => o.value);
-                const wrappedEvent = {target: {value: values[0]}};
+              onChange={(event) => {
+                const wrappedEvent = {target: {value: event.value}};
                 this.handleInputChange('status', wrappedEvent)
               }}
             />

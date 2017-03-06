@@ -48,12 +48,12 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
         </MenuItem>
         <MenuItem divider />
         {devices.length > 0 
-          ? devices.map((device) => {
+          ? devices.map((device, key) => {
               return (
                 <MenuItem
                   onSelect={() => ElementActions.changeSelectedDeviceId(device)}
                   className={device.id === selectedDeviceId ? "selected" : ""}
-                  key={device.id}
+                  key={key}
                 >
                   {device.title !== "" ? device.title : device.code}
                 </MenuItem>

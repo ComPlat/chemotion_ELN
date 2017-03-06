@@ -19,9 +19,12 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   enable_extension "hstore"
 
   create_table "analyses_experiments", force: :cascade do |t|
+    t.integer  "sample_id"
     t.integer  "holder_id"
     t.string   "status"
     t.integer  "devices_analysis_id", null: false
+    t.integer  "devices_sample_id",   null: false
+    t.string   "sample_analysis_id",  null: false
     t.string   "solvent"
     t.string   "experiment"
     t.boolean  "priority"
@@ -135,7 +138,6 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   end
 
   create_table "devices_analyses", force: :cascade do |t|
-    t.integer  "sample_id",     null: false
     t.integer  "device_id",     null: false
     t.string   "analysis_type"
     t.datetime "created_at",    null: false
@@ -143,8 +145,9 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   end
 
   create_table "devices_samples", force: :cascade do |t|
-    t.integer "device_id", null: false
-    t.integer "sample_id", null: false
+    t.integer "device_id",              null: false
+    t.integer "sample_id",              null: false
+    t.string  "types",     default: [],              array: true
   end
 
   add_index "devices_samples", ["device_id"], name: "index_devices_samples_on_device_id", using: :btree

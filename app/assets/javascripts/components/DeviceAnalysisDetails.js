@@ -30,7 +30,7 @@ export default DeviceAnalysisDetails
 const Header = ({analysis, closeDetails, toggleFullScreen}) => {
   return (
     <div>
-      {`${analysis.analysisType} Analysis: ${analysis.title}`}
+      {analysis.title}
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="closeReaction">Close</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"

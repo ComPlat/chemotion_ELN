@@ -86,8 +86,16 @@ class ElementActions {
     return (dispatch) => dispatch({sample, device, options})
   }
    
+  addSampleWithAnalysisToDevice(sample, analysis, device) {
+    return (dispatch) => dispatch({sample, analysis, device})
+  }
+
   removeSampleFromDevice(sample, device) {
     return (dispatch) => dispatch({sample, device})
+  }
+
+  toggleTypeOfDeviceSample(device, sample, type) {
+    return (dispatch) => dispatch({device, sample, type})
   }
 
   changeDeviceProp(device, prop, value) {
@@ -95,11 +103,19 @@ class ElementActions {
   }
   
   fetchDeviceAnalysisById(analysisId) { 
-    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAnalysisById(analysisId))
+    return (dispatch) => {
+      DeviceFetcher.fetchAnalysisById(analysisId)
+      .then(analysis => {
+        DeviceFetcher.fetchById(analysis.deviceId)
+        .then(device => {
+          dispatch({analysis, device})
+        })
+      })
+    }
   }
 
-  openDeviceAnalysis(device, sample, type) {
-    return (dispatch) => dispatch({device, sample, type})
+  openDeviceAnalysis(device, type) {
+    return (dispatch) => dispatch({device, type})
   }
  
   saveDeviceAnalysis(analysis) {
@@ -110,17 +126,26 @@ class ElementActions {
     }
   }
   
-  createDeviceAnalysis(deviceId, sampleId, analysisType) {
-    return (dispatch) => dispatch({deviceId, sampleId, analysisType})
+  createDeviceAnalysis(deviceId, analysisType) {
+    return (dispatch) => {
+      DeviceFetcher.fetchById(deviceId)
+      .then((device) => {
+        dispatch({device, analysisType})
+      })
+    }
   }
   
-  generateDeviceAnalysisConfig(analysis) {
+  generateExperimentConfig(experiment) {
     return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateAnalysisConfig(analysis)) 
+      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment)) 
   }
-  
-  createAnalysisExperiment(analysis) {
-    return (dispatch) => dispatch(analysis)
+   
+  duplicateAnalysisExperiment(analysis, experiment) {
+    return (dispatch) =>
+      DeviceFetcher.fetchById(analysis.deviceId)
+      .then((device) => {
+        dispatch({device, analysis, experiment})
+      })
   }
   
   changeAnalysisExperimentProp(analysis, experiment, prop, value) {
@@ -128,13 +153,13 @@ class ElementActions {
   }
   
   deleteAnalysisExperiment(analysis, experiment) {
-    return (dispatch) => dispatch({analysis, experiment})
+    return (dispatch) =>
+      DeviceFetcher.fetchById(analysis.deviceId)
+      .then((device) => {
+        dispatch({device, analysis, experiment})
+      })
   }
   
-  changeActiveAccordionExperiment(analysis, key) {
-    return (dispatch) => dispatch({analysis, key})
-  }
- 
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,

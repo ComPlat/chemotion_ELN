@@ -1,7 +1,6 @@
 class CreateDeviceAnalyses < ActiveRecord::Migration
   def change
     create_table :devices_analyses do |t|
-      t.integer :sample_id, null: false
       t.integer :device_id, null: false
       t.string :analysis_type
 
@@ -9,9 +8,12 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
     end
 
     create_table :analyses_experiments do |t|
+      t.integer :sample_id
       t.integer :holder_id
       t.string :status
       t.integer :devices_analysis_id, null: false
+      t.integer :devices_sample_id, null: false
+      t.string :sample_analysis_id, null: false
       t.string :solvent
       t.string :experiment
       t.boolean :priority
@@ -22,6 +24,7 @@ class CreateDeviceAnalyses < ActiveRecord::Migration
 
       t.timestamps null: false
     end
-
+    
+    add_column :devices_samples, :types, :string, array: true, default: []
   end
 end

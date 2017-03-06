@@ -41,7 +41,7 @@ export default class DeviceFetcher {
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/devices/${device.id}`,
       requestMethod: 'PUT',
-      bodyData: device,
+      bodyData: device.serialize(),
       jsonTranformation: (json) => new Device(json.device)
     })
   }
@@ -81,11 +81,11 @@ export default class DeviceFetcher {
     })
   }
 
-  static generateAnalysisConfig(analysis) {
+  static generateExperimentConfig(experiment) {
     return BaseFetcher.withBodyData({
       apiEndpoint: `/api/v1/icon_nmr/config`,
       requestMethod: 'POST',
-      bodyData: analysis.buildConfig(),
+      bodyData: experiment.buildConfig(),
       jsonTranformation: (json) => json
     })
   }

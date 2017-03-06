@@ -4,14 +4,12 @@ module Chemotion
       desc "Create Device Analysis"
       params do
         requires :device_id, type: Integer, desc: "device id"
-        requires :sample_id, type: Integer, desc: "sample id"
         requires :analysis_type, type: String, desc: "analysis type"
         optional :experiments, type: Array, desc: "analysis experiments"
       end
       post do
         analysis = DevicesAnalysis.new(
           device_id: params[:device_id],
-          sample_id: params[:sample_id],
           analysis_type: params[:analysis_type]
         )
         analysis.save!
@@ -28,10 +26,12 @@ module Chemotion
             number_of_scans: experiment.number_of_scans, 
             sweep_width: experiment.sweep_width,
             time: experiment.time,
+            sample_id: experiment.sample_id,
+            devices_sample_id: experiment.devices_sample_id,
+            sample_analysis_id: experiment.sample_analysis_id,
           })
           analysis.analyses_experiments << new_experiment
         }
-
 
         device = Device.find(params[:device_id])
         device.devices_analyses << analysis
@@ -73,7 +73,8 @@ module Chemotion
             # update analyses_experiments
             old_experiment_ids = analysis.analyses_experiments.map {|experiment| experiment.id}
             new_experiment_ids = params[:experiments].map {|experiment|
-              new_experiment = AnalysesExperiment.create({
+              analysis_experiment = AnalysesExperiment.find_by(id: experiment.id)
+              params = {
                 devices_analysis_id: analysis.id,
                 holder_id: experiment.holder_id,
                 status: experiment.status,
@@ -84,9 +85,17 @@ module Chemotion
                 number_of_scans: experiment.number_of_scans, 
                 sweep_width: experiment.sweep_width,
                 time: experiment.time,
-              })
-              analysis.analyses_experiments << new_experiment
-              new_experiment.id
+                sample_id: experiment.sample_id,
+                devices_sample_id: experiment.devices_sample_id,
+                sample_analysis_id: experiment.sample_analysis_id,
+              }
+              if analysis_experiment.nil?
+                analysis_experiment = AnalysesExperiment.create(params)
+                analysis.analyses_experiments << analysis_experiment
+              else
+                analysis_experiment.update(params)
+              end
+              analysis_experiment.id
             }
             to_remove_experiment_ids = old_experiment_ids - new_experiment_ids
             to_remove_experiment_ids.map{|experiment_id| 
