@@ -33,7 +33,8 @@ const SVGContent = ({show, svgPath}) => {
 }
 
 const AnalysesContent = ({show, showRecDes, analyses, reactionDescription}) => {
-  const init = showRecDes ? reactionDescription.ops : [];
+  const isReDesObj = typeof reactionDescription === "object";
+  const init = showRecDes && isReDesObj ? reactionDescription.ops : [];
   const analysesParagraph = () => {
     const dataMerged = analyses.reduce( (sum, a) => {
       let contentJSON = JSON.parse(a.extended_metadata.content)

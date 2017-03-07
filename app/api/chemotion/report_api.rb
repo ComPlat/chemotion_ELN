@@ -79,8 +79,9 @@ module Chemotion
         requires :id
       end
       get :docx do
-        reaction = Reaction.find(params[:id])
-        content = Reporter::Docx::Document.new(objs: [reaction]).convert
+        r = Reaction.find(params[:id])
+        r_hash = ElementReportPermissionProxy.new(current_user, r, user_ids).serialized
+        content = Reporter::Docx::Document.new(objs: [r_hash]).convert
 
         filename = "ELN_Reaction_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
         template_path = Rails.root.join("lib", "template", "ELN_Objs.docx")

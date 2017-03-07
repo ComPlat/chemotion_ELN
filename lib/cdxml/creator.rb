@@ -25,7 +25,8 @@ module Cdxml
       plus_y_shift = is_reactant ? y_shift - PLUS_SHIFT : y_shift
       samples.each do |s|
         shifter = { x: x_shift, y: y_shift, is_reactant: is_reactant }
-        cdxml = Chemotion::OpenBabelService.get_cdxml_from_molfile(s.molfile, shifter)
+        molfile = s.class == Hash ? s[:molfile] : s.molfile
+        cdxml = Chemotion::OpenBabelService.get_cdxml_from_molfile(molfile, shifter)
         add_yield_icon(s, x_shift, y_shift, cdxml[:geometry]) if is_product
         x_shift += cdxml[:geometry][:x_len] + X_SPACE # space between material-to-plus
         add_plus_icon(x_shift, plus_y_shift)

@@ -23,4 +23,10 @@ class DetailLevels::Reaction
       :rf_value, :temperature, :status, :container
     ]
   end
+
+  def report_base_attributes
+    [
+      :temperature_display_with_unit
+    ]
+  end
 end

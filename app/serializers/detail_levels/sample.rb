@@ -6,7 +6,7 @@ class DetailLevels::Sample
       :real_amount_unit, :molfile, :purity, :solvent, :impurities, :location,
       :is_top_secret, :is_restricted, :external_label, :analyses,
       :children_count, :parent_id, :imported_readout, :_contains_residues,
-      :sample_svg_file, :density, :boiling_point, :melting_point, 
+      :sample_svg_file, :density, :boiling_point, :melting_point,
       :reaction_description, :container, :pubchem_tag
     ]
   end
@@ -38,5 +38,27 @@ class DetailLevels::Sample
       :children_count, :parent_id, :imported_readout,
       :boiling_point, :melting_point, :reaction_description
     ]
+  end
+
+  def report_base_attributes
+    [
+      :reactions, :molecule_iupac_name, :get_svg_path
+    ]
+  end
+
+  def report_level0_attributes
+    []
+  end
+
+  def report_level1_attributes
+    report_level0_attributes + []
+  end
+
+  def report_level2_attributes
+    report_level0_attributes + []
+  end
+
+  def report_level3_attributes
+    report_level0_attributes + []
   end
 end

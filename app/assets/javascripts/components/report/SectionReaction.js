@@ -6,7 +6,7 @@ import QuillViewer from '../QuillViewer'
 const SectionReaction = ({reaction, settings, configs}) => {
   const {description, literatures, starting_materials, reactants,
          products, solvents, solvent, dangerous_products, purification,
-         observation, reaction_svg_file, tlc_description,
+         observation, svgPath, tlc_description,
          tlc_solvents, rf_value, status } = reaction;
 
   const has_analyses = products.map( sample => {
@@ -25,7 +25,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
       </Alert>
 
       <SVGContent show={settings.diagram}
-                  reaction_svg_file={reaction_svg_file}
+                  svgPath={svgPath}
                   isProductOnly={!configs.Showallmater}
                   products={products} />
       <MaterialContent  show={settings.material}
@@ -53,26 +53,26 @@ const SectionReaction = ({reaction, settings, configs}) => {
   )
 }
 
-const SVGContent = ({show, reaction_svg_file, products, isProductOnly}) => {
-  const svg_file =reaction_svg_file && `/images/reactions/${reaction_svg_file}`
-  const products_svg = products.map(s => `/images/molecules/${s.molecule.molecule_svg_file}`)
-  const products_svg_file = products_svg.map( svg => {
-    return (<td key={svg}> <SVG  src={svg} /> </td>)
-  })
+const SVGContent = ({show, svgPath, products, isProductOnly}) => {
+  const productsSvg = products.map(s => {
+    const svg = s.svgPath;
+    return (<td key={s.id}><SVG src={svg}/></td>);
+  });
 
   if(!show) {
     return null;
   }
+
   return (
     isProductOnly
       ? <Table className='reaction-details'>
           <tbody>
             <tr>
-              { products_svg_file }
+              { productsSvg }
             </tr>
           </tbody>
         </Table>
-      : <SVG key={svg_file} src={svg_file} className='reaction-details'/>
+      : <SVG key={svgPath} src={svgPath} className='reaction-details'/>
   )
 }
 
@@ -248,12 +248,13 @@ const DescriptionContent = ({show, description}) => {
   )
 }
 
-const PurificationContent = ({show, purification}) => {
+const PurificationContent = ({show, puri}) => {
+  const puriText = typeof puri === "object" ? puri.join(", ") : puri;
   return (
     show
       ? <div>
           <h4> Purification </h4>
-          <pre className="noBorder">{purification.join(", ")}</pre>
+          <pre className="noBorder">{puriText}</pre>
         </div>
       : null
   )

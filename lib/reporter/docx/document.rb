@@ -13,14 +13,15 @@ module Reporter
 
       def convert
         objs.each do |obj|
-          contents.push(to_content(obj))
+          obj_os = OpenStruct.new(obj)
+          contents.push(to_content(obj_os))
         end
         contents
       end
 
       private
       def to_content(obj)
-        type_name = obj.class.to_s
+        type_name = obj.type.capitalize
         "Reporter::Docx::Detail#{type_name}".constantize.new(
           "#{type_name.downcase}": obj,
           spl_settings: @spl_settings,
@@ -32,7 +33,7 @@ module Reporter
       end
 
       def last_id
-        id ||= objs.last.id
+        id ||= objs.last[:id]
       end
     end
   end
