@@ -128,7 +128,7 @@ export default class ResearchPlanDetails extends Component {
 
     return (
       <div>
-        <i className="icon-research_plan" />
+        <i className="fa fa-file-text-o" />
         &nbsp; <span>{research_plan.name}</span> &nbsp;
         <ElementCollectionLabels element={research_plan} placement="right"/>
         <OverlayTrigger placement="bottom"
