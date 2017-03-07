@@ -298,6 +298,7 @@ ActiveRecord::Schema.define(version: 20170215133510) do
   create_table "profiles", force: :cascade do |t|
     t.boolean  "show_external_name", default: false
     t.integer  "user_id",                            null: false
+    t.jsonb    "data"
     t.datetime "deleted_at"
     t.datetime "created_at",                         null: false
     t.datetime "updated_at",                         null: false
