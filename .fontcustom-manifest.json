@@ -1,7 +1,7 @@
 {
   "checksum": {
-    "previous": "417dad6cdf934ea81e730514ceec3a01ed1da98de89f7b5818a0e341360edda4",
-    "current": "417dad6cdf934ea81e730514ceec3a01ed1da98de89f7b5818a0e341360edda4"
+    "previous": "ebea6970ab34b700768ce8bafe0ee0ca02daf2bf9277ec0e6b7ac5d7bbcb09c0",
+    "current": "ebea6970ab34b700768ce8bafe0ee0ca02daf2bf9277ec0e6b7ac5d7bbcb09c0"
   },
   "fonts": [
     "app/assets/fonts/icons.ttf",
@@ -117,13 +117,17 @@
     "wellplate": {
       "codepoint": 61698,
       "source": "app/assets/images/svg_icons/wellplate.svg"
+    },
+    "xvial": {
+      "codepoint": 61725,
+      "source": "app/assets/images/svg_icons/xvial.svg"
     }
   },
   "options": {
     "autowidth": false,
     "config": "fontcustom.yml",
     "css_selector": ".icon-{{glyph}}",
-    "debug": false,
+    "debug": true,
     "font_ascent": 448,
     "font_descent": 64,
     "font_design_size": 16,
