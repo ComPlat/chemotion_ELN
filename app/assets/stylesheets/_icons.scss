@@ -4,11 +4,11 @@
 
 @font-face {
   font-family: "icons";
-  src: url("icons.eot");
-  src: url("icons.eot?#iefix") format("embedded-opentype"),
-       url("icons.woff") format("woff"),
-       url("icons.ttf") format("truetype"),
-       url("icons.svg#icons") format("svg");
+  src: asset_url("icons.eot");
+  src: asset_url("icons.eot?#iefix") format("embedded-opentype"),
+       asset_url("icons.woff") format("woff"),
+       asset_url("icons.ttf") format("truetype"),
+       asset_url("icons.svg#icons") format("svg");
   font-weight: normal;
   font-style: normal;
 }
@@ -16,7 +16,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: "icons";
-    src: url("icons.svg#icons") format("svg");
+    src: asset_url("icons.svg#icons") format("svg");
   }
 }
 
