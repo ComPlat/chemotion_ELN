@@ -92,28 +92,32 @@ class Import::ImportSdf
         end
       end
     elsif !rows.empty?
-      ActiveRecord::Base.transaction do
-        attribs = Sample.attribute_names & @mapped_keys.keys
-        rows.each do |row|
-          next unless row
-          molfile = row["molfile"]
-          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
-          inchikey = babel_info[:inchikey]
-          unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
-            sample = Sample.new(created_by: current_user_id)
-            sample.molfile = molfile
-            sample.molecule = molecule
+      begin
+        ActiveRecord::Base.transaction do
+          attribs = Sample.attribute_names & @mapped_keys.keys
+          rows.each do |row|
+            next unless row
+            molfile = row["molfile"]
+            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
+            inchikey = babel_info[:inchikey]
+            unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
+              sample = Sample.new(created_by: current_user_id)
+              sample.molfile = molfile
+              sample.molecule = molecule
 
-            attribs.each do |attrib|
-              sample[attrib] = row[attrib] if row[attrib] && !row[attrib].empty?
+              attribs.each do |attrib|
+                sample[attrib] = row[attrib] if (row[attrib].is_a?(Numeric) || row[attrib] && !row[attrib].empty?)
+              end
+
+              sample.collections << Collection.find(collection_id)
+              sample.collections << Collection.get_all_collection_for_user(current_user_id)
+              sample.save!
+              ids << sample.id
             end
-
-            sample.collections << Collection.find(collection_id)
-            sample.collections << Collection.get_all_collection_for_user(current_user_id)
-            sample.save!
-            ids << sample.id
           end
         end
+      rescue ActiveRecord::RecordInvalid => e
+        @message[:error] << e
       end
     else
       @message[:error] << 'No sample selected. '
@@ -179,7 +183,7 @@ class Import::ImportSdf
 
     molecules = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey,:molecule_svg_file,:iupac_name)
     iks = inchikeys.dup
-    mol_array = Array.new(iks.size){ {name: nil,inchikey: nil ,svg: nil} }
+    mol_array = Array.new(iks.size){ {name: nil,inchikey: nil ,svg: "no_image_180.svg"} }
     molecules.each do |mol|
 
       i = iks.index(mol[0])
