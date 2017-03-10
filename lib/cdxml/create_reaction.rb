@@ -29,9 +29,10 @@ module Cdxml
     end
 
     def add_yield_icon(sample, x_shift, y_shift, geometry)
-      product_sample = sample.reactions_product_samples[0]
+      eq = sample[:equivalent]
+      formatted_yield = eq && !eq.nan? ? "#{(eq * 100).round.to_s} %" : "0 %"
       @yield_arr << {
-        value: product_sample.try(:formatted_yield),
+        value: formatted_yield,
         x: x_shift + geometry[:x_len] / 2,
         y: y_shift + geometry[:y_len] / 2 + YIELD_SPACE
       }
@@ -51,7 +52,7 @@ module Cdxml
       y = Y_SHIFT + SOLVENT_Y_SHIFT
       cdxml = ""
       reaction.solvents.each do |s|
-        el = { x: x, y: y, value: s.external_label }
+        el = { x: x, y: y, value: s[:external_label] }
         cdxml += text_template(el)
         y += SOLVENT_Y_SPACE
       end

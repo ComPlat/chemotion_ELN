@@ -2,13 +2,13 @@ module Reporter
   class Worker
     def initialize(args)
       @report = args[:report]
+      @author = User.find(@report.author_id)
       @objs = extract(@report.objects)
       @file_name = @report.file_name
       @spl_settings = @report.sample_settings
       @rxn_settings = @report.reaction_settings
       @configs = @report.configs
       @img_format = @report.img_format
-      @user_name = User.find(@report.author_id).name
     end
 
     def process
@@ -38,9 +38,14 @@ module Reporter
       @file_path ||= Rails.root.join("public", "docx", fulll_file_name_ext)
     end
 
+    def user_ids
+      @author.group_ids + [@author.id]
+    end
+
     def extract(objects)
       objects.map do |tag|
-        tag["type"].camelize.constantize.find(tag["id"])
+        obj = tag["type"].camelize.constantize.find(tag["id"])
+        obj_permission_hash = ElementReportPermissionProxy.new(@author, obj, user_ids).serialized
       end
     end
 
@@ -61,7 +66,7 @@ module Reporter
     def substance
       @substance ||= {
         date: Time.now.strftime("%d.%m.%Y"),
-        author: "#{@user_name}",
+        author: "#{@author.name}",
         spl_settings: @spl_settings,
         rxn_settings: @rxn_settings,
         configs: @configs,

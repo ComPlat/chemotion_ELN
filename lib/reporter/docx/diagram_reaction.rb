@@ -16,19 +16,18 @@ module Reporter
         end
       end
 
-      def materials_svg_paths
+      def load_svg_paths
         paths = {}
-        paths[:starting_materials] = obj.starting_materials.map(&:get_svg_path)
-        paths[:reactants] = obj.reactants.map(&:get_svg_path)
+        paths[:starting_materials] = obj.starting_materials.map { |m| m[:get_svg_path] }.compact
+        paths[:reactants] = obj.reactants.map { |m| m[:get_svg_path] }.compact
         paths[:products] = obj.products.map do |p|
-          yield_amount = ReactionsProductSample.find_by(reaction_id: obj.id, sample_id: p.id).equivalent
-          [p.get_svg_path, yield_amount]
-        end
-        return paths
+          [p[:get_svg_path], p[:equivalent]] if p[:get_svg_path].present?
+        end.compact
+        @materials_svg_paths = paths
       end
 
       def solvents
-        obj.solvents.present? ? obj.solvents.map{ |s| s.preferred_tag } : [obj.solvent]
+        obj.solvents.present? ? obj.solvents.map{ |s| s[:preferred_tag] } : [obj.solvent]
       end
 
       def temperature_svg_paths

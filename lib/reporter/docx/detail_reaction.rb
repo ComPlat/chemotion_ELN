@@ -67,9 +67,11 @@ module Reporter
 
       def literatures
         output = Array.new
-        obj.literatures.each do |l|
-          output.push({ title: l.title,
-                        url: l.url
+        liters = obj.literatures
+        return [] if !liters
+        liters.each do |l|
+          output.push({ title: l[:title],
+                        url: l[:url]
           })
         end
         return output
@@ -78,87 +80,84 @@ module Reporter
       def analyses
         output = Array.new
         obj.products.each do |product|
-          product.analyses.each do |analysis|
+          product[:analyses].each do |analysis|
             metadata = analysis["extended_metadata"]
             content = JSON.parse(metadata["content"])
 
             output.push({
-              sample: product.molecule.sum_formular,
-              name: analysis.name,
+              sample: product[:molecule][:sum_formular],
+              name: analysis[:name],
               kind: metadata["kind"],
               status: metadata["status"],
               content: Sablon.content(:html, Delta.new(content).getHTML()),
-              description: analysis.description
+              description: analysis[:description]
             })
           end
         end
         return output
       end
 
-      def starting_materials
-        output = Array.new
-        obj.reactions_starting_material_samples.each do |s|
-          sample = s.sample
-          output.push({ name: sample.name,
-                        iupac_name: sample.molecule.iupac_name,
-                        short_label: sample.short_label,
-                        formular: sample.molecule.sum_formular,
-                        mol_w: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.amount_g.try(:round, digit),
-                        vol: sample.amount_ml.try(:round, digit),
-                        density: sample.density.try(:round, digit),
-                        mol: sample.amount_mmol.try(:round, digit),
-                        equiv: s.equivalent.try(:round, digit)
+      def material_hash(material, is_product=false)
+        s = OpenStruct.new(material)
+        m = s.molecule
+        sample_hash = {
+          name: s.name,
+          iupac_name: m[:iupac_name],
+          short_label: s.short_label,
+          formular: m[:sum_formular],
+          mol_w: m[:molecular_weight].try(:round, digit),
+          mass: s.amount_g.try(:round, digit),
+          vol: s.amount_ml.try(:round, digit),
+          density: s.density.try(:round, digit),
+          mol: s.amount_mmol.try(:round, digit),
+          equiv: s.equivalent.try(:round, digit)
+        }
+
+        if is_product
+          sample_hash.update({
+            mass: s.real_amount_g.try(:round, digit),
+            vol: s.real_amount_ml.try(:round, digit),
+            mol: s.real_amount_mmol.try(:round, digit),
+            equiv: s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{(s.equivalent*100).try(:round, 0)}%"
           })
         end
-        return output
+
+        sample_hash
+      end
+
+      def starting_materials
+        output = Array.new
+        obj.starting_materials.each do |s|
+          output.push(material_hash(s, false))
+        end
+        output
       end
 
       def reactants
         output = Array.new
-        obj.reactions_reactant_samples.each do |r|
-          sample = r.sample
-          output.push({ name: sample.name,
-                        iupac_name: sample.molecule.iupac_name,
-                        short_label: sample.short_label,
-                        formular: sample.molecule.sum_formular,
-                        mol_w: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.amount_g.try(:round, digit),
-                        vol: sample.amount_ml.try(:round, digit),
-                        density: sample.density.try(:round, digit),
-                        mol: sample.amount_mmol.try(:round, digit),
-                        equiv: r.equivalent.try(:round, digit)
-          })
+        obj.reactants.each do |r|
+          output.push(material_hash(r, false))
         end
-        return output
+        output
       end
 
       def products
         output = Array.new
-        obj.reactions_product_samples.each do |p|
-          sample = p.sample
-          sample.real_amount_value ||= 0
-          output.push({ name: sample.name,
-                        iupac_name: sample.molecule.iupac_name,
-                        short_label: sample.short_label,
-                        formular: sample.molecule.sum_formular,
-                        mol_w: sample.molecule.molecular_weight.try(:round, digit),
-                        mass: sample.amount_g(:real).try(:round, digit),
-                        vol: sample.amount_ml(:real).try(:round, digit),
-                        density: sample.density.try(:round, digit),
-                        mol: sample.amount_mmol(:real).try(:round, digit),
-                        equiv: p.equivalent.nil? || (p.equivalent*100).nan? ? "0%" : "#{(p.equivalent*100).try(:round, 0)}%"
-          })
+        obj.products.each do |p|
+          output.push(material_hash(p, true))
         end
-        return output
+        output
       end
 
       def purification
-        obj.purification.compact.join(", ")
+        puri = obj.purification
+        return puri if puri == "***"
+        puri.compact.join(", ")
       end
 
       def description
-        Sablon.content(:html, Delta.new(obj.description).getHTML())
+        obj_desc = obj.description.deep_stringify_keys
+        Sablon.content(:html, Delta.new(obj_desc).getHTML())
       end
 
       def solvents
@@ -171,10 +170,11 @@ module Reporter
 
       def displayed_solvents
         if solvents.present?
-          solvents.map do |s|
+          solvents.map do |solvent|
+            s = OpenStruct.new(solvent)
             volume = " (#{s.amount_ml.try(:round, digit)}ml)" if s.target_amount_value
             volume = " (#{s.amount_ml.try(:round, digit)}ml)" if s.real_amount_value
-            s.preferred_label  + volume
+            s.preferred_label + volume if s.preferred_label
           end.join(", ")
         else
           solvent

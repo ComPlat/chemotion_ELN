@@ -18,7 +18,7 @@ module Reporter
       end
 
       def collection_label
-        obj.collections.map { |c| c.label if c.label != "All" }.compact.join(", ")
+        obj.collections.map { |c| c[:label] if c[:label] != "All" }.compact.join(", ")
       end
     end
   end

@@ -8,6 +8,12 @@ module Reporter
         @obj = args[:obj]
       end
 
+      def template_path
+        @ole_instance = Tempfile.new(["ole_object", ".bin"])
+        copy_from_bin_template
+        ole_instance.path
+      end
+
       def path
         cdx = obj_to_cdx
         generate_ole_path(cdx)
@@ -16,7 +22,7 @@ module Reporter
       private
 
       def obj_to_cdx
-        klass = obj.class.to_s
+        klass = obj.type.capitalize
         cdxml = "Cdxml::Create#{klass}".constantize
                   .new({ klass.downcase.to_sym => obj }).to_cdxml
         Cdx::Creator.new({cdxml: cdxml}).to_cdx
