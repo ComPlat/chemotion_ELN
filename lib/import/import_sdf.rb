@@ -197,7 +197,7 @@ class Import::ImportSdf
 
   def process_molfile_opt_data molfile
     mf = molfile.to_s
-    custom_data = mf.scan(/^\>[^\n]*\<(\S+)\>[\n]*([^>]*)/m)
+    custom_data = mf.scan(/^\>[^\n]*\<(\S+)\>[^\n]*[\n]*([^>]*)/m)
     Hash[custom_data.map do |key, value|
       k = key.to_s.strip.upcase.gsub(/\s/, '_')
       @custom_data_keys[k] = true
