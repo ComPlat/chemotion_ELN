@@ -5,6 +5,8 @@ class CollectionsResearchPlan < ActiveRecord::Base
   validates :collection, :research_plan, presence: true
   validate :collection_research_plan_id_uniqueness
 
+  include Tagging
+
   def self.move_to_collection(research_plan_ids, old_col_id, new_col_id)
     # Delete research_plans in old collection
     self.delete_in_collection(research_plan_ids, old_col_id)

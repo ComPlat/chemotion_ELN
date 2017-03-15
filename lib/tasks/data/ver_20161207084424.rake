@@ -4,10 +4,18 @@ namespace :data do
     def data_migration(user_id, analyses_con, old_analyses)
 
       old_analyses.each do |ana|
-        ana_con = Container.create! :parent => analyses_con
-        ana_con.container_type = ana["type"]
-        ana_con.name = ana["name"]
-        ana_con.description = ana["description"]
+        ana_existed = analyses_con.children
+                                  .where(container_type: ana["type"])
+                                  .where(name: ana["name"])
+                                  .where(description: ana["description"])
+        if ana_existed.count == 0
+          ana_con = Container.create! :parent => analyses_con
+          ana_con.container_type = ana["type"]
+          ana_con.name = ana["name"]
+          ana_con.description = ana["description"]
+        else
+          ana_con = ana_existed.first
+        end
 
         ana_con.extended_metadata['report'] = ana["report"]
         ana_con.extended_metadata["kind"] = ana["kind"]
@@ -18,10 +26,19 @@ namespace :data do
         ana_con.save!
 
         ana["datasets"].each do |dataset|
-          d_con = Container.create! :parent => ana_con
-          d_con.container_type = dataset["type"]
-          d_con.name = dataset["name"]
-          d_con.description = dataset["description"]
+          ds_existed = ana_con.children
+                              .where(container_type: dataset["type"])
+                              .where(name: dataset["name"])
+                              .where(description: dataset["description"])
+          if ds_existed.count == 0
+            d_con = Container.create! :parent => ana_con
+            d_con.container_type = dataset["type"]
+            d_con.name = dataset["name"]
+            d_con.description = dataset["description"]
+          else
+            d_con = ds_existed.first
+          end
+
           d_con.extended_metadata["instrument"] = dataset["instrument"]
 
           d_con.save!
@@ -53,10 +70,12 @@ namespace :data do
       if s.container == nil
         s.container = ContainerHelper.create_root_container
         s.save!
+      end
 
+      unless s.analyses_dump.blank?
         ana_con = s.container.children.detect { |con| con.container_type == "analyses" }
-
-        data_migration(s.created_by, ana_con, s.analyses)
+        ana = JSON.parse(s.analyses_dump)
+        data_migration(s.created_by, ana_con, ana)
       end
     end
 
