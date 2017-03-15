@@ -22,6 +22,7 @@
 .env
 /config/mailcollector.yml
 /config/database.yml
+/config/storage.yml
 /node_modules
 
 /public/images/molecules/*
