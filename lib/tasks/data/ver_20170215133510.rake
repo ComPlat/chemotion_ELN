@@ -3,9 +3,12 @@ namespace :data do
   task ver_20170215133510: :environment do
     Sample.find_each do |sample|
       # Populate Sample - Collection tag
-      et = ElementTag.new
-      et.taggable_id = sample.id
-      et.taggable_type = "Sample"
+      et = sample.tag
+      unless sample.tag
+        et = ElementTag.new
+        et.taggable_id = sample.id
+        et.taggable_type = "Sample"
+      end
 
       collections = sample.collections.where.not(label: 'All')
       collection_labels = collections.map { |c|
@@ -37,7 +40,7 @@ namespace :data do
       # Populate Sample - Analyses tag
       analyses = nil
       if sample.analyses.count > 0
-        group = sample.analyses
+        group = sample.analyses.map(&:extended_metadata)
                       .map {|x| x.extract!("kind", "status") }
                       .group_by{|x| x["status"]}
         analyses = group.map { |key, val|
@@ -54,29 +57,33 @@ namespace :data do
       et.save!
     end
 
-    Molecule.all.each_slice(50) do |molecules|
-      # Populate Molecule - PubChem tag
-      pubchem_cids = nil
-      iks = molecules.map(&:inchikey)
-      pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys(iks))
-      pubchem_list = pubchem_json["PropertyTable"]["Properties"]
-      molecule_pubchem = pubchem_list.map { |pub|
-        { 
-          id: Molecule.find_by(inchikey: pub["InChIKey"]).id,
-          cid: pub["CID"]
-        }
-      }
+    # Molecule.all.each_slice(50) do |molecules|
+    #   # Populate Molecule - PubChem tag
+    #   pubchem_cids = nil
+    #   iks = molecules.map(&:inchikey)
+    #   pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys(iks))
+    #   pubchem_list = pubchem_json["PropertyTable"]["Properties"]
+    #   molecule_pubchem = pubchem_list.map { |pub|
+    #     { 
+    #       id: Molecule.find_by(inchikey: pub["InChIKey"]).id,
+    #       cid: pub["CID"]
+    #     }
+    #   }
 
-      molecule_pubchem.each do |pub|
-        et = ElementTag.new
-        et.taggable_id = pub[:id]
-        et.taggable_type = "Molecule"
-        et.taggable_data = {
-          pubchem_cid: pub[:cid]
-        }
-        et.save!
-      end
-    end
+    #   molecule_pubchem.each do |pub|
+    #     et = pub.tag
+    #     unless pub.tag
+    #       et = ElementTag.new
+    #       et.taggable_id = pub[:id]
+    #       et.taggable_type = "Molecule"
+    #     end
+
+    #     et.taggable_data = {
+    #       pubchem_cid: pub[:cid]
+    #     }
+    #     et.save!
+    #   end
+    # end
 
     Reaction.find_each do |reaction|
       # Populate Reaction - Collection tag
@@ -96,9 +103,13 @@ namespace :data do
         }
       }.uniq
 
-      et = ElementTag.new
-      et.taggable_id = reaction.id
-      et.taggable_type = "Reaction"
+      et = reaction.tag
+      unless reaction.tag
+        et = ElementTag.new
+        et.taggable_id = reaction.id
+        et.taggable_type = "Reaction"
+      end
+
       et.taggable_data = {
         collection_labels: collection_labels
       }
@@ -123,9 +134,13 @@ namespace :data do
         }
       }.uniq
 
-      et = ElementTag.new
-      et.taggable_id = wellplate.id
-      et.taggable_type = "Wellplate"
+      et = wellplate.tag
+      unless wellplate.tag
+        et = ElementTag.new
+        et.taggable_id = wellplate.id
+        et.taggable_type = "Wellplate"
+      end
+
       et.taggable_data = {
         collection_labels: collection_labels
       }
@@ -150,9 +165,13 @@ namespace :data do
         }
       }.uniq
 
-      et = ElementTag.new
-      et.taggable_id = screen.id
-      et.taggable_type = "Screen"
+      et = screen.tag
+      unless screen.tag
+        et = ElementTag.new
+        et.taggable_id = screen.id
+        et.taggable_type = "Screen"
+      end
+
       et.taggable_data = {
         collection_labels: collection_labels
       }
@@ -177,9 +196,13 @@ namespace :data do
         }
       }.uniq
 
-      et = ElementTag.new
-      et.taggable_id = rp.id
-      et.taggable_type = "ResearchPlan"
+      et = rp.tag
+      unless rp.tag
+        et = ElementTag.new
+        et.taggable_id = rp.id
+        et.taggable_type = "ResearchPlan"
+      end
+
       et.taggable_data = {
         collection_labels: collection_labels
       }
