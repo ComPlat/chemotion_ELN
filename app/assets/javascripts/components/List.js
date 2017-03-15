@@ -8,6 +8,7 @@ import ArrayUtils from './utils/ArrayUtils';
 
 import ElementsTable from './ElementsTable';
 import TabLayoutContainer from './TabLayoutContainer';
+import ContainerTree from './ContainerTree';
 
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
@@ -114,18 +115,22 @@ export default class List extends React.Component {
   }
 
   handleTabSelect(tab) {
-    UserActions.selectTab(tab);
+    if(tab == 'container_tree'){
+        this.setState({currentTab: 'container_tree'})
+    }else {
+      UserActions.selectTab(tab);
 
-    // TODO sollte in tab action handler
-    let uiState = UIStore.getState();
-    let type = this.state.visible.get(tab);
+      // TODO sollte in tab action handler
+      let uiState = UIStore.getState();
+      let type = this.state.visible.get(tab);
 
-    if (!uiState[type] || !uiState[type].page) return;
+      if (!uiState[type] || !uiState[type].page) return;
 
-    let page = uiState[type].page;
+      let page = uiState[type].page;
 
-    UIActions.setPagination({type: type, page: page});
-    KeyboardActions.contextChange(type);
+      UIActions.setPagination({type: type, page: page});
+      KeyboardActions.contextChange(type);
+    }
   }
 
   getArrayFromLayout(layout, isVisible) {
@@ -185,7 +190,9 @@ export default class List extends React.Component {
       navItems.push(navItem)
       tabContents.push(tabContent)
     }
-
+    tabContents.push(<Tab.Pane eventKey='container_tree' key="container">
+        <ContainerTree />
+      </Tab.Pane>)
     return (
       <Tab.Container id="tabList" defaultActiveKey={0} activeKey={currentTab}
                      onSelect={(e) => this.handleTabSelect(e)}>
@@ -193,6 +200,7 @@ export default class List extends React.Component {
           <Col sm={12}>
             <Nav bsStyle="tabs">
               {navItems}
+              <NavItem eventKey='container_tree' key="container">Data tree</NavItem>
               &nbsp;&nbsp;&nbsp;
               <OverlayTrigger trigger="click" placement="bottom"
                               overlay={popoverLayout} rootClose
