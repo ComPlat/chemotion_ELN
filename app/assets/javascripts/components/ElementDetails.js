@@ -215,12 +215,14 @@ export default class ElementDetails extends Component {
 
   render() {
     const { fullScreen, selecteds, activeKey, offsetTop, deletingElement } = this.state;
-    const fScrnClass = fullScreen ? "full-screen" : "";
+    const fScrnClass = fullScreen ? "full-screen" : "normal-screen";
 
     return(
-      <div className={fScrnClass}>
-         <StickyDiv zIndex={2} offsetTop={offsetTop}>
-          <Tabs activeKey={activeKey} onSelect={this.selectTab} id="elements-tabs" >
+      <div>
+         <StickyDiv zIndex={fullScreen ? 9 : 2} offsetTop={offsetTop}>
+          <div className={fScrnClass}>
+          <Tabs activeKey={activeKey} onSelect={this.selectTab}
+                id="elements-tabs">
             {selecteds.map( (el, i) => {
               return el
                 ? <Tab key={i} eventKey={i} title={this.tabTitle(el, i)} unmountOnExit={true}>
@@ -228,7 +230,7 @@ export default class ElementDetails extends Component {
                   </Tab>
                 : null;
             })}
-          </Tabs>
+          </Tabs></div>
         </StickyDiv>
         <ConfirmModal showModal={deletingElement !== null}
           title="Confirm Delete"
