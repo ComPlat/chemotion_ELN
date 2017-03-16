@@ -1,35 +1,42 @@
 import React, { Component } from 'react';
+import {DragDropContext} from 'react-dnd';
 import SortableTree from 'react-sortable-tree';
+import UIStore from './stores/UIStore';
 import ContainerStore from './stores/ContainerStore';
 import ContainerActions from './actions/ContainerActions'
+
 export default class ContainerTree extends Component {
 
   constructor(props) {
     super(props);
-
+    this.state = {
+      treeDate: []
+    }
+    this.onChange = this.onChange.bind(this)
   }
 
   componentDidMount() {
-    ContainerActions.fetchTree();
+   ContainerStore.listen(this.onChange)
+   ContainerActions.fetchTree(1)
   }
 
   componentWillUnmount() {
+    ContainerStore.unlisten(this.onChange);
   }
 
-  onChange(data){
-
+  onChange(state){
+    this.setState(state)
   }
 
   render() {
-    const {treeData} = ContainerStore.getState()
+
     return (
       <div style={{ height: 800 }}>
-                <SortableTree
-                    treeData={treeData}
-                    onChange={treeData => this.onChange(treeData)}
-                />
-            </div>
-
+        <SortableTree
+          treeData={this.state.treeData}
+          onChange={treeData => this.setState({treeData})}
+          />
+      </div>
         );
   }
 }
