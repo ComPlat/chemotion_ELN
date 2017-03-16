@@ -150,7 +150,14 @@ class ElementActions {
   }
 
   showReactionMaterial(params) {
-    return  params;
+    return (dispatch) => { SamplesFetcher.fetchById(params.sample.id)
+      .then((result) => {
+        params.sample = result
+        dispatch(params);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      })
+    }
   }
 
   importSamplesFromFile(params) {
