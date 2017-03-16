@@ -10,22 +10,37 @@ export default class ContainerTree extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      currentCollection: null,
       treeDate: []
     }
-    this.onChange = this.onChange.bind(this)
+    this.onChangeTree = this.onChangeTree.bind(this)
+    this.onChangeUI = this.onChangeUI.bind(this)
   }
 
   componentDidMount() {
-   ContainerStore.listen(this.onChange)
-   ContainerActions.fetchTree(1)
+    UIStore.getState()
+    ContainerStore.listen(this.onChangeTree)
+    UIStore.listen(this.onChangeUI)
   }
 
   componentWillUnmount() {
-    ContainerStore.unlisten(this.onChange);
+    ContainerStore.unlisten(this.onChangeTree);
+    UIStore.unlisten(this.onChangeUI)
   }
 
-  onChange(state){
-    this.setState(state)
+  onChangeTree(state){
+    this.setState({
+      treeData: state.treeData
+    })
+  }
+
+  onChangeUI(state){
+    this.setState({
+      currentCollection: state.currentCollection
+    })
+    if(this.state.currentCollection != null){
+      ContainerActions.fetchTree(this.state.currentCollection.id)
+    }
   }
 
   render() {
