@@ -66,7 +66,7 @@ export default class SamplesFetcher {
             elements: json.molecules.map( m => {
               return m.samples.map( s => new Sample(s) )
             }),
-            totalElements: parseInt(response.headers.get('X-Total')),
+            totalElements: parseInt(json.samples_count),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),
             perPage: parseInt(response.headers.get('X-Per-Page'))

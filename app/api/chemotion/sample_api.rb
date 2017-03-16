@@ -176,12 +176,14 @@ module Chemotion
             .order(:sum_formular)
 
           results = {
-            molecules: create_group_molecule(paginate(molecule_scope), scope, own_collection)
+            molecules: create_group_molecule(paginate(molecule_scope), scope, own_collection),
+            samples_count: scope.count
           }
         else
           scope = scope.order("updated_at DESC")
           results = {
-            molecules: group_by_molecule(paginate(scope), own_collection)
+            molecules: group_by_molecule(paginate(scope), own_collection),
+            samples_count: scope.count
           }
         end
 
