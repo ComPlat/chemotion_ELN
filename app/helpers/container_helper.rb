@@ -30,6 +30,19 @@ module ContainerHelper
     return root_con
   end
 
+  def self.get_children(container)
+    container.children.map do |subcontainer|
+      if subcontainer.container_type == "analyses"
+        {title: "Analyses",
+          children: get_children(subcontainer)}
+      else
+        {title: subcontainer.name,
+          subtitle: subcontainer.container_type,
+          children: get_children(subcontainer)}
+      end
+    end
+  end
+
 private
   def self.read_Attachments(folder, container)
     path = File.join(folder, container.name) #wenn leer neue namen

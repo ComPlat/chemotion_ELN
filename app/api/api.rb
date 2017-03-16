@@ -109,6 +109,7 @@ class API < Grape::API
   mount Chemotion::SearchAPI
   mount Chemotion::ReportAPI
   mount Chemotion::AttachmentAPI
+  mount Chemotion::ContainerAPI
   mount Chemotion::PublicAPI
   mount Chemotion::ProfileAPI
 end
