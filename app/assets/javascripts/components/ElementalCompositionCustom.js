@@ -26,23 +26,21 @@ export default class ElementalCompositionCustom extends React.Component {
     }
   }
 
-  handleElementsListChanged(v, key, el_composition) {
+  handleElementsListChanged(v, key, el_composition, handleElementalChanged) {
     let oldval = el_composition.data[key];
 
     el_composition.data[key] = v;
 
-    // set loading_type to what we get after calculations
-    if(this.props.parent) {
-      this.props.parent.setLoadingType('found');
+    if (this.checkElementsSum(el_composition)) {
+      handleElementalChanged(el_composition)
     }
-
-    this.checkElementsSum(el_composition);
   }
 
   elementsList(el_composition, concat_formula) {
     let elements = [];
 
     let klass = this;
+    let handleElementalChanged = klass.props.handleElementalChanged;
     let newData = {};
 
     // be sure that 3, 2-symbol (Br) elements are all before one-symbol (B)!
@@ -60,7 +58,7 @@ export default class ElementalCompositionCustom extends React.Component {
         key={key + 'found'}
         value={newData[key]}
         defaultValue={newData[key]}
-        onChange={(v)=> klass.handleElementsListChanged(v, key, el_composition)}
+        onChange={(v)=> klass.handleElementsListChanged(v, key, el_composition, handleElementalChanged)}
         />
       );
     });
@@ -80,7 +78,7 @@ export default class ElementalCompositionCustom extends React.Component {
       return false;
 
     return (
-      <td className="loading" align="right" width="13%">
+      <td className="loading" style={{textAlign:"left"}} width="13%">
         <FormControl type="text"
            key={"mc-loading" + (el_composition.id || 0).toString()}
            defaultValue={el_composition.loading || ''}
@@ -111,8 +109,7 @@ export default class ElementalCompositionCustom extends React.Component {
   render() {
     let { elemental_composition, concat_formula, parent} = this.props;
 
-    if(!elemental_composition)
-      return false;
+    if(!elemental_composition) return false;
 
     return (
       <table className="elemental-composition-custom">

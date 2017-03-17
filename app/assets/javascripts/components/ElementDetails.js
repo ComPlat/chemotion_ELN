@@ -233,7 +233,7 @@ export default class ElementDetails extends Component {
           </Tabs></div>
         </StickyDiv>
         <ConfirmModal showModal={deletingElement !== null}
-          title="Confirm Delete"
+          title="Confirm Close"
           content={this.confirmDeleteContent()}
           onClick={this.confirmDelete} />
       </div>
