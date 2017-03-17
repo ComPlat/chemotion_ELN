@@ -5,6 +5,10 @@ import ElementalCompositionCustom from './ElementalCompositionCustom'
 
 export default class ElementalCompositionGroup extends React.Component {
 
+  handleElementalChanged(el_composition) {
+    this.props.handleSampleChanged(this.props.sample)
+  }
+
   render() {
     let {sample, show} = this.props;
     let elemental_compositions = sample.elemental_compositions;
@@ -17,13 +21,14 @@ export default class ElementalCompositionGroup extends React.Component {
       data = '';
       display_error = false;
     }
-    else if (sample.formulaChanged)
+    else if (sample.formulaChanged) {
       data = (
         <p>
           Formula has been changed. Please save sample to calculate the
           elemental compositon.
         </p>
       )
+    }
 
     elemental_compositions.map((elemental_composition, key) => {
       if(Object.keys(elemental_composition.data).length)
@@ -31,13 +36,12 @@ export default class ElementalCompositionGroup extends React.Component {
 
       if(elemental_composition.composition_type == 'found') {
         el_composition_custom = elemental_composition;
-      } else {
-        if(data.constructor === Array)
-          data.push(
-            <ElementalComposition
+      } else if(data.constructor === Array) {
+        data.push(
+          <ElementalComposition
             elemental_composition={elemental_composition}
             key={elemental_composition.id}/>
-          );
+        );
       }
     });
 
@@ -54,11 +58,13 @@ export default class ElementalCompositionGroup extends React.Component {
       return false;
     } else {
       let label = sample.contains_residues ? <label>Elemental composition</label> : false
+
       return (
         <div>
           {label}
           {data}
           <ElementalCompositionCustom
+            handleElementalChanged={(el) => this.handleElementalChanged(el)}
             elemental_composition={el_composition_custom}
             hideLoading={!sample.contains_residues}
             concat_formula={sample.concat_formula}

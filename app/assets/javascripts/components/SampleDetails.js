@@ -343,7 +343,9 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem className="ea-section">
           <Row>
             <Col md={6}>
-              <ElementalCompositionGroup sample={sample}/>
+              <ElementalCompositionGroup
+                handleSampleChanged={(s) => this.handleSampleChanged(s)}
+                sample={sample}/>
             </Col>
           </Row>
         </ListGroupItem>
