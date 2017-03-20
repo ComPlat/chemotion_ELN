@@ -3,7 +3,7 @@ import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
-import {Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Tooltip, OverlayTrigger, Table} from 'react-bootstrap';
 import ArrayUtils from './utils/ArrayUtils';
 
 import UIStore from './stores/UIStore';
@@ -227,39 +227,41 @@ export default class ElementsTableEntries extends Component {
     let {keyboardElementIndex} = this.state
 
     return (
-      <tbody>
-      {elements.map((element, index) => {
-        const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
-        let style = {};
-        if (this.isElementSelected(element) ||
-           (keyboardElementIndex != null && keyboardElementIndex == index)) {
-          style = {
-          color: '#000',
-          background: '#ddd',
-          border: '4px solid #337ab7'
+      <Table className="elements" bordered hover style={{borderTop: 0}}>
+        <tbody>
+        {elements.map((element, index) => {
+          const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
+          let style = {};
+          if (this.isElementSelected(element) ||
+             (keyboardElementIndex != null && keyboardElementIndex == index)) {
+            style = {
+            color: '#000',
+            background: '#ddd',
+            border: '4px solid #337ab7'
+            }
           }
-        }
 
-        return (
-          <tr key={index} style={style}>
-            <td>
-            <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
-            </td>
-            <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
-              {element.title()}&nbsp;
-              {this.reactionStatus(element)}
-              <br/>
-              {sampleMoleculeName}
-              <ElementCollectionLabels element={element} key={element.id}/>
-              {this.sampleAnalysesLabels(element)}
-              {this.topSecretIcon(element)}
-            </td>
-            {this.previewColumn(element)}
-            {this.dragColumn(element)}
-          </tr>
-        )
-      })}
-      </tbody>
+          return (
+            <tr key={index} style={style}>
+              <td width="30px">
+                <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
+              </td>
+              <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
+                {element.title()}&nbsp;
+                {this.reactionStatus(element)}
+                <br/>
+                {sampleMoleculeName}
+                <ElementCollectionLabels element={element} key={element.id}/>
+                {this.sampleAnalysesLabels(element)}
+                {this.topSecretIcon(element)}
+              </td>
+              {this.previewColumn(element)}
+              {this.dragColumn(element)}
+            </tr>
+          )
+        })}
+        </tbody>
+      </Table>
     );
   }
 }

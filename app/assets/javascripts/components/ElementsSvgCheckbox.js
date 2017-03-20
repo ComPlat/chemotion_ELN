@@ -30,7 +30,7 @@ export default class ElementsSvgCheckbox extends Component {
           onChange={() => this.toggleCheckbox()}
           checked={this.state.checked ? this.state.checked : false}
         >
-          <Label style={{fontSize: '100%'}}>Display schemes</Label>
+          <Label style={{fontSize: '100%'}}>Schemes</Label>
         </Checkbox>
       </FormGroup>
     )

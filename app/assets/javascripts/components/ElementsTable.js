@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pagination, Table, Form, Col, Button,
+import { Pagination, Table, Form, Col, Row, Button, InputGroup,
          FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
@@ -132,16 +132,20 @@ export default class ElementsTable extends React.Component {
   pagination() {
     const {page, pages} = this.state;
     if(pages > 1) {
-      return <Pagination
-        prev
-        next
-        first
-        last
-        maxButtons={3}
-        activePage={page}
-        items={pages}
-        bsSize="small"
-        onSelect={(eventKey) => this.handlePaginationSelect(eventKey)}/>
+      return (
+        <div className='list-pagination'>
+          <Pagination
+            prev
+            next
+            first
+            last
+            maxButtons={5}
+            activePage={page}
+            items={pages}
+            bsSize="small"
+            onSelect={(eventKey) => this.handlePaginationSelect(eventKey)}/>
+        </div>
+      )
     }
   }
 
@@ -150,9 +154,7 @@ export default class ElementsTable extends React.Component {
     const {type} = this.props;
     if(type == 'reaction' || type == 'sample') {
       return (
-        <div style={{float: 'right'}}>
-          <ElementsSvgCheckbox checked={ui.showPreviews}/>
-        </div>
+        <ElementsSvgCheckbox checked={ui.showPreviews}/>
       )
     }
   }
@@ -167,20 +169,16 @@ export default class ElementsTable extends React.Component {
   numberOfResultsInput() {
     let {ui} = this.state
     return (
-      <Form horizontal style={{float: 'right'}}>
+      <Form horizontal className='list-show-count'>
         <FormGroup>
-          <Col sm={4} style={{textAlign: 'center', float: 'right'}}>
-            <FormControl type="text" style={{textAlign: 'center', float: 'right'}}
+          <InputGroup>
+            <InputGroup.Addon>Show</InputGroup.Addon>
+            <FormControl type="text" style={{textAlign: 'center'}}
                          onChange={event => this.handleNumberOfResultsChange(event)}
                          value={ui.number_of_results ? ui.number_of_results : 0} />
-          </Col>
-          <Col componentClass={ControlLabel} sm={2}
-               style={{textAlign: 'center', float: 'right'}}>
-            Show
-          </Col>
+          </InputGroup>
         </FormGroup>
       </Form>
-
     );
   }
 
@@ -215,53 +213,56 @@ export default class ElementsTable extends React.Component {
               </th>
             </tr></thead>
           </Table>
-          <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
-            elements={elements} currentElement={currentElement}
-            showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
-            onChangeCollapse={(checked) => this.collapseSample(!checked)}
-          />
+          <div className="list-elements">
+            <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
+              elements={elements} currentElement={currentElement}
+              showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
+              onChangeCollapse={(checked) => this.collapseSample(!checked)}
+            />
+          </div>
         </div>
       )
     } else {
       return (
-        <Table className="elements" bordered hover>
-          <thead><tr>
-            <th className="check">
-              <ElementAllCheckbox type={this.props.type}
-                checked={ui.checkedAll}
-                showReport={showReport}/>
-            </th>
-            <th colSpan={3}>
-              All {type.replace('_', ' ')}s
-            </th>
-          </tr></thead>
-          <ElementsTableEntries
-            elements={elements}
-            currentElement={currentElement}
-            showDragColumn={!overview}
-            ui={ui}
-          />
-        </Table>
+        <div>
+          <Table className="elements" bordered hover style={{marginBottom: 0}}>
+            <thead><tr>
+              <th className="check">
+                <ElementAllCheckbox type={this.props.type}
+                  checked={ui.checkedAll}
+                  showReport={showReport}/>
+              </th>
+              <th colSpan={3}>
+                All {type.replace('_', ' ')}s
+              </th>
+            </tr></thead>
+          </Table>
+          <div className="list-elements">
+            <ElementsTableEntries
+              elements={elements}
+              currentElement={currentElement}
+              showDragColumn={!overview}
+              ui={ui}
+            />
+          </div>
+        </div>
       )
     }
   }
 
   render() {
     return (
-      <div>
+      <div className="list-container">
         {this.renderEntries()}
-
-        <table style={{width: '100%'}}><tbody>
-        <tr>
-          <td>{this.pagination()}</td>
-          <td>
-            <div>
-              {this.numberOfResultsInput()}
-              {this.previewCheckbox()}
-            </div>
-          </td>
-        </tr>
-        </tbody></table>
+        <div className="list-container-bottom">
+          <Row>
+            <Col sm={6}>{this.previewCheckbox()}</Col>
+            <Col sm={6}>{this.numberOfResultsInput()}</Col>
+          </Row>
+          <Row>
+            <Col sm={12}>{this.pagination()}</Col>
+          </Row>
+        </div>
       </div>
     );
   }
