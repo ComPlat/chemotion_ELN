@@ -1,4 +1,13 @@
 {
+  "CollectionManagement": {
+    "Tabs": {
+      "prototype": {
+        "content": "<div/>",
+        "title":   "<div/>",
+        "on":      "()=>false"
+      }
+    }
+  },
   "CollectionTree": {
      "div": {}
   },
