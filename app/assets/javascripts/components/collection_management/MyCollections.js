@@ -48,6 +48,7 @@ export default class MyCollections extends React.Component {
     this.setState({
       tree: {
         label: 'My Collections',
+        id: -1,
         children: children
       }
     });
@@ -68,7 +69,7 @@ export default class MyCollections extends React.Component {
   }
 
   label(node) {
-    if(node.label == "My Collections") {
+    if(node.id == -1) {
       return (
         <div className="root-label">
           My Collections
@@ -107,7 +108,7 @@ export default class MyCollections extends React.Component {
   }
 
   actions(node) {
-    if(node.label == "My Collections") {
+    if(node.id == -1) {
       return (
         <div className="root-actions">
           <Button bsSize="xsmall" bsStyle="warning"
