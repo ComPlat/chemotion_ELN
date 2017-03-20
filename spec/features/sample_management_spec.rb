@@ -5,6 +5,7 @@ feature 'Sample management' do
   let(:sample) { create(:sample, creator: user) }
 
   background do
+    user.confirm
     sign_in(user)
   end
 
