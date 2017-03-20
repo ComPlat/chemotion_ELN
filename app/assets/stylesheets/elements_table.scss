@@ -128,3 +128,31 @@ th.drag {
 /*.element-svg-checkbox {
   margin: 0px 0 0;
 }*/
+
+.list-container-bottom {
+  width: 100%;
+}
+
+.list-elements {
+  border: 1px solid #ddd;
+  max-height: calc(100vh - 300px);
+  margin-bottom: 15px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.list-pagination {
+  margin: 5px 0 0 0;
+}
+
+.list-show-count {
+  float: right;
+  margin: 3px 15px 0px 0px;
+  width: 80px;
+}
+
+@media only screen and (max-width: 1500px) {
+  .list-elements {
+    height: calc(100vh - 350px);
+  }
+}
