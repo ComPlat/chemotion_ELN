@@ -39,7 +39,8 @@ class ElementPermissionProxy
       @dl = dl if dl > @dl
     end
 
-    sc.map { |cc| [cc.send("#{element.class.to_s.downcase}_detail_level")] }.each do | dl|
+    sc.each do |sc|
+      dl = sc.send("#{element.class.to_s.downcase}_detail_level")
       @dl = dl if dl > @dl
     end
 
