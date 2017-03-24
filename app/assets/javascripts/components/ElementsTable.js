@@ -1,6 +1,9 @@
 import React from 'react';
-import { Pagination, Table, Form, Col, Row, Button, InputGroup,
-         FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
+
+import {
+  Pagination, Table, Form, Col, Row, Button, InputGroup, 
+  FormGroup, FormControl, ControlLabel, Glyphicon
+} from 'react-bootstrap';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -11,6 +14,7 @@ import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
 import ElementsTableSampleEntries from './ElementsTableSampleEntries'
 import ElementsSvgCheckbox from './ElementsSvgCheckbox';
+import Switch from './Switch.js';
 import deepEqual from 'deep-equal';
 
 export default class ElementsTable extends React.Component {
@@ -22,8 +26,10 @@ export default class ElementsTable extends React.Component {
       currentElement: null,
       ui: {},
       sampleCollapseAll: false,
-      moleculeSort: false
+      moleculeSort: false,
+      selectAllCurrentPage: true
     }
+
     this.onChange = this.onChange.bind(this)
     this.onChangeUI = this.onChangeUI.bind(this)
 
@@ -133,7 +139,7 @@ export default class ElementsTable extends React.Component {
     const {page, pages} = this.state;
     if(pages > 1) {
       return (
-        <div className='list-pagination'>
+        <div className="list-pagination">
           <Pagination
             prev
             next
@@ -174,85 +180,102 @@ export default class ElementsTable extends React.Component {
           <InputGroup>
             <InputGroup.Addon>Show</InputGroup.Addon>
             <FormControl type="text" style={{textAlign: 'center'}}
-                         onChange={event => this.handleNumberOfResultsChange(event)}
-                         value={ui.number_of_results ? ui.number_of_results : 0} />
+               onChange={event => this.handleNumberOfResultsChange(event)}
+               value={ui.number_of_results ? ui.number_of_results : 0} />
           </InputGroup>
         </FormGroup>
       </Form>
     );
   }
 
-  renderEntries() {
-    const {elements, ui, currentElement, sampleCollapseAll, moleculeSort} = this.state
+  renderHeader() {
+    const {
+      sampleCollapseAll,
+      moleculeSort, ui,
+      selectAllCurrentPage
+    } = this.state
 
-    const {overview, showReport, type} = this.props
-    if(type == 'sample') {
-      return (
-        <div>
-          <Table className="elements" bordered hover style={{marginBottom: 0}}>
-            <thead><tr>
-              <th className="check" style={{verticalAlign: "middle"}}>
-                <ElementAllCheckbox type={this.props.type}
-                  checked={ui.checkedAll}
-                  showReport={showReport}/>
-              </th>
-              <th colSpan={3} style={{verticalAlign: "middle", position: "relative"}}>
-                <span style={{position: "absolute", top: "30%"}}>All {type}s</span>
-                <div style={{display: "initial", verticalAlign: "middle", width: "100%"}}>
-                  <div style={{float: "right"}}>
-                    <Button bsStyle="info" style={{width: "120px", padding: "5px"}}
-                        onClick={() => this.changeSort()}>
-                      {moleculeSort ? "Sort by Sample" : "Sort by Molecule"}
-                    </Button>
-                    &nbsp;&nbsp;
-                    <span>Collapse all</span> &nbsp;
-                    <input type="checkbox" checked={sampleCollapseAll}
-                      onChange={() => this.collapseSample(sampleCollapseAll)} />
-                  </div>
-                </div>
-              </th>
-            </tr></thead>
-          </Table>
-          <div className="list-elements">
-            <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
-              elements={elements} currentElement={currentElement}
-              showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
-              onChangeCollapse={(checked) => this.collapseSample(!checked)}
-            />
-          </div>
-        </div>
-      )
-    } else {
-      return (
-        <div>
-          <Table className="elements" bordered hover style={{marginBottom: 0}}>
-            <thead><tr>
-              <th className="check">
-                <ElementAllCheckbox type={this.props.type}
-                  checked={ui.checkedAll}
-                  showReport={showReport}/>
-              </th>
-              <th colSpan={3}>
-                All {type.replace('_', ' ')}s
-              </th>
-            </tr></thead>
-          </Table>
-          <div className="list-elements">
-            <ElementsTableEntries
-              elements={elements}
-              currentElement={currentElement}
-              showDragColumn={!overview}
-              ui={ui}
-            />
-          </div>
+    const {type, showReport } = this.props
+
+    let collapseIcon = sampleCollapseAll ? "chevron-right" : "chevron-down"
+    
+    let headerRight = (<span />)
+    if (type === 'sample') {
+      headerRight = (
+        <div className="header-right">
+          <Switch checked={moleculeSort} style={{width: "90px"}}
+            onChange={() => this.changeSort()}
+            title={
+              "Change sorting to sort by " + (
+                moleculeSort ? "Sample" : "Molecule"
+              )
+            }
+            checkedChildren="Molecule"
+            unCheckedChildren="Sample"/>
+
+          &nbsp;&nbsp;&nbsp;&nbsp;
+
+          <Glyphicon glyph={collapseIcon} 
+            title="Collapse/Uncollapse"
+            onClick={() => this.collapseSample(sampleCollapseAll)}
+            style={{
+              fontSize: "20px", cursor: "pointer",
+              top: 0, color: '#337ab7'
+            }}/> 
         </div>
       )
     }
+
+    return (
+      <div className="table-header" >
+        <div className="select-all">
+          <ElementAllCheckbox type={type} ui={ui} showReport={showReport}/>
+        </div>
+        {headerRight}
+      </div>
+    )
+  }
+
+  renderEntries() {
+    const {
+      elements,
+      ui,
+      currentElement,
+      sampleCollapseAll,
+      moleculeSort
+    } = this.state
+    
+    const {overview, type} = this.props
+    let elementsTableEntries = null
+
+    if (type === 'sample') {
+      elementsTableEntries = (
+        <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
+          elements={elements} currentElement={currentElement}
+          showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
+          onChangeCollapse={(checked) => this.collapseSample(!checked)}
+        />
+      )
+    } else {
+      elementsTableEntries = (
+        <ElementsTableEntries
+          elements={elements} currentElement={currentElement}
+          showDragColumn={!overview} ui={ui}
+        />
+      )
+    }
+
+    return (
+      <div className="list-elements">
+        {elementsTableEntries}
+      </div>
+    )
   }
 
   render() {
     return (
       <div className="list-container">
+        {this.renderHeader()}
         {this.renderEntries()}
         <div className="list-container-bottom">
           <Row>

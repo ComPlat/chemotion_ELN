@@ -134,7 +134,9 @@ th.drag {
 }
 
 .list-elements {
-  border: 1px solid #ddd;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
   max-height: calc(100vh - 300px);
   margin-bottom: 15px;
   overflow-x: hidden;
@@ -149,6 +151,34 @@ th.drag {
   float: right;
   margin: 3px 15px 0px 0px;
   width: 80px;
+}
+
+.table-header {
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  background-color: #ddd;
+  padding: 5px;
+}
+
+.header-right {
+  display: flex;
+  margin-right: 12px;
+}
+
+.select-all {
+}
+
+#tabList .active a {
+  border-bottom-color: #ddd;
+}
+
+.sample-entries > tbody > tr > td {
+  border-top: 0
 }
 
 @media only screen and (max-width: 1500px) {

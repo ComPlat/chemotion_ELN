@@ -49,10 +49,10 @@ const routes = {
 
             if (!e.params['sampleID'] && !e.params['reactionID'] &&
                 !e.params['wellplateID'] && !e.params['screenID']) {
-              UIActions.uncheckAllElements('sample');
-              UIActions.uncheckAllElements('reaction');
-              UIActions.uncheckAllElements('wellplate');
-              UIActions.uncheckAllElements('screen');
+              UIActions.uncheckAllElements({type: 'sample', range: 'all'});
+              UIActions.uncheckAllElements({type: 'reaction', range: 'all'});
+              UIActions.uncheckAllElements({type: 'wellplate', range: 'all'});
+              UIActions.uncheckAllElements({type: 'screen', range: 'all'});
             }
           });
         },
@@ -88,10 +88,10 @@ const routes = {
             }
 
             if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
-              UIActions.uncheckAllElements('sample');
-              UIActions.uncheckAllElements('reaction');
-              UIActions.uncheckAllElements('wellplate');
-              UIActions.uncheckAllElements('screen');
+              UIActions.uncheckAllElements({type: 'sample', range: 'all'});
+              UIActions.uncheckAllElements({type: 'reaction', range: 'all'});
+              UIActions.uncheckAllElements({type: 'wellplate', range: 'all'});
+              UIActions.uncheckAllElements({type: 'screen', range: 'all'});
             }
           });
         },
