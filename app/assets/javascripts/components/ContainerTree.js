@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import {DragDropContext} from 'react-dnd';
-import SortableTree from 'react-sortable-tree';
+import { SortableTreeWithoutDndContext as SortableTree } from 'react-sortable-tree';
 import UIStore from './stores/UIStore';
 import ContainerStore from './stores/ContainerStore';
 import ContainerActions from './actions/ContainerActions'
