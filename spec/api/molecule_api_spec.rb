@@ -63,6 +63,7 @@ M  END"
             expect(m.attributes.symbolize_keys[k]).to eq(v)
           end
           expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
+          expect(m.cas).to include("277-10-1")
         end
 
       end

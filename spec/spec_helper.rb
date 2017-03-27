@@ -49,7 +49,27 @@ RSpec.configure do |config|
         :body => File.read(Rails.root+'spec/fixtures/body_two_compounds.json'),
         :headers => {"Content-Type"=> "application/json"}
       )
-
+    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/TXWRERCHRDBNLG-UHFFFAOYSA-N/xrefs/RN/JSON").
+      with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(
+        :status => 200,
+        :body => File.read(Rails.root+'spec/fixtures/body_RN_TXWRERCHRDBNLG-UHFFFAOYSA-N.json'),
+        :headers => {}
+      )
+    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XLYOFNOQVPJJNP-UHFFFAOYSA-N/xrefs/RN/JSON").
+      with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(
+        :status => 200,
+        :body => File.read(Rails.root+'spec/fixtures/body_RN_XLYOFNOQVPJJNP-UHFFFAOYSA-N.json'),
+        :headers => {}
+      )
+    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/YJTKZCDBKVTVBY-UHFFFAOYSA-N/xrefs/RN/JSON").
+      with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(
+        :status => 200,
+        :body => File.read(Rails.root+'spec/fixtures/body_RN_YJTKZCDBKVTVBY-UHFFFAOYSA-N.json'),
+        :headers => {}
+      )
   end
 
   config.expect_with :rspec do |expectations|
