@@ -16,6 +16,14 @@ export default class Container extends Element {
     })
   }
 
+  static buildAnalysis(kind='other',name='') {
+    var analysis = this.buildEmpty()
+    analysis.container_type = "analysis"
+    analysis.extended_metadata['kind'] = kind
+    analysis.name = name
+    return analysis
+  }
+
   static init(){
     var root = this.buildEmpty();
     root.container_type = 'root';

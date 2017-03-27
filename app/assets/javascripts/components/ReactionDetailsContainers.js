@@ -63,7 +63,7 @@ export default class ReactionDetailsContainers extends Component {
     if(! readOnly) {
       return (
           <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            Add container
+            Add analysis
           </Button>
       )
     }

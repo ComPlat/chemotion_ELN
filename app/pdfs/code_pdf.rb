@@ -64,7 +64,7 @@ class CodePdf < Prawn::Document
     end
 
     def qr_code(element, size)
-      qr_code = Barby::QrCode.new(element.qr_code, size: 1, level: :l)
+      qr_code = Barby::QrCode.new(element.code_log.value, size: 1, level: :l)
       outputter = outputter(qr_code)
       svg outputter.to_svg(qr_code_options(size)), qr_code_options(size)
     end
@@ -93,7 +93,7 @@ class CodePdf < Prawn::Document
     def bar_code_label(element, size, type)
       text = "#{type.capitalize} ID: #{element.id}\n#{element.name}"
       text_box text, bar_code_label_options(size)[:text]
-      text_box element.bar_code, bar_code_label_options(size)[:code]
+      text_box element.code_log.value_sm, bar_code_label_options(size)[:code]
     end
 
     def bar_code_options(size)
@@ -108,7 +108,7 @@ class CodePdf < Prawn::Document
     end
 
     def bar_code(element, size)
-      outputter = outputter(Barby::Code128C.new(element.bar_code))
+      outputter = outputter(Barby::Code128C.new(element.code_log.value_sm))
       svg outputter.to_svg(bar_code_options(size)), bar_code_options(size)
     end
 

@@ -13,11 +13,11 @@ module AnalysisCodes
     new_analyses = analyses.each do |a|
       if analysis_needs_code?(a)
         if analysis_is_nmr?(a)
-          bar_code_bruker = Chemotion::CodeCreator.create_bar_code_bruker
+          bruker_code = Chemotion::CodeCreator.create_bruker_code
           qr_code = Chemotion::CodeCreator.create_qr_code
-          a["bar_code_bruker"] = bar_code_bruker
+          a["bruker_code"] = bruker_code
           a["qr_code"] = qr_code
-          CodeLog.create(code_type: "bar_code_bruker", value: bar_code_bruker, source: "analysis", source_id: self.id, analysis_id: a["id"])
+          CodeLog.create(code_type: "bruker_code", value: bruker_code, source: "analysis", source_id: self.id, analysis_id: a["id"])
           CodeLog.create(code_type: "qr_code", value: qr_code, source: "analysis", source_id: self.id, analysis_id: a["id"])
         else
           bar_code = Chemotion::CodeCreator.create_bar_code
@@ -40,7 +40,7 @@ module AnalysisCodes
     end
 
     def analysis_needs_code?(a)
-      a["bar_code"].nil? && a["qr_code"].nil? && a["bar_code_bruker"].nil?
+      a["bar_code"].nil? && a["qr_code"].nil? && a["bruker_code"].nil?
     end
 
     def analysis_is_nmr?(a)

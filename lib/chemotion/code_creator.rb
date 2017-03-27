@@ -1,32 +1,27 @@
 module Chemotion::CodeCreator
-  def self.create_bar_code
-    all_bar_codes = CodeLog.get_bar_codes
 
-    begin
-      # this generates a 8 digit number string
-      bar_code = rand.to_s[2..9]
-    end while all_bar_codes.include?(bar_code)
+  class << self
+    def uuid_to_digit(uuid=SecureRandom.uuid)
+      format '%040i',uuid.delete("-").to_i(16)
+    end
 
-    bar_code
+    def digit_to_uuid(d40)
+      hex = d40.to_i.to_s(16)
+      "%s-%s-%s-%s-%s" % [hex[0..7], hex[8..11], hex[12..15], hex[16..19], hex[20..31]]
+    end
+
+    def self.create_code_xs
+      #TODO
+      all_xs_codes = CodeLog.all.pluck :value_xs
+      begin
+        xs_code = rand.to_s[2..7]
+      end while all_bruker_codes.include?(bruker_code)
+      xs_code
+    end
+
+    def create_code_sm(value=rand.to_s)
+      value[1..10]
+    end
   end
 
-  def self.create_qr_code
-    all_qr_codes = CodeLog.get_qr_codes
-
-    begin
-      qr_code = rand.to_s[2..9]
-    end while all_qr_codes.include?(qr_code)
-
-    qr_code
-  end
-
-  def self.create_bar_code_bruker
-    all_bar_codes_bruker = CodeLog.get_bar_codes_bruker
-
-    begin
-      bar_code_bruker = rand.to_s[2..7]
-    end while all_bar_codes_bruker.include?(bar_code_bruker)
-
-    bar_code_bruker
-  end
 end

@@ -1,18 +1,40 @@
 import React from 'react';
-import {Alert, Button, Modal, OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {Alert, Button, Modal, OverlayTrigger, Tooltip, SplitButton, MenuItem} from 'react-bootstrap';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
 import UIActions from '../actions/UIActions';
 import 'whatwg-fetch';
+import Utils from '../utils/Functions';
+import UIStore from '../stores/UIStore';
 
 export default class ScanCodeButton extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       showModal: false,
       showQrReader: false,
-      scanError: null
+      scanError: null,
+      scanInfo: null,
+      checkedIds: UIStore.getState().sample.checkedIds
     }
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
+  }
+
+  onUIStoreChange(state) {
+    console.log(state);
+    if (state.sample.checkedIds != this.state.checkedIds){
+      this.setState({
+        checkedIds: state.sample.checkedIds
+      })
+    }
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
   }
 
   open() {
@@ -28,10 +50,10 @@ export default class ScanCodeButton extends React.Component {
       inputStream : {
         name : "Live",
         type : "LiveStream",
-        target: document.querySelector('#code-scanner')
+        target: document.querySelector('#code-scanner'),
       },
       decoder : {
-        readers : ["code_128_reader"]
+        readers : ["code_128_reader"],
       }
     }, function(err) {
       if (err) {
@@ -47,64 +69,11 @@ export default class ScanCodeButton extends React.Component {
     this.initializeBarcodeScan()
 
     Quagga.onDetected((data) => {
-      var barCode = data.codeResult.code;
-
-      fetch(`/api/v1/code_logs/with_bar_code?code=${barCode}`, {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json()
-      })
-      .then(this.checkJSONResponse)
-      .then((json) => {
-        let {source, source_id, analysis_id} = json
-        var apiSource;
-
-        if(source == "analysis") {
-          apiSource = "samples";
-        } else {
-          apiSource = source + 's';
-        }
-
-        fetch(`/api/v1/${apiSource}/${source_id}.json`, {
-          credentials: 'same-origin'
-        })
-        .then((response) => {
-          return response.json()
-        })
-        .then(this.checkJSONResponse)
-        .then(() => {
-          if(source == "analysis") {
-            // open active analysis
-            fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}`, {
-              credentials: 'same-origin'
-            })
-            .then((response) => {
-              return response.json()
-            })
-            .then(this.checkJSONResponse)
-            .then((json) => {
-              Quagga.stop();
-              Aviator.navigate(`/collection/all/sample/${source_id}`)
-              this.close();
-              UIActions.selectSampleTab(1)
-              UIActions.selectActiveAnalysis(json)
-            }).catch((errorMessage) => {
-              console.log(errorMessage);
-              this.setState({scanError: errorMessage.message})
-            });
-
-          } else {
-            Quagga.stop();
-            Aviator.navigate(`/collection/all/${source}/${source_id}`)
-            this.close();
-          }
-        }).catch((errorMessage) => {
-          console.log(errorMessage);
-          this.setState({scanError: errorMessage.message})
-        });
-      });
+      console.log(data);
+      let barcode = data.codeResult.code;
+      this.handleScan(barcode,true)
     })
+    Quagga.stop()
   }
 
   startQrCodeScan() {
@@ -115,7 +84,7 @@ export default class ScanCodeButton extends React.Component {
     if(state.showQrReader == true) {
       return (
         <QrReader
-          handleScan={this.handleQrScan.bind(this)}
+          handleScan={this.handleScan.bind(this)}
           handleError={this.handleError}
           previewStyle={{width: 550}}/>
       )
@@ -134,58 +103,37 @@ export default class ScanCodeButton extends React.Component {
     }
   }
 
-  handleQrScan(data) {
-    fetch(`/api/v1/code_logs/with_qr_code?code=${data}`, {
+  handleScan(data,stopQuagga=false) {
+    // this.setState((previousState) => {
+    //     return { ...previousState, scanInfo: data };
+    // })
+
+    let code_log = {}
+    fetch(`/api/v1/code_logs/generic?code=${data}`, {
       credentials: 'same-origin'
     })
     .then((response) => {
       return response.json()
     })
     .then(this.checkJSONResponse)
-    .then((json) => {
-      let {source, source_id, analysis_id} = json
-      var apiSource;
+    .then(json => {
+      code_log = json.code_log
+      stopQuagga && Quagga.stop()
+      if(code_log.source == "container") {
+        // open active analysis
+        UIActions.selectTab({tabKey: 1 ,type: code_log.root_code.source})
+        UIActions.selectActiveAnalysis(code_log.source_id)
+        Aviator.navigate(`/collection/all/${code_log.root_code.source}/${code_log.root_code.source_id}`)
+        this.close();
 
-      if(source == "analysis") {
-        apiSource = "samples";
       } else {
-        apiSource = source + 's';
+        UIActions.selectTab({tabKey: 0 ,type: code_log.root_code.source})
+        Aviator.navigate(`/collection/all/${code_log.source}/${code_log.source_id}`)
+        this.close();
       }
-
-      fetch(`/api/v1/${apiSource}/${source_id}.json`, {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json()
-      })
-      .then(this.checkJSONResponse)
-      .then(() => {
-        if(source == "analysis") {
-          // open active analysis
-          fetch(`/api/v1/samples/get_analysis_index?sample_id=${source_id}&analysis_id=${analysis_id}&code=${data}`, {
-            credentials: 'same-origin'
-          })
-          .then((response) => {
-            return response.json()
-          })
-          .then(this.checkJSONResponse)
-          .then((json) => {
-            Aviator.navigate(`/collection/all/sample/${source_id}`)
-            this.close();
-            UIActions.selectSampleTab(1)
-            UIActions.selectActiveAnalysis(json)
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-            this.setState({scanError: errorMessage.message})
-          });
-        } else {
-          Aviator.navigate(`/collection/all/${source}/${source_id}`)
-          this.close();
-        }
-      }).catch((errorMessage) => {
+     }).catch(errorMessage => {
         console.log(errorMessage.message);
         this.setState({scanError: errorMessage.message})
-      });
     });
   }
 
@@ -221,9 +169,15 @@ export default class ScanCodeButton extends React.Component {
   scanAlert() {
     if(this.state.scanError) {
       return (
+        <div>
+        { this.state.scanInfo
+            ? <Alert bsStyle="info">{this.state.scanInfo}</Alert>
+            : null
+        }
         <Alert bsStyle="danger">
           {this.state.scanError}
         </Alert>
+        </div>
       )
     }
   }
@@ -232,26 +186,53 @@ export default class ScanCodeButton extends React.Component {
     const tooltip = (
       <Tooltip id="scan_code_button">Scan barcode or QR code</Tooltip>
     )
+    let ids = this.state.checkedIds.toArray()
+    let disabledPrint = !(ids.length > 0)
+    let contents_uri = `api/v1/code_logs/print_codes?element_type=sample&ids[]=${ids}`
+    let menuItems = [
+        {
+          key: 'smallCode',
+          contents: `${contents_uri}&size=small`,
+          text: 'Small Label',
+        },
+       {
+         key: 'bigCode',
+         contents: `${contents_uri}&size=big`,
+         text: 'Large Label',
+       },
+     ]
+
+     console.log(contents_uri);
 
     return (
       <div>
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <Button onClick={() => this.open()} style={{height: 35}}>
-            <span className="fa-stack" style={{lineHeight: "1.7em"}}>
-              <i
-                className="fa fa-barcode fa-stack-1x"
-                style={{fontSize: 11, top: -1}}
-              ></i>
-              <i
-                className="fa fa-search fa-stack-2x"
-                style={{fontSize: 21, left: 1}}
-              ></i>
-            </span>
-          </Button>
+          <SplitButton id="search-code-split-button" style={{height: 33}}
+            bsStyle="default"
+            title={<span className="fa-stack" style={{ top: -5}} >
+                          <i
+                            className="fa fa-barcode fa-stack-1x"
+
+                          ></i>
+                          <i
+                            className="fa fa-search fa-stack-1x"
+                            style={{ left: 7, fontSize: "1.em"}}
+                          ></i>
+                        </span>}
+            onClick={() => this.open()}>
+              {menuItems.map(e=>
+                <MenuItem key={e.key}
+                  disabled={disabledPrint}
+                  onSelect={(eventKey,event) => {event.stopPropagation();
+                    Utils.downloadFile({contents: e.contents})}}>
+                  {e.text}
+                </MenuItem>
+              )}
+          </SplitButton>
+
         </OverlayTrigger>
         {this.scanModal()}
       </div>
     )
   }
 }
-

@@ -13,7 +13,7 @@ export default class Analysis extends Element {
       datasets: [],
       bar_code: null,
       qr_code: null,
-      bar_code_bruker: null
+      bruker_code: null
     })
   }
 
@@ -60,7 +60,7 @@ export default class Analysis extends Element {
       datasets: this.datasets.map(d => d.serialize()),
       bar_code: this.barcode,
       qr_code: this.qr_code,
-      bar_code_bruker: this.bar_code_bruker
+      bruker_code: this.bruker_code
     })
   }
 

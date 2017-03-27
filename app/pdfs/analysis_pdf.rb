@@ -5,19 +5,19 @@ require 'barby/outputter/svg_outputter'
 require "prawn/measurement_extensions"
 
 class AnalysisPdf < Prawn::Document
-  def initialize(elements, size)
+  def initialize(element,analyses, size)
     super(
       page_size: page_size(size),
       margin: [0, 0, 0, 0]
     )
 
-    elements.each_with_index do |element, i|
+    analyses.each_with_index do |analysis, i|
       start_new_page unless i == 0
 
-      qr_code_label(element, size)
-      qr_code(element, size)
-      bar_code_label(element, size)
-      bar_code(element, size)
+      qr_code_label(element, analysis, size)
+      qr_code(element, analysis, size)
+      bar_code_label(element, analysis, size)
+      bar_code(element, analysis, size)
       stroke_bounds
     end
   end
@@ -47,8 +47,8 @@ class AnalysisPdf < Prawn::Document
       end
     end
 
-    def qr_code_label(element, size)
-      text = "Sample ID: #{element.sample_id}\n#{element.name}"
+    def qr_code_label(element, analysis, size)
+      text = "#{element.class.name} ID: #{element.id}\n#{analysis.name}"
       text_box text, qr_code_label_options(size)
     end
 
@@ -63,8 +63,8 @@ class AnalysisPdf < Prawn::Document
       end
     end
 
-    def qr_code(element, size)
-      qr_code = Barby::QrCode.new(element.qr_code, size: 1, level: :l)
+    def qr_code(element, analysis, size)
+      qr_code = Barby::QrCode.new(analysis.code_log.value, size: 1, level: :l)
       outputter = outputter(qr_code)
       svg outputter.to_svg(qr_code_options(size)), qr_code_options(size)
     end
@@ -90,10 +90,10 @@ class AnalysisPdf < Prawn::Document
       end
     end
 
-    def bar_code_label(element, size)
-      text = "Sample ID: #{element.sample_id}\n#{element.name}"
+    def bar_code_label(element, analysis, size)
+      text = "#{element.class.name} ID: #{element.id}\n#{analysis.name}"
       text_box text, bar_code_label_options(size)[:text]
-      text_box element.bar_code, bar_code_label_options(size)[:code]
+      text_box analysis.code_log.value_sm, bar_code_label_options(size)[:code]
     end
 
     def bar_code_options(size)
@@ -107,8 +107,8 @@ class AnalysisPdf < Prawn::Document
       end
     end
 
-    def bar_code(element, size)
-      outputter = outputter(Barby::Code128C.new(element.bar_code))
+    def bar_code(element, analysis, size)
+      outputter = outputter(Barby::Code128C.new(analysis.code_log.value_sm))
       svg outputter.to_svg(bar_code_options(size)), bar_code_options(size)
     end
 

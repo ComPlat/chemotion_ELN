@@ -2,27 +2,49 @@ module ElementCodes
   extend ActiveSupport::Concern
 
   included do
-    before_create :create_bar_and_qr_code
-    after_create :create_bar_and_qr_code_logs
+    after_create :create_code_log
     after_destroy :destroy_code_logs
+
+    def source_class() @source_class||=self.class.name.demodulize.underscore end
+
+    def code_logs
+       CodeLog.where(source: source_class).
+         where(source_id: id).order(created_at: 'DESC')
+    end
+
+    def code_log() code_logs.first end
+
+
+    # [ "bar_code", "qr_code", "bruker_code"].each do |type|
+    #     define_method("#{type}s"){code_logs.where(code_type: type)}
+    #     define_method(type){code_logs.where(code_type: type).first}
+    # end
+
+    class << self
+      def source_class() to_s.demodulize.underscore end
+
+      def code_logs() CodeLog.where(source: source_class) end
+
+      # ["bar_code", "qr_code", "bruker_code"].each do |type|
+      #   define_method("#{type}s".to_sym){code_logs.where(code_type: type)}
+      # end
+
+    end
   end
 
-  private
+  def is_container_but_not_analysis
+    source_class == "container" && self.container_type != "analysis"
+  end
 
-    def create_bar_and_qr_code
-      self.bar_code = Chemotion::CodeCreator.create_bar_code
-      self.qr_code = Chemotion::CodeCreator.create_qr_code
-    end
+  def create_code_log
+    return if is_container_but_not_analysis
+    CodeLog.create(source: source_class, source_id: id)
+  end
 
-    def create_bar_and_qr_code_logs
-      source = self.class.name.demodulize.underscore
+  def destroy_code_logs
+    code_logs.destroy_all
+  end
 
-      CodeLog.create(code_type: "bar_code", value: self.bar_code, source: source, source_id: self.id)
-      CodeLog.create(code_type: "qr_code", value: self.qr_code, source: source, source_id: self.id)
-    end
 
-    def destroy_code_logs
-      CodeLog.find_by(value: self.bar_code, code_type: "bar_code").destroy
-      CodeLog.find_by(value: self.qr_code, code_type: "qr_code").destroy
-    end
+
 end

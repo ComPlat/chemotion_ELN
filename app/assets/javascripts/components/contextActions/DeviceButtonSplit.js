@@ -23,11 +23,11 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
 
   return (
     <ButtonGroup style={{marginLeft: '10px'}}>
-      <OverlayTrigger 
+      <OverlayTrigger
         placement="bottom"
         overlay={<Tooltip id="open-device">Open Device</Tooltip>}
       >
-        <Button 
+        <Button
           bsStyle="warning"
           disabled={selectedDeviceId === -1 || selectedDeviceId === null}
           onClick={() => handleOpenDevice()}
@@ -47,7 +47,7 @@ const DeviceButtonSplit = ({devices, selectedDeviceId}) => {
           Device Management
         </MenuItem>
         <MenuItem divider />
-        {devices.length > 0 
+        {devices && devices.length > 0 
           ? devices.map((device, key) => {
               return (
                 <MenuItem
@@ -89,4 +89,3 @@ DeviceButtonSplit.getPropsFromStores = () => {
 }
 
 export default connectToStores(DeviceButtonSplit)
-

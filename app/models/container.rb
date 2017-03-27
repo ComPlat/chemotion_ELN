@@ -1,5 +1,6 @@
 class Container < ActiveRecord::Base
-  belongs_to :element, :polymorphic => true
+  include ElementCodes
+  belongs_to :containable, :polymorphic => true
   has_many :attachments
   #has_ancestry
   has_closure_tree
@@ -14,6 +15,10 @@ class Container < ActiveRecord::Base
     end
 
     return []
+  end
+
+  def root_element
+    self.root.containable
   end
 
 end

@@ -63,4 +63,11 @@ module PubChem
     encoded_smiles = URI::encode(smiles, '[]/()+-.@#=\\')
     HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/'+encoded_smiles+'/record/SDF', options).body
   end
+
+  def self.get_xref_by_inchikey(inchikey)
+    @auth = {:username => '', :password => ''}
+    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
+
+    HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/xrefs/RN/JSON', options).body
+  end
 end

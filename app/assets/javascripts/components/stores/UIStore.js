@@ -16,35 +16,40 @@ class UIStore {
         uncheckedIds: Immutable.List(),
         currentId: null,
         page: 1,
-        activeAnalysis: 0
+        activeTab: 0,
+        activeAnalysis: 0,
       },
       reaction: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
+        activeAnalysis: 0,
       },
       wellplate: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
       },
       screen: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
       },
       research_plan: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
       },
       showPreviews: true,
       number_of_results: 15,
@@ -59,7 +64,7 @@ class UIStore {
 
     this.bindListeners({
 
-      handleSelectSampleTab: UIActions.selectSampleTab,
+      handleSelectTab: UIActions.selectTab,
       handleSelectActiveAnalysis: UIActions.selectActiveAnalysis,
 
       handleSelectCollection: UIActions.selectCollection,
@@ -83,7 +88,7 @@ class UIStore {
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
       handleShowDeviceManagement: UIActions.showDeviceManagement,
-      handleCloseDeviceManagement: UIActions.closeDeviceManagement
+      handleCloseDeviceManagement: UIActions.closeDeviceManagement,
       handleShowModalChange: UIActions.updateModalProps,
       handleHideModal: UIActions.hideModal,
     });
@@ -109,8 +114,10 @@ class UIStore {
     this.state.showCollectionManagement = false;
   }
 
-  handleSelectSampleTab(tab) {
-    this.state.sample.activeTab = tab;
+  handleSelectTab(params={}) {
+    let type = params.type || "sample"
+    let tabKey = params.tabKey || 0
+    this.state[type].activeTab = tabKey;
   }
 
   handleSelectActiveAnalysis(index) {

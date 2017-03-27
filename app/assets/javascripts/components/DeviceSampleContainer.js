@@ -3,8 +3,6 @@ import {DropTarget} from 'react-dnd'
 import DragDropItemTypes from './DragDropItemTypes'
 import ElementActions from './actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
-import Analysis from './models/Analysis'
-import UIStore from './stores/UIStore'
 
 const target = {
   drop(props, monitor){

@@ -9,6 +9,6 @@ module ReallyDestroyTask
     %w(Collection CollectionsReaction CollectionsSample CollectionsScreen
     CollectionsWellplate ScreensWellplate ReactionsProductSample Sample
     Reaction ReactionsReactantSample ReactionsStartingMaterialSample
-    Literature Molecule Wellplate Screen Well User)
+    Literature Molecule Wellplate Screen Well User CodeLog)
   end
 end

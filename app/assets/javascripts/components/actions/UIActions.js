@@ -22,8 +22,8 @@ class UIActions {
     return null
   }
 
-  selectSampleTab(tab) {
-    return tab;
+  selectTab(params) {
+    return params;
   }
 
   selectActiveAnalysis(index) {

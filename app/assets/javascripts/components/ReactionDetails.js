@@ -1,6 +1,8 @@
 import React, {Component} from 'react'
 import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
   OverlayTrigger, Tooltip} from 'react-bootstrap';
+import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
@@ -10,22 +12,24 @@ import ReactionDetailsContainers from './ReactionDetailsContainers';
 import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
-import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
-
+import PrintCodeButton from './common/PrintCodeButton'
 import XTabs from "./extra/ReactionDetailsXTabs";
-
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 import {setReactionByType} from './ReactionDetailsShare'
 
-import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
+
     const {reaction} = props;
     this.state = {
-      reaction,
+      reaction: reaction,
+      activeTab: UIStore.getState().reaction.activeTab,
     };
+
     if(reaction.hasMaterials()) {
       this.updateReactionSvg();
     }
@@ -34,6 +38,7 @@ export default class ReactionDetails extends Component {
   componentWillReceiveProps(nextProps) {
     const {reaction} = this.state;
     const nextReaction = nextProps.reaction;
+
     if (nextReaction.id != reaction.id ||
         nextReaction.updated_at != reaction.updated_at ||
         nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
@@ -44,13 +49,17 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  shouldComponentUpdate(nextProps) {
+  shouldComponentUpdate(nextProps, nextState) {
     let nextReaction = nextProps.reaction;
-    const {reaction} = this.state;
-    return (nextReaction.id != reaction.id ||
-        nextReaction.updated_at != reaction.updated_at ||
-        nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
-        !!nextReaction.changed || !!nextReaction.editedSample)
+    let nextActiveTab = nextState.activeTab
+    const {reaction, activeTab} = this.state;
+    return (
+      nextReaction.id != reaction.id ||
+      nextReaction.updated_at != reaction.updated_at ||
+      nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+      !!nextReaction.changed || !!nextReaction.editedSample ||
+      nextActiveTab != activeTab
+    )
   }
 
   updateReactionSvg() {
@@ -81,25 +90,12 @@ export default class ReactionDetails extends Component {
   handleSubmit() {
     const {reaction} = this.state;
 
-    // set corrected values before we save the reaction
-    reaction.products.map(function(product) {
-      if(false && product.adjusted_equivalent) { // TODO: cleanup
-        product.loading = product.adjusted_loading;
-        product.equivalent = product.adjusted_equivalent;
-        product.setAmountAndNormalizeToGram(
-          {
-            value: product.adjusted_amount_g,
-            unit: 'g'
-        });
-
-      }
-    })
-
     if(reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
       ElementActions.updateReaction(reaction);
     }
+
     if(reaction.is_new) {
       const force = true;
       this.props.closeDetails(reaction, force);
@@ -115,7 +111,7 @@ export default class ReactionDetails extends Component {
     reaction.changed = true;
     if(options.schemaChanged) {
       this.setState({ reaction }, () => this.updateReactionSvg());
-    } else{
+    } else {
       this.setState({ reaction });
     }
   }
@@ -140,6 +136,15 @@ export default class ReactionDetails extends Component {
     Aviator.navigate(`${currentURI}/sample/${product.id}`);
   }
 
+  handleProductChange(product) {
+    let {reaction} = this.state
+
+    reaction.updateMaterial(product)
+    reaction.changed = true
+
+    this.setState({ reaction })
+  }
+
   productLink(product) {
     return (
       <span>
@@ -157,25 +162,24 @@ export default class ReactionDetails extends Component {
 
   productData(reaction) {
     const {products} = this.state.reaction;
-    let tabs = products.map((product, key) =>
-           <Tab key={product.short_label}
-                eventKey={key}
-                title={this.productLink(product)}>
 
-             <ReactionSampleDetailsContainers
-                sample={product}
-                />
-           </Tab>
-     );
+    let tabs = products.map((product, key) =>
+      <Tab key={product.short_label} eventKey={key}
+           title={this.productLink(product)}>
+        <ReactionSampleDetailsContainers sample={product}
+          setState={(product) => this.handleProductChange(product)}
+          handleSampleChanged={(product) => this.handleProductChange(product)}
+        />
+      </Tab>
+    );
+
     return(
-      <Tabs defaultActiveKey={4.1} id="data-detail-tab">
+      <Tabs defaultActiveKey={4.1} id="data-detail-tab"
+            style={{marginTop: "10px"}}>
         <Tab eventKey={4.1} title={reaction.short_label}>
           <ListGroupItem style={{paddingBottom: 20}}>
-            <ReactionDetailsContainers
-              reaction={reaction}
-              parent={this}
-              />
-            </ListGroupItem>
+            <ReactionDetailsContainers reaction={reaction} parent={this} />
+          </ListGroupItem>
         </Tab>
         {tabs}
       </Tabs>
@@ -210,28 +214,8 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  reactionCodePrintButtons(reaction) {
-    if(reaction.isNew)
-      return ''
-    else
-      return (
-        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
-          <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + reaction.id + "&type=reaction&size=small"})}>
-            <i className="fa fa-barcode fa-lg"></i>
-          </Button>
-          &nbsp;
-          <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + reaction.id + "&type=reaction&size=big"})}>
-            <i className="fa fa-barcode fa-2x"></i>
-          </Button>
-        </div>
-      )
-  }
-
   reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
-
     return (
       <h4>
         <i className="icon-reaction"/>&nbsp;{reaction.title()}
@@ -276,9 +260,16 @@ export default class ReactionDetails extends Component {
           <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
-        {this.reactionCodePrintButtons(reaction)}
+        <PrintCodeButton element={reaction}/>
       </h4>
     )
+  }
+
+  handleSelect(key) {
+    UIActions.selectTab({tabKey: key, type: 'reaction'});
+    this.setState({
+      activeTab: key
+    })
   }
 
   render() {
@@ -294,7 +285,8 @@ export default class ReactionDetails extends Component {
       <Panel className='panel-detail' header={this.reactionHeader(reaction)}
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         {this.reactionSVG(reaction)}
-        <Tabs defaultActiveKey={0} id="reaction-detail-tab">
+        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)}
+           id="reaction-detail-tab">
           <Tab eventKey={0} title={'Scheme'}>
             <ReactionDetailsScheme
               reaction={reaction}

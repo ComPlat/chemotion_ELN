@@ -7,7 +7,7 @@ class AnalysesExperimentSerializer < ActiveModel::Serializer
     case analysis.analysis_type
       when "NMR" then 
         sample_analysis = sample.analyses.select{|a| a['id'] == object.sample_analysis_id}
-        !sample_analysis.empty?  ? sample_analysis.first['bar_code_bruker'] : ""
+        !sample_analysis.empty?  ? sample_analysis.first['bruker_code'] : ""
       else ""
     end
   end

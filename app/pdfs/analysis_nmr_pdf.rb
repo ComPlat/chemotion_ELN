@@ -36,7 +36,7 @@ class AnalysisNmrPdf < Prawn::Document
   end
 
   def qr_code(element)
-    qr_code = Barby::QrCode.new(element.qr_code, size: 1, level: :l)
+    qr_code = Barby::QrCode.new(element.code_log.value, size: 1, level: :l)
     outputter = outputter(qr_code)
     height = 6.mm
     width = 6.mm
@@ -44,7 +44,7 @@ class AnalysisNmrPdf < Prawn::Document
   end
 
   def bar_code(element)
-    outputter = outputter(Barby::Code128C.new(element.bar_code_bruker))
+    outputter = outputter(Barby::Code128C.new(element.code_log.value_xs))
     height = 25.mm
     width = 14.mm
     # xdim 0.254mm = 10mil

@@ -6,24 +6,6 @@ module Chemotion
     include Grape::Kaminari
 
     resource :samples do
-      namespace :get_analysis_index do
-        desc "Get analysis index for sample and analysis id"
-        params do
-          requires :sample_id, type: Integer
-          requires :analysis_id, type: String
-          optional :code, type: String
-        end
-        get do
-          sample = Sample.find(params[:sample_id])
-          index = sample.analyses.index { |a| a["id"] == params[:analysis_id]}
-
-          if index.nil?
-            error!("Analysis with code #{params[:code]} not found", 404)
-          else
-            index
-          end
-        end
-      end
 
       # TODO Refactoring: Use Grape Entities
       namespace :ui_state do
@@ -255,6 +237,7 @@ module Chemotion
         optional :melting_point, type: Float, desc: "Sample melting point"
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        optional :xref, type: Hash
         requires :container, type: Hash
       end
       route_param :id do
@@ -263,7 +246,6 @@ module Chemotion
         end
 
         put do
-
           attributes = declared(params, include_missing: false)
 
           ContainerHelper.update_datamodel(attributes[:container]);
@@ -315,6 +297,7 @@ module Chemotion
         optional :melting_point, type: Float, desc: "Sample melting point"
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        optional :xref, type: Hash
         requires :container, type: Hash
       end
       post do
@@ -340,7 +323,8 @@ module Chemotion
           melting_point: params[:melting_point],
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
-          created_by: current_user.id
+          created_by: current_user.id,
+          xref: params[:xref]
         }
 
         # otherwise ActiveRecord::UnknownAttributeError appears
