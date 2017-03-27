@@ -32,7 +32,7 @@ export default class ContainerTree extends Component {
     this.setState({
       treeData: state.treeData
     })
-    console.log(this.state.treeData)
+    ContainerActions.updateTree(this.state.tree)
   }
 
   onChangeUI(state){
