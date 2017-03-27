@@ -204,7 +204,8 @@ export default class Sample extends Element {
       is_split: this.is_split || false,
       is_new: this.is_new,
       imported_readout: this.imported_readout,
-      container: this.container
+      container: this.container,
+      xref: this.xref,
     });
 
     return serialized;

@@ -4,6 +4,7 @@ import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
         Tooltip, OverlayTrigger} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
+import Select from 'react-select';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -246,25 +247,22 @@ export default class SampleDetails extends React.Component {
 
   moleculeInchi(sample) {
     return (
-      <FormGroup >
-        <ControlLabel></ControlLabel>
-        <InputGroup>
-          <InputGroup.Addon>InChI</InputGroup.Addon>
-          <FormControl type="text"
-             key={sample.id}
-             defaultValue={sample.molecule_inchistring || ''}
-             disabled
-             readOnly
-          />
-          <InputGroup.Button>
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_inchistring || " "} >
-                <i className="fa fa-clipboard"></i>
-              </Button>
-            </OverlayTrigger>
-          </InputGroup.Button>
-        </InputGroup>
-      </FormGroup>
+      <InputGroup className='sample-molecule-identifier'>
+        <InputGroup.Addon>InChI</InputGroup.Addon>
+        <FormControl type="text"
+           key={sample.id}
+           defaultValue={sample.molecule_inchistring || ''}
+           disabled
+           readOnly
+        />
+        <InputGroup.Button>
+          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+            <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_inchistring || " "} >
+              <i className="fa fa-clipboard"></i>
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+      </InputGroup>
     )
   }
 
@@ -276,25 +274,60 @@ export default class SampleDetails extends React.Component {
 
   moleculeCanoSmiles(sample) {
     return (
-      <FormGroup >
-        <ControlLabel></ControlLabel>
-        <InputGroup>
-          <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
-          <FormControl type="text"
-             defaultValue={sample.molecule_cano_smiles || ''}
-             disabled
-             readOnly
-          />
-          <InputGroup.Button>
-            <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-              <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_cano_smiles || " "} >
-                <i className="fa fa-clipboard"></i>
-              </Button>
-            </OverlayTrigger>
-          </InputGroup.Button>
-        </InputGroup>
-      </FormGroup>
+      <InputGroup className='sample-molecule-identifier'>
+        <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
+        <FormControl type="text"
+           defaultValue={sample.molecule_cano_smiles || ''}
+           disabled
+           readOnly
+        />
+        <InputGroup.Button>
+          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+            <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_cano_smiles || " "} >
+              <i className="fa fa-clipboard"></i>
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+      </InputGroup>
     )
+  }
+
+  moleculeCas() {
+    const sample = this.state.sample;
+    const { molecule, xref } = sample;
+    const cas = xref ? xref.cas : "";
+    let cas_arr = [];
+    if(molecule && molecule.cas) {
+      cas_arr = molecule.cas.map(c => Object.assign({label: c}, {value: c}));
+    }
+    return (
+      <InputGroup className='sample-molecule-identifier'>
+        <InputGroup.Addon>CAS</InputGroup.Addon>
+        <Select ref='casSelect'
+                name='cas'
+                multi={false}
+                options={cas_arr}
+                className='drop-up'
+                onChange={(e) => this.updateCas(e)}
+                value={cas}
+        />
+        <InputGroup.Button>
+          <OverlayTrigger placement="bottom"
+                          overlay={this.clipboardTooltip()} >
+            <Button active className="clipboardBtn"
+                    data-clipboard-text={cas} >
+              <i className="fa fa-clipboard"></i>
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+      </InputGroup>
+    )
+  }
+
+  updateCas(e) {
+    let sample = this.state.sample;
+    sample.xref = { ...sample.xref, cas: e };
+    this.setState({sample});
   }
 
   handleSectionToggle() {
@@ -384,6 +417,7 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem>
           {this.moleculeInchi(sample)}
           {this.moleculeCanoSmiles(sample)}
+          {this.moleculeCas()}
         </ListGroupItem>
       </Tab>
     )
