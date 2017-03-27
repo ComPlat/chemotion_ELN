@@ -36,9 +36,28 @@ module ContainerHelper
         {title: "Analyses",
           children: get_children(subcontainer)}
       else
-        {title: subcontainer.name,
-          subtitle: subcontainer.container_type,
+        titleStr = subcontainer.name + " (" + subcontainer.container_type + ")"
+        {title: titleStr,
           children: get_children(subcontainer)}
+      end
+    end
+  end
+
+  def self.update_attachments(objects)
+    objects.each do |object|
+      if object.title.end_with? "(dataset)"
+        parentid = object.id
+        object.children.each do |child|
+          if child.title.end_with? "(attachment)"
+            attachment = Attachment.where(:id => child.id)
+            if attachment
+              attachment.container_id = parentid
+              attachment.save!
+            end
+          end
+        end
+      else
+        update_attachments(object.children)
       end
     end
   end

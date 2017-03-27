@@ -32,6 +32,7 @@ export default class ContainerTree extends Component {
     this.setState({
       treeData: state.treeData
     })
+    console.log(this.state.treeData)
   }
 
   onChangeUI(state){
@@ -43,13 +44,27 @@ export default class ContainerTree extends Component {
     }
   }
 
+  draggable(tree_info){
+    return tree_info.node.title.endsWith("(attachment)")
+  }
+
+  droppable(tree_info){
+    if(tree_info.nextParent!=null){
+      return tree_info.nextParent.title.endsWith("(dataset)")
+    }else {
+      return false
+    }
+  }
+
   render() {
 
     return (
       <div style={{ height: 800 }}>
         <SortableTree
           treeData={this.state.treeData}
-          onChange={treeData => this.setState({treeData})}
+          onChange={treeData => this.onChangeTree({treeData})}
+          canDrag={this.draggable}
+          canDrop={this.droppable}
           />
       </div>
         );
