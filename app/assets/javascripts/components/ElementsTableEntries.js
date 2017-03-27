@@ -3,7 +3,7 @@ import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
-import {Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Tooltip, OverlayTrigger, Table} from 'react-bootstrap';
 import ArrayUtils from './utils/ArrayUtils';
 
 import UIStore from './stores/UIStore';
@@ -133,6 +133,9 @@ export default class ElementsTableEntries extends Component {
       },
       {
         'reaction': element.type == 'reaction' && this.isElementSelected(element)
+      },
+      {
+        'research_plan': element.type == 'research_plan'
       }
     );
 
@@ -142,12 +145,12 @@ export default class ElementsTableEntries extends Component {
       cursor: 'pointer'
     };
     let tdExtraContents = [];
-    for (let j=0;j < XTdCont.TdContCount;j++){
-      let NoName = XTdCont["TdCont"+j];
+    for (let j=0;j < XTdCont.count;j++){
+      let NoName = XTdCont["content"+j];
       tdExtraContents.push(<NoName element={element}/>);
     }
 
-    if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction')) {
+    if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction' || element.type == 'research_plan')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
@@ -224,39 +227,41 @@ export default class ElementsTableEntries extends Component {
     let {keyboardElementIndex} = this.state
 
     return (
-      <tbody>
-      {elements.map((element, index) => {
-        const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
-        let style = {};
-        if (this.isElementSelected(element) ||
-           (keyboardElementIndex != null && keyboardElementIndex == index)) {
-          style = {
-          color: '#000',
-          background: '#ddd',
-          border: '4px solid #337ab7'
+      <Table className="elements" bordered hover style={{borderTop: 0}}>
+        <tbody>
+        {elements.map((element, index) => {
+          const sampleMoleculeName = (element.type == 'sample') ? element.molecule.iupac_name: '';
+          let style = {};
+          if (this.isElementSelected(element) ||
+             (keyboardElementIndex != null && keyboardElementIndex == index)) {
+            style = {
+            color: '#000',
+            background: '#ddd',
+            border: '4px solid #337ab7'
+            }
           }
-        }
 
-        return (
-          <tr key={index} style={style}>
-            <td>
-            <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
-            </td>
-            <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
-              {element.title()}&nbsp;
-              {this.reactionStatus(element)}
-              <br/>
-              {sampleMoleculeName}
-              <ElementCollectionLabels element={element} key={element.id}/>
-              {this.sampleAnalysesLabels(element)}
-              {this.topSecretIcon(element)}
-            </td>
-            {this.previewColumn(element)}
-            {this.dragColumn(element)}
-          </tr>
-        )
-      })}
-      </tbody>
+          return (
+            <tr key={index} style={style}>
+              <td width="30px">
+                <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
+              </td>
+              <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
+                {element.title()}&nbsp;
+                {this.reactionStatus(element)}
+                <br/>
+                {sampleMoleculeName}
+                <ElementCollectionLabels element={element} key={element.id}/>
+                {this.sampleAnalysesLabels(element)}
+                {this.topSecretIcon(element)}
+              </td>
+              {this.previewColumn(element)}
+              {this.dragColumn(element)}
+            </tr>
+          )
+        })}
+        </tbody>
+      </Table>
     );
   }
 }

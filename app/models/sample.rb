@@ -5,6 +5,9 @@ class Sample < ActiveRecord::Base
   include Collectable
   include ElementCodes
   include AnalysisCodes
+  include UnitConvertable
+  include Taggable
+
   has_many :analyses_experiments
 
   multisearchable against: [
@@ -103,6 +106,8 @@ class Sample < ActiveRecord::Base
   belongs_to :fingerprints
   belongs_to :user
 
+  has_one :container, :as => :containable
+
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
   has_many :residues
@@ -114,6 +119,7 @@ class Sample < ActiveRecord::Base
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
   before_save :check_molfile_polymer_section
+  before_save :find_or_create_fingerprint
 
   has_ancestry
 
@@ -121,7 +127,7 @@ class Sample < ActiveRecord::Base
   validate :has_collections
 
   accepts_nested_attributes_for :molecule, update_only: true
-  accepts_nested_attributes_for :residues, :elemental_compositions,
+  accepts_nested_attributes_for :residues, :elemental_compositions, :container,
                                 allow_destroy: true
   accepts_nested_attributes_for :collections_samples
 
@@ -131,42 +137,32 @@ class Sample < ActiveRecord::Base
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
 
-  before_save :auto_set_short_label, on: :create
+  before_create :auto_set_short_label
 
   after_save :update_data_for_reactions
   before_create :check_short_label
   after_create :update_counter
 
+  after_create :create_root_container
+
   def molecule_sum_formular
-    if self.molecule
-      self.molecule.sum_formular
-    else
-      ""
-    end
+    self.molecule ? self.molecule.sum_formular : ""
   end
 
   def molecule_iupac_name
-    if self.molecule
-      self.molecule.iupac_name
-    else
-      ""
-    end
+    self.molecule ? self.molecule.iupac_name : ""
   end
 
   def molecule_inchistring
-    if self.molecule
-      self.molecule.inchistring
-    else
-      ""
-    end
+    self.molecule ? self.molecule.inchistring : ""
   end
 
   def molecule_cano_smiles
-    if self.molecule
-      self.molecule.cano_smiles
-    else
-      ""
-    end
+    self.molecule ? self.molecule.cano_smiles : ""
+  end
+
+  def analyses
+    self.container ? self.container.analyses : []
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
@@ -210,6 +206,8 @@ class Sample < ActiveRecord::Base
 
     subsample.collections << Collection.find(collection_id)
 
+    subsample.container = ContainerHelper.create_root_container
+
     subsample.save!
 
     subsample
@@ -233,6 +231,10 @@ class Sample < ActiveRecord::Base
     reactions_as_starting_material + reactions_as_reactant + reactions_as_solvent + reactions_as_product
   end
 
+  def reaction_description
+    reactions.first.try(:description)
+  end
+
   #todo: find_or_create_molecule_based_on_inchikey
   def auto_set_molfile_to_molecules_molfile
     if molecule && molecule.molfile
@@ -253,6 +255,12 @@ class Sample < ActiveRecord::Base
           end
         end
       end
+    end
+  end
+
+  def find_or_create_fingerprint
+    if self.fingerprint_id == nil
+      self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
     end
   end
 
@@ -335,40 +343,8 @@ class Sample < ActiveRecord::Base
     end
   end
 
-  # -- fake analyses
-  def analyses
-    unless analyses_dump.blank?
-      JSON.parse(analyses_dump)
-    else
-      []
-    end
-  end
-
-  def analyses= analyses
-    json_dump = JSON.dump(analyses)
-    self.analyses_dump = json_dump
-  end
-
-  def amount_mmol type = 'target'
-    divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
-    if self.loading
-      (self["#{type}_amount_value"] || 0.0) * loading.to_f
-    else
-      1000.0 * (self["#{type}_amount_value"] || 0.0) / self.molecule.molecular_weight
-    end / divisor
-  end
-
-  def amount_mg type = 'target'
-    multiplier = self["#{type}_amount_unit"] == 'g' ? 1000.0 : 1.0
-    (self["#{type}_amount_value"] || 0.0) * multiplier
-  end
-
-  def amount_ml type = 'target'
-    return if self.molecule.is_partial
-
-    divisor = self["#{type}_amount_unit"] == 'mg' ? 1000.0 : 1.0
-
-    (self["#{type}_amount_value"] || 0.0) / (self.molecule.density || 1.0) / divisor
+  def contains_residues
+    self.residues.any?
   end
 
   def preferred_label
@@ -481,5 +457,11 @@ private
   def update_counter
     return if (self.short_label == 'reactants' || self.short_label == 'solvents')
     self.creator.increment_counter 'samples' unless self.parent
+  end
+
+  def create_root_container
+    if self.container == nil
+      self.container = ContainerHelper.create_root_container
+    end
   end
 end

@@ -11,12 +11,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170209094545) do
+ActiveRecord::Schema.define(version: 20170215133510) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
+
+  create_table "attachments", force: :cascade do |t|
+    t.integer  "container_id"
+    t.string   "filename",     null: false
+    t.string   "identifier",   null: false
+    t.string   "checksum",     null: false
+    t.string   "storage",      null: false
+    t.integer  "created_by",   null: false
+    t.integer  "created_for"
+    t.integer  "version",      null: false
+    t.datetime "created_at",   null: false
+    t.datetime "updated_at",   null: false
+  end
 
   create_table "analyses_experiments", force: :cascade do |t|
     t.integer  "sample_id"
@@ -51,22 +64,23 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   end
 
   create_table "collections", force: :cascade do |t|
-    t.integer  "user_id",                                null: false
+    t.integer  "user_id",                                   null: false
     t.string   "ancestry"
-    t.text     "label",                                  null: false
+    t.text     "label",                                     null: false
     t.integer  "shared_by_id"
-    t.boolean  "is_shared",              default: false
-    t.integer  "permission_level",       default: 0
-    t.integer  "sample_detail_level",    default: 10
-    t.integer  "reaction_detail_level",  default: 10
-    t.integer  "wellplate_detail_level", default: 10
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
+    t.boolean  "is_shared",                 default: false
+    t.integer  "permission_level",          default: 0
+    t.integer  "sample_detail_level",       default: 10
+    t.integer  "reaction_detail_level",     default: 10
+    t.integer  "wellplate_detail_level",    default: 10
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
     t.integer  "position"
-    t.integer  "screen_detail_level",    default: 10
-    t.boolean  "is_locked",              default: false
+    t.integer  "screen_detail_level",       default: 10
+    t.boolean  "is_locked",                 default: false
     t.datetime "deleted_at"
-    t.boolean  "is_synchronized",        default: false, null: false
+    t.boolean  "is_synchronized",           default: false, null: false
+    t.integer  "researchplan_detail_level", default: 10
   end
 
   add_index "collections", ["ancestry"], name: "index_collections_on_ancestry", using: :btree
@@ -82,6 +96,12 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
   add_index "collections_reactions", ["deleted_at"], name: "index_collections_reactions_on_deleted_at", using: :btree
   add_index "collections_reactions", ["reaction_id"], name: "index_collections_reactions_on_reaction_id", using: :btree
+
+  create_table "collections_research_plans", force: :cascade do |t|
+    t.integer  "collection_id"
+    t.integer  "research_plan_id"
+    t.datetime "deleted_at"
+  end
 
   create_table "collections_samples", force: :cascade do |t|
     t.integer  "collection_id"
@@ -113,6 +133,30 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
   add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
   add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
+
+  create_table "container_hierarchies", id: false, force: :cascade do |t|
+    t.integer "ancestor_id",   null: false
+    t.integer "descendant_id", null: false
+    t.integer "generations",   null: false
+  end
+
+  add_index "container_hierarchies", ["ancestor_id", "descendant_id", "generations"], name: "container_anc_desc_udx", unique: true, using: :btree
+  add_index "container_hierarchies", ["descendant_id"], name: "container_desc_idx", using: :btree
+
+  create_table "containers", force: :cascade do |t|
+    t.string   "ancestry"
+    t.integer  "containable_id"
+    t.string   "containable_type"
+    t.string   "name"
+    t.string   "container_type"
+    t.text     "description"
+    t.hstore   "extended_metadata", default: {}
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+    t.integer  "parent_id"
+  end
+
+  add_index "containers", ["ancestry"], name: "index_containers_on_ancestry", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -152,6 +196,16 @@ ActiveRecord::Schema.define(version: 20170209094545) do
 
   add_index "devices_samples", ["device_id"], name: "index_devices_samples_on_device_id", using: :btree
   add_index "devices_samples", ["sample_id"], name: "index_devices_samples_on_sample_id", using: :btree
+
+  create_table "element_tags", force: :cascade do |t|
+    t.string   "taggable_type"
+    t.integer  "taggable_id"
+    t.jsonb    "taggable_data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "element_tags", ["taggable_id"], name: "index_element_tags_on_taggable_id", using: :btree
 
   create_table "elemental_compositions", force: :cascade do |t|
     t.integer  "sample_id",                     null: false
@@ -269,6 +323,19 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
 
+  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.text     "path_1h"
+    t.text     "path_13c"
+    t.text     "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
+  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
+
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
     t.integer  "searchable_id"
@@ -282,6 +349,7 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   create_table "profiles", force: :cascade do |t|
     t.boolean  "show_external_name", default: false
     t.integer  "user_id",                            null: false
+    t.jsonb    "data"
     t.datetime "deleted_at"
     t.datetime "created_at",                         null: false
     t.datetime "updated_at",                         null: false
@@ -364,6 +432,49 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
   add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
+  create_table "reports", force: :cascade do |t|
+    t.integer  "author_id"
+    t.string   "file_name"
+    t.text     "file_description"
+    t.text     "configs"
+    t.text     "sample_settings"
+    t.text     "reaction_settings"
+    t.text     "objects"
+    t.string   "img_format"
+    t.string   "file_path"
+    t.datetime "generated_at"
+    t.datetime "deleted_at"
+    t.datetime "created_at",        null: false
+    t.datetime "updated_at",        null: false
+  end
+
+  add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
+  add_index "reports", ["file_name"], name: "index_reports_on_file_name", using: :btree
+
+  create_table "reports_users", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "report_id"
+    t.datetime "downloaded_at"
+    t.datetime "deleted_at"
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
+  end
+
+  add_index "reports_users", ["deleted_at"], name: "index_reports_users_on_deleted_at", using: :btree
+  add_index "reports_users", ["report_id"], name: "index_reports_users_on_report_id", using: :btree
+  add_index "reports_users", ["user_id"], name: "index_reports_users_on_user_id", using: :btree
+
+  create_table "research_plans", force: :cascade do |t|
+    t.string   "name",        null: false
+    t.text     "description"
+    t.string   "sdf_file"
+    t.string   "svg_file"
+    t.integer  "created_by",  null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
   create_table "residues", force: :cascade do |t|
     t.integer  "sample_id"
     t.string   "residue_type"
@@ -413,6 +524,28 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
+  create_table "scifinding_credentials", force: :cascade do |t|
+    t.string   "username"
+    t.string   "encrypted_password"
+    t.string   "encrypted_current_token"
+    t.string   "encrypted_refreshed_token"
+    t.datetime "token_expires_at"
+    t.datetime "token_requested_at"
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+    t.integer  "user_id"
+    t.string   "encrypted_password_iv"
+    t.string   "encrypted_current_token_iv"
+    t.string   "encrypted_refreshed_token_iv"
+  end
+
+  create_table "scifinding_tags", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "count"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
   create_table "screens", force: :cascade do |t|
     t.string   "description"
     t.string   "name"
@@ -443,12 +576,13 @@ ActiveRecord::Schema.define(version: 20170209094545) do
     t.integer "user_id"
     t.integer "collection_id"
     t.integer "shared_by_id"
-    t.integer "permission_level",       default: 0
-    t.integer "sample_detail_level",    default: 0
-    t.integer "reaction_detail_level",  default: 0
-    t.integer "wellplate_detail_level", default: 0
-    t.integer "screen_detail_level",    default: 0
+    t.integer "permission_level",          default: 0
+    t.integer "sample_detail_level",       default: 0
+    t.integer "reaction_detail_level",     default: 0
+    t.integer "wellplate_detail_level",    default: 0
+    t.integer "screen_detail_level",       default: 0
     t.string  "fake_ancestry"
+    t.integer "researchplan_detail_level", default: 10
   end
 
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
@@ -456,28 +590,33 @@ ActiveRecord::Schema.define(version: 20170209094545) do
   add_index "sync_collections_users", ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
 
   create_table "users", force: :cascade do |t|
-    t.string   "email",                            default: "",                                                    null: false
-    t.string   "encrypted_password",               default: "",                                                    null: false
+    t.string   "email",                            default: "",                                                                                      null: false
+    t.string   "encrypted_password",               default: "",                                                                                      null: false
     t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.integer  "sign_in_count",                    default: 0,                                                     null: false
+    t.integer  "sign_in_count",                    default: 0,                                                                                       null: false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.inet     "current_sign_in_ip"
     t.inet     "last_sign_in_ip"
-    t.datetime "created_at",                                                                                       null: false
-    t.datetime "updated_at",                                                                                       null: false
+    t.datetime "created_at",                                                                                                                         null: false
+    t.datetime "updated_at",                                                                                                                         null: false
     t.string   "name"
-    t.string   "first_name",                                                                                       null: false
-    t.string   "last_name",                                                                                        null: false
+    t.string   "first_name",                                                                                                                         null: false
+    t.string   "last_name",                                                                                                                          null: false
     t.datetime "deleted_at"
-    t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"}, null: false
+    t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
+    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.boolean  "is_templates_moderator",           default: false,                                                 null: false
     t.integer  "selected_device_id"
+    t.string   "confirmation_token"
+    t.datetime "confirmed_at"
+    t.datetime "confirmation_sent_at"
+    t.string   "unconfirmed_email"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
   end
 
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree

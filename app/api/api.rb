@@ -27,9 +27,9 @@ class API < Grape::API
       groups = Hash.new
       sample_serializer_selector =
         if own_collection
-          lambda { |s| SampleSerializer::Level10.new(s, 10).serializable_hash }
+          lambda { |s| SampleListSerializer::Level10.new(s, 10).serializable_hash }
         else
-          lambda { |s| ElementPermissionProxy.new(current_user, s, user_ids).serialized }
+          lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
         end
 
       samples.each do |sample|
@@ -38,6 +38,37 @@ class API < Grape::API
         serialized_sample = sample_serializer_selector.call(sample)
         groups[moleculeName] = (groups[moleculeName] || []).push(serialized_sample)
       end
+      return to_molecule_array(groups)
+    end
+
+    def create_group_molecule(molecules, samples, own_collection = false)
+      groups = Hash.new
+      sample_serializer_selector =
+        if own_collection
+          lambda { |s| SampleListSerializer::Level10.new(s, 10).serializable_hash }
+        else
+          lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+        end
+
+      molecules.each do |molecule|
+        next if molecule == nil
+        moleculeName = molecule.iupac_name || molecule.inchistring
+
+        samplesGroup = samples.select {|v| v.molecule_id == molecule.id}
+        samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
+
+        samplesGroup.each do |sample|
+          name = moleculeName
+          serialized_sample = sample_serializer_selector.call(sample)
+
+          if sample.residues.present?
+            name = name + 'part_' + sample.residues[0].residue_type.to_s
+          end
+
+          groups[name] = (groups[name] || []).push(serialized_sample)
+        end
+      end
+
       return to_molecule_array(groups)
     end
 
@@ -69,6 +100,7 @@ class API < Grape::API
   mount Chemotion::SampleAPI
   mount Chemotion::ReactionAPI
   mount Chemotion::WellplateAPI
+  mount Chemotion::ResearchPlanAPI
   mount Chemotion::ScreenAPI
   mount Chemotion::UserAPI
   mount Chemotion::ReactionSvgAPI

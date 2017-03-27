@@ -19,6 +19,18 @@ gem 'jbuilder', '~> 2.0'
 # bundle exec rake doc:rails generates the API under doc/api.
 gem 'sdoc', '~> 0.4.0', group: :doc
 
+group :development do
+  gem 'rack-mini-profiler'
+
+  # For memory profiling (requires Ruby MRI 2.1+)
+  gem 'memory_profiler'
+
+  # For call-stack profiling flamegraphs (requires Ruby MRI 2.0.0+)
+  gem 'flamegraph'
+  gem 'stackprof'     # For Ruby MRI 2.1+
+  gem 'fast_stack'    # For Ruby MRI 2.0
+end
+
 gem 'pg'
 gem 'pg_search'
 
@@ -30,6 +42,10 @@ gem 'browserify-rails' , '~> 3.0.1'
 
 # for collection tree structure
 gem 'ancestry'
+gem 'closure_tree'
+
+gem 'net-ssh'
+gem 'net-sftp'
 
 # svg composer
 gem 'nokogiri'
@@ -57,14 +73,14 @@ gem 'axlsx', git: 'https://github.com/randym/axlsx'
 gem 'roo', ">2.5.0"
 
 gem 'httparty'
-gem 'faraday'
+gem 'faraday', '~> 0.11.0'
 # Ketcher editor
 gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails'
 
 # Free font icons
 gem "font-awesome-rails"
 
-# Email notifications and so on
+# delayed job
 gem 'delayed_job_active_record'
 
 # required by cap3 delayed-job but has to be specified manually
@@ -80,10 +96,16 @@ gem "whenever", require: false
 gem "backup"
 gem 'yaml_db'
 
+gem "ruby-ole"
+
 # CI
 gem 'coveralls', require: false
 
-gem 'openbabel', '2.3.2.1', git: 'https://github.com/cubuslab/openbabel-gem'
+# openbabel
+# to compile from github/openbabel/openbabel master
+#gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem'
+# to compile from github/openbabel/openbabel branch openbabel-2-4-x
+gem 'openbabel', '2.4.0.1', git: 'https://github.com/ComPlat/openbabel-gem', branch: 'openbabel-2-4-x'
 
 gem 'prawn'
 gem 'prawn-svg'
@@ -123,7 +145,7 @@ group :development, :test do
   gem 'capistrano-rails'
   gem 'capistrano-nvm', require: false
   gem 'capistrano-npm'
-  gem 'capistrano3-delayed-job'
+  # gem 'capistrano3-delayed-job'
 end
 
 group :test do
@@ -134,8 +156,9 @@ group :test do
   gem "faker", "~> 1.6.6"
   gem "capybara", "~> 2.7.1"
   gem "launchy", "~> 2.4.3"
-  gem "selenium-webdriver", "~> 2.53.4"
+  gem "selenium-webdriver", "~> 3.0.5"
   gem "chromedriver-helper", "1.0.0"
+  gem "headless", "2.0.0"
 end
 
 # Chemotion plugins: list your chemotion specific plugin gems here

@@ -75,22 +75,23 @@ module Chemotion
       get do
         scope = if params[:collection_id]
           begin
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).
-              find(params[:collection_id]).reactions
+            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
+              .find(params[:collection_id])
+              .reactions
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
         elsif params[:sync_collection_id]
           begin
-            current_user.all_sync_in_collections_users.find(params[:sync_collection_id]).collection.reactions
+            current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
+              .collection.reactions
           rescue ActiveRecord::RecordNotFound
             Reaction.none
           end
         else
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
-        end.order("created_at DESC")
-
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
+        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
       desc "Return serialized reaction by id"
@@ -156,6 +157,8 @@ module Chemotion
 
         requires :materials, type: Hash
         optional :literatures, type: Array
+
+        requires :container, type: Hash
       end
       route_param :id do
 
@@ -168,6 +171,9 @@ module Chemotion
           materials = attributes.delete(:materials)
           literatures = attributes.delete(:literatures)
           id = attributes.delete(:id)
+
+          ContainerHelper.update_datamodel(attributes[:container]);
+          attributes.delete(:container);
 
           if reaction = Reaction.find(id)
             reaction.update_attributes!(attributes)
@@ -200,17 +206,25 @@ module Chemotion
 
         requires :materials, type: Hash
         optional :literatures, type: Array
+        requires :container, type: Hash
       end
 
       post do
+
         attributes = declared(params, include_missing: false).symbolize_keys
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
         collection_id = attributes.delete(:collection_id)
 
+        container_info = params[:container]
+        attributes.delete(:container)
+
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
+
+        reaction.container = ContainerHelper.update_datamodel(container_info)
+        reaction.save!
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
@@ -258,6 +272,7 @@ module ReactionUpdator
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
 
+
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
@@ -275,9 +290,6 @@ module ReactionUpdator
               if (material_group == :reactant || material_group == :solvent)
                 # Use 'reactant' or 'solvent' as short_label
                 subsample.short_label = sample.short_label
-              else
-                #we don't want to inherit short_label from parent
-                subsample.short_label = nil
               end
 
               subsample.target_amount_value = sample.target_amount_value
@@ -292,6 +304,9 @@ module ReactionUpdator
 
               subsample.collections << collections.where.not(id: first_collection_id)
 
+              #add new data container
+              #subsample.container = ContainerHelper.create_root_container
+
               subsample.save!
               subsample.reload
               included_sample_ids << subsample.id
@@ -303,14 +318,26 @@ module ReactionUpdator
               )
             #create new sample
             else
-
               attributes = sample.to_h
                 .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
                 .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
 
+              # update attributes[:name] for a copied reaction
+              if reaction.name.include?("Copy") && attributes[:name].present?
+                named_by_reaction = "#{reaction.short_label}"
+                named_by_reaction += "-#{attributes[:name].split("-").last}"
+                attributes.merge!(name: named_by_reaction)
+              end
+
+              container_info = attributes[:container]
+              attributes.delete(:container)
+
               new_sample = Sample.new(
                 attributes
               )
+
+              #add new data container
+              new_sample.container = ContainerHelper.update_datamodel(container_info)
 
               new_sample.collections << collections
               new_sample.save!

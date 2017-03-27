@@ -9,8 +9,21 @@ class SyncCollectionsUser < ActiveRecord::Base
   has_many :screens, through: :collection
 
   before_create :auto_set_synchronized_flag
+  after_destroy :check_collection_if_synced
+
+  private
 
   def auto_set_synchronized_flag
-    self.collection.update_attribute(:is_synchronized, true) if self.collection.present?
+    if self.collection.present?
+      self.collection.update_attribute(:is_synchronized, true)
+    end
+  end
+
+  def check_collection_if_synced
+    if collection = self.collection
+      unless collection.sync_collections_users.count > 0
+        collection.update_attribute(:is_synchronized, false)
+      end
+    end
   end
 end

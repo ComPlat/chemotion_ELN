@@ -1,0 +1,16 @@
+table.layout-container {
+  td {
+    font-size: 25pt;
+    color: #337ab7;
+    border: 1px solid #ddd;
+    div {
+      text-align: center;
+      width: 50px;
+    }
+  }
+
+  .hidden-layout {
+    background-color: #f7f7f7;
+    color: #555555;
+  }
+}

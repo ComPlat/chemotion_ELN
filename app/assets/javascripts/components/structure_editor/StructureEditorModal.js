@@ -133,12 +133,12 @@ const StructureEditor =
           <iframe id="ifKetcher" src="/ketcher">
           </iframe>
         </div>
-        <div>
+        <div style={{marginTop: "20px"}}>
           <ButtonToolbar>
             <Button bsStyle="warning" onClick={handleCancelBtn}>
               {cancelBtnText}
             </Button>
-            <Button bsStyle="primary" onClick={handleSaveBtn}>
+            <Button bsStyle="primary" onClick={handleSaveBtn} style={{marginRight:"20px"}}>
               {submitBtnText}
             </Button>
             {submitAddons}

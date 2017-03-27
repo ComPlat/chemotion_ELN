@@ -1,7 +1,9 @@
 import alt from '../alt';
 import UIActions from '../actions/UIActions';
+import UserActions from '../actions/UserActions';
 import ElementActions from '../actions/ElementActions';
 import ElementStore from './ElementStore';
+import UserStore from './UserStore';
 import ArrayUtils from '../utils/ArrayUtils';
 import Immutable from 'immutable';
 
@@ -14,7 +16,6 @@ class UIStore {
         uncheckedIds: Immutable.List(),
         currentId: null,
         page: 1,
-        activeTab: 0,
         activeAnalysis: 0
       },
       reaction: {
@@ -38,20 +39,29 @@ class UIStore {
         currentId: null,
         page: 1
       },
+      research_plan: {
+        checkedAll: false,
+        checkedIds: Immutable.List(),
+        uncheckedIds: Immutable.List(),
+        currentId: null,
+        page: 1
+      },
       showPreviews: true,
       number_of_results: 15,
       currentCollection: null,
-      currentTab: 1,
       currentSearchSelection: null,
       showCollectionManagement: false,
       showDeviceManagement: false,
-      isSync: false
+      isSync: false,
+      showModal: false,
+      modalParams: {},
     };
 
     this.bindListeners({
-      handleSelectTab: UIActions.selectTab,
+
       handleSelectSampleTab: UIActions.selectSampleTab,
       handleSelectActiveAnalysis: UIActions.selectActiveAnalysis,
+
       handleSelectCollection: UIActions.selectCollection,
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
@@ -74,6 +84,8 @@ class UIStore {
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
       handleShowDeviceManagement: UIActions.showDeviceManagement,
       handleCloseDeviceManagement: UIActions.closeDeviceManagement
+      handleShowModalChange: UIActions.updateModalProps,
+      handleHideModal: UIActions.hideModal,
     });
   }
 
@@ -88,17 +100,13 @@ class UIStore {
   handleShowDeviceManagement() {
     this.state.showDeviceManagement = true
   }
-  
+
   handleCloseDeviceManagement() {
     this.state.showDeviceManagement = false
   }
 
   handleShowElements() {
     this.state.showCollectionManagement = false;
-  }
-
-  handleSelectTab(tab) {
-    this.state.currentTab = tab;
   }
 
   handleSelectSampleTab(tab) {
@@ -200,6 +208,8 @@ class UIStore {
           state.pagination);
         ElementActions.fetchScreensByCollectionId(collection.id,
           state.pagination);
+        ElementActions.fetchResearchPlansByCollectionId(collection.id,
+          state.pagination);
       }
     }
   }
@@ -250,6 +260,20 @@ class UIStore {
 
   handleChangeNumberOfResultsShown(value) {
     this.state.number_of_results = value;
+  }
+  handleShowModalChange(params){
+    this.state.showModal = params.show ? true : false
+    this.state.modalParams = params
+  }
+
+  handleHideModal(){
+    this.state.showModal = false
+    this.state.modalParams = {
+      show: false,
+      title: "",
+      component: "",
+      action: null
+    }
   }
 }
 

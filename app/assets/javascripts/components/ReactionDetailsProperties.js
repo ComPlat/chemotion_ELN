@@ -15,21 +15,26 @@ export default class ReactionDetailsProperties extends Component {
   constructor(props) {
     super(props);
     const {reaction} = props;
+
     this.state = {
       reaction,
       durationButtonDisabled: false
     }
+
     this.clipboard = new Clipboard('.clipboardBtn');
   }
 
-  componentDidMount() {
-    this.calcTimeDiff()
-  }
-
   componentWillReceiveProps(nextProps) {
-    const nextReaction = nextProps.reaction;
-    this.calcTimeDiff()
-    this.setState({ reaction: nextReaction });
+    let nextReaction = nextProps.reaction
+    let durationButtonDisabled = false
+    nextReaction.duration = this.calcDuration(nextReaction)
+
+    if (nextReaction.duration == null) {
+      nextReaction.duration = "No time traveling here"
+      durationButtonDisabled = true
+    }
+
+    this.setState({ reaction: nextReaction, durationButtonDisabled });
   }
 
   componentWillUnmount() {
@@ -44,34 +49,24 @@ export default class ReactionDetailsProperties extends Component {
 
   setCurrentTime(type) {
     const currentTime = new Date().toLocaleString('en-GB').split(', ').join(' ')
-    const {reaction} = this.state
-    if(type === 'start') {
-      reaction.timestamp_start = currentTime
-    } else {
-      reaction.timestamp_stop = currentTime
-    }
-    this.setState({ reaction: reaction })
-    this.calcTimeDiff()
+
+    let wrappedEvent = {target: {value: currentTime}}
+    let inputType = type === 'start' ? 'timestampStart' : 'timestampStop'
+    this.props.onInputChange(inputType, wrappedEvent)
   }
 
-  calcTimeDiff() {
-    const {reaction} = this.state
-    let {durationButtonDisabled} = this.state
+  calcDuration(reaction) {
+    let duration = null
+
     if(reaction.timestamp_start && reaction.timestamp_stop) {
       const start = moment(reaction.timestamp_start, "DD-MM-YYYY HH:mm:ss")
       const stop = moment(reaction.timestamp_stop, "DD-MM-YYYY HH:mm:ss")
-      if (start > stop) {
-        reaction.duration = "No time traveling here"
-        durationButtonDisabled = true
-      } else {
-        reaction.duration = moment.preciseDiff(start, stop)
-        durationButtonDisabled = false
+      if (start < stop) {
+        duration = moment.preciseDiff(start, stop)
       }
-      this.setState({
-        reaction: reaction,
-        durationButtonDisabled: durationButtonDisabled
-      })
     }
+
+    return duration
   }
 
   clipboardTooltip() {
@@ -81,7 +76,7 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   render() {
-    const {reaction} = this.state;
+    const {reaction} = this.state
     const {durationButtonDisabled} = this.state
 
     return (
@@ -103,7 +98,8 @@ export default class ReactionDetailsProperties extends Component {
                     placeholder="DD/MM/YYYY hh:mm:ss"
                     onChange={event => this.props.onInputChange('timestampStart', event)}/>
                   <InputGroup.Button>
-                    <Button active style={ {padding: '6px'}} onClick={e => this.setCurrentTime('start')} >
+                    <Button active style={ {padding: '6px'}}
+                            onClick={e => this.setCurrentTime('start')} >
                       <i className="fa fa-clock-o"></i>
                     </Button>
                   </InputGroup.Button>
@@ -121,7 +117,8 @@ export default class ReactionDetailsProperties extends Component {
                     placeholder="DD/MM/YYYY hh:mm:ss"
                     onChange={event => this.props.onInputChange('timestampStop', event)}/>
                   <InputGroup.Button>
-                    <Button active style={ {padding: '6px'}} onClick={e => this.setCurrentTime('stop')} >
+                    <Button active style={ {padding: '6px'}}
+                            onClick={e => this.setCurrentTime('stop')} >
                       <i className="fa fa-clock-o"></i>
                     </Button>
                   </InputGroup.Button>
@@ -138,9 +135,6 @@ export default class ReactionDetailsProperties extends Component {
                     disabled="true"
                     placeholder="Duration" />
                   <InputGroup.Button>
-                    <Button active onClick={e => this.calcTimeDiff()} >
-                      <i className="fa fa-hourglass-end"></i>
-                    </Button>
                     <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
                       <Button active className="clipboardBtn"
                               disabled={durationButtonDisabled}

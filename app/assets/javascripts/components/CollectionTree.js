@@ -230,8 +230,8 @@ export default class CollectionTree extends React.Component {
   render() {
     let {ownCollectionVisible} = this.state
     let extraDiv = [];
-    for (let j=0;j < Xdiv.divCount;j++){
-      let NoName = Xdiv["div"+j];
+    for (let j=0;j < Xdiv.count;j++){
+      let NoName = Xdiv["content"+j];
       extraDiv.push(<NoName key={"Xdiv"+j} />);
     }
 

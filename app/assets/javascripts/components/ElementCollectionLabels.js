@@ -68,18 +68,22 @@ export default class ElementCollectionLabels extends React.Component {
 
   render() {
     const {element} = this.state
+
+    if (!element.tag || !element.tag.taggable_data ||
+        !element.tag.taggable_data.collection_labels)
+      return (<span />)
+
     const {currentUser} = UserStore.getState()
 
     let placement = "left"
     if (this.props.placement) placement = this.props.placement
 
-    if(!element.collection_labels) return (<span></span>)
-
+    let collection_labels = element.tag.taggable_data.collection_labels
     let shared_labels = []
     let labels = []
     let sync_labels = []
 
-    element.collection_labels.map((label, index) => {
+    collection_labels.map((label, index) => {
       if (label.is_shared == false && label.user_id == currentUser.id) {
         labels.push(label)
       } else if (label.is_shared == true && label.shared_by_id == currentUser.id) {

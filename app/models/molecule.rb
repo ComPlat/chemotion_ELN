@@ -1,6 +1,8 @@
 class Molecule < ActiveRecord::Base
   acts_as_paranoid
+
   include Collectable
+  include Taggable
 
   has_many :samples
   has_many :collections, through: :samples
@@ -58,15 +60,18 @@ class Molecule < ActiveRecord::Base
     end
   end
 
-  def self.find_or_create_by_molfiles molfiles, is_partial = false
-    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
+  def self.find_or_create_by_molfiles molfiles, is_partial = false, is_compact = true
 
+    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
     inchikeys = bi.map do |babel_info|
       inchikey = babel_info[:inchikey]
       !inchikey.blank? && inchikey || nil
     end
+
     compact_iks = inchikeys.compact
     mol_to_get = []
+
+    iks = inchikeys.dup
     unless compact_iks.empty?
       existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
       mol_to_get = compact_iks - existing_ik
@@ -77,8 +82,8 @@ class Molecule < ActiveRecord::Base
         ik = pubchem_info[:inchikey]
         Molecule.find_or_create_by(inchikey: ik,
           is_partial: is_partial) do |molecule|
-          i =  inchikeys.index(ik)
-          inchikeys[i] = nil
+          i =  iks.index(ik)
+          iks[i] = nil
           babel_info = bi[i]
           molecule.molfile = molfiles[i]
           molecule.assign_molecule_data babel_info, pubchem_info
@@ -86,7 +91,39 @@ class Molecule < ActiveRecord::Base
       end
     end
 
-    where('inchikey IN (?)',compact_iks)
+    iks = inchikeys.dup
+    unless compact_iks.empty?
+      existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
+      mol_to_get = compact_iks - existing_ik
+    end
+    unless mol_to_get.empty?
+      mol_to_get.each do |ik|
+        Molecule.find_or_create_by(inchikey: ik,
+          is_partial: is_partial) do |molecule|
+          i =  iks.index(ik)
+          iks[i] = nil
+          babel_info = bi[i]
+          molecule.molfile = molfiles[i]
+          molecule.assign_molecule_data babel_info
+        end
+      end
+    end
+
+    molecules = where('inchikey IN (?)',compact_iks)
+    if is_compact
+      molecules
+    else
+      iks = inchikeys.dup
+      mol_array = Array.new(iks.size)
+      molecules.each do |mol|
+        i = iks.index(mol.inchikey)
+        if i
+          iks[i] = nil
+          mol_array[i]=mol
+        end
+      end
+      mol_array
+    end
   end
 
   def refresh_molecule_data
@@ -102,7 +139,7 @@ class Molecule < ActiveRecord::Base
     end
   end
 
-  def assign_molecule_data babel_info, pubchem_info
+  def assign_molecule_data babel_info, pubchem_info={}
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
@@ -145,7 +182,7 @@ class Molecule < ActiveRecord::Base
     if lines.size > 3
       lines[4..-1].each do |line|
         break if line.match /(M.+END+)/
-        line.gsub! ' R# ', ' H  ' # replace residues with Hydrogens
+        line.gsub! ' R# ', ' C  ' # replace residues with Carbons
       end
     end
     lines.join "\n"
@@ -155,9 +192,13 @@ class Molecule < ActiveRecord::Base
   def check_sum_formular
     return unless self.is_partial
 
-    atomic_weight_h = Chemotion::PeriodicTable.get_atomic_weight 'H'
-    self.molecular_weight -= atomic_weight_h
-    self.exact_molecular_weight -= atomic_weight_h
+    atomic_weight_h = Chemotion::PeriodicTable.get_atomic_weight('H') * 3
+    self.molecular_weight -= atomic_weight_h # remove CH3
+    self.exact_molecular_weight -= atomic_weight_h # remove CH3
+
+    atomic_weight_c = Chemotion::PeriodicTable.get_atomic_weight 'C'
+    self.molecular_weight -= atomic_weight_c # remove CH3
+    self.exact_molecular_weight -= atomic_weight_c # remove CH3
 
     fdata = Chemotion::Calculations.parse_formula self.sum_formular, true
     self.sum_formular = fdata.map do |key, value|

@@ -20,7 +20,6 @@ export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
     let {currentUser} = UserStore.getState();
-
     this.state = {
       currentUser: currentUser,
       currentCollection: {id: 0},
@@ -30,43 +29,80 @@ export default class ManagingActions extends React.Component {
     }
 
     this.handleButtonClick = this.handleButtonClick.bind(this)
+    this.onChange = this.onChange.bind(this)
+    this.onUserChange = this.onUserChange.bind(this)
+    this.onPermissionChange = this.onPermissionChange.bind(this)
   }
 
   componentDidMount() {
-    UserStore.listen(this.onUserChange.bind(this));
-    UIStore.listen(this.onChange.bind(this));
-    PermissionStore.listen(this.onPermissionChange.bind(this));
+    UserStore.listen(this.onUserChange);
+    UIStore.listen(this.onChange);
+    PermissionStore.listen(this.onPermissionChange);
 
     UserActions.fetchCurrentUser();
   }
 
   componentWillUnmount() {
-    UserStore.unlisten(this.onUserChange.bind(this));
-    UIStore.unlisten(this.onChange.bind(this));
-    PermissionStore.unlisten(this.onPermissionChange.bind(this));
+    UserStore.unlisten(this.onUserChange);
+    UIStore.unlisten(this.onChange);
+    PermissionStore.unlisten(this.onPermissionChange);
   }
 
   onChange(state) {
-    let elementsFilter = this.filterParamsFromUIState(state);
+    if (this.checkUIState(state)){
+      let elementsFilter = this.filterParamsFromUIState(state);
+      let params = {
+        elements_filter: elementsFilter
+      }
+      PermissionActions.fetchPermissionStatus(params)
+      this.setState({
+        currentCollection:          state.currentCollection,
+        sample_checkedAll:          state.sample.checkedAll,
+        sample_checkedIds:          state.sample.checkedIds,
+        sample_uncheckedIds:        state.sample.uncheckedIds,
+        reaction_checkedAll:        state.reaction.checkedAll,
+        reaction_checkedIds:        state.reaction.checkedIds,
+        reaction_uncheckedIds:      state.reaction.uncheckedIds,
+        wellplate_checkedAll:       state.wellplate.checkedAll,
+        wellplate_checkedIds:       state.wellplate.checkedIds,
+        wellplate_uncheckedIds:     state.wellplate.uncheckedIds,
+        screen_checkedAll:          state.screen.checkedAll,
+        screen_checkedIds:          state.screen.checkedIds,
+        screen_uncheckedIds:        state.screen.uncheckedIds,
+        research_plan_checkedAll:   state.research_plan.checkedAll,
+        research_plan_checkedIds:   state.research_plan.checkedIds,
+        research_plan_uncheckedIds: state.research_plan.uncheckedIds,
 
-    let params = {
-      elements_filter: elementsFilter
+        })
     }
+  }
 
-    PermissionActions.fetchSharingAllowedStatus(params);
-    PermissionActions.fetchDeletionAllowedStatus(params);
-    PermissionActions.fetchTopSecretStatus(params);
-
-    this.setState({
-      currentCollection: state.currentCollection
-    })
+  checkUIState(state){
+    return (
+      state.currentCollection !== this.state.currentCollection    ||
+      state.sample.checkedAll          != this.state.sample_checkedAll        ||
+      state.sample.checkedIds          != this.state.sample_checkedIds        ||
+      state.sample.uncheckedIds        != this.state.sample_uncheckedIds      ||
+      state.reaction.checkedAll        != this.state.reaction_checkedAll      ||
+      state.reaction.checkedIds        != this.state.reaction_checkedIds      ||
+      state.reaction.uncheckedIds      != this.state.reaction_uncheckedIds    ||
+      state.wellplate.checkedAll       != this.state.wellplate_checkedAll     ||
+      state.wellplate.checkedIds       != this.state.wellplate_checkedIds     ||
+      state.wellplate.uncheckedIds     != this.state.wellplate_uncheckedIds   ||
+      state.screen.checkedAll          != this.state.screen_checkedAll        ||
+      state.screen.checkedIds          != this.state.screen_checkedIds        ||
+      state.screen.uncheckedIds        != this.state.screen_uncheckedIds      ||
+      state.research_plan.checkedAll   != this.state.research_plan_checkedAll ||
+      state.research_plan.checkedIds   != this.state.research_plan_checkedIds ||
+      state.research_plan.uncheckedIds != this.state.research_plan_uncheckedIds
+    )
   }
 
   hasSelection(){
     const uiState = UIStore.getState();
     let elementsFilter = this.filterParamsFromUIState(uiState);
     let result = false;
-    ['sample', 'reaction', 'wellplate', 'screen'].map(function(prop){
+    ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'].map(function(prop){
       if(elementsFilter[prop].included_ids.size > 0 || elementsFilter[prop].all)
         result = true;
     });
@@ -75,9 +111,13 @@ export default class ManagingActions extends React.Component {
   }
 
   onUserChange(state) {
-    this.setState({
-      currentUser: state.currentUser
-    })
+    let newId = state.currentUser ? state.currentUser.id : null
+    let oldId =this.state.currentUser ?  this.state.currentUser.id : null
+    if (newId !== oldId){
+      this.setState({
+        currentUser: state.currentUser
+      });
+    }
   }
 
   onPermissionChange(state) {
@@ -114,6 +154,12 @@ export default class ManagingActions extends React.Component {
         all: uiState.screen.checkedAll,
         included_ids: uiState.screen.checkedIds,
         excluded_ids: uiState.screen.uncheckedIds,
+        collection_id: collectionId
+      },
+      research_plan: {
+        all: uiState.research_plan.checkedAll,
+        included_ids: uiState.research_plan.checkedIds,
+        excluded_ids: uiState.research_plan.uncheckedIds,
         collection_id: collectionId
       }
     };

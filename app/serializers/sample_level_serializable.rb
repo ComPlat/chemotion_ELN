@@ -6,6 +6,8 @@ module SampleLevelSerializable
     has_one :molecule
     has_many :residues
     has_many :elemental_compositions
+    has_one :container
+    has_one :tag
 
     alias_method :original_initialize, :initialize
 
@@ -31,7 +33,7 @@ module SampleLevelSerializable
             []
           when :_contains_residues
             false
-          when :analysis_kinds
+          when :container
             nil
           else
             '***'

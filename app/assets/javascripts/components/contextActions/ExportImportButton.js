@@ -7,14 +7,15 @@ import ModalExport from './ModalExport';
 
 const ExportImportButton = ({isDisabled, updateModalProps}) => {
   const tooltip = (<Tooltip id="export_button">Import Export</Tooltip>)
-  const title =
+  const title = (
     <div>
       <Glyphicon bsSize="small" glyph="import"/> <Glyphicon bsSize="small" glyph="export"/>
     </div>
+  )
 
   return (
-    <OverlayTrigger placement="bottom" overlay={tooltip}>
-      <Dropdown id='export-dropdown' title={title} disabled={isDisabled}>
+    <OverlayTrigger placement="bottom" overlay={tooltip} refs="overlay">
+      <Dropdown id='export-dropdown' title={title} disabled={isDisabled} > 
         <Dropdown.Toggle>
           <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
         </Dropdown.Toggle>

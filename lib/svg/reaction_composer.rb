@@ -6,9 +6,9 @@ module SVG
     REACTANT_SCALE = 0.75
     YIELD_YOFFSET = 10
     SOLVENT_LENGTH_LIMIT = 15
-    WORD_SIZE_BASE_REPORT = 6
+    WORD_SIZE_BASE_REPORT = 12
     WORD_SIZE_REPORT_SCALE = 2
-    WORD_SIZE_BASE_SVG = 8
+    WORD_SIZE_BASE_SVG = 14
     WORD_SIZE_SVG_SCALE = 1.7
     ARROW_LENGTH_BASE = 120
     ARROW_LENGTH_SCALE = 50
@@ -158,7 +158,7 @@ module SVG
       def set_global_view_box_height
         material_max = find_material_max_height(starting_materials + products)
         reactant_max = find_material_max_height(reactants)
-        global_view_box_array[3] = [reactant_max*REACTANT_SCALE*2,material_max, global_view_box_array[3]].max+2*YIELD_YOFFSET
+        global_view_box_array[3] = [reactant_max*REACTANT_SCALE*2,material_max, global_view_box_array[3]].max+2*YIELD_YOFFSET + 15
       end
 
       def file_path
@@ -224,7 +224,7 @@ module SVG
       end
 
       def compose_yield_svg(amount,x=0,y= @max_height_for_products)
-        yield_amount = amount && !amount.to_f.nan? ? (amount * 100).try(:round, 0) : 0
+        yield_amount = amount && !amount.to_f.nan? && !amount.to_f.infinite? ? (amount * 100).try(:round, 0) : 0
         yield_svg = <<-END
           <svg font-family="sans-serif">
             <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f+YIELD_YOFFSET}" x="#{x}">#{yield_amount} %</text>

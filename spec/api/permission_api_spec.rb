@@ -61,7 +61,7 @@ describe Chemotion::PermissionAPI do
         CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w2.id)
         CollectionsScreen.create!(collection_id: c1.id, screen_id: sc1.id)
 
-        post '/api/v1/permissions/sharing', params
+        post '/api/v1/permissions/status', params
       end
 
 

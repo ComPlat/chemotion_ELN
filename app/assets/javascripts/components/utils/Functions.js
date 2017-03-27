@@ -24,11 +24,12 @@ const Functions = {
     link.dispatchEvent(event);
   },
 
-  extraThing(name,extra) {
+  extraThing(extra){
     let obj = {}
-    for (let i=0;i<extra[name+'Count'];i++){obj={...obj,...extra[name+i]} }
+    for (let i=0;i<extra['count'];i++){obj={...obj,...extra['content'+i]} }
     return obj;
   }
+
 };
 
 module.exports = Functions;

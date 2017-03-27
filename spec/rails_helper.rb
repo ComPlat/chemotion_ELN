@@ -34,4 +34,5 @@ RSpec.configure do |config|
   config.include Devise::Test::ControllerHelpers, type: :controller
   config.include LoginMacros
   config.include CapybaraHelpers
+  config.include ReportHelpers
 end

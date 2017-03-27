@@ -2,35 +2,54 @@ import alt from '../alt'
 import ReportActions from '../actions/ReportActions'
 import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
+import ArrayUtils from '../utils/ArrayUtils';
 
 class ReportStore {
   constructor() {
-    this.settings = [ {text: "formula", checked: true},
-                      {text: "material", checked: true},
-                      {text: "description", checked: true},
-                      {text: "purification", checked: true},
-                      {text: "tlc", checked: true},
-                      {text: "observation", checked: true},
-                      {text: "analysis", checked: true},
-                      {text: "literature", checked: true} ]
+    this.splSettings = [ {text: "diagram", checked: true},
+                          {text: "collection", checked: true},
+                          {text: "analyses", checked: true},
+                          {text: "reaction description", checked: true} ]
+    this.rxnSettings = [ {text: "diagram", checked: true},
+                          {text: "material", checked: true},
+                          {text: "description", checked: true},
+                          {text: "purification", checked: true},
+                          {text: "tlc", checked: true},
+                          {text: "observation", checked: true},
+                          {text: "analysis", checked: true},
+                          {text: "literature", checked: true} ]
     this.configs = [ {text: "Page Break", checked: true},
-                     {text: "Show all material in formulas (unchecked to show Products only)", checked: true} ]
-    this.checkedAllSettings = true
+                     {text: "Show all material in diagrams (unchecked to show Products only)", checked: true} ]
+    this.checkedAllSplSettings = true
+    this.checkedAllRxnSettings = true
     this.checkedAllConfigs = true
     this.processingReport = false
-    this.selectedReactionIds = []
-    this.selectedReactions = []
+    this.selectedObjTags = { sampleIds: [], reactionIds: [] }
+    this.selectedObjs = []
     this.imgFormat = 'png'
+    this.archives = []
+    this.fileName = this.initFileName()
+    this.fileDescription = ''
+    this.activeKey = 0
+    this.processings = []
 
     this.bindListeners({
-      handleUpdateSettings: ReportActions.updateSettings,
-      handleToggleSettingsCheckAll: ReportActions.toggleSettingsCheckAll,
+      handleUpdateSplSettings: ReportActions.updateSplSettings,
+      handleToggleSplSettingsCheckAll: ReportActions.toggleSplSettingsCheckAll,
+      handleUpdateRxnSettings: ReportActions.updateRxnSettings,
+      handleToggleRxnSettingsCheckAll: ReportActions.toggleRxnSettingsCheckAll,
       handleUpdateConfigs: ReportActions.updateConfigs,
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
-      handleGenerateReports: ReportActions.generateReports,
-      handleUpdateCheckedIds: ReportActions.updateCheckedIds,
+      handleGenerateReport: ReportActions.generateReport,
+      handleUpdateCheckedTags: ReportActions.updateCheckedTags,
       handleMove: ReportActions.move,
-      handleUpdateImgFormat: ReportActions.updateImgFormat
+      handleUpdateImgFormat: ReportActions.updateImgFormat,
+      handleGetArchives: ReportActions.getArchives,
+      handleUpdateFileName: ReportActions.updateFileName,
+      handleUpdateFileDescription: ReportActions.updateFileDescription,
+      handleUpdateActiveKey: ReportActions.updateActiveKey,
+      handleDownloadReport: ReportActions.downloadReport,
+      handleUpdateProcessQueue: ReportActions.updateProcessQueue,
     })
   }
 
@@ -38,9 +57,9 @@ class ReportStore {
     this.setState({ imgFormat: value })
   }
 
-  handleUpdateSettings(target) {
+  handleUpdateSplSettings(target) {
     this.setState({
-      settings: this.settings.map( s => {
+      splSettings: this.splSettings.map( s => {
         if(s.text === target.text) {
           return Object.assign({}, s, {checked: !target.checked})
         }
@@ -49,13 +68,34 @@ class ReportStore {
     })
   }
 
-  handleToggleSettingsCheckAll() {
-    const newCheckValue = !this.checkedAllSettings
+  handleToggleSplSettingsCheckAll() {
+    const newCheckValue = !this.checkedAllSplSettings
     this.setState({
-      settings: this.settings.map( s => {
+      splSettings: this.splSettings.map( s => {
         return Object.assign({}, s, {checked: newCheckValue})
       }),
-      checkedAllSettings: newCheckValue
+      checkedAllSplSettings: newCheckValue
+    })
+  }
+
+  handleUpdateRxnSettings(target) {
+    this.setState({
+      rxnSettings: this.rxnSettings.map( s => {
+        if(s.text === target.text) {
+          return Object.assign({}, s, {checked: !target.checked})
+        }
+        return s
+      })
+    })
+  }
+
+  handleToggleRxnSettingsCheckAll() {
+    const newCheckValue = !this.checkedAllRxnSettings
+    this.setState({
+      rxnSettings: this.rxnSettings.map( s => {
+        return Object.assign({}, s, {checked: newCheckValue})
+      }),
+      checkedAllRxnSettings: newCheckValue
     })
   }
 
@@ -80,58 +120,148 @@ class ReportStore {
     })
   }
 
-  handleGenerateReports() {
-    const ids = this.selectedReactionIds.join('_')
-    const settings = this.chainedItems(this.settings)
-    const configs = this.chainedItems(this.configs)
-    this.spinnerProcess()
+  handleGenerateReport(result) {
+    const newArchives = [result.report, ...this.archives];
+    this.setState({ processingReport: !this.processingReport,
+                    activeKey: 5,
+                    archives: newArchives,
+                    processings: this.getProcessings(newArchives),
+                    fileName: this.initFileName() });
+    this.loadingIcon();
+  }
+
+  getProcessings(archives) {
+    let ids = [];
+    archives.forEach( a => {
+      if(!a.downloadable) {
+        ids = [...ids, a.id];
+      }
+    });
+    return ids;
+  }
+
+  loadingIcon() {
+    setTimeout(() => this.setState({processingReport: false}), 2500);
+  }
+
+  handleUpdateCheckedTags({newTags, newObjs}) {
+    this.setState({selectedObjTags: newTags});
+    this.setObjs(newTags, newObjs);
+  }
+
+  setObjs(newTags, newObjs) {
+    const oriSelectedObjs = this.selectedObjs || [];
+    const { sampleIds, reactionIds } = newTags;
+    const { samples, reactions } = newObjs;
+    let selectedObjs = this.keepObjsAsIds(oriSelectedObjs, samples, sampleIds, 'sample');
+    selectedObjs = this.keepObjsAsIds(selectedObjs, reactions, reactionIds, 'reaction');
+    this.setState({selectedObjs: selectedObjs});
+  }
+
+  keepObjsAsIds(oriSelectedObjs, newElems, ids, type) {
+    const allObjs = oriSelectedObjs.concat(newElems).filter(obj => obj != null) || [];
+    return allObjs.map( obj => {
+      if(obj.type !== type){
+        return obj;
+      }
+      if(obj.type === type && ids.indexOf(obj.id) !== -1){
+        const index = ids.indexOf(obj.id);
+        ids = [ ...ids.slice(0, index), ...ids.slice(index + 1) ]
+        return obj;
+      }
+      return null;
+    }).filter(obj => obj != null) || [];
+  }
+
+  handleMove({sourceTag, targetTag}) {
+    const sourceIndex = this.findIndexFromObjs(sourceTag);
+    const targetIndex = this.findIndexFromObjs(targetTag);
+    const indexOne = sourceIndex > targetIndex ? targetIndex : sourceIndex;
+    const indexTwo = sourceIndex > targetIndex ? sourceIndex : targetIndex;
+    const objs = this.selectedObjs || [];
+
+    const newObjs = [ ...objs.slice(0, indexOne),
+                      objs[indexTwo],
+                      ...objs.slice(indexOne + 1, indexTwo),
+                      objs[indexOne],
+                      ...objs.slice(indexTwo + 1) ].filter(obj => obj != null) || [];
+    this.setState({selectedObjs: newObjs});
+  }
+
+  findIndexFromObjs(tag) {
+    let objIndex;
+    const objs = this.selectedObjs || [];
+    objs.forEach( (obj, i) => {
+      if(obj.type === tag.type && obj.id === tag.id) {
+        objIndex = i;
+      }
+    });
+    return objIndex;
+  }
+
+  initFileName() {
+    const dt = new Date();
+    const datetime =  dt.getFullYear() + "-"
+                        + (dt.getMonth()+1)  + "-"
+                        + dt.getDate() + "H"
+                        + dt.getHours() + "M"
+                        + dt.getMinutes() + "S"
+                        + dt.getSeconds();
+    return "ELN_Report_" + datetime;
+  }
+
+  handleGetArchives({archives}) {
+    this.setState({archives: archives});
+  }
+
+  handleUpdateFileName(value) {
+    const validValue = this.validName(value);
+    this.setState({fileName: validValue});
+  }
+
+  validName(text) {
+    if(text.length > 40) {
+      text = text.substring(0, 40);
+    }
+    text = text.replace(/[^a-zA-Z0-9\-\_]/g, '');
+    return text;
+  }
+
+  handleUpdateFileDescription(value) {
+    this.setState({fileDescription: value});
+  }
+
+  handleUpdateActiveKey(key) {
+    this.setState({activeKey: key});
+  }
+
+  handleDownloadReport(id) {
+    this.markReaded(id);
     Utils.downloadFile({
-      contents: "api/v1/multiple_reports/docx?ids=" + ids
-                + "&settings=" + settings + "&configs=" + configs
-                + "&img_format=" + this.imgFormat,
-      name: "ELN-report_" + new Date().toISOString().slice(0,19)
+      contents: "api/v1/download_report/docx?id=" + JSON.stringify(id),
     })
   }
 
-  spinnerProcess() {
-    this.setState({processingReport: !this.processingReport})
-    setTimeout(() => this.setState({processingReport: false}), 2500)
-  }
-
-  chainedItems(items) {
-    return items.map(item => {
-      return item.checked
-        ? item.text.replace(/\s+/g, '').substring(0, 12).toLowerCase()
-        : null
-    }).filter(r => r!=null).join('_')
-  }
-
-  handleUpdateCheckedIds(ids) {
-    this.setState({selectedReactionIds: ids});
-    this.setReactions();
-  }
-
-  setReactions() {
-    const preSelectedReactions = this.selectedReactions;
-    const allReactions = preSelectedReactions.concat(ElementStore.state.elements.reactions.elements) || [];
-    const selectedReaction = this.selectedReactionIds.map( id => {
-      return allReactions.map( reaction => {
-        if(reaction.id === id){
-          return reaction;
-        }
-        return null;
-      }).filter(r => r!=null)[0];
+  markReaded(id) {
+    const newArchives = this.archives.map(archive => {
+      if(archive.id === id) {
+        archive.unread = false;
+      }
+      return archive;
     });
-    this.setState({selectedReactions: selectedReaction});
+    this.setState({ archives: newArchives });
   }
 
-  handleMove({sourceId, targetId}) {
-    let selectedIds = this.selectedReactionIds;
-    const sourceIndex = selectedIds.indexOf(sourceId);
-    const targetIndex = selectedIds.indexOf(targetId);
-    selectedIds.splice(sourceIndex, 1);
-    selectedIds.splice(targetIndex, 0, sourceId);
-    this.handleUpdateCheckedIds(selectedIds);
+  handleUpdateProcessQueue(result) {
+    const updatedArchives = result.archives;
+    const updatedIds = updatedArchives.map(a => a.id);
+    const newProcessings = this.processings.filter(x => updatedIds.indexOf(x) === -1);
+    const newArchives = this.archives.map(a => {
+      const index = updatedIds.indexOf(a.id);
+      return index === -1 ? a : updatedArchives[index];
+    });
+    this.setState({ archives: newArchives,
+                    processings: newProcessings });
   }
 }
 

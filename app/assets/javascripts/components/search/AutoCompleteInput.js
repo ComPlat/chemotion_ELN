@@ -256,6 +256,7 @@ export default class AutoCompleteInput extends React.Component {
       sample_external_label : {icon: 'icon-sample', label: 'Sample External Label'},
       polymer_type : {icon: 'icon-polymer', label: 'Polymer'},
       reaction_name : {icon: 'icon-reaction', label: 'Reaction'},
+      reaction_short_label : {icon: 'icon-reaction', label: 'Reaction'},
       wellplate_name : {icon: 'icon-wellplate', label: 'Wellplate'},
       screen_name : {icon: 'icon-screen', label: 'Screen'},
       iupac_name : {icon: 'icon-sample', label: 'Molecule'},

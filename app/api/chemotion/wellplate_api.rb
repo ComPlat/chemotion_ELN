@@ -9,7 +9,7 @@ module Chemotion
           requires :wellplates, type: Array do
             requires :name, type: String
             optional :size, type: Integer
-            optional :description, type: String
+            optional :description, type: Hash
             optional :wells, type: Array
             optional :collection_id, type: Integer
           end
@@ -85,9 +85,9 @@ module Chemotion
         else
           # All collection of current_user
           Wellplate.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
-        end.order("created_at DESC")
+        end.includes(collections: :sync_collections_users).order("created_at DESC")
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
       desc "Return serialized wellplate by id"
@@ -124,8 +124,9 @@ module Chemotion
         requires :id, type: Integer
         optional :name, type: String
         optional :size, type: Integer
-        optional :description, type: String
+        optional :description, type: Hash
         optional :wells, type: Array
+        requires :container, type: Hash
       end
       route_param :id do
         before do
@@ -133,6 +134,9 @@ module Chemotion
         end
 
         put do
+          ContainerHelper.update_datamodel(params[:container]);
+          params.delete(:container);
+
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
           {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
         end
@@ -142,12 +146,21 @@ module Chemotion
       params do
         requires :name, type: String
         optional :size, type: Integer
-        optional :description, type: String
+        optional :description, type: Hash
         optional :wells, type: Array
         optional :collection_id, type: Integer
+        requires :container, type: Hash
       end
       post do
+
+        container = params[:container]
+        params.delete(:container)
+
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
+        wellplate.container =  ContainerHelper.update_datamodel(container)
+
+        wellplate.save!
+
         current_user.increment_counter 'wellplates'
         {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
       end

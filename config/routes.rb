@@ -17,4 +17,6 @@ Rails.application.routes.draw do
   root :to => redirect("home")
 
   get 'test', to: 'pages#test'
+
+
 end

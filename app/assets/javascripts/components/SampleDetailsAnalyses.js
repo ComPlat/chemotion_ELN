@@ -113,36 +113,66 @@ export default class SampleDetailsAnalyses extends Component {
           </Button>
         </div>
       )
+    }
+
+  toggleAddToReport(e, analysis) {
+    e.stopPropagation();
+    analysis.report = !analysis.report;
+    this.handleChange(analysis);
+  }
+
+  analysisHeader(analysis, sample, readOnly) {
+    const confirmDelete = () => {
+      if(confirm('Delete the analysis?')) {
+        this.handleRemove(analysis)
+      }
+    };
+    const kind = (analysis.kind && analysis.kind != '')
+      ? (' - Type: ' + analysis.kind)
+      : ''
+    const status = (analysis.status && analysis.status != '')
+      ? (' - Status: ' + analysis.status)
+      :''
+    const inReport = analysis.report === true;
+
+    return (
+      <div style={{width: '100%'}}>
+        {analysis.name}
+        {kind}
+        {status}
+        <div className="button-right">
+          <label>
+            <input onClick={(e) => this.toggleAddToReport(e, analysis)}
+                   type="checkbox"
+                   defaultChecked={inReport} />
+            <span>Add to Report</span>
+          </label>
+          <Button bsSize="xsmall"
+                  bsStyle="danger"
+                  className="g-marginLeft--20"
+                  disabled={readOnly}
+                  onClick={confirmDelete}>
+            <i className="fa fa-trash"></i>
+          </Button>
+          <Button bsSize="xsmall"
+            onClick={() => {
+              const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
+              const device = devices.find((d) => d.id === selectedDeviceId)
+              ElementActions.addSampleWithAnalysisToDevice(sample, analysis, device)
+            }}
+            style={{marginLeft: 25}}
+          >
+            Transfer to Device
+          </Button>
+          {this.analysisCodePrintButtons(analysis, sample)}
+        </div>
+      </div>
+    );
   }
 
   render() {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
-
-    let analysisHeader = (analysis, sample) => {
-      return (
-      <p style={{width: '100%'}}>{analysis.name}
-        {(analysis.kind && analysis.kind != '') ? (' - Type: ' + analysis.kind) : ''}
-        {(analysis.status && analysis.status != '') ? (' - Status: ' + analysis.status) :''}
-        <Button bsSize="xsmall" bsStyle="danger"
-           className="button-right" disabled={readOnly}
-          onClick={() => {if(confirm('Delete the analysis?')) {this.handleRemove(analysis)}}}>
-          <i className="fa fa-trash"></i>
-        </Button>
-        <Button bsSize="xsmall"
-          onClick={() => {
-            const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
-            const device = devices.find((d) => d.id === selectedDeviceId)
-            ElementActions.addSampleWithAnalysisToDevice(sample, analysis, device)
-          }}
-          style={{marginLeft: 25}}
-        >
-          Transfer to Device
-        </Button>
-        {this.analysisCodePrintButtons(analysis, sample)}
-        </p>
-      )
-    }
 
     if(sample.analyses.length > 0) {
       return (
@@ -151,8 +181,10 @@ export default class SampleDetailsAnalyses extends Component {
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
             {sample.analyses.map(
               (analysis, key) =>
-                <Panel header={analysisHeader(analysis, sample)} eventKey={key}
-                    key={key} onClick={() => this.handleAccordionOpen(key)}>
+                <Panel header={this.analysisHeader(analysis, sample, readOnly)}
+                       eventKey={key}
+                       key={key}
+                       onClick={() => this.handleAccordionOpen(key)}>
                   <AnalysisComponent
                     readOnly={readOnly}
                     analysis={analysis}

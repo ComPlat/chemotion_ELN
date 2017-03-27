@@ -4,6 +4,7 @@ feature 'Pages' do
   let!(:john) { create(:person) }
 
   background do
+    john.confirm
     sign_in(john)
   end
 

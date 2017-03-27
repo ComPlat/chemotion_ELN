@@ -226,4 +226,19 @@ M  END
     return sp.match(m)
   end
 
+  def self.get_cdxml_from_molfile(mol, shifter={}, output_path=nil)
+    # `obabel -imol #{file_name} -ocdxml`
+    input = Tempfile.new(["input", ".mol"]).path
+    output = output_path || Tempfile.new(["output", ".mol"]).path
+    File.write(input, mol)
+
+    c = OpenBabel::OBConversion.new
+    c.set_in_and_out_formats("mol", "cdxml")
+    c.open_in_and_out_files(input, output)
+    c.convert
+
+    orig_cdxml = File.read(output)
+    shifted_cdxml, geometry = Cdxml::Shifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).convey
+    return { content: shifted_cdxml, geometry: geometry, path: output }
+  end
 end

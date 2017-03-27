@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/ComPlat/ketcher-rails
-  revision: 8caaa5ab0fa62e5cb8b7e0f62a4b465fd2a6dcee
+  revision: 64b0017bf50c163429450d6b699b886d2aaf1128
   specs:
     ketcherails (0.1.3)
       bootstrap-kaminari-views
@@ -13,19 +13,20 @@ GIT
       sprite-factory
 
 GIT
+  remote: https://github.com/ComPlat/openbabel-gem
+  revision: 837eec9e660b6dbc9d2517889de39a6e93bb4b98
+  branch: openbabel-2-4-x
+  specs:
+    openbabel (2.4.0.1)
+
+GIT
   remote: https://github.com/ComPlat/sablon
-  revision: 03130357d526230e36647a0d5d348ed3c5a51d42
+  revision: ce06ae287674f8fb06dbb0d8c95df5c76dbb47ad
   specs:
     sablon (0.0.19)
       nokogiri (>= 1.6.0)
       redcarpet (>= 3.2)
       rubyzip (>= 1.1)
-
-GIT
-  remote: https://github.com/cubuslab/openbabel-gem
-  revision: 1a9ecb42781ae635051cb7600c6ad7f593730b50
-  specs:
-    openbabel (2.3.2.1)
 
 GIT
   remote: https://github.com/fl9/fun_sftp.git
@@ -143,8 +144,6 @@ GEM
     capistrano-rvm (0.1.2)
       capistrano (~> 3.0)
       sshkit (~> 1.2)
-    capistrano3-delayed-job (1.7.2)
-      capistrano (~> 3.0, >= 3.0.0)
     capybara (2.7.1)
       addressable
       mime-types (>= 1.16)
@@ -161,8 +160,10 @@ GEM
       nokogiri (~> 1.6)
     chronic (0.10.2)
     chunky_png (1.3.8)
-    climate_control (0.0.3)
-      activesupport (>= 3.0)
+    climate_control (0.1.0)
+    closure_tree (6.2.0)
+      activerecord (>= 4.1.0)
+      with_advisory_lock (>= 3.0.0)
     cocaine (0.5.8)
       climate_control (>= 0.0.3, < 1.0)
     coderay (1.1.1)
@@ -213,9 +214,11 @@ GEM
       railties (>= 3.0.0)
     faker (1.6.6)
       i18n (~> 0.5)
-    faraday (0.9.2)
+    faraday (0.11.0)
       multipart-post (>= 1.2, < 3)
+    fast_stack (0.2.0)
     ffi (1.9.10)
+    flamegraph (0.9.5)
     font-awesome-rails (4.6.2.0)
       railties (>= 3.2, < 5.1)
     fontcustom (1.3.8)
@@ -252,6 +255,7 @@ GEM
     hashie (3.4.4)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
+    headless (2.0.0)
     hitimes (1.2.4)
     html2haml (2.0.0)
       erubis (~> 2.7.0)
@@ -297,6 +301,7 @@ GEM
       skinny (~> 0.2.3)
       sqlite3 (~> 1.3)
       thin (~> 1.5.0)
+    memory_profiler (0.9.7)
     mime-types (3.0)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0221)
@@ -342,6 +347,8 @@ GEM
     rack (1.6.4)
     rack-accept (0.4.5)
       rack (>= 0.4)
+    rack-mini-profiler (0.10.1)
+      rack (>= 1.2.0)
     rack-protection (1.5.3)
       rack
     rack-test (0.6.3)
@@ -403,6 +410,7 @@ GEM
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
     rtf (0.3.3)
+    ruby-ole (1.2.12)
     ruby_parser (3.8.2)
       sexp_processor (~> 4.1)
     rubyzip (1.1.7)
@@ -417,7 +425,7 @@ GEM
     sdoc (0.4.1)
       json (~> 1.7, >= 1.7.7)
       rdoc (~> 4.0)
-    selenium-webdriver (2.53.4)
+    selenium-webdriver (3.0.5)
       childprocess (~> 0.5)
       rubyzip (~> 1.0)
       websocket (~> 1.0)
@@ -447,6 +455,7 @@ GEM
     sshkit (1.10.0)
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
+    stackprof (0.2.10)
     term-ansicolor (1.3.2)
       tins (~> 1.0)
     thin (1.5.1)
@@ -483,6 +492,9 @@ GEM
     websocket (1.2.3)
     whenever (0.9.4)
       chronic (>= 0.6.3)
+    with_advisory_lock (3.0.0)
+      activerecord (>= 3.2)
+      thread_safe
     xpath (2.0.0)
       nokogiri (~> 1.3)
     yaml_db (0.3.0)
@@ -508,9 +520,9 @@ DEPENDENCIES
   capistrano-nvm
   capistrano-rails
   capistrano-rvm
-  capistrano3-delayed-job
   capybara (~> 2.7.1)
   chromedriver-helper (= 1.0.0)
+  closure_tree
   coveralls
   daemons
   database_cleaner
@@ -519,7 +531,9 @@ DEPENDENCIES
   dotenv-rails
   factory_girl_rails
   faker (~> 1.6.6)
-  faraday
+  faraday (~> 0.11.0)
+  fast_stack
+  flamegraph
   font-awesome-rails
   fontcustom
   fun_sftp!
@@ -528,6 +542,7 @@ DEPENDENCIES
   grape-kaminari
   haml-rails (~> 0.9)
   hashie-forbidden_attributes
+  headless (= 2.0.0)
   httparty
   jbuilder (~> 2.0)
   jquery-rails
@@ -535,25 +550,31 @@ DEPENDENCIES
   ketcherails!
   launchy (~> 2.4.3)
   mailcatcher
+  memory_profiler
+  net-sftp
+  net-ssh
   nokogiri
-  openbabel (= 2.3.2.1)!
+  openbabel (= 2.4.0.1)!
   paranoia (~> 2.0)
   pg
   pg_search
   prawn
   prawn-svg
   pundit
+  rack-mini-profiler
   rails (= 4.2.0)
   rmagick
   roo (> 2.5.0)
   rqrcode
   rspec-rails
   rtf
+  ruby-ole
   sablon!
   sass-rails (~> 5.0)
   sdoc (~> 0.4.0)
-  selenium-webdriver (~> 2.53.4)
+  selenium-webdriver (~> 3.0.5)
   spring
+  stackprof
   thin
   thumbnailer!
   uglifier (>= 1.3.0)
@@ -563,4 +584,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   1.13.6
+   1.14.5

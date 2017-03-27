@@ -34,9 +34,25 @@ div[class^="col-"] {
     background-color: rgba(255, 0, 0, 0.2);
 }
 */
-.navbar {
+.navbar-custom {
   border-radius: 0;
+  background-color: #EFEFEF;
+
+  a.dropdown-toggle:hover {
+    color: black;
+  }
 }
+.custom-modal {
+  width: 100%;
+}
+
+.modal-container {
+  position: relative;
+}
+.modal-container .modal, .modal-container .modal-backdrop {
+  position: absolute;
+}
+
 
 #app {
   -webkit-user-select: none;
@@ -130,4 +146,13 @@ span.pseudo-link:hover {
   .panel-heading {
     height: 44px;
   }
+// icon for research plan. just a standard FontAwesome icon
+$font-icons-research_plan: "\f0f6";
+
+.icon-research_plan {
+  font-style: inherit;
+}
+.icon-research_plan:before {
+  font-family: FontAwesome;
+  content: "\f0f6";
 }

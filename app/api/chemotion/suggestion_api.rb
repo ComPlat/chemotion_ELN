@@ -45,6 +45,7 @@ module Chemotion
         when 'reaction'
           {
             reaction_name: search_by_field.call(Reaction, :name, qry),
+            reaction_short_label: search_by_field.call(Reaction, :short_label, qry),
             sample_name: d_for.call(Sample).with_reactions.by_name(qry)
               .pluck(:name).uniq,
             iupac_name: d_for.call(Molecule).with_reactions.by_iupac_name(qry)
@@ -85,6 +86,7 @@ module Chemotion
             inchistring: search_by_field.call(Molecule, :inchistring, qry),
             cano_smiles: search_by_field.call(Molecule, :cano_smiles, qry),
             reaction_name: search_by_field.call(Reaction, :name, qry),
+            reaction_short_label: search_by_field.call(Reaction, :short_label, qry),
             wellplate_name: search_by_field.call(Wellplate, :name, qry),
             screen_name: search_by_field.call(Screen, :name, qry),
             conditions: search_by_field.call(Screen, :conditions, qry),

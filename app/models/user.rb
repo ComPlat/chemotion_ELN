@@ -1,8 +1,8 @@
 class User < ActiveRecord::Base
   acts_as_paranoid
   # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable and :omniauthable
-  devise :database_authenticatable, :registerable,
+  # :lockable, :timeoutable and :omniauthable
+  devise :database_authenticatable, :registerable, :confirmable,
          :recoverable, :rememberable, :trackable, :validatable
 
   has_one :profile, dependent: :destroy
@@ -11,6 +11,7 @@ class User < ActiveRecord::Base
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
   has_many :wellplates, through: :collections
+  has_many :research_plans, :through => :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
 
@@ -20,6 +21,9 @@ class User < ActiveRecord::Base
   has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
   has_many :devices
   belongs_to :selected_device, class_name: 'Device'
+
+  has_many :reports_users
+  has_many :reports, through: :reports_users
 
   validates_presence_of :first_name, :last_name, allow_blank: false
   validates :name_abbreviation, uniqueness:  {message: " has already been taken." },

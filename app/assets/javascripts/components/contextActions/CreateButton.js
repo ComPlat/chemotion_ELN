@@ -3,6 +3,7 @@ import {SplitButton, Button, ButtonToolbar, DropdownButton, FormControl,
   FormGroup, ControlLabel, Modal, MenuItem, Tooltip, OverlayTrigger} from 'react-bootstrap';
 import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
+import UserStore from '../stores/UserStore';
 import ElementActions from '../actions/ElementActions';
 import ClipboardActions from '../actions/ClipboardActions';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
@@ -22,7 +23,6 @@ export default class CreateButton extends React.Component {
 
     this.createBtn = this.createBtn.bind(this)
     this.createBtnTooltip = this.createBtnTooltip.bind(this)
-    this.getTabName = this.getTabName.bind(this)
   }
 
   getSampleFilter() {
@@ -183,28 +183,7 @@ export default class CreateButton extends React.Component {
     );
   }
 
-  getTabName() {
-    let {currentTab} = UIStore.getState()
-    let type = 'sample'
-    switch(currentTab) {
-      case 1:
-        type = 'sample'
-        break;
-      case 2:
-        type = 'reaction'
-        break;
-      case 3:
-        type = 'wellplate'
-        break;
-      case 4:
-        type = 'screen'
-    }
-
-    return type
-  }
-
-  createBtn() {
-    let type = this.getTabName()
+  createBtn(type) {
     return (
       <div>
         <i className={"icon-" + type}></i> &nbsp; <i className="fa fa-plus"></i>
@@ -212,27 +191,28 @@ export default class CreateButton extends React.Component {
     )
   }
 
-  createBtnTooltip() {
-    let type = this.getTabName()
+  createBtnTooltip(type) {
     return (
-      <Tooltip id="create_button">Create new {type}</Tooltip>
+      <Tooltip id="create_button">Create new {type.replace('_', ' ')}</Tooltip>
     )
   }
 
   render() {
     const {isDisabled} = this.props
+    let type = UserStore.getState().currentType
 
     return (
       <div>
-        <OverlayTrigger placement="bottom" overlay={this.createBtnTooltip()}>
+        <OverlayTrigger placement="bottom" overlay={this.createBtnTooltip(type)}>
           <SplitButton id='create-split-button' bsStyle="primary"
-                       title={this.createBtn()} disabled={isDisabled}
-                       onClick={() => this.createElementOfType(this.getTabName())}>
+                       title={this.createBtn(type)} disabled={isDisabled}
+                       onClick={() => this.createElementOfType(type)}>
             {this.createWellplateModal()}
             <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
             <MenuItem onSelect={() => this.createElementOfType('reaction')}>Create Reaction</MenuItem>
             <MenuItem onSelect={() => this.createElementOfType('wellplate')}>Create Wellplate</MenuItem>
             <MenuItem onSelect={() => this.createElementOfType('screen')}>Create Screen</MenuItem>
+            <MenuItem onSelect={() => this.createElementOfType('research_plan')}>Create Research Plan</MenuItem>
             <MenuItem divider />
             <MenuItem onSelect={() => this.createWellplateFromSamples()}>Create Wellplate from Samples</MenuItem>
             <MenuItem onSelect={() => this.createScreenFromWellplates()}>Create Screen from Wellplates</MenuItem>

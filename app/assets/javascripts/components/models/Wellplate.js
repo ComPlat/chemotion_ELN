@@ -1,6 +1,7 @@
 import Element from './Element';
 import Well from './Well';
 import Sample from './Sample';
+import Container from './Container.js';
 
 export default class Wellplate extends Element {
   constructor(args) {
@@ -10,14 +11,19 @@ export default class Wellplate extends Element {
   }
 
   static buildEmpty(collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new Wellplate(
       {
         collection_id: collection_id,
         type: 'wellplate',
         name: 'New Wellplate',
         size: 96,
-        description: '',
-        wells: []
+        description: description_default,
+        wells: [],
+        container: Container.init(),
       }
     )
   }
@@ -40,7 +46,8 @@ export default class Wellplate extends Element {
         name: 'New Wellplate',
         size: 96,
         description: '',
-        wells: wells
+        wells: wells,
+        container: Container.init(),
       }
     )
   }
@@ -75,7 +82,8 @@ export default class Wellplate extends Element {
       name: this.name,
       size: this.size,
       description: this.description,
-      wells: this.wells.map(w => w.serialize())
+      wells: this.wells.map(w => w.serialize()),
+      container: this.container
     })
   }
 

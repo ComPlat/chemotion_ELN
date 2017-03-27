@@ -4,6 +4,9 @@ class Screen < ActiveRecord::Base
   include PgSearch
   include Collectable
   include ElementCodes
+  include Taggable
+
+  serialize :description, Hash
 
   multisearchable against: [:name, :conditions, :requirements]
 
@@ -25,4 +28,6 @@ class Screen < ActiveRecord::Base
 
   has_many :screens_wellplates, dependent: :destroy
   has_many :wellplates, through: :screens_wellplates
+
+  has_one :container, :as => :containable
 end

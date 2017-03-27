@@ -52,8 +52,15 @@ export default class CollectionSubtree extends React.Component {
       let visible = this.isVisible(this.state.root, state)
       const {root} = this.state
 
-      if(state.currentCollection.id == root.id &&
-         state.currentCollection.is_synchronized == root.is_synchronized) {
+      let selectedCol = (
+        state.currentCollection.id == root.id &&
+        state.currentCollection.is_synchronized == root.is_synchronized
+      ) || (
+        state.currentCollection.id == root.id &&
+        state.currentCollection.isRemote == root.isRemote
+      )
+
+      if(selectedCol) {
         this.setState({
           selected: true,
           visible: visible,

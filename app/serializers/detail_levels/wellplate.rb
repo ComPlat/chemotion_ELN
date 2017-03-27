@@ -15,4 +15,8 @@ class DetailLevels::Wellplate
   def level1_attributes
     level0_attributes
   end
+
+  def list_removed_attributes
+    []
+  end
 end

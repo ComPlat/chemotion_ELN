@@ -7,14 +7,6 @@ import Select from 'react-select'
 
 export default class PolymerSection extends React.Component {
 
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      sample: props.sample
-    }
-  }
-
   handleAmountChanged(amount) {
     this.props.parent.handleAmountChanged(amount);
   }
@@ -48,9 +40,7 @@ export default class PolymerSection extends React.Component {
         });
 
     } else {
-      this.setState({
-        sample: sample
-      });
+      this.props.parent.handleSampleChanged(sample);
     }
   }
 
@@ -63,9 +53,7 @@ export default class PolymerSection extends React.Component {
       }
     }
 
-    this.setState({
-      sample: sample
-    });
+    this.props.parent.handleSampleChanged(sample);
   }
 
   handlePRadioChanged(e, residue, sample) {
@@ -83,17 +71,11 @@ export default class PolymerSection extends React.Component {
         sample.loading = e_compositon.loading;
     }
 
-    this.setState({
-      sample: sample
-    });
+    this.props.parent.handleSampleChanged(sample);
   }
 
   handlePolymerTypeSelectChanged(value, residue, sample){
     residue.custom_info['polymer_type'] = value;
-
-    this.setState({
-      sample: sample
-    });
 
     // tell parent (SampleDetails) component about changes
     this.props.parent.handleSampleChanged(sample);
@@ -263,7 +245,9 @@ export default class PolymerSection extends React.Component {
         </Row>
         <Row>
           <Col md={8}>
-            <ElementalCompositionGroup sample={sample}/>
+            <ElementalCompositionGroup
+                handleSampleChanged={(s) => this.props.parent.handleSampleChanged(s)}
+                sample={sample}/>
           </Col>
           <Col md={4}>
             {this.polymerLoading(sample, residue)}

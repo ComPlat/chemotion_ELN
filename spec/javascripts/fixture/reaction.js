@@ -25,12 +25,6 @@ const reaction = {
   "temperature":"39.0 °C",
   "status":"Not Successful",
   "reaction_svg_file":"",
-  "analysis_kinds":{
-    "confirmed":{},
-    "unconfirmed":{},
-    "other":{},
-    "count":{"confirmed":0,"unconfirmed":0,"other":0}
-  },
   "starting_materials":[
     {
       "collection_labels":[],
@@ -53,12 +47,6 @@ const reaction = {
       "is_restricted":false,
       "external_label":"",
       "analyses":[],
-      "analysis_kinds":{
-        "confirmed":{},
-        "unconfirmed":{},
-        "other":{},
-        "count":{"confirmed":0,"unconfirmed":0,"other":0}
-      },
       "children_count":null,
       "parent_id":35,
       "imported_readout":"",
@@ -143,12 +131,6 @@ const reaction = {
       "is_restricted":false,
       "external_label":"",
       "analyses":[],
-      "analysis_kinds":{
-        "confirmed":{},
-        "unconfirmed":{},
-        "other":{},
-        "count":{"confirmed":0,"unconfirmed":0,"other":0}
-      },
       "children_count":null,
       "parent_id":44,
       "imported_readout":"",
@@ -225,16 +207,6 @@ const reaction = {
       "is_restricted":false,
       "external_label":"",
       "analyses":[],
-      "analysis_kinds":{
-        "confirmed":{},
-        "unconfirmed":{},
-        "other":{},
-        "count":{
-          "confirmed":0,
-          "unconfirmed":0,
-          "other":0
-        }
-      },
       "children_count":null,
       "parent_id":null,
       "imported_readout":"",

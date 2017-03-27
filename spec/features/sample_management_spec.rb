@@ -5,6 +5,7 @@ feature 'Sample management' do
   let(:sample) { create(:sample, creator: user) }
 
   background do
+    user.confirm
     sign_in(user)
   end
 
@@ -71,8 +72,8 @@ feature 'Sample management' do
         end
       end
 
-      # check if analyses have been copied
-      expect(Sample.last.analyses).to eq(sample.analyses)
+      # Analyses will not be copied
+      # expect(Sample.last.analyses).to eq(sample.analyses)
 
       # check SVG file
       expect(Sample.last.sample_svg_file).to eq(sample.sample_svg_file)

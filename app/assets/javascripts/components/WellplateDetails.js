@@ -1,5 +1,5 @@
 import React, {PropTypes, Component} from 'react';
-import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button,
+import {Well, Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger, Col, Row} from 'react-bootstrap';
 import Barcode from 'react-barcode';
 import SVGInline from 'react-svg-inline'
@@ -11,6 +11,7 @@ import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
 import Utils from './utils/Functions';
+import WellplateDetailsContainers from './WellplateDetailsContainers';
 
 import UIStore from './stores/UIStore';
 
@@ -69,6 +70,12 @@ export default class WellplateDetails extends Component {
       const force = true;
       this.props.closeDetails(wellplate, force);
     }
+  }
+
+  handleWellplateChanged(wellplate) {
+    this.setState({
+      wellplate
+    });
   }
 
   handleWellsChange(wells) {
@@ -220,6 +227,14 @@ export default class WellplateDetails extends Component {
               {...properties}
               changeProperties={(change) => this.handleChangeProperties(change)}
               />
+          </Tab>
+          <Tab eventKey={3} title={'Analyses'}>
+            <ListGroupItem style={{paddingBottom: 20}}>
+              <WellplateDetailsContainers
+                wellplate={wellplate}
+                parent={this}
+              />
+            </ListGroupItem>
           </Tab>
         </Tabs>
         <ButtonToolbar>

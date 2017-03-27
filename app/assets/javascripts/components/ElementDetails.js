@@ -7,6 +7,7 @@ import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
 import DeviceAnalysisDetails from './DeviceAnalysisDetails'
+import ResearchPlanDetails from './ResearchPlanDetails';
 import { SameEleTypId, UrlSilentNavigation } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
@@ -32,6 +33,8 @@ export default class ElementDetails extends Component {
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
     this.onChangeCurrentElement(null, this.props.currentElement);
+    // imitate scroll event to make StickyDiv element visible in current area
+    window.scrollTo(window.scrollX, window.scrollY + 1);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -181,6 +184,10 @@ export default class ElementDetails extends Component {
                   toggleFullScreen={this.toggleFullScreen}/>;
       case 'deviceAnalysis':
         return <DeviceAnalysisDetails analysis={el}
+          closeDetails={this.closeDetails}
+          toggleFullScreen={this.toggleFullScreen}/>;
+      case 'research_plan':
+        return <ResearchPlanDetails research_plan={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
     }
@@ -219,23 +226,25 @@ export default class ElementDetails extends Component {
 
   render() {
     const { fullScreen, selecteds, activeKey, offsetTop, deletingElement } = this.state;
-    const fScrnClass = fullScreen ? "full-screen" : "";
+    const fScrnClass = fullScreen ? "full-screen" : "normal-screen";
 
     return(
-      <div className={fScrnClass}>
-         <StickyDiv zIndex={2} offsetTop={offsetTop}>
-          <Tabs activeKey={activeKey} onSelect={this.selectTab} id="elements-tabs" >
+      <div>
+         <StickyDiv zIndex={fullScreen ? 9 : 2} offsetTop={offsetTop}>
+          <div className={fScrnClass}>
+          <Tabs activeKey={activeKey} onSelect={this.selectTab}
+                id="elements-tabs">
             {selecteds.map( (el, i) => {
               return el
-                ? <Tab eventKey={i} title={this.tabTitle(el, i)} key={i} unmountOnExit={true} >
+                ? <Tab key={i} eventKey={i} title={this.tabTitle(el, i)} unmountOnExit={true}>
                     {this.content(el)}
                   </Tab>
                 : null;
             })}
-          </Tabs>
+          </Tabs></div>
         </StickyDiv>
         <ConfirmModal showModal={deletingElement !== null}
-          title="Confirm Delete"
+          title="Confirm Close"
           content={this.confirmDeleteContent()}
           onClick={this.confirmDelete} />
       </div>

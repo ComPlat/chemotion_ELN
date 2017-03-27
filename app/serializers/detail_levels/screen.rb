@@ -1,7 +1,8 @@
 class DetailLevels::Screen
   def base_attributes
     [
-      :id, :type, :name, :description, :result, :collaborator, :conditions, :requirements, :created_at, :bar_code, :qr_code
+      :id, :type, :name, :description, :result, :collaborator, :conditions,
+      :requirements, :created_at, :bar_code, :qr_code
     ]
   end
 
@@ -9,5 +10,9 @@ class DetailLevels::Screen
     [
       :id, :type, :is_restricted, :name, :description, :conditions, :requirements
     ]
+  end
+
+  def list_removed_attributes
+    []
   end
 end

@@ -5,12 +5,18 @@ class ReactionsProductSample < ActiveRecord::Base
 
   include Reactable
   include ReactionSampleCollections
+  include Tagging
 
   def self.get_samples reaction_ids
     self.where(reaction_id: reaction_ids).pluck(:sample_id).compact.uniq
   end
 
+  def self.get_reactions samples_ids
+    self.where(sample_id: samples_ids).pluck(:reaction_id).compact.uniq
+  end
+
   def formatted_yield
-    self.equivalent ? (self.equivalent * 100).to_s + " %" : " %"
+    eq = self.equivalent
+    eq && !eq.nan? ? "#{(eq * 100).round.to_s} %" : "0 %"
   end
 end

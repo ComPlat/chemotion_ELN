@@ -41,7 +41,7 @@ export default class ElementalComposition extends React.Component {
       return false;
 
     return (
-      <td className="loading" align="right" width="13%">
+      <td className="loading" style={{textAlign:"left"}} width="13%">
         {elemental_composition.loading.toFixed(2)}
       </td>
     )
@@ -55,7 +55,9 @@ export default class ElementalComposition extends React.Component {
             <span>{elemental_composition.description}</span>
           </th>
 
-          <th className="loading">{elemental_composition.loading ? 'Loading (mmol/g)' : ''}</th>
+          <th className="loading">
+            {elemental_composition.loading ? 'Loading (mmol/g)' : ''}
+          </th>
         </tr>
       </thead>
     )

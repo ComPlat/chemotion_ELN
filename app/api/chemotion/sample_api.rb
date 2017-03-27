@@ -1,30 +1,9 @@
+require 'open-uri'
+#require './helpers'
+
 module Chemotion
   class SampleAPI < Grape::API
     include Grape::Kaminari
-
-    helpers do
-      def filter_datasets_params
-        return if params[:analyses].blank?
-
-        params[:analyses].each do |i|
-          i['datasets'].each do |j|
-            j['attachments'].reject! do |k|
-              path = Rails.root.to_s + '/uploads/attachments/'
-              file = k['file']['id'].to_s + File.extname(k['name']) rescue ''
-              !File.exists?(path +  file) && k['is_new']
-            end
-          end
-        end
-      end
-
-      def create_thumbnail file_path, file_id
-        thumbnail_path = Thumbnailer.create(file_path)
-        if thumbnail_path && File.exists?(thumbnail_path)
-          dest = File.join('uploads', 'thumbnails', "#{file_id}.png")
-          FileUtils.mv(thumbnail_path, dest)
-        end
-      end
-    end
 
     resource :samples do
       namespace :get_analysis_index do
@@ -89,7 +68,7 @@ module Chemotion
           samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
           samples.map{|sample|
             DevicesSample.find_by(sample_id: sample.id).destroy
-            sample.devices_analyses.map{|d| 
+            sample.devices_analyses.map{|d|
               d.analyses_experiments.destroy_all
               d.destroy
             }
@@ -115,15 +94,31 @@ module Chemotion
 
       namespace :import do
         desc "Import Samples from a File"
+
+        before do
+          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+        end
         post do
           extname = File.extname(params[:file].filename)
           if extname.match(/\.sdf?/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file].tempfile.path,
-            collection_id: params[:currentCollectionId],
-            current_user_id: current_user.id)
+              collection_id: params[:currentCollectionId],
+              mapped_keys: {
+                description: {field: "description", displayName: "Description", multiple: true},
+                location: {field: "location", displayName: "Location"},
+                name: {field: "name", displayName: "Name"},
+                external_label: {field: "external_label", displayName: "External label"},
+                purity: {field: "purity", displayName: "Purity"},
+              },
+              current_user_id: current_user.id)
             sdf_import.find_or_create_mol_by_batch
-            sdf_import.create_samples
-            return {sdf:true, message: sdf_import.message, data:[] ,status: sdf_import.status}
+            return {
+               sdf: true, message: sdf_import.message,
+               data: sdf_import.processed_mol, status: sdf_import.status,
+               custom_data_keys: sdf_import.custom_data_keys.keys,
+               mapped_keys: sdf_import.mapped_keys,
+               collection_id: sdf_import.collection_id
+             }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
           import = Import::ImportSamples.new.from_file(params[:file].tempfile.path,
@@ -131,46 +126,93 @@ module Chemotion
         end
       end
 
+      namespace :confirm_import do
+        desc "Create Samples from an Array of inchikeys"
+        params do
+          requires :rows, type: Array, desc: "Selected Molecule from the UI"
+          requires :currentCollectionId, type: Integer
+          requires :mapped_keys, type: Hash
+        end
+
+        before do
+          error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
+        end
+
+        post do
+          sdf_import = Import::ImportSdf.new(
+            collection_id: params[:currentCollectionId],
+            current_user_id: current_user.id,
+            rows: params[:rows],
+            mapped_keys: params[:mapped_keys]
+
+          )
+          sdf_import.create_samples
+          return {
+            sdf: true, message: sdf_import.message, status: sdf_import.status,
+          }
+        end
+      end
+
       desc "Return serialized molecules_samples_groups of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :molecule_sort, type: Integer, desc: "Sort by parameter"
       end
-      paginate per_page: 7, offset: 0
+      paginate per_page: 7, offset: 0, max_per_page: 100
 
-      before do
-        params[:per_page].to_i > 100 && (params[:per_page] = 100)
-      end
       get do
         own_collection = false
         scope = if params[:collection_id]
           begin
-            c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids).find(params[:collection_id])
+            c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
+                .find(params[:collection_id])
+
             !c.is_shared && (c.shared_by_id != current_user.id) && (own_collection = true)
+
             Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
-            .find(params[:collection_id]).samples
-            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections)
+                      .find(params[:collection_id])
+                      .samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         elsif params[:sync_collection_id]
           begin
             own_collection = false
+
             c = current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-            c.collection.samples
-            .includes(:molecule, :residues, :elemental_compositions, :reactions_product_samples, :reactions_starting_material_samples, :collections)
+
+            c.collection
+             .samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
           own_collection = true
-          Sample.for_user(current_user.id).includes(:molecule).uniq
-        end.uniq.not_reactant.not_solvents.order("updated_at DESC")
+          Sample.for_user(current_user.id).uniq
+        end.includes(:residues, :tag, collections: :sync_collections_users, molecule: :tag)
 
-        return {
-          molecules: group_by_molecule(paginate(scope), own_collection)
-        }
+        scope = scope.uniq.not_reactant.not_solvents
+
+        if params[:molecule_sort] == 1
+          molecule_scope = Molecule.where(id: (scope.pluck :molecule_id))
+            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+            .order(:sum_formular)
+
+          results = {
+            molecules: create_group_molecule(paginate(molecule_scope), scope, own_collection),
+            samples_count: scope.count
+          }
+        else
+          scope = scope.order("updated_at DESC")
+          results = {
+            molecules: group_by_molecule(paginate(scope), own_collection),
+            samples_count: scope.count
+          }
+        end
+
+        return results
       end
 
       desc "Return serialized sample by id"
@@ -183,91 +225,9 @@ module Chemotion
         end
 
         get do
-          sample= Sample.includes(:molecule, :residues, :elemental_compositions)
+          sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
-        end
-      end
-
-      #todo: move to AttachmentAPI
-      desc "Upload attachments"
-      post 'upload_dataset_attachments' do
-        params.each do |file_id, file|
-          if tempfile = file.tempfile
-              upload_path = File.join('uploads', 'attachments', "#{file_id}#{File.extname(tempfile)}")
-              upload_dir = File.join('uploads', 'attachments')
-              thumbnail_dir = File.join('uploads', 'thumbnails')
-              FileUtils.mkdir_p(upload_dir) unless Dir.exist?(upload_dir)
-              FileUtils.mkdir_p(thumbnail_dir) unless Dir.exist?(thumbnail_dir)
-            begin
-              FileUtils.cp(tempfile.path, upload_path)
-            ensure
-              tempfile.close
-              tempfile.unlink   # deletes the temp file
-            end
-            begin
-              create_thumbnail(upload_path, file_id)
-            end
-          end
-        end
-        true
-      end
-
-      #todo: authorize attachment download
-      desc "Download the attachment file"
-      params do
-        optional :filename, type: String
-      end
-      get 'download_attachement/:attachment_id' do
-        file_id = params[:attachment_id]
-        filename = params[:filename] || file_id
-        content_type "application/octet-stream"
-        header['Content-Disposition'] = "attachment; filename=#{filename}"
-        env['api.format'] = :binary
-        File.open(File.join('uploads', 'attachments', "#{file_id}#{File.extname(filename)}")).read
-      end
-
-      module SampleUpdator
-
-        def self.updated_embedded_analyses(analyses)
-          Array(analyses).map do |ana|
-            {
-              id: ana.id,
-              type: ana.type,
-              name: ana.name,
-              kind: ana.kind,
-              status: ana.status,
-              content: ana.content,
-              description: ana.description,
-              bar_code: ana.bar_code,
-              qr_code: ana.qr_code,
-              bar_code_bruker: ana.bar_code_bruker,
-              datasets: Array(ana.datasets).map do |dataset|
-                {
-                  id: dataset.id,
-                  type: dataset.type,
-                  name: dataset.name,
-                  instrument: dataset.instrument,
-                  description: dataset.description,
-                  attachments: Array(dataset.attachments).map do |attachment|
-                    if(attachment.file)
-                      {
-                        id: attachment.id,
-                        name: attachment.name,
-                        filename: attachment.file.id
-                      }
-                    else
-                      {
-                        id: attachment.id,
-                        name: attachment.name,
-                        filename: attachment.filename
-                      }
-                    end
-                  end
-                }
-              end
-            }
-          end
         end
       end
 
@@ -293,20 +253,21 @@ module Chemotion
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
         optional :melting_point, type: Float, desc: "Sample melting point"
-        optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        requires :container, type: Hash
       end
       route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Sample.find(params[:id])).update?
-          filter_datasets_params
         end
 
         put do
+
           attributes = declared(params, include_missing: false)
-          embedded_analyses = SampleUpdator.updated_embedded_analyses(params[:analyses])
-          attributes.merge!(analyses: embedded_analyses)
+
+          ContainerHelper.update_datamodel(attributes[:container]);
+          attributes.delete(:container);
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
@@ -324,6 +285,7 @@ module Chemotion
           if sample = Sample.find(params[:id])
             sample.update!(attributes)
           end
+
           {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
         end
       end
@@ -351,16 +313,16 @@ module Chemotion
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
         optional :melting_point, type: Float, desc: "Sample melting point"
-        optional :analyses, type: Array
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        requires :container, type: Hash
       end
       post do
-        filter_datasets_params
 
         attributes = {
           name: params[:name],
           short_label: params[:short_label],
+          external_label: params[:external_label],
           target_amount_value: params[:target_amount_value],
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],
@@ -376,7 +338,6 @@ module Chemotion
           density: params[:density],
           boiling_point: params[:boiling_point],
           melting_point: params[:melting_point],
-          analyses: SampleUpdator.updated_embedded_analyses(params[:analyses]),
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id
@@ -406,6 +367,8 @@ module Chemotion
         all_coll = Collection.get_all_collection_for_user(current_user.id)
         sample.collections << all_coll
 
+        sample.container = ContainerHelper.update_datamodel(params[:container])
+
         sample.save!
 
         sample
@@ -423,7 +386,7 @@ module Chemotion
         delete do
           sample = Sample.find(params[:id])
           DevicesSample.find_by(sample_id: sample.id).destroy
-          sample.devices_analyses.map{|d| 
+          sample.devices_analyses.map{|d|
             d.analyses_experiments.destroy_all
             d.destroy
           }

@@ -1,4 +1,6 @@
 import alt from '../alt';
+import ReportsFetcher from '../fetchers/ReportsFetcher';
+import _ from 'lodash';
 
 class ReportActions {
 
@@ -6,11 +8,19 @@ class ReportActions {
     return value;
   }
 
-  updateSettings(target) {
+  updateSplSettings(target) {
     return target;
   }
 
-  toggleSettingsCheckAll() {
+  toggleSplSettingsCheckAll() {
+    return null;
+  }
+
+  updateRxnSettings(target) {
+    return target;
+  }
+
+  toggleRxnSettingsCheckAll() {
     return null;
   }
 
@@ -22,16 +32,66 @@ class ReportActions {
     return null;
   }
 
-  generateReports() {
-    return null;
+  generateReport(report) {
+    return (dispatch) => { ReportsFetcher.create(report)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
-  updateCheckedIds(ids) {
-    return ids;
+  updateCheckedTags(oldTags, newTags) {
+    const diffTags = {  sample: _.difference(newTags.sampleIds, oldTags.sampleIds),
+                        reaction: _.difference(newTags.reactionIds, oldTags.reactionIds) };
+    return (dispatch) => { ReportsFetcher.fetchContent(diffTags)
+      .then((result) => {
+        dispatch({newTags: newTags, newObjs: result});
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
-  move({sourceId, targetId}) {
-    return {sourceId, targetId};
+  move({sourceTag, targetTag}) {
+    return {sourceTag, targetTag};
+  }
+
+  getArchives() {
+    return (dispatch) => { ReportsFetcher.fetchArchives()
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  updateProcessQueue(oriQueue) {
+    return (dispatch) => { ReportsFetcher.fetchDownloadable(oriQueue)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
+  updateFileName(value) {
+    return value;
+  }
+
+  updateFileDescription(value) {
+    return value;
+  }
+
+  updateActiveKey(key) {
+    return key;
+  }
+
+  downloadReport(id) {
+    return id;
   }
 }
 

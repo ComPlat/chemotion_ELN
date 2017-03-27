@@ -38,7 +38,7 @@ describe Chemotion::ReactionSvgAPI do
         expect(output_svg).to include(solvent_2)
         expect(output_svg).to include(temperature)
         expect(output_svg).to include((product_yield * 100).round(0).to_s + " %")
-        expect(output_svg).to eq standard_svg
+        expect(output_svg.strip).to eq standard_svg.strip
       end
     end
   end

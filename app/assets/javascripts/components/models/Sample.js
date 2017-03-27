@@ -1,10 +1,10 @@
 import React from 'react'
 import Element from './Element';
 import Molecule from './Molecule';
-import Analysis from './Analysis';
 import _ from 'lodash';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
+import Container from './Container.js';
 
 export default class Sample extends Element {
   isMethodRestricted(m) {
@@ -42,7 +42,7 @@ export default class Sample extends Element {
     });
 
     if(this.contains_residues) { this.setDefaultResidue(); }
-    this.analyses = [];
+
     return this;
   }
 
@@ -87,14 +87,14 @@ export default class Sample extends Element {
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
-      analyses: [],
       residues: [],
       elemental_compositions: [{
         composition_type: 'found',
         data: {}
       }],
       imported_readout: '',
-      attached_amount_mg: '' // field for polymers calculations
+      attached_amount_mg: '', // field for polymers calculations
+      container: Container.init(),
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -113,6 +113,9 @@ export default class Sample extends Element {
   buildCopy() {
     let sample = super.buildCopy()
     sample.short_label = sample.short_label + " Copy"
+
+    sample.container = Container.init();
+
     return sample;
   }
 
@@ -160,6 +163,9 @@ export default class Sample extends Element {
 
     splitSample.split_label = splitSample.buildSplitShortLabel();
 
+    //Todo ???
+    splitSample.container = Container.init();
+
     return splitSample;
   }
 
@@ -193,12 +199,12 @@ export default class Sample extends Element {
       density: this.density,
       boiling_point: this.boiling_point,
       melting_point: this.melting_point,
-      analyses: this.analyses.map(a => a.serialize()),
       residues: this.residues,
       elemental_compositions: this.elemental_compositions,
       is_split: this.is_split || false,
       is_new: this.is_new,
-      imported_readout: this.imported_readout
+      imported_readout: this.imported_readout,
+      container: this.container
     });
 
     return serialized;
@@ -271,6 +277,18 @@ export default class Sample extends Element {
       cssClass = 'label--bold c-text--grey';
     }
     return cssClass;
+  }
+
+  get molecule_name(){
+    if (this.contains_residues) {
+      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
+          + this.polymer_type.slice(1);
+      let val = polymer_name.replace('_', '-') + ' - ';
+      val += this.molecule.sum_formular;
+      return val;
+    }
+    else
+      return this.molecule && (this.molecule.iupac_name || this.molecule.sum_formular || '')
   }
 
   get name() {
@@ -666,36 +684,7 @@ export default class Sample extends Element {
     return params;
   }
 
-  // -- Analyses --
 
-  get analyses() {
-    return (this._analyses || []).map(a => new Analysis(a));
-  }
-
-  set analyses(analyses) {
-    this._analyses = analyses.map(a => new Analysis(a));
-  }
-
-  addAnalysis(analysis) {
-    let analyses = this.analyses;
-    analyses.push(analysis);
-    this.analyses = analyses;
-  }
-
-  removeAnalysis(analysis) {
-    let analyses = this.analyses;
-    _.remove(analyses, (a) => { return a.id == analysis.id});
-    this.analyses = analyses;
-  }
-
-  updateAnalysis(changedAnalysis) {
-    this.analyses.find(analysis => {
-      if(analysis.id == changedAnalysis.id) {
-        const analysisPosition = _.findIndex(this.analyses, (a) => { return a.id == analysis.id});
-        this._analyses[analysisPosition] = changedAnalysis;
-      }
-    });
-  }
 };
 
 Sample.counter = 0;

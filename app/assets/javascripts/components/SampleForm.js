@@ -77,7 +77,7 @@ export default class SampleForm extends React.Component {
         <ControlLabel>Molecule</ControlLabel>
         <InputGroup>
           <FormControl type="text" ref="moleculeInput"
-            value={sample.molecule && (sample.molecule.iupac_name || sample.molecule.sum_formular || '')}
+            value={sample.molecule_name}
             disabled={sample.isMethodDisabled('molecule_iupac_name')}
             readOnly={sample.isMethodDisabled('molecule_iupac_name')}
             onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}
@@ -244,12 +244,12 @@ export default class SampleForm extends React.Component {
         <Row className="hidden-hd">
           {this.sampleAmount(sample, 4)}
         </Row>
-        <Row className="hidden-hd" style={ { 'padding-top': 15  }}>
+        <Row className="hidden-hd" style={ { 'paddingTop': "15px"  }}>
           {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 4, isPolymer)}
           {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer, '', 4, isPolymer)}
           {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 4, isPolymer)}
         </Row>
-        <Row style={ { 'padding-top': 15  } }>
+        <Row style={ { 'paddingTop': "15px"  } }>
           <Col md={4}>{this.sampleDescription(sample)}</Col>
           {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity')}
           <Col md={2}>{this.textInput(sample, 'impurities', 'Impurities')}</Col>

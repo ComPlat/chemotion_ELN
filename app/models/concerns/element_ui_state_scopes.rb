@@ -3,7 +3,7 @@ module ElementUIStateScopes
 
   module ClassMethods
     def for_ui_state(ui_state)
-      return [] unless ui_state
+      return self.none unless ui_state
 
       all = coerce_all_to_boolean(ui_state.fetch(:all, false))
       collection_id = ui_state.fetch(:collection_id, 'all')

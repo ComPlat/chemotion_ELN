@@ -2,7 +2,10 @@ import 'whatwg-fetch';
 import Sample from '../models/Sample';
 import UIStore from '../stores/UIStore'
 import NotificationActions from '../actions/NotificationActions'
+import AttachmentFetcher from './AttachmentFetcher'
 import _ from 'lodash';
+
+import Container from '../models/Container';
 
 export default class SamplesFetcher {
   static fetchByUIState(params) {
@@ -40,6 +43,7 @@ export default class SamplesFetcher {
         return response.json()
       }).then((json) => {
         return new Sample(json.sample);
+
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -47,10 +51,12 @@ export default class SamplesFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}, isSync=false) {
+  static fetchByCollectionId(id, queryParams={}, isSync = false, moleculeSort = false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || UIStore.getState().number_of_results
-    let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }collection_id=${id}&page=${page}&per_page=${per_page}`
+    let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }` +
+               `collection_id=${id}&page=${page}&per_page=${per_page}&` +
+               `molecule_sort=${moleculeSort ? 1 : 0}`
     let promise = fetch(api, {
         credentials: 'same-origin'
       })
@@ -60,7 +66,7 @@ export default class SamplesFetcher {
             elements: json.molecules.map( m => {
               return m.samples.map( s => new Sample(s) )
             }),
-            totalElements: parseInt(response.headers.get('X-Total')),
+            totalElements: parseInt(json.samples_count),
             page: parseInt(response.headers.get('X-Page')),
             pages: parseInt(response.headers.get('X-Total-Pages')),
             perPage: parseInt(response.headers.get('X-Per-Page'))
@@ -86,7 +92,7 @@ export default class SamplesFetcher {
       if(response.ok == false) {
         let msg = 'Files uploading failed: ';
         if(response.status == 413) {
-          msg += 'File size limit exceeded. Max size is 10MB'
+          msg += 'File size limit exceeded. Max size is 50MB'
         } else {
           msg += response.statusText;
         }
@@ -98,20 +104,8 @@ export default class SamplesFetcher {
     })
   }
 
-  static getFileListfrom(sample){
-    let datasets = _.flatten(sample.analyses.map(a=>a.datasets));
-    let attachments = _.flatten(datasets.map(d=>d.attachments));
-    const fileFromAttachment = function(attachment) {
-      let file = attachment.file;
-      file.id = attachment.id;
-      return file;
-    }
-    let files = _.compact(_.flatten(attachments.filter(a=>a.is_new).map(a=>fileFromAttachment(a))));
-    return files
-  }
-
   static update(sample) {
-    let files = SamplesFetcher.getFileListfrom(sample.serialize())
+    let files = AttachmentFetcher.getFileListfrom(sample.container)
     let promise = ()=> fetch('/api/v1/samples/' + sample.id, {
       credentials: 'same-origin',
       method: 'put',
@@ -129,7 +123,7 @@ export default class SamplesFetcher {
     });
 
     if(files.length > 0) {
-      return SamplesFetcher.uploadFiles(files)().then(()=> promise());
+      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
     } else {
       return promise()
     }
@@ -137,7 +131,7 @@ export default class SamplesFetcher {
   }
 
   static create(sample) {
-    let files = SamplesFetcher.getFileListfrom(sample.serialize())
+    let files = AttachmentFetcher.getFileListfrom(sample.container)
     let promise = ()=> fetch('/api/v1/samples', {
       credentials: 'same-origin',
       method: 'post',
@@ -154,7 +148,7 @@ export default class SamplesFetcher {
       console.log(errorMessage);
     });
     if(files.length > 0) {
-      return SamplesFetcher.uploadFiles(files)().then(()=> promise());
+      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
     } else {
       return promise()
     }
@@ -226,6 +220,31 @@ export default class SamplesFetcher {
       credentials: 'same-origin',
       method: 'post',
       body: data
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static importSamplesFromFileConfirm(params) {
+
+    let promise = fetch('/api/v1/samples/confirm_import/', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        currentCollectionId: params.currentCollectionId,
+        rows: params.rows,
+        mapped_keys: params.mapped_keys,
+      })
     }).then((response) => {
       return response.json()
     }).then((json) => {

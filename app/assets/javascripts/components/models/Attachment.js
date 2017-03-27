@@ -7,7 +7,9 @@ export default class Attachment extends Element {
       {
         file: file,
         name: file.name,
-        preview: file.preview
+        filename: file.name,
+        identifier: file.id,
+        is_deleted: false,
       }
     )
   }
@@ -22,9 +24,10 @@ export default class Attachment extends Element {
 
   serialize() {
     return super.serialize({
-      name: this.name,
       filename: this.filename,
-      file: this.file
+      identifier: this.identifier,
+      file: this.file,
+      is_deleted: this.is_deleted,
     })
   }
 

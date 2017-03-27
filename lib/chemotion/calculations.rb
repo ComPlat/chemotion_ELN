@@ -28,7 +28,8 @@ module Chemotion::Calculations
 
       atoms_number = (atom.last.blank? ? 1 : atom.last).to_i
 
-      atoms_number -= 1 if atom_label == 'H' && is_partial
+      atoms_number -= 1 if atom_label == 'C' && is_partial # remove 1 C
+      atoms_number -= 3 if atom_label == 'H' && is_partial # remove 3 H
 
       if elements.has_key? atom_label
         old_val = elements[atom_label]
@@ -74,11 +75,15 @@ module Chemotion::Calculations
     end
   end
 
-  def self.get_yield product_data, sm_data
+  def self.get_yield product_data, sm_data, expected_data
     VALUABLE_ELEMENTS.each do |element_name|
 
-      if product_data[element_name].to_f * sm_data[element_name].to_f > 0.0
-        return product_data[element_name].to_f / sm_data[element_name].to_f
+      ea_p = product_data[element_name].to_f
+      ea_sm = sm_data[element_name].to_f
+      ea_exp = expected_data[element_name].to_f
+
+      if ea_p * ea_exp > 0.0 && (ea_exp - ea_sm) != 0
+        return (ea_p - ea_sm) / (ea_exp - ea_sm)
       end
     end
 

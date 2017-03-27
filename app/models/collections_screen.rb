@@ -5,6 +5,8 @@ class CollectionsScreen < ActiveRecord::Base
 
   validate :collection_screen_id_uniqueness
 
+  include Tagging
+
   def self.move_to_collection(screen_ids, old_col_id, new_col_id)
     # Get associated wellplates
     wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
@@ -24,7 +26,7 @@ class CollectionsScreen < ActiveRecord::Base
     self.where(
       screen_id: screen_ids,
       collection_id: collection_id
-    ).delete_all
+    ).destroy_all
   end
 
   # Remove from collection and process associated elements

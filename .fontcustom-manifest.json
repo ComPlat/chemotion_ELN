@@ -1,7 +1,7 @@
 {
   "checksum": {
-    "previous": "59308ce972f0338ca00889be1e42d52690613984408579977fd9a40f542b44f1",
-    "current": "59308ce972f0338ca00889be1e42d52690613984408579977fd9a40f542b44f1"
+    "previous": "ebea6970ab34b700768ce8bafe0ee0ca02daf2bf9277ec0e6b7ac5d7bbcb09c0",
+    "current": "ebea6970ab34b700768ce8bafe0ee0ca02daf2bf9277ec0e6b7ac5d7bbcb09c0"
   },
   "fonts": [
     "app/assets/fonts/icons.ttf",
@@ -10,6 +10,54 @@
     "app/assets/fonts/icons.eot"
   ],
   "glyphs": {
+    "acidified-hcl": {
+      "codepoint": 61706,
+      "source": "app/assets/images/svg_icons/acidified-hcl.svg"
+    },
+    "c-nmr": {
+      "codepoint": 61718,
+      "source": "app/assets/images/svg_icons/c-nmr.svg"
+    },
+    "dried": {
+      "codepoint": 61717,
+      "source": "app/assets/images/svg_icons/dried.svg"
+    },
+    "ea": {
+      "codepoint": 61719,
+      "source": "app/assets/images/svg_icons/ea.svg"
+    },
+    "ei": {
+      "codepoint": 61720,
+      "source": "app/assets/images/svg_icons/ei.svg"
+    },
+    "gpx-a": {
+      "codepoint": 61708,
+      "source": "app/assets/images/svg_icons/gpx-a.svg"
+    },
+    "gpx-b": {
+      "codepoint": 61709,
+      "source": "app/assets/images/svg_icons/gpx-b.svg"
+    },
+    "h-nmr": {
+      "codepoint": 61721,
+      "source": "app/assets/images/svg_icons/h-nmr.svg"
+    },
+    "hand-stop": {
+      "codepoint": 61701,
+      "source": "app/assets/images/svg_icons/hand-stop.svg"
+    },
+    "hr": {
+      "codepoint": 61722,
+      "source": "app/assets/images/svg_icons/hr.svg"
+    },
+    "ir": {
+      "codepoint": 61723,
+      "source": "app/assets/images/svg_icons/ir.svg"
+    },
+    "isolated": {
+      "codepoint": 61710,
+      "source": "app/assets/images/svg_icons/isolated.svg"
+    },
     "polymer": {
       "codepoint": 61700,
       "source": "app/assets/images/svg_icons/polymer.svg"
@@ -17,6 +65,30 @@
     "reaction": {
       "codepoint": 61696,
       "source": "app/assets/images/svg_icons/reaction.svg"
+    },
+    "reaction-procedure": {
+      "codepoint": 61703,
+      "source": "app/assets/images/svg_icons/reaction-procedure.svg"
+    },
+    "residue-adsorbed": {
+      "codepoint": 61711,
+      "source": "app/assets/images/svg_icons/residue-adsorbed.svg"
+    },
+    "residue-dissolved": {
+      "codepoint": 61712,
+      "source": "app/assets/images/svg_icons/residue-dissolved.svg"
+    },
+    "residue-purified": {
+      "codepoint": 61713,
+      "source": "app/assets/images/svg_icons/residue-purified.svg"
+    },
+    "resin-solvent": {
+      "codepoint": 61704,
+      "source": "app/assets/images/svg_icons/resin-solvent.svg"
+    },
+    "resin-solvent-reagent": {
+      "codepoint": 61705,
+      "source": "app/assets/images/svg_icons/resin-solvent-reagent.svg"
     },
     "sample": {
       "codepoint": 61697,
@@ -26,16 +98,36 @@
       "codepoint": 61699,
       "source": "app/assets/images/svg_icons/screen.svg"
     },
+    "tlc-control": {
+      "codepoint": 61714,
+      "source": "app/assets/images/svg_icons/tlc-control.svg"
+    },
+    "uv": {
+      "codepoint": 61724,
+      "source": "app/assets/images/svg_icons/uv.svg"
+    },
+    "washed-nahco3": {
+      "codepoint": 61715,
+      "source": "app/assets/images/svg_icons/washed-nahco3.svg"
+    },
+    "water-free": {
+      "codepoint": 61702,
+      "source": "app/assets/images/svg_icons/water-free.svg"
+    },
     "wellplate": {
       "codepoint": 61698,
       "source": "app/assets/images/svg_icons/wellplate.svg"
+    },
+    "xvial": {
+      "codepoint": 61725,
+      "source": "app/assets/images/svg_icons/xvial.svg"
     }
   },
   "options": {
     "autowidth": false,
     "config": "fontcustom.yml",
     "css_selector": ".icon-{{glyph}}",
-    "debug": false,
+    "debug": true,
     "font_ascent": 448,
     "font_descent": 64,
     "font_design_size": 16,

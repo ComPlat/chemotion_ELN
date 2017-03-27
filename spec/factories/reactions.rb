@@ -3,6 +3,9 @@ FactoryGirl.define do
     callback(:before_create) do |reaction|
       #reaction.collections << FactoryGirl.build(:collection) if reaction.collections.blank?
       reaction.creator = FactoryGirl.build(:user) unless reaction.creator
+
+      reaction.container = FactoryGirl.build(:container) unless reaction.container
+
     end
 
     sequence(:name) { |i| "Reaction #{i}" }

@@ -5,7 +5,7 @@ module Chemotion
     # TODO implement search cache?
     helpers do
       def page_size
-        params[:per_page] == nil ? 7 : params[:per_page]
+        params[:per_page] == nil ? 7 : params[:per_page].to_i
       end
 
       def pages(total_elements)
@@ -27,22 +27,55 @@ module Chemotion
         return 'structure'
       end
 
-      def serialization_by_elements_and_page(elements, page = 1)
+      def sample_structure_search arg
+        molfile = Fingerprint.standardized_molfile arg
+        threshold = params[:selection].tanimoto_threshold
+        type = params[:selection].search_type
+
+        # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
+        Sample.for_user(current_user.id)
+              .search_by_fingerprint(molfile, current_user.id,
+                params[:collection_id].to_i, type, threshold)
+      end
+
+      def serialization_by_elements_and_page(elements, page = 1, moleculeSort = false)
         samples = elements.fetch(:samples, [])
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
 
-        samples = samples.empty? ? samples : Kaminari.paginate_array(samples)
         # After paging, now we can map to searchable for AllElementSearch
         samples = samples.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         reactions = reactions.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         wellplates = wellplates.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
         screens = screens.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
 
-        serialized_samples = {
-          molecules: group_by_molecule(samples)
-        }
+        samples_size = samples.size
+        if samples.empty? == false
+          if moleculeSort
+            molecule_scope =
+              Molecule.where(id: (samples.map(&:molecule_id)))
+                      .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                      .order(:sum_formular)
+            samples_size = molecule_scope.size
+            molecule_scope = molecule_scope.page(page).per(page_size)
+
+            serialized_samples = {
+              molecules: create_group_molecule(molecule_scope, samples)
+            }
+          else
+            paging_samples = Kaminari.paginate_array(samples).page(page).per(page_size)
+            paging_samples = paging_samples.map{ |e| e.is_a?(PgSearch::Document) ? e.searchable : e}.uniq
+            serialized_samples = {
+              molecules: group_by_molecule(paging_samples)
+            }
+          end
+        else
+          serialized_samples = {
+            molecules: []
+          }
+        end
+
         serialized_reactions = Kaminari.paginate_array(reactions).page(page)
           .per(page_size).map {|s|
             ReactionSerializer.new(s).serializable_hash.deep_symbolize_keys
@@ -59,9 +92,9 @@ module Chemotion
         {
           samples: {
             elements: serialized_samples,
-            totalElements: samples.size,
+            totalElements: samples_size,
             page: page,
-            pages: pages(samples.size),
+            pages: pages(samples_size),
             per_page: page_size
           },
           reactions: {
@@ -90,34 +123,42 @@ module Chemotion
 
       # Generate search query
       def scope_by_search_by_method_arg_and_collection_id(search_by_method,
-          arg, collection_id, is_sync = false)
+          arg, collection_id, is_sync = false, molecule_sort = false)
+        sample_search = false
+
         scope = case search_by_method
         when 'polymer_type'
+          sample_search = true
           Sample.for_user(current_user.id).joins(:residues)
             .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
         when 'sum_formula', 'iupac_name', 'inchistring', 'cano_smiles',
              'sample_name', 'sample_short_label', 'sample_external_label'
+          sample_search = true
           Sample.for_user(current_user.id).search_by(search_by_method, arg)
-        when 'reaction_name'
+        when 'reaction_name', 'reaction_short_label'
           Reaction.for_user(current_user.id).search_by(search_by_method, arg)
         when 'wellplate_name'
           Wellplate.for_user(current_user.id).search_by(search_by_method, arg)
         when 'screen_name'
           Screen.for_user(current_user.id).search_by(search_by_method, arg)
         when 'substring'
-          AllElementSearch.new(arg, current_user.id).search_by_substring
+          all_element = AllElementSearch.new(arg, current_user.id).search_by_substring
         when 'structure'
-          molfile = Fingerprint.standardized_molfile arg
-          threshold = params[:selection].tanimoto_threshold
-          type = params[:selection].search_type
-
-          # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
-          Sample.for_user(current_user.id)
-                .search_by_fingerprint(molfile, current_user.id, collection_id,
-                                       type, threshold)
+          sample_structure_search(arg)
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
+
+        if sample_search
+          scope =
+            if molecule_sort
+              scope.includes(:molecule)
+                   .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                   .order(:sum_formular)
+            else
+              scope.order("updated_at DESC")
+            end
+        end
 
         scope
       end
@@ -167,6 +208,7 @@ module Chemotion
           requires :selection, type: Hash
           requires :collection_id, type: String
           optional :is_sync, type: Boolean
+          optional :molecule_sort, type: Integer
         end
 
         post do
@@ -174,15 +216,12 @@ module Chemotion
           arg = get_arg()
           return if arg.to_s.strip.length == 0
 
-          scope =
-            scope_by_search_by_method_arg_and_collection_id(search_by_method,
-                                                            arg,
-                                                            params[:collection_id],
-                                                            params[:is_sync])
-
+          molecule_sort = params[:molecule_sort] == 1 ? true : false
+          scope = scope_by_search_by_method_arg_and_collection_id(search_by_method,
+            arg, params[:collection_id], params[:is_sync], molecule_sort)
 
           serialization_by_elements_and_page(elements_by_scope(scope),
-                                             params[:page])
+            params[:page], molecule_sort)
 
         end
       end
@@ -200,9 +239,16 @@ module Chemotion
           search_by_method = get_search_method()
           arg = get_arg()
 
-          scope = Sample.search_by(search_by_method, arg)
+          scope =
+            case search_by_method
+            when 'structure'
+              sample_structure_search(arg)
+            else
+              Sample.search_by(search_by_method, arg)
+            end
 
-          samples = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          # samples = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          samples = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(samples),
                                              params[:page])
@@ -222,9 +268,24 @@ module Chemotion
           search_by_method = get_search_method()
           arg = get_arg()
 
-          scope = Reaction.search_by(search_by_method, arg)
+          scope =
+            case search_by_method
+            when 'structure'
+              associated_samples = sample_structure_search(arg)
+              samples_ids = associated_samples.pluck(:id)
 
-          reactions = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+              reaction_ids = (
+                ReactionsProductSample.get_reactions(samples_ids) +
+                ReactionsStartingMaterialSample.get_reactions(samples_ids) +
+                ReactionsReactantSample.get_reactions(samples_ids)
+              ).compact.uniq
+              Reaction.where(id: reaction_ids)
+            else
+              Reaction.search_by(search_by_method, arg)
+            end
+
+          # reactions = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          reactions = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(reactions),
                                              params[:page])
@@ -244,9 +305,17 @@ module Chemotion
           search_by_method = get_search_method()
           arg = get_arg()
 
-          scope = Wellplate.search_by(search_by_method, arg)
+          scope =
+            case search_by_method
+            when 'structure'
+              associated_samples = sample_structure_search(arg)
+              Wellplate.by_sample_ids(associated_samples.pluck(:id))
+            else
+              Wellplate.search_by(search_by_method, arg)
+            end
 
-          wellplates = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          # wellplates = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          wellplates = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(wellplates),
                                              params[:page])
@@ -266,9 +335,18 @@ module Chemotion
           search_by_method = get_search_method()
           arg = get_arg()
 
-          scope = Screen.search_by(search_by_method, arg)
+          scope =
+            case search_by_method
+            when 'structure'
+              associated_samples = sample_structure_search(arg)
+              well_ids = Wellplate.by_sample_ids(associated_samples.pluck(:id))
+              Screen.by_wellplate_ids(well_ids)
+            else
+              Screen.search_by(search_by_method, arg)
+            end
 
-          screens = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          # screens = scope.by_collection_id(params[:collection_id].to_i, params[:is_sync])
+          screens = scope.by_collection_id(params[:collection_id].to_i)
 
           serialization_by_elements_and_page(elements_by_scope(screens),
                                              params[:page])

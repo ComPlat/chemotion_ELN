@@ -7,21 +7,20 @@ import NotificationActions from './NotificationActions';
 
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
-import ResidueFetcher from '../fetchers/ResidueFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
 import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher'
 
-import Molecule from '../models/Molecule';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
-
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
+import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
 import Device from '../models/Device'
 
@@ -163,7 +162,7 @@ class ElementActions {
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-                                           currentPage, isSync = false) {
+      currentPage, isSync = false, moleculeSort = false) {
     let uid;
     NotificationActions.add({
       title: "Searching ...",
@@ -173,7 +172,8 @@ class ElementActions {
     });
 
     return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection, collectionId, currentPage, isSync)
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection,
+        collectionId, currentPage, isSync, moleculeSort)
                    .then((result) => {
                      dispatch(result);
                      NotificationActions.removeByUid(uid);
@@ -207,8 +207,10 @@ class ElementActions {
       });};
   }
 
-  fetchSamplesByCollectionId(id, queryParams={}, collectionIsSync = false) {
-    return (dispatch) => { SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+  fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
+      moleculeSort = false) {
+    return (dispatch) => {
+      SamplesFetcher.fetchByCollectionId(id, queryParams, collectionIsSync, moleculeSort)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -281,11 +283,27 @@ class ElementActions {
   }
 
   showReactionMaterial(params) {
-    return  params;
+    return (dispatch) => { SamplesFetcher.fetchById(params.sample.id)
+      .then((result) => {
+        params.sample = result
+        dispatch(params);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      })
+    }
   }
 
   importSamplesFromFile(params) {
     return (dispatch) => { SamplesFetcher.importSamplesFromFile(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+  
+  importSamplesFromFileConfirm(params) {
+    return (dispatch) => { SamplesFetcher.importSamplesFromFileConfirm(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -508,6 +526,47 @@ class ElementActions {
       });};
   }
 
+  // -- ResearchPlans --
+  fetchResearchPlansByCollectionId(id, queryParams={}, collectionIsSync = false) {
+    return (dispatch) => { ResearchPlansFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  fetchResearchPlanById(id) {
+    return (dispatch) => { ResearchPlansFetcher.fetchById(id)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  updateResearchPlan(params) {
+    return (dispatch) => { ResearchPlansFetcher.update(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  generateEmptyResearchPlan(collection_id) {
+    return ResearchPlan.buildEmpty(collection_id);
+  }
+
+  createResearchPlan(params) {
+    return (dispatch) => { ResearchPlansFetcher.create(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   // -- Report --
   showReportContainer() {
     return  Report.buildEmpty()
@@ -582,6 +641,15 @@ class ElementActions {
       });};
   }
 
+  deleteResearchPlansByUIState(ui_state) {
+    return (dispatch) => { ResearchPlansFetcher.deleteResearchPlansByUIState(ui_state)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
   updateElementsCollection(params) {
     return (dispatch) => { CollectionsFetcher.updateElementsCollection(params)
       .then(() => {
@@ -610,6 +678,10 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  changeSorting(sort) {
+    return sort;
   }
 
 }

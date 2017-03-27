@@ -1,8 +1,13 @@
 import Element from './Element';
 import Wellplate from './Wellplate';
+import Container from './Container';
 
 export default class Screen extends Element {
   static buildEmpty(collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new Screen({
       collection_id: collection_id,
       type: 'screen',
@@ -11,12 +16,17 @@ export default class Screen extends Element {
       requirements: '',
       conditions: '',
       result: '',
-      description: '',
-      wellplates: []
+      description: description_default,
+      wellplates: [],
+      container: Container.init(),
     })
   }
 
   static buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id) {
+    let description_default = {
+      "ops": [{ "insert": "" }]
+    }
+
     return new Screen({
       collection_id: collection_id,
       type: 'screen',
@@ -25,8 +35,9 @@ export default class Screen extends Element {
       requirements: '',
       conditions: '',
       result: '',
-      description: '',
-      wellplates: clipboardWellplates
+      description: description_default,
+      wellplates: clipboardWellplates,
+      container: Container.init(),
     })
   }
 
@@ -38,7 +49,8 @@ export default class Screen extends Element {
       conditions: this.conditions,
       requirements: this.requirements,
       description: this.description,
-      wellplate_ids: this.wellplate_ids
+      wellplate_ids: this.wellplate_ids,
+      container: this.container,
     })
   }
 

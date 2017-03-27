@@ -4,6 +4,26 @@ describe Chemotion::ReactionAPI do
   context 'authorized user logged in' do
     let(:user) { create(:user) }
 
+    let(:new_container) {{
+      "name" => "new",
+      "attachments" => [],
+      "is_deleted" => false,
+      "is_new" => true,
+      "description" => "",
+      "container_type" => "root",
+      "extended_metadata" => { "report" => true },
+      "children" => [{
+        "name" => "new",
+        "attachments" => [],
+        "is_deleted" => false,
+        "is_new" => true,
+        "description" => "",
+        "container_type" => "analyses",
+        "extended_metadata" => { "report" => true },
+        "children" => []
+      }],
+    }}
+
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
     end
@@ -27,12 +47,18 @@ describe Chemotion::ReactionAPI do
           id: r2.id,
           name: r2.name,
           type: 'reaction',
-          collection_labels: [{
-            "name" => 'C1', "is_shared" => false,
-            "id" => c1.id, "user_id" => user.id,
-            "shared_by_id" => c1.shared_by_id,
-            "is_synchronized" => c1.is_synchronized
-          }]
+          tag: include(
+            "taggable_id" => r2.id,
+            "taggable_type" => "Reaction",
+            "taggable_data" => include(
+              "collection_labels" => [{
+                "name" => 'C1', "is_shared" => false,
+                "id" => c1.id, "user_id" => user.id,
+                "shared_by_id" => c1.shared_by_id,
+                "is_synchronized" => c1.is_synchronized
+              }]
+            )
+          )
         )
       end
     end
@@ -176,11 +202,24 @@ describe Chemotion::ReactionAPI do
     describe 'PUT /api/v1/reactions', focus: true do
 
       let(:collection_1) { Collection.create!(label: 'Collection #1', user: user) }
-      let(:sample_1) {create(:sample,name:'Sample 1')}#{ Sample.create!(name: 'Sample 1') }
-      let(:sample_2) {create(:sample,name:'Sample 2')}#{ Sample.create!(name: 'Sample 2') }
-      let(:sample_3) {create(:sample,name:'Sample 3')}#{ Sample.create!(name: 'Sample 3') }
-      let(:sample_4) {create(:sample,name:'Sample 4')}#{ Sample.create!(name: 'Sample 4') }
-      let(:reaction_1) { create(:reaction,name:'r1')}#{Reaction.create(name: 'r1') }
+      let(:sample_1) {create(:sample, name:'Sample 1')}
+      let(:sample_2) {create(:sample, name:'Sample 2')}
+      let(:sample_3) {create(:sample, name:'Sample 3')}
+      let(:sample_4) {create(:sample, name:'Sample 4')}
+
+      let(:reaction_1) {create(:reaction, name:'r1')}
+      let (:reaction_container) {{
+        "name" => "new",
+        "attachments" => [],
+        "is_deleted" => false,
+        "is_new" => false,
+        "containable_type" => "Reaction",
+        "containable_id" => reaction_1.id,
+        "description" => "",
+        "container_type" => "root",
+        "extended_metadata" => {},
+        "children" => [],
+      }}
 
       before do
         CollectionsReaction.create(reaction_id: reaction_1.id, collection_id: collection_1.id)
@@ -191,42 +230,41 @@ describe Chemotion::ReactionAPI do
       end
 
       context 'updating and reassigning existing materials' do
-        let(:params) {
-          {
-            "id" => reaction_1.id,
-            "name" => "new name",
-            "materials" => {
-              "starting_materials" => [
-                  {
-                                "id" => sample_1.id,
-                       "target_amount_unit" => "mg",
-                      "target_amount_value" => 76.09596,
-                        "equivalent" => 1,
-                         "reference" => true,
-                            "is_new" => false
-                  },
-                  {
-                                "id" => sample_2.id,
-                       "target_amount_unit" => "mg",
-                      "target_amount_value" => 99.08404,
-                        "equivalent" => 5.5,
-                         "reference" => false,
-                            "is_new" => false
-                  }
-              ],
+        let(:params) {{
+          "id" => reaction_1.id,
+          "name" => "new name",
+          "container" => reaction_container,
+          "materials" => {
+            "starting_materials" => [
+              {
+                "id" => sample_1.id,
+                "target_amount_unit" => "mg",
+                "target_amount_value" => 76.09596,
+                "equivalent" => 1,
+                "reference" => true,
+                "is_new" => false
+              },
+              {
+                "id" => sample_2.id,
+                "target_amount_unit" => "mg",
+                "target_amount_value" => 99.08404,
+                "equivalent" => 5.5,
+                "reference" => false,
+                "is_new" => false
+              }
+            ],
             "products" => [
-                  {
-                                "id" => sample_3.id,
-                       "target_amount_unit" => "mg",
-                      "target_amount_value" => 99.08404,
-                        "equivalent" => 5.5,
-                         "reference" => false,
-                            "is_new" => false
-                  }
-              ]
-            }
+              {
+                "id" => sample_3.id,
+                "target_amount_unit" => "mg",
+                "target_amount_value" => 99.08404,
+                "equivalent" => 5.5,
+                "reference" => false,
+                "is_new" => false
+              }
+            ]
           }
-        }
+        }}
 
         before do
           put "/api/v1/reactions/#{reaction_1.id}", params
@@ -282,6 +320,7 @@ describe Chemotion::ReactionAPI do
           {
             "id" => reaction_1.id,
             "name" => "new name",
+            "container" => new_container,
             "materials" => {
               "starting_materials" => [
                 {
@@ -298,7 +337,8 @@ describe Chemotion::ReactionAPI do
                   "amount_value" => 99.08404,
                   "equivalent" => 5.5,
                   "reference" => false,
-                  "is_new" => false
+                  "is_new" => false,
+                  "container" => new_container
                 }
               ],
               "products" => [
@@ -311,6 +351,7 @@ describe Chemotion::ReactionAPI do
                 "equivalent" => 1,
                 "is_new" => true,
                 "is_split" => true,
+                "container" => new_container
               ]
             }
           }
@@ -348,38 +389,43 @@ describe Chemotion::ReactionAPI do
 
     describe 'POST /api/v1/reactions', focus: true do
       let(:collection_1) { Collection.create!(label: 'Collection #1', user: user) }
-      let(:sample_1) {create(:sample,name:'Sample 1')}#{ Sample.create!(name: 'Sample 1') }
+      let(:sample_1) {
+        create(:sample, name:'Sample 1', container: FactoryGirl.create(:container))
+      }
 
       context 'creating new materials' do
         let(:params) {
           {
             "name" => "r001",
             "collection_id" => collection_1.id,
+            "container" => new_container,
             "materials" => {
               "products" => [
-                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
-                       "name" => "New Subsample 1",
+                "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
+                "name" => "New Subsample 1",
                 "target_amount_unit" => "mg",
-               "target_amount_value" => 76.09596,
-                  "parent_id" => sample_1.id,
-                  "reference" => true,
-                 "equivalent" => 1,
-                     "is_new" => true,
-                   "is_split" => true,
-                   "molecule" => {molfile: ""}
+                "target_amount_value" => 76.09596,
+                "parent_id" => sample_1.id,
+                "reference" => true,
+                "equivalent" => 1,
+                "is_new" => true,
+                "is_split" => true,
+                "molecule" => {molfile: ""},
+                "container" => new_container,
               ],
               "reactants" => [
-                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336",
-                       "name" => "Copied Sample",
-                    "solvent" => "solvent1",
+                "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336",
+                "name" => "Copied Sample",
+                "solvent" => "solvent1",
                 "target_amount_unit" => "mg",
-               "target_amount_value" => 86.09596,
-                  "parent_id" => sample_1.id,
-                  "reference" => false,
-                 "equivalent" => 2,
-                     "is_new" => true,
-                   "is_split" => false,
-                   "molecule" => {molfile: ""}
+                "target_amount_value" => 86.09596,
+                "parent_id" => sample_1.id,
+                "reference" => false,
+                "equivalent" => 2,
+                "is_new" => true,
+                "is_split" => false,
+                "molecule" => {molfile: ""},
+                "container" => new_container,
               ]
             }
           }
@@ -392,7 +438,6 @@ describe Chemotion::ReactionAPI do
         let(:r) { Reaction.find_by(name: 'r001') }
 
         it 'should create subsamples' do
-
           subsample = r.products.last
 
           expect(subsample.parent).to eq(sample_1)
@@ -434,7 +479,53 @@ describe Chemotion::ReactionAPI do
 
       end
 
-    end
+      context 'creating a copied reaction' do
+        let! (:new_container) {{
+          "name" => "new",
+          "attachments" => [],
+          "is_deleted" => false,
+          "is_new" => false,
+          "containable_type" => "Reaction",
+          "containable_id" => 1,
+          "description" => "",
+          "container_type" => "root",
+          "extended_metadata" => {},
+          "children" => [],
+        }}
 
+        let(:params) {
+          {
+            "name" => " Copy",
+            "collection_id" => collection_1.id,
+            "container" => new_container,
+            "materials" => {
+              "products" => [
+                         "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
+                       "name" => "JHX-1-A",
+                "target_amount_unit" => "mg",
+               "target_amount_value" => 76.09596,
+                  "reference" => true,
+                 "equivalent" => 1,
+                     "is_new" => true,
+                   "is_split" => true,
+                   "molecule" => {molfile: ""},
+                  "container" => new_container
+              ]
+            }
+          }
+        }
+
+        before do
+          post "/api/v1/reactions", params
+        end
+
+        let(:r) { Reaction.last }
+
+        it 'create products with name realted to teh reaction short_label' do
+          product = r.products.first
+          expect(product.name).to include(r.short_label)
+        end
+      end
+    end
   end
 end

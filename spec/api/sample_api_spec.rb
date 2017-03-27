@@ -118,7 +118,14 @@ describe Chemotion::SampleAPI do
             impurities: '',
             location: '',
             molfile: '',
-            is_top_secret: false
+            is_top_secret: false,
+            container: {
+              attachments: [],
+              children: [],
+              is_new: true,
+              is_deleted: false,
+              name: 'new'
+            }
           }
         }
 
@@ -203,13 +210,19 @@ describe Chemotion::SampleAPI do
           id: s.id,
           name: s.name,
           type: 'sample',
-          #collection_labels: [{"name" => 'C1', "is_shared" => false, "id"=>c.id}]
+          tag: include(
+            "taggable_data" => include(
+              "collection_labels" => include({
+                "name" => 'C1',
+                "is_shared" => false,
+                "id"=>c.id,
+                "user_id" => user.id,
+                "shared_by_id" => c.shared_by_id,
+                "is_synchronized" => c.is_synchronized
+              })
+            )
+          )
         )
-        expect(first_sample["collection_labels"]).to include({
-          "name" => 'C1', "is_shared" => false, "id"=>c.id,
-          "user_id" => user.id, "shared_by_id" => c.shared_by_id,
-          "is_synchronized" => c.is_synchronized
-        })
       end
     end
 
@@ -220,6 +233,7 @@ describe Chemotion::SampleAPI do
             name: 'test',
             target_amount_value: 0,
             target_amount_unit: 'g',
+            external_label: 'test extlabel',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
@@ -228,9 +242,15 @@ describe Chemotion::SampleAPI do
             density: 0.5,
             boiling_point: 100,
             melting_point: 200,
-          #  molecule: FactoryGirl.create(:molecule),
-            molfile: '',
-            is_top_secret: false
+            molfile: File.read(Rails.root + "spec/fixtures/test_2.mol"),
+            is_top_secret: false,
+            container: {
+              attachments: [],
+              children: [],
+              is_new: true,
+              is_deleted: false,
+              name: 'new'
+            }
           }
         }
 
@@ -239,6 +259,10 @@ describe Chemotion::SampleAPI do
         it 'should be able to create a new sample' do
           s = Sample.find_by(name: 'test')
           expect(s).to_not be_nil
+
+          #TODO Correct?
+          params.delete(:container)
+          #end
 
           params.each do |k, v|
             expect(s.attributes.symbolize_keys[k]).to eq(v)

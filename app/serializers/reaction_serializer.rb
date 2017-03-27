@@ -1,6 +1,4 @@
 class ReactionSerializer < ActiveModel::Serializer
-  include Labeled
-
   attributes *DetailLevels::Reaction.new.base_attributes
 
   has_many :starting_materials, serializer: MaterialSerializer
@@ -9,6 +7,9 @@ class ReactionSerializer < ActiveModel::Serializer
   has_many :products, serializer: MaterialSerializer
 
   has_many :literatures
+
+  has_one :container
+  has_one :tag
 
   def starting_materials
     MaterialDecorator.new(object.reactions_starting_material_samples).decorated
@@ -32,49 +33,6 @@ class ReactionSerializer < ActiveModel::Serializer
 
   def type
     'reaction'
-  end
-
-  def analysis_kinds
-    products = object.products
-    result_labels = {confirmed: {}, unconfirmed: {}, other: {}, count:{confirmed: 0, unconfirmed:0, other: 0}}
-    products.each do |product|
-      analyses = product.analyses
-      analyses.inject(result_labels) { |result, analysis|
-        if analysis["status"] == "Confirmed"
-          if result[:confirmed][analysis["kind"]] then
-            result[:confirmed][analysis["kind"]][:count] += 1
-          else
-            result[:confirmed][analysis["kind"]] = {
-              label: analysis["kind"],
-              count: 1
-            }
-          end
-          result[:count][:confirmed] +=1
-        elsif analysis["status"] == "Unconfirmed"
-          if result[:unconfirmed][analysis["kind"]] then
-            result[:unconfirmed][analysis["kind"]][:count] += 1
-          else
-            result[:unconfirmed][analysis["kind"]] = {
-              label: analysis["kind"],
-              count: 1
-            }
-          end
-          result[:count][:unconfirmed] +=1
-        else
-          if result[:other][analysis["kind"]] then
-            result[:other][analysis["kind"]][:count] += 1
-          else
-            result[:other][analysis["kind"]] = {
-              label: analysis["kind"],
-              count: 1
-            }
-          end
-          result[:count][:other] +=1
-        end
-        result
-      }
-    end
-    result_labels
   end
 
   class Level0 < ActiveModel::Serializer

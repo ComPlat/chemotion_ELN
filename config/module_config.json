@@ -1,0 +1,56 @@
+{
+  "CollectionTree": {
+     "div": {}
+  },
+  "ElementsTableEntries": {
+    "TdCont": {}
+  },
+  "ElementsTableSampleEntries": {
+    "MolHeadCont": {}
+  },
+  "Home": {
+    "Home": {
+
+    }
+  },
+  "ReactionDetails": {
+    "Tabs": {
+      "prototype": {
+        "content": "<div/>",
+        "title":   "<div/>",
+        "on":      "()=>true"
+      }
+    }
+  },
+  "SampleDetails": {
+    "Tabs": {
+      "prototype": {
+        "content": "<div/>",
+        "title":   "<div/>",
+        "on":      "()=>true"
+      }
+    },
+    "Labels" :{
+      "prototype": {
+        "content": "<div/>",
+        "on":      "()=>true"
+      }
+    }
+  },
+
+  "CollectionStore": {
+    "state": {},
+    "listeners": {},
+    "handlers": {}
+  },
+
+  "ElementStore": {
+    "state": {},
+    "listeners": {},
+    "handlers": {}
+  },
+
+  "routes": {
+    "routes": {}
+  }
+}

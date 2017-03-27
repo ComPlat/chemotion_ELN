@@ -5,18 +5,35 @@ Object.assign = require('object-assign')
 
 describe('ReportActions', () => {
 
-  describe('updateSettings', () => {
-    it('should return the Setting', () => {
-      const payload = {text: "formula", checked: true}
-      const actual = ReportActions.updateSettings(payload)
+  describe('updateSplSettings', () => {
+    it('should return the splSetting', () => {
+      const payload = {text: "diagram", checked: true}
+      const actual = ReportActions.updateSplSettings(payload)
       const expected = payload
       expect(actual).toEqual(expected)
     })
   })
 
-  describe('toggleSettingsCheckAll', () => {
+  describe('updateRxnSettings', () => {
+    it('should return the rxnSetting', () => {
+      const payload = {text: "diagram", checked: true}
+      const actual = ReportActions.updateRxnSettings(payload)
+      const expected = payload
+      expect(actual).toEqual(expected)
+    })
+  })
+
+  describe('toggleRxnSettingsCheckAll', () => {
     it('should return null', () => {
-      const actual = ReportActions.toggleSettingsCheckAll()
+      const actual = ReportActions.toggleRxnSettingsCheckAll()
+      const expected = null
+      expect(actual).toEqual(expected)
+    })
+  })
+
+  describe('toggleSplSettingsCheckAll', () => {
+    it('should return null', () => {
+      const actual = ReportActions.toggleSplSettingsCheckAll()
       const expected = null
       expect(actual).toEqual(expected)
     })

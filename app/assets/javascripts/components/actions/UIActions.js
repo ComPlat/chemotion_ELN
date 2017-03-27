@@ -22,10 +22,6 @@ class UIActions {
     return null
   }
 
-  selectTab(tab) {
-    return  tab;
-  }
-
   selectSampleTab(tab) {
     return tab;
   }
@@ -96,6 +92,13 @@ class UIActions {
 
   changeNumberOfResultsShown(value) {
     return  value;
+  }
+
+  updateModalProps(params){
+    return params
+  }
+  hideModal(){
+    return null
   }
 }
 

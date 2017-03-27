@@ -15,12 +15,12 @@ import UIActions from './actions/UIActions';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
+import PubchemLabels from './PubchemLabels';
 import ElementReactionLabels from './ElementReactionLabels';
-import SampleDetailsAnalyses from './SampleDetailsAnalyses';
+import SampleDetailsContainers from './SampleDetailsContainers';
 
 import XLabels from "./extra/SampleDetailsXLabels";
-import XTab from "./extra/SampleDetailsXTab";
-import XTabName from "./extra/SampleDetailsXTabName";
+import XTabs from "./extra/SampleDetailsXTabs";
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 
@@ -366,6 +366,7 @@ export default class SampleDetails extends React.Component {
           <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
           <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
           <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
+          <PubchemLabels element={sample} />
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
         {this.initiateAnalysisButton(sample)}
@@ -511,7 +512,9 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem className="ea-section">
           <Row>
             <Col md={6}>
-              <ElementalCompositionGroup sample={sample}/>
+              <ElementalCompositionGroup
+                handleSampleChanged={(s) => this.handleSampleChanged(s)}
+                sample={sample}/>
             </Col>
           </Row>
         </ListGroupItem>
@@ -555,13 +558,13 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  sampleAnalysesTab(ind){
+  sampleContainerTab(ind){
     let sample = this.state.sample || {}
     return(
       <Tab eventKey={ind} title={'Analyses'}
-        key={'Analyses' + sample.id.toString()}>
+        key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
-          <SampleDetailsAnalyses
+          <SampleDetailsContainers
             sample={sample}
             parent={this}
             />
@@ -595,10 +598,10 @@ export default class SampleDetails extends React.Component {
   extraTab(ind){
     let sample = this.state.sample || {}
     let num = ind - 3 ;
-    let NoName =  XTab["Tab"+num];
-    let TabName = XTabName["TabName"+num];
+    let NoName =  XTabs["content"+num];
+    let Title = XTabs["title"+num];
     return(
-       <Tab eventKey={ind} key={ind} title={TabName} >
+       <Tab eventKey={ind} key={ind} title={Title} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  sample={sample}/>
          </ListGroupItem>
@@ -607,8 +610,8 @@ export default class SampleDetails extends React.Component {
   }
   extraLabels(){
     let labels = [];
-    for (let j=0;j < XLabels.LabelsCount;j++){
-      labels.push(XLabels["Labels"+j])
+    for (let j=0;j < XLabels.count;j++){
+      labels.push(XLabels["content"+j])
     }
     return labels;
   }
@@ -677,11 +680,13 @@ export default class SampleDetails extends React.Component {
     let sample = this.state.sample || {}
     let tabContents = [
                        (i)=>(this.samplePropertiesTab(i)),
-                       (i)=>(this.sampleAnalysesTab(i)),
+                       (i)=>(this.sampleContainerTab(i)),
                        (i)=>(this.sampleImportReadoutTab(i))
                       ];
-    for (let j=0;j < XTab.TabCount;j++){
-      tabContents.push((i)=>this.extraTab(i))
+    for (let j=0;j < XTabs.count;j++){
+      if (XTabs['on'+j](sample)){
+        tabContents.push((i)=>this.extraTab(i))
+      }
     }
 
     return (

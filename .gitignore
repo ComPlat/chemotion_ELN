@@ -20,7 +20,9 @@
 .coveralls.yml
 
 .env
+/config/mailcollector.yml
 /config/database.yml
+/config/storage.yml
 /node_modules
 
 /public/images/molecules/*
@@ -41,11 +43,21 @@
 /public/images/templates/*
 !/public/images/templates/.keep
 
+/public/images/research_plans/*
+!/public/images/research_plans/.keep
+
+/public/images/*
+
 /uploads/attachments/*
 /uploads/thumbnails
 !/public/attachments/.keep
 
+/public/docx/*
+!/public/docx/.keep
+
 /coverage/
+
+/uploadNew/
 
 # Temp files
 /spec/tmp/*
@@ -66,3 +78,6 @@ backup/weekly_backup
 
 #mc
 .DS_Store
+
+# vim tags
+tags

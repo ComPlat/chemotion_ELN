@@ -1,6 +1,7 @@
 import 'whatwg-fetch';
 import Screen from '../models/Screen';
 import UIStore from '../stores/UIStore'
+import AttachmentFetcher from './AttachmentFetcher'
 
 export default class ScreensFetcher {
   static fetchById(id) {
@@ -41,7 +42,9 @@ export default class ScreensFetcher {
   }
 
   static update(screen) {
-    let promise = fetch('/api/v1/screens/' + screen.id, {
+    let files = AttachmentFetcher.getFileListfrom(screen.container)
+
+    let promise = () => fetch('/api/v1/screens/' + screen.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
@@ -56,11 +59,19 @@ export default class ScreensFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    return promise;
+
+    if(files.length > 0 ){
+        return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+    }else{
+      return promise()
+    }
+
   }
 
   static create(screen) {
-    let promise = fetch('/api/v1/screens/', {
+    let files = AttachmentFetcher.getFileListfrom(screen.container)
+
+    let promise = () => fetch('/api/v1/screens/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
@@ -75,7 +86,13 @@ export default class ScreensFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-    return promise;
+
+    if(files.length > 0){
+      return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
+    }else{
+      return promise()
+    }
+
   }
 
   static deleteScreensByUIState(ui_state) {

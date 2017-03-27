@@ -25,12 +25,12 @@ set :bundle_jobs, 4 # parallel bundler
 # set :pty, true
 
 # Default value for :linked_files is []
-set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/secrets.yml', '.env')
+set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/storage.yml',  'config/secrets.yml', '.env')
 
 # Default value for linked_dirs is []
 set :linked_dirs, fetch(:linked_dirs, []).push('node_modules','log', 'tmp/pids',
-'tmp/cache', 'tmp/sockets', 'public/images', 'uploads/attachments',
-'uploads/thumbnails', 'backup/deploy_backup', 'backup/weekly_backup')
+'tmp/cache', 'tmp/sockets', 'public/images', 'public/docx', 'uploads/attachments',
+'uploads/thumbnails', 'backup/deploy_backup', 'backup/weekly_backup', 'uploadNew')
 
 set :rvm_ruby_version, (`cat .ruby-version`).strip
 
@@ -43,10 +43,23 @@ set :rvm_ruby_version, (`cat .ruby-version`).strip
 before 'deploy:migrate', 'deploy:backup'
 after 'deploy:publishing', 'deploy:restart'
 
+
+namespace :git do
+  task :update_repo_url do
+    on roles(:all) do
+      within repo_path do
+        execute :git, 'remote', 'set-url', 'origin', fetch(:repo_url)
+      end
+    end
+  end
+end
+
 namespace :deploy do
 
   task :backup do
-    on roles :app do
+    server_name = ""
+    on roles :app do |server|
+      server_name = server.hostname
       within "#{fetch(:deploy_to)}/current/" do
         with RAILS_ENV: fetch(:rails_env) do
           execute :bundle, 'exec backup perform -t deploy_backup -c backup/config.rb'
@@ -55,8 +68,10 @@ namespace :deploy do
     end
 
     # RSync local folder with server backups
-    backup_dir = "#{fetch(:user)}@#{fetch(:server)}:#{fetch(:deploy_to)}/shared/backup"
-    system("rsync -r #{backup_dir}/deploy_backup backup")
+    backup_dir = "#{fetch(:user)}@#{server_name}:#{fetch(:deploy_to)}/shared/backup"
+    unless system("rsync -r #{backup_dir}/deploy_backup backup")
+      raise 'Error while sync backup folder'
+    end
   end
 
   task :restart do
@@ -74,4 +89,52 @@ namespace :deploy do
     end
   end
 
+  task :restart do
+    on roles :app do
+      invoke 'delayed_job:restart'
+    end
+  end
+end
+
+namespace :delayed_job do
+  def args
+    fetch(:delayed_job_args, "")
+  end
+
+  def delayed_job_roles
+    fetch(:delayed_job_server_role, :app)
+  end
+
+  desc 'Stop the delayed_job process'
+  task :stop do
+    on roles(delayed_job_roles) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'bin/delayed_job', :stop
+        end
+      end
+    end
+  end
+
+  desc 'Start the delayed_job process'
+  task :start do
+    on roles(delayed_job_roles) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'bin/delayed_job', args, :start
+        end
+      end
+    end
+  end
+
+  desc 'Restart the delayed_job process'
+  task :restart do
+    on roles(delayed_job_roles) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute :bundle, :exec, :'bin/delayed_job', args, :restart
+        end
+      end
+    end
+  end
 end

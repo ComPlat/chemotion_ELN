@@ -3,18 +3,17 @@ import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
   OverlayTrigger, Tooltip} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
-import QuillEditor from './QuillEditor'
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
-import ReactionDetailsAnalyses from './ReactionDetailsAnalyses';
+import ReactionDetailsContainers from './ReactionDetailsContainers';
+import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
 
-import XTab from "./extra/ReactionDetailsXTab";
-import XTabName from "./extra/ReactionDetailsXTabName";
+import XTabs from "./extra/ReactionDetailsXTabs";
 
 import {setReactionByType} from './ReactionDetailsShare'
 
@@ -84,7 +83,7 @@ export default class ReactionDetails extends Component {
 
     // set corrected values before we save the reaction
     reaction.products.map(function(product) {
-      if(product.adjusted_loading && product.error_mass) {
+      if(false && product.adjusted_equivalent) { // TODO: cleanup
         product.loading = product.adjusted_loading;
         product.equivalent = product.adjusted_equivalent;
         product.setAmountAndNormalizeToGram(
@@ -156,30 +155,38 @@ export default class ReactionDetails extends Component {
     )
   }
 
-  productAnalyses() {
+  productData(reaction) {
     const {products} = this.state.reaction;
     let tabs = products.map((product, key) =>
            <Tab key={product.short_label}
                 eventKey={key}
                 title={this.productLink(product)}>
 
-             <ReactionDetailsAnalyses
+             <ReactionSampleDetailsContainers
                 sample={product}
                 />
            </Tab>
      );
     return(
-        <Tabs defaultActiveKey={0} id="product-analyses-tab">
-          {tabs}
-        </Tabs>
+      <Tabs defaultActiveKey={4.1} id="data-detail-tab">
+        <Tab eventKey={4.1} title={reaction.short_label}>
+          <ListGroupItem style={{paddingBottom: 20}}>
+            <ReactionDetailsContainers
+              reaction={reaction}
+              parent={this}
+              />
+            </ListGroupItem>
+        </Tab>
+        {tabs}
+      </Tabs>
     )
   }
 
   extraTab(ind){
     let reaction = this.state.reaction || {}
     let num = ind  ;
-    let NoName =  XTab["Tab"+num];
-    let TabName = XTabName["TabName"+num];
+    let NoName =  XTabs["content"+num];
+    let TabName = XTabs["title"+num];
     return(
        <Tab eventKey={ind+4}  title={TabName} key={"sampleDetailsTab"+ind+3} >
          <ListGroupItem style={{paddingBottom: 20}}>
@@ -279,8 +286,8 @@ export default class ReactionDetails extends Component {
 
     const submitLabel = (reaction && reaction.isNew) ? "Create" : "Save";
     let extraTabs =[];
-    for (let j=0;j < XTab.TabCount;j++){
-      extraTabs.push((i)=>this.extraTab(i))
+    for (let j=0;j < XTabs.count;j++){
+      if (XTabs['on'+j](reaction)){extraTabs.push((i)=>this.extraTab(i))}
     }
 
     return (
@@ -308,7 +315,7 @@ export default class ReactionDetails extends Component {
               />
           </Tab>
           <Tab eventKey={3} title={'Analyses'}>
-            {this.productAnalyses()}
+              {this.productData(reaction)}
           </Tab>
           {extraTabs.map((e,i)=>e(i))}
         </Tabs>

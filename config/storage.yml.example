@@ -1,0 +1,26 @@
+development:
+  :root_folder: 'uploadNew'
+  :thumbnail_folder: 'thumbnails'
+  :temp_folder: 'temp'
+  :remote_enable: true
+  :host: 'host'
+  :username: 'username'
+  :password: 'password'
+
+test:
+  :root_folder: 'uploadNew'
+  :thumbnail_folder: 'thumbnails'
+  :temp_folder: 'temp'
+  :remote_enable: true
+  :host: 'host'
+  :username: 'username'
+  :password: 'password'
+
+production:
+  :root_folder: 'uploadNew'
+  :thumbnail_folder: 'thumbnails'
+  :temp_folder: 'temp'
+  :remote_enable: true
+  :host: 'host'
+  :username: 'username'
+  :password: 'password'

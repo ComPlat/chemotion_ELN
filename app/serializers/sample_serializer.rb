@@ -1,11 +1,9 @@
 class SampleSerializer < ActiveModel::Serializer
-  include Labeled
-
   attributes *DetailLevels::Sample.new.base_attributes
 
   has_one :molecule
-  has_one :reactions_product_samples
-  has_one :reactions_starting_material_samples
+  has_one :container, :serializer => ContainerSerializer
+  has_one :tag
 
   has_many :residues
   has_many :elemental_compositions
@@ -40,41 +38,11 @@ class SampleSerializer < ActiveModel::Serializer
     object.parent.id if object.parent
   end
 
-  def analysis_kinds
-    analyses = object.analyses
-    analyses.inject({confirmed: {}, unconfirmed: {}, other: {}, count:{confirmed: 0, unconfirmed:0, other: 0}}) do |result, analysis|
-      if analysis["status"] == "Confirmed"
-        if result[:confirmed][analysis["kind"]] then
-          result[:confirmed][analysis["kind"]][:count] += 1
-        else
-          result[:confirmed][analysis["kind"]] = {
-            label: analysis["kind"],
-            count: 1
-          }
-        end
-        result[:count][:confirmed] +=1
-      elsif analysis["status"] == "Unconfirmed"
-        if result[:unconfirmed][analysis["kind"]] then
-          result[:unconfirmed][analysis["kind"]][:count] += 1
-        else
-          result[:unconfirmed][analysis["kind"]] = {
-            label: analysis["kind"],
-            count: 1
-          }
-        end
-        result[:count][:unconfirmed] +=1
-      else
-        if result[:other][analysis["kind"]] then
-          result[:other][analysis["kind"]][:count] += 1
-        else
-          result[:other][analysis["kind"]] = {
-            label: analysis["kind"],
-            count: 1
-          }
-        end
-        result[:count][:other] +=1
-      end
-      result
+  def pubchem_tag
+    unless molecule
+      nil
+    else
+      molecule.tag ? molecule.tag.taggable_data : nil
     end
   end
 

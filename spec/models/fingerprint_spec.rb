@@ -74,8 +74,8 @@ RSpec.describe Fingerprint, type: :model do
       fingerprint.num_set_bits = -1
       expect(fingerprint.valid?).to be(false)
 
-      fingerprint.num_set_bits = 0
-      expect(fingerprint.valid?).to be(false)
+      # fingerprint.num_set_bits = 0
+      # expect(fingerprint.valid?).to be(false)
     end
 
     it 'must check if fingerprint existed' do

@@ -29,9 +29,9 @@ module Chemotion
         else
           # All collection of current_user
           Screen.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
-        end.order("created_at DESC")
+        end.includes(collections: :sync_collections_users).order("created_at DESC")
 
-        paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
+        paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
       desc "Return serialized screen by id"
@@ -57,8 +57,9 @@ module Chemotion
         optional :requirements, type: String
         optional :conditions, type: String
         optional :result, type: String
-        optional :description, type: String
+        optional :description, type: Hash
         requires :wellplate_ids, type: Array
+        requires :container, type: Hash
       end
       route_param :id do
         before do
@@ -66,7 +67,11 @@ module Chemotion
         end
 
         put do
+          ContainerHelper.update_datamodel(params[:container]);
+          params.delete(:container);
+
           attributes = declared(params.except(:wellplate_ids), include_missing: false)
+
           screen = Screen.find(params[:id])
           screen.update(attributes)
           old_wellplate_ids = screen.wellplates.pluck(:id)
@@ -89,9 +94,10 @@ module Chemotion
         optional :requirements, type: String
         optional :conditions, type: String
         optional :result, type: String
-        optional :description, type: String
+        optional :description, type: Hash
         optional :collection_id, type: Integer
         requires :wellplate_ids, type: Array
+        requires :container, type: Hash
       end
       post do
         attributes = {
@@ -102,7 +108,11 @@ module Chemotion
           result: params[:result],
           description: params[:description]
         }
+
         screen = Screen.create(attributes)
+
+        screen.container = ContainerHelper.update_datamodel(params[:container])
+        screen.save!
 
         collection = Collection.find(params[:collection_id])
         CollectionsScreen.create(screen: screen, collection: collection)

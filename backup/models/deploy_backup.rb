@@ -6,8 +6,9 @@
     config = Rails.configuration.database_configuration[Rails.env]
 
     archive :attachments_backup do |archive|
-      archive.add "#{Rails.root}/public/images"
-      archive.add "#{Rails.root}/uploads/attachments"
+      archive.add File.readlink("#{Rails.root}/public/images")
+      archive.add File.readlink("#{Rails.root}/uploads/attachments")
+      archive.add File.readlink("#{Rails.root}/uploads/thumbnails")
     end
 
     database PostgreSQL do |db|

@@ -1,13 +1,15 @@
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import CollectionStore from './stores/CollectionStore';
+import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
+import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import rXr from './extra/routesXroutes';
 
 let allRoutes = (r)=>{
   let rts ={...r};
-  for (let i=0;i<rXr.routesCount;i++){rts={...rts,...rXr['routes'+i]} }
+  for (let i=0;i<rXr.count;i++){rts={...rts,...rXr['content'+i]} }
   return rts;
 }
 
@@ -24,6 +26,7 @@ const routes = {
       target: {
         show: function(e) {
           UIActions.showElements();
+          UserActions.fetchCurrentUser();
           let uiState = UIStore.getState();
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];
@@ -67,6 +70,7 @@ const routes = {
       target: {
         show: function(e) {
           UIActions.showElements();
+          UserActions.fetchCurrentUser();
           let uiState = UIStore.getState();
           let currentSearchSelection = uiState.currentSearchSelection;
           let collectionId = e.params['collectionID'];
@@ -110,7 +114,7 @@ const routes = {
       },
       '/:reportID': 'show'
     },
-    
+
     '/sample': {
       target: {
         showOrNew: function(e) {
@@ -187,7 +191,6 @@ const routes = {
       },
       '/:screenID': 'showOrNew'
     },
-
     '/devicesAnalysis': {
       target: {
         create: function(e) {
@@ -215,6 +218,19 @@ const routes = {
       '/management': 'showDeviceManagement',
       '/:deviceId': 'show',
     },
+    '/research_plan': {
+      target: {
+        showOrNew(e) {
+          const {researchPlanID, collectionID} = e.params;
+          if (researchPlanID == 'new') {
+            ElementActions.generateEmptyResearchPlan(collectionID);
+          } else {
+            ElementActions.fetchResearchPlanById(researchPlanID);
+          }
+        }
+      },
+      '/:researchPlanID': 'showOrNew'
+    }
 }
 
 export default function() {

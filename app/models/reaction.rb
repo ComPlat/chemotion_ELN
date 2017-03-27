@@ -4,14 +4,17 @@ class Reaction < ActiveRecord::Base
   include PgSearch
   include Collectable
   include ElementCodes
+  include Taggable
 
   serialize :temperature, Hash
   serialize :description, Hash
 
   multisearchable against: :name
+  multisearchable against: :short_label
 
   # search scopes for exact matching
   pg_search_scope :search_by_reaction_name, against: :name
+  pg_search_scope :search_by_reaction_short_label, against: :short_label
 
   pg_search_scope :search_by_sample_name, associated_against: {
     starting_materials: :name,
@@ -56,6 +59,7 @@ class Reaction < ActiveRecord::Base
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
+  scope :by_short_label, ->(query) { where('short_label ILIKE ?', "%#{query}%") }
   scope :by_material_ids, ->(ids) { joins(:starting_materials).where('samples.id IN (?)', ids) }
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
@@ -94,6 +98,8 @@ class Reaction < ActiveRecord::Base
 
   after_create :update_counter
 
+  has_one :container, :as => :containable
+
   def self.get_associated_samples(reaction_ids)
     ( ReactionsProductSample.get_samples(reaction_ids) +
       ReactionsStartingMaterialSample.get_samples(reaction_ids) +
@@ -127,16 +133,12 @@ class Reaction < ActiveRecord::Base
     minTemp = (arrayData.min_by { |x| x["value"] })["value"]
 
     return ""  if (minTemp == nil || maxTemp == nil)
-
-    return minTemp
     return minTemp + " ~ " + maxTemp
   end
 
   def temperature_display_with_unit
     tp = temperature_display
-    if (tp =~ /^[\-|\d]\d*\.{0,1}\d{0,2}$/).present?
-      tp + " " + temperature["valueUnit"]
-    end
+    tp.length != 0 ? tp + " " + temperature["valueUnit"] : ""
   end
 
   def description_contents
