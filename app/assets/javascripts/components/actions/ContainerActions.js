@@ -14,7 +14,12 @@ class ContainerActions{
   }
 
   updateTree(tree){
-    return tree;
+    return (dispatch) => { ContainerTreeFetcher.updateTree(tree)
+      .then((result) => {
+        dispatch(result.tree);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
   }
 }
 
