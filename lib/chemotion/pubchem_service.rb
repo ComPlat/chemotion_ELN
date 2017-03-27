@@ -84,4 +84,7 @@ module Chemotion::PubchemService
     PubChem.get_molfile_by_smiles(smiles)
   end
 
+  def self.xref_from_inchikey inchikey
+    PubChem.get_xref_by_inchikey(inchikey)
+  end
 end

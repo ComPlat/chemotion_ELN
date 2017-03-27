@@ -230,6 +230,7 @@ module Chemotion
         optional :melting_point, type: Float, desc: "Sample melting point"
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        optional :xref, type: Hash
         requires :container, type: Hash
       end
       route_param :id do
@@ -238,7 +239,6 @@ module Chemotion
         end
 
         put do
-
           attributes = declared(params, include_missing: false)
 
           ContainerHelper.update_datamodel(attributes[:container]);
@@ -290,6 +290,7 @@ module Chemotion
         optional :melting_point, type: Float, desc: "Sample melting point"
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
+        optional :xref, type: Hash
         requires :container, type: Hash
       end
       post do
@@ -315,7 +316,8 @@ module Chemotion
           melting_point: params[:melting_point],
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
-          created_by: current_user.id
+          created_by: current_user.id,
+          xref: params[:xref]
         }
 
         # otherwise ActiveRecord::UnknownAttributeError appears
