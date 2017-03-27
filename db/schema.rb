@@ -11,12 +11,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170215133510) do
+ActiveRecord::Schema.define(version: 20170327091111) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
 
   create_table "attachments", force: :cascade do |t|
     t.integer  "container_id"
@@ -190,6 +190,31 @@ ActiveRecord::Schema.define(version: 20170215133510) do
     t.time     "deleted_at"
   end
 
+  create_table "ketcherails_atom_abbreviations", force: :cascade do |t|
+    t.integer  "moderated_by"
+    t.integer  "suggested_by"
+    t.string   "name",                          null: false
+    t.text     "molfile",                       null: false
+    t.integer  "aid",               default: 1, null: false
+    t.integer  "bid",               default: 1, null: false
+    t.string   "icon_path"
+    t.string   "sprite_class"
+    t.string   "status"
+    t.text     "notes"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
+    t.string   "icon_file_name"
+    t.string   "icon_content_type"
+    t.integer  "icon_file_size"
+    t.datetime "icon_updated_at"
+  end
+
+  add_index "ketcherails_atom_abbreviations", ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by", using: :btree
+  add_index "ketcherails_atom_abbreviations", ["name"], name: "index_ketcherails_atom_abbreviations_on_name", using: :btree
+  add_index "ketcherails_atom_abbreviations", ["suggested_by"], name: "index_ketcherails_atom_abbreviations_on_suggested_by", using: :btree
+
   create_table "ketcherails_common_templates", force: :cascade do |t|
     t.integer  "moderated_by"
     t.integer  "suggested_by"
@@ -267,23 +292,11 @@ ActiveRecord::Schema.define(version: 20170215133510) do
     t.boolean  "is_partial",             default: false, null: false
     t.float    "exact_molecular_weight"
     t.string   "cano_smiles"
+    t.text     "cas"
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
-
-  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
-    t.integer  "molecule_id"
-    t.text     "path_1h"
-    t.text     "path_13c"
-    t.text     "source"
-    t.datetime "deleted_at"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
-  end
-
-  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
-  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
 
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
@@ -298,10 +311,10 @@ ActiveRecord::Schema.define(version: 20170215133510) do
   create_table "profiles", force: :cascade do |t|
     t.boolean  "show_external_name", default: false
     t.integer  "user_id",                            null: false
-    t.jsonb    "data"
     t.datetime "deleted_at"
     t.datetime "created_at",                         null: false
     t.datetime "updated_at",                         null: false
+    t.jsonb    "data"
   end
 
   add_index "profiles", ["deleted_at"], name: "index_profiles_on_deleted_at", using: :btree
@@ -462,34 +475,13 @@ ActiveRecord::Schema.define(version: 20170215133510) do
     t.float    "melting_point"
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
+    t.jsonb    "xref",                default: {}
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
   add_index "samples", ["identifier"], name: "index_samples_on_identifier", using: :btree
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
-
-  create_table "scifinding_credentials", force: :cascade do |t|
-    t.string   "username"
-    t.string   "encrypted_password"
-    t.string   "encrypted_current_token"
-    t.string   "encrypted_refreshed_token"
-    t.datetime "token_expires_at"
-    t.datetime "token_requested_at"
-    t.datetime "created_at",                   null: false
-    t.datetime "updated_at",                   null: false
-    t.integer  "user_id"
-    t.string   "encrypted_password_iv"
-    t.string   "encrypted_current_token_iv"
-    t.string   "encrypted_refreshed_token_iv"
-  end
-
-  create_table "scifinding_tags", force: :cascade do |t|
-    t.integer  "molecule_id"
-    t.integer  "count"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
-  end
 
   create_table "screens", force: :cascade do |t|
     t.string   "description"
@@ -551,8 +543,8 @@ ActiveRecord::Schema.define(version: 20170215133510) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "type",                             default: "Person"
+    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
@@ -561,6 +553,7 @@ ActiveRecord::Schema.define(version: 20170215133510) do
     t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
   end
 
+  add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
   add_index "users", ["deleted_at"], name: "index_users_on_deleted_at", using: :btree
   add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
