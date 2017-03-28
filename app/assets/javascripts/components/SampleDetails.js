@@ -396,8 +396,8 @@ export default class SampleDetails extends React.Component {
         key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsContainers
-            sample={sample}
-            parent={this}
+            sample={sample} setState={(sample) => {this.setState(sample)}}
+            handleSampleChanged={this.handleSampleChanged}
             />
         </ListGroupItem>
       </Tab>

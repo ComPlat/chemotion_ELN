@@ -6,10 +6,12 @@ export default class ReactionSampleDetailsContainers extends Component {
     const {sample} = this.props;
 
     return (
-     <SampleDetailsContainers
-       sample={sample}
-       readOnly={true}
-       />
+      <div style={{marginTop: 10}}>
+        <SampleDetailsContainers sample={sample}
+          setState={this.props.setState}
+          handleSampleChanged={this.props.handleSampleChanged}
+        />
+      </div>
     );
   }
 }
