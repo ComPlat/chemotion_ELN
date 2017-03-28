@@ -31,7 +31,7 @@ const abstractConfigs = (configs) => {
       switch(obj.text) {
         case 'Page Break':
           return { text: "page_break", checked: obj.checked };
-        case 'Show all material in diagrams (unchecked to show Products only)':
+        case 'Show all chemicals in schemes (unchecked to show products only)':
           if(obj.checked) {
             return { text: "whole_diagram", checked: obj.checked };
           } else {
