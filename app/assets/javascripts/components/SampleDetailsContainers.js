@@ -22,7 +22,13 @@ export default class SampleDetailsContainers extends Component {
   handleChange(container) {
     const {sample} = this.state
 
-    this.props.parent.handleSampleChanged(sample)
+    let analyses = sample.container.children.find((child) => { return child.container_type == "analyses"})
+    let analysis = analyses.children.find((child) => {
+      return child.container_type == "analysis" && child.id == container.id
+    })
+    if (analysis) analysis = container;
+
+    this.props.handleSampleChanged(sample)
   }
 
   handleAdd() {
@@ -36,21 +42,21 @@ export default class SampleDetailsContainers extends Component {
 
     this.handleAccordionOpen(newKey);
 
-    this.props.parent.setState({sample: sample})
+    this.props.setState({sample: sample})
   }
 
   handleRemove(container) {
     let {sample} = this.state;
     container.is_deleted = true;
 
-    this.props.parent.setState({sample: sample})
+    this.props.setState({sample: sample})
   }
 
   handleUndo(container) {
     let {sample} = this.state;
     container.is_deleted = false;
 
-    this.props.parent.setState({sample: sample})
+    this.props.setState({sample: sample})
   }
 
   handleAccordionOpen(newKey) {

@@ -307,6 +307,10 @@ module ReactionUpdator
               #add new data container
               #subsample.container = ContainerHelper.create_root_container
 
+              if sample.container
+                subsample.container = ContainerHelper.update_datamodel(sample.container)
+              end
+
               subsample.save!
               subsample.reload
               included_sample_ids << subsample.id
@@ -365,6 +369,10 @@ module ReactionUpdator
               r.assign_attributes sample.residues_attributes[0]
             end
 
+            if sample.container
+              existing_sample.container = ContainerHelper.update_datamodel(sample.container)
+            end
+
             existing_sample.save!
             included_sample_ids << existing_sample.id
 
@@ -392,6 +400,7 @@ module ReactionUpdator
               )
             end
           end
+
 
         end
       end

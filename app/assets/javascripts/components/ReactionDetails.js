@@ -22,10 +22,12 @@ import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
+
     const {reaction} = props;
     this.state = {
       reaction,
     };
+
     if(reaction.hasMaterials()) {
       this.updateReactionSvg();
     }
@@ -34,6 +36,7 @@ export default class ReactionDetails extends Component {
   componentWillReceiveProps(nextProps) {
     const {reaction} = this.state;
     const nextReaction = nextProps.reaction;
+
     if (nextReaction.id != reaction.id ||
         nextReaction.updated_at != reaction.updated_at ||
         nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
@@ -81,25 +84,12 @@ export default class ReactionDetails extends Component {
   handleSubmit() {
     const {reaction} = this.state;
 
-    // set corrected values before we save the reaction
-    reaction.products.map(function(product) {
-      if(false && product.adjusted_equivalent) { // TODO: cleanup
-        product.loading = product.adjusted_loading;
-        product.equivalent = product.adjusted_equivalent;
-        product.setAmountAndNormalizeToGram(
-          {
-            value: product.adjusted_amount_g,
-            unit: 'g'
-        });
-
-      }
-    })
-
     if(reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
       ElementActions.updateReaction(reaction);
     }
+
     if(reaction.is_new) {
       const force = true;
       this.props.closeDetails(reaction, force);
@@ -115,7 +105,7 @@ export default class ReactionDetails extends Component {
     reaction.changed = true;
     if(options.schemaChanged) {
       this.setState({ reaction }, () => this.updateReactionSvg());
-    } else{
+    } else {
       this.setState({ reaction });
     }
   }
@@ -140,6 +130,15 @@ export default class ReactionDetails extends Component {
     Aviator.navigate(`${currentURI}/sample/${product.id}`);
   }
 
+  handleProductChange(product) {
+    let {reaction} = this.state
+
+    reaction.updateMaterial(product)
+    reaction.changed = true
+
+    this.setState({ reaction })
+  }
+
   productLink(product) {
     return (
       <span>
@@ -157,25 +156,24 @@ export default class ReactionDetails extends Component {
 
   productData(reaction) {
     const {products} = this.state.reaction;
-    let tabs = products.map((product, key) =>
-           <Tab key={product.short_label}
-                eventKey={key}
-                title={this.productLink(product)}>
 
-             <ReactionSampleDetailsContainers
-                sample={product}
-                />
-           </Tab>
-     );
+    let tabs = products.map((product, key) =>
+      <Tab key={product.short_label} eventKey={key}
+           title={this.productLink(product)}>
+        <ReactionSampleDetailsContainers sample={product} 
+          setState={(product) => this.handleProductChange(product)}
+          handleSampleChanged={(product) => this.handleProductChange(product)} 
+        />
+      </Tab>
+    );
+
     return(
-      <Tabs defaultActiveKey={4.1} id="data-detail-tab">
+      <Tabs defaultActiveKey={4.1} id="data-detail-tab"
+            style={{marginTop: "10px"}}>
         <Tab eventKey={4.1} title={reaction.short_label}>
           <ListGroupItem style={{paddingBottom: 20}}>
-            <ReactionDetailsContainers
-              reaction={reaction}
-              parent={this}
-              />
-            </ListGroupItem>
+            <ReactionDetailsContainers reaction={reaction} parent={this} />
+          </ListGroupItem>
         </Tab>
         {tabs}
       </Tabs>
