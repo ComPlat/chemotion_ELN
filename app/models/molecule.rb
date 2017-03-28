@@ -4,6 +4,8 @@ class Molecule < ActiveRecord::Base
   include Collectable
   include Taggable
 
+  serialize :cas, Array
+
   has_many :samples
   has_many :collections, through: :samples
 
@@ -55,6 +57,8 @@ class Molecule < ActiveRecord::Base
           Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
         molecule.molfile = molfile
         molecule.assign_molecule_data babel_info, pubchem_info
+        xref = Chemotion::PubchemService.xref_from_inchikey(inchikey)
+        molecule.cas = get_cas(xref)
       end
       molecule
     end
@@ -218,5 +222,14 @@ private
   def sanitize_molfile
     index = self.molfile.lines.index { |l| l.match /(M.+END+)/ }
     self.molfile = self.molfile.lines[0..index].join if index.is_a?(Integer)
+  end
+
+  def self.get_cas xref
+    begin
+      xref_json = JSON.parse(xref)
+      xref_json["InformationList"]["Information"].first["RN"]
+    rescue
+      []
+    end
   end
 end

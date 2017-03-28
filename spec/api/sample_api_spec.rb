@@ -106,6 +106,7 @@ describe Chemotion::SampleAPI do
         let(:c3) { create(:collection, user_id: user.id, is_shared: true, permission_level: 1) }
         let(:s1) { create(:sample, name: 'old', target_amount_value: 0.1) }
         let(:s2) { create(:sample, name: 'old2', target_amount_value: 0.2) }
+        let(:cas) { 'test_cas' }
 
         let(:params) {
           {
@@ -119,6 +120,7 @@ describe Chemotion::SampleAPI do
             location: '',
             molfile: '',
             is_top_secret: false,
+            xref: { "cas" => cas },
             container: {
               attachments: [],
               children: [],
@@ -146,6 +148,7 @@ describe Chemotion::SampleAPI do
             s = Sample.find_by(name: 'updated name')
             expect(s).to_not be_nil
             expect(s.target_amount_value).to eq 0
+            expect(s.xref["cas"]).to eq cas
           end
         end
 
@@ -160,6 +163,7 @@ describe Chemotion::SampleAPI do
             s = Sample.find_by(name: 'updated name')
             expect(s).to_not be_nil
             expect(s.target_amount_value).to eq 0
+            expect(s.xref["cas"]).to eq cas
           end
         end
       end
@@ -228,6 +232,7 @@ describe Chemotion::SampleAPI do
 
     describe 'POST /api/v1/samples' do
       context 'with valid parameters' do
+        let(:cas) { 'test_cas' }
         let(:params) {
           {
             name: 'test',
@@ -244,6 +249,7 @@ describe Chemotion::SampleAPI do
             melting_point: 200,
             molfile: File.read(Rails.root + "spec/fixtures/test_2.mol"),
             is_top_secret: false,
+            xref: { "cas" => cas },
             container: {
               attachments: [],
               children: [],
