@@ -32,14 +32,26 @@ module ContainerHelper
 
   def self.get_children(container)
     container.children.map do |subcontainer|
-      if subcontainer.container_type == "analyses"
+      case subcontainer.container_type
+      when "analyses"
         {title: "Analyses",
           children: get_children(subcontainer)}
+      when "dataset"
+        titleStr = subcontainer.name + " (" + subcontainer.container_type + ")"
+        {id: subcontainer.id, title: titleStr,
+          children: get_attachments(subcontainer)}
       else
         titleStr = subcontainer.name + " (" + subcontainer.container_type + ")"
-        {title: titleStr,
+        {id: subcontainer.id, title: titleStr,
           children: get_children(subcontainer)}
       end
+    end
+  end
+
+  def self.get_attachments(container)
+    container.attachments.map do |attachment|
+      titleStr = attachment.filename + " (attachment)"
+      {id: attachment.id, title: titleStr, children: []}
     end
   end
 
@@ -49,7 +61,7 @@ module ContainerHelper
         parentid = object.id
         object.children.each do |child|
           if child.title.end_with? "(attachment)"
-            attachment = Attachment.where(:id => child.id)
+            attachment = Attachment.find_by id: child.id
             if attachment
               attachment.container_id = parentid
               attachment.save!

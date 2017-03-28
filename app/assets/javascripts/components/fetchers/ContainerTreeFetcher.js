@@ -17,7 +17,8 @@ export default class ContainerTreeFetcher {
     return promise;
   }
 
-  static updateTree(tree) {
+  static updateTree(treeData) {
+    console.log(treeData)
     let promise = fetch('/api/v1/tree/', {
       credentials: 'same-origin',
       method: 'PUT',
@@ -25,7 +26,7 @@ export default class ContainerTreeFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({tree})
+      body: JSON.stringify({treeData})
     }).then((response) => {
       return response.json()
     }).then((json) => {
