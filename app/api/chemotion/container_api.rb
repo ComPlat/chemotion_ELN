@@ -19,7 +19,7 @@ module Chemotion
         attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
         data_tree = attachments.map do |attachment|
           titleStr = attachment.filename + " (attachment)"
-          {id: attachment.id, title: titleStr}
+          {id: attachment.id, title: titleStr, children: []}
         end
         tree = [{title: 'Measurement data', children: data_tree}]
 
@@ -28,10 +28,10 @@ module Chemotion
 
       desc "Update data tree"
       params do
-        requires :tree, type: Array
+        requires :treeData, type: Array
       end
       put do
-        ContainerHelper.update_attachments(params[:tree])
+        ContainerHelper.update_attachments(params[:treeData])
       end
 
     end

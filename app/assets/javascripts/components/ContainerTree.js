@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import {Button} from 'react-bootstrap';
 import {DragDropContext} from 'react-dnd';
 import { SortableTreeWithoutDndContext as SortableTree } from 'react-sortable-tree';
 import UIStore from './stores/UIStore';
@@ -32,7 +33,7 @@ export default class ContainerTree extends Component {
     this.setState({
       treeData: state.treeData
     })
-    ContainerActions.updateTree(this.state.tree)
+
   }
 
   onChangeUI(state){
@@ -56,17 +57,26 @@ export default class ContainerTree extends Component {
     }
   }
 
+  handleSave(){
+    ContainerActions.updateTree(this.state.treeData)
+  }
+
   render() {
 
     return (
+      <div>
+        <div>
+        <Button bsStyle="warning" onClick={() => this.handleSave()}>Save</Button>
+        </div>
       <div style={{ height: 800 }}>
-        <SortableTree
+          <SortableTree
           treeData={this.state.treeData}
           onChange={treeData => this.onChangeTree({treeData})}
           canDrag={this.draggable}
           canDrop={this.droppable}
           />
+        </div>
       </div>
-        );
+      );
   }
 }
