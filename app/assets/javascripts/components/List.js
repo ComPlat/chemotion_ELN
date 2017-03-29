@@ -30,7 +30,8 @@ export default class List extends React.Component {
       totalResearchPlanElements: 0,
       visible: Immutable.List(),
       hidden: Immutable.List(),
-      currentTab: 0
+      currentTab: 0,
+      treeView: false
     }
 
     this.onChange = this.onChange.bind(this)
@@ -115,22 +116,24 @@ export default class List extends React.Component {
   }
 
   handleTabSelect(tab) {
-    if(tab == 'container_tree'){
-        this.setState({currentTab: 'container_tree'})
-    }else {
-      UserActions.selectTab(tab);
+    UserActions.selectTab(tab);
 
-      // TODO sollte in tab action handler
-      let uiState = UIStore.getState();
-      let type = this.state.visible.get(tab);
 
-      if (!uiState[type] || !uiState[type].page) return;
+    // TODO sollte in tab action handler
+    let uiState = UIStore.getState();
+    let type = this.state.visible.get(tab);
 
-      let page = uiState[type].page;
+    if (!uiState[type] || !uiState[type].page) return;
 
-      UIActions.setPagination({type: type, page: page});
-      KeyboardActions.contextChange(type);
-    }
+    let page = uiState[type].page;
+
+    UIActions.setPagination({type: type, page: page});
+    KeyboardActions.contextChange(type);
+
+  }
+
+  handleSwitch(){
+    this.setState({treeView: !this.state.treeView})
   }
 
   getArrayFromLayout(layout, isVisible) {
@@ -150,7 +153,7 @@ export default class List extends React.Component {
   }
 
   render() {
-    let {visible, hidden, currentTab} = this.state
+    let {visible, hidden, currentTab, treeView} = this.state
 
     const {overview, showReport} = this.props
     const elementState = this.state
@@ -182,17 +185,18 @@ export default class List extends React.Component {
       )
       let tabContent = (
         <Tab.Pane eventKey={i} key={value + "_tabPanel"}>
-          <ElementsTable overview={overview} showReport={showReport}
+          {treeView
+            ? <ContainerTree type={value} />
+            : <ElementsTable overview={overview} showReport={showReport}
                          type={value}/>
+          }
         </Tab.Pane>
-      )
+        )
 
       navItems.push(navItem)
       tabContents.push(tabContent)
     }
-    tabContents.push(<Tab.Pane eventKey='container_tree' key="container">
-        <ContainerTree />
-      </Tab.Pane>)
+
     return (
       <Tab.Container id="tabList" defaultActiveKey={0} activeKey={currentTab}
                      onSelect={(e) => this.handleTabSelect(e)}>
@@ -200,7 +204,11 @@ export default class List extends React.Component {
           <Col sm={12}>
             <Nav bsStyle="tabs">
               {navItems}
-              <NavItem eventKey='container_tree' key="container">Data tree</NavItem>
+              &nbsp;&nbsp;&nbsp;
+              <Button bsSize="xsmall" bsStyle="danger"
+                onClick={() => this.handleSwitch()}>
+                <i className="fa fa-exchange"></i>
+              </Button>
               &nbsp;&nbsp;&nbsp;
               <OverlayTrigger trigger="click" placement="bottom"
                               overlay={popoverLayout} rootClose
