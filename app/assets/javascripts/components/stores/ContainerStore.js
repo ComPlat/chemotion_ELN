@@ -1,4 +1,5 @@
 import alt from '../alt';
+import UIStore from './UIStore';
 
 import ContainerActions  from '../actions/ContainerActions';
 
@@ -10,12 +11,22 @@ class ContainerStore{
 
     this.bindListeners({
       handleFetchTree: ContainerActions.fetchTree,
-      handleUpdateTree: ContainerActions.updateTree
+      handleUpdateTree: ContainerActions.updateTree,
+      handleInitTree: ContainerActions.initTree,
     })
   }
 
   handleFetchTree(result){
+    this.waitFor(UIStore.dispatchToken);
     this.state.treeData = result;
+  }
+  handleInitTree(type){
+    console.log('handle tree');
+    const {currentCollection} = UIStore.getState();
+
+    this.waitFor(UIStore.dispatchToken);
+    //const {currentCollection} = UIStore.getState();
+    ContainerActions.fetchTree(currentCollection.id, type)
   }
 
   handleUpdateTree(treeData){

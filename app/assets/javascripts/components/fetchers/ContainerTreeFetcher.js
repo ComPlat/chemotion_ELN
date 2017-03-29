@@ -2,8 +2,8 @@ import 'whatwg-fetch';
 
 export default class ContainerTreeFetcher {
 
-  static fetchByCollectionId(id) {
-    let promise = fetch('/api/v1/tree/' + id + '.json', {
+  static fetchByCollectionId(id, type) {
+    let promise = fetch('/api/v1/tree/' + id + '.json?' + "type=" +type, {
       credentials: 'same-origin'
     })
     .then((response) => {

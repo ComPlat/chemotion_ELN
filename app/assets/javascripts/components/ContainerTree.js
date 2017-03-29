@@ -9,19 +9,21 @@ import ContainerActions from './actions/ContainerActions'
 export default class ContainerTree extends Component {
 
   constructor(props) {
-    super(props);
+    super(props)
+
     this.state = {
       currentCollection: null,
-      treeDate: []
+      treeData: [],
     }
+
     this.onChangeTree = this.onChangeTree.bind(this)
     this.onChangeUI = this.onChangeUI.bind(this)
   }
 
   componentDidMount() {
-    UIStore.getState()
     ContainerStore.listen(this.onChangeTree)
     UIStore.listen(this.onChangeUI)
+    ContainerActions.initTree(this.props.type)
   }
 
   componentWillUnmount() {
@@ -37,12 +39,13 @@ export default class ContainerTree extends Component {
   }
 
   onChangeUI(state){
-    this.setState({
-      currentCollection: state.currentCollection
-    })
-    if(this.state.currentCollection != null){
-      ContainerActions.fetchTree(this.state.currentCollection.id)
+    if(state.currentCollection){
+      const type = this.props.type
+      ContainerActions.fetchTree(state.currentCollection.id, type)
     }
+    this.setState({
+      currentCollection: state.currentCollection.id
+    })
   }
 
   draggable(tree_info){
@@ -62,18 +65,20 @@ export default class ContainerTree extends Component {
   }
 
   render() {
-
+    let {treeData} = this.state
     return (
       <div>
         <div>
-        <Button bsStyle="warning" onClick={() => this.handleSave()}>Save</Button>
+          <Button bsStyle="warning" onClick={() => this.handleSave()}>
+            Save
+          </Button>
         </div>
-      <div style={{ height: 800 }}>
+        <div style={{ height: 800 }}>
           <SortableTree
-          treeData={this.state.treeData}
-          onChange={treeData => this.onChangeTree({treeData})}
-          canDrag={this.draggable}
-          canDrop={this.droppable}
+            treeData={treeData}
+            onChange={treeData => this.onChangeTree({treeData})}
+            canDrag={this.draggable}
+            canDrop={this.droppable}
           />
         </div>
       </div>
