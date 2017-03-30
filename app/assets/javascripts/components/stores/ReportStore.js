@@ -19,7 +19,7 @@ class ReportStore {
                           {text: "analysis", checked: true},
                           {text: "literature", checked: true} ]
     this.configs = [ {text: "Page Break", checked: true},
-                     {text: "Show all material in diagrams (unchecked to show Products only)", checked: true} ]
+                     {text: "Show all chemicals in schemes (unchecked to show products only)", checked: true} ]
     this.checkedAllSplSettings = true
     this.checkedAllRxnSettings = true
     this.checkedAllConfigs = true

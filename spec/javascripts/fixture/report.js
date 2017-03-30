@@ -11,7 +11,7 @@ const rxnSettings = [ {text: "diagram", checked: true},
                       {text: "analysis", checked: true},
                       {text: "literature", checked: true} ]
 const configs = [ {text: "Page Break", checked: true},
-                  {text: "Show all material in diagrams (unchecked to show Products only)", checked: true} ]
+                  {text: "Show all chemicals in schemes (unchecked to show products only)", checked: true} ]
 
 const originalState = {
   splSettings: splSettings,
