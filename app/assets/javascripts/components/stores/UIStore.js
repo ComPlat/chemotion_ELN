@@ -93,30 +93,45 @@ class UIStore {
     this.state.showCollectionManagement = false;
   }
 
-  handleCheckAllElements(type) {
+  handleCheckAllElements(params) {
     this.waitFor(ElementStore.dispatchToken);
-    let {elements} = ElementStore.getState();
 
-    this.state[type].checkedAll = true;
-    this.state[type].checkedIds = Immutable.List();
-    this.state[type].uncheckedIds = Immutable.List();
+    let {type, range} = params;
+    
+    if (range == 'all') {
+      this.state[type].checkedAll = true;
+      this.state[type].checkedIds = Immutable.List();
+      this.state[type].uncheckedIds = Immutable.List();
+    } else if (range == 'current') {
+      let {elements} = ElementStore.getState();
+      let curPageIds = elements[type + "s"].elements.reduce(
+        function(a, b) { return a.concat(b); }, []
+      ).map((e) => { return e.id });
+
+      this.state[type].uncheckedIds = Immutable.List();
+      this.state[type].checkedIds = Immutable.List(curPageIds);
+    } else {
+      this.handleUncheckAllElements(params)
+    }
   }
 
   handleToggleShowPreviews() {
     this.state.showPreviews = !this.state.showPreviews;
   }
 
-  handleUncheckAllElements(type) {
+  handleUncheckAllElements(params) {
+    let {type, range} = params;
+
     this.state[type].checkedAll = false;
     this.state[type].checkedIds = Immutable.List();
     this.state[type].uncheckedIds = Immutable.List();
   }
 
   handleUncheckWholeSelection() {
-    this.handleUncheckAllElements('sample');
-    this.handleUncheckAllElements('screen');
-    this.handleUncheckAllElements('reaction');
-    this.handleUncheckAllElements('wellplate');
+    this.handleUncheckAllElements({type: 'sample', range: 'all'});
+    this.handleUncheckAllElements({type: 'screen', range: 'all'});
+    this.handleUncheckAllElements({type: 'reaction', range: 'all'});
+    this.handleUncheckAllElements({type: 'wellplate', range: 'all'});
   }
 
   handleCheckElement(element) {

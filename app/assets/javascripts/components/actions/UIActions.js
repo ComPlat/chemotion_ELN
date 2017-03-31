@@ -22,20 +22,20 @@ class UIActions {
     return  syncCollection
   }
 
-  checkAllElements(type) {
-    return  type;
+  checkAllElements(params) {
+    return  params;
   }
 
   toggleShowPreviews() {
     return  null;
   }
 
-  checkElement(element) {
-    return  element;
+  checkElement(params) {
+    return  params;
   }
 
-  uncheckAllElements(type) {
-    return  type;
+  uncheckAllElements(params) {
+    return  params;
   }
 
   uncheckWholeSelection() {
@@ -81,6 +81,7 @@ class UIActions {
   updateModalProps(params){
     return params
   }
+
   hideModal(){
     return null
   }

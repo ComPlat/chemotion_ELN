@@ -79,7 +79,7 @@ export default class ManagingActions extends React.Component {
 
   checkUIState(state){
     return (
-      state.currentCollection !== this.state.currentCollection    ||
+      state.currentCollection          !== this.state.currentCollection       ||
       state.sample.checkedAll          != this.state.sample_checkedAll        ||
       state.sample.checkedIds          != this.state.sample_checkedIds        ||
       state.sample.uncheckedIds        != this.state.sample_uncheckedIds      ||

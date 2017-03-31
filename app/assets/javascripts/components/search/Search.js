@@ -4,7 +4,6 @@ import AutoCompleteInput from './AutoCompleteInput';
 import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
         Form, FormGroup, FormControl, HelpBlock, Radio, Grid, Row, Col}
   from 'react-bootstrap';
-import Select from 'react-select'
 
 import StructureEditorModal from '../structure_editor/StructureEditorModal'
 
