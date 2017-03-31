@@ -190,6 +190,32 @@ ActiveRecord::Schema.define(version: 20170327091111) do
     t.time     "deleted_at"
   end
 
+  create_table "ketcherails_amino_acids", force: :cascade do |t|
+    t.integer  "moderated_by"
+    t.integer  "suggested_by"
+    t.string   "name",                          null: false
+    t.text     "molfile",                       null: false
+    t.integer  "aid",               default: 1, null: false
+    t.integer  "aid2",              default: 1, null: false
+    t.integer  "bid",               default: 1, null: false
+    t.string   "icon_path"
+    t.string   "sprite_class"
+    t.string   "status"
+    t.text     "notes"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
+    t.string   "icon_file_name"
+    t.string   "icon_content_type"
+    t.integer  "icon_file_size"
+    t.datetime "icon_updated_at"
+  end
+
+  add_index "ketcherails_amino_acids", ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by", using: :btree
+  add_index "ketcherails_amino_acids", ["name"], name: "index_ketcherails_amino_acids_on_name", using: :btree
+  add_index "ketcherails_amino_acids", ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by", using: :btree
+
   create_table "ketcherails_atom_abbreviations", force: :cascade do |t|
     t.integer  "moderated_by"
     t.integer  "suggested_by"
@@ -209,6 +235,7 @@ ActiveRecord::Schema.define(version: 20170327091111) do
     t.string   "icon_content_type"
     t.integer  "icon_file_size"
     t.datetime "icon_updated_at"
+    t.string   "rtl_name"
   end
 
   add_index "ketcherails_atom_abbreviations", ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by", using: :btree
