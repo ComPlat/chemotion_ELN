@@ -221,11 +221,23 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: "Selected elements from the UI"
           requires :collection_id, type: Integer, desc: "Destination collection id"
+          requires :is_sync_to_me, type: Boolean, desc: "Destination collection is_sync_to_me"
         end
         post do
           ui_state = params[:ui_state]
+          is_sync_to_me = params[:is_sync_to_me]
           collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollection].id
+
+          if is_sync_to_me
+            sync_coll_user = SyncCollectionsUser.find(collection_id)
+            accessible = sync_coll_user && sync_coll_user.user_id == current_user.id
+            writable = sync_coll_user && sync_coll_user.permission_level >= 1
+            if accessible && writable
+              collection_id = sync_coll_user.collection_id
+            end
+          end
+
           # Assign Sample
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:sample],
