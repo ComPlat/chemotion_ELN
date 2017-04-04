@@ -20,12 +20,10 @@ class ContainerStore{
     this.waitFor(UIStore.dispatchToken);
     this.state.treeData = result;
   }
-  handleInitTree(type){
-    console.log('handle tree');
-    const {currentCollection} = UIStore.getState();
 
+  handleInitTree(type){
+    const {currentCollection} = UIStore.getState();
     this.waitFor(UIStore.dispatchToken);
-    //const {currentCollection} = UIStore.getState();
     ContainerActions.fetchTree(currentCollection.id, type)
   }
 

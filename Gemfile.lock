@@ -523,6 +523,7 @@ DEPENDENCIES
   grape-active_model_serializers
   grape-kaminari
   haml-rails (~> 0.9)
+  hashdiff
   hashie-forbidden_attributes
   headless (= 2.0.0)
   httparty
