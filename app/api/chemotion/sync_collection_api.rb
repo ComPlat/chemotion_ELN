@@ -35,7 +35,7 @@ module Chemotion
 
       desc "Return all remote serialized collections"
       get :sync_remote_roots, each_serializer: SyncCollectionRemoteSerializer do
-        current_user.all_collections.remote(current_user.id).roots
+        current_user.all_collections.includes(:user).remote(current_user.id).roots
       end
 
 

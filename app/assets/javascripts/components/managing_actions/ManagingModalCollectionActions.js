@@ -138,7 +138,8 @@ export default class ManagingModalCollectionActions extends React.Component {
         excluded_ids: uiStoreState.research_plan.uncheckedIds
       },
       currentCollection: uiStoreState.currentCollection,
-      currentCollectionId: uiStoreState.currentCollection.id
+      currentCollectionId: uiStoreState.currentCollection.id,
+      currentSearchSelection: uiStoreState.currentSearchSelection
     }
 
     this.props.action({ ui_state: ui_state,

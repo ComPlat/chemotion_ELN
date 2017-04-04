@@ -223,6 +223,10 @@ class ElementStore {
 
   handleRemoveElementsCollection(params) {
     let collection_id = params.ui_state.currentCollection.id
+
+    UIActions.clearSearchSelection.defer()
+    this.waitFor(UIStore.dispatchToken)
+
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
       params.ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(collection_id);

@@ -31,6 +31,7 @@ export default class Search extends React.Component {
     let uiState = UIStore.getState()
     selection.elementType = this.state.elementType
     UIActions.setSearchSelection(selection)
+    selection.page_size = uiState.number_of_results
 
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
       uiState.currentCollection.id, 1, uiState.isSync)
@@ -48,9 +49,10 @@ export default class Search extends React.Component {
   structureSearch(molfile) {
     let uiState = UIStore.getState()
     let userState = UIStore.getState()
+
     let tanimoto = this.state.tanimotoThreshold
-    if (tanimoto <= 0 || tanimoto > 1)
-      tanimoto = 0.3
+    if (tanimoto <= 0 || tanimoto > 1) tanimoto = 0.3
+
     let selection = {
       elementType: this.state.elementType,
       molfile: molfile,
