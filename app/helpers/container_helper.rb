@@ -30,37 +30,12 @@ module ContainerHelper
     return root_con
   end
 
-  def self.get_children(container)
-    container.children.map do |subcontainer|
-      case subcontainer.container_type
-      when "analyses"
-        {title: "Analyses",
-          children: get_children(subcontainer)}
-      when "dataset"
-        titleStr = subcontainer.name + " (" + subcontainer.container_type + ")"
-        {id: subcontainer.id, title: titleStr,
-          children: get_attachments(subcontainer)}
-      else
-        titleStr = subcontainer.name + " (" + subcontainer.container_type + ")"
-        {id: subcontainer.id, title: titleStr,
-          children: get_children(subcontainer)}
-      end
-    end
-  end
-
-  def self.get_attachments(container)
-    container.attachments.map do |attachment|
-      titleStr = attachment.filename + " (attachment)"
-      {id: attachment.id, title: titleStr, children: []}
-    end
-  end
-
   def self.update_attachments(objects)
     objects.each do |object|
-      if object.title.end_with? "(dataset)"
+      if object.subtitle.end_with? "(dataset)"
         parentid = object.id
         object.children.each do |child|
-          if child.title.end_with? "(attachment)"
+          if child.subtitle.end_with? "(attachment)"
             attachment = Attachment.find_by id: child.id
             if attachment
               attachment.container_id = parentid

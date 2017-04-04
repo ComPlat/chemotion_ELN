@@ -17,8 +17,8 @@ class ContainerActions{
     return type
   }
 
-  updateTree(tree){
-    return (dispatch) => { ContainerTreeFetcher.updateTree(tree)
+  updateTree(collection_id, type, tree){
+    return (dispatch) => { ContainerTreeFetcher.updateTree(collection_id, type, tree)
       .then((result) => {
         dispatch(result.tree);
       }).catch((errorMessage) => {

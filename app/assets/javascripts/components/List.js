@@ -17,6 +17,7 @@ import UserStore from './stores/UserStore';
 import UserActions from './actions/UserActions';
 import UIActions from './actions/UIActions';
 import KeyboardActions from './actions/KeyboardActions';
+import ContainerActions from './actions/ContainerActions'
 
 export default class List extends React.Component {
   constructor(props) {
@@ -39,6 +40,8 @@ export default class List extends React.Component {
     this.initState = this.initState.bind(this)
     this.changeLayout = this.changeLayout.bind(this)
     this.handleTabSelect = this.handleTabSelect.bind(this)
+    this.handleSwitch = this.handleSwitch.bind(this)
+
   }
 
   _checkedElements(type) {
@@ -61,6 +64,7 @@ export default class List extends React.Component {
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     UserStore.unlisten(this.onChangeUser);
+
   }
 
   initState(){
@@ -118,7 +122,6 @@ export default class List extends React.Component {
   handleTabSelect(tab) {
     UserActions.selectTab(tab);
 
-
     // TODO sollte in tab action handler
     let uiState = UIStore.getState();
     let type = this.state.visible.get(tab);
@@ -127,13 +130,18 @@ export default class List extends React.Component {
 
     let page = uiState[type].page;
 
-    UIActions.setPagination({type: type, page: page});
-    KeyboardActions.contextChange(type);
+    if(this.state.treeView){
+      ContainerActions.fetchTree(uiState.currentCollection.id, type)
+    } else {
+      UIActions.setPagination({type: type, page: page});
+    }
 
+    KeyboardActions.contextChange(type);
   }
 
   handleSwitch(){
-    this.setState({treeView: !this.state.treeView})
+    this.state.treeView = !this.state.treeView
+    this.handleTabSelect(this.state.currentTab)
   }
 
   getArrayFromLayout(layout, isVisible) {
@@ -207,7 +215,7 @@ export default class List extends React.Component {
               &nbsp;&nbsp;&nbsp;
               <Button bsSize="xsmall" bsStyle="danger"
                 onClick={() => this.handleSwitch()}>
-                <i className="fa fa-exchange"></i>
+                <span className="fa fa-exchange"></span>
               </Button>
               &nbsp;&nbsp;&nbsp;
               <OverlayTrigger trigger="click" placement="bottom"
