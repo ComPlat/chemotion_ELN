@@ -97,17 +97,25 @@ class UIStore {
     this.waitFor(ElementStore.dispatchToken);
 
     let {type, range} = params;
-    
+    let {elements} = ElementStore.getState();
+
     if (range == 'all') {
-      this.state[type].checkedAll = true;
-      this.state[type].checkedIds = Immutable.List();
-      this.state[type].uncheckedIds = Immutable.List();
+      if (this.state.currentSearchSelection && elements[type + "s"].ids) {
+        let ids = elements[type + "s"].ids
+        this.state[type].checkedAll = false
+        this.state[type].checkedIds = Immutable.List(ids)
+        this.state[type].uncheckedIds = Immutable.List()
+      } else {
+        this.state[type].checkedAll = true;
+        this.state[type].checkedIds = Immutable.List();
+        this.state[type].uncheckedIds = Immutable.List();
+      }
     } else if (range == 'current') {
-      let {elements} = ElementStore.getState();
       let curPageIds = elements[type + "s"].elements.reduce(
         function(a, b) { return a.concat(b); }, []
       ).map((e) => { return e.id });
 
+      this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = Immutable.List();
       this.state[type].checkedIds = Immutable.List(curPageIds);
     } else {

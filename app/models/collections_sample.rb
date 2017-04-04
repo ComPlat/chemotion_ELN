@@ -26,7 +26,13 @@ class CollectionsSample < ActiveRecord::Base
 
   def self.create_in_collection(sample_ids, collection_id)
     sample_ids.map { |id|
-      self.find_or_create_by(sample_id: id, collection_id: collection_id)
+      s = self.with_deleted.find_or_create_by(
+        sample_id: id,
+        collection_id: collection_id
+      )
+
+      s.restore! if s.deleted?
+      s
     }
   end
 end
