@@ -25,9 +25,9 @@ class User < ActiveRecord::Base
 
   validates_presence_of :first_name, :last_name, allow_blank: false
   validates :name_abbreviation, uniqueness:  {message: " has already been taken." },
-    format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,3}[a-zA-Z]\Z/,
+    format: {with: /\A[a-zA-Z][a-zA-Z0-9\-_]{0,4}[a-zA-Z0-9]\Z/,
     message: "can be alphanumeric, middle '_' and '-' are allowed,"+
-    " but leading or trailing digit, '-' and '_' are not."}
+    " but leading digit, or trailing '-' and '_' are not."}
   validate :name_abbreviation_length
 
 
@@ -39,6 +39,9 @@ class User < ActiveRecord::Base
     if type == 'Group'
       na.blank? || !na.length.between?(2, 5)  && errors.add(:name_abbreviation,
       "has to be 2 to 5 characters long")
+    elsif type == 'Device'
+        na.blank? || !na.length.between?(2, 6)  && errors.add(:name_abbreviation,
+        "has to be 2 to 6 characters long")
     else
       na.blank? || !na.length.between?(2, 3)  && errors.add(:name_abbreviation,
         "has to be 2 to 3 characters long")
@@ -133,6 +136,14 @@ class Person < User
 
   has_many :users_admins, dependent: :destroy, foreign_key: :admin_id
   has_many :administrated_accounts,  through: :users_admins, source: :user
+end
+
+class Device < User
+  has_many :users_devices, dependent: :destroy
+  has_many :users, class_name: "User", through: :users_devices
+
+  has_many :users_admins, dependent: :destroy, foreign_key: :user_id
+  has_many :admins,  through: :users_admins, source: :admin
 end
 
 class Group < User
