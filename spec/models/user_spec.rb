@@ -50,7 +50,7 @@ RSpec.describe 'User', type: :model do
       expect(FactoryGirl.build(:user, :name_abbreviation => "a1d")).to be_valid
       expect(FactoryGirl.build(:user, :name_abbreviation => "as_")).to_not be_valid
       expect(FactoryGirl.build(:user, :name_abbreviation => "as-")).to_not be_valid
-      expect(FactoryGirl.build(:user, :name_abbreviation => "as1")).to_not be_valid
+      expect(FactoryGirl.build(:user, :name_abbreviation => "as1")).to be_valid
     end
 
     it 'validates the format of name_abbreviation for group' do
@@ -58,7 +58,7 @@ RSpec.describe 'User', type: :model do
       expect(FactoryGirl.build(:group, :name_abbreviation => "a_0_a")).to be_valid
       expect(FactoryGirl.build(:group, :name_abbreviation => "asdf_")).to_not be_valid
       expect(FactoryGirl.build(:group, :name_abbreviation => "asdf-")).to_not be_valid
-      expect(FactoryGirl.build(:group, :name_abbreviation => "asdf1")).to_not be_valid
+      expect(FactoryGirl.build(:group, :name_abbreviation => "asdf1")).to be_valid
     end
 
     it 'validates the length of name_abbreviation for group' do
