@@ -53,6 +53,40 @@
   border-radius: 2px;
   user-select: none;
   cursor: default;
+
+  .checkbox-dropdown {
+    line-height: 1em;
+    border: 1px solid rgba(155, 155, 155, 0.57);
+    width: 48px;
+    height: 28px;
+    display: table-cell;
+    vertical-align: middle;
+    border-radius: 2px;
+    padding-left: 5px;
+    background-color: #f5f5f5;
+  }
+
+  .checkbox-options {
+    z-index: 2;
+    width: 160px;
+    border: 1px solid #ccc;
+    background: #fff;
+    position: absolute;
+
+    div {
+      padding: 6px 44px 6px 30px;
+      cursor: pointer;
+    }
+
+    div:hover {
+      background-color: #eee;
+      border-color: #eee;
+      border-style: dotted;
+      border-width: 1px 0;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+  }
 }
 
 .all-checkbox:hover {
@@ -60,36 +94,30 @@
   color: #333;
 }
 
-.checkbox-dropdown {
-  line-height: 1em;
-  border: 1px solid rgba(155, 155, 155, 0.57);
-  width: 48px;
-  height: 28px;
-  display: table-cell;
-  vertical-align: middle;
-  border-radius: 2px;
-  padding-left: 5px;
-  background-color: #f5f5f5;
-}
+.advanced-search {
+  margin-top: 10px;
 
-.checkbox-options {
-  z-index: 2;
-  width: 160px;
-  border: 1px solid #ccc;
-  background: #fff;
-  position: absolute;
-
-  div {
-    padding: 6px 44px 6px 30px;
-    cursor: pointer;
+  button {
+    margin-left: 5px;
   }
 
-  div:hover {
-    background-color: #eee;
-    border-color: #eee;
-    border-style: dotted;
-    border-width: 1px 0;
-    padding-top: 5px;
-    padding-bottom: 5px;
+  .field-select {
+    margin: 5px;
+    flex: 0 0 205px;
+  }
+
+  .link-select {
+    margin: 5px;
+    flex: 0 0 117px
+  }
+
+  .value-select {
+    margin: 5px;
+    height: 33px;
+  }
+
+  .footer {
+    margin: 10px;
+    z-index: 1;
   }
 }

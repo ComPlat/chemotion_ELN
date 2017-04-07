@@ -50,6 +50,24 @@ module Chemotion
                 params[:collection_id].to_i, type, threshold)
       end
 
+      def advanced_search arg
+        query = ""
+        cond_val = []
+        arg.each do |filter|
+          field = filter.field
+          words = filter.value.split(',').map!(&:strip)
+
+          conditions = words.collect { |word|
+            " samples." + field + " = ? "
+          }.join(" OR ")
+
+          query = query + " " + filter.link + " (" + conditions + ") "
+          cond_val = cond_val + words
+        end
+
+        Sample.for_user(current_user.id).where([query] + cond_val)
+      end
+
       def serialization_by_elements_and_page(elements, page = 1, molecule_sort = false)
         samples = elements.fetch(:samples, [])
         reactions = elements.fetch(:reactions, [])
@@ -178,6 +196,8 @@ module Chemotion
           ).search_by_substring
         when 'structure'
           sample_structure_search(arg)
+        when 'advanced'
+          advanced_search(arg)
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
