@@ -39,7 +39,13 @@ class CollectionsReaction < ActiveRecord::Base
   # Static create without checking associated
   def self.static_create_in_collection(reaction_ids, collection_id)
     reaction_ids.map { |id|
-      self.find_or_create_by(reaction_id: id, collection_id: collection_id)
+      r = self.with_deleted.find_or_create_by(
+        reaction_id: id,
+        collection_id: collection_id
+      )
+
+      r.restore! if r.deleted?
+      r
     }
   end
 

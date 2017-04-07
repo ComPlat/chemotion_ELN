@@ -39,7 +39,13 @@ class CollectionsWellplate < ActiveRecord::Base
   # Static create without checking associated
   def self.static_create_in_collection(wellplate_ids, collection_id)
     wellplate_ids.map { |id|
-      self.find_or_create_by(wellplate_id: id, collection_id: collection_id)
+      w = self.with_deleted.find_or_create_by(
+        wellplate_id: id,
+        collection_id: collection_id
+      )
+
+      w.restore! if w.deleted?
+      w
     }
   end
 

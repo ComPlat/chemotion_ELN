@@ -37,7 +37,13 @@ class CollectionsScreen < ActiveRecord::Base
   # Static create without checking associated
   def self.static_create_in_collection(screen_ids, collection_id)
     screen_ids.map { |id|
-      self.find_or_create_by(screen_id: id, collection_id: collection_id)
+      s = self.with_deleted.find_or_create_by(
+        screen_id: id,
+        collection_id: collection_id
+      )
+
+      s.restore! if s.deleted?
+      s
     }
   end
 
