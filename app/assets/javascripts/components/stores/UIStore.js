@@ -46,6 +46,7 @@ class UIStore {
         page: 1
       },
       showPreviews: true,
+      showAdvancedSearch: false,
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
@@ -60,6 +61,7 @@ class UIStore {
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleToggleShowPreviews: UIActions.toggleShowPreviews,
+      handleToggleAdvancedSearch: UIActions.toggleAdvancedSearch,
       handleCheckElement: UIActions.checkElement,
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
@@ -125,6 +127,11 @@ class UIStore {
 
   handleToggleShowPreviews() {
     this.state.showPreviews = !this.state.showPreviews;
+  }
+
+  handleToggleAdvancedSearch(show) {
+    if (show == null) show = !this.state.showAdvancedSearch
+    this.state.showAdvancedSearch = show;
   }
 
   handleUncheckAllElements(params) {

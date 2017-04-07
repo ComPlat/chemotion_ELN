@@ -1,6 +1,5 @@
 import React from 'react'
 
-import { ButtonGroup, DropdownButton, MenuItem, Button } from 'react-bootstrap'
 import UIActions from './actions/UIActions'
 import Select from 'react-select'
 
