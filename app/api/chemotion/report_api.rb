@@ -59,7 +59,8 @@ module Chemotion
       end
 
       def included_field
-        ["molecule.cano_smiles", "molecule.sum_formular", "molecule.inchistring"]
+        ["molecule.cano_smiles", "molecule.sum_formular",
+          "molecule.inchistring", "molecule.molecular_weight"]
       end
 
       def selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)

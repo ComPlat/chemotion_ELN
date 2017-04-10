@@ -34,7 +34,8 @@ export default class ModalExport extends React.Component {
         {value: "identifier", text: "identifier", checked: false},
         {value: "density", text: "density", checked: false},
         {value: "melting_point", text: "melting_point", checked: false},
-        {value: "boiling_point", text: "boiling_point", checked: false}
+        {value: "boiling_point", text: "boiling_point", checked: false},
+        {value: "molecular_weight", text: "molecular_weight", checked: false},
       ],
       checkedAllColumns: true,
     };
@@ -70,7 +71,7 @@ export default class ModalExport extends React.Component {
         <div className="pull-right">
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-            <DropdownButton bsStyle="warning" id="md-export-dropdown"
+            <DropdownButton dropup bsStyle="warning" id="md-export-dropdown"
                 title="XLSX Export" onSelect={(e) => this.handleClick(e)}>
               <MenuItem eventKey="1">XLSX Export</MenuItem>
               <MenuItem eventKey="2">SDF Export</MenuItem>
