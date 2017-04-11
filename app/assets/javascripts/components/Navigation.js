@@ -88,7 +88,7 @@ export default class Navigation extends React.Component {
 
 
   render() {
-    const { modalProps } = this.state;
+    const { modalProps, showAdvancedSearch } = this.state;
 
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
@@ -104,7 +104,7 @@ export default class Navigation extends React.Component {
           <UserAuth/>
           <div style={{clear: "both"}} />
           <SearchFilter searchFunc={this.advancedSearch}
-            show={this.state.showAdvancedSearch}/>
+            show={showAdvancedSearch}/>
         </Navbar>
       : <Navbar fluid className='navbar-custom'>
           <Navbar.Header>
