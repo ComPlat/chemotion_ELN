@@ -54,7 +54,7 @@ module Chemotion
       def excluded_field
         [
           "id", "molecule_id", "created_by", "deleted_at",
-          "user_id", "fingerprint_id", "sample_svg_file"
+          "user_id", "fingerprint_id", "sample_svg_file", "xref"
         ]
       end
 
