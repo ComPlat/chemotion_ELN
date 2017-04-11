@@ -78,7 +78,8 @@ class Reporter::ExcelExport
   end
 
   def is_molecule_attribute(key)
-    ["cano_smiles", "sum_formular", "inchistring"].index(key)
+    ["cano_smiles", "sum_formular", "inchistring",
+      "molecular_weight"].index(key)
   end
 
   def process_and_add_image(sheet, sample, row, files)
