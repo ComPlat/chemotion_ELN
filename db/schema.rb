@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170327091111) do
+ActiveRecord::Schema.define(version: 20170411104507) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -461,7 +461,6 @@ ActiveRecord::Schema.define(version: 20170327091111) do
     t.boolean  "is_top_secret",       default: false
     t.string   "ancestry"
     t.string   "external_label",      default: ""
-    t.text     "analyses_dump"
     t.integer  "created_by"
     t.string   "short_label"
     t.float    "real_amount_value"
@@ -546,11 +545,11 @@ ActiveRecord::Schema.define(version: 20170327091111) do
     t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
   end
 
   add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
@@ -565,6 +564,11 @@ ActiveRecord::Schema.define(version: 20170327091111) do
 
   add_index "users_admins", ["admin_id"], name: "index_users_admins_on_admin_id", using: :btree
   add_index "users_admins", ["user_id"], name: "index_users_admins_on_user_id", using: :btree
+
+  create_table "users_devices", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "device_id"
+  end
 
   create_table "users_groups", force: :cascade do |t|
     t.integer "user_id"
