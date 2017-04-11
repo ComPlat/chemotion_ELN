@@ -262,6 +262,7 @@ class UIStore {
 
   handleClearSearchSelection() {
     this.state.currentSearchSelection = null;
+    this.state.showAdvancedSearch = false;
   }
 
   handleChangeNumberOfResultsShown(value) {

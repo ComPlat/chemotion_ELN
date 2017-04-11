@@ -1,6 +1,7 @@
 import React from 'react'
 import {Button, FormControl} from 'react-bootstrap'
 import Select from 'react-select'
+import UIActions from '../actions/UIActions';
 
 export default class SearchFilter extends React.Component {
   constructor(props) {
@@ -36,6 +37,7 @@ export default class SearchFilter extends React.Component {
     let show = !this.state.showFilters
     if (typeof(bool) == "boolean") {
       show = bool
+      UIActions.toggleAdvancedSearch(bool)
     }
 
     this.setState({ showFilters: show })

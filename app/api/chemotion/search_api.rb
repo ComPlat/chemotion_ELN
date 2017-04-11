@@ -55,7 +55,7 @@ module Chemotion
         cond_val = []
         arg.each do |filter|
           field = filter.field
-          words = filter.value.split(',').map!(&:strip)
+          words = filter.value.split(/,|(\r)?\n/).map!(&:strip)
 
           conditions = words.collect { |word|
             " samples." + field + " = ? "
