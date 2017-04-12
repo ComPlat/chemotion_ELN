@@ -11,6 +11,9 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import { ConfirmModal } from './common/ConfirmModal';
 
+import Sample from './models/Sample';
+import Reaction from './models/Reaction';
+
 export default class ElementDetails extends Component {
   constructor(props) {
     super(props);
@@ -45,17 +48,48 @@ export default class ElementDetails extends Component {
     this.setState({ selecteds: [] });
   }
 
+  synchronizeElements(close, open) {
+    let associatedSampleFromReaction = (
+      close instanceof Reaction && open instanceof Sample && 
+      close.samples.map(s => s.id).includes(open.id)
+    )
+
+    let associatedReactionFromSample = (
+      close instanceof Sample && open instanceof Reaction &&
+      open.samples.map(s => s.id).includes(close.id)
+    )
+
+    if (associatedSampleFromReaction) {
+      let s = close.samples.filter(x => x.id == open.id)[0]
+
+      open.amount_value = s.amount_value
+      open.amount_unit = s.amount_unit
+      open.container = s.container
+    } else if (associatedReactionFromSample) {
+      open.updateMaterial(close)
+      if (close.isPendingToSave) open.changed = close.isPendingToSave
+    }
+    
+    return {ori: close, next: open}
+  }
+
   onChangeCurrentElement(oriEl, nextEl) {
     const { selecteds } = this.state;
     const index = this.elementIndex(selecteds, nextEl);
     let activeKey = index;
     let newSelecteds = null;
+
+    let sync = this.synchronizeElements(oriEl, nextEl)
+    oriEl = sync.ori
+    nextEl = sync.next
+
     if(!oriEl || index === -1) {
       activeKey = selecteds.length;
       newSelecteds = this.addElement(nextEl);
     } else {
       newSelecteds = this.updateElement(nextEl, index);
     }
+
     this.setState({ selecteds: newSelecteds });
     this.resetActiveKey(activeKey);
   }
