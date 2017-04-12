@@ -474,12 +474,20 @@ export default class Reaction extends Element {
 
   updateMaterial(material) {
     var cats = ['starting_materials', 'reactants', 'solvents', 'products'];
-    for(let i = 0; i < cats.length; i++) {
-      this['_' + cats[i]].map((sample, index) => {
-        if(sample.id == material.id) {
-          this['_' + cats[i]][index] = material;
+
+    let i = 0, updated = false
+    while (i < cats.length || !updated) {
+      let group = this['_' + cats[i]]
+      if (group) {
+        let index = group.findIndex(x => x.id == material.id)
+        
+        if (index >= 0) {
+          this['_' + cats[i]][index] = new Sample(material)
+          updated = true
         }
-      })
+      }
+
+      i = i + 1
     }
   }
 

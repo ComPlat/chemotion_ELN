@@ -30,6 +30,10 @@ export default class Element {
             ['_checksum', 'belongTo', 'matGroup']), _.isEmpty)));
   }
 
+  get getChecksum() {
+    return this._checksum
+  }
+
   get isNew() {
     return this.is_new == true
   }
@@ -38,8 +42,12 @@ export default class Element {
     return !_.isEmpty(this) && (this.isNew || this.isEdited);
   }
 
-  updateChecksum() {
-    this._checksum = this.checksum();
+  updateChecksum(cs) {
+    if (cs) {
+      this._checksum = cs
+    } else {
+      this._checksum = this.checksum();
+    }
   }
 
   buildCopy() {
