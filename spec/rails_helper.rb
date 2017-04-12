@@ -35,4 +35,5 @@ RSpec.configure do |config|
   config.include LoginMacros
   config.include CapybaraHelpers
   config.include ReportHelpers
+  config.include PubchemHelpers
 end

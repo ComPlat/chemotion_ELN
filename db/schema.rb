@@ -11,13 +11,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170405152501) do
+ActiveRecord::Schema.define(version: 20170411104507) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "uuid-ossp"
+  enable_extension "hstore"
 
   create_table "attachments", force: :cascade do |t|
     t.integer  "container_id"
@@ -494,7 +494,6 @@ ActiveRecord::Schema.define(version: 20170405152501) do
     t.boolean  "is_top_secret",       default: false
     t.string   "ancestry"
     t.string   "external_label",      default: ""
-    t.text     "analyses_dump"
     t.integer  "created_by"
     t.string   "short_label"
     t.float    "real_amount_value"

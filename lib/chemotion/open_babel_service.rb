@@ -69,6 +69,19 @@ M  END
 
   end
 
+  def self.inchikey_from_molfile molfile
+    c = OpenBabel::OBConversion.new
+    c.set_in_format 'mol'
+
+    m = OpenBabel::OBMol.new
+    c.read_string m, molfile
+
+    c.set_out_format 'inchikey'
+    inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
+    
+    return inchikey
+  end
+
   def self.molecule_info_from_molfiles molfile_array
     molecule_info = []
     molfile_array.each do |molfile|

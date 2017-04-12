@@ -34,28 +34,32 @@ export default class SearchFetcher {
           totalElements: json.samples.totalElements,
           page: json.samples.page,
           pages: json.samples.pages,
-          perPage: json.samples.per_page
+          perPage: json.samples.per_page,
+          ids: json.samples.ids
         }
         let reactions = {
           elements: json.reactions.elements.map((r) => new Reaction(r)),
           totalElements: json.reactions.totalElements,
           page: json.reactions.page,
           pages: json.reactions.pages,
-          perPage: json.reactions.per_page
+          perPage: json.reactions.per_page,
+          ids: json.reactions.ids
         }
         let wellplates = {
           elements: json.wellplates.elements.map((w) => new Wellplate(w)),
           totalElements: json.wellplates.totalElements,
           page: json.wellplates.page,
           pages: json.wellplates.pages,
-          perPage: json.wellplates.per_page
+          perPage: json.wellplates.per_page,
+          ids: json.wellplates.ids
         }
         let screens = {
           elements: json.screens.elements.map((s) => new Screen(s)),
           totalElements: json.screens.totalElements,
           page: json.screens.page,
           pages: json.screens.pages,
-          perPage: json.screens.per_page
+          perPage: json.screens.per_page,
+          ids: json.screens.ids
         }
 
         return {

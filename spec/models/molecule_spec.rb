@@ -15,6 +15,11 @@ RSpec.describe Molecule, type: :model do
       invalid_molecule.inchikey = molecule.inchikey
       expect {invalid_molecule.save!}.to raise_error
     end
+
+    it 'have a tag with CID' do
+      molecule.save!
+      expect(molecule.tag.taggable_data["pubchem_cid"]).to eq(123456789)
+    end
   end
 
   describe 'persistance' do

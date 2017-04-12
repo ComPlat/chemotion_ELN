@@ -4,141 +4,160 @@ import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
 import CollectionActions from '../actions/CollectionActions';
 import ReactDOM from 'react-dom';
+import Select from 'react-select'
 
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      ui_state: UIStore.getState(),
-      collection_state: CollectionStore.getState(),
-      labelOfNewCollection: null
+      newLabel: null,
+      options: null,
+      selected: null,
     }
-    this.onUIChange = this.onUIChange.bind(this)
+    this.onSelectChange = this.onSelectChange.bind(this);
+    this.addCollection = this.addCollection.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIChange);
-    CollectionStore.listen(this.onCollectionChange.bind(this));
+    const options = this.collectionOptions();
+    const selected = options[0].value;
+    this.setState({options, selected});
   }
 
-  componentWillUnmount() {
-    UIStore.unlisten(this.onUIChange);
-    CollectionStore.unlisten(this.onCollectionChange.bind(this));
+  onSelectChange(e) {
+    this.setState({selected: e});
   }
 
-  onUIChange(state) {
-    this.setState({
-      ui_state: state
-    })
+  writableColls(colls) {
+    return colls.map(coll => {
+      return coll.permission_level >= 1 ? coll : null;
+    }).filter(r => r!=null);
   }
 
-  onCollectionChange(state) {
-    this.setState({
-      collection_state: state
-    })
-  }
+  collectionEntries() {
+    const cState = CollectionStore.getState();
+    const cUnshared = [...cState.lockedRoots, ...cState.unsharedRoots];
+    let cShared = [];
+    let cSynced = [];
+    if (this.props.listSharedCollections){
+      cState.sharedRoots.map(sharedR => cShared = [...cShared, ...sharedR.children]);
+      cState.syncInRoots.map(syncInR => cSynced = [...cSynced, ...syncInR.children]);
+      cSynced = this.writableColls(cSynced);
+    }
 
-  collectionEntriesMap(collections) {
-    if (collections == undefined) return []
+    if (cShared.length > 0) { cShared[0] = Object.assign(cShared[0], { first: true }); }
+    if (cSynced.length > 0) { cSynced[0] = Object.assign(cSynced[0], { first: true }); }
 
-    let tree = [];
-    let depth = 0;
-    this.makeTree(tree, collections, depth);
-
-    return tree.map( leaf => {
-      const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
-      return (<option value={leaf.id} key={leaf.id}>{indent + leaf.label}</option>)
-    });
+    const cAll = [...cUnshared, ...cShared, ...cSynced];
+    let cAllTree = [];
+    this.makeTree(cAllTree, cAll, 0);
+    return cAllTree;
   }
 
   makeTree(tree, collections, depth) {
-    collections.forEach(collection => {
-      tree.push({ id: collection.id, label: collection.label, depth: depth });
+    collections.forEach((collection, index) => {
+      tree.push({ id: collection.id,
+                  label: collection.label,
+                  depth: depth,
+                  first: collection.first,
+                  is_shared: collection.is_shared,
+                  is_sync_to_me: collection.is_sync_to_me });
       if(collection.children && collection.children.length > 0) {
         this.makeTree(tree, collection.children, depth + 1)
       }
     });
   }
 
-  collectionEntries() {
-    let cState = this.state.collection_state
-    let collections = cState.unsharedRoots.concat(cState.lockedRoots);
-    if (this.props.listSharedCollections){
-      cState.sharedRoots.map(sharedRoot=>{collections = collections.concat(sharedRoot.children)})
-      cState.remoteRoots.map(remoteRoot=>{collections = collections.concat(remoteRoot.children)})
-    }
-    return this.collectionEntriesMap(collections);
+  collectionOptions() {
+    const cAllTree = this.collectionEntries();
+    if (cAllTree.length === 0) return [];
+
+    const options = cAllTree.map( leaf => {
+      const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
+      const className = leaf.first ? "separator" : "";
+      return { value: `${leaf.id}-${leaf.is_sync_to_me ? "is_sync_to_me" : ""}`,
+                label: indent + leaf.label,
+                className: className };
+    });
+    return options;
   }
 
   addCollection() {
-    let label = ReactDOM.findDOMNode(this.refs["collectionLabelInput"]).value || '';
-    //TODO: Don't allow empty labels.
-    CollectionActions.createUnsharedCollection({label: label});
+    const label = ReactDOM.findDOMNode(this.refs["collectionLabelInput"]).value;
+    if(label) {
+      CollectionActions.createUnsharedCollection({label: label});
+      this.setState({ newLabel: label });
+    }
+  }
 
-    this.setState({
-      labelOfNewCollection: label
-    });
+  useNewCollectionId() {
+    const unsharedCollections = CollectionStore.getState().unsharedRoots;
+    const { newLabel } = this.state;
+    const newCollection = unsharedCollections.filter((collection) => {
+      return collection.label == newLabel;
+    }).pop();
+    return newCollection.id;
   }
 
   handleSubmit() {
-    let select_ref = this.refs.collectionSelect
-    let collection_id = select_ref ? ReactDOM.findDOMNode(select_ref).value : undefined;
-    let newLabel = this.state.labelOfNewCollection;
+    const { selected, newLabel } = this.state;
+    let collection_id = parseInt(selected.split("-")[0]);
+    let is_sync_to_me = selected.split("-")[1] == "is_sync_to_me";
 
     if(newLabel) {
-      let unsharedCollections = CollectionStore.getState().unsharedRoots;
-
-      let newCollection = unsharedCollections.filter((collection) => {
-        return collection.label == newLabel;
-      }).pop();
-
-      collection_id = newCollection.id;
+      collection_id = this.useNewCollectionId();
+      is_sync_to_me = false;
     }
 
-    // TODO: This needs to be improved.
-    // We are constantly changing the ui_state into this syntax:
-    let ui_state = {
+    const uiStoreState = UIStore.getState();
+    const ui_state = {
       sample: {
-        all: this.state.ui_state.sample.checkedAll,
-        included_ids: this.state.ui_state.sample.checkedIds,
-        excluded_ids: this.state.ui_state.sample.uncheckedIds
+        all: uiStoreState.sample.checkedAll,
+        included_ids: uiStoreState.sample.checkedIds,
+        excluded_ids: uiStoreState.sample.uncheckedIds
       },
       reaction: {
-        all: this.state.ui_state.reaction.checkedAll,
-        included_ids: this.state.ui_state.reaction.checkedIds,
-        excluded_ids: this.state.ui_state.reaction.uncheckedIds
+        all: uiStoreState.reaction.checkedAll,
+        included_ids: uiStoreState.reaction.checkedIds,
+        excluded_ids: uiStoreState.reaction.uncheckedIds
       },
       wellplate: {
-        all: this.state.ui_state.wellplate.checkedAll,
-        included_ids: this.state.ui_state.wellplate.checkedIds,
-        excluded_ids: this.state.ui_state.wellplate.uncheckedIds
+        all: uiStoreState.wellplate.checkedAll,
+        included_ids: uiStoreState.wellplate.checkedIds,
+        excluded_ids: uiStoreState.wellplate.uncheckedIds
       },
       screen: {
-        all: this.state.ui_state.screen.checkedAll,
-        included_ids: this.state.ui_state.screen.checkedIds,
-        excluded_ids: this.state.ui_state.screen.uncheckedIds
+        all: uiStoreState.screen.checkedAll,
+        included_ids: uiStoreState.screen.checkedIds,
+        excluded_ids: uiStoreState.screen.uncheckedIds
       },
       research_plan: {
-        all: this.state.ui_state.research_plan.checkedAll,
-        included_ids: this.state.ui_state.research_plan.checkedIds,
-        excluded_ids: this.state.ui_state.research_plan.uncheckedIds
+        all: uiStoreState.research_plan.checkedAll,
+        included_ids: uiStoreState.research_plan.checkedIds,
+        excluded_ids: uiStoreState.research_plan.uncheckedIds
       },
-      currentCollection: this.state.ui_state.currentCollection,
-      currentCollectionId: this.state.ui_state.currentCollection.id
+      currentCollection: uiStoreState.currentCollection,
+      currentCollectionId: uiStoreState.currentCollection.id,
+      currentSearchSelection: uiStoreState.currentSearchSelection
     }
 
-    this.props.action({ui_state: ui_state, collection_id: collection_id});
+    this.props.action({ ui_state: ui_state,
+                        collection_id: collection_id,
+                        is_sync_to_me: is_sync_to_me});
     this.props.onHide();
   }
 
   render() {
+    const { options, selected } = this.state;
     return (
       <div>
       <FormGroup>
         <ControlLabel>Select a Collection</ControlLabel>
-        <FormControl ref='collectionSelect' componentClass="select">
-          {this.collectionEntries()}
-        </FormControl>
+        <Select options={options}
+                value={selected}
+                onChange={this.onSelectChange}
+                className="select-assign-collection"/>
       </FormGroup>
 
         <table width="100%"><tbody>
@@ -147,19 +166,19 @@ export default class ManagingModalCollectionActions extends React.Component {
               <FormGroup>
                 <ControlLabel>Create a Collection</ControlLabel>
                 <FormControl type="text" ref="collectionLabelInput"
-                  placeholder={'-- Please insert collection name --'}
+                  placeholder="-- Please insert collection name --"
                 />
               </FormGroup>
             </td>
             <td width="5%">
               <Button bsSize="small" className="managing-actions-add-btn"
-                      bsStyle="success" onClick={this.addCollection.bind(this)}>
+                      bsStyle="success" onClick={this.addCollection}>
                 <i className="fa fa-plus"></i>
               </Button>
             </td>
           </tr>
         </tbody></table>
-        <Button bsStyle="warning" onClick={() => this.handleSubmit()}>Submit</Button>
+        <Button bsStyle="warning" onClick={this.handleSubmit}>Submit</Button>
       </div>
     )
   }

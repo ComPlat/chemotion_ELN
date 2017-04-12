@@ -1,5 +1,6 @@
 import React from 'react';
 import UIStore from '../stores/UIStore';
+import ElementStore from '../stores/ElementStore';
 import {Button, ButtonToolbar} from 'react-bootstrap';
 
 export default class ManagingModalRemove extends React.Component {
@@ -12,6 +13,8 @@ export default class ManagingModalRemove extends React.Component {
 
   handleClick() {
     const {onHide, action} = this.props;
+    const {moleculeSort} = ElementStore.getState()
+
     let ui_state = {
       sample: {
         all: this.state.ui_state.sample.checkedAll,
@@ -34,7 +37,9 @@ export default class ManagingModalRemove extends React.Component {
         excluded_ids: this.state.ui_state.screen.uncheckedIds
       },
       currentCollection: this.state.ui_state.currentCollection,
-      currentCollectionId: this.state.ui_state.currentCollection.id
+      currentCollectionId: this.state.ui_state.currentCollection.id,
+      currentSearchSelection: this.state.ui_state.currentSearchSelection,
+      molecule_sort: moleculeSort
     };
     action({ui_state: ui_state});
     onHide();

@@ -94,6 +94,7 @@ export default class ManagingModalSharing extends React.Component {
         excluded_ids: [],
         collection_id: collectionId
       },
+      currentSearchSelection: uiState.currentSearchSelection
     };
     return filterParams;
   }
@@ -131,7 +132,8 @@ export default class ManagingModalSharing extends React.Component {
         included_ids: uiState.research_plan.checkedIds,
         excluded_ids: uiState.research_plan.uncheckedIds,
         collection_id: collectionId
-      }
+      },
+      currentSearchSelection: uiState.currentSearchSelection
     };
     return filterParams;
   }
@@ -156,9 +158,9 @@ export default class ManagingModalSharing extends React.Component {
       let uiState = UIStore.getState();
       let currentCollectionId = uiState.currentCollection.Id;
       let filterParams =
-        this.isSelectionEmpty(uiState) ?
-          this.filterParamsWholeCollection(uiState) :
-          this.filterParamsFromUIState(uiState);
+        this.isSelectionEmpty(uiState) 
+        ? this.filterParamsWholeCollection(uiState) 
+        : this.filterParamsFromUIState(uiState);
       params = {
         ...params,
         elements_filter: filterParams,

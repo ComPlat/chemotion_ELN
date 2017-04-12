@@ -52,6 +52,7 @@ class UIStore {
         page: 1,
       },
       showPreviews: true,
+      showAdvancedSearch: false,
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
@@ -71,6 +72,7 @@ class UIStore {
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleToggleShowPreviews: UIActions.toggleShowPreviews,
+      handleToggleAdvancedSearch: UIActions.toggleAdvancedSearch,
       handleCheckElement: UIActions.checkElement,
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
@@ -124,30 +126,58 @@ class UIStore {
     this.state.sample.activeAnalysis = index;
   }
 
-  handleCheckAllElements(type) {
+  handleCheckAllElements(params) {
     this.waitFor(ElementStore.dispatchToken);
+
+    let {type, range} = params;
     let {elements} = ElementStore.getState();
 
-    this.state[type].checkedAll = true;
-    this.state[type].checkedIds = Immutable.List();
-    this.state[type].uncheckedIds = Immutable.List();
+    if (range == 'all') {
+      if (this.state.currentSearchSelection && elements[type + "s"].ids) {
+        let ids = elements[type + "s"].ids
+        this.state[type].checkedAll = false
+        this.state[type].checkedIds = Immutable.List(ids)
+        this.state[type].uncheckedIds = Immutable.List()
+      } else {
+        this.state[type].checkedAll = true;
+        this.state[type].checkedIds = Immutable.List();
+        this.state[type].uncheckedIds = Immutable.List();
+      }
+    } else if (range == 'current') {
+      let curPageIds = elements[type + "s"].elements.reduce(
+        function(a, b) { return a.concat(b); }, []
+      ).map((e) => { return e.id });
+
+      this.state[type].checkedAll = false;
+      this.state[type].uncheckedIds = Immutable.List();
+      this.state[type].checkedIds = this.state[type].checkedIds.concat(curPageIds)
+    } else {
+      this.handleUncheckAllElements(params)
+    }
   }
 
   handleToggleShowPreviews() {
     this.state.showPreviews = !this.state.showPreviews;
   }
 
-  handleUncheckAllElements(type) {
+  handleToggleAdvancedSearch(show) {
+    if (show == null) show = !this.state.showAdvancedSearch
+    this.state.showAdvancedSearch = show;
+  }
+
+  handleUncheckAllElements(params) {
+    let {type, range} = params;
+
     this.state[type].checkedAll = false;
     this.state[type].checkedIds = Immutable.List();
     this.state[type].uncheckedIds = Immutable.List();
   }
 
   handleUncheckWholeSelection() {
-    this.handleUncheckAllElements('sample');
-    this.handleUncheckAllElements('screen');
-    this.handleUncheckAllElements('reaction');
-    this.handleUncheckAllElements('wellplate');
+    this.handleUncheckAllElements({type: 'sample', range: 'all'});
+    this.handleUncheckAllElements({type: 'screen', range: 'all'});
+    this.handleUncheckAllElements({type: 'reaction', range: 'all'});
+    this.handleUncheckAllElements({type: 'wellplate', range: 'all'});
   }
 
   handleCheckElement(element) {
@@ -263,6 +293,7 @@ class UIStore {
 
   handleClearSearchSelection() {
     this.state.currentSearchSelection = null;
+    this.state.showAdvancedSearch = false;
   }
 
   handleChangeNumberOfResultsShown(value) {

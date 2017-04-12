@@ -2,7 +2,7 @@ class SyncCollectionsUserSerializer < ActiveModel::Serializer
   attributes :id, :permission_level, :sample_detail_level, :reaction_detail_level,
     :wellplate_detail_level, :screen_detail_level
   attributes :ancestry, :user, :sharer
-  attributes :label, :is_shared, :is_locked
+  attributes :label, :is_shared, :is_locked, :is_sync_to_me
 
   def ancestry
     object.fake_ancestry
@@ -28,6 +28,7 @@ class SyncCollectionsUserSerializer < ActiveModel::Serializer
     false
   end
 
-
-
+  def is_sync_to_me
+    true
+  end
 end

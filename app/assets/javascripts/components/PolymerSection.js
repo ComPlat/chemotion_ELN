@@ -207,7 +207,7 @@ export default class PolymerSection extends React.Component {
         value={residue.custom_info.polymer_type}
         clearable={false}
         onChange={(v) => this.handlePolymerTypeSelectChanged(v, residue, sample)}
-        />
+      />
     )
   }
 

@@ -6,7 +6,7 @@ module Taggable
 
     after_save :update_tag
   end
-  
+
   def update_tag
     self.tag = ElementTag.create unless self.tag
     et = self.tag
@@ -34,12 +34,13 @@ module Taggable
 
     # Populate PubChem tag
     pubchem_cid = nil
-    if self.class.to_s === 'Molecule' && !self.tag && 
-       self.inchikey && !self.inchikey.to_s.empty?
+    if self.class.to_s === 'Molecule'
+       self.inchikey && !self.inchikey.to_s.empty? &&
+       (!self.tag.taggable_data || !self.tag.taggable_data["pubchem_cid"])
       pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([self.inchikey]))
-      pubchem = pubchem_json["PropertyTable"]["Properties"].first
-      if pubchem["CID"] && Float(pubchem["CID"])
-        pubchem_cid = pubchem["CID"]
+      prop = pubchem_json.dig("PropertyTable", "Properties")
+      if prop && prop.first && prop.first["CID"] && Float(prop.first["CID"])
+        pubchem_cid = prop.first["CID"]
       end
     end
 
@@ -75,7 +76,7 @@ module Taggable
       collection_labels: collection_labels,
       reaction_id: reaction_id,
       analyses: analyses,
-      pubchem_cid: nil
+      pubchem_cid: pubchem_cid,
     }
     et.taggable_data.delete_if { |key, value| value.blank? }
 

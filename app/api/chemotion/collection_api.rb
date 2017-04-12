@@ -37,17 +37,19 @@ module Chemotion
 
       desc "Return all locked and unshared serialized collection roots of current user"
       get :locked do
-        current_user.collections.locked.unshared.roots.order('label ASC')
+        current_user.collections.includes(:shared_users)
+          .locked.unshared.roots.order('label ASC')
       end
 
       desc "Return all unlocked unshared serialized collection roots of current user"
       get :roots do
-        current_user.collections.ordered.unlocked.unshared.roots
+        current_user.collections.ordered.includes(:shared_users)
+          .unlocked.unshared.roots
       end
 
       desc "Return all shared serialized collections"
       get :shared_roots do
-        Collection.shared(current_user.id).roots.includes(:user)
+        Collection.shared(current_user.id).roots
       end
 
       desc "Return all remote serialized collections"
@@ -149,7 +151,8 @@ module Chemotion
           share_screens = ElementsPolicy.new(current_user, screens).share?
           share_research_plans = ElementsPolicy.new(current_user, research_plans).share?
 
-          sharing_allowed = share_samples && share_reactions && share_wellplates && share_screens
+          sharing_allowed = share_samples && share_reactions &&
+            share_wellplates && share_screens && share_research_plans
 
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
         end
@@ -166,10 +169,10 @@ module Chemotion
           requires :collection_id, type: Integer, desc: "Destination collection id"
         end
         put do
-
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollection].id
           collection_id = params[:collection_id]
+
           unless Collection.find(collection_id).is_shared
             # Move Sample
             sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
@@ -197,6 +200,7 @@ module Chemotion
             ).compact
             CollectionsWellplate.move_to_collection(wellplate_ids,
               current_collection_id, collection_id)
+
             # Move Screen
             screen_ids = Screen.for_user(current_user.id).for_ui_state_with_collection(
               ui_state[:screen],
@@ -221,11 +225,23 @@ module Chemotion
         params do
           requires :ui_state, type: Hash, desc: "Selected elements from the UI"
           requires :collection_id, type: Integer, desc: "Destination collection id"
+          requires :is_sync_to_me, type: Boolean, desc: "Destination collection is_sync_to_me"
         end
         post do
           ui_state = params[:ui_state]
+          is_sync_to_me = params[:is_sync_to_me]
           collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollection].id
+
+          if is_sync_to_me
+            sync_coll_user = SyncCollectionsUser.find(collection_id)
+            accessible = sync_coll_user && sync_coll_user.user_id == current_user.id
+            writable = sync_coll_user && sync_coll_user.permission_level >= 1
+            if accessible && writable
+              collection_id = sync_coll_user.collection_id
+            end
+          end
+
           # Assign Sample
           sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
             ui_state[:sample],
@@ -274,6 +290,17 @@ module Chemotion
         delete do
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollection].id
+
+          # selection = ui_state[:currentSearchSelection]
+          # search_method = if selection.structure_search
+          #                   "structure"
+          #                 else 
+          #                   selection.search_by_method
+          #                 end
+          # arg = selection.structure_search ? selection.molfile : selection.name
+          # molfile = Fingerprint.standardized_molfile arg
+          # cache_key = cache_key(search_method, arg, molfile,
+          #   current_collection_id, params[:molecule_sort])
 
           # Remove Sample
           sample_ids = Sample.for_ui_state_with_collection(

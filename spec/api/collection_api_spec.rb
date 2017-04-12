@@ -8,7 +8,7 @@ describe Chemotion::CollectionAPI do
         :children, :descendant_ids, :permission_level, :shared_by_id,
         :sample_detail_level, :reaction_detail_level, :wellplate_detail_level,
         :screen_detail_level, :is_shared, :is_locked, :sync_collections_users,
-        :shared_users, :is_synchronized
+        :shared_users, :is_synchronized, :is_remote, :shared_to
       ]
     }
   }
@@ -22,6 +22,13 @@ describe Chemotion::CollectionAPI do
     let!(:c3)   { create(:collection, user: user, is_shared: false) }
     let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true) }
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
+    # - - - - sync collection
+    let!(:owner) { create(:user) }
+    let!(:c_sync_ancestry) { create(:collection, user: user, shared_by_id: owner.id, is_shared: true, is_locked: true, is_synchronized: false) }
+    let!(:c_sync_r) { create(:collection, user: owner, is_shared: false, is_locked: false, is_synchronized: false) }
+    let!(:c_sync_w) { create(:collection, user: owner, is_shared: false, is_locked: false, is_synchronized: false) }
+    let!(:sc_r) { create(:sync_collections_user, collection_id: c_sync_r.id, user_id: user.id, permission_level: 0, shared_by_id: owner.id, fake_ancestry: c_sync_ancestry.id.to_s)}
+    let!(:sc_w) { create(:sync_collections_user, collection_id: c_sync_w.id, user_id: user.id, permission_level: 1, shared_by_id: owner.id, fake_ancestry: c_sync_ancestry.id.to_s)}
 
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
@@ -103,6 +110,7 @@ describe Chemotion::CollectionAPI do
         get '/api/v1/collections/roots'
         collections = JSON.parse(response.body)['collections']
         shared_to = collections.map{ |c| c.delete("shared_to") }
+        is_remote = collections.map{ |c| c.delete("is_remote") }
 
         expect(collections).to eq [
           c1.as_json(json_options),
@@ -110,6 +118,7 @@ describe Chemotion::CollectionAPI do
         ]
 
         expect(shared_to.compact).to be_empty
+        expect(is_remote).to eq [false, false]
       end
     end
 
@@ -127,6 +136,7 @@ describe Chemotion::CollectionAPI do
         collections = JSON.parse(response.body)['collections']
         shared_to = collections.map{|c| c.delete("shared_to")}
         shared_by = collections.map{|c| c.delete("shared_by")}
+        is_remote = collections.map{|c| c.delete("is_remote")}
         expect(collections).to eq [c2.as_json(json_options)]
         expect(shared_to.map{|u| u&&u['id']||nil}).to eq [c2.user.id]
       end
@@ -148,7 +158,7 @@ describe Chemotion::CollectionAPI do
         before {get '/api/v1/collections/remote_roots'}
         it 'returns serialized (remote) collection roots of logged in user' do
           serialized = JSON.parse(response.body)['collections'].map{ |e| e['id']}
-          expect(serialized).to match_array [c4.id, c6.id]
+          expect(serialized).to match_array [c4.id, c6.id, c_sync_ancestry.id]
         end
       end
     end
@@ -218,14 +228,32 @@ describe Chemotion::CollectionAPI do
       let!(:params) {
         {
           ui_state: ui_state,
-          collection_id: c3.id
+          collection_id: c3.id,
+          is_sync_to_me: false
         }
       }
 
       let!(:params_shared) {
         {
           ui_state: ui_state,
-          collection_id: c2.id
+          collection_id: c2.id,
+          is_sync_to_me: false
+        }
+      }
+
+      let!(:params_sync_read) {
+        {
+          ui_state: ui_state,
+          collection_id: sc_r.id,
+          is_sync_to_me: true
+        }
+      }
+
+      let!(:params_sync_write) {
+        {
+          ui_state: ui_state,
+          collection_id: sc_w.id,
+          is_sync_to_me: true
         }
       }
 
@@ -301,6 +329,36 @@ describe Chemotion::CollectionAPI do
           expect(c2.wellplates).to match_array [w1]
           expect(c2.screens).to match_array [sc1]
           expect(c2.research_plans).to match_array [rp1]
+        end
+        it 'assign elements to a `writable` sync collection' do
+          post '/api/v1/collections/elements', params_sync_write
+          c1.reload
+          c_sync_w.reload
+          expect(c1.samples).to match_array [s1, s2]
+          expect(c1.reactions).to match_array [r1, r2]
+          expect(c1.wellplates).to match_array [w1, w2]
+          expect(c1.screens).to match_array [sc1]
+          expect(c1.research_plans).to match_array [rp1]
+          expect(c_sync_w.samples).to match_array [s1, s2]
+          expect(c_sync_w.reactions).to match_array [r1]
+          expect(c_sync_w.wellplates).to match_array [w1]
+          expect(c_sync_w.screens).to match_array [sc1]
+          expect(c_sync_w.research_plans).to match_array [rp1]
+        end
+        it 'can not assign elements to a `readable` sync collection' do
+          post '/api/v1/collections/elements', params_sync_read
+          c1.reload
+          c_sync_r.reload
+          expect(c1.samples).to match_array [s1, s2]
+          expect(c1.reactions).to match_array [r1, r2]
+          expect(c1.wellplates).to match_array [w1, w2]
+          expect(c1.screens).to match_array [sc1]
+          expect(c1.research_plans).to match_array [rp1]
+          expect(c_sync_r.samples).to match_array []
+          expect(c_sync_r.reactions).to match_array []
+          expect(c_sync_r.wellplates).to match_array []
+          expect(c_sync_r.screens).to match_array []
+          expect(c_sync_r.research_plans).to match_array []
         end
       end
 

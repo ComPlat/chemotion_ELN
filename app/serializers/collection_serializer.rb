@@ -1,7 +1,7 @@
 class CollectionSerializer < ActiveModel::Serializer
   attributes :id, :label, :shared_to, :is_shared, :shared_by_id, :is_locked,
     :descendant_ids, :is_synchronized, :permission_level, :sample_detail_level,
-    :wellplate_detail_level, :screen_detail_level, :reaction_detail_level
+    :wellplate_detail_level, :screen_detail_level, :reaction_detail_level, :is_remote
 
   has_many :children
 
@@ -10,6 +10,10 @@ class CollectionSerializer < ActiveModel::Serializer
 
   def children
     object.children.ordered
+  end
+
+  def is_remote
+    object.is_shared && (object.shared_by_id != scope.current_user.id)
   end
 
   def descendant_ids

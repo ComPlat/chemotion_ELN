@@ -26,12 +26,37 @@ export default class AutoCompleteInput extends React.Component {
       timeoutReference: null,
       keyboardContext: ''
     }
+
+    this.onUIChange = this.onUIChange.bind(this)
+
     this.timeout = 6e2 // 600ms timeout for input typing
     this.doneTyping = this.doneTyping.bind(this)
   }
 
   componentDidMount() {
+    UIStore.listen(this.onUIChange)
     this.initInputWidth()
+  }
+
+  onUIChange(state) {
+    let inputDisabled = false
+    let value = ''
+
+    if (state.currentSearchSelection) {
+      inputDisabled = true
+      let selection = state.currentSearchSelection
+
+      if (selection.search_by_method === "substring") {
+        value = selection.name
+      } else {
+        value = selection.search_by_method
+      }
+    }
+
+    this.setState({
+      value : value,
+      inputDisabled : inputDisabled
+    })
   }
 
   initInputWidth() {

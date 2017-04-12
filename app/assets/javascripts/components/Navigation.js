@@ -7,16 +7,20 @@ import ContextActions from './contextActions/ContextActions';
 import UserStore from './stores/UserStore';
 import UIStore from './stores/UIStore'
 import UserActions from './actions/UserActions';
+import UIActions from './actions/UIActions';
+import ElementActions from './actions/ElementActions';
 import NavNewSession from '../libHome/NavNewSession'
 import NavHead from '../libHome/NavHead'
 import DocumentHelper from '../components/utils/DocumentHelper';
 import NavigationModal from './NavigationModal';
+import SearchFilter from './search/SearchFilter.js'
 
 export default class Navigation extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       currentUser: null,
+      showAdvancedSearch: false,
       modalProps: {
         show: false,
         title: "",
@@ -52,7 +56,8 @@ export default class Navigation extends React.Component {
 
   onUIChange(state) {
     this.setState({
-      modalProps: state.modalParams
+      modalProps: state.modalParams,
+      showAdvancedSearch: state.showAdvancedSearch
     });
   }
 
@@ -66,8 +71,24 @@ export default class Navigation extends React.Component {
     });
   }
 
+  advancedSearch(filters) {
+    let uiState = UIStore.getState()
+
+    let selection = {
+      elementType: "all",
+      name: filters,
+      search_by_method: "advanced",
+      page_size: uiState.number_of_results
+    }
+    UIActions.setSearchSelection(selection)
+
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
+      uiState.currentCollection.id, 1, uiState.isSync)
+  }
+
+
   render() {
-    const { modalProps } = this.state;
+    const { modalProps, showAdvancedSearch } = this.state;
 
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
@@ -81,6 +102,9 @@ export default class Navigation extends React.Component {
             <NavigationModal {...modalProps} />
           </Nav>
           <UserAuth/>
+          <div style={{clear: "both"}} />
+          <SearchFilter searchFunc={this.advancedSearch}
+            show={showAdvancedSearch}/>
         </Navbar>
       : <Navbar fluid className='navbar-custom'>
           <Navbar.Header>
@@ -92,6 +116,9 @@ export default class Navigation extends React.Component {
             <Search />
           </Nav>
           <NavNewSession authenticityToken={this.token()}/>
+          <div style={{clear: "both"}} />
+          <SearchFilter searchFunc={this.advancedSearch}
+            show={this.state.showAdvancedSearch}/>
         </Navbar>
     )
   }

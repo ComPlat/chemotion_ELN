@@ -126,6 +126,9 @@ GEM
       railties (>= 4.0.0, < 5.0)
       sprockets (>= 3.5.2)
     builder (3.2.2)
+    bullet (5.5.0)
+      activesupport (>= 3.0.0)
+      uniform_notifier (~> 1.10.0)
     byebug (8.2.5)
     capistrano (3.4.1)
       i18n
@@ -473,6 +476,7 @@ GEM
       thread_safe (~> 0.1)
     uglifier (3.0.0)
       execjs (>= 0.3.0, < 3)
+    uniform_notifier (1.10.0)
     virtus (1.0.5)
       axiom-types (~> 0.1)
       coercible (~> 1.0)
@@ -513,6 +517,7 @@ DEPENDENCIES
   better_errors
   bootstrap-sass (~> 3.3.5)
   browserify-rails (~> 3.0.1)
+  bullet
   byebug
   capistrano (= 3.4.1)
   capistrano-bundler

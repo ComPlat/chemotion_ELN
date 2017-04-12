@@ -29,3 +29,96 @@
 .Select {
   line-height: 1;
 }
+
+
+.span-checkbox {
+  -webkit-border-radius: 0;
+  border-radius: 0;
+  background-color: rgba(255,255,255,.05);
+  border: 1px solid rgba(155,155,155,.57);
+  height: 17px;
+  margin: 0 0px 0px 1px;
+  outline: 0;
+  width: 17px;
+  position: relative;
+  display: inline-block;
+  text-align: center;
+}
+
+.span-checkbox:hover {
+  border: 2px solid #b2b2b2;
+}
+
+.all-checkbox {
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  user-select: none;
+  cursor: default;
+
+  .checkbox-dropdown {
+    line-height: 1em;
+    border: 1px solid rgba(155, 155, 155, 0.57);
+    width: 48px;
+    height: 28px;
+    display: table-cell;
+    vertical-align: middle;
+    border-radius: 2px;
+    padding-left: 5px;
+    background-color: #f5f5f5;
+  }
+
+  .checkbox-options {
+    z-index: 2;
+    width: 160px;
+    border: 1px solid #ccc;
+    background: #fff;
+    position: absolute;
+
+    div {
+      padding: 6px 44px 6px 30px;
+      cursor: pointer;
+    }
+
+    div:hover {
+      background-color: #eee;
+      border-color: #eee;
+      border-style: dotted;
+      border-width: 1px 0;
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+  }
+}
+
+.all-checkbox:hover {
+  border: 1px solid #c6c6c6;
+  color: #333;
+}
+
+.advanced-search {
+  margin-top: 10px;
+
+  button {
+    margin-left: 5px;
+  }
+
+  .field-select {
+    margin: 5px;
+    flex: 0 0 205px;
+  }
+
+  .link-select {
+    margin: 5px;
+    flex: 0 0 117px
+  }
+
+  .value-select {
+    margin: 5px;
+    height: 60px;
+  }
+
+  .footer {
+    margin: 10px;
+    z-index: 1;
+  }
+}
