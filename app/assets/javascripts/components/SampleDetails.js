@@ -3,7 +3,6 @@ import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
         Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
         Tooltip, OverlayTrigger, DropdownButton, MenuItem, SplitButton, ButtonGroup} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import SVGInline from 'react-svg-inline'
 import Clipboard from 'clipboard';
 import Barcode from 'react-barcode';
 import Select from 'react-select';
@@ -74,10 +73,10 @@ export default class SampleDetails extends React.Component {
   }
 
   onUIStoreChange(state) {
-    if (state.sample.activeTab != this.state.sample.activeTab){
-      this.setState({
-        activeTab: state.sample.activeTab
-      })
+    if (state.sample.activeTab != this.state.activeTab){
+      this.setState((previousState)=>{ return {
+        ...previousState, activeTab: state.sample.activeTab
+      }})
     }
   }
 
@@ -213,7 +212,7 @@ export default class SampleDetails extends React.Component {
   sampleQrCode() {
     let uuid = this.state.sample.code_log && this.state.sample.code_log.id
     return uuid
-     ? <SVG  src={`/images/qr/${this.state.sample.code_log.id}.v1_l.svg`} className="qr-svg"/>
+     ? <SVG  src={`/images/qr/${uuid}.v1_l.svg`} className="qr-svg"/>
      : null
   }
 
@@ -300,10 +299,10 @@ export default class SampleDetails extends React.Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.props.toggleFullScreen()}>
-          <i className="fa fa-expand"></i>
-        </Button>
+          <Button bsStyle="info" bsSize="xsmall" className="button-right"
+            onClick={() => this.props.toggleFullScreen()}>
+            <i className="fa fa-expand"></i>
+          </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample}/>
         <div style={{display: "inline-block", marginLeft: "10px"}}>
@@ -648,11 +647,8 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  handleSelect(key) {
-    UIActions.selectTab({tabKey: key, type: 'sample'});
-    // this.setState({
-    //   activeTab: key
-    // })
+  handleSelect(eventKey) {
+    UIActions.selectTab({tabKey: eventKey, type: 'sample'});
   }
 
   render() {
@@ -674,7 +670,7 @@ export default class SampleDetails extends React.Component {
              bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
         {this.sampleInfo(sample)}
         <ListGroup>
-        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)} id="SampleDetailsXTab">
+        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
           {tabContents.map((e,i)=>e(i))}
         </Tabs>
         </ListGroup>

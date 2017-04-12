@@ -21,7 +21,6 @@ export default class ScanCodeButton extends React.Component {
   }
 
   onUIStoreChange(state) {
-    console.log(state);
     if (state.sample.checkedIds != this.state.checkedIds){
       this.setState({
         checkedIds: state.sample.checkedIds
@@ -201,8 +200,6 @@ export default class ScanCodeButton extends React.Component {
          text: 'Large Label',
        },
      ]
-
-     console.log(contents_uri);
 
     return (
       <div>

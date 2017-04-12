@@ -33,6 +33,24 @@ export default class ReactionDetails extends Component {
     if(reaction.hasMaterials()) {
       this.updateReactionSvg();
     }
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
+
+  }
+
+  onUIStoreChange(state) {
+    if (state.reaction.activeTab != this.state.activeTab){
+      this.setState({
+        activeTab: state.reaction.activeTab
+      })
+    }
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
   }
 
   componentWillReceiveProps(nextProps) {

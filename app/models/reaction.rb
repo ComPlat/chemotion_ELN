@@ -110,6 +110,10 @@ class Reaction < ActiveRecord::Base
   def samples
     starting_materials + reactants + products + solvents
   end
+  
+  def analyses
+    self.container ? self.container.analyses : []
+  end
 
   def auto_format_temperature!
     valueUnitCheck = (temperature["valueUnit"] =~ /^(°C|°F|K)$/).present?

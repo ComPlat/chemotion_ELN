@@ -8,6 +8,10 @@ class SampleSerializer < ActiveModel::Serializer
   has_many :residues
   has_many :elemental_compositions
 
+  def code_log
+    CodeLogSerializer.new(object.code_log).serializable_hash
+  end 
+
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
   end

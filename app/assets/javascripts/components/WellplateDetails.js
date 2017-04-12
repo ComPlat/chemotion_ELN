@@ -2,7 +2,7 @@ import React, {PropTypes, Component} from 'react';
 import {Well, Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, Tooltip, OverlayTrigger, Col, Row} from 'react-bootstrap';
 import Barcode from 'react-barcode';
-import SVGInline from 'react-svg-inline'
+import SVG from 'react-inlinesvg';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
@@ -10,10 +10,10 @@ import CollectionActions from './actions/CollectionActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
-import Utils from './utils/Functions';
 import WellplateDetailsContainers from './WellplateDetailsContainers';
-
+import PrintCodeButton from './common/PrintCodeButton'
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 
 const cols = 12;
 
@@ -23,28 +23,28 @@ export default class WellplateDetails extends Component {
     const {wellplate} = props;
     this.state = {
       wellplate,
-      activeTab: 0,
+      activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
       qrCodeSVG: ""
     }
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentDidMount() {
-    this.fetchQrCodeSVG(this.state.wellplate)
+    UIStore.listen(this.onUIStoreChange)
   }
 
-  fetchQrCodeSVG(wellplate) {
-    fetch(`/api/v1/attachments/svgs?element_id=${wellplate.id}&element_type=wellplate`, {
-      credentials: 'same-origin'
-    })
-    .then((response) => {
-      return response.json()
-    })
-    .then((json) => {
-      this.setState({qrCodeSVG: json})
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    if (state.wellplate.activeTab != this.state.activeTab){
+      console.log(`store change ${state.wellplate.activeTab != this.state.activeTab}`);
+      this.setState({
+        activeTab: state.wellplate.activeTab
+      })
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -100,33 +100,17 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
-  handleTabChange(event) {
-    let showWellplate = (event == 0) ? true : false;
-    this.setState({activeTab: event, showWellplate});
-  }
-
-  wellplateCodePrintButtons(wellplate) {
-    if(wellplate.isNew)
-      return ''
-    else
-      return (
-        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
-          <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + wellplate.id + "&type=wellplate&size=small"})}>
-            <i className="fa fa-barcode fa-lg"></i>
-          </Button>
-          &nbsp;
-          <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + wellplate.id + "&type=wellplate&size=big"})}>
-            <i className="fa fa-barcode fa-2x"></i>
-          </Button>
-        </div>
-      )
+  handleTabChange(eventKey) {
+    let showWellplate = (eventKey == 0) ? true : false;
+    this.setState((previousState) => {
+       return { ...previousState, activeTab: eventKey, showWellplate}})
+    UIActions.selectTab({tabKey: eventKey, type: 'wellplate'});
   }
 
   wellplateHeader(wellplate) {
-    let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
+    console.log(`wellplate ${wellplate.id}`);
 
+    let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
     return(
       <div>
         <i className="icon-wellplate" />
@@ -149,22 +133,25 @@ export default class WellplateDetails extends Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+          <Button bsStyle="info" bsSize="xsmall" className="button-right"
           onClick={() => this.props.toggleFullScreen()}>
           <i className="fa fa-expand"></i>
-        </Button>
+          </Button>
         </OverlayTrigger>
-        {this.wellplateCodePrintButtons(wellplate)}
+        <PrintCodeButton element={wellplate}/>
       </div>
     )
   }
 
   wellplateQrCode() {
-    return <SVGInline svg={this.state.qrCodeSVG} height="80" width="80"/>
-  }
+    let uuid = this.state.wellplate.code_log && this.state.wellplate.code_log.id
+    return uuid
+     ? <SVG  src={`/images/qr/${uuid}.v1_l.svg`} className="qr-svg"/>
+     : null
+    }
 
   wellplateBarCode(wellplate) {
-    let barCode = wellplate.bar_code
+    let barCode = wellplate.code_log && wellplate.code_log.value_sm
     if(barCode != null)
       return <Barcode
                 value={barCode}

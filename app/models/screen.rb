@@ -30,4 +30,9 @@ class Screen < ActiveRecord::Base
   has_many :wellplates, through: :screens_wellplates
 
   has_one :container, :as => :containable
+
+  def analyses
+    self.container ? self.container.analyses : []
+  end
+
 end

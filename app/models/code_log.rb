@@ -33,7 +33,7 @@ class CodeLog < ActiveRecord::Base
     svg = outputter.to_svg(margin:0)
     filename = File.join Rails.root, "public", "images", "qr",
       "#{self.id}.v#{version}_#{level.to_s}.svg"
-    File.write filename,svg
+    File.write filename,svg, mode: "w"
   end
 
 end

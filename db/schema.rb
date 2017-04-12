@@ -11,13 +11,31 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170411104507) do
+ActiveRecord::Schema.define(version: 20170414012345) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+  enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "uuid-ossp"
-  enable_extension "hstore"
+
+  create_table "analyses_experiments", force: :cascade do |t|
+    t.integer  "sample_id"
+    t.integer  "holder_id"
+    t.string   "status"
+    t.integer  "devices_analysis_id", null: false
+    t.integer  "devices_sample_id",   null: false
+    t.string   "sample_analysis_id",  null: false
+    t.string   "solvent"
+    t.string   "experiment"
+    t.boolean  "priority"
+    t.boolean  "on_day"
+    t.integer  "number_of_scans"
+    t.integer  "sweep_width"
+    t.string   "time"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
+  end
 
   create_table "attachments", force: :cascade do |t|
     t.integer  "container_id"
@@ -40,16 +58,12 @@ ActiveRecord::Schema.define(version: 20170411104507) do
     t.string   "source"
     t.integer  "source_id"
     t.string   "value",      limit: 40
-    t.integer  "value_xs"
-    t.integer  "value_sm"
     t.datetime "deleted_at"
     t.datetime "created_at",            null: false
     t.datetime "updated_at",            null: false
   end
 
   add_index "code_logs", ["source", "source_id"], name: "index_code_logs_on_source_and_source_id", using: :btree
-  add_index "code_logs", ["value_sm"], name: "index_code_logs_on_value_sm", using: :btree
-  add_index "code_logs", ["value_xs"], name: "index_code_logs_on_value_xs", using: :btree
 
   create_table "collections", force: :cascade do |t|
     t.integer  "user_id",                                   null: false

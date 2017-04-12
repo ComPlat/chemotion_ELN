@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
-import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
+import {PanelGroup, Panel, Button} from 'react-bootstrap';
+
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
+import PrintCodeButton from './common/PrintCodeButton'
 
 export default class ScreenDetailsContainers extends Component {
   constructor(props) {
@@ -71,14 +73,17 @@ export default class ScreenDetailsContainers extends Component {
     const {screen, activeContainer} = this.state;
     const {readOnly} = this.props;
 
-    let containerHeader = (container) => <p style={{width: '100%'}}>{container.name}
-      {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
-      {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
-      <Button bsSize="xsmall" bsStyle="danger"
-         className="button-right" disabled={readOnly}
-        onClick={() => {if(confirm('Delete the container?')) {this.handleRemove(container)}}}>
-        <i className="fa fa-trash"></i>
-      </Button></p>
+    let containerHeader = (container) =>
+      <p style={{width: '100%'}}>{container.name}
+        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+        {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
+        <Button bsSize="xsmall" bsStyle="danger"
+           className="button-right" disabled={readOnly}
+          onClick={() => {if(confirm('Delete the container?')) {this.handleRemove(container)}}}>
+          <i className="fa fa-trash"></i>
+        </Button>
+        <PrintCodeButton element={screen} analyses={[container]} ident={container.id}/>
+      </p>
 
       let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
         {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}

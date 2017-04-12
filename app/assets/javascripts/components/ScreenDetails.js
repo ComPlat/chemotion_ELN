@@ -1,13 +1,17 @@
 import React, {Component} from 'react';
 import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab} from 'react-bootstrap';
+import StickyDiv from 'react-stickydiv'
+
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
 import Utils from './utils/Functions';
 import QuillEditor from './QuillEditor'
 import ScreenDetailsContainers from './ScreenDetailsContainers';
 import ElementActions from './actions/ElementActions';
-import StickyDiv from 'react-stickydiv'
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
+import PrintCodeButton from './common/PrintCodeButton'
 
 export default class ScreenDetails extends Component {
   constructor(props) {
@@ -15,9 +19,26 @@ export default class ScreenDetails extends Component {
     const {screen} = props;
     this.state = {
       screen,
+      activeTab: UIStore.getState().screen.activeTab,
+    }
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
+  }
+
+  onUIStoreChange(state) {
+    if (state.screen.activeTab != this.state.activeTab){
+      this.setState({
+        activeTab: state.screen.activeTab
+      })
     }
   }
 
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
   componentWillReceiveProps(nextProps) {
     const {screen} = nextProps;
     this.setState({ screen });
@@ -84,26 +105,6 @@ export default class ScreenDetails extends Component {
     this.setState({ screen });
   }
 
-  screenCodePrintButtons(screen) {
-    if(screen.isNew)
-      return ''
-    else
-      console.log(screen)
-      return (
-        <div style={{display: "inline-block", position: "absolute", right: "100px"}}>
-          <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + screen.id + "&type=screen&size=small"})}>
-            <i className="fa fa-barcode fa-lg"></i>
-          </Button>
-          &nbsp;
-          <Button bsSize="xsmall"
-            onClick={() => Utils.downloadFile({contents: "api/v1/code_logs/print_codes?ids[]=" + screen.id + "&type=screen&size=big"})}>
-            <i className="fa fa-barcode fa-2x"></i>
-          </Button>
-        </div>
-      )
-  }
-
   screenHeader(screen) {
     let saveBtnDisplay = screen.isEdited ? '' : 'none'
 
@@ -134,7 +135,7 @@ export default class ScreenDetails extends Component {
           <i className="fa fa-expand"></i>
         </Button>
         </OverlayTrigger>
-        {this.screenCodePrintButtons(screen)}
+        <PrintCodeButton element={screen}/>
       </div>
     )
   }
@@ -232,9 +233,15 @@ export default class ScreenDetails extends Component {
     );
   }
 
+  handleSelect(eventKey) {
+    UIActions.selectTab({tabKey: eventKey, type: 'screen'});
+    this.setState({
+      activeTab: eventKey
+    })
+  }
+
   render() {
     const {screen} = this.state;
-    const {wellplates, name, collaborator, result, conditions, requirements, description} = screen;
 
     const submitLabel = screen.isNew ? "Create" : "Save";
 
@@ -242,7 +249,8 @@ export default class ScreenDetails extends Component {
       <Panel header={this.screenHeader(screen)}
              bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
              className="panel-detail">
-        <Tabs defaultActiveKey={0} id="screen-detail-tab">
+        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect}
+           id="screen-detail-tab">
           <Tab eventKey={0} title={'Properties'}>
             {this.propertiesFields(screen)}
           </Tab>

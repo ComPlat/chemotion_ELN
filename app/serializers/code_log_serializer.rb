@@ -1,5 +1,5 @@
 class CodeLogSerializer < ActiveModel::Serializer
-  attributes :id, :value, :source, :source_id, :root_code
+  attributes :id, :value, :source, :source_id, :root_code, :value_sm
 
   def root_code
     return {} unless object.source == "container"

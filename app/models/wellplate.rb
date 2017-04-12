@@ -60,5 +60,9 @@ class Wellplate < ActiveRecord::Base
   def self.associated_by_user_id_and_screen_ids(user_id, screen_ids)
     for_user(user_id).by_screen_ids(screen_ids)
   end
+  
+  def analyses
+    self.container ? self.container.analyses : []
+  end
 
 end
