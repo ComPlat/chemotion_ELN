@@ -10,3 +10,7 @@ end
 every :sunday, at: '12pm' do
   command "backup perform -t weekly_backup -c backup/config.rb"
 end
+
+every 5.minutes do
+  runner ""
+end
