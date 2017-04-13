@@ -65,7 +65,6 @@ export default class ContextActions extends React.Component {
         <ButtonGroup style={{marginLeft: '10px'}}>
           <ScanCodeButton/>
         </ButtonGroup>
-        <DeviceButtonSplit/>
       </div>
     )
   }
@@ -74,4 +73,3 @@ export default class ContextActions extends React.Component {
 ContextActions.propTypes = {
   updateModalProps: React.PropTypes.func.isRequired,
 };
-

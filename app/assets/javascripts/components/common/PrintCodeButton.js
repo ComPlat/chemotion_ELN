@@ -40,7 +40,7 @@ const PrintCodeButton = ({element, analyses, all_analyses, ident})=>{
         <SplitButton id={`print-code-split-button-${ident ? ident : 0}`}
           pullRight bsStyle="default"
           disabled={element.isNew} bsSize="xsmall"
-          onToggle={(is_open,event) => event.stopPropagation()}
+          onToggle={(is_open,event) => {if (event){ event.stopPropagation()}}}
           title={<i className="fa fa-barcode fa-lg"></i>}
           onClick={(event) =>  {event.stopPropagation();Utils.downloadFile(
               {contents: menuItems[0].contents})}}>
