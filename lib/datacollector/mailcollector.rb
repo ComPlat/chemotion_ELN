@@ -33,7 +33,7 @@ class Mailcollector < Collector
             puts "Sender found"
 
             sender_email = @sender_mailbox + "@" + @sender_host
-            sender = User.find_by email: sender_email
+            sender = Device.find_by email: sender_email
 
             #recipient_email = envelope.cc[0].mailbox + "@" + envelope.cc[0].host
             recipient_email = envelope.to[0].mailbox + "@" + envelope.to[0].host
@@ -52,11 +52,11 @@ class Mailcollector < Collector
           end
         end
       else
-        puts "ERROR: Can not login " + @server
+        puts "ERROR: Cannot login " + @server
         raise
       end
     rescue Exception => e
-      puts "ERROR: Can not handle new data mails " + e.message
+      puts "ERROR: Cannot handle new data mails " + e.message
       raise e.message
     ensure
       imap.logout
@@ -78,7 +78,7 @@ private
       end
 
     rescue Exception => e
-      puts "ERROR: Can not handle mail " + e.message
+      puts "ERROR: Cannot handle mail " + e.message
       raise e.message
     end
 

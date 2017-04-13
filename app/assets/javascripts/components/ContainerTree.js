@@ -122,15 +122,15 @@ export default class ContainerTree extends Component {
             </th>
           </tr></thead>
           </Table>
-          <SortableTree
-            style={{height: 800}}
+          <div className="treecontainer">
+            <SortableTree className="containertree"
                   treeData={treeData}
                   onChange={treeData => this.onChangeTree({treeData})}
                   canDrag={this.draggable}
                   canDrop={this.droppable}
                   onMoveNode={this.onMoveNode.bind(this)}
-            />
-
+                  />
+          </div>
         </div>
       );
   }
