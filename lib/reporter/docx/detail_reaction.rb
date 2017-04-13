@@ -81,14 +81,14 @@ module Reporter
         output = Array.new
         obj.products.each do |product|
           product[:analyses].each do |analysis|
-            metadata = analysis["extended_metadata"]
-            content = JSON.parse(metadata["content"])
+            metadata = analysis[:extended_metadata]
+            content = JSON.parse(metadata[:content])
 
             output.push({
               sample: product[:molecule][:sum_formular],
               name: analysis[:name],
-              kind: metadata["kind"],
-              status: metadata["status"],
+              kind: metadata[:kind],
+              status: metadata[:status],
               content: Sablon.content(:html, Delta.new(content).getHTML()),
               description: analysis[:description]
             })
