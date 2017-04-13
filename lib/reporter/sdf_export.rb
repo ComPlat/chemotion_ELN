@@ -33,7 +33,7 @@ class Reporter::SdfExport
 
         field_str = field.gsub(" ", "_").upcase
 
-        field_mdf = ">  <#{field_str}> (#{sample.id})\n#{value}\n\n"
+        field_mdf = ">  <#{field_str}>\n#{value}\n\n"
 
         sample_mdf = sample_mdf + field_mdf
       end
