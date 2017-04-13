@@ -7,6 +7,7 @@
 
     archive :attachments_backup do |archive|
       archive.add File.readlink("#{Rails.root}/public/images")
+      archive.add File.readlink("#{Rails.root}/public/docx")
       archive.add File.readlink("#{Rails.root}/uploads/attachments")
       archive.add File.readlink("#{Rails.root}/uploads/thumbnails")
     end
