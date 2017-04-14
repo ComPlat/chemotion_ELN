@@ -18,7 +18,7 @@
 
 @media only screen and (min-width: 1366px) and (min-height: 500px) {
   .card-navigation {
-    /* position: fixed; 
+    /* position: fixed;
     width: 100%; */
     top: 0;
     z-index: 5;
@@ -43,10 +43,22 @@
 }
 
 .export-container {
-  height: 70vh;
   overflow: auto;
   margin-bottom: 10px;
 }
+
+#export-import {
+    list-style-type: none;
+    -moz-column-count: 4;
+    -moz-column-gap: 20px;
+    -webkit-column-count: 4;
+    -webkit-column-gap: 20px;
+    column-count: 4;
+    column-gap: 20px;
+
+}
+
+
 
 .select-assign-collection {
   .separator {
