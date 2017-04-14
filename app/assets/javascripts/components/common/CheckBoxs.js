@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import React from 'react'
 import {Table} from 'react-bootstrap'
 
 const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
@@ -20,28 +20,48 @@ const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
             <input type="checkbox"
                    checked={checkedAll}
                    onChange={toggleCheckAll} />
-            <span className="g-marginLeft--10"> Selected all </span>
+            <span className="g-marginLeft--10">
+              {checkedAll ? "Deselect all" : "Select all"}
+            </span>
           </th>
         </tr>
       </thead>
+
       <tbody>
-        {checkBoxs}
+        <tr >
+          <td>
+            <ul id="export-import">
+              {checkBoxs}
+            </ul>
+          </td>
+        </tr>
       </tbody>
     </Table>
   )
 }
+CheckBoxs.propTypes = {
+  items: React.PropTypes.array,
+  checkedAll: React.PropTypes.bool,
+  toggleCheckAll: React.PropTypes.func,
+  toggleCheckbox: React.PropTypes.func,
+
+}
 
 const CheckBox = ({text, checked, toggleCheckbox}) => {
   return (
-    <tr >
-      <td>
-        <input type="checkbox"
+    <li>
+      <input type="checkbox"
                onChange={toggleCheckbox}
                checked={checked} />
-        <span className="g-marginLeft--10"> {text} </span>
-      </td>
-    </tr>
+      <span className="g-marginLeft--10"> {text} </span>
+    </li>
+
   )
+}
+CheckBox.propTypes = {
+  text: React.PropTypes.string,
+  checked: React.PropTypes.bool,
+  toggleCheckbox: React.PropTypes.func,
 }
 
 export default CheckBoxs
