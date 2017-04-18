@@ -107,7 +107,7 @@ export default class ReactionDetailsMainProperties extends Component {
                   value={reaction.status}
                   disabled={reaction.isMethodDisabled('status')}
                   onChange={event => {
-                    const wrappedEvent = {target: {value: event}};
+                    const wrappedEvent = {target: {value: event && event.value}};
                     onInputChange('status', wrappedEvent)
                   }}
                 />

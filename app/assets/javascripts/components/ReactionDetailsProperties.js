@@ -169,7 +169,7 @@ export default class ReactionDetailsProperties extends Component {
                 multi={true}
                 disabled={reaction.isMethodDisabled('purification')}
                 options={purificationOptions}
-                onChange={(event, selectedOptions) =>
+                onChange={(selectedOptions) =>
                   this.handleMultiselectChange('purification', selectedOptions)}
                 value={reaction.purification}
                 />
@@ -182,8 +182,8 @@ export default class ReactionDetailsProperties extends Component {
                 options={dangerousProductsOptions}
                 value={reaction.dangerous_products}
                 disabled={reaction.isMethodDisabled('dangerous_products')}
-                onChange={(event, selectedOptions) =>
-                  this.handleMultiselectChange('dangerousProducts', selectedOptions)}
+                onChange={selectedOptions => this.handleMultiselectChange(
+                  'dangerousProducts', selectedOptions)}
               />
             </Col>
           </Row>

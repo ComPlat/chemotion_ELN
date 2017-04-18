@@ -161,7 +161,7 @@ export default class ReportContainer extends Component {
                     value={imgFormat}
                     clearable={false}
                     style={{width: 100}}
-                    onChange={(e) => this.handleImgFormatChanged(e)}/>
+                    onChange={(e) => this.handleImgFormatChanged(e.value)}/>
           </Col>
           <Col md={9} sm={16}>
             <label></label>

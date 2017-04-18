@@ -68,11 +68,8 @@ export default class ContainerComponent extends Component {
               options={kindOptions}
               value={container.extended_metadata['kind']}
               disabled={readOnly}
-              onChange={(event, selectedOptions) => {
-                const values = selectedOptions.map(o => o.value);
-                const wrappedEvent = {target: {value: values[0]}};
-                this.handleInputChange('kind', wrappedEvent)
-              }}
+              onChange={event => this.handleInputChange('kind',
+                {target: {value: event && event.value}})}
               />
           </div>
         </Col>
@@ -85,11 +82,8 @@ export default class ContainerComponent extends Component {
               options={confirmOptions}
               value={container.extended_metadata['status']}
               disabled={readOnly}
-              onChange={(event, selectedOptions) => {
-                const values = selectedOptions.map(o => o.value);
-                const wrappedEvent = {target: {value: values[0]}};
-                this.handleInputChange('status', wrappedEvent)
-              }}
+              onChange={event => this.handleInputChange('status',
+                {target: {value: event && event.value}})}
             />
           </div>
         </Col>
