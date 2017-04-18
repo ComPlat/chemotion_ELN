@@ -1,16 +1,17 @@
 GIT
   remote: https://github.com/ComPlat/ketcher-rails
-  revision: 64b0017bf50c163429450d6b699b886d2aaf1128
+  revision: aae1ba59e96ac5604449cf260a347a65e4bdb637
+  ref: aae1ba59e96ac5604449cf260a347a65e4bdb637
   specs:
     ketcherails (0.1.3)
-      bootstrap-kaminari-views
+      bootstrap-kaminari-views (= 0.0.5)
       haml-rails (= 0.9.0)
       jquery-ui-rails (= 5.0.5)
-      kaminari
+      kaminari (= 0.16.3)
       nokogiri (= 1.6.7.2)
       paperclip (~> 5.0.0)
       rails (~> 4.2.0)
-      sprite-factory
+      sprite-factory (= 1.7.1)
 
 GIT
   remote: https://github.com/ComPlat/openbabel-gem
