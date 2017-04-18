@@ -23,6 +23,7 @@ export default class ManagingModalSharing extends React.Component {
       reactionDetailLevel: props.reactionDetailLevel,
       wellplateDetailLevel: props.wellplateDetailLevel,
       screenDetailLevel: props.screenDetailLevel,
+      selectedUsers: null,
     }
     this.onUserChange = this.onUserChange.bind(this)
   }
@@ -153,7 +154,7 @@ export default class ManagingModalSharing extends React.Component {
     }
 
     if (this.props.collAction == "Create") {
-      let userIds = this.refs.userSelect.state.values.map(o => o.value);
+      let userIds = this.state.selectedUsers;
       let uiState = UIStore.getState();
       let currentCollectionId = uiState.currentCollection.Id;
       let filterParams =
@@ -174,7 +175,7 @@ export default class ManagingModalSharing extends React.Component {
     if (this.props.collAction == "EditSync") {CollectionActions.editSync(params);}
 
     if (this.props.collAction == "CreateSync"){
-      let userIds = this.refs.userSelect.state.values.map(o => o.value);
+      let userIds = this.state.selectedUsers;
       params = {
         ...params,
         user_ids: userIds,
@@ -226,15 +227,21 @@ export default class ManagingModalSharing extends React.Component {
 
   selectUsers() {
     let style = this.props.selectUsers ? {} : {display: 'none'}
-    let users = this.state.users.filter((u)=> u.id != this.state.currentUser.id);
-    let usersEntries = users.map(
-      (user) => {return { value: user.id, label: user.name };});
+    let {users,selectedUsers} = this.state
+
+    let usersEntries = users.filter(u => u.id != this.state.currentUser.id)
+      .map( u => {return { value: u.id, label: u.name };});
 
       return(
         <div style={style}>
           <b>Select Users to share with</b>
-          <Select ref='userSelect' name='users' multi={true}
-            options={usersEntries}/>
+          <Select  name='users' multi={true}
+            onChange={e=>{
+              if (e) {this.setState({selectedUsers: e.map(o => o.value)})}
+            }}
+            options={usersEntries}
+            value={selectedUsers}
+          />
         </div>
       )
 
