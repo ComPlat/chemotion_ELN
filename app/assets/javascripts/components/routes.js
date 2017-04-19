@@ -104,14 +104,13 @@ const routes = {
       '/:collectionID': 'show'
     },
 
-
     '/report': {
       target: {
-        show: function(e) {
+        showReport: function(e) {
           ElementActions.showReportContainer();
         }
       },
-      '/:reportID': 'show'
+      '/': 'showReport'
     },
 
     '/sample': {
