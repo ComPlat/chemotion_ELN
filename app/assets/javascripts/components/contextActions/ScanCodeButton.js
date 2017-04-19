@@ -1,5 +1,7 @@
 import React from 'react';
-import {Alert, Button, Modal, OverlayTrigger, Tooltip, SplitButton, MenuItem} from 'react-bootstrap';
+import ReactDOM from 'react-dom'
+import {Alert, Button, Modal, OverlayTrigger, Tooltip, SplitButton,
+  FormGroup, ControlLabel, FormControl, MenuItem, Form} from 'react-bootstrap';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
 import UIActions from '../actions/UIActions';
@@ -150,6 +152,19 @@ export default class ScanCodeButton extends React.Component {
           <Modal.Body>
             <div id="code-scanner" style={{maxHeight: '400px', overflow: 'hidden'}}>
               {this.qrReader(this.state)}
+              <Form  onSubmit={()=>{
+                this.handleScan(ReactDOM.findDOMNode(this.codeInput).value)
+                }}>
+                <FormGroup>
+                  <ControlLabel></ControlLabel>
+                  <FormControl
+                    autoFocus
+                    type="text"
+                    ref={input => {this.codeInput = input}}
+                    />
+                  <Button type="submit" style={{display:"none"}}></Button>
+                </FormGroup>
+              </Form>
             </div>
             <br/>
             {this.scanAlert()}
