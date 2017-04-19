@@ -6,7 +6,6 @@ import HTML5Backend from 'react-dnd-html5-backend';
 import List from './List';
 import ElementDetails from './ElementDetails';
 import ElementStore from './stores/ElementStore';
-import ReportContainer from './report/ReportContainer';
 
 class Elements extends Component {
   constructor(props) {
@@ -30,37 +29,36 @@ class Elements extends Component {
     this.setState({ currentElement });
   }
 
-  rightHalfPage(showReport, currentElement) {
-    return (
-      showReport
-        ? <ReportContainer />
-        : <ElementDetails currentElement={currentElement} />
-    );
-  }
-
   render() {
     const { currentElement } = this.state;
-    const showReport = currentElement && currentElement.type === 'report' ? true : false;
+    const showReport = (currentElement || []).type === 'report'
+
+    let list = (
+      <Col md={12} style={{paddingLeft: "10px"}}>
+        <List overview={false} showReport={showReport}/>
+      </Col>
+    )
+    let page = (<span />)
+
     if (currentElement) {
-      return (
-        <div>
-          <Col md={4}>
-            <List overview={false} showReport={showReport}/>
-          </Col>
-          <Col md={8}>
-            {this.rightHalfPage(showReport, currentElement)}
-          </Col>
-        </div>
+      list = (
+        <Col md={4}>
+          <List overview={false} showReport={showReport}/>
+        </Col>
       )
-    } else {
-      return (
-        <div>
-          <Col md={12} style={{paddingLeft: "10px"}}>
-            <List overview={true} showReport={showReport}/>
-          </Col>
-        </div>
-      );
+      page = (
+        <Col md={8}>
+          <ElementDetails currentElement={currentElement} />
+        </Col>
+      )
     }
+
+    return (
+      <div>
+        {list}
+        {page}
+      </div>
+    );
   }
 }
 

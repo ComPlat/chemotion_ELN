@@ -10,6 +10,7 @@ import { SameEleTypId, UrlSilentNavigation } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import { ConfirmModal } from './common/ConfirmModal';
+import ReportContainer from './report/ReportContainer';
 
 import Sample from './models/Sample';
 import Reaction from './models/Reaction';
@@ -108,10 +109,11 @@ export default class ElementDetails extends Component {
 
   deleteElement(deleteEl) {
     const { selecteds } = this.state;
+
     return selecteds.map( s => {
       const isSame = SameEleTypId(s, deleteEl);
       return isSame ? null : s;
-    }).filter(r => r != null);
+    }).filter(r => r != null)
   }
 
   elementIndex(selecteds, newSelected) {
@@ -130,6 +132,7 @@ export default class ElementDetails extends Component {
     } else {
       ElementActions.setCurrentElement(newCurrentElement);
     }
+
     UrlSilentNavigation(newCurrentElement);
   }
 
@@ -143,11 +146,14 @@ export default class ElementDetails extends Component {
   }
 
   isDeletable(deleteEl) {
-    return deleteEl.isPendingToSave ? false : true;
+    return deleteEl && deleteEl.isPendingToSave ? false : true;
   }
 
   closeDetails(deleteEl, force = false) {
-    const isDeletable = this.isDeletable(deleteEl);
+    let isDeletable = this.isDeletable(deleteEl);
+    // Currently ignore report "isPendingToSave"
+    if (deleteEl.type === "report") isDeletable = true
+
     if(force || isDeletable) {
       this.deleteCurrentElement(deleteEl);
     } else {
@@ -214,6 +220,8 @@ export default class ElementDetails extends Component {
         return <ResearchPlanDetails research_plan={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
+      case 'report':
+        return <ReportContainer closeDetails={this.closeDetails} report={el}/>
     }
   }
 
@@ -237,14 +245,28 @@ export default class ElementDetails extends Component {
   }
 
   tabTitle(el, elKey) {
-    const bsStyle = el.isPendingToSave ? 'info' : 'primary';
+    let bsStyle = el.isPendingToSave ? 'info' : 'primary';
     const focusing = elKey === this.state.activeKey;
-    const icon = focusing
-      ? <i className={`icon-${el.type}`}/>
-      : <Label bsStyle={bsStyle}>
-          <i className={`icon-${el.type}`}/>
-        </Label>
-    return <div>{icon} &nbsp; {el.title()} </div>
+
+    let iconElement = (<i className={`icon-${el.type}`}/>)
+    let title = el.title()
+
+    if (el.type === 'report') {
+      title = "Report"
+      bsStyle = "primary"
+      iconElement = (
+        <span>
+          <i className="fa fa-file-text-o" />&nbsp;&nbsp;
+          <i className="fa fa-pencil" />
+        </span>
+      )
+    }
+
+    let icon = focusing
+      ? (iconElement)
+      : <Label bsStyle={bsStyle}>{iconElement}</Label>
+
+    return <div>{icon} &nbsp; {title} </div>
   }
 
   render() {
