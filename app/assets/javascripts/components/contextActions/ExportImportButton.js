@@ -15,7 +15,7 @@ const ExportImportButton = ({isDisabled, updateModalProps}) => {
 
   return (
     <OverlayTrigger placement="bottom" overlay={tooltip} refs="overlay">
-      <Dropdown id='export-dropdown' title={title} disabled={isDisabled} > 
+      <Dropdown id='export-dropdown' title={title} disabled={isDisabled} >
         <Dropdown.Toggle>
           <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
         </Dropdown.Toggle>
@@ -51,12 +51,13 @@ const importFunction = (updateModalProps) => {
 }
 
 const exportFunction = (updateModalProps) => {
-  const title = "Select Export columns";
+  const title = "Select Data to Export";
   const component = ModalExport;
   const modalProps = {
     show: true,
     title,
     component,
+    customModal: "exportModal"
   };
   updateModalProps(modalProps);
 }

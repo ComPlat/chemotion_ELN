@@ -26,7 +26,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
 
       <SVGContent show={settings.diagram}
                   svgPath={svgPath}
-                  isProductOnly={!configs.Showallmater}
+                  isProductOnly={!configs.Showallchemi}
                   products={products} />
       <MaterialContent  show={settings.material}
                         starting_materials={starting_materials}
@@ -289,17 +289,23 @@ const AnalysesContent = ({show, products}) => {
   const analyses = products.map((product, i) => {
     return (
       product.analyses.map((analysis, j) => {
+        const content = analysis && analysis.extended_metadata
+                          ? JSON.parse(analysis.extended_metadata.content)
+                          : {}
+        const kind = analysis.kind ? `(${analysis.kind})` : ""
         return (
           analysis
             ? <div key={i*100+j}>
-                <div className="noBorder">
-                  <p><b>{product.molecule.sum_formular}</b> ({analysis.kind})</p>
-                  <div className="noBorder">
+                <div className="noBorder g-marginLeft--20">
+                  <p><b>{product.molecule.sum_formular}</b> {kind}</p>
+                  <div className="noBorder g-marginLeft--20">
                     <u>Content:</u>
-                    <QuillViewer value={analysis.content} />
-                    <u>Description:</u> {analysis.description}
+                    <QuillViewer value={content} />
+                    <u>Description:</u>
+                    <p className="g-marginLeft--20">{analysis.description}</p>
                   </div>
                 </div>
+                <br/>
               </div>
             : null
         )

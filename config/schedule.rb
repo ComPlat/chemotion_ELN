@@ -3,10 +3,10 @@
 # It's helpful, but not entirely necessary to understand cron before proceeding.
 # http://en.wikipedia.org/wiki/Cron
 
-every 4.days do
-  runner "ReallyDestroyTask.execute!"
+every :sunday, at: '0am' do
+  rake "backup:weekly"
 end
 
-every :sunday, at: '12pm' do
-  command "backup perform -t weekly_backup -c backup/config.rb"
+every :sunday, at: '1am' do
+  runner "ReallyDestroyTask.execute!"
 end

@@ -312,7 +312,7 @@ export default class SampleDetails extends React.Component {
           <PubchemLabels element={sample} />
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
-        
+
       </div>
     )
   }

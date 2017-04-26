@@ -9,10 +9,9 @@ class Reporter::SdfExport
 
   def generate_file(default_excluded_field, default_included_field, removed_field = [])
     return -1 if @@sample_list.empty? || @@sample_list.first == nil
-
     mdf_string = ""
     # We dont want to export Sample description
-    default_excluded_field << ["description", "image"]
+    default_excluded_field += ["description", "image", "molfile"]
     default_included_field = default_included_field.map! {|x|
       x.slice!("molecule.")
       x
@@ -26,7 +25,7 @@ class Reporter::SdfExport
     @@sample_list.compact.each_with_index do |sample, index|
       sample_mdf = sample.molfile.split(/#|END/).first + "END\n"
 
-      default_included_field.each do |field|
+      (default_included_field - removed_field).each do |field|
         value = sample.molecule.send(field).to_s || ""
         next if value.empty?
 
@@ -34,7 +33,7 @@ class Reporter::SdfExport
 
         field_str = field.gsub(" ", "_").upcase
 
-        field_mdf = ">  <#{field_str}> (#{sample.id})\n#{value}\n\n"
+        field_mdf = ">  <#{field_str}>\n#{value}\n\n"
 
         sample_mdf = sample_mdf + field_mdf
       end
@@ -46,7 +45,7 @@ class Reporter::SdfExport
 
         field_str = field.gsub(" ", "_").upcase
 
-        field_mdf = ">  <#{field_str}> (#{sample.id})\n#{value}\n\n"
+        field_mdf = ">  <#{field_str}>\n#{value}\n\n"
 
         sample_mdf = sample_mdf + field_mdf
       end

@@ -15,10 +15,7 @@ class MaterialDecorator
       rma = reaction_materials_attributes[reaction_material.sample_id] || {}
       m.reference = rma['reference']
       m.equivalent = rma['equivalent']
-
-      if reaction_material.class.to_s === "ReactionsProductSample"
-        m.container = reaction_material.sample.container
-      end
+      m.container = reaction_material.sample.container
 
       m
     end

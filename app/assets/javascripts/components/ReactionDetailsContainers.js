@@ -37,6 +37,7 @@ export default class ReactionDetailsContainers extends Component {
     const {reaction} = this.state;
     let container = Container.buildEmpty();
     container.container_type = "analysis";
+    container.extended_metadata.content = { "ops": [{ "insert": "" }] }
 
     reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 

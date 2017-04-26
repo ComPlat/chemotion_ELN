@@ -1,7 +1,6 @@
 import React from 'react'
 
 import UIActions from './actions/UIActions'
-import Select from 'react-select'
 
 export default class ElementAllCheckbox extends React.Component {
   constructor(props) {

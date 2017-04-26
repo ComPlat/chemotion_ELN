@@ -54,6 +54,7 @@ export default class SampleDetailsContainers extends Component {
     const {sample} = this.state;
     let container = Container.buildEmpty();
     container.container_type = "analysis";
+    container.extended_metadata.content = { "ops": [{ "insert": "" }] }
 
     sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
