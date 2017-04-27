@@ -76,15 +76,10 @@ module Chemotion
           requires :element_type, type: String
         end
         get do
-          case params[:element_type]
-          when "sample"
-            sample = Sample.find(params[:element_id])
-            qr_code = Barby::QrCode.new(sample.qr_code, size: 1, level: :l)
-            outputter = Barby::SvgOutputter.new(qr_code)
-            outputter.to_svg(margin: 0)
-          when "wellplate"
-            wellplate = Wellplate.find(params[:element_id])
-            qr_code = Barby::QrCode.new(wellplate.qr_code, size: 1, level: :l)
+          code = CodeLog.where(source: params[:element_type],
+            source_id: params[:element_id]).first
+          if code
+            qr_code = Barby::QrCode.new(code.value, size: 1, level: :l)
             outputter = Barby::SvgOutputter.new(qr_code)
             outputter.to_svg(margin: 0)
           else
