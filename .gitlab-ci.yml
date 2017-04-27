@@ -8,13 +8,13 @@ variables:
   POSTGRES_USER: chemotion_test
   POSTGRES_PASSWORD: "123456"
 
-cache:
-  untracked: true
-  key: "$CI_BUILD_REF_NAME"
-  paths:
-    - node_modules/
-    - public/
-    - .bundle/
+# cache:
+#   untracked: true
+#   key: "$CI_BUILD_REF_NAME"
+#   paths:
+#     - node_modules/
+#     - public/
+#     - .bundle/
 
 # stages:
   # - rspec

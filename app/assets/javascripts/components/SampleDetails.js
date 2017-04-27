@@ -307,7 +307,7 @@ export default class SampleDetails extends React.Component {
                 name='cas'
                 multi={false}
                 options={cas_arr}
-                className='drop-up'
+                //className='drop-up'//TODO fix drop-up style (react-select upg)
                 onChange={(e) => this.updateCas(e)}
                 value={cas}
         />

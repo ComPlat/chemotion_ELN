@@ -136,7 +136,8 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction, addDefaultSol
             multi={false}
             options={defaultMultiSolventsOptions}
             placeholder='Default solvents'
-            onChange={ (e) => { createDefaultSolventsForReaction(e[0], e[1]) }} />
+            onChange={ (e) => {if (e && e.value){
+              createDefaultSolventsForReaction(e.value[0], e.value[1]) }}} />
         </th>
         <th width="4%">T/R</th>
         <th width="26%">Label</th>
@@ -160,4 +161,18 @@ MaterialGroup.propTypes = {
   showLoadingColumn: PropTypes.object,
   reaction: PropTypes.object.isRequired,
   addDefaultSolvent: PropTypes.func,
+};
+
+GeneralMaterialGroup.propTypes = {
+  materialGroup: PropTypes.string.isRequired,
+  showLoadingColumn: PropTypes.object,
+  reaction: PropTypes.object.isRequired,
+  contents: PropTypes.array,
+};
+
+SolventsMaterialGroup.propTypes = {
+  materialGroup: PropTypes.string.isRequired,
+  reaction: PropTypes.object.isRequired,
+  addDefaultSolvent: PropTypes.func,
+  contents: PropTypes.array,
 };

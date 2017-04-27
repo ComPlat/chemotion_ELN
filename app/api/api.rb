@@ -23,6 +23,23 @@ class API < Grape::API
       request.path.include?('/api/v1/public/')
     end
 
+    def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
+      molecule_sort = molecule_sort == 1 ? true : false
+      inchikey = Chemotion::OpenBabelService.inchikey_from_molfile molfile
+
+      cache_key = [
+        latest_updated,
+        search_method,
+        arg,
+        inchikey,
+        collection_id,
+        molecule_sort,
+        opt
+      ]
+
+      return cache_key
+    end
+
     def group_by_molecule(samples, own_collection = false)
       groups = Hash.new
       sample_serializer_selector =

@@ -75,8 +75,12 @@ private
           oldcon.description = child.description
 
           extended_metadata = child.extended_metadata
-          if child.container_type == "analysis" && extended_metadata.key?("content")
-            extended_metadata["content"] = extended_metadata["content"].to_json
+          if child.container_type == "analysis"
+              extended_metadata["content"] = if extended_metadata.key?("content")
+                extended_metadata["content"].to_json
+              else 
+                "{\"ops\":[{\"insert\":\"\"}]}"
+              end
           end
           oldcon.extended_metadata = extended_metadata
 
@@ -93,8 +97,12 @@ private
           newcon.description = child.description
 
           extended_metadata = child.extended_metadata
-          if child.container_type == "analysis" && extended_metadata.key?("content")
-            extended_metadata["content"] = extended_metadata["content"].to_json
+          if child.container_type == "analysis"
+              extended_metadata["content"] = if extended_metadata.key?("content")
+                extended_metadata["content"].to_json
+              else 
+                "{\"ops\":[{\"insert\":\"\"}]}"
+              end
           end
           newcon.extended_metadata = extended_metadata
 

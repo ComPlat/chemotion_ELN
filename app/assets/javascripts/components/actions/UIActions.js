@@ -14,6 +14,10 @@ class UIActions {
     return  null;
   }
 
+  toggleAdvancedSearch(show) {
+    return show
+  }
+
   selectCollection(collection) {
     return  collection
   }

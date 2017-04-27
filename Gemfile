@@ -73,7 +73,7 @@ gem 'roo', ">2.5.0"
 gem 'httparty'
 gem 'faraday', '~> 0.11.0'
 # Ketcher editor
-gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails'
+gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails', ref: 'aae1ba59e96ac5604449cf260a347a65e4bdb637'
 
 # Free font icons
 gem "font-awesome-rails"
@@ -128,6 +128,7 @@ group :development, :test do
 
   # Access an IRB console on exception pages or by using <%= console %> in views
 
+  gem 'bullet'
 
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'

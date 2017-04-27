@@ -54,12 +54,13 @@ module Chemotion
       def excluded_field
         [
           "id", "molecule_id", "created_by", "deleted_at",
-          "user_id", "fingerprint_id", "sample_svg_file"
+          "user_id", "fingerprint_id", "sample_svg_file", "xref"
         ]
       end
 
       def included_field
-        ["molecule.cano_smiles", "molecule.sum_formular", "molecule.inchistring"]
+        ["molecule.cano_smiles", "molecule.sum_formular",
+          "molecule.inchistring", "molecule.molecular_weight"]
       end
 
       def selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)

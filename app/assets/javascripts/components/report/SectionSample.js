@@ -37,7 +37,9 @@ const AnalysesContent = ({show, showRecDes, analyses, reactionDescription}) => {
   const init = showRecDes && isReDesObj ? reactionDescription.ops : [];
   const analysesParagraph = () => {
     const dataMerged = analyses.reduce( (sum, a) => {
-      let contentJSON = JSON.parse(a.extended_metadata.content)
+      let defaultContent = "{\"ops\":[{\"insert\":\"\"}]}"
+
+      let contentJSON = JSON.parse(a.extended_metadata.content || defaultContent)
       return [...sum, ...contentJSON.ops];
     } , init);
     const data = dataMerged.map(d => {

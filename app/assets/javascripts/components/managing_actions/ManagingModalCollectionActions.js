@@ -9,10 +9,12 @@ import Select from 'react-select'
 export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
+    const options = this.collectionOptions();
+    const selected = options[0].value;
     this.state = {
       newLabel: null,
-      options: null,
-      selected: null,
+      options: options,
+      selected: selected,
     }
     this.onSelectChange = this.onSelectChange.bind(this);
     this.addCollection = this.addCollection.bind(this);
@@ -20,13 +22,13 @@ export default class ManagingModalCollectionActions extends React.Component {
   }
 
   componentDidMount() {
-    const options = this.collectionOptions();
-    const selected = options[0].value;
-    this.setState({options, selected});
+
   }
 
   onSelectChange(e) {
-    this.setState({selected: e});
+    let selected = e && e.value
+    this.setState((previousProps,previousState)=>{
+      return {...previousState,selected: selected}});
   }
 
   writableColls(colls) {
@@ -138,7 +140,8 @@ export default class ManagingModalCollectionActions extends React.Component {
         excluded_ids: uiStoreState.research_plan.uncheckedIds
       },
       currentCollection: uiStoreState.currentCollection,
-      currentCollectionId: uiStoreState.currentCollection.id
+      currentCollectionId: uiStoreState.currentCollection.id,
+      currentSearchSelection: uiStoreState.currentSearchSelection
     }
 
     this.props.action({ ui_state: ui_state,

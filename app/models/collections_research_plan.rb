@@ -31,7 +31,13 @@ class CollectionsResearchPlan < ActiveRecord::Base
   # Static create without checking associated
   def self.static_create_in_collection(research_plan_ids, collection_id)
     research_plan_ids.map { |id|
-      self.find_or_create_by(research_plan_id: id, collection_id: collection_id)
+      rp = self.with_deleted.find_or_create_by(
+        research_plan_id: id,
+        collection_id: collection_id
+      )
+
+      rp.restore! if rp.deleted?
+      rp
     }
   end
 

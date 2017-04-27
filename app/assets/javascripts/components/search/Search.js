@@ -31,6 +31,7 @@ export default class Search extends React.Component {
     let uiState = UIStore.getState()
     selection.elementType = this.state.elementType
     UIActions.setSearchSelection(selection)
+    selection.page_size = uiState.number_of_results
 
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
       uiState.currentCollection.id, 1, uiState.isSync)
@@ -48,9 +49,10 @@ export default class Search extends React.Component {
   structureSearch(molfile) {
     let uiState = UIStore.getState()
     let userState = UIStore.getState()
+
     let tanimoto = this.state.tanimotoThreshold
-    if (tanimoto <= 0 || tanimoto > 1)
-      tanimoto = 0.3
+    if (tanimoto <= 0 || tanimoto > 1) tanimoto = 0.3
+
     let selection = {
       elementType: this.state.elementType,
       molfile: molfile,
@@ -68,24 +70,18 @@ export default class Search extends React.Component {
   handleClearSearchSelection() {
     let uiState = UIStore.getState()
 
-    this.refs.autoComplete.setState({
-      value: ''
-    })
-
     UIActions.selectCollection({id: uiState.currentCollection.id})
     UIActions.clearSearchSelection()
-
-    let autoComplete = this.refs.autoComplete
-    autoComplete.setState({
-      value : '',
-      inputDisabled : false
-    })
   }
 
   showStructureEditor() {
     this.setState({
       showStructureEditor: true
     })
+  }
+
+  showAdvancedSearch() {
+    UIActions.toggleAdvancedSearch(true)
   }
 
   hideStructureEditor() {
@@ -110,12 +106,6 @@ export default class Search extends React.Component {
     // If the first character ~ num of atoms is 0, we will not search
     if (molfileLines[1].trim()[0] != 0) {
       this.structureSearch(molfile)
-
-      let autoComplete = this.refs.autoComplete
-      autoComplete.setState({
-        value : 'Structure Filter',
-        inputDisabled : true
-      })
     }
 
     this.hideStructureEditor()
@@ -142,9 +132,13 @@ export default class Search extends React.Component {
   }
 
   renderMenuItems() {
-    let elements = ["all", "samples", "reactions", "wellplates", "screens"]
+    let elements = [
+      "All",
+      "Samples", "Reactions",
+      "Wellplates", "Screens"
+    ]
 
-    return elements.map((element) => {
+    let menu = elements.map((element) => {
       return (
         <MenuItem key={element}
             onSelect = {() => this.handleElementSelection(element)}>
@@ -152,6 +146,15 @@ export default class Search extends React.Component {
         </MenuItem>
       )
     })
+
+    menu.push(<MenuItem key="divider" divider/>)
+    menu.push(
+      <MenuItem key="advanced" onSelect={this.showAdvancedSearch}>
+        Advanced Search
+      </MenuItem>
+    )
+
+    return menu
   }
 
   render() {
@@ -207,11 +210,12 @@ export default class Search extends React.Component {
       }
     }
 
-    let innerDropdown =
+    let innerDropdown = (
       <DropdownButton id="search-inner-dropdown" title={this.state.elementType}
           style={{width:'100px'}}>
         {this.renderMenuItems()}
       </DropdownButton>
+    )
 
     return (
       <div className="chemotion-search">

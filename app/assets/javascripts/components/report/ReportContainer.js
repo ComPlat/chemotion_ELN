@@ -49,23 +49,31 @@ export default class ReportContainer extends Component {
     ReportActions.updateCheckedTags.defer(oldTags, newTags);
   }
 
+  renderHeader() {
+    return (
+      <div>
+        Report Generation
+        <div className="button-right">
+          <Button bsStyle="danger"
+                  bsSize="xsmall"
+                  className="g-marginLeft--10 button-right"
+                  onClick={(e) => this.props.closeDetails(this.props.report)}>
+            <i className="fa fa-times"></i>
+          </Button>
+          {this.generateReportBtn()}
+        </div>
+      </div>
+    )
+  }
+
   render() {
     const { splSettings, checkedAllSplSettings,
             rxnSettings, checkedAllRxnSettings,
             configs, checkedAllConfigs,
             selectedObjs, archives, activeKey } = this.state;
     return (
-      <Panel header="Report Generation"
+      <Panel header={this.renderHeader()}
              bsStyle="default">
-        <div className="button-right">
-          {this.generateReportBtn()}
-          <Button bsStyle="danger"
-                  bsSize="xsmall"
-                  className="g-marginLeft--10"
-                  onClick={this.closeDetails.bind(this)}>
-            <i className="fa fa-times"></i>
-          </Button>
-        </div>
 
         <Tabs activeKey={activeKey}
               onSelect={this.selectTab}
@@ -161,7 +169,7 @@ export default class ReportContainer extends Component {
                     value={imgFormat}
                     clearable={false}
                     style={{width: 100}}
-                    onChange={(e) => this.handleImgFormatChanged(e)}/>
+                    onChange={(e) => this.handleImgFormatChanged(e.value)}/>
           </Col>
           <Col md={9} sm={16}>
             <label></label>
@@ -193,10 +201,10 @@ export default class ReportContainer extends Component {
     ReportActions.updateConfigs({text, checked})
   }
 
-  closeDetails() {
-    UIActions.uncheckWholeSelection();
-    UIActions.deselectAllElements()
-  }
+  // closeDetails() {
+  //   UIActions.uncheckWholeSelection();
+  //   UIActions.deselectAllElements()
+  // }
 
   toggleSplSettingsAll() {
     ReportActions.toggleSplSettingsCheckAll()

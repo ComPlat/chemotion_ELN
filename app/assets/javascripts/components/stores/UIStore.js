@@ -46,6 +46,7 @@ class UIStore {
         page: 1
       },
       showPreviews: true,
+      showAdvancedSearch: false,
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
@@ -60,6 +61,7 @@ class UIStore {
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
       handleToggleShowPreviews: UIActions.toggleShowPreviews,
+      handleToggleAdvancedSearch: UIActions.toggleAdvancedSearch,
       handleCheckElement: UIActions.checkElement,
       handleUncheckElement: UIActions.uncheckElement,
       handleUncheckAllElements: UIActions.uncheckAllElements,
@@ -97,19 +99,27 @@ class UIStore {
     this.waitFor(ElementStore.dispatchToken);
 
     let {type, range} = params;
-    
+    let {elements} = ElementStore.getState();
+
     if (range == 'all') {
-      this.state[type].checkedAll = true;
-      this.state[type].checkedIds = Immutable.List();
-      this.state[type].uncheckedIds = Immutable.List();
+      if (this.state.currentSearchSelection && elements[type + "s"].ids) {
+        let ids = elements[type + "s"].ids
+        this.state[type].checkedAll = false
+        this.state[type].checkedIds = Immutable.List(ids)
+        this.state[type].uncheckedIds = Immutable.List()
+      } else {
+        this.state[type].checkedAll = true;
+        this.state[type].checkedIds = Immutable.List();
+        this.state[type].uncheckedIds = Immutable.List();
+      }
     } else if (range == 'current') {
-      let {elements} = ElementStore.getState();
       let curPageIds = elements[type + "s"].elements.reduce(
         function(a, b) { return a.concat(b); }, []
       ).map((e) => { return e.id });
 
+      this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = Immutable.List();
-      this.state[type].checkedIds = Immutable.List(curPageIds);
+      this.state[type].checkedIds = this.state[type].checkedIds.concat(curPageIds)
     } else {
       this.handleUncheckAllElements(params)
     }
@@ -117,6 +127,11 @@ class UIStore {
 
   handleToggleShowPreviews() {
     this.state.showPreviews = !this.state.showPreviews;
+  }
+
+  handleToggleAdvancedSearch(show) {
+    if (show == null) show = !this.state.showAdvancedSearch
+    this.state.showAdvancedSearch = show;
   }
 
   handleUncheckAllElements(params) {
@@ -247,6 +262,7 @@ class UIStore {
 
   handleClearSearchSelection() {
     this.state.currentSearchSelection = null;
+    this.state.showAdvancedSearch = false;
   }
 
   handleChangeNumberOfResultsShown(value) {

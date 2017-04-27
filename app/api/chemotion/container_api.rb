@@ -30,7 +30,7 @@ module Chemotion
     resource :inbox do
       get do
         attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
-        
+
       end
     end
 
