@@ -1,11 +1,13 @@
 import React from 'react';
-import {Button, OverlayTrigger} from 'react-bootstrap';
+import {Button, OverlayTrigger, Badge} from 'react-bootstrap';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
 import UIActions from './actions/UIActions';
+import InboxActions from './actions/InboxActions';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
+import InboxStore from './stores/InboxStore';
 import Xdiv from './extra/CollectionTreeXdiv';
 import update from 'react-addons-update';
 import UserInfos from './UserInfos';
@@ -15,6 +17,8 @@ export default class CollectionTree extends React.Component {
     super(props);
 
     let collecState = CollectionStore.getState()
+    let inboxState = InboxStore.getState()
+
     this.state = {
       unsharedRoots: collecState.unsharedRoots,
       sharedRoots: collecState.sharedRoots,
@@ -24,7 +28,9 @@ export default class CollectionTree extends React.Component {
       ownCollectionVisible: true,
       sharedWithCollectionVisible: true,
       sharedToCollectionVisible: true,
-      syncCollectionVisible: true
+      syncCollectionVisible: true,
+      inbox: inboxState.inbox,
+      inboxVisible: false
     }
 
     this.onChange = this.onChange.bind(this)
@@ -32,15 +38,18 @@ export default class CollectionTree extends React.Component {
 
   componentDidMount() {
     CollectionStore.listen(this.onChange);
+    InboxStore.listen(this.onChange);
     CollectionActions.fetchLockedCollectionRoots();
     CollectionActions.fetchUnsharedCollectionRoots();
     CollectionActions.fetchSharedCollectionRoots();
     CollectionActions.fetchRemoteCollectionRoots();
     CollectionActions.fetchSyncInCollectionRoots();
+    InboxActions.fetchInbox();
   }
 
   componentWillUnmount() {
     CollectionStore.unlisten(this.onChange);
+    InboxStore.unlisten(this.onChange);
   }
 
   onChange(state) {
@@ -49,6 +58,7 @@ export default class CollectionTree extends React.Component {
 
   lockedSubtrees() {
     const roots = this.state.lockedRoots;
+
     return this.subtrees(roots, null, false);
   }
 
@@ -119,6 +129,28 @@ export default class CollectionTree extends React.Component {
 
     return this.subtrees(labelledRoots, subTreeLabels,
                          false, sharedWithCollectionVisible)
+  }
+
+
+  inboxSubtrees() {
+    const inbox = this.state.inbox;
+
+    let filelist = inbox.map(e => {
+      return (
+        <li>
+          <span style={{fontSize: '18pt', cursor: 'move'}}
+            className='text-info fa fa-arrows'></span>
+             &nbsp; {e.filename}
+        </li>
+      )
+    })
+    return(
+      <div className="tree-view">
+        <ul>
+          {filelist}
+        </ul>
+      </div>
+    )
   }
 
   remoteSyncInSubtrees() {
@@ -228,7 +260,7 @@ export default class CollectionTree extends React.Component {
   }
 
   render() {
-    let {ownCollectionVisible} = this.state
+    let {ownCollectionVisible, inboxVisible, inbox} = this.state
     let extraDiv = [];
     for (let j=0;j < Xdiv.count;j++){
       let NoName = Xdiv["content"+j];
@@ -236,6 +268,7 @@ export default class CollectionTree extends React.Component {
     }
 
     let ownCollectionDisplay = ownCollectionVisible ? "" : "none"
+    let inboxDisplay = inboxVisible ? "" : "none"
 
     return (
       <div>
@@ -260,6 +293,17 @@ export default class CollectionTree extends React.Component {
           {this.remoteSyncInSubtrees()}
         </div>
         {extraDiv.map((e)=>{return e})}
+        <div className="tree-view">
+          <div className="title" style={{backgroundColor:'white'}}
+            onClick={() => this.setState({inboxVisible: !inboxVisible})}>
+            <i className="fa fa-list" /> &nbsp; Inbox {
+              inbox.length > 0 ? <Badge> {inbox.length} </Badge> : ""
+            }
+          </div>
+        </div>
+        <div className="tree-wrapper" style={{display: inboxDisplay}}>
+          {this.inboxSubtrees()}
+        </div>
       </div>
     )
   }
