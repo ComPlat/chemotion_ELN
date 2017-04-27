@@ -7,7 +7,11 @@ RSpec.describe CodeLog, type: :model do
     screen = create(:screen)
     wellplate = create(:wellplate)
 
-    expect(CodeLog.get_bar_codes).to eq [sample.bar_code, reaction.bar_code, screen.bar_code, wellplate.bar_code]
-    expect(CodeLog.get_qr_codes).to eq [sample.qr_code, reaction.qr_code, screen.qr_code, wellplate.qr_code]
+    expect(CodeLog.all.pluck(:source, :source_id)).to eq [
+      ["sample",sample.id],
+      ["reaction", reaction.id],
+      ["screen", screen.id],
+      ["wellplate", wellplate.id]
+    ]
   end
 end

@@ -13,15 +13,11 @@ RSpec.describe Sample, type: :model do
     let(:sample)  { create(:sample) }
     let(:samples) { create_list(:sample, 500) }
 
-    it 'has a bar and qr code' do
-      expect(sample.bar_code).to be_a(String)
-      expect(sample.qr_code).to be_a(String)
-    end
-
-    # test on 500 samples as indicator
-    it 'has "unique" bar & qr codes' do
-      expect(samples.map(&:bar_code).size).to eq(samples.map(&:bar_code).uniq.size)
-      expect(samples.map(&:qr_code).size).to eq(samples.map(&:qr_code).uniq.size)
+    it 'has a CodeLog' do
+      expect(sample.code_log.value).to match(/\d{40}/)
+      expect(sample.code_log.id).to match(
+      /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+      )
     end
   end
 
@@ -57,8 +53,7 @@ RSpec.describe Sample, type: :model do
     end
 
     it 'also destroys corresponding CodeLog' do
-      expect(CodeLog.get_bar_codes).to_not include sample.bar_code
-      expect(CodeLog.get_qr_codes).to_not include sample.qr_code
+      expect(CodeLog.where(source: "sample",source_id: sample.id)).to be_empty
     end
   end
 

@@ -1,10 +1,10 @@
 class UserSerializer < ActiveModel::Serializer
   attributes :id, :name, :initials, :samples_count, :reactions_count, :type,
-            :reaction_name_prefix, :selected_device_id, :layout
+            :reaction_name_prefix, :layout
 
-  def selected_device_id
-    object.selected_device.try(:id)
-  end
+  # def selected_device_id
+  #   object.selected_device.try(:id)
+  # end
 
   def samples_count
     object.counters['samples'].to_i

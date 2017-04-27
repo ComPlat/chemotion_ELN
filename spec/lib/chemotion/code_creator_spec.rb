@@ -5,8 +5,7 @@ RSpec.describe 'CodeCreator' do
 
   describe 'code creation' do
     it 'create functions return a string' do
-      expect(subject.create_bar_code).to be_a(String)
-      expect(subject.create_qr_code).to be_a(String)
+      expect(subject.uuid_to_digit).to match(/\d{40}/)
     end
   end
 end

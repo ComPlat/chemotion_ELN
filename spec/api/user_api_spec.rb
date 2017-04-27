@@ -4,7 +4,7 @@ describe Chemotion::UserAPI do
   let(:json_options) {
     {
       only: [:id,:is_templates_moderator,:type, :reaction_name_prefix],
-      methods: [:name, :initials, :selected_device_id]
+      methods: [:name, :initials]
     }
   }
   let(:srlzr){

@@ -12,9 +12,11 @@ RSpec.describe Reaction, type: :model do
   describe 'after creation' do
     let(:reaction) { create(:reaction) }
 
-    it 'has a bar and qr code' do
-      expect(reaction.bar_code).to be_a(String)
-      expect(reaction.qr_code).to be_a(String)
+    it 'has a CodeLog' do
+      expect(reaction.code_log.value).to match(/\d{40}/)
+      expect(reaction.code_log.id).to match(
+        /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+      )
     end
   end
 

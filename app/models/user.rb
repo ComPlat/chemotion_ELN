@@ -19,8 +19,8 @@ class User < ActiveRecord::Base
   has_many :sync_in_collections_users,  foreign_key: :user_id, class_name: 'SyncCollectionsUser'
   has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
   has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
-  has_many :devices
-  belongs_to :selected_device, class_name: 'Device'
+  has_many :devices, through: :users_devices
+  #belongs_to :selected_device, class_name: 'Device'
 
   has_many :reports_users
   has_many :reports, through: :reports_users

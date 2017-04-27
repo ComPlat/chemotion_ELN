@@ -237,6 +237,32 @@ ActiveRecord::Schema.define(version: 20170414012345) do
     t.time     "deleted_at"
   end
 
+  create_table "ketcherails_amino_acids", force: :cascade do |t|
+    t.integer  "moderated_by"
+    t.integer  "suggested_by"
+    t.string   "name",                          null: false
+    t.text     "molfile",                       null: false
+    t.integer  "aid",               default: 1, null: false
+    t.integer  "aid2",              default: 1, null: false
+    t.integer  "bid",               default: 1, null: false
+    t.string   "icon_path"
+    t.string   "sprite_class"
+    t.string   "status"
+    t.text     "notes"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
+    t.string   "icon_file_name"
+    t.string   "icon_content_type"
+    t.integer  "icon_file_size"
+    t.datetime "icon_updated_at"
+  end
+
+  add_index "ketcherails_amino_acids", ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by", using: :btree
+  add_index "ketcherails_amino_acids", ["name"], name: "index_ketcherails_amino_acids_on_name", using: :btree
+  add_index "ketcherails_amino_acids", ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by", using: :btree
+
   create_table "ketcherails_atom_abbreviations", force: :cascade do |t|
     t.integer  "moderated_by"
     t.integer  "suggested_by"
@@ -256,6 +282,7 @@ ActiveRecord::Schema.define(version: 20170414012345) do
     t.string   "icon_content_type"
     t.integer  "icon_file_size"
     t.datetime "icon_updated_at"
+    t.string   "rtl_name"
   end
 
   add_index "ketcherails_atom_abbreviations", ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by", using: :btree
@@ -592,11 +619,11 @@ ActiveRecord::Schema.define(version: 20170414012345) do
     t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 
@@ -652,12 +679,5 @@ ActiveRecord::Schema.define(version: 20170414012345) do
   add_index "wells", ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
-
-  create_table "xvial_xvials", force: :cascade do |t|
-    t.integer  "sample_id"
-    t.jsonb    "data"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
 
 end

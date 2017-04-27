@@ -1,12 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe Device, type: :model do
-  let(:user) { create(:user) }
-  let(:device) { create(:device, user_id: user.id) }
-  let(:user_2) { create(:user, selected_device_id: device.id) }
+  let(:user) { create(:person) }
+  let(:device) { create(:device)}
 
+  before do
+    device.users << user
+    device.save
+  end
   it "handles user device relationship correctly" do
-    expect(device.user.id).to eq user.id
-    expect(user_2.selected_device).to eq device
+    expect(device.users).to eq Person.where id: user.id
   end
 end

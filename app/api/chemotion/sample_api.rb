@@ -49,11 +49,11 @@ module Chemotion
         delete do
           samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
           samples.map{|sample|
-            DevicesSample.find_by(sample_id: sample.id).destroy
-            sample.devices_analyses.map{|d|
-              d.analyses_experiments.destroy_all
-              d.destroy
-            }
+            # DevicesSample.find_by(sample_id: sample.id).destroy
+            # sample.devices_analyses.map{|d|
+            #   d.analyses_experiments.destroy_all
+            #   d.destroy
+            # }
             sample.destroy
           }
         end
@@ -369,11 +369,11 @@ module Chemotion
 
         delete do
           sample = Sample.find(params[:id])
-          DevicesSample.find_by(sample_id: sample.id).destroy
-          sample.devices_analyses.map{|d|
-            d.analyses_experiments.destroy_all
-            d.destroy
-          }
+          # DevicesSample.find_by(sample_id: sample.id).destroy
+          # sample.devices_analyses.map{|d|
+          #   d.analyses_experiments.destroy_all
+          #   d.destroy
+          # }
           sample.destroy
         end
       end
