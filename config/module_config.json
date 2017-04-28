@@ -1,4 +1,19 @@
 {
+  "AdvancedSearch":{
+    "SearchParams":{
+      "prototype": {
+        "content": {
+          "label": "label",
+          "value": {
+           "table": "db_table_name",
+           "column": "table_column_name",
+           "label": "label"
+          }
+        },
+        "on":      "()=>true"
+      }
+    }
+  },
   "CollectionManagement": {
     "Tabs": {
       "prototype": {

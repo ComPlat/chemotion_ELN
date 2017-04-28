@@ -53,19 +53,38 @@ module Chemotion
       def advanced_search arg
         query = ""
         cond_val = []
+        tables = []
+
         arg.each do |filter|
-          field = filter.field
+          table = filter.field.table
+          tables.push(table)
+          field = filter.field.column
           words = filter.value.split(/,|(\r)?\n/).map!(&:strip)
 
+          if filter.match.downcase == "exact" 
+            match = "="
+          else 
+            match = "LIKE"
+            words = words.map{ |e| "%#{e}%" }
+          end
+
           conditions = words.collect { |word|
-            " samples." + field + " = ? "
+            " " + table + "." + field + " " + match + " ? "
           }.join(" OR ")
 
           query = query + " " + filter.link + " (" + conditions + ") "
           cond_val = cond_val + words
         end
 
-        Sample.for_user(current_user.id).where([query] + cond_val)
+        scope = Sample.for_user(current_user.id)
+        tables.each do |table|
+          if table.downcase != "samples"
+            scope = scope.joins("INNER JOIN #{table} ON #{table}.sample_id = samples.id")
+          end
+        end
+        scope = scope.where([query] + cond_val)
+
+        scope
       end
 
       def serialization_by_elements_and_page(elements, page = 1, molecule_sort = false)
