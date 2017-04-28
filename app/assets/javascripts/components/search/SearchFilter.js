@@ -2,7 +2,7 @@ import React from 'react'
 import {Button, FormControl} from 'react-bootstrap'
 import Select from 'react-select'
 import UIActions from '../actions/UIActions';
-import AdvancedSearchExtra from "../extra/AdvancedSearchExtra";
+import XSearchParams from "../extra/AdvancedSearchXSearchParams";
 
 export default class SearchFilter extends React.Component {
   constructor(props) {
@@ -41,7 +41,12 @@ export default class SearchFilter extends React.Component {
         label: 'Sample External Label'
       }
     ]
-    this.listOptions = this.listOptions.concat(AdvancedSearchExtra)
+
+    for (let i = 0; i < XSearchParams.count; i++){
+      if (XSearchParams[`on${i}`]){
+        this.listOptions = this.listOptions.concat(XSearchParams[`content${i}`])
+      }
+    }
 
     this.andOrOps = [
       { value: "AND", label: "AND" },
@@ -82,7 +87,7 @@ export default class SearchFilter extends React.Component {
     let check = (filter.field && filter.value && filter.link) ||
                 (idx == 0 && filter.field && filter.value)
 
-    if (check) filters.push({link: "OR", match: "EXACT", field: "", value: ""}) 
+    if (check) filters.push({link: "OR", match: "EXACT", field: "", value: ""})
 
     this.setState(filters)
   }
