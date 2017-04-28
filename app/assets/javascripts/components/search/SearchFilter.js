@@ -18,7 +18,7 @@ export default class SearchFilter extends React.Component {
     this.listOptions = [
       {
         value: {
-          table: 'sample',
+          table: 'samples',
           column: 'name',
           label: 'Sample Name'
         },
@@ -26,7 +26,7 @@ export default class SearchFilter extends React.Component {
       },
       {
         value: {
-          table: 'sample',
+          table: 'samples',
           column: 'short_label',
           label: 'Sample Short Label'
         },
@@ -34,7 +34,7 @@ export default class SearchFilter extends React.Component {
       },
       {
         value: {
-          table: 'sample',
+          table: 'samples',
           column: 'external_label',
           label: 'Sample External Label'
         },

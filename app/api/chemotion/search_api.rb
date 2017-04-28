@@ -69,7 +69,7 @@ module Chemotion
           end
 
           conditions = words.collect { |word|
-            " " + table + "." + field + " " + match + " ? "
+            table + "." + field + " " + match + " ? "
           }.join(" OR ")
 
           query = query + " " + filter.link + " (" + conditions + ") "
@@ -92,6 +92,8 @@ module Chemotion
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
+
+        search_by_method = get_search_method()
 
         samples_size = samples.size
         if samples.empty? == false
@@ -117,7 +119,7 @@ module Chemotion
               :residues, :tag,
               collections: :sync_collections_users,
               molecule: :tag
-            ).find(ids)
+            ).where(id: ids).order("position(id::text in '#{ids}')").to_a
             serialized_samples = {
               molecules: group_by_molecule(paging_samples)
             }
@@ -220,12 +222,16 @@ module Chemotion
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
-        
-        return scope.includes(:molecule)
-                    .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
-                    .order(:sum_formular) if molecule_sort
-        
-        return scope
+       
+        if search_method == 'advanced'
+          return scope.order("position("+ arg.first.field.column + "::text in '#{arg.first.value}')")
+        elsif molecule_sort
+          return scope.includes(:molecule)
+                      .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                      .order(:sum_formular) 
+        else 
+          return scope
+        end
       end
 
       def elements_by_scope(scope, collection_id)
