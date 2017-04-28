@@ -19,7 +19,7 @@ export default class Search extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      elementType: 'all',
+      elementType: 'All',
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'similar',
@@ -141,7 +141,7 @@ export default class Search extends React.Component {
     let menu = elements.map((element) => {
       return (
         <MenuItem key={element}
-            onSelect = {() => this.handleElementSelection(element)}>
+                  onSelect = {() => this.handleElementSelection(element.toLowerCase())}>
           {element}
         </MenuItem>
       )
