@@ -35,7 +35,7 @@ class Elements extends Component {
 
     let list = (
       <Col md={12} style={{paddingLeft: "10px"}}>
-        <List overview={false} showReport={showReport}/>
+        <List overview={true} showReport={showReport}/>
       </Col>
     )
     let page = (<span />)
