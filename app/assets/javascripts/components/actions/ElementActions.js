@@ -22,7 +22,7 @@ import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
-import Device from '../models/Device'
+import DeviceControl from '../models/DeviceControl'
 
 import _ from 'lodash';
 
@@ -84,7 +84,7 @@ class ElementActions {
   addSampleToDevice(sample, device, options) {
     return (dispatch) => dispatch({sample, device, options})
   }
-   
+
   addSampleWithAnalysisToDevice(sample, analysis, device) {
     return (dispatch) => dispatch({sample, analysis, device})
   }
@@ -100,8 +100,8 @@ class ElementActions {
   changeDeviceProp(device, prop, value) {
     return (dispatch) => dispatch({device, prop, value})
   }
-  
-  fetchDeviceAnalysisById(analysisId) { 
+
+  fetchDeviceAnalysisById(analysisId) {
     return (dispatch) => {
       DeviceFetcher.fetchAnalysisById(analysisId)
       .then(analysis => {
@@ -116,7 +116,7 @@ class ElementActions {
   openDeviceAnalysis(device, type) {
     return (dispatch) => dispatch({device, type})
   }
- 
+
   saveDeviceAnalysis(analysis) {
     if (analysis.isNew) {
       return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
@@ -124,7 +124,7 @@ class ElementActions {
       return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
     }
   }
-  
+
   createDeviceAnalysis(deviceId, analysisType) {
     return (dispatch) => {
       DeviceFetcher.fetchById(deviceId)
@@ -133,12 +133,12 @@ class ElementActions {
       })
     }
   }
-  
+
   generateExperimentConfig(experiment) {
     return (dispatch) =>
-      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment)) 
+      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment))
   }
-   
+
   duplicateAnalysisExperiment(analysis, experiment) {
     return (dispatch) =>
       DeviceFetcher.fetchById(analysis.deviceId)
@@ -146,11 +146,11 @@ class ElementActions {
         dispatch({device, analysis, experiment})
       })
   }
-  
+
   changeAnalysisExperimentProp(analysis, experiment, prop, value) {
     return (dispatch) => dispatch({analysis, experiment, prop, value})
   }
-  
+
   deleteAnalysisExperiment(analysis, experiment) {
     return (dispatch) =>
       DeviceFetcher.fetchById(analysis.deviceId)
@@ -158,7 +158,11 @@ class ElementActions {
         dispatch({device, analysis, experiment})
       })
   }
-  
+
+  showDeviceControl() {
+    return DeviceControl.buildEmpty()
+  }
+
   // -- Search --
 
   fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
@@ -301,7 +305,7 @@ class ElementActions {
         console.log(errorMessage);
       });};
   }
-  
+
   importSamplesFromFileConfirm(params) {
     return (dispatch) => { SamplesFetcher.importSamplesFromFileConfirm(params)
       .then((result) => {
@@ -570,10 +574,6 @@ class ElementActions {
   // -- Report --
   showReportContainer() {
     return  Report.buildEmpty()
-  }
-  
-  showDeviceContainer() {
-    return Device.buildEmpty()
   }
 
   // -- General --

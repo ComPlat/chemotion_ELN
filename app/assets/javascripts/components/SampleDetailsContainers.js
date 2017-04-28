@@ -80,10 +80,10 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleAccordionOpen(newKey) {
-    const currentKey = this.state.activeAnalysis;
-    if(currentKey !== newKey) {
-      this.setState({activeAnalysis: newKey});
-    }
+    this.setState((prevState)=>{
+      let prevKey = prevState.activeAnalysis
+      return {...prevState,activeAnalysis: prevKey == newKey ? 0 : newKey}
+    });
   }
 
   addButton() {

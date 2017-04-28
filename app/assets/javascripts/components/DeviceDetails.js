@@ -1,7 +1,9 @@
 import React from 'react'
-import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
+import {Panel, PanelGroup , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from './DeviceSampleContainer'
 import ElementActions from './actions/ElementActions'
+import DeviceManagement from './DeviceManagement'
+
 
 const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
   return (
@@ -10,9 +12,10 @@ const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
       header={<Header device={device} closeDetails={closeDetails} toggleFullScreen={toggleFullScreen}/>}
       bsStyle={device.isPendingToSave ? 'info' : 'primary'}
     >
-      <DeviceSampleContainer
-        device={device}
-      />
+      <PanelGroup  defaultActiveKey="0" accordion>
+        <Panel header="Device Management" eventKey="1"><DeviceManagement/></Panel>
+      </PanelGroup>
+      
       <ButtonToolbar>
         <Button bsStyle="primary" onClick={() => closeDetails(device)}>
           Close
@@ -60,4 +63,3 @@ const Header = ({device, closeDetails, toggleFullScreen}) => {
     </div>
   )
 }
-

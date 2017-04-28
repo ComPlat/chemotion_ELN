@@ -6,7 +6,6 @@ import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
-import DeviceAnalysisDetails from './DeviceAnalysisDetails'
 import ResearchPlanDetails from './ResearchPlanDetails';
 import { SameEleTypId, UrlSilentNavigation } from './utils/ElementUtils';
 import ElementActions from './actions/ElementActions';
@@ -218,14 +217,14 @@ export default class ElementDetails extends Component {
         return <ScreenDetails screen={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
-      case 'device':
+      case 'deviceCtrl':
         return <DeviceDetails device={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
-      case 'deviceAnalysis':
-        return <DeviceAnalysisDetails analysis={el}
-          closeDetails={this.closeDetails}
-          toggleFullScreen={this.toggleFullScreen}/>;
+      // case 'deviceAnalysis':
+      //   return <DeviceAnalysisDetails analysis={el}
+      //     closeDetails={this.closeDetails}
+      //     toggleFullScreen={this.toggleFullScreen}/>;
       case 'research_plan':
         return <ResearchPlanDetails research_plan={el}
                   closeDetails={this.closeDetails}
@@ -268,6 +267,15 @@ export default class ElementDetails extends Component {
         <span>
           <i className="fa fa-file-text-o" />&nbsp;&nbsp;
           <i className="fa fa-pencil" />
+        </span>
+      )
+    } else if (el.type === 'deviceCtrl') {
+      title = "Measurement"
+      bsStyle = "primary"
+      iconElement = (
+        <span>
+          <i className="fa fa-bar-chart"/>
+          <i className="fa fa-cogs"/>
         </span>
       )
     }

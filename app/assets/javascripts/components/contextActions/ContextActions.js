@@ -6,7 +6,7 @@ import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
 import ScanCodeButton from './ScanCodeButton';
-import DeviceButtonSplit from './DeviceButtonSplit'
+//import DeviceButton from './DeviceButton'
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -58,6 +58,7 @@ export default class ContextActions extends React.Component {
           <ExportImportButton isDisabled={this.isDisabled()}
                               updateModalProps={updateModalProps} />
           <ReportButton />
+        
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
           <CreateButton isDisabled={this.isCreateDisabled()}/>

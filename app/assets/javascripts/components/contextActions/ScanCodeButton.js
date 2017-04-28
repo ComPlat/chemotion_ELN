@@ -222,14 +222,9 @@ export default class ScanCodeButton extends React.Component {
           <SplitButton id="search-code-split-button" style={{height: 33}}
             bsStyle="default"
             title={<span className="fa-stack" style={{ top: -5}} >
-                          <i
-                            className="fa fa-barcode fa-stack-1x"
-
-                          ></i>
-                          <i
-                            className="fa fa-search fa-stack-1x"
-                            style={{ left: 7, fontSize: "1.em"}}
-                          ></i>
+                          <i className="fa fa-barcode fa-stack-1x"/>
+                          <i className="fa fa-search fa-stack-1x"
+                             style={{ left: 7, fontSize: "1.em"}}/>
                         </span>}
             onClick={() => this.open()}>
               {menuItems.map(e=>
