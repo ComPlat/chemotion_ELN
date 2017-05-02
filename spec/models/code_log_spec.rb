@@ -7,7 +7,7 @@ RSpec.describe CodeLog, type: :model do
     screen = create(:screen)
     wellplate = create(:wellplate)
 
-    expect(CodeLog.all.pluck(:source, :source_id)).to eq [
+    expect(CodeLog.all.pluck(:source, :source_id)).to match_array [
       ["sample",sample.id],
       ["reaction", reaction.id],
       ["screen", screen.id],
