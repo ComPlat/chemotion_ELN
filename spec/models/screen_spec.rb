@@ -9,6 +9,17 @@ RSpec.describe Screen, type: :model do
     end
   end
 
+  describe 'after creation' do
+    let(:screen) { create(:screen) }
+
+    it 'has a CodeLog' do
+      expect(screen.code_log.value).to match(/\d{40}/)
+      expect(screen.code_log.id).to match(
+      /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+      )
+    end
+  end
+
   describe 'deletion' do
     let(:screen)     { create(:screen) }
     let(:wellplate)  { create(:wellplate) }

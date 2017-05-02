@@ -685,6 +685,14 @@ export default class Sample extends Element {
     return params;
   }
 
+  //Container & Analyses routines
+  addAnalysis(analysis){
+    this.container.children.filter(
+      element => ~element.container_type.indexOf('analyses')
+    )[0].children.push(analysis);
+
+  }
+
 
 };
 

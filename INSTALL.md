@@ -29,6 +29,12 @@ if there are errors with nokogiri compilation with new xcode7:
 * Execute `bundle install`.
 * Execute `rake db:reset` (this creates and seeds the database).
 
+## Environment variables
+
+Production
+
+* `cp .env.production{.example,}  # optionally enter SFTP credentials`
+
 # Deployment notes
 
 The search feature uses the Postgres extension pg_trgm (http://www.postgresql.org/docs/9.3/static/pgtrgm.html). For the first installation on the production machine you have to install the `postgres-contrib` package in order to enable Postgres extensions.
@@ -63,3 +69,15 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 
 * `brew install fontforge --with-python`
 * `brew install eot-utils`
+
+# Docker setup
+* Initial setup: `docker-compose up`
+* For Linux users: use docker-compose run with user docker, e.g., `docker-compose run --user=docker bundle exec rails g migration new_migration`
+
+## Workarounds:
+
+* npm packages, database.yml und migrations still need to be performed manually
+* `cp config/database.yml{.example,}`
+* `docker-compose run app bash`
+* in the container: `$ npm i && bundle exec rake db:setup`
+

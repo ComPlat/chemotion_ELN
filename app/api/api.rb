@@ -128,4 +128,8 @@ class API < Grape::API
   mount Chemotion::AttachmentAPI
   mount Chemotion::PublicAPI
   mount Chemotion::ProfileAPI
+  mount Chemotion::CodeLogAPI
+  mount Chemotion::DeviceAPI
+  mount Chemotion::IconNmrAPI
+  mount Chemotion::DevicesAnalysisAPI
 end

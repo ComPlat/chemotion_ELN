@@ -1,9 +1,10 @@
 import React from 'react';
 import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
         Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
-        Tooltip, OverlayTrigger} from 'react-bootstrap';
+        Tooltip, OverlayTrigger, DropdownButton, MenuItem, SplitButton, ButtonGroup} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
+import Barcode from 'react-barcode';
 import Select from 'react-select';
 
 import ElementActions from './actions/ElementActions';
@@ -26,18 +27,20 @@ import StructureEditorModal from './structure_editor/StructureEditorModal';
 import Aviator from 'aviator';
 
 import Sample from './models/Sample';
+import Container from './models/Container'
 import PolymerSection from './PolymerSection';
 import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 import SampleForm from './SampleForm'
+import Utils from './utils/Functions';
+import PrintCodeButton from './common/PrintCodeButton'
 
 const MWPrecision = 6;
 
 export default class SampleDetails extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
       sample: props.sample,
       reaction: null,
@@ -45,8 +48,10 @@ export default class SampleDetails extends React.Component {
       showStructureEditor: false,
       loadingMolecule: false,
       showElementalComposition: false,
+      activeTab: UIStore.getState().sample.activeTab,
+      qrCodeSVG: ""
     }
-
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
   }
 
@@ -57,8 +62,22 @@ export default class SampleDetails extends React.Component {
     });
   }
 
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
   componentWillUnmount() {
     this.clipboard.destroy();
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    if (state.sample.activeTab != this.state.activeTab){
+      this.setState((previousState)=>{ return {
+        ...previousState, activeTab: state.sample.activeTab
+      }})
+    }
   }
 
   handleSampleChanged(sample) {
@@ -190,6 +209,73 @@ export default class SampleDetails extends React.Component {
       return '';
   }
 
+  sampleQrCode() {
+    let uuid = this.state.sample.code_log && this.state.sample.code_log.id
+    return uuid
+     ? <SVG  src={`/images/qr/${uuid}.v1_l.svg`} className="qr-svg"/>
+     : null
+  }
+
+  sampleBarCode(sample) {
+    let barCode = sample.code_log && sample.code_log.value_sm
+    if(barCode != null)
+      return <Barcode
+                value={barCode}
+                width={1}
+                height={80}
+                fontSize={13}
+                margin={0}/>;
+    else
+      return '';
+  }
+
+
+  initiateAnalysisButton(sample) {
+    return (
+      <div style={{display: "inline-block", marginLeft: "100px"}}>
+        <DropdownButton id="InitiateAnalysis" bsStyle="info" bsSize="xsmall" title="Initiate Analysis">
+          <MenuItem eventKey="1" onClick={() => this.initiateAnalysisWithKind(sample, "1H NMR")}>1H NMR</MenuItem>
+          <MenuItem eventKey="2" onClick={() => this.initiateAnalysisWithKind(sample, "13C NMR")}>13C NMR</MenuItem>
+          <MenuItem eventKey="3" onClick={() => this.initiateAnalysisWithKind(sample, "Others")}>others</MenuItem>
+          <MenuItem eventKey="4" onClick={() => this.initiateAnalysisWithKind(sample, "Others2x")}>others 2x</MenuItem>
+          <MenuItem eventKey="5" onClick={() => this.initiateAnalysisWithKind(sample, "Others3x")}>others 3x</MenuItem>
+        </DropdownButton>
+      </div>
+    )
+  }
+
+  initiateAnalysisWithKind(sample, kind) {
+    let analysis = Container.buildAnalysis(kind),
+              a1 = Container.buildAnalysis(),
+              a2 = Container.buildAnalysis(),
+              a3 = Container.buildAnalysis();
+    switch(kind) {
+      case "1H NMR": case "13C NMR":
+        sample.addAnalysis(analysis);
+        ElementActions.updateSample(sample);
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
+        break;
+      case "Others":
+        sample.addAnalysis(a1);
+        ElementActions.updateSample(sample);
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small"})
+        break;
+      case "Others2x":
+        sample.addAnalysis(a1);
+        sample.addAnalysis(a2);
+        ElementActions.updateSample(sample);
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
+        break;
+      case "Others3x":
+        sample.addAnalysis(a1);
+        sample.addAnalysis(a2);
+        sample.addAnalysis(a3);
+        ElementActions.updateSample(sample);
+        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
+        break;
+    }
+  }
+
   sampleHeader(sample) {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
     return (
@@ -213,11 +299,12 @@ export default class SampleDetails extends React.Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.props.toggleFullScreen()}>
-          <i className="fa fa-expand"></i>
-        </Button>
+          <Button bsStyle="info" bsSize="xsmall" className="button-right"
+            onClick={() => this.props.toggleFullScreen()}>
+            <i className="fa fa-expand"></i>
+          </Button>
         </OverlayTrigger>
+        <PrintCodeButton element={sample}/>
         <div style={{display: "inline-block", marginLeft: "10px"}}>
           <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
           <ElementCollectionLabels element={sample} key={sample.id} placement="right"/>
@@ -225,7 +312,23 @@ export default class SampleDetails extends React.Component {
           <PubchemLabels element={sample} />
           {this.extraLabels().map((Lab,i)=><Lab key={i} element={sample}/>)}
         </div>
+
       </div>
+    )
+  }
+
+  transferToDeviceButton(sample) {
+    return (
+      <Button bsSize="xsmall"
+        onClick={() => {
+          const {selectedDeviceId, devices} = ElementStore.getState().elements.devices
+          const device = devices.find((d) => d.id === selectedDeviceId)
+          ElementActions.addSampleToDevice(sample, device, {save: true})
+        }}
+        style={{marginLeft: 25}}
+      >
+        Transfer to Device
+      </Button>
     )
   }
 
@@ -237,6 +340,12 @@ export default class SampleDetails extends React.Component {
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
+          <Col md={6}>
+            {this.sampleBarCode(sample)}
+          </Col>
+          <Col md={6}>
+            {this.sampleQrCode()}
+          </Col>
         </Col>
         <Col md={8}>
           {this.svgOrLoading(sample)}
@@ -307,7 +416,7 @@ export default class SampleDetails extends React.Component {
                 name='cas'
                 multi={false}
                 options={cas_arr}
-                //className='drop-up'//TODO fix drop-up style (react-select upg)
+                //className='drop-up' //TODO fix drop-up style (react-select upg)
                 onChange={(e) => this.updateCas(e)}
                 value={cas}
         />
@@ -537,6 +646,10 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  handleSelect(eventKey) {
+    UIActions.selectTab({tabKey: eventKey, type: 'sample'});
+  }
+
   render() {
     let sample = this.state.sample || {}
     let tabContents = [
@@ -556,7 +669,7 @@ export default class SampleDetails extends React.Component {
              bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
         {this.sampleInfo(sample)}
         <ListGroup>
-        <Tabs defaultActiveKey={0} id="SampleDetailsXTab">
+        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
           {tabContents.map((e,i)=>e(i))}
         </Tabs>
         </ListGroup>

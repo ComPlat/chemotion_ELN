@@ -15,35 +15,41 @@ class UIStore {
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
+        activeAnalysis: 0,
       },
       reaction: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
+        activeAnalysis: 0,
       },
       wellplate: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
       },
       screen: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
+        activeTab: 0,
       },
       research_plan: {
         checkedAll: false,
         checkedIds: Immutable.List(),
         uncheckedIds: Immutable.List(),
         currentId: null,
-        page: 1
+        page: 1,
       },
       showPreviews: true,
       showAdvancedSearch: false,
@@ -51,12 +57,17 @@ class UIStore {
       currentCollection: null,
       currentSearchSelection: null,
       showCollectionManagement: false,
+      showDeviceManagement: false,
       isSync: false,
       showModal: false,
       modalParams: {},
     };
 
     this.bindListeners({
+
+      handleSelectTab: UIActions.selectTab,
+      handleSelectActiveAnalysis: UIActions.selectActiveAnalysis,
+
       handleSelectCollection: UIActions.selectCollection,
       handleSelectSyncCollection: UIActions.selectSyncCollection,
       handleCheckAllElements: UIActions.checkAllElements,
@@ -78,6 +89,8 @@ class UIStore {
       handleToggleCollectionManagement: UIActions.toggleCollectionManagement,
       handleUncheckWholeSelection: UIActions.uncheckWholeSelection,
       handleChangeNumberOfResultsShown: UIActions.changeNumberOfResultsShown,
+      handleShowDeviceManagement: UIActions.showDeviceManagement,
+      handleCloseDeviceManagement: UIActions.closeDeviceManagement,
       handleShowModalChange: UIActions.updateModalProps,
       handleHideModal: UIActions.hideModal,
     });
@@ -91,8 +104,26 @@ class UIStore {
     this.state.showCollectionManagement = true;
   }
 
+  handleShowDeviceManagement() {
+    this.state.showDeviceManagement = true
+  }
+
+  handleCloseDeviceManagement() {
+    this.state.showDeviceManagement = false
+  }
+
   handleShowElements() {
     this.state.showCollectionManagement = false;
+  }
+
+  handleSelectTab(params={}) {
+    let type = params.type || "sample"
+    let tabKey = params.tabKey || 0
+    this.state[type].activeTab = tabKey;
+  }
+
+  handleSelectActiveAnalysis(index) {
+    this.state.sample.activeAnalysis = index;
   }
 
   handleCheckAllElements(params) {

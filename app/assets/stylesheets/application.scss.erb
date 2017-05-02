@@ -20,20 +20,10 @@
  @import "font-awesome";
 
 
- <%Bundler.load.current_dependencies.select{  |dep|  dep.groups.include?(:plugins)}.map(&:name).each do |plugin|%>
+ <%Bundler.load.current_dependencies.select{|dep| dep.groups.include?(:plugins)}.map(&:name).each do |plugin|%>
  @import "<%=plugin%>";
  <%end%>
-/*
-Show Bootstrap Grid as overlay for debugging
 
-div[class="row"] {
-    border: 1px dotted rgba(0, 0, 0, 0.5);
-}
-
-div[class^="col-"] {
-    background-color: rgba(255, 0, 0, 0.2);
-}
-*/
 .navbar-custom {
   border-radius: 0;
   background-color: #EFEFEF;
@@ -142,6 +132,11 @@ span.pseudo-link:hover {
   width: 15%
 }
 
+#elements-tabs {
+  .panel-heading {
+    height: 44px;
+  }
+}
 // icon for research plan. just a standard FontAwesome icon
 $font-icons-research_plan: "\f0f6";
 

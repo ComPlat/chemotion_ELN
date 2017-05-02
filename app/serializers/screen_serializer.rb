@@ -4,6 +4,10 @@ class ScreenSerializer < ActiveModel::Serializer
   has_many :wellplates
   has_one :container
   has_one :tag
+
+  def code_log
+    CodeLogSerializer.new(object.code_log).serializable_hash
+  end
   
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")

@@ -1,7 +1,5 @@
 source 'https://rubygems.org'
 
-ruby '2.3.1'
-
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.2.0'
 
@@ -38,6 +36,8 @@ gem 'pg_search'
 
 gem 'devise'
 
+gem 'dotenv-rails', require: 'dotenv/rails-now'
+
 gem 'browserify-rails' , '~> 3.0.1'
 
 # for collection tree structure
@@ -49,6 +49,9 @@ gem 'net-sftp'
 
 # svg composer
 gem 'nokogiri'
+
+# SFTP client
+gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git', branch: 'allow-port-option'
 
 # API
 gem 'grape'
@@ -90,7 +93,6 @@ gem 'thumbnailer', :git => 'https://github.com/merlin-p/thumbnailer.git'
 gem "paranoia", "~> 2.0"
 
 gem "whenever", require: false
-gem "dotenv-rails"
 gem "backup"
 gem 'yaml_db'
 
@@ -99,19 +101,16 @@ gem "ruby-ole"
 # CI
 gem 'coveralls', require: false
 
-
 # openbabel
 # to compile from github/openbabel/openbabel master
 #gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem'
 # to compile from github/openbabel/openbabel branch openbabel-2-4-x
 gem 'openbabel', '2.4.0.1', git: 'https://github.com/ComPlat/openbabel-gem', branch: 'openbabel-2-4-x'
 
-
-group :production do
-
-#  gem 'unicorn'
-
-end
+gem 'prawn'
+gem 'prawn-svg'
+gem 'barby'
+gem 'rqrcode'
 
 group :development do
   gem 'web-console', '~> 2.0'
@@ -163,7 +162,7 @@ group :test do
   gem "headless", "2.0.0"
 end
 
-# Chemotion plugins: lsit your chemotion specific plugin gems here
+# Chemotion plugins: list your chemotion specific plugin gems here
 
 #gem 'scifinding', '0.1.0', git: 'https://github.com/ComPlat/scifinding' , :group => [:plugins,:development,:production]
 

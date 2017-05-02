@@ -308,7 +308,7 @@ export default class ElementsTableSampleEntries extends Component {
   isCurrentElementDropTargetForType(type) {
     const {currentElement} = ElementStore.getState()
     const targets = {
-      sample: ['reaction', 'wellplate']
+      sample: ['reaction', 'wellplate', 'device']
     };
     return type && currentElement && targets[type].includes(currentElement.type)
   }

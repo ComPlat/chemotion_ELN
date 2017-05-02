@@ -1,4 +1,5 @@
 import UIStore from './stores/UIStore';
+import ElementStore from './stores/ElementStore';
 import CollectionStore from './stores/CollectionStore';
 import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
@@ -188,6 +189,33 @@ const routes = {
         }
       },
       '/:screenID': 'showOrNew'
+    },
+    '/devicesAnalysis': {
+      target: {
+        create: function(e) {
+          const {deviceId, analysisType} = e.params;
+          ElementActions.createDeviceAnalysis(deviceId, analysisType)
+        },
+        show: function(e) {
+          const {analysisId} = e.params;
+          ElementActions.fetchDeviceAnalysisById(analysisId)
+        },
+      },
+      '/new/:deviceId/:analysisType': 'create',
+      '/:analysisId': 'show',
+    },
+    '/device': {
+      target: {
+        show: function(e) {
+          const {deviceId} = e.params;
+          ElementActions.fetchDeviceById(deviceId)
+        },
+        showDeviceManagement: function(e) {
+          UIActions.showDeviceManagement()
+        },
+      },
+      '/management': 'showDeviceManagement',
+      '/:deviceId': 'show',
     },
     '/research_plan': {
       target: {

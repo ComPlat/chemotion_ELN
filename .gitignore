@@ -40,6 +40,9 @@
 /public/images/sprites/*
 !/public/images/sprites/.keep
 
+/public/images/qr/*
+!/public/images/qr/.keep
+
 /public/images/templates/*
 !/public/images/templates/.keep
 

@@ -10,6 +10,7 @@ const Functions = {
 
     return "";
   },
+
   downloadFile(file) {
     const {contents, name} = file;
     const link = document.createElement('a');
@@ -28,7 +29,6 @@ const Functions = {
     for (let i=0;i<extra['count'];i++){obj={...obj,...extra['content'+i]} }
     return obj;
   }
-
 
 };
 

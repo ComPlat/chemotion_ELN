@@ -3,6 +3,7 @@ class Reaction < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include ElementCodes
   include Taggable
 
   serialize :temperature, Hash
@@ -108,6 +109,10 @@ class Reaction < ActiveRecord::Base
 
   def samples
     starting_materials + reactants + products + solvents
+  end
+  
+  def analyses
+    self.container ? self.container.analyses : []
   end
 
   def auto_format_temperature!

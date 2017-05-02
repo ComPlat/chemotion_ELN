@@ -6,7 +6,7 @@ class DetailLevels::Reaction
       :observation, :purification, :dangerous_products, :solvent,
       :tlc_solvents, :tlc_description,
       :rf_value, :temperature, :status, :reaction_svg_file,
-      :short_label, :container
+      :short_label, :container, :code_log
     ]
   end
 

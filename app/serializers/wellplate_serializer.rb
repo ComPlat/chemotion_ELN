@@ -5,6 +5,10 @@ class WellplateSerializer < ActiveModel::Serializer
   has_one :container
   has_one :tag
 
+  def code_log
+    CodeLogSerializer.new(object.code_log).serializable_hash
+  end 
+
   def wells
     object.wells.order("id asc")
   end

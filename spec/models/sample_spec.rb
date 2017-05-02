@@ -9,6 +9,18 @@ RSpec.describe Sample, type: :model do
     end
   end
 
+  describe 'after creation' do
+    let(:sample)  { create(:sample) }
+    let(:samples) { create_list(:sample, 500) }
+
+    it 'has a CodeLog' do
+      expect(sample.code_log.value).to match(/\d{40}/)
+      expect(sample.code_log.id).to match(
+      /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+      )
+    end
+  end
+
   describe 'deletion' do
     let(:sample)     { create(:sample) }
     let(:reaction_1) { create(:reaction) }
@@ -38,6 +50,10 @@ RSpec.describe Sample, type: :model do
 
     it 'only soft deletes sample' do
       expect(Sample.with_deleted).to eq [sample]
+    end
+
+    it 'also destroys corresponding CodeLog' do
+      expect(CodeLog.where(source: "sample",source_id: sample.id)).to be_empty
     end
   end
 

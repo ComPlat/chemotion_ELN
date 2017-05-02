@@ -1,9 +1,12 @@
 import React from 'react';
-import {ButtonGroup} from 'react-bootstrap';
+import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
+import UIActions from './../actions/UIActions'
 import CreateButton from './CreateButton';
 import ReportButton from './ReportButton';
 import ExportImportButton from './ExportImportButton';
+import ScanCodeButton from './ScanCodeButton';
+//import DeviceButton from './DeviceButton'
 
 export default class ContextActions extends React.Component {
   constructor(props) {
@@ -55,9 +58,13 @@ export default class ContextActions extends React.Component {
           <ExportImportButton isDisabled={this.isDisabled()}
                               updateModalProps={updateModalProps} />
           <ReportButton />
+        
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
           <CreateButton isDisabled={this.isCreateDisabled()}/>
+        </ButtonGroup>
+        <ButtonGroup style={{marginLeft: '10px'}}>
+          <ScanCodeButton/>
         </ButtonGroup>
       </div>
     )

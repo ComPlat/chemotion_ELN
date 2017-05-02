@@ -9,6 +9,17 @@ RSpec.describe Reaction, type: :model do
     end
   end
 
+  describe 'after creation' do
+    let(:reaction) { create(:reaction) }
+
+    it 'has a CodeLog' do
+      expect(reaction.code_log.value).to match(/\d{40}/)
+      expect(reaction.code_log.id).to match(
+        /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i
+      )
+    end
+  end
+
   describe 'deletion' do
     let(:reaction)   { create(:reaction) }
     let(:literature) { create(:literature, reaction: reaction) }

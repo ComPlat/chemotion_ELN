@@ -3,21 +3,27 @@ development:
   encoding: unicode
   database: chemotion_dev
   pool: 5
-  username: fh
+  username: postgres
   password:
+  template: template0
+  host: postgres
+  port: 5432
 
 test:
   adapter: postgresql
   encoding: unicode
   database: chemotion_test
   pool: 5
-  username: fh
+  username: postgres
   password:
+  template: template0
+  host: postgres
+  port: 5432
 
 production:
   adapter: postgresql
   encoding: unicode
   database: chemotion_production
   pool: 5
-  username: fh
+  username: postgres
   password:

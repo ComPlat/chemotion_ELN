@@ -11,12 +11,31 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170411104507) do
+ActiveRecord::Schema.define(version: 20170414012345) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
+  enable_extension "uuid-ossp"
+
+  create_table "analyses_experiments", force: :cascade do |t|
+    t.integer  "sample_id"
+    t.integer  "holder_id"
+    t.string   "status"
+    t.integer  "devices_analysis_id", null: false
+    t.integer  "devices_sample_id",   null: false
+    t.string   "sample_analysis_id",  null: false
+    t.string   "solvent"
+    t.string   "experiment"
+    t.boolean  "priority"
+    t.boolean  "on_day"
+    t.integer  "number_of_scans"
+    t.integer  "sweep_width"
+    t.string   "time"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
+  end
 
   create_table "attachments", force: :cascade do |t|
     t.integer  "container_id"
@@ -34,6 +53,17 @@ ActiveRecord::Schema.define(version: 20170411104507) do
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
   end
+
+  create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
+    t.string   "source"
+    t.integer  "source_id"
+    t.string   "value",      limit: 40
+    t.datetime "deleted_at"
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
+  end
+
+  add_index "code_logs", ["source", "source_id"], name: "index_code_logs_on_source_and_source_id", using: :btree
 
   create_table "collections", force: :cascade do |t|
     t.integer  "user_id",                                   null: false
@@ -167,6 +197,23 @@ ActiveRecord::Schema.define(version: 20170411104507) do
 
   add_index "elemental_compositions", ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
 
+  create_table "experiments", force: :cascade do |t|
+    t.string   "type",                limit: 20
+    t.string   "name"
+    t.text     "description"
+    t.string   "status",              limit: 20
+    t.jsonb    "parameter"
+    t.integer  "user_id"
+    t.integer  "device_id"
+    t.integer  "container_id"
+    t.integer  "experimentable_id"
+    t.string   "experimentable_type"
+    t.string   "ancestry"
+    t.integer  "parent_id"
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+  end
+
   create_table "fingerprints", force: :cascade do |t|
     t.bit      "fp0",          limit: 64
     t.bit      "fp1",          limit: 64
@@ -190,6 +237,32 @@ ActiveRecord::Schema.define(version: 20170411104507) do
     t.time     "deleted_at"
   end
 
+  create_table "ketcherails_amino_acids", force: :cascade do |t|
+    t.integer  "moderated_by"
+    t.integer  "suggested_by"
+    t.string   "name",                          null: false
+    t.text     "molfile",                       null: false
+    t.integer  "aid",               default: 1, null: false
+    t.integer  "aid2",              default: 1, null: false
+    t.integer  "bid",               default: 1, null: false
+    t.string   "icon_path"
+    t.string   "sprite_class"
+    t.string   "status"
+    t.text     "notes"
+    t.datetime "approved_at"
+    t.datetime "rejected_at"
+    t.datetime "created_at",                    null: false
+    t.datetime "updated_at",                    null: false
+    t.string   "icon_file_name"
+    t.string   "icon_content_type"
+    t.integer  "icon_file_size"
+    t.datetime "icon_updated_at"
+  end
+
+  add_index "ketcherails_amino_acids", ["moderated_by"], name: "index_ketcherails_amino_acids_on_moderated_by", using: :btree
+  add_index "ketcherails_amino_acids", ["name"], name: "index_ketcherails_amino_acids_on_name", using: :btree
+  add_index "ketcherails_amino_acids", ["suggested_by"], name: "index_ketcherails_amino_acids_on_suggested_by", using: :btree
+
   create_table "ketcherails_atom_abbreviations", force: :cascade do |t|
     t.integer  "moderated_by"
     t.integer  "suggested_by"
@@ -209,6 +282,7 @@ ActiveRecord::Schema.define(version: 20170411104507) do
     t.string   "icon_content_type"
     t.integer  "icon_file_size"
     t.datetime "icon_updated_at"
+    t.string   "rtl_name"
   end
 
   add_index "ketcherails_atom_abbreviations", ["moderated_by"], name: "index_ketcherails_atom_abbreviations_on_moderated_by", using: :btree
@@ -545,11 +619,12 @@ ActiveRecord::Schema.define(version: 20170411104507) do
     t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
+    t.integer  "selected_device_id"
   end
 
   add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree

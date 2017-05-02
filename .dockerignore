@@ -1,0 +1,6 @@
+.git
+backup
+.gitignore
+node_modules
+tmp
+

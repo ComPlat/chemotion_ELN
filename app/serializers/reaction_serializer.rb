@@ -11,6 +11,10 @@ class ReactionSerializer < ActiveModel::Serializer
   has_one :container
   has_one :tag
 
+  def code_log
+    CodeLogSerializer.new(object.code_log).serializable_hash
+  end
+
   def starting_materials
     MaterialDecorator.new(object.reactions_starting_material_samples).decorated
   end

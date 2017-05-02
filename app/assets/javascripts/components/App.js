@@ -17,6 +17,7 @@ import initRoutes from './routes';
 import Notifications from './Notifications';
 
 import UserActions from './actions/UserActions';
+import ElementActions from './actions/ElementActions';
 import KeyboardActions from './actions/KeyboardActions';
 
 class App extends Component {
@@ -96,7 +97,6 @@ class App extends Component {
 
   mainContent() {
     const {showCollectionManagement, mainContentClassName} = this.state;
-
     return (
       <Col className={mainContentClassName} >
         {showCollectionManagement ? <CollectionManagement/> : <Elements/>}

@@ -1,6 +1,9 @@
 import React, {PropTypes, Component} from 'react';
-import {Well, Panel, Input, ListGroup, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger} from 'react-bootstrap';
+import {Well, Panel, ListGroupItem, ButtonToolbar, Button,
+  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row} from 'react-bootstrap';
+import Barcode from 'react-barcode';
+import SVG from 'react-inlinesvg';
+
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
 import CollectionActions from './actions/CollectionActions';
@@ -8,8 +11,9 @@ import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
 import WellplateProperties from './WellplateProperties';
 import WellplateDetailsContainers from './WellplateDetailsContainers';
-
+import PrintCodeButton from './common/PrintCodeButton'
 import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 
 const cols = 12;
 
@@ -19,8 +23,27 @@ export default class WellplateDetails extends Component {
     const {wellplate} = props;
     this.state = {
       wellplate,
-      activeTab: 0,
+      activeTab: UIStore.getState().wellplate.activeTab,
       showWellplate: true,
+      qrCodeSVG: ""
+    }
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    if (state.wellplate.activeTab != this.state.activeTab){
+      console.log(`store change ${state.wellplate.activeTab != this.state.activeTab}`);
+      this.setState({
+        activeTab: state.wellplate.activeTab
+      })
     }
   }
 
@@ -77,14 +100,17 @@ export default class WellplateDetails extends Component {
     this.setState({ wellplate });
   }
 
-  handleTabChange(event) {
-    let showWellplate = (event == 0) ? true : false;
-    this.setState({activeTab: event, showWellplate});
+  handleTabChange(eventKey) {
+    let showWellplate = (eventKey == 0) ? true : false;
+    this.setState((previousState) => {
+       return { ...previousState, activeTab: eventKey, showWellplate}})
+    UIActions.selectTab({tabKey: eventKey, type: 'wellplate'});
   }
 
   wellplateHeader(wellplate) {
-    let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
+    console.log(`wellplate ${wellplate.id}`);
 
+    let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
     return(
       <div>
         <i className="icon-wellplate" />
@@ -107,13 +133,36 @@ export default class WellplateDetails extends Component {
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
+          <Button bsStyle="info" bsSize="xsmall" className="button-right"
           onClick={() => this.props.toggleFullScreen()}>
           <i className="fa fa-expand"></i>
-        </Button>
+          </Button>
         </OverlayTrigger>
+        <PrintCodeButton element={wellplate}/>
       </div>
     )
+  }
+
+  wellplateQrCode() {
+    let uuid = this.state.wellplate.code_log && this.state.wellplate.code_log.id
+    return uuid
+     ? <SVG  src={`/images/qr/${uuid}.v1_l.svg`} className="qr-svg"/>
+     : null
+    }
+
+  wellplateBarCode(wellplate) {
+    let barCode = wellplate.code_log && wellplate.code_log.value_sm
+    if(barCode != null)
+      return <Barcode
+                value={barCode}
+                width={1}
+                height={80}
+                fontSize={13}
+                marginTop={10}
+                marginBottom={10}
+                margin={0}/>;
+    else
+      return '';
   }
 
   render() {
@@ -133,16 +182,24 @@ export default class WellplateDetails extends Component {
         <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
               id="wellplateDetailsTab">
           <Tab eventKey={0} title={'Designer'}>
-            <Well>
-              <Wellplate
-                show={showWellplate}
-                size={size}
-                wells={wells}
-                handleWellsChange={(wells) => this.handleWellsChange(wells)}
-                cols={cols}
-                width={60}
-                />
-            </Well>
+            <Row>
+              <Col md={10}>
+                <Well>
+                  <Wellplate
+                    show={showWellplate}
+                    size={size}
+                    wells={wells}
+                    handleWellsChange={(wells) => this.handleWellsChange(wells)}
+                    cols={cols}
+                    width={60}
+                    />
+                </Well>
+              </Col>
+              <Col md={2}>
+                {this.wellplateBarCode(wellplate)}
+                {this.wellplateQrCode()}
+              </Col>
+            </Row>
           </Tab>
           <Tab eventKey={1} title={'List'}>
             <Well>

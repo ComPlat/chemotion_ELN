@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import StickyDiv from 'react-stickydiv'
 import {Tabs, Tab, Label} from 'react-bootstrap';
 import SampleDetails from './SampleDetails';
+import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
 import WellplateDetails from './WellplateDetails';
 import ScreenDetails from './ScreenDetails';
@@ -51,7 +52,7 @@ export default class ElementDetails extends Component {
 
   synchronizeElements(close, open) {
     let associatedSampleFromReaction = (
-      close instanceof Reaction && open instanceof Sample && 
+      close instanceof Reaction && open instanceof Sample &&
       close.samples.map(s => s.id).includes(open.id)
     )
 
@@ -70,7 +71,7 @@ export default class ElementDetails extends Component {
       open.updateMaterial(close)
       if (close.isPendingToSave) open.changed = close.isPendingToSave
     }
-    
+
     return {ori: close, next: open}
   }
 
@@ -216,6 +217,14 @@ export default class ElementDetails extends Component {
         return <ScreenDetails screen={el}
                   closeDetails={this.closeDetails}
                   toggleFullScreen={this.toggleFullScreen}/>;
+      case 'deviceCtrl':
+        return <DeviceDetails device={el}
+                  closeDetails={this.closeDetails}
+                  toggleFullScreen={this.toggleFullScreen}/>;
+      // case 'deviceAnalysis':
+      //   return <DeviceAnalysisDetails analysis={el}
+      //     closeDetails={this.closeDetails}
+      //     toggleFullScreen={this.toggleFullScreen}/>;
       case 'research_plan':
         return <ResearchPlanDetails research_plan={el}
                   closeDetails={this.closeDetails}
@@ -258,6 +267,15 @@ export default class ElementDetails extends Component {
         <span>
           <i className="fa fa-file-text-o" />&nbsp;&nbsp;
           <i className="fa fa-pencil" />
+        </span>
+      )
+    } else if (el.type === 'deviceCtrl') {
+      title = "Measurement"
+      bsStyle = "primary"
+      iconElement = (
+        <span>
+          <i className="fa fa-bar-chart"/>
+          <i className="fa fa-cogs"/>
         </span>
       )
     }

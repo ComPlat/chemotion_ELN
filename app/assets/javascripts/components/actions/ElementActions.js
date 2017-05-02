@@ -14,6 +14,7 @@ import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
+import DeviceFetcher from '../fetchers/DeviceFetcher'
 
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -21,10 +22,146 @@ import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
+import DeviceControl from '../models/DeviceControl'
 
 import _ from 'lodash';
 
+const handleFetch = (dispatch, fetch) => {
+  return fetch()
+    .then((result) => {
+      dispatch(result)
+    })
+    .catch((errorMessage) => {
+      console.log(errorMessage)
+    })
+}
+
 class ElementActions {
+  // -- Devices --
+  fetchAllDevices() {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchAll())
+  }
+
+  fetchDeviceById(deviceId) {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.fetchById(deviceId))
+  }
+
+  createDevice () {
+    return null
+  }
+
+  changeActiveAccordionDevice(key) {
+    return (dispatch) => dispatch(key)
+  }
+
+  changeSelectedDeviceId(device) {
+    return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.changeSelectedDevice(device))
+  }
+
+  setSelectedDeviceId(deviceId) {
+    return (dispatch) => dispatch(deviceId)
+  }
+
+  toggleDeviceType(device, type) {
+    return (dispatch) => dispatch({device, type})
+  }
+
+  saveDevice(device) {
+    if (device.isNew) {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.create(device))
+    } else {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.update(device))
+    }
+  }
+
+  deleteDevice(device) {
+    if (!device.isNew) {
+      DeviceFetcher.delete(device)
+    }
+    return (dispatch) => dispatch(device)
+  }
+
+  addSampleToDevice(sample, device, options) {
+    return (dispatch) => dispatch({sample, device, options})
+  }
+
+  addSampleWithAnalysisToDevice(sample, analysis, device) {
+    return (dispatch) => dispatch({sample, analysis, device})
+  }
+
+  removeSampleFromDevice(sample, device) {
+    return (dispatch) => dispatch({sample, device})
+  }
+
+  toggleTypeOfDeviceSample(device, sample, type) {
+    return (dispatch) => dispatch({device, sample, type})
+  }
+
+  changeDeviceProp(device, prop, value) {
+    return (dispatch) => dispatch({device, prop, value})
+  }
+
+  fetchDeviceAnalysisById(analysisId) {
+    return (dispatch) => {
+      DeviceFetcher.fetchAnalysisById(analysisId)
+      .then(analysis => {
+        DeviceFetcher.fetchById(analysis.deviceId)
+        .then(device => {
+          dispatch({analysis, device})
+        })
+      })
+    }
+  }
+
+  openDeviceAnalysis(device, type) {
+    return (dispatch) => dispatch({device, type})
+  }
+
+  saveDeviceAnalysis(analysis) {
+    if (analysis.isNew) {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.createAnalysis(analysis))
+    } else {
+      return (dispatch) => handleFetch(dispatch, () => DeviceFetcher.updateAnalysis(analysis))
+    }
+  }
+
+  createDeviceAnalysis(deviceId, analysisType) {
+    return (dispatch) => {
+      DeviceFetcher.fetchById(deviceId)
+      .then((device) => {
+        dispatch({device, analysisType})
+      })
+    }
+  }
+
+  generateExperimentConfig(experiment) {
+    return (dispatch) =>
+      handleFetch(dispatch, () => DeviceFetcher.generateExperimentConfig(experiment))
+  }
+
+  duplicateAnalysisExperiment(analysis, experiment) {
+    return (dispatch) =>
+      DeviceFetcher.fetchById(analysis.deviceId)
+      .then((device) => {
+        dispatch({device, analysis, experiment})
+      })
+  }
+
+  changeAnalysisExperimentProp(analysis, experiment, prop, value) {
+    return (dispatch) => dispatch({analysis, experiment, prop, value})
+  }
+
+  deleteAnalysisExperiment(analysis, experiment) {
+    return (dispatch) =>
+      DeviceFetcher.fetchById(analysis.deviceId)
+      .then((device) => {
+        dispatch({device, analysis, experiment})
+      })
+  }
+
+  showDeviceControl() {
+    return DeviceControl.buildEmpty()
+  }
 
   // -- Search --
 
@@ -168,7 +305,7 @@ class ElementActions {
         console.log(errorMessage);
       });};
   }
-  
+
   importSamplesFromFileConfirm(params) {
     return (dispatch) => { SamplesFetcher.importSamplesFromFileConfirm(params)
       .then((result) => {
