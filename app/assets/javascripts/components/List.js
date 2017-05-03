@@ -8,7 +8,6 @@ import ArrayUtils from './utils/ArrayUtils';
 
 import ElementsTable from './ElementsTable';
 import TabLayoutContainer from './TabLayoutContainer';
-import ContainerTree from './ContainerTree';
 
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
@@ -17,7 +16,6 @@ import UserStore from './stores/UserStore';
 import UserActions from './actions/UserActions';
 import UIActions from './actions/UIActions';
 import KeyboardActions from './actions/KeyboardActions';
-import ContainerActions from './actions/ContainerActions'
 
 export default class List extends React.Component {
   constructor(props) {
@@ -32,7 +30,6 @@ export default class List extends React.Component {
       visible: Immutable.List(),
       hidden: Immutable.List(),
       currentTab: 0,
-      treeView: false
     }
 
     this.onChange = this.onChange.bind(this)
@@ -40,8 +37,6 @@ export default class List extends React.Component {
     this.initState = this.initState.bind(this)
     this.changeLayout = this.changeLayout.bind(this)
     this.handleTabSelect = this.handleTabSelect.bind(this)
-    this.handleSwitch = this.handleSwitch.bind(this)
-
   }
 
   _checkedElements(type) {
@@ -64,7 +59,6 @@ export default class List extends React.Component {
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     UserStore.unlisten(this.onChangeUser);
-
   }
 
   initState(){
@@ -130,18 +124,9 @@ export default class List extends React.Component {
 
     let page = uiState[type].page;
 
-    if(this.state.treeView){
-      ContainerActions.fetchTree(uiState.currentCollection.id, type)
-    } else {
-      UIActions.setPagination({type: type, page: page});
-    }
+    UIActions.setPagination({type: type, page: page});
 
     KeyboardActions.contextChange(type);
-  }
-
-  handleSwitch(){
-    this.state.treeView = !this.state.treeView
-    this.handleTabSelect(this.state.currentTab)
   }
 
   getArrayFromLayout(layout, isVisible) {
@@ -193,11 +178,8 @@ export default class List extends React.Component {
       )
       let tabContent = (
         <Tab.Pane eventKey={i} key={value + "_tabPanel"}>
-          {treeView
-            ? <ContainerTree type={value} />
-            : <ElementsTable overview={overview} showReport={showReport}
+           <ElementsTable overview={overview} showReport={showReport}
                          type={value}/>
-          }
         </Tab.Pane>
         )
 
@@ -212,11 +194,6 @@ export default class List extends React.Component {
           <Col sm={12}>
             <Nav bsStyle="tabs">
               {navItems}
-              &nbsp;&nbsp;&nbsp;
-              <Button bsSize="xsmall" bsStyle="danger"
-                onClick={() => this.handleSwitch()}>
-                <span className="fa fa-exchange"></span>
-              </Button>
               &nbsp;&nbsp;&nbsp;
               <OverlayTrigger trigger="click" placement="bottom"
                               overlay={popoverLayout} rootClose

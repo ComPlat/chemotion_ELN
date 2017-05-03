@@ -30,25 +30,6 @@ module ContainerHelper
     return root_con
   end
 
-  def self.update_attachments(objects)
-    objects.each do |object|
-      if object.subtitle.end_with? "(dataset)"
-        parentid = object.id
-        object.children.each do |child|
-          if child.subtitle.end_with? "(attachment)"
-            attachment = Attachment.find_by id: child.id
-            if attachment
-              attachment.container_id = parentid
-              attachment.save!
-            end
-          end
-        end
-      else
-        update_attachments(object.children)
-      end
-    end
-  end
-
 private
   def self.read_Attachments(folder, container)
     path = File.join(folder, container.name) #wenn leer neue namen
@@ -78,7 +59,7 @@ private
           if child.container_type == "analysis"
               extended_metadata["content"] = if extended_metadata.key?("content")
                 extended_metadata["content"].to_json
-              else 
+              else
                 "{\"ops\":[{\"insert\":\"\"}]}"
               end
           end
@@ -100,7 +81,7 @@ private
           if child.container_type == "analysis"
               extended_metadata["content"] = if extended_metadata.key?("content")
                 extended_metadata["content"].to_json
-              else 
+              else
                 "{\"ops\":[{\"insert\":\"\"}]}"
               end
           end
@@ -119,7 +100,11 @@ private
     attachments.each do |attachment|
       if !attachment.is_new
         if !attachment.is_deleted
-          #todo: update
+          #update
+          old_attachment = Attachment.find_by id: attachment.id
+          old_attachment.container_id = parent_container_id
+
+          old_attachment.save!
         else
           #delete
           storage = Storage.new

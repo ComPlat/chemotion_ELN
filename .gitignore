@@ -21,6 +21,7 @@
 
 .env
 /config/mailcollector.yml
+/config/datamailcollector.yml
 /config/database.yml
 /config/storage.yml
 /node_modules

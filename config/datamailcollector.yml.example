@@ -4,8 +4,6 @@ development:
   :ssl: true
   :mail_address: "service@mail"
   :password: "password"
-  :sender_mailbox: "device"
-  :sender_host: "domain"
 
 test:
   :server: "imap.server.de"
@@ -13,8 +11,6 @@ test:
   :ssl: true
   :mail_address: "service@mail"
   :password: "password"
-  :sender_mailbox: "device"
-  :sender_host: "domain"
 
 production:
   :server: "imap.server.de"
@@ -22,5 +18,3 @@ production:
   :ssl: true
   :mail_address: "service@mail"
   :password: "password"
-  :sender_mailbox: "device"
-  :sender_host: "domain"

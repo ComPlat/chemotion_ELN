@@ -1,11 +1,13 @@
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import {ListGroup, ListGroupItem, Button, ButtonToolbar, Well} from 'react-bootstrap';
 import ContainerDatasetModal from './ContainerDatasetModal';
+import ContainerDatasetField from './ContainerDatasetField';
 import Container from './models/Container';
+import AttachmentDropzone from './AttachmentDropzone'
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
-    super();
+    super(props);
     const {container} = props;
     this.state = {
       container,
@@ -34,6 +36,19 @@ export default class ContainerDatasets extends Component {
     let dataset_container = Container.buildEmpty();
     dataset_container.container_type = "dataset";
 
+    container.children.push(dataset_container);
+
+    this.handleModalOpen(dataset_container);
+    this.props.onChange(container);
+
+  }
+
+  handleAddWithAttachment(attachment){
+    const {container} = this.state;
+    let dataset_container = Container.buildEmpty();
+    dataset_container.container_type = "dataset";
+
+    dataset_container.attachments.push(attachment)
     container.children.push(dataset_container);
 
     this.handleModalOpen(dataset_container);
@@ -79,58 +94,29 @@ export default class ContainerDatasets extends Component {
 
   addButton() {
     const {readOnly} = this.props;
+
     if(!readOnly) {
       return (
         <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
+        <AttachmentDropzone
+          handleAddWithAttachment={(attachment) => this.handleAddWithAttachment(attachment)}
+          />
+          &nbsp;&nbsp;&nbsp;
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus"></i>
           </Button>
+
+
         </div>
       )
     }
   }
 
-  removeButton(dataset_container) {
-    const {readOnly} = this.props;
-    if(!readOnly) {
-      return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleRemove(dataset_container)}>
-          <i className="fa fa-trash-o"></i>
-        </Button>
-      );
-    }
-  }
 
-  datasetField(dataset_container){
-    if(dataset_container.is_deleted){
-      return (
-        <div><strike>{dataset_container.name}</strike>
-
-            <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(dataset_container)}>
-              <i className="fa fa-undo"></i>
-            </Button>
-
-        </div>
-      )
-    }else{
-      return(
-        <div>
-        <a style={{cursor: 'pointer'}} onClick={() => this.handleModalOpen(dataset_container)}>
-          {dataset_container.name}
-        </a>
-        <ButtonToolbar className="pull-right">
-          <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
-            <i className="fa fa-download"></i>
-          </Button>
-          {this.removeButton(dataset_container)}
-        </ButtonToolbar>
-        </div>
-      )
-    }
-  }
 
   render() {
     const {container, modal} = this.state;
+
     if(container.children.length > 0) {
       return (
         <div>
@@ -139,7 +125,12 @@ export default class ContainerDatasets extends Component {
               {container.children.map((dataset_container, key) => {
                 return (
                   <ListGroupItem key={key}>
-                    {this.datasetField(dataset_container)}
+                    <ContainerDatasetField
+                      dataset_container={dataset_container}
+                      handleRemove={() => this.handleRemove(dataset_container)}
+                      handleUndo={() => this.handleUndo(dataset_container)}
+                      handleModalOpen={() => this.handleModalOpen(dataset_container)}
+                    />
                   </ListGroupItem>
                 )
               })}
@@ -156,7 +147,7 @@ export default class ContainerDatasets extends Component {
         </div>
       );
     } else {
-      return(
+      return (
         <div>
           <Well style={{minHeight: 70, padding: 10}}>
             There are currently no Datasets.<br/>

@@ -7,3 +7,7 @@ every :sunday, at: '0am' do
   rake "backup:weekly"
   runner "ReallyDestroyTask.execute!"
 end
+
+every 2.minutes do
+  rake 'collect_mail_data'
+end

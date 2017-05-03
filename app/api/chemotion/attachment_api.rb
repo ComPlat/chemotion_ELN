@@ -2,9 +2,30 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API
+
+    resource :inbox do
+      get do
+        attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
+      end
+    end
+
     resource :attachments do
 
-      #todo: move to AttachmentAPI
+      desc "Delete Attachment"
+      delete ':attachment_id' do
+        #todo: authorize
+        if current_user
+          attachment = Attachment.find_by id: params[:attachment_id]
+          if attachment && attachment.created_for == current_user.id
+            begin
+              storage = Storage.new
+              storage.delete(attachment)
+              attachment.delete
+            end
+          end
+        end
+      end
+
       desc "Upload attachments"
       post 'upload_dataset_attachments' do
         params.each do |file_id, file|

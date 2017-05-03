@@ -6,4 +6,5 @@ export default {
   RESEARCH_PLAN: 'research_plan',
   LAYOUT: 'layout',
   GENERAL: 'general',
+  DATA: 'data',
 };
