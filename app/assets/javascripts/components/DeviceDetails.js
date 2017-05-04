@@ -2,22 +2,23 @@ import React from 'react'
 import {Panel, PanelGroup , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from './DeviceSampleContainer'
 import ElementActions from './actions/ElementActions'
+import DetailActions from './actions/DetailActions'
 import DeviceManagement from './DeviceManagement'
 
 
-const DeviceDetails = ({device, closeDetails, toggleFullScreen}) => {
+const DeviceDetails = ({device, toggleFullScreen}) => {
   return (
     <Panel
       className='panel-detail'
-      header={<Header device={device} closeDetails={closeDetails} toggleFullScreen={toggleFullScreen}/>}
+      header={<Header device={device} toggleFullScreen={toggleFullScreen}/>}
       bsStyle={device.isPendingToSave ? 'info' : 'primary'}
     >
       <PanelGroup  defaultActiveKey="0" accordion>
         <Panel header="Device Management" eventKey="1"><DeviceManagement/></Panel>
       </PanelGroup>
-      
+
       <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => closeDetails(device)}>
+        <Button bsStyle="primary" onClick={() => DetailActions.close(device)}>
           Close
         </Button>
         <Button bsStyle="warning" onClick={() => handleSubmit(device)}>
@@ -35,14 +36,14 @@ const handleSubmit = (device) => {
   ElementActions.saveDevice(device)
 }
 
-const Header = ({device, closeDetails, toggleFullScreen}) => {
+const Header = ({device, toggleFullScreen}) => {
   return (
     <div>
       {device.title}
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="closeReaction">Close Device</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => closeDetails(device)}>
+            onClick={() => DetailActions.close(device)}>
           <i className="fa fa-times"></i>
         </Button>
       </OverlayTrigger>

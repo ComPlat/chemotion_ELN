@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import {Panel, Button, Tabs, Tab, Row, Col, FormGroup, ControlLabel,
         FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
-
+import DetailActions from '../actions/DetailActions';
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
 import UIActions from '../actions/UIActions';
@@ -57,7 +57,7 @@ export default class ReportContainer extends Component {
           <Button bsStyle="danger"
                   bsSize="xsmall"
                   className="g-marginLeft--10 button-right"
-                  onClick={(e) => this.props.closeDetails(this.props.report)}>
+                  onClick={(e) => DetailActions.close(this.props.report)}>
             <i className="fa fa-times"></i>
           </Button>
           {this.generateReportBtn()}
@@ -200,11 +200,6 @@ export default class ReportContainer extends Component {
   toggleConfigs(text, checked){
     ReportActions.updateConfigs({text, checked})
   }
-
-  // closeDetails() {
-  //   UIActions.uncheckWholeSelection();
-  //   UIActions.deselectAllElements()
-  // }
 
   toggleSplSettingsAll() {
     ReportActions.toggleSplSettingsCheckAll()

@@ -5,13 +5,13 @@ import{
 } from 'react-bootstrap'
 import Select from 'react-select'
 import ElementActions from './actions/ElementActions'
-
+import DetailActions from './actions/DetailActions'
 import {solvents, experiments} from './staticDropdownOptions/device_options'
 
-const AnalysisNMR = ({analysis, closeDetails}) => {
+const AnalysisNMR = ({analysis}) => {
   const styleByExperimentState = (experiment) => {
     return experiment.isNew || experiment.isEdited
-      ? "info" 
+      ? "info"
       : "default"
   }
   return (
@@ -71,7 +71,7 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
         }
       </Form>
       <ButtonToolbar>
-        <Button bsStyle="primary" onClick={() => closeDetails(analysis)}>
+        <Button bsStyle="primary" onClick={() => DetailActions.close(analysis)}>
           Close
         </Button>
         <Button
@@ -80,7 +80,7 @@ const AnalysisNMR = ({analysis, closeDetails}) => {
           onClick={() => {
             ElementActions.saveDeviceAnalysis(analysis)
             if (analysis.isNew) {
-              closeDetails(analysis, true)
+              DetailActions.close(analysis, true)
             }
           }}
         >
@@ -187,21 +187,21 @@ const Experiment = ({analysis, experiment}) => {
       </Col>
       <Col sm={2}>
         <ButtonToolbar>
-          <Button 
+          <Button
             bsSize="xsmall"
             bsStyle="danger"
             onClick={(e) => ElementActions.deleteAnalysisExperiment(analysis, experiment)}
           >
             <i className="fa fa-trash"></i>
           </Button>
-          <Button 
+          <Button
             bsSize="xsmall"
             bsStyle="info"
             onClick={(e) => ElementActions.duplicateAnalysisExperiment(analysis, experiment)}
           >
             Add
           </Button>
-          <Button 
+          <Button
             bsSize="xsmall"
             bsStyle="success"
             onClick={(e) => ElementActions.generateExperimentConfig(experiment)}

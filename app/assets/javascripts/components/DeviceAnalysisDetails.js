@@ -2,16 +2,16 @@ import React from 'react'
 import {Panel , ButtonToolbar, Button, OverlayTrigger, Tooltip} from 'react-bootstrap'
 import DeviceSampleContainer from './DeviceSampleContainer'
 import ElementActions from './actions/ElementActions'
+import DetailActions from './actions/DetailActions'
 import AnalysisNMR from './AnalysisNMR'
 
-const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
+const DeviceAnalysisDetails = ({analysis, toggleFullScreen}) => {
   return (
     <Panel
       className='panel-detail'
       header={
-        <Header 
+        <Header
           analysis={analysis}
-          closeDetails={closeDetails}
           toggleFullScreen={toggleFullScreen}
         />
       }
@@ -19,7 +19,6 @@ const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
     >
       <MainContent
         analysis={analysis}
-        closeDetails={closeDetails}
       />
     </Panel>
   )
@@ -27,14 +26,14 @@ const DeviceAnalysisDetails = ({analysis, closeDetails, toggleFullScreen}) => {
 
 export default DeviceAnalysisDetails
 
-const Header = ({analysis, closeDetails, toggleFullScreen}) => {
+const Header = ({analysis, toggleFullScreen}) => {
   return (
     <div>
       {analysis.title}
       <OverlayTrigger placement="bottom"
           overlay={<Tooltip id="closeReaction">Close</Tooltip>}>
         <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => closeDetails(analysis)}>
+            onClick={() => DetailActions.close(analysis)}>
           <i className="fa fa-times"></i>
         </Button>
       </OverlayTrigger>
@@ -49,10 +48,10 @@ const Header = ({analysis, closeDetails, toggleFullScreen}) => {
   )
 }
 
-const MainContent = ({analysis, closeDetails}) => {
+const MainContent = ({analysis}) => {
   switch(analysis.analysisType) {
     case 'NMR':
-      return <AnalysisNMR analysis={analysis} closeDetails={closeDetails}/>
+      return <AnalysisNMR analysis={analysis} />
       break
     default:
       return <div>Device-Analysis not found!</div>

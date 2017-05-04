@@ -9,6 +9,7 @@ import Utils from './utils/Functions';
 import QuillEditor from './QuillEditor'
 import ScreenDetailsContainers from './ScreenDetailsContainers';
 import ElementActions from './actions/ElementActions';
+import DetailActions from './actions/DetailActions';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import PrintCodeButton from './common/PrintCodeButton'
@@ -54,7 +55,7 @@ export default class ScreenDetails extends Component {
     }
     if(screen.is_new) {
       const force = true;
-      this.props.closeDetails(screen, force);
+      DetailActions.close(screen, force);
     }
   }
 
@@ -116,7 +117,7 @@ export default class ScreenDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeScreen">Close Screen</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => this.props.closeDetails(screen)} >
+            onClick={() => DetailActions.close(screen)} >
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -263,7 +264,7 @@ export default class ScreenDetails extends Component {
         </Tabs>
 
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => this.props.closeDetails(screen)}>Close</Button>
+          <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
           <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
         </ButtonToolbar>
       </Panel>
@@ -273,6 +274,5 @@ export default class ScreenDetails extends Component {
 
 ScreenDetails.propTypes = {
   screen: React.PropTypes.object,
-  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }

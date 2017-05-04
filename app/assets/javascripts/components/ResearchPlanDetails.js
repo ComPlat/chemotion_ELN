@@ -6,6 +6,7 @@ import StructureEditorModal from './structure_editor/StructureEditorModal';
 import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
+import DetailActions from './actions/DetailActions'
 import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher'
 import QuillEditor from './QuillEditor'
 
@@ -91,7 +92,7 @@ export default class ResearchPlanDetails extends Component {
     }
     if(research_plan.is_new) {
       const force = true;
-      this.props.closeDetails(research_plan, force);
+      DetailActions.close(research_plan, force);
     }
   }
 
@@ -134,7 +135,7 @@ export default class ResearchPlanDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeresearch_plan">Close research_plan</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => this.props.closeDetails(research_plan)} >
+            onClick={() => DetailActions.close(research_plan)} >
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -212,7 +213,7 @@ export default class ResearchPlanDetails extends Component {
         </ListGroup>
         {this.structureEditorModal(research_plan)}
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => this.props.closeDetails(research_plan)}>Close</Button>
+          <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
           <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
         </ButtonToolbar>
       </Panel>
@@ -222,6 +223,5 @@ export default class ResearchPlanDetails extends Component {
 
 ResearchPlanDetails.propTypes = {
   research_plan: React.PropTypes.object,
-  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }

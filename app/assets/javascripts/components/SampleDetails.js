@@ -9,6 +9,7 @@ import Select from 'react-select';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
+import DetailActions from './actions/DetailActions';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -163,7 +164,7 @@ export default class SampleDetails extends React.Component {
     }
     if(sample.is_new || closeView) {
       const force = true;
-      this.props.closeDetails(sample, force);
+      DetailActions.close(sample, force);
     }
     sample.updateChecksum();
   }
@@ -284,7 +285,7 @@ export default class SampleDetails extends React.Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeSample">Close Sample</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => this.props.closeDetails(sample)}>
+            onClick={() => DetailActions.close(sample)}>
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -621,7 +622,7 @@ export default class SampleDetails extends React.Component {
     return (
       <ButtonToolbar>
         <Button bsStyle="primary"
-                onClick={() => this.props.closeDetails(sample)}>
+                onClick={() => DetailActions.close(sample)}>
           Close
         </Button>
         {this.saveBtn(sample)}
@@ -681,6 +682,5 @@ export default class SampleDetails extends React.Component {
 }
 SampleDetails.propTypes = {
   sample: React.PropTypes.object,
-  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }
