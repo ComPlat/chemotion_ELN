@@ -31,6 +31,17 @@ module Chemotion
 
         molecule.attributes.merge({ temp_svg: svg_file_name })
       end
+
+      desc "return CAS of the molecule"
+      params do
+        requires :inchikey, type: String, desc: "Molecule inchikey"
+      end
+      get :cas do
+        inchikey = params[:inchikey]
+        molecule = Molecule.find_by(inchikey: inchikey)
+        molecule.load_cas if molecule
+        molecule
+      end
     end
   end
 end
