@@ -50,7 +50,8 @@ export default class SampleDetails extends React.Component {
       loadingMolecule: false,
       showElementalComposition: false,
       activeTab: UIStore.getState().sample.activeTab,
-      qrCodeSVG: ""
+      qrCodeSVG: "",
+      isCasLoading: false,
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -60,9 +61,9 @@ export default class SampleDetails extends React.Component {
     this.setState({
       sample: nextProps.sample,
       loadingMolecule: false,
+      isCasLoading: false,
     });
   }
-
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange)
@@ -403,22 +404,24 @@ export default class SampleDetails extends React.Component {
   }
 
   moleculeCas() {
-    const sample = this.state.sample;
+    const { sample, isCasLoading } = this.state;
     const { molecule, xref } = sample;
     const cas = xref ? xref.cas : "";
-    let cas_arr = [];
+    let casArr = [];
     if(molecule && molecule.cas) {
-      cas_arr = molecule.cas.map(c => Object.assign({label: c}, {value: c}));
+      casArr = molecule.cas.map(c => Object.assign({label: c}, {value: c}));
     }
+
     return (
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>CAS</InputGroup.Addon>
         <Select ref='casSelect'
                 name='cas'
                 multi={false}
-                options={cas_arr}
-                //className='drop-up' //TODO fix drop-up style (react-select upg)
+                options={casArr}
                 onChange={(e) => this.updateCas(e)}
+                onOpen={(e) => this.onCasSelectOpen(e, casArr)}
+                isLoading={isCasLoading}
                 value={cas}
         />
         <InputGroup.Button>
@@ -438,6 +441,13 @@ export default class SampleDetails extends React.Component {
     let sample = this.state.sample;
     sample.xref = { ...sample.xref, cas: e };
     this.setState({sample});
+  }
+
+  onCasSelectOpen(e, casArr) {
+    if(casArr.length === 0) {
+      this.setState({isCasLoading: true})
+      DetailActions.getMoleculeCas(this.state.sample)
+    }
   }
 
   handleSectionToggle() {

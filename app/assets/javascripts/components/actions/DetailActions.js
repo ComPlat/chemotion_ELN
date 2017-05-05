@@ -1,5 +1,6 @@
 import alt from '../alt'
 import _ from 'lodash'
+import MoleculesFetcher from '../fetchers/MoleculesFetcher'
 
 class DetailActions {
   select(index) {
@@ -16,6 +17,17 @@ class DetailActions {
 
   changeCurrentElement(oriEl, nextEl) {
     return {oriEl, nextEl}
+  }
+
+  getMoleculeCas(sample) {
+    return (dispatch) => { MoleculesFetcher.fetchCas(sample.molecule.inchikey)
+      .then((result) => {
+        sample.molecule = result
+        dispatch(sample)
+      }).catch((errorMessage) => {
+        console.log(errorMessage)
+      })
+    }
   }
 }
 
