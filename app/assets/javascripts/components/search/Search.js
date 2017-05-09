@@ -41,7 +41,7 @@ export default class Search extends React.Component {
     let userState = UserStore.getState()
     let uiState = UIStore.getState()
     let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser(
-      '/api/v1/suggestions/' + this.state.elementType + '/',
+      '/api/v1/suggestions/' + this.state.elementType.toLowerCase() + '/',
       query, userState.currentUser.id, uiState.currentCollection.id)
     return promise
   }
