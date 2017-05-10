@@ -112,6 +112,8 @@ gem 'prawn-svg'
 gem 'barby'
 gem 'rqrcode'
 
+gem 'countries'
+
 group :development do
   gem 'web-console', '~> 2.0'
   gem 'better_errors' # allows to debug exception on backend from browser
