@@ -6,6 +6,7 @@ import SVG from 'react-inlinesvg';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementActions from './actions/ElementActions';
+import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
 import Wellplate from './Wellplate';
 import WellplateList from './WellplateList';
@@ -68,7 +69,7 @@ export default class WellplateDetails extends Component {
     }
     if(wellplate.is_new) {
       const force = true;
-      this.props.closeDetails(wellplate, force);
+      DetailActions.close(wellplate, force);
     }
   }
 
@@ -119,7 +120,7 @@ export default class WellplateDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeWellplate">Close Wellplate</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall"
-            className="button-right" onClick={() => this.props.closeDetails(wellplate)} >
+            className="button-right" onClick={() => DetailActions.close(wellplate)} >
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -227,7 +228,7 @@ export default class WellplateDetails extends Component {
         <ButtonToolbar>
           <Button
             bsStyle="primary"
-            onClick={() => this.props.closeDetails(wellplate)}
+            onClick={() => DetailActions.close(wellplate)}
             >
             Close
           </Button>
@@ -252,6 +253,5 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.object.isRequired,
-  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 };

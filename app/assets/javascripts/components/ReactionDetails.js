@@ -6,6 +6,7 @@ import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
+import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
@@ -116,7 +117,7 @@ export default class ReactionDetails extends Component {
 
     if(reaction.is_new) {
       const force = true;
-      this.props.closeDetails(reaction, force);
+      DetailActions.close(reaction, force);
     }
   }
 
@@ -240,7 +241,7 @@ export default class ReactionDetails extends Component {
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-              onClick={() => this.props.closeDetails(reaction)}>
+              onClick={() => DetailActions.close(reaction)}>
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -331,7 +332,7 @@ export default class ReactionDetails extends Component {
         </Tabs>
         <hr/>
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => this.props.closeDetails(reaction)}>
+          <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
             Close
           </Button>
           <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
@@ -348,6 +349,5 @@ export default class ReactionDetails extends Component {
 
 ReactionDetails.propTypes = {
   reaction: React.PropTypes.object,
-  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }

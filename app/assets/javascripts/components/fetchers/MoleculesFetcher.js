@@ -23,4 +23,19 @@ export default class MoleculesFetcher {
 
     return promise;
   }
+
+  static fetchCas(inchikey) {
+    let promise = fetch(`/api/v1/molecules/cas?inchikey=${inchikey}`, {
+        credentials: 'same-origin'
+      })
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json
+      }).catch((errorMessage) => {
+        console.log(errorMessage)
+      })
+
+    return promise
+  }
 }

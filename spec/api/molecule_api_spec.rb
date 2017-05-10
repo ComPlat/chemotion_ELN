@@ -63,11 +63,22 @@ M  END"
             expect(m.attributes.symbolize_keys[k]).to eq(v)
           end
           expect(m.molecule_svg_file).to match(/\w{128}\.svg/)
-          expect(m.cas).to include("123-456-789")
         end
 
       end
     end
 
+
+    describe 'Get /api/v1/molecules/cas' do
+      let!(:m) { create(:molecule) }
+
+      it 'returns a molecule with CAS number' do
+        expect(m.cas).to eq([])
+
+        get "/api/v1/molecules/cas?inchikey=#{m.inchikey}"
+        expect(JSON.parse(response.body)["cas"])
+          .to eq ["123-456-789", "987-654-321", "558440-22-5"]
+      end
+    end
   end
 end
