@@ -58,11 +58,9 @@ export default class SampleDetailsContainers extends Component {
 
     sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
-    const newKey = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
-
-    this.handleAccordionOpen(newKey);
-
-    this.props.setState({sample: sample})
+    this.props.setState({sample: sample},
+      this.handleAccordionOpen(container.id)
+    )
   }
 
   handleRemove(container) {
