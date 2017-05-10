@@ -58,11 +58,9 @@ export default class SampleDetailsContainers extends Component {
 
     sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
-    const newKey = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
-
-    this.handleAccordionOpen(newKey);
-
-    this.props.setState({sample: sample})
+    this.props.setState({sample: sample},
+      this.handleAccordionOpen(container.id)
+    )
   }
 
   handleRemove(container) {
@@ -103,7 +101,7 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
-  analysisHeader(container, readOnly) {
+  analysisHeader(container, readOnly, key) {
     const confirmDelete = (e) => {
       e.stopPropagation()
       if(confirm('Delete the analysis?')) {
@@ -120,7 +118,8 @@ export default class SampleDetailsContainers extends Component {
     const inReport = container.extended_metadata['report'];
 
     return (
-      <div style={{width: '100%'}}>
+      <div style={{width: '100%'}}
+            onClick={() => this.handleAccordionOpen(key)}>
         {container.name}
         {kind}
         {status}
@@ -199,9 +198,8 @@ export default class SampleDetailsContainers extends Component {
             }
 
             return (
-              <Panel header={this.analysisHeader(container, readOnly)}
-                     eventKey={key} key={key + "_analysis"}
-                     onClick={() => this.handleAccordionOpen(key)}>
+              <Panel header={this.analysisHeader(container, readOnly, key)}
+                     eventKey={key} key={key + "_analysis"}>
                 <ContainerComponent
                   readOnly={readOnly}
                   container={container}
