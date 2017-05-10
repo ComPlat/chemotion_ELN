@@ -132,4 +132,5 @@ class API < Grape::API
   mount Chemotion::DeviceAPI
   mount Chemotion::IconNmrAPI
   mount Chemotion::DevicesAnalysisAPI
+  mount Chemotion::V1PublicAPI
 end

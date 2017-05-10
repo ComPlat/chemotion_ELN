@@ -11,13 +11,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170414012345) do
+ActiveRecord::Schema.define(version: 20170509085000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
   enable_extension "pg_trgm"
   enable_extension "uuid-ossp"
+
+  create_table "affiliations", force: :cascade do |t|
+    t.string   "company"
+    t.string   "country"
+    t.string   "organization"
+    t.string   "department"
+    t.string   "group"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "analyses_experiments", force: :cascade do |t|
     t.integer  "sample_id"
@@ -596,6 +606,13 @@ ActiveRecord::Schema.define(version: 20170414012345) do
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
   add_index "sync_collections_users", ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id", using: :btree
   add_index "sync_collections_users", ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
+
+  create_table "user_affiliations", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "affiliation_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                            default: "",                                                                                      null: false
