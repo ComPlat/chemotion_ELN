@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170509085000) do
+ActiveRecord::Schema.define(version: 20170512110856) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -591,16 +591,19 @@ ActiveRecord::Schema.define(version: 20170509085000) do
   add_index "screens_wellplates", ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
 
   create_table "sync_collections_users", force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "collection_id"
-    t.integer "shared_by_id"
-    t.integer "permission_level",          default: 0
-    t.integer "sample_detail_level",       default: 0
-    t.integer "reaction_detail_level",     default: 0
-    t.integer "wellplate_detail_level",    default: 0
-    t.integer "screen_detail_level",       default: 0
-    t.string  "fake_ancestry"
-    t.integer "researchplan_detail_level", default: 10
+    t.integer  "user_id"
+    t.integer  "collection_id"
+    t.integer  "shared_by_id"
+    t.integer  "permission_level",          default: 0
+    t.integer  "sample_detail_level",       default: 0
+    t.integer  "reaction_detail_level",     default: 0
+    t.integer  "wellplate_detail_level",    default: 0
+    t.integer  "screen_detail_level",       default: 0
+    t.string   "fake_ancestry"
+    t.integer  "researchplan_detail_level", default: 10
+    t.string   "label"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
@@ -636,11 +639,11 @@ ActiveRecord::Schema.define(version: 20170509085000) do
     t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 
@@ -696,5 +699,6 @@ ActiveRecord::Schema.define(version: 20170509085000) do
   add_index "wells", ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
+
 
 end
