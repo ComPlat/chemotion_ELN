@@ -117,6 +117,9 @@ export default class SampleDetailsContainers extends Component {
 
     const inReport = container.extended_metadata['report'];
 
+    let attachments = container.attachments
+    let attachmentPreview = null
+
     return (
       <div style={{width: '100%'}}
             onClick={() => this.handleAccordionOpen(key)}>
@@ -141,6 +144,9 @@ export default class SampleDetailsContainers extends Component {
               Add to Report
             </Label>
           </span>
+        </div>
+        <div>
+          <img src={attachmentPreview} alt='no preview' />
         </div>
       </div>
     );
@@ -199,7 +205,7 @@ export default class SampleDetailsContainers extends Component {
 
             return (
               <Panel header={this.analysisHeader(container, readOnly, key)}
-                     eventKey={key} key={key + "_analysis"}>
+                eventKey={key} key={key + "_analysis"}>
                 <ContainerComponent
                   readOnly={readOnly}
                   container={container}
