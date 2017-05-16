@@ -1,23 +1,25 @@
 import React, {Component} from 'react'
 import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
   OverlayTrigger, Tooltip} from 'react-bootstrap';
+import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
+import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
 import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
-import SVG from 'react-inlinesvg';
 import Utils from './utils/Functions';
-
+import PrintCodeButton from './common/PrintCodeButton'
 import XTabs from "./extra/ReactionDetailsXTabs";
-
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 import {setReactionByType} from './ReactionDetailsShare'
 
-import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -25,12 +27,31 @@ export default class ReactionDetails extends Component {
 
     const {reaction} = props;
     this.state = {
-      reaction,
+      reaction: reaction,
+      activeTab: UIStore.getState().reaction.activeTab,
     };
 
     if(reaction.hasMaterials()) {
       this.updateReactionSvg();
     }
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
+
+  }
+
+  onUIStoreChange(state) {
+    if (state.reaction.activeTab != this.state.activeTab){
+      this.setState({
+        activeTab: state.reaction.activeTab
+      })
+    }
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
   }
 
   componentWillReceiveProps(nextProps) {
@@ -47,13 +68,17 @@ export default class ReactionDetails extends Component {
     }
   }
 
-  shouldComponentUpdate(nextProps) {
+  shouldComponentUpdate(nextProps, nextState) {
     let nextReaction = nextProps.reaction;
-    const {reaction} = this.state;
-    return (nextReaction.id != reaction.id ||
-        nextReaction.updated_at != reaction.updated_at ||
-        nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
-        !!nextReaction.changed || !!nextReaction.editedSample)
+    let nextActiveTab = nextState.activeTab
+    const {reaction, activeTab} = this.state;
+    return (
+      nextReaction.id != reaction.id ||
+      nextReaction.updated_at != reaction.updated_at ||
+      nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+      !!nextReaction.changed || !!nextReaction.editedSample ||
+      nextActiveTab != activeTab
+    )
   }
 
   updateReactionSvg() {
@@ -92,7 +117,7 @@ export default class ReactionDetails extends Component {
 
     if(reaction.is_new) {
       const force = true;
-      this.props.closeDetails(reaction, force);
+      DetailActions.close(reaction, force);
     }
   }
 
@@ -160,9 +185,9 @@ export default class ReactionDetails extends Component {
     let tabs = products.map((product, key) =>
       <Tab key={product.short_label} eventKey={key}
            title={this.productLink(product)}>
-        <ReactionSampleDetailsContainers sample={product} 
+        <ReactionSampleDetailsContainers sample={product}
           setState={(product) => this.handleProductChange(product)}
-          handleSampleChanged={(product) => this.handleProductChange(product)} 
+          handleSampleChanged={(product) => this.handleProductChange(product)}
         />
       </Tab>
     );
@@ -210,14 +235,13 @@ export default class ReactionDetails extends Component {
 
   reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
-
     return (
       <h4>
         <i className="icon-reaction"/>&nbsp;{reaction.title()}
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-              onClick={() => this.props.closeDetails(reaction)}>
+              onClick={() => DetailActions.close(reaction)}>
             <i className="fa fa-times"></i>
           </Button>
         </OverlayTrigger>
@@ -255,8 +279,16 @@ export default class ReactionDetails extends Component {
           <ElementCollectionLabels element={reaction} key={reaction.id} placement="right"/>
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
+        <PrintCodeButton element={reaction}/>
       </h4>
     )
+  }
+
+  handleSelect(key) {
+    UIActions.selectTab({tabKey: key, type: 'reaction'});
+    this.setState({
+      activeTab: key
+    })
   }
 
   render() {
@@ -272,7 +304,8 @@ export default class ReactionDetails extends Component {
       <Panel className='panel-detail' header={this.reactionHeader(reaction)}
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
         {this.reactionSVG(reaction)}
-        <Tabs defaultActiveKey={0} id="reaction-detail-tab">
+        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)}
+           id="reaction-detail-tab">
           <Tab eventKey={0} title={'Scheme'}>
             <ReactionDetailsScheme
               reaction={reaction}
@@ -299,7 +332,7 @@ export default class ReactionDetails extends Component {
         </Tabs>
         <hr/>
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => this.props.closeDetails(reaction)}>
+          <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
             Close
           </Button>
           <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
@@ -316,6 +349,5 @@ export default class ReactionDetails extends Component {
 
 ReactionDetails.propTypes = {
   reaction: React.PropTypes.object,
-  closeDetails: React.PropTypes.func,
   toggleFullScreen: React.PropTypes.func,
 }

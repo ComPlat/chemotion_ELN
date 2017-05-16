@@ -1,3 +1,6 @@
+require 'barby'
+require 'barby/barcode/qr_code'
+require 'barby/outputter/svg_outputter'
 require 'digest'
 
 module Chemotion
@@ -83,6 +86,25 @@ module Chemotion
             storage.read_thumbnail(attachment)
           else
             nil
+          end
+        end
+      end
+
+      namespace :svgs do
+        desc "Get QR Code SVG for element"
+        params do
+          requires :element_id, type: Integer
+          requires :element_type, type: String
+        end
+        get do
+          code = CodeLog.where(source: params[:element_type],
+            source_id: params[:element_id]).first
+          if code
+            qr_code = Barby::QrCode.new(code.value, size: 1, level: :l)
+            outputter = Barby::SvgOutputter.new(qr_code)
+            outputter.to_svg(margin: 0)
+          else
+            ""
           end
         end
       end

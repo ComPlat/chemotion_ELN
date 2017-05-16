@@ -87,7 +87,7 @@ Rails.application.configure do
     :password             => ENV['SMTP_PASSWORD'],
     :authentication       => ENV['SMTP_AUTH'] && ENV['SMTP_AUTH'].to_sym,
     :enable_starttls_auto => ENV['SMTP_TLS'] && ENV['SMTP_TLS'].match(/true/),
-    :openssl_verify_mode  => ENV['SMTP_SSL_MODE'],
+    :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
   }
 
 end

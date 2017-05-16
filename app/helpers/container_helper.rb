@@ -73,10 +73,12 @@ private
       else
         if !child.is_deleted
           #Create container
-          newcon = root_container.children.create(name: child.name)
-          newcon.container_type = child.container_type
-          newcon.description = child.description
-
+          newcon = root_container.children.create(
+            name: child.name,
+            container_type: child.container_type,
+            description: child.description
+          )
+            
           extended_metadata = child.extended_metadata
           if child.container_type == "analysis"
               extended_metadata["content"] = if extended_metadata.key?("content")

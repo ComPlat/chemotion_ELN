@@ -3,23 +3,25 @@
   = form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f|
     = devise_error_messages!
     .form-group.field
-      = f.label :email
+      = f.label :email, class: "required"
       %br/
-      = f.email_field :email, autofocus: true, class: 'form-control'
+      = f.email_field :email, autofocus: true, class: 'form-control', required: true
     .form-group.field
-      = f.label :first_name
+      = f.label :first_name, class: "required"
       %br/
-      = f.text_field :first_name, autofocus: true, class: 'form-control'
+      = f.text_field :first_name, autofocus: true, class: 'form-control', required: true
     .form-group.field
-      = f.label :last_name
+      = f.label :last_name, class: "required"
       %br/
-      = f.text_field :last_name, autofocus: true, class: 'form-control'
+      = f.text_field :last_name, autofocus: true, class: 'form-control', required: true
     .form-group.field
-      = f.label "Name Abbreviation"
+      = f.label "Name Abbreviation", class: "required"
       %em
         (Kürzel)
       %br/
-      = f.text_field :name_abbreviation, autofocus: true, class: 'form-control'
+      = f.text_field :name_abbreviation, autofocus: true, class: 'form-control', required: true
+    = f.fields_for :affiliations, resource.affiliations.build do |a|
+      = render "devise/shared/affiliations", f: a
     .form-group.field
       = f.label :password
       - if @validatable
@@ -32,6 +34,7 @@
       %br/
       = f.password_field :password_confirmation, autocomplete: "off", class: 'form-control'
     .form-group.actions
+      %input{:style=>"display:none;"}
       = f.submit "Sign up", class: 'btn btn-primary'
 
   = render "devise/shared/links"

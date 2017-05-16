@@ -1,7 +1,9 @@
 import React, {Component} from 'react';
-import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
+import {PanelGroup, Panel, Button, Label} from 'react-bootstrap';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
+import PrintCodeButton from './common/PrintCodeButton'
+import UIStore from './stores/UIStore';
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
@@ -9,14 +11,31 @@ export default class SampleDetailsContainers extends Component {
     const {sample} = props;
     this.state = {
       sample,
-      activeContainer: 0
+      activeAnalysis: UIStore.getState().sample.activeAnalysis,
     };
+    this.onUIStoreChange = this.onUIStoreChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      sample: nextProps.sample
+      sample: nextProps.sample,
     })
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange)
+  }
+
+  componentWillUnmount() {
+    UIStore.unlisten(this.onUIStoreChange)
+  }
+
+  onUIStoreChange(state) {
+    if (state.sample.activeAnalysis != this.state.sample.activeAnalysis){
+      this.setState({
+        activeAnalysis: state.sample.activeAnalysis
+      })
+    }
   }
 
   handleChange(container) {
@@ -39,11 +58,9 @@ export default class SampleDetailsContainers extends Component {
 
     sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
 
-    const newKey = sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
-
-    this.handleAccordionOpen(newKey);
-
-    this.props.setState({sample: sample})
+    this.props.setState({sample: sample},
+      this.handleAccordionOpen(container.id)
+    )
   }
 
   handleRemove(container) {
@@ -61,10 +78,10 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleAccordionOpen(newKey) {
-    const currentKey = this.state.activeContainer;
-    if(currentKey !== newKey) {
-      this.setState({activeContainer: newKey});
-    }
+    this.setState((prevState)=>{
+      let prevKey = prevState.activeAnalysis
+      return {...prevState,activeAnalysis: prevKey == newKey ? 0 : newKey}
+    });
   }
 
   addButton() {
@@ -84,8 +101,9 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
-  analysisHeader(container, readOnly) {
-    const confirmDelete = () => {
+  analysisHeader(container, readOnly, key) {
+    const confirmDelete = (e) => {
+      e.stopPropagation()
       if(confirm('Delete the analysis?')) {
         this.handleRemove(container)
       }
@@ -100,24 +118,29 @@ export default class SampleDetailsContainers extends Component {
     const inReport = container.extended_metadata['report'];
 
     return (
-      <div style={{width: '100%'}}>
+      <div style={{width: '100%'}}
+            onClick={() => this.handleAccordionOpen(key)}>
         {container.name}
         {kind}
         {status}
         <div className="button-right">
-          <label>
-            <input onClick={(e) => this.toggleAddToReport(e, container)}
-                   type="checkbox"
-                   defaultChecked={inReport} />
-            <span>Add to Report</span>
-          </label>
+
           <Button bsSize="xsmall"
                   bsStyle="danger"
-                  className="g-marginLeft--20"
+                  className="button-right"
                   disabled={readOnly}
                   onClick={confirmDelete}>
             <i className="fa fa-trash"></i>
           </Button>
+          <PrintCodeButton element={this.state.sample} analyses={[container]} ident={container.id}/>
+          <span className="collection-label button-right" onClick={e => e.stopPropagation()}>
+            <Label>
+              <input onClick={(e) => this.toggleAddToReport(e, container)}
+                     type="checkbox"
+                     defaultChecked={inReport} />
+              Add to Report
+            </Label>
+          </span>
         </div>
       </div>
     );
@@ -147,7 +170,7 @@ export default class SampleDetailsContainers extends Component {
   }
 
   render() {
-    const {sample, activeContainer} = this.state;
+    const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
 
     if (sample.container == null) {
@@ -163,8 +186,9 @@ export default class SampleDetailsContainers extends Component {
       return (
         <div>
           <p>&nbsp;{this.addButton()}</p>
-          <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-          {analyses_container[0].children.map((container, key) => {
+          <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
+          {analyses_container[0].children.map((container,i) => {
+            let key = container.id || `fake_${i}`
             if (container.is_deleted) {
               return (
                 <Panel header={this.analysisHeaderDeleted(container, readOnly)}
@@ -174,9 +198,8 @@ export default class SampleDetailsContainers extends Component {
             }
 
             return (
-              <Panel header={this.analysisHeader(container, readOnly)}
-                     eventKey={key} key={key + "_analysis"}
-                     onClick={() => this.handleAccordionOpen(key)}>
+              <Panel header={this.analysisHeader(container, readOnly, key)}
+                     eventKey={key} key={key + "_analysis"}>
                 <ContainerComponent
                   readOnly={readOnly}
                   container={container}

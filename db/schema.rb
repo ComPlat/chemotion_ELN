@@ -11,12 +11,41 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170411104507) do
+ActiveRecord::Schema.define(version: 20170512110856) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "pg_trgm"
   enable_extension "hstore"
+  enable_extension "pg_trgm"
+  enable_extension "uuid-ossp"
+
+  create_table "affiliations", force: :cascade do |t|
+    t.string   "company"
+    t.string   "country"
+    t.string   "organization"
+    t.string   "department"
+    t.string   "group"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "analyses_experiments", force: :cascade do |t|
+    t.integer  "sample_id"
+    t.integer  "holder_id"
+    t.string   "status"
+    t.integer  "devices_analysis_id", null: false
+    t.integer  "devices_sample_id",   null: false
+    t.string   "sample_analysis_id",  null: false
+    t.string   "solvent"
+    t.string   "experiment"
+    t.boolean  "priority"
+    t.boolean  "on_day"
+    t.integer  "number_of_scans"
+    t.integer  "sweep_width"
+    t.string   "time"
+    t.datetime "created_at",          null: false
+    t.datetime "updated_at",          null: false
+  end
 
   create_table "attachments", force: :cascade do |t|
     t.integer  "container_id"
@@ -34,6 +63,17 @@ ActiveRecord::Schema.define(version: 20170411104507) do
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
   end
+
+  create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
+    t.string   "source"
+    t.integer  "source_id"
+    t.string   "value",      limit: 40
+    t.datetime "deleted_at"
+    t.datetime "created_at",            null: false
+    t.datetime "updated_at",            null: false
+  end
+
+  add_index "code_logs", ["source", "source_id"], name: "index_code_logs_on_source_and_source_id", using: :btree
 
   create_table "collections", force: :cascade do |t|
     t.integer  "user_id",                                   null: false
@@ -166,6 +206,23 @@ ActiveRecord::Schema.define(version: 20170411104507) do
   end
 
   add_index "elemental_compositions", ["sample_id"], name: "index_elemental_compositions_on_sample_id", using: :btree
+
+  create_table "experiments", force: :cascade do |t|
+    t.string   "type",                limit: 20
+    t.string   "name"
+    t.text     "description"
+    t.string   "status",              limit: 20
+    t.jsonb    "parameter"
+    t.integer  "user_id"
+    t.integer  "device_id"
+    t.integer  "container_id"
+    t.integer  "experimentable_id"
+    t.string   "experimentable_type"
+    t.string   "ancestry"
+    t.integer  "parent_id"
+    t.datetime "created_at",                     null: false
+    t.datetime "updated_at",                     null: false
+  end
 
   create_table "fingerprints", force: :cascade do |t|
     t.bit      "fp0",          limit: 64
@@ -534,21 +591,31 @@ ActiveRecord::Schema.define(version: 20170411104507) do
   add_index "screens_wellplates", ["wellplate_id"], name: "index_screens_wellplates_on_wellplate_id", using: :btree
 
   create_table "sync_collections_users", force: :cascade do |t|
-    t.integer "user_id"
-    t.integer "collection_id"
-    t.integer "shared_by_id"
-    t.integer "permission_level",          default: 0
-    t.integer "sample_detail_level",       default: 0
-    t.integer "reaction_detail_level",     default: 0
-    t.integer "wellplate_detail_level",    default: 0
-    t.integer "screen_detail_level",       default: 0
-    t.string  "fake_ancestry"
-    t.integer "researchplan_detail_level", default: 10
+    t.integer  "user_id"
+    t.integer  "collection_id"
+    t.integer  "shared_by_id"
+    t.integer  "permission_level",          default: 0
+    t.integer  "sample_detail_level",       default: 0
+    t.integer  "reaction_detail_level",     default: 0
+    t.integer  "wellplate_detail_level",    default: 0
+    t.integer  "screen_detail_level",       default: 0
+    t.string   "fake_ancestry"
+    t.integer  "researchplan_detail_level", default: 10
+    t.string   "label"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   add_index "sync_collections_users", ["collection_id"], name: "index_sync_collections_users_on_collection_id", using: :btree
   add_index "sync_collections_users", ["shared_by_id", "user_id", "fake_ancestry"], name: "index_sync_collections_users_on_shared_by_id", using: :btree
   add_index "sync_collections_users", ["user_id", "fake_ancestry"], name: "index_sync_collections_users_on_user_id_and_fake_ancestry", using: :btree
+
+  create_table "user_affiliations", force: :cascade do |t|
+    t.integer  "user_id"
+    t.integer  "affiliation_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                            default: "",                                                                                      null: false
@@ -577,6 +644,7 @@ ActiveRecord::Schema.define(version: 20170411104507) do
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
     t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
+    t.integer  "selected_device_id"
   end
 
   add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
@@ -631,5 +699,6 @@ ActiveRecord::Schema.define(version: 20170411104507) do
   add_index "wells", ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
+
 
 end

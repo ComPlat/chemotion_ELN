@@ -8,7 +8,7 @@ export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(
       selection, collectionId, currentPage = 1,
       isSync = false, moleculeSort = false) {
-    let promise = fetch('/api/v1/search/' + selection.elementType, {
+    let promise = fetch('/api/v1/search/' + selection.elementType.toLowerCase(), {
         credentials: 'same-origin',
         method: 'POST',
         headers: {

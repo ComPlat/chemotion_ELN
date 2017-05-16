@@ -14,6 +14,22 @@ class UIActions {
     return  null;
   }
 
+  showDeviceManagement() {
+    return null
+  }
+
+  closeDeviceManagement() {
+    return null
+  }
+
+  selectTab(params) {
+    return params;
+  }
+
+  selectActiveAnalysis(index) {
+    return index;
+  }
+
   toggleAdvancedSearch(show) {
     return show
   }

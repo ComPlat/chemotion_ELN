@@ -53,19 +53,38 @@ module Chemotion
       def advanced_search arg
         query = ""
         cond_val = []
+        tables = []
+
         arg.each do |filter|
-          field = filter.field
+          table = filter.field.table
+          tables.push(table)
+          field = filter.field.column
           words = filter.value.split(/,|(\r)?\n/).map!(&:strip)
 
+          if filter.match.downcase == "exact" 
+            match = "="
+          else 
+            match = "LIKE"
+            words = words.map{ |e| "%#{e}%" }
+          end
+
           conditions = words.collect { |word|
-            " samples." + field + " = ? "
+            table + "." + field + " " + match + " ? "
           }.join(" OR ")
 
           query = query + " " + filter.link + " (" + conditions + ") "
           cond_val = cond_val + words
         end
 
-        Sample.for_user(current_user.id).where([query] + cond_val)
+        scope = Sample.for_user(current_user.id)
+        tables.each do |table|
+          if table.downcase != "samples"
+            scope = scope.joins("INNER JOIN #{table} ON #{table}.sample_id = samples.id")
+          end
+        end
+        scope = scope.where([query] + cond_val)
+
+        scope
       end
 
       def serialization_by_elements_and_page(elements, page = 1, molecule_sort = false)
@@ -73,6 +92,8 @@ module Chemotion
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
+
+        search_by_method = get_search_method()
 
         samples_size = samples.size
         if samples.empty? == false
@@ -98,7 +119,7 @@ module Chemotion
               :residues, :tag,
               collections: :sync_collections_users,
               molecule: :tag
-            ).find(ids)
+            ).where(id: ids).order("position(id::text in '#{ids}')").to_a
             serialized_samples = {
               molecules: group_by_molecule(paging_samples)
             }
@@ -201,12 +222,16 @@ module Chemotion
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
-        
-        return scope.includes(:molecule)
-                    .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
-                    .order(:sum_formular) if molecule_sort
-        
-        return scope
+       
+        if search_method == 'advanced'
+          return scope.order("position("+ arg.first.field.column + "::text in '#{arg.first.value}')")
+        elsif molecule_sort
+          return scope.includes(:molecule)
+                      .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                      .order(:sum_formular) 
+        else 
+          return scope
+        end
       end
 
       def elements_by_scope(scope, collection_id)

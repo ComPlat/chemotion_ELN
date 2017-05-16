@@ -47,7 +47,15 @@ module Chemotion
         end
 
         delete do
-          Sample.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
+          samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
+          samples.map{|sample|
+            # DevicesSample.find_by(sample_id: sample.id).destroy
+            # sample.devices_analyses.map{|d|
+            #   d.analyses_experiments.destroy_all
+            #   d.destroy
+            # }
+            sample.destroy
+          }
         end
       end
 
@@ -126,7 +134,6 @@ module Chemotion
           }
         end
       end
-
 
       desc "Return serialized molecules_samples_groups of current user"
       params do
@@ -361,7 +368,13 @@ module Chemotion
         end
 
         delete do
-          Sample.find(params[:id]).destroy
+          sample = Sample.find(params[:id])
+          # DevicesSample.find_by(sample_id: sample.id).destroy
+          # sample.devices_analyses.map{|d|
+          #   d.analyses_experiments.destroy_all
+          #   d.destroy
+          # }
+          sample.destroy
         end
       end
     end

@@ -3,7 +3,6 @@ module Chemotion
     include Grape::Kaminari
 
     resource :screens do
-
       desc "Return serialized screens"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"

@@ -2,6 +2,7 @@ import React from 'react'
 import {Button, FormControl} from 'react-bootstrap'
 import Select from 'react-select'
 import UIActions from '../actions/UIActions';
+import XSearchParams from "../extra/AdvancedSearchXSearchParams";
 
 export default class SearchFilter extends React.Component {
   constructor(props) {
@@ -10,22 +11,56 @@ export default class SearchFilter extends React.Component {
     this.state = {
       showFilters: props.show,
       filters: [
-        { link: "", field: "", value: "" }
+        { link: "", match: "EXACT", field: "", value: "" }
       ]
     }
 
     this.listOptions = [
-      {value: 'name', label: 'Sample Name'},
-      {value: 'short_label', label: 'Sample Short Label'},
-      {value: 'external_label', label: 'Sample External Label'}
+      {
+        value: {
+          table: 'samples',
+          column: 'name',
+          label: 'Sample Name'
+        },
+        label: 'Sample Name'
+      },
+      {
+        value: {
+          table: 'samples',
+          column: 'short_label',
+          label: 'Sample Short Label'
+        },
+        label: 'Sample Short Label'
+      },
+      {
+        value: {
+          table: 'samples',
+          column: 'external_label',
+          label: 'Sample External Label'
+        },
+        label: 'Sample External Label'
+      }
     ]
+
+    for (let i = 0; i < XSearchParams.count; i++){
+      if (XSearchParams[`on${i}`]){
+        this.listOptions = this.listOptions.concat(XSearchParams[`content${i}`])
+      }
+    }
+
     this.andOrOps = [
-      {value: "and", label: "AND"},
-      {value: "or", label: "OR"}
+      { value: "AND", label: "AND" },
+      { value: "OR", label: "OR" }
+    ]
+
+    this.matchOps = [
+      { value: "EXACT", label: "EXACT" },
+      { value: "LIKE", label: "SUBSTRING" }
     ]
 
     this.search = this.search.bind(this)
     this.showFilters = this.showFilters.bind(this)
+    this.renderField = this.renderField.bind(this)
     this.handleUpdateFilters = this.handleUpdateFilters.bind(this)
   }
 
@@ -52,7 +87,7 @@ export default class SearchFilter extends React.Component {
     let check = (filter.field && filter.value && filter.link) ||
                 (idx == 0 && filter.field && filter.value)
 
-    if (check) filters.push({link: "or", field: "", value: ""}) 
+    if (check) filters.push({link: "OR", match: "EXACT", field: "", value: ""})
 
     this.setState(filters)
   }
@@ -72,16 +107,26 @@ export default class SearchFilter extends React.Component {
     }, this.props.searchFunc(filters))
   }
 
+  renderField(val) {
+    return (val.label)
+  }
+
   renderOptions() {
     let {filters} = this.state
 
     let defaultRow = (
       <div style={{display: "flex"}}>
         <span style={{flex: "0 0 127px"}} />
+        <span className="match-select">
+          <Select simpleValue searchable={false} options={this.matchOps}
+            placeholder="Select search type" clearable={false}
+            value={filters[0].match}
+            onChange={(val) => this.handleUpdateFilters(0, "match", val)} />
+        </span>
         <span className="field-select">
           <Select simpleValue searchable={false} options={this.listOptions}
             placeholder="Select search field" clearable={false}
-            value={filters[0].field} clearable={false}
+            value={filters[0].field} valueRenderer={this.renderField}
             onChange={(val) => this.handleUpdateFilters(0, "field", val)} />
         </span>
         <FormControl type="text" value={filters[0].value}
@@ -103,8 +148,13 @@ export default class SearchFilter extends React.Component {
           <div key={"filter_" + idx} style={{display: "flex"}}>
             <span className="link-select">
               <Select simpleValue options={this.andOrOps}
-                placeholder="" value={filter.link} clearable={false}
+                value={filter.link} clearable={false}
                 onChange={(val) => this.handleUpdateFilters(id, "link", val)} />
+            </span>
+            <span className="match-select">
+              <Select simpleValue options={this.matchOps}
+                value={filter.match} clearable={false}
+                onChange={(val) => this.handleUpdateFilters(id, "match", val)} />
             </span>
             <span className="field-select">
               <Select simpleValue options={this.listOptions} clearable={false}

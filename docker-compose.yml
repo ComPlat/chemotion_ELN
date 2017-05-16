@@ -1,0 +1,32 @@
+version: '2'
+services:
+  app:
+    build: .
+    depends_on:
+      - postgres
+    command:
+      ["./run.sh", "postgres"]
+    volumes:
+      - .:/usr/src/app
+    volumes_from:
+      - box
+    ports:
+      - "3000:3000"
+    links:
+      - sftp
+    environment:
+      DOCKER: 'true'
+
+  box:
+    image: busybox
+    volumes:
+      - /box
+
+  postgres:
+    image: 'postgres:9.5'
+
+  sftp:
+    image: atmoz/sftp
+    ports:
+      - "2222:22"
+    command: sftp_test:sftp_test:::uploads

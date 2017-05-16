@@ -34,10 +34,12 @@ RSpec.describe 'ReallyDestroyTask' do
   describe 'models' do
     let(:models){
       [
-        'Collection', 'CollectionsReaction', 'CollectionsSample', 'CollectionsScreen',
-        'CollectionsWellplate', 'ScreensWellplate', 'ReactionsProductSample', 'Sample',
-        'Reaction', 'ReactionsReactantSample', 'ReactionsStartingMaterialSample',
+        'Collection', 'CollectionsReaction', 'CollectionsSample',
+        'CollectionsScreen', 'CollectionsWellplate', 'ScreensWellplate',
+        'ReactionsProductSample', 'Sample', 'Reaction',
+        'ReactionsReactantSample', 'ReactionsStartingMaterialSample',
         'Literature', 'Molecule', 'Wellplate', 'Screen', 'Well', 'User',
+        'CodeLog'
       ]
     }
 

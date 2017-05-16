@@ -3,8 +3,12 @@ class Sample < ActiveRecord::Base
   include ElementUIStateScopes
   include PgSearch
   include Collectable
+  include ElementCodes
+  include AnalysisCodes
   include UnitConvertable
   include Taggable
+
+  has_many :analyses_experiments
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
@@ -96,12 +100,14 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
+  has_many :devices_samples
+
   belongs_to :molecule
   belongs_to :fingerprints
   belongs_to :user
 
   has_one :container, :as => :containable
-  
+
   has_one :well, dependent: :destroy
   has_many :wellplates, through: :well
   has_many :residues

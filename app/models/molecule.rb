@@ -57,8 +57,6 @@ class Molecule < ActiveRecord::Base
           Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
         molecule.molfile = molfile
         molecule.assign_molecule_data babel_info, pubchem_info
-        xref = Chemotion::PubchemService.xref_from_inchikey(inchikey)
-        molecule.cas = get_cas(xref)
       end
       molecule
     end
@@ -216,6 +214,14 @@ class Molecule < ActiveRecord::Base
     end.join
   end
 
+  def load_cas
+    if inchikey.present? && cas.blank?
+      xref = Chemotion::PubchemService.xref_from_inchikey(inchikey)
+      self.cas = get_cas(xref)
+      self.save
+    end
+  end
+
 private
 
   # TODO: check that molecules are OK and remove this method. fix is in editor
@@ -224,7 +230,7 @@ private
     self.molfile = self.molfile.lines[0..index].join if index.is_a?(Integer)
   end
 
-  def self.get_cas xref
+  def get_cas xref
     begin
       xref_json = JSON.parse(xref)
       xref_json["InformationList"]["Information"].first["RN"]

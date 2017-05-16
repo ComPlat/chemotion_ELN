@@ -17,4 +17,16 @@ FactoryGirl.define do
       end
     end
   end
+
+  factory :sample_without_analysis, class: Sample do
+    sequence(:name) { |i| "Sample #{i}" }
+
+    target_amount_value 100
+    target_amount_unit "mg"
+    callback(:before_create) do |sample|
+      sample.creator = FactoryGirl.build(:user) unless sample.creator
+      sample.collections << FactoryGirl.build(:collection) #if sample.collections.blank?
+      sample.molecule = FactoryGirl.build(:molecule) unless sample.molecule
+    end
+  end
 end

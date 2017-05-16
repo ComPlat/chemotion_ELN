@@ -30,6 +30,7 @@
   line-height: 1;
 }
 
+
 .span-checkbox {
   -webkit-border-radius: 0;
   border-radius: 0;
@@ -109,6 +110,11 @@
   .link-select {
     margin: 5px;
     flex: 0 0 117px
+  }
+
+  .match-select {
+    margin: 5px;
+    flex: 0 0 150px
   }
 
   .value-select {

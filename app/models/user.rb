@@ -19,9 +19,16 @@ class User < ActiveRecord::Base
   has_many :sync_in_collections_users,  foreign_key: :user_id, class_name: 'SyncCollectionsUser'
   has_many :sharing_collections, through: :sync_out_collections_users, source: :collection
   has_many :shared_collections,  through: :sync_in_collections_users, source: :collection
+  has_many :devices, through: :users_devices
+  #belongs_to :selected_device, class_name: 'Device'
 
   has_many :reports_users
   has_many :reports, through: :reports_users
+
+  has_many :user_affiliations
+  has_many :affiliations, through: :user_affiliations, :dependent => :destroy
+
+  accepts_nested_attributes_for :affiliations
 
   validates_presence_of :first_name, :last_name, allow_blank: false
   validates :name_abbreviation, uniqueness:  {message: " has already been taken." },
@@ -29,7 +36,6 @@ class User < ActiveRecord::Base
     message: "can be alphanumeric, middle '_' and '-' are allowed,"+
     " but leading digit, or trailing '-' and '_' are not."}
   validate :name_abbreviation_length
-
 
   after_create :create_chemotion_public_collection, :create_all_collection,
                :has_profile

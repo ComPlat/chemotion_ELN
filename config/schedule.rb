@@ -5,6 +5,9 @@
 
 every :sunday, at: '0am' do
   rake "backup:weekly"
+end
+
+every :sunday, at: '1am' do
   runner "ReallyDestroyTask.execute!"
 end
 
