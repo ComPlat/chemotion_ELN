@@ -1,1 +1,2 @@
-class Person < User ; end
+class Person < User
+end

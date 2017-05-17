@@ -7,7 +7,8 @@ import DragDropItemTypes from './DragDropItemTypes';
 const dataTarget = {
   canDrop(props, monitor) {
     const itemType = monitor.getItemType();
-    if(itemType == DragDropItemTypes.DATA){
+    if(itemType == DragDropItemTypes.DATA ||
+      itemType == DragDropItemTypes.DATASET){
       return true;
     }
   },
@@ -19,6 +20,13 @@ const dataTarget = {
       const {dataset_container} = props;
       dataset_container.attachments.push(item.attachment)
       InboxActions.removeAttachmentFromList(item.attachment)
+    }else if (itemType == DragDropItemTypes.DATASET) {
+      const {dataset_container} = props;
+      console.log(item)
+      item.dataset.attachments.map(attachment => {
+        dataset_container.attachments.push(attachment)
+        InboxActions.removeAttachmentFromList(attachment)
+      })
     }
   }
 };
@@ -89,7 +97,7 @@ class ContainerDatasetField extends Component{
   }
 }
 
-export default DropTarget(DragDropItemTypes.DATA, dataTarget, collectTarget)(ContainerDatasetField);
+export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(ContainerDatasetField);
 
 ContainerDatasetField.propTypes = {
   isOver: PropTypes.bool.isRequired,

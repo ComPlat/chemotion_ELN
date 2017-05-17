@@ -8,7 +8,10 @@ module Chemotion
 
     resource :inbox do
       get do
-        attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
+        #attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
+        if current_user && current_user.container
+          InboxSerializer.new(current_user.container)
+        end
       end
     end
 

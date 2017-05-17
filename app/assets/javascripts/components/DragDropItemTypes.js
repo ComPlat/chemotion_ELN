@@ -7,4 +7,5 @@ export default {
   LAYOUT: 'layout',
   GENERAL: 'general',
   DATA: 'data',
+  DATASET: 'dataset',
 };

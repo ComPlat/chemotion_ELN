@@ -6,7 +6,8 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
 
   has_one :profile, dependent: :destroy
-
+  has_one :container, :as => :containable
+  
   has_many :collections
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections

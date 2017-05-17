@@ -5,7 +5,7 @@ class InboxStore{
 
   constructor() {
     this.state = {
-      inbox: []
+      inbox: {}
     };
 
     this.bindListeners({
@@ -20,10 +20,12 @@ class InboxStore{
   }
 
   handleRemoveAttachmentFromList(attachment){
-    const index = this.state.inbox.indexOf(attachment)
+    let inbox = this.state.inbox
 
-    return index !== (-1) ? this.setState(this.state.inbox.splice(index, 1))
-                          : this.state.inbox;
+    //return index !== (-1) ? this.setState(this.state.inbox.splice(index, 1))
+    //                      : this.state.inbox;
+    //TODO
+
   }
 
   handleDeleteAttachment(result){

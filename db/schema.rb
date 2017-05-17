@@ -15,8 +15,8 @@ ActiveRecord::Schema.define(version: 20170512110856) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", force: :cascade do |t|
@@ -699,6 +699,5 @@ ActiveRecord::Schema.define(version: 20170512110856) do
   add_index "wells", ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
-
 
 end
