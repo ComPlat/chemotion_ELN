@@ -17,6 +17,10 @@ class InboxActions{
     return attachment;
   }
 
+  removeDatasetFromList(dataset){
+    return dataset;
+  }
+
   deleteAttachment(params) {
     return (dispatch) => { AttachmentFetcher.deleteAttachment(params)
       .then((result) => {

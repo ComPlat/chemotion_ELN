@@ -28,7 +28,8 @@ class AttachmentContainer extends Component {
         <span style={{cursor: 'move'}}
           className='text-info fa fa-arrows'>
           <i className="fa fa-file-text" aria-hidden="true">
-          &nbsp; {attachment.filename}</i> </span>,
+          &nbsp; {attachment.filename} </i>
+          </span> ,
         {dropEffect: 'move'}
       );
     }

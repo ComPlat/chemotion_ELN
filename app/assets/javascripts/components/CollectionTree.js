@@ -36,6 +36,7 @@ export default class CollectionTree extends React.Component {
       sharedToCollectionVisible: true,
       syncCollectionVisible: true,
       inbox: inboxState.inbox,
+      numberOfAttachments: inboxState.numberOfAttachments,
       inboxVisible: false
     }
 
@@ -149,7 +150,7 @@ export default class CollectionTree extends React.Component {
     if(inbox.children){
       boxes = inbox.children.map(device_box => {
         return(
-          <DeviceBox device_box={device_box} />
+            <DeviceBox device_box={device_box} />
         )
       })
     }
@@ -306,14 +307,14 @@ export default class CollectionTree extends React.Component {
           <div className="title" style={{backgroundColor:'white'}}>
             <i className="fa fa-inbox" onClick={() => this.setState({inboxVisible: !inboxVisible})}> &nbsp; Inbox &nbsp;</i>
             {
-              inbox.length > 0 ? <Badge> {inbox.length} </Badge> : ""
+              this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ""
             }
             &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()}/>
           </div>
 
         </div>
         <div className="tree-wrapper" style={{display: inboxDisplay}}>
-          {this.inboxSubtrees()}
+            {this.inboxSubtrees()}
         </div>
       </div>
     )

@@ -43,12 +43,14 @@ export default class ContainerDatasets extends Component {
 
   }
 
-  handleAddWithAttachment(attachment){
+  handleAddWithAttachments(attachments){
     const {container} = this.state;
     let dataset_container = Container.buildEmpty();
     dataset_container.container_type = "dataset";
 
-    dataset_container.attachments.push(attachment)
+    attachments.forEach(attachment => {
+      dataset_container.attachments.push(attachment)
+    })
     container.children.push(dataset_container);
 
     this.handleModalOpen(dataset_container);
@@ -99,7 +101,7 @@ export default class ContainerDatasets extends Component {
       return (
         <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
         <AttachmentDropzone
-          handleAddWithAttachment={(attachment) => this.handleAddWithAttachment(attachment)}
+          handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
           />
           &nbsp;&nbsp;&nbsp;
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
