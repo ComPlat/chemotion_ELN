@@ -89,5 +89,7 @@ Rails.application.configure do
     :enable_starttls_auto => ENV['SMTP_TLS'] && ENV['SMTP_TLS'].match(/true/),
     :openssl_verify_mode  => ENV['SMTP_SSL_MODE']
   }
+  
+  config.browserify_rails.commandline_options = "-t [ babelify --presets [ es2015 react ] --plugins [ transform-object-rest-spread ] ]  -g uglifyify  -p bundle-collapser/plugin "
 
 end
