@@ -1,5 +1,5 @@
 class ElementPermissionProxy
-  attr_reader :user, :element
+  attr_reader :user, :element, :detail_level
 
   def initialize(user, element, user_ids = [])
     @user = user
@@ -8,14 +8,21 @@ class ElementPermissionProxy
 
     @collections = user_collections_for_element
     @sync_collections = sync_collections_users_for_element
+    @detail_level = detail_level_for_element
   end
 
   def serialized
     serializer_class = serializer_class_by_element
-    detail_level_for_element
     nested_dl = nested_details_levels_for_element
+    serialized_element = restriction_by_dl(
+      serializer_class,
+      detail_level,
+      nested_dl
+    ).deep_symbolize_keys
+  end
 
-    serialized_element = restriction_by_dl(serializer_class, @dl, nested_dl).deep_symbolize_keys
+  def read_dataset?
+    detail_level >=3
   end
 
   private
