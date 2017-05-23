@@ -42,7 +42,7 @@
   - plugin_with_setting_view_list.each do |plugin|
     .jumbotron
       .row
-        %h3 = (p=plugin.capitalize.constantize)::const_defined?('TITLE') && p::TITLE || plugin.to_s
+        %h3= (p=plugin.capitalize.constantize)::const_defined?('TITLE') && p::TITLE || plugin.to_s
         = render "#{plugin}/home/account"
 
 
