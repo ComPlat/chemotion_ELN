@@ -28,6 +28,13 @@ module Chemotion
 
       #todo: authorize attachment download
       desc "Download the attachment file"
+      before do
+        attachment = Attachment.find_by id: params[:attachment_id]
+        if attachment
+          element = attachment.container.root.containable
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, element).read?
+        end
+      end
       get ':attachment_id' do
         attachment_id = params[:attachment_id]
 
