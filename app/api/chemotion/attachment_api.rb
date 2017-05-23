@@ -50,7 +50,6 @@ module Chemotion
         true
       end
 
-      #todo: authorize attachment download
       desc "Download the attachment file"
       get ':attachment_id' do
         attachment_id = params[:attachment_id]

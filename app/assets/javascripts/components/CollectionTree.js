@@ -150,7 +150,7 @@ export default class CollectionTree extends React.Component {
     if(inbox.children){
       boxes = inbox.children.map(device_box => {
         return(
-            <DeviceBox device_box={device_box} />
+            <DeviceBox key={"box_"+device_box.id} device_box={device_box} />
         )
       })
     }

@@ -24,35 +24,20 @@ class DatasetContainer extends Component {
     }
   }
 
-  deleteAttachment(attachment){
-    if(confirm('Are you sure?')) {
-      InboxActions.deleteAttachment(attachment)
-    }
-  }
-
   deleteDataset(dataset){
-
-  }
-
-  getAttachments(dataset){
-    let attachments = dataset.attachments.map(attachment => {
-      return(
-        <li>
-          <AttachmentContainer
-            sourceType={DragDropItemTypes.DATA}
-            attachment={attachment} />
-            <a className="close"
-            onClick={() => this.deleteAttachment(attachment)}>&times;</a>
-        </li>
-        )
-    })
-
-    return attachments;
+    //TODO
   }
 
   render() {
     const {connectDragSource, sourceType, dataset} = this.props;
     let {visible} = this.state
+    let attachments = dataset.attachments.map(attachment => {
+      return(
+          <AttachmentContainer key={"attach_"+attachment.id}
+            sourceType={DragDropItemTypes.DATA}
+            attachment={attachment} />
+        )
+    })
 
     if(sourceType == DragDropItemTypes.DATASET) {
       return connectDragSource(
@@ -61,7 +46,7 @@ class DatasetContainer extends Component {
                   <i className="fa fa-folder-open" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
                     &nbsp; {dataset.name}</i> </span>
                     <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
-                <ul> {this.getAttachments(dataset)} </ul>
+                <ul> {attachments} </ul>
             </li>
           : <li> <span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
                   <i className="fa fa-folder" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>

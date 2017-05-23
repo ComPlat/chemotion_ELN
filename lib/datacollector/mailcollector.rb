@@ -17,15 +17,10 @@ class Mailcollector < Collector
       imap = Net::IMAP.new(@server, @port, @ssl)
       response = imap.login(@mail_address, @password)
       if response['name'] == "OK"
-        puts "Logged in"
         imap.select('INBOX')
 
         imap.search(['NOT', 'SEEN']).each do |message_id|
-          puts "Message found " + message_id.to_s
-
           envelope = imap.fetch(message_id, "ENVELOPE")[0].attr["ENVELOPE"]
-          puts "Sender Mailbox: " + envelope.from[0].mailbox.to_s
-          puts "Sender Host: " + envelope.from[0].host.to_s
 
           sender_email = envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s
           recipient_email = envelope.to[0].mailbox + "@" + envelope.to[0].host
@@ -33,9 +28,6 @@ class Mailcollector < Collector
           sender = Device.find_by email: sender_email
           recipient = User.find_by email: recipient_email
           if sender && recipient
-            puts "Sender and recipient found"
-            puts "Starting...."
-
             device_box = prepare_inbox_containers(recipient, sender)
             raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
             message = Mail.read_from_string raw_message

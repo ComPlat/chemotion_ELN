@@ -1,6 +1,8 @@
 import React, { Component, PropTypes } from 'react';
 import {DragSource} from 'react-dnd';
 
+import DragDropItemTypes from '../DragDropItemTypes';
+
 const dataSource = {
   beginDrag(props) {
     return props;
@@ -17,19 +19,26 @@ class AttachmentContainer extends Component {
     super(props);
   }
 
+  deleteAttachment(attachment){
+    if(confirm('Are you sure?')) {
+      InboxActions.deleteAttachment(attachment)
+    }
+  }
+
   render() {
     const {connectDragSource, sourceType, attachment} = this.props;
-    if(sourceType == "") {
-      return <span style={ {cursor: 'not-allowed',
-                            color: 'lightgray'}}
-                  className='fa fa-arrows'></span>;
-    } else {
+
+    if(sourceType == DragDropItemTypes.DATA) {
       return connectDragSource(
-        <span style={{cursor: 'move'}}
+        <li><span style={{cursor: 'move'}}
           className='text-info fa fa-arrows'>
           <i className="fa fa-file-text" aria-hidden="true">
           &nbsp; {attachment.filename} </i>
-          </span> ,
+          </span>
+          <a className="close"
+          onClick={() => this.deleteAttachment(attachment)}>&times;</a>
+          </li>
+          ,
         {dropEffect: 'move'}
       );
     }
