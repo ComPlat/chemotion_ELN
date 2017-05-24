@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import Attachment from '../models/Attachment';
 
 export default class AttachmentFetcher {
 
@@ -64,5 +65,24 @@ export default class AttachmentFetcher {
         });
       }
     })
+  }
+
+  static deleteAttachment(params){
+    let promise = fetch(`/api/v1/attachments/${params.id}`, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return new Attachment(json.attachment);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
   }
 }

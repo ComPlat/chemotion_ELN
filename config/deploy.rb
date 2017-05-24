@@ -25,7 +25,7 @@ set :bundle_jobs, 4 # parallel bundler
 # set :pty, true
 
 # Default value for :linked_files is []
-set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/storage.yml',  'config/secrets.yml', '.env')
+set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/storage.yml', 'config/datamailcollector.yml', 'config/secrets.yml', '.env')
 
 # Default value for linked_dirs is []
 set :linked_dirs, fetch(:linked_dirs, []).push('node_modules','log', 'tmp/pids',

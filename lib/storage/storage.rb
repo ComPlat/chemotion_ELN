@@ -80,6 +80,7 @@ class Storage
       end
     rescue Exception => e
       puts "ERROR: Can not delete attachment " + e.message
+      raise e.message
     end
   end
 

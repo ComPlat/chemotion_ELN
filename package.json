@@ -43,6 +43,7 @@
     "react-dom": "15.3.2",
     "react-dropzone": "^3.6.0",
     "react-inlinesvg": "0.4.2",
+    "react-input-autosize": "1.1.0",
     "react-notification-system": "^0.2.7",
     "react-qr-reader": "^0.3.1",
     "react-input-autosize": "1.1.0",
