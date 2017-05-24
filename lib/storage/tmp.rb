@@ -1,11 +1,11 @@
 require 'storage'
 
-class Local < Storage
+class Tmp < Storage
   attr_reader :data_folder
 
   def initialize(attach)
     super(attach)
-    @config = @store_configs[:local]
+    @config = @store_configs[:tmp]
     datafolder =  @config[:data_folder]
     if datafolder.blank?
       @data_folder ||= File.join(Rails.root,'tmp', Rails.env, 'uploads')
@@ -36,6 +36,13 @@ class Local < Storage
     File.exist?(thumb_path) && IO.binread(thumb_path) || false
   end
 
+  def destroy
+    remove_thumb_file
+    is_removed = remove_file
+    rm_dir unless attachment.bucket.blank?
+    is_removed
+  end
+
   def remove_file
     File.exist?(path) && rm_file
     !File.exist?(path)
@@ -46,42 +53,39 @@ class Local < Storage
     !File.exist?(thumb_path)
   end
 
-  def destroy
-    remove_thumb_file
-    remove_file
-  end
-
   def path
-    raise StandardError, 'cannot build path without attachment key' if attachment.key.blank?
+    raise 'cannot build path without attachment key' if attachment.key.blank?
     if !attachment.bucket.blank?
-      File.join(data_folder, attachment.bucket, attachment.key.to_s )
+      File.join(data_folder, attachment.bucket, attachment.key )
     else
-      File.join(data_folder, attachment.key.to_s)
+      File.join(data_folder, attachment.key)
     end
   end
 
   def thumb_path
-    path + thumb_suffix
-  end
-
-  def thumb_suffix
-    '.thumb.jpg'
+    path && path + '.thumb.jpg'
   end
 
   private
 
   def write_thumbnail
-    if (fp = attachment.thumb_path) && File.exist?(fp)
-      FileUtils.copy(fp, thumb_path)
-    elsif attachment.file_data
-      IO.binwrite(thumb_path, attachment.thumb_data)
+    fp = if (afp = attachment.file_path) && afp.is_a?(Tempfile)
+           afp.path
+         else
+           afp
+         end
+    tn = Thumbnailer.create(fp)#, thumb_path)
+    #NB issue with Thumbnailer.create(source, destination)
+    if tn && tn != thumb_path
+      dir = File.dirname(thumb_path)
+      FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+      FileUtils.move(tn, thumb_path)
     end
   end
 
   def write_file
-    set_key
-    set_bucket
-    write_dir
+    dir = File.dirname(path)
+    FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
     begin
       if (fp = attachment.file_path) && File.exist?(fp)
         FileUtils.copy(fp, path)
@@ -89,17 +93,9 @@ class Local < Storage
         IO.binwrite(path, attachment.file_data)
       end
     rescue Exception => e
-      puts "ERROR: Can not write local-file: " + e.message
+      puts "ERROR: Can not write tmp-file: " + e.message
       raise e.message
     end
-  end
-
-  def set_key
-    attachment.key = attachment.identifier
-  end
-
-  def set_bucket
-    attachment.bucket = attachment.id / 10000 + 1
   end
 
   def rm_file
@@ -110,9 +106,11 @@ class Local < Storage
     FileUtils.rm(thumb_path, force: true)
   end
 
-  def write_dir
-    dirs = [File.dirname(path)]
-    dirs << File.dirname(thumb_path) if attachment.thumb
-    dirs.each{ |d| FileUtils.mkdir_p(d) unless Dir.exist?(d)}
+  def rm_dir
+    f_dir = File.dirname(path)
+    t_dir = File.dirname(thumb_path)
+    Dir.rmdir(f_dir )if Dir.exist?(f_dir) && (Dir.entries(f_dir) - %w{ . .. }).empty?
+    Dir.rmdir(t_dir )if Dir.exist?(t_dir) && (Dir.entries(t_dir) - %w{ . .. }).empty?
   end
+
 end

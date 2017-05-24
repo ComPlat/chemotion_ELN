@@ -21,8 +21,6 @@ module Chemotion
           attachment = Attachment.find_by id: params[:attachment_id]
           if attachment && attachment.created_for == current_user.id
             begin
-              storage = Storage.new
-              storage.delete(attachment)
               attachment.delete
             end
           end
@@ -33,11 +31,19 @@ module Chemotion
       post 'upload_dataset_attachments' do
         params.each do |file_id, file|
           if tempfile = file.tempfile
+              a = Attachment.new(
+                bucket: file.container_id,
+                filename: file.filename,
+                #file_data: IO.binread(tempfile),
+                file_path: file.tempfile,
+                created_by: current_user.id,
+                created_for: current_user.id,
+                content_type: file.type
+              )
             begin
-              sha256 = Digest::SHA256.file(tempfile).hexdigest
-
-              storage = Storage.new
-              storage.create(file_id, file.filename, IO.binread(tempfile), sha256, current_user.id, current_user.id)
+              a.save!
+            # rescue
+            #   a.destroy
             ensure
               tempfile.close
               tempfile.unlink   # deletes the temp file
@@ -47,13 +53,12 @@ module Chemotion
         true
       end
 
-      #todo: authorize attachment download
       desc "Download the attachment file"
       before do
         attachment = Attachment.find_by id: params[:attachment_id]
         if attachment
           element = attachment.container.root.containable
-          can_read = ElementPolicy.new(current_user, element).read? 
+          can_read = ElementPolicy.new(current_user, element).read?
           can_dwnld  = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
           error!('401 Unauthorized', 401) unless can_dwnld
         end
@@ -63,13 +68,11 @@ module Chemotion
 
         attachment = Attachment.find_by id: attachment_id
         if attachment != nil
-          storage = Storage.new
-
           content_type "application/octet-stream"
           header['Content-Disposition'] = "attachment; filename="+attachment.filename
           env['api.format'] = :binary
 
-          storage.read(attachment)
+          attachment.read_file
         else
           nil
         end
@@ -91,8 +94,7 @@ module Chemotion
 
           attachment = Attachment.find_by id: params[:id]
           if attachment
-            storage = Storage.new
-            storage.read_thumbnail(attachment)
+            attachment.read_thumbnail
           else
             nil
           end

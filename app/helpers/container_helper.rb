@@ -19,10 +19,6 @@ module ContainerHelper
     return root_container
   end
 
-  def self.export_datamodel(container)
-
-  end
-
   def self.create_root_container
     root_con = Container.create(name: "root", container_type: "root")
     root_con.children.create(container_type: "analyses")
@@ -31,17 +27,6 @@ module ContainerHelper
   end
 
 private
-  def self.read_Attachments(folder, container)
-    path = File.join(folder, container.name) #wenn leer neue namen
-
-    container.attachments.each do |attachment|
-    end
-
-    container.children.each do |child|
-      read_Attachments(path, child)
-    end
-
-  end
 
   def self.create_or_update_containers(children, root_container)
     children.each do |child|
@@ -78,7 +63,7 @@ private
             container_type: child.container_type,
             description: child.description
           )
-            
+
           extended_metadata = child.extended_metadata
           if child.container_type == "analysis"
               extended_metadata["content"] = if extended_metadata.key?("content")
@@ -102,39 +87,26 @@ private
     attachments.each do |attachment|
       if !attachment.is_new
         if !attachment.is_deleted
-          #update
-          old_attachment = Attachment.find_by id: attachment.id
-          old_attachment.container_id = parent_container_id
-
-          old_attachment.save!
+          #todo: update
         else
           #delete
-          storage = Storage.new
-          storage.delete(attachment)
           Attachment.where(id: attachment.id).destroy_all
         end
       else
         if !attachment.is_deleted
           #create
-          begin
-            storage = Storage.new
-            storage.update(attachment.id, parent_container_id)
+          #begin
+            attachment.update!(container_id: parent_container_id)
 
-          rescue Exception => e
-            puts "ERROR: Can not create attachment: " + e.message
-          end
+          #rescue Exception => e
+        #    puts "ERROR: Can not create attachment: " + e.message
+          #end
         end
       end
     end
   end
 
   def self.delete_containers_and_attachments(container)
-    attachments = Attachment.where(container_id: container.id)
-
-    storage = Storage.new
-    attachments.each do |attach|
-      storage.delete(attach)
-    end
     Attachment.where(container_id: container.id).destroy_all
 
     if container.children.length > 0
