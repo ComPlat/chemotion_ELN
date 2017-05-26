@@ -1,6 +1,7 @@
 import alt from '../alt';
 import InboxFetcher from '../fetchers/InboxFetcher';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher'
+import ContainerFetcher from '../fetchers/ContainerFetcher'
 
 class InboxActions{
 
@@ -28,6 +29,19 @@ class InboxActions{
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  deleteContainer(params) {
+    return (dispatch) => { ContainerFetcher.deleteContainer(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  clearCache(){
+    return null;
   }
 }
 

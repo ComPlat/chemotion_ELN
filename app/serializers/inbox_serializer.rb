@@ -22,11 +22,12 @@ class InboxSerializer < ActiveModel::Serializer
   def json_tree(attachments, containers)
       containers.map do |container, subcontainers|
         current_attachments = attachments.select{|attach| attach.container_id == container.id}
-        {:id => container.id,
-          :name => container.name,
-          :container_type => container.container_type,
-          :attachments => current_attachments,
-          :children => json_tree(attachments, subcontainers).compact}
+          {:id => container.id,
+            :name => container.name,
+            :container_type => container.container_type,
+            :attachments => current_attachments,
+            :children => json_tree(attachments, subcontainers).compact}
       end
   end
+
 end

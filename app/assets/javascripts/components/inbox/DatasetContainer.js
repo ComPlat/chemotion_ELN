@@ -25,7 +25,7 @@ class DatasetContainer extends Component {
   }
 
   deleteDataset(dataset){
-    //TODO
+    InboxActions.deleteContainer(dataset)
   }
 
   render() {
@@ -45,13 +45,19 @@ class DatasetContainer extends Component {
           ? <li><span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
                   <i className="fa fa-folder-open" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
                     &nbsp; {dataset.name}</i> </span>
-                    <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
+                    {attachments.length == 0
+                    ? <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
+                    : ""
+                    }
                 <ul> {attachments} </ul>
             </li>
           : <li> <span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
                   <i className="fa fa-folder" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
                     &nbsp; {dataset.name}</i> </span>
-                    <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
+                    {attachments.length == 0
+                    ? <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
+                    : ""
+                    }
                   </li>
           ,
         {dropEffect: 'move'}

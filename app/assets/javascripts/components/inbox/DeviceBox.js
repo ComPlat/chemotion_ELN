@@ -14,6 +14,10 @@ export default class DeviceBox extends React.Component {
     }
   }
 
+  deleteDeviceBox(device_box){
+    InboxActions.deleteContainer(device_box)
+  }
+
   render() {
     let {device_box} = this.props
     let {visible} = this.state
@@ -28,13 +32,22 @@ export default class DeviceBox extends React.Component {
     return (
       visible
           ?
-          <li><i className="fa fa-folder-open" aria-hidden="true"
+          <li><div className="tree-view"><div className="title"><i className="fa fa-folder-open" aria-hidden="true"
           onClick={() => this.setState({visible: !visible})}> {device_box.name} </i>
+            {datasets.length == 0
+              ? <a className="close" onClick={() => this.deleteDeviceBox(device_box)}>&times;</a>
+              : ""
+            }</div></div>
               <ul> {datasets} </ul>
             </li>
 
-          : <li><i className="fa fa-folder" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> {device_box.name} </i>
+          : <li><div className="tree-view"><div className="title"><i className="fa fa-folder" aria-hidden="true"
+          onClick={() => this.setState({visible: !visible})}> {device_box.name}</i>
+            {datasets.length == 0
+              ? <a className="close" onClick={() => this.deleteDeviceBox(device_box)}>&times;</a>
+              : ""
+            }
+            </div></div>
             </li>
     )
   }

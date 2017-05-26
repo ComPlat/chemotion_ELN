@@ -1,11 +1,13 @@
 import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
+import _ from 'lodash'
 
 class InboxStore{
 
   constructor() {
     this.state = {
       inbox: {},
+      cache: [],
       numberOfAttachments: 0
     };
 
@@ -13,12 +15,15 @@ class InboxStore{
       handleFetchInbox: InboxActions.fetchInbox,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
       handleRemoveDatasetFromList:InboxActions.removeDatasetFromList,
-      handleDeleteAttachment: InboxActions.deleteAttachment
+      handleDeleteAttachment: InboxActions.deleteAttachment,
+      handleDeleteContainer: InboxActions.deleteContainer,
+      handleClearCache: InboxActions.clearCache
     })
   }
 
   handleFetchInbox(result){
     this.state.inbox = result;
+    this.sync();
     this.countAttachments();
   }
 
@@ -29,15 +34,8 @@ class InboxStore{
       device_box.children.forEach(dataset => {
         var index = dataset.attachments.indexOf(attachment)
         if (index != -1){
-          if(dataset.attachments.length == 1){
-              var index_dataset = device_box.children.indexOf(dataset)
-              if(index_dataset != -1){
-                device_box.children.splice(index_dataset, 1)
-              }
-          }else{
             dataset.attachments.splice(index, 1)
-          }
-
+            this.state.cache.push(attachment)
         }
       })
     })
@@ -51,7 +49,10 @@ class InboxStore{
     inbox.children.forEach(device_box => {
       var index = device_box.children.indexOf(dataset)
       if(index != -1){
-        device_box.children.splice(index, 1)
+        device_box.children[index].attachments.forEach(attachment => {
+          this.state.cache.push(attachment)
+        })
+        device_box.children[index].attachments = []
       }
     })
 
@@ -61,6 +62,33 @@ class InboxStore{
 
   handleDeleteAttachment(result){
     InboxActions.fetchInbox();
+  }
+
+  handleDeleteContainer(result){
+    InboxActions.fetchInbox();
+  }
+
+  handleClearCache(){
+    this.state.cache = [];
+  }
+
+  sync(){
+    let inbox = this.state.inbox
+
+    inbox.children.forEach(device_box => {
+      device_box.children.forEach(dataset => {
+        this.state.cache.forEach(deletedAttachment => {
+          dataset.attachments = dataset.attachments.filter(function(item) {
+            if (item.id !== deletedAttachment.id){
+              return item
+            }
+
+          })
+        })
+      })
+    })
+
+    this.setState(inbox)
   }
 
   countAttachments(){
