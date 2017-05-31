@@ -8,9 +8,10 @@ module Chemotion
 
     resource :inbox do
       get do
-        #attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
         if current_user && current_user.container
+          unlinked_attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
           InboxSerializer.new(current_user.container)
+
         end
       end
     end
@@ -76,6 +77,17 @@ module Chemotion
         if Container.exists?(id: container_id)
 
         end
+      end
+
+      resource :link do
+          desc "Delete container id of attachment"
+          delete ':attachment_id' do
+            attachment = Attachment.find_by id: params[:attachment_id]
+            if attachment != nil
+              attachment.container_id = nil
+              attachment.save!
+            end
+          end
       end
 
       resource :thumbnail do

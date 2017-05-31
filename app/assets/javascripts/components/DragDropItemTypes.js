@@ -7,5 +7,6 @@ export default {
   LAYOUT: 'layout',
   GENERAL: 'general',
   DATA: 'data',
+  UNLINKED_DATA: 'unlinked_data',
   DATASET: 'dataset',
 };

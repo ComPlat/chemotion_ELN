@@ -1,5 +1,5 @@
 class InboxSerializer < ActiveModel::Serializer
-  attributes :id, :name, :container_type, :children
+  attributes :id, :name, :container_type, :children, :unlinked_attachments
   #has_many :attachments, :serializer => AttachmentSerializer
 
   def children
@@ -30,4 +30,7 @@ class InboxSerializer < ActiveModel::Serializer
       end
   end
 
+  def unlinked_attachments
+    Attachment.where(:container_id => nil, :created_for => object.containable.id)
+  end
 end

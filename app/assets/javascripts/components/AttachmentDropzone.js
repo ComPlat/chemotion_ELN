@@ -7,6 +7,7 @@ const dataTarget = {
   canDrop(props, monitor) {
     const itemType = monitor.getItemType();
     if(itemType == DragDropItemTypes.DATA ||
+      itemType == DragDropItemTypes.UNLINKED_DATA ||
       itemType == DragDropItemTypes.DATASET){
       return true;
     }
@@ -21,6 +22,10 @@ const dataTarget = {
       case DragDropItemTypes.DATA:
         handleAddWithAttachments([item.attachment])
         InboxActions.removeAttachmentFromList(item.attachment)
+        break;
+      case DragDropItemTypes.UNLINKED_DATA:
+        handleAddWithAttachments([item.attachment])
+        InboxActions.removeUnlinkedAttachmentFromList(item.attachment)
         break;
       case DragDropItemTypes.DATASET:
         handleAddWithAttachments(item.dataset.attachments)
@@ -69,7 +74,7 @@ class AttachmentDropzone extends Component{
 }
 
 
-export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(AttachmentDropzone);
+export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.UNLINKED_DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(AttachmentDropzone);
 
 AttachmentDropzone.propTypes = {
   isOver: PropTypes.bool.isRequired,

@@ -8,6 +8,7 @@ const dataTarget = {
   canDrop(props, monitor) {
     const itemType = monitor.getItemType();
     if(itemType == DragDropItemTypes.DATA ||
+      itemType == DragDropItemTypes.UNLINKED_DATA ||
       itemType == DragDropItemTypes.DATASET){
       return true;
     }
@@ -22,6 +23,10 @@ const dataTarget = {
       case DragDropItemTypes.DATA:
         dataset_container.attachments.push(item.attachment)
         InboxActions.removeAttachmentFromList(item.attachment)
+        break;
+      case DragDropItemTypes.UNLINKED_DATA:
+        dataset_container.attachments.push(item.attachment)
+        InboxActions.removeUnlinkedAttachmentFromList(item.attachment)
         break;
       case DragDropItemTypes.DATASET:
         item.dataset.attachments.forEach(attachment => {
@@ -100,7 +105,7 @@ class ContainerDatasetField extends Component{
   }
 }
 
-export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(ContainerDatasetField);
+export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.UNLINKED_DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(ContainerDatasetField);
 
 ContainerDatasetField.propTypes = {
   isOver: PropTypes.bool.isRequired,

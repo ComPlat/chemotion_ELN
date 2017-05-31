@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import {DragSource} from 'react-dnd';
-
+import InboxActions from '../actions/InboxActions';
 import DragDropItemTypes from '../DragDropItemTypes';
 
 const dataSource = {
@@ -28,7 +28,8 @@ class AttachmentContainer extends Component {
   render() {
     const {connectDragSource, sourceType, attachment} = this.props;
 
-    if(sourceType == DragDropItemTypes.DATA) {
+    if(sourceType == DragDropItemTypes.DATA ||
+    sourceType == DragDropItemTypes.UNLINKED_DATA) {
       return connectDragSource(
         <li><span style={{cursor: 'move'}}
           className='text-info fa fa-arrows'>

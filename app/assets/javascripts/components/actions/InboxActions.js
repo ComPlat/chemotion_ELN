@@ -18,12 +18,25 @@ class InboxActions{
     return attachment;
   }
 
+  removeUnlinkedAttachmentFromList(attachment){
+    return attachment;
+  }
+
   removeDatasetFromList(dataset){
     return dataset;
   }
 
   deleteAttachment(params) {
     return (dispatch) => { AttachmentFetcher.deleteAttachment(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  deleteContainerLink(params) {
+    return (dispatch) => { AttachmentFetcher.deleteContainerLink(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
@@ -38,6 +51,10 @@ class InboxActions{
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
+  }
+
+  backToInbox(attachment){
+    return attachment
   }
 
   clearCache(){

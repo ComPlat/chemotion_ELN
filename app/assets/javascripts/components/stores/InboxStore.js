@@ -14,10 +14,13 @@ class InboxStore{
     this.bindListeners({
       handleFetchInbox: InboxActions.fetchInbox,
       handleRemoveAttachmentFromList: InboxActions.removeAttachmentFromList,
+      handleRemoveUnlinkedAttachmentFromList: InboxActions.removeUnlinkedAttachmentFromList,
       handleRemoveDatasetFromList:InboxActions.removeDatasetFromList,
       handleDeleteAttachment: InboxActions.deleteAttachment,
       handleDeleteContainer: InboxActions.deleteContainer,
-      handleClearCache: InboxActions.clearCache
+      handleClearCache: InboxActions.clearCache,
+      handleBackToInbox: InboxActions.backToInbox,
+      handleDeleteContainerLink: InboxActions.deleteContainerLink
     })
   }
 
@@ -43,6 +46,19 @@ class InboxStore{
     this.countAttachments();
   }
 
+  handleRemoveUnlinkedAttachmentFromList(attachment){
+    let inbox = this.state.inbox
+
+    var index = inbox.unlinked_attachments.indexOf(attachment)
+    if (index != -1){
+      inbox.unlinked_attachments.splice(index, 1)
+      this.state.cache.push(attachment)
+    }
+
+    this.setState(inbox)
+    this.countAttachments();
+  }
+
   handleRemoveDatasetFromList(dataset){
     let inbox = this.state.inbox;
 
@@ -64,12 +80,36 @@ class InboxStore{
     InboxActions.fetchInbox();
   }
 
+  handleDeleteContainerLink(result){
+    InboxActions.fetchInbox();
+  }
+
   handleDeleteContainer(result){
     InboxActions.fetchInbox();
   }
 
+  handleBackToInbox(attachment){
+    var attachments = this.state.cache.filter(function(item) {
+      if (item.id == attachment.id){
+        return item
+      }
+    })
+    if (attachments.length == 1) {
+      var index = this.state.cache.indexOf(attachments[0])
+      this.state.cache.splice(index, 1)
+      InboxActions.fetchInbox()
+    }else{
+      console.log("not found")
+      InboxActions.deleteContainerLink(attachment)
+    }
+  }
+
   handleClearCache(){
     this.state.cache = [];
+  }
+
+  handleClearCache(attachments){
+
   }
 
   sync(){
@@ -77,17 +117,26 @@ class InboxStore{
 
     inbox.children.forEach(device_box => {
       device_box.children.forEach(dataset => {
-        this.state.cache.forEach(deletedAttachment => {
-          dataset.attachments = dataset.attachments.filter(function(item) {
-            if (item.id !== deletedAttachment.id){
-              return item
-            }
+        dataset.attachments = _.differenceBy(dataset.attachments, this.state.cache, 'id')
+        //this.state.cache.forEach(deletedAttachment => {
+          //dataset.attachments = dataset.attachments.filter(function(item) {
+          //  if (item.id !== deletedAttachment.id){
+          //    return item
+          //  }
 
-          })
-        })
+        //  })
+        //})
       })
     })
+    inbox.unlinked_attachments = _.differenceBy(inbox.unlinked_attachments, this.state.cache, 'id')
+    //this.state.cache.forEach(deletedAttachment => {
+    //  inbox.unlinked_attachments = inbox.unlinked_attachments.filter(function(item) {
+    //    if (item.id !== deletedAttachment.id){
+    //      return item
+    //    }
 
+    //  })
+    //})
     this.setState(inbox)
   }
 
@@ -99,6 +148,7 @@ class InboxStore{
         count += dataset.attachments.length
       })
     })
+    count += inbox.unlinked_attachments.length
     this.state.numberOfAttachments = count
   }
 }

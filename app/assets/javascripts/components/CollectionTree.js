@@ -13,6 +13,7 @@ import update from 'react-addons-update';
 import UserInfos from './UserInfos';
 
 import DeviceBox from './inbox/DeviceBox';
+import UnsortedBox from './inbox/UnsortedBox';
 
 import {DragDropContext} from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
@@ -158,6 +159,10 @@ export default class CollectionTree extends React.Component {
       <div className="tree-view">
         <ul key="inbox">
           {boxes}
+          {inbox.unlinked_attachments
+            ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
+            : ""
+          }
         </ul>
       </div>
     )
