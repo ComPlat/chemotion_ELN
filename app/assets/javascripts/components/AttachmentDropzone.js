@@ -65,10 +65,12 @@ class AttachmentDropzone extends Component{
     const {connectDropTarget, isOver, canDrop} = this.props;
 
     return connectDropTarget(
-      <i style={{height: 50, width: '100%', border: '2px dashed lightgray', color: 'gray', padding: 2, textAlign: 'center'}}>
+      <div>
+      <i style={{color: 'gray', padding: 2, textAlign: 'center'}}>
       Drop File(s) for new Dataset.
       {isOver && canDrop && this.renderOverlay('green')}
       </i>
+      </div>
     );
   }
 }

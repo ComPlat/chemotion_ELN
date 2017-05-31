@@ -100,15 +100,9 @@ export default class ContainerDatasets extends Component {
     if(!readOnly) {
       return (
         <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
-        <AttachmentDropzone
-          handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
-          />
-          &nbsp;&nbsp;&nbsp;
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus"></i>
           </Button>
-
-
         </div>
       )
     }
@@ -136,6 +130,11 @@ export default class ContainerDatasets extends Component {
                   </ListGroupItem>
                 )
               })}
+              <ListGroupItem key="attachmentdropzone" disabled>
+              <AttachmentDropzone
+                handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                />
+              </ListGroupItem>
             </ListGroup>
             {this.addButton()}
           </Well>

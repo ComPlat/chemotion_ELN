@@ -109,7 +109,7 @@ class InboxStore{
   }
 
   handleClearCache(attachments){
-
+    this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
   }
 
   sync(){
@@ -118,25 +118,10 @@ class InboxStore{
     inbox.children.forEach(device_box => {
       device_box.children.forEach(dataset => {
         dataset.attachments = _.differenceBy(dataset.attachments, this.state.cache, 'id')
-        //this.state.cache.forEach(deletedAttachment => {
-          //dataset.attachments = dataset.attachments.filter(function(item) {
-          //  if (item.id !== deletedAttachment.id){
-          //    return item
-          //  }
-
-        //  })
-        //})
       })
     })
     inbox.unlinked_attachments = _.differenceBy(inbox.unlinked_attachments, this.state.cache, 'id')
-    //this.state.cache.forEach(deletedAttachment => {
-    //  inbox.unlinked_attachments = inbox.unlinked_attachments.filter(function(item) {
-    //    if (item.id !== deletedAttachment.id){
-    //      return item
-    //    }
 
-    //  })
-    //})
     this.setState(inbox)
   }
 
