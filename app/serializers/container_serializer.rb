@@ -22,16 +22,16 @@ class ContainerSerializer < ActiveModel::Serializer
     all_containers = object.hash_tree
     root = all_containers.keys[0]
     arr = Array.new
-    get_attchement_ids(arr, all_containers[root])
+    get_attachment_ids(arr, all_containers[root])
     attachments = Attachment.where(container_id: arr)
 
     json_tree(attachments, all_containers[root])
   end
 
-  def get_attchement_ids(arr, containers)
+  def get_attachment_ids(arr, containers)
     containers.map do |container, subcontainers|
       arr.push(container.id)
-      get_attchement_ids(arr, subcontainers)
+      get_attachment_ids(arr, subcontainers)
     end
   end
 

@@ -1,5 +1,6 @@
 import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
+import ElementActions from '../actions/ElementActions';
 import _ from 'lodash'
 
 class InboxStore{
@@ -18,9 +19,9 @@ class InboxStore{
       handleRemoveDatasetFromList:InboxActions.removeDatasetFromList,
       handleDeleteAttachment: InboxActions.deleteAttachment,
       handleDeleteContainer: InboxActions.deleteContainer,
-      handleClearCache: InboxActions.clearCache,
       handleBackToInbox: InboxActions.backToInbox,
-      handleDeleteContainerLink: InboxActions.deleteContainerLink
+      handleDeleteContainerLink: InboxActions.deleteContainerLink,
+      handleUpdateSample: ElementActions.updateSample
     })
   }
 
@@ -99,17 +100,28 @@ class InboxStore{
       this.state.cache.splice(index, 1)
       InboxActions.fetchInbox()
     }else{
-      console.log("not found")
       InboxActions.deleteContainerLink(attachment)
     }
   }
 
-  handleClearCache(){
-    this.state.cache = [];
+  getAttachments(containers, all_attachments){
+    containers.forEach(container => {
+      all_attachments.push.apply(all_attachments, container.attachments)
+      this.getAttachments(container.children, all_attachments)
+    })
+    return all_attachments
   }
 
-  handleClearCache(attachments){
+  updateCache(attachments){
     this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
+  }
+
+  handleUpdateSample(sample){
+    if (sample.container){
+      var all_attachments = []
+      all_attachments = this.getAttachments(sample.container.children, all_attachments)
+      this.updateCache(all_attachments)
+    }
   }
 
   sync(){

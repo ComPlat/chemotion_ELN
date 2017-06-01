@@ -57,9 +57,6 @@ class InboxActions{
     return attachment
   }
 
-  clearCache(){
-    return null;
-  }
 }
 
 export default alt.createActions(InboxActions);
