@@ -9,12 +9,7 @@ class Attachment < ActiveRecord::Base
   before_create :store_tmp_file_and_thumbnail
 
   after_create :reload, on: :create
-  #after_create :move_to_store_and_update
   before_save  :move_from_store, if: :storage_changed?, on: :update
-  #after_save :update
-
-
-  #before_save :store_file_and_thumbnail
 
   after_destroy :delete_file_and_thumbnail
 
@@ -64,14 +59,4 @@ class Attachment < ActiveRecord::Base
   def move_from_store(from_store = self.storage_was)
     old_store.move_to_store(self.storage)
   end
-
-  def move_to_store_and_update
-    self.file_path = nil
-    self.file_data = nil
-    #store.move_to_store
-    self.update(storage: 'local')
-  end
-
-  #NB when before_create :if identifier present from UI use it as key else genereate uuid key
-   # to avoid successful db commit
 end

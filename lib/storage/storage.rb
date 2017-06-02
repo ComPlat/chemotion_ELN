@@ -25,7 +25,7 @@ class Storage
   def initialize(attach = Attachment.new)
     @store_configs = Rails.configuration.storage.stores
     @primary_store = Rails.configuration.storage.primary_store
-    @secundary_store = Rails.configuration.storage.secundary_store
+    @secondary_store = Rails.configuration.storage.secondary_store
     @attachment = attach
   end
 
@@ -39,7 +39,7 @@ class Storage
     #TODO checksum check
     file_removed = remove_file if file_stored
     thumb_removed = remove_thumb_file if thumb_stored
-    
+    attachment.storage = store
     file_removed
   end
 

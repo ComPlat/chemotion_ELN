@@ -34,6 +34,7 @@ module Chemotion
               a = Attachment.new(
                 bucket: file.container_id,
                 filename: file.filename,
+                key: file.name,
                 #file_data: IO.binread(tempfile),
                 file_path: file.tempfile,
                 created_by: current_user.id,
@@ -94,7 +95,7 @@ module Chemotion
 
           attachment = Attachment.find_by id: params[:id]
           if attachment
-            attachment.read_thumbnail
+            Base64.encode64(attachment.read_thumbnail)
           else
             nil
           end

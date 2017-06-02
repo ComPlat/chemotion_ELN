@@ -65,7 +65,7 @@ describe Chemotion::CollectionAPI do
     end
 
     after(:all) do
-    #  `rm -rf #{File.join(Rails.root,'tmp','test')}`
+      `rm -rf #{File.join(Rails.root,'tmp','test')}`
       puts "delete tmp folder #{File.join(Rails.root,'tmp','test')} "
     end
   end

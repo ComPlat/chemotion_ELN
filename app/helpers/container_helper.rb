@@ -15,7 +15,6 @@ module ContainerHelper
 
     #root-Container can not contain attachments!!
 
-
     return root_container
   end
 
@@ -55,7 +54,8 @@ private
           create_or_update_attachments(oldcon.id, child.attachments)
           create_or_update_containers(child.children, oldcon)
         end
-      else
+      end
+      if child.is_new
         if !child.is_deleted
           #Create container
           newcon = root_container.children.create(
@@ -83,25 +83,20 @@ private
     end
   end
 
-  def self.create_or_update_attachments(parent_container_id, attachments)
-    attachments.each do |attachment|
-      if !attachment.is_new
-        if !attachment.is_deleted
-          #todo: update
-        else
-          #delete
-          Attachment.where(id: attachment.id).destroy_all
-        end
+  def self.create_or_update_attachments(container_id, attachments)
+    attachments.each do |att|
+      if att.is_new
+        attachment = Attachment.where(storage: 'tmp', key: att.id).last
       else
-        if !attachment.is_deleted
-          #create
-          #begin
-            attachment.update!(container_id: parent_container_id)
-
-          #rescue Exception => e
-        #    puts "ERROR: Can not create attachment: " + e.message
-          #end
-        end
+        #TODO fix this should be identifier:
+        #
+        attachment = Attachment.where( id: att.id).last
+      end
+      if attachment
+        return  attachment.destroy! if att.is_deleted
+        attachment.update!(container_id: container_id)
+        #NB 2step update because moving store should be delayed job
+        attachment.update!(storage: 'local' ) if att.is_new
       end
     end
   end
