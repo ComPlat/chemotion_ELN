@@ -1,17 +1,26 @@
 
 class Attachment < ActiveRecord::Base
   belongs_to :container
-  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data
+  attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated
+
+  before_create :generate_key
+  before_create :store_tmp_file_and_thumbnail, if: :new_upload
+
+  before_save  :move_from_store, if: :store_changed, on: :update
 
   #reload to get identifier:uuid
-  before_create :add_checksum
-  before_create :generate_key
-  before_create :store_tmp_file_and_thumbnail
-
   after_create :reload, on: :create
-  before_save  :move_from_store, if: :storage_changed?, on: :update
+  after_create :store_file_and_thumbnail_for_dup, if: :duplicated
 
   after_destroy :delete_file_and_thumbnail
+
+  def copy(**args)
+    d = self.dup
+    d.identifier = nil
+    d.duplicated = true
+    d.update(args)
+    d
+  end
 
   def extname
     File.extname(self.filename.to_s)
@@ -33,11 +42,11 @@ class Attachment < ActiveRecord::Base
     Storage.old_store(self,old_store)
   end
 
-  private
-
   def add_checksum
-    self.checksum = Digest::SHA256.hexdigest(self.file_data) if self.file_data
+    store.add_checksum
   end
+
+  private
 
   def generate_key
     #unless self.key #&& self.key.match(
@@ -46,9 +55,37 @@ class Attachment < ActiveRecord::Base
     self.key = SecureRandom.uuid unless self.key
   end
 
+  def new_upload
+    self.storage == 'tmp'
+  end
+
+  def store_changed
+    #!new_record? && storage_changed?
+    !self.duplicated && storage_changed?
+  end
+
   def store_tmp_file_and_thumbnail
     stored = store.store_file
     self.thumb = store.store_thumb if stored
+    stored
+  end
+
+  def store_file_and_thumbnail_for_dup
+    #TODO have copy function inside store
+    self.duplicated = nil
+    if store.respond_to?(:path)
+      self.file_path = store.path
+    else
+      self.file_data = store.read_file
+    end
+    if store.respond_to?(:thumb_path)
+      self.thumb_path = store.thumb_path
+    else
+      self.thumb_data = store.read_thumb
+    end
+    stored = store.store_file
+    self.thumb = store.store_thumb if stored
+    self.save if stored
     stored
   end
 

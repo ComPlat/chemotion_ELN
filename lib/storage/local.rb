@@ -20,7 +20,7 @@ class Local < Storage
 
   def store_file
     write_file
-    File.exist?(path)
+    add_checksum if File.exist?(path)
   end
 
   def store_thumb
@@ -53,10 +53,10 @@ class Local < Storage
 
   def path
     raise StandardError, 'cannot build path without attachment key' if attachment.key.blank?
-    if !attachment.bucket.blank?
-      File.join(data_folder, attachment.bucket, attachment.key.to_s )
-    else
+    if attachment.bucket.blank?
       File.join(data_folder, attachment.key.to_s)
+    else
+      File.join(data_folder, attachment.bucket, attachment.key.to_s)
     end
   end
 
@@ -66,6 +66,10 @@ class Local < Storage
 
   def thumb_suffix
     '.thumb.jpg'
+  end
+
+  def thumb_prefix
+    ''
   end
 
   private
@@ -108,6 +112,10 @@ class Local < Storage
 
   def rm_thumb_file
     FileUtils.rm(thumb_path, force: true)
+  end
+
+  def add_checksum
+    attachment.checksum = Digest::SHA256.hexdigest(read_file)
   end
 
   def write_dir

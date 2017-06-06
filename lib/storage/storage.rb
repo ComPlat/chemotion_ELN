@@ -12,7 +12,7 @@ class Storage
 
     def constantize(store)
       klass = store.camelize.constantize
-      raise( TypeError, "#{store} class is not a Storage class") if klass.superclass != Storage
+      raise( TypeError, "#{store} class is not a Storage class") unless klass < Storage
       klass
     end
 
@@ -24,6 +24,7 @@ class Storage
 
   def initialize(attach = Attachment.new)
     @store_configs = Rails.configuration.storage.stores
+    @store_config = @store_configs[storage_sym]
     @primary_store = Rails.configuration.storage.primary_store
     @secondary_store = Rails.configuration.storage.secondary_store
     @attachment = attach
@@ -43,4 +44,18 @@ class Storage
     file_removed
   end
 
+  def storage_sym
+    self.class.name.underscore.to_sym
+  end
+
+  def regenerate_thumbnail
+    tmp = Tempfile.new(attachment.filename)
+    tmp.write attachment.read_file
+    attachment.thumb_path = Thumbnailer.create(tmp.path)
+    attachment.thumb = store_thumb
+    tmp.close
+    tmp.unlink
+    FileUtils.rm(attachment.thumb_path, force: true)
+    attachment.thumb_path = nil
+  end
 end

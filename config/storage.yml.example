@@ -8,6 +8,13 @@ development:
     :local:
       :data_folder: 'uploads/development'
       :thumbnail_folder: 'uploads/development'
+    :local_user:
+      :data_folder: 'uploadNew/users'
+      :thumbnail_folder: 'uploadNew/thumbnails/users'
+    :local_dataset:
+      :data_folder: 'uploads/datasets'
+      :thumbnail_folder: 'uploads/datasets'
+
   # :sftp:
     # :data_folder:
     # :thumbnail_folder:
@@ -31,7 +38,7 @@ test:
       :thumbnail_folder: 'tmp/test/uploads/local'
 
 production:
-  :primary_store: 'local_user'
+  :primary_store: 'local'
   :secundary_store: ''
   :stores:
     :tmp:
@@ -40,6 +47,3 @@ production:
     :local:
       :data_folder: 'uploads'
       :thumbnail_folder: 'uploads'
-    :local_user:
-      :data_folder: 'uploadNew'
-      :thumbnail_folder: 'uploadNew/thumbnails'
