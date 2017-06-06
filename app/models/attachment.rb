@@ -70,6 +70,11 @@ class Attachment < ActiveRecord::Base
     stored
   end
 
+  def regenerate_thumbnail
+    store.regenerate_thumbnail
+    update if attachment.thumb
+  end
+
   def store_file_and_thumbnail_for_dup
     #TODO have copy function inside store
     self.duplicated = nil

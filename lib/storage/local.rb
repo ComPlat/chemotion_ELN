@@ -77,7 +77,7 @@ class Local < Storage
   def write_thumbnail
     if (fp = attachment.thumb_path) && File.exist?(fp)
       FileUtils.copy(fp, thumb_path)
-    elsif attachment.file_data
+    elsif attachment.thumb_data
       IO.binwrite(thumb_path, attachment.thumb_data)
     end
   end
