@@ -66,6 +66,10 @@ class Tmp < Storage
     path && path + '.thumb.jpg'
   end
 
+  def add_checksum
+    attachment.checksum = Digest::SHA256.hexdigest(read_file)
+  end
+
   private
 
   def write_thumbnail

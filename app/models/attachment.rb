@@ -5,6 +5,7 @@ class Attachment < ActiveRecord::Base
 
   before_create :generate_key
   before_create :store_tmp_file_and_thumbnail, if: :new_upload
+  before_create :add_checksum, if: :new_upload
 
   before_save  :move_from_store, if: :store_changed, on: :update
 
@@ -44,6 +45,11 @@ class Attachment < ActiveRecord::Base
 
   def add_checksum
     store.add_checksum
+  end
+
+  def reset_checksum
+    add_checksum
+    update if checksum_changed?
   end
 
   private

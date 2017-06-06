@@ -72,6 +72,10 @@ class Local < Storage
     ''
   end
 
+  def add_checksum
+    attachment.checksum = Digest::SHA256.hexdigest(read_file)
+  end
+
   private
 
   def write_thumbnail
@@ -112,10 +116,6 @@ class Local < Storage
 
   def rm_thumb_file
     FileUtils.rm(thumb_path, force: true)
-  end
-
-  def add_checksum
-    attachment.checksum = Digest::SHA256.hexdigest(read_file)
   end
 
   def write_dir

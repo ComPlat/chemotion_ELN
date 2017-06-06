@@ -20,10 +20,11 @@ RSpec.describe Attachment, type: :model do
         #file_data: File.read("#{Rails.root}/spec/fixtures/upload.jpg")
       )
     }
-    # before do
-    #   attachment.save!
-    # end
+
     context 'after_create' do
+      before do
+        new_attachment.save!
+      end
       it 'is possible to create a valid attachment' do
         expect(attachment.valid?).to be(true)
       end
@@ -35,20 +36,23 @@ RSpec.describe Attachment, type: :model do
       end
 
       it 'checksummed the file_data' do
-        expect(attachment_with_file.checksum).to eq(
-          Digest::SHA256.file(file_path).hexdigest
-        )
-      end
+       expect(attachment_with_file.checksum).to eq(
+         Digest::SHA256.file(file_path).hexdigest
+       )
+     end
+
+
+
     end
 
-    describe 'add_checksum' do
-      before { new_attachment.send(:add_checksum)}
-      it 'checksums the file_data' do
-        expect(new_attachment.checksum).to eq(
-          Digest::SHA256.file(file_path).hexdigest
-        )
-      end
-    end
+    # describe 'add_checksum' do
+    #   before { new_attachment.send(:add_checksum)}
+    #   it 'checksums the file_data' do
+    #     expect(new_attachment.checksum).to eq(
+    #       Digest::SHA256.file(file_path).hexdigest
+    #     )
+    #   end
+    # end
 
     describe 'generate_key' do
       before { new_attachment.send(:generate_key)}
@@ -71,6 +75,7 @@ RSpec.describe Attachment, type: :model do
       let(:t_path) { new_attachment_with_img.store.thumb_path }
       before do
         new_attachment_with_img.save
+        new_attachment_with_img.update(storage: 'local')
       end
       it 'set the key according to the identifier' do
         expect(new_attachment_with_img.key).to match(new_attachment_with_img.identifier)
