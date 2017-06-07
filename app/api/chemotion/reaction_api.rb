@@ -26,9 +26,195 @@ class OSample < OpenStruct
   end
 end
 
+module ReactionHelpers
+  def update_literatures_for_reaction(reaction, _literatures)
+    current_literature_ids = reaction.literature_ids
+    literatures = Array(_literatures)
+    literatures.each do |literature|
+      if literature.is_new
+        Literature.create(reaction_id: reaction.id, title: literature.title, url: literature.url)
+      else
+        #todo:
+        #update
+      end
+    end
+    included_literature_ids = literatures.map(&:id)
+    deleted_literature_ids = current_literature_ids - included_literature_ids
+    Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
+  end
+
+  def update_materials_for_reaction(reaction, material_attributes, current_user)
+    collections = reaction.collections
+
+    materials = OpenStruct.new(material_attributes)
+
+    materials = {
+      starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
+      reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
+      solvent: Array(material_attributes['solvents']).map{|m| OSample.new(m)},
+      product: Array(material_attributes['products']).map{|m| OSample.new(m)}
+    }
+
+
+    ActiveRecord::Base.transaction do
+      included_sample_ids = []
+      materials.each do |material_group, samples|
+        reaction_samples_association = reaction.public_send("reactions_#{material_group}_samples")
+        samples.each do |sample|
+          #create new subsample
+          if sample.is_new
+            if sample.is_split && sample.parent_id
+              parent_sample = Sample.find(sample.parent_id)
+
+              #TODO extract subsample method
+              first_collection_id = collections.first.id
+              subsample = parent_sample.create_subsample current_user, first_collection_id
+
+              if (material_group == :reactant || material_group == :solvent)
+                # Use 'reactant' or 'solvent' as short_label
+                subsample.short_label = sample.short_label
+              end
+
+              subsample.target_amount_value = sample.target_amount_value
+              subsample.target_amount_unit = sample.target_amount_unit
+              subsample.real_amount_value = sample.real_amount_value
+              subsample.real_amount_unit = sample.real_amount_unit
+
+              if ra = (sample.residues_attributes || sample.residues)
+                subsample.residues_attributes =
+                  ra.uniq || ra.each do |i| i.delete :id end
+              end
+
+              subsample.collections << collections.where.not(id: first_collection_id)
+
+              #add new data container
+              #subsample.container = create_root_container
+
+              if sample.container
+                subsample.container = update_datamodel(sample.container)
+              end
+
+              subsample.save!
+              subsample.reload
+              included_sample_ids << subsample.id
+
+              reaction_samples_association.create!(
+                sample_id: subsample.id,
+                equivalent: sample.equivalent,
+                reference: sample.reference
+              )
+            #create new sample
+            else
+              attributes = sample.to_h
+                .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
+                .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
+
+              # update attributes[:name] for a copied reaction
+              if reaction.name.include?("Copy") && attributes[:name].present?
+                named_by_reaction = "#{reaction.short_label}"
+                named_by_reaction += "-#{attributes[:name].split("-").last}"
+                attributes.merge!(name: named_by_reaction)
+              end
+
+              container_info = attributes[:container]
+              attributes.delete(:container)
+
+              new_sample = Sample.new(
+                attributes
+              )
+
+              #add new data container
+              new_sample.container = update_datamodel(container_info)
+
+              new_sample.collections << collections
+              new_sample.save!
+
+              reaction_samples_association.create(
+                sample_id: new_sample.id,
+                equivalent: sample.equivalent,
+                reference: sample.reference
+              )
+              included_sample_ids << new_sample.id
+            end
+          #update the existing sample
+          else
+            existing_sample = Sample.find(sample.id)
+
+            existing_sample.target_amount_value = sample.target_amount_value
+            existing_sample.target_amount_unit = sample.target_amount_unit
+            existing_sample.real_amount_value = sample.real_amount_value
+            existing_sample.real_amount_unit = sample.real_amount_unit
+            existing_sample.external_label = sample.external_label if sample.external_label
+            existing_sample.short_label = sample.short_label if sample.short_label
+            existing_sample.name = sample.name if sample.name
+
+            if r = existing_sample.residues[0]
+              r.assign_attributes sample.residues_attributes[0]
+            end
+
+            if sample.container
+              existing_sample.container = update_datamodel(sample.container)
+            end
+
+            existing_sample.save!
+            included_sample_ids << existing_sample.id
+
+            existing_association = reaction_samples_association.find_by(sample_id: sample.id)
+
+            #update existing associations
+            if existing_association.present?
+              existing_association.update_attributes!(
+                equivalent: sample.equivalent,
+                reference: sample.reference
+              )
+            #sample was moved to other materialgroup
+            else
+              #clear existing associations
+              reaction.reactions_starting_material_samples.find_by(sample_id: sample.id).try(:destroy)
+              reaction.reactions_reactant_samples.find_by(sample_id: sample.id).try(:destroy)
+              reaction.reactions_solvent_samples.find_by(sample_id: sample.id).try(:destroy)
+              reaction.reactions_product_samples.find_by(sample_id: sample.id).try(:destroy)
+
+              #create a new association
+              reaction_samples_association.create(
+                sample_id: sample.id,
+                equivalent: sample.equivalent,
+                reference: sample.reference
+              )
+            end
+          end
+
+
+        end
+      end
+
+      #delete all samples not anymore in one of the groups
+
+      current_sample_ids = [
+        reaction.reactions_starting_material_samples.pluck(:sample_id),
+        reaction.reactions_reactant_samples.pluck(:sample_id),
+        reaction.reactions_solvent_samples.pluck(:sample_id),
+        reaction.reactions_product_samples.pluck(:sample_id)
+      ].flatten.uniq
+
+      deleted_sample_ids = current_sample_ids - included_sample_ids
+      Sample.where(id: deleted_sample_ids).destroy_all
+
+      #for testing
+      #raise ActiveRecord::Rollback
+    end
+
+    # to update the SVG
+    reaction.reload
+    reaction.save!
+  end
+end
+
 module Chemotion
   class ReactionAPI < Grape::API
     include Grape::Kaminari
+    helpers ContainerHelpers
+    helpers ReactionHelpers
 
     resource :reactions do
       namespace :ui_state do
@@ -172,14 +358,14 @@ module Chemotion
           literatures = attributes.delete(:literatures)
           id = attributes.delete(:id)
 
-          ContainerHelper.update_datamodel(attributes[:container]);
-          attributes.delete(:container);
+          update_datamodel(attributes[:container])
+          attributes.delete(:container)
 
           if reaction = Reaction.find(id)
             reaction.update_attributes!(attributes)
             reaction.touch
-            ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)
-            ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
+            update_materials_for_reaction(reaction, materials, current_user)
+            update_literatures_for_reaction(reaction, literatures)
             reaction.reload
           end
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
@@ -223,15 +409,15 @@ module Chemotion
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
 
-        reaction.container = ContainerHelper.update_datamodel(container_info)
+        reaction.container = update_datamodel(container_info)
         reaction.save!
 
         CollectionsReaction.create(reaction: reaction, collection: collection)
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
 
         if reaction
-          ReactionUpdator.update_materials_for_reaction(reaction, materials, current_user)
-          ReactionUpdator.update_literatures_for_reaction(reaction, literatures)
+          update_materials_for_reaction(reaction, materials, current_user)
+          update_literatures_for_reaction(reaction, literatures)
           reaction.reload
           reaction
         end
@@ -239,190 +425,5 @@ module Chemotion
     end
 
 
-  end
-end
-
-
-module ReactionUpdator
-  def self.update_literatures_for_reaction(reaction, _literatures)
-    current_literature_ids = reaction.literature_ids
-    literatures = Array(_literatures)
-    literatures.each do |literature|
-      if literature.is_new
-        Literature.create(reaction_id: reaction.id, title: literature.title, url: literature.url)
-      else
-        #todo:
-        #update
-      end
-    end
-    included_literature_ids = literatures.map(&:id)
-    deleted_literature_ids = current_literature_ids - included_literature_ids
-    Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
-  end
-
-  def self.update_materials_for_reaction(reaction, material_attributes, current_user)
-    collections = reaction.collections
-
-    materials = OpenStruct.new(material_attributes)
-
-    materials = {
-      starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
-      reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
-      solvent: Array(material_attributes['solvents']).map{|m| OSample.new(m)},
-      product: Array(material_attributes['products']).map{|m| OSample.new(m)}
-    }
-
-
-    ActiveRecord::Base.transaction do
-      included_sample_ids = []
-      materials.each do |material_group, samples|
-        reaction_samples_association = reaction.public_send("reactions_#{material_group}_samples")
-        samples.each do |sample|
-          #create new subsample
-          if sample.is_new
-            if sample.is_split && sample.parent_id
-              parent_sample = Sample.find(sample.parent_id)
-
-              #TODO extract subsample method
-              first_collection_id = collections.first.id
-              subsample = parent_sample.create_subsample current_user, first_collection_id
-
-              if (material_group == :reactant || material_group == :solvent)
-                # Use 'reactant' or 'solvent' as short_label
-                subsample.short_label = sample.short_label
-              end
-
-              subsample.target_amount_value = sample.target_amount_value
-              subsample.target_amount_unit = sample.target_amount_unit
-              subsample.real_amount_value = sample.real_amount_value
-              subsample.real_amount_unit = sample.real_amount_unit
-
-              if ra = (sample.residues_attributes || sample.residues)
-                subsample.residues_attributes =
-                  ra.uniq || ra.each do |i| i.delete :id end
-              end
-
-              subsample.collections << collections.where.not(id: first_collection_id)
-
-              #add new data container
-              #subsample.container = ContainerHelper.create_root_container
-
-              if sample.container
-                subsample.container = ContainerHelper.update_datamodel(sample.container)
-              end
-
-              subsample.save!
-              subsample.reload
-              included_sample_ids << subsample.id
-
-              reaction_samples_association.create!(
-                sample_id: subsample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
-            #create new sample
-            else
-              attributes = sample.to_h
-                .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
-                .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
-
-              # update attributes[:name] for a copied reaction
-              if reaction.name.include?("Copy") && attributes[:name].present?
-                named_by_reaction = "#{reaction.short_label}"
-                named_by_reaction += "-#{attributes[:name].split("-").last}"
-                attributes.merge!(name: named_by_reaction)
-              end
-
-              container_info = attributes[:container]
-              attributes.delete(:container)
-
-              new_sample = Sample.new(
-                attributes
-              )
-
-              #add new data container
-              new_sample.container = ContainerHelper.update_datamodel(container_info)
-
-              new_sample.collections << collections
-              new_sample.save!
-
-              reaction_samples_association.create(
-                sample_id: new_sample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
-              included_sample_ids << new_sample.id
-            end
-          #update the existing sample
-          else
-            existing_sample = Sample.find(sample.id)
-
-            existing_sample.target_amount_value = sample.target_amount_value
-            existing_sample.target_amount_unit = sample.target_amount_unit
-            existing_sample.real_amount_value = sample.real_amount_value
-            existing_sample.real_amount_unit = sample.real_amount_unit
-            existing_sample.external_label = sample.external_label if sample.external_label
-            existing_sample.short_label = sample.short_label if sample.short_label
-            existing_sample.name = sample.name if sample.name
-
-            if r = existing_sample.residues[0]
-              r.assign_attributes sample.residues_attributes[0]
-            end
-
-            if sample.container
-              existing_sample.container = ContainerHelper.update_datamodel(sample.container)
-            end
-
-            existing_sample.save!
-            included_sample_ids << existing_sample.id
-
-            existing_association = reaction_samples_association.find_by(sample_id: sample.id)
-
-            #update existing associations
-            if existing_association.present?
-              existing_association.update_attributes!(
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
-            #sample was moved to other materialgroup
-            else
-              #clear existing associations
-              reaction.reactions_starting_material_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_reactant_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_solvent_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_product_samples.find_by(sample_id: sample.id).try(:destroy)
-
-              #create a new association
-              reaction_samples_association.create(
-                sample_id: sample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
-            end
-          end
-
-
-        end
-      end
-
-      #delete all samples not anymore in one of the groups
-
-      current_sample_ids = [
-        reaction.reactions_starting_material_samples.pluck(:sample_id),
-        reaction.reactions_reactant_samples.pluck(:sample_id),
-        reaction.reactions_solvent_samples.pluck(:sample_id),
-        reaction.reactions_product_samples.pluck(:sample_id)
-      ].flatten.uniq
-
-      deleted_sample_ids = current_sample_ids - included_sample_ids
-      Sample.where(id: deleted_sample_ids).destroy_all
-
-      #for testing
-      #raise ActiveRecord::Rollback
-    end
-
-    # to update the SVG
-    reaction.reload
-    reaction.save!
   end
 end

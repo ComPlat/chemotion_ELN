@@ -1,6 +1,7 @@
-module ContainerHelper
+module ContainerHelpers
+  extend Grape::API::Helpers
 
-  def self.update_datamodel(container)
+  def update_datamodel(container)
     if container.is_new
       root_container = Container.create(name: "root", container_type: container.containable_type)
     else
@@ -8,26 +9,16 @@ module ContainerHelper
       root_container.name = "root" #if it is created from client.side
     end
     root_container.save!
-
     if container.children != nil
       create_or_update_containers(container.children, root_container)
     end
-
     #root-Container can not contain attachments!!
-
     return root_container
   end
 
-  def self.create_root_container
-    root_con = Container.create(name: "root", container_type: "root")
-    root_con.children.create(container_type: "analyses")
+  private
 
-    return root_con
-  end
-
-private
-
-  def self.create_or_update_containers(children, root_container)
+  def create_or_update_containers(children, root_container)
     children.each do |child|
       if !child.is_new
         if child.is_deleted
@@ -38,7 +29,6 @@ private
           oldcon.name = child.name
           oldcon.container_type = child.container_type
           oldcon.description = child.description
-
           extended_metadata = child.extended_metadata
           if child.container_type == "analysis"
               extended_metadata["content"] = if extended_metadata.key?("content")
@@ -48,9 +38,7 @@ private
               end
           end
           oldcon.extended_metadata = extended_metadata
-
           oldcon.save!
-
           create_or_update_attachments(oldcon.id, child.attachments)
           create_or_update_containers(child.children, oldcon)
         end
@@ -63,7 +51,6 @@ private
             container_type: child.container_type,
             description: child.description
           )
-
           extended_metadata = child.extended_metadata
           if child.container_type == "analysis"
               extended_metadata["content"] = if extended_metadata.key?("content")
@@ -73,9 +60,7 @@ private
               end
           end
           newcon.extended_metadata = extended_metadata
-
           newcon.save!
-
           create_or_update_attachments(newcon.id, child.attachments)
           create_or_update_containers(child.children, newcon)
         end
@@ -83,12 +68,11 @@ private
     end
   end
 
-  def self.create_or_update_attachments(container_id, attachments)
+  def create_or_update_attachments(container_id, attachments)
     element = Container.find(container_id).root.containable
-    can_write = ElementPolicy.new(current_user, element).write?
+    can_update = ElementPolicy.new(current_user, element).update?
     can_edit = true
-    return unless can_write
-
+    return unless can_update
     attachments.each do |att|
       if att.is_new
         attachment = Attachment.where(storage: 'tmp', key: att.id).last
@@ -96,7 +80,7 @@ private
         attachment = Attachment.where( id: att.id).last
         if attachment && prev_cont = attachment.container_id
           prev_element = Container.find(prev_cont).root.containable
-          can_edit = ElementPolicy.new(current_user, prev_element).write?
+          can_edit = ElementPolicy.new(current_user, prev_element).update?
         end
       end
       if attachment
@@ -106,15 +90,13 @@ private
         end
         #NB 2step update because moving store should be delayed job
         attachment.update!(container_id: container_id)
-        primary_store = Rails.config.storage.primary_store
+        primary_store = Rails.configuration.storage.primary_store
         attachment.update!(storage: primary_store) if att.is_new
       end
     end
   end
-
-  def self.delete_containers_and_attachments(container)
+  def delete_containers_and_attachments(container)
     Attachment.where(container_id: container.id).destroy_all
-
     if container.children.length > 0
       container.children.each do |tmp|
         delete_containers_and_attachments(tmp)
@@ -122,5 +104,4 @@ private
     end
     Container.where(id: container.id).destroy_all
   end
-
 end #module

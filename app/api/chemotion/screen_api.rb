@@ -1,6 +1,7 @@
 module Chemotion
   class ScreenAPI < Grape::API
     include Grape::Kaminari
+    helpers ContainerHelpers
 
     resource :screens do
       desc "Return serialized screens"
@@ -67,7 +68,7 @@ module Chemotion
         end
 
         put do
-          ContainerHelper.update_datamodel(params[:container]);
+          update_datamodel(params[:container]);
           params.delete(:container);
 
           attributes = declared(params.except(:wellplate_ids), include_missing: false)
@@ -111,7 +112,7 @@ module Chemotion
 
         screen = Screen.create(attributes)
 
-        screen.container = ContainerHelper.update_datamodel(params[:container])
+        screen.container = update_datamodel(params[:container])
         screen.save!
 
         collection = Collection.find(params[:collection_id])
