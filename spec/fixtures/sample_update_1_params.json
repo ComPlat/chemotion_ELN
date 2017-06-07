@@ -1,0 +1,85 @@
+{
+  "id": null,
+  "type": "sample",
+  "is_new": false,
+
+  "container": {
+    "id": null,
+    "name": "root",
+    "container_type": null,
+    "description": null,
+    "extended_metadata": {
+      "report": false
+    },
+    "children": [
+      {
+        "id": null,
+        "name": "new",
+        "container_type": "analyses",
+        "description": "",
+        "extended_metadata": {
+          "report": true
+        },
+        "attachments": [
+
+        ],
+        "children": [
+          {
+            "id": null,
+            "name": "test analysis",
+            "container_type": "analysis",
+            "description": "updated description",
+            "extended_metadata": {
+              "report": true,
+              "content": {
+                "ops": [
+                  {
+                    "insert": ""
+                  }
+                ]
+              }
+            },
+            "attachments": [
+
+            ],
+            "children": [
+              {
+                "name": "upload",
+                "children": [
+
+                ],
+                "is_deleted":false,
+
+                "attachments": [
+                  {
+                    "file": {
+                      "id": "8580a8d0-4b83-11e7-afc4-85a98b9d0194",
+                      "container_id": "831ca120-4b83-11e7-afc4-85a98b9d0194"
+                    },
+                    "name": "upload.jpg",
+                    "filename": "upload.jpg",
+                    "id": "8580a8d0-4b83-11e7-afc4-85a98b9d0194",
+                    "is_new": true,
+                    "_checksum": "345a815c89ed2cd6848d3f9766d12f85924b802e61f2129630d8b66acbdc5f59"
+                  }
+                ],
+                "description": "",
+                "extended_metadata": {
+                  "report": true
+                },
+                "container_type": "dataset",
+                "id": "831ca120-4b83-11e7-afc4-85a98b9d0194",
+                "is_new": true,
+                "_checksum": "799ac40e4e380f601029ef53bc97d8356fbe18b62b97bfd4a126dc843c00bf63"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "code_log": null,
+    "attachments": [
+
+    ]
+  }
+}

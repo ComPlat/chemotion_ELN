@@ -15,16 +15,19 @@ module Chemotion
     resource :attachments do
 
       desc "Delete Attachment"
-      delete ':attachment_id' do
-        #todo: authorize
-        if current_user
-          attachment = Attachment.find_by id: params[:attachment_id]
-          if attachment && attachment.created_for == current_user.id
-            begin
-              attachment.delete
-            end
+      before do
+        if attachment = Attachment.find_by id: params[:attachment_id]
+          if element = attachment.container && attachment.container.root.containable
+            can_delete = ElementPolicy.new(current_user, element).update?
+          else
+            can_delete = attachment.created_for == current_user.id
           end
         end
+        error!('401 Unauthorized', 401) unless can_delete
+      end
+
+      delete ':attachment_id' do
+        Attachment.find(params[:attachment_id]).delete!
       end
 
       desc "Upload attachments"
@@ -79,13 +82,23 @@ module Chemotion
         end
       end
 
-      #todo: authorize attachment download
       desc "Download the zip attachment file"
+      before do
+        container = Container.where(id: container_id).first
+        if container && (element = container.root.containable)
+          can_read = ElementPolicy.new(current_user, element).read?
+          can_dwnld  = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+        end
+        error!('401 Unauthorized', 401) unless can_dwnld
+      end
+      
       get 'zip/:container_id' do
         container_id = params[:container_id]
 
-        if Container.exists?(id: container_id)
+        if container = Container.where(id: container_id).first
+          container.attachments.each do |attachment|
 
+          end
         end
       end
 

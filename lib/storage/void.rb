@@ -10,6 +10,10 @@ class void < Storage
     FileUtils.mkdir_p(data_folder) unless Dir.exist?(data_folder)
   end
 
+  def file_exist?
+    false
+  end
+
   def store_file
     true
   end

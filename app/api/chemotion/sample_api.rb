@@ -5,6 +5,7 @@ module Chemotion
   class SampleAPI < Grape::API
     include Grape::Kaminari
     helpers ContainerHelpers
+    helpers ParamsHelpers
     resource :samples do
 
       # TODO Refactoring: Use Grape Entities
@@ -239,12 +240,13 @@ module Chemotion
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
         requires :container, type: Hash
+        #use :root_container_params
       end
+
       route_param :id do
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Sample.find(params[:id])).update?
         end
-
         put do
           attributes = declared(params, include_missing: false)
 

@@ -14,6 +14,6 @@ FactoryGirl.define do
   #  key nil
 
     file_data File.read("#{Rails.root}/spec/fixtures/upload.txt")
-
+    file_path File.join("#{Rails.root}/spec/fixtures/upload.txt")
   end
 end

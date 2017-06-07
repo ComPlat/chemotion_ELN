@@ -1,7 +1,6 @@
 class Storage
   attr_reader :attachment, :primary_store, :secundary_store
   class << self
-
     def new_store(attach)
       storage_klass(attach).new(attach)
     end
@@ -32,14 +31,13 @@ class Storage
 
   def move_to_store(store = primary_store)
     dest_store = self.class.constantize(store).new(attachment)
-
     attachment.file_data = read_file
     attachment.thumb_data = read_thumb if attachment.thumb
     file_stored = dest_store.store_file
     thumb_stored = dest_store.store_thumb if attachment.thumb
     #TODO checksum check
-    file_removed = remove_file if file_stored
-    thumb_removed = remove_thumb_file if thumb_stored
+    file_removed = remove_file(true) if file_stored
+    thumb_removed = remove_thumb_file(true) if thumb_stored
     attachment.storage = store
     file_removed
   end

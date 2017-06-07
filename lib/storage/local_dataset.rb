@@ -1,8 +1,7 @@
 require 'storage'
 
-class LocalDataset < Storage
+class LocalDataset < Local
   #store files  in subdirectories named after the parent container_id
-
 
   private
 

@@ -5,8 +5,7 @@ class Local < Storage
 
   def initialize(attach)
     super(attach)
-    @config = @store_configs[:local]
-    datafolder =  @config[:data_folder]
+    datafolder =  @store_config[:data_folder]
     if datafolder.blank?
       @data_folder ||= File.join(Rails.root,'tmp', Rails.env, 'uploads')
     elsif datafolder.match(/^\//)
@@ -15,7 +14,10 @@ class Local < Storage
       @data_folder ||= File.join(Rails.root, datafolder)
     end
     FileUtils.mkdir_p(data_folder) unless Dir.exist?(data_folder)
+  end
 
+  def file_exist?
+    File.exist?(path)
   end
 
   def store_file
@@ -36,32 +38,42 @@ class Local < Storage
     File.exist?(thumb_path) && IO.binread(thumb_path) || false
   end
 
-  def remove_file
-    File.exist?(path) && rm_file
-    !File.exist?(path)
+  def destroy(at_previous_path = false)
+    remove_thumb_file(at_previous_path)
+    remove_file(at_previous_path)
   end
 
-  def remove_thumb_file
-    File.exist?(thumb_path) && rm_thumb_file
-    !File.exist?(thumb_path)
+  def remove_file(at_previous_path = false)
+    pat = at_previous_path && prev_path || path
+    File.exist?(pat) && rm_file(pat)
+    !File.exist?(pat)
   end
 
-  def destroy
-    remove_thumb_file
-    remove_file
+  def remove_thumb_file(at_previous_path = false)
+    pat = at_previous_path && prev_thumb_path || thumb_path
+    File.exist?(pat) && rm_file(pat)
+    !File.exist?(pat)
   end
 
-  def path
+  def path(bucket = attachment.bucket, key = attachment.key)
     raise StandardError, 'cannot build path without attachment key' if attachment.key.blank?
-    if attachment.bucket.blank?
-      File.join(data_folder, attachment.key.to_s)
+    if bucket.blank?
+      File.join(data_folder, key.to_s)
     else
-      File.join(data_folder, attachment.bucket, attachment.key.to_s)
+      File.join(data_folder, bucket, key.to_s)
     end
   end
 
-  def thumb_path
-    path + thumb_suffix
+  def thumb_path(*arg)
+    path(*arg) + thumb_suffix
+  end
+
+  def prev_path
+    path(attachment.bucket_was,attachment.key_was)
+  end
+
+  def prev_thumb_path
+    thumb_path(attachment.bucket_was,attachment.key_was)
   end
 
   def thumb_suffix
@@ -111,12 +123,8 @@ class Local < Storage
     attachment.bucket = attachment.id / 10000 + 1
   end
 
-  def rm_file
-    FileUtils.rm(path, force: true)
-  end
-
-  def rm_thumb_file
-    FileUtils.rm(thumb_path, force: true)
+  def rm_file(path_to_file)
+    FileUtils.rm(path_to_file, force: true)
   end
 
   def create_dirs

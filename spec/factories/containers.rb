@@ -26,4 +26,18 @@ FactoryGirl.define do
       end
     end
   end
+
+  factory :analysis_container, class: Container do
+    sequence(:name) { |i| "Analysis #{i}" }
+    attachments []
+    extended_metadata = {
+      'kind' => '13C NMR',
+      'status' => 'Confirmed',
+      #'datasets' => [],
+      'content' => "{\"ops\": [{\"insert\": \"analysis contents\"}]}"
+    }
+    description 'no description'
+    container_type 'analysis'
+
+  end
 end

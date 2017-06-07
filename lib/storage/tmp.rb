@@ -1,39 +1,10 @@
 require 'storage'
 
-class Tmp < Storage
-  attr_reader :data_folder
-
-  def initialize(attach)
-    super(attach)
-    @config = @store_configs[:tmp]
-    datafolder =  @config[:data_folder]
-    if datafolder.blank?
-      @data_folder ||= File.join(Rails.root,'tmp', Rails.env, 'uploads')
-    elsif datafolder.match(/^\//)
-      @data_folder ||= datafolder
-    else
-      @data_folder ||= File.join(Rails.root, datafolder)
-    end
-    FileUtils.mkdir_p(data_folder) unless Dir.exist?(data_folder)
-
-  end
+class Tmp < Local
 
   def store_file
     write_file
     File.exist?(path)
-  end
-
-  def store_thumb
-    write_thumbnail
-    File.exist?(thumb_path)
-  end
-
-  def read_file
-    File.exist?(path) && IO.binread(path) || false
-  end
-
-  def read_thumb
-    File.exist?(thumb_path) && IO.binread(thumb_path) || false
   end
 
   def destroy
@@ -41,33 +12,6 @@ class Tmp < Storage
     is_removed = remove_file
     rm_dir unless attachment.bucket.blank?
     is_removed
-  end
-
-  def remove_file
-    File.exist?(path) && rm_file
-    !File.exist?(path)
-  end
-
-  def remove_thumb_file
-    File.exist?(thumb_path) && rm_thumb_file
-    !File.exist?(thumb_path)
-  end
-
-  def path
-    raise 'cannot build path without attachment key' if attachment.key.blank?
-    if !attachment.bucket.blank?
-      File.join(data_folder, attachment.bucket, attachment.key )
-    else
-      File.join(data_folder, attachment.key)
-    end
-  end
-
-  def thumb_path
-    path && path + '.thumb.jpg'
-  end
-
-  def add_checksum
-    attachment.checksum = Digest::SHA256.hexdigest(read_file)
   end
 
   private
@@ -102,12 +46,10 @@ class Tmp < Storage
     end
   end
 
-  def rm_file
-    FileUtils.rm(path, force: true)
+  def set_key
   end
 
-  def rm_thumb_file
-    FileUtils.rm(thumb_path, force: true)
+  def set_bucket
   end
 
   def rm_dir
