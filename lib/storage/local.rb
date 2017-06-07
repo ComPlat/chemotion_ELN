@@ -79,6 +79,7 @@ class Local < Storage
   private
 
   def write_thumbnail
+    create_thumb_dir
     if (fp = attachment.thumb_path) && File.exist?(fp)
       FileUtils.copy(fp, thumb_path)
     elsif attachment.thumb_data
@@ -89,7 +90,7 @@ class Local < Storage
   def write_file
     set_key
     set_bucket
-    write_dir
+    create_dirs
     begin
       if (fp = attachment.file_path) && File.exist?(fp)
         FileUtils.copy(fp, path)
@@ -118,9 +119,16 @@ class Local < Storage
     FileUtils.rm(thumb_path, force: true)
   end
 
-  def write_dir
+  def create_dirs
     dirs = [File.dirname(path)]
     dirs << File.dirname(thumb_path) if attachment.thumb
     dirs.each{ |d| FileUtils.mkdir_p(d) unless Dir.exist?(d)}
+  end
+
+  def create_thumb_dir
+    if attachment.thumb
+      d = File.dirname(thumb_path)
+      FileUtils.mkdir_p(d) unless Dir.exist?(d)
+    end
   end
 end

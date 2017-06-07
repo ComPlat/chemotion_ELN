@@ -88,8 +88,6 @@ private
       if att.is_new
         attachment = Attachment.where(storage: 'tmp', key: att.id).last
       else
-        #TODO fix this should be identifier:
-        #
         attachment = Attachment.where( id: att.id).last
       end
       if attachment

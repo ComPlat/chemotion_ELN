@@ -7,7 +7,10 @@ class LocalDataset < Storage
   private
 
   def set_key
-    attachment.key = File.join(attachment.container_id, attachment.filename)
+    attachment.key = File.join(
+      attachment.container_id,
+      attachment.filename
+    )
   end
 
   def set_bucket

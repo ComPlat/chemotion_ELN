@@ -52,7 +52,10 @@ class Storage
     tmp = Tempfile.new(attachment.filename)
     tmp.write attachment.read_file
     attachment.thumb_path = Thumbnailer.create(tmp.path)
-    attachment.thumb = store_thumb
+    if File.exist?(attachment.thumb_path)
+      attachment.thumb = true
+      store_thumb
+    end
     tmp.close
     tmp.unlink
     FileUtils.rm(attachment.thumb_path, force: true)
