@@ -84,17 +84,30 @@ private
   end
 
   def self.create_or_update_attachments(container_id, attachments)
+    element = Container.find(container_id).root.containable
+    can_write = ElementPolicy.new(current_user, element).write?
+    can_edit = true
+    return unless can_write
+
     attachments.each do |att|
       if att.is_new
         attachment = Attachment.where(storage: 'tmp', key: att.id).last
       else
         attachment = Attachment.where( id: att.id).last
+        if attachment && prev_cont = attachment.container_id
+          prev_element = Container.find(prev_cont).root.containable
+          can_edit = ElementPolicy.new(current_user, prev_element).write?
+        end
       end
       if attachment
-        return  attachment.destroy! if att.is_deleted
-        attachment.update!(container_id: container_id)
+        if att.is_deleted && can_edit
+          attachment.destroy!
+          next
+        end
         #NB 2step update because moving store should be delayed job
-        attachment.update!(storage: 'local' ) if att.is_new
+        attachment.update!(container_id: container_id)
+        primary_store = Rails.config.storage.primary_store
+        attachment.update!(storage: primary_store) if att.is_new
       end
     end
   end
