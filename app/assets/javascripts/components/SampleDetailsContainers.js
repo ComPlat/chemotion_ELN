@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {PanelGroup, Panel, Button, Label} from 'react-bootstrap';
+import {PanelGroup, Panel, Button, Label, Checkbox} from 'react-bootstrap';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton'
@@ -101,6 +101,23 @@ export default class SampleDetailsContainers extends Component {
     this.handleChange(container);
   }
 
+  PreviewImg(container) {
+    const rawImg = container.preview_img
+    const noAttSvg = '/images/no_attachment.svg'
+    const noAvaSvg = '/images/not_available.svg'
+    switch(rawImg) {
+      case null:
+      case undefined:
+          return noAttSvg
+          break;
+      case 'not available':
+          return noAvaSvg
+          break;
+      default:
+          return `data:image/png;base64,${rawImg}`
+    }
+  }
+
   analysisHeader(container, readOnly, key) {
     const confirmDelete = (e) => {
       e.stopPropagation()
@@ -108,26 +125,15 @@ export default class SampleDetailsContainers extends Component {
         this.handleRemove(container)
       }
     };
-    const kind = (container.extended_metadata['kind'] && container.extended_metadata['kind'] != '')
-      ? (' - Type: ' + container.extended_metadata['kind'])
-      : ''
-    const status = (container.extended_metadata['status'] && container.extended_metadata['status'] != '')
-      ? (' - Status: ' + container.extended_metadata['status'])
-      :''
+    const kind = container.extended_metadata['kind'] || ' - '
+    const status = container.extended_metadata['status'] || ' - '
+    const description = container.description || ' - '
+    const inReport = container.extended_metadata['report']
+    const previewImg = this.PreviewImg(container)
 
-    const inReport = container.extended_metadata['report'];
-
-    let attachments = container.attachments
-    let attachmentPreview = null
-
-    return (
-      <div style={{width: '100%'}}
-            onClick={() => this.handleAccordionOpen(key)}>
-        {container.name}
-        {kind}
-        {status}
-        <div className="button-right">
-
+    const btnGroup = () => {
+      return (
+        <div className="upper-btn">
           <Button bsSize="xsmall"
                   bsStyle="danger"
                   className="button-right"
@@ -135,18 +141,34 @@ export default class SampleDetailsContainers extends Component {
                   onClick={confirmDelete}>
             <i className="fa fa-trash"></i>
           </Button>
-          <PrintCodeButton element={this.state.sample} analyses={[container]} ident={container.id}/>
-          <span className="collection-label button-right" onClick={e => e.stopPropagation()}>
-            <Label>
-              <input onClick={(e) => this.toggleAddToReport(e, container)}
-                     type="checkbox"
-                     defaultChecked={inReport} />
-              Add to Report
-            </Label>
-          </span>
+          <PrintCodeButton element={this.state.sample}
+                            analyses={[container]}
+                            ident={container.id}/>
+          <div className="button-right add-to-report"
+                onClick={e => e.stopPropagation()}>
+            <Checkbox onClick={(e) => this.toggleAddToReport(e, container)}
+                      defaultChecked={inReport} >
+              <span>Add to Report</span>
+            </Checkbox>
+          </div>
         </div>
-        <div>
-          <img src={attachmentPreview} alt='no preview' />
+      )
+    }
+
+    return (
+      <div className="analysis-header"
+            onClick={() => this.handleAccordionOpen(key)}>
+        <div className="preview">
+          <img src={previewImg} />
+        </div>
+        <div className="abstract">
+          { btnGroup() }
+          <div className="lower-text">
+            <div className="main-title">{container.name}</div>
+            <div className="sub-title">Type: {kind}</div>
+            <div className="sub-title">Status: {status}</div>
+            <div className="desc">Description: {description}</div>
+          </div>
         </div>
       </div>
     );

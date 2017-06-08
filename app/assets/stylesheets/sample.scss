@@ -55,3 +55,76 @@
 .noAnalyses-warning {
   margin: 20px;
 }
+
+.analysis-header {
+  height: 125px;
+
+  .preview {
+    display: inline-block;
+    height: 125px;
+    vertical-align: top;
+    width: 125px;
+
+    img {
+      float: left;
+      height: 120px;
+      margin: 0 20px 0 0;
+      width: 120px;
+    }
+  }
+
+  .abstract {
+    display: inline-block;
+    width: calc(100% - 135px);
+
+    .upper-btn {
+      height: 22px;
+
+      .add-to-report {
+        border: 1px solid black;
+        border-radius: 3px;
+        font-size: 12px;
+        height: 22px;
+        padding: 0 12px;
+        vertical-align: middle;
+      }
+
+      .checkbox {
+        margin: 0;
+
+        span {
+          line-height: 22px;
+        }
+      }
+    }
+
+    .lower-text {
+      height: 103px;
+
+      .main-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 10px 0 0 10px;
+        overflow: hidden;
+        text-decoration: underline;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 80%;
+      }
+
+      .sub-title {
+        font-size: 14px;
+        margin-left: 30px;
+      }
+
+      .desc {
+        font-size: 12px;
+        margin-left: 30px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 80%;
+      }
+    }
+  }
+}
