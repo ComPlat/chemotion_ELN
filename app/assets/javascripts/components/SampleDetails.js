@@ -181,7 +181,7 @@ export default class SampleDetails extends React.Component {
   svgOrLoading(sample) {
     let svgPath = "";
     if (this.state.loadingMolecule) {
-      svgPath = "/images/loading-bubbles.svg";
+      svgPath = "/images/wild_card/loading-bubbles.svg";
     } else {
       svgPath = sample.svgPath;
     }

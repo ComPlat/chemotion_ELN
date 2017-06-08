@@ -443,7 +443,7 @@ export default class Reaction extends Element {
     if(this.reaction_svg_file && this.reaction_svg_file != '***')
       return `/images/reactions/${this.reaction_svg_file}`
     else
-      return `images/no_image_180.svg`
+      return `images/wild_card/no_image_180.svg`
   }
 
   SMGroupValid() {
@@ -480,7 +480,7 @@ export default class Reaction extends Element {
       let group = this['_' + cats[i]]
       if (group) {
         let index = group.findIndex(x => x.id == material.id)
-        
+
         if (index >= 0) {
           this['_' + cats[i]][index] = new Sample(material)
           break

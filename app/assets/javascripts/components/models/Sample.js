@@ -658,7 +658,7 @@ export default class Sample extends Element {
   get svgPath() {
     if (this.sample_svg_file){
       if(this.sample_svg_file === '***')
-        return `/images/no_image_180.svg`
+        return `/images/wild_card/no_image_180.svg`
       else
         return `/images/samples/${this.sample_svg_file}`;
     } else {

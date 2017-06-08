@@ -33,7 +33,7 @@ export default class ResearchPlan extends Element {
     if (this.svg_file){
       return `/images/research_plans/${this.svg_file}`;
     } else {
-      return `/images/no_image_180.svg`
+      return `/images/wild_card/no_image_180.svg`
     }
   }
 }

@@ -103,8 +103,8 @@ export default class SampleDetailsContainers extends Component {
 
   PreviewImg(container) {
     const rawImg = container.preview_img
-    const noAttSvg = '/images/no_attachment.svg'
-    const noAvaSvg = '/images/not_available.svg'
+    const noAttSvg = '/images/wild_card/no_attachment.svg'
+    const noAvaSvg = '/images/wild_card/not_available.svg'
     switch(rawImg) {
       case null:
       case undefined:
