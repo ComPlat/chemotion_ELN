@@ -4,25 +4,7 @@ describe Chemotion::ReactionAPI do
   context 'authorized user logged in' do
     let(:user) { create(:user) }
 
-    let(:new_container) {{
-      "name" => "new",
-      "attachments" => [],
-      "is_deleted" => false,
-      "is_new" => true,
-      "description" => "",
-      "container_type" => "root",
-      "extended_metadata" => { "report" => true },
-      "children" => [{
-        "name" => "new",
-        "attachments" => [],
-        "is_deleted" => false,
-        "is_new" => true,
-        "description" => "",
-        "container_type" => "analyses",
-        "extended_metadata" => { "report" => true },
-        "children" => []
-      }],
-    }}
+    let(:new_root_container) { create(:root_container) }
 
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
@@ -320,7 +302,7 @@ describe Chemotion::ReactionAPI do
           {
             "id" => reaction_1.id,
             "name" => "new name",
-            "container" => new_container,
+            "container" => new_root_container,
             "materials" => {
               "starting_materials" => [
                 {
@@ -338,7 +320,7 @@ describe Chemotion::ReactionAPI do
                   "equivalent" => 5.5,
                   "reference" => false,
                   "is_new" => false,
-                  "container" => new_container
+                  "container" => new_root_container
                 }
               ],
               "products" => [
@@ -351,14 +333,17 @@ describe Chemotion::ReactionAPI do
                 "equivalent" => 1,
                 "is_new" => true,
                 "is_split" => true,
-                "container" => new_container
+                "container" => new_root_container
               ]
             }
           }
         }
 
         before do
-          put "/api/v1/reactions/#{reaction_1.id}", params
+          put(
+            "/api/v1/reactions/#{reaction_1.id}.json", params.to_json,
+            'CONTENT_TYPE' => 'application/json'
+          )
         end
 
         let(:r) { Reaction.find(reaction_1.id) }
@@ -398,7 +383,7 @@ describe Chemotion::ReactionAPI do
           {
             "name" => "r001",
             "collection_id" => collection_1.id,
-            "container" => new_container,
+            "container" => new_root_container,
             "materials" => {
               "products" => [
                 "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e335",
@@ -411,7 +396,7 @@ describe Chemotion::ReactionAPI do
                 "is_new" => true,
                 "is_split" => true,
                 "molecule" => {molfile: ""},
-                "container" => new_container,
+                "container" => new_root_container,
               ],
               "reactants" => [
                 "id" => "d4ca4ec0-6d8e-11e5-b2f1-c9913eb3e336",
@@ -425,14 +410,17 @@ describe Chemotion::ReactionAPI do
                 "is_new" => true,
                 "is_split" => false,
                 "molecule" => {molfile: ""},
-                "container" => new_container,
+                "container" => new_root_container,
               ]
             }
           }
         }
 
         before do
-          post "/api/v1/reactions", params
+          post(
+            '/api/v1/reactions.json', params.to_json,
+            'CONTENT_TYPE' => 'application/json'
+          )
         end
 
         let(:r) { Reaction.find_by(name: 'r001') }

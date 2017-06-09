@@ -27,6 +27,17 @@ FactoryGirl.define do
     end
   end
 
+  factory :root_container, class: Container do
+    name "root"
+    attachments []
+    description ""
+    extended_metadata {}
+    container_type "root"
+    after(:create) do |container|
+      analyses = FactoryGirl.create(:container, parent: container, container_type: "analyses")
+    end
+  end
+
   factory :analysis_container, class: Container do
     sequence(:name) { |i| "Analysis #{i}" }
     attachments []
