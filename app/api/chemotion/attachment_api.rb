@@ -6,28 +6,53 @@ require 'digest'
 module Chemotion
   class AttachmentAPI < Grape::API
 
+    rescue_from ActiveRecord::RecordNotFound do |error|
+      message = "Could not find attachment"
+      error!(message, 404)
+    end
+
     resource :inbox do
       get do
-        attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
+        attachments = Attachment.where(
+          :container_id => nil, :created_for => current_user.id
+        )
       end
     end
 
     resource :attachments do
-
-      desc "Delete Attachment"
       before do
-        if attachment = Attachment.find_by id: params[:attachment_id]
-          if element = attachment.container && attachment.container.root.containable
-            can_delete = ElementPolicy.new(current_user, element).update?
-          else
-            can_delete = attachment.created_for == current_user.id
+        case request.env['REQUEST_METHOD']
+        when /delete/i
+          if @attachment = Attachment.find(params[:attachment_id])
+            if element = @attachment.container && @attachment.container.root.containable
+              can_delete = ElementPolicy.new(current_user, element).update?
+            else
+              can_delete = @attachment.created_for == current_user.id
+            end
+            error!('401 Unauthorized', 401) unless can_delete
+          end
+        when /post/i
+
+        when /get/i
+          if request.url.match(/zip/)
+            @container = Container.find(params[:container_id])
+            if element = container.root.containable
+              can_read = ElementPolicy.new(current_user, element).read?
+              can_dwnld = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+            end
+            error!('401 Unauthorized', 401) unless can_dwnld
+          elsif @attachment = Attachment.find(params[:attachment_id])
+             element = @attachment.container.root.containable
+             can_read = ElementPolicy.new(current_user, element).read?
+             can_dwnld = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+             error!('401 Unauthorized', 401) unless can_dwnld
           end
         end
-        error!('401 Unauthorized', 401) unless can_delete
       end
 
+      desc "Delete Attachment"
       delete ':attachment_id' do
-        Attachment.find(params[:attachment_id]).delete!
+        @attachment.delete!
       end
 
       desc "Upload attachments"
@@ -38,7 +63,6 @@ module Chemotion
                 bucket: file.container_id,
                 filename: file.filename,
                 key: file.name,
-                #file_data: IO.binread(tempfile),
                 file_path: file.tempfile,
                 created_by: current_user.id,
                 created_for: current_user.id,
@@ -46,11 +70,9 @@ module Chemotion
               )
             begin
               a.save!
-            # rescue
-            #   a.destroy
             ensure
               tempfile.close
-              tempfile.unlink   # deletes the temp file
+              tempfile.unlink
             end
           end
         end
@@ -58,60 +80,26 @@ module Chemotion
       end
 
       desc "Download the attachment file"
-      before do
-        attachment = Attachment.find_by id: params[:attachment_id]
-        if attachment
-          element = attachment.container.root.containable
-          can_read = ElementPolicy.new(current_user, element).read?
-          can_dwnld  = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-          error!('401 Unauthorized', 401) unless can_dwnld
-        end
-      end
       get ':attachment_id' do
-        attachment_id = params[:attachment_id]
-
-        attachment = Attachment.find_by id: attachment_id
-        if attachment != nil
-          content_type "application/octet-stream"
-          header['Content-Disposition'] = "attachment; filename="+attachment.filename
-          env['api.format'] = :binary
-
-          attachment.read_file
-        else
-          nil
-        end
+        content_type "application/octet-stream"
+        header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
+        env['api.format'] = :binary
+        @attachment.read_file
       end
 
       desc "Download the zip attachment file"
-      before do
-        container = Container.where(id: container_id).first
-        if container && (element = container.root.containable)
-          can_read = ElementPolicy.new(current_user, element).read?
-          can_dwnld  = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-        end
-        error!('401 Unauthorized', 401) unless can_dwnld
-      end
-      
       get 'zip/:container_id' do
-        container_id = params[:container_id]
-
-        if container = Container.where(id: container_id).first
-          container.attachments.each do |attachment|
-
-          end
+        @container.attachments.each do |att|
+          #TODO
         end
       end
 
-      resource :thumbnail do
-        desc 'Return Base64 encoded thumbnail'
-        get ':id' do
-
-          attachment = Attachment.find_by id: params[:id]
-          if attachment
-            Base64.encode64(attachment.read_thumbnail)
-          else
-            nil
-          end
+      desc 'Return Base64 encoded thumbnail'
+      get 'thumbnail/:attachment_id' do
+        if @attachment.thumb
+          Base64.encode64(@attachment.read_thumbnail)
+        else
+          nil
         end
       end
 
