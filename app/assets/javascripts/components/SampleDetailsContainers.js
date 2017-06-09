@@ -115,6 +115,7 @@ export default class SampleDetailsContainers extends Component {
       ? (' - Status: ' + container.extended_metadata['status'])
       :''
 
+    let labelStyle = {display: "flex", alignItems: "center", borderColor: "#ccc"}
     const inReport = container.extended_metadata['report'];
 
     return (
@@ -134,10 +135,10 @@ export default class SampleDetailsContainers extends Component {
           </Button>
           <PrintCodeButton element={this.state.sample} analyses={[container]} ident={container.id}/>
           <span className="collection-label button-right" onClick={e => e.stopPropagation()}>
-            <Label>
+            <Label style={labelStyle}>
               <input onClick={(e) => this.toggleAddToReport(e, container)}
-                     type="checkbox"
-                     defaultChecked={inReport} />
+                type="checkbox" style={{margin: "0px 5px 0px 0px"}}
+                defaultChecked={inReport} />
               Add to Report
             </Label>
           </span>

@@ -27,6 +27,7 @@ export default class ElementsTable extends React.Component {
       ui: {},
       sampleCollapseAll: false,
       moleculeSort: false,
+      advancedSearch: false,
       selectAllCurrentPage: true
     }
 
@@ -81,6 +82,16 @@ export default class ElementsTable extends React.Component {
       });
     }
 
+    let {currentSearchSelection} = state
+    let isAdvS = false
+    if (currentSearchSelection && currentSearchSelection.search_by_method) {
+      isAdvS = currentSearchSelection.search_by_method == "advanced" ? true : false
+      if (isAdvS != this.state.advancedSearch) {
+        this.setState({advancedSearch: isAdvS})
+      }
+    } else if (this.state.advancedSearch == true) {
+      this.setState({advancedSearch: false})
+    }
   }
 
   onChange(state) {
@@ -196,22 +207,29 @@ export default class ElementsTable extends React.Component {
     } = this.state
 
     const {type, showReport } = this.props
+    const {advancedSearch} = this.state
 
     let collapseIcon = sampleCollapseAll ? "chevron-right" : "chevron-down"
-    
+
+    let switchBtnTitle = "Change sorting to sort by "
+    let checkedLbl = "Molecule"
+    let uncheckedLbl = "Sample"
+    if (advancedSearch) {
+      switchBtnTitle = switchBtnTitle + (moleculeSort ? "order of input" : "sample last updated")
+      checkedLbl = "Updated"
+      uncheckedLbl = "Order"
+    } else {
+      switchBtnTitle = switchBtnTitle + (moleculeSort ? "Sample" : "Molecule")
+    }
     let headerRight = (<span />)
     if (type === 'sample') {
       headerRight = (
         <div className="header-right">
           <Switch checked={moleculeSort} style={{width: "90px"}}
             onChange={() => this.changeSort()}
-            title={
-              "Change sorting to sort by " + (
-                moleculeSort ? "Sample" : "Molecule"
-              )
-            }
-            checkedChildren="Molecule"
-            unCheckedChildren="Sample"/>
+            title={switchBtnTitle}
+            checkedChildren={checkedLbl}
+            unCheckedChildren={uncheckedLbl}/>
 
           &nbsp;&nbsp;&nbsp;&nbsp;
 

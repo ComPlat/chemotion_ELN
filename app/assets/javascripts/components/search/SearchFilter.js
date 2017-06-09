@@ -111,31 +111,8 @@ export default class SearchFilter extends React.Component {
     return (val.label)
   }
 
-  renderOptions() {
+  renderDynamicRow() {
     let {filters} = this.state
-
-    let defaultRow = (
-      <div style={{display: "flex"}}>
-        <span style={{flex: "0 0 127px"}} />
-        <span className="match-select">
-          <Select simpleValue searchable={false} options={this.matchOps}
-            placeholder="Select search type" clearable={false}
-            value={filters[0].match}
-            onChange={(val) => this.handleUpdateFilters(0, "match", val)} />
-        </span>
-        <span className="field-select">
-          <Select simpleValue searchable={false} options={this.listOptions}
-            placeholder="Select search field" clearable={false}
-            value={filters[0].field} valueRenderer={this.renderField}
-            onChange={(val) => this.handleUpdateFilters(0, "field", val)} />
-        </span>
-        <FormControl type="text" value={filters[0].value}
-          componentClass="textarea"
-          className="value-select" placeholder="Search value"
-          onChange={(e) => this.handleUpdateFilters(0, "value", e.target.value)}
-        />
-      </div>
-    )
 
     let dynamicRow = ( <span /> )
 
@@ -145,7 +122,7 @@ export default class SearchFilter extends React.Component {
       dynamicRow = addedFilters.map((filter, idx) => {
         let id = idx + 1
         return (
-          <div key={"filter_" + idx} style={{display: "flex"}}>
+          <div key={"filter_" + idx} className="adv-search-row">
             <span className="link-select">
               <Select simpleValue options={this.andOrOps}
                 value={filter.link} clearable={false}
@@ -172,21 +149,38 @@ export default class SearchFilter extends React.Component {
 
     }
 
-    return (
-      <div>
-        {defaultRow}
-        {dynamicRow}
-      </div>
-    )
+    return dynamicRow
   }
 
   render() {
-    let {showFilters, currentOption} = this.state
+    let {showFilters, currentOption, filters} = this.state
     if (!showFilters) return (<span />)
 
     return (
       <div className="advanced-search">
-        {this.renderOptions()}
+        <div>
+          <div className="adv-search-row">
+            <span style={{flex: "0 0 127px"}} />
+            <span className="match-select">
+              <Select simpleValue searchable={false} options={this.matchOps}
+                placeholder="Select search type" clearable={false}
+                value={filters[0].match}
+                onChange={(val) => this.handleUpdateFilters(0, "match", val)} />
+            </span>
+            <span className="field-select">
+              <Select simpleValue searchable={false} options={this.listOptions}
+                placeholder="Select search field" clearable={false}
+                value={filters[0].field} valueRenderer={this.renderField}
+                onChange={(val) => this.handleUpdateFilters(0, "field", val)} />
+            </span>
+            <FormControl type="text" value={filters[0].value}
+              componentClass="textarea"
+              className="value-select" placeholder="Search value"
+              onChange={(e) => this.handleUpdateFilters(0, "value", e.target.value)}
+            />
+          </div>
+          {this.renderDynamicRow()}
+        </div>
         <div className="footer">
           <Button bsStyle="primary" onClick={this.search}>
             Search
