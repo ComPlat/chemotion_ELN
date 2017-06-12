@@ -21,4 +21,10 @@ class Container < ActiveRecord::Base
     self.root.containable
   end
 
+  def self.create_root_container
+    root_con = Container.create(name: "root", container_type: "root")
+    root_con.children.create(container_type: "analyses")
+    root_con
+  end
+
 end

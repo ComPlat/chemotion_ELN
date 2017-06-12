@@ -20,6 +20,9 @@ import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import KeyboardActions from './actions/KeyboardActions';
 
+import {DragDropContext} from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
+
 class App extends Component {
   constructor(props) {
     super();
@@ -129,10 +132,12 @@ class App extends Component {
   }
 }
 
+const AppWithDnD = DragDropContext(HTML5Backend)(App)
+
 $(document).ready(function() {
   let domElement = document.getElementById('app');
   if (domElement){
-    ReactDOM.render(<App />, domElement);
+    ReactDOM.render(<AppWithDnD />, domElement);
     initRoutes();
     Aviator.dispatch();
   }

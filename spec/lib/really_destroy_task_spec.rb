@@ -21,12 +21,12 @@ RSpec.describe 'ReallyDestroyTask' do
     end
 
     it 'does not really destroy samples or reactions' do
-      expect(Sample.with_deleted).to eq [s0,s1,s2]
-      expect(Sample.all).to eq [s0]
-      expect(Sample.only_deleted).to eq [s1,s2]
+      expect(Sample.with_deleted.to_a).to eq [s0,s1,s2]
+      expect(Sample.all.to_a).to eq [s0]
+      expect(Sample.only_deleted.to_a).to eq [s1,s2]
       expect(Sample.only_deleted.size).to eq 2
-      expect(Reaction.with_deleted).to eq [r0,r1,r2]
-      expect(Reaction.only_deleted).to eq [r1,r2]
+      expect(Reaction.with_deleted.to_a).to eq [r0,r1,r2]
+      expect(Reaction.only_deleted.to_a).to eq [r1,r2]
       expect(Reaction.only_deleted.size).to eq 2
     end
   end

@@ -29,7 +29,7 @@ export default class List extends React.Component {
       totalResearchPlanElements: 0,
       visible: Immutable.List(),
       hidden: Immutable.List(),
-      currentTab: 0
+      currentTab: 0,
     }
 
     this.onChange = this.onChange.bind(this)
@@ -125,6 +125,7 @@ export default class List extends React.Component {
     let page = uiState[type].page;
 
     UIActions.setPagination({type: type, page: page});
+
     KeyboardActions.contextChange(type);
   }
 
@@ -145,7 +146,7 @@ export default class List extends React.Component {
   }
 
   render() {
-    let {visible, hidden, currentTab} = this.state
+    let {visible, hidden, currentTab, treeView} = this.state
 
     const {overview, showReport} = this.props
     const elementState = this.state
@@ -177,10 +178,10 @@ export default class List extends React.Component {
       )
       let tabContent = (
         <Tab.Pane eventKey={i} key={value + "_tabPanel"}>
-          <ElementsTable overview={overview} showReport={showReport}
+           <ElementsTable overview={overview} showReport={showReport}
                          type={value}/>
         </Tab.Pane>
-      )
+        )
 
       navItems.push(navItem)
       tabContents.push(tabContent)

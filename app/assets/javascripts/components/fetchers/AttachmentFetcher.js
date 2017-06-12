@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import Attachment from '../models/Attachment';
 
 export default class AttachmentFetcher {
 
@@ -20,7 +21,6 @@ export default class AttachmentFetcher {
   static getFileListfrom(container){
     var allFiles = new Array();
     this.filterAllAttachments(allFiles, container.children);
-
     return allFiles
   }
 
@@ -30,6 +30,7 @@ export default class AttachmentFetcher {
       const fileFromAttachment = function(attachment) {
         let file = attachment.file;
         file.id = attachment.id;
+        file.container_id = container.id;
         return file;
       }
       var tmpArray = container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a));
@@ -64,5 +65,24 @@ export default class AttachmentFetcher {
         });
       }
     })
+  }
+
+  static deleteAttachment(params){
+    let promise = fetch(`/api/v1/attachments/${params.id}`, {
+      credentials: 'same-origin',
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return new Attachment(json.attachment);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
   }
 }

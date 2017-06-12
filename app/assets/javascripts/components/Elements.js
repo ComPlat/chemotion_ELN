@@ -7,7 +7,7 @@ import List from './List';
 import ElementDetails from './ElementDetails';
 import ElementStore from './stores/ElementStore';
 
-class Elements extends Component {
+export default class Elements extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -62,4 +62,4 @@ class Elements extends Component {
   }
 }
 
-export default DragDropContext(HTML5Backend)(Elements);
+//export default DragDropContext(HTML5Backend)(Elements);
