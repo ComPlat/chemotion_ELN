@@ -87,48 +87,66 @@ module Chemotion
         scope
       end
 
+      def serialize_samples samples, page, search_method, molecule_sort
+        return {
+          data: [],
+          size: 0
+        } if samples.empty?
+
+        samples_size = samples.size
+
+        if search_method != "advanced" && molecule_sort == true
+          molecule_scope =
+            Molecule.joins(:samples).where("samples.id IN (?)", samples)
+                    .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                    .order(:sum_formular)
+          molecule_scope = molecule_scope.page(page).per(page_size).includes(
+            :tag, collections: :sync_collections_users
+          )
+          sample_scope = Sample.includes(
+            :residues, :molecule, :tag, :container
+          ).find(samples)
+          samples_size = molecule_scope.size
+
+          serialized_samples = {
+            molecules: create_group_molecule(molecule_scope, sample_scope)
+          }
+        else
+          ids = Kaminari.paginate_array(samples).page(page).per(page_size)
+          paging_samples = Sample.includes(
+            :residues, :tag,
+            collections: :sync_collections_users,
+            molecule: :tag
+          ).where(id: ids).order("position(id::text in '#{ids}')").to_a
+
+          if search_method == "advanced"
+            group_molecule = group_by_order(paging_samples)
+          else
+            group_molecule = group_by_molecule(paging_samples)
+          end
+
+          serialized_samples = {
+            molecules: group_molecule
+          }
+        end
+
+        return {
+          data: serialized_samples,
+          size: samples_size
+        }
+
+      end
+
       def serialization_by_elements_and_page(elements, page = 1, molecule_sort = false)
         samples = elements.fetch(:samples, [])
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
 
-        search_by_method = get_search_method()
-
-        samples_size = samples.size
-        if samples.empty? == false
-          if molecule_sort
-            molecule_scope =
-              Molecule.joins(:samples).where("samples.id IN (?)", samples)
-                      .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
-                      .order(:sum_formular)
-            molecule_scope = molecule_scope.page(page).per(page_size).includes(
-              :tag, collections: :sync_collections_users
-            )
-            sample_scope = Sample.includes(
-              :residues, :molecule, :tag, :container
-            ).find(samples)
-            samples_size = molecule_scope.size
-
-            serialized_samples = {
-              molecules: create_group_molecule(molecule_scope, sample_scope)
-            }
-          else
-            ids = Kaminari.paginate_array(samples).page(page).per(page_size)
-            paging_samples = Sample.includes(
-              :residues, :tag,
-              collections: :sync_collections_users,
-              molecule: :tag
-            ).where(id: ids).order("position(id::text in '#{ids}')").to_a
-            serialized_samples = {
-              molecules: group_by_molecule(paging_samples)
-            }
-          end
-        else
-          serialized_samples = {
-            molecules: []
-          }
-        end
+        search_method = get_search_method()
+        samples_data = serialize_samples(samples, page, search_method, molecule_sort)
+        serialized_samples = samples_data[:data]
+        samples_size = samples_data[:size]
 
         ids = Kaminari.paginate_array(reactions).page(page).per(page_size)
         serialized_reactions = Reaction.includes(
@@ -222,16 +240,18 @@ module Chemotion
         end
 
         scope = scope.by_collection_id(collection_id.to_i)
-       
-        if search_method == 'advanced'
+
+        if search_method == 'advanced' && molecule_sort == false
           return scope.order("position("+ arg.first.field.column + "::text in '#{arg.first.value}')")
-        elsif molecule_sort
+        elsif search_method == 'advanced' && molecule_sort == true
+          return scope.order("samples.updated_at DESC")
+        elsif search_method != 'advanced' && molecule_sort == true
           return scope.includes(:molecule)
                       .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                       .order(:sum_formular) 
-        else 
-          return scope
         end
+
+        return scope
       end
 
       def elements_by_scope(scope, collection_id)

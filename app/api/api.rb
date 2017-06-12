@@ -58,6 +58,28 @@ class API < Grape::API
       return to_molecule_array(groups)
     end
 
+    def group_by_order(samples)
+      groups = Array.new
+
+      samples.each do |sample|
+        next if sample == nil
+        moleculeName = get_molecule_name(sample)
+        serialized_sample = ElementListPermissionProxy.new(current_user, sample, user_ids).serialized
+        recent_group = groups.last
+        if recent_group && recent_group[:moleculeName] == moleculeName
+          recent_group[:samples].push(serialized_sample)
+        else
+          groups.push(
+            moleculeName: moleculeName,
+            samples: Array.new.push(serialized_sample)
+          )
+        end
+      end
+
+      return groups
+    end
+
+
     def create_group_molecule(molecules, samples, own_collection = false)
       groups = Hash.new
       sample_serializer_selector =
