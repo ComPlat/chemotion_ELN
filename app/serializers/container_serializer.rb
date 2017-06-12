@@ -60,9 +60,9 @@ class ContainerSerializer < ActiveModel::Serializer
     first_child = container.children.length > 0 && container.children[0]
     has_dataset = first_child && first_child.container_type == "dataset"
     if has_dataset
-      attachment = first_child.attachments[0]
-      preview = Storage.new.read_thumbnail(attachment)
-      return preview || "not available"
+      attachment = first_child.attachments.select {|att| att.thumb}[0]
+      preview = attachment.read_thumbnail if attachment
+      return preview && Base64.encode64(preview) || "not available"
     end
   end
 end
