@@ -1,8 +1,8 @@
 class ContainerSerializer < ActiveModel::Serializer
   attributes :id, :name, :container_type, :description, :extended_metadata,
-    :children, :code_log, :preview_img
+             :children, :code_log, :preview_img
 
-  has_many :attachments, :serializer => AttachmentSerializer
+  has_many :attachments, serializer: AttachmentSerializer
 
   def extended_metadata
     extended_metadata = object.extended_metadata
@@ -35,19 +35,21 @@ class ContainerSerializer < ActiveModel::Serializer
   end
 
   def json_tree(attachments, containers)
-      containers.map do |container, subcontainers|
-        current_attachments = attachments.select{|attach| attach.container_id == container.id}
-        {
-          id: container.id,
-          name: container.name,
-          container_type: container.container_type,
-          description: container.description,
-          extended_metadata: get_extended_metadata(container),
-          attachments: current_attachments,
-          preview_img: preview_img(container),
-          children: json_tree(attachments, subcontainers).compact
-        }
+    containers.map do |container, subcontainers|
+      current_attachments = attachments.select do |attach|
+        attach.container_id == container.id
       end
+      {
+        id: container.id,
+        name: container.name,
+        attachments: current_attachments,
+        children: json_tree(attachments, subcontainers).compact,
+        description: container.description,
+        container_type: container.container_type,
+        extended_metadata: get_extended_metadata(container),
+        preview_img: preview_img(container)
+      }
+    end
   end
 
   def get_extended_metadata(container)
