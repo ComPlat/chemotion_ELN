@@ -1,6 +1,7 @@
 module Chemotion
   class WellplateAPI < Grape::API
     include Grape::Kaminari
+    helpers ContainerHelpers
 
     resource :wellplates do
       namespace :bulk do
@@ -134,7 +135,7 @@ module Chemotion
         end
 
         put do
-          ContainerHelper.update_datamodel(params[:container]);
+          update_datamodel(params[:container]);
           params.delete(:container);
 
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
@@ -157,7 +158,7 @@ module Chemotion
         params.delete(:container)
 
         wellplate = Usecases::Wellplates::Create.new(declared(params, include_missing: false), current_user.id).execute!
-        wellplate.container =  ContainerHelper.update_datamodel(container)
+        wellplate.container =  update_datamodel(container)
 
         wellplate.save!
 

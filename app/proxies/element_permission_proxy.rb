@@ -22,7 +22,7 @@ class ElementPermissionProxy
   end
 
   def read_dataset?
-    detail_level >=3
+    detail_level >= 3
   end
 
   private

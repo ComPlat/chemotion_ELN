@@ -78,32 +78,7 @@ export default class SamplesFetcher {
 
     return promise;
   }
-
-  static uploadFiles(files) {
-    var data = new FormData()
-    files.forEach((file)=> {
-      data.append(file.id || file.name, file);
-    });
-    return ()=>fetch('/api/v1/samples/upload_dataset_attachments', {
-      credentials: 'same-origin',
-      method: 'post',
-      body: data
-    }).then((response) => {
-      if(response.ok == false) {
-        let msg = 'Files uploading failed: ';
-        if(response.status == 413) {
-          msg += 'File size limit exceeded. Max size is 50MB'
-        } else {
-          msg += response.statusText;
-        }
-        NotificationActions.add({
-          message: msg,
-          level: 'error'
-        });
-      }
-    })
-  }
-
+  
   static update(sample) {
     let files = AttachmentFetcher.getFileListfrom(sample.container)
     let promise = ()=> fetch('/api/v1/samples/' + sample.id, {

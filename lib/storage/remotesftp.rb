@@ -1,7 +1,7 @@
 require 'net/sftp'
-require 'datahandler'
+require 'storage'
 
-class RemoteSFTP < DataHandler
+class RemoteSFTP < storage
 
   def initialize
     super
