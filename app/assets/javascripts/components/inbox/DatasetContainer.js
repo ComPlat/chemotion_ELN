@@ -4,6 +4,7 @@ import {DragSource} from 'react-dnd';
 import AttachmentContainer from './AttachmentContainer'
 import DragDropItemTypes from '../DragDropItemTypes';
 import InboxActions from '../actions/InboxActions';
+import InboxStore from '../stores/InboxStore';
 
 const dataSource = {
   beginDrag(props) {
@@ -20,7 +21,8 @@ class DatasetContainer extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      visible: false
+      visible: false,
+      cache: InboxStore.getState().cache
     }
   }
 
@@ -45,7 +47,7 @@ class DatasetContainer extends Component {
           ? <li><span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
                   <i className="fa fa-folder-open" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
                     &nbsp; {dataset.name}</i> </span>
-                    {attachments.length == 0
+                    {attachments.length == 0 && this.state.cache.length == 0
                     ? <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
                     : ""
                     }
@@ -54,7 +56,7 @@ class DatasetContainer extends Component {
           : <li> <span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
                   <i className="fa fa-folder" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
                     &nbsp; {dataset.name}</i> </span>
-                    {attachments.length == 0
+                    {attachments.length == 0 && this.state.cache.length == 0
                     ? <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
                     : ""
                     }

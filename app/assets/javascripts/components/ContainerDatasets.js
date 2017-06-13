@@ -150,8 +150,15 @@ export default class ContainerDatasets extends Component {
     } else {
       return (
         <div>
-          <Well style={{minHeight: 70, padding: 10}}>
-            There are currently no Datasets.<br/>
+          <Well style={{minHeight: 70, padding: 5, paddingBottom: 31}}>
+            <p>There are currently no Datasets.</p>
+            <ListGroup style={{marginBottom: 0}}>
+              <ListGroupItem key="attachmentdropzone" disabled>
+                <AttachmentDropzone
+                  handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                />
+              </ListGroupItem>
+            </ListGroup>
             {this.addButton()}
           </Well>
         </div>

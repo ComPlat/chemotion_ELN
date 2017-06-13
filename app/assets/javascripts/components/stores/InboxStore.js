@@ -21,7 +21,9 @@ class InboxStore{
       handleDeleteContainer: InboxActions.deleteContainer,
       handleBackToInbox: InboxActions.backToInbox,
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
-      handleUpdateSample: ElementActions.updateSample
+
+      handleUpdateCreateSample: [ElementActions.updateSample, ElementActions.createSample]
+
     })
   }
 
@@ -95,6 +97,7 @@ class InboxStore{
         return item
       }
     })
+
     if (attachments.length == 1) {
       var index = this.state.cache.indexOf(attachments[0])
       this.state.cache.splice(index, 1)
@@ -116,7 +119,7 @@ class InboxStore{
     this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
   }
 
-  handleUpdateSample(sample){
+  handleUpdateCreateSample(sample){
     if (sample.container){
       var all_attachments = []
       all_attachments = this.getAttachments(sample.container.children, all_attachments)
