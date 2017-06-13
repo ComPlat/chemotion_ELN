@@ -91,7 +91,7 @@ export default class ContainerDataset extends Component {
     const {dataset_container} = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
 
-    if(index != 1){
+    if(index != -1){
       dataset_container.attachments.splice(index, 1);
       onChange(dataset_container);
 
@@ -192,7 +192,7 @@ export default class ContainerDataset extends Component {
   }
   attachmentBackToInboxButton(attachment) {
     const {readOnly} = this.props;
-    console.log(attachment.is_new)
+    console.log(attachment)
     if(!readOnly && !attachment.is_new) {
       return (
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentBackToInbox(attachment)}>
