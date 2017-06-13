@@ -105,8 +105,11 @@ module ContainerHelpers
 
   def can_update_container(container)
     container = Container.find(container) if container.is_a?(Integer)
-    element = container.root.containable
-    ElementPolicy.new(current_user, element).update?
+    if element = container.root.containable
+      ElementPolicy.new(current_user, element).update?
+    else
+      true
+    end
   end
 
 end #module
