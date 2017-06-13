@@ -20,7 +20,7 @@ namespace :data do
           ),
           storage: 'local_user'
         )
-        if File.exist?(attachment.storage.path)
+        if File.exist?(attachment.store.path)
           attachment.regenerate_thumbnail
         else
           attachment.update_columns(

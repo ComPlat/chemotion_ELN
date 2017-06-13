@@ -52,6 +52,11 @@ class Attachment < ActiveRecord::Base
     update if checksum_changed?
   end
 
+  def regenerate_thumbnail
+    store.regenerate_thumbnail
+    update if self.thumb
+  end
+
   private
 
   def generate_key
@@ -74,11 +79,6 @@ class Attachment < ActiveRecord::Base
     stored = store.store_file
     self.thumb = store.store_thumb if stored
     stored
-  end
-
-  def regenerate_thumbnail
-    store.regenerate_thumbnail
-    update if attachment.thumb
   end
 
   def store_file_and_thumbnail_for_dup

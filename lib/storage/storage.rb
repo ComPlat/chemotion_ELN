@@ -50,13 +50,13 @@ class Storage
     tmp = Tempfile.new(attachment.filename)
     tmp.write attachment.read_file
     attachment.thumb_path = Thumbnailer.create(tmp.path)
-    if File.exist?(attachment.thumb_path)
+    if attachment.thumb_path && File.exist?(attachment.thumb_path)
       attachment.thumb = true
       store_thumb
     end
     tmp.close
     tmp.unlink
-    FileUtils.rm(attachment.thumb_path, force: true)
+    FileUtils.rm(attachment.thumb_path, force: true) if attachment.thumb_path
     attachment.thumb_path = nil
   end
 end
