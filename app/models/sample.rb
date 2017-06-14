@@ -162,7 +162,7 @@ class Sample < ActiveRecord::Base
   end
 
   def analyses
-    self.container ? self.container.analyses : []
+    self.container ? self.container.analyses : Container.none
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)

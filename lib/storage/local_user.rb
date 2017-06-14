@@ -2,7 +2,7 @@ require 'storage'
 require 'local'
 
 class LocalUser < Local
-  #store files  in subdirectories named after the creator_id
+  # store files  in subdirectories named after the creator_id
   def thumb_path
     File.join(
       File.dirname(path),
@@ -15,12 +15,12 @@ class LocalUser < Local
 
   def set_key
     attachment.key = File.join(
-      attachment.created_by,
+      attachment.created_by.to_s,
       attachment.identifier + '_' + attachment.filename
     )
   end
 
   def set_bucket
+    attachment.bucket = nil
   end
-
 end
