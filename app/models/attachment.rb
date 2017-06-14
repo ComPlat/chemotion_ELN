@@ -54,7 +54,7 @@ class Attachment < ActiveRecord::Base
 
   def regenerate_thumbnail
     store.regenerate_thumbnail
-    update if self.thumb
+    save! if self.thumb
   end
 
   private

@@ -1,7 +1,7 @@
 require 'storage'
 require 'local'
 
-class void < Storage
+class Void < Storage
   attr_reader :data_folder
 
   def initialize(attach)
