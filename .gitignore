@@ -51,6 +51,7 @@
 !/public/images/research_plans/.keep
 
 /public/images/*
+!/public/images/wild_card/
 
 /uploads/attachments/*
 /uploads/thumbnails

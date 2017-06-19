@@ -28,9 +28,9 @@ export default class PubchemLabels extends React.Component {
   render() {
     let {element, color} = this.props
 
-    let pubchemLogo = "/images/pubchem.svg"
+    let pubchemLogo = "/images/wild_card/pubchem.svg"
     let pubchem = (
-      <img src={pubchemLogo} className="pubchem-logo" /> 
+      <img src={pubchemLogo} className="pubchem-logo" />
     )
 
     let labelStyle = {

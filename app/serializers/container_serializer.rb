@@ -1,27 +1,20 @@
+# frozen_string_literal: true
+
+# container serializer class
 class ContainerSerializer < ActiveModel::Serializer
   attributes :id, :name, :container_type, :description, :extended_metadata,
-    :children, :code_log
+             :children, :code_log, :preview_img
 
-  has_many :attachments, :serializer => AttachmentSerializer
-
+  has_many :attachments, serializer: AttachmentSerializer
 
   def extended_metadata
-    extended_metadata = object.extended_metadata
-    return extended_metadata unless extended_metadata
-
-    extended_metadata["report"] = extended_metadata["report"] == "true"
-
-    unless extended_metadata["content"].blank?
-      extended_metadata["content"] = JSON.parse(object.extended_metadata["content"])
-    end
-
-    extended_metadata
+    get_extended_metadata(object)
   end
 
   def children
     all_containers = object.hash_tree
     root = all_containers.keys[0]
-    arr = Array.new
+    arr = []
     get_attachment_ids(arr, all_containers[root])
     attachments = Attachment.where(container_id: arr)
 
@@ -36,28 +29,40 @@ class ContainerSerializer < ActiveModel::Serializer
   end
 
   def json_tree(attachments, containers)
-      containers.map do |container, subcontainers|
-        current_attachments = attachments.select{|attach| attach.container_id == container.id}
-        {:id => container.id,
-          :name => container.name,
-          :container_type => container.container_type,
-          :description => container.description,
-          :extended_metadata => get_extended_metadata(container),
-          :attachments => current_attachments,
-          :children => json_tree(attachments, subcontainers).compact}
+    containers.map do |container, subcontainers|
+      current_attachments = attachments.select do |attach|
+        attach.container_id == container.id
       end
+      {
+        id: container.id,
+        name: container.name,
+        attachments: current_attachments,
+        children: json_tree(attachments, subcontainers).compact,
+        description: container.description,
+        container_type: container.container_type,
+        extended_metadata: get_extended_metadata(container),
+        preview_img: preview_img(container)
+      }
+    end
   end
 
   def get_extended_metadata(container)
-    extended_metadata = container.extended_metadata
-    return extended_metadata unless extended_metadata
-
-    extended_metadata["report"] = extended_metadata["report"] == "true"
-
-    unless extended_metadata["content"].blank?
-      extended_metadata["content"] = JSON.parse(container.extended_metadata["content"])
+    ext_mdata = container.extended_metadata
+    return ext_mdata unless ext_mdata
+    ext_mdata['report'] = ext_mdata['report'] == 'true' || ext_mdata == true
+    unless ext_mdata['content'].blank?
+      ext_mdata['content'] = JSON.parse(container.extended_metadata['content'])
     end
+    ext_mdata
+  end
 
-    extended_metadata
+  def preview_img(container = object)
+    first_child = container.children.length > 0 && container.children[0]
+    has_dataset = first_child && first_child.container_type == "dataset"
+    if has_dataset
+      attachment = first_child.attachments.select {|att| att.thumb}[0]
+      preview = attachment.read_thumbnail if attachment
+      return preview && Base64.encode64(preview) || "not available"
+    end
   end
 end

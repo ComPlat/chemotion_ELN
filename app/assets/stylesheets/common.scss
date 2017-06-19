@@ -98,6 +98,11 @@
 .advanced-search {
   margin-top: 10px;
 
+  .adv-search-row {
+    display: flex;
+    overflow: visible !important;
+  }
+
   button {
     margin-left: 5px;
   }

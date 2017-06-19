@@ -24,7 +24,7 @@ export default class ResearchPlanDetails extends Component {
   svgOrLoading(research_plan) {
     let svgPath = "";
     if (this.state.loadingMolecule) {
-      svgPath = "/images/loading-bubbles.svg";
+      svgPath = "/images/wild_card/loading-bubbles.svg";
     } else {
       svgPath = research_plan.svgPath;
     }

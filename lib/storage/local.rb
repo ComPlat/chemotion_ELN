@@ -1,110 +1,142 @@
-require 'datahandler'
+require 'storage'
 
-class Local < DataHandler
+class Local < Storage
+  attr_reader :data_folder
 
-  def storage_id
-    "local"
+  def initialize(attach)
+    super(attach)
+    datafolder =  @store_config[:data_folder]
+    if datafolder.blank?
+      @data_folder ||= File.join(Rails.root,'tmp', Rails.env, 'uploads')
+    elsif datafolder.match(/^\//)
+      @data_folder ||= datafolder
+    else
+      @data_folder ||= File.join(Rails.root, datafolder)
+    end
+    FileUtils.mkdir_p(data_folder) unless Dir.exist?(data_folder)
   end
 
-  def temp(file_id_filename, file)
+  def file_exist?
+    File.exist?(path)
+  end
+
+  def store_file
+    write_file
+    add_checksum if File.exist?(path)
+  end
+
+  def store_thumb
+    write_thumbnail
+    File.exist?(thumb_path)
+  end
+
+  def read_file
+    File.exist?(path) && IO.binread(path) || false
+  end
+
+  def read_thumb
+    File.exist?(thumb_path) && IO.binread(thumb_path) || false
+  end
+
+  def destroy(at_previous_path = false)
+    remove_thumb_file(at_previous_path)
+    remove_file(at_previous_path)
+  end
+
+  def remove_file(at_previous_path = false)
+    pat = at_previous_path && prev_path || path
+    File.exist?(pat) && rm_file(pat)
+    !File.exist?(pat)
+  end
+
+  def remove_thumb_file(at_previous_path = false)
+    pat = at_previous_path && prev_thumb_path || thumb_path
+    File.exist?(pat) && rm_file(pat)
+    !File.exist?(pat)
+  end
+
+  def path(bucket = attachment.bucket, key = attachment.key)
+    raise StandardError, 'cannot build path without attachment key' if attachment.key.blank?
+    if bucket.blank?
+      File.join(data_folder, key.to_s)
+    else
+      File.join(data_folder, bucket, key.to_s)
+    end
+  end
+
+  def thumb_path(*arg)
+    path(*arg) + thumb_suffix
+  end
+
+  def prev_path
+    path(attachment.bucket_was,attachment.key_was)
+  end
+
+  def prev_thumb_path
+    thumb_path(attachment.bucket_was,attachment.key_was)
+  end
+
+  def thumb_suffix
+    '.thumb.jpg'
+  end
+
+  def thumb_prefix
+    ''
+  end
+
+  def add_checksum
+    attachment.checksum = Digest::SHA256.hexdigest(read_file)
+  end
+
+  private
+
+  def write_thumbnail
+    create_thumb_dir
+    if (fp = attachment.thumb_path) && File.exist?(fp)
+      FileUtils.copy(fp, thumb_path)
+    elsif attachment.thumb_data
+      IO.binwrite(thumb_path, attachment.thumb_data)
+    end
+  end
+
+  def write_file
+    set_key
+    set_bucket
+    create_dirs
     begin
-      FileUtils.mkdir_p(@temp_folder) unless Dir.exist?(@temp_folder)
-      path = File.join(@temp_folder, file_id_filename)
-      IO.binwrite(path, file)
+      if (fp = attachment.file_path) && File.exist?(fp)
+        FileUtils.copy(fp, path)
+      elsif attachment.file_data
+        IO.binwrite(path, attachment.file_data)
+      end
     rescue Exception => e
-      puts "ERROR: Can not write tmp-file: " + e.message
+      puts "ERROR: Can not write local-file: " + e.message
       raise e.message
     end
   end
 
-  def move(created_by, file_id_filename, thumbnail)
-    begin
-        folder = File.join(@upload_root_folder, created_by.to_s)
-        FileUtils.mkdir_p(folder) unless Dir.exist?(folder)
-
-        dest_path = File.join(folder, file_id_filename)
-
-        source_path = File.join(@temp_folder, file_id_filename)
-        FileUtils.mv(source_path, dest_path)
-
-        if thumbnail
-          create_thumbnail(created_by, dest_path, file_id_filename)
-        end
-
-      rescue Exception => e
-        puts "ERROR: Can not copy tmp-file to storage: " + e.message
-        raise e.message
-      end
+  def set_key
+    attachment.key = attachment.identifier
   end
 
-  def read(attachment)
-    begin
-      folder = File.join(@upload_root_folder, attachment.created_by.to_s)
-      file_id = attachment.identifier + "_" + attachment.filename
-      path = File.join(folder, file_id)
+  def set_bucket
+    attachment.bucket = attachment.id / 10000 + 1
+  end
 
-      return IO.binread(path)
-    rescue Exception => e
-      puts "ERROR: Can not read file: " + e.message
-      raise e.message
+  def rm_file(path_to_file)
+    FileUtils.rm(path_to_file, force: true)
+  end
+
+  def create_dirs
+    dirs = [File.dirname(path)]
+    dirs << File.dirname(thumb_path) if attachment.thumb
+    dirs.each{ |d| FileUtils.mkdir_p(d) unless Dir.exist?(d)}
+  end
+
+  def create_thumb_dir
+    if attachment.thumb
+      d = File.dirname(thumb_path)
+      FileUtils.mkdir_p(d) unless Dir.exist?(d)
     end
   end
-
-  def delete(attachment)
-    begin
-      folder = File.join(@upload_root_folder, attachment.created_by.to_s)
-      file_id = attachment.identifier + "_" + attachment.filename
-      path = File.join(folder, file_id)
-
-      File.delete(path)
-
-      folder_thumbnail = File.join(@upload_root_folder, attachment.created_by.to_s, @thumbnail_folder)
-      thumbnail_id = attachment.identifier + "_" + attachment.filename + ".png"
-      path_thumbnail = File.join(folder_thumbnail, thumbnail_id)
-
-      if File.exist?(path_thumbnail)
-        File.delete(path_thumbnail)
-      end
-    rescue Exception => e
-      puts "ERROR: Can not delete file: " + e.message
-      raise e.message
-    end
-  end
-
-  def read_thumbnail(attachment)
-    begin
-      folder = File.join(@upload_root_folder, attachment.created_by.to_s, @thumbnail_folder)
-      thumbnail_id = attachment.identifier + "_" + attachment.filename + ".png"
-      path = File.join(folder, thumbnail_id)
-
-      if File.exist?(path)
-        Base64.encode64(File.open(path, 'rb').read)
-      else
-        nil
-      end
-    rescue
-      puts "ERROR: Can not read thumbnail: " + e.message
-      raise e.message
-    end
-  end
-
-private
-
-  def create_thumbnail(created_by, file_path, file_id)
-    begin
-      dest_folder = File.join(@upload_root_folder, created_by.to_s, @thumbnail_folder)
-      FileUtils.mkdir_p(dest_folder) unless Dir.exist?(dest_folder)
-
-      thumbnail_path = Thumbnailer.create(file_path)
-
-      dest = File.join(dest_folder, "#{file_id}.png")
-
-      if thumbnail_path && File.exists?(thumbnail_path)
-        FileUtils.mv(thumbnail_path, dest)
-      end
-    rescue Exception => e
-      puts "ERROR: Can not create thumbnail: " + e.message
-    end
-  end
-
 end

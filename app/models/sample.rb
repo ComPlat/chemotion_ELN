@@ -162,7 +162,7 @@ class Sample < ActiveRecord::Base
   end
 
   def analyses
-    self.container ? self.container.analyses : []
+    self.container ? self.container.analyses : Container.none
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
@@ -206,7 +206,7 @@ class Sample < ActiveRecord::Base
 
     subsample.collections << Collection.find(collection_id)
 
-    subsample.container = ContainerHelper.create_root_container
+    subsample.container = Container.create_root_container
 
     subsample.save!
 
@@ -461,7 +461,7 @@ private
 
   def create_root_container
     if self.container == nil
-      self.container = ContainerHelper.create_root_container
+      self.container = Container.create_root_container
     end
   end
 end

@@ -27,6 +27,8 @@ export default class Attachment extends Element {
       filename: this.filename,
       identifier: this.identifier,
       file: this.file,
+      thumb: this.thumb,
+      content_type: this.content_type,
       is_deleted: this.is_deleted,
     })
   }

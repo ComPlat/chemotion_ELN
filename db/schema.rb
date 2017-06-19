@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170512110856) do
+ActiveRecord::Schema.define(version: 20170524130531) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -49,16 +49,22 @@ ActiveRecord::Schema.define(version: 20170512110856) do
 
   create_table "attachments", force: :cascade do |t|
     t.integer  "container_id"
-    t.string   "filename",     null: false
-    t.string   "identifier",   null: false
-    t.string   "checksum",     null: false
-    t.string   "storage",      null: false
-    t.integer  "created_by",   null: false
+    t.string   "filename"
+    t.uuid     "identifier",               default: "uuid_generate_v4()"
+    t.string   "checksum"
+    t.string   "storage",      limit: 20,  default: "tmp"
+    t.integer  "created_by",                                              null: false
     t.integer  "created_for"
-    t.integer  "version",      null: false
-    t.datetime "created_at",   null: false
-    t.datetime "updated_at",   null: false
+    t.integer  "version",                  default: 0
+    t.datetime "created_at",                                              null: false
+    t.datetime "updated_at",                                              null: false
+    t.string   "content_type"
+    t.string   "bucket"
+    t.string   "key",          limit: 500
+    t.boolean  "thumb",                    default: false
   end
+
+  add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string "token", null: false
@@ -639,11 +645,11 @@ ActiveRecord::Schema.define(version: 20170512110856) do
     t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 

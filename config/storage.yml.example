@@ -1,26 +1,49 @@
 development:
-  :root_folder: 'uploadNew'
-  :thumbnail_folder: 'thumbnails'
-  :temp_folder: 'temp'
-  :remote_enable: true
-  :host: 'host'
-  :username: 'username'
-  :password: 'password'
+  :primary_store: 'local'
+  :secundary_store: ''
+  :stores:
+    :tmp:
+      :data_folder: 'tmp/uploads/development'
+      :thumbnail_folder: 'tmp/uploads/development'
+    :local:
+      :data_folder: 'uploads/development'
+      :thumbnail_folder: 'uploads/development'
+    :local_user:
+      :data_folder: 'uploadNew/users'
+      :thumbnail_folder: 'uploadNew/thumbnails/users'
+    :local_dataset:
+      :data_folder: 'uploads/datasets'
+      :thumbnail_folder: 'uploads/datasets'
+
+  # :sftp:
+    # :data_folder:
+    # :thumbnail_folder:
+      # :host: 'host'
+      # :username: 'username'
+      # :password: 'password'
+  # :s3os:
+    # :bucket:
+    # :secret_access_key:
+
 
 test:
-  :root_folder: 'uploadNew'
-  :thumbnail_folder: 'thumbnails'
-  :temp_folder: 'temp'
-  :remote_enable: true
-  :host: 'host'
-  :username: 'username'
-  :password: 'password'
+  :primary_store: 'local'
+  :secundary_store: ''
+  :stores:
+    :tmp:
+      :data_folder: 'tmp/test/uploads/tmp/'
+      :thumbnail_folder: 'tmp/test/uploads/tmp/'
+    :local:
+      :data_folder: 'tmp/test/uploads/local'
+      :thumbnail_folder: 'tmp/test/uploads/local'
 
 production:
-  :root_folder: 'uploadNew'
-  :thumbnail_folder: 'thumbnails'
-  :temp_folder: 'temp'
-  :remote_enable: true
-  :host: 'host'
-  :username: 'username'
-  :password: 'password'
+  :primary_store: 'local'
+  :secundary_store: ''
+  :stores:
+    :tmp:
+      :data_folder: 'tmp/test/uploads/tmp/'
+      :thumbnail_folder: 'tmp/test/uploads/tmp/'
+    :local:
+      :data_folder: 'uploads'
+      :thumbnail_folder: 'uploads'

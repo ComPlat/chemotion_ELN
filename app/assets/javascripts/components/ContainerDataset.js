@@ -26,12 +26,12 @@ export default class ContainerDataset extends Component {
   createAttachmentPreviews(dataset_container) {
     const { attachments } = dataset_container;
     let updatedAttachments = attachments.map((attachment) => {
-      return AttachmentFetcher.fetchThumbnail({id: attachment.id}).then((result) => {
+      return attachment.thumb ? AttachmentFetcher.fetchThumbnail({id: attachment.id}).then((result) => {
         if(result != null) {
           attachment.preview = `data:image/png;base64,${result}`;
         }
         return attachment;
-      });
+      }) : attachment;
     });
 
     Promise.all(updatedAttachments).then((attachments) => {
