@@ -606,6 +606,7 @@ class ElementActions {
   // - ...
 
   deleteSamplesByUIState(ui_state) {
+    console.log(ui_state)
     return (dispatch) => { SamplesFetcher.deleteSamplesByUIState(ui_state)
       .then((result) => {
         dispatch(result);

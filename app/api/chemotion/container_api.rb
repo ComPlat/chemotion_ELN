@@ -13,7 +13,7 @@ module Chemotion
             container.destroy
           end
         end
-
+        true
       end
 
     end

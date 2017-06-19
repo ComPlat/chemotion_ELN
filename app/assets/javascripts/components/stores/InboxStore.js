@@ -1,6 +1,7 @@
 import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
+import DetailActions from '../actions/DetailActions';
 import _ from 'lodash'
 
 class InboxStore{
@@ -9,6 +10,7 @@ class InboxStore{
     this.state = {
       inbox: {},
       cache: [],
+      deleteEl: null,
       numberOfAttachments: 0
     };
 
@@ -22,8 +24,18 @@ class InboxStore{
       handleBackToInbox: InboxActions.backToInbox,
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
 
-      handleUpdateCreateSample: [ElementActions.updateSample, ElementActions.createSample]
-
+      handleUpdateCreateElement: [
+        ElementActions.createSample,
+        ElementActions.updateSample,
+        ElementActions.createReaction,
+        ElementActions.updateReaction,
+        ElementActions.createWellplate,
+        ElementActions.updateWellplate,
+        ElementActions.createScreen,
+        ElementActions.updateScreen,
+      ],
+      handleClose : DetailActions.close,
+      handleConfirmDelete: DetailActions.confirmDelete
     })
   }
 
@@ -119,12 +131,27 @@ class InboxStore{
     this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
   }
 
-  handleUpdateCreateSample(sample){
-    if (sample.container){
+  handleUpdateCreateElement(element){
+    console.log("Started")
+    console.log(element)
+    if (element.container){
+      console.log("if...")
       var all_attachments = []
-      all_attachments = this.getAttachments(sample.container.children, all_attachments)
+      all_attachments = this.getAttachments(element.container.children, all_attachments)
       this.updateCache(all_attachments)
+      InboxActions.fetchInbox();
     }
+  }
+
+  handleClose({deleteEl, force}){
+    this.state.deleteEl = deleteEl
+  }
+
+  handleConfirmDelete(confirm){
+    if(confirm){
+      this.handleUpdateCreateElement(this.state.deleteEl)
+    }
+    this.state.deleteEl = null
   }
 
   sync(){
