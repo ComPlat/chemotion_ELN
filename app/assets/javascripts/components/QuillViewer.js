@@ -22,8 +22,32 @@ export default class QuillViewer extends React.Component {
       };
 
       this.viewer = new Quill(quillViewer, defaultOptions);
-      this.viewer.setContents(this.props.value);
+      const oriValue = this.props.value;
+      const value = this.props.preview ? this.keepSupSub(oriValue) : oriValue;
+      this.viewer.setContents(value);
     }
+  }
+
+  keepSupSub(value) {
+    let content = []
+    value.ops.forEach(op => {
+      if(typeof op.insert === 'string' && op.insert !== '\n') {
+        if (op.attributes
+              && op.attributes.script
+              && (op.attributes.script === 'super'
+                  || op.attributes.script === 'sub')) {
+          content.push({insert: op.insert,
+                        attributes: { script: op.attributes.script }});
+        } else {
+          content.push({insert: op.insert});
+        }
+      }
+    })
+    content.filter(op => op).push({insert: '\n'});
+    if(content.length === 1) {
+      content.unshift({insert: '-'})
+    }
+    return content;
   }
 
   render() {
@@ -31,9 +55,11 @@ export default class QuillViewer extends React.Component {
     this.readOnly = true;
 
     return (
-      <div className="quill-viewer">
-        <div ref="quillViewer"></div>
-      </div>
+      this.props.preview
+        ? <div className="quill-viewer">
+            <div ref="quillViewer"></div>
+          </div>
+        : <spam ref="quillViewer" />
     );
   }
 }
