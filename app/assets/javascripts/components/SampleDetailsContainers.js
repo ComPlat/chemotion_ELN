@@ -4,6 +4,7 @@ import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton'
 import UIStore from './stores/UIStore';
+import QuillViewer from './QuillViewer'
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
@@ -127,9 +128,9 @@ export default class SampleDetailsContainers extends Component {
     };
     const kind = container.extended_metadata['kind'] || ' - '
     const status = container.extended_metadata['status'] || ' - '
-    const description = container.description || ' - '
     const inReport = container.extended_metadata['report']
     const previewImg = this.PreviewImg(container)
+    const content = container.extended_metadata['content'];
 
     const btnGroup = () => {
       return (
@@ -167,7 +168,11 @@ export default class SampleDetailsContainers extends Component {
             <div className="main-title">{container.name}</div>
             <div className="sub-title">Type: {kind}</div>
             <div className="sub-title">Status: {status}</div>
-            <div className="desc">Description: {description}</div>
+
+            <div className="desc">
+              <spam>Content: </spam>
+              <QuillViewer value={content} preview={true} />
+            </div>
           </div>
         </div>
       </div>
