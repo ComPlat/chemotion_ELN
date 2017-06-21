@@ -31,6 +31,7 @@ class Mailcollector < Collector
             device_box = prepare_inbox_containers(recipient, sender)
             raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
             message = Mail.read_from_string raw_message
+
             handle_new_mail(sender, recipient, message, device_box)
           end
           imap.store(message_id, "+FLAGS", [:Deleted])
@@ -66,14 +67,24 @@ private
   def handle_new_mail(sender, recipient, message, device_box)
     begin
       if message.multipart?
-        storage = Storage.new
-        puts "Attachments " + message.attachments.length.to_s
         dataset = Container.create(name: message.subject, container_type: "dataset", parent: device_box)
         message.attachments.each do |attachment|
-          sha256 = Digest::SHA256.hexdigest attachment.body.decoded
-          uuid = SecureRandom.uuid
-          storage.create(uuid, attachment.filename, attachment.body.decoded, sha256, sender.id, recipient.id)
-          storage.update(uuid, dataset.id)
+          file = Tempfile.new(attachment.filename)
+          File.open(file.path, 'w+b') { |f| f.write(attachment.decoded) }
+
+          a = Attachment.new(
+            bucket: dataset.id,
+            filename: attachment.filename,
+            file_path: file.path,
+            created_by: sender.id,
+            created_for: recipient.id,
+            content_type: attachment.mime_type
+          )
+          a.update!(container_id: dataset.id)
+          primary_store = Rails.configuration.storage.primary_store
+
+          a.update!(storage: primary_store)
+
         end
       end
     rescue Exception => e

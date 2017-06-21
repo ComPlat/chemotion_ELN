@@ -8,7 +8,6 @@ class DetailActions {
   }
 
   close(deleteEl, force = false) {
-    console.log(deleteEl)
     return {deleteEl, force}
   }
 

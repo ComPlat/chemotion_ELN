@@ -2,6 +2,7 @@ import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
+import DetailStore from './DetailStore';
 import _ from 'lodash'
 
 class InboxStore{
@@ -35,7 +36,13 @@ class InboxStore{
         ElementActions.updateScreen,
       ],
       handleClose : DetailActions.close,
-      handleConfirmDelete: DetailActions.confirmDelete
+      handleConfirmDelete: DetailActions.confirmDelete,
+      handleDeleteElement: [
+        ElementActions.deleteSamplesByUIState,
+        ElementActions.deleteReactionsByUIState,
+        ElementActions.deleteWellplatesByUIState,
+        ElementActions.deleteScreensByUIState
+      ]
     })
   }
 
@@ -132,10 +139,7 @@ class InboxStore{
   }
 
   handleUpdateCreateElement(element){
-    console.log("Started")
-    console.log(element)
     if (element.container){
-      console.log("if...")
       var all_attachments = []
       all_attachments = this.getAttachments(element.container.children, all_attachments)
       this.updateCache(all_attachments)
@@ -152,6 +156,13 @@ class InboxStore{
       this.handleUpdateCreateElement(this.state.deleteEl)
     }
     this.state.deleteEl = null
+  }
+
+  handleDeleteElement({ui_state}){
+    const {selecteds} = DetailStore.getState()
+    //ui_state.forEach(element => {
+     //this.handleUpdateCreateElement(element)
+    //})
   }
 
   sync(){
