@@ -187,11 +187,15 @@ export default class SampleDetails extends React.Component {
     }
     let className = svgPath ? 'svg-container' : 'svg-container-empty'
     return (
-      <div className={className}
-           onClick={this.showStructureEditor.bind(this)}>
-        <Glyphicon className="pull-right" glyph='pencil'/>
-        <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
-      </div>
+      sample.can_update
+        ? <div className={className}
+               onClick={this.showStructureEditor.bind(this)}>
+            <Glyphicon className="pull-right" glyph='pencil'/>
+            <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
+          </div>
+        : <div className={className}>
+            <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
+          </div>
     );
   }
 
@@ -295,7 +299,7 @@ export default class SampleDetails extends React.Component {
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
             onClick={() => this.handleSubmit()}
             style={{display: saveBtnDisplay}}
-            disabled={!this.sampleIsValid()} >
+            disabled={!this.sampleIsValid() || !sample.can_update} >
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
@@ -423,6 +427,7 @@ export default class SampleDetails extends React.Component {
                 onOpen={(e) => this.onCasSelectOpen(e, casArr)}
                 isLoading={isCasLoading}
                 value={cas}
+                disabled={!sample.can_update}
         />
         <InputGroup.Button>
           <OverlayTrigger placement="bottom"
@@ -608,13 +613,13 @@ export default class SampleDetails extends React.Component {
 
   saveBtn(sample, closeView = false) {
     let submitLabel = (sample && sample.isNew) ? "Create" : "Save";
-
+    const isDisabled = !sample.can_update;
     if(closeView) submitLabel += ' and close';
 
     return (
       <Button bsStyle="warning"
               onClick={() => this.handleSubmit(closeView)}
-              disabled={!this.sampleIsValid()}>
+              disabled={!this.sampleIsValid() || isDisabled}>
               {submitLabel}
       </Button>
     )

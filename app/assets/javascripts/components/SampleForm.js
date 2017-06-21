@@ -61,7 +61,7 @@ export default class SampleForm extends React.Component {
 
   // Input components of sample details should be disabled if detail level does not allow to read their content
   topSecretCheckbox(sample) {
-    if(!sample.isMethodDisabled('is_top_secret')) {
+    if(sample.can_update) {
       return (
         <Checkbox ref="topSecretInput"
         checked={sample.is_top_secret}
@@ -78,12 +78,12 @@ export default class SampleForm extends React.Component {
         <InputGroup>
           <FormControl type="text" ref="moleculeInput"
             value={sample.molecule_name}
-            disabled={sample.isMethodDisabled('molecule_iupac_name')}
-            readOnly={sample.isMethodDisabled('molecule_iupac_name')}
+            disabled={!sample.can_update}
+            readOnly={!sample.can_update}
             onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}
           />
           <InputGroup.Button>
-            {this.structureEditorButton(sample.isMethodDisabled('molecule_iupac_name'))}
+            {this.structureEditorButton(!sample.can_update)}
           </InputGroup.Button>
         </InputGroup>
       </FormGroup>
@@ -110,8 +110,8 @@ export default class SampleForm extends React.Component {
         <FormControl type="text"
           value={sample[field] || ''}
           onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}
-          disabled={disabled || sample.isMethodDisabled(field)}
-          readOnly={disabled || sample.isMethodDisabled(field)}
+          disabled={disabled || !sample.can_update}
+          readOnly={disabled || !sample.can_update}
         />
       </FormGroup>
     )
@@ -125,7 +125,7 @@ export default class SampleForm extends React.Component {
               options={solventOptions}
               onChange={(e) => this.handleFieldChanged(sample, 'solvent', e)}
               value={sample.solvent}
-              disabled={sample.isMethodDisabled('solvent')}
+              disabled={!sample.can_update}
       />
     )
   }
@@ -163,23 +163,24 @@ export default class SampleForm extends React.Component {
 
   sampleAmount(sample, inputsSize=2) {
     let content = [];
+    const isDisabled = !sample.can_update;
     if(sample.isMethodDisabled('amount_value') == false) {
       if(sample.isMethodRestricted('molecule') == true) {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', false, '', inputsSize)
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '', inputsSize)
         )
       } else {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', false, '', inputsSize)
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '', inputsSize)
         )
 
         if(!sample.contains_residues)
           content.push(
-            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', false, '', inputsSize)
+            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', isDisabled, '', inputsSize)
           )
 
         content.push(
-          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', false, '', inputsSize)
+          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', isDisabled, '', inputsSize)
         )
 
         if(sample.contains_residues)
@@ -207,7 +208,7 @@ export default class SampleForm extends React.Component {
              value={sample.description || ''}
              onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}
              rows={2}
-             disabled={sample.isMethodDisabled('description')}
+             disabled={!sample.can_update}
         />
       </FormGroup>
     )
@@ -216,6 +217,7 @@ export default class SampleForm extends React.Component {
   render() {
     let sample = this.state.sample || {}
     let isPolymer = sample.molfile.indexOf(" R# ") !== -1
+    const isDisabled = !sample.can_update;
 
     return (
       <div className="sample-form">
@@ -236,22 +238,22 @@ export default class SampleForm extends React.Component {
 
         <Row className="visible-hd">
           {this.sampleAmount(sample)}
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 2, isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer, '', 2, isPolymer)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 2, isPolymer)}
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer || isDisabled, '', 2, isPolymer)}
+          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer || isDisabled, '', 2, isPolymer)}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer || isDisabled, '', 2, isPolymer)}
         </Row>
 
         <Row className="hidden-hd">
           {this.sampleAmount(sample, 4)}
         </Row>
         <Row className="hidden-hd" style={ { 'paddingTop': "15px"  }}>
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer, '', 4, isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer, '', 4, isPolymer)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer, '', 4, isPolymer)}
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer || isDisabled, '', 4, isPolymer)}
+          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer || isDisabled, '', 4, isPolymer)}
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer || isDisabled, '', 4, isPolymer)}
         </Row>
         <Row style={ { 'paddingTop': "15px"  } }>
           <Col md={4}>{this.sampleDescription(sample)}</Col>
-          {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity')}
+          {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity', '', isDisabled)}
           <Col md={2}>{this.textInput(sample, 'impurities', 'Impurities')}</Col>
           <Col md={4}>
             <label>Solvent</label>

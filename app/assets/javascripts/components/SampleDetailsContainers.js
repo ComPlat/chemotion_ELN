@@ -86,10 +86,16 @@ export default class SampleDetailsContainers extends Component {
   }
 
   addButton() {
-    const {readOnly} = this.props;
-    if(! readOnly) {
+    const {readOnly, sample} = this.props;
+    if(!readOnly) {
       return (
-          <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          <Button
+            className="button-right"
+            bsSize="xsmall"
+            bsStyle="success"
+            onClick={() => this.handleAdd()}
+            disabled={!sample.can_update}
+          >
             Add analysis
           </Button>
       )
@@ -120,6 +126,8 @@ export default class SampleDetailsContainers extends Component {
   }
 
   analysisHeader(container, readOnly, key) {
+    let {sample} = this.props
+
     const confirmDelete = (e) => {
       e.stopPropagation()
       if(confirm('Delete the analysis?')) {
@@ -132,13 +140,20 @@ export default class SampleDetailsContainers extends Component {
     const previewImg = this.PreviewImg(container)
     const content = container.extended_metadata['content'];
 
+    let addToLabelBtn =  <Checkbox onClick={(e) => this.toggleAddToReport(e, container)}
+                  defaultChecked={inReport}
+                  disabled={!sample.can_update}>
+          <span>Add to Report</span>
+        </Checkbox>
+
     const btnGroup = () => {
+      const isDisabled = !this.props.sample.can_update;
       return (
         <div className="upper-btn">
           <Button bsSize="xsmall"
                   bsStyle="danger"
                   className="button-right"
-                  disabled={readOnly}
+                  disabled={readOnly || isDisabled}
                   onClick={confirmDelete}>
             <i className="fa fa-trash"></i>
           </Button>
@@ -205,6 +220,7 @@ export default class SampleDetailsContainers extends Component {
   render() {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
+    const isDisabled = !sample.can_update;
 
     if (sample.container == null) {
       return (
@@ -236,6 +252,7 @@ export default class SampleDetailsContainers extends Component {
                 <ContainerComponent
                   readOnly={readOnly}
                   container={container}
+                  disabled={isDisabled}
                   onChange={container => this.handleChange(container)}
                 />
               </Panel>
