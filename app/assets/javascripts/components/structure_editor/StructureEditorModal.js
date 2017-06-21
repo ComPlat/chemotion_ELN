@@ -1,8 +1,8 @@
 import React from 'react';
 import {Button, ButtonToolbar, Input, Modal, Panel} from 'react-bootstrap';
 import Select from 'react-select';
-
 import Aviator from 'aviator';
+import UserStore from '../stores/UserStore';
 
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
@@ -87,6 +87,9 @@ export default class StructureEditorModal extends React.Component {
   // and would give a feedback if the structure is valid or not
 
   render() {
+    const userState = UserStore.getState();
+    const disableSearch = userState.currentUser == null;
+
     let editorContent = this.state.showWarning ?
       <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)}
                   hideWarning={this.hideWarning.bind(this)} />
@@ -103,6 +106,7 @@ export default class StructureEditorModal extends React.Component {
         submitAddons = {
           this.props.submitAddons ? this.props.submitAddons : ""
         }
+        disableSearch = { disableSearch }
       />
 
     let dom_class = this.state.showWarning ? "" : "structure-editor-modal"
@@ -125,8 +129,8 @@ export default class StructureEditorModal extends React.Component {
   }
 }
 
-const StructureEditor =
-  ({handleCancelBtn, handleSaveBtn, cancelBtnText, submitBtnText, submitAddons}) => {
+const StructureEditor = ({handleCancelBtn, handleSaveBtn, cancelBtnText,
+                          submitBtnText, submitAddons, disableSearch}) => {
     return (
       <div>
         <div>
@@ -138,7 +142,12 @@ const StructureEditor =
             <Button bsStyle="warning" onClick={handleCancelBtn}>
               {cancelBtnText}
             </Button>
-            <Button bsStyle="primary" onClick={handleSaveBtn} style={{marginRight:"20px"}}>
+            <Button
+              bsStyle="primary"
+              onClick={handleSaveBtn}
+              style={{marginRight:"20px"}}
+              disabled={disableSearch}
+            >
               {submitBtnText}
             </Button>
             {submitAddons}
