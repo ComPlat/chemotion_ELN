@@ -38,7 +38,7 @@ class ContainerDatasetField extends Component{
         <Button bsSize="xsmall"
                 bsStyle="danger"
                 onClick={() => handleRemove(dataset_container)}
-                disable={disabled}>
+                disabled={disabled}>
           <i className="fa fa-trash-o"></i>
         </Button>
       );
