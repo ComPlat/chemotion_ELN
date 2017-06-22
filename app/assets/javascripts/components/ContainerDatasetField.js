@@ -17,11 +17,12 @@ const dataTarget = {
   drop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    const {dataset_container} = props;
+    const {dataset_container, onChange} = props;
 
     switch (itemType) {
       case DragDropItemTypes.DATA:
         dataset_container.attachments.push(item.attachment)
+        onChange(dataset_container)
         InboxActions.removeAttachmentFromList(item.attachment)
         break;
       case DragDropItemTypes.UNLINKED_DATA:
@@ -32,6 +33,7 @@ const dataTarget = {
         item.dataset.attachments.forEach(attachment => {
           dataset_container.attachments.push(attachment)
         })
+        onChange(dataset_container)
         InboxActions.removeDatasetFromList(item.dataset)
         break;
     }

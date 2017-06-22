@@ -139,7 +139,7 @@ class InboxStore{
   }
 
   handleUpdateCreateElement(element){
-    if (element.container){
+    if (element.isEdited && element.container){
       var all_attachments = []
       all_attachments = this.getAttachments(element.container.children, all_attachments)
       this.updateCache(all_attachments)
@@ -160,9 +160,11 @@ class InboxStore{
 
   handleDeleteElement({ui_state}){
     const {selecteds} = DetailStore.getState()
-    //ui_state.forEach(element => {
-     //this.handleUpdateCreateElement(element)
-    //})
+    var shownElements = _.differenceBy(selecteds, ui_state, 'id')
+
+    shownElements.forEach(element => {
+      this.handleUpdateCreateElement(element)
+    })
   }
 
   sync(){

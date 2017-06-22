@@ -69,22 +69,17 @@ private
       if message.multipart?
         dataset = Container.create(name: message.subject, container_type: "dataset", parent: device_box)
         message.attachments.each do |attachment|
-          file = Tempfile.new(attachment.filename)
-          File.open(file.path, 'w+b') { |f| f.write(attachment.decoded) }
-
           a = Attachment.new(
-            bucket: dataset.id,
             filename: attachment.filename,
-            file_path: file.path,
+            file_data: attachment.decoded,
             created_by: sender.id,
             created_for: recipient.id,
             content_type: attachment.mime_type
           )
+          a.save!
           a.update!(container_id: dataset.id)
           primary_store = Rails.configuration.storage.primary_store
-
           a.update!(storage: primary_store)
-
         end
       end
     rescue Exception => e

@@ -123,6 +123,7 @@ export default class ContainerDatasets extends Component {
                   <ListGroupItem key={key}>
                     <ContainerDatasetField
                       dataset_container={dataset_container}
+                      onChange={() => this.handleChange(dataset_container)}
                       handleRemove={() => this.handleRemove(dataset_container)}
                       handleUndo={() => this.handleUndo(dataset_container)}
                       handleModalOpen={() => this.handleModalOpen(dataset_container)}
