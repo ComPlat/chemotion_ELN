@@ -247,8 +247,9 @@ module Chemotion
           return scope.order("samples.updated_at DESC")
         elsif search_method != 'advanced' && molecule_sort == true
           return scope.includes(:molecule)
-                      .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
-                      .order(:sum_formular) 
+            .joins(:molecule)
+            .order("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))")
+            .order("molecules.sum_formular") 
         end
 
         return scope
