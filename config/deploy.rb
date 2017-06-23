@@ -35,7 +35,7 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
   'backup/deploy_backup', 'backup/weekly_backup',
   'node_modules',
   'log', 
-  'public/images', 'public/docx', 'public/simulations'
+  'public/images', 'public/docx', 'public/simulations',
   'tmp/pids', 'tmp/cache', 'tmp/sockets', 'tmp/uploads',
   'uploads', 'uploadNew'
 )
