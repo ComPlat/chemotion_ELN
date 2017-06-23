@@ -82,7 +82,13 @@ export default class ReactionsFetcher {
   }
 
   static update(reaction) {
-    let files = AttachmentFetcher.getFileListfrom(reaction.container)
+    let reactionFiles = AttachmentFetcher.getFileListfrom(reaction.container)
+    let productsFiles = []
+    reaction.products.forEach((prod) => {
+      let files = AttachmentFetcher.getFileListfrom(prod.container)
+      productsFiles = [].concat(files)
+    })
+    let allFiles = reactionFiles.concat(productsFiles)
 
     let promise = ()=> fetch('/api/v1/reactions/' + reaction.id, {
       credentials: 'same-origin',
@@ -100,9 +106,9 @@ export default class ReactionsFetcher {
       console.log(errorMessage);
     });
 
-    if(files.length > 0 ){
-        return AttachmentFetcher.uploadFiles(files)().then(()=> promise());
-    }else{
+    if (allFiles.length > 0 ){
+      return AttachmentFetcher.uploadFiles(allFiles)().then(()=> promise());
+    } else {
       return promise()
     }
   }
