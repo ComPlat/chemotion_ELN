@@ -94,7 +94,7 @@ export default class ElementCollectionLabels extends React.Component {
       return (<span></span>)
 
     let collectionOverlay = (
-      <Popover className="collection-overlay">
+      <Popover className="collection-overlay" id="element-collections">
         {this.renderCollectionsLabels("My Collections", labels)}
         {this.renderCollectionsLabels("Shared Collections", shared_labels)}
         {this.renderCollectionsLabels("Synchronized Collections", sync_labels, true)}
