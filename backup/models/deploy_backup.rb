@@ -6,10 +6,16 @@
     config = Rails.configuration.database_configuration[Rails.env]
 
     archive :attachments_backup do |archive|
-      archive.add File.readlink("#{Rails.root}/public/images")
+      archive.add File.readlink("#{Rails.root}/public/images/molecules")
+      archive.add File.readlink("#{Rails.root}/public/images/reactions")
+      archive.add File.readlink("#{Rails.root}/public/images/research_plans")
+      archive.add File.readlink("#{Rails.root}/public/images/samples")
+      archive.add File.readlink("#{Rails.root}/public/images/sprites")
+      archive.add File.readlink("#{Rails.root}/public/images/templates")
       archive.add File.readlink("#{Rails.root}/public/docx")
-      archive.add File.readlink("#{Rails.root}/uploads/attachments")
-      archive.add File.readlink("#{Rails.root}/uploads/thumbnails")
+      archive.add File.readlink("#{Rails.root}/tmp/uploads")
+      archive.add File.readlink("#{Rails.root}/uploads")     
+      archive.add File.readlink("#{Rails.root}/uploadNew")
     end
 
     database PostgreSQL do |db|
@@ -18,7 +24,7 @@
       db.username           = config['username']
       db.password           = config['password']
       db.host               = config['host']
-      db.port               = 5432
+      db.port               = config['port'] || 5432
     end
 
     ##
