@@ -43,12 +43,14 @@ export default class ContainerDatasets extends Component {
 
   }
 
-  handleAddWithAttachment(attachment){
+  handleAddWithAttachments(attachments){
     const {container} = this.state;
     let dataset_container = Container.buildEmpty();
     dataset_container.container_type = "dataset";
 
-    dataset_container.attachments.push(attachment)
+    attachments.forEach(attachment => {
+      dataset_container.attachments.push(attachment)
+    })
     container.children.push(dataset_container);
 
     this.handleModalOpen(dataset_container);
@@ -98,15 +100,9 @@ export default class ContainerDatasets extends Component {
     if(!readOnly && !disabled) {
       return (
         <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
-        <AttachmentDropzone
-          handleAddWithAttachment={(attachment) => this.handleAddWithAttachment(attachment)}
-          />
-          &nbsp;&nbsp;&nbsp;
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
             <i className="fa fa-plus"></i>
           </Button>
-
-
         </div>
       )
     }
@@ -128,6 +124,7 @@ export default class ContainerDatasets extends Component {
                   <ListGroupItem key={key}>
                     <ContainerDatasetField
                       dataset_container={dataset_container}
+                      onChange={() => this.handleChange(dataset_container)}
                       handleRemove={() => this.handleRemove(dataset_container)}
                       handleUndo={() => this.handleUndo(dataset_container)}
                       handleModalOpen={() => this.handleModalOpen(dataset_container)}
@@ -136,6 +133,11 @@ export default class ContainerDatasets extends Component {
                   </ListGroupItem>
                 )
               })}
+              <ListGroupItem key="attachmentdropzone" disabled>
+              <AttachmentDropzone
+                handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                />
+              </ListGroupItem>
             </ListGroup>
             {this.addButton()}
           </Well>
@@ -152,8 +154,15 @@ export default class ContainerDatasets extends Component {
     } else {
       return (
         <div>
-          <Well style={{minHeight: 70, padding: 10}}>
-            There are currently no Datasets.<br/>
+          <Well style={{minHeight: 70, padding: 5, paddingBottom: 31}}>
+            <p>There are currently no Datasets.</p>
+            <ListGroup style={{marginBottom: 0}}>
+              <ListGroupItem key="attachmentdropzone" disabled>
+                <AttachmentDropzone
+                  handleAddWithAttachments={(attachments) => this.handleAddWithAttachments(attachments)}
+                />
+              </ListGroupItem>
+            </ListGroup>
             {this.addButton()}
           </Well>
         </div>

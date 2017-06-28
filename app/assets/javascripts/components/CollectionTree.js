@@ -3,7 +3,6 @@ import {Button, OverlayTrigger, Badge, Glyphicon} from 'react-bootstrap';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
-import AttachmentContainer from './AttachmentContainer';
 import UIActions from './actions/UIActions';
 import InboxActions from './actions/InboxActions';
 import UIStore from './stores/UIStore';
@@ -12,6 +11,9 @@ import InboxStore from './stores/InboxStore';
 import Xdiv from './extra/CollectionTreeXdiv';
 import update from 'react-addons-update';
 import UserInfos from './UserInfos';
+
+import DeviceBox from './inbox/DeviceBox';
+import UnsortedBox from './inbox/UnsortedBox';
 
 import {DragDropContext} from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
@@ -35,6 +37,7 @@ export default class CollectionTree extends React.Component {
       sharedToCollectionVisible: true,
       syncCollectionVisible: true,
       inbox: inboxState.inbox,
+      numberOfAttachments: inboxState.numberOfAttachments,
       inboxVisible: false
     }
 
@@ -144,29 +147,25 @@ export default class CollectionTree extends React.Component {
   inboxSubtrees() {
     const inbox = this.state.inbox;
 
-    let filelist = inbox.map(e => {
-      return (
-        <li key={"inbox_"+ e.id}>
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.deleteAttachment(e)}>
-          <i className="fa fa-trash-o"></i>
-        </Button>
-          &nbsp;&nbsp;<AttachmentContainer sourceType={DragDropItemTypes.DATA} attachment={e}/>
-        </li>
-      )
-    })
+    let boxes = ""
+    if(inbox.children){
+      boxes = inbox.children.map(device_box => {
+        return(
+            <DeviceBox key={"box_"+device_box.id} device_box={device_box} />
+        )
+      })
+    }
     return(
       <div className="tree-view">
         <ul key="inbox">
-          {filelist}
+          {boxes}
+          {inbox.unlinked_attachments
+            ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
+            : ""
+          }
         </ul>
       </div>
     )
-  }
-
-  deleteAttachment(attachment){
-    if(confirm('Are you sure?')) {
-      InboxActions.deleteAttachment(attachment)
-    }
   }
 
   remoteSyncInSubtrees() {
@@ -313,14 +312,14 @@ export default class CollectionTree extends React.Component {
           <div className="title" style={{backgroundColor:'white'}}>
             <i className="fa fa-inbox" onClick={() => this.setState({inboxVisible: !inboxVisible})}> &nbsp; Inbox &nbsp;</i>
             {
-              inbox.length > 0 ? <Badge> {inbox.length} </Badge> : ""
+              this.state.numberOfAttachments > 0 ? <Badge> {this.state.numberOfAttachments} </Badge> : ""
             }
             &nbsp;<Glyphicon bsSize="small" glyph="refresh" onClick={() => this.refreshInbox()}/>
           </div>
 
         </div>
         <div className="tree-wrapper" style={{display: inboxDisplay}}>
-          {this.inboxSubtrees()}
+            {this.inboxSubtrees()}
         </div>
       </div>
     )

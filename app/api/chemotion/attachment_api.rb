@@ -13,9 +13,13 @@ module Chemotion
 
     resource :inbox do
       get do
-        attachments = Attachment.where(
-          :container_id => nil, :created_for => current_user.id
-        )
+        if current_user
+          if !current_user.container
+            current_user.container = Container.create(name: "inbox", container_type: "root")
+          end
+          unlinked_attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
+          InboxSerializer.new(current_user.container)
+        end
       end
     end
 
@@ -52,7 +56,13 @@ module Chemotion
 
       desc "Delete Attachment"
       delete ':attachment_id' do
-        @attachment.delete!
+        @attachment.delete
+      end
+
+      desc "Delete container id of attachment"
+      delete 'link/:attachment_id' do
+        @attachment.container_id = nil
+        @attachment.save!
       end
 
       desc "Upload attachments"
@@ -121,7 +131,7 @@ module Chemotion
           end
         end
       end
-
     end
+
   end
 end

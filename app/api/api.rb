@@ -133,6 +133,7 @@ class API < Grape::API
     authenticate! unless is_public_request?
   end
 
+  mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
   mount Chemotion::SyncCollectionAPI

@@ -8,6 +8,8 @@ import SamplesFetcher from './fetchers/SamplesFetcher';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
 import Container from './models/Container';
 
+import InboxActions from './actions/InboxActions';
+
 export default class ContainerDataset extends Component {
   constructor(props) {
     super();
@@ -89,6 +91,18 @@ export default class ContainerDataset extends Component {
     this.setState({dataset_container});
   }
 
+  handleAttachmentBackToInbox(attachment) {
+    const {onChange} = this.props;
+    const {dataset_container} = this.state;
+    const index = dataset_container.attachments.indexOf(attachment);
+
+    if(index != -1){
+      InboxActions.backToInbox(attachment)
+      dataset_container.attachments.splice(index, 1);
+      onChange(dataset_container);
+    }
+  }
+
   handleUndo(attachment) {
     const {dataset_container} = this.state;
     const index = dataset_container.attachments.indexOf(attachment);
@@ -144,7 +158,8 @@ export default class ContainerDataset extends Component {
           </tr>
           <tr>
             <td>
-              {this.removeAttachmentButton(attachment)}
+              {this.removeAttachmentButton(attachment)} &nbsp;
+              {this.attachmentBackToInboxButton(attachment)}
             </td>
           </tr>
         </tbody></Table>
@@ -185,7 +200,17 @@ export default class ContainerDataset extends Component {
       );
     }
   }
+  attachmentBackToInboxButton(attachment) {
+    const {readOnly} = this.props;
 
+    if(!readOnly && !attachment.is_new) {
+      return (
+        <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentBackToInbox(attachment)}>
+          <i className="fa fa-backward"></i>
+        </Button>
+      );
+    }
+  }
   dropzone() {
     const {readOnly, disabled} = this.props;
     if(!readOnly && !disabled) {

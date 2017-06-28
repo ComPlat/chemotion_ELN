@@ -6,7 +6,9 @@ import InboxActions from './actions/InboxActions';
 const dataTarget = {
   canDrop(props, monitor) {
     const itemType = monitor.getItemType();
-    if(itemType == DragDropItemTypes.DATA){
+    if(itemType == DragDropItemTypes.DATA ||
+      itemType == DragDropItemTypes.UNLINKED_DATA ||
+      itemType == DragDropItemTypes.DATASET){
       return true;
     }
   },
@@ -14,10 +16,21 @@ const dataTarget = {
   drop(props, monitor) {
     const item = monitor.getItem();
     const itemType = monitor.getItemType();
-    if(itemType == DragDropItemTypes.DATA){
-      const {dataset_container, handleAddWithAttachment} = props;
-      handleAddWithAttachment(item.attachment)
-      InboxActions.removeAttachmentFromList(item.attachment)
+    const {dataset_container, handleAddWithAttachments} = props;
+
+    switch (itemType) {
+      case DragDropItemTypes.DATA:
+        handleAddWithAttachments([item.attachment])
+        InboxActions.removeAttachmentFromList(item.attachment)
+        break;
+      case DragDropItemTypes.UNLINKED_DATA:
+        handleAddWithAttachments([item.attachment])
+        InboxActions.removeUnlinkedAttachmentFromList(item.attachment)
+        break;
+      case DragDropItemTypes.DATASET:
+        handleAddWithAttachments(item.dataset.attachments)
+        InboxActions.removeDatasetFromList(item.dataset)
+        break;
     }
   }
 };
@@ -52,16 +65,18 @@ class AttachmentDropzone extends Component{
     const {connectDropTarget, isOver, canDrop} = this.props;
 
     return connectDropTarget(
-      <i style={{height: 50, width: '100%', border: '2px dashed lightgray', color: 'gray', padding: 2, textAlign: 'center'}}>
-      Drop File for new Dataset.
+      <div>
+      <i style={{color: 'gray', padding: 2, textAlign: 'center'}}>
+      Drop File(s) for new Dataset.
       {isOver && canDrop && this.renderOverlay('green')}
       </i>
+      </div>
     );
   }
 }
 
 
-export default DropTarget(DragDropItemTypes.DATA, dataTarget, collectTarget)(AttachmentDropzone);
+export default DropTarget([DragDropItemTypes.DATA, DragDropItemTypes.UNLINKED_DATA, DragDropItemTypes.DATASET], dataTarget, collectTarget)(AttachmentDropzone);
 
 AttachmentDropzone.propTypes = {
   isOver: PropTypes.bool.isRequired,
