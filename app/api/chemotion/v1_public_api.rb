@@ -22,6 +22,11 @@ module Chemotion
         get "groups" do
           Affiliation.pluck("DISTINCT affiliations.group")
         end
+
+        desc "return organization's name from email domain"
+        get "swot" do
+          Swot::school_name "dummy@#{params[:domain]}"
+        end
       end
 
     end
