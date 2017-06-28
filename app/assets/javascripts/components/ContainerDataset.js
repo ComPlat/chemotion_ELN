@@ -62,11 +62,17 @@ export default class ContainerDataset extends Component {
     const {dataset_container} = this.state;
 
     let attachments = files.map(f => Attachment.fromFile(f))
+    let first_attach = dataset_container.attachments.length == 0
     dataset_container.attachments = dataset_container.attachments.concat(attachments)
-    let attachment_list = dataset_container.attachments
-    let attach_name = attachment_list[attachment_list.length - 1].filename
-    attach_name = attach_name.slice(0, -4)
-    dataset_container.name = attach_name
+
+    if (first_attach) {
+      let attachment_list = dataset_container.attachments
+      let attach_name = attachment_list[attachment_list.length - 1].filename
+      let splitted = attach_name.split(".")
+      splitted.splice(-1, 1)
+      attach_name = splitted.join(".")
+      dataset_container.name = attach_name
+    }
 
     this.setState({dataset_container});
   }
