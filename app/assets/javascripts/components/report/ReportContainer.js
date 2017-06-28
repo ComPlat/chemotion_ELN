@@ -278,8 +278,15 @@ export default class ReportContainer extends Component {
   }
 
   updateProcessQueue() {
-    setTimeout(this.updateQueue, 1000 * 20);
+    setTimeout(this.updateQueue, 1000 * 30);
+    setTimeout(this.updateQueue, 1000 * 60);
     setTimeout(this.updateQueue, 1000 * 90);
+    setTimeout(this.updateQueue, 1000 * 120);
+    setTimeout(this.updateQueue, 1000 * 150);
+    setTimeout(this.updateQueue, 1000 * 180);
+    setTimeout(this.updateQueue, 1000 * 210);
+    setTimeout(this.updateQueue, 1000 * 240);
+    setTimeout(this.updateQueue, 1000 * 270);
     setTimeout(this.updateQueue, 1000 * 300);
   }
 
