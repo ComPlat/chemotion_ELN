@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170626102803) do
+ActiveRecord::Schema.define(version: 20170628101506) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -69,6 +69,7 @@ ActiveRecord::Schema.define(version: 20170626102803) do
   create_table "authentication_keys", force: :cascade do |t|
     t.string  "token",     null: false
     t.integer "device_id"
+    t.inet    "ip"
   end
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|

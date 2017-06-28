@@ -1,4 +1,4 @@
-class TokenAuthentication
+class TokenIPAuthentication
   attr_reader :request
 
   def initialize(request)
@@ -7,6 +7,7 @@ class TokenAuthentication
 
   def is_successful?
     token = request.headers['Auth-Token'] || request.params['auth_token']
-    API::AuthenticationKey.find_by(token: token).present?
+    key = API::AuthenticationKey.find_by(token: token)
+    key && key.ip == request.env['REMOTE_ADDR']
   end
 end
