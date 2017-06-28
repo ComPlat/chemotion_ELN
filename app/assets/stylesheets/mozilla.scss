@@ -1,0 +1,28 @@
+@-moz-document url-prefix() {
+  input[type="checkbox"] {
+    margin: 0 0 0 -20px !important;
+    vertical-align: middle;
+  }
+
+  input[type="checkbox"].common-checkbox  {
+    margin: -2px 0 0 -10px !important;
+    vertical-align: middle;
+  }
+
+  input[type="checkbox"].element-checkbox {
+    margin: -2px 0 0 0 !important;
+    vertical-align: middle;
+  }
+
+  .analysis-header {
+    .abstract {
+      .upper-btn {
+        .checkbox {
+          input[type="checkbox"] {
+            margin: 1px 0 0 -25px;
+          }
+        }
+      }
+    }
+  }
+}
