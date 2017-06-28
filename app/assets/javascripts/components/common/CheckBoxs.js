@@ -19,7 +19,8 @@ const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
           <th>
             <input type="checkbox"
                    checked={checkedAll}
-                   onChange={toggleCheckAll} />
+                   onChange={toggleCheckAll}
+                   className="common-checkbox" />
             <span className="g-marginLeft--10">
               {checkedAll ? "Deselect all" : "Select all"}
             </span>
@@ -52,7 +53,8 @@ const CheckBox = ({text, checked, toggleCheckbox}) => {
     <li>
       <input type="checkbox"
                onChange={toggleCheckbox}
-               checked={checked} />
+               checked={checked}
+               className="common-checkbox" />
       <span className="g-marginLeft--10"> {text} </span>
     </li>
 
