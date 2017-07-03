@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170524130531) do
+ActiveRecord::Schema.define(version: 20170629121125) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -27,6 +27,8 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "group"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.date     "from"
+    t.date     "to"
   end
 
   create_table "analyses_experiments", force: :cascade do |t|
@@ -62,6 +64,7 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "bucket"
     t.string   "key",          limit: 500
     t.boolean  "thumb",                    default: false
+    t.string   "folder"
   end
 
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
@@ -388,6 +391,19 @@ ActiveRecord::Schema.define(version: 20170524130531) do
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
 
+  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.text     "path_1h"
+    t.text     "path_13c"
+    t.text     "source"
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
+  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
+
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
     t.integer  "searchable_id"
@@ -572,6 +588,28 @@ ActiveRecord::Schema.define(version: 20170524130531) do
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
+  create_table "scifinding_credentials", force: :cascade do |t|
+    t.string   "username"
+    t.string   "encrypted_password"
+    t.string   "encrypted_current_token"
+    t.string   "encrypted_refreshed_token"
+    t.datetime "token_expires_at"
+    t.datetime "token_requested_at"
+    t.datetime "created_at",                   null: false
+    t.datetime "updated_at",                   null: false
+    t.integer  "user_id"
+    t.string   "encrypted_password_iv"
+    t.string   "encrypted_current_token_iv"
+    t.string   "encrypted_refreshed_token_iv"
+  end
+
+  create_table "scifinding_tags", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "count"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
   create_table "screens", force: :cascade do |t|
     t.string   "description"
     t.string   "name"
@@ -621,6 +659,7 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.integer  "affiliation_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.datetime "deleted_at"
   end
 
   create_table "users", force: :cascade do |t|
@@ -642,14 +681,14 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 
