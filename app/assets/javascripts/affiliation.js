@@ -13,7 +13,7 @@ $(".affiliation-line").each(function(id){
     if (delInput.val() == 't'){ delInput.val(null)} else{delInput.val('t')}
   });
   fromCell.mouseenter(function(e){
-     e.stopPropagation();
+    e.stopPropagation();
     let input = $('<input class="form" type="month" />');
     input.val(fromInput.val());
     fromCell.html(input);
@@ -24,10 +24,11 @@ $(".affiliation-line").each(function(id){
     fromInput.val(val)
   });
   toCell.mouseenter(function(e){
-     e.stopPropagation();
+    e.stopPropagation();
     let input = $('<input class="form-control" type="month" />');
     input.val(toInput.val());
     toCell.html(input);
+    toCell.find('> input').focus();
   }).mouseleave(function(){
     var val = toCell.find('> input').val();
     toCell.html(val)
