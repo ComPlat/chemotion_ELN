@@ -10,7 +10,7 @@ class SampleSerializer < ActiveModel::Serializer
 
   def code_log
     CodeLogSerializer.new(object.code_log).serializable_hash
-  end 
+  end
 
   def created_at
     object.created_at.strftime("%d.%m.%Y, %H:%M")
@@ -50,7 +50,16 @@ class SampleSerializer < ActiveModel::Serializer
     end
   end
 
+  def can_update
+    false
+  end
+
+  def can_publish
+    false
+  end
+
   class Level0 < ActiveModel::Serializer
+    include SamplePolicySerializable
     include SampleLevelSerializable
     define_restricted_methods_for_level(0)
 
@@ -63,11 +72,13 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   class Level1 < ActiveModel::Serializer
+    include SamplePolicySerializable
     include SampleLevelSerializable
     define_restricted_methods_for_level(1)
   end
 
   class Level2 < ActiveModel::Serializer
+    include SamplePolicySerializable
     include SampleLevelSerializable
     define_restricted_methods_for_level(2)
 
@@ -77,14 +88,12 @@ class SampleSerializer < ActiveModel::Serializer
   end
 
   class Level3 < ActiveModel::Serializer
+    include SamplePolicySerializable
     include SampleLevelSerializable
     define_restricted_methods_for_level(3)
   end
 end
 
 class SampleSerializer::Level10 < SampleSerializer
-  alias_method :original_initialize, :initialize
-  def initialize(element, nested_detail_levels)
-    original_initialize(element)
-  end
+  include SamplePolicySerializable
 end

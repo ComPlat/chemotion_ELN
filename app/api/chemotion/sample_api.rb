@@ -211,9 +211,12 @@ module Chemotion
         get do
           sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
-          serialized_sample = ElementPermissionProxy.new(current_user, sample, user_ids).serialized
-          serialized_sample[:can_publish] = @element_policy.destroy?
-          serialized_sample[:can_update] = @element_policy.update?
+          serialized_sample = ElementPermissionProxy.new(
+                                current_user,
+                                sample,
+                                user_ids,
+                                @element_policy
+                              ).serialized
           {sample: serialized_sample}
         end
       end
@@ -275,9 +278,12 @@ module Chemotion
             sample.update!(attributes)
           end
 
-          serialized_sample = ElementPermissionProxy.new(current_user, sample, user_ids).serialized
-          serialized_sample[:can_publish] = @element_policy.destroy?
-          serialized_sample[:can_update] = @element_policy.update?
+          serialized_sample = ElementPermissionProxy.new(
+                                current_user,
+                                sample,
+                                user_ids,
+                                @element_policy,
+                              ).serialized
           {sample: serialized_sample}
         end
       end

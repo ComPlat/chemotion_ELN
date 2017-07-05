@@ -10,9 +10,12 @@ module ReactionLevelSerializable
 
     alias_method :original_initialize, :initialize
 
-    def initialize(element, nested_detail_levels)
+    def initialize(element, options={})
       original_initialize(element)
-      @nested_dl = nested_detail_levels
+      is_hash_opt = options.class == Hash && options[:nested_dl]
+      @nested_dl = is_hash_opt ? options[:nested_dl] : options
+      @policy = is_hash_opt ? options[:policy] : nil
+      @current_user = is_hash_opt ? options[:current_user] : nil
     end
 
     def type
@@ -36,7 +39,15 @@ module ReactionLevelSerializable
     end
 
     def products
-      MaterialDecorator.new(object.reactions_product_samples).decorated.map{ |s| "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(s, @nested_dl).serializable_hash }
+      MaterialDecorator.new(object.reactions_product_samples).decorated.map do |s|
+        spl_obj = Sample.find(s.id)
+        spl_opts = {  nested_dl: @nested_dl,
+                      policy: ElementPolicy.new(@current_user, spl_obj),
+                      current_user: @current_user }
+        "MaterialSerializer::Level#{@nested_dl[:sample] || 0}".
+          constantize.
+          new(s, spl_opts).serializable_hash
+        end
     end
   end
 

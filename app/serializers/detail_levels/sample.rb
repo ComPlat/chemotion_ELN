@@ -7,7 +7,8 @@ class DetailLevels::Sample
       :is_top_secret, :is_restricted, :external_label, :analyses,
       :children_count, :parent_id, :imported_readout, :_contains_residues,
       :sample_svg_file, :density, :boiling_point, :melting_point,
-      :reaction_description, :container, :pubchem_tag, :xref, :code_log
+      :reaction_description, :container, :pubchem_tag, :xref, :code_log,
+      :can_update, :can_publish
     ]
   end
 
@@ -15,7 +16,8 @@ class DetailLevels::Sample
 
   def level0_attributes
     [
-      :id, :type, :is_restricted, :external_label, :code_log
+      :id, :type, :is_restricted, :external_label, :code_log,
+      :can_update, :can_publish
     ]
   end
 
@@ -38,7 +40,8 @@ class DetailLevels::Sample
       :target_amount_value, :target_amount_unit, :real_amount_value,
       :real_amount_unit, :purity, :solvent, :impurities, :location,
       :children_count, :parent_id, :imported_readout,
-      :boiling_point, :melting_point, :reaction_description
+      :boiling_point, :melting_point, :reaction_description,
+      :can_update, :can_publish
     ]
   end
 
