@@ -12,8 +12,11 @@ set :rails_env,   "production"
 set :unicorn_env, "production"
 set :unicorn_rack_env, "production"
 set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
-set :nvm_node, 'v4.4.7'
 set :bundle_jobs, 4 # parallel bundler
+
+set :nvm_type, :user
+set :nvm_node, 'v6.2.2'
+set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
 # Default value for :format is :pretty
 # set :format, :pretty
@@ -28,10 +31,14 @@ set :bundle_jobs, 4 # parallel bundler
 set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/storage.yml', 'config/datamailcollector.yml', 'config/secrets.yml', '.env')
 
 # Default value for linked_dirs is []
-set :linked_dirs, fetch(:linked_dirs, []).push('node_modules','log', 'tmp/pids',
-'tmp/cache', 'tmp/sockets', 'public/images', 'public/docx', 'uploads',
-'backup/deploy_backup', 'backup/weekly_backup', 'uploadNew',
-'public/simulations')
+set :linked_dirs, fetch(:linked_dirs, []).push(
+  'backup/deploy_backup', 'backup/weekly_backup',
+  'node_modules',
+  'log', 
+  'public/images', 'public/docx', 'public/simulations',
+  'tmp/pids', 'tmp/cache', 'tmp/sockets', 'tmp/uploads',
+  'uploads', 'uploadNew'
+)
 
 set :rvm_ruby_version, (`cat .ruby-version`).strip
 

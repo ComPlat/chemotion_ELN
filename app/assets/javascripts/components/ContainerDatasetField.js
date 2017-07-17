@@ -50,10 +50,13 @@ const collectTarget = (connect, monitor) => ({
 class ContainerDatasetField extends Component{
 
   removeButton(dataset_container) {
-    const {readOnly, handleRemove} = this.props;
+    const {readOnly, handleRemove, disabled} = this.props;
     if(!readOnly) {
       return (
-        <Button bsSize="xsmall" bsStyle="danger" onClick={() => handleRemove(dataset_container)}>
+        <Button bsSize="xsmall"
+                bsStyle="danger"
+                onClick={() => handleRemove(dataset_container)}
+                disabled={disabled}>
           <i className="fa fa-trash-o"></i>
         </Button>
       );
@@ -76,13 +79,20 @@ class ContainerDatasetField extends Component{
     }
 
   render() {
-    const {connectDropTarget, isOver, canDrop, dataset_container, handleUndo, handleModalOpen} = this.props;
+    const {connectDropTarget, isOver, canDrop, dataset_container, handleUndo,
+            handleModalOpen, disabled} = this.props;
 
     if(dataset_container.is_deleted){
       return (
         <div><strike>{dataset_container.name}</strike>
 
-            <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => handleUndo(dataset_container)}>
+            <Button
+              className="pull-right"
+              bsSize="xsmall"
+              bsStyle="danger"
+              onClick={() => handleUndo(dataset_container)}
+              disabled={disabled}
+            >
               <i className="fa fa-undo"></i>
             </Button>
 

@@ -4,6 +4,7 @@ import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton'
 import UIStore from './stores/UIStore';
+import QuillViewer from './QuillViewer'
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
@@ -85,10 +86,16 @@ export default class SampleDetailsContainers extends Component {
   }
 
   addButton() {
-    const {readOnly} = this.props;
-    if(! readOnly) {
+    const {readOnly, sample} = this.props;
+    if(!readOnly) {
       return (
-          <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
+          <Button
+            className="button-right"
+            bsSize="xsmall"
+            bsStyle="success"
+            onClick={() => this.handleAdd()}
+            disabled={!sample.can_update}
+          >
             Add analysis
           </Button>
       )
@@ -119,6 +126,8 @@ export default class SampleDetailsContainers extends Component {
   }
 
   analysisHeader(container, readOnly, key) {
+    let {sample} = this.props
+
     const confirmDelete = (e) => {
       e.stopPropagation()
       if(confirm('Delete the analysis?')) {
@@ -127,17 +136,24 @@ export default class SampleDetailsContainers extends Component {
     };
     const kind = container.extended_metadata['kind'] || ' - '
     const status = container.extended_metadata['status'] || ' - '
-    const description = container.description || ' - '
     const inReport = container.extended_metadata['report']
     const previewImg = this.PreviewImg(container)
+    const content = container.extended_metadata['content'];
+
+    let addToLabelBtn =  <Checkbox onClick={(e) => this.toggleAddToReport(e, container)}
+                  defaultChecked={inReport}
+                  disabled={!sample.can_update}>
+          <span>Add to Report</span>
+        </Checkbox>
 
     const btnGroup = () => {
+      const isDisabled = !this.props.sample.can_update;
       return (
         <div className="upper-btn">
           <Button bsSize="xsmall"
                   bsStyle="danger"
                   className="button-right"
-                  disabled={readOnly}
+                  disabled={readOnly || isDisabled}
                   onClick={confirmDelete}>
             <i className="fa fa-trash"></i>
           </Button>
@@ -167,7 +183,11 @@ export default class SampleDetailsContainers extends Component {
             <div className="main-title">{container.name}</div>
             <div className="sub-title">Type: {kind}</div>
             <div className="sub-title">Status: {status}</div>
-            <div className="desc">Description: {description}</div>
+
+            <div className="desc">
+              <spam>Content: </spam>
+              <QuillViewer value={content} preview={true} />
+            </div>
           </div>
         </div>
       </div>
@@ -200,6 +220,7 @@ export default class SampleDetailsContainers extends Component {
   render() {
     const {sample, activeAnalysis} = this.state;
     const {readOnly} = this.props;
+    const isDisabled = !sample.can_update;
 
     if (sample.container == null) {
       return (
@@ -231,6 +252,7 @@ export default class SampleDetailsContainers extends Component {
                 <ContainerComponent
                   readOnly={readOnly}
                   container={container}
+                  disabled={isDisabled}
                   onChange={container => this.handleChange(container)}
                 />
               </Panel>

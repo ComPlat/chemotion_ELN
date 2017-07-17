@@ -30,28 +30,27 @@ export default class List extends React.Component {
       visible: Immutable.List(),
       hidden: Immutable.List(),
       currentTab: 0,
+      totalCheckedElements: {
+        sample: 0,
+        reaction: 0,
+        wellplate: 0,
+        screen: 0,
+        research_plan: 0
+      }
     }
 
     this.onChange = this.onChange.bind(this)
     this.onChangeUser = this.onChangeUser.bind(this)
+    this.onChangeUI = this.onChangeUI.bind(this)
     this.initState = this.initState.bind(this)
     this.changeLayout = this.changeLayout.bind(this)
     this.handleTabSelect = this.handleTabSelect.bind(this)
   }
 
-  _checkedElements(type) {
-    let elementUI = UIStore.getState()[type];
-    let element   = ElementStore.getState()['elements'][type+"s"];
-    if (elementUI.checkedAll) {
-      return element.totalElements - elementUI.uncheckedIds.size;
-    } else {
-      return elementUI.checkedIds.size;
-    }
-  }
-
   componentDidMount() {
     ElementStore.listen(this.onChange);
     UserStore.listen(this.onChangeUser);
+    UIStore.listen(this.onChangeUI);
 
     this.initState();
   }
@@ -59,6 +58,7 @@ export default class List extends React.Component {
   componentWillUnmount() {
     ElementStore.unlisten(this.onChange);
     UserStore.unlisten(this.onChangeUser);
+    UIStore.unlisten(this.onChangeUI);
   }
 
   initState(){
@@ -97,6 +97,23 @@ export default class List extends React.Component {
       hidden: hidden
     })
   }
+
+  onChangeUI(state) {
+    let { totalCheckedElements } = this.state;
+
+    ["sample", "reaction", "wellplate", "screen", "research_plan"].forEach((type) => {
+      let elementUI = state[type];
+      let element   = ElementStore.getState()['elements'][type+"s"]
+      if (elementUI.checkedAll) {
+        totalCheckedElements[type] = element.totalElements - elementUI.uncheckedIds.size
+      } else {
+        totalCheckedElements[type] = elementUI.checkedIds.size
+      }
+    })
+
+    this.setState({totalCheckedElements})
+  }
+
 
   changeLayout() {
     let {visible, hidden} = this.refs.tabLayoutContainer.state
@@ -146,11 +163,10 @@ export default class List extends React.Component {
   }
 
   render() {
-    let {visible, hidden, currentTab, treeView} = this.state
+    let {visible, hidden, currentTab, treeView, totalCheckedElements} = this.state
 
     const {overview, showReport} = this.props
     const elementState = this.state
-    let checkedElements = this._checkedElements
 
     let popoverLayout = (
       <Popover id="popover-layout" title="Tab Layout Editing"
@@ -172,7 +188,7 @@ export default class List extends React.Component {
         <NavItem eventKey={i} key={value + "_navItem"}>
           <i className={"icon-" + value}>
             {elementState["total" + camelized_value + "Elements"]}
-            ({checkedElements(value)})
+            ({totalCheckedElements[value]})
           </i>
         </NavItem>
       )

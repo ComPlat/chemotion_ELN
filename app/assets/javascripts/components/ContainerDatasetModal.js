@@ -4,7 +4,8 @@ import ContainerDataset from './ContainerDataset';
 
 export default class ContainerDatasetModal extends Component {
   render() {
-    const {show, dataset_container, onHide, onChange, readOnly} = this.props;
+    const {show, dataset_container, onHide, onChange,
+            readOnly, disabled} = this.props;
     if(show) {
       return (
         <div>
@@ -20,6 +21,7 @@ export default class ContainerDatasetModal extends Component {
                 dataset_container={dataset_container}
                 onModalHide={() => onHide()}
                 onChange = {dataset_container => onChange(dataset_container)}
+                disabled={disabled}
               />
             </Modal.Body>
           </Modal>

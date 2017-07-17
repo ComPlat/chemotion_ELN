@@ -33,19 +33,12 @@ export default class Elements extends Component {
     const { currentElement } = this.state;
     const showReport = (currentElement || []).type === 'report'
 
-    let list = (
-      <Col md={12} style={{paddingLeft: "10px"}}>
-        <List overview={true} showReport={showReport}/>
-      </Col>
-    )
-    let page = (<span />)
+    let md = 12
+    let overview = currentElement ? false : true
+    let page = null
 
     if (currentElement) {
-      list = (
-        <Col md={4}>
-          <List overview={false} showReport={showReport}/>
-        </Col>
-      )
+      md = 4 
       page = (
         <Col md={8}>
           <ElementDetails currentElement={currentElement} />
@@ -55,11 +48,12 @@ export default class Elements extends Component {
 
     return (
       <div>
-        {list}
+        <Col md={md}>
+          <List overview={overview} showReport={showReport}/>
+        </Col>
         {page}
       </div>
     );
   }
 }
 
-//export default DragDropContext(HTML5Backend)(Elements);

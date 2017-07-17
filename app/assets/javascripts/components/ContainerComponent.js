@@ -3,6 +3,7 @@ import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
 import Select from 'react-select'
 import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor'
+import QuillViewer from './QuillViewer'
 
 import {sampleAnalysesContentSymbol} from './utils/quillToolbarSymbol'
 import {confirmOptions, kindOptions} from './staticDropdownOptions/options';
@@ -48,7 +49,23 @@ export default class ContainerComponent extends Component {
 
   render() {
     const {container} = this.state;
-    const {readOnly} = this.props;
+    const {readOnly, disabled} = this.props;
+
+    let quill = (<span />)
+    if (readOnly || disabled) {
+      quill = (
+        <QuillViewer value={container.extended_metadata['content']} />
+      )
+    } else {
+      quill = (
+        <QuillEditor value={container.extended_metadata['content']}
+          onChange={event => this.handleInputChange('content', {target: {value: event}})}
+          disabled={readOnly}
+          toolbarSymbol={sampleAnalysesContentSymbol}
+        />
+      )
+    }
+
     return (
       <div>
         <Col md={4}>
@@ -57,7 +74,8 @@ export default class ContainerComponent extends Component {
             type="text"
             label="Name"
             value={container.name || '***'}
-            onChange={event => this.handleInputChange('name', event)}/>
+            onChange={event => this.handleInputChange('name', event)}
+            disabled={disabled}/>
         </Col>
         <Col md={4}>
           <div style={{marginBottom: 11}}>
@@ -67,7 +85,7 @@ export default class ContainerComponent extends Component {
               multi={false}
               options={kindOptions}
               value={container.extended_metadata['kind']}
-              disabled={readOnly}
+              disabled={readOnly || disabled}
               onChange={event => this.handleInputChange('kind',
                 {target: {value: event && event.value}})}
               />
@@ -81,7 +99,7 @@ export default class ContainerComponent extends Component {
               multi={false}
               options={confirmOptions}
               value={container.extended_metadata['status']}
-              disabled={readOnly}
+              disabled={readOnly || disabled}
               onChange={event => this.handleInputChange('status',
                 {target: {value: event && event.value}})}
             />
@@ -90,11 +108,7 @@ export default class ContainerComponent extends Component {
         <Col md={12}>
         <FormGroup>
           <ControlLabel>Content</ControlLabel>
-          <QuillEditor value={container.extended_metadata['content']}
-            onChange={event => this.handleInputChange('content', {target: {value: event}})}
-            disabled={readOnly}
-            toolbarSymbol={sampleAnalysesContentSymbol}
-            />
+          {quill}
         </FormGroup>
           <FormGroup>
             <ControlLabel>Description</ControlLabel>
@@ -102,7 +116,7 @@ export default class ContainerComponent extends Component {
               componentClass="textarea"
               label="Description"
               value={container.description || ''}
-              disabled={readOnly}
+              disabled={readOnly || disabled}
               onChange={event => this.handleInputChange('description', event)}
               />
           </FormGroup>
@@ -112,6 +126,7 @@ export default class ContainerComponent extends Component {
           <ContainerDatasets
             container={container}
             readOnly={readOnly}
+            disabled={disabled}
             onChange={container => this.props.onChange(container)}
             />
         </Col>

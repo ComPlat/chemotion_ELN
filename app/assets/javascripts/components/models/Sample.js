@@ -95,6 +95,7 @@ export default class Sample extends Element {
       imported_readout: '',
       attached_amount_mg: '', // field for polymers calculations
       container: Container.init(),
+      can_update: true,
     });
 
     sample.short_label = Sample.buildNewShortLabel();

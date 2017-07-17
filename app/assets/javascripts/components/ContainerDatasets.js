@@ -95,9 +95,9 @@ export default class ContainerDatasets extends Component {
   }
 
   addButton() {
-    const {readOnly} = this.props;
+    const {readOnly, disabled} = this.props;
 
-    if(!readOnly) {
+    if(!readOnly && !disabled) {
       return (
         <div className="pull-right" style={{marginTop: 5, marginBottom: 5}}>
           <Button bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
@@ -112,6 +112,7 @@ export default class ContainerDatasets extends Component {
 
   render() {
     const {container, modal} = this.state;
+    const {disabled} = this.props;
 
     if(container.children.length > 0) {
       return (
@@ -127,6 +128,7 @@ export default class ContainerDatasets extends Component {
                       handleRemove={() => this.handleRemove(dataset_container)}
                       handleUndo={() => this.handleUndo(dataset_container)}
                       handleModalOpen={() => this.handleModalOpen(dataset_container)}
+                      disabled={disabled}
                     />
                   </ListGroupItem>
                 )
@@ -145,6 +147,7 @@ export default class ContainerDatasets extends Component {
             show={modal.show}
             readOnly={this.props.readOnly}
             dataset_container={modal.dataset_container}
+            disabled={disabled}
             />
         </div>
       );

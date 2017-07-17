@@ -64,11 +64,17 @@ export default class ContainerDataset extends Component {
     const {dataset_container} = this.state;
 
     let attachments = files.map(f => Attachment.fromFile(f))
+    let first_attach = dataset_container.attachments.length == 0
     dataset_container.attachments = dataset_container.attachments.concat(attachments)
-    let attachment_list = dataset_container.attachments
-    let attach_name = attachment_list[attachment_list.length - 1].filename
-    attach_name = attach_name.slice(0, -4)
-    dataset_container.name = attach_name
+
+    if (first_attach) {
+      let attachment_list = dataset_container.attachments
+      let attach_name = attachment_list[attachment_list.length - 1].filename
+      let splitted = attach_name.split(".")
+      splitted.splice(-1, 1)
+      attach_name = splitted.join(".")
+      dataset_container.name = attach_name
+    }
 
     this.setState({dataset_container});
   }
@@ -113,6 +119,7 @@ export default class ContainerDataset extends Component {
   }
 
   listGroupItem(attachment){
+    const {disabled} = this.props;
     if(attachment.is_deleted){
       return(
         <Table className="borderless"><tbody>
@@ -126,7 +133,12 @@ export default class ContainerDataset extends Component {
           </tr>
           <tr>
             <td>
-            <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(attachment)}>
+            <Button
+              bsSize="xsmall"
+              bsStyle="danger"
+              onClick={() => this.handleUndo(attachment)}
+              disabled={disabled}
+            >
               <i className="fa fa-undo"></i>
             </Button>
             </td>
@@ -179,8 +191,8 @@ export default class ContainerDataset extends Component {
   }
 
   removeAttachmentButton(attachment) {
-    const {readOnly} = this.props;
-    if(!readOnly) {
+    const {readOnly, disabled} = this.props;
+    if(!readOnly && !disabled) {
       return (
         <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
           <i className="fa fa-trash-o"></i>
@@ -200,8 +212,8 @@ export default class ContainerDataset extends Component {
     }
   }
   dropzone() {
-    const {readOnly} = this.props;
-    if(!readOnly) {
+    const {readOnly, disabled} = this.props;
+    if(!readOnly && !disabled) {
       return (
         <Dropzone
           onDrop={files => this.handleFileDrop(files)}
@@ -217,7 +229,7 @@ export default class ContainerDataset extends Component {
 
   render() {
     const {dataset_container} = this.state;
-    const {readOnly, onModalHide} = this.props;
+    const {readOnly, onModalHide, disabled} = this.props;
     return (
       <Row>
         <Col md={6} style={{paddingRight: 0}}>
@@ -227,7 +239,7 @@ export default class ContainerDataset extends Component {
               <FormControl
                 type="text"
                 value={dataset_container.name || ''}
-                disabled={readOnly}
+                disabled={readOnly || disabled}
                 onChange={event => this.handleInputChange('name', event)}
                 />
             </FormGroup>
@@ -239,7 +251,7 @@ export default class ContainerDataset extends Component {
               <FormControl
                 type="text"
                 value={dataset_container.extended_metadata['instrument'] || ''}
-                disabled={readOnly}
+                disabled={readOnly || disabled}
                 onChange={event => this.handleInputChange('instrument', event)}
               />
             </FormGroup>
@@ -250,7 +262,7 @@ export default class ContainerDataset extends Component {
               <FormControl
                 componentClass="textarea"
                 value={dataset_container.description || ''}
-                disabled={readOnly}
+                disabled={readOnly || disabled}
                 onChange={event => this.handleInputChange('description', event)}
                 style={{minHeight: 100}}
               />
@@ -265,7 +277,13 @@ export default class ContainerDataset extends Component {
         <Col md={12}>
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => onModalHide()}>Close</Button>
-            <Button bsStyle="warning" onClick={() => this.handleSave()}>Save</Button>
+            <Button
+              bsStyle="warning"
+              onClick={() => this.handleSave()}
+              disabled={disabled}
+            >
+              Save
+            </Button>
           </ButtonToolbar>
         </Col>
       </Row>

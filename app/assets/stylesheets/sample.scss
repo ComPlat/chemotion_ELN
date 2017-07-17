@@ -125,6 +125,16 @@
         white-space: nowrap;
         width: 80%;
       }
+
+      .ql-editor {
+        font-size: 12px;
+        margin: -14px 0 0 50px;
+        overflow: hidden;
+        padding: 0;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 80%;
+      }
     }
   }
 }

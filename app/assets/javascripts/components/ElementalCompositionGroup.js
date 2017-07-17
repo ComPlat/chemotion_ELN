@@ -54,6 +54,15 @@ export default class ElementalCompositionGroup extends React.Component {
       )
     }
 
+    const custom = sample.can_update
+      ? <ElementalCompositionCustom
+          handleElementalChanged={(el) => this.handleElementalChanged(el)}
+          elemental_composition={el_composition_custom}
+          hideLoading={!sample.contains_residues}
+          concat_formula={sample.concat_formula}
+          key={'elem_composition_found'}/>
+      : null;
+
     if (!sample.molecule.sum_formular) {
       return false;
     } else {
@@ -63,12 +72,7 @@ export default class ElementalCompositionGroup extends React.Component {
         <div>
           {label}
           {data}
-          <ElementalCompositionCustom
-            handleElementalChanged={(el) => this.handleElementalChanged(el)}
-            elemental_composition={el_composition_custom}
-            hideLoading={!sample.contains_residues}
-            concat_formula={sample.concat_formula}
-            key={'elem_composition_found'}/>
+          {custom}
         </div>
       )
     }

@@ -113,6 +113,7 @@ gem 'barby'
 gem 'rqrcode'
 
 gem 'countries'
+gem 'swot'
 
 group :development do
   gem 'web-console', '~> 2.0'

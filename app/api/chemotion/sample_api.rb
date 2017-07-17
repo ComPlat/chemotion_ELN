@@ -204,13 +204,17 @@ module Chemotion
       end
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Sample.find(params[:id])).read?
+          @element_policy = ElementPolicy.new(current_user, Sample.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.read?
         end
 
         get do
           sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
-          {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
+          serialized_sample = ElementPermissionProxy.new(current_user, sample, user_ids).serialized
+          serialized_sample[:can_publish] = @element_policy.destroy?
+          serialized_sample[:can_update] = @element_policy.update?
+          {sample: serialized_sample}
         end
       end
 
@@ -245,7 +249,8 @@ module Chemotion
 
       route_param :id do
         before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Sample.find(params[:id])).update?
+          @element_policy = ElementPolicy.new(current_user, Sample.find(params[:id]))
+          error!('401 Unauthorized', 401) unless @element_policy.update?
         end
         put do
           attributes = declared(params, include_missing: false)
@@ -270,7 +275,10 @@ module Chemotion
             sample.update!(attributes)
           end
 
-          {sample: ElementPermissionProxy.new(current_user, sample, user_ids).serialized}
+          serialized_sample = ElementPermissionProxy.new(current_user, sample, user_ids).serialized
+          serialized_sample[:can_publish] = @element_policy.destroy?
+          serialized_sample[:can_update] = @element_policy.update?
+          {sample: serialized_sample}
         end
       end
 
