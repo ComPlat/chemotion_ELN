@@ -70,7 +70,9 @@ ActiveRecord::Schema.define(version: 20170629121125) do
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
-    t.string "token", null: false
+    t.string  "token",     null: false
+    t.integer "device_id"
+    t.inet    "ip"
   end
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|

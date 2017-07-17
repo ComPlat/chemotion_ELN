@@ -1,7 +1,7 @@
 require 'net/imap'
 require 'mail'
 
-class Mailcollector < Collector
+class Mailcollector
 
   def initialize
     @server = Rails.configuration.datamailcollector.server
@@ -12,28 +12,15 @@ class Mailcollector < Collector
   end
 
   def execute
-
     begin
       imap = Net::IMAP.new(@server, @port, @ssl)
       response = imap.login(@mail_address, @password)
       if response['name'] == "OK"
+        puts "Logged in....."
         imap.select('INBOX')
-
         imap.search(['NOT', 'SEEN']).each do |message_id|
-          envelope = imap.fetch(message_id, "ENVELOPE")[0].attr["ENVELOPE"]
-
-          sender_email = envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s
-          recipient_email = envelope.to[0].mailbox + "@" + envelope.to[0].host
-
-          sender = Device.find_by email: sender_email
-          recipient = User.find_by email: recipient_email
-          if sender && recipient
-            device_box = prepare_inbox_containers(recipient, sender)
-            raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
-            message = Mail.read_from_string raw_message
-
-            handle_new_mail(sender, recipient, message, device_box)
-          end
+          puts "Handle new mail " + message_id.to_s
+          handle_new_mail(message_id, imap)
           imap.store(message_id, "+FLAGS", [:Deleted])
         end
         imap.close
@@ -41,51 +28,50 @@ class Mailcollector < Collector
         puts "ERROR: Cannot login " + @server
         raise
       end
-    rescue Exception => e
-      puts "ERROR: Cannot handle new data mails " + e.message
-      raise e.message
     ensure
       imap.logout
       imap.disconnect
     end
-
   end
 
 private
-  def prepare_inbox_containers(user, device)
-    if !user.container
-      user.container = Container.create(name: "inbox", container_type: "root")
-    end
-    device_box_id = "device_box_" + device.id.to_s
-    device_container = Container.where(container_type: device_box_id, parent_id: user.container.id).first
-    if !device_container
-      device_container = Container.create(name: device.first_name, container_type: device_box_id, parent: user.container)
-    end
-    device_container
-  end
-
-  def handle_new_mail(sender, recipient, message, device_box)
-    begin
+  def handle_new_mail(message_id, imap)
+    envelope = imap.fetch(message_id, "ENVELOPE")[0].attr["ENVELOPE"]
+    helper = getHelper(envelope)
+    if helper.sender_recipient_known?
+      raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
+      message = Mail.read_from_string raw_message
       if message.multipart?
-        dataset = Container.create(name: message.subject, container_type: "dataset", parent: device_box)
-        message.attachments.each do |attachment|
-          a = Attachment.new(
-            filename: attachment.filename,
-            file_data: attachment.decoded,
-            created_by: sender.id,
-            created_for: recipient.id,
-            content_type: attachment.mime_type
-          )
-          a.save!
-          a.update!(container_id: dataset.id)
-          primary_store = Rails.configuration.storage.primary_store
-          a.update!(storage: primary_store)
-        end
+        puts "Handle new message..."
+        handle_new_message(message, helper)
       end
-    rescue Exception => e
-      puts "ERROR: Cannot handle mail " + e.message
-      raise e.message
     end
   end
 
+  def handle_new_message(message, helper)
+    dataset = helper.prepare_dataset(message.subject)
+    message.attachments.each do |attachment|
+      puts "Store attachment..."
+      a = Attachment.new(
+        filename: attachment.filename,
+        file_data: attachment.decoded,
+        created_by: helper.sender.id,
+        created_for: helper.recipient.id,
+        content_type: attachment.mime_type
+      )
+      a.save!
+      a.update!(container_id: dataset.id)
+      primary_store = Rails.configuration.storage.primary_store
+      a.update!(storage: primary_store)
+    end
+  end
+
+  def getHelper(envelope)
+    if envelope.cc
+      helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
+        envelope.cc[0].mailbox + "@" + envelope.cc[0].host)
+    else
+      helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s)
+    end
+  end
 end
