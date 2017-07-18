@@ -96,7 +96,7 @@ export default class ReactionDetailsContainers extends Component {
         </Button>
         </p>
 
-    if(reaction.container != null){
+    if(reaction.container != null && reaction.container.children){
 
       var analyses_container = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'));
 
