@@ -3,6 +3,7 @@ import ReportActions from '../actions/ReportActions'
 import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
 import ArrayUtils from '../utils/ArrayUtils';
+import UpdateSelectedObjs from './common/UpdateSelectedObjs';
 
 class ReportStore {
   constructor() {
@@ -146,31 +147,10 @@ class ReportStore {
 
   handleUpdateCheckedTags({newTags, newObjs}) {
     this.setState({selectedObjTags: newTags});
-    this.setObjs(newTags, newObjs);
-  }
-
-  setObjs(newTags, newObjs) {
-    const oriSelectedObjs = this.selectedObjs || [];
-    const { sampleIds, reactionIds } = newTags;
-    const { samples, reactions } = newObjs;
-    let selectedObjs = this.keepObjsAsIds(oriSelectedObjs, samples, sampleIds, 'sample');
-    selectedObjs = this.keepObjsAsIds(selectedObjs, reactions, reactionIds, 'reaction');
-    this.setState({selectedObjs: selectedObjs});
-  }
-
-  keepObjsAsIds(oriSelectedObjs, newElems, ids, type) {
-    const allObjs = oriSelectedObjs.concat(newElems).filter(obj => obj != null) || [];
-    return allObjs.map( obj => {
-      if(obj.type !== type){
-        return obj;
-      }
-      if(obj.type === type && ids.indexOf(obj.id) !== -1){
-        const index = ids.indexOf(obj.id);
-        ids = [ ...ids.slice(0, index), ...ids.slice(index + 1) ]
-        return obj;
-      }
-      return null;
-    }).filter(obj => obj != null) || [];
+    const newSelectedObjs = UpdateSelectedObjs(newTags,
+                                                newObjs,
+                                                this.selectedObjs);
+    this.setState({selectedObjs: newSelectedObjs});
   }
 
   handleMove({sourceTag, targetTag}) {

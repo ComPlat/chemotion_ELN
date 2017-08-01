@@ -13,6 +13,7 @@ import Archives from './Archives';
 import CheckBoxs from '../common/CheckBoxs';
 import Select from 'react-select';
 import paramize from './Paramize';
+import PanelHeader from '../common/PanelHeader';
 
 export default class ReportContainer extends Component {
   constructor(props) {
@@ -23,6 +24,11 @@ export default class ReportContainer extends Component {
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
     this.updateQueue = this.updateQueue.bind(this);
+    this.panelHeader = this.panelHeader.bind(this);
+    this.closeDetail = this.closeDetail.bind(this);
+    this.generateReportBtn = this.generateReportBtn.bind(this);
+    this.generateReport = this.generateReport.bind(this);
+    this.updateProcessQueue = this.updateProcessQueue.bind(this);
   }
 
   componentDidMount() {
@@ -49,21 +55,14 @@ export default class ReportContainer extends Component {
     ReportActions.updateCheckedTags.defer(oldTags, newTags);
   }
 
-  renderHeader() {
-    return (
-      <div>
-        Report Generation
-        <div className="button-right">
-          <Button bsStyle="danger"
-                  bsSize="xsmall"
-                  className="g-marginLeft--10 button-right"
-                  onClick={(e) => DetailActions.close(this.props.report)}>
-            <i className="fa fa-times"></i>
-          </Button>
-          {this.generateReportBtn()}
-        </div>
-      </div>
-    )
+  closeDetail() {
+    DetailActions.close(this.props.report);
+  }
+
+  panelHeader() {
+    return <PanelHeader title="Report Generation"
+                        processBtn={this.generateReportBtn}
+                        closeDetail={this.closeDetail} />
   }
 
   render() {
@@ -72,7 +71,7 @@ export default class ReportContainer extends Component {
             configs, checkedAllConfigs,
             selectedObjs, archives, activeKey } = this.state;
     return (
-      <Panel header={this.renderHeader()}
+      <Panel header={this.panelHeader()}
              bsStyle="default">
 
         <Tabs activeKey={activeKey}
@@ -243,23 +242,23 @@ export default class ReportContainer extends Component {
   }
 
   generateReportBtn() {
-    const { sampleIds, reactionIds } = this.state.selectedObjTags;
+    const { selectedObjTags, splSettings, rxnSettings, processingReport } = this.state;
+    const { sampleIds, reactionIds } = selectedObjTags;
     const hasObj = [...sampleIds, ...reactionIds].length !== 0 ? true : false;
 
-    const showGeneReportBtn = [...this.state.splSettings,
-                               ...this.state.rxnSettings].map(setting => {
-      if(setting.checked){
+    const showGeneReportBtn = [...splSettings, ...rxnSettings].map(settting => {
+      if(settting.checked){
         return true
       }
     }).filter(r => r!=null).length !== 0 ? true : false
 
     return (
-      !this.state.processingReport ?
+      !processingReport ?
       <Button bsStyle="primary"
               bsSize="xsmall"
               className="button-right"
               disabled={!(showGeneReportBtn && hasObj)}
-              onClick={this.generateReport.bind(this)}>
+              onClick={this.generateReport}>
         <span><i className="fa fa-file-text-o"></i> Generate Report</span>
       </Button>
       :
@@ -274,7 +273,7 @@ export default class ReportContainer extends Component {
   generateReport() {
     const report = paramize(this.state);
     ReportActions.generateReport(report);
-    setTimeout(this.updateProcessQueue.bind(this), 1000 * 10);
+    setTimeout(this.updateProcessQueue, 1000 * 10);
   }
 
   updateProcessQueue() {
