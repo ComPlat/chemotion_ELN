@@ -121,19 +121,5 @@ describe Chemotion::ReportAPI do
         expect(response["Content-Disposition"]).to include(rp1.file_name + ".docx")
       end
     end
-
-    describe 'GET /api/v1/reports/content' do
-      before do
-        params = { ids: "{\"sample\":[#{s1.id}],\"reaction\":[#{r1.id}]}" }
-        get '/api/v1/reports/content', params
-      end
-
-      it 'returns a header with docx-type' do
-        response_samples = JSON.parse(response.body)['samples']
-        response_reactions = JSON.parse(response.body)['reactions']
-        expect(response_samples.first["id"]).to eq s1.id
-        expect(response_reactions.first["id"]).to eq r1.id
-      end
-    end
   end
 end
