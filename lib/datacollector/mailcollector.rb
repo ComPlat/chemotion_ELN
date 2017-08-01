@@ -68,10 +68,21 @@ private
 
   def getHelper(envelope)
     if envelope.cc
+      puts "alt"
       helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
         envelope.cc[0].mailbox + "@" + envelope.cc[0].host)
+    elsif envelope.to.length == 2
+      puts "Two To"
+      if envelope.to[0].mailbox.to_s + "@" + envelope.to[0].host.to_s == @mail_address
+          recipient = 1
+      else
+          recipient = 0
+      end
+      helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
+        envelope.to[recipient].mailbox.to_s + "@" + envelope.to[recipient].host.to_s)
     else
       helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s)
     end
+    helper
   end
 end
