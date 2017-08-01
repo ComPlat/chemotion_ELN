@@ -33,9 +33,13 @@ const title = (archive) => {
     ? <Label bsStyle="warning">new</Label>
     : null;
 
+  const supportingInfoLabel = archive.template === "supporting_information"
+    ? <Label bsStyle="info">Supporting Information</Label>
+    : null;
+
   return (
     <div style={{width: '100%', lineHeight: '30px'}}>
-      {archive.file_name} {newLabel}
+      {archive.file_name} {newLabel} {supportingInfoLabel}
       <div className="button-right">
         {downloadBtn(archive.downloadable, archive.id)}
       </div>

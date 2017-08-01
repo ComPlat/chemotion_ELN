@@ -4,6 +4,7 @@ import { FormGroup, OverlayTrigger, ControlLabel, FormControl,
           Row, Col } from 'react-bootstrap';
 import ReportActions from '../actions/ReportActions';
 import CheckBoxs from '../common/CheckBoxs';
+import Immutable from 'immutable';
 
 const imgFormatOpts = () => {
   return (
@@ -11,6 +12,15 @@ const imgFormatOpts = () => {
       { label: 'PNG', value: 'png'},
       { label: 'EPS', value: 'eps'},
       { label: 'EMF', value: 'emf'}
+    ]
+  );
+}
+
+const templateOpts = () => {
+  return (
+    [
+      { label: 'Standard', value: 'standard'},
+      { label: 'Supporting Information', value: 'supporting_information'},
     ]
   );
 }
@@ -72,11 +82,50 @@ const FileName = ({fileNameRule, fileName}) => {
   );
 }
 
-const Config = ({ imgFormat, configs, fileName, checkedAllConfigs, fileNameRule,
-  toggleConfigs, toggleConfigsAll, handleImgFormatChanged }) => {
+const Template = ({template, handleTemplateChanged}) => {
+  return (
+    <Row>
+      <Col md={6} sm={12}>
+        <label>Template Selection</label>
+        <Select options={templateOpts()}
+                value={template}
+                clearable={false}
+                onChange={handleTemplateChanged}/>
+      </Col>
+      <Col md={6} sm={12} />
+    </Row>
+  );
+}
 
+const SiConfig = ({template, configs, fileName, checkedAllConfigs,
+        fileNameRule, toggleConfigs, toggleConfigsAll,
+        handleTemplateChanged}) => {
+
+  const filteredConfigs = configs.filter(c => c.text === "Show all chemicals in schemes (unchecked to show products only)");
   return (
     <div>
+      <br/>
+      <Template template={template}
+                  handleTemplateChanged={handleTemplateChanged}/>
+      <br/>
+      <FileName fileNameRule={fileNameRule} fileName={fileName} />
+      <FileDescription />
+      <CheckBoxs  items={filteredConfigs}
+                  toggleCheckbox={toggleConfigs}
+                  toggleCheckAll={toggleConfigsAll}
+                  checkedAll={checkedAllConfigs} />
+    </div>
+  );
+}
+
+const GeneralConfig = ({template, configs, fileName, checkedAllConfigs,
+        fileNameRule, toggleConfigs, toggleConfigsAll,
+        handleTemplateChanged, imgFormat, handleImgFormatChanged}) => {
+  return (
+    <div>
+      <br/>
+      <Template template={template}
+                  handleTemplateChanged={handleTemplateChanged}/>
       <br/>
       <FileName fileNameRule={fileNameRule} fileName={fileName} />
       <FileDescription />
@@ -87,6 +136,36 @@ const Config = ({ imgFormat, configs, fileName, checkedAllConfigs, fileNameRule,
       <ImgFormat imgFormat={imgFormat}
                   handleImgFormatChanged={handleImgFormatChanged} />
     </div>
+  );
+}
+
+const Config = ({imgFormat, configs, fileName, checkedAllConfigs, fileNameRule,
+          toggleConfigs, toggleConfigsAll, handleImgFormatChanged, template,
+          handleTemplateChanged}) => {
+  return (
+    template === "supporting_information"
+      ? <SiConfig
+          configs={configs}
+          fileName={fileName}
+          checkedAllConfigs={checkedAllConfigs}
+          fileNameRule={fileNameRule}
+          toggleConfigs={toggleConfigs}
+          toggleConfigsAll={toggleConfigsAll}
+          template={template}
+          handleTemplateChanged={handleTemplateChanged}
+        />
+      : <GeneralConfig
+          imgFormat={imgFormat}
+          configs={configs}
+          fileName={fileName}
+          checkedAllConfigs={checkedAllConfigs}
+          fileNameRule={fileNameRule}
+          toggleConfigs={toggleConfigs}
+          toggleConfigsAll={toggleConfigsAll}
+          handleImgFormatChanged={handleImgFormatChanged}
+          template={template}
+          handleTemplateChanged={handleTemplateChanged}
+        />
   );
 }
 

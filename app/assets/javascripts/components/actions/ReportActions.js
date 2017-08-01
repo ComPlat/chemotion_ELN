@@ -9,6 +9,10 @@ class ReportActions {
     return value;
   }
 
+  updateTemplate(value) {
+    return value;
+  }
+
   updateSplSettings(target) {
     return target;
   }

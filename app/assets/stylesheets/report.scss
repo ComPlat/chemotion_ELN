@@ -28,3 +28,45 @@
   color: gray;
   font-style: italic;
 }
+
+.report-orders {
+
+  .panel {
+    margin-bottom: 5px;
+    width: 95%;
+  }
+
+  .panel-body {
+    padding: 0;
+  }
+
+  .row {
+    display: -webkit-flex;
+    display: flex;
+    height: 100px;
+  }
+
+  .svg {
+    -webkit-flex: 1;
+            flex: 1;
+    min-width: 0;
+    padding: 2px;
+    text-align: center;
+    vertical-align: middle;
+
+    svg {
+      max-height: 96%;
+      max-width: 96%;
+    }
+  }
+
+  .dnd-btn {
+    line-height: 100px;
+    text-align: center;
+    width: 80px;
+  }
+}
+
+.report-preview .ql-tooltip {
+  height: 0;
+}

@@ -1,16 +1,16 @@
 import React, {Component} from 'react'
 import {Panel, Button, Tabs, Tab, Row, Col, FormGroup, ControlLabel,
         FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import _ from 'lodash';
 import DetailActions from '../actions/DetailActions';
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
 import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
-
-import Reports from './Reports';
+import Setting from './Setting';
+import Previews from './Previews';
 import Orders from './Orders';
 import Archives from './Archives';
-import CheckBoxs from '../common/CheckBoxs';
 import paramize from './Paramize';
 import Config from './Config';
 import PanelHeader from '../common/PanelHeader';
@@ -74,7 +74,7 @@ export default class ReportContainer extends Component {
             rxnSettings, checkedAllRxnSettings,
             configs, checkedAllConfigs,
             selectedObjs, archives, activeKey,
-            imgFormat, fileName } = this.state;
+            imgFormat, fileName, template } = this.state;
     return (
       <Panel header={this.panelHeader()}
              bsStyle="default">
@@ -88,43 +88,45 @@ export default class ReportContainer extends Component {
               fileName={fileName}
               configs={configs}
               checkedAllConfigs={checkedAllConfigs}
+              template={template}
               fileNameRule={this.fileNameRule}
               toggleConfigs={this.toggleConfigs}
               toggleConfigsAll={this.toggleConfigsAll}
               handleImgFormatChanged={this.handleImgFormatChanged}
+              handleTemplateChanged={this.handleTemplateChanged}
             />
           </Tab>
 
-          <Tab eventKey={1} title={"Sample Setting"}>
-            <CheckBoxs  items={splSettings}
-                        toggleCheckbox={this.toggleSplSettings}
-                        toggleCheckAll={this.toggleSplSettingsAll}
-                        checkedAll={checkedAllSplSettings} />
+          <Tab eventKey={1} title={"Setting"}>
+            <Setting
+              template={template}
+              splSettings={splSettings}
+              toggleSplSettings={this.toggleSplSettings}
+              toggleSplSettingsAll={this.toggleSplSettingsAll}
+              checkedAllSplSettings={checkedAllSplSettings}
+              rxnSettings={rxnSettings}
+              toggleRxnSettings={this.toggleRxnSettings}
+              toggleRxnSettingsAll={this.toggleRxnSettingsAll}
+              checkedAllRxnSettings={checkedAllRxnSettings} />
           </Tab>
 
-          <Tab eventKey={2} title={"Reaction Setting"}>
-            <CheckBoxs  items={rxnSettings}
-                        toggleCheckbox={this.toggleRxnSettings}
-                        toggleCheckAll={this.toggleRxnSettingsAll}
-                        checkedAll={checkedAllRxnSettings} />
-          </Tab>
-
-          <Tab eventKey={3} title={"Order"}>
+          <Tab eventKey={2} title={"Order"}>
             <div className="panel-fit-screen">
-              <Orders selectedObjs={selectedObjs} />
+              <Orders selectedObjs={selectedObjs} template={template} />
             </div>
           </Tab>
 
-          <Tab eventKey={4} title={"Report"}>
+          <Tab eventKey={3} title={"Preview"}>
             <div className="panel-fit-screen">
-              <Reports selectedObjs={selectedObjs}
-                       splSettings={splSettings}
-                       rxnSettings={rxnSettings}
-                       configs={configs} />
+              <Previews selectedObjs={selectedObjs}
+                         splSettings={splSettings}
+                         rxnSettings={rxnSettings}
+                         configs={configs}
+                         template={template} />
             </div>
           </Tab>
 
-          <Tab eventKey={5} title={this.archivesTitle()}>
+          <Tab eventKey={4} title={this.archivesTitle()}>
             <div className="panel-fit-screen">
               <Archives archives={archives} />
             </div>
@@ -172,6 +174,10 @@ export default class ReportContainer extends Component {
     ReportActions.updateImgFormat(e.value);
   }
 
+  handleTemplateChanged(e) {
+    ReportActions.updateTemplate(e.value);
+  }
+
   selectTab(key) {
     ReportActions.updateActiveKey(key);
   }
@@ -183,7 +189,7 @@ export default class ReportContainer extends Component {
       : null;
 
     return(
-      <p>Archive {unReadBadge}</p>
+      <span>Archive {unReadBadge}</span>
     );
   }
 

@@ -49,3 +49,15 @@ table.reaction-scheme-solvent {
     margin: 0;
   }
 }
+
+.reaction-role {
+  background-color: #eee;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  margin-left: 20px;
+  padding: 5px;
+
+  .checkbox-inline + .checkbox-inline {
+    margin-left: 20px;
+  }
+}

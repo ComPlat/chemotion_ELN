@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import {Row, Col, FormGroup, FormControl, ControlLabel, ListGroupItem,
-        OverlayTrigger, ListGroup, Button, Tooltip, InputGroup} from 'react-bootstrap'
+        OverlayTrigger, ListGroup, Button, Tooltip, InputGroup,
+        Checkbox} from 'react-bootstrap'
 import Select from 'react-select'
 
 import Reaction from './models/Reaction';
@@ -22,8 +23,10 @@ export default class ReactionDetailsMainProperties extends Component {
       temperature: props.reaction.temperature
     }
 
-    this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this)
-    this.updateTemperature = this.updateTemperature.bind(this)
+    this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
+    this.updateTemperature = this.updateTemperature.bind(this);
+    this.renderRole = this.renderRole.bind(this);
+    this.onClickRoleRadio = this.onClickRoleRadio.bind(this);
 
     this.temperatureUnit = props.reaction.temperature.valueUnit
   }
@@ -55,6 +58,42 @@ export default class ReactionDetailsMainProperties extends Component {
     let unit = Reaction.temperature_unit[(index + 1) % 3]
 
     this.props.onInputChange('temperatureUnit', unit)
+  }
+
+  renderRole() {
+    const { role } = this.props.reaction;
+    return (
+      <span className="reaction-role">
+        <Checkbox inline name="rxnRole1"
+                onClick={this.onClickRoleRadio}
+                checked={role === "gp"}
+                value="gp">
+          GP<i className="fa fa-home c-bs-primary"/>
+        </Checkbox>
+        <Checkbox inline name="rxnRole2"
+                onClick={this.onClickRoleRadio}
+                checked={role === "parts"}
+                value="parts">
+          parts of GP<i className="fa fa-bookmark c-bs-success"/>
+        </Checkbox>
+        <Checkbox inline name="rxnRole"
+                onClick={this.onClickRoleRadio}
+                checked={role === "single"}
+                value="single">
+          Single<i className="fa fa-asterisk c-bs-danger"/>
+        </Checkbox>
+      </span>
+    );
+  }
+
+  onClickRoleRadio(e) {
+    const { onInputChange, reaction } = this.props;
+    const value  = e.target.value;
+    if(reaction.role === value) {
+      onInputChange("role", null);
+    } else {
+      onInputChange("role", value);
+    }
   }
 
   render() {
@@ -147,7 +186,7 @@ export default class ReactionDetailsMainProperties extends Component {
           <Row>
             <Col md={12}>
               <FormGroup>
-                <ControlLabel>Description</ControlLabel>
+                <ControlLabel>Description {this.renderRole()}</ControlLabel>
                 <QuillEditor value={reaction.description}
                   onChange={event => onInputChange('description', event)}
                   toolbarSymbol={reactionToolbarSymbol}/>
