@@ -11,8 +11,8 @@ import Reports from './Reports';
 import Orders from './Orders';
 import Archives from './Archives';
 import CheckBoxs from '../common/CheckBoxs';
-import Select from 'react-select';
 import paramize from './Paramize';
+import Config from './Config';
 import PanelHeader from '../common/PanelHeader';
 
 export default class ReportContainer extends Component {
@@ -29,6 +29,10 @@ export default class ReportContainer extends Component {
     this.generateReportBtn = this.generateReportBtn.bind(this);
     this.generateReport = this.generateReport.bind(this);
     this.updateProcessQueue = this.updateProcessQueue.bind(this);
+    this.fileNameRule = this.fileNameRule.bind(this);
+    this.toggleConfigs = this.toggleConfigs.bind(this);
+    this.toggleConfigsAll = this.toggleConfigsAll.bind(this);
+    this.handleImgFormatChanged = this.handleImgFormatChanged.bind(this);
   }
 
   componentDidMount() {
@@ -69,7 +73,8 @@ export default class ReportContainer extends Component {
     const { splSettings, checkedAllSplSettings,
             rxnSettings, checkedAllRxnSettings,
             configs, checkedAllConfigs,
-            selectedObjs, archives, activeKey } = this.state;
+            selectedObjs, archives, activeKey,
+            imgFormat, fileName } = this.state;
     return (
       <Panel header={this.panelHeader()}
              bsStyle="default">
@@ -78,7 +83,16 @@ export default class ReportContainer extends Component {
               onSelect={this.selectTab}
               id="report-tabs" >
           <Tab eventKey={0} title={"Config"}>
-            { this.renderConfig() }
+            <Config
+              imgFormat={imgFormat}
+              fileName={fileName}
+              configs={configs}
+              checkedAllConfigs={checkedAllConfigs}
+              fileNameRule={this.fileNameRule}
+              toggleConfigs={this.toggleConfigs}
+              toggleConfigsAll={this.toggleConfigsAll}
+              handleImgFormatChanged={this.handleImgFormatChanged}
+            />
           </Tab>
 
           <Tab eventKey={1} title={"Sample Setting"}>
@@ -121,64 +135,6 @@ export default class ReportContainer extends Component {
     );
   }
 
-  renderConfig() {
-    const { imgFormat, configs, checkedAllConfigs } = this.state;
-    const imgFormatOpts = [
-      { label: 'PNG', value: 'png'},
-      { label: 'EPS', value: 'eps'},
-      { label: 'EMF', value: 'emf'}
-    ];
-    const EPSwarning = (imgFormat == 'eps')
-                    ? <p className="text-danger" style={{paddingTop: 12}}>
-                        WARNING: EPS format is not supported by Microsoft Office
-                      </p>
-                    : null;
-    return (
-      <div>
-        <br/>
-        <FormGroup>
-          <OverlayTrigger overlay={this.fileNameRule()}>
-            <ControlLabel>
-              File Name
-            </ControlLabel>
-          </OverlayTrigger>
-          <FormControl type="text"
-            value={this.state.fileName}
-            onChange={e => ReportActions.updateFileName(e.target.value)}
-          />
-        </FormGroup>
-
-        <FormGroup>
-          <ControlLabel>File description</ControlLabel>
-          <FormControl componentClass="textarea"
-           onChange={e => ReportActions.updateFileDescription(e.target.value)}
-           rows={2}
-          />
-        </FormGroup>
-
-        <CheckBoxs  items={configs}
-                    toggleCheckbox={this.toggleConfigs}
-                    toggleCheckAll={this.toggleConfigsAll}
-                    checkedAll={checkedAllConfigs} />
-
-        <Row>
-          <Col md={3} sm={8}>
-            <label>Images format</label>
-            <Select options={imgFormatOpts}
-                    value={imgFormat}
-                    clearable={false}
-                    style={{width: 100}}
-                    onChange={(e) => this.handleImgFormatChanged(e.value)}/>
-          </Col>
-          <Col md={9} sm={16}>
-            <label></label>
-            {EPSwarning}
-          </Col>
-        </Row>
-      </div>
-    );
-  }
-
   fileNameRule() {
     return (
       <Tooltip id="file-name-rule" >
@@ -213,7 +169,7 @@ export default class ReportContainer extends Component {
   }
 
   handleImgFormatChanged(e) {
-    ReportActions.updateImgFormat(e);
+    ReportActions.updateImgFormat(e.value);
   }
 
   selectTab(key) {

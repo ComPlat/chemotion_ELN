@@ -79,12 +79,12 @@ class ReportActions {
     };
   }
 
-  updateFileName(value) {
-    return value;
+  updateFileName(e) {
+    return e.target.value;
   }
 
-  updateFileDescription(value) {
-    return value;
+  updateFileDescription(e) {
+    return e.target.value;
   }
 
   updateActiveKey(key) {
