@@ -226,7 +226,7 @@ private
 
   # TODO: check that molecules are OK and remove this method. fix is in editor
   def sanitize_molfile
-    index = self.molfile.lines.index { |l| l.match /(M.+END+)/ }
+    index = self.molfile.lines.index { |l| l.match /(M +END)/ }
     self.molfile = self.molfile.lines[0..index].join if index.is_a?(Integer)
   end
 
