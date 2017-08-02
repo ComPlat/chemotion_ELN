@@ -32,6 +32,7 @@ group :development do
   gem 'flamegraph'
   gem 'stackprof'     # For Ruby MRI 2.1+
   gem 'fast_stack'    # For Ruby MRI 2.0
+  gem 'web-console', '~> 2.0'
 end
 
 gem 'pg'
@@ -117,8 +118,6 @@ gem 'countries'
 gem 'swot'
 
 group :development, :test do
-  gem 'web-console', '~> 2.0'
-
   # Rails better error page
   gem "binding_of_caller"
   gem 'better_errors' # allows to debug exception on backend from browser
