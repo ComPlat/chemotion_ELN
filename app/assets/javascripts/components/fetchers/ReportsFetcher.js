@@ -40,23 +40,6 @@ export default class ReportsFetcher {
     return promise;
   }
 
-  static fetchContent(ids) {
-    let promise = fetch(`/api/v1/reports/content?ids=${JSON.stringify(ids)}`, {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json()
-      }).then((json) => {
-        const samples = json.samples.map(s => new Sample(s));
-        const reactions = json.reactions.map(r => new Reaction(r));
-        return { samples, reactions };
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
-  }
-
   static create(report) {
     let promise = fetch('/api/v1/reports', {
       credentials: 'same-origin',
