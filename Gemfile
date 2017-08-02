@@ -65,8 +65,6 @@ gem 'grape-kaminari'
 
 gem 'pundit'
 
-gem 'awesome_print'
-
 # Report Generator
 gem 'rtf'
 gem 'sablon', git: 'https://github.com/ComPlat/sablon'
@@ -118,12 +116,12 @@ gem 'rqrcode'
 gem 'countries'
 gem 'swot'
 
-group :development do
-  gem 'web-console', '~> 2.0'
-  gem 'better_errors' # allows to debug exception on backend from browser
-end
-
 group :development, :test do
+  gem 'web-console', '~> 2.0'
+
+  # Rails better error page
+  gem "binding_of_caller"
+  gem 'better_errors' # allows to debug exception on backend from browser
 
   gem 'mailcatcher'
 
@@ -145,6 +143,15 @@ group :development, :test do
 
   # generate icon fonts
   gem 'fontcustom'
+
+  # nice debug print
+  gem 'awesome_print'
+
+  # RailsPanel Chrome extension
+  gem 'meta_request'
+
+  # Remove all assets requests
+  gem 'quiet_assets'
 
   gem 'capistrano', '3.4.1'
   gem 'capistrano-rvm'
