@@ -112,15 +112,9 @@ class App extends Component {
     return (
       <Grid fluid>
         <Row className="card-navigation">
-          <Navigation/>
+          <Navigation toggleCollectionTree={this.toggleCollectionTree} />
         </Row>
-        <Row className="card-content">
-          <div onClick={this.toggleCollectionTree}
-               style={{
-                 float: "left", cursor: "pointer", margin: "12px 3px 3px 3px"
-               }}>
-            <i className={this.state.indicatorClassName} />
-          </div>
+        <Row className="card-content container-fluid">
           {this.collectionTree()}
           {this.mainContent()}
         </Row>
