@@ -14,7 +14,8 @@ module Tagging
     taggables << self.wellplate if defined? self.wellplate
     taggables << self.screen if defined? self.screen
 
-    taggables.each do |taggable|
+    taggables.compact.each do |taggable|
+      next if taggable.nil?
       taggable.update_tag
     end
   end
