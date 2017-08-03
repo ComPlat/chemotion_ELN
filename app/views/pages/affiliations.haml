@@ -1,9 +1,8 @@
 .container
   %h2
     My past and present affiliations
-
-
   %br/
+
   %br/
   .jumbotron
     .row
@@ -13,6 +12,12 @@
         = f.label "from"
         = f.month_field :from_month, autofocus: true, class: 'form-control',
             id: 'from-month'
+        - if @new_aff.errors.any?
+          %div{id: 'error_explanation'}
+            %h2= pluralize(@new_aff.errors.count, "error") + ' prohibited this reference from being saved:'
+            %ul
+              - @new_aff.errors.full_messages.each do |message|
+                %li= message
       %br/
 
       .actions
@@ -29,14 +34,14 @@
             %th.col-xs-2 Group
             %th.col-xs-1 from
             %th.col-xs-1 to
-            %th.col-xs-1 
+            %th.col-xs-1
         %tbody
           - @affiliations.each.with_index do |aff, ind|
             %tr{id: "affiliation_#{aff.id}", class:'affiliation-line'}
-              %td= aff.country
-              %td= aff.organization
-              %td= aff.department
-              %td= aff.group
+              %td= aff.affiliation.country
+              %td= aff.affiliation.organization
+              %td= aff.affiliation.department
+              %td= aff.affiliation.group
               %td{id: "aff_#{aff.id}_from", class: 'affiliation_from'}= aff.from.strftime("%b-%Y") if aff.from
               %td{id: "aff_#{aff.id}_to",   class: 'affiliation_to'  }= aff.to.strftime("%b-%Y") if aff.to
               %td

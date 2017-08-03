@@ -7,7 +7,7 @@ class User < ActiveRecord::Base
 
   has_one :profile, dependent: :destroy
   has_one :container, :as => :containable
-  
+
   has_many :collections
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
@@ -26,8 +26,8 @@ class User < ActiveRecord::Base
   has_many :reports_users
   has_many :reports, through: :reports_users
 
-  has_many :user_affiliations
-  has_many :affiliations, through: :user_affiliations, :dependent => :destroy
+  has_many :user_affiliations, :dependent => :destroy
+  has_many :affiliations, through: :user_affiliations
 
   accepts_nested_attributes_for :affiliations
 
@@ -120,6 +120,12 @@ class User < ActiveRecord::Base
     SyncCollectionsUser.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
   end
 
+  def current_affiliations
+    affiliations.includes(:user_affiliations)
+                .where("user_affiliations.to IS NULL")
+                .order("user_affiliations.from DESC")
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -137,7 +143,6 @@ class User < ActiveRecord::Base
 end
 
 class Person < User
-
   has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
   has_many :groups, through: :users_groups
 

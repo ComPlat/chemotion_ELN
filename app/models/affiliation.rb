@@ -2,10 +2,19 @@
 
 class Affiliation < ActiveRecord::Base
   attr_accessor :from_month, :to_month
+  validates :organization, presence: true
   before_save :from_to
 
   has_many :user_affiliations
-  has_many :users, through: :user_affiliations, dependent: :destroy
+  has_many :users, through: :user_affiliations
+
+  def output_array_full
+    [group, department, organization, country]
+  end
+
+  def output_full
+    output_array_full.map{|e| !e.blank? && e || nil}.compact.join(', ')
+  end
 
   private
 
