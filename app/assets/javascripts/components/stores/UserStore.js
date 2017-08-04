@@ -21,7 +21,8 @@ class UserStore {
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchProfile: UserActions.fetchProfile,
       handleChangeLayout: UserActions.changeLayout,
-      handleSelectTab: UserActions.selectTab
+      handleSelectTab: UserActions.selectTab,
+      handleUpdateShowSampleExt: UserActions.updateShowSampleExt
     })
   }
 
@@ -50,6 +51,12 @@ class UserStore {
   handleChangeLayout(result) {
     this.waitFor(ElementStore.dispatchToken)
     this.state.currentUser.layout = result
+  }
+
+  handleUpdateShowSampleExt(result) {
+    if (this.state.profile && result >= 0) {
+      this.state.profile.show_external_name = result
+    }
   }
 
   handleSelectTab(tab) {

@@ -61,6 +61,15 @@ class UserActions {
     return  tab;
   }
 
+  updateShowSampleExt(show) {
+    return (dispatch) => { UsersFetcher.updateShowSampleExt(show)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
 }
 
 export default alt.createActions(UserActions);
