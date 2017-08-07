@@ -220,7 +220,10 @@ export default class CollectionSubtree extends React.Component {
 
     let style
     if (!visible) {
-      style = {display: "none"};
+      style = {
+        display: "none",
+        marginBottom: 0
+      };
     }
 
     return (
@@ -228,9 +231,9 @@ export default class CollectionSubtree extends React.Component {
         {this.takeOwnershipButton()}
         <div className={"title " + this.selectedCssClass()}
              onClick={this.handleClick}>
-          {label}
           {this.expandButton()}
           {this.synchronizedIcon()}
+          {label}
         </div>
         <ul style={style}>
           {this.subtrees()}
