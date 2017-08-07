@@ -16,6 +16,8 @@
   font-size: 14px;
   padding: 7px;
   margin-bottom: 1px;
+  position: relative;
+  overflow: auto;
 }
 
 .tree-view li {
