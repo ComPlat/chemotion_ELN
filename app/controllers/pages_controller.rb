@@ -1,8 +1,9 @@
 class PagesController < ApplicationController
   skip_before_action :authenticate_user!, only: [:home]
   before_action :fetch_affiliations, only: [:affiliations, :update_affiliations]
+  before_action :build_affiliation, only: [:affiliations]
 
-  def heme; end
+  def home; end
 
   def welcome; end
 
@@ -51,29 +52,30 @@ class PagesController < ApplicationController
   end
 
   def affiliations
-    @new_aff = current_user.affiliations.build
-    @new_aff.organization = Swot::school_name(current_user.email)
+
   end
 
   def create_affiliation
-    @affiliation = current_user.affiliations.build(affiliation_params)
+    @affiliation = Affiliation.find_or_create_by(sliced_affiliation_params)
+    current_user.user_affiliations.build(from: affiliation_params[:from_month],affiliation_id: @affiliation.id)
     if current_user.save!
-      flash['success'] = 'New affiliation saved!'
+      flash['success'] = 'New affiliation added!'
+      redirect_to pages_affiliations_path
     else
       flash.now['danger'] = 'Not saved! Please check input fields.'
+      render 'affiliations'
     end
-    redirect_to pages_affiliations_path
+    #redirect_to pages_affiliations_path
   end
 
   def update_affiliations
-    cu_user_affiliations = current_user.user_affiliations
     affiliations_params[:affiliations].each do |affiliation|
+      u_affiliation = @affiliations.find_by(id: affiliation[:id])
+      next unless u_affiliation
       if affiliation.delete(:_destroy).blank?
-        @affiliations.find(affiliation[:id]).update!(affiliation)
+        u_affiliation.update!(affiliation)
       else
-        cu_user_affiliations.find_by(
-          affiliation_id: affiliation[:id]
-        ).destroy!
+        u_affiliation.destroy!
       end
     end
     redirect_to pages_affiliations_path
@@ -81,8 +83,13 @@ class PagesController < ApplicationController
 
   private
 
+  def build_affiliation
+    @new_aff = current_user.affiliations.build
+    @new_aff.organization = Swot::school_name(current_user.email)
+  end
+
   def fetch_affiliations
-    @affiliations = current_user.affiliations.order(
+    @affiliations = current_user.user_affiliations.includes(:affiliation).order(
       to: :desc, from: :desc, created_at: :desc
     )
   end
@@ -93,6 +100,10 @@ class PagesController < ApplicationController
       :country, :organization, :department, :group,
       :from, :to, :from_month, :to_month
     )
+  end
+
+  def sliced_affiliation_params
+     affiliation_params.slice(:country, :organization, :department, :group)
   end
 
   def affiliations_params

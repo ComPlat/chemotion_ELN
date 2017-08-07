@@ -5,10 +5,10 @@
   = f.text_field :country, autofocus: true, class: 'form-control',
       id: 'country-select'
 .form-group.field
-  = f.label "Organization"
+  = f.label "Organization", class: "required"
   %br/
   = f.text_field :organization, autofocus: true, class: 'form-control',
-      id: 'organization-select'
+      id: 'organization-select', required: true
 .form-group.field
   = f.label "Department"
   %br/
