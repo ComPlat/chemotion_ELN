@@ -289,10 +289,8 @@ export default class ElementsTable extends React.Component {
         {this.renderEntries()}
         <div className="list-container-bottom">
           <Row>
-            <Col sm={12}>{this.numberOfResultsInput()}</Col>
-          </Row>
-          <Row>
-            <Col sm={12}>{this.pagination()}</Col>
+            <Col sm={6}>{this.pagination()}</Col>
+            <Col sm={6}>{this.numberOfResultsInput()}</Col>
           </Row>
         </div>
       </div>
