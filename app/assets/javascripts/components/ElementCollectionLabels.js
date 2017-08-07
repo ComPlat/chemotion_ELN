@@ -103,16 +103,16 @@ export default class ElementCollectionLabels extends React.Component {
 
     return (
       <div  style={{display: "inline-block"}} onClick={this.preventOnClick}>
-      <OverlayTrigger trigger="click" rootClose placement={placement}
-          overlay={collectionOverlay}>
-        <span className="collection-label" key={element.id}>
-          <Label>
-            <i className='fa fa-list'/>
-            {" " + labels.length} {" - "}
-            {total_shared_collections + " "} <i className="fa fa-share-alt"/>
-          </Label>
-        </span>
-      </OverlayTrigger>
+        <OverlayTrigger trigger="click" rootClose placement={placement}
+            overlay={collectionOverlay}>
+          <span className="collection-label" key={element.id}>
+            <Label>
+              <i className='fa fa-list'/>
+              {" " + labels.length} {" - "}
+              {total_shared_collections + " "} <i className="fa fa-share-alt"/>
+            </Label>
+          </span>
+        </OverlayTrigger>
       </div>
     )
   }

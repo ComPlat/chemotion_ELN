@@ -7,7 +7,7 @@ import {Tab, Button, Row, Col, Nav, NavItem,
 import ArrayUtils from './utils/ArrayUtils';
 
 import ElementsTable from './ElementsTable';
-import TabLayoutContainer from './TabLayoutContainer';
+import ElementsTableSettings from './ElementsTableSettings';
 
 import ElementStore from './stores/ElementStore';
 import UIStore from './stores/UIStore';
@@ -43,7 +43,6 @@ export default class List extends React.Component {
     this.onChangeUser = this.onChangeUser.bind(this)
     this.onChangeUI = this.onChangeUI.bind(this)
     this.initState = this.initState.bind(this)
-    this.changeLayout = this.changeLayout.bind(this)
     this.handleTabSelect = this.handleTabSelect.bind(this)
   }
 
@@ -115,21 +114,6 @@ export default class List extends React.Component {
   }
 
 
-  changeLayout() {
-    let {visible, hidden} = this.refs.tabLayoutContainer.state
-
-    let layout = {}
-
-    visible.forEach(function (value, index) {
-      layout[value] = (index + 1).toString()
-    })
-    hidden.forEach(function (value, index) {
-      if (value != "hidden") layout[value] = (- index - 1).toString()
-    })
-
-    UserActions.changeLayout(layout)
-  }
-
   handleTabSelect(tab) {
     UserActions.selectTab(tab);
 
@@ -163,18 +147,13 @@ export default class List extends React.Component {
   }
 
   render() {
-    let {visible, hidden, currentTab, treeView, totalCheckedElements} = this.state
+    let {
+      visible, hidden, currentTab, treeView, 
+      totalCheckedElements, 
+    } = this.state
 
     const {overview, showReport} = this.props
     const elementState = this.state
-
-    let popoverLayout = (
-      <Popover id="popover-layout" title="Tab Layout Editing"
-               style={{maxWidth: "none"}}>
-        <TabLayoutContainer visible={visible} hidden={hidden}
-                            ref="tabLayoutContainer"/>
-      </Popover>
-    )
 
     let navItems = []
     let tabContents = []
@@ -204,21 +183,16 @@ export default class List extends React.Component {
     }
 
     return (
-      <Tab.Container id="tabList" defaultActiveKey={0} activeKey={currentTab}
-                     onSelect={(e) => this.handleTabSelect(e)}>
+      <Tab.Container  id="tabList" defaultActiveKey={0} activeKey={currentTab}
+                      onSelect={(e) => this.handleTabSelect(e)}>
         <Row className="clearfix">
           <Col sm={12}>
             <Nav bsStyle="tabs">
               {navItems}
               &nbsp;&nbsp;&nbsp;
-              <OverlayTrigger trigger="click" placement="bottom"
-                              overlay={popoverLayout} rootClose
-                              onExit={() => this.changeLayout()}>
-                <Button bsSize="xsmall" bsStyle="danger"
-                        style={{marginTop: "9px"}}>
-                  <i className="fa fa-cog"></i>
-                </Button>
-              </OverlayTrigger>
+              <ElementsTableSettings
+                visible={visible} hidden={hidden}
+                ref="elementsTableSettings"/>
             </Nav>
           </Col>
           <Col sm={12}>

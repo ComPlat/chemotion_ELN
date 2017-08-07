@@ -45,6 +45,20 @@ module Chemotion
 
       end
 
+      namespace :profile do
+        desc "Update profile"
+
+        post do
+          p = current_user.profile
+          params.keys.each do |attr|
+            p[attr] = params[attr]
+          end
+
+          current_user.save!
+        end
+
+      end
+
     end
 
     resource :groups do

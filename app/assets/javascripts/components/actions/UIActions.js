@@ -46,8 +46,8 @@ class UIActions {
     return  params;
   }
 
-  toggleShowPreviews() {
-    return  null;
+  toggleShowPreviews(show) {
+    return  show;
   }
 
   checkElement(params) {

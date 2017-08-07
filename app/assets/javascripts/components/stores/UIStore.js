@@ -51,6 +51,7 @@ class UIStore {
         currentId: null,
         page: 1,
       },
+
       showPreviews: true,
       showAdvancedSearch: false,
       number_of_results: 15,
@@ -156,8 +157,9 @@ class UIStore {
     }
   }
 
-  handleToggleShowPreviews() {
-    this.state.showPreviews = !this.state.showPreviews;
+  handleToggleShowPreviews(show) {
+    if (show == null) show = !this.state.showPreviews;
+    this.state.showPreviews = show;
   }
 
   handleToggleAdvancedSearch(show) {

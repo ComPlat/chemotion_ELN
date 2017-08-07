@@ -66,4 +66,25 @@ export default class UsersFetcher {
 
     return promise;
   }
+
+  static updateShowSampleExt(show) {
+    let promise = fetch('/api/v1/users/profile/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({show_external_name: show})
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      let result = json ? show : -1;
+      return result;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }
