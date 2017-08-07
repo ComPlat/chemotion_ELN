@@ -5,7 +5,7 @@ module Chemotion
 
       desc "Return all users"
       get do
-        User.all
+        User.where(type: %w(Person Group)).all
       end
 
       desc "Return current_user"
