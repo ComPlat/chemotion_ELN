@@ -23,7 +23,7 @@ gem 'jbuilder', '~> 2.0'
 gem 'sdoc', '~> 0.4.0', group: :doc
 
 group :development do
-  gem 'rack-mini-profiler'
+  gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
   # For memory profiling (requires Ruby MRI 2.1+)
   gem 'memory_profiler'

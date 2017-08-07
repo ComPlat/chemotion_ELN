@@ -31,6 +31,7 @@ export default class Navigation extends React.Component {
     }
     this.onChange = this.onChange.bind(this)
     this.onUIChange = this.onUIChange.bind(this)
+    this.toggleCollectionTree = this.toggleCollectionTree.bind(this)
   }
 
   componentDidMount() {
@@ -61,6 +62,10 @@ export default class Navigation extends React.Component {
     });
   }
 
+  toggleCollectionTree() {
+    this.props.toggleCollectionTree();
+  }
+
   token(){
     return DocumentHelper.getMetaContent("csrf-token")
   }
@@ -86,15 +91,25 @@ export default class Navigation extends React.Component {
       uiState.currentCollection.id, 1, uiState.isSync)
   }
 
+  navHeader() {
+    return (
+      <Navbar.Header className="collec-tree">
+        <Navbar.Text style={{cursor: "pointer"}}>
+          <i  className="fa-list" style={{fontStyle: "normal"}}
+              onClick={this.toggleCollectionTree} />
+        </Navbar.Text>
+        <Navbar.Text />
+        <NavHead />
+      </Navbar.Header>
+    )
+  }
 
   render() {
     const { modalProps, showAdvancedSearch } = this.state;
 
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
-          <Navbar.Header>
-            <NavHead/>
-          </Navbar.Header>
+          {this.navHeader()}
           <Nav navbar className='navbar-form'>
             <Search />
             <ManagingActions updateModalProps={this.updateModalProps.bind(this)} />
@@ -107,11 +122,7 @@ export default class Navigation extends React.Component {
             show={showAdvancedSearch}/>
         </Navbar>
       : <Navbar fluid className='navbar-custom'>
-          <Navbar.Header>
-            <Navbar.Brand>
-              <NavHead/>
-            </Navbar.Brand>
-          </Navbar.Header>
+          {this.navHeader()}
           <Nav navbar className='navbar-form'>
             <Search />
           </Nav>
