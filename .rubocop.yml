@@ -1,0 +1,17 @@
+Style/BlockDelimiters:
+  EnforcedStyle: semantic
+  FunctionalMethods:
+    - before
+    - let
+    - let!
+    - subject
+    - watch
+    - expect
+
+Metrics/ModuleLength:
+  Exclude:
+    - "**/*_spec.rb"
+
+Metrics/BlockLength:
+  Exclude:
+    - "**/*_spec.rb"
