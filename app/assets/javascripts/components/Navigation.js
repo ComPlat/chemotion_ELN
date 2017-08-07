@@ -95,7 +95,7 @@ export default class Navigation extends React.Component {
     return (
       <Navbar.Header className="collec-tree">
         <Navbar.Text style={{cursor: "pointer"}}>
-          <i  className="fa-list" style={{fontStyle: "normal"}}
+          <i  className="fa fa-list" style={{fontStyle: "normal"}}
               onClick={this.toggleCollectionTree} />
         </Navbar.Text>
         <Navbar.Text />
