@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, OverlayTrigger} from 'react-bootstrap';
+import {Glyphicon, Label, Button, OverlayTrigger} from 'react-bootstrap';
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import CollectionStore from './stores/CollectionStore';
@@ -19,7 +19,10 @@ export default class CollectionSubtree extends React.Component {
       root: props.root,
       visible: false
     }
+
     this.onChange = this.onChange.bind(this)
+    this.toggleExpansion = this.toggleExpansion.bind(this)
+    this.handleClick = this.handleClick.bind(this)
   }
 
   isVisible(node, uiState) {
@@ -106,14 +109,12 @@ export default class CollectionSubtree extends React.Component {
 
 
   expandButton() {
-    let label = this.state.visible ? '-' : '+';
+    let icon = this.state.visible ? 'minus' : 'plus';
 
-    if(this.hasChildren()) {
+    if (this.hasChildren()) {
       return (
-        <Button bsStyle="success" bsSize="xsmall" style={{width: "20px"}}
-                onClick={this.toggleExpansion.bind(this)}>
-          {label}
-        </Button>
+        <Glyphicon glyph={icon} style={{float: "right", marginLeft: "5px"}}
+          onClick={this.toggleExpansion}/>
       )
     }
   }
@@ -205,7 +206,7 @@ export default class CollectionSubtree extends React.Component {
     return(
       sharedUsers && sharedUsers.length > 0
         ? <OverlayTrigger placement="bottom" overlay={UserInfos({users:sharedUsers})}>
-            <i className="fa fa-share-alt"></i>
+            <i className="fa fa-share-alt" style={{float: "right"}}></i>
           </OverlayTrigger>
         : null
     )
@@ -226,9 +227,9 @@ export default class CollectionSubtree extends React.Component {
       <div className="tree-view" key={root.id}>
         {this.takeOwnershipButton()}
         <div className={"title " + this.selectedCssClass()}
-             onClick={this.handleClick.bind(this)}>
-          {this.expandButton()}
+             onClick={this.handleClick}>
           {label}
+          {this.expandButton()}
           {this.synchronizedIcon()}
         </div>
         <ul style={style}>
