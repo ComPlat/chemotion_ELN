@@ -19,7 +19,12 @@ export default class ScanCodeButton extends React.Component {
       scanInfo: null,
       checkedIds: UIStore.getState().sample.checkedIds
     }
+
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.open = this.open.bind(this);
+    this.close = this.close.bind(this);
+    this.startBarcodeScan = this.startBarcodeScan.bind(this);
+    this.startQrCodeScan = this.startQrCodeScan.bind(this);
   }
 
   onUIStoreChange(state) {
@@ -145,7 +150,7 @@ export default class ScanCodeButton extends React.Component {
   scanModal() {
     if(this.state.showModal == true) {
       return (
-        <Modal show={this.state.showModal} onHide={() => this.close()}>
+        <Modal show={this.state.showModal} onHide={this.close}>
           <Modal.Header closeButton>
             <Modal.Title>Scan barcode or QR code</Modal.Title>
           </Modal.Header>
@@ -170,8 +175,8 @@ export default class ScanCodeButton extends React.Component {
             {this.scanAlert()}
           </Modal.Body>
           <Modal.Footer>
-            <Button onClick={() => this.startBarcodeScan()}>Start barcode scan</Button>
-            <Button onClick={() => this.startQrCodeScan()}>Start QR code scan</Button>
+            <Button onClick={this.startBarcodeScan}>Start barcode scan</Button>
+            <Button onClick={this.startQrCodeScan}>Start QR code scan</Button>
           </Modal.Footer>
         </Modal>
       )
@@ -197,47 +202,43 @@ export default class ScanCodeButton extends React.Component {
   }
 
   render() {
-    const tooltip = (
-      <Tooltip id="scan_code_button">Scan barcode or QR code</Tooltip>
-    )
     let ids = this.state.checkedIds.toArray()
     let disabledPrint = !(ids.length > 0)
     let contents_uri = `api/v1/code_logs/print_codes?element_type=sample&ids[]=${ids}`
     let menuItems = [
-        {
-          key: 'smallCode',
-          contents: `${contents_uri}&size=small`,
-          text: 'Small Label',
-        },
-       {
-         key: 'bigCode',
-         contents: `${contents_uri}&size=big`,
-         text: 'Large Label',
-       },
-     ]
+      {
+        key: 'smallCode',
+        contents: `${contents_uri}&size=small`,
+        text: 'Small Label',
+      },
+      {
+        key: 'bigCode',
+        contents: `${contents_uri}&size=big`,
+        text: 'Large Label',
+      },
+    ]
+
+    let title = (
+      <span className="fa-stack" style={{top: -4}} >
+        <i className="fa fa-barcode fa-stack-1x"/>
+        <i className="fa fa-search fa-stack-1x" style={{ left: 7}}/>
+      </span>
+    )
 
     return (
       <div>
-        <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <SplitButton id="search-code-split-button" style={{height: 33}}
-            bsStyle="default"
-            title={<span className="fa-stack" style={{ top: -5}} >
-                          <i className="fa fa-barcode fa-stack-1x"/>
-                          <i className="fa fa-search fa-stack-1x"
-                             style={{ left: 7, fontSize: "1.em"}}/>
-                        </span>}
-            onClick={() => this.open()}>
-              {menuItems.map(e=>
-                <MenuItem key={e.key}
-                  disabled={disabledPrint}
-                  onSelect={(eventKey,event) => {event.stopPropagation();
-                    Utils.downloadFile({contents: e.contents})}}>
-                  {e.text}
-                </MenuItem>
-              )}
-          </SplitButton>
+        <SplitButton id="search-code-split-button" bsStyle="default"
+          title={title} onClick={this.open} style={{height: "34px"}}>
+            {menuItems.map(e=>
+              <MenuItem key={e.key}
+                disabled={disabledPrint}
+                onSelect={(eventKey,event) => {event.stopPropagation();
+                  Utils.downloadFile({contents: e.contents})}}>
+                {e.text}
+              </MenuItem>
+            )}
+        </SplitButton>
 
-        </OverlayTrigger>
         {this.scanModal()}
       </div>
     )
