@@ -5,5 +5,5 @@
   =label_tag 'name abbreviation', nil, class: 'small_label'
   %input{ id:"name_abbreviation", name:"group_param[name_abbreviation]", size:"10",type:"text",maxlength:"5",placeholder:"AK-JM"}
   =submit_tag 'Create new Group'
-
+  = hidden_field_tag("group_param[users][]",current_user.id)
   %br/
