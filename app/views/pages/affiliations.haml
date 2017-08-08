@@ -3,21 +3,18 @@
     My past and present affiliations
   %br/
 
+  - flash.each do |key, value|
+    %div{class: "alert alert-warning"}= value
+
   %br/
   .jumbotron
     .row
     = form_for @new_aff, method: 'patch', url: pages_create_affiliation_path do |f|
-      = render "devise/shared/affiliations", f: f
+      = render "devise/shared/affiliations", f: f, disabled: false
       .form-group.field
         = f.label "from"
         = f.month_field :from_month, autofocus: true, class: 'form-control',
             id: 'from-month'
-        - if @new_aff.errors.any?
-          %div{id: 'error_explanation'}
-            %h2= pluralize(@new_aff.errors.count, "error") + ' prohibited this reference from being saved:'
-            %ul
-              - @new_aff.errors.full_messages.each do |message|
-                %li= message
       %br/
 
       .actions
