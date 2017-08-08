@@ -37,7 +37,7 @@ class User < ActiveRecord::Base
     message: "can be alphanumeric, middle '_' and '-' are allowed,"+
     " but leading digit, or trailing '-' and '_' are not."}
   validate :name_abbreviation_length
-
+# validate :academic_email
   after_create :create_chemotion_public_collection, :create_all_collection,
                :has_profile
 
@@ -53,6 +53,12 @@ class User < ActiveRecord::Base
       na.blank? || !na.length.between?(2, 3)  && errors.add(:name_abbreviation,
         "has to be 2 to 3 characters long")
     end
+  end
+
+  def academic_email
+    Swot::is_academic?(email) || errors.add(
+      :email, 'not from an academic organization'
+    )
   end
 
   def owns_collections?(collections)

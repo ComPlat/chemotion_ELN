@@ -1,5 +1,7 @@
 .container
   %h2 Log in
+  - flash.each do |key, value|
+    %div{class: "alert alert-warning"}= value
   = form_for(resource, as: resource_name, url: session_path(resource_name)) do |f|
     .form-group.field
       = f.label :email
@@ -16,5 +18,5 @@
     .form-group.actions
       = f.submit "Log in", class: 'btn btn-primary'
   = render "devise/shared/links"
-  
+
   = link_to "Back", root_path
