@@ -151,7 +151,9 @@ class UIStore {
 
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = Immutable.List();
-      this.state[type].checkedIds = this.state[type].checkedIds.concat(curPageIds)
+      let checked = this.state[type].checkedIds.concat(curPageIds);
+      // Remove duplicates
+      this.state[type].checkedIds = checked.toSet().toList();
     } else {
       this.handleUncheckAllElements(params)
     }
