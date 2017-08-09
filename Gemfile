@@ -116,6 +116,8 @@ gem 'rqrcode'
 
 gem 'countries'
 gem 'swot'
+gem 'gman'
+gem 'ruby-mailchecker'
 
 group :development, :test do
   # Rails better error page
