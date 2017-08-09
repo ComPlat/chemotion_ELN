@@ -38,6 +38,7 @@ class User < ActiveRecord::Base
     " but leading digit, or trailing '-' and '_' are not."}
   validate :name_abbreviation_length
 # validate :academic_email
+  validate :mail_checker
   after_create :create_chemotion_public_collection, :create_all_collection,
                :has_profile
 
@@ -58,6 +59,12 @@ class User < ActiveRecord::Base
   def academic_email
     Swot::is_academic?(email) || errors.add(
       :email, 'not from an academic organization'
+    )
+  end
+
+  def mail_checker
+    MailChecker.valid?(email) || errors.add(
+      :email, 'from throwable email providers not accepted'
     )
   end
 
