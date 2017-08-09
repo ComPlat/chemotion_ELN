@@ -46,6 +46,14 @@ export default class List extends React.Component {
     this.handleTabSelect = this.handleTabSelect.bind(this)
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    const prevP = this.props
+    const nextP = nextProps
+    const prevS = this.state
+    const nextS = nextState
+    return !_.isEqual(prevP, nextP) || !_.isEqual(prevS, nextS)
+  }
+
   componentDidMount() {
     ElementStore.listen(this.onChange);
     UserStore.listen(this.onChangeUser);
@@ -148,8 +156,8 @@ export default class List extends React.Component {
 
   render() {
     let {
-      visible, hidden, currentTab, treeView, 
-      totalCheckedElements, 
+      visible, hidden, currentTab, treeView,
+      totalCheckedElements,
     } = this.state
 
     const {overview, showReport} = this.props
@@ -184,7 +192,7 @@ export default class List extends React.Component {
 
     return (
       <Tab.Container  id="tabList" defaultActiveKey={0} activeKey={currentTab}
-                      onSelect={(e) => this.handleTabSelect(e)}>
+                      onSelect={this.handleTabSelect}>
         <Row className="clearfix">
           <Col sm={12}>
             <Nav bsStyle="tabs">
