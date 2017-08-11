@@ -2,8 +2,8 @@ import 'whatwg-fetch';
 
 // TODO: SamplesFetcher also updates Samples and so on...naming?
 export default class UsersFetcher {
-  static fetchUsers() {
-    let promise = fetch('/api/v1/users.json', {
+  static fetchUsersByName(name) {
+    let promise = fetch(`/api/v1/users/name.json?name=${name}`, {
         credentials: 'same-origin'
       })
       .then((response) => {

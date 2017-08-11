@@ -1,21 +1,11 @@
 import alt from '../alt';
 import UsersFetcher from '../fetchers/UsersFetcher';
-import cookie from 'react-cookie';
+import cookie from 'react-cookie'
 
 import DocumentHelper from '../utils/DocumentHelper';
 
 
 class UserActions {
-
-  fetchUsers() {
-    return (dispatch) => { UsersFetcher.fetchUsers()
-      .then((result) => {
-        dispatch(result.users);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
   fetchCurrentUser() {
     return (dispatch) => { UsersFetcher.fetchCurrentUser()
       .then((result) => {

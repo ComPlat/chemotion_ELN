@@ -9,7 +9,6 @@ import ElementStore from './ElementStore';
 class UserStore {
   constructor() {
     this.state = {
-      users: [],
       currentUser: null,
       profile: null,
       currentTab: 0,
@@ -17,17 +16,12 @@ class UserStore {
     };
 
     this.bindListeners({
-      handleFetchUsers: UserActions.fetchUsers,
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchProfile: UserActions.fetchProfile,
       handleChangeLayout: UserActions.changeLayout,
       handleSelectTab: UserActions.selectTab,
       handleUpdateShowSampleExt: UserActions.updateShowSampleExt
     })
-  }
-
-  handleFetchUsers(result) {
-    this.state.users = result;
   }
 
   handleFetchCurrentUser(result) {

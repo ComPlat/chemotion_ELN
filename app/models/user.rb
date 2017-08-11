@@ -41,6 +41,11 @@ class User < ActiveRecord::Base
   after_create :create_chemotion_public_collection, :create_all_collection,
                :has_profile
 
+  scope :by_name, ->(query) {
+    where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
+          "#{query.downcase}%", "#{query.downcase}%")
+  }
+
   def name_abbreviation_length
     na = name_abbreviation
     if type == 'Group'
