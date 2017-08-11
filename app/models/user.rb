@@ -134,9 +134,12 @@ class User < ActiveRecord::Base
   end
 
   def current_affiliations
-    affiliations.includes(:user_affiliations)
-                .where("user_affiliations.to IS NULL")
-                .order("user_affiliations.from DESC")
+    Affiliation.joins(
+     "INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id"
+    ).where(
+      "(ua.user_id = ?) and (ua.deleted_at ISNULL) \
+      and (ua.to ISNULL or ua.to > ?)", id, Time.now
+    ).order("ua.from DESC")
   end
 
   private
