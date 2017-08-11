@@ -4,12 +4,15 @@ class CollectorHelper
   def initialize(from, cc = nil)
     if cc
       @sender = Device.find_by email: from
+      @sender = Device.find_by email: from.downcase unless @sender
       @recipient = User.find_by email: cc
+      @recipient = User.find_by email: cc.downcase unless @recipient
       if @sender && @recipient
         prepare_containers
       end
     else
       @sender = User.find_by email: from
+      @sender = User.find_by email: from.downcase unless @sender
       if @sender
         @recipient = @sender
         prepare_containers
