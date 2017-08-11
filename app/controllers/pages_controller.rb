@@ -1,7 +1,7 @@
 class PagesController < ApplicationController
   skip_before_action :authenticate_user!, only: [:home]
   before_action :fetch_affiliations, only: [:affiliations, :update_affiliations]
-  before_action :build_affiliation, only: [:affiliations]
+  before_action :build_affiliation, only: [:affiliations, :update_affiliations]
 
   def home; end
 
@@ -57,7 +57,9 @@ class PagesController < ApplicationController
 
   def create_affiliation
     @affiliation = Affiliation.find_or_create_by(sliced_affiliation_params)
-    current_user.user_affiliations.build(from: affiliation_params[:from_month],affiliation_id: @affiliation.id)
+    current_user.user_affiliations.build(
+      from: affiliation_params[:from_month],affiliation_id: @affiliation.id
+    )
     if current_user.save!
       flash['success'] = 'New affiliation added!'
       redirect_to pages_affiliations_path
@@ -73,7 +75,11 @@ class PagesController < ApplicationController
       u_affiliation = @affiliations.find_by(id: affiliation[:id])
       next unless u_affiliation
       if affiliation.delete(:_destroy).blank?
-        u_affiliation.update!(affiliation)
+        unless u_affiliation.update(affiliation)
+          messages = u_affiliation.errors.messages[:to]
+          flash.now['danger'] = messages && messages[0]
+          return render 'affiliations'
+        end
       else
         u_affiliation.destroy!
       end

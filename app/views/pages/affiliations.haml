@@ -11,10 +11,7 @@
     .row
     = form_for @new_aff, method: 'patch', url: pages_create_affiliation_path do |f|
       = render "devise/shared/affiliations", f: f, disabled: false
-      .form-group.field
-        = f.label "from"
-        = f.month_field :from_month, autofocus: true, class: 'form-control',
-            id: 'from-month'
+
       %br/
 
       .actions

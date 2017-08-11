@@ -4,7 +4,7 @@ class UserAffiliation < ActiveRecord::Base
   belongs_to :affiliation
 
   attr_accessor :from_month, :to_month
-  before_save :from_to
+  validate :from_to, on: :update
 
   private
 
@@ -14,6 +14,9 @@ class UserAffiliation < ActiveRecord::Base
       if date && date.match(/-?\d{1,4}-\d{2}/)
         self[month] = Date.strptime(date, '%Y-%m')
       end
+    end
+    if to && from && to < from
+      errors.add(:to, 'to-date should be later than from-date')
     end
   end
 end
