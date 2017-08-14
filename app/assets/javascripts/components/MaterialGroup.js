@@ -12,10 +12,12 @@ export default class MaterialGroup extends Component {
 
   render() {
     const { materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,
-            reaction, addDefaultSolvent } = this.props;
+            reaction, addDefaultSolvent, headIndex } = this.props;
     let contents = [];
+    let index = headIndex;
 
     materials.map((material, key) => {
+      index += 1;
       contents.push(
         (<Material
           reaction={reaction}
@@ -24,7 +26,8 @@ export default class MaterialGroup extends Component {
           material={material}
           materialGroup={materialGroup}
           showLoadingColumn={showLoadingColumn}
-          deleteMaterial={material => deleteMaterial(material, materialGroup)} />)
+          deleteMaterial={material => deleteMaterial(material, materialGroup)}
+          index={index} />)
       );
 
       if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
@@ -32,7 +35,7 @@ export default class MaterialGroup extends Component {
           (<MaterialCalculations
             material={material}
             materialGroup={materialGroup}
-            />)
+            index={index} />)
         );
     })
 

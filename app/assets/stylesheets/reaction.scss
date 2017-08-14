@@ -39,3 +39,13 @@ table.reaction-scheme-solvent {
 .bs-btnTxt--small {
   font-size: 11px !important;
 }
+
+.inline-inside {
+  div {
+    display: inline-block;
+  }
+
+  p {
+    margin: 0;
+  }
+}
