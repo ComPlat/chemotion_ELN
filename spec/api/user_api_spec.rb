@@ -25,27 +25,40 @@ describe Chemotion::UserAPI do
     let!(:p1)  { create(:person, first_name: 'Jane', last_name: 'Doe') }
     let!(:p2)  { create(:person, first_name: 'John', last_name: 'Doe') }
     let!(:p3)  { create(:person, first_name: 'Jin',  last_name: 'Doe') }
-    let!(:g1)  { create(:group) }
-    let!(:g2)  { create(:group, admins: [p1], users: [p1, p2]) }
-    let!(:g3)  { create(:group, admins: [p1]) }
-    let!(:g4)  { create(:group, admins: [p2], users: [p2, p3]) }
+    let!(:g1)  { create(:group, first_name: 'Doe', last_name: 'Group Test') }
+    let!(:g2)  {
+      create(
+        :group, admins: [p1], users: [p1, p2],
+        first_name: 'Doe', last_name: 'Group Test'
+      )
+    }
+    let!(:g3)  {
+      create(:group, admins: [p1], first_name: 'Doe', last_name: 'Group Test')
+    }
+    let!(:g4)  {
+      create(
+        :group, admins: [p2], users: [p2, p3],
+        first_name: 'Doe', last_name: 'Group Test'
+      )
+    }
 
     before do
       allow_any_instance_of(WardenAuthentication).to receive(:current_user)
         .and_return(p1)
     end
 
-    describe 'GET /api/v1/users/' do
+    describe 'GET /api/v1/users/:name' do
       before do
-        get '/api/v1/users/'
+        get "/api/v1/users/name.json?name=#{p1.last_name}"
       end
-      it 'Returns all users' do
+      it 'Returns all matched user names' do
         expect(
           JSON.parse(response.body)['users'].collect do |e|
-            [e['id'], e['initials']]
+            [e['id'], e['abb']]
           end
         ).to match_array(
-          User.where(type: %w(Person Group)).pluck(:id, :name_abbreviation)
+          User.by_name(p1.last_name).where(type: %w(Person Group)).limit(3)
+              .pluck(:id, :name_abbreviation)
         )
 
         # expect(
