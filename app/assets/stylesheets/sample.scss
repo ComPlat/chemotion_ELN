@@ -123,20 +123,23 @@
         // font-size: 12px;
         display: inline-flex;
         margin-left: 30px;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        // overflow: hidden;
+        // text-overflow: ellipsis;
         // white-space: nowrap;
         // width: 80%;
       }
-
+      
       .ql-editor {
         font-size: 14px;
-        // margin: -14px 0 0 50px;
-        overflow: hidden;
         padding: 0;
-        text-overflow: ellipsis;
-        // white-space: nowrap;
-        // width: 80%;
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        p {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
     }
   }
