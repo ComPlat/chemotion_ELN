@@ -1,11 +1,16 @@
 import React from 'react';
 import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 import Select from 'react-select';
-import UIStore from '../stores/UIStore';
+
+import {debounce} from 'lodash';
+
+import SharingShortcuts from '../sharing/SharingShortcuts';
+
 import CollectionActions from '../actions/CollectionActions';
 import UserActions from '../actions/UserActions';
+import UIStore from '../stores/UIStore';
 import UserStore from '../stores/UserStore';
-import SharingShortcuts from '../sharing/SharingShortcuts';
+import UsersFetcher from '../fetchers/UsersFetcher';
 
 export default class ManagingModalSharing extends React.Component {
 
@@ -13,10 +18,9 @@ export default class ManagingModalSharing extends React.Component {
     super(props);
 
     // TODO update for new check/uncheck info
-    let {currentUser, users} = UserStore.getState();
+    let {currentUser} = UserStore.getState();
     this.state = {
       currentUser: currentUser,
-      users: users,
       role:'Pick a sharing role',
       permissionLevel: props.permissionLevel,
       sampleDetailLevel: props.sampleDetailLevel,
@@ -25,13 +29,19 @@ export default class ManagingModalSharing extends React.Component {
       screenDetailLevel: props.screenDetailLevel,
       selectedUsers: null,
     }
-    this.onUserChange = this.onUserChange.bind(this)
+
+    this.onUserChange = this.onUserChange.bind(this);
+    this.handleSelectUser = this.handleSelectUser.bind(this);
+    this.handleSharing = this.handleSharing.bind(this);
+    this.promptTextCreator = this.promptTextCreator.bind(this);
+    
+    // this.loadUserByName = debounce(this.loadUserByName.bind(this), 300);
+    this.loadUserByName = this.loadUserByName.bind(this);
   }
 
   componentDidMount() {
     UserStore.listen(this.onUserChange);
     UserActions.fetchCurrentUser();
-    UserActions.fetchUsers();
   }
 
   componentWillUnmount() {
@@ -40,8 +50,7 @@ export default class ManagingModalSharing extends React.Component {
 
   onUserChange(state) {
     this.setState({
-      currentUser: state.currentUser,
-      users: state.users
+      currentUser: state.currentUser
     })
   }
 
@@ -225,26 +234,55 @@ export default class ManagingModalSharing extends React.Component {
     this.setState(state)
   }
 
+  handleSelectUser(val) {
+    if (val) {
+      this.setState({selectedUsers: val})
+    }
+  }
+
+  loadUserByName(input) {
+    let {selectedUsers} = this.state;
+
+    if (!input) {
+      return Promise.resolve({ options: [] });
+    }
+
+    return UsersFetcher.fetchUsersByName(input)
+      .then((res) => {
+        let usersEntries = res.users.filter(u => u.id != this.state.currentUser.id)
+          .map(u => {
+            return {
+              value: u.id,
+              name: u.name,
+              label: u.name + " (" + u.abb + ")"
+            }
+          });
+        return {options: usersEntries};
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+  }
+
+  promptTextCreator(label) {
+    return ("Share with \"" + label + "\"");
+  }
+
   selectUsers() {
-    let style = this.props.selectUsers ? {} : {display: 'none'}
-    let {users,selectedUsers} = this.state
+    let style = this.props.selectUsers ? {} : {display: 'none'};
+    let {selectedUsers} = this.state;
 
-    let usersEntries = users.filter(u => u.id != this.state.currentUser.id)
-      .map( u => {return { value: u.id, label: u.name };});
-
-      return(
-        <div style={style}>
-          <b>Select Users to share with</b>
-          <Select  name='users' multi={true}
-            onChange={e=>{
-              if (e) {this.setState({selectedUsers: e.map(o => o.value)})}
-            }}
-            options={usersEntries}
-            value={selectedUsers}
-          />
-        </div>
-      )
-
+    return(
+      <div style={style}>
+        <ControlLabel>Select Users to share with</ControlLabel>
+        <Select.AsyncCreatable multi={true} isLoading={true}
+          backspaceRemoves={true} value={selectedUsers}
+          valueKey="value" labelKey="label" matchProp="name"
+          promptTextCreator={this.promptTextCreator}
+          loadOptions={this.loadUserByName}
+          onChange={this.handleSelectUser}
+        />
+      </div>
+    )
   }
 
   render() {
@@ -320,7 +358,7 @@ export default class ManagingModalSharing extends React.Component {
         </FormGroup>
         {this.selectUsers()}
         <br/>
-        <Button bsStyle="warning" onClick={()=>this.handleSharing()}>{this.props.collAction} Shared Collection</Button>
+        <Button bsStyle="warning" onClick={this.handleSharing}>{this.props.collAction} Shared Collection</Button>
       </div>
     )
   }

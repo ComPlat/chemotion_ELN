@@ -2,9 +2,24 @@
 module Chemotion
   class UserAPI < Grape::API
     resource :users do
-      desc 'Return all users'
-      get do
-        User.where(type: %w(Person Group)).all
+
+      desc 'Find top 3 matched user names'
+      params do
+        requires :name, type: String
+      end
+      get 'name' do
+        unless params[:name].nil? || params[:name].empty?
+          User.where(type: %w(Person Group)).by_name(params[:name]).limit(3)
+              .map do |x|
+            {
+              name: x.first_name + " " + x.last_name,
+              id: x.id,
+              abb: x.name_abbreviation
+            }
+          end
+        else
+          {users: []}
+        end
       end
 
       desc 'Return current_user'
