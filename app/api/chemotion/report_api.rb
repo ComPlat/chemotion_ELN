@@ -4,8 +4,8 @@ module Chemotion
       def hashize(inputs)
         output = {}
         inputs.each do |inp|
-          key = inp["text"].to_sym
-          val = inp["checked"]
+          key = inp['text'].to_sym
+          val = inp['checked']
           output[key] = val
         end
         output
@@ -16,7 +16,7 @@ module Chemotion
           diagram: true,
           collection: true,
           analyses: true,
-          reaction_description: true,
+          reaction_description: true
         }
       end
 
@@ -29,20 +29,20 @@ module Chemotion
           tlc: true,
           observation: true,
           analysis: true,
-          literature: true,
+          literature: true
         }
       end
 
       def all_configs
         {
           page_break: true,
-          whole_diagram: true,
+          whole_diagram: true
         }
       end
 
       def merge(contents, spl_settings, rxn_settings, configs)
         {
-          date: Time.now.strftime("%d.%m.%Y"),
+          date: Time.now.strftime('%d.%m.%Y'),
           author: "#{current_user.first_name} #{current_user.last_name}",
           spl_settings: spl_settings,
           rxn_settings: rxn_settings,
@@ -52,93 +52,111 @@ module Chemotion
       end
 
       def excluded_field
-        [
-          "id", "molecule_id", "created_by", "deleted_at",
-          "user_id", "fingerprint_id", "sample_svg_file", "xref"
-        ]
+        %w(
+          id molecule_id created_by deleted_at
+          user_id fingerprint_id sample_svg_file xref
+        )
       end
 
       def included_field
-        ["molecule.cano_smiles", "molecule.sum_formular",
-          "molecule.inchistring", "molecule.molecular_weight"]
+        %w(
+          molecule.cano_smiles molecule.sum_formular
+          molecule.inchistring molecule.molecular_weight
+        )
       end
 
-      def selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)
+      def selected_elements(
+          type, checkedAll, checkedIds, uncheckedIds, currentCollection
+        )
         elements = "#{type}s".to_sym
         if checkedAll
-          Collection.find(currentCollection).send(elements).where.not(id: uncheckedIds)
+          Collection.find(currentCollection)
+                    .send(elements).where.not(id: uncheckedIds)
         else
-          Collection.find(currentCollection).send(elements).where(id: checkedIds)
+          Collection.find(currentCollection)
+                    .send(elements).where(id: checkedIds)
         end
+      end
+
+      def time_now
+        Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
     end
 
     resource :reports do
-      desc "Build a report using the contents of a JSON file"
+      desc 'Build a report using the contents of a JSON file'
 
       params do
         requires :id
       end
       get :docx do
         r = Reaction.find(params[:id])
-        r_hash = ElementReportPermissionProxy.new(current_user, r, user_ids).serialized
+        r_hash = ElementReportPermissionProxy.new(current_user, r, user_ids)
+                                             .serialized
         content = Reporter::Docx::Document.new(objs: [r_hash]).convert
 
-        filename = "ELN_Reaction_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S") + ".docx"
-        template_path = Rails.root.join("lib", "template", "ELN_Objs.docx")
+        filename = 'ELN_Reaction_' + time_now + '.docx'
+        template_path = Rails.root.join('lib', 'template', 'ELN_Objs.docx')
 
         content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
-        docx = Sablon.template(template_path).render_to_string(merge(content, all_spl_settings, all_rxn_settings, all_configs))
+        header(
+          'Content-Disposition',
+          "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
+        )
+        Sablon.template(template_path).render_to_string(
+          merge(content, all_spl_settings, all_rxn_settings, all_configs)
+        )
       end
 
       params do
         requires :type, type: String
-        requires :checkedIds
-        requires :uncheckedIds
+        requires :checkedIds, type: Array
+        requires :uncheckedIds, type: Array
         requires :checkedAll, type: Boolean
         requires :currentCollection, type: Integer
-        requires :removedColumns, type: String
+        requires :removedColumns, type: Array
         requires :exportType, type: Integer
       end
-      get :export_samples_from_selections do
+      post :export_samples_from_selections do
         env['api.format'] = :binary
-
-        fileType = ""
+        fileType = ''
         case params[:exportType]
         when 1 # XLSX export
           content_type('application/vnd.ms-excel')
-          fileType = ".xlsx"
+          fileType = '.xlsx'
           export = Reporter::ExcelExport.new
         when 2 # SDF export
           content_type('chemical/x-mdl-sdfile')
-          fileType = ".sdf"
+          fileType = '.sdf'
           export = Reporter::SdfExport.new
         end
-        fileName = params[:type].capitalize + "_" +
-                   Time.now.strftime("%Y-%m-%dT%H-%M-%S") + fileType
+        fileName = params[:type].capitalize + '_' + time_now + fileType
         fileURI = URI.escape(fileName)
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
+        header 'Content-Disposition', "attachment; filename=\"#{fileURI}\""
+        # header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
 
-        # - - - - - - -
         type = params[:type]
-        checkedIds = params[:checkedIds].split(",")
-        uncheckedIds = params[:uncheckedIds].split(",")
+        checkedIds = params[:checkedIds]
+        uncheckedIds = params[:uncheckedIds]
         checkedAll = params[:checkedAll]
         currentCollection = params[:currentCollection]
-        removed_field = params[:removedColumns].split(",")
+        removed_field = params[:removedColumns]
 
-        elements = selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)
-        samples = if type == "sample"
-          elements.includes(:molecule)
-        elsif type == "reaction"
-          elements.map { |r| r.starting_materials + r.reactants + r.products }.flatten
-        elsif type == "wellplate"
-          elements.map do |wellplate|
-            wellplate.wells.map { |well| well.sample }.flatten
-          end.flatten
-        end
+        elements = selected_elements(
+          type, checkedAll, checkedIds, uncheckedIds, currentCollection
+        )
+        samples = if type == 'sample'
+                    elements.includes(:molecule)
+                  elsif type == 'reaction'
+                    elements.map { |r|
+                      r.starting_materials + r.reactants + r.products
+                    }.flatten
+                  elsif type == 'wellplate'
+                    elements.map { |wellplate|
+                      wellplate.wells.map(&:sample).flatten
+                    }.flatten
+                  end
 
         samples.each { |sample| export.add_sample(sample) }
         export.generate_file(excluded_field, included_field, removed_field)
@@ -150,15 +168,17 @@ module Chemotion
       get :excel_wellplate do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Wellplate #{params[:id]} Samples Excel.xlsx")}"
+        header(
+          'Content-Disposition',
+          "attachment; filename*=UTF-8''#{URI.escape("Wellplate #{params[:id]} \
+          Samples Excel.xlsx")}"
+        )
 
         excel = Reporter::ExcelExport.new
 
         Wellplate.find(params[:id]).wells.each do |well|
           sample = well.sample
-          if (sample)
-            excel.add_sample(sample)
-          end
+          sample && excel.add_sample(sample)
         end
 
         excel.generate_file(excluded_field, included_field)
@@ -167,10 +187,15 @@ module Chemotion
       params do
         requires :id, type: String
       end
+
       get :excel_reaction do
         env['api.format'] = :binary
         content_type('application/vnd.ms-excel')
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{URI.escape("Reaction #{params[:id]} Samples Excel.xlsx")}"
+        header(
+          'Content-Disposition',
+          "attachment; filename*=UTF-8''#{URI.escape("Reaction #{params[:id]} \
+          Samples Excel.xlsx")}"
+        )
 
         excel = Reporter::ExcelExport.new
 
@@ -191,14 +216,14 @@ module Chemotion
     end
 
     resource :archives do
-      desc "return all reports of the user"
+      desc 'return all reports of the user'
       params do
       end
       get :all, each_serializer: ReportSerializer do
         current_user.reports.order(updated_at: :desc)
       end
 
-      desc "return reports which can be downloaded now"
+      desc 'return reports which can be downloaded now'
       params do
         requires :ids, type: Array[Integer]
       end
@@ -209,14 +234,14 @@ module Chemotion
       end
     end
 
-    desc "returns a created report"
+    desc 'returns a created report'
     params do
-      requires :objTags, type: Array[Hash], coerce_with: -> (val) { JSON.parse(val) }
-      requires :splSettings, type: Array[Hash], coerce_with: -> (val) { JSON.parse(val) }
-      requires :rxnSettings, type: Array[Hash], coerce_with: -> (val) { JSON.parse(val) }
-      requires :configs, type: Array[Hash], coerce_with: -> (val) { JSON.parse(val) }
+      requires :objTags, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
+      requires :splSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
+      requires :rxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
+      requires :configs, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w(png eps emf)
-      requires :fileName, type: String, default: "ELN_Report_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S")
+      requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       optional :fileDescription
     end
     post :reports, each_serializer: ReportSerializer do
@@ -242,7 +267,7 @@ module Chemotion
     end
 
     resource :download_report do
-      desc "return a report in docx format"
+      desc 'return a report in docx format'
 
       params do
         requires :id, type: Integer
@@ -253,15 +278,18 @@ module Chemotion
 
         if report
           # set readed
-          ru = report.reports_users.find{ |ru| ru.user_id == current_user.id }
+          ru = report.reports_users.find { |r| r.user_id == current_user.id }
           ru.touch :downloaded_at
           # send docx back
-          full_file_path = Rails.root.join("public", "docx", report.file_path)
-          file_name_ext = report.file_name + ".docx"
+          full_file_path = Rails.root.join('public', 'docx', report.file_path)
+          file_name_ext = report.file_name + '.docx'
           content_type MIME::Types.type_for(file_name_ext)[0].to_s
           env['api.format'] = :binary
-          header 'Content-Disposition', "attachment; filename*=UTF-8''#{CGI.escape(file_name_ext)}"
-          docx = File.read(full_file_path)
+          header(
+            'Content-Disposition',
+            "attachment; filename*=UTF-8''#{CGI.escape(file_name_ext)}"
+          )
+          File.read(full_file_path)
         end
       end
     end

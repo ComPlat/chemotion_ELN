@@ -4,6 +4,7 @@ import {Button, ButtonToolbar, Input,
 import CheckBoxs from '../common/CheckBoxs';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
+import ReportsFetcher from './../fetchers/ReportsFetcher';
 import Utils from '../utils/Functions';
 
 export default class ModalExport extends React.Component {
@@ -101,7 +102,7 @@ export default class ModalExport extends React.Component {
       return !item.checked
         ? item.value
         : null
-    }).filter(r => r!=null).join(',');
+    }).filter(r => r!=null);
   }
 
   render() {
@@ -122,12 +123,19 @@ export default class ModalExport extends React.Component {
 const exportSelections = (uiState, userState, removedColumns, e) => {
   const { currentCollection, sample, reaction, wellplate } = uiState;
   const { currentType } = userState;
-
-  let url_params = "type=" + currentType +
-      selectedStringfy(sample, currentCollection, removedColumns, e);
-
-  Utils.downloadFile({ contents: "api/v1/reports/export_samples_from_selections?" + url_params });
+  const { checkedIds, uncheckedIds, checkedAll } = sample
+  ReportsFetcher.createDownloadFile({
+    type: currentType,
+    exportType: e,
+    checkedIds: checkedIds.toArray(),
+    uncheckedIds: uncheckedIds.toArray(),
+    checkedAll: checkedAll,
+    currentCollection: currentCollection.id,
+    removedColumns: removedColumns
+  });
 }
+
+
 
 const selectedStringfy = (input, currentCollection, removedColumns, e) => {
   const { checkedIds, uncheckedIds, checkedAll } = input;
