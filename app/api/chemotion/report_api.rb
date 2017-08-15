@@ -95,14 +95,14 @@ module Chemotion
 
       params do
         requires :type, type: String
-        requires :checkedIds
-        requires :uncheckedIds
+        requires :checkedIds, type: Array
+        requires :uncheckedIds, type: Array
         requires :checkedAll, type: Boolean
         requires :currentCollection, type: Integer
-        requires :removedColumns, type: String
+        requires :removedColumns, type: Array
         requires :exportType, type: Integer
       end
-      get :export_samples_from_selections do
+      post :export_samples_from_selections do
         env['api.format'] = :binary
 
         fileType = ""
@@ -119,15 +119,16 @@ module Chemotion
         fileName = params[:type].capitalize + "_" +
                    Time.now.strftime("%Y-%m-%dT%H-%M-%S") + fileType
         fileURI = URI.escape(fileName)
-        header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
+        header 'Content-Disposition', "attachment; filename=\"#{fileURI}\""
+        #header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
 
         # - - - - - - -
         type = params[:type]
-        checkedIds = params[:checkedIds].split(",")
-        uncheckedIds = params[:uncheckedIds].split(",")
+        checkedIds = params[:checkedIds]
+        uncheckedIds = params[:uncheckedIds]
         checkedAll = params[:checkedAll]
         currentCollection = params[:currentCollection]
-        removed_field = params[:removedColumns].split(",")
+        removed_field = params[:removedColumns]
 
         elements = selected_elements(type, checkedAll, checkedIds, uncheckedIds, currentCollection)
         samples = if type == "sample"
