@@ -29,6 +29,7 @@ const originalState = {
   fileDescription: '',
   activeKey: 0,
   processings: [],
+  template: "supporting_information",
 }
 
 export { originalState, splSettings, rxnSettings, configs }
