@@ -2,8 +2,9 @@ module Reporter
   class Delta
     attr_reader :delta, :html
 
-    def initialize(d)
+    def initialize(d, font_family = nil)
       @delta = d
+      @font_family = font_family
     end
 
     def getHTML
@@ -41,6 +42,8 @@ module Reporter
           k
         elsif k === ""
           "<p><br /></p>"
+        elsif @font_family
+          "<p><span style=\"font-family: #{@font_family}\">#{k}</span></p>"
         else
           "<p>#{k}</p>"
         end
@@ -127,6 +130,8 @@ module Reporter
           styles << "color: #{value}"
         when "background"
           styles << "background-color: #{value}"
+        when "font-family"
+          styles << "font-family: #{value}"
         end
       end
 

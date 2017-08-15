@@ -9,10 +9,11 @@ module Reporter
       @rxn_settings = @report.reaction_settings
       @configs = @report.configs
       @img_format = @report.img_format
+      @template_path = args[:template_path]
     end
 
     def process
-      raw = Sablon.template(template_path).render_to_string(substance)
+      raw = Sablon.template(@template_path).render_to_string(substance)
       create_docx(raw)
       save_report
     end
@@ -47,10 +48,6 @@ module Reporter
         obj = tag["type"].camelize.constantize.find(tag["id"])
         obj_permission_hash = ElementReportPermissionProxy.new(@author, obj, user_ids).serialized
       end
-    end
-
-    def template_path
-      Rails.root.join("lib", "template", "ELN_Objs.docx")
     end
 
     def contents
