@@ -139,6 +139,13 @@ export default class SampleDetailsContainers extends Component {
     const inReport = container.extended_metadata['report']
     const previewImg = this.PreviewImg(container)
     const content = container.extended_metadata['content'];
+    const contentOneLine = {
+      ops: content.ops.map((x) => {
+        let c = Object.assign({}, x);
+        if (c.insert) c.insert = c.insert.replace(/\n/g, " ");
+        return c;
+      })
+    };
 
     let addToLabelBtn =  <Checkbox onClick={(e) => this.toggleAddToReport(e, container)}
                   defaultChecked={inReport}
@@ -184,9 +191,9 @@ export default class SampleDetailsContainers extends Component {
             <div className="sub-title">Type: {kind}</div>
             <div className="sub-title">Status: {status}</div>
 
-            <div className="desc">
-              <spam>Content: </spam>
-              <QuillViewer value={content} preview={true} />
+            <div className="desc sub-title">
+              <span>Content: </span> &nbsp;
+              <QuillViewer value={contentOneLine} preview={true} />
             </div>
           </div>
         </div>

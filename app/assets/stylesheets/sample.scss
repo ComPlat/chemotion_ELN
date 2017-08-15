@@ -75,10 +75,11 @@
 
   .abstract {
     display: inline-block;
-    width: calc(100% - 135px);
+    width: calc(100% - 125px);
 
     .upper-btn {
       height: 22px;
+      float: right;
 
       .add-to-report {
         border: 1px solid black;
@@ -104,36 +105,41 @@
       .main-title {
         font-size: 18px;
         font-weight: bold;
-        margin: 10px 0 0 10px;
+        margin: 0 0 0 10px;
         overflow: hidden;
         text-decoration: underline;
         text-overflow: ellipsis;
         white-space: nowrap;
-        width: 80%;
+        // width: 80%;
       }
 
       .sub-title {
         font-size: 14px;
         margin-left: 30px;
+        margin-top: 3px;
       }
 
       .desc {
-        font-size: 12px;
+        // font-size: 12px;
+        display: inline-flex;
         margin-left: 30px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 80%;
+        // overflow: hidden;
+        // text-overflow: ellipsis;
+        // white-space: nowrap;
+        // width: 80%;
       }
-
+      
       .ql-editor {
-        font-size: 12px;
-        margin: -14px 0 0 50px;
-        overflow: hidden;
+        font-size: 14px;
         padding: 0;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        width: 80%;
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        p {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
       }
     }
   }
