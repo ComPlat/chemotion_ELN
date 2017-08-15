@@ -71,6 +71,10 @@ module Chemotion
           Collection.find(currentCollection).send(elements).where(id: checkedIds)
         end
       end
+
+      def time_now
+        Time.now.strftime('%Y-%m-%dT%H-%M-%S')
+      end
     end
 
     resource :reports do
@@ -217,7 +221,7 @@ module Chemotion
       requires :rxnSettings, type: Array[Hash], coerce_with: -> (val) { JSON.parse(val) }
       requires :configs, type: Array[Hash], coerce_with: -> (val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w(png eps emf)
-      requires :fileName, type: String, default: "ELN_Report_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S")
+      requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       optional :fileDescription
     end
     post :reports, each_serializer: ReportSerializer do

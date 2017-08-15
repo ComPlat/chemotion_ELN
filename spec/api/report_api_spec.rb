@@ -37,7 +37,7 @@ describe Chemotion::ReportAPI do
       end
     end
 
-    describe 'GET /api/v1/reports/export_samples_from_selections' do
+    describe 'POST /api/v1/reports/export_samples_from_selections' do
       let(:c)        { create(:collection, user_id: user.id) }
       let(:sample_1) { create(:sample) }
       let(:sample_2) { create(:sample) }
@@ -50,12 +50,19 @@ describe Chemotion::ReportAPI do
       before do
         params = {  type: "sample",
                     exportType: 1,
-                    checkedIds: "#{sample_1.id}",
-                    uncheckedIds: "",
+                    checkedIds: [sample_1.id],
+                    uncheckedIds: [],
                     checkedAll: false,
                     currentCollection: c.id,
-                    removedColumns: "target_amount_value,target_amount_unit,created_at,updated_at,molfile" }
-        get '/api/v1/reports/export_samples_from_selections', params
+                    removedColumns: [
+                      'target_amount_value','target_amount_unit',
+                      'created_at','updated_at','molfile'
+                    ]
+                  }
+        post('/api/v1/reports/export_samples_from_selections', params.to_json,
+          'HTTP_ACCEPT' => 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+          'CONTENT_TYPE' => 'application/json'
+        )
       end
 
       it 'returns a header with excel-type' do
