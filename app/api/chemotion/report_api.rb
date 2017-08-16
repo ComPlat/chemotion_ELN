@@ -13,35 +13,6 @@ module Chemotion
         output
       end
 
-      def excluded_field
-        %w(
-          id molecule_id created_by deleted_at identifier molecule_name_id
-          user_id fingerprint_id sample_svg_file xref impurities ancestry
-        )
-      end
-
-      def included_field
-        %w(
-          molecule.cano_smiles molecule.sum_formular molecule_name
-          molecule.inchistring molecule.molecular_weight molecule.inchikey
-        )
-      end
-
-      def selected_elements(
-          type, checkedAll, checkedIds, uncheckedIds, currentCollection
-        )
-        elements = "#{type}s".to_sym
-        if checkedAll
-          Collection.find(currentCollection)
-                    .send(elements).where.not(id: uncheckedIds).order(updated_at: :desc)
-        else
-          ids = checkedIds.join(',')
-          Collection.find(currentCollection)
-                    .send(elements).where(id: checkedIds)
-                    .order("position(','||#{type}s.id::text||',' in ',#{ids},')")
-        end
-      end
-
       def time_now
         Time.now.strftime('%Y-%m-%dT%H-%M-%S')
       end
@@ -54,9 +25,7 @@ module Chemotion
       end
       get :docx do
         params[:template] = "single_reaction"
-        docx, filename = Report.create_reaction_docx(
-                            current_user, user_ids, params
-                          )
+        docx, filename = Report.create_reaction_docx(current_user, user_ids, params)
         content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
         header(
@@ -71,44 +40,41 @@ module Chemotion
       end
       post :export_samples_from_selections do
         env['api.format'] = :binary
-        fileType = ''
+        t = time_now
         case params[:exportType]
         when 1 # XLSX export
-          content_type('application/vnd.ms-excel')
-          fileType = '.xlsx'
-          export = Reporter::ExcelExport.new
+          export = Export::ExportExcel.new
         when 2 # SDF export
+          export = Export::ExportSdf.new(time: t)
+          force_molfile_selection
+        end
+        c_id = params[:uiState][:currentCollection]
+        c_id = SyncCollectionsUser.find_by(c_id)&.collection_id if params[:uiState][:isSync]
+
+        %i[sample reaction wellplate].each do |table|
+          next unless (p_t = params[:uiState][table])
+          ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+          next unless p_t[:checkedAll] || ids
+          column_query = build_column_query(filter_column_selection(table))
+          sql_query = build_sql(table, column_query, c_id, ids, p_t[:checkedAll])
+          next unless sql_query
+          result = db_exec_query(sql_query)
+          export.generate_sheet_with_samples(table, result)
+        end
+
+        case export.file_extension
+        when 'xlsx' # XLSX export
+          content_type('application/vnd.ms-excel')
+        when 'sdf' # SDF export
           content_type('chemical/x-mdl-sdfile')
-          fileType = '.sdf'
-          export = Reporter::SdfExport.new
+        when 'zip'
+          content_type('application/zip, application/octet-stream')
         end
-        fileName =  'sample_export_' + time_now + fileType
-        fileURI = URI.escape(fileName)
-        header 'Content-Disposition', "attachment; filename=\"#{fileURI}\""
+        filename = URI.escape("sample_export_#{t}.#{export.file_extension}")
+        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
         # header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
-        currColl = params[:uiState][:isSync] ? 0 : params[:uiState][:currentCollection]
-        removed_field = params[:columns]
-        [:sample, :reaction, :wellplate].each do |type|
-          next unless ( p_t = params[:uiState][type])
-          elements = selected_elements(
-            type.to_s, p_t[:checkedAll], p_t[:checkedIds],
-            p_t[:uncheckedIds], currColl
-          )
-          samples = case type.to_s
-                    when 'sample'
-                      elements.includes([:molecule,:molecule_name])
-                    when 'reaction'
-                      elements.map { |r|
-                        r.starting_materials + r.reactants + r.products
-                      }.flatten
-                    when 'wellplate'
-                      elements.map { |wellplate|
-                        wellplate.wells.map(&:sample).flatten
-                      }.flatten
-                    end
-          samples.each { |sample| export.add_sample(sample) }
-        end
-        export.generate_file(excluded_field, included_field, removed_field)
+
+        export.read
       end
 
       params do
@@ -118,9 +84,8 @@ module Chemotion
         env['api.format'] = :binary
         params[:exportType]
         content_type('text/csv')
-        fileName = 'reaction_smiles_' + time_now + '.csv'
-        fileURI = URI.escape(fileName)
-        header 'Content-Disposition', "attachment; filename=\"#{fileURI}\""
+        filename = URI.escape('reaction_smiles_' + time_now + '.csv')
+        header 'Content-Disposition', "attachment; filename=\"#{filename}\""
         real_coll_id = fetch_collection_id_w_current_user(
           params[:uiState][:currentCollection], params[:uiState][:isSync]
         )
@@ -142,18 +107,16 @@ module Chemotion
         content_type('application/vnd.ms-excel')
         header(
           'Content-Disposition',
-          "attachment; filename*=UTF-8''#{URI.escape("Wellplate #{params[:id]} \
+          "attachment; filename*=UTF-8''#{URI.escape("Wellplate_#{params[:id]}_\
           Samples Excel.xlsx")}"
         )
-
-        excel = Reporter::ExcelExport.new
-
-        Wellplate.find(params[:id]).wells.each do |well|
-          sample = well.sample
-          sample && excel.add_sample(sample)
-        end
-
-        excel.generate_file(excluded_field, included_field)
+        export = Export::ExportExcel.new
+        column_query = build_column_query(default_columns_wellplate)
+        sql_query = build_sql(:wellplate, column_query, nil, params[:id], false)
+        next unless sql_query
+        result = db_exec_query(sql_query)
+        export.generate_sheet_with_samples(:wellplate, result)
+        export.read
       end
 
       params do
@@ -165,25 +128,16 @@ module Chemotion
         content_type('application/vnd.ms-excel')
         header(
           'Content-Disposition',
-          "attachment; filename*=UTF-8''#{URI.escape("Reaction #{params[:id]} \
+          "attachment; filename*=UTF-8''#{URI.escape("Reaction_#{params[:id]}_\
           Samples Excel.xlsx")}"
         )
-
-        excel = Reporter::ExcelExport.new
-
-        reaction = Reaction.find(params[:id])
-
-        reaction.starting_materials.each do |material|
-          excel.add_sample(material)
-        end
-        reaction.reactants.each do |reactant|
-          excel.add_sample(reactant)
-        end
-        reaction.products.each do |product|
-          excel.add_sample(product)
-        end
-
-        excel.generate_file(excluded_field, included_field)
+        export = Export::ExportExcel.new
+        column_query = build_column_query(default_columns_reaction)
+        sql_query = build_sql(:reaction, column_query, nil, params[:id], false)
+        next unless sql_query
+        result = db_exec_query(sql_query)
+        export.generate_sheet_with_samples(:reaction, result)
+        export.read
       end
     end
 
