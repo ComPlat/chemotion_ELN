@@ -4,6 +4,9 @@ const observationPurification = [
 ];
 
 const solventsTL = [
+  {"cyclohexane": "cyclohexane: ethyl acetate (20 : 1)"},
+  {"CH2Cl2": "CH2Cl2: MeOH (20 : 1)"},
+  {"NEt3": "cyclohexane: ethyl acetate (20 : 1) + 1% NEt3"}
 ];
 
 module.exports = {solventsTL, observationPurification};

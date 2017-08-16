@@ -1,12 +1,12 @@
 import React, {Component} from 'react';
-import {Row, Col, FormGroup, ControlLabel, FormControl,
-        ListGroupItem, ListGroup, InputGroup, Button,
-        OverlayTrigger, Tooltip} from 'react-bootstrap'
+import {Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
+        ListGroupItem, ListGroup, InputGroup, Button, Glyphicon,
+        OverlayTrigger, Tooltip, DropdownButton} from 'react-bootstrap'
 import Select from 'react-select'
 import {purificationOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
-import {observationPurification} from './utils/reactionPredefined.js';
+import {observationPurification, solventsTL} from './utils/reactionPredefined.js';
 import Clipboard from 'clipboard';
 import moment from 'moment';
 
@@ -24,6 +24,7 @@ export default class ReactionDetailsProperties extends Component {
     this.clipboard = new Clipboard('.clipboardBtn');
     this.handlePurificationChange = this.handlePurificationChange.bind(this)
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
+    this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -79,6 +80,15 @@ export default class ReactionDetailsProperties extends Component {
     const values = selectedOptions.map(option => option.value);
     const wrappedEvent = {target: {value: values}};
     this.props.onInputChange(type, wrappedEvent)
+  }
+
+  handleOnSolventSelect(eventKey) {
+    const key = Object.keys(solventsTL[eventKey])[0];
+    const val = solventsTL[eventKey][key];
+
+    let {reaction} = this.state;
+    reaction.tlc_solvents = val;
+    this.handleOnReactionChange(reaction);
   }
 
   setCurrentTime(type) {
@@ -227,12 +237,28 @@ export default class ReactionDetailsProperties extends Component {
             <Col md={6}>
               <FormGroup>
                 <ControlLabel>Solvents (parts)</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={reaction.tlc_solvents || ''}
-                  disabled={reaction.isMethodDisabled('tlc_solvents')}
-                  placeholder="Solvents as parts..."
-                  onChange={event => this.props.onInputChange('tlc_solvents', event)}/>
+                <FormGroup>
+                  <InputGroup>
+                    <DropdownButton componentClass={InputGroup.Button}
+                      title="" onSelect={this.handleOnSolventSelect}
+                    >
+                      {
+                        solventsTL.map((x, i) => (
+                          <MenuItem key={i} eventKey={i}>
+                            {Object.keys(x)[0]}
+                          </MenuItem>
+                        ))
+                      }
+                    </DropdownButton>
+                    <FormControl style={{zIndex: 0}}
+                      type="text"
+                      value={reaction.tlc_solvents || ''}
+                      disabled={reaction.isMethodDisabled('tlc_solvents')}
+                      placeholder="Solvents as parts..."
+                      onChange={event => this.props.onInputChange('tlc_solvents', event)}
+                    />
+                  </InputGroup>
+                </FormGroup>
               </FormGroup>
             </Col>
             <Col md={6}>
