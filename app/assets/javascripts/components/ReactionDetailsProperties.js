@@ -6,9 +6,9 @@ import Select from 'react-select'
 import {purificationOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import {observationPurification} from './utils/reactionPredefined.js';
 import Clipboard from 'clipboard';
 import moment from 'moment';
-import momentPreciseRange from 'moment-precise-range-plugin';
 
 export default class ReactionDetailsProperties extends Component {
 
@@ -22,6 +22,8 @@ export default class ReactionDetailsProperties extends Component {
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
+    this.handlePurificationChange = this.handlePurificationChange.bind(this)
+    this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -39,6 +41,38 @@ export default class ReactionDetailsProperties extends Component {
 
   componentWillUnmount() {
     this.clipboard.destroy()
+  }
+
+  handleOnReactionChange(reaction) {
+    this.props.onReactionChange(reaction);
+  }
+
+  handlePurificationChange(selected) {
+    if (selected.length == 0) {
+      return this.handleMultiselectChange('purification', selected);
+    };
+
+    const obs = observationPurification;
+    let {reaction} = this.state;
+
+    const selectedVal = selected[selected.length - 1].value;
+    const predefinedObs = obs.filter(x => {
+      return Object.keys(x).filter(k => { 
+        return k.toLowerCase().localeCompare(selectedVal.toLowerCase()) == 0;
+      }).length > 0;
+    });
+
+    if (predefinedObs.length > 0) {
+      const values = selected.map(option => option.value);
+      reaction.purification = values;
+
+      const predefined = predefinedObs[0][selectedVal.toLowerCase()];
+      reaction.observation = (reaction.observation || "") + "\n" + predefined;
+
+      this.handleOnReactionChange(reaction);
+    } else {
+      this.handleMultiselectChange('purification', selected);
+    }
   }
 
   handleMultiselectChange(type, selectedOptions) {
@@ -153,7 +187,7 @@ export default class ReactionDetailsProperties extends Component {
               <FormGroup>
                 <ControlLabel>Observation</ControlLabel>
                 <FormControl
-                  componentClass="textarea"
+                  componentClass="textarea" rows="4"
                   value={reaction.observation || ''}
                   disabled={reaction.isMethodDisabled('observation')}
                   placeholder="Observation..."
@@ -169,8 +203,7 @@ export default class ReactionDetailsProperties extends Component {
                 multi={true}
                 disabled={reaction.isMethodDisabled('purification')}
                 options={purificationOptions}
-                onChange={(selectedOptions) =>
-                  this.handleMultiselectChange('purification', selectedOptions)}
+                onChange={this.handlePurificationChange}
                 value={reaction.purification}
                 />
             </Col>
