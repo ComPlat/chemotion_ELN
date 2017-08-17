@@ -22,7 +22,7 @@ export default class ReactionDetailsProperties extends Component {
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
-    this.handlePurificationChange = this.handlePurificationChange.bind(this)
+    this.handlePurificationChange = this.handlePurificationChange.bind(this);
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
   }
