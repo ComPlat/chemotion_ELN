@@ -1,14 +1,14 @@
 import React, {Component} from 'react';
-import {Row, Col, FormGroup, ControlLabel, FormControl,
-        ListGroupItem, ListGroup, InputGroup, Button,
-        OverlayTrigger, Tooltip} from 'react-bootstrap'
+import {Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
+        ListGroupItem, ListGroup, InputGroup, Button, Glyphicon,
+        OverlayTrigger, Tooltip, DropdownButton} from 'react-bootstrap'
 import Select from 'react-select'
 import {purificationOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import {observationPurification, solventsTL} from './utils/reactionPredefined.js';
 import Clipboard from 'clipboard';
 import moment from 'moment';
-import momentPreciseRange from 'moment-precise-range-plugin';
 
 export default class ReactionDetailsProperties extends Component {
 
@@ -22,6 +22,9 @@ export default class ReactionDetailsProperties extends Component {
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
+    this.handlePurificationChange = this.handlePurificationChange.bind(this);
+    this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
+    this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -41,10 +44,51 @@ export default class ReactionDetailsProperties extends Component {
     this.clipboard.destroy()
   }
 
+  handleOnReactionChange(reaction) {
+    this.props.onReactionChange(reaction);
+  }
+
+  handlePurificationChange(selected) {
+    if (selected.length == 0) {
+      return this.handleMultiselectChange('purification', selected);
+    };
+
+    const obs = observationPurification;
+    let {reaction} = this.state;
+
+    const selectedVal = selected[selected.length - 1].value;
+    const predefinedObs = obs.filter(x => {
+      return Object.keys(x).filter(k => { 
+        return k.toLowerCase().localeCompare(selectedVal.toLowerCase()) == 0;
+      }).length > 0;
+    });
+
+    if (predefinedObs.length > 0) {
+      const values = selected.map(option => option.value);
+      reaction.purification = values;
+
+      const predefined = predefinedObs[0][selectedVal.toLowerCase()];
+      reaction.observation = (reaction.observation || "") + "\n" + predefined;
+
+      this.handleOnReactionChange(reaction);
+    } else {
+      this.handleMultiselectChange('purification', selected);
+    }
+  }
+
   handleMultiselectChange(type, selectedOptions) {
     const values = selectedOptions.map(option => option.value);
     const wrappedEvent = {target: {value: values}};
     this.props.onInputChange(type, wrappedEvent)
+  }
+
+  handleOnSolventSelect(eventKey) {
+    const key = Object.keys(solventsTL[eventKey])[0];
+    const val = solventsTL[eventKey][key];
+
+    let {reaction} = this.state;
+    reaction.tlc_solvents = val;
+    this.handleOnReactionChange(reaction);
   }
 
   setCurrentTime(type) {
@@ -153,7 +197,7 @@ export default class ReactionDetailsProperties extends Component {
               <FormGroup>
                 <ControlLabel>Observation</ControlLabel>
                 <FormControl
-                  componentClass="textarea"
+                  componentClass="textarea" rows="4"
                   value={reaction.observation || ''}
                   disabled={reaction.isMethodDisabled('observation')}
                   placeholder="Observation..."
@@ -169,8 +213,7 @@ export default class ReactionDetailsProperties extends Component {
                 multi={true}
                 disabled={reaction.isMethodDisabled('purification')}
                 options={purificationOptions}
-                onChange={(selectedOptions) =>
-                  this.handleMultiselectChange('purification', selectedOptions)}
+                onChange={this.handlePurificationChange}
                 value={reaction.purification}
                 />
             </Col>
@@ -194,12 +237,28 @@ export default class ReactionDetailsProperties extends Component {
             <Col md={6}>
               <FormGroup>
                 <ControlLabel>Solvents (parts)</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={reaction.tlc_solvents || ''}
-                  disabled={reaction.isMethodDisabled('tlc_solvents')}
-                  placeholder="Solvents as parts..."
-                  onChange={event => this.props.onInputChange('tlc_solvents', event)}/>
+                <FormGroup>
+                  <InputGroup>
+                    <DropdownButton componentClass={InputGroup.Button}
+                      title="" onSelect={this.handleOnSolventSelect}
+                    >
+                      {
+                        solventsTL.map((x, i) => (
+                          <MenuItem key={i} eventKey={i}>
+                            {Object.keys(x)[0]}
+                          </MenuItem>
+                        ))
+                      }
+                    </DropdownButton>
+                    <FormControl style={{zIndex: 0}}
+                      type="text"
+                      value={reaction.tlc_solvents || ''}
+                      disabled={reaction.isMethodDisabled('tlc_solvents')}
+                      placeholder="Solvents as parts..."
+                      onChange={event => this.props.onInputChange('tlc_solvents', event)}
+                    />
+                  </InputGroup>
+                </FormGroup>
               </FormGroup>
             </Col>
             <Col md={6}>
