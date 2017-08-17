@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import {Table, Button} from 'react-bootstrap'
 import ElementCheckbox from './ElementCheckbox'
 import SVG from 'react-inlinesvg'
+import _ from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels'
 import ElementAnalysesLabels from './ElementAnalysesLabels'
 import ElementReactionLabels from './ElementReactionLabels'
@@ -33,6 +34,14 @@ export default class ElementsTableSampleEntries extends Component {
     }
 
     this.sampleOnKeyDown = this.sampleOnKeyDown.bind(this)
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const prevP = this.props
+    const nextP = nextProps
+    const prevS = this.state
+    const nextS = nextState
+    return !_.isEqual(prevP, nextP) || !_.isEqual(prevS, nextS)
   }
 
   componentDidMount() {
@@ -231,6 +240,7 @@ export default class ElementsTableSampleEntries extends Component {
       if (selected || keyboardSeletectedElementId == sample.id) {
         style = {color: '#fff', background: '#337ab7'}
       }
+      const funcShowDetails = () => this.showDetails(sample.id)
 
       return (
         <tr key={index} style={style}>
@@ -239,7 +249,7 @@ export default class ElementsTableSampleEntries extends Component {
                              checked={this.isElementChecked(sample)}/>
           </td>
           <td style={{cursor: 'pointer'}}
-              onClick={() => this.showDetails(sample.id)}>
+              onClick={funcShowDetails}>
             {sample.title(selected)}
             <div style={{float: 'right'}}>
               <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>

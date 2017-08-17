@@ -37,6 +37,12 @@ class App extends Component {
     this.toggleCollectionTree = this.toggleCollectionTree.bind(this)
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    const prev = this.state
+    const next = nextState
+    return !_.isEqual(prev, next)
+  }
+
   componentDidMount() {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
