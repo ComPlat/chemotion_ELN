@@ -110,7 +110,7 @@ class Reaction < ActiveRecord::Base
   def samples
     starting_materials + reactants + products + solvents
   end
-  
+
   def analyses
     self.container ? self.container.analyses : []
   end
@@ -160,7 +160,8 @@ class Reaction < ActiveRecord::Base
 
     begin
       composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
-                                                  solvents: solvents_in_svg)
+                                                  solvents: solvents_in_svg,
+                                                  show_yield: true)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
       Rails.logger.info("**** SVG::ReactionComposer failed ***")
