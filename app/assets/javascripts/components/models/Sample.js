@@ -116,6 +116,7 @@ export default class Sample extends Element {
     sample.short_label = sample.short_label + " Copy"
 
     sample.container = Container.init();
+    sample.can_update = true;
 
     return sample;
   }
