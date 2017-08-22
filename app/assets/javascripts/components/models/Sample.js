@@ -79,11 +79,12 @@ export default class Sample extends Element {
       external_label: '',
       target_amount_value: 0,
       target_amount_unit: 'g',
+      molarity_value: 0,
+      molarity_unit: 'M',
       description: '',
       purity: 1,
       density: 1,
       solvent: '',
-      impurities: '',
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
@@ -187,11 +188,12 @@ export default class Sample extends Element {
       target_amount_unit: this.target_amount_unit,
       real_amount_value: this.real_amount_value,
       real_amount_unit: this.real_amount_unit,
+      molarity_value: this.molarity_value,
+      molarity_unit: this.molarity_unit,
       description: this.description,
       purity: this.purity,
       short_label: this.short_label,
       solvent: this.solvent,
-      impurities: this.impurities,
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
@@ -346,13 +348,22 @@ export default class Sample extends Element {
     this._description = description;
   }
 
-  get impurities() {
-    return this._impurities;
+  get molartiy_value() {
+    return this._molarity_value;
   }
 
-  set impurities(impurities) {
-    this._impurities = impurities;
+  set molarity_value(molarity_value) {
+    this._molarity_value = molarity_value;
   }
+
+  get molartiy_unit() {
+    return this._molarity_unit;
+  }
+
+  set molarity_value(molarity_unit) {
+    this._molarity_value = molarity_unit;
+  }
+
 
   get imported_readout() {
     return this._imported_readout;
@@ -361,7 +372,6 @@ export default class Sample extends Element {
   set imported_readout(imported_readout) {
     this._imported_readout = imported_readout;
   }
-
 
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit)
@@ -473,9 +483,9 @@ export default class Sample extends Element {
   }
 
   //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
-	//Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
-	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
-	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
+  //Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
+  //Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
+  //Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
     if(this.contains_residues) {
