@@ -101,7 +101,6 @@ export default class NumeralInputWithUnitsCompo extends Component {
     });
   }
 
-// TODO fix css-issue with wrong z-index
   render() {
     let { bsSize, bsStyle, disabled,label} = this.props;
     let {unit,showString, value,metricPrefix,currentPrecision,valueString} = this.state;
@@ -120,16 +119,20 @@ export default class NumeralInputWithUnitsCompo extends Component {
     let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
     let labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null
     if(unit != 'none') {
-      prefixSwitch = <InputGroup.Button>
+      prefixSwitch = (
+        <InputGroup.Button>
           <Button active
             onClick={() =>{this.togglePrefix()}}
             bsClass='bs-btnTxt--small btn'
             bsStyle={bsStyleBtnAfter}
             bsSize={bsSize}
-            style={{padding:"8px 2px 7px 2px"}} >
-              {mp+unit}
+            style={{padding:"6px 2px 6px 2px"}}
+          >
+            {mp + unit}
           </Button>
         </InputGroup.Button>
+      )
+
       return (
         <div>
           {labelWrap}

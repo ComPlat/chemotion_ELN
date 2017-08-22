@@ -1,13 +1,11 @@
 import React from 'react';
-import {Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel, Glyphicon, Row, Col} from 'react-bootstrap';
+import {Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
+  Table, Glyphicon} from 'react-bootstrap';
 
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import Select from 'react-select';
 
 import {solventOptions} from './staticDropdownOptions/options';
-
-
-
 
 export default class SampleForm extends React.Component {
   constructor(props) {
@@ -26,25 +24,6 @@ export default class SampleForm extends React.Component {
     });
   }
 
-  handleUnitChanged(unit, nextUnit, value) {
-    let convertedValue = value;
-    if(unit && nextUnit && unit != nextUnit) {
-      switch(unit) {
-        case 'g':
-          if(nextUnit == 'mol') {
-            convertedValue = value * 2;
-          }
-          break;
-        case 'mol':
-          if(nextUnit == 'g') {
-            convertedValue = value / 2;
-          }
-          break;
-      }
-    }
-    return convertedValue;
-  }
-
   showStructureEditor() {
     this.props.parent.setState({
       showStructureEditor: true
@@ -53,7 +32,8 @@ export default class SampleForm extends React.Component {
 
   structureEditorButton(isDisabled) {
     return (
-      <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
+      <Button onClick={this.showStructureEditor.bind(this)}
+              disabled={isDisabled}>
         <Glyphicon glyph='pencil'/>
       </Button>
     )
@@ -63,9 +43,8 @@ export default class SampleForm extends React.Component {
   topSecretCheckbox(sample) {
     if(sample.can_update) {
       return (
-        <Checkbox ref="topSecretInput"
-        checked={sample.is_top_secret}
-        onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
+        <Checkbox ref="topSecretInput" checked={sample.is_top_secret}
+          onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
         >Top secret</Checkbox>
       )
     }
@@ -73,7 +52,7 @@ export default class SampleForm extends React.Component {
 
   moleculeInput(sample) {
     return (
-      <FormGroup>
+      <FormGroup style={{width: "100%"}}>
         <ControlLabel>Molecule</ControlLabel>
         <InputGroup>
           <FormControl type="text" ref="moleculeInput"
@@ -119,13 +98,10 @@ export default class SampleForm extends React.Component {
 
   sampleSolvent(sample) {
     return (
-      <Select ref='solventInput'
-              name='solvents'
-              multi={false}
-              options={solventOptions}
+      <Select ref='solventInput' name='solvents' style={{marginBottom: "15px"}}
+              multi={false} options={solventOptions}
               onChange={(e) => this.handleFieldChanged(sample, 'solvent', e)}
-              value={sample.solvent}
-              disabled={!sample.can_update}
+              value={sample.solvent} disabled={!sample.can_update}
       />
     )
   }
@@ -144,7 +120,7 @@ export default class SampleForm extends React.Component {
       return false;
     let value = notApplicable ? 'N/A' : (!isNaN(sample[field]) ? sample[field] : null)
     return (
-      <Col md={size} key={field + sample.id.toString()}>
+      <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
           value={value}
           unit={unit}
@@ -157,35 +133,35 @@ export default class SampleForm extends React.Component {
           disabled={disabled}
           onChange={(e) => this.handleFieldChanged(sample, field, e)}
         />
-      </Col>
+      </td>
     )
   }
 
-  sampleAmount(sample, inputsSize=2) {
+  sampleAmount(sample) {
     let content = [];
     const isDisabled = !sample.can_update;
     if(sample.isMethodDisabled('amount_value') == false) {
       if(sample.isMethodRestricted('molecule') == true) {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '', inputsSize)
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '')
         )
       } else {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '', inputsSize)
+          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '')
         )
 
         if(!sample.contains_residues)
           content.push(
-            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', isDisabled, '', inputsSize)
+            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', isDisabled, '')
           )
 
         content.push(
-          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', isDisabled, '', inputsSize)
+          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', isDisabled, '')
         )
 
         if(sample.contains_residues)
           content.push(
-            this.attachedAmountInput(sample, inputsSize)
+            this.attachedAmountInput(sample)
           )
       }
      return content;
@@ -218,49 +194,64 @@ export default class SampleForm extends React.Component {
     let sample = this.state.sample || {}
     let isPolymer = sample.molfile.indexOf(" R# ") !== -1
     const isDisabled = !sample.can_update;
+    const polyDisabled = isPolymer || isDisabled;
 
     return (
-      <div className="sample-form">
-        <Row>
-          <Col md={6}>{this.moleculeInput(sample)}</Col>
-          <Col md={6} className="top-secret-checkbox">
-            {this.topSecretCheckbox(sample)}
-          </Col>
-        </Row>
+      <Table responsive className="sample-form">
+        <tr>
+          <td colSpan="4">
+            <div style={{display: "flex", justifyContent: "space-between"}}>
+              <div style={{width: "82%"}}>
+                {this.moleculeInput(sample)}
+              </div>
+              <div style={{width: "15%"}} className="top-secret-checkbox">
+                {this.topSecretCheckbox(sample)}
+              </div>
+            </div>
+          </td>
+        </tr>
 
-        <Row>
-          <Col md={4}>{this.textInput(sample, 'name', 'Name')}</Col>
-          <Col md={4}>
-            {this.textInput(sample, 'external_label', 'External label')}
-          </Col>
-          <Col md={4}>{this.textInput(sample, 'location', 'Location')}</Col>
-        </Row>
+        <tr>
+          <td colSpan="4">
+            <div className="name-form">
+              <div style={{width: "12%"}}>
+                {this.textInput(sample, 'name', 'Name')}
+              </div>
+              <div style={{width: "20%"}}>
+                {this.textInput(sample, 'external_label', 'External label')}
+              </div>
+              <div style={{width: "14%"}}>
+                {this.textInput(sample, 'location', 'Location')}
+              </div>
+              <div  style={{width: "50%"}}>
+                <label>Solvent</label>
+                {this.sampleSolvent(sample)}
+              </div>
+            </div>
+          </td>
+        </tr>
 
-        <Row className="visible-hd">
+        <tr className="visible-hd">
           {this.sampleAmount(sample)}
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer || isDisabled, '', 2, isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer || isDisabled, '', 2, isPolymer)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer || isDisabled, '', 2, isPolymer)}
-        </Row>
+          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', polyDisabled, '', 2, isPolymer)}
+        </tr>
 
-        <Row className="hidden-hd">
-          {this.sampleAmount(sample, 4)}
-        </Row>
-        <Row className="hidden-hd" style={ { 'paddingTop': "15px"  }}>
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer || isDisabled, '', 4, isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer || isDisabled, '', 4, isPolymer)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer || isDisabled, '', 4, isPolymer)}
-        </Row>
-        <Row style={ { 'paddingTop': "15px"  } }>
-          <Col md={4}>{this.sampleDescription(sample)}</Col>
+        <tr>
+          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', polyDisabled, '', 2, isPolymer)}
+          {this.numInput(sample, 'molarity_value', 'M', ['milli','none'], 5, 'Molarity', '',  polyDisabled, '', 2, isPolymer)}
           {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity', '', isDisabled)}
-          <Col md={2}>{this.textInput(sample, 'impurities', 'Impurities')}</Col>
-          <Col md={4}>
-            <label>Solvent</label>
-            {this.sampleSolvent(sample)}
-          </Col>
-        </Row>
-      </div>
+          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '',  polyDisabled, '', 2, isPolymer)}
+        </tr>
+
+        <tr style={{'paddingTop': "15px"}}>
+          <td colSpan="4">{this.sampleDescription(sample)}</td>
+        </tr>
+      </Table>
     )
   }
+}
+
+SampleForm.propTypes = {
+  sample: React.PropTypes.object,
+  parent: React.PropTypes.object
 }
