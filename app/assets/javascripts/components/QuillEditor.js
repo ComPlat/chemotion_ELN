@@ -265,5 +265,14 @@ QuillEditor.propTypes = {
   theme: React.PropTypes.string,
   height: React.PropTypes.string,
   disabled: React.PropTypes.bool,
-  onChange: React.PropTypes.func
-}
+  onChange: React.PropTypes.func,
+};
+
+QuillEditor.defaultProps = {
+  value: {},
+  toolbarSymbol: [],
+  theme: 'snow',
+  height: '230px',
+  disabled: true,
+  onChange: null,
+};
