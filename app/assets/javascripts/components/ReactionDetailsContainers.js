@@ -12,18 +12,25 @@ export default class ReactionDetailsContainers extends Component {
       reaction,
       activeContainer: 0
     };
+
+    this.handleChange = this.handleChange.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
+    this.handleUndo = this.handleUndo.bind(this);
+    this.handleOnClickRemove = this.handleOnClickRemove.bind(this);
+    this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      reaction: nextProps.reaction
-    })
+      reaction: nextProps.reaction,
+    });
   }
 
   handleChange(container) {
-    const {reaction} = this.state
+    const { reaction } = this.state;
 
-    this.props.parent.handleReactionChange(reaction)
+    this.props.parent.handleReactionChange(reaction);
   }
 
   handleUndo(container) {
@@ -34,125 +41,174 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   handleAdd() {
-    const {reaction} = this.state;
-    let container = Container.buildEmpty();
-    container.container_type = "analysis";
-    container.extended_metadata.content = { "ops": [{ "insert": "" }] }
+    const { reaction } = this.state;
+    const container = Container.buildEmpty();
+    container.container_type = 'analysis';
+    container.extended_metadata.content = { ops: [{ insert: '' }] };
 
-    reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+    reaction.container.children.filter(element => (
+      ~element.container_type.indexOf('analyses')
+    ))[0].children.push(container);
 
-    const newKey = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.length - 1;
+    const newKey = reaction.container.children.filter(element => (
+      ~element.container_type.indexOf('analyses')
+    ))[0].children.length - 1;
 
     this.handleAccordionOpen(newKey);
 
-    this.props.parent.setState({reaction: reaction})
+    this.props.parent.setState({ reaction: reaction });
+  }
+
+  handleOnClickRemove(container) {
+    if (confirm('Delete the container?')) {
+      this.handleRemove(container);
+    }
   }
 
   handleRemove(container) {
-    let {reaction} = this.state;
+    let { reaction } = this.state;
 
     container.is_deleted = true;
 
-    this.props.parent.setState({reaction: reaction})
+    this.props.parent.setState({ reaction: reaction });
   }
 
   handleAccordionOpen(key) {
-    this.setState({activeContainer: key});
+    this.setState({ activeContainer: key });
   }
 
   addButton() {
-    const {readOnly} = this.props;
-    if(! readOnly) {
+    const { readOnly } = this.props;
+    if (!readOnly) {
       return (
-          <Button className="button-right" bsSize="xsmall" bsStyle="success" onClick={() => this.handleAdd()}>
-            Add analysis
-          </Button>
-      )
+        <Button
+          className="button-right"
+          bsSize="xsmall"
+          bsStyle="success"
+          onClick={this.handleAdd}
+        >
+          Add analysis
+        </Button>
+      );
     }
+
+    return (<span />);
   }
 
   render() {
     const {reaction, activeContainer} = this.state;
     const {readOnly} = this.props;
 
-    let containerHeader = (container) => <p style={{width: '100%'}}>
-        {container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
-        {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
-        <Button bsSize="xsmall" bsStyle="danger"
-           className="button-right" disabled={readOnly}
-          onClick={() => {if(confirm('Delete the container?')) {this.handleRemove(container)}}}>
-          <i className="fa fa-trash"></i>
-        </Button>
-        <PrintCodeButton element={reaction} analyses={[container]} ident={container.id}/>
-      </p>
+    let handleOnClickRemove = this.handleOnClickRemove;
+    let containerHeader = (container) => {
+      const kind = container.extended_metadata['kind'] && container.extended_metadata['kind'] != '';
+      const titleKind = kind ? (' - Type: ' + container.extended_metadata['kind']) : '';
 
-      let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
-        {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
-        </strike>
-        <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
-          <i className="fa fa-undo"></i>
-        </Button>
-        </p>
+      const status = container.extended_metadata['status'] && container.extended_metadata['status'] != '';
+      const titleStatus = status ? (' - Status: ' + container.extended_metadata['status']) : '';
 
-    if(reaction.container != null && reaction.container.children){
+      return (
+        <div style={{width: '100%'}}>
+          {container.name}
+          {titleKind}
+          {titleStatus}
+          <Button
+            bsSize="xsmall"
+            bsStyle="danger"
+            className="button-right"
+            disabled={readOnly}
+            onClick={handleOnClickRemove}
+          >
+            <i className="fa fa-trash" />
+          </Button>
+          <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
+        </div>
+      )
+    };
 
-      var analyses_container = reaction.container.children.filter(element => ~element.container_type.indexOf('analyses'));
+    let handleUndo = this.handleUndo;
+    let containerHeaderDeleted = (container) => {
+      const kind = container.extended_metadata['kind'] && container.extended_metadata['kind'] != '';
+      const titleKind = kind ? (' - Type: ' + container.extended_metadata['kind']) : '';
 
-      if(analyses_container.length == 1 && analyses_container[0].children.length > 0){
+      const status = container.extended_metadata['status'] && container.extended_metadata['status'] != '';
+      const titleStatus = status ? (' - Status: ' + container.extended_metadata['status']) : '';
+
+      return (
+        <div style={{width: '100%'}}>
+          <strike>
+            {container.name}
+            {titleKind}
+            {titleStatus}
+          </strike>
+          <Button className="pull-right" bsSize="xsmall" bsStyle="danger"
+                  onClick={handleUndo}>
+            <i className="fa fa-undo"></i>
+          </Button>
+        </div>
+      )
+    };
+
+    if (reaction.container != null && reaction.container.children) {
+      const analyses_container = reaction.container.children.filter(element => (
+        ~element.container_type.indexOf('analyses')
+      ));
+
+      if (analyses_container.length === 1 && analyses_container[0].children.length > 0) {
         return (
           <div>
-          <p>&nbsp;{this.addButton()}</p>
-          <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
-          {analyses_container[0].children.map((container, key) => {
-            if (container.is_deleted){
-              return (
-                <Panel header={containerHeaderDeleted(container)} eventKey={key}
-                    key={key} >
-                    </Panel>
-                  );
-                }else {
+            <div style={{ marginBottom: '10px' }}>
+              &nbsp;{this.addButton()}
+            </div>
+            <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
+              {analyses_container[0].children.map((container, key) => {
+                if (container.is_deleted) {
                   return (
-                    <Panel header={containerHeader(container)} eventKey={key}
-                    key={key} onClick={() => this.handleAccordionOpen(key)}>
-                    <ContainerComponent
-                    readOnly={readOnly}
-                    container={container}
-                    onChange={container => this.handleChange(container)}
+                    <Panel
+                      header={containerHeaderDeleted(container)}
+                      eventKey={key}
+                      key={`reaction_container_deleted_${container.id}`}
                     />
-                    </Panel>
                   );
                 }
 
-          }
-        )}
-        </PanelGroup>
-        </div>
-      )
-    }else {
+                return (
+                  <Panel
+                    header={containerHeader(container)}
+                    eventKey={key}
+                    key={`reaction_container_${container.id}`}
+                    onClick={this.handleAccordionOpen.bind(this, key)}
+                  >
+                    <ContainerComponent
+                      readOnly={readOnly}
+                      container={container}
+                      onChange={this.handleChange.bind(this, container)}
+                    />
+                  </Panel>
+                );
+              })}
+            </PanelGroup>
+          </div>
+        );
+      }
+
       return (
-        <div>
-          <p className='noAnalyses-warning'>
-            There are currently no Analyses.
-            {this.addButton()}
-          </p>
+        <div
+          style={{ marginBottom: '10px' }}
+          className="noAnalyses-warning"
+        >
+          There are currently no Analyses.
+          {this.addButton()}
         </div>
-      )
+      );
     }
 
-  }else{
     return (
-      <div>
-        <p className='noAnalyses-warning'>
-          There are currently no Analyses.
-
-        </p>
+      <div className="noAnalyses-warning">
+        There are currently no Analyses.
       </div>
-    )
+    );
   }
-  }
-
 }
 
 ReactionDetailsContainers.propTypes = {

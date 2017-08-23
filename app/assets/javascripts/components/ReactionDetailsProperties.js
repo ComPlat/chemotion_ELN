@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
-import {Row, Col, FormGroup, ControlLabel, FormControl, MenuItem,
-        ListGroupItem, ListGroup, InputGroup, Button, Glyphicon,
-        OverlayTrigger, Tooltip, DropdownButton} from 'react-bootstrap'
+import {Row, Col, FormGroup, ControlLabel, FormControl, MenuItem, Button, 
+  ListGroupItem, ListGroup, InputGroup, OverlayTrigger, Tooltip,
+  DropdownButton} from 'react-bootstrap'
 import Select from 'react-select'
 import {purificationOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
@@ -22,9 +22,11 @@ export default class ReactionDetailsProperties extends Component {
     }
 
     this.clipboard = new Clipboard('.clipboardBtn');
+
     this.handlePurificationChange = this.handlePurificationChange.bind(this);
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
+    this.setCurrentTime = this.setCurrentTime.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -51,7 +53,7 @@ export default class ReactionDetailsProperties extends Component {
   handlePurificationChange(selected) {
     if (selected.length == 0) {
       return this.handleMultiselectChange('purification', selected);
-    };
+    }
 
     const obs = observationPurification;
     let {reaction} = this.state;
@@ -143,7 +145,7 @@ export default class ReactionDetailsProperties extends Component {
                     onChange={event => this.props.onInputChange('timestampStart', event)}/>
                   <InputGroup.Button>
                     <Button active style={ {padding: '6px'}}
-                            onClick={e => this.setCurrentTime('start')} >
+                            onClick={this.setCurrentTime.bind(this, 'start')} >
                       <i className="fa fa-clock-o"></i>
                     </Button>
                   </InputGroup.Button>
@@ -162,7 +164,7 @@ export default class ReactionDetailsProperties extends Component {
                     onChange={event => this.props.onInputChange('timestampStop', event)}/>
                   <InputGroup.Button>
                     <Button active style={ {padding: '6px'}}
-                            onClick={e => this.setCurrentTime('stop')} >
+                            onClick={this.setCurrentTime.bind(this, 'stop')} >
                       <i className="fa fa-clock-o"></i>
                     </Button>
                   </InputGroup.Button>
@@ -240,7 +242,8 @@ export default class ReactionDetailsProperties extends Component {
                 <FormGroup>
                   <InputGroup>
                     <DropdownButton componentClass={InputGroup.Button}
-                      title="" onSelect={this.handleOnSolventSelect}
+                      id="solvents_dd" title=""
+                      onSelect={this.handleOnSolventSelect}
                     >
                       {
                         solventsTL.map((x, i) => (
@@ -295,5 +298,6 @@ export default class ReactionDetailsProperties extends Component {
 
 ReactionDetailsProperties.propTypes = {
   reaction: React.PropTypes.object,
+  onReactionChange: React.PropTypes.func,
   onInputChange: React.PropTypes.func
 }
