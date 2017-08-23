@@ -273,6 +273,6 @@ QuillEditor.defaultProps = {
   toolbarSymbol: [],
   theme: 'snow',
   height: '230px',
-  disabled: true,
+  disabled: false,
   onChange: null,
 };
