@@ -358,12 +358,14 @@ class Material extends Component {
           <Button
             bsStyle="danger"
             bsSize="small"
-            onClick={() => deleteMaterial(material)} >
-            <i className="fa fa-trash-o"></i>
+            style={{ height: '30px' }}
+            onClick={() => deleteMaterial(material)}
+          >
+            <i className="fa fa-trash-o" />
           </Button>
         </td>
       </tr>
-    )
+    );
   }
 
   toggleTarget(isTarget) {
