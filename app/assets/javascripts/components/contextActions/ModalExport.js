@@ -18,7 +18,7 @@ export default class ModalExport extends React.Component {
         {value: "cano_smiles", text: "canonical smiles", checked: true},
         {value: "sum_formular", text: "sum formula", checked: true},
         {value: "inchistring", text: "inchistring", checked: true},
-        {value: "target_amount_value,target_amount_unit", text: "target amount", checked: false},
+        {value: "target_amount_value, target_amount_unit", text: "target amount", checked: false},
         {value: "created_at", text: "created at", checked: false},
         {value: "updated_at", text: "updated at", checked: false},
         {value: "molfile", text: "molfile", checked: false},

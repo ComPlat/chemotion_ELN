@@ -1,26 +1,35 @@
 import React from 'react';
-import {Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon} from 'react-bootstrap';
-
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import { Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
+  Table, Glyphicon } from 'react-bootstrap';
 import Select from 'react-select';
 
-import {solventOptions} from './staticDropdownOptions/options';
+import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import { solventOptions } from './staticDropdownOptions/options';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      sample: props.sample
-    }
+      sample: props.sample,
+    };
+
+    this.handleFieldChanged = this.handleFieldChanged.bind(this);
   }
 
   handleAmountChanged(amount) {
     let sample = this.state.sample;
     sample.setAmountAndNormalizeToGram(amount);
+
     this.setState({
-      sample: sample
+      sample: sample,
+    });
+  }
+
+  handleMolarityChanged(molarity) {
+    let sample = this.state.sample;
+    this.setState({
+      sample: sample,
     });
   }
 
@@ -32,8 +41,10 @@ export default class SampleForm extends React.Component {
 
   structureEditorButton(isDisabled) {
     return (
-      <Button onClick={this.showStructureEditor.bind(this)}
-              disabled={isDisabled}>
+      <Button
+        onClick={this.showStructureEditor}
+        disabled={isDisabled}
+      >
         <Glyphicon glyph='pencil'/>
       </Button>
     )
@@ -70,12 +81,16 @@ export default class SampleForm extends React.Component {
   }
 
   handleFieldChanged(sample, field, e) {
-    if(/amount/.test(field))
+    if (/amount/.test(field)) {
       this.handleAmountChanged(e);
-    else if (e && e.value) // for numeric inputs
+    } else if (/molarity/.test(field)) {
+      this.handleMolarityChanged(e);
+    } else if (e && e.value) {
+      // for numeric inputs
       sample[field] = e.value;
-    else
+    } else {
       sample[field] = e;
+    }
 
     this.props.parent.setState({
       sample: sample
@@ -111,18 +126,18 @@ export default class SampleForm extends React.Component {
       return false;
 
     return this.numInput(sample, 'defined_part_amount', 'g',
-    ['milli','none'], 4, 'Attached', 'attachedAmountMg', true, "Weight of the defined part", size)
+      ['milli', 'none'], 4, 'Attached', 'attachedAmountMg', true, "Weight of the defined part", size)
   }
 
   numInput(sample, field, unit, prefixes, precision, label, ref = '',
-    disabled = false, title='', size=2, notApplicable = false) {
-    if(sample.contains_residues && unit == 'l')
-      return false;
-    let value = notApplicable ? 'N/A' : (!isNaN(sample[field]) ? sample[field] : null)
+    disabled = false, title = '', size = 2, notApplicable = false) {
+    if (sample.contains_residues && unit === 'l') return false;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
+
     return (
       <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
-          value={value}
+          value={notApplicable ? 'N/A' : value}
           unit={unit}
           label={label}
           ref={ref}
@@ -140,29 +155,30 @@ export default class SampleForm extends React.Component {
   sampleAmount(sample) {
     let content = [];
     const isDisabled = !sample.can_update;
-    if(sample.isMethodDisabled('amount_value') == false) {
-      if(sample.isMethodRestricted('molecule') == true) {
+    if (sample.isMethodDisabled('amount_value') === false) {
+      if (sample.isMethodRestricted('molecule') === true) {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '')
+          this.numInput(sample, 'amount_g', 'g', ['milli', 'none'], 4, 'Amount', 'massMgInput', isDisabled, '')
         )
       } else {
         content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '')
+          this.numInput(sample, 'amount_g', 'g', ['milli', 'none'], 4, 'Amount', 'massMgInput', isDisabled, '')
         )
 
         if(!sample.contains_residues)
           content.push(
-            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', isDisabled, '')
+            this.numInput(sample, 'amount_l', 'l', ['milli', 'micro', 'none'], 5, '\u202F', 'l', isDisabled, '')
           )
 
         content.push(
-          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', isDisabled, '')
+          this.numInput(sample, 'amount_mol', 'mol', ['milli', 'none'], 4, '\u202F', 'amountInput', isDisabled, '')
         )
 
-        if(sample.contains_residues)
+        if (sample.contains_residues) {
           content.push(
             this.attachedAmountInput(sample)
           )
+        }
       }
      return content;
     } else {
@@ -238,7 +254,7 @@ export default class SampleForm extends React.Component {
 
         <tr>
           {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', polyDisabled, '', 2, isPolymer)}
-          {this.numInput(sample, 'molarity_value', 'M', ['milli','none'], 5, 'Molarity', '',  polyDisabled, '', 2, isPolymer)}
+          {this.numInput(sample, 'molarity_value', 'M', ['milli', 'none'], 5, 'Molarity', '',  polyDisabled, '', 2, isPolymer)}
           {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity', '', isDisabled)}
           {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '',  polyDisabled, '', 2, isPolymer)}
         </tr>
