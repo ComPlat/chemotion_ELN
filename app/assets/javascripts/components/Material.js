@@ -130,7 +130,9 @@ class Material extends Component {
   equivalentOrYield(material) {
     if(this.props.materialGroup == 'products') {
       return (
-        <FormControl type="text"
+        <FormControl
+          type="text"
+          style={{ height: '30px' }}
           bsClass='bs-form--compact form-control'
           value={`${((material.equivalent || 0 ) * 100).toFixed(0)}%`}
           disabled={true}
