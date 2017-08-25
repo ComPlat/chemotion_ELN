@@ -452,7 +452,7 @@ export default class Sample extends Element {
   }
 
   get has_molarity() {
-    return this.molarity_unit > 0 && this.density === 0;
+    return this.molarity_value > 0 && this.density === 0;
   }
 
   get has_density() {
@@ -503,8 +503,8 @@ export default class Sample extends Element {
       return this.amount_value * this.molecule_molecular_weight;
     }
 
-    if (this.has_molarity && this.amount_unit === 'l') {
-      const mol = this.amount_value * this.molarity_value;
+    if (this.has_molarity && this.amount_unit === 'l') {console.log("g molarity");
+      const mol = this.amount_value * this.molarity_value;console.log(mol);
       return mol * this.molecule_molecular_weight;
     } else if (this.has_density && this.amount_unit === 'l') {
       return this.amount_value * this.density;
@@ -521,7 +521,7 @@ export default class Sample extends Element {
       if (this.amount_unit === 'mol') {
         return this.amount_value / this.molarity_value;
       } else if (this.amount_unit === 'g') {
-        const mol = this.amount_value / this.molecule_molecular_weight;
+        const mol = this.amount_value / this.molecule_molecular_weight;console.log(mol);
         return mol * this.molarity_value;
       }
     } else if (this.has_density) {
