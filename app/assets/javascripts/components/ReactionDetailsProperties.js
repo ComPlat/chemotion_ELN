@@ -3,12 +3,14 @@ import {Row, Col, FormGroup, ControlLabel, FormControl, MenuItem, Button,
   ListGroupItem, ListGroup, InputGroup, OverlayTrigger, Tooltip,
   DropdownButton} from 'react-bootstrap'
 import Select from 'react-select'
+import moment from 'moment';
+import 'moment-precise-range-plugin';
+
 import {purificationOptions,
         dangerousProductsOptions} from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import {observationPurification, solventsTL} from './utils/reactionPredefined.js';
 import Clipboard from 'clipboard';
-import moment from 'moment';
 
 export default class ReactionDetailsProperties extends Component {
 
