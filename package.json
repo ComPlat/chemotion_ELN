@@ -24,7 +24,7 @@
     "jsdom": "^9.8.0",
     "lodash": "^4.17.0",
     "moment": "^2.14.1",
-    "moment-precise-range-plugin": "^1.2.0",
+    "moment-precise-range-plugin": "^1.2.4",
     "numeral": "^1.5.3",
     "path": "^0.12.7",
     "qrcode.react": "^0.6.1",
