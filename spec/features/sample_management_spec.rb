@@ -44,12 +44,11 @@ feature 'Sample management' do
         end
       end
 
-      amount = sample.target_amount_value.to_s
-      expect(find_bs_field('Amount').value).to eq(amount)
+      amount = (sample.target_amount_value * 1000)
+      expect(find_bs_field('Amount').value.to_f).to eq(amount)
 
-      molarity_float = sample.molarity_value * (sample.molarity_unit === 'M' ? 1 : 1000)
-      molarity = molarity.to_s
-      expect(find_bs_field('Molarity').value.to_f.to_s).to eq(molarity)
+      molarity = sample.molarity_value * 1000
+      expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
 
       # test read-only molecule data
       { inchistring: 'InChI', cano_smiles: 'Canonical Smiles' }.each do |f, v|
