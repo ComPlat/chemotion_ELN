@@ -339,6 +339,8 @@ module Chemotion
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :role, type: String
+        optional :origin, type: Hash
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
@@ -388,6 +390,8 @@ module Chemotion
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :role, type: String
+        optional :origin, type: Hash
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash

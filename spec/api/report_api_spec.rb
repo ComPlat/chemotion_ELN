@@ -107,9 +107,8 @@ describe Chemotion::ReportAPI do
 
     describe 'POST /api/v1/reports' do
       let(:fileName) { 'ELN' }
-
-      before do
-        params = {
+      let(:params) do
+        {
           objTags: "[{\"id\":#{r1.id},\"type\":\"reaction\"}, \
             {\"id\":#{r2.id},\"type\":\"reaction\"}]",
           splSettings: "[{\"text\":\"diagram\",\"checked\":true}, \
@@ -119,12 +118,19 @@ describe Chemotion::ReportAPI do
           configs: "[{\"text\":\"page_break\",\"checked\":true}, \
             {\"text\":\"whole_diagram\",\"checked\":true}]",
           imgFormat: 'png',
-          fileName: fileName
+          fileName: fileName,
         }
-        post '/api/v1/reports', params
       end
 
-      it 'returns a created report' do
+      it 'returns a created -standard- report' do
+        params[:template] = "standard"
+        post '/api/v1/reports', params
+        expect(response.body).to include(fileName)
+      end
+
+      it 'returns a created -supporting_information- report' do
+        params[:template] = "supporting_information"
+        post '/api/v1/reports', params
         expect(response.body).to include(fileName)
       end
     end

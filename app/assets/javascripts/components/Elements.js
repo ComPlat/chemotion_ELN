@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import {DragDropContext} from 'react-dnd';
 import {Col} from 'react-bootstrap';
 import HTML5Backend from 'react-dnd-html5-backend';
-import _ from 'lodash';
 
 import List from './List';
 import ElementDetails from './ElementDetails';
@@ -15,14 +14,6 @@ export default class Elements extends Component {
       currentElement: null,
     };
     this.handleOnChange = this.handleOnChange.bind(this)
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    const prevP = this.props
-    const nextP = nextProps
-    const prevS = this.state
-    const nextS = nextState
-    return !_.isEqual(prevP, nextP) || !_.isEqual(prevS, nextS)
   }
 
   componentDidMount() {
@@ -47,7 +38,7 @@ export default class Elements extends Component {
     let page = null
 
     if (currentElement) {
-      md = 5
+      md = 5 
       page = (
         <Col md={7} className="small-col">
           <ElementDetails currentElement={currentElement} />

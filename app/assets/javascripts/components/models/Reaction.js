@@ -25,6 +25,7 @@ export default class Reaction extends Element {
       type: 'reaction',
       name: '',
       status: "",
+      role: "",
       description: description_default,
       timestamp_start: "",
       timestamp_stop: "",
@@ -91,6 +92,8 @@ export default class Reaction extends Element {
       temperature: this.temperature,
       short_label: this.short_label,
       status: this.status,
+      role: this.role,
+      origin: this.origin,
       reaction_svg_file: this.reaction_svg_file,
       materials: {
         starting_materials: this.starting_materials.map(s=>s.serializeMaterial()),
@@ -242,7 +245,9 @@ export default class Reaction extends Element {
 
   static copyFromReactionAndCollectionId(reaction, collection_id) {
     const copy = reaction.buildCopy();
-    copy.name = reaction.name + " Copy"
+    copy.role = "parts";
+    copy.origin = { id: reaction.id, short_label: reaction.short_label };
+    copy.name = copy.nameFromRole(copy.role);
     copy.collection_id = collection_id;
     copy.starting_materials = reaction.starting_materials.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.reactants = reaction.reactants.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
@@ -530,5 +535,24 @@ export default class Reaction extends Element {
   // overwrite isPendingToSave method in models/Element.js
   get isPendingToSave() {
     return !_.isEmpty(this) && (this.isNew || this.changed);
+  }
+
+  nameFromRole(role) {
+    let name = this.name;
+    const shortLabelNum = this.short_label.split("-").slice(-1)[0];
+    const ori = this.origin;
+    const oriSL = ori ? ori.short_label.split("-").slice(-1)[0] : "xx";
+    switch (role) {
+      case 'gp':
+        name = `General Procedure ${shortLabelNum}`;
+        break;
+      case 'parts':
+        name = `According to General Procedure ${oriSL}`;
+        break;
+      case 'single':
+        name = `Single ${shortLabelNum}`;
+        break;
+    }
+    return name;
   }
 }

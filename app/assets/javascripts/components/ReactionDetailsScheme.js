@@ -45,7 +45,7 @@ export default class ReactionDetailsScheme extends Component {
         splitSample = sample.buildChild();
       }
     }
-  
+
     this.insertSolventExtLabel(splitSample, materialGroup, external_label);
 
     reaction.addMaterial(splitSample, materialGroup);
@@ -417,6 +417,10 @@ export default class ReactionDetailsScheme extends Component {
       reaction.markSampleAsReference(refM.id);
     }
 
+    const headReactants = reaction.starting_materials.length;
+    const headSolvents = headReactants + reaction.reactants.length;
+    const headProducts = headSolvents + reaction.solvents.length;
+
     return (
       <div>
         <ListGroup fill>
@@ -430,7 +434,8 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              headIndex={0} />
           </ListGroupItem>
           <ListGroupItem style={minPadding} >
 
@@ -442,8 +447,8 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
-
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              headIndex={headReactants} />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
 
@@ -455,8 +460,8 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
-
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              headIndex={headProducts} />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
             { this.solventCollapseBtn() }
@@ -470,7 +475,8 @@ export default class ReactionDetailsScheme extends Component {
                   deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                   dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
                   showLoadingColumn={reaction.hasPolymers()}
-                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
+                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+                  headIndex={headSolvents} />
               </div>
             </Collapse>
           </ListGroupItem>

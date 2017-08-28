@@ -35,6 +35,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
       <SolventContent show={settings.material}
                       solvents={solvents}
                       solvent={solvent} />
+      <h4> Description </h4>
       <DescriptionContent show={settings.description && description}
                           description={description} />
       <PurificationContent show={settings.purification && purification && purification.length != 0}
@@ -113,6 +114,19 @@ const StatusContent = ({status}) => {
                    backgroundColor: 'white',
                    color:'red'}} >
           <i className="fa fa-times-circle-o"/>
+        </a>
+        </OverlayTrigger>
+      )
+      break;
+    case "General Procedure":
+      tooltip = (<Tooltip id="general_procedure">General Procedure</Tooltip>);
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+        <a style={{marginLeft: '10px',
+                   padding: '3px',
+                   backgroundColor: 'white',
+                   color:'blue'}} >
+          <i className="fa fa-home"/>
         </a>
         </OverlayTrigger>
       )
@@ -237,14 +251,7 @@ const SolventContent = ({show, solvents, solvent}) => {
 }
 
 const DescriptionContent = ({show, description}) => {
-  return (
-    show
-      ? <div>
-          <h4> Description </h4>
-          <QuillViewer value={description} />
-        </div>
-      : null
-  )
+  return show ? <QuillViewer value={description} /> : null;
 }
 
 const PurificationContent = ({show, puri}) => {
@@ -351,4 +358,4 @@ const LiteratureContent = ({show, literatures}) => {
   )
 }
 
-export default SectionReaction;
+export { SectionReaction, SVGContent, DescriptionContent };

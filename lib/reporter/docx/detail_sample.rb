@@ -9,6 +9,8 @@ module Reporter
       def content
         {
           title: title,
+          iupac_name: iupac_name,
+          sum_formular: sum_formular,
           collections: collection_label,
           structure: structure,
           analyses: analyses,
@@ -23,13 +25,21 @@ module Reporter
         "#{obj.molecule_iupac_name} (#{obj.short_label})"
       end
 
+      def iupac_name
+        "#{obj.molecule_iupac_name}"
+      end
+
+      def sum_formular
+        "#{obj.molecule[:sum_formular]}"
+      end
+
       def structure
         DiagramSample.new(obj: obj, format: @img_format).generate
       end
 
       def analyses
         paragraphs = merge_items(init_item, obj.analyses)
-        paragraph = remove_line_break(paragraphs)
+        paragraph = remove_redundant_space_break(paragraphs)
         Sablon.content(:html, Delta.new({"ops" => paragraph}).getHTML())
       end
 
@@ -41,26 +51,6 @@ module Reporter
           item += obj.reactions.first.description["ops"].map(&:to_h)
         end
         item
-      end
-
-      def merge_items(init, items)
-        items.reduce(init) do |sum, i|
-          ops =
-            if i["extended_metadata"] && i["extended_metadata"]["content"]
-              JSON.parse(i["extended_metadata"]["content"])["ops"]
-            else
-              []
-            end
-
-          sum + ops
-        end
-      end
-
-      def remove_line_break(paragraphs)
-        paragraphs.map do |p|
-          p["insert"] = p["insert"].tr("\n", " ")
-          p
-        end
       end
     end
   end

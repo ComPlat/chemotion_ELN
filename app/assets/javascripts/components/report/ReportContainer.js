@@ -1,18 +1,18 @@
 import React, {Component} from 'react'
 import {Panel, Button, Tabs, Tab, Row, Col, FormGroup, ControlLabel,
         FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import _ from 'lodash';
 import DetailActions from '../actions/DetailActions';
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
 import UIActions from '../actions/UIActions';
 import UIStore from '../stores/UIStore';
-
-import Reports from './Reports';
+import Setting from './Setting';
+import Previews from './Previews';
 import Orders from './Orders';
 import Archives from './Archives';
-import CheckBoxs from '../common/CheckBoxs';
-import Select from 'react-select';
 import paramize from './Paramize';
+import Config from './Config';
 import PanelHeader from '../common/PanelHeader';
 
 export default class ReportContainer extends Component {
@@ -29,6 +29,10 @@ export default class ReportContainer extends Component {
     this.generateReportBtn = this.generateReportBtn.bind(this);
     this.generateReport = this.generateReport.bind(this);
     this.updateProcessQueue = this.updateProcessQueue.bind(this);
+    this.fileNameRule = this.fileNameRule.bind(this);
+    this.toggleConfigs = this.toggleConfigs.bind(this);
+    this.toggleConfigsAll = this.toggleConfigsAll.bind(this);
+    this.handleImgFormatChanged = this.handleImgFormatChanged.bind(this);
   }
 
   componentDidMount() {
@@ -69,7 +73,8 @@ export default class ReportContainer extends Component {
     const { splSettings, checkedAllSplSettings,
             rxnSettings, checkedAllRxnSettings,
             configs, checkedAllConfigs,
-            selectedObjs, archives, activeKey } = this.state;
+            selectedObjs, archives, activeKey,
+            imgFormat, fileName, template } = this.state;
     return (
       <Panel header={this.panelHeader()}
              bsStyle="default">
@@ -78,39 +83,50 @@ export default class ReportContainer extends Component {
               onSelect={this.selectTab}
               id="report-tabs" >
           <Tab eventKey={0} title={"Config"}>
-            { this.renderConfig() }
+            <Config
+              imgFormat={imgFormat}
+              fileName={fileName}
+              configs={configs}
+              checkedAllConfigs={checkedAllConfigs}
+              template={template}
+              fileNameRule={this.fileNameRule}
+              toggleConfigs={this.toggleConfigs}
+              toggleConfigsAll={this.toggleConfigsAll}
+              handleImgFormatChanged={this.handleImgFormatChanged}
+              handleTemplateChanged={this.handleTemplateChanged}
+            />
           </Tab>
 
-          <Tab eventKey={1} title={"Sample Setting"}>
-            <CheckBoxs  items={splSettings}
-                        toggleCheckbox={this.toggleSplSettings}
-                        toggleCheckAll={this.toggleSplSettingsAll}
-                        checkedAll={checkedAllSplSettings} />
+          <Tab eventKey={1} title={"Setting"}>
+            <Setting
+              template={template}
+              splSettings={splSettings}
+              toggleSplSettings={this.toggleSplSettings}
+              toggleSplSettingsAll={this.toggleSplSettingsAll}
+              checkedAllSplSettings={checkedAllSplSettings}
+              rxnSettings={rxnSettings}
+              toggleRxnSettings={this.toggleRxnSettings}
+              toggleRxnSettingsAll={this.toggleRxnSettingsAll}
+              checkedAllRxnSettings={checkedAllRxnSettings} />
           </Tab>
 
-          <Tab eventKey={2} title={"Reaction Setting"}>
-            <CheckBoxs  items={rxnSettings}
-                        toggleCheckbox={this.toggleRxnSettings}
-                        toggleCheckAll={this.toggleRxnSettingsAll}
-                        checkedAll={checkedAllRxnSettings} />
-          </Tab>
-
-          <Tab eventKey={3} title={"Order"}>
+          <Tab eventKey={2} title={"Order"}>
             <div className="panel-fit-screen">
-              <Orders selectedObjs={selectedObjs} />
+              <Orders selectedObjs={selectedObjs} template={template} />
             </div>
           </Tab>
 
-          <Tab eventKey={4} title={"Report"}>
+          <Tab eventKey={3} title={"Preview"}>
             <div className="panel-fit-screen">
-              <Reports selectedObjs={selectedObjs}
-                       splSettings={splSettings}
-                       rxnSettings={rxnSettings}
-                       configs={configs} />
+              <Previews selectedObjs={selectedObjs}
+                         splSettings={splSettings}
+                         rxnSettings={rxnSettings}
+                         configs={configs}
+                         template={template} />
             </div>
           </Tab>
 
-          <Tab eventKey={5} title={this.archivesTitle()}>
+          <Tab eventKey={4} title={this.archivesTitle()}>
             <div className="panel-fit-screen">
               <Archives archives={archives} />
             </div>
@@ -118,64 +134,6 @@ export default class ReportContainer extends Component {
         </Tabs>
 
       </Panel>
-    );
-  }
-
-  renderConfig() {
-    const { imgFormat, configs, checkedAllConfigs } = this.state;
-    const imgFormatOpts = [
-      { label: 'PNG', value: 'png'},
-      { label: 'EPS', value: 'eps'},
-      { label: 'EMF', value: 'emf'}
-    ];
-    const EPSwarning = (imgFormat == 'eps')
-                    ? <p className="text-danger" style={{paddingTop: 12}}>
-                        WARNING: EPS format is not supported by Microsoft Office
-                      </p>
-                    : null;
-    return (
-      <div>
-        <br/>
-        <FormGroup>
-          <OverlayTrigger overlay={this.fileNameRule()}>
-            <ControlLabel>
-              File Name
-            </ControlLabel>
-          </OverlayTrigger>
-          <FormControl type="text"
-            value={this.state.fileName}
-            onChange={e => ReportActions.updateFileName(e.target.value)}
-          />
-        </FormGroup>
-
-        <FormGroup>
-          <ControlLabel>File description</ControlLabel>
-          <FormControl componentClass="textarea"
-           onChange={e => ReportActions.updateFileDescription(e.target.value)}
-           rows={2}
-          />
-        </FormGroup>
-
-        <CheckBoxs  items={configs}
-                    toggleCheckbox={this.toggleConfigs}
-                    toggleCheckAll={this.toggleConfigsAll}
-                    checkedAll={checkedAllConfigs} />
-
-        <Row>
-          <Col md={3} sm={8}>
-            <label>Images format</label>
-            <Select options={imgFormatOpts}
-                    value={imgFormat}
-                    clearable={false}
-                    style={{width: 100}}
-                    onChange={(e) => this.handleImgFormatChanged(e.value)}/>
-          </Col>
-          <Col md={9} sm={16}>
-            <label></label>
-            {EPSwarning}
-          </Col>
-        </Row>
-      </div>
     );
   }
 
@@ -213,7 +171,11 @@ export default class ReportContainer extends Component {
   }
 
   handleImgFormatChanged(e) {
-    ReportActions.updateImgFormat(e);
+    ReportActions.updateImgFormat(e.value);
+  }
+
+  handleTemplateChanged(e) {
+    ReportActions.updateTemplate(e.value);
   }
 
   selectTab(key) {
@@ -227,7 +189,7 @@ export default class ReportContainer extends Component {
       : null;
 
     return(
-      <p>Archive {unReadBadge}</p>
+      <span>Archive {unReadBadge}</span>
     );
   }
 

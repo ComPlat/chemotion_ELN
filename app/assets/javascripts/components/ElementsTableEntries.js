@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import _ from 'lodash';
 import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -24,14 +23,6 @@ export default class ElementsTableEntries extends Component {
     }
 
     this.entriesOnKeyDown = this.entriesOnKeyDown.bind(this)
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    const prevP = this.props
-    const nextP = nextProps
-    const prevS = this.state
-    const nextS = nextState
-    return !_.isEqual(prevP, nextP) || !_.isEqual(prevS, nextS)
   }
 
   componentDidMount() {
@@ -158,18 +149,17 @@ export default class ElementsTableEntries extends Component {
       let NoName = XTdCont["content"+j];
       tdExtraContents.push(<NoName element={element}/>);
     }
-    const funcShowDetails = () => this.showDetails(element)
 
     const {showPreviews} = UIStore.getState();
     if(showPreviews && (element.type == 'reaction' || element.type == 'research_plan')) {
       return (
-        <td style={svgContainerStyle} onClick={funcShowDetails}>
+        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
       );
     } else {
-      return <td style={{display:'none', cursor: 'pointer'}} onClick={funcShowDetails}/>;
+      return <td style={{display:'none', cursor: 'pointer'}} onClick={e => this.showDetails(element)}/>;
     }
   }
 
@@ -196,7 +186,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>
+              <i className="fa fa-check-circle-o c-bs-success"/>
             </OverlayTrigger>
           )
           break;
@@ -205,7 +195,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>
+              <i className="fa fa-clock-o c-bs-warning"/>
             </OverlayTrigger>
           )
           break;
@@ -214,11 +204,45 @@ export default class ElementsTableEntries extends Component {
           tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>
+              <i className="fa fa-times-circle-o c-bs-danger"/>
             </OverlayTrigger>
           )
           break;
 
+        default:
+          break;
+      }
+    }
+  }
+
+  reactionRole(element) {
+    let tooltip = null;
+    if (element.type == 'reaction') {
+      switch (element.role) {
+        case "gp":
+          tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <i className="fa fa-home c-bs-primary"/>
+            </OverlayTrigger>
+          )
+          break;
+        case "parts":
+          tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <i className="fa fa-bookmark c-bs-success"/>
+            </OverlayTrigger>
+          )
+          break;
+        case "single":
+          tooltip = <Tooltip id="roleTp">Single</Tooltip>;
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <i className="fa fa-asterisk c-bs-danger"/>
+            </OverlayTrigger>
+          )
+          break;
         default:
           break;
       }
@@ -251,16 +275,16 @@ export default class ElementsTableEntries extends Component {
             border: '4px solid #337ab7'
             }
           }
-          const funcShowDetails = () => this.showDetails(element)
 
           return (
             <tr key={index} style={style}>
               <td width="30px">
                 <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
               </td>
-              <td onClick={funcShowDetails} style={{cursor: 'pointer'}}>
+              <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
                 {element.title()}&nbsp;
                 {this.reactionStatus(element)}
+                {this.reactionRole(element)}
                 <br/>
                 {sampleMoleculeName}
                 <ElementCollectionLabels element={element} key={element.id}/>

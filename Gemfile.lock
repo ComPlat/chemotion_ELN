@@ -22,11 +22,11 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/sablon
-  revision: ce06ae287674f8fb06dbb0d8c95df5c76dbb47ad
+  revision: b2d1ff682c4b4d984b91cf410043e42bdc5c25fc
   specs:
     sablon (0.0.19)
       nokogiri (>= 1.6.0)
-      redcarpet (>= 3.2)
+      redcarpet (>= 3.4.0)
       rubyzip (>= 1.1)
 
 GIT
@@ -420,7 +420,7 @@ GEM
       ffi (>= 0.5.0)
     rdoc (4.2.2)
       json (~> 1.4)
-    redcarpet (3.3.4)
+    redcarpet (3.4.0)
     responders (2.3.0)
       railties (>= 4.2.0, < 5.1)
     rmagick (2.15.4)

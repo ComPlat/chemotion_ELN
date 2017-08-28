@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170816135217) do
+ActiveRecord::Schema.define(version: 20170828104739) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -437,9 +437,12 @@ ActiveRecord::Schema.define(version: 20170816135217) do
     t.datetime "deleted_at"
     t.string   "short_label"
     t.integer  "created_by"
+    t.string   "role"
+    t.jsonb    "origin"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
+  add_index "reactions", ["role"], name: "index_reactions_on_role", using: :btree
 
   create_table "reactions_product_samples", force: :cascade do |t|
     t.integer  "reaction_id"
@@ -501,8 +504,9 @@ ActiveRecord::Schema.define(version: 20170816135217) do
     t.string   "file_path"
     t.datetime "generated_at"
     t.datetime "deleted_at"
-    t.datetime "created_at",        null: false
-    t.datetime "updated_at",        null: false
+    t.datetime "created_at",                             null: false
+    t.datetime "updated_at",                             null: false
+    t.string   "template",          default: "standard"
   end
 
   add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree

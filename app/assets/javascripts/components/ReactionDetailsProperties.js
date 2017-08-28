@@ -199,12 +199,12 @@ export default class ReactionDetailsProperties extends Component {
           <Row>
             <Col md={12}>
               <FormGroup>
-                <ControlLabel>Observation</ControlLabel>
+                <ControlLabel>Additional information for publication and purification details</ControlLabel>
                 <FormControl
                   componentClass="textarea" rows="4"
                   value={reaction.observation || ''}
                   disabled={reaction.isMethodDisabled('observation')}
-                  placeholder="Observation..."
+                  placeholder="Additional information for publication and purification details..."
                   onChange={event => this.props.onInputChange('observation', event)}/>
               </FormGroup>
             </Col>

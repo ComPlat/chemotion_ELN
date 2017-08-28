@@ -3,6 +3,7 @@ import ReportActions from '../actions/ReportActions'
 import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
 import ArrayUtils from '../utils/ArrayUtils';
+import { reOrderArr } from '../utils/DndControl';
 import UpdateSelectedObjs from './common/UpdateSelectedObjs';
 
 class ReportStore {
@@ -33,6 +34,7 @@ class ReportStore {
     this.fileDescription = ''
     this.activeKey = 0
     this.processings = []
+    this.template = 'supporting_information'
 
     this.bindListeners({
       handleUpdateSplSettings: ReportActions.updateSplSettings,
@@ -51,11 +53,34 @@ class ReportStore {
       handleUpdateActiveKey: ReportActions.updateActiveKey,
       handleDownloadReport: ReportActions.downloadReport,
       handleUpdateProcessQueue: ReportActions.updateProcessQueue,
+      handleUpdateTemplate: ReportActions.updateTemplate,
     })
   }
 
   handleUpdateImgFormat(value) {
     this.setState({ imgFormat: value })
+  }
+
+  handleUpdateTemplate(value) {
+    this.setState({ template: value,
+      fileName: this.initFileName(value),
+      selectedObjs: this.orderObjsForTemplate(value) });
+  }
+
+  orderObjsForTemplate(template, oldObjs = null) {
+    const oldSelectedObjs = oldObjs || this.selectedObjs;
+    if(template === 'supporting_information') {
+      let frontObjs = [], rearObjs = [];
+      oldSelectedObjs.map(obj => {
+        if(obj.type === 'reaction' && obj.role === 'gp') {
+          frontObjs = [...frontObjs, obj];
+        } else {
+          rearObjs = [...rearObjs, obj];
+        }
+      });
+      return [...frontObjs, ...rearObjs];
+    }
+    return oldSelectedObjs;
   }
 
   handleUpdateSplSettings(target) {
@@ -124,10 +149,10 @@ class ReportStore {
   handleGenerateReport(result) {
     const newArchives = [result.report, ...this.archives];
     this.setState({ processingReport: !this.processingReport,
-                    activeKey: 5,
+                    activeKey: 4,
                     archives: newArchives,
                     processings: this.getProcessings(newArchives),
-                    fileName: this.initFileName() });
+                    fileName: this.initFileName(this.template) });
     this.loadingIcon();
   }
 
@@ -150,36 +175,32 @@ class ReportStore {
     const newSelectedObjs = UpdateSelectedObjs(newTags,
                                                 newObjs,
                                                 this.selectedObjs);
-    this.setState({selectedObjs: newSelectedObjs});
+    const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
+    this.setState({selectedObjs: finalObjs});
+  }
+
+  isEqTypeId(a, b) {
+    return a.type === b.type && a.id === b.id;
   }
 
   handleMove({sourceTag, targetTag}) {
-    const sourceIndex = this.findIndexFromObjs(sourceTag);
-    const targetIndex = this.findIndexFromObjs(targetTag);
-    const indexOne = sourceIndex > targetIndex ? targetIndex : sourceIndex;
-    const indexTwo = sourceIndex > targetIndex ? sourceIndex : targetIndex;
-    const objs = this.selectedObjs || [];
-
-    const newObjs = [ ...objs.slice(0, indexOne),
-                      objs[indexTwo],
-                      ...objs.slice(indexOne + 1, indexTwo),
-                      objs[indexOne],
-                      ...objs.slice(indexTwo + 1) ].filter(obj => obj != null) || [];
-    this.setState({selectedObjs: newObjs});
+    const oldObjs = this.selectedObjs || [];
+    const newObjs = reOrderArr(sourceTag, targetTag, this.isEqTypeId, oldObjs);
+    const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
+    this.setState({selectedObjs: finalObjs});
   }
 
-  findIndexFromObjs(tag) {
-    let objIndex;
-    const objs = this.selectedObjs || [];
-    objs.forEach( (obj, i) => {
-      if(obj.type === tag.type && obj.id === tag.id) {
-        objIndex = i;
-      }
-    });
-    return objIndex;
-  }
+  initFileName(template = 'supporting_information') {
+    let prefix = "Supporting_Information_";
+    switch(template) {
+      case "standard":
+        prefix = "ELN_Report_";
+        break;
+      case "supporting_information":
+        prefix = "Supporting_Information_";
+        break;
+    }
 
-  initFileName() {
     const dt = new Date();
     const datetime =  dt.getFullYear() + "-"
                         + (dt.getMonth()+1)  + "-"
@@ -187,7 +208,7 @@ class ReportStore {
                         + dt.getHours() + "M"
                         + dt.getMinutes() + "S"
                         + dt.getSeconds();
-    return "ELN_Report_" + datetime;
+    return prefix + datetime;
   }
 
   handleGetArchives({archives}) {
