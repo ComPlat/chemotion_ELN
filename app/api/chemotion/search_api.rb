@@ -50,20 +50,25 @@ module Chemotion
                 params[:collection_id].to_i, type, threshold)
       end
 
+      def whitelisted_table(table:, column:, **_)
+        API::WL_TABLES.has_key?(table) && API::WL_TABLES[table].include?(column)
+      end
+
       def advanced_search arg
         query = ""
         cond_val = []
         tables = []
 
         arg.each do |filter|
+          next unless whitelisted_table(filter.field.to_h.symbolize_keys)
           table = filter.field.table
           tables.push(table)
           field = filter.field.column
           words = filter.value.split(/,|(\r)?\n/).map!(&:strip)
 
-          if filter.match.downcase == "exact" 
+          if filter.match.downcase == "exact"
             match = "="
-          else 
+          else
             match = "LIKE"
             words = words.map{ |e| "%#{e}%" }
           end
@@ -249,7 +254,7 @@ module Chemotion
           return scope.includes(:molecule)
             .joins(:molecule)
             .order("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))")
-            .order("molecules.sum_formular") 
+            .order("molecules.sum_formular")
         end
 
         return scope
@@ -517,4 +522,3 @@ module Chemotion
     end
   end
 end
-
