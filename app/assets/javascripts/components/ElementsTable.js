@@ -1,10 +1,9 @@
 import React from 'react';
 
 import {
-  Pagination, Table, Form, Col, Row, Button, InputGroup,
+  Pagination, Table, Form, Col, Row, Button, InputGroup, 
   FormGroup, FormControl, ControlLabel, Glyphicon
 } from 'react-bootstrap';
-import _ from 'lodash';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -37,16 +36,6 @@ export default class ElementsTable extends React.Component {
 
     this.collapseSample = this.collapseSample.bind(this)
     this.changeSort = this.changeSort.bind(this)
-    this.handlePaginationSelect = this.handlePaginationSelect.bind(this)
-    this.handleNumberOfResultsChange = this.handleNumberOfResultsChange.bind(this)
-  }
-
-  shouldComponentUpdate(nextProps, nextState) {
-    const prevP = this.props
-    const nextP = nextProps
-    const prevS = this.state
-    const nextS = nextState
-    return !_.isEqual(prevP, nextP) || !_.isEqual(prevS, nextS)
   }
 
   componentDidMount() {
@@ -134,12 +123,9 @@ export default class ElementsTable extends React.Component {
     }
   }
 
-  collapseSample(e) {
-    const prevCollAll = this.state.sampleCollapseAll
-    const nextCollAll = typeof(e) === 'boolean' ? false : !prevCollAll
-    this.setState({sampleCollapseAll: nextCollAll})
+  collapseSample(sampelCollapseAll) {
+    this.setState({sampleCollapseAll: !sampelCollapseAll})
   }
-
 
   changeSort() {
     let {moleculeSort} = this.state
@@ -175,7 +161,7 @@ export default class ElementsTable extends React.Component {
             activePage={page}
             items={pages}
             bsSize="small"
-            onSelect={this.handlePaginationSelect}/>
+            onSelect={(eventKey) => this.handlePaginationSelect(eventKey)}/>
         </div>
       )
     }
@@ -196,7 +182,7 @@ export default class ElementsTable extends React.Component {
           <InputGroup>
             <InputGroup.Addon>Show</InputGroup.Addon>
             <FormControl type="text" style={{textAlign: 'center'}}
-               onChange={this.handleNumberOfResultsChange}
+               onChange={event => this.handleNumberOfResultsChange(event)}
                value={ui.number_of_results ? ui.number_of_results : 0} />
           </InputGroup>
         </FormGroup>
@@ -239,13 +225,13 @@ export default class ElementsTable extends React.Component {
 
           &nbsp;&nbsp;&nbsp;&nbsp;
 
-          <Glyphicon glyph={collapseIcon}
+          <Glyphicon glyph={collapseIcon} 
             title="Collapse/Uncollapse"
-            onClick={this.collapseSample}
+            onClick={() => this.collapseSample(sampleCollapseAll)}
             style={{
               fontSize: "20px", cursor: "pointer",
               top: 0, color: '#337ab7'
-            }}/>
+            }}/> 
         </div>
       )
     }
@@ -268,7 +254,7 @@ export default class ElementsTable extends React.Component {
       sampleCollapseAll,
       moleculeSort
     } = this.state
-
+    
     const {overview, type} = this.props
     let elementsTableEntries = null
 
@@ -277,7 +263,7 @@ export default class ElementsTable extends React.Component {
         <ElementsTableSampleEntries collapseAll={sampleCollapseAll}
           elements={elements} currentElement={currentElement}
           showDragColumn={!overview} ui={ui} moleculeSort={moleculeSort}
-          onChangeCollapse={this.collapseSample}
+          onChangeCollapse={(checked) => this.collapseSample(!checked)}
         />
       )
     } else {
