@@ -161,7 +161,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
           {"insert"=>"} "},
           {"insert"=>"#{s2.molecule.iupac_name}"},
-          {"insert"=>" (0.1 g, 5.551 mmol, #{equiv} equiv.); "},
+          {"insert"=>" (1.0 g, 55.508 mmol, 0.88 equiv.); "},
           {"insert"=>"Yield "},
           {"insert"=>"{2|"},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
