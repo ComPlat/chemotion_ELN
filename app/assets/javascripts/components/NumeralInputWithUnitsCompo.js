@@ -72,7 +72,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       currentPrecision: undefined,
       showString: true,
       valueString: metPreConv(value, 'none', metricPrefix) || 0,
-    }, () => {this._onChangeCallback()});
+    });
   }
 
   _handleInputValueBlur() {
