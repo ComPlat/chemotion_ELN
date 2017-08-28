@@ -75,7 +75,6 @@ export default class ScanCodeButton extends React.Component {
     this.initializeBarcodeScan()
 
     Quagga.onDetected((data) => {
-      console.log(data);
       let barcode = data.codeResult.code;
       this.handleScan(barcode,true)
     })

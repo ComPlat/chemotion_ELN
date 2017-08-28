@@ -521,7 +521,7 @@ export default class Sample extends Element {
       if (this.amount_unit === 'mol') {
         return this.amount_value / this.molarity_value;
       } else if (this.amount_unit === 'g') {
-        const mol = this.amount_value / this.molecule_molecular_weight;console.log(mol);
+        const mol = this.amount_value / this.molecule_molecular_weight;
         return mol * this.molarity_value;
       }
     } else if (this.has_density) {
