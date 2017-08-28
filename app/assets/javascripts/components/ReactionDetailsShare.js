@@ -51,6 +51,10 @@ const setReactionByType = (reaction, type, value) => {
       reaction.solvent = value;
       options = {schemaChanged: true}
       break;
+    case 'role':
+      reaction.role = value;
+      reaction.name = reaction.nameFromRole(value);
+      break;
   }
 
   return { newReaction: reaction, options: options }

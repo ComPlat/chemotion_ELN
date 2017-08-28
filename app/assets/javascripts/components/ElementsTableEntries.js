@@ -186,7 +186,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>
+              <i className="fa fa-check-circle-o c-bs-success"/>
             </OverlayTrigger>
           )
           break;
@@ -195,7 +195,7 @@ export default class ElementsTableEntries extends Component {
           tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>
+              <i className="fa fa-clock-o c-bs-warning"/>
             </OverlayTrigger>
           )
           break;
@@ -204,11 +204,45 @@ export default class ElementsTableEntries extends Component {
           tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>
+              <i className="fa fa-times-circle-o c-bs-danger"/>
             </OverlayTrigger>
           )
           break;
 
+        default:
+          break;
+      }
+    }
+  }
+
+  reactionRole(element) {
+    let tooltip = null;
+    if (element.type == 'reaction') {
+      switch (element.role) {
+        case "gp":
+          tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <i className="fa fa-home c-bs-primary"/>
+            </OverlayTrigger>
+          )
+          break;
+        case "parts":
+          tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <i className="fa fa-bookmark c-bs-success"/>
+            </OverlayTrigger>
+          )
+          break;
+        case "single":
+          tooltip = <Tooltip id="roleTp">Single</Tooltip>;
+          return (
+            <OverlayTrigger placement="top" overlay={tooltip}>
+              <i className="fa fa-asterisk c-bs-danger"/>
+            </OverlayTrigger>
+          )
+          break;
         default:
           break;
       }
@@ -250,6 +284,7 @@ export default class ElementsTableEntries extends Component {
               <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
                 {element.title()}&nbsp;
                 {this.reactionStatus(element)}
+                {this.reactionRole(element)}
                 <br/>
                 {sampleMoleculeName}
                 <ElementCollectionLabels element={element} key={element.id}/>

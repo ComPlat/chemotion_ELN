@@ -10,7 +10,8 @@ module Chemotion
       post do
         paths = params[:materials_svg_paths]
         composer = SVG::ReactionComposer.new(paths, temperature: params[:temperature],
-                                                    solvents: params[:solvents])
+                                                    solvents: params[:solvents],
+                                                    show_yield: true)
         filename = composer.compose_reaction_svg_and_save :temp => true
         {:reaction_svg => filename}
       end

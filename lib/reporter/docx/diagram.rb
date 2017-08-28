@@ -5,6 +5,7 @@ module Reporter
       def initialize(args)
         @obj = args[:obj]
         @format = args[:format] || 'png'
+        @template = args[:template]
       end
 
       def generate(products_only = false)

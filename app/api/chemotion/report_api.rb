@@ -11,46 +11,6 @@ module Chemotion
         output
       end
 
-      def all_spl_settings
-        {
-          diagram: true,
-          collection: true,
-          analyses: true,
-          reaction_description: true
-        }
-      end
-
-      def all_rxn_settings
-        {
-          diagram: true,
-          material: true,
-          description: true,
-          purification: true,
-          tlc: true,
-          observation: true,
-          analysis: true,
-          literature: true
-        }
-      end
-
-      def all_configs
-        {
-          page_break: true,
-          whole_diagram: true
-        }
-      end
-
-      def merge(contents, spl_settings, rxn_settings, configs)
-        {
-          date: Time.now.strftime('%d.%m.%Y'),
-          author: "#{current_user.first_name} #{current_user.last_name}",
-          spl_settings: spl_settings,
-          rxn_settings: rxn_settings,
-          configs: configs,
-          objs: contents
-        }
-      end
-
       def excluded_field
         %w(
           id molecule_id created_by deleted_at
@@ -84,29 +44,22 @@ module Chemotion
     end
 
     resource :reports do
-      desc 'Build a report using the contents of a JSON file'
-
+      desc "Build a reaction report using the contents of a JSON file"
       params do
         requires :id
       end
       get :docx do
-        r = Reaction.find(params[:id])
-        r_hash = ElementReportPermissionProxy.new(current_user, r, user_ids)
-                                             .serialized
-        content = Reporter::Docx::Document.new(objs: [r_hash]).convert
-
-        filename = 'ELN_Reaction_' + time_now + '.docx'
-        template_path = Rails.root.join('lib', 'template', 'ELN_Objs.docx')
-
+        params[:template] = "single_reaction"
+        docx, filename = Report.create_reaction_docx(
+                            current_user, user_ids, params
+                          )
         content_type MIME::Types.type_for(filename)[0].to_s
         env['api.format'] = :binary
         header(
           'Content-Disposition',
           "attachment; filename*=UTF-8''#{CGI.escape(filename)}"
         )
-        Sablon.template(template_path).render_to_string(
-          merge(content, all_spl_settings, all_rxn_settings, all_configs)
-        )
+        docx
       end
 
       params do
@@ -241,7 +194,8 @@ module Chemotion
       requires :rxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :configs, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w(png eps emf)
-      requires :fileName, type: String, default: 'ELN_Report_' + Time.now.strftime('%Y-%m-%dT%H-%M-%S')
+      requires :fileName, type: String, default: "ELN_Report_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S")
+      requires :template, type: String, default: "standard"
       optional :fileDescription
     end
     post :reports, each_serializer: ReportSerializer do
@@ -257,6 +211,7 @@ module Chemotion
         reaction_settings: rxn_settings,
         objects: params[:objTags],
         img_format: params[:imgFormat],
+        template: params[:template],
         author_id: current_user.id
       }
 

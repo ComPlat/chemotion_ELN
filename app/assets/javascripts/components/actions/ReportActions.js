@@ -9,6 +9,10 @@ class ReportActions {
     return value;
   }
 
+  updateTemplate(value) {
+    return value;
+  }
+
   updateSplSettings(target) {
     return target;
   }
@@ -79,12 +83,12 @@ class ReportActions {
     };
   }
 
-  updateFileName(value) {
-    return value;
+  updateFileName(e) {
+    return e.target.value;
   }
 
-  updateFileDescription(value) {
-    return value;
+  updateFileDescription(e) {
+    return e.target.value;
   }
 
   updateActiveKey(key) {

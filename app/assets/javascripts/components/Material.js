@@ -1,5 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
+        Label} from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
@@ -496,12 +497,15 @@ class Material extends Component {
       iupacStyle = {display: "none"}
       br = ""
     }
+    const { index } = this.props;
 
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div style={{display: "inline-block", maxWidth: "100%"}}>
-          {materialName}
-          {br}
+          <div className="inline-inside">
+            <Label bsStyle="primary">{index}</Label>&nbsp;
+            {materialName}
+          </div>
           <span style={iupacStyle}>
             {moleculeIupacName}
           </span>

@@ -58,6 +58,7 @@ module SVG
         @solvents = options[:solvents] || []
         @temperature = options[:temperature]
         @pas = options[:preserve_aspect_ratio]
+        @show_yield = options[:show_yield]
       end
 
       def init_word_size
@@ -202,7 +203,11 @@ module SVG
             group_width += vb[2] + 10
             svg['width'] = "#{vb[2]}px;"
             svg['height'] = "#{vb[3]}px;"
-            output += "<g transform='translate(#{x_shift}, #{y_shift})'>" + svg.inner_html.to_s + yield_svg +"</g>"
+            if @show_yield
+              output += "<g transform='translate(#{x_shift}, #{y_shift})'>" + svg.inner_html.to_s + yield_svg +"</g>"
+            else
+              output += "<g transform='translate(#{x_shift}, #{y_shift})'>" + svg.inner_html.to_s + "</g>"
+            end
           end
         end
         reactant_shift = options[:is_reactants] ? 30 : 0
