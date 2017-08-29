@@ -55,7 +55,7 @@ module Chemotion
       end
 
       def advanced_search arg
-        query = ""
+        query = ''
         cond_val = []
         tables = []
 
@@ -66,25 +66,26 @@ module Chemotion
           field = filter.field.column
           words = filter.value.split(/,|(\r)?\n/).map!(&:strip)
 
-          if filter.match.downcase == "exact"
-            match = "="
+          if filter.match.casecmp('exact').zero?
+            match = '='
           else
-            match = "LIKE"
-            words = words.map{ |e| "%#{e}%" }
+            match = 'LIKE'
+            words = words.map { |e| "%#{e}%" }
           end
 
-          conditions = words.collect { |word|
-            table + "." + field + " " + match + " ? "
-          }.join(" OR ")
+          conditions = words.collect {
+            table + '.' + field + ' ' + match + ' ? '
+          }.join(' OR ')
 
-          query = query + " " + filter.link + " (" + conditions + ") "
-          cond_val = cond_val + words
+          query = query + ' ' + filter.link + ' (' + conditions + ') '
+          cond_val += words
         end
 
         scope = Sample.for_user(current_user.id)
         tables.each do |table|
-          if table.downcase != "samples"
-            scope = scope.joins("INNER JOIN #{table} ON #{table}.sample_id = samples.id")
+          if table.casecmp('samples') != 0
+            scope = scope.joins("INNER JOIN #{table} ON "\
+                                "#{table}.sample_id = samples.id")
           end
         end
         scope = scope.where([query] + cond_val)
@@ -93,16 +94,14 @@ module Chemotion
       end
 
       def serialize_samples samples, page, search_method, molecule_sort
-        return {
-          data: [],
-          size: 0
-        } if samples.empty?
+        return { data: [], size: 0 } if samples.empty?
 
         samples_size = samples.size
 
-        if search_method != "advanced" && molecule_sort == true
+        if search_method != 'advanced' && molecule_sort == true
+          # Sorting by molecule for non-advanced search
           molecule_scope =
-            Molecule.joins(:samples).where("samples.id IN (?)", samples)
+            Molecule.joins(:samples).where('samples.id IN (?)', samples)
                     .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                     .order(:sum_formular)
           molecule_scope = molecule_scope.page(page).per(page_size).includes(
@@ -124,7 +123,8 @@ module Chemotion
             molecule: :tag
           ).where(id: ids).order("position(id::text in '#{ids}')").to_a
 
-          if search_method == "advanced"
+          if search_method == 'advanced'
+            # sort by order - advanced search
             group_molecule = group_by_order(paging_samples)
           else
             group_molecule = group_by_molecule(paging_samples)
@@ -217,7 +217,8 @@ module Chemotion
       end
 
       # Generate search query
-      def seach_elements(search_method, arg, collection_id, is_sync = false, molecule_sort = false)
+      def seach_elements(search_method, arg, collection_id,
+                         is_sync = false, molecule_sort = false)
         scope = case search_method
         when 'polymer_type'
           Sample.order("samples.updated_at DESC")
@@ -247,14 +248,17 @@ module Chemotion
         scope = scope.by_collection_id(collection_id.to_i)
 
         if search_method == 'advanced' && molecule_sort == false
-          return scope.order("position("+ arg.first.field.column + "::text in '#{arg.first.value}')")
+          arg_value_str = arg.first.value.gsub(/(\r)?\n/, ",")
+          return scope.order('position(\',\'||' + arg.first.field.column +
+                             "::text||\',\' in ',#{arg_value_str},')")
         elsif search_method == 'advanced' && molecule_sort == true
-          return scope.order("samples.updated_at DESC")
+          return scope.order('samples.updated_at DESC')
         elsif search_method != 'advanced' && molecule_sort == true
           return scope.includes(:molecule)
-            .joins(:molecule)
-            .order("LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))")
-            .order("molecules.sum_formular")
+                      .joins(:molecule)
+                      .order(
+                        "LENGTH(SUBSTRING(molecules.sum_formular, 'C\\d+'))"
+                      ).order('molecules.sum_formular')
         end
 
         return scope
