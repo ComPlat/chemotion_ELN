@@ -36,11 +36,11 @@ export default class ContainerComponent extends Component {
 
     switch (type) {
       case 'name':
-        container.name = ev;
+        container.name = ev.currentTarget.value;
         isChanged = true;
         break;
       case 'description':
-        container.description = ev;
+        container.description = ev.currentTarget.value;
         isChanged = true;
         break;
       case 'kind':
