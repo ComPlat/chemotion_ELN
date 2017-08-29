@@ -7,6 +7,7 @@ class API < Grape::API
   # TODO needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
+
     def current_user
       @current_user = WardenAuthentication.new(env).current_user
     end
@@ -132,6 +133,10 @@ class API < Grape::API
   before do
     authenticate! unless is_public_request?
   end
+
+  WL_TABLES = {
+    'samples' => %w(name short_label external_label)
+  }
 
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
