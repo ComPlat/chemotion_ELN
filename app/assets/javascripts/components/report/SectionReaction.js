@@ -174,22 +174,21 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
         : null
     )
   }
-  const table = (rows) => {
-    return (
-      <Table striped condensed hover>
-        <thead>
-          <tr>
-            <th>Formula</th>
-            <th>Mass(mg)</th>
-            <th>Vol(ml)</th>
-            <th>Amount(mmol)</th>
-            <th>Equiv/Yield</th>
-          </tr>
-        </thead>
-        {rows}
-      </Table>
-    )
-  }
+  const table = (dataRows) => (
+    <Table striped condensed hover>
+      <thead>
+        <tr>
+          <th>Formula</th>
+          <th>Mass(mg)</th>
+          <th>Vol(ml)</th>
+          <th>Amount(mmol)</th>
+          <th>Equiv/Yield</th>
+        </tr>
+      </thead>
+      {dataRows}
+    </Table>
+  );
+
   return (
     show
       ? <div>

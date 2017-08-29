@@ -139,11 +139,12 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionForAmountChange(changeEvent) {
-    let {sampleID, amount} = changeEvent;
-    let updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, amount } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
 
     // normalize to milligram
-    updatedSample.setAmountAndNormalizeToGram(amount);
+    // updatedSample.setAmountAndNormalizeToGram(amount);
+    updatedSample.setAmount(amount);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
@@ -322,17 +323,24 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForEquivalentChange(samples, updatedSample) {
-    const {referenceMaterial} = this.props.reaction;
+    const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
-      if (sample.id == updatedSample.id) {
+      if (sample.id === updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
-        if(referenceMaterial && referenceMaterial.amount_value) {
-          sample.setAmountAndNormalizeToGram({value:updatedSample.equivalent * referenceMaterial.amount_mol, unit:'mol'});
-        }
-        else if(sample.amount_value) {
-          sample.setAmountAndNormalizeToGram({value:updatedSample.equivalent * sample.amount_mol,unit: 'mol'});
+        if (referenceMaterial && referenceMaterial.amount_value) {
+          // sample.setAmountAndNormalizeToGram({
+          sample.setAmount({
+            value: updatedSample.equivalent * referenceMaterial.amount_mol,
+            unit: 'mol',
+          });
+        } else if (sample.amount_value) {
+          sample.setAmount({
+            value: updatedSample.equivalent * sample.amount_mol,
+            unit: 'mol'
+          });
         }
       }
+
       return sample;
     });
   }

@@ -1,17 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-import Quill from 'quill'
-import Delta from 'quill-delta'
+import Quill from 'quill';
+import Delta from 'quill-delta';
 
-import _ from 'lodash'
+import _ from 'lodash';
 
 const toolbarOptions = [
-  ['bold', 'italic', 'underline'], //, 'strike'
-  [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-  [{ 'script': 'sub'}, { 'script': 'super' }],
-  [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-  [{ 'color': [] }, { 'background': [] }],
+  ['bold', 'italic', 'underline'],
+  [{ list: 'ordered' }, { list: 'bullet' }],
+  [{ script: 'sub' }, { script: 'super' }],
+  [{ header: [1, 2, 3, 4, 5, 6, false] }],
+  [{ color: [] }, { background: [] }],
   // [{ 'font': [] }],
   // ['blockquote', 'code-block'],
   // [{ 'header': 1 }, { 'header': 2 }],
@@ -20,101 +20,101 @@ const toolbarOptions = [
   // [{ 'size': ['small', false, 'large', 'huge'] }],
   // [{ 'align': [] }],
   // ['clean'],
-]
+];
 
 export default class QuillEditor extends React.Component {
-  constructor (props) {
-    super(props)
+  constructor(props) {
+    super(props);
 
     this.state = {
-      value: props.value,    // Editor contents
-      timeoutReference: null
-    }
+      // Editor contents
+      value: props.value,
+    };
 
-    this.theme = props.theme
-    if (!props.theme || props.theme == "") this.theme = "snow"
+    this.theme = props.theme;
+    if (!props.theme || props.theme === '') this.theme = 'snow';
 
-    this.readOnly = true
-    if (!props.disabled || props.disabled == false) this.readOnly = false
+    this.readOnly = true;
+    if (!props.disabled || props.disabled === false) this.readOnly = false;
 
-    this.height = props.height
-    if (!props.height || props.height == "") this.height = "230px"
+    this.height = props.height;
+    if (!props.height || props.height === '') this.height = '230px';
 
-    this.toolbar = (props.toolbarSymbol || []).map(x => x.name)
+    this.toolbar = (props.toolbarSymbol || []).map(x => x.name);
 
-    this.editor = false
-    this.timeout = 3e2
-    this.id = _.uniqueId("quill-editor-")
+    this.editor = false;
+    this.id = _.uniqueId('quill-editor-');
 
-    this.getContents = this.getContents.bind(this)
-    this.clearTypingTimeout = this.clearTypingTimeout.bind(this)
-    this.updateEditorValue = this.updateEditorValue.bind(this)
-  }
-
-  componentWillReceiveProps(nextProps) {
-    let {value} = this.state
-    let nextVal = nextProps.value
-
-    if (this.editor && nextVal && nextVal !== this.getContents() ) {
-      this.setState({value: nextProps.value})
-      let sel = this.editor.getSelection()
-      this.editor.setContents(nextProps.value)
-      if (sel) this.editor.setSelection(sel)
-    }
-
-    this.clearTypingTimeout()
+    this.getContents = this.getContents.bind(this);
+    this.updateEditorValue = this.updateEditorValue.bind(this);
+    this.debouncedOnChange = _.debounce(this.props.onChange.bind(this), 300);
+    this.onChange = this.onChange.bind(this);
   }
 
   componentWillMount() {
   }
 
   componentDidMount() {
-    this.initQuill()
+    this.initQuill();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const nextVal = nextProps.value;
+    const oldContents = this.editor ? this.getContents() : null;
+
+    if (oldContents && nextVal &&
+      !_.isEqual(nextVal.ops, oldContents.ops)) {
+      this.setState({ value: nextVal });
+      const sel = this.editor.getSelection();
+      this.editor.setContents(nextVal);
+      if (sel) this.editor.setSelection(sel);
+    }
+  }
+
+  componentWillUpdate() {
+    this.componentWillUnmount();
+  }
+
+  componentDidUpdate() {
+    this.componentDidMount();
   }
 
   componentWillUnmount() {
     // Don't set the state to null, it would generate a loop.
-    this.clearTypingTimeout()
   }
 
-  componentWillUpdate() {
-    this.componentWillUnmount()
+  onChange(val) {
+    this.props.onChange(val);
   }
 
-  componentDidUpdate() {
-    this.componentDidMount()
+  getContents() {
+    if (this.editor) return this.editor.getContents();
+
+    return null;
   }
 
-  updateEditorValue(contents) {
-    let onChange = this.props.onChange
-
+  updateEditorValue(contents, bounce = true) {
     this.setState({
       value: contents,
-      timeoutReference: setTimeout(onChange.bind(this, contents), this.timeout)
-    })
-  }
-
-  clearTypingTimeout() {
-    let {timeoutReference} = this.state
-    if (timeoutReference) clearTimeout(timeoutReference)
+    }, bounce ? this.debouncedOnChange(contents) : this.onChange(contents));
   }
 
   initQuill() {
     if (!this.editor) {
-      let quillEditor = ReactDOM.findDOMNode(this.refs[this.id])
+      const quillEditor = ReactDOM.findDOMNode(this.refs[this.id]);
 
-      let quillOptions = {
+      const quillOptions = {
         modules: {
-          toolbar: "#toolbar-" + this.id
+          toolbar: `#toolbar-${this.id}`,
         },
         theme: this.theme,
-        readOnly: this.readOnly
-      }
+        readOnly: this.readOnly,
+      };
 
       // init Quill
-      this.editor = new Quill(quillEditor, quillOptions)
-      let {value} = this.state
-      if (value) this.editor.setContents(value)
+      this.editor = new Quill(quillEditor, quillOptions);
+      const { value } = this.state;
+      if (value) this.editor.setContents(value);
 
       // Resolve compability with Grammarly Chrome add-on
       // Fromm https://github.com/quilljs/quill/issues/574
@@ -125,130 +125,154 @@ export default class QuillEditor extends React.Component {
       // Quill.register({'formats/grammarly-inline': GrammarlyInline})
 
       this.editor.on('text-change', (delta, oldDelta, source) => {
-        if (source == 'user' && this.props.onChange) {
-          this.clearTypingTimeout()
-
-          let contents = this.getContents()
-          this.updateEditorValue(contents)
+        if (source === 'user' && this.props.onChange) {
+          const contents = this.getContents();
+          this.updateEditorValue(contents);
         }
-      })
+      });
 
-      let updateEditorValue = this.updateEditorValue
-      let editor = this.editor
-      let id = this.id
-      let toolbarSymbol = this.props.toolbarSymbol
+      const updateEditorValue = this.updateEditorValue;
+      const editor = this.editor;
+      const id = this.id;
+      const toolbarSymbol = this.props.toolbarSymbol;
 
-      this.toolbar.forEach(function(element) {
-        let selector = '#toolbar-' + id + ' #' + element + "_id"
-        let btn = document.querySelector(selector)
-        let elementIcon = "icon-" + element
+      this.toolbar.forEach((element) => {
+        const selector = `#toolbar-${id} #${element}_id`;
+        const btn = document.querySelector(selector);
 
-        btn.addEventListener('click', function() {
-          let range = editor.getSelection()
+        btn.addEventListener('click', () => {
+          const range = editor.getSelection();
 
           if (range) {
-            let contents = editor.getContents()
-            let elementOps = toolbarSymbol.find(x => x.name === element).ops
-            let insertDelta = new Delta(elementOps)
-            elementOps = [{retain: range.index}].concat(elementOps)
-            let elementDelta = new Delta(elementOps)
-            contents = contents.compose(elementDelta)
+            let contents = editor.getContents();
+            let elementOps = toolbarSymbol.find(x => x.name === element).ops;
+            const insertDelta = new Delta(elementOps);
+            elementOps = [{ retain: range.index }].concat(elementOps);
+            const elementDelta = new Delta(elementOps);
+            contents = contents.compose(elementDelta);
 
-            editor.setContents(contents)
+            editor.setContents(contents);
 
-            range.length = 0
-            range.index = range.index + insertDelta.length()
-            editor.setSelection(range)
+            range.length = 0;
+            range.index += insertDelta.length();
+            editor.setSelection(range);
 
-            updateEditorValue(contents)
+            updateEditorValue(contents, false);
           }
-        })
-      })
+        });
+      });
     }
-  }
-
-  getContents() {
-    if (this.editor) return this.editor.getContents()
-
-    return null;
   }
 
   renderQuillToolbarGroup() {
-    if (this.theme != "snow") return (<span />)
+    if (this.theme !== 'snow') return (<span />);
 
-    let quillToolbar = toolbarOptions.map(function(formatGroup, index) {
-      let groupElement = formatGroup.map(function(element) {
-        if (typeof(element) == "string") {
-          return (<button className={"ql-" + element} key={"btnKey_" + element}/>)
-        } else if (typeof(element) == "object") {
-          let elementName = Object.getOwnPropertyNames(element)[0]
-          let elementValue = element[elementName]
+    const quillToolbar = toolbarOptions.map((formatGroup, index) => {
+      const groupElement = formatGroup.map((element) => {
+        if (typeof element === 'string') {
+          return (
+            <button
+              className={`ql-${element}`}
+              key={`btnKey_${element}`}
+            />
+          );
+        } else if (typeof element === 'object') {
+          const elementName = Object.getOwnPropertyNames(element)[0];
+          const elementValue = element[elementName];
 
-          if (typeof elementValue == "string") {
+          if (typeof elementValue === 'string') {
             return (
-              <button className={"ql-" + elementName}
-                      value={elementValue} key={"btnKey_" + elementValue}>
-              </button>
-            )
+              <button
+                className={`ql-${elementName}`}
+                key={`btnKey_${elementValue}`}
+                value={elementValue}
+              />
+            );
           } else if (Array.isArray(elementValue)) {
-            let options = elementValue.map(e => <option value={e} key={"opt_" + e}/>)
+            const options = elementValue.map(e => <option value={e} key={`opt_${e}`} />);
             return (
-              <select className={"ql-" + elementName} key={"btnKey_" + elementName}>
+              <select
+                className={`ql-${elementName}`}
+                key={`btnKey_${elementName}`}
+              >
                 {options}
               </select>
-            )
+            );
           }
         }
-      })
+
+        return (<span />);
+      });
 
       return (
-        <span className="ql-formats" key={"sp_" + index}>
+        <span
+          className="ql-formats"
+          key={`sp_${index}`}
+        >
           {groupElement}
         </span>
-      )
-    })
+      );
+    });
 
-    return quillToolbar
+    return quillToolbar;
   }
 
   renderCustomToolbar() {
-    if (this.theme != "snow" || !this.toolbar || this.toolbar.length == 0) {
-      return (<span />)
+    if (this.theme !== 'snow' || !this.toolbar || this.toolbar.length === 0) {
+      return (<span />);
     }
 
-    let customToolbarElement = this.toolbar.map(function(element) {
-      return (
-        <button className={"icon-" + element} key={element + "_key"}
-                id={element + "_id"}
-                style={{margin: "0px 3px 3px 3px"}}/>
-      )
-    })
+    const customToolbarElement = this.toolbar.map(element => (
+      <button
+        className={`icon-${element}`}
+        key={`${element}_key`}
+        id={`${element}_id`}
+        style={{ margin: '0px 3px 3px 3px' }}
+      />
+    ));
 
     return (
-      <span className="ql-formats"
-            style={{fontSize: "25px", display: "block", height: "35px"}}>
-        {customToolbarElement}
+      <span
+        className="ql-formats"
+        style={{ fontSize: '25px', display: 'block', height: '35px' }}
+      >
+        { customToolbarElement }
       </span>
-    )
+    );
   }
 
   render() {
-    let quillToolbar = this.renderQuillToolbarGroup()
+    const quillToolbar = this.renderQuillToolbarGroup();
 
     return (
       <div>
-        <div id={"toolbar-" + this.id}>
+        <div id={`toolbar-${this.id}`}>
           {quillToolbar}
           {this.renderCustomToolbar()}
         </div>
-        <div ref={this.id} style={{height: this.height}}></div>
+        <div
+          ref={this.id}
+          style={{ height: this.height }}
+        />
       </div>
-    )
+    );
   }
 }
 
-// QuillEditor.propTypes = {
-//   options: React.PropTypes.object,
-//   events: React.PropTypes.object,
-//   onChange: React.PropTypes.func
-// }
+QuillEditor.propTypes = {
+  value: React.PropTypes.object,
+  toolbarSymbol: React.PropTypes.array,
+  theme: React.PropTypes.string,
+  height: React.PropTypes.string,
+  disabled: React.PropTypes.bool,
+  onChange: React.PropTypes.func,
+};
+
+QuillEditor.defaultProps = {
+  value: {},
+  toolbarSymbol: [],
+  theme: 'snow',
+  height: '230px',
+  disabled: false,
+  onChange: null,
+};

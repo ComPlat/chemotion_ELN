@@ -25,6 +25,33 @@
 }
 
 .sample-form {
+  margin-bottom: 0px !important;
+
+  // .table > tbody > tr > td {
+  //   border-top: none !important;
+  //   padding: 0px !important;
+  // }
+
+  .name-form {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    
+    -webkit-flex-flow: row nowrap;
+    justify-content: space-between;
+  }
+
+  td {
+    padding: 2px 3px 2px 3px !important;
+    border-top: none !important;
+  }
+  
   button.external-save-btn {
     margin-top: 23px;
     margin-left: -10px;
@@ -41,9 +68,13 @@
     }
   }
 
-
   .top-secret-checkbox {
-    margin-top: 20px;
+    margin-top: 22px;
+    float: right;
+  }
+
+  .Select-menu-outer {
+    z-index: 5;
   }
 }
 
@@ -141,6 +172,11 @@
           white-space: nowrap;
         }
       }
+
     }
   }
 }
+
+// $select-input-height: 34px;
+// @import "../../../node_modules/react-select/scss/default";
+

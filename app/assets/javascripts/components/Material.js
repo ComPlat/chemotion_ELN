@@ -131,7 +131,9 @@ class Material extends Component {
   equivalentOrYield(material) {
     if(this.props.materialGroup == 'products') {
       return (
-        <FormControl type="text"
+        <FormControl
+          type="text"
+          style={{ height: '30px' }}
           bsClass='bs-form--compact form-control'
           value={`${((material.equivalent || 0 ) * 100).toFixed(0)}%`}
           disabled={true}
@@ -359,12 +361,14 @@ class Material extends Component {
           <Button
             bsStyle="danger"
             bsSize="small"
-            onClick={() => deleteMaterial(material)} >
-            <i className="fa fa-trash-o"></i>
+            style={{ height: '30px' }}
+            onClick={() => deleteMaterial(material)}
+          >
+            <i className="fa fa-trash-o" />
           </Button>
         </td>
       </tr>
-    )
+    );
   }
 
   toggleTarget(isTarget) {

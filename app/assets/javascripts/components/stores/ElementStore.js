@@ -370,7 +370,6 @@ class ElementStore {
     Promise.all(promises)
     .then(experiments => {
       experiments.map(experiment => analysis.experiments.push(experiment))
-      console.log(analysis)
       ElementActions.saveDeviceAnalysis(analysis)
     })
   }

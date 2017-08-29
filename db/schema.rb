@@ -576,6 +576,8 @@ ActiveRecord::Schema.define(version: 20170828104739) do
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
     t.jsonb    "xref",                default: {}
+    t.float    "molarity_value",      default: 0.0
+    t.string   "molarity_unit",       default: "M"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

@@ -231,10 +231,11 @@ module Chemotion
         optional :target_amount_unit, type: String, desc: "Sample target amount_unit"
         optional :real_amount_value, type: Float, desc: "Sample real amount_value"
         optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
+        optional :molarity_value, type: Float, desc: "Sample molarity value"
+        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         optional :description, type: String, desc: "Sample description"
         optional :purity, type: Float, desc: "Sample purity"
         optional :solvent, type: String, desc: "Sample solvent"
-        optional :impurities, type: String, desc: "Sample impurities"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -298,10 +299,11 @@ module Chemotion
         requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
         optional :real_amount_value, type: Float, desc: "Sample real amount_value"
         optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
+        optional :molarity_value, type: Float, desc: "Sample molarity value"
+        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
         requires :solvent, type: String, desc: "Sample solvent"
-        requires :impurities, type: String, desc: "Sample impurities"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -326,10 +328,11 @@ module Chemotion
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],
           real_amount_unit: params[:real_amount_unit],
+          molarity_value: params[:molarity_value],
+          molarity_unit: params[:molarity_unit],
           description: params[:description],
           purity: params[:purity],
           solvent: params[:solvent],
-          impurities: params[:impurities],
           location: params[:location],
           molfile: params[:molfile],
           sample_svg_file: params[:sample_svg_file],
