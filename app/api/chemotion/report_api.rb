@@ -35,6 +35,7 @@ module Chemotion
         else
           Collection.find(currentCollection)
                     .send(elements).where(id: checkedIds)
+                    .order("position(samples.id::text in '#{checkedIds}')")
         end
       end
 
