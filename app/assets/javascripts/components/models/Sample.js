@@ -375,10 +375,10 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
-  setAmount(amount) {
-    this.amount_value = amount.value;
-    this.amount_unit = amount.unit;
-  }
+  // setAmount(amount) {
+  //   this.amount_value = amount.value;
+  //   this.amount_unit = amount.unit;
+  // }
 
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
@@ -496,63 +496,15 @@ export default class Sample extends Element {
   }
 
   get amount_g() {
-    // return this.convertToGram(this.amount_value, this.amount_unit);
-    if (this.amount_unit === 'g') return this.amount_value;
-
-    if (this.amount_unit === 'mol') {
-      return this.amount_value * this.molecule_molecular_weight;
-    }
-
-    if (this.has_molarity && this.amount_unit === 'l') {
-      const mol = this.amount_value * this.molarity_value;
-      return mol * this.molecule_molecular_weight;
-    } else if (this.has_density && this.amount_unit === 'l') {
-      return this.amount_value * this.density;
-    }
-
-    return 0;
+    return this.convertToGram(this.amount_value, this.amount_unit);
   }
 
   get amount_l() {
-    // return this.convertGramToUnit(this.amount_g, 'l');
-    if (this.amount_unit === 'l') return this.amount_value;
-
-    if (this.has_molarity) {
-      if (this.amount_unit === 'mol') {
-        return this.amount_value / this.molarity_value;
-      } else if (this.amount_unit === 'g') {
-        const mol = this.amount_value / this.molecule_molecular_weight;
-        return mol * this.molarity_value;
-      }
-    } else if (this.has_density) {
-      if (this.amount_unit === 'g') return this.amount_value / this.density;
-      if (this.amount_unit === 'mol') {
-        const mass = this.amount_value * this.molecule_molecular_weight;
-        return mass / this.density;
-      }
-    }
-
-    return 0;
+    return this.convertGramToUnit(this.amount_g, 'l');
   }
 
   get amount_mol() {
-    // return this.convertGramToUnit(this.amount_g, 'mol');
-    if (this.amount_unit === 'mol') return this.amount_value;
-
-    if (this.amount_unit === 'g') {
-      return this.amount_value / this.molecule_molecular_weight;
-    }
-
-    if (this.has_molarity && this.amount_unit === 'l') {
-      return this.molarity_value * this.amount_value;
-    }
-
-    if (this.has_density && this.amount_unit === 'l') {
-      const mass = this.density * this.amount_value;
-      return mass / this.molecule_molecular_weight;
-    }
-
-    return 0;
+    return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
   //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
@@ -576,17 +528,18 @@ export default class Sample extends Element {
         case 'g':
           return amount_g;
         case 'l': {
-          const density = this.density || 1.0;
-          if (density) {
-            return amount_g / (density * 1000);
+          if (this.has_molarity) {
+            return amount_g / this.molarity_value;
           }
-          break;
+
+          const density = this.density || 1.0;
+          return amount_g / (density * 1000);
         }
         case 'mol': {
           const molecularWeight = this.molecule_molecular_weight;
           const purity = this.purity || 1.0;
-          if (molecular_weight) {
-            return (amount_g * purity) / molecular_weight;
+          if (molecularWeight) {
+            return (amount_g * purity) / molecularWeight;
           }
 
           break;
@@ -615,25 +568,22 @@ export default class Sample extends Element {
           return amountValue;
       }
     } else {
-      let amountValue = this.has_molarity ? amount_value : amount_value * this.molarity_value;
-
       switch (amount_unit) {
         case 'g':
-          return amountValue;
-          break;
+          return amount_value;
         case 'mg':
-          return amountValue / 1000.0;
-          break;
+          return amount_value / 1000.0;
         case 'l':
-          // return amountValue * (this.density || 1.0) * 1000;
-          return amountValue * this.density * 1000;
-          break;
+          if (this.has_molarity) {
+            return amount_value * this.molarity_value;
+          }
+          // has_density
+          return amount_value * (this.density || 1.0) * 1000;
         case 'mol':
           const molecularWeight = this.molecule_molecular_weight;
-          return (amountValue / (this.purity || 1.0)) * molecularWeight;
-          break;
+          return (amount_value / (this.purity || 1.0)) * molecularWeight;
         default:
-          return amountValue;
+          return amount_value;
       }
     }
   }
