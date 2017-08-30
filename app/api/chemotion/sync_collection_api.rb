@@ -69,7 +69,7 @@ module Chemotion
           requires :id, type: Integer
         end
 
-        before do
+        after_validation do
           c = Collection.where(is_shared:false,id: params[:id],user_id: current_user.id).first
           if c
             samples =   c.samples
@@ -89,6 +89,17 @@ module Chemotion
         end
 
         post do
+          uids = params[:user_ids].map do |user_id|
+            val = user_id[:value].to_s
+            if val =~ /^[0-9]+$/ 
+              val.to_i
+            # elsif val =~ Devise::email_regexp
+            else
+              User.where(email: val).pluck :id
+            end
+          end.flatten.compact.uniq
+
+          params[:user_ids] = uids
           Usecases::Sharing::SyncWithUsers.new(params, current_user).execute!
         end
 
