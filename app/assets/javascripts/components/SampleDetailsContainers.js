@@ -1,110 +1,147 @@
-import React, {Component} from 'react';
-import {PanelGroup, Panel, Button, Label, Checkbox} from 'react-bootstrap';
+import React, { Component } from 'react';
+import { Button } from 'react-bootstrap';
 import Container from './models/Container';
-import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton'
 import UIStore from './stores/UIStore';
-import QuillViewer from './QuillViewer'
+import { reOrderArr } from './utils/DndControl';
+import { RndNotAvailable, RndNoAnalyses, RndOrder,
+  RndEdit } from './SampleDetailsContainersCom';
 
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
     super();
-    const {sample} = props;
+    const { sample } = props;
     this.state = {
       sample,
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
+      mode: 'edit',
     };
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.addButton = this.addButton.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleUndo = this.handleUndo.bind(this);
+    this.handleRemove = this.handleRemove.bind(this);
+    this.handleAccordionOpen = this.handleAccordionOpen.bind(this);
+    this.handleAdd = this.handleAdd.bind(this);
+    this.handleMove = this.handleMove.bind(this);
+    this.toggleAddToReport = this.toggleAddToReport.bind(this);
+    this.toggleMode = this.toggleMode.bind(this);
+    this.isEqCId = this.isEqCId.bind(this);
+    this.indexedContainers = this.indexedContainers.bind(this);
+    this.sortArrByIndex = this.sortArrByIndex.bind(this);
+  }
+
+  componentDidMount() {
+    UIStore.listen(this.onUIStoreChange);
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
       sample: nextProps.sample,
-    })
-  }
-
-  componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
+    });
   }
 
   componentWillUnmount() {
-    UIStore.unlisten(this.onUIStoreChange)
+    UIStore.unlisten(this.onUIStoreChange);
   }
 
   onUIStoreChange(state) {
-    if (state.sample.activeAnalysis != this.state.sample.activeAnalysis){
-      this.setState({
-        activeAnalysis: state.sample.activeAnalysis
-      })
+    if (state.sample.activeAnalysis !== this.state.sample.activeAnalysis) {
+      this.setState({ activeAnalysis: state.sample.activeAnalysis });
     }
   }
 
   handleChange(container) {
-    const {sample} = this.state
-
-    let analyses = sample.container.children.find((child) => { return child.container_type == "analyses"})
-    let analysis = analyses.children.find((child) => {
-      return child.container_type == "analysis" && child.id == container.id
-    })
+    const { sample } = this.state;
+    const analyses = sample.container.children.find(child => (
+      child.container_type === 'analyses'
+    ));
+    let analysis = analyses.children.find(child => (
+      child.container_type === 'analysis' && child.id === container.id
+    ));
     if (analysis) analysis = container;
 
-    this.props.handleSampleChanged(sample)
+    this.props.handleSampleChanged(sample);
   }
 
   handleAdd() {
-    const {sample} = this.state;
-    let container = Container.buildEmpty();
+    const { sample } = this.state;
+    const container = Container.buildEmpty();
     container.container_type = "analysis";
     container.extended_metadata.content = { "ops": [{ "insert": "" }] }
+    sample.analysesContainers()[0].children.push(container);
 
-    sample.container.children.filter(element => ~element.container_type.indexOf('analyses'))[0].children.push(container);
+    this.props.setState({ sample },
+      this.handleAccordionOpen(container.id),
+    );
+  }
 
-    this.props.setState({sample: sample},
-      this.handleAccordionOpen(container.id)
-    )
+  handleMove(source, target) {
+    const { sample } = this.state;
+    const containers = sample.analysesContainers()[0].children;
+    const sortedConts = this.sortArrByIndex(containers);
+    const newContainers = reOrderArr(source, target, this.isEqCId, sortedConts);
+    const newIndexedConts = this.indexedContainers(newContainers);
+
+    sample.analysesContainers()[0].children = newIndexedConts;
+    this.props.setState({ sample });
+  }
+
+  isEqCId(container, tagEl) {
+    return container.id === tagEl.cId;
+  }
+
+  indexedContainers(containers) {
+    return containers.map((c, i) => {
+      const container = c;
+      container.extended_metadata.index = i;
+      return container;
+    });
   }
 
   handleRemove(container) {
-    let {sample} = this.state;
+    const { sample } = this.state;
     container.is_deleted = true;
 
-    this.props.setState({sample: sample})
+    this.props.setState({ sample });
   }
 
   handleUndo(container) {
-    let {sample} = this.state;
+    const { sample } = this.state;
     container.is_deleted = false;
 
-    this.props.setState({sample: sample})
+    this.props.setState({ sample });
   }
 
   handleAccordionOpen(newKey) {
-    this.setState((prevState)=>{
-      let prevKey = prevState.activeAnalysis
-      return {...prevState,activeAnalysis: prevKey == newKey ? 0 : newKey}
+    this.setState((prevState) => {
+      const prevKey = prevState.activeAnalysis;
+      return { ...prevState,
+        mode: 'edit',
+        activeAnalysis: prevKey === newKey ? 0 : newKey,
+      };
     });
   }
 
   addButton() {
-    const {readOnly, sample} = this.props;
-    if(!readOnly) {
-      return (
-          <Button
-            className="button-right"
-            bsSize="xsmall"
-            bsStyle="success"
-            onClick={() => this.handleAdd()}
-            disabled={!sample.can_update}
-          >
-            Add analysis
-          </Button>
-      )
+    const { readOnly, sample } = this.props;
+    if (readOnly) {
+      return null;
     }
+    return (
+      <Button
+        className="button-right"
+        bsSize="xsmall"
+        bsStyle="success"
+        onClick={this.handleAdd}
+        disabled={!sample.can_update}
+      >
+        Add analysis
+      </Button>
+    );
   }
 
-  toggleAddToReport(e, container) {
-    e.stopPropagation();
-    container.extended_metadata['report'] = !container.extended_metadata['report'];
+  toggleAddToReport(container) {
+    container.extended_metadata.report = !container.extended_metadata.report;
     this.handleChange(container);
   }
 
@@ -210,92 +247,85 @@ export default class SampleDetailsContainers extends Component {
     );
   }
 
-  analysisHeaderDeleted(container, readOnly) {
+  toggleMode() {
+    const { mode } = this.state;
+    if (mode === 'edit') {
+      this.setState({ mode: 'order' });
+    } else {
+      this.setState({ mode: 'edit' });
+    }
+  }
 
-    const kind = (container.extended_metadata['kind'] && container.extended_metadata['kind'] != '')
-      ? (' - Type: ' + container.extended_metadata['kind'])
-      : ''
-    const status = (container.extended_metadata['status'] && container.extended_metadata['status'] != '')
-      ? (' - Status: ' + container.extended_metadata['status'])
-      :''
-
-    return (
-      <div style={{width: '100%'}}>
-        <strike>{container.name}
-        {kind}
-        {status}</strike>
-        <div className="button-right">
-          <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>
-            <i className="fa fa-undo"></i>
-          </Button>
-        </div>
-      </div>
-    );
+  sortArrByIndex(arr) {
+    return arr.concat().sort((a, b) => {
+      const aIndex = parseInt(a.extended_metadata.index, 10);
+      const bIndex = parseInt(b.extended_metadata.index, 10);
+      if (!aIndex) return false;
+      if (!bIndex) return true;
+      return aIndex - bIndex;
+    });
   }
 
   render() {
-    const {sample, activeAnalysis} = this.state;
-    const {readOnly} = this.props;
+    const { sample, activeAnalysis, mode } = this.state;
+    const { readOnly } = this.props;
     const isDisabled = !sample.can_update;
 
-    if (sample.container == null) {
-      return (
-        <div><p className='noAnalyses-warning'>Not available.</p></div>
-      )
+    if (sample.container == null) return <RndNotAvailable />;
+
+    const analyContainer = sample.analysesContainers();
+
+    if (analyContainer.length === 1 && analyContainer[0].children.length > 0) {
+      const orderContainers = this.sortArrByIndex(analyContainer[0].children);
+
+      switch (mode) {
+        case 'order':
+          return (
+            <RndOrder
+              sample={sample}
+              mode={mode}
+              orderContainers={orderContainers}
+              readOnly={readOnly}
+              isDisabled={isDisabled}
+              addButton={this.addButton}
+              handleRemove={this.handleRemove}
+              handleMove={this.handleMove}
+              handleAccordionOpen={this.handleAccordionOpen}
+              handleUndo={this.handleUndo}
+              toggleAddToReport={this.toggleAddToReport}
+              toggleMode={this.toggleMode}
+            />
+          );
+        default:
+          return (
+            <RndEdit
+              sample={sample}
+              mode={mode}
+              orderContainers={orderContainers}
+              activeAnalysis={activeAnalysis}
+              handleChange={this.handleChange}
+              handleUndo={this.handleUndo}
+              handleRemove={this.handleRemove}
+              handleAccordionOpen={this.handleAccordionOpen}
+              toggleAddToReport={this.toggleAddToReport}
+              readOnly={readOnly}
+              isDisabled={isDisabled}
+              addButton={this.addButton}
+              toggleMode={this.toggleMode}
+            />
+          );
+      }
     }
-
-    let analyses_container =
-      sample.container.children.filter(element => ~element.container_type.indexOf('analyses'));
-
-    if (analyses_container.length == 1 && analyses_container[0].children.length > 0) {
-      return (
-        <div>
-          <p>&nbsp;{this.addButton()}</p>
-          <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
-            {analyses_container[0].children.map((container, i) => {
-              const key = container.id || `fake_${i}`;
-              if (container.is_deleted) {
-                return (
-                  <Panel
-                    header={this.analysisHeaderDeleted(container, readOnly)}
-                    eventKey={key}
-                    key={`${key}_analysis`}
-                  />
-                );
-              }
-
-              return (
-                <Panel
-                  header={this.analysisHeader(container, readOnly, key)}
-                  eventKey={key} key={key + '_analysis'}
-                >
-                  <ContainerComponent
-                    readOnly={readOnly}
-                    container={container}
-                    disabled={isDisabled}
-                    onChange={c => this.handleChange(c)}
-                  />
-                </Panel>
-              );
-            })}
-          </PanelGroup>
-        </div>
-      )
-    } else {
-      return (
-        <div>
-          <p className='noAnalyses-warning'>
-            There are currently no Analyses.
-            {this.addButton()}
-          </p>
-        </div>
-      )
-    }
+    return (
+      <RndNoAnalyses
+        addButton={this.addButton}
+      />
+    );
   }
-
 }
 
 SampleDetailsContainers.propTypes = {
   readOnly: React.PropTypes.bool,
   parent: React.PropTypes.object,
+  sample: React.PropTypes.object,
 };

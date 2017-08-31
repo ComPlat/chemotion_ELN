@@ -729,7 +729,11 @@ export default class Sample extends Element {
     )[0].children.push(analysis);
   }
 
-
+  analysesContainers() {
+    return this.container
+      .children
+      .filter(el => ~el.container_type.indexOf('analyses'));
+  }
 }
 
 Sample.counter = 0;

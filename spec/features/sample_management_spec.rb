@@ -44,10 +44,10 @@ feature 'Sample management' do
         end
       end
 
-      amount = (sample.target_amount_value * 1000)
+      amount = sample.target_amount_value * 1000
       expect(find_bs_field('Amount').value.to_f).to eq(amount)
 
-      molarity = sample.molarity_value * 1000
+      molarity = sample.molarity_value
       expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
 
       # test read-only molecule data
