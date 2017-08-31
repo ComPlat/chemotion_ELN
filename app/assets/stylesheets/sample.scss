@@ -134,10 +134,13 @@
   }
 }
 
+.analysis-header.order {
+  width: calc(100% - 30px);
+}
+
 .analysis-header {
   display: inline-block;
   height: 125px;
-  width: calc(100%);
 
   .preview {
     display: inline-block;

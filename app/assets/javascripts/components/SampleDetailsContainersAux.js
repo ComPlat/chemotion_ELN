@@ -160,7 +160,10 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
   };
 
   return (
-    <div className="analysis-header" onClick={clickToOpen}>
+    <div
+      className={`analysis-header ${mode === 'edit' ? '' : 'order'}`}
+      onClick={clickToOpen}
+    >
       <div className="preview">
         <img src={previewImg} alt="" />
       </div>
