@@ -17,6 +17,8 @@ export default class ReactionDetailsScheme extends Component {
     super(props);
     let { reaction } = props;
     this.state = { reaction };
+
+    this.onClickRoleRadio = this.onClickRoleRadio.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -60,6 +62,16 @@ export default class ReactionDetailsScheme extends Component {
   insertSolventExtLabel(splitSample, materialGroup, external_label) {
     if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
       splitSample.external_label = external_label;
+    }
+  }
+
+  onClickRoleRadio(e) {
+    const { onInputChange, reaction } = this.props;
+    const value = e.target.value;
+    if (reaction.role === value) {
+      onInputChange('role', null);
+    } else {
+      onInputChange('role', value);
     }
   }
 
