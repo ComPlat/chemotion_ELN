@@ -135,10 +135,8 @@ export default class ReactionDetailsProperties extends Component {
     const { reaction } = this.state
     const { durationButtonDisabled } = this.state
 
-
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
-
       return (
         <MenuItem key={i} eventKey={i}>
           <StringTag key={i} string={val} />
@@ -154,12 +152,14 @@ export default class ReactionDetailsProperties extends Component {
 
     return (
       <div>
-        <ReactionDetailsMainProperties
-          reaction={reaction}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)}
-        />
         <ListGroup>
           <ListGroupItem>
+            <div className="reaction-scheme-props">
+              <ReactionDetailsMainProperties
+                reaction={reaction}
+                onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              />
+            </div>
             <Row className="small-padding">
               <Col md={4}>
                 <FormGroup>
@@ -215,13 +215,20 @@ export default class ReactionDetailsProperties extends Component {
                       type="text"
                       value={reaction.duration || ''}
                       disabled="true"
-                      placeholder="Duration" />
+                      placeholder="Duration"
+                    />
                     <InputGroup.Button>
-                      <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-                        <Button active className="clipboardBtn"
-                                disabled={durationButtonDisabled}
-                                data-clipboard-text={reaction.duration || " "} >
-                          <i className="fa fa-clipboard"></i>
+                      <OverlayTrigger
+                        placement="bottom"
+                        overlay={this.clipboardTooltip()}
+                      >
+                        <Button
+                          active
+                          className="clipboardBtn"
+                          disabled={durationButtonDisabled}
+                          data-clipboard-text={reaction.duration || ' '}
+                        >
+                          <i className="fa fa-clipboard" />
                         </Button>
                       </OverlayTrigger>
                     </InputGroup.Button>
@@ -229,11 +236,12 @@ export default class ReactionDetailsProperties extends Component {
                 </FormGroup>
               </Col>
             </Row>
-
             <Row>
               <Col md={12}>
                 <FormGroup>
-                  <ControlLabel>Additional information for publication and purification details</ControlLabel>
+                  <ControlLabel>
+                    Additional information for publication and purification details
+                  </ControlLabel>
                   <FormControl
                     componentClass="textarea" rows="4"
                     value={reaction.observation || ''}
@@ -248,19 +256,19 @@ export default class ReactionDetailsProperties extends Component {
               <Col md={6}>
                 <label>Purification</label>
                 <Select
-                  name='purification'
-                  multi={true}
+                  name="purification"
+                  multi
                   disabled={reaction.isMethodDisabled('purification')}
                   options={purificationOptions}
                   onChange={this.handlePurificationChange}
                   value={reaction.purification}
-                  />
+                />
               </Col>
               <Col md={6}>
                 <label>Dangerous Products</label>
                 <Select
                   name='dangerous_products'
-                  multi={true}
+                  multi
                   options={dangerousProductsOptions}
                   value={reaction.dangerous_products}
                   disabled={reaction.isMethodDisabled('dangerous_products')}
@@ -278,8 +286,10 @@ export default class ReactionDetailsProperties extends Component {
                   <ControlLabel>Solvents (parts)</ControlLabel>
                   <FormGroup>
                     <InputGroup>
-                      <DropdownButton componentClass={InputGroup.Button}
-                        id="solvents_dd" title=""
+                      <DropdownButton
+                        componentClass={InputGroup.Button}
+                        id="solvents_dd"
+                        title=""
                         onSelect={this.handleOnSolventSelect}
                       >
                         { solventsItems }

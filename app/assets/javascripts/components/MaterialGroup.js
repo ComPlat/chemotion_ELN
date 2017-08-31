@@ -91,20 +91,20 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
     <div>
       <table width="100%" className="reaction-scheme">
         <thead><tr>
-        <th width="4%">{addSampleButton}</th>
-        <th width={showLoadingColumn ? "8%" : "15%"}>{headers.group}</th>
-        <th width="4%">{refTHead}</th>
-        <th width="3%">{headers.tr}</th>
-        <th width="10%">{headers.amount}</th>
-        <th width={showLoadingColumn ? "9%" : "10%"}></th>
-        <th width={showLoadingColumn ? "11%" : "12%"}></th>
-        {loadingTHead}
-        <th width={showLoadingColumn ? "11%" : "12%"}>{headers.concn}</th>
-        <th width={showLoadingColumn ? "8%" : "9%"}>{headers.eq}</th>
-        <th width="4%"></th>
+          <th width="4%">{addSampleButton}</th>
+          <th width={showLoadingColumn ? '8%' : '15%'}>{headers.group}</th>
+          <th width="4%">{refTHead}</th>
+          <th width="3%">{headers.tr}</th>
+          <th width="10%">{headers.amount}</th>
+          <th width={showLoadingColumn ? '9%' : '10%'}></th>
+          <th width={showLoadingColumn ? '11%' : '12%'}></th>
+          {loadingTHead}
+          <th width={showLoadingColumn ? '11%' : '12%'}>{headers.concn}</th>
+          <th width={showLoadingColumn ? '8%' : '9%'}>{headers.eq}</th>
+          <th width='4%'></th>
         </tr></thead>
         <tbody>
-          {contents.map( item => item )}
+          {contents.map(item => item)}
         </tbody>
       </table>
     </div>

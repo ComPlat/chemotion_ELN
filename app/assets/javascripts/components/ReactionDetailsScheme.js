@@ -1,17 +1,21 @@
 import React, {Component} from 'react';
-import { ListGroup, ListGroupItem,Tooltip, OverlayTrigger,
-         Tabs, Tab, Row, Col, Collapse, Button, ButtonGroup } from 'react-bootstrap';
+import {
+  ListGroup, ListGroupItem, FormGroup, ControlLabel,
+  Row, Col, Collapse, Button, ButtonGroup, Checkbox,
+} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import QuillEditor from './QuillEditor';
 
-import NotificationActions from './actions/NotificationActions'
+import NotificationActions from './actions/NotificationActions';
+import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
-    let {reaction} = props;
+    let { reaction } = props;
     this.state = { reaction };
   }
 
@@ -22,8 +26,8 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   dropSample(sample, materialGroup, external_label) {
-    let {reaction} = this.state;
-    let splitSample ;
+    let { reaction } = this.state;
+    let splitSample;
 
     if (sample instanceof Molecule || materialGroup == 'products'){
       // Create new Sample with counter
@@ -57,6 +61,32 @@ export default class ReactionDetailsScheme extends Component {
     if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
       splitSample.external_label = external_label;
     }
+  }
+
+  renderRole() {
+    const { role } = this.props.reaction;
+    return (
+      <span className="reaction-role">
+        <Checkbox inline name="rxnRole1"
+                onClick={this.onClickRoleRadio}
+                checked={role === "gp"}
+                value="gp">
+          GP<i className="fa fa-home c-bs-primary"/>
+        </Checkbox>
+        <Checkbox inline name="rxnRole2"
+                onClick={this.onClickRoleRadio}
+                checked={role === "parts"}
+                value="parts">
+          parts of GP<i className="fa fa-bookmark c-bs-success"/>
+        </Checkbox>
+        <Checkbox inline name="rxnRole"
+                onClick={this.onClickRoleRadio}
+                checked={role === "single"}
+                value="single">
+          Single<i className="fa fa-asterisk c-bs-danger"/>
+        </Checkbox>
+      </span>
+    );
   }
 
   deleteMaterial(material, materialGroup) {
@@ -480,9 +510,28 @@ export default class ReactionDetailsScheme extends Component {
           </ListGroupItem>
         </ListGroup>
 
-        <ReactionDetailsMainProperties
-          reaction={reaction}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)} />
+        <ListGroup>
+          <ListGroupItem>
+            <div className="reaction-scheme-props">
+              <ReactionDetailsMainProperties
+                reaction={reaction}
+                onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              />
+            </div>
+            <Row>
+              <Col md={12}>
+                <FormGroup>
+                  <ControlLabel>Description {this.renderRole()}</ControlLabel>
+                  <QuillEditor
+                    value={reaction.description}
+                    onChange={event => this.props.onInputChange('description', event)}
+                    toolbarSymbol={reactionToolbarSymbol}
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
+          </ListGroupItem>
+        </ListGroup>
       </div>
     );
   }

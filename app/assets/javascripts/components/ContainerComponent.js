@@ -44,11 +44,11 @@ export default class ContainerComponent extends Component {
         isChanged = true;
         break;
       case 'kind':
-        container.extended_metadata.kind = ev.value;
+        container.extended_metadata.kind = ev ? ev.value : undefined;
         isChanged = true;
         break;
       case 'status':
-        container.extended_metadata.status = ev.value;
+        container.extended_metadata.status = ev ? ev.value : undefined;
         isChanged = true;
         break;
       case 'content':
@@ -73,7 +73,9 @@ export default class ContainerComponent extends Component {
       )
     } else {
       quill = (
-        <QuillEditor value={container.extended_metadata.content}
+        <QuillEditor
+          height="120px"
+          value={container.extended_metadata.content}
           onChange={this.handleInputChange.bind(this, 'content')}
           disabled={readOnly}
           toolbarSymbol={sampleAnalysesContentSymbol}

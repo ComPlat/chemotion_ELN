@@ -61,3 +61,15 @@ table.reaction-scheme-solvent {
     margin-left: 20px;
   }
 }
+
+.reaction-scheme-props {
+  width: 100%;
+
+  .table {
+    margin-bottom: 0px;
+
+    tr > div {
+      padding: 0 2px;
+    }
+  }
+}
