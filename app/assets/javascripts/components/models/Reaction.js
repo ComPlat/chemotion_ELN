@@ -539,18 +539,22 @@ export default class Reaction extends Element {
 
   nameFromRole(role) {
     let name = this.name;
-    const shortLabelNum = this.short_label.split("-").slice(-1)[0];
-    const ori = this.origin;
-    const oriSL = ori ? ori.short_label.split("-").slice(-1)[0] : "xx";
+    const sLabel = this.short_label;
+    const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
+    const oriSLabel = this.origin && this.origin.short_label;
+    const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
+
     switch (role) {
       case 'gp':
-        name = `General Procedure ${shortLabelNum}`;
+        name = `General Procedure ${sLNum}`;
         break;
       case 'parts':
-        name = `According to General Procedure ${oriSL}`;
+        name = `According to General Procedure ${oriSLNum}`;
         break;
       case 'single':
-        name = `Single ${shortLabelNum}`;
+        name = `Single ${sLNum}`;
+        break;
+      default:
         break;
     }
     return name;
