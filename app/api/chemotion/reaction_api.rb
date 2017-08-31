@@ -227,7 +227,7 @@ module Chemotion
             optional :excluded_ids, type: Array
           end
           optional :options, type: Hash do
-            optional :delete_subsamples, type: Boolean
+            optional :deleteSubsamples, type: Boolean
           end
         end
 
@@ -239,7 +239,7 @@ module Chemotion
           reactions = Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])
           options = params[:options]
 
-          if options && options.fetch(:delete_subsamples, false)
+          if options && options.fetch(:deleteSubsamples, false)
             reactions.flat_map(&:samples).map(&:destroy)
           end
 
