@@ -128,7 +128,7 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
         analyses={[container]}
         ident={container.id}
       />
-      <button
+      <span
         className="button-right add-to-report"
         onClick={stopBubble}
       >
@@ -138,7 +138,7 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
         >
           <span>Add to Report</span>
         </Checkbox>
-      </button>
+      </span>
     </div>
   );
 };
@@ -147,8 +147,8 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
   handleRemove, handleAccordionOpen, toggleAddToReport }) => {
   const clickToOpen = () => handleAccordionOpen(serial);
 
-  const kind = container.extended_metadata.kind || ' - ';
-  const status = container.extended_metadata.status || ' - ';
+  const kind = container.extended_metadata.kind || '';
+  const status = container.extended_metadata.status || '';
   const previewImg = previewImage(container);
   const content = container.extended_metadata.content;
   const contentOneLine = {
@@ -175,7 +175,9 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
           <div className="sub-title">Status: {status}</div>
 
           <div className="desc sub-title">
-            <span>Content: </span> &nbsp;
+            <span style={{ float: 'left', marginRight: '5px' }}>
+              Content:
+            </span>
             <QuillViewer value={contentOneLine} preview />
           </div>
         </div>

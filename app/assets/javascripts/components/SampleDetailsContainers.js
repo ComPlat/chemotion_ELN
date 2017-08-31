@@ -162,90 +162,90 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
-  analysisHeader(container, readOnly, key) {
-    const { sample } = this.props;
+  // analysisHeader(container, readOnly, key) {
+  //   const { sample } = this.props;
 
-    const confirmDelete = (e) => {
-      e.stopPropagation()
-      if (confirm('Delete the analysis?')) {
-        this.handleRemove(container)
-      }
-    };
-    const kind = container.extended_metadata.kind || ' - ';
-    const status = container.extended_metadata.status || ' - ';
-    const inReport = container.extended_metadata.report;
-    const previewImg = this.PreviewImg(container);
-    const content = container.extended_metadata.content;
+  //   const confirmDelete = (e) => {
+  //     e.stopPropagation()
+  //     if (confirm('Delete the analysis?')) {
+  //       this.handleRemove(container)
+  //     }
+  //   };
+  //   const kind = container.extended_metadata.kind || ' - ';
+  //   const status = container.extended_metadata.status || ' - ';
+  //   const inReport = container.extended_metadata.report;
+  //   const previewImg = this.PreviewImg(container);
+  //   const content = container.extended_metadata.content;
 
-    const addToLabelBtn = (
-      <Checkbox
-        onClick={e => this.toggleAddToReport(e, container)}
-        defaultChecked={inReport}
-        disabled={!sample.can_update}
-      >
-        <span>Add to Report</span>
-      </Checkbox>
-    );
+  //   const addToLabelBtn = (
+  //     <Checkbox
+  //       onClick={e => this.toggleAddToReport(e, container)}
+  //       defaultChecked={inReport}
+  //       disabled={!sample.can_update}
+  //     >
+  //       <span>Add to Report</span>
+  //     </Checkbox>
+  //   );
 
-    const btnGroup = () => {
-      const isDisabled = !this.props.sample.can_update;
-      return (
-        <div className="upper-btn">
-          <Button bsSize="xsmall"
-                  bsStyle="danger"
-                  className="button-right"
-                  disabled={readOnly || isDisabled}
-                  onClick={confirmDelete}>
-            <i className="fa fa-trash"></i>
-          </Button>
-          <PrintCodeButton
-            element={this.state.sample}
-            analyses={[container]}
-            ident={container.id}
-          />
-          <div
-            role="button"
-            className="button-right add-to-report"
-            onClick={e => e.stopPropagation()}
-          >
-            <Checkbox
-              onClick={e => this.toggleAddToReport(e, container)}
-              defaultChecked={inReport}
-            >
-              <span>Add to Report</span>
-            </Checkbox>
-          </div>
-        </div>
-      )
-    }
+  //   const btnGroup = () => {
+  //     const isDisabled = !this.props.sample.can_update;
+  //     return (
+  //       <div className="upper-btn">
+  //         <Button bsSize="xsmall"
+  //                 bsStyle="danger"
+  //                 className="button-right"
+  //                 disabled={readOnly || isDisabled}
+  //                 onClick={confirmDelete}>
+  //           <i className="fa fa-trash"></i>
+  //         </Button>
+  //         <PrintCodeButton
+  //           element={this.state.sample}
+  //           analyses={[container]}
+  //           ident={container.id}
+  //         />
+  //         <div
+  //           role="button"
+  //           className="button-right add-to-report"
+  //           onClick={e => e.stopPropagation()}
+  //         >
+  //           <Checkbox
+  //             onClick={e => this.toggleAddToReport(e, container)}
+  //             defaultChecked={inReport}
+  //           >
+  //             <span>Add to Report</span>
+  //           </Checkbox>
+  //         </div>
+  //       </div>
+  //     )
+  //   }
 
-    return (
-      <div
-        className="analysis-header"
-        role="presentation"
-        onClick={() => this.handleAccordionOpen(key)}
-      >
-        <div className="preview">
-          <img alt="preview" src={previewImg} />
-        </div>
-        <div className="abstract">
-          { btnGroup() }
-          <div className="lower-text">
-            <div className="main-title">{container.name}</div>
-            <div className="sub-title">Type: {kind}</div>
-            <div className="sub-title">Status: {status}</div>
+  //   return (
+  //     <div
+  //       className="analysis-header"
+  //       role="presentation"
+  //       onClick={() => this.handleAccordionOpen(key)}
+  //     >
+  //       <div className="preview">
+  //         <img alt="preview" src={previewImg} />
+  //       </div>
+  //       <div className="abstract">
+  //         { btnGroup() }
+  //         <div className="lower-text">
+  //           <div className="main-title">{container.name}</div>
+  //           <div className="sub-title">Type: {kind}</div>
+  //           <div className="sub-title">Status: {status}</div>
 
-            <div className="desc sub-title">
-              <span style={{ float: 'left', marginRight: '5px' }}>
-                Content:
-              </span>
-              <QuillViewer value={content} preview />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  //           <div className="desc sub-title">
+  //             <span style={{ float: 'left', marginRight: '5px' }}>
+  //               Content:
+  //             </span>
+  //             <QuillViewer value={content} preview />
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   toggleMode() {
     const { mode } = this.state;
