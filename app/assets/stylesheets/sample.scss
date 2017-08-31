@@ -1,3 +1,29 @@
+/* mixin for multiline */
+@mixin multiLineEllipsis($lineHeight: 1.2em, $lineCount: 1, $bgColor: white){
+  overflow: hidden;
+  position: relative;
+  line-height: $lineHeight;
+  max-height: $lineHeight * $lineCount + 0.2em; 
+  text-align: justify;
+  margin-right: -1em;
+  padding-right: 1em;
+  &:before {
+    content: '...';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+  &:after {
+    content: '';
+    position: absolute;
+    right: 0;
+    width: 1em;
+    height: 1em;
+    margin-top: 0.2em;
+    background: $bgColor;
+  }
+}
+
 .svg-container, .svg-container-empty {
   text-align: center;
 
@@ -92,7 +118,7 @@
 
   .preview {
     display: inline-block;
-    height: 125px;
+    // height: 125px;
     vertical-align: top;
     width: 125px;
 
@@ -113,8 +139,6 @@
       float: right;
 
       .add-to-report {
-        border: 1px solid black;
-        border-radius: 3px;
         font-size: 12px;
         height: 22px;
         padding: 0 12px;
@@ -131,29 +155,29 @@
     }
 
     .lower-text {
-      height: 103px;
+      // height: 103px;
 
       .main-title {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: bold;
         margin: 0 0 0 10px;
         overflow: hidden;
         text-decoration: underline;
         text-overflow: ellipsis;
         white-space: nowrap;
-        // width: 80%;
       }
 
       .sub-title {
         font-size: 14px;
-        margin-left: 30px;
+        margin-left: 10px;
         margin-top: 3px;
       }
 
       .desc {
         // font-size: 12px;
-        display: inline-flex;
-        margin-left: 30px;
+        // display: inline-flex;
+        margin-left: 10px;
+        margin-right: 0px;
         // overflow: hidden;
         // text-overflow: ellipsis;
         // white-space: nowrap;
@@ -163,13 +187,16 @@
       .ql-editor {
         font-size: 14px;
         padding: 0;
-        display: table;
-        table-layout: fixed;
-        width: 100%;
+        @include multiLineEllipsis($lineHeight: 1.0em, $lineCount: 3, $bgColor: #f5f5f5);  
+        // overflow-y: inherit;
+        // display: table;
+        // table-layout: fixed;
+        // width: 100%;
         p {
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          margin-top: 3px;
+          // overflow: hidden;
+          // text-overflow: ellipsis;
+          // white-space: nowrap;
         }
       }
 

@@ -126,32 +126,29 @@ export default class SampleDetailsContainers extends Component {
   }
 
   analysisHeader(container, readOnly, key) {
-    let {sample} = this.props
+    const { sample } = this.props;
 
     const confirmDelete = (e) => {
       e.stopPropagation()
-      if(confirm('Delete the analysis?')) {
+      if (confirm('Delete the analysis?')) {
         this.handleRemove(container)
       }
     };
-    const kind = container.extended_metadata['kind'] || ' - '
-    const status = container.extended_metadata['status'] || ' - '
-    const inReport = container.extended_metadata['report']
-    const previewImg = this.PreviewImg(container)
-    const content = container.extended_metadata['content'];
-    const contentOneLine = {
-      ops: content.ops.map((x) => {
-        let c = Object.assign({}, x);
-        if (c.insert) c.insert = c.insert.replace(/\n/g, " ");
-        return c;
-      })
-    };
+    const kind = container.extended_metadata.kind || ' - ';
+    const status = container.extended_metadata.status || ' - ';
+    const inReport = container.extended_metadata.report;
+    const previewImg = this.PreviewImg(container);
+    const content = container.extended_metadata.content;
 
-    let addToLabelBtn =  <Checkbox onClick={(e) => this.toggleAddToReport(e, container)}
-                  defaultChecked={inReport}
-                  disabled={!sample.can_update}>
-          <span>Add to Report</span>
-        </Checkbox>
+    const addToLabelBtn = (
+      <Checkbox
+        onClick={e => this.toggleAddToReport(e, container)}
+        defaultChecked={inReport}
+        disabled={!sample.can_update}
+      >
+        <span>Add to Report</span>
+      </Checkbox>
+    );
 
     const btnGroup = () => {
       const isDisabled = !this.props.sample.can_update;
@@ -164,13 +161,20 @@ export default class SampleDetailsContainers extends Component {
                   onClick={confirmDelete}>
             <i className="fa fa-trash"></i>
           </Button>
-          <PrintCodeButton element={this.state.sample}
-                            analyses={[container]}
-                            ident={container.id}/>
-          <div className="button-right add-to-report"
-                onClick={e => e.stopPropagation()}>
-            <Checkbox onClick={(e) => this.toggleAddToReport(e, container)}
-                      defaultChecked={inReport} >
+          <PrintCodeButton
+            element={this.state.sample}
+            analyses={[container]}
+            ident={container.id}
+          />
+          <div
+            role="button"
+            className="button-right add-to-report"
+            onClick={e => e.stopPropagation()}
+          >
+            <Checkbox
+              onClick={e => this.toggleAddToReport(e, container)}
+              defaultChecked={inReport}
+            >
               <span>Add to Report</span>
             </Checkbox>
           </div>
@@ -179,10 +183,13 @@ export default class SampleDetailsContainers extends Component {
     }
 
     return (
-      <div className="analysis-header"
-            onClick={() => this.handleAccordionOpen(key)}>
+      <div
+        className="analysis-header"
+        role="presentation"
+        onClick={() => this.handleAccordionOpen(key)}
+      >
         <div className="preview">
-          <img src={previewImg} />
+          <img alt="preview" src={previewImg} />
         </div>
         <div className="abstract">
           { btnGroup() }
@@ -192,8 +199,10 @@ export default class SampleDetailsContainers extends Component {
             <div className="sub-title">Status: {status}</div>
 
             <div className="desc sub-title">
-              <span>Content: </span> &nbsp;
-              <QuillViewer value={contentOneLine} preview={true} />
+              <span style={{ float: 'left', marginRight: '5px' }}>
+                Content:
+              </span>
+              <QuillViewer value={content} preview />
             </div>
           </div>
         </div>
@@ -243,28 +252,32 @@ export default class SampleDetailsContainers extends Component {
         <div>
           <p>&nbsp;{this.addButton()}</p>
           <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
-          {analyses_container[0].children.map((container,i) => {
-            let key = container.id || `fake_${i}`
-            if (container.is_deleted) {
+            {analyses_container[0].children.map((container, i) => {
+              const key = container.id || `fake_${i}`;
+              if (container.is_deleted) {
+                return (
+                  <Panel
+                    header={this.analysisHeaderDeleted(container, readOnly)}
+                    eventKey={key}
+                    key={`${key}_analysis`}
+                  />
+                );
+              }
+
               return (
-                <Panel header={this.analysisHeaderDeleted(container, readOnly)}
-                       eventKey={key} key={key + "_analysis"} >
+                <Panel
+                  header={this.analysisHeader(container, readOnly, key)}
+                  eventKey={key} key={key + '_analysis'}
+                >
+                  <ContainerComponent
+                    readOnly={readOnly}
+                    container={container}
+                    disabled={isDisabled}
+                    onChange={c => this.handleChange(c)}
+                  />
                 </Panel>
               );
-            }
-
-            return (
-              <Panel header={this.analysisHeader(container, readOnly, key)}
-                eventKey={key} key={key + "_analysis"}>
-                <ContainerComponent
-                  readOnly={readOnly}
-                  container={container}
-                  disabled={isDisabled}
-                  onChange={container => this.handleChange(container)}
-                />
-              </Panel>
-            );
-          })}
+            })}
           </PanelGroup>
         </div>
       )

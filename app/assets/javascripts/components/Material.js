@@ -31,7 +31,7 @@ class Material extends Component {
     return (
       <td style={inputsStyle}>
         <FormControl type="text"
-               value="N / A"
+               value="n/a"
                disabled={true}
                />
       </td>
@@ -49,10 +49,10 @@ class Material extends Component {
             value={material.amount_l}
             unit='l'
             metricPrefix='milli'
-            metricPrefixes = {['milli','none','micro']}
+            metricPrefixes = {['milli', 'none', 'micro']}
             precision={3}
-            onChange={(amount) => this.handleAmountUnitChange(amount)}
-            bsStyle={ material.amount_unit === 'l' ? 'success' : 'default' }
+            onChange={amount => this.handleAmountUnitChange(amount)}
+            bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
           />
         </td>
       )
@@ -443,7 +443,7 @@ class Material extends Component {
               bsStyle={isTarget ? 'success' : 'primary'}
               bsSize='small'
               >
-        {isTarget ? "T" : "R"}
+        {isTarget ? 't' : 'r'}
       </Button>
     )
   }

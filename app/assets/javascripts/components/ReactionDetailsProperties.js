@@ -124,175 +124,178 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   render() {
-    const {reaction} = this.state
-    const {durationButtonDisabled} = this.state
+    const { reaction } = this.state
+    const { durationButtonDisabled } = this.state
 
     return (
       <div>
-      <ReactionDetailsMainProperties
-        reaction={reaction}
-        onInputChange={(type, event) => this.props.onInputChange(type, event)} />
-      <ListGroup>
-        <ListGroupItem>
-          <Row className="small-padding">
-            <Col md={4}>
-              <FormGroup>
-                <ControlLabel>Start</ControlLabel>
-                <InputGroup>
-                  <FormControl
-                    type="text"
-                    value={reaction.timestamp_start || ''}
-                    disabled={reaction.isMethodDisabled('timestamp_start')}
-                    placeholder="DD/MM/YYYY hh:mm:ss"
-                    onChange={event => this.props.onInputChange('timestampStart', event)}/>
-                  <InputGroup.Button>
-                    <Button active style={ {padding: '6px'}}
-                            onClick={this.setCurrentTime.bind(this, 'start')} >
-                      <i className="fa fa-clock-o"></i>
-                    </Button>
-                  </InputGroup.Button>
-                </InputGroup>
-              </FormGroup>
-            </Col>
-            <Col md={4}>
-              <FormGroup>
-                <ControlLabel>Stop</ControlLabel>
-                <InputGroup>
-                  <FormControl
-                    type="text"
-                    value={reaction.timestamp_stop || ''}
-                    disabled={reaction.isMethodDisabled('timestamp_stop')}
-                    placeholder="DD/MM/YYYY hh:mm:ss"
-                    onChange={event => this.props.onInputChange('timestampStop', event)}/>
-                  <InputGroup.Button>
-                    <Button active style={ {padding: '6px'}}
-                            onClick={this.setCurrentTime.bind(this, 'stop')} >
-                      <i className="fa fa-clock-o"></i>
-                    </Button>
-                  </InputGroup.Button>
-                </InputGroup>
-              </FormGroup>
-            </Col>
-            <Col md={4}>
-              <FormGroup>
-                <ControlLabel>Duration</ControlLabel>
-                <InputGroup>
-                  <FormControl
-                    type="text"
-                    value={reaction.duration || ''}
-                    disabled="true"
-                    placeholder="Duration" />
-                  <InputGroup.Button>
-                    <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-                      <Button active className="clipboardBtn"
-                              disabled={durationButtonDisabled}
-                              data-clipboard-text={reaction.duration || " "} >
-                        <i className="fa fa-clipboard"></i>
-                      </Button>
-                    </OverlayTrigger>
-                  </InputGroup.Button>
-                </InputGroup>
-              </FormGroup>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col md={12}>
-              <FormGroup>
-                <ControlLabel>Additional information for publication and purification details</ControlLabel>
-                <FormControl
-                  componentClass="textarea" rows="4"
-                  value={reaction.observation || ''}
-                  disabled={reaction.isMethodDisabled('observation')}
-                  placeholder="Additional information for publication and purification details..."
-                  onChange={event => this.props.onInputChange('observation', event)}/>
-              </FormGroup>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <label>Purification</label>
-              <Select
-                name='purification'
-                multi={true}
-                disabled={reaction.isMethodDisabled('purification')}
-                options={purificationOptions}
-                onChange={this.handlePurificationChange}
-                value={reaction.purification}
-                />
-            </Col>
-            <Col md={6}>
-              <label>Dangerous Products</label>
-              <Select
-                name='dangerous_products'
-                multi={true}
-                options={dangerousProductsOptions}
-                value={reaction.dangerous_products}
-                disabled={reaction.isMethodDisabled('dangerous_products')}
-                onChange={selectedOptions => this.handleMultiselectChange(
-                  'dangerousProducts', selectedOptions)}
+        <ListGroup>
+          <ListGroupItem>
+            <div className="reaction-scheme-props">
+              <ReactionDetailsMainProperties
+                reaction={reaction}
+                onInputChange={(type, event) => this.props.onInputChange(type, event)}
               />
-            </Col>
-          </Row>
-        </ListGroupItem>
-        <ListGroupItem>
-          <h4 className="list-group-item-heading" >TLC-Control</h4>
-          <Row>
-            <Col md={6}>
-              <FormGroup>
-                <ControlLabel>Solvents (parts)</ControlLabel>
+            </div>
+            <Row className="small-padding">
+              <Col md={4}>
                 <FormGroup>
+                  <ControlLabel>Start</ControlLabel>
                   <InputGroup>
-                    <DropdownButton componentClass={InputGroup.Button}
-                      id="solvents_dd" title=""
-                      onSelect={this.handleOnSolventSelect}
-                    >
-                      {
-                        solventsTL.map((x, i) => (
-                          <MenuItem key={i} eventKey={i}>
-                            {Object.keys(x)[0]}
-                          </MenuItem>
-                        ))
-                      }
-                    </DropdownButton>
-                    <FormControl style={{zIndex: 0}}
+                    <FormControl
                       type="text"
-                      value={reaction.tlc_solvents || ''}
-                      disabled={reaction.isMethodDisabled('tlc_solvents')}
-                      placeholder="Solvents as parts..."
-                      onChange={event => this.props.onInputChange('tlc_solvents', event)}
-                    />
+                      value={reaction.timestamp_start || ''}
+                      disabled={reaction.isMethodDisabled('timestamp_start')}
+                      placeholder="DD/MM/YYYY hh:mm:ss"
+                      onChange={event => this.props.onInputChange('timestampStart', event)}/>
+                    <InputGroup.Button>
+                      <Button active style={ {padding: '6px'}}
+                              onClick={this.setCurrentTime.bind(this, 'start')} >
+                        <i className="fa fa-clock-o"></i>
+                      </Button>
+                    </InputGroup.Button>
                   </InputGroup>
                 </FormGroup>
-              </FormGroup>
-            </Col>
-            <Col md={6}>
-              <FormGroup>
-                <ControlLabel>Rf-Value</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={reaction.rf_value || ''}
-                  disabled={reaction.isMethodDisabled('rf_value')}
-                  placeholder="Rf-Value..."
-                  onChange={event => this.props.onInputChange('rfValue', event)}/>
-              </FormGroup>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={12}>
-              <FormGroup>
-                <ControlLabel>TLC-Description</ControlLabel>
-                <FormControl
-                  componentClass="textarea"
-                  value={reaction.tlc_description || ''}
-                  disabled={reaction.isMethodDisabled('tlc_description')}
-                  placeholder="TLC-Description..."
-                  onChange={event => this.props.onInputChange('tlcDescription', event)}/>
-              </FormGroup>
-            </Col>
-          </Row>
-        </ListGroupItem>
-      </ListGroup>
+              </Col>
+              <Col md={4}>
+                <FormGroup>
+                  <ControlLabel>Stop</ControlLabel>
+                  <InputGroup>
+                    <FormControl
+                      type="text"
+                      value={reaction.timestamp_stop || ''}
+                      disabled={reaction.isMethodDisabled('timestamp_stop')}
+                      placeholder="DD/MM/YYYY hh:mm:ss"
+                      onChange={event => this.props.onInputChange('timestampStop', event)}/>
+                    <InputGroup.Button>
+                      <Button active style={ {padding: '6px'}}
+                              onClick={this.setCurrentTime.bind(this, 'stop')} >
+                        <i className="fa fa-clock-o"></i>
+                      </Button>
+                    </InputGroup.Button>
+                  </InputGroup>
+                </FormGroup>
+              </Col>
+              <Col md={4}>
+                <FormGroup>
+                  <ControlLabel>Duration</ControlLabel>
+                  <InputGroup>
+                    <FormControl
+                      type="text"
+                      value={reaction.duration || ''}
+                      disabled="true"
+                      placeholder="Duration" />
+                    <InputGroup.Button>
+                      <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+                        <Button active className="clipboardBtn"
+                                disabled={durationButtonDisabled}
+                                data-clipboard-text={reaction.duration || " "} >
+                          <i className="fa fa-clipboard"></i>
+                        </Button>
+                      </OverlayTrigger>
+                    </InputGroup.Button>
+                  </InputGroup>
+                </FormGroup>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={12}>
+                <FormGroup>
+                  <ControlLabel>Additional information for publication and purification details</ControlLabel>
+                  <FormControl
+                    componentClass="textarea" rows="4"
+                    value={reaction.observation || ''}
+                    disabled={reaction.isMethodDisabled('observation')}
+                    placeholder="Additional information for publication and purification details..."
+                    onChange={event => this.props.onInputChange('observation', event)}/>
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <label>Purification</label>
+                <Select
+                  name='purification'
+                  multi={true}
+                  disabled={reaction.isMethodDisabled('purification')}
+                  options={purificationOptions}
+                  onChange={this.handlePurificationChange}
+                  value={reaction.purification}
+                  />
+              </Col>
+              <Col md={6}>
+                <label>Dangerous Products</label>
+                <Select
+                  name='dangerous_products'
+                  multi={true}
+                  options={dangerousProductsOptions}
+                  value={reaction.dangerous_products}
+                  disabled={reaction.isMethodDisabled('dangerous_products')}
+                  onChange={selectedOptions => this.handleMultiselectChange(
+                    'dangerousProducts', selectedOptions)}
+                />
+              </Col>
+            </Row>
+          </ListGroupItem>
+          <ListGroupItem>
+            <h4 className="list-group-item-heading" >TLC-Control</h4>
+            <Row>
+              <Col md={6}>
+                <FormGroup>
+                  <ControlLabel>Solvents (parts)</ControlLabel>
+                  <FormGroup>
+                    <InputGroup>
+                      <DropdownButton componentClass={InputGroup.Button}
+                        id="solvents_dd" title=""
+                        onSelect={this.handleOnSolventSelect}
+                      >
+                        {
+                          solventsTL.map((x, i) => (
+                            <MenuItem key={i} eventKey={i}>
+                              {Object.keys(x)[0]}
+                            </MenuItem>
+                          ))
+                        }
+                      </DropdownButton>
+                      <FormControl style={{zIndex: 0}}
+                        type="text"
+                        value={reaction.tlc_solvents || ''}
+                        disabled={reaction.isMethodDisabled('tlc_solvents')}
+                        placeholder="Solvents as parts..."
+                        onChange={event => this.props.onInputChange('tlc_solvents', event)}
+                      />
+                    </InputGroup>
+                  </FormGroup>
+                </FormGroup>
+              </Col>
+              <Col md={6}>
+                <FormGroup>
+                  <ControlLabel>Rf-Value</ControlLabel>
+                  <FormControl
+                    type="text"
+                    value={reaction.rf_value || ''}
+                    disabled={reaction.isMethodDisabled('rf_value')}
+                    placeholder="Rf-Value..."
+                    onChange={event => this.props.onInputChange('rfValue', event)}/>
+                </FormGroup>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <FormGroup>
+                  <ControlLabel>TLC-Description</ControlLabel>
+                  <FormControl
+                    componentClass="textarea"
+                    value={reaction.tlc_description || ''}
+                    disabled={reaction.isMethodDisabled('tlc_description')}
+                    placeholder="TLC-Description..."
+                    onChange={event => this.props.onInputChange('tlcDescription', event)}/>
+                </FormGroup>
+              </Col>
+            </Row>
+          </ListGroupItem>
+        </ListGroup>
       </div>
     );
   }
