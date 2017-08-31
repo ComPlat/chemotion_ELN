@@ -20,8 +20,7 @@ export default class SampleForm extends React.Component {
 
   handleAmountChanged(amount) {
     const sample = this.state.sample;
-    // sample.setAmountAndNormalizeToGram(amount);
-    sample.setAmount(amount);
+    sample.setAmountAndNormalizeToGram(amount);
 
     this.setState({ sample });
   }
@@ -287,7 +286,7 @@ export default class SampleForm extends React.Component {
                 'Density', '', polyDisabled, '', densityBlocked, isPolymer)
             }
             {
-              this.numInput(sample, 'molarity_value', 'M', ['milli', 'none'],
+              this.numInput(sample, 'molarity_value', 'M', ['none'],
                 5, 'Molarity', '', polyDisabled, '', molarityBlocked, isPolymer)
             }
             {

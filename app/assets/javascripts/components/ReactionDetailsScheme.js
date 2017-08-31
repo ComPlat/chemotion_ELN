@@ -173,8 +173,7 @@ export default class ReactionDetailsScheme extends Component {
     const updatedSample = this.props.reaction.sampleById(sampleID);
 
     // normalize to milligram
-    // updatedSample.setAmountAndNormalizeToGram(amount);
-    updatedSample.setAmount(amount);
+    updatedSample.setAmountAndNormalizeToGram(amount);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
@@ -358,13 +357,12 @@ export default class ReactionDetailsScheme extends Component {
       if (sample.id === updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
         if (referenceMaterial && referenceMaterial.amount_value) {
-          // sample.setAmountAndNormalizeToGram({
-          sample.setAmount({
+          sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * referenceMaterial.amount_mol,
             unit: 'mol',
           });
         } else if (sample.amount_value) {
-          sample.setAmount({
+          sample.setAmountAndNormalizeToGram({
             value: updatedSample.equivalent * sample.amount_mol,
             unit: 'mol'
           });

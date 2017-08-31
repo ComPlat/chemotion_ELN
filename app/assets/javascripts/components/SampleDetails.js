@@ -88,19 +88,19 @@ export default class SampleDetails extends React.Component {
     });
   }
 
-  // handleAmountChanged(amount) {
-  //   const sample = this.state.sample;
-  //   sample.setAmountAndNormalizeToGram(amount);
-  //   this.setState({ sample });
-  // }
+  handleAmountChanged(amount) {
+    const sample = this.state.sample;
+    sample.setAmountAndNormalizeToGram(amount);
+    this.setState({ sample });
+  }
 
-  // handleImportedReadoutChanged(e) {
-  //   let sample = this.state.sample;
-  //   sample.imported_readout = e.target.value
-  //   this.setState({
-  //     sample: sample
-  //   });
-  // }
+  handleImportedReadoutChanged(e) {
+    let sample = this.state.sample;
+    sample.imported_readout = e.target.value
+    this.setState({
+      sample: sample
+    });
+  }
 
   showStructureEditor() {
     this.setState({
