@@ -171,10 +171,7 @@ export default class QuillEditor extends React.Component {
       const groupElement = formatGroup.map((element) => {
         if (typeof element === 'string') {
           return (
-            <button
-              className={`ql-${element}`}
-              key={`btnKey_${element}`}
-            />
+            <button className={`ql-${element}`} key={`btnKey_${element}`} />
           );
         } else if (typeof element === 'object') {
           const elementName = Object.getOwnPropertyNames(element)[0];
@@ -205,10 +202,7 @@ export default class QuillEditor extends React.Component {
       });
 
       return (
-        <span
-          className="ql-formats"
-          key={`sp_${index}`}
-        >
+        <span className="ql-formats" key={`sp_${index}`} >
           {groupElement}
         </span>
       );
@@ -223,18 +217,19 @@ export default class QuillEditor extends React.Component {
     }
 
     const customToolbarElement = this.toolbar.map(element => (
-      <button
-        className={`icon-${element}`}
+      <span
         key={`${element}_key`}
         id={`${element}_id`}
-        style={{ margin: '0px 3px 3px 3px' }}
-      />
+        style={{ marginRight: '5px' }}
+      >
+        <i className={`icon-${element}`} />
+      </span>
     ));
 
     return (
       <span
-        className="ql-formats"
-        style={{ fontSize: '25px', display: 'block', height: '35px' }}
+        className="ql-formats custom-toolbar"
+        style={{ fontSize: '22px' }}
       >
         { customToolbarElement }
       </span>
@@ -242,12 +237,10 @@ export default class QuillEditor extends React.Component {
   }
 
   render() {
-    const quillToolbar = this.renderQuillToolbarGroup();
-
     return (
       <div>
         <div id={`toolbar-${this.id}`}>
-          {quillToolbar}
+          {this.renderQuillToolbarGroup()}
           {this.renderCustomToolbar()}
         </div>
         <div
