@@ -5,36 +5,46 @@ export default class ManagingModalDelete extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      delete_subsamples: false
-    }
+      deleteSubsamples: false,
+    };
+
+    this.handleCheck = this.handleCheck.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+    this.onHide = this.onHide.bind(this);
   }
 
   handleClick() {
-    const {onHide, action} = this.props;
+    const { onHide, action } = this.props;
     action(this.state);
     onHide();
   }
 
+  onHide() {
+    this.props.onHide();
+  }
+
   handleCheck() {
-    let {delete_subsamples} = this.state;
+    const { deleteSubsamples } = this.state;
 
     this.setState({
-      delete_subsamples: !delete_subsamples
+      deleteSubsamples: !deleteSubsamples,
     });
   }
 
   render() {
-    const {onHide} = this.props;
     return (
       <div>
-        <Checkbox onChange={() => this.handleCheck()} checked={this.state.checked ? this.state.checked : false}>
+        <Checkbox
+          onChange={this.handleCheck}
+          checked={this.state.deleteSubsamples}
+        >
           Also delete reaction subsamples?
         </Checkbox>
         <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()}>Delete</Button>
+          <Button bsStyle="primary" onClick={this.onHide}>Cancel</Button>
+          <Button bsStyle="warning" onClick={this.handleClick}>Delete</Button>
         </ButtonToolbar>
       </div>
-    )
+    );
   }
 }
