@@ -363,7 +363,7 @@ module Reporter
       def product_analyses_delta
         delta = []
         obj.products.each do |product|
-          delta = merge_items(delta, product[:analyses])
+          delta = merge_items(delta, sort_by_index(product[:analyses]))
         end
         return [] if delta.length == 0
         remove_redundant_space_break(delta) + [{"insert"=>"\n"}]
@@ -423,6 +423,13 @@ module Reporter
           return [{"insert"=>"\""},
                   {"attributes"=>{"bold"=>"true"}, "insert"=>"NAME"},
                   {"insert"=>"\""}]
+        end
+      end
+
+      def sort_by_index(analyses)
+        analyses.sort_by do |a|
+          analy_index = a[:extended_metadata][:index]
+          analy_index ? analy_index.try(:to_i) : -1
         end
       end
     end
