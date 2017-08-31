@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, ButtonToolbar, Checkbox} from 'react-bootstrap';
+import { Button, ButtonToolbar, Checkbox } from 'react-bootstrap';
 
 export default class ManagingModalDelete extends React.Component {
   constructor(props) {
@@ -13,14 +13,14 @@ export default class ManagingModalDelete extends React.Component {
     this.onHide = this.onHide.bind(this);
   }
 
+  onHide() {
+    this.props.onHide();
+  }
+
   handleClick() {
     const { onHide, action } = this.props;
     action(this.state);
     onHide();
-  }
-
-  onHide() {
-    this.props.onHide();
   }
 
   handleCheck() {
