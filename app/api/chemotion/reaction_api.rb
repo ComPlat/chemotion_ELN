@@ -420,6 +420,11 @@ module Chemotion
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
 
         if reaction
+          materials.products&.map! do |prod|
+            prod.name.gsub! attributes['origin'].short_label, reaction.short_label
+            prod
+          end
+
           update_materials_for_reaction(reaction, materials, current_user)
           update_literatures_for_reaction(reaction, literatures)
           reaction.reload
