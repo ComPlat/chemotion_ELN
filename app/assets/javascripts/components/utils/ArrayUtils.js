@@ -43,8 +43,8 @@ export default class ArrayUtils {
     return arr.concat().sort((a, b) => {
       const aIndex = parseInt(a.extended_metadata.index, 10);
       const bIndex = parseInt(b.extended_metadata.index, 10);
-      if (!aIndex) return false;
-      if (!bIndex) return true;
+      if (isNaN(aIndex)) return false;
+      if (isNaN(bIndex)) return true;
       return aIndex - bIndex;
     });
   }

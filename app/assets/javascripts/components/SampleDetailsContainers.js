@@ -68,6 +68,7 @@ export default class SampleDetailsContainers extends Component {
     const container = Container.buildEmpty();
     container.container_type = "analysis";
     container.extended_metadata.content = { "ops": [{ "insert": "" }] }
+    container.extended_metadata.index = -1;
     sample.analysesContainers()[0].children.push(container);
 
     this.props.setState({ sample },
