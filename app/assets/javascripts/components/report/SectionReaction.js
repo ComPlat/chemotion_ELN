@@ -285,7 +285,7 @@ const ObservationContent = ({show, observation}) => {
     show
       ? <div>
           <h4> Observation </h4>
-          <pre className="noBorder">{observation}</pre>
+          <QuillViewer value={observation} />
         </div>
       : null
   )
