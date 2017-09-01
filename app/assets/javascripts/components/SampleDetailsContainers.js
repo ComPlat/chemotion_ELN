@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Button } from 'react-bootstrap';
 import Container from './models/Container';
 import UIStore from './stores/UIStore';
+import ArrayUtils from './utils/ArrayUtils';
 import { reOrderArr } from './utils/DndControl';
 import { RndNotAvailable, RndNoAnalyses, RndOrder,
   RndEdit } from './SampleDetailsContainersCom';
@@ -27,7 +28,6 @@ export default class SampleDetailsContainers extends Component {
     this.toggleMode = this.toggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
-    this.sortArrByIndex = this.sortArrByIndex.bind(this);
   }
 
   componentDidMount() {
@@ -78,7 +78,7 @@ export default class SampleDetailsContainers extends Component {
   handleMove(source, target) {
     const { sample } = this.state;
     const containers = sample.analysesContainers()[0].children;
-    const sortedConts = this.sortArrByIndex(containers);
+    const sortedConts = ArrayUtils.sortArrByIndex(containers);
     const newContainers = reOrderArr(source, target, this.isEqCId, sortedConts);
     const newIndexedConts = this.indexedContainers(newContainers);
 
@@ -256,16 +256,6 @@ export default class SampleDetailsContainers extends Component {
     }
   }
 
-  sortArrByIndex(arr) {
-    return arr.concat().sort((a, b) => {
-      const aIndex = parseInt(a.extended_metadata.index, 10);
-      const bIndex = parseInt(b.extended_metadata.index, 10);
-      if (!aIndex) return false;
-      if (!bIndex) return true;
-      return aIndex - bIndex;
-    });
-  }
-
   render() {
     const { sample, activeAnalysis, mode } = this.state;
     const { readOnly } = this.props;
@@ -276,7 +266,7 @@ export default class SampleDetailsContainers extends Component {
     const analyContainer = sample.analysesContainers();
 
     if (analyContainer.length === 1 && analyContainer[0].children.length > 0) {
-      const orderContainers = this.sortArrByIndex(analyContainer[0].children);
+      const orderContainers = ArrayUtils.sortArrByIndex(analyContainer[0].children);
 
       switch (mode) {
         case 'order':

@@ -3,6 +3,7 @@ import { SVGContent, DescriptionContent } from './SectionReaction';
 import QuillViewer from '../QuillViewer';
 import { digit } from '../utils/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
+import ArrayUtils from '../utils/ArrayUtils';
 import _ from 'lodash';
 
 const Title = ({el, counter}) => {
@@ -158,7 +159,8 @@ const tlcContent = (el) => {
 const analysesContent = (products) => {
   let content = [];
   const value = products.map( p => {
-    return p.analyses.map(a => {
+    const sortAnalyses = ArrayUtils.sortArrByIndex(p.analyses);
+    return sortAnalyses.map(a => {
       const data = a && a.extended_metadata
                       ? JSON.parse(a.extended_metadata.content)
                       : {}
