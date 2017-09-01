@@ -174,7 +174,8 @@ const analysesContent = (products) => {
 
 const dangContent = (el) => {
   if(el.dangerous_products.length === 0) return [];
-  let content = [{ insert: "The reaction includes the use of dangerous " +
+  let content = [{ attributes: { bold: "true" }, insert: "Attention! "},
+                  { insert: "The reaction includes the use of dangerous " +
                             "chemicals, which have the following " +
                             "classification: " }];
   el.dangerous_products.forEach( d => {
