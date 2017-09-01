@@ -126,8 +126,8 @@ module Reporter
         delta = "CAS: #{cas}; " +
                 "Smiles: #{m[:cano_smiles]}; " +
                 "InCHI: #{m[:inchikey]}; " +
-                "Molecular Mass: #{m[:molecular_weight].try(:round, 4)}; " +
-                "Exact Mass: #{m[:exact_molecular_weight].try(:round, 4)}; "
+                "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " +
+                "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; "
         [{"insert"=>delta}]
       end
 
@@ -215,20 +215,20 @@ module Reporter
           iupac_name: m[:iupac_name],
           short_label: s.short_label,
           formular: m[:sum_formular],
-          mol_w: m[:molecular_weight].try(:round, digit),
-          mass: s.amount_g.try(:round, digit),
-          vol: s.amount_ml.try(:round, digit),
-          density: s.density.try(:round, digit),
-          mol: s.amount_mmol.try(:round, digit),
-          equiv: s.equivalent.try(:round, digit)
+          mol_w: fixed_digit(m[:molecular_weight], digit),
+          mass: fixed_digit(s.amount_g, digit),
+          vol: fixed_digit(s.amount_ml, digit),
+          density: fixed_digit(s.density, digit),
+          mol: fixed_digit(s.amount_mmol, digit),
+          equiv: fixed_digit(s.equivalent, digit)
         }
 
         if is_product
-          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{(s.equivalent*100).try(:round, 0)}%"
+          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{fixed_digit(s.equivalent * 100, 0)}%"
           sample_hash.update({
-            mass: s.real_amount_g.try(:round, digit),
-            vol: s.real_amount_ml.try(:round, digit),
-            mol: s.real_amount_mmol.try(:round, digit),
+            mass: fixed_digit(s.real_amount_g, digit),
+            vol: fixed_digit(s.real_amount_ml, digit),
+            mol: fixed_digit(s.real_amount_mmol, digit),
             equiv: equiv
           })
         end
@@ -285,9 +285,9 @@ module Reporter
           solvents.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.target_amount_value
-              " (#{s.amount_ml.try(:round, digit)}ml)"
+              " (#{fixed_digit(s.amount_ml, digit)}ml)"
             elsif s.real_amount_value
-              " (#{s.amount_ml.try(:round, digit)}ml)"
+              " (#{fixed_digit(s.amount_ml, digit)}ml)"
             end
             s.preferred_label + volume if s.preferred_label
           end.join(", ")
@@ -438,6 +438,10 @@ module Reporter
           analy_index = a[:extended_metadata][:index]
           analy_index ? analy_index.try(:to_i) : -1
         end
+      end
+
+      def fixed_digit(input_num, digit_num)
+        "%.#{digit_num}f" % input_num.try(:round, digit_num).to_f
       end
     end
   end
