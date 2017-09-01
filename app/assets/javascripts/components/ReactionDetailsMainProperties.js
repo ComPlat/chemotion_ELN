@@ -23,7 +23,6 @@ export default class ReactionDetailsMainProperties extends Component {
 
     this.toggleTemperatureChart = this.toggleTemperatureChart.bind(this);
     this.updateTemperature = this.updateTemperature.bind(this);
-    this.onClickRoleRadio = this.onClickRoleRadio.bind(this);
 
     this.temperatureUnit = props.reaction.temperature.valueUnit;
   }
@@ -55,16 +54,6 @@ export default class ReactionDetailsMainProperties extends Component {
     let unit = Reaction.temperature_unit[(index + 1) % 3]
 
     this.props.onInputChange('temperatureUnit', unit)
-  }
-
-  onClickRoleRadio(e) {
-    const { onInputChange, reaction } = this.props;
-    const value = e.target.value;
-    if (reaction.role === value) {
-      onInputChange('role', null);
-    } else {
-      onInputChange('role', value);
-    }
   }
 
   render() {
