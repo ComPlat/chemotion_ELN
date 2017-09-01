@@ -413,7 +413,10 @@ module Reporter
                   "which have the following classification: " +
                   d.join(", ") +
                   "."
-        remove_redundant_space_break([{"insert"=>content}])
+        remove_redundant_space_break([
+          {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
+          {"insert"=>content}
+        ])
       end
 
       def iupac_delta(iupac)
