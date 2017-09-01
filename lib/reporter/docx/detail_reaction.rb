@@ -338,25 +338,19 @@ module Reporter
         return [] if obj.role != "single"
         delta_desc = obj.description.deep_stringify_keys["ops"]
         clean_desc = remove_redundant_space_break(delta_desc)
-        return [{"insert"=>"\n"}] + clean_desc + [{"insert"=>"\n"}]
+        return clean_desc
       end
 
       def single_observation_delta
         delta_obs = obj.observation.deep_stringify_keys['ops']
         clean_obs = remove_redundant_space_break(delta_obs)
 
-        [{ 'insert' => "\n" }] + clean_obs + [{ 'insert' => "\n" }]
+        clean_obs
       end
 
       def obsv_tlc_delta
-        # return observation_delta + tlc_delta + obsv_tlc_break_delta
         single_observation_delta + tlc_delta + obsv_tlc_break_delta
       end
-
-      # def observation_delta
-      #   return [] if obj.observation.blank?
-      #   remove_redundant_space_break([{"insert"=>"#{obj.observation} "}])
-      # end
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
