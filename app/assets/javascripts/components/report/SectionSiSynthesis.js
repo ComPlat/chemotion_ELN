@@ -137,10 +137,7 @@ const materailsContent = (el) => {
 
 const obsvTlcContent = (el) => {
   let content = [];
-  if(el.observation) {
-    content = [{ insert: `${el.observation} ` }];
-  }
-  content = [...content, ...tlcContent(el)];
+  content = [...el.observation.ops, ...tlcContent(el)];
   content = rmOpsRedundantSpaceBreak(content);
   if(content.length === 0) return [];
   return frontBreak(content);

@@ -8,6 +8,7 @@ class Reaction < ActiveRecord::Base
 
   serialize :temperature, Hash
   serialize :description, Hash
+  serialize :observation, Hash
 
   multisearchable against: :name
   multisearchable against: :short_label
@@ -147,6 +148,10 @@ class Reaction < ActiveRecord::Base
 
   def description_contents
     return description["ops"].map{|s| s["insert"]}.join()
+  end
+
+  def observation_contents
+    return observation["ops"].map{|s| s["insert"]}.join()
   end
 
   def update_svg_file!

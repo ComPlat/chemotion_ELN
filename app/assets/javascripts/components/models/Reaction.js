@@ -30,7 +30,7 @@ export default class Reaction extends Element {
       timestamp_start: "",
       timestamp_stop: "",
       duration: "",
-      observation: "",
+      observation: description_default,
       purification: "",
       dangerous_products: "",
       tlc_solvents: "",
@@ -132,6 +132,10 @@ export default class Reaction extends Element {
 
   get description_contents() {
     return this.description.ops.map(s => s.insert).join()
+  }
+
+  get observation_contents() {
+    return this.observation.ops.map(s => s.insert).join()
   }
 
   convertTemperature(newUnit) {
