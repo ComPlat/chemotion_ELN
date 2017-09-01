@@ -38,4 +38,14 @@ export default class ArrayUtils {
   static flatten2D(array_2d) {
     return array_2d.reduce((a, b) => a.concat(b), []);
   }
+
+  static sortArrByIndex(arr) {
+    return arr.concat().sort((a, b) => {
+      const aIndex = parseInt(a.extended_metadata.index, 10);
+      const bIndex = parseInt(b.extended_metadata.index, 10);
+      if (!aIndex) return false;
+      if (!bIndex) return true;
+      return aIndex - bIndex;
+    });
+  }
 }
