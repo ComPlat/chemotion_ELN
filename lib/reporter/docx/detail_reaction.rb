@@ -309,7 +309,9 @@ module Reporter
       end
 
       def observation
-        obj.observation
+        delta_obs = obj.observation.deep_stringify_keys['ops']
+        clean_obs = { 'ops' => remove_redundant_space_break(delta_obs) }
+        Sablon.content(:html, Delta.new(clean_obs, @font_family).getHTML)
       end
 
       def synthesis_html
@@ -339,14 +341,22 @@ module Reporter
         return [{"insert"=>"\n"}] + clean_desc + [{"insert"=>"\n"}]
       end
 
-      def obsv_tlc_delta
-        return observation_delta + tlc_delta + obsv_tlc_break_delta
+      def single_observation_delta
+        delta_obs = obj.observation.deep_stringify_keys['ops']
+        clean_obs = remove_redundant_space_break(delta_obs)
+
+        [{ 'insert' => "\n" }] + clean_obs + [{ 'insert' => "\n" }]
       end
 
-      def observation_delta
-        return [] if obj.observation.blank?
-        remove_redundant_space_break([{"insert"=>"#{obj.observation} "}])
+      def obsv_tlc_delta
+        # return observation_delta + tlc_delta + obsv_tlc_break_delta
+        single_observation_delta + tlc_delta + obsv_tlc_break_delta
       end
+
+      # def observation_delta
+      #   return [] if obj.observation.blank?
+      #   remove_redundant_space_break([{"insert"=>"#{obj.observation} "}])
+      # end
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
@@ -356,7 +366,7 @@ module Reporter
       end
 
       def obsv_tlc_break_delta
-        return [] if obj.tlc_solvents.blank? && obj.observation.blank?
+        return [] if obj.tlc_solvents.blank?
         [{"insert"=>"\n"}]
       end
 

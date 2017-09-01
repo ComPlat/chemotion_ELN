@@ -330,7 +330,7 @@ module Chemotion
         optional :description, type: Hash
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
-        optional :observation, type: String
+        optional :observation, type: Hash
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
         optional :tlc_solvents, type: String
@@ -381,7 +381,7 @@ module Chemotion
         optional :description, type: Hash
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
-        optional :observation, type: String
+        optional :observation, type: Hash
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
         optional :tlc_solvents, type: String

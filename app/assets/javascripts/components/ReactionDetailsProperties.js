@@ -10,6 +10,7 @@ import Clipboard from 'clipboard';
 import { purificationOptions,
   dangerousProductsOptions } from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import QuillEditor from './QuillEditor';
 import StringTag from './StringTag.jsx';
 import { observationPurification, solventsTL } from './utils/reactionPredefined';
 
@@ -242,11 +243,10 @@ export default class ReactionDetailsProperties extends Component {
                   <ControlLabel>
                     Additional information for publication and purification details
                   </ControlLabel>
-                  <FormControl
-                    componentClass="textarea" rows="4"
-                    value={reaction.observation || ''}
+                  <QuillEditor
+                    value={reaction.observation}
+                    height="95px"
                     disabled={reaction.isMethodDisabled('observation')}
-                    placeholder="Additional information for publication and purification details..."
                     onChange={event => this.props.onInputChange('observation', event)}
                   />
                 </FormGroup>

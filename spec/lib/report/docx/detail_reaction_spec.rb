@@ -8,7 +8,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let(:rf)    { 'correct tlc_rf' }
   let(:t_sol) { 'correct tlc_solvents' }
   let(:t_des) { 'correct tlc_description' }
-  let(:obs)   { 'correct observation' }
+  let(:obs)   { { "ops" => [{"insert" => "correct observation" }] } }
   let(:des)   { { "ops" => [{"insert" => "correct description" }] } }
   let(:prev_index) { 5 }
   let(:equiv) { 0.88 }
@@ -82,10 +82,12 @@ describe 'Reporter::Docx::DetailReaction instance' do
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML())
       )
+      expect(content[:observation]).to eq(
+        Sablon.content(:html, Reporter::Delta.new(obs).getHTML())
+      )
       expect(content[:tlc_rf]).to eq(rf)
       expect(content[:tlc_solvent]).to eq(t_sol)
       expect(content[:tlc_description]).to eq(t_des)
-      expect(content[:observation]).to eq(obs)
       expect(content[:short_label]).to eq(r1.short_label)
       expect(content[:products_html].class).to eq(Sablon::Content::HTML)
       expect(content[:synthesis_html].class).to eq(Sablon::Content::HTML)
@@ -172,7 +174,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.0 g, 0.0 mmol)"},
           {"insert"=>"."},
           {"insert"=>"\n"},
-          {"insert"=>"#{obs} "},
+          {"insert"=>"\n"},
+          {"insert"=>"correct observation"},
+          {"insert"=>"\n"},
           {"insert"=>"R"},
           {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{rf} (#{t_sol})."}, {"insert"=>"\n"},
