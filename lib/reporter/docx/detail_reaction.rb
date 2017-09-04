@@ -384,7 +384,7 @@ module Reporter
                     {"insert"=>"} "},
                     *iupac_delta(m[:iupac_name]),
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
-                      "#{m[:equiv]} equiv.); "}]
+                      "#{fixed_digit(m[:equiv], 2)} equiv.); "}]
         end
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
@@ -393,7 +393,7 @@ module Reporter
                     {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
                     {"insert"=>"} "},
                     *iupac_delta(m[:iupac_name]),
-                    {"insert"=>" (#{m[:vol]} mL); "}]
+                    {"insert"=>" (#{fixed_digit(m[:vol], 2)} mL); "}]
         end
         delta += [{"insert"=>"Yield "}]
         obj.products.each do |material|
@@ -441,7 +441,7 @@ module Reporter
       end
 
       def fixed_digit(input_num, digit_num)
-        "%.#{digit_num}f" % input_num.try(:round, digit_num).to_f
+        "%.#{digit_num}f" % input_num.try(:to_f).try(:round, digit_num).to_f
       end
     end
   end
