@@ -36,6 +36,10 @@
     width: 95%;
   }
 
+  .panel-heading {
+    padding: 5px 15px;
+  }
+
   .panel-body {
     padding: 0;
   }
@@ -43,7 +47,7 @@
   .row {
     display: -webkit-flex;
     display: flex;
-    height: 100px;
+    height: 80px;
   }
 
   .svg {
@@ -61,7 +65,7 @@
   }
 
   .dnd-btn {
-    line-height: 100px;
+    line-height: 80px;
     text-align: center;
     width: 80px;
   }

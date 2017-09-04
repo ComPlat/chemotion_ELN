@@ -38,6 +38,12 @@ const orderDropCollect = (connect, monitor) => {
   }
 }
 
+const headerTitle = (el, icon) => {
+  return (
+    <span>{el.title()} {icon}</span>
+  );
+}
+
 const ObjRow = ({element, template, connectDragSource, connectDropTarget, isDragging, isOver, canDrop}) => {
   const style = {};
   if (canDrop) {
@@ -52,17 +58,25 @@ const ObjRow = ({element, template, connectDragSource, connectDropTarget, isDrag
   }
 
   let bsStyle = "default";
+  let icon = null;
   if(element.type === 'sample') {
     bsStyle = 'success';
   } else if (template === 'supporting_information' && element.type === 'reaction' && element.role === 'gp') {
     bsStyle = 'primary';
+    icon = <i className="fa fa-home c-bs-info" />;
+  } else if (template === 'supporting_information' && element.type === 'reaction' && element.role === 'single') {
+    bsStyle = 'default';
+    icon = <i className="fa fa-asterisk c-bs-danger" />;
+  } else if (template === 'supporting_information' && element.type === 'reaction' && element.role === 'parts') {
+    bsStyle = 'info';
+    icon = <i className="fa fa-bookmark c-bs-success" />;
   } else if (element.type === 'reaction') {
     bsStyle = 'info';
   }
 
   return compose(connectDragSource, connectDropTarget)(
     <div>
-      <Panel style={style} header={element.title()} bsStyle={bsStyle}>
+      <Panel style={style} header={headerTitle(element, icon)} bsStyle={bsStyle}>
         <div className="row">
           <div className="svg">
             <SVG src={element.svgPath} key={element.svgPath}/>
