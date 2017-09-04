@@ -86,7 +86,7 @@ export default class Sample extends Element {
       molarity_unit: 'M',
       description: '',
       purity: 1,
-      density: 1,
+      density: 0,
       solvent: '',
       location: '',
       molfile: '',
@@ -530,10 +530,12 @@ export default class Sample extends Element {
         case 'l': {
           if (this.has_molarity) {
             return amount_g / this.molarity_value;
+          } else if (this.has_density) {
+            const density = this.density;
+            return amount_g / (density * 1000);
           }
 
-          const density = this.density || 1.0;
-          return amount_g / (density * 1000);
+          return 0;
         }
         case 'mol': {
           const molecularWeight = this.molecule_molecular_weight;
@@ -576,9 +578,12 @@ export default class Sample extends Element {
         case 'l':
           if (this.has_molarity) {
             return amount_value * this.molarity_value;
+          } else if (this.has_density) {
+            // has_density
+            return amount_value * (this.density || 1.0) * 1000;
           }
-          // has_density
-          return amount_value * (this.density || 1.0) * 1000;
+
+          return 0;
         case 'mol':
           const molecularWeight = this.molecule_molecular_weight;
           return (amount_value / (this.purity || 1.0)) * molecularWeight;
