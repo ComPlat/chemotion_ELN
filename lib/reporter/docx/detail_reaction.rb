@@ -417,7 +417,7 @@ module Reporter
                   "which have the following classification: " +
                   d.join(", ") +
                   "."
-        remove_redundant_space_break([
+        [{"insert"=>"\n"}] + remove_redundant_space_break([
           {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
           {"insert"=>content}
         ])

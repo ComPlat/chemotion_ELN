@@ -181,6 +181,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"analysis contents"},
           {"insert"=>"analysis contents"},
           {"insert"=>"\n"},
+          {"insert"=>"\n"},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
           {"insert"=>"The reaction includes the use of dangerous chemicals, " +
                       "which have the following classification: #{d1}, #{d2}."}
