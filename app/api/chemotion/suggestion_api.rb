@@ -19,7 +19,7 @@ module Chemotion
       def search_possibilities_by_type_user_and_collection(
         type, user_id, collection_id)
         d_for = Proc.new do |klass|
-          klass.for_user(user_id).by_collection_id(collection_id)
+          klass.by_collection_id(collection_id)
         end
 
         search_by_field = Proc.new do |klass, field, qry|

@@ -220,18 +220,18 @@ module Chemotion
         scope = case search_method
         when 'polymer_type'
           Sample.order("samples.updated_at DESC")
-                .for_user(current_user.id).joins(:residues)
+                .joins(:residues)
                 .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
         when 'sum_formula', 'iupac_name', 'inchistring', 'cano_smiles',
              'sample_name', 'sample_short_label', 'sample_external_label'
           Sample.order("samples.updated_at DESC")
-                .for_user(current_user.id).search_by(search_method, arg)
+                .search_by(search_method, arg)
         when 'reaction_name', 'reaction_short_label'
-          Reaction.for_user(current_user.id).search_by(search_method, arg)
+          Reaction.search_by(search_method, arg)
         when 'wellplate_name'
-          Wellplate.for_user(current_user.id).search_by(search_method, arg)
+          Wellplate.search_by(search_method, arg)
         when 'screen_name'
-          Screen.for_user(current_user.id).search_by(search_method, arg)
+          Screen.search_by(search_method, arg)
         when 'substring'
           AllElementSearch.new(
             arg,
@@ -283,7 +283,6 @@ module Chemotion
           )
         user_screens = Screen.for_user(current_user.id)
           .by_collection_id(collection_id)
-
         case scope.first
         when Sample
           elements[:samples] = scope.pluck(:id)
@@ -322,6 +321,7 @@ module Chemotion
             user_reactions.by_product_ids(elements[:samples]).pluck(:id)
           ).uniq.pluck(:id)
         when AllElementSearch::Results
+          # TODO check this samples_ids + molecules_ids ????
           elements[:samples] = (scope.samples_ids + scope.molecules_ids)
 
           elements[:reactions] = (
