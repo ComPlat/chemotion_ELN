@@ -349,7 +349,7 @@ module Reporter
       end
 
       def obsv_tlc_delta
-        observation_delta + tlc_delta + obsv_tlc_break_delta
+        observation_delta + [{"insert"=>" "}] + tlc_delta + obsv_tlc_break_delta
       end
 
       def tlc_delta

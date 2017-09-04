@@ -175,6 +175,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"."},
           {"insert"=>"\n"},
           {"insert"=>"correct observation"},
+          {"insert"=>" "},
           {"insert"=>"R"},
           {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{rf} (#{t_sol})."}, {"insert"=>"\n"},
