@@ -1,6 +1,7 @@
 import React, {Component} from 'react'
 import ReportActions from '../actions/ReportActions';
-import { Table, Button, Label, PanelGroup, Panel } from 'react-bootstrap';
+import { Table, Button, Label, PanelGroup, Panel, OverlayTrigger,
+  Tooltip } from 'react-bootstrap';
 
 const Archives = ({archives}) => {
   const content = archives.map( (archive, index) => {
@@ -33,8 +34,13 @@ const title = (archive) => {
     ? <Label bsStyle="warning">new</Label>
     : null;
 
-  const supportingInfoLabel = archive.template === "supporting_information"
-    ? <Label bsStyle="info">Supporting Information</Label>
+  const siTooltip = <Tooltip>Supporting Information</Tooltip>;
+  const supportingInfoLabel = archive.template === 'supporting_information'
+    ? (
+      <OverlayTrigger placement="right" overlay={siTooltip}>
+        <Label bsStyle="info">SI</Label>
+      </OverlayTrigger>
+    )
     : null;
 
   return (
