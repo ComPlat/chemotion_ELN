@@ -23,21 +23,18 @@ module Chemotion
 
       def get_search_method
         return params[:selection].search_by_method unless structure_search
-
         # page_size = params[:per_page].to_i
-        return 'structure'
+        'structure'
       end
 
       def latest_updated
-        latest_updated = [
+        [
           Sample.maximum(:updated_at),
           Reaction.maximum(:updated_at),
           Wellplate.maximum(:updated_at),
           Screen.maximum(:updated_at),
           ResearchPlan.maximum(:updated_at)
         ].max
-
-        return latest_updated
       end
 
       def sample_structure_search arg
