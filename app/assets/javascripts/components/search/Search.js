@@ -32,7 +32,6 @@ export default class Search extends React.Component {
     selection.elementType = this.state.elementType
     UIActions.setSearchSelection(selection)
     selection.page_size = uiState.number_of_results
-
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
       uiState.currentCollection.id, 1, uiState.isSync)
   }
@@ -68,9 +67,9 @@ export default class Search extends React.Component {
   }
 
   handleClearSearchSelection() {
-    let uiState = UIStore.getState()
-
-    UIActions.selectCollection({id: uiState.currentCollection.id})
+    let {currentCollection, isSync} = UIStore.getState();
+    isSync ? UIActions.selectSyncCollection(currentCollection)
+      : UIActions.selectCollection(currentCollection);
     UIActions.clearSearchSelection()
   }
 

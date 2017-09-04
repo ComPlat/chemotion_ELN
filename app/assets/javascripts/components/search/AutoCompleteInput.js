@@ -246,7 +246,9 @@ export default class AutoCompleteInput extends React.Component {
       this.setState({
         value: ''
       })
-      UIActions.selectCollection({id: UIStore.getState().currentCollection.id})
+      let {currentCollection, isSync} = UIStore.getState();
+      isSync ? UIActions.selectSyncCollection(currentCollection)
+        : UIActions.selectCollection(currentCollection);
 
       return 0
     }
