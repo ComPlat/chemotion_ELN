@@ -54,6 +54,7 @@ class ReportStore {
       handleDownloadReport: ReportActions.downloadReport,
       handleUpdateProcessQueue: ReportActions.updateProcessQueue,
       handleUpdateTemplate: ReportActions.updateTemplate,
+      handleClone: ReportActions.clone,
     })
   }
 
@@ -263,6 +264,9 @@ class ReportStore {
     });
     this.setState({ archives: newArchives,
                     processings: newProcessings });
+  }
+  handleClone(archive) {
+    console.log(archive);
   }
 }
 

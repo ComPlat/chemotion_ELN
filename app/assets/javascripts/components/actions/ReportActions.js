@@ -98,6 +98,10 @@ class ReportActions {
   downloadReport(id) {
     return id;
   }
+
+  clone(archive) {
+    return archive;
+  }
 }
 
 export default alt.createActions(ReportActions);

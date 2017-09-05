@@ -48,10 +48,17 @@ const title = (archive) => {
     <div style={{width: '100%', lineHeight: '30px'}}>
       {archive.file_name} {newLabel} {supportingInfoLabel}
       <div className="button-right">
+        {cloneBtn(archive)}
+        <span>&nbsp;</span>
         {downloadStatusBtn(archive.downloadable, archive.id)}
       </div>
     </div>
   );
+};
+
+const clickDownloadReport = (e, archiveId) => {
+  e.stopPropagation();
+  ReportActions.downloadReport(archiveId);
 };
 
 const downloadStatusBtn = (downloadable, archiveId) => {
@@ -81,9 +88,29 @@ const downloadStatusBtn = (downloadable, archiveId) => {
   return downloadable ? downloadBtn : processBtn;
 };
 
-const clickDownloadReport = (e, archiveId) => {
+const clickToClone = (e, archive) => {
   e.stopPropagation();
-  ReportActions.downloadReport(archiveId);
+  ReportActions.clone(archive);
+};
+
+const cloneBtn = (archive) => {
+  const onClickToClone = e => clickToClone(e, archive);
+  const downloadable = archive.downloadable;
+  const cloneTP = (
+    <Tooltip id="clone-tp">
+      Create a report with the same configs & settings
+    </Tooltip>
+  );
+
+  const btn = (
+    <OverlayTrigger placement="top" overlay={cloneTP}>
+      <Button bsStyle="warning" bsSize="small" onClick={onClickToClone}>
+        <i className="fa fa-pencil" />
+      </Button>
+    </OverlayTrigger>
+  );
+
+  return downloadable ? btn : null;
 };
 
 export default Archives;
