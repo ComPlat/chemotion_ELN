@@ -102,7 +102,7 @@ const cloneBtn = (archive) => {
   const downloadable = archive.downloadable;
   const cloneTP = (
     <Tooltip id="clone-tp">
-      Create a report with the same configs & settings
+      Load date from this report.
     </Tooltip>
   );
 
