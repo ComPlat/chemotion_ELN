@@ -4,7 +4,7 @@ import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
 import ArrayUtils from '../utils/ArrayUtils';
 import { reOrderArr } from '../utils/DndControl';
-import UpdateSelectedObjs from './common/UpdateSelectedObjs';
+import { UpdateSelectedObjs } from '../utils/ReportHelper';
 
 class ReportStore {
   constructor() {
