@@ -96,8 +96,7 @@ const solventsContent = (el, prev_counter, prev_content) => {
     counter += 1;
     const m = el.molecule;
     content = [...content,
-                { insert: `{${counter}|` },
-                boldXX(),
+                { insert: `{${counter}` },
                 { insert: "} " },
                 deltaIupac(m),
                 { insert: ` (${digit(el.amount_l * 1000, 2)} mL); ` }];

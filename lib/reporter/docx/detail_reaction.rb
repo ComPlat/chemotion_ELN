@@ -390,8 +390,7 @@ module Reporter
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{counter}|"},
-                    {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+          delta += [{"insert"=>"{#{counter}"},
                     {"insert"=>"} "},
                     *iupac_delta(m[:iupac_name]),
                     {"insert"=>" (#{fixed_digit(m[:vol], 2)} mL); "}]
