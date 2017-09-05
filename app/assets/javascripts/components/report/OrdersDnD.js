@@ -2,9 +2,10 @@ import React, {Component} from 'react'
 import SVG from 'react-inlinesvg';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
-import { Panel } from 'react-bootstrap';
+import { Panel, Button } from 'react-bootstrap';
 import DragDropItemTypes from '../DragDropItemTypes'
 import ReportActions from '../actions/ReportActions';
+import UIActions from '../actions/UIActions';
 
 const orderSource = {
   beginDrag(props) {
@@ -39,8 +40,23 @@ const orderDropCollect = (connect, monitor) => {
 }
 
 const headerTitle = (el, icon) => {
+  const clickToRm = () => {
+    ReportActions.remove({ type: el.type, id: el.id });
+    UIActions.uncheckWholeSelection.defer();
+  };
+
   return (
-    <span>{el.title()} {icon}</span>
+    <span>
+      {el.title()} {icon}
+      <Button
+        bsStyle="danger"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={clickToRm}
+      >
+        <i className="fa fa-times" />
+      </Button>
+    </span>
   );
 }
 

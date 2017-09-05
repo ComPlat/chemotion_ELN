@@ -157,3 +157,13 @@
     z-index: 1;
   }
 }
+
+.loading-modal {
+  .modal-content {
+    height: 100px;
+    text-align: center;
+    margin: auto;
+    padding-top: 25px;
+    width: 100px;
+  }
+}

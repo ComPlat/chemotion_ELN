@@ -2,6 +2,7 @@ import alt from '../alt';
 import GeneralFetcher from '../fetchers/GeneralFetcher';
 import ReportsFetcher from '../fetchers/ReportsFetcher';
 import _ from 'lodash';
+import { GetTypeIds } from '../utils/ReportHelper';
 
 class ReportActions {
 
@@ -47,9 +48,12 @@ class ReportActions {
     };
   }
 
-  updateCheckedTags(oldTags, newTags) {
-    const diffTags = {  sample: _.difference(newTags.sampleIds, oldTags.sampleIds),
-                        reaction: _.difference(newTags.reactionIds, oldTags.reactionIds) };
+  updateCheckedTags(oldTags, newTags, defaultTags) {
+    let dfSIds = _.difference(newTags.sampleIds, oldTags.sampleIds);
+    let dfRIds = _.difference(newTags.reactionIds, oldTags.reactionIds);
+    dfSIds = dfSIds.filter(id => !defaultTags.sampleIds.includes(id));
+    dfRIds = dfRIds.filter(id => !defaultTags.reactionIds.includes(id));
+    const diffTags = { sample: dfSIds, reaction: dfRIds };
     return (dispatch) => { GeneralFetcher.fetchListContent(diffTags)
       .then((result) => {
         dispatch({newTags: newTags, newObjs: result});
@@ -97,6 +101,25 @@ class ReportActions {
 
   downloadReport(id) {
     return id;
+  }
+
+  clone(archive) {
+    const tags = {
+      sample: GetTypeIds(archive.objects, 'sample'),
+      reaction: GetTypeIds(archive.objects, 'reaction'),
+    };
+    return (dispatch) => {
+      GeneralFetcher.fetchListContent(tags)
+        .then((result) => {
+          dispatch({ objs: result, archive, tags });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  remove(target) {
+    return target;
   }
 }
 

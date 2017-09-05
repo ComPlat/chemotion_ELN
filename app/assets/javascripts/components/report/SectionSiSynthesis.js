@@ -96,8 +96,7 @@ const solventsContent = (el, prev_counter, prev_content) => {
     counter += 1;
     const m = el.molecule;
     content = [...content,
-                { insert: `{${counter}|` },
-                boldXX(),
+                { insert: `{${counter}` },
                 { insert: "} " },
                 deltaIupac(m),
                 { insert: ` (${digit(el.amount_l * 1000, 2)} mL); ` }];
@@ -159,8 +158,10 @@ const analysesContent = (products) => {
     const sortAnalyses = ArrayUtils.sortArrByIndex(p.analyses);
     return sortAnalyses.map(a => {
       const data = a && a.extended_metadata
-                      ? JSON.parse(a.extended_metadata.content)
-                      : {}
+        && a.extended_metadata.report
+        && a.extended_metadata.report == 'true'
+        ? JSON.parse(a.extended_metadata.content)
+        : {ops: []};
       content = [...content, ...data.ops];
     });
   });

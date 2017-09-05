@@ -367,7 +367,8 @@ module Reporter
       def product_analyses_delta
         delta = []
         obj.products.each do |product|
-          delta = merge_items(delta, sort_by_index(product[:analyses]))
+          valid_analyses = keep_report(product[:analyses])
+          delta = merge_items(delta, sort_by_index(valid_analyses))
         end
         return [] if delta.length == 0
         remove_redundant_space_break(delta) + [{"insert"=>"\n"}]
@@ -389,8 +390,7 @@ module Reporter
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{counter}|"},
-                    {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+          delta += [{"insert"=>"{#{counter}"},
                     {"insert"=>"} "},
                     *iupac_delta(m[:iupac_name]),
                     {"insert"=>" (#{fixed_digit(m[:vol], 2)} mL); "}]
@@ -431,6 +431,12 @@ module Reporter
                   {"attributes"=>{"bold"=>"true"}, "insert"=>"NAME"},
                   {"insert"=>"\""}]
         end
+      end
+
+      def keep_report(analyses)
+        analyses.map do |a|
+          a[:extended_metadata][:report] == "true" ? a : nil
+        end.compact
       end
 
       def sort_by_index(analyses)

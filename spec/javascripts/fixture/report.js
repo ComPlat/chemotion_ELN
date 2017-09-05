@@ -21,6 +21,7 @@ const originalState = {
   checkedAllRxnSettings: true,
   checkedAllConfigs: true,
   processingReport: false,
+  defaultObjTags: { sampleIds: [], reactionIds: [] },
   selectedObjTags: { sampleIds: [], reactionIds: [] },
   selectedObjs: [],
   imgFormat: 'png',
