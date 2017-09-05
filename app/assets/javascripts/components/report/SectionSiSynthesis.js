@@ -159,8 +159,10 @@ const analysesContent = (products) => {
     const sortAnalyses = ArrayUtils.sortArrByIndex(p.analyses);
     return sortAnalyses.map(a => {
       const data = a && a.extended_metadata
-                      ? JSON.parse(a.extended_metadata.content)
-                      : {}
+        && a.extended_metadata.report
+        && a.extended_metadata.report == 'true'
+        ? JSON.parse(a.extended_metadata.content)
+        : {ops: []};
       content = [...content, ...data.ops];
     });
   });
