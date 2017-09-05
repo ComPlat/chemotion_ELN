@@ -20,6 +20,14 @@ module Chemotion
         collection_id = fetch_collection_id_w_current_user(
           params[:collection_id], params[:isSync]
         )
+        dl = permission_level_for_collection(
+          params[:collection_id], params[:isSync]
+        )
+        dl_s = dl[:sample_detail_level]
+        dl_r = dl[:reaction_detail_level]
+        dl_wp = dl[:wellplate_detail_level]
+        dl_sc = dl[:screen_detail_level]
+
         d_for = Proc.new do |klass|
           klass.by_collection_id(collection_id)
         end
@@ -33,67 +41,95 @@ module Chemotion
 
         case type
         when 'sample'
+          sample_short_label = dl_s > 0 && search_by_field.call(Sample, :short_label, qry) || []
+          sample_external_label = dl_s > 0 && search_by_field.call(Sample, :external_label, qry) || []
+          sample_name = dl_s > 0 && search_by_field.call(Sample, :name, qry) || []
+          polymer_type = dl_s > 0 && d_for.call(Sample).joins(:residues)
+            .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
+            .pluck("residues.custom_info -> 'polymer_type'").uniq || []
+          sum_formula = dl_s > 0 && search_by_field.call(Molecule, :sum_formular, qry) || []
+          iupac_name = dl_s > 0 && search_by_field.call(Molecule, :iupac_name, qry) || []
+          inchistring = dl_s > 0 && search_by_field.call(Molecule, :inchistring, qry) || []
+          cano_smiles = dl_s > 0 && search_by_field.call(Molecule, :cano_smiles, qry) || []
           {
-            sample_short_label: search_by_field.call(Sample, :short_label, qry),
-            sample_external_label: search_by_field.call(Sample, :external_label, qry),
-            sample_name: search_by_field.call(Sample, :name, qry),
-            polymer_type: d_for.call(Sample).joins(:residues)
-              .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
-              .pluck("residues.custom_info -> 'polymer_type'").uniq,
-            sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
-            iupac_name: search_by_field.call(Molecule, :iupac_name, qry),
-            inchistring: search_by_field.call(Molecule, :inchistring, qry),
-            cano_smiles: search_by_field.call(Molecule, :cano_smiles, qry)
+            sample_short_label: sample_short_label,
+            sample_external_label: sample_external_label,
+            sample_name: sample_name,
+            polymer_type: polymer_type,
+            sum_formula: sum_formula,
+            iupac_name: iupac_name,
+            inchistring: inchistring,
+            cano_smiles: cano_smiles
           }
         when 'reaction'
+          reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
+          reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
+          sample_name = dl_s > 0 && d_for.call(Sample).with_reactions.by_name(qry).pluck(:name).uniq || []
+          iupac_name = dl_s > 0 && d_for.call(Molecule).with_reactions.by_iupac_name(qry).pluck(:iupac_name).uniq || []
+          inchistring = dl_s > 0 && d_for.call(Molecule).with_reactions.by_inchistring(qry).pluck(:inchistring).uniq || []
+          cano_smiles = dl_s > 0 && d_for.call(Molecule).with_reactions.by_cano_smiles(qry).pluck(:cano_smiles).uniq || []
           {
-            reaction_name: search_by_field.call(Reaction, :name, qry),
-            reaction_short_label: search_by_field.call(Reaction, :short_label, qry),
-            sample_name: d_for.call(Sample).with_reactions.by_name(qry)
-              .pluck(:name).uniq,
-            iupac_name: d_for.call(Molecule).with_reactions.by_iupac_name(qry)
-              .pluck(:iupac_name).uniq,
-            inchistring: d_for.call(Molecule).with_reactions.by_inchistring(qry)
-              .pluck(:inchistring).uniq,
-            cano_smiles: d_for.call(Molecule).with_reactions.by_cano_smiles(qry)
-              .pluck(:cano_smiles).uniq
+            reaction_name: reaction_name,
+            reaction_short_label: reaction_short_label,
+            sample_name: sample_name,
+            iupac_name: iupac_name,
+            inchistring: inchistring,
+            cano_smiles: cano_smiles
           }
         when 'wellplate'
+          wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
+          sample_name = dl_s > 0 && d_for.call(Sample).with_wellplates.by_name(qry).pluck(:name).uniq || []
+          iupac_name = dl_s > 0 && d_for.call(Molecule).with_wellplates.by_iupac_name(qry).pluck(:iupac_name).uniq || []
+          inchistring = dl_s > 0 && d_for.call(Molecule).with_wellplates.by_inchistring(qry).pluck(:inchistring).uniq || []
+          cano_smiles = dl_s > 0 && d_for.call(Molecule).with_wellplates.by_cano_smiles(qry).pluck(:cano_smiles).uniq || []
           {
-            wellplate_name: search_by_field.call(Wellplate, :name, qry),
-            sample_name: d_for.call(Sample).with_wellplates.by_name(qry)
-              .pluck(:name).uniq,
-            iupac_name: d_for.call(Molecule).with_wellplates.by_iupac_name(qry)
-              .pluck(:iupac_name).uniq,
-            inchistring: d_for.call(Molecule).with_wellplates.by_inchistring(qry)
-              .pluck(:inchistring).uniq,
-            cano_smiles: d_for.call(Molecule).with_wellplates.by_cano_smiles(qry)
-              .pluck(:cano_smiles).uniq
+            wellplate_name: wellplate_name,
+            sample_name: sample_name,
+            iupac_name: iupac_name,
+            inchistring: inchistring,
+            cano_smiles: cano_smiles
           }
         when 'screen'
+          screen_name = dl_sc > -1 &&  search_by_field.call(Screen, :name, qry) || []
+          conditions = dl_sc > -1 &&  search_by_field.call(Screen, :conditions, qry) || []
+          requirements = dl_sc > -1 &&  search_by_field.call(Screen, :requirements, qry) || []
           {
-            screen_name: search_by_field.call(Screen, :name, qry),
-            conditions: search_by_field.call(Screen, :conditions, qry),
-            requirements: search_by_field.call(Screen, :requirements, qry)
+            screen_name: screen_name,
+            conditions: conditions,
+            requirements: requirements
           }
         else
+          sample_name = dl_s > 0 && search_by_field.call(Sample, :name, qry) || []
+          sample_short_label = dl_s > 0 && search_by_field.call(Sample, :short_label, qry) || []
+          sample_external_label = dl_s > 0 && search_by_field.call(Sample, :external_label, qry) || []
+          polymer_type = dl_s > 0 && d_for.call(Sample).joins(:residues)
+            .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
+            .pluck("residues.custom_info -> 'polymer_type'").uniq || []
+          sum_formula = dl_s > 0 && search_by_field.call(Molecule, :sum_formular, qry) || []
+          iupac_name = dl_s > 0 && search_by_field.call(Molecule, :iupac_name, qry) || []
+          inchistring = dl_s > 0 && search_by_field.call(Molecule, :inchistring, qry) || []
+          cano_smiles = dl_s > 0 && search_by_field.call(Molecule, :cano_smiles, qry) || []
+          reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
+          reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
+          wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
+          screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
+          conditions = dl_sc > -1 && search_by_field.call(Screen, :conditions, qry) || []
+          requirements = dl_sc > -1 && search_by_field.call(Screen, :requirements, qry) || []
           {
-            sample_name: search_by_field.call(Sample, :name, qry),
-            sample_short_label: search_by_field.call(Sample, :short_label, qry),
-            sample_external_label: search_by_field.call(Sample, :external_label, qry),
-            polymer_type: d_for.call(Sample).joins(:residues)
-              .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
-              .pluck("residues.custom_info -> 'polymer_type'").uniq,
-            sum_formula: search_by_field.call(Molecule, :sum_formular, qry),
-            iupac_name: search_by_field.call(Molecule, :iupac_name, qry),
-            inchistring: search_by_field.call(Molecule, :inchistring, qry),
-            cano_smiles: search_by_field.call(Molecule, :cano_smiles, qry),
-            reaction_name: search_by_field.call(Reaction, :name, qry),
-            reaction_short_label: search_by_field.call(Reaction, :short_label, qry),
-            wellplate_name: search_by_field.call(Wellplate, :name, qry),
-            screen_name: search_by_field.call(Screen, :name, qry),
-            conditions: search_by_field.call(Screen, :conditions, qry),
-            requirements: search_by_field.call(Screen, :requirements, qry)
+            sample_name: sample_name,
+            sample_short_label: sample_short_label,
+            sample_external_label: sample_external_label,
+            polymer_type: polymer_type,
+            sum_formula: sum_formula,
+            iupac_name: iupac_name,
+            inchistring: inchistring,
+            cano_smiles: cano_smiles,
+            reaction_name: reaction_name,
+            reaction_short_label: reaction_short_label,
+            wellplate_name: wellplate_name,
+            screen_name: screen_name,
+            conditions: conditions,
+            requirements: requirements
           }
         end
       end
