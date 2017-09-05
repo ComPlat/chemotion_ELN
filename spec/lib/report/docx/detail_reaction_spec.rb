@@ -37,6 +37,8 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let!(:s1) { create(:sample, name: 'Sample 1') }
   let!(:s2) { create(:sample, name: 'Sample 2') }
   let!(:s3) { create(:sample, name: 'Sample 3') }
+  let!(:s4) { create(:sample, name: 'Solvent') }
+  let!(:correct_content) { "analysis contents (true for report)" }
   let!(:r1_serialized) do
     CollectionsReaction.create!(reaction: r1, collection: c1)
     CollectionsSample.create!(sample: s1, collection: c1)
@@ -51,6 +53,14 @@ describe 'Reporter::Docx::DetailReaction instance' do
     ReactionsProductSample.create!(
       reaction: r1, sample: s3, equivalent: equiv
     )
+    ReactionsSolventSample.create!(
+      reaction: r1, sample: s4, equivalent: equiv
+    )
+    con = r1.products[0].container.children[0].children[0]
+    con.extended_metadata["report"] = "true"
+    con.extended_metadata["content"] = "{\"ops\": [{\"insert\": \"#{correct_content}\"}]}"
+    con.save!
+
     ElementReportPermissionProxy.new(user, r1, [user.id]).serialized
   end
   let!(:target) do
@@ -78,7 +88,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     it "has correct content" do
       expect(content[:title]).to eq(tit)
-      expect(content[:solvents]).to eq(sol)
+      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.000ml)")
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML())
       )
@@ -164,12 +174,16 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"} "},
           {"insert"=>"#{s2.molecule.iupac_name}"},
           {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv.); "},
+          {"insert"=>"{2"},
+          {"insert"=>"} "},
+          {"insert"=>s4.preferred_label},
+          {"insert"=>" (0.00 mL); "},
           {"insert"=>"Yield "},
-          {"insert"=>"{2|"},
+          {"insert"=>"{3|"},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
           {"insert"=>"; "},
-          {"insert"=>"{3|"},
+          {"insert"=>"{4|"},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
           {"insert"=>"."},
@@ -179,8 +193,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"R"},
           {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{rf} (#{t_sol})."}, {"insert"=>"\n"},
-          {"insert"=>"analysis contents"},
-          {"insert"=>"analysis contents"},
+          {"insert"=>correct_content},
           {"insert"=>"\n"},
           {"insert"=>"\n"},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
