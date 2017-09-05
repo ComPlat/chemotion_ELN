@@ -371,7 +371,7 @@ module Chemotion
           # cache_key = cache_key(search_by_method, arg, molfile,
           #   params[:collection_id], molecule_sort, opt)
 
-          c_id = fetch_collection_id(params[:collection_id], params[:is_sync])
+          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
 
           scope = search_elements(search_by_method, arg, c_id, molecule_sort)
 
@@ -404,7 +404,7 @@ module Chemotion
             else
               Sample.search_by(search_by_method, arg)
             end
-          c_id = fetch_collection_id(params[:collection_id], params[:is_sync])
+          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
           samples = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
@@ -442,7 +442,7 @@ module Chemotion
             else
               Reaction.search_by(search_by_method, arg)
             end
-          c_id = fetch_collection_id(params[:collection_id], params[:is_sync])
+          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
           reactions = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
@@ -473,7 +473,7 @@ module Chemotion
             else
               Wellplate.search_by(search_by_method, arg)
             end
-          c_id = fetch_collection_id(params[:collection_id], params[:is_sync])
+          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
           wellplates = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
@@ -505,7 +505,7 @@ module Chemotion
             else
               Screen.search_by(search_by_method, arg)
             end
-          c_id = fetch_collection_id(params[:collection_id], params[:is_sync])
+          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
           screens = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
