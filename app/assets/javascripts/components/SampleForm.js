@@ -178,7 +178,8 @@ export default class SampleForm extends React.Component {
   sampleAmount(sample) {
     const content = [];
     const isDisabled = !sample.can_update;
-    const {molarityBlocked} = this.state;
+    const { molarityBlocked } = this.state;
+    const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
     if (sample.isMethodDisabled('amount_value') === false) {
       // if (sample.isMethodRestricted('molecule') === true) {
@@ -190,7 +191,8 @@ export default class SampleForm extends React.Component {
 
       if (!sample.contains_residues) {
         content.push(this.numInput(sample, 'amount_l', 'l',
-          ['milli', 'micro', 'none'], 5, '\u202F', 'l', isDisabled, ''));
+          ['milli', 'micro', 'none'], 5, '\u202F', 'l',
+          isDisabled, '', volumeBlocked));
       }
 
       content.push(this.numInput(sample, 'amount_mol', 'mol',
