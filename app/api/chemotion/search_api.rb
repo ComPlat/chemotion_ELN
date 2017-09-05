@@ -37,28 +37,54 @@ module Chemotion
         ].max
       end
 
-      def sample_structure_search(arg, c_id)
+      def sample_structure_search(arg, c_id = @c_id, not_permitted = @dl_s && @dl_s < 1 )
+        return Sample.none if not_permitted
         molfile = Fingerprint.standardized_molfile arg
         threshold = params[:selection].tanimoto_threshold
         type = params[:selection].search_type
 
         # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
         Sample.by_collection_id(c_id)
-              .search_by_fingerprint(molfile, current_user.id,
-                c_id.to_i, type, threshold)
+              .search_by_fingerprint(
+                molfile, current_user.id, c_id, type, threshold
+              )
       end
 
       def whitelisted_table(table:, column:, **_)
         API::WL_TABLES.has_key?(table) && API::WL_TABLES[table].include?(column)
       end
 
-      def advanced_search(arg, c_id)
+      # desc: return true if the detail level allow to access the column
+      def filter_with_detail_level(table:, column:, sample_detail_level:,
+        reaction_detail_level:,  **_)
+        # TODO filter according to columns
+        case table
+        when 'samples'
+          if sample_detail_level > 0
+            true
+          else
+            false
+          end
+        when 'reactions'
+          if reaction_detail_level > -1
+            true
+          else
+            false
+          end
+        else
+          true
+        end
+      end
+
+      def advanced_search(arg, c_id = @c_id, dl = @dl)
         query = ''
         cond_val = []
         tables = []
 
         arg.each do |filter|
-          next unless whitelisted_table(filter.field.to_h.symbolize_keys)
+          adv_field = filter.field.to_h.merge(dl).symbolize_keys
+          next unless whitelisted_table(**adv_field)
+          next unless filter_with_detail_level(**adv_field)
           table = filter.field.table
           tables.push(table)
           field = filter.field.column
@@ -215,35 +241,46 @@ module Chemotion
       end
 
       # Generate search query
-      def search_elements(search_method, arg, collection_id,
-                          molecule_sort = false)
+      def search_elements(search_method, arg, c_id = @c_id,
+                          molecule_sort = false, dl = @dl)
+        dl_s = dl[:sample_detail_level] || 0
         scope = case search_method
         when 'polymer_type'
-          Sample.order("samples.updated_at DESC")
-                .joins(:residues)
-                .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
+          if dl_s > 0
+            Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  .joins(:residues)
+                  .where("residues.custom_info -> 'polymer_type' ILIKE '%#{arg}%'")
+          else
+            Sample.none
+          end
         when 'sum_formula', 'iupac_name', 'inchistring', 'cano_smiles',
              'sample_name', 'sample_short_label', 'sample_external_label'
-          Sample.order("samples.updated_at DESC")
-                .search_by(search_method, arg)
+          if dl_s > 0
+            Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  .search_by(search_method, arg)
+          else
+            Sample.none
+          end
         when 'reaction_name', 'reaction_short_label'
-          Reaction.search_by(search_method, arg)
+          Reaction.by_collection_id(c_id).search_by(search_method, arg)
         when 'wellplate_name'
-          Wellplate.search_by(search_method, arg)
+          Wellplate.by_collection_id(c_id).search_by(search_method, arg)
         when 'screen_name'
-          Screen.search_by(search_method, arg)
+          Screen.by_collection_id(c_id).search_by(search_method, arg)
         when 'substring'
-          AllElementSearch.new(
-            arg,
-            current_user.id
-          ).search_by_substring
+          if dl_s > 0
+            AllElementSearch.new(
+              arg,
+              current_user.id
+            ).search_by_substring.by_collection_id(c_id)
+          else
+            Sample.none
+          end
         when 'structure'
-          sample_structure_search(arg, collection_id)
+            sample_structure_search(arg)
         when 'advanced'
-          advanced_search(arg, collection_id)
+          advanced_search(arg, c_id)
         end
-
-        scope = scope.by_collection_id(collection_id.to_i)
 
         if search_method == 'advanced' && molecule_sort == false
           arg_value_str = arg.first.value.gsub(/(\r)?\n/, ",")
@@ -262,7 +299,7 @@ module Chemotion
         return scope
       end
 
-      def elements_by_scope(scope, collection_id)
+      def elements_by_scope(scope, collection_id = @c_id)
         return {} if scope.empty?
 
         elements = {}
@@ -343,6 +380,19 @@ module Chemotion
 
         elements
       end
+
+      def set_var
+        @c_id = fetch_collection_id_w_current_user(
+          params[:collection_id], params[:is_sync]
+        )
+        @dl = permission_level_for_collection(
+          params[:collection_id], params[:isSync]
+        )
+        @dl_s = @dl[:sample_detail_level]
+        @dl_r = @dl[:reaction_detail_level]
+        @dl_wp = @dl[:wellplate_detail_level]
+        @dl_sc = @dl[:screen_detail_level]
+      end
     end
 
     resource :search do
@@ -354,6 +404,10 @@ module Chemotion
           requires :collection_id, type: String
           optional :is_sync, type: Boolean
           optional :molecule_sort, type: Integer
+        end
+
+        after_validation do
+          set_var
         end
 
         post do
@@ -368,11 +422,9 @@ module Chemotion
           # cache_key = cache_key(search_by_method, arg, molfile,
           #   params[:collection_id], molecule_sort, opt)
 
-          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
+          scope = search_elements(search_by_method, arg, @c_id, molecule_sort, @dl)
 
-          scope = search_elements(search_by_method, arg, c_id, molecule_sort)
-
-          elements_ids = elements_by_scope(scope, c_id)
+          elements_ids = elements_by_scope(scope)
 
           serialization_by_elements_and_page(
             elements_ids,
@@ -390,21 +442,23 @@ module Chemotion
           optional :is_sync, type: Boolean
         end
 
+        after_validation do
+          set_var
+        end
+
         post do
           search_by_method = get_search_method()
           arg = get_arg()
-          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
-          scope =
+          samples =
             case search_by_method
             when 'structure'
-              sample_structure_search(arg,c_id)
+              sample_structure_search(arg)
             else
-              Sample.search_by(search_by_method, arg)
+              Sample.by_collection_id(@c_id).search_by(search_by_method, arg)
             end
-          samples = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
-            elements_by_scope(samples, c_id),
+            elements_by_scope(samples),
             params[:page]
           )
         end
@@ -419,15 +473,18 @@ module Chemotion
           optional :is_sync, type: Boolean
         end
 
+        after_validation do
+          set_var
+        end
+
         post do
           search_by_method = get_search_method()
           arg = get_arg()
-          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
 
-          scope =
+          reactions =
             case search_by_method
             when 'structure'
-              associated_samples = sample_structure_search(arg, c_id)
+              associated_samples = sample_structure_search(arg)
               samples_ids = associated_samples.pluck(:id)
 
               reaction_ids = (
@@ -435,14 +492,13 @@ module Chemotion
                 ReactionsStartingMaterialSample.get_reactions(samples_ids) +
                 ReactionsReactantSample.get_reactions(samples_ids)
               ).compact.uniq
-              Reaction.where(id: reaction_ids)
+              Reaction.by_collection_id(@c_id).where(id: reaction_ids)
             else
-              Reaction.search_by(search_by_method, arg)
+              Reaction.by_collection_id(@c_id).search_by(search_by_method, arg)
             end
-          reactions = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
-            elements_by_scope(reactions, c_id),
+            elements_by_scope(reactions),
             params[:page]
           )
         end
@@ -457,23 +513,25 @@ module Chemotion
           optional :is_sync, type: Boolean
         end
 
+        after_validation do
+          set_var
+        end
+
         post do
           search_by_method = get_search_method()
           arg = get_arg()
-          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
 
-          scope =
+          wellplates =
             case search_by_method
             when 'structure'
-              associated_samples = sample_structure_search(arg, c_id)
-              Wellplate.by_sample_ids(associated_samples.pluck(:id))
+              associated_samples = sample_structure_search(arg)
+              Wellplate.by_collection_id(@c_id).by_sample_ids(associated_samples.pluck(:id))
             else
-              Wellplate.search_by(search_by_method, arg)
+              Wellplate.by_collection_id(@c_id).search_by(search_by_method, arg)
             end
-          wellplates = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
-            elements_by_scope(wellplates, c_id),
+            elements_by_scope(wellplates),
             params[:page]
           )
         end
@@ -488,24 +546,26 @@ module Chemotion
           optional :is_sync, type: Boolean
         end
 
+        after_validation do
+          set_var
+        end
+
         post do
           search_by_method = get_search_method()
           arg = get_arg()
-          c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:is_sync])
 
-          scope =
+          screens =
             case search_by_method
             when 'structure'
-              associated_samples = sample_structure_search(arg, c_id)
+              associated_samples = sample_structure_search(arg)
               well_ids = Wellplate.by_sample_ids(associated_samples.pluck(:id))
-              Screen.by_wellplate_ids(well_ids)
+              Screen.by_collection_id(@c_id).by_wellplate_ids(well_ids)
             else
-              Screen.search_by(search_by_method, arg)
+              Screen.by_collection_id(@c_id).search_by(search_by_method, arg)
             end
-          screens = scope.by_collection_id(c_id)
 
           serialization_by_elements_and_page(
-            elements_by_scope(screens, c_id),
+            elements_by_scope(screens),
             params[:page]
           )
         end

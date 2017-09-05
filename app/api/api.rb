@@ -134,6 +134,7 @@ class API < Grape::API
     authenticate! unless is_public_request?
   end
 
+  # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
     'samples' => %w(name short_label external_label)
   }

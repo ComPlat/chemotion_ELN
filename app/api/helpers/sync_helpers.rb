@@ -16,4 +16,19 @@ module SyncHelpers
       )&.id
     end.to_i
   end
+
+  #desc: given an id of coll or sync coll return detail levels as array
+  def permission_level_for_collection(id, is_sync = false)
+    (is_sync && SyncCollectionsUser || Collection).find_by(
+      id: id.to_i, user_id: current_user.id
+    )&.slice(
+      :sample_detail_level, :reaction_detail_level,
+      :wellplate_detail_level, :screen_detail_level
+    ) || {
+      sample_detail_level: 0,
+      reaction_detail_level: 0,
+      wellplate_detail_level: 0,
+      screen_detail_level: 0
+    }
+  end
 end
