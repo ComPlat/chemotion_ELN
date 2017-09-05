@@ -2,6 +2,7 @@ import React, {Component} from 'react'
 import ReportActions from '../actions/ReportActions';
 import { Table, Button, Label, PanelGroup, Panel, OverlayTrigger,
   Tooltip } from 'react-bootstrap';
+import { stopBubble } from '../utils/DomHelper';
 
 const Archives = ({archives}) => {
   const content = archives.map( (archive, index) => {
@@ -34,7 +35,7 @@ const title = (archive) => {
     ? <Label bsStyle="warning">new</Label>
     : null;
 
-  const siTooltip = <Tooltip>Supporting Information</Tooltip>;
+  const siTooltip = <Tooltip id="si-tp">Supporting Information</Tooltip>;
   const supportingInfoLabel = archive.template === 'supporting_information'
     ? (
       <OverlayTrigger placement="right" overlay={siTooltip}>
@@ -47,31 +48,42 @@ const title = (archive) => {
     <div style={{width: '100%', lineHeight: '30px'}}>
       {archive.file_name} {newLabel} {supportingInfoLabel}
       <div className="button-right">
-        {downloadBtn(archive.downloadable, archive.id)}
+        {downloadStatusBtn(archive.downloadable, archive.id)}
       </div>
     </div>
   );
-}
+};
 
-const downloadBtn = (downloadable, archive_id) => {
-  return (
-    downloadable
-      ? <Button bsStyle="primary"
-                bsSize="small"
-                onClick={(e) => clickDownloadReport(e, archive_id)}>
-          Download <i className="fa fa-download"></i>
-        </Button>
-      : <Button bsStyle="default"
-                bsSize="small"
-                disabled >
-          Processing <i className="fa fa-clock-o"></i>
-        </Button>
+const downloadStatusBtn = (downloadable, archiveId) => {
+  const onClickDownloadReport = e => clickDownloadReport(e, archiveId);
+  const downloadTP = <Tooltip id="download-docx">Download docx</Tooltip>;
+  const processTP = (
+    <Tooltip  id="wait-processing">
+      Processing the report. Please wait
+    </Tooltip>
   );
-}
+  const downloadBtn = (
+    <OverlayTrigger placement="top" overlay={downloadTP}>
+      <Button bsStyle="primary" bsSize="small" onClick={onClickDownloadReport}>
+        <i className="fa fa-download" />
+      </Button>
+    </OverlayTrigger>
+  );
 
-const clickDownloadReport = (e, archive_id) => {
+  const processBtn = (
+    <OverlayTrigger placement="top" overlay={processTP}>
+      <Button bsStyle="default" bsSize="small" onClick={stopBubble}>
+        <i className="fa fa-clock-o" />
+      </Button>
+    </OverlayTrigger>
+  );
+
+  return downloadable ? downloadBtn : processBtn;
+};
+
+const clickDownloadReport = (e, archiveId) => {
   e.stopPropagation();
-  ReportActions.downloadReport(archive_id);
-}
+  ReportActions.downloadReport(archiveId);
+};
 
 export default Archives;
