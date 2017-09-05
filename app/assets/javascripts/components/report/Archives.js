@@ -1,5 +1,7 @@
 import React, {Component} from 'react'
 import ReportActions from '../actions/ReportActions';
+import LoadingActions from '../actions/LoadingActions';
+import UIActions from '../actions/UIActions';
 import { Table, Button, Label, PanelGroup, Panel, OverlayTrigger,
   Tooltip } from 'react-bootstrap';
 import { stopBubble } from '../utils/DomHelper';
@@ -90,7 +92,9 @@ const downloadStatusBtn = (downloadable, archiveId) => {
 
 const clickToClone = (e, archive) => {
   e.stopPropagation();
-  ReportActions.clone(archive);
+  LoadingActions.start();
+  ReportActions.clone.defer(archive);
+  UIActions.uncheckWholeSelection.defer();
 };
 
 const cloneBtn = (archive) => {

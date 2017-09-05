@@ -15,6 +15,7 @@ import Aviator from 'aviator'
 import initRoutes from './routes';
 
 import Notifications from './Notifications';
+import LoadingModal from './common/LoadingModal';
 
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
@@ -120,6 +121,7 @@ class App extends Component {
         </Row>
         <Row>
           <Notifications />
+          <LoadingModal />
         </Row>
       </Grid>
     )
