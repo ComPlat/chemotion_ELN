@@ -26,6 +26,7 @@ class ReportStore {
     this.checkedAllRxnSettings = true
     this.checkedAllConfigs = true
     this.processingReport = false
+    this.defaultObjTags = { sampleIds: [], reactionIds: [] }
     this.selectedObjTags = { sampleIds: [], reactionIds: [] }
     this.selectedObjs = []
     this.imgFormat = 'png'
@@ -175,6 +176,7 @@ class ReportStore {
     this.setState({selectedObjTags: newTags});
     const newSelectedObjs = UpdateSelectedObjs(newTags,
                                                 newObjs,
+                                                this.defaultObjTags,
                                                 this.selectedObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
     this.setState({selectedObjs: finalObjs});
@@ -265,8 +267,53 @@ class ReportStore {
     this.setState({ archives: newArchives,
                     processings: newProcessings });
   }
-  handleClone(archive) {
-    console.log(archive);
+
+  handleClone(result) {
+    const { objs, archive, tags } = result;
+    const { template, file_description, img_format, configs } = archive;
+    const ss = archive.sample_settings;
+    const rs = archive.reaction_settings;
+    const defaultObjTags = { sampleIds: tags.sample,
+      reactionIds: tags.reaction };
+    const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
+    const finalObjs = this.orderObjsForTemplate(template, newObjs);
+
+    this.setState({
+      activeKey: 0,
+      template,
+      fileDescription: file_description,
+      fileName: this.initFileName(template),
+      imgFormat: img_format,
+      checkedAllSplSettings: false,
+      checkedAllRxnSettings: false,
+      checkedAllConfigs: false,
+      splSettings:
+        [
+          { text: 'diagram', checked: ss.diagram },
+          { text: 'collection', checked: ss.collection },
+          { text: 'analyses', checked: ss.analyses },
+          { text: 'reaction description', checked: ss.reaction_description },
+        ],
+      rxnSettings:
+        [
+          { text: 'diagram', checked: rs.diagram },
+          { text: 'material', checked: rs.material },
+          { text: 'description', checked: rs.description },
+          { text: 'purification', checked: rs.purification },
+          { text: 'tlc', checked: rs.tlc },
+          { text: 'observation', checked: rs.observation },
+          { text: 'analysis', checked: rs.analysis },
+          { text: 'literature', checked: rs.literature },
+        ],
+      configs:
+        [
+          { text: 'Page Break', checked: configs.page_break },
+          { text: 'Show all chemicals in schemes (unchecked to show products only)', checked: configs.page_break },
+        ],
+      defaultObjTags,
+      selectedObjTags: { sampleIds: [], reactionIds: [] },
+      selectedObjs: finalObjs,
+    });
   }
 }
 

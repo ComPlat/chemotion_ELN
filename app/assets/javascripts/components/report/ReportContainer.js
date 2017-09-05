@@ -56,7 +56,8 @@ export default class ReportContainer extends Component {
     const newTags = { sampleIds: state['sample'].checkedIds.toArray(),
                       reactionIds: state['reaction'].checkedIds.toArray() };
     const oldTags = this.state.selectedObjTags;
-    ReportActions.updateCheckedTags.defer(oldTags, newTags);
+    const defaultTags = this.state.defaultObjTags;
+    ReportActions.updateCheckedTags.defer(oldTags, newTags, defaultTags);
   }
 
   closeDetail() {
@@ -204,9 +205,12 @@ export default class ReportContainer extends Component {
   }
 
   generateReportBtn() {
-    const { selectedObjTags, splSettings, rxnSettings, processingReport } = this.state;
-    const { sampleIds, reactionIds } = selectedObjTags;
-    const hasObj = [...sampleIds, ...reactionIds].length !== 0 ? true : false;
+    const { selectedObjTags, defaultObjTags, splSettings, rxnSettings,
+      processingReport } = this.state;
+
+    const hasObj = [...selectedObjTags.sampleIds,
+      ...selectedObjTags.reactionIds, ...defaultObjTags.sampleIds,
+      ...defaultObjTags.reactionIds].length !== 0;
 
     const showGeneReportBtn = [...splSettings, ...rxnSettings].map(settting => {
       if(settting.checked){
