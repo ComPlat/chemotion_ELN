@@ -16,8 +16,10 @@ module Chemotion
         suggestions
       end
 
-      def search_possibilities_by_type_user_and_collection(
-        type, user_id, collection_id)
+      def search_possibilities_by_type_user_and_collection(type)
+        collection_id = fetch_collection_id_w_current_user(
+          params[:collection_id], params[:isSync]
+        )
         d_for = Proc.new do |klass|
           klass.by_collection_id(collection_id)
         end
@@ -109,10 +111,8 @@ module Chemotion
         end
         route_param :query do
           get do
-            c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:isSync])
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'all', current_user.id, c_id)
+              search_possibilities_by_type_user_and_collection('all')
 
             {
               suggestions:
@@ -129,11 +129,8 @@ module Chemotion
         end
         route_param :query do
           get do
-            c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:isSync])
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'sample', current_user.id, c_id
-              )
+              search_possibilities_by_type_user_and_collection('sample')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
@@ -149,11 +146,8 @@ module Chemotion
         end
         route_param :query do
           get do
-            c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:isSync])
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'reaction', current_user.id, c_id
-              )
+              search_possibilities_by_type_user_and_collection('reaction')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
@@ -169,11 +163,8 @@ module Chemotion
         end
         route_param :query do
           get do
-            c_id = fetch_collection_id_w_current_user(params[:collection_id], params[:isSync])
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'wellplate', current_user.id, c_id
-              )
+              search_possibilities_by_type_user_and_collection('wellplate')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
@@ -189,11 +180,8 @@ module Chemotion
         end
         route_param :query do
           get do
-            fetch_collection_id_w_current_user(params[:collection_id], params[:isSync])
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'screen', current_user.id, c_id
-              )
+              search_possibilities_by_type_user_and_collection('screen')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
