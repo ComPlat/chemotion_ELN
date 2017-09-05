@@ -56,6 +56,7 @@ class ReportStore {
       handleUpdateProcessQueue: ReportActions.updateProcessQueue,
       handleUpdateTemplate: ReportActions.updateTemplate,
       handleClone: ReportActions.clone,
+      hadnleRemove: ReportActions.remove,
     })
   }
 
@@ -312,6 +313,34 @@ class ReportStore {
         ],
       defaultObjTags,
       selectedObjTags: { sampleIds: [], reactionIds: [] },
+      selectedObjs: finalObjs,
+    });
+  }
+
+  hadnleRemove(target) {
+    let dTags = this.defaultObjTags;
+    let sTags = this.selectedObjTags;
+    const currentObjs = this.selectedObjs;
+    if (target.type === 'sample') {
+      const tmpSDTags = dTags.sampleIds.filter(e => e !== target.id);
+      const tmpSSTags = sTags.sampleIds.filter(e => e !== target.id);
+      dTags = { sampleIds: [...tmpSDTags, ...tmpSSTags],
+        reactionIds: [...dTags.reactionIds, ...sTags.reactionIds] };
+    } else if (target.type === 'reaction') {
+      const tmpRDTags = dTags.reactionIds.filter(e => e !== target.id);
+      const tmpRSTags = sTags.reactionIds.filter(e => e !== target.id);
+      dTags = { sampleIds: [...dTags.sampleIds, ...sTags.sampleIds],
+        reactionIds: [...tmpRDTags, ...tmpRSTags] };
+    }
+    dTags = { sampleIds: [...new Set(dTags.sampleIds)],
+      reactionIds: [...new Set(dTags.reactionIds)] };
+    sTags = { sampleIds: [], reactionIds: [] };
+    const newObjs = UpdateSelectedObjs(sTags, currentObjs, dTags, currentObjs);
+    const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
+
+    this.setState({
+      defaultObjTags: dTags,
+      selectedObjTags: sTags,
       selectedObjs: finalObjs,
     });
   }
