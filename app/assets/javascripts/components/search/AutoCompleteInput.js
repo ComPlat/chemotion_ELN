@@ -220,6 +220,7 @@ export default class AutoCompleteInput extends React.Component {
         value: ''
       })
       let {currentCollection, isSync} = UIStore.getState();
+      currentCollection['clearSearch'] = true
       isSync ? UIActions.selectSyncCollection(currentCollection)
         : UIActions.selectCollection(currentCollection);
 

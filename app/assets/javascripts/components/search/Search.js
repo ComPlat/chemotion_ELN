@@ -25,6 +25,7 @@ export default class Search extends React.Component {
       searchType: 'similar',
       tanimotoThreshold: 0.7
     }
+    this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this)
   }
 
   handleSelectionChange(selection) {
@@ -68,9 +69,9 @@ export default class Search extends React.Component {
 
   handleClearSearchSelection() {
     let {currentCollection, isSync} = UIStore.getState();
+    currentCollection['clearSearch'] = true;
     isSync ? UIActions.selectSyncCollection(currentCollection)
       : UIActions.selectCollection(currentCollection);
-    UIActions.clearSearchSelection()
   }
 
   showStructureEditor() {
@@ -163,7 +164,7 @@ export default class Search extends React.Component {
           <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />
         </Button>
         <Button bsStyle = "danger"
-                onClick={() => this.handleClearSearchSelection()}>
+                onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times"></i>
         </Button>
       </ButtonGroup>

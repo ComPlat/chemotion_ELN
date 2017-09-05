@@ -81,9 +81,9 @@ const routes = {
             let collection = result.sync_collections_user;
 
             if(currentSearchSelection) {
-              // TODO
-              // UIActions.selectCollectionWithoutUpdating(collection)
-              // ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collection.id);
+              UIActions.selectCollectionWithoutUpdating(collection)
+              ElementActions.fetchBasedOnSearchSelectionAndCollection(
+                currentSearchSelection, collection.id, 1, uiState.isSync)
             } else {
               UIActions.selectSyncCollection(collection);
             }

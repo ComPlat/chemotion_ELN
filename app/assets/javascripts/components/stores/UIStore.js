@@ -233,6 +233,11 @@ class UIStore {
     let hasChanged =
       (!state.currentCollection || state.isSync || state.currentCollection.id != collection.id)
       || (state.currentSearchSelection != null);
+    if (collection['clearSearch']){
+      this.handleClearSearchSelection();
+      hasChanged = true;
+      collection['clearSearch'] = undefined;
+    }
 
     if(hasChanged) {
       this.state.isSync = false
@@ -260,7 +265,11 @@ class UIStore {
     let hasChanged =
       (!state.currentCollection || !state.isSync || state.currentCollection.id != collection.id)
       || (state.currentSearchSelection != null);
-
+    if (collection['clearSearch']){
+      this.handleClearSearchSelection();
+      hasChanged = true;
+      collection['clearSearch'] = undefined;
+    }
     if(hasChanged) {
       this.state.isSync = true
       let isSync = this.state.isSync
@@ -293,6 +302,7 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
+    this.state.isSync = collection.is_sync_to_me ? true : false;
   }
 
   handleClearSearchSelection() {
