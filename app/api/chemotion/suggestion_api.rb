@@ -2,6 +2,7 @@ module Chemotion
   class SuggestionAPI < Grape::API
     include Grape::Kaminari
 
+    helpers SyncHelpers
     helpers do
       def page_size
         7
@@ -15,10 +16,12 @@ module Chemotion
         suggestions
       end
 
-      def search_possibilities_by_type_user_and_collection(
-        type, user_id, collection_id)
+      def search_possibilities_by_type_user_and_collection(type)
+        collection_id = fetch_collection_id_w_current_user(
+          params[:collection_id], params[:isSync]
+        )
         d_for = Proc.new do |klass|
-          klass.for_user(user_id).by_collection_id(collection_id)
+          klass.by_collection_id(collection_id)
         end
 
         search_by_field = Proc.new do |klass, field, qry|
@@ -101,15 +104,15 @@ module Chemotion
       namespace :all do
         desc 'Return all suggestions for AutoCompleteInput'
         params do
-          requires :user_id, type: Integer, desc: 'Current user id'
+          optional :user_id, type: Integer, desc: 'Current user id'
           requires :collection_id, type: String
           requires :query, type: String, desc: 'Search query'
+          requires :isSync, type: Boolean
         end
         route_param :query do
           get do
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'all', params[:user_id], params[:collection_id])
+              search_possibilities_by_type_user_and_collection('all')
 
             {
               suggestions:
@@ -127,9 +130,7 @@ module Chemotion
         route_param :query do
           get do
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'sample', params[:user_id], params[:collection_id]
-              )
+              search_possibilities_by_type_user_and_collection('sample')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
@@ -146,9 +147,7 @@ module Chemotion
         route_param :query do
           get do
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'reaction', params[:user_id], params[:collection_id]
-              )
+              search_possibilities_by_type_user_and_collection('reaction')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
@@ -165,9 +164,7 @@ module Chemotion
         route_param :query do
           get do
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'wellplate', params[:user_id], params[:collection_id]
-              )
+              search_possibilities_by_type_user_and_collection('wellplate')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)
@@ -184,9 +181,7 @@ module Chemotion
         route_param :query do
           get do
             search_possibilities =
-              search_possibilities_by_type_user_and_collection(
-                'screen', params[:user_id], params[:collection_id]
-              )
+              search_possibilities_by_type_user_and_collection('screen')
             {
               suggestions:
                 search_possibilities_to_suggestions(search_possibilities)

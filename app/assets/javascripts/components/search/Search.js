@@ -25,6 +25,7 @@ export default class Search extends React.Component {
       searchType: 'similar',
       tanimotoThreshold: 0.7
     }
+    this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this)
   }
 
   handleSelectionChange(selection) {
@@ -32,7 +33,6 @@ export default class Search extends React.Component {
     selection.elementType = this.state.elementType
     UIActions.setSearchSelection(selection)
     selection.page_size = uiState.number_of_results
-
     ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
       uiState.currentCollection.id, 1, uiState.isSync)
   }
@@ -42,7 +42,7 @@ export default class Search extends React.Component {
     let uiState = UIStore.getState()
     let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser(
       '/api/v1/suggestions/' + this.state.elementType.toLowerCase() + '/',
-      query, userState.currentUser.id, uiState.currentCollection.id)
+      query, userState.currentUser.id, uiState.currentCollection.id, uiState.isSync)
     return promise
   }
 
@@ -68,10 +68,10 @@ export default class Search extends React.Component {
   }
 
   handleClearSearchSelection() {
-    let uiState = UIStore.getState()
-
-    UIActions.selectCollection({id: uiState.currentCollection.id})
-    UIActions.clearSearchSelection()
+    let {currentCollection, isSync} = UIStore.getState();
+    currentCollection['clearSearch'] = true;
+    isSync ? UIActions.selectSyncCollection(currentCollection)
+      : UIActions.selectCollection(currentCollection);
   }
 
   showStructureEditor() {
@@ -164,7 +164,7 @@ export default class Search extends React.Component {
           <Glyphicon glyph='pencil' id='AutoCompletedrawAddon' />
         </Button>
         <Button bsStyle = "danger"
-                onClick={() => this.handleClearSearchSelection()}>
+                onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times"></i>
         </Button>
       </ButtonGroup>

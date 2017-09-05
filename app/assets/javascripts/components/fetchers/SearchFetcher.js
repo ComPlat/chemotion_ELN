@@ -27,10 +27,12 @@ export default class SearchFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        let samples = {
-          elements: json.samples.elements.molecules.map( m => {
+        let sampleElements = json.samples.totalElements > 0
+          ? json.samples.elements.molecules.map( m => {
             return m.samples.map( s => new Sample(s) )
-          }),
+          }) : [];
+        let samples = {
+          elements: sampleElements,
           totalElements: json.samples.totalElements,
           page: json.samples.page,
           pages: json.samples.pages,
