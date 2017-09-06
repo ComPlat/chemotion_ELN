@@ -498,6 +498,8 @@ export default class Reaction extends Element {
 
       i = i + 1
     }
+
+    this._updateEquivalentForMaterial(material);
   }
 
   // literatures
