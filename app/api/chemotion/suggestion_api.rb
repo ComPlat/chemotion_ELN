@@ -42,7 +42,7 @@ module Chemotion
         case type
         when 'sample'
           sample_short_label = dl_s > 0 && search_by_field.call(Sample, :short_label, qry) || []
-          sample_external_label = dl_s > 0 && search_by_field.call(Sample, :external_label, qry) || []
+          sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
           sample_name = dl_s > 0 && search_by_field.call(Sample, :name, qry) || []
           polymer_type = dl_s > 0 && d_for.call(Sample).joins(:residues)
             .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
@@ -101,7 +101,7 @@ module Chemotion
         else
           sample_name = dl_s > 0 && search_by_field.call(Sample, :name, qry) || []
           sample_short_label = dl_s > 0 && search_by_field.call(Sample, :short_label, qry) || []
-          sample_external_label = dl_s > 0 && search_by_field.call(Sample, :external_label, qry) || []
+          sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
           polymer_type = dl_s > 0 && d_for.call(Sample).joins(:residues)
             .where("residues.custom_info -> 'polymer_type' ILIKE '%#{qry}%'")
             .pluck("residues.custom_info -> 'polymer_type'").uniq || []
