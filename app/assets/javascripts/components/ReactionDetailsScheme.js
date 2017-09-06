@@ -263,49 +263,44 @@ export default class ReactionDetailsScheme extends Component {
   checkMassMolecule(referenceM, updatedS) {
     let errorMsg;
     let mFull;
-    let mwb = updatedS.molecule.molecular_weight;
+    const mwb = updatedS.molecule.molecular_weight;
 
     // mass check apply to 'polymers' only
-    if(!updatedS.contains_residues) {
+    if (!updatedS.contains_residues) {
       mFull = referenceM.amount_mol * mwb;
     } else {
-      let mwa = referenceM.molecule.molecular_weight;
-      let deltaM = mwb - mwa;
-      let massA = referenceM.amount_g;
-      mFull = massA + referenceM.amount_mol * deltaM;
+      const mwa = referenceM.molecule.molecular_weight;
+      const deltaM = mwb - mwa;
+      const massA = referenceM.amount_g;
+      mFull = massA + (referenceM.amount_mol * deltaM);
+      const massExperimental = updatedS.amount_g;
 
-      let massExperimental = updatedS.amount_g;
-      if(deltaM > 0) { //expect weight gain
-        if(massExperimental > mFull) {
-          errorMsg = 'Experimental mass value is more than possible \
-                      by 100% conversion! Please check your data.';
-        } else if(massExperimental < massA) {
-          errorMsg = 'Material loss! \
-                    Experimental mass value is less than possible! \
-                    Please check your data.';
+      if (deltaM > 0) { // expect weight gain
+        if (massExperimental > mFull) {
+          errorMsg = 'Experimental mass value is more than possible\n' +
+            'by 100% conversion! Please check your data.';
+        } else if (massExperimental < massA) {
+          errorMsg = 'Material loss! ' +
+            'Experimental mass value is less than possible!\n' +
+            'Please check your data.';
         }
-      } else { //expect weight loss
-        if(massExperimental < mFull) {
-          errorMsg = 'Experimental mass value is less than possible \
-                      by 100% conversion! Please check your data.';
-        }
+      } else if (massExperimental < mFull) { // expect weight loss
+        errorMsg = 'Experimental mass value is less than possible\n' +
+          'by 100% conversion! Please check your data.';
       }
     }
 
-    if(errorMsg) {
+    if (errorMsg) {
       updatedS.error_mass = true;
       NotificationActions.add({
         message: errorMsg,
-        level: 'error'
+        level: 'error',
       });
     } else {
       updatedS.error_mass = false;
     }
 
-    return {
-      mFull: mFull,
-      errorMsg: errorMsg
-    }
+    return { mFull, errorMsg };
   }
 
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
