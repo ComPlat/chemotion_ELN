@@ -62,6 +62,8 @@ module Chemotion
         when 'samples'
           if sample_detail_level > 0
             true
+          elsif column == 'external_label'
+            true
           else
             false
           end
@@ -253,8 +255,15 @@ module Chemotion
           else
             Sample.none
           end
-        when 'sum_formula', 'iupac_name', 'inchistring', 'cano_smiles',
-             'sample_name', 'sample_short_label', 'sample_external_label'
+        when 'sum_formula', 'sample_external_label'
+          if dl_s > -1
+            Sample.by_collection_id(c_id).order("samples.updated_at DESC")
+                  .search_by(search_method, arg)
+          else
+            Sample.none
+          end
+        when 'iupac_name', 'inchistring', 'cano_smiles',
+             'sample_name', 'sample_short_label'
           if dl_s > 0
             Sample.by_collection_id(c_id).order("samples.updated_at DESC")
                   .search_by(search_method, arg)
@@ -268,13 +277,16 @@ module Chemotion
         when 'screen_name'
           Screen.by_collection_id(c_id).search_by(search_method, arg)
         when 'substring'
+          # NB we'll have to split the content of the pg_search_document into
+          # MW + external_label (dl_s = 0) and the other info only available
+          # from dl_s > 0. For now one can use the suggested search instead.
           if dl_s > 0
             AllElementSearch.new(
               arg,
               current_user.id
             ).search_by_substring.by_collection_id(c_id)
           else
-            Sample.none
+            AllElementSearch::Results.new(Sample.none,current_user.id)
           end
         when 'structure'
             sample_structure_search(arg)
