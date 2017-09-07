@@ -2,7 +2,6 @@ import React, {Component} from 'react'
 import {Panel, Button, Tabs, Tab, Row, Col, FormGroup, ControlLabel,
         FormControl, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import _ from 'lodash';
-import DetailActions from '../actions/DetailActions';
 import ReportActions from '../actions/ReportActions';
 import ReportStore from '../stores/ReportStore';
 import UIActions from '../actions/UIActions';
@@ -11,9 +10,9 @@ import Setting from './Setting';
 import Previews from './Previews';
 import Orders from './Orders';
 import Archives from './Archives';
-import paramize from './Paramize';
 import Config from './Config';
 import PanelHeader from '../common/PanelHeader';
+import { CloseBtn, ResetBtn, GenerateReportBtn } from './ReportComponent';
 
 export default class ReportContainer extends Component {
   constructor(props) {
@@ -23,19 +22,12 @@ export default class ReportContainer extends Component {
     }
     this.onChange = this.onChange.bind(this);
     this.onChangeUI = this.onChangeUI.bind(this);
-    this.updateQueue = this.updateQueue.bind(this);
     this.panelHeader = this.panelHeader.bind(this);
-    this.closeDetail = this.closeDetail.bind(this);
-    this.generateReportBtn = this.generateReportBtn.bind(this);
-    this.generateReport = this.generateReport.bind(this);
-    this.updateProcessQueue = this.updateProcessQueue.bind(this);
     this.fileNameRule = this.fileNameRule.bind(this);
     this.toggleConfigs = this.toggleConfigs.bind(this);
     this.toggleConfigsAll = this.toggleConfigsAll.bind(this);
     this.handleImgFormatChanged = this.handleImgFormatChanged.bind(this);
-    this.closeBtn = this.closeBtn.bind(this);
-    this.resetBtn = this.resetBtn.bind(this);
-    this.clickToReset = this.clickToReset.bind(this);
+    this.updateQueue = this.updateQueue.bind(this);
   }
 
   componentDidMount() {
@@ -63,12 +55,18 @@ export default class ReportContainer extends Component {
     ReportActions.updateCheckedTags.defer(oldTags, newTags, defaultTags);
   }
 
-  closeDetail() {
-    DetailActions.close(this.props.report);
-  }
-
   panelHeader() {
-    const btns = [this.closeBtn, this.generateReportBtn, this.resetBtn];
+    const { report } = this.props;
+    const allState = this.state;
+    const btns = [
+      <CloseBtn key="closeBtn" report={report} />,
+      <GenerateReportBtn
+        key="generateReportBtn"
+        allState={allState}
+        updateQueue={this.updateQueue}
+      />,
+      <ResetBtn key="resetBtn" />,
+    ];
     return <PanelHeader title="Report Generation" btns={btns} />;
   }
 
@@ -206,92 +204,9 @@ export default class ReportContainer extends Component {
     return ids;
   }
 
-  closeBtn() {
-    return (
-      <Button
-        bsStyle="danger"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={this.closeDetail}
-      >
-        <i className="fa fa-times" />
-      </Button>
-    );
-  }
-
-  resetBtn() {
-    return (
-      <Button
-        bsStyle="info"
-        bsSize="xsmall"
-        className="button-right"
-        onClick={this.clickToReset}
-      >
-        <i className="fa fa-eraser" />
-        Reset
-      </Button>
-    );
-  }
-
-  clickToReset() {
-    ReportActions.reset();
-    UIActions.uncheckWholeSelection.defer();
-  }
-
-  generateReportBtn() {
-    const { selectedObjTags, defaultObjTags, splSettings, rxnSettings,
-      processingReport } = this.state;
-
-    const hasObj = [...selectedObjTags.sampleIds,
-      ...selectedObjTags.reactionIds, ...defaultObjTags.sampleIds,
-      ...defaultObjTags.reactionIds].length !== 0;
-
-    const showGeneReportBtn = [...splSettings, ...rxnSettings].map(settting => {
-      if(settting.checked){
-        return true
-      }
-    }).filter(r => r!=null).length !== 0 ? true : false
-
-    return (
-      !processingReport ?
-      <Button bsStyle="primary"
-              bsSize="xsmall"
-              className="button-right"
-              disabled={!(showGeneReportBtn && hasObj)}
-              onClick={this.generateReport}>
-        <span><i className="fa fa-file-text-o"></i> Generate Report</span>
-      </Button>
-      :
-      <Button bsStyle="danger"
-              bsSize="xsmall"
-              className="button-right">
-        <span><i className="fa fa-spinner fa-pulse fa-fw"></i> Processing</span>
-      </Button>
-    )
-  }
-
-  generateReport() {
-    const report = paramize(this.state);
-    ReportActions.generateReport(report);
-    setTimeout(this.updateProcessQueue, 1000 * 10);
-  }
-
-  updateProcessQueue() {
-    setTimeout(this.updateQueue, 1000 * 30);
-    setTimeout(this.updateQueue, 1000 * 60);
-    setTimeout(this.updateQueue, 1000 * 90);
-    setTimeout(this.updateQueue, 1000 * 120);
-    setTimeout(this.updateQueue, 1000 * 150);
-    setTimeout(this.updateQueue, 1000 * 180);
-    setTimeout(this.updateQueue, 1000 * 210);
-    setTimeout(this.updateQueue, 1000 * 240);
-    setTimeout(this.updateQueue, 1000 * 270);
-    setTimeout(this.updateQueue, 1000 * 300);
-  }
-
   updateQueue() {
     const { processings } = this.state;
-    if(processings.length > 0) {
+    if (processings.length > 0) {
       ReportActions.updateProcessQueue.defer(processings);
     }
   }
