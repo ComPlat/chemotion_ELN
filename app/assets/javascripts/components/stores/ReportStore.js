@@ -4,7 +4,7 @@ import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
 import ArrayUtils from '../utils/ArrayUtils';
 import { reOrderArr } from '../utils/DndControl';
-import { UpdateSelectedObjs } from '../utils/ReportHelper';
+import { UpdateSelectedObjs, GetTypeIds } from '../utils/ReportHelper';
 
 class ReportStore {
   constructor() {
@@ -57,6 +57,7 @@ class ReportStore {
       handleUpdateTemplate: ReportActions.updateTemplate,
       handleClone: ReportActions.clone,
       hadnleRemove: ReportActions.remove,
+      hadnleReset: ReportActions.reset,
     })
   }
 
@@ -269,6 +270,11 @@ class ReportStore {
                     processings: newProcessings });
   }
 
+  orderObjsForArchive(objs, order) {
+    return order.map(od => objs.find(obj => this.isEqTypeId(obj, od)))
+      .filter(r => r != null);
+  }
+
   handleClone(result) {
     const { objs, archive, tags } = result;
     const { template, file_description, img_format, configs } = archive;
@@ -277,7 +283,8 @@ class ReportStore {
     const defaultObjTags = { sampleIds: tags.sample,
       reactionIds: tags.reaction };
     const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
-    const finalObjs = this.orderObjsForTemplate(template, newObjs);
+    const orderedArObjs = this.orderObjsForArchive(newObjs, archive.objects);
+    const orderedArTpObjs = this.orderObjsForTemplate(template, orderedArObjs);
 
     this.setState({
       activeKey: 0,
@@ -313,7 +320,7 @@ class ReportStore {
         ],
       defaultObjTags,
       selectedObjTags: { sampleIds: [], reactionIds: [] },
-      selectedObjs: finalObjs,
+      selectedObjs: orderedArTpObjs,
     });
   }
 
@@ -342,6 +349,45 @@ class ReportStore {
       defaultObjTags: dTags,
       selectedObjTags: sTags,
       selectedObjs: finalObjs,
+    });
+  }
+
+  hadnleReset() {
+    this.setState({
+      activeKey: 0,
+      template: 'supporting_information',
+      fileDescription: '',
+      fileName: this.initFileName(),
+      imgFormat: 'png',
+      checkedAllSplSettings: true,
+      checkedAllRxnSettings: true,
+      checkedAllConfigs: true,
+      splSettings:
+        [
+          { text: 'diagram', checked: true },
+          { text: 'collection', checked: true },
+          { text: 'analyses', checked: true },
+          { text: 'reaction description', checked: true },
+        ],
+      rxnSettings:
+        [
+          { text: 'diagram', checked: true },
+          { text: 'material', checked: true },
+          { text: 'description', checked: true },
+          { text: 'purification', checked: true },
+          { text: 'tlc', checked: true },
+          { text: 'observation', checked: true },
+          { text: 'analysis', checked: true },
+          { text: 'literature', checked: true },
+        ],
+      configs:
+        [
+          { text: 'Page Break', checked: true },
+          { text: 'Show all chemicals in schemes (unchecked to show products only)', checked: true },
+        ],
+      defaultObjTags: { sampleIds: [], reactionIds: [] },
+      selectedObjTags: { sampleIds: [], reactionIds: [] },
+      selectedObjs: [],
     });
   }
 }

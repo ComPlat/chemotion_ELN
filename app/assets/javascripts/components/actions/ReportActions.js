@@ -121,6 +121,10 @@ class ReportActions {
   remove(target) {
     return target;
   }
+
+  reset() {
+    return null;
+  }
 }
 
 export default alt.createActions(ReportActions);
