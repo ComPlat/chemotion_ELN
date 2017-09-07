@@ -57,6 +57,7 @@ class ReportStore {
       handleUpdateTemplate: ReportActions.updateTemplate,
       handleClone: ReportActions.clone,
       hadnleRemove: ReportActions.remove,
+      hadnleReset: ReportActions.reset,
     })
   }
 
@@ -348,6 +349,45 @@ class ReportStore {
       defaultObjTags: dTags,
       selectedObjTags: sTags,
       selectedObjs: finalObjs,
+    });
+  }
+
+  hadnleReset() {
+    this.setState({
+      activeKey: 0,
+      template: 'supporting_information',
+      fileDescription: '',
+      fileName: this.initFileName(),
+      imgFormat: 'png',
+      checkedAllSplSettings: true,
+      checkedAllRxnSettings: true,
+      checkedAllConfigs: true,
+      splSettings:
+        [
+          { text: 'diagram', checked: true },
+          { text: 'collection', checked: true },
+          { text: 'analyses', checked: true },
+          { text: 'reaction description', checked: true },
+        ],
+      rxnSettings:
+        [
+          { text: 'diagram', checked: true },
+          { text: 'material', checked: true },
+          { text: 'description', checked: true },
+          { text: 'purification', checked: true },
+          { text: 'tlc', checked: true },
+          { text: 'observation', checked: true },
+          { text: 'analysis', checked: true },
+          { text: 'literature', checked: true },
+        ],
+      configs:
+        [
+          { text: 'Page Break', checked: true },
+          { text: 'Show all chemicals in schemes (unchecked to show products only)', checked: true },
+        ],
+      defaultObjTags: { sampleIds: [], reactionIds: [] },
+      selectedObjTags: { sampleIds: [], reactionIds: [] },
+      selectedObjs: [],
     });
   }
 }

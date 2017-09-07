@@ -33,6 +33,9 @@ export default class ReportContainer extends Component {
     this.toggleConfigs = this.toggleConfigs.bind(this);
     this.toggleConfigsAll = this.toggleConfigsAll.bind(this);
     this.handleImgFormatChanged = this.handleImgFormatChanged.bind(this);
+    this.closeBtn = this.closeBtn.bind(this);
+    this.resetBtn = this.resetBtn.bind(this);
+    this.clickToReset = this.clickToReset.bind(this);
   }
 
   componentDidMount() {
@@ -65,9 +68,8 @@ export default class ReportContainer extends Component {
   }
 
   panelHeader() {
-    return <PanelHeader title="Report Generation"
-                        processBtn={this.generateReportBtn}
-                        closeDetail={this.closeDetail} />
+    const btns = [this.closeBtn, this.generateReportBtn, this.resetBtn];
+    return <PanelHeader title="Report Generation" btns={btns} />;
   }
 
   render() {
@@ -202,6 +204,38 @@ export default class ReportContainer extends Component {
       }
     });
     return ids;
+  }
+
+  closeBtn() {
+    return (
+      <Button
+        bsStyle="danger"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={this.closeDetail}
+      >
+        <i className="fa fa-times" />
+      </Button>
+    );
+  }
+
+  resetBtn() {
+    return (
+      <Button
+        bsStyle="info"
+        bsSize="xsmall"
+        className="button-right"
+        onClick={this.clickToReset}
+      >
+        <i className="fa fa-eraser" />
+        Reset
+      </Button>
+    );
+  }
+
+  clickToReset() {
+    ReportActions.reset();
+    UIActions.uncheckWholeSelection.defer();
   }
 
   generateReportBtn() {
