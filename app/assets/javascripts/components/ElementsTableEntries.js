@@ -177,41 +177,42 @@ export default class ElementsTableEntries extends Component {
   }
 
   reactionStatus(element) {
+    if (element.type === 'reaction' && element.status) {
+      const tooltip = (
+        <Tooltip id={`reaction_${element.status}`}>
+          {element.status} Reaction
+        </Tooltip>
+      );
 
-    let tooltip = null;
-    if (element.type == 'reaction') {
+      let icon = null;
       switch (element.status) {
-
-        case "Successful":
-          tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
-          return (
-            <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-check-circle-o c-bs-success"/>
-            </OverlayTrigger>
-          )
+        case 'Planned':
+          icon = <i className="fa fa-clock-o c-bs-warning" />;
           break;
-
-        case "Planned":
-          tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
-          return (
-            <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-clock-o c-bs-warning"/>
-            </OverlayTrigger>
-          )
+        case 'Running':
+          icon = <i className="fa fa-hourglass-half" />;
           break;
-
-        case "Not Successful":
-          tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
-          return (
-            <OverlayTrigger placement="top" overlay={tooltip}>
-              <i className="fa fa-times-circle-o c-bs-danger"/>
-            </OverlayTrigger>
-          )
+        case 'Done':
+          icon = <i className="fa fa-hourglass" />;
           break;
-
+        case 'Analyses Pending':
+          icon = <i className="fa fa-ellipsis-h c-bs-primary" />;
+          break;
+        case 'Successful':
+          icon = <i className="fa fa-check-circle-o c-bs-success" />;
+          break;
+        case 'Not Successful':
+          icon = <i className="fa fa-times-circle-o c-bs-danger" />;
+          break;
         default:
           break;
       }
+
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          {icon}
+        </OverlayTrigger>
+      );
     }
   }
 
@@ -284,6 +285,7 @@ export default class ElementsTableEntries extends Component {
               <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
                 {element.title()}&nbsp;
                 {this.reactionStatus(element)}
+                {' '}
                 {this.reactionRole(element)}
                 <br/>
                 {sampleMoleculeName}
