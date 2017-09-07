@@ -4,7 +4,7 @@ import ElementStore from '../stores/ElementStore';
 import Utils from '../utils/Functions'
 import ArrayUtils from '../utils/ArrayUtils';
 import { reOrderArr } from '../utils/DndControl';
-import { UpdateSelectedObjs } from '../utils/ReportHelper';
+import { UpdateSelectedObjs, GetTypeIds } from '../utils/ReportHelper';
 
 class ReportStore {
   constructor() {
@@ -269,6 +269,11 @@ class ReportStore {
                     processings: newProcessings });
   }
 
+  orderObjsForArchive(objs, order) {
+    return order.map(od => objs.find(obj => this.isEqTypeId(obj, od)))
+      .filter(r => r != null);
+  }
+
   handleClone(result) {
     const { objs, archive, tags } = result;
     const { template, file_description, img_format, configs } = archive;
@@ -277,7 +282,8 @@ class ReportStore {
     const defaultObjTags = { sampleIds: tags.sample,
       reactionIds: tags.reaction };
     const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
-    const finalObjs = this.orderObjsForTemplate(template, newObjs);
+    const orderedArObjs = this.orderObjsForArchive(newObjs, archive.objects);
+    const orderedArTpObjs = this.orderObjsForTemplate(template, orderedArObjs);
 
     this.setState({
       activeKey: 0,
@@ -313,7 +319,7 @@ class ReportStore {
         ],
       defaultObjTags,
       selectedObjTags: { sampleIds: [], reactionIds: [] },
-      selectedObjs: finalObjs,
+      selectedObjs: orderedArTpObjs,
     });
   }
 
