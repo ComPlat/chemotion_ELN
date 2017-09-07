@@ -120,3 +120,79 @@ th.drag {
     height: calc(100vh - 350px);
   }
 }
+
+@-webkit-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@-moz-keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-1 {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+@-webkit-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+@-moz-keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@keyframes blink-2 {
+  0%   { opacity: 0; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+
+}
+@-webkit-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+@-moz-keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+@keyframes blink-3 {
+  0%   { opacity: 0; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+
+}
+
+.running-1 {
+  -webkit-animation: blink-1 4s infinite ; /* Safari 4+ */
+  -moz-animation:    blink-1 4s infinite ; /* Fx 5+ */
+  animation:         blink-1 4s infinite ; /* IE 10+, Fx 29+ */
+  position: absolute;
+  left: 0;
+}
+.running-2 {
+  -webkit-animation: blink-2 4s infinite; /* Safari 4+ */
+  -moz-animation:    blink-2 4s infinite; /* Fx 5+ */
+  animation:         blink-2 4s infinite; /* IE 10+, Fx 29+ */;
+  position: absolute;
+  left: 0;
+}
+.running-3 {
+  -webkit-animation: blink-3 4s infinite  ; /* Safari 4+ */
+  -moz-animation:    blink-3 4s infinite  ; /* Fx 5+ */
+  animation:         blink-3 4s infinite  ; /* IE 10+, Fx 29+ */
+  position: absolute;
+  left: 0;
+
+}
