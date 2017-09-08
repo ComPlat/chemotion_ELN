@@ -144,7 +144,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
                       "InCHI: #{s2.molecule.inchikey}; " +
                       "Molecular Mass: 18.0153; Exact Mass: 18.0106; "},
           {"insert"=>"EA: "},
-          {"insert"=>"H 11.19, O 88.81"},
+          {"insert"=>"H 11.19; O 88.81"},
           {"insert"=>"."},
           {"insert"=>"\n"},
           {"insert"=>"Name: "},
@@ -161,7 +161,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
                       "Molecular Mass: 18.0153; " +
                       "Exact Mass: 18.0106; "},
           {"insert"=>"EA: "},
-          {"insert"=>"H 11.19, O 88.81"},
+          {"insert"=>"H 11.19; O 88.81"},
           {"insert"=>"."},
           {"insert"=>"\n"}
         ]
@@ -190,7 +190,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"\n"},
           {"insert"=>"correct observation"},
           {"insert"=>" "},
-          {"insert"=>"R"},
+          {"attributes"=>{"italic"=>true}, "insert"=>"R"},
           {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{rf} (#{t_sol})."}, {"insert"=>"\n"},
           {"insert"=>correct_content},

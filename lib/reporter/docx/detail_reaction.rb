@@ -136,7 +136,7 @@ module Reporter
         p[:elemental_compositions].each do |ec|
           ea = ec[:data] if ec[:description] == "By molecule formula"
         end
-        delta = ea.map { |key, value| "#{key} #{value}" }.join(", ")
+        delta = ea.map { |key, value| "#{key} #{value}" }.join("; ")
         [{"insert"=>"EA: "}, {"insert"=>delta}, {"insert"=>"."}]
       end
 
@@ -354,7 +354,7 @@ module Reporter
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
-        [{"insert"=>"R"},
+        [{"attributes"=>{"italic"=> true}, "insert"=>"R"},
           {"attributes"=>{"italic"=> true, "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{obj.rf_value} (#{obj.tlc_solvents})."}]
       end
