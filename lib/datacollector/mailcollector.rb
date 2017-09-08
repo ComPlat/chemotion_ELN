@@ -20,8 +20,12 @@ class Mailcollector
         imap.select('INBOX')
         imap.search(['NOT', 'SEEN']).each do |message_id|
           puts "Handle new mail " + message_id.to_s
-          handle_new_mail(message_id, imap)
-          imap.store(message_id, "+FLAGS", [:Deleted])
+          begin
+            handle_new_mail(message_id, imap)
+            imap.store(message_id, "+FLAGS", [:Deleted])
+          rescue
+            puts "Cannot handle new mail ID: " + message_id.to_s
+          end
         end
         imap.close
       else
@@ -68,11 +72,11 @@ private
 
   def getHelper(envelope)
     if envelope.cc
-      puts "alt"
+      puts "CC method"
       helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
         envelope.cc[0].mailbox + "@" + envelope.cc[0].host)
-    elsif envelope.to.length == 2
-      puts "Two To"
+    elsif envelope.to && envelope.to.length == 2
+      puts "To method"
       if envelope.to[0].mailbox.to_s + "@" + envelope.to[0].host.to_s == @mail_address
           recipient = 1
       else
@@ -81,6 +85,7 @@ private
       helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
         envelope.to[recipient].mailbox.to_s + "@" + envelope.to[recipient].host.to_s)
     else
+      puts "Sender = Recipient method"
       helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s)
     end
     helper
