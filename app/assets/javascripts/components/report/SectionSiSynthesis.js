@@ -49,12 +49,12 @@ const ProductsInfo = ({products = []}) => {
     p.elemental_compositions.forEach(ec => {
       if(ec.description === "By molecule formula") {
         for (let [k, v] of Object.entries(ec.data)) {
-          ea = [...ea, `${k}: ${v}`];
+          ea = [...ea, `${k} ${v}`];
         }
       }
       return null;
     });
-    ea = ea.filter(r => r != null).join(", ");
+    ea = ea.filter(r => r != null).join("; ");
     const cas = p.xref && p.xref.cas ? p.xref.cas.value : "- ";
     const pFormula  = `Formula: ${m.sum_formular}; `;
     const pCAS      = `CAS: ${cas}; `;
@@ -145,7 +145,7 @@ const obsvTlcContent = (el) => {
 const tlcContent = (el) => {
   let content = [];
   if(el.tlc_solvents) {
-    content = [{ insert: "R" },
+    content = [{ attributes: { italic: "true" }, insert: "R"},
                 { attributes: { script: "sub", italic: "true" }, insert: "f"},
                 { insert: ` = ${el.rf_value} (${el.tlc_solvents}).`}]
   }
