@@ -230,14 +230,24 @@ export const purificationOptions = [{
 
 export const statusOptions = [{
   label: 'Planned',
-  value: 'Planned'
+  value: 'Planned',
+}, {
+  label: 'Running',
+  value: 'Running',
+}, {
+  label: 'Done',
+  value: 'Done',
+}, {
+  label: 'Analyses Pending',
+  value: 'Analyses Pending',
 }, {
   label: 'Successful',
-  value: 'Successful'
+  value: 'Successful',
 }, {
   label: 'Not Successful',
-  value: 'Not Successful'
+  value: 'Not Successful',
 }];
+
 
 export const dangerousProductsOptions = [{
   label: 'Causes cancer',

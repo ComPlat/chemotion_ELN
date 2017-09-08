@@ -65,11 +65,15 @@ table.reaction-scheme-solvent {
 .reaction-scheme-props {
   width: 100%;
 
-  .table {
+  table.table {
     margin-bottom: 0px;
 
     tr > div {
       padding: 0 2px;
+    }
+
+    div.Select-menu-outer {
+      z-index: 5;
     }
   }
 }
