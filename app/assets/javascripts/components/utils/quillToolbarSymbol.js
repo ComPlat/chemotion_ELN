@@ -212,7 +212,7 @@ const sampleAnalysesContentSymbol = [
       { "attributes": { "script":"sub" }, "insert": "3" },
       { "insert": "[MeOD/DMSO-d" },
       { "attributes": { "script":"sub" }, "insert": "6" },
-      { "insert":"], ppm), δ =" }
+      { "insert":"], ppm) δ =" }
     ]
   },
   {
@@ -223,7 +223,7 @@ const sampleAnalysesContentSymbol = [
       { "attributes": { "script": "sub" }, "insert": "3" },
       { "insert": "[MeOD/DMSO-d" },
       { "attributes": { "script": "sub" }, "insert": "6" },
-      { "insert":"], ppm),  δ =" }
+      { "insert":"], ppm) δ =" }
     ]
   },
   {
@@ -260,7 +260,7 @@ const sampleAnalysesContentSymbol = [
   {
     name: "ea",
     ops: [
-      { "insert":"EA (): calc. C H N O, found C H N O." }
+      { "insert":"EA (): Calcd C ;H ;N ;O . Found C ;H ;N ;O ." }
     ]
   }
 ]
