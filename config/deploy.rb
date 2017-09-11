@@ -48,7 +48,7 @@ set :rvm_ruby_version, (`cat .ruby-version`).strip
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
-before 'deploy:migrate', 'deploy:backup'
+#before 'deploy:migrate', 'deploy:backup'
 after 'deploy:publishing', 'deploy:restart'
 
 
