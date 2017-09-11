@@ -113,13 +113,6 @@ namespace :delayed_job do
     fetch(:delayed_job_server_role, :app)
   end
 
-  desc 'Start the data collector jobs'
-  before :restart, :initCollectorJobs do
-    on roles :app do
-      Delayed::Job.enqueue(CollectDataFromMailJob.new, cron: '*/5 * * * *') if Delayed::Job.where("handler like ?", "%CollectDataFromMailJob%").length == 0
-    end
-  end
-
   desc 'Stop the delayed_job process'
   task :stop do
     on roles(delayed_job_roles) do

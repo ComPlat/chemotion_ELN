@@ -115,7 +115,9 @@ module Chemotion
     # The default is none
     config.browserify_rails.source_map_environments << "development"
 
-
+    config.after_initialize do
+      Delayed::Job.enqueue(CollectDataFromMailJob.new, cron: '*/5 * * * *') if Delayed::Job.where("handler like ?", "%CollectDataFromMailJob%").length == 0
+    end
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.
