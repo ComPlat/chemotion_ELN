@@ -190,11 +190,16 @@ export default class ElementsTableEntries extends Component {
           icon = <i className="fa fa-clock-o c-bs-warning" />;
           break;
         case 'Running':
-          icon = <span style={{position:'relative'}}>
-            <i className="fa fa-hourglass-1 running-1 c-bs-warning" />
-            <i className="fa fa-hourglass-2 running-2 c-bs-warning" />
-            <i className="fa fa-hourglass-3 running-3 c-bs-warning" />
-          </span>;
+          icon = (
+            <span
+              style={{ width: '12px', height: '14px', lineHeight: '14px' }}
+              className="fa fa-stack"
+            >
+              <i className="fa fa-stack-1x fa-hourglass-1 running-1 c-bs-warning" />
+              <i className="fa fa-stack-1x fa-hourglass-2 running-2 c-bs-warning" />
+              <i className="fa fa-stack-1x fa-hourglass-3 running-3 c-bs-warning" />
+            </span>
+          );
           break;
         case 'Done':
           icon = <i className="fa fa-hourglass-3 c-bs-primary" />;
