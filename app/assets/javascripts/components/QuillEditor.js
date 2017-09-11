@@ -220,7 +220,7 @@ export default class QuillEditor extends React.Component {
       <span
         key={`${element}_key`}
         id={`${element}_id`}
-        style={{ marginRight: '5px' }}
+        style={{ marginRight: '5px', cursor: 'pointer' }}
       >
         <i className={`icon-${element}`} />
       </span>
