@@ -178,21 +178,17 @@ th.drag {
   -webkit-animation: blink-1 4s infinite ; /* Safari 4+ */
   -moz-animation:    blink-1 4s infinite ; /* Fx 5+ */
   animation:         blink-1 4s infinite ; /* IE 10+, Fx 29+ */
-  position: absolute;
-  left: 0;
 }
+
 .running-2 {
   -webkit-animation: blink-2 4s infinite; /* Safari 4+ */
   -moz-animation:    blink-2 4s infinite; /* Fx 5+ */
   animation:         blink-2 4s infinite; /* IE 10+, Fx 29+ */;
-  position: absolute;
-  left: 0;
 }
+
 .running-3 {
   -webkit-animation: blink-3 4s infinite  ; /* Safari 4+ */
   -moz-animation:    blink-3 4s infinite  ; /* Fx 5+ */
   animation:         blink-3 4s infinite  ; /* IE 10+, Fx 29+ */
-  position: absolute;
-  left: 0;
-
 }
+
