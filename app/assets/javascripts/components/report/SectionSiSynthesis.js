@@ -49,7 +49,7 @@ const ProductsInfo = ({products = []}) => {
     p.elemental_compositions.forEach(ec => {
       if(ec.description === "By molecule formula") {
         for (let [k, v] of Object.entries(ec.data)) {
-          ea = [...ea, `${k} ${v}`];
+          ea = [...ea, `${k}, ${v}`];
         }
       }
       return null;
