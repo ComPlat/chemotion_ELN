@@ -34,7 +34,7 @@ set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/
 set :linked_dirs, fetch(:linked_dirs, []).push(
   'backup/deploy_backup', 'backup/weekly_backup',
   'node_modules',
-  'log', 
+  'log',
   'public/images', 'public/docx', 'public/simulations',
   'tmp/pids', 'tmp/cache', 'tmp/sockets', 'tmp/uploads',
   'uploads', 'uploadNew'
@@ -111,6 +111,13 @@ namespace :delayed_job do
 
   def delayed_job_roles
     fetch(:delayed_job_server_role, :app)
+  end
+
+  desc 'Start the data collector jobs'
+  before :restart, :initCollectorJobs do
+    on roles :app do
+      Delayed::Job.enqueue(CollectDataFromMailJob.new, cron: '*/5 * * * *') if Delayed::Job.where("handler like ?", "%CollectDataFromMailJob%").length == 0
+    end
   end
 
   desc 'Stop the delayed_job process'
