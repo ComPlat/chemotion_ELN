@@ -1,25 +1,28 @@
 const rmRedundantSpaceBreak = (target) => {
-  return target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
-}
+  target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
+};
 
 const rmOpsRedundantSpaceBreak = (ops) => {
-  const clearOps = ops.map(op => {
+  const clearOps = ops.map((op) => {
     op.insert = rmRedundantSpaceBreak(op.insert);
     return op;
   });
   return clearOps;
-}
+};
 
 const rmDeltaRedundantSpaceBreak = (delta) => {
   const clearOps = rmOpsRedundantSpaceBreak(delta.ops);
   return { ops: clearOps };
-}
+};
 
 const frontBreak = (content) => {
-  return [{ insert: "\n"}, ...content];
-}
+  const res = [{ insert: '\n' }, ...content];
+  return res;
+};
 
-module.exports = { rmDeltaRedundantSpaceBreak,
-                    rmOpsRedundantSpaceBreak,
-                    rmRedundantSpaceBreak,
-                    frontBreak };
+module.exports = {
+  rmDeltaRedundantSpaceBreak,
+  rmOpsRedundantSpaceBreak,
+  rmRedundantSpaceBreak,
+  frontBreak,
+};
