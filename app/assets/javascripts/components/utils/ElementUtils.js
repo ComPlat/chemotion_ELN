@@ -1,33 +1,32 @@
+import Aviator from 'aviator';
 import UIStore from '../stores/UIStore';
-import _ from 'lodash'
 
 const SameEleTypId = (orig, next) => {
   let same = false;
-  if(orig && next && orig.type === next.type && orig.id === next.id) {
+  if (orig && next && orig.type === next.type && orig.id === next.id) {
     same = true;
   }
   return same;
-}
+};
 
 const UrlSilentNavigation = (element) => {
-  const {currentCollection, isSync} = UIStore.getState();
-  if(element) {
+  const { currentCollection, isSync } = UIStore.getState();
+  if (element) {
+    let elementString = `${element.type}`;
+    if (!isNaN(element.id)) elementString += `/${element.id}`;
 
-    let elementString = `${element.type}`
-    if (!isNaN(element.id)) elementString = elementString + `/${element.id}`
-
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/${elementString}`
-      : `/collection/${currentCollection.id}/${elementString}`,
-      { silent: true }
+    const collectionUrl = `${currentCollection.id}/${elementString}`;
+    Aviator.navigate(
+      isSync ? `/scollection/${collectionUrl}` : `/collection/${collectionUrl}`,
+      { silent: true },
     );
   } else {
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/`
-      : `/collection/${currentCollection.id}/`,
-      { silent: true }
+    const cId = currentCollection.id;
+    Aviator.navigate(
+      isSync ? `/scollection/${cId}/` : `/collection/${cId}/`,
+      { silent: true },
     );
   }
-}
+};
 
 module.exports = { SameEleTypId, UrlSilentNavigation };
