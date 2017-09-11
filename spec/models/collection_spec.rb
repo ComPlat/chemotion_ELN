@@ -75,15 +75,21 @@ RSpec.describe Collection, type: :model do
   end
 
   describe 'bulk_update' do
-    let(:c1) { create(:collection) }
-    let(:c2) { create(:collection, parent: c1) }
-    let(:c3) { create(:collection, parent: c2) }
-    let(:c4) { create(:collection, parent: c1) }
+    let(:p1) {create(:person)}
+    let(:p2) {create(:person)}
+    let(:c1_u1) { create(:collection, user_id: p1.id) }
+    let(:c2_u1) { create(:collection, user_id: p1.id, parent: c1_u1) }
+    let(:c3_u1) { create(:collection, user_id: p1.id, parent: c2_u1) }
+    let(:c4_u1) { create(:collection, user_id: p1.id, parent: c1_u1) }
+    let(:c1_u2) { create(:collection, user_id: p2.id) }
+    let(:c2_u2) { create(:collection, user_id: p2.id, parent: c1_u2) }
+    let(:c3_u2) { create(:collection, user_id: p2.id, parent: c2_u2) }
+    let(:c4_u2) { create(:collection, user_id: p2.id, parent: c1_u2) }
 
     let(:valid_attr) {
       [
         {
-          'id' => c1.id,
+          'id' => c1_u1.id,
           'label' => 'new label',
           'children' => [
             {
@@ -99,14 +105,14 @@ RSpec.describe Collection, type: :model do
           'isNew' => true,
           'children' => [
             {
-              'id' => c2.id,
-              'label' => c2.label,
+              'id' => c2_u1.id,
+              'label' => c2_u1.label,
               'children' => []
             }
           ]
         },
         {
-          'id' => c4.id,
+          'id' => c4_u1.id,
           'label' => 'updated c4',
           'children' => []
         }
@@ -114,10 +120,10 @@ RSpec.describe Collection, type: :model do
     }
 
     context 'all attributes are valid' do
-      before { described_class.bulk_update(c1.user_id, valid_attr, [c3.id]) }
+      before { described_class.bulk_update(p1.id, valid_attr, [c3_u1.id]) }
 
       it 'updates existing and create new collections with parent child associations' do
-        c_1 = Collection.find(c1.id)
+        c_1 = Collection.find(c1_u1.id)
         c_1_children = c_1.children
         expect(c_1.label).to eq 'new label'
         expect(c_1_children.size).to eq 1
@@ -125,18 +131,30 @@ RSpec.describe Collection, type: :model do
 
         c = Collection.find_by(label: 'new collection')
         expect(c).to_not be_nil
-        expect(c.children).to eq [c2]
+        expect(c.children).to eq [c2_u1]
 
-        c_2 = Collection.find(c2.id)
+        c_2 = Collection.find(c2_u1.id)
         expect(c_2.parent).to eq c
 
         # c3 should be deleted because it doesn't appear in valid_attr
-        expect(Collection.find_by(id: c3.id)).to be_nil
+        expect(Collection.find_by(id: c3_u1.id)).to be_nil
 
         # c4 should now be a root node
-        c_4 = Collection.find(c4.id)
+        c_4 = Collection.find(c4_u1.id)
         expect(c_4.parent).to be_nil
         expect(c_4.label).to eq 'updated c4'
+      end
+    end
+
+    context 'not permitted context' do
+      before { described_class.bulk_update(p2.id, valid_attr, [c3_u1.id]) }
+      it 'does not update collection of somebody else' do
+        expect(Collection.find_by(id: c3_u1.id)).to_not be_nil
+        c = Collection.find_by(label: 'new collection')
+        expect(c).to_not be_nil
+        c_1 = Collection.find(c1_u1.id)
+        c_2 = Collection.find(c2_u1.id)
+        expect(c_2.parent).to eq c1_u1
       end
     end
 

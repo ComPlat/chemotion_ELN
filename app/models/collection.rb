@@ -48,24 +48,32 @@ class Collection < ActiveRecord::Base
   def self.bulk_update(user_id, collection_attributes, deleted_ids)
     ActiveRecord::Base.transaction do
       update_or_create(user_id, collection_attributes)
-      update_parent_child_associations(collection_attributes)
-      deleted_ids.each do |id|
-        c = Collection.find_by(id: id)
-        c.destroy if c
-      end
+      update_parent_child_associations(user_id, collection_attributes)
+      delete_set(user_id, deleted_ids)
     end
   end
 
   private
+  def self.filter_collection_attributes(user_id, collection_attributes)
+    c_ids = collection_attributes.map {|ca| !ca['isNew'] && ca['id'].to_i || nil}.compact
+    filtered_cids = Collection.where(id: c_ids).map do |c|
+      if (c.user_id == user_id && !c.is_shared) || (c.is_shared &&
+        (c.shared_by_id == user_id || (c.user_id == user_id &&
+        permission_level == 10)))
+        c.id
+      else
+       nil
+      end
+    end.compact
+    collection_attributes.select {|ca| ca['isNew'] || filtered_cids.include?(ca['id'].to_i)}
+  end
 
   def self.update_or_create(user_id, collection_attributes, position=0)
-    return unless collection_attributes
-
-    collection_attributes.each do |attr|
+    return unless collection_attributes && user_id.is_a?(Integer)
+    filter_collection_attributes(user_id, collection_attributes).each do |attr|
       position += 1
       if(attr['isNew'])
         collection = create({label: attr['label'], user_id: user_id, position: position})
-        # Replace fake id by real id
         attr['id'] = collection.id
       else
         collection = find(attr['id']).update({label: attr['label'], position: position})
@@ -74,10 +82,10 @@ class Collection < ActiveRecord::Base
     end
   end
 
-  def self.update_parent_child_associations(collection_attributes, grand_parent=nil)
-    return unless collection_attributes
+  def self.update_parent_child_associations(user_id, collection_attributes, grand_parent=nil)
+    return unless collection_attributes && user_id.is_a?(Integer)
 
-    collection_attributes.each do |attr|
+    filter_collection_attributes(user_id, collection_attributes).each do |attr|
       parent = Collection.find(attr['id'])
 
       # collection is a new root collection
@@ -86,13 +94,21 @@ class Collection < ActiveRecord::Base
       end
 
       if(attr['children'])
-        attr['children'].each do |attr_child|
+        filter_collection_attributes(user_id, attr['children']).each do |attr_child|
           child = Collection.find(attr_child['id'])
           child.update(parent: parent)
         end
       end
 
-      update_parent_child_associations(attr['children'], parent)
+      update_parent_child_associations(user_id, attr['children'], parent)
+    end
+  end
+
+  def self.delete_set(user_id, deleted_ids)
+    Collection.where(
+      id: deleted_ids, user_id: user_id
+    ).each do |c|
+      c.destroy
     end
   end
 end
