@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import Delta from 'quill-delta';
+
 import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
@@ -136,6 +138,13 @@ export default class Reaction extends Element {
 
   get observation_contents() {
     return this.observation.ops.map(s => s.insert).join()
+  }
+
+  concat_text_observation(content) {
+    const insertDelta = new Delta().insert(content);
+    const observationDelta = new Delta(this.observation);
+    const composedDelta = observationDelta.concat(insertDelta);
+    this.observation = composedDelta;
   }
 
   convertTemperature(newUnit) {

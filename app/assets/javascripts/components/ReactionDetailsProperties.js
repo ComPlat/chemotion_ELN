@@ -81,7 +81,7 @@ export default class ReactionDetailsProperties extends Component {
       reaction.purification = values;
 
       const predefined = predefinedObs[0][selectedVal.toLowerCase()];
-      reaction.observation = `${(reaction.observation || '')}\n${predefined}`;
+      reaction.concat_text_observation(predefined);
 
       this.handleOnReactionChange(reaction);
     } else {
