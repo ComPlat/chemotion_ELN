@@ -241,6 +241,9 @@ export default class QuillEditor extends React.Component {
       <div>
         <div id={`toolbar-${this.id}`}>
           {this.renderQuillToolbarGroup()}
+          <span className="ql-formats custom-toolbar">
+            { this.props.customToolbar }
+          </span>
           {this.renderCustomToolbar()}
         </div>
         <div
@@ -254,6 +257,7 @@ export default class QuillEditor extends React.Component {
 
 QuillEditor.propTypes = {
   value: React.PropTypes.object,
+  customToolbar: React.PropTypes.object,
   toolbarSymbol: React.PropTypes.array,
   theme: React.PropTypes.string,
   height: React.PropTypes.string,
@@ -263,6 +267,7 @@ QuillEditor.propTypes = {
 
 QuillEditor.defaultProps = {
   value: {},
+  customToolbar: "",
   toolbarSymbol: [],
   theme: 'snow',
   height: '230px',
