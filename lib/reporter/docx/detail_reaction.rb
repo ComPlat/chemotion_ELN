@@ -368,10 +368,12 @@ module Reporter
         delta = []
         obj.products.each do |product|
           valid_analyses = keep_report(product[:analyses])
-          delta = merge_items(delta, sort_by_index(valid_analyses))
+          sorted_analyses = sort_by_index(valid_analyses)
+          delta = merge_items_symbols(delta, sorted_analyses, '; ')
         end
-        return [] if delta.length == 0
-        remove_redundant_space_break(delta) + [{"insert"=>"\n"}]
+        return [] if delta.length.zero?
+        remove_redundant_space_break(delta)[0..-2] +
+          [{ 'insert' => '.' }, { 'insert' => "\n" }]
       end
 
       def materials_table_delta

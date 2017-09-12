@@ -153,23 +153,32 @@ const tlcContent = (el) => {
   return content;
 }
 
+const endingSymbol = (content, symbol) => {
+  if (content.length === 0) return [];
+  const lastEl = content[content.length - 1];
+  const lastIs = lastEl.insert.replace(/\s*[,.;]*\s*$/, '');
+
+  return [...content.slice(0, -1), { insert: lastIs }, { insert: symbol }];
+};
+
 const analysesContent = (products) => {
   let content = [];
-  const value = products.map( p => {
+  products.map((p) => {
     const sortAnalyses = ArrayUtils.sortArrByIndex(p.analyses);
-    return sortAnalyses.map(a => {
+    return sortAnalyses.map((a) => {
       const data = a && a.extended_metadata
         && a.extended_metadata.report
-        && a.extended_metadata.report == 'true'
+        && a.extended_metadata.report === 'true'
         ? JSON.parse(a.extended_metadata.content)
-        : {ops: []};
-      content = [...content, ...data.ops];
+        : { ops: [] };
+      content = [...content, ...endingSymbol(data.ops, '; ')];
     });
   });
+  if (content.length === 0) return [];
   content = rmOpsRedundantSpaceBreak(content);
-  if(content.length === 0) return [];
+  content = [...content.slice(0, -1), { insert: '.' }];
   return frontBreak(content);
-}
+};
 
 const dangContent = (el) => {
   if(el.dangerous_products.length === 0) return [];
