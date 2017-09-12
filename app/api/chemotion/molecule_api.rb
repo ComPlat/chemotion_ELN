@@ -42,6 +42,26 @@ module Chemotion
         molecule.load_cas if molecule
         molecule
       end
+
+      desc 'return names of the molecule'
+      params do
+        requires :inchikey, type: String, desc: 'Molecule inchikey'
+        optional :new_name, type: String, desc: 'New molecule_name'
+      end
+      get :names do
+        inchikey = params[:inchikey]
+        new_name = params[:new_name]
+
+        mol = Molecule.find_by(inchikey: inchikey)
+        return [] if mol.blank?
+
+        user_id = current_user.id
+        mol.create_molecule_name_by_user(new_name, user_id) if new_name.present?
+
+        mol.molecule_names.map do |mn|
+          { id: mn.id, name: mn.name }
+        end
+      end
     end
   end
 end

@@ -105,6 +105,7 @@ class Sample < ActiveRecord::Base
   belongs_to :molecule
   belongs_to :fingerprints
   belongs_to :user
+  belongs_to :molecule_name
 
   has_one :container, :as => :containable
 
@@ -141,8 +142,9 @@ class Sample < ActiveRecord::Base
 
   after_save :update_data_for_reactions
   before_create :check_short_label
-  after_create :update_counter
+  before_create :check_molecule_name
 
+  after_create :update_counter
   after_create :create_root_container
 
   def molecule_sum_formular
@@ -359,6 +361,11 @@ class Sample < ActiveRecord::Base
     end
   end
 
+  def molecule_name_hash
+    mn = molecule_name
+    mn ? { label: mn.name, value: mn.id } : {}
+  end
+
 private
 
   def has_collections
@@ -462,6 +469,14 @@ private
   def create_root_container
     if self.container == nil
       self.container = Container.create_root_container
+    end
+  end
+
+  def check_molecule_name
+    if molecule_name_id.blank?
+      target = molecule_iupac_name || molecule_sum_formular
+      mn = molecule.molecule_names.find_by(name: target)
+      self.molecule_name_id = mn.id
     end
   end
 end
