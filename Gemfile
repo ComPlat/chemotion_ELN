@@ -86,6 +86,7 @@ gem 'font-awesome-rails'
 
 # delayed job
 gem 'delayed_job_active_record'
+gem 'delayed_cron_job'
 
 # required by cap3 delayed-job but has to be specified manually
 gem 'daemons'
