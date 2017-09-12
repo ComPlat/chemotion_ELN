@@ -1,7 +1,7 @@
 import Delta from 'quill-delta';
 
 const rmRedundantSpaceBreak = (target) => {
-  target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
+  return target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
 };
 
 const rmOpsRedundantSpaceBreak = (ops) => {
