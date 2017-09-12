@@ -49,20 +49,10 @@ const sampleAnalysesFormatPattern = {
       },
     },
     {
-      pattern: 'J=',
-      replace: {
-        ops: [
-          { insert: 'J', attributes: { italic: true } },
-          { insert: ' =' },
-        ],
-      },
-    },
-    {
       pattern: 'J=(\\d+)',
       replace: {
         ops: [
-          { insert: 'J', attributes: { italic: true } },
-          { insert: ' =#{1}' },
+          { insert: 'J =#{1}' },
         ],
       },
     },
@@ -72,6 +62,15 @@ const sampleAnalysesFormatPattern = {
         ops: [
           { insert: 'J', attributes: { italic: true } },
           { insert: ' = #{1}' },
+        ],
+      },
+    },
+    {
+      pattern: 'J=',
+      replace: {
+        ops: [
+          { insert: 'J', attributes: { italic: true } },
+          { insert: ' =' },
         ],
       },
     },
@@ -119,20 +118,10 @@ const sampleAnalysesFormatPattern = {
       },
     },
     {
-      pattern: 'J=',
-      replace: {
-        ops: [
-          { insert: 'J', attributes: { italic: true } },
-          { insert: ' =' },
-        ],
-      },
-    },
-    {
       pattern: 'J=(\\d+)',
       replace: {
         ops: [
-          { insert: 'J', attributes: { italic: true } },
-          { insert: ' =#{1}' },
+          { insert: 'J =#{1}' },
         ],
       },
     },
@@ -142,6 +131,15 @@ const sampleAnalysesFormatPattern = {
         ops: [
           { insert: 'J', attributes: { italic: true } },
           { insert: ' = #{1}' },
+        ],
+      },
+    },
+    {
+      pattern: 'J=',
+      replace: {
+        ops: [
+          { insert: 'J', attributes: { italic: true } },
+          { insert: ' =' },
         ],
       },
     },
