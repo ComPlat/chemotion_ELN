@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
-import { Col, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
+import { Button, Col, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
 import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
 
 import { sampleAnalysesContentSymbol } from './utils/quillToolbarSymbol';
+import { sampleAnalysesFormatPattern } from './utils/ElementUtils';
+import { searchAndReplace } from './utils/quillFormat';
 import { confirmOptions, kindOptions } from './staticDropdownOptions/options';
 
 export default class ContainerComponent extends Component {
@@ -18,6 +20,7 @@ export default class ContainerComponent extends Component {
 
     this.onChange = this.onChange.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
+    this.reformatContent = this.reformatContent.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -62,9 +65,29 @@ export default class ContainerComponent extends Component {
     if (isChanged) this.onChange(container);
   }
 
+  reformatContent() {
+    const { container } = this.state;
+    const kind = container.extended_metadata.kind;
+    let content = { ...container.extended_metadata.content };
+    const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
+
+    sampleAnalysesFormatPattern[type].forEach((patt) => {
+      content = searchAndReplace(content, patt.pattern, patt.replace);
+    });
+
+    container.extended_metadata.content = content;
+    this.onChange(container);
+  }
+
   render() {
     const { container } = this.state;
     const { readOnly, disabled } = this.props;
+
+    const formatButton = (
+      <Button bsSize="xsmall" onClick={this.reformatContent}>
+        <i className="fa fa-magic" />
+      </Button>
+    );
 
     let quill = (<span />);
     if (readOnly || disabled) {
@@ -79,6 +102,7 @@ export default class ContainerComponent extends Component {
           onChange={this.handleInputChange.bind(this, 'content')}
           disabled={readOnly}
           toolbarSymbol={sampleAnalysesContentSymbol}
+          customToolbar={formatButton}
         />
       )
     }
