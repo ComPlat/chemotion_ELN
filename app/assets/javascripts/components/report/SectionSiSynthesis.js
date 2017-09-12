@@ -4,6 +4,7 @@ import QuillViewer from '../QuillViewer';
 import { digit } from '../utils/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
 import ArrayUtils from '../utils/ArrayUtils';
+import { Alphabet } from '../utils/ElementUtils';
 import _ from 'lodash';
 
 const Title = ({el, counter}) => {
@@ -80,7 +81,7 @@ const stAndReContent = (el, prev_counter, prev_content) => {
     counter += 1;
     const m = el.molecule;
     content = [...content,
-                { insert: `{${counter}|` },
+                { insert: `{${Alphabet(counter)}|` },
                 boldXX(),
                 { insert: "} " },
                 deltaIupac(m),
@@ -96,7 +97,7 @@ const solventsContent = (el, prev_counter, prev_content) => {
     counter += 1;
     const m = el.molecule;
     content = [...content,
-                { insert: `{${counter}` },
+                { insert: `{${Alphabet(counter)}` },
                 { insert: "} " },
                 deltaIupac(m),
                 { insert: ` (${digit(el.amount_l * 1000, 2)} mL); ` }];
@@ -112,7 +113,7 @@ const porductsContent = (el, prev_counter, prev_content) => {
     counter += 1;
     const m = p.molecule;
     content = [...content,
-                { insert: `{${counter}|` },
+                { insert: `{${Alphabet(counter)}|` },
                 boldXX(),
                 { insert: "} " },
                 { insert: ` = ${digit(p.equivalent * 100, 0)}%` },

@@ -238,8 +238,16 @@ const sampleAnalysesFormatPattern = {
   ],
 };
 
+const Alphabet = (input = 1) => {
+  const num = parseInt(input, 10);
+  const index = num >= 1 && num <= 26 ? num - 1 : 25;
+  const alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  return alphabets[index];
+};
+
 module.exports = {
   SameEleTypId,
   UrlSilentNavigation,
   sampleAnalysesFormatPattern,
+  Alphabet,
 };

@@ -380,7 +380,7 @@ module Reporter
         [obj.starting_materials, obj.reactants].flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{counter}|"},
+          delta += [{"insert"=>"{#{alphabet(counter)}|"},
                     {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
                     {"insert"=>"} "},
                     *iupac_delta(m[:iupac_name]),
@@ -390,7 +390,7 @@ module Reporter
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{counter}"},
+          delta += [{"insert"=>"{#{alphabet(counter)}"},
                     {"insert"=>"} "},
                     *iupac_delta(m[:iupac_name]),
                     {"insert"=>" (#{fixed_digit(m[:vol], 2)} mL); "}]
@@ -399,7 +399,7 @@ module Reporter
         obj.products.each do |material|
           p = material_hash(material, true)
           counter += 1
-          delta += [{"insert"=>"{#{counter}|"},
+          delta += [{"insert"=>"{#{alphabet(counter)}|"},
                     {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
                     {"insert"=>"} = #{p[:equiv]} (#{p[:mass]} g, " +
                       "#{p[:mol]} mmol)"},
@@ -448,6 +448,12 @@ module Reporter
 
       def fixed_digit(input_num, digit_num)
         "%.#{digit_num}f" % input_num.try(:to_f).try(:round, digit_num).to_f
+      end
+
+      def alphabet(counter)
+        alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        counter = counter >= 1 && counter <=26 ? counter - 1 : 25
+        alphabets[counter]
       end
     end
   end
