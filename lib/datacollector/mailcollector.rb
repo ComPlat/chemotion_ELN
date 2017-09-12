@@ -20,8 +20,12 @@ class Mailcollector
         imap.select('INBOX')
         imap.search(['NOT', 'SEEN']).each do |message_id|
           puts "Handle new mail " + message_id.to_s
-          handle_new_mail(message_id, imap)
-          imap.store(message_id, "+FLAGS", [:Deleted])
+          begin
+            handle_new_mail(message_id, imap)
+            imap.store(message_id, "+FLAGS", [:Deleted])
+          rescue
+            puts "Cannot handle new mail ID: " + message_id.to_s
+          end
         end
         imap.close
       else
@@ -38,7 +42,7 @@ private
   def handle_new_mail(message_id, imap)
     envelope = imap.fetch(message_id, "ENVELOPE")[0].attr["ENVELOPE"]
     helper = getHelper(envelope)
-    if helper.sender_recipient_known?
+    if helper && helper.sender_recipient_known?
       raw_message = imap.fetch(message_id, 'RFC822').first.attr['RFC822']
       message = Mail.read_from_string raw_message
       if message.multipart?
@@ -67,21 +71,26 @@ private
   end
 
   def getHelper(envelope)
-    if envelope.cc
-      puts "alt"
-      helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
-        envelope.cc[0].mailbox + "@" + envelope.cc[0].host)
-    elsif envelope.to.length == 2
-      puts "Two To"
+    helper = nil
+    if (envelope.cc && envelope.cc.length == 1) && (envelope.to && envelope.to.length == 1)
+      puts "CC method"
       if envelope.to[0].mailbox.to_s + "@" + envelope.to[0].host.to_s == @mail_address
-          recipient = 1
-      else
-          recipient = 0
+        helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s, envelope.cc[0].mailbox.to_s + "@" + envelope.cc[0].host.to_s)
       end
-      helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
-        envelope.to[recipient].mailbox.to_s + "@" + envelope.to[recipient].host.to_s)
-    else
-      helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s)
+    elsif !envelope.cc && envelope.to && envelope.to.length == 2
+      puts "To method"
+      if envelope.to[0].mailbox.to_s + "@" + envelope.to[0].host.to_s == @mail_address
+        helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
+          envelope.to[1].mailbox.to_s + "@" + envelope.to[1].host.to_s)
+      elsif envelope.to[1].mailbox.to_s + "@" + envelope.to[1].host.to_s == @mail_address
+        helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s,
+          envelope.to[0].mailbox.to_s + "@" + envelope.to[0].host.to_s)
+      end
+    elsif !envelope.cc && envelope.to && envelope.to.length == 1
+      puts "Sender = Recipient method"
+      if envelope.to[0].mailbox.to_s + "@" + envelope.to[0].host.to_s == @mail_address
+        helper = CollectorHelper.new(envelope.from[0].mailbox.to_s + "@" + envelope.from[0].host.to_s)
+      end
     end
     helper
   end
