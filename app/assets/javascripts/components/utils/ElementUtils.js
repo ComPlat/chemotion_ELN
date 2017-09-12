@@ -53,7 +53,7 @@ const sampleAnalysesFormatPattern = {
       replace: {
         ops: [
           { insert: 'J', attributes: { italic: true } },
-          { insert: '=' },
+          { insert: ' =' },
         ],
       },
     },
@@ -123,7 +123,7 @@ const sampleAnalysesFormatPattern = {
       replace: {
         ops: [
           { insert: 'J', attributes: { italic: true } },
-          { insert: '=' },
+          { insert: ' =' },
         ],
       },
     },
