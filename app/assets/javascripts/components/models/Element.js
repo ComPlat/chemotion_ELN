@@ -27,7 +27,8 @@ export default class Element {
 
   checksum(fieldsToOmit = []) {
     return sha256(JSON.stringify(_.omit(_.omit(this,
-            ['_checksum', 'belongTo', 'matGroup', ...fieldsToOmit]), _.isEmpty)));
+      ['_checksum', 'belongTo', 'matGroup', 'molecule_names', ...fieldsToOmit],
+    ), _.isEmpty)));
   }
 
   get getChecksum() {
