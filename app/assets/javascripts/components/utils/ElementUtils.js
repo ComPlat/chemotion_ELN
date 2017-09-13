@@ -98,6 +98,14 @@ const sampleAnalysesFormatPattern = {
         ],
       },
     },
+    {
+      pattern: '(\\d+) - (\\d+)',
+      replace: {
+        ops: [
+          { insert: '#{1}–#{2}' },
+        ],
+      },
+    },
   ],
   _1hnmr: [
     {
@@ -167,6 +175,14 @@ const sampleAnalysesFormatPattern = {
         ],
       },
     },
+    {
+      pattern: '(\\d+) - (\\d+)',
+      replace: {
+        ops: [
+          { insert: '#{1}–#{2}' },
+        ],
+      },
+    },
   ],
   _ea: [
     {
@@ -225,6 +241,14 @@ const sampleAnalysesFormatPattern = {
         ],
       },
     },
+    {
+      pattern: '(\\d+) - (\\d+)',
+      replace: {
+        ops: [
+          { insert: '#{1}–#{2}' },
+        ],
+      },
+    },
   ],
   _mass: [
     {
@@ -232,6 +256,14 @@ const sampleAnalysesFormatPattern = {
       replace: {
         ops: [
           { insert: 'm/z', attributes: { italic: true } },
+        ],
+      },
+    },
+    {
+      pattern: '(\\d+) - (\\d+)',
+      replace: {
+        ops: [
+          { insert: '#{1}–#{2}' },
         ],
       },
     },
