@@ -80,5 +80,16 @@ M  END"
           .to eq ["123-456-789", "987-654-321", "558440-22-5"]
       end
     end
+
+    describe 'Get /api/v1/molecules/names' do
+      let!(:m) { create(:molecule) }
+      let!(:nn) { "this_is_a_new_name" }
+
+      it 'returns molecule_names hash' do
+        get "/api/v1/molecules/names?inchikey=#{m.inchikey}"
+        mns = JSON.parse(response.body)["molecules"].map { |m| m["name"] }
+        expect(mns).to include(m.sum_formular)
+      end
+    end
   end
 end
