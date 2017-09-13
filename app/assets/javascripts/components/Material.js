@@ -6,7 +6,7 @@ import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName'
 import ElementActions from './actions/ElementActions'
-import { UrlSilentNavigation } from './utils/ElementUtils';
+import { UrlSilentNavigation, Alphabet } from './utils/ElementUtils';
 
 const source = {
   beginDrag(props) {
@@ -501,13 +501,13 @@ class Material extends Component {
       iupacStyle = {display: "none"}
       br = ""
     }
-    const { index } = this.props;
+    const mAlphabet = Alphabet(this.props.index);
 
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div style={{display: "inline-block", maxWidth: "100%"}}>
           <div className="inline-inside">
-            <Label bsStyle="primary">{index}</Label>&nbsp;
+            <Label bsStyle="primary">{mAlphabet}</Label>&nbsp;
             {materialName}
           </div>
           <span style={iupacStyle}>

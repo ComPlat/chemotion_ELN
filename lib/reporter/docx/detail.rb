@@ -36,6 +36,23 @@ module Reporter
         end
       end
 
+      def merge_items_symbols(init, items, gap_symbol)
+        items.reduce(init) do |sum, i|
+          ops =
+            if i['extended_metadata'] && i['extended_metadata']['content']
+              JSON.parse(i['extended_metadata']['content'])['ops']
+            elsif i[:extended_metadata] && i[:extended_metadata][:content]
+              JSON.parse(i[:extended_metadata][:content])['ops']
+            else
+              []
+            end
+
+          last = ops.last['insert'].gsub(/\s*[,.;]*\s*$/, '')
+          ops = ops[0..-2] + [{ 'insert' => last }, { 'insert' => gap_symbol }]
+          sum + ops
+        end
+      end
+
       def remove_redundant_space_break(ops)
         ops.map.with_index do |op, i|
           op["insert"] = op["insert"].gsub(/\s\s+/, " ")
