@@ -32,11 +32,11 @@ const UrlSilentNavigation = (element) => {
 const sampleAnalysesFormatPattern = {
   _13cnmr: [
     {
-      pattern: '13C',
+      pattern: '13C NMR',
       replace: {
         ops: [
           { insert: '13', attributes: { script: 'sup' } },
-          { insert: 'C' },
+          { insert: 'C NMR' },
         ],
       },
     },
@@ -101,19 +101,19 @@ const sampleAnalysesFormatPattern = {
   ],
   _1hnmr: [
     {
-      pattern: '1H',
+      pattern: '1H NMR',
       replace: {
         ops: [
           { insert: '1', attributes: { script: 'sup' } },
-          { insert: 'H' },
+          { insert: 'H NMR' },
         ],
       },
     },
     {
-      pattern: '(\\d+) H',
+      pattern: '(\\d+) H([^z])',
       replace: {
         ops: [
-          { insert: '#{1}H' },
+          { insert: '#{1}H#{2}' },
         ],
       },
     },
