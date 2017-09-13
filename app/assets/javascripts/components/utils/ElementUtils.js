@@ -41,6 +41,16 @@ const sampleAnalysesFormatPattern = {
       },
     },
     {
+      pattern: ' CDC(l|L)3,',
+      replace: {
+        ops: [
+          { insert: ' CDCl' },
+          { insert: '3', attributes: { script: 'sub' } },
+          { insert: ',' },
+        ],
+      },
+    },
+    {
       pattern: '(\\d+) C',
       replace: {
         ops: [
@@ -123,6 +133,16 @@ const sampleAnalysesFormatPattern = {
         ops: [
           { insert: '1', attributes: { script: 'sup' } },
           { insert: 'H NMR' },
+        ],
+      },
+    },
+    {
+      pattern: ' CDC(l|L)3,',
+      replace: {
+        ops: [
+          { insert: ' CDCl' },
+          { insert: '3', attributes: { script: 'sub' } },
+          { insert: ',' },
         ],
       },
     },
