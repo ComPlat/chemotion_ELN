@@ -75,6 +75,15 @@ const sampleAnalysesFormatPattern = {
       },
     },
     {
+      pattern: 'J = (\\d+)',
+      replace: {
+        ops: [
+          { insert: 'J', attributes: { italic: true } },
+          { insert: ' = #{1}' },
+        ],
+      },
+    },
+    {
       pattern: '\\) , ',
       replace: {
         ops: [
@@ -148,6 +157,15 @@ const sampleAnalysesFormatPattern = {
         ops: [
           { insert: 'J', attributes: { italic: true } },
           { insert: ' =' },
+        ],
+      },
+    },
+    {
+      pattern: 'J = (\\d+)',
+      replace: {
+        ops: [
+          { insert: 'J', attributes: { italic: true } },
+          { insert: ' = #{1}' },
         ],
       },
     },
