@@ -1,4 +1,5 @@
 import Delta from 'quill-delta';
+import _ from 'lodash';
 
 const rmRedundantSpaceBreak = (target) => {
   target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
@@ -56,7 +57,7 @@ const searchAndReplace = (contents, pattern, regexReplace) => {
       cur = matched.index + l;
 
       const groupRegex = new RegExp(pattern, 'g');
-      let mappedReplace = regexReplace.ops;
+      let mappedReplace = _.cloneDeep(regexReplace.ops);
 
       let matchedGroup = groupRegex.exec(content.insert);
       while (matchedGroup) {
