@@ -1,33 +1,40 @@
-import React, {Component} from 'react';
-import {Tooltip, OverlayTrigger} from 'react-bootstrap';
-import Formula from './Formula'
-//var _ = require('lodash');
+import React from 'react';
+import Formula from './Formula';
 
-export default class SampleName extends React.Component {
-  render() {
-    let {sample} = this.props;
+const sumFormula = sf => <Formula formula={sf} />;
 
-    let molecule_name = sample._molecule.iupac_name
-    let sum_formular = (<Formula formula={sample._molecule.sum_formular}/>)
-    if(sample.contains_residues) {
-      let polymer_name = sample.polymer_type.charAt(0).toUpperCase()
-                          + sample.polymer_type.slice(1);
-      return (
-        <div>
-          <p>
-            {polymer_name.replace('_', '-') + ' - '}
-            {sum_formular}
-          </p>
-          <p>{molecule_name}</p>
-        </div>
-      )
-    } else {
-      return (
-        <div>
-          <p>{sum_formular}</p>
-          <p>{molecule_name}</p>
-        </div>
-      )
-    }
+const sampleNameWithResidues = (polymer_type, sumFormulaCom, moleculeName) => {
+  const polymerName = (polymer_type.charAt(0).toUpperCase()
+    + polymer_type.slice(1)).replace('_', '-') + ' - ';
+
+  return (
+    <div>
+      <p>
+        {polymerName}
+        {sumFormulaCom}
+      </p>
+      <p>{moleculeName}</p>
+    </div>
+  );
+};
+
+const SampleName = ({ sample }) => {
+  const { sum_formular, iupac_name } = sample._molecule;
+  const { contains_residues, polymer_type } = sample;
+  const mnl = sample.molecule_name_label;
+  const moleculeName = mnl && mnl !== sum_formular ? mnl : iupac_name;
+  const sumFormulaCom = sumFormula(sum_formular);
+
+  if (contains_residues) {
+    return sampleNameWithResidues(polymer_type, sumFormulaCom, moleculeName);
   }
-}
+
+  return (
+    <div>
+      <p>{sumFormulaCom}</p>
+      <p>{moleculeName}</p>
+    </div>
+  );
+};
+
+export default SampleName;
