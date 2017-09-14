@@ -57,9 +57,14 @@ const searchAndReplace = (contents, pattern, regexReplace) => {
       const change = new Delta().retain(retain).delete(l);
       cur = matched.index + l;
 
-      const cloneRegex = _.cloneDeep(regexReplace.ops);
-      const group = matched.slice(1);
-      const mappedReplace = mapValueToGroupRegex(cloneRegex, group);
+      let mappedReplace;
+      if (typeof regexReplace === 'function') {
+        mappedReplace = new Delta(regexReplace(matched));
+      } else {
+        const cloneRegex = _.cloneDeep(regexReplace.ops);
+        const group = matched.slice(1);
+        mappedReplace = mapValueToGroupRegex(cloneRegex, group);
+      }
 
       replaced = replaced.concat(change.concat(new Delta(mappedReplace)));
       matched = regexMatch.exec(content.insert);
