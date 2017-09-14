@@ -23,14 +23,15 @@ const frontBreak = (content) => {
   return res;
 };
 
-const mapGroupRegexToDelta = (content, matchedGroup) => {
-  let newContent = content;
+const mapValueToGroupRegex = (content, matchedGroup) => {
+  let newContent = _.cloneDeep(content);
   matchedGroup.forEach((m, idx) => {
     newContent = newContent.map((d) => {
       const patt = `#{${idx + 1}}`;
       const insertString = d.insert;
-      d.insert = insertString.replace(patt, m);
-      return d;
+      const dd = { ...d };
+      dd.insert = insertString.replace(patt, m);
+      return dd;
     });
   });
 
@@ -56,15 +57,9 @@ const searchAndReplace = (contents, pattern, regexReplace) => {
       const change = new Delta().retain(retain).delete(l);
       cur = matched.index + l;
 
-      const groupRegex = new RegExp(pattern, 'g');
-      let mappedReplace = _.cloneDeep(regexReplace.ops);
-
-      let matchedGroup = groupRegex.exec(content.insert);
-      while (matchedGroup) {
-        const group = matchedGroup.slice(1);
-        mappedReplace = mapGroupRegexToDelta(mappedReplace, group);
-        matchedGroup = groupRegex.exec(content.insert);
-      }
+      const cloneRegex = _.cloneDeep(regexReplace.ops);
+      const group = matched.slice(1);
+      const mappedReplace = mapValueToGroupRegex(cloneRegex, group);
 
       replaced = replaced.concat(change.concat(new Delta(mappedReplace)));
       matched = regexMatch.exec(content.insert);
