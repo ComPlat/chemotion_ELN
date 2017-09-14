@@ -136,7 +136,8 @@ export default class Sample extends Element {
     newSample.molfile = sample.molfile || '';
     newSample.sample_svg_file = sample.sample_svg_file;
     newSample.residues = sample.residues || [];
-    newSample.contains_residues = sample.contains_residues;
+    newSample.contains_residues = sample.contains_residues
+    newSample.density = sample.density;
 
     return newSample;
   }

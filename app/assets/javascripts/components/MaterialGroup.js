@@ -117,11 +117,14 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction, addDefaultSol
       <Glyphicon glyph="plus" />
   </Button>
 
-  const createDefaultSolventsForReaction = (external_label, molfile) => {
-    MoleculesFetcher.fetchByMolfile(molfile)
+  const createDefaultSolventsForReaction = (event) => {
+    const solvent = event.value
+    MoleculesFetcher.fetchByMolfile(solvent.molfile)
       .then((result) => {
         const molecule = new Molecule(result);
-        addDefaultSolvent(molecule, materialGroup, external_label);
+        const d = molecule.density
+        molecule.density = d && d > 0 && d || solvent.density
+        addDefaultSolvent(molecule, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -139,8 +142,7 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction, addDefaultSol
             multi={false}
             options={defaultMultiSolventsOptions}
             placeholder='Default solvents'
-            onChange={ (e) => {if (e && e.value){
-              createDefaultSolventsForReaction(e.value[0], e.value[1]) }}} />
+            onChange={createDefaultSolventsForReaction} />
         </th>
         <th width="4%">T/R</th>
         <th width="26%">Label</th>
