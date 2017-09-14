@@ -261,7 +261,7 @@ const sampleAnalysesContentSymbol = [
   {
     name: 'ea',
     ops: [
-      { insert: 'EA (): Calcd C ;H ;N ;O . Found C ;H ;N ;O .' },
+      { insert: 'EA (): Calcd C ; H ; N ; O . Found C ; H ; N ; O .' },
     ],
   },
 ];

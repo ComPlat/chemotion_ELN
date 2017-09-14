@@ -1,5 +1,8 @@
 import Aviator from 'aviator';
+import Delta from 'quill-delta';
+
 import UIStore from '../stores/UIStore';
+import { searchAndReplace } from './quillFormat';
 
 const SameEleTypId = (orig, next) => {
   let same = false;
@@ -29,6 +32,19 @@ const UrlSilentNavigation = (element) => {
   }
 };
 
+const formatChemicalFormular = (formular) => {
+  const contentDelta = new Delta([{ insert: formular[0] }]);
+  const pattern = '(C|H|O|N|S)(\\d{1,2})';
+  const regexReplace = {
+    ops: [
+      { insert: '#{1}' },
+      { insert: '#{2}', attributes: { script: 'sub' } },
+    ],
+  };
+
+  return searchAndReplace(contentDelta, pattern, regexReplace);
+};
+
 const sampleAnalysesFormatPattern = {
   _13cnmr: [
     {
@@ -37,6 +53,16 @@ const sampleAnalysesFormatPattern = {
         ops: [
           { insert: '13', attributes: { script: 'sup' } },
           { insert: 'C NMR' },
+        ],
+      },
+    },
+    {
+      pattern: ' CDC(l|L)3,',
+      replace: {
+        ops: [
+          { insert: ' CDCl' },
+          { insert: '3', attributes: { script: 'sub' } },
+          { insert: ',' },
         ],
       },
     },
@@ -123,6 +149,16 @@ const sampleAnalysesFormatPattern = {
         ops: [
           { insert: '1', attributes: { script: 'sup' } },
           { insert: 'H NMR' },
+        ],
+      },
+    },
+    {
+      pattern: ' CDC(l|L)3,',
+      replace: {
+        ops: [
+          { insert: ' CDCl' },
+          { insert: '3', attributes: { script: 'sub' } },
+          { insert: ',' },
         ],
       },
     },
@@ -268,6 +304,25 @@ const sampleAnalysesFormatPattern = {
       },
     },
   ],
+  _ir: [
+    {
+      pattern: 'cm-1',
+      replace: {
+        ops: [
+          { insert: 'cm–1' },
+        ],
+      },
+    },
+    {
+      pattern: 'cm–1',
+      replace: {
+        ops: [
+          { insert: 'cm' },
+          { insert: '–1', attributes: { script: 'sup' } },
+        ],
+      },
+    },
+  ],
   _mass: [
     {
       pattern: 'm/z',
@@ -284,6 +339,42 @@ const sampleAnalysesFormatPattern = {
           { insert: '#{1}–#{2}' },
         ],
       },
+    },
+    {
+      pattern: 'calc\\.',
+      replace: {
+        ops: [
+          { insert: 'calcd' },
+        ],
+      },
+    },
+    {
+      pattern: 'calcd',
+      replace: {
+        ops: [
+          { insert: 'Calcd' },
+        ],
+      },
+    },
+    {
+      pattern: '\\. HRMS',
+      replace: {
+        ops: [
+          { insert: '; HRMS' },
+        ],
+      },
+    },
+    {
+      pattern: ', found',
+      replace: {
+        ops: [
+          { insert: '. Found' },
+        ],
+      },
+    },
+    {
+      pattern: '(HRMS \\()(([A-Z]\\d{1,2})+)(\\))',
+      replace: formatChemicalFormular,
     },
   ],
 };
