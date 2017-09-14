@@ -67,7 +67,7 @@ export default class ContainerComponent extends Component {
 
   reformatContent() {
     const { container } = this.state;
-    const kind = container.extended_metadata.kind;
+    const kind = container.extended_metadata.kind || '';
     let content = { ...container.extended_metadata.content };
     const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
 
