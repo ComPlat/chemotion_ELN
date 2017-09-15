@@ -373,7 +373,7 @@ const sampleAnalysesFormatPattern = {
       },
     },
     {
-      pattern: '(HRMS \\()(([A-Z]\\d{1,2})+)(\\))',
+      pattern: '(HRMS \\()(([A-Z]\\d{0,2})+)(\\))',
       replace: formatChemicalFormular,
     },
   ],
