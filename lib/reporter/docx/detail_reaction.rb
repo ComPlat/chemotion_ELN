@@ -359,8 +359,13 @@ module Reporter
           {"insert"=>" = #{obj.rf_value} (#{obj.tlc_solvents})."}]
       end
 
+      def obsv_blank
+        obsv_arr = observation_delta.map { |ob| ob['insert'] }
+        obsv_arr.join('').gsub(/\s+/, '').blank?
+      end
+
       def obsv_tlc_break_delta
-        return [] if obj.tlc_solvents.blank?
+        return [] if obsv_blank && tlc_delta.blank?
         [{"insert"=>"\n"}]
       end
 
