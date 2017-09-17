@@ -189,11 +189,12 @@ module Chemotion
 
       desc 'delete an archive'
       params do
-        requires :archive_id, type: Integer
+        requires :id, type: Integer
       end
-      delete do
-        archive = current_user.reports.find(params[:archive_id])
-        return params[:archive_id] if archive.destroy
+      route_param :id do
+        delete do
+          current_user.reports.find(params[:id]).destroy!
+        end
       end
     end
 

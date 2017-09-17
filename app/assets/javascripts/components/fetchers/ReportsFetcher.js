@@ -20,19 +20,12 @@ export default class ReportsFetcher {
   }
 
   static deleteArchive(archive_id) {
-    let promise = fetch('/api/v1/archives/', {
+    let promise = fetch(`/api/v1/archives/${archive_id}`, {
         credentials: 'same-origin',
         method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ archive_id: archive_id }),
       })
       .then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
+        if (response.status == 200) {return archive_id }
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

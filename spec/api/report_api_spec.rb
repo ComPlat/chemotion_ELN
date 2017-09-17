@@ -106,16 +106,16 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'Delete /api/v1/archives/' do
-      let!(:a_mine) { user.reports.create }
-      let!(:a_others) { other.reports.create }
+    #  let!(:a_mine) { user.reports.create }
+    #  let!(:a_others) { other.reports.create }
 
       context 'my archive' do
         before do
-          delete '/api/v1/archives/', { archive_id: a_mine.id }
+          delete "/api/v1/archives/#{rp1.id}"
         end
 
         it 'delete the archive' do
-          archive = Report.find_by(id: a_mine.id)
+          archive = Report.find_by(id: rp1.id)
           expect(response.status).to eq 200
           expect(archive).to be_nil
         end
@@ -123,11 +123,11 @@ describe Chemotion::ReportAPI do
 
       context 'other\'s archive' do
         before do
-          delete '/api/v1/archives/', { archive_id: a_others.id }
+          delete "/api/v1/archives/#{rp_others.id}"
         end
 
         it 'can not delete the archive' do
-          archive = Report.find_by(id: a_others.id)
+          archive = Report.find_by(id: rp_others.id)
           expect(response.status).to eq 404
           expect(archive).not_to be_nil
         end
