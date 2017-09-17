@@ -105,6 +105,35 @@ describe Chemotion::ReportAPI do
       end
     end
 
+    describe 'Delete /api/v1/archives/' do
+    #  let!(:a_mine) { user.reports.create }
+    #  let!(:a_others) { other.reports.create }
+
+      context 'my archive' do
+        before do
+          delete "/api/v1/archives/#{rp1.id}"
+        end
+
+        it 'delete the archive' do
+          archive = Report.find_by(id: rp1.id)
+          expect(response.status).to eq 200
+          expect(archive).to be_nil
+        end
+      end
+
+      context 'other\'s archive' do
+        before do
+          delete "/api/v1/archives/#{rp_others.id}"
+        end
+
+        it 'can not delete the archive' do
+          archive = Report.find_by(id: rp_others.id)
+          expect(response.status).to eq 404
+          expect(archive).not_to be_nil
+        end
+      end
+    end
+
     describe 'POST /api/v1/reports' do
       let(:fileName) { 'ELN' }
       let(:params) do

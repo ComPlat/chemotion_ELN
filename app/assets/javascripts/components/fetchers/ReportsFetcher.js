@@ -19,6 +19,20 @@ export default class ReportsFetcher {
     return promise;
   }
 
+  static deleteArchive(archive_id) {
+    let promise = fetch(`/api/v1/archives/${archive_id}`, {
+        credentials: 'same-origin',
+        method: 'DELETE',
+      })
+      .then((response) => {
+        if (response.status == 200) {return archive_id }
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
   static fetchDownloadable(ids) {
     let promise = fetch('/api/v1/archives/downloadable/', {
         credentials: 'same-origin',

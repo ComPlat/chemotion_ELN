@@ -53,6 +53,8 @@ const title = (archive) => {
         {cloneBtn(archive)}
         <span>&nbsp;</span>
         {downloadStatusBtn(archive.downloadable, archive.id)}
+        <span>&nbsp;</span>
+        {deleteBtn(archive)}
       </div>
     </div>
   );
@@ -88,6 +90,33 @@ const downloadStatusBtn = (downloadable, archiveId) => {
   );
 
   return downloadable ? downloadBtn : processBtn;
+};
+
+const clickToDelete = (e, archive) => {
+  e.stopPropagation();
+  if(confirm('Are you sure to delete this archive?')) {
+    ReportActions.delete(archive);
+  }
+};
+
+const deleteBtn = (archive) => {
+  const onClickToDelete = e => clickToDelete(e, archive);
+  const downloadable = archive.downloadable;
+  const deleteTP = (
+    <Tooltip id="delete-tp">
+      Delete this archive.
+    </Tooltip>
+  );
+
+  const btn = (
+    <OverlayTrigger placement="top" overlay={deleteTP}>
+      <Button bsStyle="danger" bsSize="small" onClick={onClickToDelete}>
+        <i className="fa fa-times" />
+      </Button>
+    </OverlayTrigger>
+  );
+
+  return downloadable ? btn : null;
 };
 
 const clickToClone = (e, archive) => {

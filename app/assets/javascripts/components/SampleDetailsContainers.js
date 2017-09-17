@@ -28,6 +28,8 @@ export default class SampleDetailsContainers extends Component {
     this.toggleMode = this.toggleMode.bind(this);
     this.isEqCId = this.isEqCId.bind(this);
     this.indexedContainers = this.indexedContainers.bind(this);
+    this.buildEmptyAnalyContainer = this.buildEmptyAnalyContainer.bind(this);
+    this.sortedContainers = this.sortedContainers.bind(this);
   }
 
   componentDidMount() {
@@ -65,26 +67,39 @@ export default class SampleDetailsContainers extends Component {
 
   handleAdd() {
     const { sample } = this.state;
-    const container = Container.buildEmpty();
-    container.container_type = "analysis";
-    container.extended_metadata.content = { "ops": [{ "insert": "" }] }
-    container.extended_metadata.index = -1;
-    sample.analysesContainers()[0].children.push(container);
+    const newContainer = this.buildEmptyAnalyContainer();
 
+    const sortedConts = this.sortedContainers(sample);
+    const newSortConts = [...sortedConts, newContainer];
+    const newIndexedConts = this.indexedContainers(newSortConts);
+
+    sample.analysesContainers()[0].children = newIndexedConts;
     this.props.setState({ sample },
-      this.handleAccordionOpen(container.id),
+      this.handleAccordionOpen(newContainer.id),
     );
   }
 
   handleMove(source, target) {
     const { sample } = this.state;
-    const containers = sample.analysesContainers()[0].children;
-    const sortedConts = ArrayUtils.sortArrByIndex(containers);
-    const newContainers = reOrderArr(source, target, this.isEqCId, sortedConts);
-    const newIndexedConts = this.indexedContainers(newContainers);
+
+    const sortedConts = this.sortedContainers(sample);
+    const newSortConts = reOrderArr(source, target, this.isEqCId, sortedConts);
+    const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
     this.props.setState({ sample });
+  }
+
+  sortedContainers(sample) {
+    const containers = sample.analysesContainers()[0].children;
+    return ArrayUtils.sortArrByIndex(containers);
+  }
+
+  buildEmptyAnalyContainer() {
+    const newContainer = Container.buildEmpty();
+    newContainer.container_type = "analysis";
+    newContainer.extended_metadata.content = { "ops": [{ "insert": "" }] };
+    return newContainer;
   }
 
   isEqCId(container, tagEl) {

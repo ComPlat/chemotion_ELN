@@ -58,7 +58,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
     )
     con = r1.products[0].container.children[0].children[0]
     con.extended_metadata["report"] = "true"
-    con.extended_metadata["content"] = "{\"ops\": [{\"insert\": \"#{correct_content}\"}]}"
+    con.extended_metadata["content"] = "{\"ops\": [{\"insert\": \"  \\n\"}, {\"insert\": \"  #{correct_content}  \"}, {\"insert\": \"  ; \\n\"}]}"
     con.save!
 
     ElementReportPermissionProxy.new(user, r1, [user.id]).serialized
