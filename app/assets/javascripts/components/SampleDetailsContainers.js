@@ -75,7 +75,7 @@ export default class SampleDetailsContainers extends Component {
 
     sample.analysesContainers()[0].children = newIndexedConts;
     this.props.setState({ sample },
-      this.handleAccordionOpen(container.id),
+      this.handleAccordionOpen(newContainer.id),
     );
   }
 
