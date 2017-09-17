@@ -23,33 +23,63 @@ module Reporter
 
       def merge_items(init, items)
         items.reduce(init) do |sum, i|
-          ops =
-            if i["extended_metadata"] && i["extended_metadata"]["content"]
-              JSON.parse(i["extended_metadata"]["content"])["ops"]
-            elsif i[:extended_metadata] && i[:extended_metadata][:content]
-              JSON.parse(i[:extended_metadata][:content])["ops"]
-            else
-              []
-            end
-
+          ops = parse_ops(i)
           sum + ops
         end
       end
 
-      def merge_items_symbols(init, items, gap_symbol)
+      def merge_items_symbols(init, items, symbol)
         items.reduce(init) do |sum, i|
-          ops =
-            if i['extended_metadata'] && i['extended_metadata']['content']
-              JSON.parse(i['extended_metadata']['content'])['ops']
-            elsif i[:extended_metadata] && i[:extended_metadata][:content]
-              JSON.parse(i[:extended_metadata][:content])['ops']
-            else
-              []
-            end
+          ops = parse_ops(i)
+          ops = rm_head_tail_space(ops)
+          return sum if ops.blank?
 
-          last = ops.last['insert'].gsub(/\s*[,.;]*\s*$/, '')
-          ops = ops[0..-2] + [{ 'insert' => last }, { 'insert' => gap_symbol }]
+          ops = ops_tail_with_symbol(ops, symbol)
           sum + ops
+        end
+      end
+
+      def ops_tail_with_symbol(ops, symbol)
+        ops[0..-2] +
+          [{ 'insert' => ops.last['insert'] }, { 'insert' => symbol }]
+      end
+
+      def rm_head_tail_space(ops = [])
+        ops = rm_head_space(ops)
+        rm_tail_space(ops)
+      end
+
+      def rm_head_space(ops = [])
+        head = nil
+        ops.each do |op|
+          head = op['insert'].gsub(/^\s+/, '')
+          break if head.present?
+          ops = ops[1..-1]
+        end
+        return [] if ops.blank?
+        ops[0]['insert'] = head
+        ops
+      end
+
+      def rm_tail_space(ops = [])
+        tail = nil
+        ops.reverse.each do |op|
+          tail = op['insert'].gsub(/\s*[,.;]*\s*$/, '')
+          break if tail.present?
+          ops = ops[0..-2]
+        end
+        return [] if ops.blank?
+        ops[-1]['insert'] = tail
+        ops
+      end
+
+      def parse_ops(i)
+        if i['extended_metadata'] && i['extended_metadata']['content']
+          JSON.parse(i['extended_metadata']['content'])['ops']
+        elsif i[:extended_metadata] && i[:extended_metadata][:content]
+          JSON.parse(i[:extended_metadata][:content])['ops']
+        else
+          []
         end
       end
 

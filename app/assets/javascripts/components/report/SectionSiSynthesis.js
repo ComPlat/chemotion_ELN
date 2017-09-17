@@ -153,12 +153,51 @@ const tlcContent = (el) => {
   return content;
 }
 
+const rmHeadSpace = (content) => {
+  let els = content;
+  let head = null;
+  els.some((el) => {
+    head = el.insert.replace(/^\s+/, '');
+    if (!head) els = [...els.slice(1)];
+    return head;
+  });
+  if (els.length === 0 || !head) return [];
+  els[0].insert = head;
+
+  return els;
+};
+
+const rmTailSpace = (content) => {
+  let els = content;
+  let tail = null;
+  els.reverse().some((el) => {
+    tail = el.insert.replace(/\s*[,.;]*\s*$/, '');
+    if (!tail) els = [...els.slice(1)];
+    return tail;
+  });
+  if (els.length === 0 || !tail) return [];
+  els.reverse();
+  els[els.length - 1].insert = tail;
+
+  return els;
+};
+
+const opsTailWithSymbol = (els, symbol) => {
+  return [...els.slice(0, -1),
+    { insert: els.slice(-1)[0].insert },
+    { insert: symbol }
+  ];
+};
+
 const endingSymbol = (content, symbol) => {
   if (content.length === 0) return [];
-  const lastEl = content[content.length - 1];
-  const lastIs = lastEl.insert.replace(/\s*[,.;]*\s*$/, '');
 
-  return [...content.slice(0, -1), { insert: lastIs }, { insert: symbol }];
+  let els = rmHeadSpace(content);
+  els = rmTailSpace(els);
+
+  if (els.length === 0) return [];
+
+  return opsTailWithSymbol(els, symbol);
 };
 
 const analysesContent = (products) => {
@@ -191,8 +230,13 @@ const dangContent = (el) => {
   });
   content = content.slice(0,-1);
   content = rmOpsRedundantSpaceBreak(content);
-  return frontBreak(content);
+  return content;
 }
+
+const DangerBlock = ({el}) => {
+  const block = dangContent(el);
+  return <QuillViewer value={{ops: block}} />
+};
 
 const ContentBlock = ({el}) => {
   const synName = synNameContent(el);
@@ -200,9 +244,8 @@ const ContentBlock = ({el}) => {
   const materials = materailsContent(el);
   const obsvTlc = obsvTlcContent(el);
   const analyses = analysesContent(el.products);
-  const dangerous = dangContent(el);
   const block = [...synName, ...desc, ...materials,
-                  ...obsvTlc, ...analyses, ...dangerous];
+                  ...obsvTlc, ...analyses];
   return <QuillViewer value={{ops: block}} />
 }
 
@@ -229,6 +272,7 @@ const SynthesisRow = ({el, counter, configs}) => {
       />
       <ProductsInfo products={el.products} />
       <ContentBlock el={el} />
+      <DangerBlock el={el} />
     </div>
   );
 }
