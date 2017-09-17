@@ -56,6 +56,7 @@ class ReportStore {
       handleUpdateProcessQueue: ReportActions.updateProcessQueue,
       handleUpdateTemplate: ReportActions.updateTemplate,
       handleClone: ReportActions.clone,
+      handleDelete: ReportActions.delete,
       hadnleRemove: ReportActions.remove,
       hadnleReset: ReportActions.reset,
     })
@@ -389,6 +390,14 @@ class ReportStore {
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: [],
     });
+  }
+
+  handleDelete(deleted_id) {
+    const newArchives = this.archives.map((a) => {
+      if (a.id !== deleted_id) return a;
+    }).filter(r => r != null);
+
+    this.setState({ archives: newArchives });
   }
 }
 

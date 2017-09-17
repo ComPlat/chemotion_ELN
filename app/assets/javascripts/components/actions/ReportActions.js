@@ -118,6 +118,17 @@ class ReportActions {
     };
   }
 
+  delete(archive) {
+    return (dispatch) => {
+      ReportsFetcher.deleteArchive(archive.id)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
   remove(target) {
     return target;
   }

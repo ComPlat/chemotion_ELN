@@ -19,6 +19,27 @@ export default class ReportsFetcher {
     return promise;
   }
 
+  static deleteArchive(archive_id) {
+    let promise = fetch('/api/v1/archives/', {
+        credentials: 'same-origin',
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ archive_id: archive_id }),
+      })
+      .then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
   static fetchDownloadable(ids) {
     let promise = fetch('/api/v1/archives/downloadable/', {
         credentials: 'same-origin',

@@ -186,6 +186,15 @@ module Chemotion
           params[:ids].include?(r.id) && r.file_path.present?
         end
       end
+
+      desc 'delete an archive'
+      params do
+        requires :archive_id, type: Integer
+      end
+      delete do
+        archive = current_user.reports.find(params[:archive_id])
+        return params[:archive_id] if archive.destroy
+      end
     end
 
     desc 'returns a created report'
