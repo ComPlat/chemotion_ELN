@@ -7,6 +7,12 @@ import ArrayUtils from '../utils/ArrayUtils';
 import { Alphabet } from '../utils/ElementUtils';
 import _ from 'lodash';
 
+const insertBlank = (target) => {
+  if(target.length === 0) return true;
+  const content = target.map(t => t.insert).join('').replace(/\s+/, '');
+  return !content;
+};
+
 const Title = ({el, counter}) => {
   let iupacs = el.products.map( (p, i) => {
     const key1 = `${i}-text`;
@@ -140,6 +146,7 @@ const obsvTlcContent = (el) => {
   content = [...el.observation.ops, ...tlcContent(el)];
   content = rmOpsRedundantSpaceBreak(content);
   if(content.length === 0) return [];
+  if(insertBlank) return [];
   return frontBreak(content);
 }
 
