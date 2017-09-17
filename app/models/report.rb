@@ -11,6 +11,8 @@ class Report < ActiveRecord::Base
 
   default_scope { includes(:reports_users) }
 
+  after_destroy :delete_archive
+
   def create_docx
     template = self.template
     template_path = self.class.docx_template_path(template)
@@ -103,5 +105,10 @@ class Report < ActiveRecord::Base
       page_break: true,
       whole_diagram: true,
     }
+  end
+
+  def delete_archive
+    full_file_path = File.join('public', 'docx', file_name + '.docx')
+    FileUtils.rm(full_file_path, force: true) if File.exist?(full_file_path)
   end
 end
