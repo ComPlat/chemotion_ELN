@@ -530,7 +530,7 @@ export default class Sample extends Element {
           return amount_g;
         case 'l': {
           if (this.has_molarity) {
-            return amount_g / this.molarity_value;
+            return this.amount_mol * this.molarity_value;
           } else if (this.has_density) {
             const density = this.density;
             return amount_g / (density * 1000);
