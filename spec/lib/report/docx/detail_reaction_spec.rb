@@ -39,6 +39,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let!(:s3) { create(:sample, name: 'Sample 3') }
   let!(:s4) { create(:sample, name: 'Solvent') }
   let!(:correct_content) { "analysis contents (true for report)" }
+  let!(:non_breaking_space) { " " }
   let!(:r1_serialized) do
     CollectionsReaction.create!(reaction: r1, collection: c1)
     CollectionsSample.create!(sample: s1, collection: c1)
@@ -58,7 +59,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
     )
     con = r1.products[0].container.children[0].children[0]
     con.extended_metadata["report"] = "true"
-    con.extended_metadata["content"] = "{\"ops\": [{\"insert\": \"  \\n\"}, {\"insert\": \"  #{correct_content}  \"}, {\"insert\": \"  ; \\n\"}]}"
+    con.extended_metadata["content"] = "{\"ops\": [{\"insert\": \"  \\n\"}, {\"insert\": \"  #{correct_content} #{non_breaking_space} \"}, {\"insert\": \" #{non_breaking_space} ;#{non_breaking_space} \\n\"}]}"
     con.save!
 
     ElementReportPermissionProxy.new(user, r1, [user.id]).serialized
