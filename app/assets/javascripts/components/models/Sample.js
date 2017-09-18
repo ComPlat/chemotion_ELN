@@ -508,10 +508,10 @@ export default class Sample extends Element {
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
-  //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
-  //Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
-  //Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
-  //Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
+  // Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
+  // Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
+  // Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
+  // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
     if(this.contains_residues) {
@@ -530,7 +530,7 @@ export default class Sample extends Element {
           return amount_g;
         case 'l': {
           if (this.has_molarity) {
-            return amount_g / this.molarity_value;
+            return this.amount_mol * this.molarity_value;
           } else if (this.has_density) {
             const density = this.density;
             return amount_g / (density * 1000);
