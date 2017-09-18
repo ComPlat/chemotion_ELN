@@ -34,14 +34,12 @@ module Reporter
           ops = rm_head_tail_space(ops)
           return sum if ops.blank?
 
-          ops = ops_tail_with_symbol(ops, symbol)
-          sum + ops
+          sum + ops_tail_with_symbol(ops, symbol)
         end
       end
 
       def ops_tail_with_symbol(ops, symbol)
-        ops[0..-2] +
-          [{ 'insert' => ops.last['insert'] }, { 'insert' => symbol }]
+        ops + [{ 'insert' => symbol }]
       end
 
       def rm_head_tail_space(ops = [])

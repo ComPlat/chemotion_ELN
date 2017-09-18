@@ -190,10 +190,7 @@ const rmTailSpace = (content) => {
 };
 
 const opsTailWithSymbol = (els, symbol) => {
-  return [...els.slice(0, -1),
-    { insert: els.slice(-1)[0].insert },
-    { insert: symbol }
-  ];
+  return [...els, { insert: symbol }];
 };
 
 const endingSymbol = (content, symbol) => {

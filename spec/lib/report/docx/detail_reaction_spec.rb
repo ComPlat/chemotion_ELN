@@ -202,7 +202,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"italic"=>true}, "insert"=>"R"},
           {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{rf} (#{t_sol})."}, {"insert"=>"\n"},
-          {"attributes"=>{"script"=>"super"}, "insert"=>"-1"},
+          {"attributes"=>{"color"=>"black", "script"=>"super"}, "insert"=>"-1"},
           {"insert"=>correct_content},
           {"insert"=>"."},
           {"insert"=>"\n"},
