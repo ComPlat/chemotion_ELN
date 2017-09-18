@@ -52,7 +52,7 @@ module Reporter
       def rm_head_space(ops = [])
         head = nil
         ops.each do |op|
-          head = op['insert'].gsub(/^\s+/, '')
+          head = op['insert'].gsub(/^[\u00A0\s]+/, '')
           break if head.present?
           ops = ops[1..-1]
         end
@@ -64,7 +64,7 @@ module Reporter
       def rm_tail_space(ops = [])
         tail = nil
         ops.reverse.each do |op|
-          tail = op['insert'].gsub(/\s*[,.;]*\s*$/, '')
+          tail = op['insert'].gsub(/[\u00A0\s]*[,.;]*[\u00A0\s]*$/, '')
           break if tail.present?
           ops = ops[0..-2]
         end
@@ -85,7 +85,7 @@ module Reporter
 
       def remove_redundant_space_break(ops)
         ops.map.with_index do |op, i|
-          op["insert"] = op["insert"].gsub(/\s\s+/, " ")
+          op["insert"] = op["insert"].gsub(/[\u00A0\s]{2,}/, " ")
           op["insert"] = op["insert"].lstrip if i == 0
           op["insert"] = op["insert"].gsub(/\n/, " ")
           op
