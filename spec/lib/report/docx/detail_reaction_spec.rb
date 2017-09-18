@@ -8,7 +8,8 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let(:rf)    { 'correct tlc_rf' }
   let(:t_sol) { 'correct tlc_solvents' }
   let(:t_des) { 'correct tlc_description' }
-  let(:obs)   { { "ops" => [{"insert" => "correct observation" }] } }
+  let!(:correct_obsv) { "correct observation" }
+  let(:obs)   { { "ops" => [{"insert" => "#{correct_obsv}\n" }] } }
   let(:des)   { { "ops" => [{"insert" => "correct description" }] } }
   let(:prev_index) { 5 }
   let(:equiv) { 0.88 }
@@ -197,7 +198,8 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
           {"insert"=>"."},
           {"insert"=>"\n"},
-          {"insert"=>"correct observation"},
+          {"insert"=>"#{correct_obsv}"},
+          {"insert"=>"."},
           {"insert"=>" "},
           {"attributes"=>{"italic"=>true}, "insert"=>"R"},
           {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
