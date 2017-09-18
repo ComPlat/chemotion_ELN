@@ -377,9 +377,8 @@ module Reporter
           delta = merge_items_symbols(delta, sorted_analyses, '; ')
         end
         return [] if delta.length.zero?
-        result = remove_redundant_space_break(delta)[0..-2] +
+        remove_redundant_space_break(delta)[0..-2] +
           [{ 'insert' => '.' }, { 'insert' => "\n" }]
-        sanitize_attributes(result)
       end
 
       def materials_table_delta
@@ -462,13 +461,6 @@ module Reporter
         alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         counter = counter >= 1 && counter <=26 ? counter - 1 : 25
         alphabets[counter]
-      end
-
-      def sanitize_attributes(content)
-        content.map do |c|
-          c['attributes'].delete('color') if c['attributes']
-          c
-        end
       end
     end
   end
