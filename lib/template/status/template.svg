@@ -8,7 +8,13 @@
   <text text-anchor="middle" x="65" y="46" font-size="14" id="svg_1" fill="#ffffff">Planned</text>
   <rect ry="4" rx="4" fill="#d9534f" stroke-width="5" x="10" y="60" width="110" height="22" id="svg_2"/>
   <text text-anchor="middle" x="65" y="76" font-size="14" id="svg_1" fill="#ffffff">Not successful</text>
-  <rect ry="4" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2" x="10" y="90" width="110" height="22" id="svg_2"/>
-  <text text-anchor="middle" x="65" y="106" font-size="14" id="svg_1" fill="#00000">General Procedure</text>
+  <rect ry="4" rx="4" fill="#428bca" stroke-width="5" x="10" y="90" width="110" height="22" id="svg_2"/>
+  <text text-anchor="middle" x="65" y="106" font-size="14" id="svg_1" fill="#ffffff">Done</text>
+  <rect ry="4" rx="4" fill="#ffffff" stroke="#000000" stroke-width="2" x="10" y="120" width="110" height="22" id="svg_2"/>
+  <text text-anchor="middle" x="65" y="136" font-size="14" id="svg_1" fill="#00000">General Procedure</text>
+  <rect ry="4" rx="4" fill="#c6e2ff" stroke="#000000" stroke-width="2" x="10" y="150" width="110" height="22" id="svg_2"/>
+  <text text-anchor="middle" x="65" y="166" font-size="14" id="svg_1" fill="#00000">Running</text>
+  <rect ry="4" rx="4" fill="#f5f5dc" stroke="#000000" stroke-width="2" x="10" y="180" width="110" height="22" id="svg_2"/>
+  <text text-anchor="middle" x="65" y="196" font-size="14" id="svg_1" fill="#00000">Analyses Pending</text>
  </g>
 </svg>
