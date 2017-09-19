@@ -372,6 +372,22 @@ ActiveRecord::Schema.define(version: 20170908105401) do
   add_index "literatures", ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree
   add_index "literatures", ["reaction_id"], name: "index_literatures_on_reaction_id", using: :btree
 
+  create_table "molecule_names", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "user_id"
+    t.text     "description"
+    t.string   "name",        null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "molecule_names", ["deleted_at"], name: "index_molecule_names_on_deleted_at", using: :btree
+  add_index "molecule_names", ["molecule_id"], name: "index_molecule_names_on_molecule_id", using: :btree
+  add_index "molecule_names", ["name"], name: "index_molecule_names_on_name", using: :btree
+  add_index "molecule_names", ["user_id", "molecule_id"], name: "index_molecule_names_on_user_id_and_molecule_id", using: :btree
+  add_index "molecule_names", ["user_id"], name: "index_molecule_names_on_user_id", using: :btree
+
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
     t.string   "inchistring"
@@ -579,11 +595,13 @@ ActiveRecord::Schema.define(version: 20170908105401) do
     t.jsonb    "xref",                default: {}
     t.float    "molarity_value",      default: 0.0
     t.string   "molarity_unit",       default: "M"
+    t.integer  "molecule_name_id"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
   add_index "samples", ["identifier"], name: "index_samples_on_identifier", using: :btree
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
+  add_index "samples", ["molecule_name_id"], name: "index_samples_on_molecule_name_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
   create_table "screens", force: :cascade do |t|

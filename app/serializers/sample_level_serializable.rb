@@ -35,6 +35,8 @@ module SampleLevelSerializable
             false
           when :container
             nil
+          when :molecule_name_hash
+            {}
           else
             '***'
           end
