@@ -4,7 +4,9 @@ namespace :data do
     Molecule.find_each(&:create_molecule_names)
 
     Sample.with_deleted.find_each do |s|
+      next if s.molecule_name_id
       m = s.molecule
+      next unless m
       mns = m.molecule_names
       origin = m.iupac_name || m.sum_formular
       if origin && mns.present?
