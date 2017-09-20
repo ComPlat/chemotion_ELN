@@ -169,6 +169,12 @@ module Reporter
             Rails.root.join("lib", "template", "status", "planned.png")
           when "Not Successful" then
             Rails.root.join("lib", "template", "status", "not_successful.png")
+          when "Done" then
+            Rails.root.join("lib", "template", "status", "done.png")
+          when "Running" then
+            Rails.root.join("lib", "template", "status", "running.png")
+          when "Analyses Pending" then
+            Rails.root.join("lib", "template", "status", "analyses_pending.png")
           else
             Rails.root.join("lib", "template", "status", "blank.png")
         end
