@@ -160,7 +160,7 @@ group :development, :test do
   # Remove all assets requests
   gem 'quiet_assets'
 
-  gem 'capistrano', '3.4.1'
+  gem 'capistrano', '3.9.1'
   gem 'capistrano-bundler'
   gem 'capistrano-npm'
   gem 'capistrano-nvm', require: false
