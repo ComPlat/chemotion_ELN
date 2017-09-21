@@ -91,9 +91,4 @@ Rails.application.configure do
   }
 
   config.browserify_rails.commandline_options = "-t [ babelify --presets [ es2015 react ] --plugins [ transform-object-rest-spread ] ]  -g uglifyify  -p bundle-collapser/plugin "
-  unless defined?(Rails::Console)
-    config.after_initialize do
-      AppRestartMailJob.set(wait: 1.minute).perform_later if Delayed::Job.where("handler like ?", "%AppRestartMailJob%").empty?
-    end
-  end
 end
