@@ -167,6 +167,7 @@ group :development, :test do
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
   # gem 'capistrano3-delayed-job'
+  gem 'slackistrano'
 end
 
 group :test do

@@ -486,6 +486,8 @@ GEM
     skinny (0.2.4)
       eventmachine (~> 1.0.0)
       thin (>= 1.5, < 1.7)
+    slackistrano (3.8.1)
+      capistrano (>= 3.8.1)
     spring (1.7.1)
     sprite-factory (1.7.1)
     sprockets (3.7.1)
@@ -630,6 +632,7 @@ DEPENDENCIES
   sass-rails (~> 5.0, >= 5.0.6)
   sdoc (~> 0.4.0)
   selenium-webdriver (~> 3.0.5)
+  slackistrano
   spring
   stackprof
   swot
