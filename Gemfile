@@ -161,13 +161,14 @@ group :development, :test do
   # Remove all assets requests
   gem 'quiet_assets'
 
-  gem 'capistrano', '3.4.1'
+  gem 'capistrano', '3.9.1'
   gem 'capistrano-bundler'
   gem 'capistrano-npm'
   gem 'capistrano-nvm', require: false
   gem 'capistrano-rails'
   gem 'capistrano-rvm'
   # gem 'capistrano3-delayed-job'
+  gem 'slackistrano'
 end
 
 group :test do
