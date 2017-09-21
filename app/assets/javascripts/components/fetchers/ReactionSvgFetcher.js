@@ -16,9 +16,8 @@ export default class ReactionSvgFetcher {
         solvents
       })
     }).then(response => {
-      return response.json()
-    })
-      .catch(errorMessage => {
+      return response.status == 201 ? response.json() : {}
+    }).catch(errorMessage => {
         console.log(errorMessage);
       });
 
