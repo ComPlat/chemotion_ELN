@@ -68,6 +68,7 @@ class Reaction < ActiveRecord::Base
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
+  accepts_nested_attributes_for :collections_reactions
 
   has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
