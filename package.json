@@ -48,6 +48,7 @@
     "react-stickydiv": "^3.4.19",
     "react-svg-file-zoom-pan": "0.0.6",
     "react-svg-inline": "^1.2.0",
+    "react-treeview": "0.4.7",
     "react-ui-tree": "3.0.0",
     "sha256": "^0.2.0",
     "uuid": "^2.0.2",
