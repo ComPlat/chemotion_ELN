@@ -47,18 +47,31 @@
   margin-bottom: 10px;
 }
 
-#export-import {
-    list-style-type: none;
-    -moz-column-count: 4;
-    -moz-column-gap: 20px;
-    -webkit-column-count: 4;
-    -webkit-column-gap: 20px;
-    column-count: 4;
-    column-gap: 20px;
+@mixin check-box-list-common($i) {
+  list-style-type: none;
+  -moz-column-gap: 20px;
+  -webkit-column-gap: 20px;
+  column-gap: 20px;
+  -moz-column-count: $i;
+  -webkit-column-count: $i;
+  column-count: $i;
 
 }
+.check-box-list {
+  @include check-box-list-common(4);
+}
 
+.check-box-list-1 {
+  @include check-box-list-common(1);
+}
 
+.check-box-list-2 {
+  @include check-box-list-common(2);
+}
+
+.check-box-list-3 {
+  @include check-box-list-common(3);
+}
 
 .select-assign-collection {
   .separator {
