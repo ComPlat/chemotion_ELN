@@ -1,7 +1,8 @@
 import React from 'react'
 import {Table} from 'react-bootstrap'
+import PropTypes from 'prop-types'
 
-const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
+const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll, customClass = 'check-box-list' , customStyle = {}}) => {
   let checkBoxs = items.map( (setting, i) => {
     const {text, checked} = setting
     return(
@@ -11,7 +12,10 @@ const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
                   toggleCheckbox={toggleCheckbox.bind(null, text, checked)} />
     )
   })
-
+  const lgth = items && items.length
+  if (customClass == 'check-box-list') {
+    customClass =  lgth && lgth < 4 ? `check-box-list-${lgth}` : 'check-box-list'
+  }
   return (
     <Table striped>
       <thead>
@@ -31,7 +35,7 @@ const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
       <tbody>
         <tr >
           <td>
-            <ul id="export-import">
+            <ul className={customClass} style={customStyle}>
               {checkBoxs}
             </ul>
           </td>
@@ -41,11 +45,12 @@ const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll}) => {
   )
 }
 CheckBoxs.propTypes = {
-  items: React.PropTypes.array,
-  checkedAll: React.PropTypes.bool,
-  toggleCheckAll: React.PropTypes.func,
-  toggleCheckbox: React.PropTypes.func,
-
+  items: PropTypes.array,
+  checkedAll: PropTypes.bool,
+  toggleCheckAll: PropTypes.func,
+  toggleCheckbox: PropTypes.func,
+  customClass: PropTypes.string,
+  customStyle: PropTypes.object,
 }
 
 const CheckBox = ({text, checked, toggleCheckbox}) => {
@@ -60,10 +65,11 @@ const CheckBox = ({text, checked, toggleCheckbox}) => {
 
   )
 }
+
 CheckBox.propTypes = {
-  text: React.PropTypes.string,
-  checked: React.PropTypes.bool,
-  toggleCheckbox: React.PropTypes.func,
+  text: PropTypes.string,
+  checked: PropTypes.bool,
+  toggleCheckbox: PropTypes.func,
 }
 
 export default CheckBoxs
