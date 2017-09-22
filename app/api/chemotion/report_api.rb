@@ -13,15 +13,15 @@ module Chemotion
 
       def excluded_field
         %w(
-          id molecule_id created_by deleted_at
-          user_id fingerprint_id sample_svg_file xref
+          id molecule_id created_by deleted_at identifier molecule_name_id
+          user_id fingerprint_id sample_svg_file xref impurities ancestry
         )
       end
 
       def included_field
         %w(
-          molecule.cano_smiles molecule.sum_formular
-          molecule.inchistring molecule.molecular_weight
+          molecule.cano_smiles molecule.sum_formular molecule_name
+          molecule.inchistring molecule.molecular_weight molecule.inchikey
         )
       end
 
@@ -31,11 +31,11 @@ module Chemotion
         elements = "#{type}s".to_sym
         if checkedAll
           Collection.find(currentCollection)
-                    .send(elements).where.not(id: uncheckedIds)
+                    .send(elements).where.not(id: uncheckedIds).order(updated_at: :desc)
         else
           Collection.find(currentCollection)
                     .send(elements).where(id: checkedIds)
-                    .order("position(samples.id::text in '#{checkedIds}')")
+                    .order("position(#{type}s.id::text in '#{checkedIds}')")
         end
       end
 
@@ -69,7 +69,7 @@ module Chemotion
         requires :uncheckedIds, type: Array
         requires :checkedAll, type: Boolean
         requires :currentCollection, type: Integer
-        requires :removedColumns, type: Array
+        requires :removedColumns, type: Array[String]
         requires :exportType, type: Integer
       end
       post :export_samples_from_selections do
@@ -101,7 +101,7 @@ module Chemotion
           type, checkedAll, checkedIds, uncheckedIds, currentCollection
         )
         samples = if type == 'sample'
-                    elements.includes(:molecule)
+                    elements.includes([:molecule,:molecule_name])
                   elsif type == 'reaction'
                     elements.map { |r|
                       r.starting_materials + r.reactants + r.products
