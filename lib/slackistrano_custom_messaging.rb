@@ -18,8 +18,14 @@ if defined?(Slackistrano::Messaging)
       #  end
 
       def payload_for_updating
+        t =  <<-TXT
+          #{member_links}\n current revision:  #{fetch(:git_current_rev)}\n
+          base revision: <#{fetch(:git_url)} | #{fetch(:git_base_rev)}>\n
+          On server #{server_hostnames} #{super[:text]} \n
+          ```#{fetch(:git_log_message)}```
+          TXT
         {
-          text: "#{member_links}: On server #{server_hostnames} " + super[:text]
+          text: t
         }
       end
 
@@ -82,14 +88,13 @@ if defined?(Slackistrano::Messaging)
 
        def server_hostnames
          roles(:web).map do |host|
-           "#{host.user}@#{host.hostname}"
+           # "#{host.user}@#{host.hostname}"
+           "#{host.hostname}"
          end.join(', ')
        end
 
        def member_links
-         fetch(:slack_members, nil)&.inject do |ms,m|
-            ms << "<@#{m}>"
-         end
+         fetch(:slack_members, nil)&.map { |m| "<@#{m}>" }.join(', ')
        end
      end
    end
