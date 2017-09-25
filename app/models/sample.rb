@@ -363,7 +363,7 @@ class Sample < ActiveRecord::Base
 
   def molecule_name_hash
     mn = molecule_name
-    mn ? { label: mn.name, value: mn.id } : {}
+    mn ? { label: mn.name, value: mn.id, desc: mn.description } : {}
   end
 
 private
