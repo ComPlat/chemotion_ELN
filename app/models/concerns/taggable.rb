@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+# Module for tag behaviour
 module Taggable
   extend ActiveSupport::Concern
 
@@ -8,78 +11,93 @@ module Taggable
   end
 
   def update_tag
-    self.tag = ElementTag.create unless self.tag
-    et = self.tag
-    return if et.destroyed?
+    self.tag = ElementTag.new unless tag
+    return if tag.destroyed?
+    tag.taggable_id = id
+    tag.taggable_type = self.class
+    tag.taggable_data = remove_blank_value(populate_taggable_data)
+    tag.save!
+  end
 
-    et.taggable_id = self.id
-    et.taggable_type = self.class
+  def remove_blank_value(hash)
+    hash.delete_if do |_, value| value.blank? end
+  end
 
-    # Populate Collections tag
-    collections = self.collections.where.not(label: 'All')
-    collection_labels = collections.map { |c|
-      collection_id =
-        if c.is_synchronized
-          SyncCollectionsUser.where(collection_id: c.id).first.id
-        else
-          c.id
-        end
+  def inchikey?
+    inchikey && !inchikey.to_s.empty?
+  end
 
+  def pubchem_check
+    inchikey? && tag.taggable_data&.fetch('pubchem_cid',nil)
+  end
+
+  def collection_id(c)
+    if c.is_synchronized
+      SyncCollectionsUser.where(collection_id: c.id).first.id
+    else
+      c.id
+    end
+  end
+
+  # Populate Collections tag
+  def collection_tag
+    collections.where.not(label: 'All').map { |c|
+      cid = collection_id(c)
       {
         name: c.label, is_shared: c.is_shared, user_id: c.user_id,
-        id: collection_id, shared_by_id: c.shared_by_id,
+        id: cid, shared_by_id: c.shared_by_id,
         is_synchronized: c.is_synchronized
       }
     }.uniq
+  end
 
-    # Populate PubChem tag
-    pubchem_cid = nil
-    if self.class.to_s === 'Molecule'
-       self.inchikey && !self.inchikey.to_s.empty? &&
-       (!self.tag.taggable_data || !self.tag.taggable_data["pubchem_cid"])
-      pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([self.inchikey]))
-      prop = pubchem_json.dig("PropertyTable", "Properties")
-      if prop && prop.first && prop.first["CID"] && Float(prop.first["CID"])
-        pubchem_cid = prop.first["CID"]
-      end
-    end
+  def reaction_tag
+    return nil unless self.class.to_s == 'Sample'
+    associated_reaction = [
+      reactions_as_starting_material,
+      reactions_as_product
+    ].flatten.compact.uniq
 
-    # Populate Sample - Reaction tag
-    reaction_id = nil
-    analyses = nil
+    associated_reaction.count.positive? ? associated_reaction.first.id : nil
+  end
 
-    if self.class.to_s === 'Sample'
-      associated_reaction = [
-        self.reactions_as_starting_material,
-        self.reactions_as_product
-      ].flatten.compact.uniq
+  def grouped_analyses
+    analyses.map(&:extended_metadata).map { |x| x.extract!('kind', 'status') }
+            .group_by { |x| x['status'] }
+  end
 
-      if associated_reaction.count > 0
-        reaction_id = associated_reaction.first.id
-      end
+  def count_by_kind(analyses)
+    analyses.group_by { |x| x['kind'] }.map { |k, v| [k, v.length] }.to_h
+  end
 
+  def analyses_tag
+    return nil unless self.class.to_s == 'Sample' && analyses.count.positive?
+    grouped_analyses.map { |key, val|
+      vv = count_by_kind(val)
+      kk = key.to_s.downcase
+      [kk, vv]
+    }.to_h
+  end
 
-      # Populate Sample - Analyses tag
-      if self.analyses.count > 0
-        group = self.analyses.map(&:extended_metadata)
-                    .map {|x| x.extract!("kind", "status") }
-                    .group_by{|x| x["status"]}
+  def pubchem_response_check(json)
+    prop = json.dig('PropertyTable', 'Properties')
+    return nil unless prop.class == Array
+    prop.first.dig('CID')
+  end
 
-        analyses = group.map { |key, val|
-          new_val = val.group_by{|x| x["kind"]}.map{|k, v| [k, v.length]}
-          [key.to_s.downcase, new_val.to_h]
-        }.to_h
-      end
-    end
+  def pubchem_tag
+    return nil unless self.class.to_s == 'Molecule'
+    return tag.taggable_data['pubchem_cid'] if pubchem_check
+    pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([inchikey]))
+    pubchem_response_check pubchem_json
+  end
 
-    et.taggable_data = {
-      collection_labels: collection_labels,
-      reaction_id: reaction_id,
-      analyses: analyses,
-      pubchem_cid: pubchem_cid,
+  def populate_taggable_data
+    {
+      collection_labels: collection_tag,
+      reaction_id: reaction_tag,
+      analyses: analyses_tag,
+      pubchem_cid: pubchem_tag,
     }
-    et.taggable_data.delete_if { |key, value| value.blank? }
-
-    et.save!
   end
 end
