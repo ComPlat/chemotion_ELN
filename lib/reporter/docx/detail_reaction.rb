@@ -438,7 +438,7 @@ module Reporter
 
       def sample_molecule_name_delta(sample)
         mnh = sample[:molecule_name_hash]
-        smn = mnh ? mnh[:label] : nil
+        smn = mnh && mnh[:desc] != 'sum_formular' ? mnh[:label] : nil
         iupac = sample[:molecule] ? sample[:molecule][:iupac_name] : nil
         if smn.present?
           [{ 'insert' => smn.to_s }]
