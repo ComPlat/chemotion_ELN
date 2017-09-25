@@ -7,7 +7,7 @@ import ArrayUtils from '../utils/ArrayUtils';
 import { Alphabet } from '../utils/ElementUtils';
 import _ from 'lodash';
 
-const insertBlank = (target) => {
+const onlyBlank = (target) => {
   if (target.length === 0) return true;
   const content = target.map(t => t.insert).join('').replace(/\s+/, '');
   return !content;
@@ -155,8 +155,7 @@ const obsvTlcContent = (el) => {
   let content = [];
   content = [...el.observation.ops, ...tlcContent(el)];
   content = rmOpsRedundantSpaceBreak(content);
-  if(content.length === 0) return [];
-  if(insertBlank) return [];
+  if (onlyBlank(content)) return [];
   return frontBreak(content);
 }
 
@@ -178,7 +177,7 @@ const rmHeadSpace = (content) => {
     if (!head) els = [...els.slice(1)];
     return head;
   });
-  if (els.length === 0 || !head) return [];
+  if (onlyBlank(els) || !head) return [];
   els[0].insert = head;
 
   return els;
@@ -192,7 +191,7 @@ const rmTailSpace = (content) => {
     if (!tail) els = [...els.slice(1)];
     return tail;
   });
-  if (els.length === 0 || !tail) return [];
+  if (onlyBlank(els) || !tail) return [];
   els.reverse();
   els[els.length - 1].insert = tail;
 
@@ -204,12 +203,12 @@ const opsTailWithSymbol = (els, symbol) => {
 };
 
 const endingSymbol = (content, symbol) => {
-  if (content.length === 0) return [];
+  if (onlyBlank(content)) return [];
 
   let els = rmHeadSpace(content);
   els = rmTailSpace(els);
 
-  if (els.length === 0) return [];
+  if (onlyBlank(els)) return [];
 
   return opsTailWithSymbol(els, symbol);
 };
@@ -227,7 +226,7 @@ const analysesContent = (products) => {
       content = [...content, ...endingSymbol(data.ops, '; ')];
     });
   });
-  if (content.length === 0) return [];
+  if (onlyBlank(content)) return [];
   content = rmOpsRedundantSpaceBreak(content);
   content = [...content.slice(0, -1), { insert: '.' }];
   return frontBreak(content);
@@ -249,7 +248,7 @@ const dangContent = (el) => {
 
 const DangerBlock = ({el}) => {
   const block = dangContent(el);
-  return <QuillViewer value={{ops: block}} />
+  return block.length > 0 ? <QuillViewer value={{ops: block}} /> : null;
 };
 
 const ContentBlock = ({el}) => {

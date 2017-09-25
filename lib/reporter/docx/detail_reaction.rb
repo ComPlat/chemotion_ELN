@@ -318,7 +318,8 @@ module Reporter
 
       def observation
         delta_obs = obj.observation.deep_stringify_keys['ops']
-        clean_obs = { 'ops' => remove_redundant_space_break(delta_obs) }
+        one_line_obs = remove_redundant_space_break(delta_obs)
+        clean_obs = { 'ops' => rm_head_tail_space(one_line_obs) }
         Sablon.content(:html, Delta.new(clean_obs, @font_family).getHTML)
       end
 
@@ -351,13 +352,15 @@ module Reporter
 
       def observation_delta
         delta_obs = obj.observation.deep_stringify_keys['ops']
-        clean_obs = remove_redundant_space_break(delta_obs)
-
-        clean_obs
+        one_line_obs = remove_redundant_space_break(delta_obs)
+        rm_head_tail_space(one_line_obs)
       end
 
       def obsv_tlc_delta
-        observation_delta + [{"insert"=>" "}] + tlc_delta + obsv_tlc_break_delta
+        tlc_delta_arr = tlc_delta
+        return [] if obsv_blank && tlc_delta_arr.blank?
+        observation_delta + [{"insert"=>"."}] +
+          [{"insert"=>" "}] + tlc_delta_arr + [{"insert"=>"\n"}]
       end
 
       def tlc_delta
@@ -370,11 +373,6 @@ module Reporter
       def obsv_blank
         obsv_arr = observation_delta.map { |ob| ob['insert'] }
         obsv_arr.join('').gsub(/\s+/, '').blank?
-      end
-
-      def obsv_tlc_break_delta
-        return [] if obsv_blank && tlc_delta.blank?
-        [{"insert"=>"\n"}]
       end
 
       def product_analyses_delta
