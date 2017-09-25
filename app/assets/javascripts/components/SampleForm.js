@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
   Table, Glyphicon } from 'react-bootstrap';
 import Select from 'react-select';
-
+import DetailActions from './actions/DetailActions';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import { solventOptions } from './staticDropdownOptions/options';
 
@@ -13,9 +13,16 @@ export default class SampleForm extends React.Component {
     this.state = {
       sample: props.sample,
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
+      isMolNameLoading: false,
     };
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
+    this.updateMolName = this.updateMolName.bind(this);
+    this.addMolName = this.addMolName.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({ isMolNameLoading: false });
   }
 
   handleAmountChanged(amount) {
@@ -74,18 +81,53 @@ export default class SampleForm extends React.Component {
     return (<span />);
   }
 
+  openMolName(moleculeNames) {
+    const { sample } = this.state;
+    if (moleculeNames.length <= 1) {
+      this.setState({ isMolNameLoading: true });
+      DetailActions.updateMoleculeNames(sample);
+    }
+  }
+
+  addMolName(moleculeName) {
+    const { sample } = this.state;
+    this.setState({ isMolNameLoading: true });
+    DetailActions.updateMoleculeNames(sample, moleculeName.label);
+  }
+
+  updateMolName(e) {
+    const { sample } = this.state;
+    sample.molecule_name = e;
+    this.props.parent.setState({ sample });
+  }
+
   moleculeInput(sample) {
+    const mnos = sample.molecule_names;
+    const mno = sample.molecule_name;
+    let moleculeNames = mno ? [mno] : [];
+    if (sample && mnos) {
+      moleculeNames = mnos.map(n => (
+        Object.assign({ label: n.name, value: n.id })
+      ));
+    }
+
+    const onOpenMolName = () => this.openMolName(moleculeNames);
+
     return (
       <FormGroup style={{ width: '100%' }}>
         <ControlLabel>Molecule</ControlLabel>
         <InputGroup>
-          <FormControl
-            type="text"
-            ref="moleculeInput"
-            value={sample.molecule_name}
+          <Select.Creatable
+            name="moleculeName"
+            multi={false}
             disabled={!sample.can_update}
-            readOnly={!sample.can_update}
-            onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}
+            options={moleculeNames}
+            onOpen={onOpenMolName}
+            onChange={this.updateMolName}
+            isLoading={this.state.isMolNameLoading}
+            value={mno && mno.value}
+            onNewOptionClick={this.addMolName}
+            clearable={false}
           />
           <InputGroup.Button>
             {this.structureEditorButton(!sample.can_update)}

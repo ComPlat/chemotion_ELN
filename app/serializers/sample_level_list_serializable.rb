@@ -21,6 +21,8 @@ module SampleLevelListSerializable
             []
           when :_contains_residues
             false
+          when :molecule_name_hash
+            {}
           else
             nil
           end

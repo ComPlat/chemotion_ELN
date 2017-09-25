@@ -12,11 +12,11 @@ class Reporter::ExcelExport
 
   def generate_file(default_excluded_field, default_included_field, removed_field = [])
     return -1 if @@sample_list.empty? || @@sample_list.first == nil
-
+    header = process_header(default_excluded_field, default_included_field, removed_field)
+    return -1 if header.empty?
     p = Axlsx::Package.new
     p.workbook.styles.fonts.first.name = 'Calibri'
     p.workbook.add_worksheet(:name => "ChemOffice") do |sheet|
-      header = process_header(default_excluded_field, default_included_field, removed_field)
       sheet.add_row(fix_typo(header)) # Add header
 
       width = 0
@@ -70,6 +70,8 @@ class Reporter::ExcelExport
       if is_molecule_attribute(key)
         asso = sample.send("molecule")
         data = asso.attributes[key]
+      elsif key == 'molecule_name' && (nid = sample.molecule_name_id)
+        data = MoleculeName.find_by(id: nid)&.attributes['name']
       else
         data = sample.attributes[key]
       end
@@ -78,7 +80,7 @@ class Reporter::ExcelExport
   end
 
   def is_molecule_attribute(key)
-    ["cano_smiles", "sum_formular", "inchistring",
+    ["cano_smiles", "sum_formular", "inchistring", 'inchikey',
       "molecular_weight"].index(key)
   end
 

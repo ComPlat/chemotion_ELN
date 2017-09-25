@@ -131,9 +131,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
       expect(target.send(:synthesis_title_delta)).to eq(
         [
           {"insert"=>"[4.#{prev_index + 1}] "},
-          {"insert"=>"#{s2.molecule.iupac_name}"},
+          {"insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>" / "},
-          {"insert"=>"#{s3.molecule.iupac_name}"},
+          {"insert"=>"#{s3.molecule_name_hash[:label]}"},
           {"insert"=>" ("},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
           {"insert"=>")"}
@@ -142,7 +142,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
       expect(target.send(:products_delta)).to eq(
         [
           {"insert"=>"Name: "},
-          {"insert"=>"#{s2.molecule.iupac_name}"},
+          {"insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>"; "},
           {"insert"=>"Formula: "},
           {"insert"=>"H"},
@@ -158,7 +158,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"."},
           {"insert"=>"\n"},
           {"insert"=>"Name: "},
-          {"insert"=>"#{s3.molecule.iupac_name}"},
+          {"insert"=>"#{s3.molecule_name_hash[:label]}"},
           {"insert"=>"; "},
           {"insert"=>"Formula: "},
           {"insert"=>"H"},
@@ -182,7 +182,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"{A|"},
           {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
           {"insert"=>"} "},
-          {"insert"=>"#{s2.molecule.iupac_name}"},
+          {"insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv.); "},
           {"insert"=>"{B"},
           {"insert"=>"} "},

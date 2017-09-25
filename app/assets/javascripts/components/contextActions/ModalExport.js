@@ -14,28 +14,30 @@ export default class ModalExport extends React.Component {
       columns: [
         {value: "Image", text: "image", checked: true},
         {value: "name", text: "name", checked: true},
-        {value: "description", text: "description", checked: true},
+        {value: "molecule_name", text: "molecule name", checked: true},
         {value: "cano_smiles", text: "canonical smiles", checked: true},
+        {value: "inchistring", text: "InChIstring", checked: true},
+        {value: "inchikey", text: "InChIkey", checked: true},
         {value: "sum_formular", text: "sum formula", checked: true},
-        {value: "inchistring", text: "inchistring", checked: true},
+        {value: "external_label", text: "external label", checked: false},
+        {value: "short_label", text: "short label", checked: false},
+        {value: "description", text: "description", checked: true},
+        {value: "real_amount_value,real_amount_unit", text: "real amount", checked: false},
         {value: "target_amount_value, target_amount_unit", text: "target amount", checked: false},
-        {value: "created_at", text: "created at", checked: false},
-        {value: "updated_at", text: "updated at", checked: false},
+        {value: "molarity_value, molarity_unit", text: "molarity", checked: false},
+        {value: "density", text: "density", checked: false},
         {value: "molfile", text: "molfile", checked: false},
         {value: "purity", text: "purity", checked: false},
         {value: "solvent", text: "solvent", checked: false},
-        {value: "molarity_value, molarity_unit", text: "molarity", checked: false},
         {value: "location", text: "location", checked: false},
         {value: "is_top_secret", text: "is top secret?", checked: false},
-        {value: "ancestry", text: "ancestry", checked: false},
-        {value: "external_label", text: "external label", checked: false},
-        {value: "short_label", text: "short label", checked: false},
-        {value: "real_amount_value,real_amount_unit", text: "real amount", checked: false},
+        // {value: "ancestry", text: "ancestry", checked: false},
         {value: "imported_readout", text: "imported readout", checked: false},
-        {value: "identifier", text: "identifier", checked: false},
-        {value: "density", text: "density", checked: false},
+        // {value: "identifier", text: "identifier", checked: false},
         {value: "melting_point", text: "melting point", checked: false},
         {value: "boiling_point", text: "boiling point", checked: false},
+        {value: "created_at", text: "created at", checked: false},
+        {value: "updated_at", text: "updated at", checked: false},
         {value: "molecular_weight", text: "molecular weight", checked: false},
       ],
       checkedAllColumns: true,
@@ -94,7 +96,7 @@ export default class ModalExport extends React.Component {
 
   removedColumns() {
     const { columns } = this.state;
-    return this.chainedItems(columns);
+    return this.chainedItems(columns).join().split(/\s*,\s*/);
   }
 
   chainedItems(items) {

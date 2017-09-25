@@ -13,17 +13,29 @@ const onlyBlank = (target) => {
   return !content;
 };
 
-const Title = ({el, counter}) => {
-  let iupacs = el.products.map( (p, i) => {
+const sampleMoleculeName = (s) => {
+  const mnh = s.molecule_name_hash;
+  const mnLabel = mnh ? mnh.label : null;
+  const iupac = s.molecule.iupac_name;
+  if (mnLabel) {
+    return mnLabel;
+  } else if (iupac) {
+    return iupac;
+  }
+  return null;
+};
+
+const Title = ({ el, counter }) => {
+  let iupacs = el.products.map((p, i) => {
     const key1 = `${i}-text`;
     const key2 = `${i}-slash`;
-    if(p.molecule.iupac_name) {
-      return [<span key={key1}>{p.molecule.iupac_name}</span>,
-              <span key={key2}> / </span>];
-    } else {
-      return [<span key={key1}>"<b>NAME</b>"</span>,
-              <span key={key2}> / </span>];
+    const smn = sampleMoleculeName(p);
+    if (smn) {
+      return [<span key={key1}>{smn}</span>,
+        <span key={key2}> / </span>];
     }
+    return [<span key={key1}>"<b>NAME</b>"</span>,
+      <span key={key2}> / </span>];
   });
   iupacs = _.flatten(iupacs).slice(0, -1);
 
@@ -34,15 +46,15 @@ const Title = ({el, counter}) => {
       <span> (<b>xx</b>)</span>
     </p>
   );
-}
+};
 
-const deltaIupac = (m) => {
-  return (
-    m.iupac_name
-      ? { insert: m.iupac_name }
-      : { attributes: { bold: "true" }, insert: "\"NAME\""}
-  );
-}
+const deltaSampleMoleculeName = (s) => {
+  const smn = sampleMoleculeName(s);
+  if (smn) {
+    return { insert: smn };
+  }
+  return { attributes: { bold: 'true' }, insert: '"NAME"' };
+};
 
 const boldXX = () => {
   return { attributes: { bold: "true" }, insert: "xx" };
@@ -70,7 +82,7 @@ const ProductsInfo = ({products = []}) => {
     const pMMass    = `Molecular Mass: ${digit(m.molecular_weight, 4)}; `;
     const pEMass    = `Exact Mass: ${digit(m.exact_molecular_weight, 4)}; `;
     const pEA       = `EA: ${ea}.`;
-    content = [...content, { insert: "Name: " }, deltaIupac(m),
+    content = [...content, { insert: "Name: " }, deltaSampleMoleculeName(p),
                 { insert: "; " },
                 { insert: pFormula + pCAS + pSmiles +
                           pInCHI + pMMass + pEMass + pEA },
@@ -85,12 +97,11 @@ const stAndReContent = (el, prev_counter, prev_content) => {
   let content = prev_content;
   [...el.starting_materials, ...el.reactants].forEach(el => {
     counter += 1;
-    const m = el.molecule;
     content = [...content,
                 { insert: `{${Alphabet(counter)}|` },
                 boldXX(),
                 { insert: "} " },
-                deltaIupac(m),
+                deltaSampleMoleculeName(el),
                 { insert: ` (${el.amount_g} g, ${digit(el.amount_mol * 1000, 4)} mmol, ${digit(el.equivalent, 2)} equiv.); ` }];
   });
   return { counter: counter, content: content };
@@ -101,11 +112,10 @@ const solventsContent = (el, prev_counter, prev_content) => {
   let content = prev_content;
   el.solvents.forEach(el => {
     counter += 1;
-    const m = el.molecule;
     content = [...content,
                 { insert: `{${Alphabet(counter)}` },
                 { insert: "} " },
-                deltaIupac(m),
+                deltaSampleMoleculeName(el),
                 { insert: ` (${digit(el.amount_l * 1000, 2)} mL); ` }];
   });
   return { counter: counter, content: content };

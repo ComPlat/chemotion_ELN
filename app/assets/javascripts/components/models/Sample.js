@@ -201,6 +201,7 @@ export default class Sample extends Element {
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
+      molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
@@ -288,16 +289,16 @@ export default class Sample extends Element {
     return cssClass;
   }
 
-  get molecule_name(){
-    if (this.contains_residues) {
-      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
-          + this.polymer_type.slice(1);
-      let val = polymer_name.replace('_', '-') + ' - ';
-      val += this.molecule.sum_formular;
-      return val;
-    }
-    else
-      return this.molecule && (this.molecule.iupac_name || this.molecule.sum_formular || '')
+  get molecule_name_label() {
+    return this.molecule_name_hash && this.molecule_name_hash.label;
+  }
+
+  get molecule_name() {
+    return this.molecule_name_hash;
+  }
+
+  set molecule_name(mno) {
+    this.molecule_name_hash = mno;
   }
 
   get name() {
@@ -508,10 +509,10 @@ export default class Sample extends Element {
     return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
-  //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
-  //Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
-  //Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
-  //Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
+  // Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
+  // Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
+  // Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
+  // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
     if(this.contains_residues) {
@@ -530,7 +531,7 @@ export default class Sample extends Element {
           return amount_g;
         case 'l': {
           if (this.has_molarity) {
-            return amount_g / this.molarity_value;
+            return this.amount_mol * this.molarity_value;
           } else if (this.has_density) {
             const density = this.density;
             return amount_g / (density * 1000);

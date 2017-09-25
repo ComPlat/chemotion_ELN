@@ -1,4 +1,4 @@
-lock '3.4.1'
+lock '3.9.1'
 
 set :application, 'chemotion'
 set :repo_url, 'git@github.com:ComPlat/chemotion_ELN.git'
@@ -23,6 +23,8 @@ set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
 # Default value for :log_level is :debug
 # set :log_level, :debug
+set :format_options, command_output: true
+set :log_file, 'log/capistrano.log'
 
 # Default value for :pty is false
 # set :pty, true
@@ -47,6 +49,8 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
 )
 
 set :rvm_ruby_version, (`cat .ruby-version`).strip
+
+set :slackistrano, false
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }

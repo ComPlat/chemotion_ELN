@@ -26,7 +26,12 @@ class Reporter::SdfExport
       sample_mdf = sample.molfile.split(/#|END/).first + "END\n"
 
       (default_included_field - removed_field).each do |field|
-        value = sample.molecule.send(field).to_s || ""
+        if field == 'molecule_name' && (nid = sample.molecule_name_id)
+          value = sample.molecule_name.attributes['name']
+        else
+          value = sample.molecule.send(field).to_s || ""
+        end
+
         next if value.empty?
 
         value = validate_value(value)

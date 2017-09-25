@@ -247,6 +247,7 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         #use :root_container_params
       end
@@ -316,6 +317,7 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :molecule_name_id, type: Integer
         requires :container, type: Hash
       end
       post do
@@ -343,7 +345,8 @@ module Chemotion
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
-          xref: params[:xref]
+          xref: params[:xref],
+          molecule_name_id: params[:molecule_name_id]
         }
 
         # otherwise ActiveRecord::UnknownAttributeError appears

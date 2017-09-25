@@ -75,7 +75,7 @@ module Reporter
         delta = [{"insert"=>"[4.#{@index + 1}] "}]
         obj.products.each do |p|
           delta = delta +
-                    iupac_delta(p[:molecule][:iupac_name]) +
+                    sample_molecule_name_delta(p) +
                     [{"insert"=>" / "}]
         end
         delta.pop
@@ -99,7 +99,7 @@ module Reporter
           m = p[:molecule]
           cas = (p[:xref] && p[:xref][:cas] && p[:xref][:cas][:label]) || "- "
           delta += [{"insert"=> "Name: " }] +
-                    iupac_delta(m[:iupac_name]) +
+                    sample_molecule_name_delta(p) +
                     [{"insert"=> "; " }]
           delta += sum_formular_delta(m)
           delta += misc_delta(cas, m)
@@ -169,6 +169,12 @@ module Reporter
             Rails.root.join("lib", "template", "status", "planned.png")
           when "Not Successful" then
             Rails.root.join("lib", "template", "status", "not_successful.png")
+          when "Done" then
+            Rails.root.join("lib", "template", "status", "done.png")
+          when "Running" then
+            Rails.root.join("lib", "template", "status", "running.png")
+          when "Analyses Pending" then
+            Rails.root.join("lib", "template", "status", "analyses_pending.png")
           else
             Rails.root.join("lib", "template", "status", "blank.png")
         end
@@ -220,7 +226,8 @@ module Reporter
           vol: fixed_digit(s.amount_ml, digit),
           density: fixed_digit(s.density, digit),
           mol: fixed_digit(s.amount_mmol, digit),
-          equiv: fixed_digit(s.equivalent, digit)
+          equiv: fixed_digit(s.equivalent, digit),
+          molecule_name_hash: s[:molecule_name_hash]
         }
 
         if is_product
@@ -229,7 +236,8 @@ module Reporter
             mass: fixed_digit(s.real_amount_g, digit),
             vol: fixed_digit(s.real_amount_ml, digit),
             mol: fixed_digit(s.real_amount_mmol, digit),
-            equiv: equiv
+            equiv: equiv,
+            molecule_name_hash: s[:molecule_name_hash]
           })
         end
 
@@ -388,7 +396,7 @@ module Reporter
           delta += [{"insert"=>"{#{alphabet(counter)}|"},
                     {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
                     {"insert"=>"} "},
-                    *iupac_delta(m[:iupac_name]),
+                    *sample_molecule_name_delta(m),
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
                       "#{fixed_digit(m[:equiv], 2)} equiv.); "}]
         end
@@ -397,7 +405,7 @@ module Reporter
           counter += 1
           delta += [{"insert"=>"{#{alphabet(counter)}"},
                     {"insert"=>"} "},
-                    *iupac_delta(m[:iupac_name]),
+                    *sample_molecule_name_delta(m),
                     {"insert"=>" (#{fixed_digit(m[:vol], 2)} mL); "}]
         end
         delta += [{"insert"=>"Yield "}]
@@ -428,13 +436,18 @@ module Reporter
         ])
       end
 
-      def iupac_delta(iupac)
-        if iupac
-          return [{"insert"=>"#{iupac}"}]
+      def sample_molecule_name_delta(sample)
+        mnh = sample[:molecule_name_hash]
+        smn = mnh ? mnh[:label] : nil
+        iupac = sample[:molecule] ? sample[:molecule][:iupac_name] : nil
+        if smn.present?
+          [{ 'insert' => smn.to_s }]
+        elsif iupac.present?
+          [{ 'insert' => iupac.to_s }]
         else
-          return [{"insert"=>"\""},
-                  {"attributes"=>{"bold"=>"true"}, "insert"=>"NAME"},
-                  {"insert"=>"\""}]
+          [{ 'insert' => '"' },
+           { 'attributes' => { 'bold' => 'true' }, 'insert' => 'NAME' },
+           { 'insert' => '"' }]
         end
       end
 

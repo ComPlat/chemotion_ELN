@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 
 import Quill from 'quill';
 import Delta from 'quill-delta';
@@ -256,18 +257,18 @@ export default class QuillEditor extends React.Component {
 }
 
 QuillEditor.propTypes = {
-  value: React.PropTypes.object,
-  customToolbar: React.PropTypes.object,
-  toolbarSymbol: React.PropTypes.array,
-  theme: React.PropTypes.string,
-  height: React.PropTypes.string,
-  disabled: React.PropTypes.bool,
-  onChange: React.PropTypes.func,
+  value: PropTypes.object,
+  customToolbar: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+  toolbarSymbol: PropTypes.array,
+  theme: PropTypes.string,
+  height: PropTypes.string,
+  disabled: PropTypes.bool,
+  onChange: PropTypes.func,
 };
 
 QuillEditor.defaultProps = {
   value: {},
-  customToolbar: "",
+  customToolbar: '',
   toolbarSymbol: [],
   theme: 'snow',
   height: '230px',

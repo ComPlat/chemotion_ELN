@@ -8,8 +8,10 @@ class Molecule < ActiveRecord::Base
 
   has_many :samples
   has_many :collections, through: :samples
+  has_many :molecule_names
 
   before_save :sanitize_molfile
+  after_create :create_molecule_names
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile
 
   validates_uniqueness_of :inchikey, scope: :is_partial
@@ -220,6 +222,26 @@ class Molecule < ActiveRecord::Base
       self.cas = get_cas(xref)
       self.save
     end
+  end
+
+  def create_molecule_names
+    if names.present?
+      names.each do |nm|
+        molecule_names.create(name: nm, description: 'iupac_name')
+      end
+    end
+    molecule_names.create(name: sum_formular, description: 'sum_formular')
+  end
+
+  def create_molecule_name_by_user(new_name, user_id)
+    return unless unique_molecule_name(new_name)
+    molecule_names
+      .create(name: new_name, description: "defined by user #{user_id}")
+  end
+
+  def unique_molecule_name(new_name)
+    mns = molecule_names.map(&:name)
+    !mns.include?(new_name)
   end
 
 private

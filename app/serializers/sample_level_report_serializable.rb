@@ -34,6 +34,8 @@ module SampleLevelReportSerializable
             false
           when :container, :molecule_iupac_name, :get_svg_path
             nil
+          when :molecule_name_hash
+            {}
           else
             '***'
           end

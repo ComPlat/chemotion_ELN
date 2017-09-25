@@ -7,6 +7,10 @@ RSpec.describe Sample, type: :model do
     it 'is possible to create a valid sample' do
       expect(sample.valid?).to be(true)
     end
+
+    it 'has molecule_name_id' do
+      expect(sample.molecule_name_id).not_to be_blank
+    end
   end
 
   describe 'after creation' do

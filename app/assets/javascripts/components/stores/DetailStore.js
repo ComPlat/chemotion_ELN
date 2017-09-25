@@ -19,6 +19,7 @@ class DetailStore {
       handleConfirmDelete: DetailActions.confirmDelete,
       handleChangeCurrentElement: DetailActions.changeCurrentElement,
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
+      handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
     })
   }
 
@@ -72,6 +73,15 @@ class DetailStore {
     const index = this.elementIndex(selecteds, updatedSample)
     const newSelecteds = this.updateElement(updatedSample, index)
     this.setState({ selecteds: newSelecteds })
+  }
+
+  handleUpdateMoleculeNames(updatedSample) {
+    if (updatedSample) {
+      const selecteds = this.selecteds;
+      const index = this.elementIndex(selecteds, updatedSample);
+      const newSelecteds = this.updateElement(updatedSample, index);
+      this.setState({ selecteds: newSelecteds });
+    }
   }
 
   synchronizeElements(close, open) {
