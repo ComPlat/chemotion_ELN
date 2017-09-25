@@ -15,7 +15,7 @@ const onlyBlank = (target) => {
 
 const sampleMoleculeName = (s) => {
   const mnh = s.molecule_name_hash;
-  const mnLabel = mnh ? mnh.label : null;
+  const mnLabel = mnh && mnh.desc !== 'sum_formular' ? mnh.label : null;
   const iupac = s.molecule.iupac_name;
   if (mnLabel) {
     return mnLabel;
