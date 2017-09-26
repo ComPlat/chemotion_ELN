@@ -25,25 +25,36 @@ const sampleMoleculeName = (s) => {
   return null;
 };
 
-const Title = ({ el, counter }) => {
-  let iupacs = el.products.map((p, i) => {
-    const key1 = `${i}-text`;
-    const key2 = `${i}-slash`;
-    const smn = sampleMoleculeName(p);
-    if (smn) {
-      return [<span key={key1}>{smn}</span>,
-        <span key={key2}> / </span>];
-    }
-    return [<span key={key1}>"<b>NAME</b>"</span>,
-      <span key={key2}> / </span>];
+const userSerial = (molecule, molSerials = []) => {
+  let output = 'xx';
+  molSerials.forEach((ms) => {
+    if (ms.mol.id === molecule.id && ms.value) output = ms.value;
   });
-  iupacs = _.flatten(iupacs).slice(0, -1);
+  return output;
+};
+
+const deltaUserSerial = (molecule, molSerials) => {
+  const insert = userSerial(molecule, molSerials);
+  return { insert };
+};
+
+const Title = ({ el, counter, molSerials }) => {
+  let title = [];
+  el.products.forEach((p, i) => {
+    const us = userSerial(p.molecule, molSerials);
+    const key = `${i}-text`;
+    const comma = <span key={`${i}-comma`}>, </span>;
+    const smn = sampleMoleculeName(p);
+    title = smn
+      ? [...title, <span key={key}>{smn} ({us})</span>, comma]
+      : [...title, <span key={key}>"<b>NAME</b>"</span>, comma];
+  });
+  title = _.flatten(title).slice(0, -1);
 
   return (
     <p>
       <span>[4.{counter}] </span>
-      {iupacs}
-      <span> (<b>xx</b>)</span>
+      <span>{title}</span>
     </p>
   );
 };
@@ -55,10 +66,6 @@ const deltaSampleMoleculeName = (s) => {
   }
   return { attributes: { bold: 'true' }, insert: '"NAME"' };
 };
-
-const boldXX = () => {
-  return { attributes: { bold: "true" }, insert: "xx" };
-}
 
 const ProductsInfo = ({ products = [] }) => {
   let content = [];
@@ -94,14 +101,14 @@ const ProductsInfo = ({ products = [] }) => {
   return <QuillViewer value={{ ops: content }} />;
 };
 
-const stAndReContent = (el, prevCounter, prevContent) => {
+const stAndReContent = (el, prevCounter, prevContent, molSerials) => {
   let counter = prevCounter;
   let content = prevContent;
   [...el.starting_materials, ...el.reactants].forEach((elm) => {
     counter += 1;
     content = [...content,
       { insert: `{${Alphabet(counter)}|` },
-      boldXX(),
+      deltaUserSerial(elm.molecule, molSerials),
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
       { insert: ` (${elm.amount_g} g, ${digit(elm.amount_mol * 1000, 4)} mmol, ${digit(elm.equivalent, 2)} equiv.); ` }];
@@ -123,15 +130,16 @@ const solventsContent = (el, prevCounter, prevContent) => {
   return { counter, content };
 };
 
-const porductsContent = (el, prevCounter, prevContent) => {
+const porductsContent = (el, prevCounter, prevContent, molSerials) => {
   let counter = prevCounter;
   let content = prevContent;
   content = [...content, { insert: 'Yield: ' }];
   el.products.forEach((p) => {
+    const m = p.molecule;
     counter += 1;
     content = [...content,
       { insert: `{${Alphabet(counter)}|` },
-      boldXX(),
+      deltaUserSerial(m, molSerials),
       { insert: '} ' },
       { insert: ` = ${digit(p.equivalent * 100, 0)}%` },
       { insert: ` (${p.amount_g} g, ${digit(p.amount_mol * 1000, 4)} mmol)` },
@@ -142,12 +150,13 @@ const porductsContent = (el, prevCounter, prevContent) => {
   return { counter, content };
 };
 
-const materailsContent = (el) => {
+const materailsContent = (el, molSerials) => {
   const counter = 0;
   const content = [];
-  const stAndRe = stAndReContent(el, counter, content);
+  const stAndRe = stAndReContent(el, counter, content, molSerials);
   const solvCon = solventsContent(el, stAndRe.counter, stAndRe.content);
-  const prodCon = porductsContent(el, solvCon.counter, solvCon.content);
+  const prodCon = porductsContent(el, solvCon.counter,
+    solvCon.content, molSerials);
 
   return prodCon.content;
 };
@@ -259,19 +268,19 @@ const descContent = (el) => {
 
 const synNameContent = el => [{ insert: `${el.name}: ` }];
 
-const ContentBlock = ({ el }) => {
+const ContentBlock = ({ el, molSerials }) => {
   const synName = synNameContent(el);
   const desc = descContent(el);
-  const materials = materailsContent(el);
+  const materials = materailsContent(el, molSerials);
   const obsvTlc = obsvTlcContent(el);
   const analyses = analysesContent(el.products);
   const block = [...synName, ...desc, ...materials, ...obsvTlc, ...analyses];
   return <QuillViewer value={{ ops: block }} />;
 };
 
-const SynthesisRow = ({ el, counter, configs }) => (
+const SynthesisRow = ({ el, counter, configs, molSerials }) => (
   <div>
-    <Title el={el} counter={counter} />
+    <Title el={el} counter={counter} molSerials={molSerials} />
     <SVGContent
       show
       svgPath={el.svgPath}
@@ -279,12 +288,12 @@ const SynthesisRow = ({ el, counter, configs }) => (
       isProductOnly={!configs.Showallchemi}
     />
     <ProductsInfo products={el.products} />
-    <ContentBlock el={el} />
+    <ContentBlock el={el} molSerials={molSerials} />
     <DangerBlock el={el} />
   </div>
 );
 
-const SectionSiSynthesis = ({ selectedObjs, configs }) => {
+const SectionSiSynthesis = ({ selectedObjs, configs, molSerials }) => {
   let counter = 0;
   const contents = selectedObjs.map((obj) => {
     if (obj.type === 'reaction' && obj.role !== 'gp') {
@@ -296,6 +305,7 @@ const SectionSiSynthesis = ({ selectedObjs, configs }) => {
           el={obj}
           counter={counter}
           configs={configs}
+          molSerials={molSerials}
         />
       );
     }

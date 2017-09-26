@@ -101,7 +101,6 @@ const clickToDelete = (e, archive) => {
 
 const deleteBtn = (archive) => {
   const onClickToDelete = e => clickToDelete(e, archive);
-  const downloadable = archive.downloadable;
   const deleteTP = (
     <Tooltip id="delete-tp">
       Delete this archive.
@@ -116,7 +115,7 @@ const deleteBtn = (archive) => {
     </OverlayTrigger>
   );
 
-  return downloadable ? btn : null;
+  return btn;
 };
 
 const clickToClone = (e, archive) => {
@@ -128,7 +127,6 @@ const clickToClone = (e, archive) => {
 
 const cloneBtn = (archive) => {
   const onClickToClone = e => clickToClone(e, archive);
-  const downloadable = archive.downloadable;
   const cloneTP = (
     <Tooltip id="clone-tp">
       Load date from this report.
@@ -143,7 +141,7 @@ const cloneBtn = (archive) => {
     </OverlayTrigger>
   );
 
-  return downloadable ? btn : null;
+  return btn;
 };
 
 export default Archives;

@@ -74,3 +74,72 @@
 .report-preview .ql-tooltip {
   height: 0;
 }
+
+
+.report-serials {
+  .panel {
+    margin: 10px;
+  }
+
+  .panel-body {
+    padding: 0;
+  }
+}
+
+.report-serial {
+  $rowHeight: 80px;
+
+  display: -webkit-flex;
+  display: flex;
+  height: $rowHeight;
+
+  .order {
+    -webkit-flex: none;
+            flex: none;
+    background-color: #bbb;
+    border-radius: 4px 0 0 4px;
+    line-height: $rowHeight;
+    text-align: center;
+    width: 30px;
+  }
+
+  .order-even {
+    background-color: #eee;
+  }
+
+  .svg {
+    -webkit-flex: none;
+            flex: none;
+    padding: 2px;
+    text-align: center;
+    vertical-align: middle;
+    width: 150px;
+
+    svg {
+      max-height: 96%;
+      max-width: 96%;
+    }
+  }
+
+  .info {
+    -webkit-flex: 1;
+            flex: 1;
+    background-color: #eee;
+    padding: 10px;
+  }
+
+  .input {
+    -webkit-flex: none;
+            flex: none;
+    line-height: $rowHeight;
+    margin: 0 20px;
+    width: 100px;
+
+    input {
+      border: 2px solid #aaa;
+      border-radius: 5px;
+      line-height: 1;
+      width: 100%;
+    }
+  }
+}

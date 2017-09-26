@@ -29,34 +29,39 @@ const StdPreviews = ({selectedObjs, splSettings, rxnSettings, configs}) => {
   )
 }
 
-const SiPreviews = ({selectedObjs, configs}) => {
-  const configs_pairs = objToKeyValPairs(configs);
+const SiPreviews = ({ selectedObjs, configs, molSerials }) => {
+  const configsPairs = objToKeyValPairs(configs);
 
   return (
     <div>
       <p>Experimental Part:</p>
-      <br/>
+      <br />
       <p>[1 Versions] Version InCHI (), Version SMILES()</p>
-      <br/>
+      <br />
       <p>[2 General remarks]</p>
-      <br/>
+      <br />
       <p>[3 General procedures]</p>
       <SectionSiProcedures selectedObjs={selectedObjs} />
-      <br/>
+      <br />
       <p>[4 Synthesis]</p>
-      <SectionSiSynthesis selectedObjs={selectedObjs} configs={configs_pairs} />
-      <br/>
+      <SectionSiSynthesis
+        selectedObjs={selectedObjs}
+        configs={configsPairs}
+        molSerials={molSerials}
+      />
+      <br />
       <p>[5 Spectra and Copies]</p>
-      <br/>
+      <br />
     </div>
   );
-}
+};
 
-const Previews = ({selectedObjs, splSettings, rxnSettings, configs, template}) => {
+const Previews = ({selectedObjs, splSettings, rxnSettings, configs, template, molSerials}) => {
   const content = template === 'supporting_information'
                     ? <SiPreviews
                         selectedObjs={selectedObjs}
                         configs={configs}
+                        molSerials={molSerials}
                       />
                     : <StdPreviews
                         selectedObjs={selectedObjs}
