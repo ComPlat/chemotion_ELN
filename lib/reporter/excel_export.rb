@@ -3,15 +3,15 @@ class Reporter::ExcelExport
   DEFAULT_ROW_HEIGHT = 20
 
   def initialize
-    @@sample_list = Array.new
+    @sample_list = Array.new
   end
 
   def add_sample(sample)
-    @@sample_list << sample
+    @sample_list << sample
   end
 
   def generate_file(default_excluded_field, default_included_field, removed_field = [])
-    return -1 if @@sample_list.empty? || @@sample_list.first == nil
+    return -1 if @sample_list.empty? || @sample_list.first == nil
     header = process_header(default_excluded_field, default_included_field, removed_field)
     return -1 if header.empty?
     p = Axlsx::Package.new
@@ -23,7 +23,7 @@ class Reporter::ExcelExport
       files = [] # do not let Tempfile object to be garbage collected
       need_images = header.index("Image")
 
-      @@sample_list.compact.each_with_index do |sample, row|
+      @sample_list.compact.each_with_index do |sample, row|
         data_hash = []
         start = 0
 
@@ -50,7 +50,7 @@ class Reporter::ExcelExport
   end
 
   def process_header(default_excluded_field, default_included_field, removed_field)
-      header = @@sample_list.first.attribute_names
+      header = @sample_list.first.attribute_names
       # Exclude field
       header.delete_if { |x| default_excluded_field.include?(x) }
       header = header.reject { |x| x.empty? }
