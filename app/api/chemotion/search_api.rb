@@ -142,12 +142,15 @@ module Chemotion
             molecules: create_group_molecule(molecule_scope, sample_scope)
           }
         else
-          ids = Kaminari.paginate_array(samples).page(page).per(page_size)
+          id_array = Kaminari.paginate_array(samples).page(page).per(page_size)
+          ids = id_array.join(',')
           paging_samples = Sample.includes(
             :residues, :tag,
             collections: :sync_collections_users,
             molecule: :tag
-          ).where(id: ids).order("position(id::text in '#{ids}')").to_a
+          ).where(
+            id: id_array
+          ).order("position(','||id::text||',' in ',#{ids},')").to_a
 
           if search_method == 'advanced'
             # sort by order - advanced search
