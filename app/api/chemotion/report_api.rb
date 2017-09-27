@@ -64,13 +64,28 @@ module Chemotion
       end
 
       params do
-        requires :type, type: String
-        requires :checkedIds, type: Array
-        requires :uncheckedIds, type: Array
-        requires :checkedAll, type: Boolean
-        requires :currentCollection, type: Integer
-        requires :removedColumns, type: Array[String]
+        requires :columns, type: Array[String]
         requires :exportType, type: Integer
+        requires :uiState, type: Hash do
+          requires :sample, type: Hash do
+            requires :checkedIds, type: Array
+            requires :uncheckedIds, type: Array
+            requires :checkedAll, type: Boolean
+          end
+          requires :reaction, type: Hash do
+            requires :checkedIds, type: Array
+            requires :uncheckedIds, type: Array
+            requires :checkedAll, type: Boolean
+          end
+          requires :wellplate, type: Hash do
+            requires :checkedIds, type: Array
+            requires :uncheckedIds, type: Array
+            requires :checkedAll, type: Boolean
+          end
+          requires :currentCollection, type: Integer
+          requires :isSync, type: Boolean
+        end
+        requires :columns, type: Array
       end
       post :export_samples_from_selections do
         env['api.format'] = :binary
@@ -85,34 +100,32 @@ module Chemotion
           fileType = '.sdf'
           export = Reporter::SdfExport.new
         end
-        fileName = params[:type].capitalize + '_' + time_now + fileType
+        fileName =  'sample_export_' + time_now + fileType
         fileURI = URI.escape(fileName)
         header 'Content-Disposition', "attachment; filename=\"#{fileURI}\""
         # header 'Content-Disposition', "attachment; filename*=UTF-8''#{fileURI}"
-
-        type = params[:type]
-        checkedIds = params[:checkedIds]
-        uncheckedIds = params[:uncheckedIds]
-        checkedAll = params[:checkedAll]
-        currentCollection = params[:currentCollection]
-        removed_field = params[:removedColumns]
-
-        elements = selected_elements(
-          type, checkedAll, checkedIds, uncheckedIds, currentCollection
-        )
-        samples = if type == 'sample'
-                    elements.includes([:molecule,:molecule_name])
-                  elsif type == 'reaction'
-                    elements.map { |r|
-                      r.starting_materials + r.reactants + r.products
-                    }.flatten
-                  elsif type == 'wellplate'
-                    elements.map { |wellplate|
-                      wellplate.wells.map(&:sample).flatten
-                    }.flatten
-                  end
-
-        samples.each { |sample| export.add_sample(sample) }
+        currColl = params[:uiState][:isSync] ? 0 : params[:uiState][:currentCollection]
+        removed_field = params[:columns]
+        [:sample, :reaction, :wellplate].each do |type|
+          next unless ( p_t = params[:uiState][type])
+          elements = selected_elements(
+            type.to_s, p_t[:checkedAll], p_t[:checkedIds],
+            p_t[:uncheckedIds], currColl
+          )
+          samples = case type.to_s
+                    when 'sample'
+                      elements.includes([:molecule,:molecule_name])
+                    when 'reaction'
+                      elements.map { |r|
+                        r.starting_materials + r.reactants + r.products
+                      }.flatten
+                    when 'wellplate'
+                      elements.map { |wellplate|
+                        wellplate.wells.map(&:sample).flatten
+                      }.flatten
+                    end
+          samples.each { |sample| export.add_sample(sample) }
+        end
         export.generate_file(excluded_field, included_field, removed_field)
       end
 

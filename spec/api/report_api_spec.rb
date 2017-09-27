@@ -56,13 +56,27 @@ describe Chemotion::ReportAPI do
 
       before do
         params = {
-          type: 'sample',
           exportType: 1,
-          checkedIds: [sample_1.id],
-          uncheckedIds: [],
-          checkedAll: false,
-          currentCollection: c.id,
-          removedColumns: %w(
+          uiState: {
+            sample: {
+              checkedIds: [sample_1.id],
+              uncheckedIds: [],
+              checkedAll: false,
+            },
+            reaction: {
+              checkedIds: [],
+              uncheckedIds: [],
+              checkedAll: false,
+            },
+            wellplate: {
+              checkedIds: [],
+              uncheckedIds: [],
+              checkedAll: false,
+            },
+            currentCollection: c.id,
+            isSync: false
+          },
+          columns: %w(
             target_amount_value target_amount_unit
             created_at updated_at molfile
           )

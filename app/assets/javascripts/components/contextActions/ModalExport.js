@@ -122,29 +122,33 @@ export default class ModalExport extends React.Component {
   }
 }
 
-const exportSelections = (uiState, userState, removedColumns, e) => {
-  const { currentCollection, sample, reaction, wellplate } = uiState;
-  const { currentType } = userState;
-  const { checkedIds, uncheckedIds, checkedAll } = sample
+const exportSelections = (uiState, userState, columns, e) => {
   ReportsFetcher.createDownloadFile({
-    type: currentType,
     exportType: e,
-    checkedIds: checkedIds.toArray(),
-    uncheckedIds: uncheckedIds.toArray(),
-    checkedAll: checkedAll,
-    currentCollection: currentCollection.id,
-    removedColumns: removedColumns
+    uiState: filterUIState(uiState),
+    columns: columns
   });
 }
 
-
-
-const selectedStringfy = (input, currentCollection, removedColumns, e) => {
-  const { checkedIds, uncheckedIds, checkedAll } = input;
-  return "&exportType=" + e +
-         "&checkedIds=" + checkedIds.toArray() +
-         "&uncheckedIds=" + uncheckedIds.toArray() +
-         "&checkedAll=" + checkedAll +
-         "&currentCollection=" + currentCollection.id +
-         "&removedColumns=" + removedColumns
+const filterUIState = (uiState) =>{
+  const { currentCollection, sample, reaction, wellplate, isSync } = uiState;
+  return {
+    sample: {
+      checkedIds: sample.checkedIds.toArray(),
+      uncheckedIds: sample.uncheckedIds.toArray(),
+      checkedAll: sample.checkedAll,
+    },
+    reaction: {
+      checkedIds: reaction.checkedIds.toArray(),
+      uncheckedIds: reaction.uncheckedIds.toArray(),
+      checkedAll: reaction.checkedAll,
+    },
+    wellplate: {
+      checkedIds: wellplate.checkedIds.toArray(),
+      uncheckedIds: wellplate.uncheckedIds.toArray(),
+      checkedAll: wellplate.checkedAll,
+    },
+    currentCollection: currentCollection.id,
+    isSync: isSync,
+  }
 }
