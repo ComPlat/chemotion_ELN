@@ -7,6 +7,7 @@ module Reporter
         @font_family = args[:font_family]
         @index = args[:index] || 0
         @template = args[:template]
+        @mol_serials = args[:mol_serials] || []
       end
 
       def content
@@ -72,17 +73,16 @@ module Reporter
       end
 
       def synthesis_title_delta
-        delta = [{"insert"=>"[4.#{@index + 1}] "}]
+        delta = [{ 'insert' => "[4.#{@index + 1}] " }]
         obj.products.each do |p|
           delta = delta +
-                    sample_molecule_name_delta(p) +
-                    [{"insert"=>" / "}]
+                  sample_molecule_name_delta(p) +
+                  [{ 'insert' => ' (' }] +
+                  mol_serial_delta(p[:molecule][:id]) +
+                  [{ 'insert' => ')' }] +
+                  [{ 'insert' => ', ' }]
         end
         delta.pop
-        delta = delta +
-                  [{"insert"=>" ("}] +
-                  [{"attributes"=>{"bold"=>"true"}, "insert"=>"xx"}] +
-                  [{"insert"=>")"}]
         delta
       end
 
@@ -394,7 +394,7 @@ module Reporter
           m = material_hash(material, false)
           counter += 1
           delta += [{"insert"=>"{#{alphabet(counter)}|"},
-                    {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+                    *mol_serial_delta(material[:molecule][:id]),
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
@@ -413,7 +413,7 @@ module Reporter
           p = material_hash(material, true)
           counter += 1
           delta += [{"insert"=>"{#{alphabet(counter)}|"},
-                    {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+                    *mol_serial_delta(material[:molecule][:id]),
                     {"insert"=>"} = #{p[:equiv]} (#{p[:mass]} g, " +
                       "#{p[:mol]} mmol)"},
                     {"insert"=>"; "}]
@@ -472,6 +472,16 @@ module Reporter
         alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         counter = counter >= 1 && counter <=26 ? counter - 1 : 25
         alphabets[counter]
+      end
+
+      def mol_serial(mol_id)
+        s = @mol_serials.select { |x| x['mol'] && x['mol']['id'] == mol_id }[0]
+        s.present? && s['value'].present? && s['value'] || 'xx'
+      end
+
+      def mol_serial_delta(mol_id)
+        serial = mol_serial(mol_id)
+        [{ 'insert' => serial }]
       end
     end
   end
