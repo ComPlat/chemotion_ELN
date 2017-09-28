@@ -22,10 +22,6 @@ class Collection < ActiveRecord::Base
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
 
-  # A collection is for_publication if it has the 'chemotion.net' label. In this collection
-  # are elements which maybe shared on chemotion.net
-  scope :for_publication, -> { where(label: 'chemotion.net') }
-
   scope :ordered, -> { order("position ASC") }
   scope :unshared, -> { where(is_shared: false) }
   scope :shared, ->(user_id) { where('shared_by_id = ? AND is_shared = ?', user_id, true) }
