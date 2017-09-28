@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170908105401) do
+ActiveRecord::Schema.define(version: 20170928124229) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -391,7 +391,7 @@ ActiveRecord::Schema.define(version: 20170908105401) do
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
     t.string   "inchistring"
-    t.float    "density"
+    t.float    "density",                default: 0.0
     t.float    "molecular_weight"
     t.binary   "molfile"
     t.float    "melting_point"
@@ -524,6 +524,7 @@ ActiveRecord::Schema.define(version: 20170908105401) do
     t.datetime "created_at",                             null: false
     t.datetime "updated_at",                             null: false
     t.string   "template",          default: "standard"
+    t.text     "mol_serials",       default: "--- []\n"
   end
 
   add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
