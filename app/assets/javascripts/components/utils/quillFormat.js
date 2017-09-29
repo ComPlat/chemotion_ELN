@@ -30,7 +30,7 @@ const mapValueToGroupRegex = (content, matchedGroup) => {
       const patt = `#{${idx + 1}}`;
       const insertString = d.insert;
       const dd = { ...d };
-      dd.insert = insertString.replace(patt, m);
+      dd.insert = insertString.replace(patt, m || '');
       return dd;
     });
   });
