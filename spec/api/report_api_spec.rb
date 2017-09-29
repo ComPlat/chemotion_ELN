@@ -148,6 +148,9 @@ describe Chemotion::ReportAPI do
             {\"text\":\"whole_diagram\",\"checked\":true}]",
           imgFormat: 'png',
           fileName: fileName,
+          molSerials: "[{\"mol\":{\"id\":1, \"svgPath\":\"1a.svg\", \
+            \"sumFormula\":\"C6H6\", \"iupacName\":\"benzene\"}, \
+            \"value\":\"1a\"}]"
         }
       end
 

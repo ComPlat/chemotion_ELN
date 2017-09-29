@@ -111,7 +111,7 @@ MOLFILE
     let(:mol_attributes){
       {
         "boiling_point" => nil,
-              "density" => nil,
+              "density" => 0.0,
              "inchikey" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
         "inchistring" => "InChI=1S/H2O/h1H2",
           "iupac_name" => "oxidane",
