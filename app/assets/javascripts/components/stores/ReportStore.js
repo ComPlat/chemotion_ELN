@@ -29,6 +29,7 @@ class ReportStore {
     this.defaultObjTags = { sampleIds: [], reactionIds: [] }
     this.selectedObjTags = { sampleIds: [], reactionIds: [] }
     this.selectedObjs = []
+    this.selMolSerials = []
     this.imgFormat = 'png'
     this.archives = []
     this.fileName = this.initFileName()
@@ -59,6 +60,7 @@ class ReportStore {
       handleDelete: ReportActions.delete,
       hadnleRemove: ReportActions.remove,
       hadnleReset: ReportActions.reset,
+      handleUpdMSVal: ReportActions.updMSVal,
     })
   }
 
@@ -67,9 +69,13 @@ class ReportStore {
   }
 
   handleUpdateTemplate(value) {
+    const newSelectedObjs = this.orderObjsForTemplate(value);
+    const molSerials = this.updMolSerials(newSelectedObjs, value);
     this.setState({ template: value,
       fileName: this.initFileName(value),
-      selectedObjs: this.orderObjsForTemplate(value) });
+      selectedObjs: newSelectedObjs,
+      selMolSerials: molSerials,
+    });
   }
 
   orderObjsForTemplate(template, oldObjs = null) {
@@ -154,7 +160,7 @@ class ReportStore {
   handleGenerateReport(result) {
     const newArchives = [result.report, ...this.archives];
     this.setState({ processingReport: !this.processingReport,
-                    activeKey: 4,
+                    activeKey: 5,
                     archives: newArchives,
                     processings: this.getProcessings(newArchives),
                     fileName: this.initFileName(this.template) });
@@ -182,7 +188,11 @@ class ReportStore {
                                                 this.defaultObjTags,
                                                 this.selectedObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
-    this.setState({selectedObjs: finalObjs});
+    const molSerials = this.updMolSerials(finalObjs);
+    this.setState({
+      selectedObjs: finalObjs,
+      selMolSerials: molSerials,
+    });
   }
 
   isEqTypeId(a, b) {
@@ -193,7 +203,11 @@ class ReportStore {
     const oldObjs = this.selectedObjs || [];
     const newObjs = reOrderArr(sourceTag, targetTag, this.isEqTypeId, oldObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
-    this.setState({selectedObjs: finalObjs});
+    const molSerials = this.updMolSerials(finalObjs);
+    this.setState({
+      selectedObjs: finalObjs,
+      selMolSerials: molSerials,
+    });
   }
 
   initFileName(template = 'supporting_information') {
@@ -286,6 +300,8 @@ class ReportStore {
     const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
     const orderedArObjs = this.orderObjsForArchive(newObjs, archive.objects);
     const orderedArTpObjs = this.orderObjsForTemplate(template, orderedArObjs);
+    const molSerials = archive.mol_serials ||
+      this.updMolSerials(orderedArTpObjs);
 
     this.setState({
       activeKey: 0,
@@ -322,6 +338,7 @@ class ReportStore {
       defaultObjTags,
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: orderedArTpObjs,
+      selMolSerials: molSerials,
     });
   }
 
@@ -345,11 +362,13 @@ class ReportStore {
     sTags = { sampleIds: [], reactionIds: [] };
     const newObjs = UpdateSelectedObjs(sTags, currentObjs, dTags, currentObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
+    const molSerials = this.updMolSerials(finalObjs);
 
     this.setState({
       defaultObjTags: dTags,
       selectedObjTags: sTags,
       selectedObjs: finalObjs,
+      selMolSerials: molSerials,
     });
   }
 
@@ -389,6 +408,7 @@ class ReportStore {
       defaultObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: [],
+      selMolSerials: [],
     });
   }
 
@@ -398,6 +418,68 @@ class ReportStore {
     }).filter(r => r != null);
 
     this.setState({ archives: newArchives });
+  }
+
+  updMolSerials(objs, template) {
+    const currentTemplate = template || this.template;
+    if (currentTemplate !== 'supporting_information') return [];
+    if (objs.length === 0) return [];
+
+    return this.extractMolSerials(objs);
+  }
+
+  extractMolSerials(objs) {
+    const oldSelMolSerials = this.selMolSerials;
+    const newSelMols = this.msMolFromSelected(objs);
+
+    const newSelMolSerials = newSelMols.map((newMol) => {
+      const unchangedMolSerial = oldSelMolSerials.find(osm => (
+        osm && osm.mol.id === newMol.id
+      ));
+      return unchangedMolSerial || { mol: newMol, value: null };
+    });
+
+    return newSelMolSerials;
+  }
+
+  nonGpRxns(objs) {
+    return objs.map((obj) => {
+      if (obj.type === 'reaction' && obj.role !== 'gp') {
+        return obj;
+      }
+      return null;
+    }).filter(r => r !== null);
+  }
+
+  msMolFromSelected(objs) {
+    const rxns = this.nonGpRxns(objs);
+    let msMols = [];
+
+    rxns.forEach((o) => {
+      const samples = [...o.starting_materials, ...o.reactants, ...o.products];
+      samples.forEach(s => msMols = [...msMols, this.createMSMol(s.molecule)]);
+    });
+    msMols = ArrayUtils.uniqSortById(msMols);
+    return msMols;
+  }
+
+  createMSMol(molecule) {
+    return {
+      id: molecule.id,
+      svgPath: molecule.svgPath,
+      sumFormula: molecule.sum_formular,
+      iupacName: molecule.iupac_name,
+    };
+  }
+
+  handleUpdMSVal({ moleculeId, value }) {
+    const newSelMolSerials = this.selMolSerials.map((ms) => {
+      if (ms.mol.id === moleculeId) {
+        return Object.assign({}, ms, { value });
+      }
+      return ms;
+    });
+    this.setState({ selMolSerials: newSelMolSerials });
   }
 }
 

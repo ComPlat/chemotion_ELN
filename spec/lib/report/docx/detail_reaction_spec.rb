@@ -73,8 +73,24 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     ElementReportPermissionProxy.new(user, r1, [user.id]).serialized
   end
+  let!(:serial) { '1a' }
+  let!(:mol_serials) do
+    mol = s2.molecule
+    [
+      {
+        'mol' => {
+          'id' => mol.id,
+          'svgPath' => mol.molecule_svg_file,
+          'sumFormula' => mol.sum_formular,
+          'iupacName' => mol.iupac_name
+        },
+        'value' => serial
+      }
+    ]
+  end
   let!(:target) do
     Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(r1_serialized),
+                                        mol_serials: mol_serials,
                                         index: prev_index)
   end
 
@@ -132,11 +148,14 @@ describe 'Reporter::Docx::DetailReaction instance' do
         [
           {"insert"=>"[4.#{prev_index + 1}] "},
           {"insert"=>"#{s2.molecule_name_hash[:label]}"},
-          {"insert"=>" / "},
+          {"insert"=>" ("},
+          {"insert"=>serial},
+          {"insert"=>")"},
+          {"insert"=>", "},
           {"insert"=>"#{s3.molecule_name_hash[:label]}"},
           {"insert"=>" ("},
-          {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
-          {"insert"=>")"}
+          {"insert"=>serial},
+          {"insert"=>")"},
         ]
       )
       expect(target.send(:products_delta)).to eq(
@@ -180,7 +199,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
         [
           {"insert"=>"#{tit}: "},
           {"insert"=>"{A|"},
-          {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+          {"insert"=>serial},
           {"insert"=>"} "},
           {"insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv.); "},
@@ -190,11 +209,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>" (0.00 mL); "},
           {"insert"=>"Yield "},
           {"insert"=>"{C|"},
-          {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+          {"insert"=>serial},
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
           {"insert"=>"; "},
           {"insert"=>"{D|"},
-          {"attributes"=>{"bold"=>"true"}, "insert"=>"xx"},
+          {"insert"=>serial},
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
           {"insert"=>"."},
           {"insert"=>"\n"},

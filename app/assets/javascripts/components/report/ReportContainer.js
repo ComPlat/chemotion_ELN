@@ -6,6 +6,7 @@ import UIStore from '../stores/UIStore';
 import Setting from './Setting';
 import Previews from './Previews';
 import Orders from './Orders';
+import Serials from './Serials';
 import Archives from './Archives';
 import Config from './Config';
 import PanelHeader from '../common/PanelHeader';
@@ -98,7 +99,9 @@ export default class ReportContainer extends Component {
   render() {
     const { splSettings, checkedAllSplSettings, archives, activeKey,
       rxnSettings, checkedAllRxnSettings, imgFormat, fileName, template,
-      configs, checkedAllConfigs, selectedObjs } = this.state;
+      configs, checkedAllConfigs, selectedObjs, selMolSerials } = this.state;
+    const archivesTitle = this.archivesTitle();
+
     return (
       <Panel
         header={this.panelHeader()}
@@ -134,7 +137,12 @@ export default class ReportContainer extends Component {
               <Orders selectedObjs={selectedObjs} template={template} />
             </div>
           </Tab>
-          <Tab eventKey={3} title={'Preview'}>
+          <Tab eventKey={3} title={'Label'}>
+            <div className="panel-fit-screen">
+              <Serials selMolSerials={selMolSerials} template={template} />
+            </div>
+          </Tab>
+          <Tab eventKey={4} title={'Preview'}>
             <div className="panel-fit-screen">
               <Previews
                 selectedObjs={selectedObjs}
@@ -142,10 +150,11 @@ export default class ReportContainer extends Component {
                 rxnSettings={rxnSettings}
                 configs={configs}
                 template={template}
+                molSerials={selMolSerials}
               />
             </div>
           </Tab>
-          <Tab eventKey={4} title={this.archivesTitle()}>
+          <Tab eventKey={5} title={archivesTitle}>
             <div className="panel-fit-screen">
               <Archives archives={archives} />
             </div>

@@ -31,6 +31,7 @@ const originalState = {
   activeKey: 0,
   processings: [],
   template: "supporting_information",
+  selMolSerials: [],
 }
 
 export { originalState, splSettings, rxnSettings, configs }

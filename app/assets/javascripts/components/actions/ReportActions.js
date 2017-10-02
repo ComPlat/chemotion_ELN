@@ -136,6 +136,10 @@ class ReportActions {
   reset() {
     return null;
   }
+
+  updMSVal(moleculeId, value) {
+    return { moleculeId, value };
+  }
 }
 
 export default alt.createActions(ReportActions);

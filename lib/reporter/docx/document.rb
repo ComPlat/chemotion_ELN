@@ -11,6 +11,7 @@ module Reporter
         @img_format = args[:img_format]
         @font_family = args[:font_family]
         @template = args[:template]
+        @mol_serials = args[:mol_serials]
       end
 
       def convert
@@ -33,7 +34,8 @@ module Reporter
           last_id: last_id,
           img_format: @img_format,
           font_family: @font_family,
-          template: @template
+          template: @template,
+          mol_serials: @mol_serials,
         ).content
       end
 

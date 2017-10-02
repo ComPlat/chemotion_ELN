@@ -10,6 +10,7 @@ module Reporter
       @configs = @report.configs
       @img_format = @report.img_format
       @template_path = args[:template_path]
+      @mol_serials = @report.mol_serials
     end
 
     def process

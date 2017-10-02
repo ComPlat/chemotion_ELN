@@ -16,7 +16,8 @@ module Reporter
                             configs: @configs,
                             img_format: img_format,
                             font_family: "Times New Roman",
-                            template: "supporting_information"
+                            template: "supporting_information",
+                            mol_serials: @mol_serials
                           ).convert
     end
 
@@ -28,7 +29,8 @@ module Reporter
                               configs: procedure_config,
                               img_format: img_format,
                               font_family: "Times New Roman",
-                              template: "supporting_information"
+                              template: "supporting_information",
+                              mol_serials: @mol_serials
                             ).convert
     end
 
