@@ -48,6 +48,22 @@ const formatChemicalFormular = (formular) => {
 const sampleAnalysesFormatPattern = {
   _13cnmr: [
     {
+      pattern: '(,{0,1}) (\\d+\\.){0,1}(\\d*) {0,1}H(,|\\))',
+      replace: {
+        ops: [
+          { insert: '#{1}#{2}#{3}H#{4}' },
+        ],
+      },
+    },
+    {
+      pattern: '(,{0,1})(\\d+\\.){0,1}(\\d*) {0,1}H(,|\\))',
+      replace: {
+        ops: [
+          { insert: '#{1} #{2}#{3}H#{4}' },
+        ],
+      },
+    },
+    {
       pattern: '13C NMR',
       replace: {
         ops: [
@@ -143,6 +159,22 @@ const sampleAnalysesFormatPattern = {
     },
   ],
   _1hnmr: [
+    {
+      pattern: '(,{0,1}) (\\d+\\.){0,1}(\\d*) {0,1}H(,|\\))',
+      replace: {
+        ops: [
+          { insert: '#{1}#{2}#{3}H#{4}' },
+        ],
+      },
+    },
+    {
+      pattern: '(,{0,1})(\\d+\\.){0,1}(\\d*) {0,1}H(,|\\))',
+      replace: {
+        ops: [
+          { insert: '#{1} #{2}#{3}H#{4}' },
+        ],
+      },
+    },
     {
       pattern: '1H NMR',
       replace: {
