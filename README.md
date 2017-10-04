@@ -4,8 +4,7 @@ An ELN for chemists!
 
 ## Funding
 
-This project has been funded by the  ![DFG][logo_dfg].
-[logo_dfg]: http://www.dfg.de/includes/images/dfg_logo.gif "logo dfg"
+This project has been funded by the  ![DFG](http://www.dfg.de/includes/images/dfg_logo.gif)
 
 
 ## License
