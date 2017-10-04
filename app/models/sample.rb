@@ -32,6 +32,12 @@ class Sample < ActiveRecord::Base
     molecule: :cano_smiles
   }
 
+  pg_search_scope :search_by_substring, against: %i[
+    name short_label external_label
+  ], associated_against: {
+    molecule: %i[sum_formular iupac_name inchistring cano_smiles]
+  }, using: { trigram: { threshold: 0.0001 } }
+
   pg_search_scope :search_by_sample_name, against: :name
   pg_search_scope :search_by_sample_short_label, against: :short_label
   pg_search_scope :search_by_sample_external_label, against: :external_label
