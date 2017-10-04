@@ -12,17 +12,18 @@ before_install:
   - export CHROME_BIN=/usr/bin/google-chrome
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - sudo apt-get install -y libappindicator1 fonts-liberation
+  - sudo apt-get install -y libappindicator1 fonts-liberation libeigen3-dev swig
   - wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
   - sudo dpkg -i google-chrome*.deb
-  - nvm install 6.9.1
+  - nvm install 6.2.2
   - npm install npm -g
   - npm install
 before_script:
   - cp config/database.yml.travis config/database.yml
+  - cp config/storage.yml.example config/storage.yml
   - psql -c 'create database travis_ci_test;' -U postgres
 addons:
-  postgresql: "9.3"
+  postgresql: "9.5"
 services:
   - postgresql
 script:
