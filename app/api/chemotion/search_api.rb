@@ -299,8 +299,8 @@ module Chemotion
 
         if search_method == 'advanced' && molecule_sort == false
           arg_value_str = arg.first.value.gsub(/(\r)?\n/, ",")
-          return scope.order('position(\',\'||' + arg.first.field.column +
-                             "::text||\',\' in ',#{arg_value_str},')")
+          return scope.order('position(\',\'||(' + arg.first.field.column +
+                             "::text)||\',\' in ',#{arg_value_str},')")
         elsif search_method == 'advanced' && molecule_sort == true
           return scope.order('samples.updated_at DESC')
         elsif search_method != 'advanced' && molecule_sort == true
