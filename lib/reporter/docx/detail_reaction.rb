@@ -481,7 +481,7 @@ module Reporter
 
       def mol_serial_delta(mol_id)
         serial = mol_serial(mol_id)
-        [{ 'insert' => serial }]
+        [{ 'insert' => serial, 'attributes' => { 'bold' => 'true' } }]
       end
     end
   end

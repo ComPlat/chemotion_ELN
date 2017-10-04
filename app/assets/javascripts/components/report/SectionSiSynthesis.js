@@ -35,7 +35,7 @@ const userSerial = (molecule, molSerials = []) => {
 
 const deltaUserSerial = (molecule, molSerials) => {
   const insert = userSerial(molecule, molSerials);
-  return { insert };
+  return { insert, attributes: { bold: 'true' } };
 };
 
 const Title = ({ el, counter, molSerials }) => {
@@ -46,7 +46,7 @@ const Title = ({ el, counter, molSerials }) => {
     const comma = <span key={`${i}-comma`}>, </span>;
     const smn = sampleMoleculeName(p);
     title = smn
-      ? [...title, <span key={key}>{smn} ({us})</span>, comma]
+      ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>"<b>NAME</b>"</span>, comma];
   });
   title = _.flatten(title).slice(0, -1);
