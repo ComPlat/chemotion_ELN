@@ -12,8 +12,6 @@ module SVG
     WORD_SIZE_SVG_SCALE = 1.7
     ARROW_LENGTH_BASE = 120
     ARROW_LENGTH_SCALE = 50
-    BOX_WIDTH = 1560
-    BOX_HEIGHT = 440
 
     attr_reader :starting_materials, :reactants, :products,
                 :num_starting_materials, :num_reactants, :num_products,
@@ -59,6 +57,8 @@ module SVG
         @temperature = options[:temperature]
         @pas = options[:preserve_aspect_ratio]
         @show_yield = options[:show_yield]
+        @box_width = options[:supporting_information] ? 2000 : 1560
+        @box_height = 440
       end
 
       def init_word_size
@@ -102,8 +102,8 @@ module SVG
       def template_it
         <<-END
           <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:cml="http://www.xml-cml.org/schema"
-            width="#{BOX_WIDTH}" height="#{BOX_HEIGHT}" >
-            <rect  width="#{BOX_WIDTH}" height="#{BOX_HEIGHT}" stroke-width="1" stroke="white" fill="none"/>
+            width="#{@box_width}" height="#{@box_height}" >
+            <rect  width="#{@box_width}" height="#{@box_height}" stroke-width="1" stroke="white" fill="none"/>
             <svg width="100%" #{preserve_aspect_ratio} viewBox="#{global_view_box_array.join(' ')}" >
             <title>Reaction 1</title>
         END

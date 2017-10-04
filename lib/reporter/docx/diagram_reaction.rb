@@ -5,17 +5,24 @@ module Reporter
       private
 
       def set_svg(products_only)
-        show_yield = @template != "supporting_information"
+        si = @template == 'supporting_information'
+        show_yield = !si
         if products_only
-          @svg_data = SVG::ProductsComposer.new(materials_svg_paths,
-                                                is_report: true,
-                                                show_yield: show_yield).compose_svg
+          @svg_data = SVG::ProductsComposer
+                      .new(materials_svg_paths,
+                           is_report: true,
+                           show_yield: show_yield,
+                           supporting_information: si)
+                      .compose_svg
         else
-          @svg_data = SVG::ReactionComposer.new(materials_svg_paths,
-                                                solvents: solvents,
-                                                temperature: temperature_svg_paths,
-                                                is_report: true,
-                                                show_yield: show_yield).compose_reaction_svg
+          @svg_data = SVG::ReactionComposer
+                      .new(materials_svg_paths,
+                           solvents: solvents,
+                           temperature: temperature_svg_paths,
+                           is_report: true,
+                           show_yield: show_yield,
+                           supporting_information: si)
+                      .compose_reaction_svg
         end
       end
 
