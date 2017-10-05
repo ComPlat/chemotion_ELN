@@ -138,7 +138,7 @@ export default class ReactionDetails extends Component {
   handleInputChange(type, event) {
     let value
     if (type == "temperatureUnit" || type == "temperatureData" ||
-        type == "description")  {
+        type == "description" || type == "role" || type === 'observation') {
       value = event;
     } else {
       value = event.target.value;
@@ -316,6 +316,7 @@ export default class ReactionDetails extends Component {
           <Tab eventKey={1} title={'Properties'}>
             <ReactionDetailsProperties
               reaction={reaction}
+              onReactionChange={reaction => this.handleReactionChange(reaction)}
               onInputChange={(type, event) => this.handleInputChange(type, event)}
               />
           </Tab>

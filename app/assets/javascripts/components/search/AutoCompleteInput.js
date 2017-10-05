@@ -66,52 +66,26 @@ export default class AutoCompleteInput extends React.Component {
     }
   }
 
-  getNextSuggestionIndex() {
+  focusNewSuggestionIndex(direction=1) {
     let {suggestions, suggestionFocus} = this.state
-    let result
-    let nextSuggestionIndex = suggestionFocus + 1
-    if(suggestions[nextSuggestionIndex]) {
-      result = nextSuggestionIndex
-    } else {
-      result = 0 // previous suggestion was first in list, so use last one
-    }
-    return result
-  }
-
-  getPreviousSuggestionIndex() {
-    let {suggestions, suggestionFocus} = this.state
-    let result
-    let previousSuggestionIndex = suggestionFocus - 1
-    if(suggestions[previousSuggestionIndex]) {
-      result = previousSuggestionIndex
-    } else {
-      // previous suggestion was first in list, so use last one
-      result = suggestions.length - 1
-    }
-    return result
-  }
-
-  focusSuggestionUsingKeyboard(direction) {
-    let suggestionFocus
-    if(direction == 'up') {
-      suggestionFocus = this.getPreviousSuggestionIndex()
-    } else if(direction == 'down') {
-      suggestionFocus = this.getNextSuggestionIndex()
-    }
-
-    this.focusSuggestion(suggestionFocus)
-    this.setState({suggestionFocus: suggestionFocus})
+    let length = suggestions.length
+    let sF = suggestionFocus == null ? length - 1 : suggestionFocus
+    let newSuggestionIndex = sF + direction
+    if (newSuggestionIndex >= length) {newSuggestionIndex = 0}
+    if (newSuggestionIndex < 0) {newSuggestionIndex = length - 1}
+    this.focusSuggestion(newSuggestionIndex)
   }
 
   focusSuggestion(newFocus) {
     let {suggestions, suggestionFocus, value, valueBeforeFocus} = this.state
     let newState = {}
+    let sF = !suggestionFocus ? 0 : suggestionFocus
     if(!valueBeforeFocus) {
       newState.valueBeforeFocus = value
     }
     newState.value = suggestions[newFocus].name
     newState.suggestionFocus = newFocus
-    ReactDOM.findDOMNode(this.refs['suggestion_' + suggestionFocus])
+    ReactDOM.findDOMNode(this.refs['suggestion_' + sF])
             .classList.remove('active')
     let newFocusDom = ReactDOM.findDOMNode(this.refs['suggestion_' + newFocus])
     newFocusDom.classList.add('active')
@@ -145,7 +119,6 @@ export default class AutoCompleteInput extends React.Component {
       let newState = {}
       if(result.length > 0) {
         newState.suggestions = result
-        newState.suggestionFocus = result.length - 1
         newState.showSuggestions = show
       } else {
         newState.suggestions = null
@@ -218,13 +191,13 @@ export default class AutoCompleteInput extends React.Component {
         break
       case 38: // Up
         if(showSuggestions && !error) {
-          this.focusSuggestionUsingKeyboard('up')
+          this.focusNewSuggestionIndex(-1)
         }
         event.preventDefault()
         break
       case 40: // Down
         if(showSuggestions && !error) {
-          this.focusSuggestionUsingKeyboard('down')
+          this.focusNewSuggestionIndex(+1)
         } else if(suggestions) {
           newState.showSuggestions = true
         }
@@ -242,16 +215,19 @@ export default class AutoCompleteInput extends React.Component {
       valueBeforeFocus: null
     })
 
-    if (!this.state.value || this.state.value.trim() == '') {
+    if (!value || value.trim() == '') {
       this.setState({
         value: ''
       })
-      UIActions.selectCollection({id: UIStore.getState().currentCollection.id})
+      let {currentCollection, isSync} = UIStore.getState();
+      currentCollection['clearSearch'] = true
+      isSync ? UIActions.selectSyncCollection(currentCollection)
+        : UIActions.selectCollection(currentCollection);
 
       return 0
     }
 
-    let selection = {name: this.state.value, search_by_method: 'substring'}
+    let selection = {name: value, search_by_method: 'substring'}
     if (suggestions && suggestionFocus != null && suggestions[suggestionFocus]) {
       let selectedSuggestion = suggestions[suggestionFocus]
       let selectedName = selectedSuggestion.name

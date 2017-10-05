@@ -9,4 +9,5 @@ export default {
   DATA: 'data',
   UNLINKED_DATA: 'unlinked_data',
   DATASET: 'dataset',
+  CONTAINER: 'container',
 };

@@ -29,6 +29,23 @@ class DetailActions {
       })
     }
   }
+
+  updateMoleculeNames(sample, newMolName = '') {
+    const inchikey = sample.molecule.inchikey;
+    if (!inchikey) { return null; }
+
+    return (dispatch) => {
+      MoleculesFetcher
+        .updateNames(inchikey, newMolName)
+        .then((result) => {
+          const mn = result.find(r => r.name === newMolName);
+          if (mn) sample.molecule_name = { label: mn.name, value: mn.id };
+          sample.molecule_names = result;
+          dispatch(sample);
+        })
+        .catch(errorMessage => console.log(errorMessage));
+    };
+  }
 }
 
 export default alt.createActions(DetailActions)

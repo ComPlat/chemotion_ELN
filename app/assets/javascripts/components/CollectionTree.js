@@ -104,9 +104,8 @@ export default class CollectionTree extends React.Component {
       <div className="tree-view">
         <div className="title" style={{backgroundColor:'white'}}
              onClick={() => this.setState({sharedToCollectionVisible: !sharedToCollectionVisible})}>
-          <i className="fa fa-list" /> &nbsp;
-          My shared projects &nbsp;
-          <i className="fa fa-share-alt share-icon" />
+          <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
+          My shared collections 
         </div>
       </div>
     )
@@ -132,9 +131,9 @@ export default class CollectionTree extends React.Component {
       <div className="tree-view">
         <div className="title" style={{backgroundColor:'white'}}
              onClick={() => this.setState({sharedWithCollectionVisible: !sharedWithCollectionVisible})}>
-          <i className="fa fa-list"/> &nbsp;
-          Shared with me &nbsp;
           <i className="fa fa-share-alt share-icon"/>
+          &nbsp;&nbsp;
+          Shared with me &nbsp;
         </div>
       </div>
     )
@@ -186,9 +185,8 @@ export default class CollectionTree extends React.Component {
       <div className="tree-view">
         <div className="title" style={{backgroundColor:'white'}}
              onClick={() => this.setState({syncCollectionVisible: !syncCollectionVisible})}>
-          <i className="fa fa-list"/> &nbsp;
+          <i className="fa fa-share-alt"/>&nbsp;&nbsp;
           Synchronized with me &nbsp;
-          <i className="fa fa-share-alt"/>
         </div>
       </div>
     )
@@ -291,7 +289,7 @@ export default class CollectionTree extends React.Component {
           {this.collectionManagementButton()}
           <div className="title" style={{backgroundColor:'white'}}
                onClick={() => this.setState({ownCollectionVisible: !ownCollectionVisible})}>
-            <i className="fa fa-list" /> &nbsp; Collections
+            <i className="fa fa-list" /> &nbsp;&nbsp; Collections
           </div>
         </div>
         <div className="tree-wrapper" style={{display: ownCollectionDisplay}}>

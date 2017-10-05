@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170524130531) do
+ActiveRecord::Schema.define(version: 20171004132647) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -27,6 +27,10 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "group"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.date     "from"
+    t.date     "to"
+    t.string   "domain"
+    t.string   "cat"
   end
 
   create_table "analyses_experiments", force: :cascade do |t|
@@ -62,12 +66,15 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "bucket"
     t.string   "key",          limit: 500
     t.boolean  "thumb",                    default: false
+    t.string   "folder"
   end
 
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
-    t.string "token", null: false
+    t.string  "token",     null: false
+    t.integer "device_id"
+    t.inet    "ip"
   end
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
@@ -188,6 +195,7 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "queue"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.string   "cron"
   end
 
   add_index "delayed_jobs", ["priority", "run_at"], name: "delayed_jobs_priority", using: :btree
@@ -364,10 +372,26 @@ ActiveRecord::Schema.define(version: 20170524130531) do
   add_index "literatures", ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree
   add_index "literatures", ["reaction_id"], name: "index_literatures_on_reaction_id", using: :btree
 
+  create_table "molecule_names", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.integer  "user_id"
+    t.text     "description"
+    t.string   "name",        null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "molecule_names", ["deleted_at"], name: "index_molecule_names_on_deleted_at", using: :btree
+  add_index "molecule_names", ["molecule_id"], name: "index_molecule_names_on_molecule_id", using: :btree
+  add_index "molecule_names", ["name"], name: "index_molecule_names_on_name", using: :btree
+  add_index "molecule_names", ["user_id", "molecule_id"], name: "index_molecule_names_on_user_id_and_molecule_id", using: :btree
+  add_index "molecule_names", ["user_id"], name: "index_molecule_names_on_user_id", using: :btree
+
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
     t.string   "inchistring"
-    t.float    "density"
+    t.float    "density",                default: 0.0
     t.float    "molecular_weight"
     t.binary   "molfile"
     t.float    "melting_point"
@@ -430,9 +454,12 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.datetime "deleted_at"
     t.string   "short_label"
     t.integer  "created_by"
+    t.string   "role"
+    t.jsonb    "origin"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
+  add_index "reactions", ["role"], name: "index_reactions_on_role", using: :btree
 
   create_table "reactions_product_samples", force: :cascade do |t|
     t.integer  "reaction_id"
@@ -494,8 +521,10 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "file_path"
     t.datetime "generated_at"
     t.datetime "deleted_at"
-    t.datetime "created_at",        null: false
-    t.datetime "updated_at",        null: false
+    t.datetime "created_at",                             null: false
+    t.datetime "updated_at",                             null: false
+    t.string   "template",          default: "standard"
+    t.text     "mol_serials",       default: "--- []\n"
   end
 
   add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
@@ -560,16 +589,20 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.string   "sample_svg_file"
     t.integer  "user_id"
     t.string   "identifier"
-    t.float    "density",             default: 1.0,   null: false
+    t.float    "density",             default: 0.0
     t.float    "melting_point"
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
     t.jsonb    "xref",                default: {}
+    t.float    "molarity_value",      default: 0.0
+    t.string   "molarity_unit",       default: "M"
+    t.integer  "molecule_name_id"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
   add_index "samples", ["identifier"], name: "index_samples_on_identifier", using: :btree
   add_index "samples", ["molecule_id"], name: "index_samples_on_sample_id", using: :btree
+  add_index "samples", ["molecule_name_id"], name: "index_samples_on_molecule_name_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
   create_table "screens", force: :cascade do |t|
@@ -621,6 +654,10 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.integer  "affiliation_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.datetime "deleted_at"
+    t.date     "from"
+    t.date     "to"
+    t.boolean  "main"
   end
 
   create_table "users", force: :cascade do |t|
@@ -642,14 +679,14 @@ ActiveRecord::Schema.define(version: 20170524130531) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 

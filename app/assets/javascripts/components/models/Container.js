@@ -1,5 +1,4 @@
 import Element from './Element';
-import Attachment from './Attachment';
 
 export default class Container extends Element {
   static buildEmpty() {
@@ -10,10 +9,10 @@ export default class Container extends Element {
       is_deleted: false,
       description: '',
       extended_metadata: {
-        report: true
+        report: true,
       },
       container_type: '',
-    })
+    });
   }
 
   static buildAnalysis(kind='other',name='') {
@@ -53,5 +52,4 @@ export default class Container extends Element {
       container_type: this.container_type,
     })
   }
-
 }

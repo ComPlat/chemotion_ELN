@@ -8,6 +8,7 @@ class Reaction < ActiveRecord::Base
 
   serialize :temperature, Hash
   serialize :description, Hash
+  serialize :observation, Hash
 
   multisearchable against: :name
   multisearchable against: :short_label
@@ -67,6 +68,7 @@ class Reaction < ActiveRecord::Base
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
+  accepts_nested_attributes_for :collections_reactions
 
   has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
@@ -110,7 +112,7 @@ class Reaction < ActiveRecord::Base
   def samples
     starting_materials + reactants + products + solvents
   end
-  
+
   def analyses
     self.container ? self.container.analyses : []
   end
@@ -149,6 +151,10 @@ class Reaction < ActiveRecord::Base
     return description["ops"].map{|s| s["insert"]}.join()
   end
 
+  def observation_contents
+    return observation["ops"].map{|s| s["insert"]}.join()
+  end
+
   def update_svg_file!
     paths = {}
     %i(starting_materials reactants products).each do |prop|
@@ -160,7 +166,8 @@ class Reaction < ActiveRecord::Base
 
     begin
       composer = SVG::ReactionComposer.new(paths, temperature: temperature_display_with_unit,
-                                                  solvents: solvents_in_svg)
+                                                  solvents: solvents_in_svg,
+                                                  show_yield: true)
       self.reaction_svg_file = composer.compose_reaction_svg_and_save
     rescue Exception => e
       Rails.logger.info("**** SVG::ReactionComposer failed ***")

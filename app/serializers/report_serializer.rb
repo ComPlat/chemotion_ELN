@@ -1,7 +1,7 @@
 class ReportSerializer < ActiveModel::Serializer
   attributes :id, :file_name, :file_description,
-              :configs, :sample_settings, :reaction_settings,
-              :downloadable, :unread
+             :configs, :sample_settings, :reaction_settings, :mol_serials,
+             :downloadable, :unread, :template, :img_format, :objects
 
   def downloadable
     @downloadable ||= object.file_path.present?

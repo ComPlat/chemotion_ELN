@@ -86,7 +86,7 @@ label.required:after {
 
 .panel-fit-screen {
   overflow-y: scroll;
-  max-height: calc(100vh - 220px);
+  max-height: calc(100vh - 320px);
 }
 
 @media screen and (min-width: 1367px) {
@@ -95,11 +95,11 @@ label.required:after {
   }
 }
 
-@media screen and (max-width: 1366px) {
-  .visible-hd {
-    display: none !important;
-  }
-}
+<%# @media screen and (max-width: 1366px) { %>
+<%#   .visible-hd { %>
+<%#     display: none !important; %>
+<%#   } %>
+<%# } %>
 
 span.pseudo-link {
   cursor:pointer;
@@ -117,7 +117,7 @@ span.pseudo-link:hover {
 .small-col {
   float: left;
   padding-left: 6px !important;
-  padding-right: 6px !important;
+  padding-right: 0px !important;
 }
 
 .no-pad-col {
@@ -126,15 +126,17 @@ span.pseudo-link:hover {
 }
 
 .main-content {
-  width: 83%
+  float: none;
+  overflow: hidden;
 }
 
 .full-main {
-  width: 98%
+  width: 99%;
 }
 
 .collec-tree {
-  width: 15%
+  width: 15%;
+  margin-left: 3px;
 }
 
 // icon for research plan. just a standard FontAwesome icon
@@ -151,4 +153,10 @@ $font-icons-research_plan: "\f0f6";
 .exportModal {
    width: 60%;
    height: auto;
+}
+
+tr.strokeout  td {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2NkYGCQBAAAIwAbDJgTxgAAAABJRU5ErkJggg==');
+    background-repeat: repeat-x;
+    background-position: 50% 40%;
 }

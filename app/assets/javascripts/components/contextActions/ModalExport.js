@@ -4,6 +4,7 @@ import {Button, ButtonToolbar, Input,
 import CheckBoxs from '../common/CheckBoxs';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
+import ReportsFetcher from './../fetchers/ReportsFetcher';
 import Utils from '../utils/Functions';
 
 export default class ModalExport extends React.Component {
@@ -13,28 +14,30 @@ export default class ModalExport extends React.Component {
       columns: [
         {value: "Image", text: "image", checked: true},
         {value: "name", text: "name", checked: true},
-        {value: "description", text: "description", checked: true},
+        {value: "molecule_name", text: "molecule name", checked: true},
         {value: "cano_smiles", text: "canonical smiles", checked: true},
+        {value: "inchistring", text: "InChIstring", checked: true},
+        {value: "inchikey", text: "InChIkey", checked: true},
         {value: "sum_formular", text: "sum formula", checked: true},
-        {value: "inchistring", text: "inchistring", checked: true},
-        {value: "target_amount_value,target_amount_unit", text: "target amount", checked: false},
-        {value: "created_at", text: "created at", checked: false},
-        {value: "updated_at", text: "updated at", checked: false},
+        {value: "external_label", text: "external label", checked: false},
+        {value: "short_label", text: "short label", checked: false},
+        {value: "description", text: "description", checked: true},
+        {value: "real_amount_value,real_amount_unit", text: "real amount", checked: false},
+        {value: "target_amount_value, target_amount_unit", text: "target amount", checked: false},
+        {value: "molarity_value, molarity_unit", text: "molarity", checked: false},
+        {value: "density", text: "density", checked: false},
         {value: "molfile", text: "molfile", checked: false},
         {value: "purity", text: "purity", checked: false},
         {value: "solvent", text: "solvent", checked: false},
-        {value: "impurities", text: "impurities", checked: false},
         {value: "location", text: "location", checked: false},
         {value: "is_top_secret", text: "is top secret?", checked: false},
-        {value: "ancestry", text: "ancestry", checked: false},
-        {value: "external_label", text: "external label", checked: false},
-        {value: "short_label", text: "short label", checked: false},
-        {value: "real_amount_value,real_amount_unit", text: "real amount", checked: false},
+        // {value: "ancestry", text: "ancestry", checked: false},
         {value: "imported_readout", text: "imported readout", checked: false},
-        {value: "identifier", text: "identifier", checked: false},
-        {value: "density", text: "density", checked: false},
+        // {value: "identifier", text: "identifier", checked: false},
         {value: "melting_point", text: "melting point", checked: false},
         {value: "boiling_point", text: "boiling point", checked: false},
+        {value: "created_at", text: "created at", checked: false},
+        {value: "updated_at", text: "updated at", checked: false},
         {value: "molecular_weight", text: "molecular weight", checked: false},
       ],
       checkedAllColumns: true,
@@ -93,7 +96,7 @@ export default class ModalExport extends React.Component {
 
   removedColumns() {
     const { columns } = this.state;
-    return this.chainedItems(columns);
+    return this.chainedItems(columns).join().split(/\s*,\s*/);
   }
 
   chainedItems(items) {
@@ -101,7 +104,7 @@ export default class ModalExport extends React.Component {
       return !item.checked
         ? item.value
         : null
-    }).filter(r => r!=null).join(',');
+    }).filter(r => r!=null);
   }
 
   render() {
@@ -119,22 +122,33 @@ export default class ModalExport extends React.Component {
   }
 }
 
-const exportSelections = (uiState, userState, removedColumns, e) => {
-  const { currentCollection, sample, reaction, wellplate } = uiState;
-  const { currentType } = userState;
-
-  let url_params = "type=" + currentType +
-      selectedStringfy(sample, currentCollection, removedColumns, e);
-
-  Utils.downloadFile({ contents: "api/v1/reports/export_samples_from_selections?" + url_params });
+const exportSelections = (uiState, userState, columns, e) => {
+  ReportsFetcher.createDownloadFile({
+    exportType: e,
+    uiState: filterUIState(uiState),
+    columns: columns
+  });
 }
 
-const selectedStringfy = (input, currentCollection, removedColumns, e) => {
-  const { checkedIds, uncheckedIds, checkedAll } = input;
-  return "&exportType=" + e +
-         "&checkedIds=" + checkedIds.toArray() +
-         "&uncheckedIds=" + uncheckedIds.toArray() +
-         "&checkedAll=" + checkedAll +
-         "&currentCollection=" + currentCollection.id +
-         "&removedColumns=" + removedColumns
+const filterUIState = (uiState) =>{
+  const { currentCollection, sample, reaction, wellplate, isSync } = uiState;
+  return {
+    sample: {
+      checkedIds: sample.checkedIds.toArray(),
+      uncheckedIds: sample.uncheckedIds.toArray(),
+      checkedAll: sample.checkedAll,
+    },
+    reaction: {
+      checkedIds: reaction.checkedIds.toArray(),
+      uncheckedIds: reaction.uncheckedIds.toArray(),
+      checkedAll: reaction.checkedAll,
+    },
+    wellplate: {
+      checkedIds: wellplate.checkedIds.toArray(),
+      uncheckedIds: wellplate.uncheckedIds.toArray(),
+      checkedAll: wellplate.checkedAll,
+    },
+    currentCollection: currentCollection.id,
+    isSync: isSync,
+  }
 }

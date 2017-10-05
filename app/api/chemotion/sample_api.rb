@@ -211,9 +211,12 @@ module Chemotion
         get do
           sample= Sample.includes(:molecule, :residues, :elemental_compositions, :container)
                         .find(params[:id])
-          serialized_sample = ElementPermissionProxy.new(current_user, sample, user_ids).serialized
-          serialized_sample[:can_publish] = @element_policy.destroy?
-          serialized_sample[:can_update] = @element_policy.update?
+          serialized_sample = ElementPermissionProxy.new(
+                                current_user,
+                                sample,
+                                user_ids,
+                                @element_policy
+                              ).serialized
           {sample: serialized_sample}
         end
       end
@@ -228,10 +231,11 @@ module Chemotion
         optional :target_amount_unit, type: String, desc: "Sample target amount_unit"
         optional :real_amount_value, type: Float, desc: "Sample real amount_value"
         optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
+        optional :molarity_value, type: Float, desc: "Sample molarity value"
+        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         optional :description, type: String, desc: "Sample description"
         optional :purity, type: Float, desc: "Sample purity"
         optional :solvent, type: String, desc: "Sample solvent"
-        optional :impurities, type: String, desc: "Sample impurities"
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -243,6 +247,7 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         #use :root_container_params
       end
@@ -275,9 +280,12 @@ module Chemotion
             sample.update!(attributes)
           end
 
-          serialized_sample = ElementPermissionProxy.new(current_user, sample, user_ids).serialized
-          serialized_sample[:can_publish] = @element_policy.destroy?
-          serialized_sample[:can_update] = @element_policy.update?
+          serialized_sample = ElementPermissionProxy.new(
+                                current_user,
+                                sample,
+                                user_ids,
+                                @element_policy,
+                              ).serialized
           {sample: serialized_sample}
         end
       end
@@ -292,10 +300,11 @@ module Chemotion
         requires :target_amount_unit, type: String, desc: "Sample target amount_unit"
         optional :real_amount_value, type: Float, desc: "Sample real amount_value"
         optional :real_amount_unit, type: String, desc: "Sample real amount_unit"
+        optional :molarity_value, type: Float, desc: "Sample molarity value"
+        optional :molarity_unit, type: String, desc: "Sample real amount_unit"
         requires :description, type: String, desc: "Sample description"
         requires :purity, type: Float, desc: "Sample purity"
         requires :solvent, type: String, desc: "Sample solvent"
-        requires :impurities, type: String, desc: "Sample impurities"
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
@@ -308,6 +317,7 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :molecule_name_id, type: Integer
         requires :container, type: Hash
       end
       post do
@@ -320,10 +330,11 @@ module Chemotion
           target_amount_unit: params[:target_amount_unit],
           real_amount_value: params[:real_amount_value],
           real_amount_unit: params[:real_amount_unit],
+          molarity_value: params[:molarity_value],
+          molarity_unit: params[:molarity_unit],
           description: params[:description],
           purity: params[:purity],
           solvent: params[:solvent],
-          impurities: params[:impurities],
           location: params[:location],
           molfile: params[:molfile],
           sample_svg_file: params[:sample_svg_file],
@@ -334,7 +345,8 @@ module Chemotion
           residues: params[:residues],
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
-          xref: params[:xref]
+          xref: params[:xref],
+          molecule_name_id: params[:molecule_name_id]
         }
 
         # otherwise ActiveRecord::UnknownAttributeError appears

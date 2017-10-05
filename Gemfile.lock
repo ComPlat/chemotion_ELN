@@ -22,12 +22,19 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/sablon
-  revision: ce06ae287674f8fb06dbb0d8c95df5c76dbb47ad
+  revision: b2d1ff682c4b4d984b91cf410043e42bdc5c25fc
   specs:
     sablon (0.0.19)
       nokogiri (>= 1.6.0)
-      redcarpet (>= 3.2)
+      redcarpet (>= 3.4.0)
       rubyzip (>= 1.1)
+
+GIT
+  remote: https://github.com/MiniProfiler/rack-mini-profiler
+  revision: f9733f275ba655d20311f00e71e8570864c61fe1
+  specs:
+    rack-mini-profiler (0.10.5)
+      rack (>= 1.2.0)
 
 GIT
   remote: https://github.com/fl9/fun_sftp.git
@@ -94,11 +101,14 @@ GEM
       thread_safe (~> 0.3, >= 0.3.4)
       tzinfo (~> 1.1)
     addressable (2.4.0)
+    airbrussh (1.3.0)
+      sshkit (>= 1.6.1, != 1.7.0)
     ancestry (2.1.0)
       activerecord (>= 3.0.0)
     archive-zip (0.7.0)
       io-like (~> 0.3.0)
     arel (6.0.4)
+    ast (2.3.0)
     autoprefixer-rails (6.3.6)
       execjs
     awesome_print (1.6.1)
@@ -131,10 +141,12 @@ GEM
       activesupport (>= 3.0.0)
       uniform_notifier (~> 1.10.0)
     byebug (8.2.5)
-    capistrano (3.4.1)
+    callsite (0.0.11)
+    capistrano (3.9.1)
+      airbrussh (>= 1.0.0)
       i18n
       rake (>= 10.0.0)
-      sshkit (~> 1.3)
+      sshkit (>= 1.9.0)
     capistrano-bundler (1.1.4)
       capistrano (~> 3.1)
       sshkit (~> 1.2)
@@ -173,6 +185,7 @@ GEM
     coderay (1.1.1)
     coercible (1.0.0)
       descendants_tracker (~> 0.0.1)
+    colored (1.2)
     concurrent-ruby (1.0.2)
     countries (2.0.8)
       i18n_data (~> 0.7.0)
@@ -192,6 +205,8 @@ GEM
     daemons (1.2.3)
     database_cleaner (1.5.3)
     debug_inspector (0.0.2)
+    delayed_cron_job (0.7.2)
+      delayed_job (>= 4.1)
     delayed_job (4.1.1)
       activesupport (>= 3.0, < 5.0)
     delayed_job_active_record (4.1.0)
@@ -236,6 +251,11 @@ GEM
       thor (~> 0.14)
     globalid (0.3.7)
       activesupport (>= 4.1.0)
+    gman (7.0.2)
+      colored (~> 1.2)
+      iso_country_codes (~> 0.6)
+      naughty_or_nice (= 2.1)
+      public_suffix (~> 2.0)
     grape (0.16.2)
       activesupport
       builder
@@ -275,10 +295,11 @@ GEM
     httparty (0.13.7)
       json (~> 1.8)
       multi_xml (>= 0.5.2)
-    i18n (0.7.0)
+    i18n (0.8.6)
     i18n_data (0.7.0)
     ice_nine (0.11.2)
     io-like (0.3.0)
+    iso_country_codes (0.7.8)
     jbuilder (2.4.1)
       activesupport (>= 3.0.0, < 5.1)
       multi_json (~> 1.2)
@@ -312,6 +333,10 @@ GEM
       sqlite3 (~> 1.3)
       thin (~> 1.5.0)
     memory_profiler (0.9.7)
+    meta_request (0.4.3)
+      callsite (~> 0.0, >= 0.0.11)
+      rack-contrib (>= 1.1, < 3)
+      railties (>= 3.0.0, < 5.2.0)
     mime-types (3.1)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0521)
@@ -325,11 +350,14 @@ GEM
     multipart-post (2.0.0)
     mustermann19 (0.4.3)
       enumerable-lazy
+    naughty_or_nice (2.1.0)
+      addressable (~> 2.3)
+      public_suffix (~> 2.0)
     net-scp (1.2.1)
       net-ssh (>= 2.6.5)
     net-sftp (2.1.2)
       net-ssh (>= 2.6.5)
-    net-ssh (3.1.1)
+    net-ssh (4.2.0)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
     open4 (1.3.4)
@@ -340,27 +368,34 @@ GEM
       cocaine (~> 0.5.5)
       mime-types
       mimemagic (~> 0.3.0)
+    parallel (1.11.2)
     paranoia (2.1.5)
       activerecord (~> 4.0)
+    parser (2.4.0.0)
+      ast (~> 2.2)
     pdf-core (0.6.1)
     pg (0.18.4)
     pg_search (1.0.5)
       activerecord (>= 3.1)
       activesupport (>= 3.1)
       arel
+    powerpack (0.1.1)
     prawn (2.1.0)
       pdf-core (~> 0.6.1)
       ttfunk (~> 1.4.0)
     prawn-svg (0.25.2)
       css_parser (~> 1.3)
       prawn (>= 0.11.1, < 3)
+    public_suffix (2.0.5)
     pundit (1.1.0)
       activesupport (>= 3.0.0)
+    quiet_assets (1.1.0)
+      railties (>= 3.1, < 5.0)
     rack (1.6.5)
     rack-accept (0.4.5)
       rack (>= 0.4)
-    rack-mini-profiler (0.10.1)
-      rack (>= 1.2.0)
+    rack-contrib (1.5.0)
+      rack (~> 1.4)
     rack-protection (1.5.3)
       rack
     rack-test (0.6.3)
@@ -389,13 +424,15 @@ GEM
       activesupport (= 4.2.0)
       rake (>= 0.8.7)
       thor (>= 0.18.1, < 2.0)
-    rake (12.0.0)
+    rainbow (2.2.2)
+      rake
+    rake (12.1.0)
     rb-fsevent (0.9.7)
     rb-inotify (0.9.7)
       ffi (>= 0.5.0)
     rdoc (4.2.2)
       json (~> 1.4)
-    redcarpet (3.3.4)
+    redcarpet (3.4.0)
     responders (2.3.0)
       railties (>= 4.2.0, < 5.1)
     rmagick (2.15.4)
@@ -422,14 +459,23 @@ GEM
       rspec-support (~> 3.4.0)
     rspec-support (3.4.1)
     rtf (0.3.3)
+    rubocop (0.49.1)
+      parallel (~> 1.10)
+      parser (>= 2.3.3.1, < 3.0)
+      powerpack (~> 0.1)
+      rainbow (>= 1.99.1, < 3.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (~> 1.0, >= 1.0.1)
+    ruby-mailchecker (3.0.27)
     ruby-ole (1.2.12)
+    ruby-progressbar (1.8.1)
     ruby_parser (3.8.4)
       sexp_processor (~> 4.1)
     rubyzip (1.1.7)
     safe_yaml (1.0.4)
     sass (3.4.22)
-    sass-rails (5.0.4)
-      railties (>= 4.0.0, < 5.0)
+    sass-rails (5.0.6)
+      railties (>= 4.0.0, < 6)
       sass (~> 3.1)
       sprockets (>= 2.8, < 4.0)
       sprockets-rails (>= 2.0, < 4.0)
@@ -455,6 +501,8 @@ GEM
     skinny (0.2.4)
       eventmachine (~> 1.0.0)
       thin (>= 1.5, < 1.7)
+    slackistrano (3.8.1)
+      capistrano (>= 3.8.1)
     spring (1.7.1)
     sprite-factory (1.7.1)
     sprockets (3.7.1)
@@ -465,17 +513,20 @@ GEM
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
     sqlite3 (1.3.11)
-    sshkit (1.10.0)
+    sshkit (1.14.0)
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
     stackprof (0.2.10)
+    swot (1.0.0)
+      naughty_or_nice (~> 2.0)
+      public_suffix
     term-ansicolor (1.3.2)
       tins (~> 1.0)
     thin (1.5.1)
       daemons (>= 1.0.9)
       eventmachine (>= 0.12.6)
       rack (>= 1.0.0)
-    thor (0.19.4)
+    thor (0.19.1)
     thread_safe (0.3.6)
     tilt (2.0.7)
     timers (4.0.4)
@@ -486,6 +537,7 @@ GEM
       thread_safe (~> 0.1)
     uglifier (3.0.0)
       execjs (>= 0.3.0, < 3)
+    unicode-display_width (1.2.1)
     unicode_utils (1.4.0)
     uniform_notifier (1.10.0)
     virtus (1.0.5)
@@ -526,11 +578,12 @@ DEPENDENCIES
   backup
   barby
   better_errors
+  binding_of_caller
   bootstrap-sass (~> 3.3.5)
   browserify-rails (~> 3.0.1)
   bullet
   byebug
-  capistrano (= 3.4.1)
+  capistrano (= 3.9.1)
   capistrano-bundler
   capistrano-npm
   capistrano-nvm
@@ -543,6 +596,7 @@ DEPENDENCIES
   coveralls
   daemons
   database_cleaner
+  delayed_cron_job
   delayed_job_active_record
   devise
   dotenv-rails
@@ -554,6 +608,7 @@ DEPENDENCIES
   font-awesome-rails
   fontcustom
   fun_sftp!
+  gman
   grape
   grape-active_model_serializers
   grape-kaminari
@@ -568,6 +623,7 @@ DEPENDENCIES
   launchy (~> 2.4.3)
   mailcatcher
   memory_profiler
+  meta_request
   net-sftp
   net-ssh
   nokogiri
@@ -578,21 +634,27 @@ DEPENDENCIES
   prawn
   prawn-svg
   pundit
-  rack-mini-profiler
+  quiet_assets
+  rack-mini-profiler!
   rails (= 4.2.0)
   rmagick
   roo (> 2.5.0)
   rqrcode
   rspec-rails
   rtf
+  rubocop
+  ruby-mailchecker
   ruby-ole
   sablon!
-  sass-rails (~> 5.0)
+  sass-rails (~> 5.0, >= 5.0.6)
   sdoc (~> 0.4.0)
   selenium-webdriver (~> 3.0.5)
+  slackistrano
   spring
   stackprof
+  swot
   thin
+  thor (= 0.19.1)
   thumbnailer!
   uglifier (>= 1.3.0)
   web-console (~> 2.0)
@@ -601,4 +663,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   1.14.6
+   1.15.4

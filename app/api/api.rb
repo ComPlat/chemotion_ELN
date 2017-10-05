@@ -7,6 +7,7 @@ class API < Grape::API
   # TODO needs to be tested,
   # source: http://funonrails.com/2014/03/api-authentication-using-devise-token/
   helpers do
+
     def current_user
       @current_user = WardenAuthentication.new(env).current_user
     end
@@ -20,7 +21,8 @@ class API < Grape::API
     end
 
     def is_public_request?
-      request.path.include?('/api/v1/public/')
+      request.path.include?('/api/v1/public/') ||
+        request.path.include?('/api/v1/ketcher/layout')
     end
 
     def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
@@ -133,6 +135,11 @@ class API < Grape::API
     authenticate! unless is_public_request?
   end
 
+  # desc: whitelisted tables and columns for advanced_search
+  WL_TABLES = {
+    'samples' => %w(name short_label external_label)
+  }
+
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI
@@ -155,5 +162,6 @@ class API < Grape::API
   mount Chemotion::DeviceAPI
   mount Chemotion::IconNmrAPI
   mount Chemotion::DevicesAnalysisAPI
+  mount Chemotion::GeneralAPI
   mount Chemotion::V1PublicAPI
 end

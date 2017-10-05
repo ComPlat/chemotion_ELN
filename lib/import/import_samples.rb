@@ -180,12 +180,9 @@ class Import::ImportSamples
     sample.molfile = molfile
     sample.molecule = molecule
     # Populate new sample
-    sample_attr = Sample.attribute_names
     header.each_with_index do |field, index|
-      next if excluded_field.include?(field)
-      next unless sample_attr.include?(field)
-      field_assign = field + "="
-      sample.send(field_assign, row[field])
+      next unless included_fields.include?(field)
+      sample[field] = row[field]
     end
     sample.collections << Collection.find(collection_id)
     sample.collections << Collection.get_all_collection_for_user(current_user_id)
@@ -193,8 +190,46 @@ class Import::ImportSamples
     processed.push(sample)
   end
 
-  def excluded_field
-    ["ancestry", "short_label"]
+  def excluded_fields
+    [
+      'id',
+      # 'name',
+      # 'target_amount_value',
+      # 'target_amount_unit',
+      'created_at',
+      'updated_at',
+      # 'description',
+      'molecule_id',
+      'molfile',
+      # 'purity',
+      # 'solvent',
+      'impurities',
+      # 'location',
+      'is_top_secret',
+      'ancestry',
+      # 'external_label',
+      'created_by',
+      'short_label',
+      # 'real_amount_value',
+      # 'real_amount_unit',
+      # 'imported_readout',
+      'deleted_at',
+      'sample_svg_file',
+      'user_id',
+      'identifier',
+      # 'density',
+      # 'melting_point',
+      # 'boiling_point',
+      'fingerprint_id',
+      'xref',
+      # 'molarity_value',
+      # 'molarity_unit',
+      'molecule_name_id',
+    ]
+  end
+
+  def included_fields
+    Sample.attribute_names - excluded_fields
   end
 
   def error_process_file

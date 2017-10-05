@@ -1,0 +1,54 @@
+.container
+  %h2
+    My past and present affiliations
+  %br/
+
+  - flash.each do |key, value|
+    %div{class: "alert alert-warning"}= value
+
+  %br/
+  .jumbotron
+    .row
+    = form_for @new_aff, method: 'patch', url: pages_create_affiliation_path do |f|
+      = render "devise/shared/affiliations", f: f, disabled: false
+
+      %br/
+
+      .actions
+        = f.submit "Set current affiliation", class: "btn btn-primary"
+
+    %br/
+    = form_tag('/pages/update_affiliations', method: :patch) do
+      %table{class: 'table table-bordered' , style: 'backgroundColor: white'}
+        %thead
+          %tr
+            %th.col-xs-1 Country
+            %th.col-xs-3 Organization
+            %th.col-xs-2 Department
+            %th.col-xs-2 Group
+            %th.col-xs-1 from
+            %th.col-xs-1 to
+            %th.col-xs-1
+        %tbody
+          - @affiliations.each.with_index do |aff, ind|
+            %tr{id: "affiliation_#{aff.id}", class:'affiliation-line'}
+              %td= aff.affiliation.country
+              %td= aff.affiliation.organization
+              %td= aff.affiliation.department
+              %td= aff.affiliation.group
+              %td{id: "aff_#{aff.id}_from", class: 'affiliation_from'}= aff.from.strftime("%b-%Y") if aff.from
+              %td{id: "aff_#{aff.id}_to",   class: 'affiliation_to'  }= aff.to.strftime("%b-%Y") if aff.to
+              %td
+                %a{class: 'btn btn-danger del-affiliation', ref:'#'}
+                  %span{class:'glyphicon glyphicon-trash'}
+              = hidden_field_tag("affiliations[][from_month]", aff.from && aff.from.strftime('%Y-%m'))
+              = hidden_field_tag("affiliations[][to_month]", aff.to && aff.to.strftime('%Y-%m'))
+              = hidden_field_tag("affiliations[][id]", aff.id)
+              = hidden_field_tag("affiliations[][_destroy]")
+      %br/
+      = submit_tag "Update", class: 'btn btn-primary'
+  %br/
+  %br/
+
+  = link_to "Back", root_path
+  %script{:src => asset_path('affiliation.js')}

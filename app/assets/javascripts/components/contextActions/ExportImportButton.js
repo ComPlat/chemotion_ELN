@@ -1,37 +1,28 @@
 import React, {Component} from 'react';
-import {OverlayTrigger, Dropdown, Button, MenuItem, Tooltip, Glyphicon}
+import {Dropdown, Button, MenuItem, Glyphicon}
   from 'react-bootstrap';
 import ElementActions from '../actions/ElementActions';
 import ModalImport from './ModalImport';
 import ModalExport from './ModalExport';
 
 const ExportImportButton = ({isDisabled, updateModalProps}) => {
-  const tooltip = (<Tooltip id="export_button">Import Export</Tooltip>)
-  const title = (
-    <div>
-      <Glyphicon bsSize="small" glyph="import"/> <Glyphicon bsSize="small" glyph="export"/>
-    </div>
-  )
-
   return (
-    <OverlayTrigger placement="bottom" overlay={tooltip} refs="overlay">
-      <Dropdown id='export-dropdown' title={title} disabled={isDisabled} >
-        <Dropdown.Toggle>
-          <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
-        </Dropdown.Toggle>
-        <Dropdown.Menu>
-          <MenuItem onSelect={() => exportFunction(updateModalProps)}
-            title='Export to spreadsheet'>
-            Export samples from selection
-          </MenuItem>
-          <MenuItem divider />
-          <MenuItem onSelect={() => importFunction(updateModalProps)}
-            title='Import from spreadsheet or sdf'>
-            Import samples to collection
-          </MenuItem>
-        </Dropdown.Menu>
-      </Dropdown>
-    </OverlayTrigger>
+    <Dropdown id='export-dropdown' disabled={isDisabled} >
+      <Dropdown.Toggle>
+        <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
+      </Dropdown.Toggle>
+      <Dropdown.Menu>
+        <MenuItem onSelect={() => exportFunction(updateModalProps)}
+          title='Export to spreadsheet'>
+          Export samples from selection
+        </MenuItem>
+        <MenuItem divider />
+        <MenuItem onSelect={() => importFunction(updateModalProps)}
+          title='Import from spreadsheet or sdf'>
+          Import samples to collection
+        </MenuItem>
+      </Dropdown.Menu>
+    </Dropdown>
   )
 }
 

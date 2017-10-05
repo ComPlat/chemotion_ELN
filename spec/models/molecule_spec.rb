@@ -20,6 +20,12 @@ RSpec.describe Molecule, type: :model do
       molecule.save!
       expect(molecule.tag.taggable_data["pubchem_cid"]).to eq(123456789)
     end
+
+    it 'has molecule_names' do
+      names = molecule.molecule_names.map(&:name)
+      expect(names).to include molecule.sum_formular
+      expect(names & molecule.names == molecule.names).to be(true)
+    end
   end
 
   describe 'persistance' do

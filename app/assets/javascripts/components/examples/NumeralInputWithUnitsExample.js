@@ -9,7 +9,6 @@ export default class NumeralInputWithUnitsExample extends Component {
 
   render() {
     let ajaxCall = (unit, nextUnit, value) => {
-      console.log("ajax call with unit: " + unit + " nextUnit: " + nextUnit + " and value: " + value);
       let convertedValue = value;
       if (unit && nextUnit && unit != nextUnit) {
         switch (unit) {
@@ -25,7 +24,7 @@ export default class NumeralInputWithUnitsExample extends Component {
             break;
         }
       }
-      console.log("result:" + convertedValue);
+
       return convertedValue;
     };
     return (

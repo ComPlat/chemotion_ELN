@@ -1,15 +1,17 @@
 const paramize = (state) => {
-  const { selectedObjs, splSettings, rxnSettings, configs,
-          fileName, fileDescription, imgFormat } = state;
+  const { selectedObjs, splSettings, rxnSettings, configs, selMolSerials,
+    fileName, fileDescription, imgFormat, template } = state;
   const params = {
     objTags: JSON.stringify(objTags(selectedObjs)),
     splSettings: JSON.stringify(abstractSplSettings(splSettings)),
     rxnSettings: JSON.stringify(rxnSettings),
     configs: JSON.stringify(abstractConfigs(configs)),
-    imgFormat: imgFormat,
-    fileName: fileName,
-    fileDescription: fileDescription,
-  }
+    imgFormat,
+    fileName,
+    fileDescription,
+    template,
+    molSerials: JSON.stringify(selMolSerials),
+  };
 
   return params;
 };

@@ -1,10 +1,11 @@
 class ElementPermissionProxy
   attr_reader :user, :element, :detail_level
 
-  def initialize(user, element, user_ids = [])
+  def initialize(user, element, user_ids = [], policy = {})
     @user = user
     @element = element
     @user_ids = user_ids
+    @policy = policy
 
     @collections = user_collections_for_element
     @sync_collections = sync_collections_users_for_element
@@ -120,6 +121,8 @@ class ElementPermissionProxy
 
   def restriction_by_dl(serializer_class, dl, nested_dl)
     klass = "#{serializer_class}::Level#{dl}".constantize
-    klass.new(element, nested_dl).serializable_hash
+    need_hash = [SampleSerializer, ReactionSerializer].include? serializer_class
+    opt = need_hash ? { nested_dl: nested_dl, policy: @policy, current_user: @user } : nested_dl
+    klass.new(element, opt).serializable_hash
   end
 end

@@ -21,6 +21,7 @@ const originalState = {
   checkedAllRxnSettings: true,
   checkedAllConfigs: true,
   processingReport: false,
+  defaultObjTags: { sampleIds: [], reactionIds: [] },
   selectedObjTags: { sampleIds: [], reactionIds: [] },
   selectedObjs: [],
   imgFormat: 'png',
@@ -29,6 +30,8 @@ const originalState = {
   fileDescription: '',
   activeKey: 0,
   processings: [],
+  template: "supporting_information",
+  selMolSerials: [],
 }
 
 export { originalState, splSettings, rxnSettings, configs }

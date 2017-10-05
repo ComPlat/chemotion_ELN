@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import Delta from 'quill-delta';
+
 import Element from './Element';
 import Sample from './Sample';
 import Literature from './Literature';
@@ -25,11 +27,12 @@ export default class Reaction extends Element {
       type: 'reaction',
       name: '',
       status: "",
+      role: "",
       description: description_default,
       timestamp_start: "",
       timestamp_stop: "",
       duration: "",
-      observation: "",
+      observation: description_default,
       purification: "",
       dangerous_products: "",
       tlc_solvents: "",
@@ -91,6 +94,8 @@ export default class Reaction extends Element {
       temperature: this.temperature,
       short_label: this.short_label,
       status: this.status,
+      role: this.role,
+      origin: this.origin,
       reaction_svg_file: this.reaction_svg_file,
       materials: {
         starting_materials: this.starting_materials.map(s=>s.serializeMaterial()),
@@ -129,6 +134,17 @@ export default class Reaction extends Element {
 
   get description_contents() {
     return this.description.ops.map(s => s.insert).join()
+  }
+
+  get observation_contents() {
+    return this.observation.ops.map(s => s.insert).join()
+  }
+
+  concat_text_observation(content) {
+    const insertDelta = new Delta().insert(content);
+    const observationDelta = new Delta(this.observation);
+    const composedDelta = observationDelta.concat(insertDelta);
+    this.observation = composedDelta;
   }
 
   convertTemperature(newUnit) {
@@ -242,7 +258,9 @@ export default class Reaction extends Element {
 
   static copyFromReactionAndCollectionId(reaction, collection_id) {
     const copy = reaction.buildCopy();
-    copy.name = reaction.name + " Copy"
+    copy.role = "parts";
+    copy.origin = { id: reaction.id, short_label: reaction.short_label };
+    copy.name = copy.nameFromRole(copy.role);
     copy.collection_id = collection_id;
     copy.starting_materials = reaction.starting_materials.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
     copy.reactants = reaction.reactants.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
@@ -489,6 +507,8 @@ export default class Reaction extends Element {
 
       i = i + 1
     }
+
+    this._updateEquivalentForMaterial(material);
   }
 
   // literatures
@@ -530,5 +550,28 @@ export default class Reaction extends Element {
   // overwrite isPendingToSave method in models/Element.js
   get isPendingToSave() {
     return !_.isEmpty(this) && (this.isNew || this.changed);
+  }
+
+  nameFromRole(role) {
+    let name = this.name;
+    const sLabel = this.short_label;
+    const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
+    const oriSLabel = this.origin && this.origin.short_label;
+    const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
+
+    switch (role) {
+      case 'gp':
+        name = `General Procedure ${sLNum}`;
+        break;
+      case 'parts':
+        name = `According to General Procedure ${oriSLNum}`;
+        break;
+      case 'single':
+        name = `Single ${sLNum}`;
+        break;
+      default:
+        break;
+    }
+    return name;
   }
 }

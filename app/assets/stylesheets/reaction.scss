@@ -39,3 +39,41 @@ table.reaction-scheme-solvent {
 .bs-btnTxt--small {
   font-size: 11px !important;
 }
+
+.inline-inside {
+  div {
+    display: inline-block;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.reaction-role {
+  background-color: #eee;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  margin-left: 20px;
+  padding: 5px;
+
+  .checkbox-inline + .checkbox-inline {
+    margin-left: 20px;
+  }
+}
+
+.reaction-scheme-props {
+  width: 100%;
+
+  table.table {
+    margin-bottom: 0px;
+
+    tr > div {
+      padding: 0 2px;
+    }
+
+    div.Select-menu-outer {
+      z-index: 5;
+    }
+  }
+}

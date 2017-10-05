@@ -1,5 +1,5 @@
 import React from 'react';
-import {OverlayTrigger, Button, Tooltip} from 'react-bootstrap';
+import {Button} from 'react-bootstrap';
 
 import PermissionStore from '../stores/PermissionStore';
 
@@ -9,14 +9,17 @@ export default class ShareButton extends React.Component {
     this.state = {
       isTopSecret: false
     }
+
+    this.onPermissionChange = this.onPermissionChange.bind(this);
+    this.handleModalShow = this.handleModalShow.bind(this);
   }
 
   componentDidMount() {
-    PermissionStore.listen(this.onPermissionChange.bind(this));
+    PermissionStore.listen(this.onPermissionChange);
   }
 
   componentWillUnmount() {
-    PermissionStore.unlisten(this.onPermissionChange.bind(this));
+    PermissionStore.unlisten(this.onPermissionChange);
   }
 
   onPermissionChange(state) {
@@ -29,19 +32,14 @@ export default class ShareButton extends React.Component {
     this.props.onClick("share")
   }
 
-
   render() {
     const {isDisabled} = this.props
 
-    const tooltip = (<Tooltip id="export_button">Share elements</Tooltip>)
-
     return (
-      <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <Button bsStyle="info" id="share-btn" disabled={isDisabled}
-                onClick={() => this.handleModalShow()}>
-          <i className="fa fa-share-alt"></i>
-        </Button>
-      </OverlayTrigger>
+      <Button bsStyle="info" id="share-btn" disabled={isDisabled}
+              onClick={this.handleModalShow}>
+        <i className="fa fa-share-alt"></i>
+      </Button>
     )
   }
 }

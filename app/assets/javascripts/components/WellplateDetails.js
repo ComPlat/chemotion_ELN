@@ -41,7 +41,6 @@ export default class WellplateDetails extends Component {
 
   onUIStoreChange(state) {
     if (state.wellplate.activeTab != this.state.activeTab){
-      console.log(`store change ${state.wellplate.activeTab != this.state.activeTab}`);
       this.setState({
         activeTab: state.wellplate.activeTab
       })
@@ -109,7 +108,6 @@ export default class WellplateDetails extends Component {
   }
 
   wellplateHeader(wellplate) {
-    console.log(`wellplate ${wellplate.id}`);
 
     let saveBtnDisplay = wellplate.isEdited ? '' : 'none'
     return(

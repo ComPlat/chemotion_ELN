@@ -89,11 +89,9 @@ export default class SampleDetails extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    let sample = this.state.sample;
+    const sample = this.state.sample;
     sample.setAmountAndNormalizeToGram(amount);
-    this.setState({
-      sample: sample
-    });
+    this.setState({ sample });
   }
 
   handleImportedReadoutChanged(e) {
@@ -411,6 +409,7 @@ export default class SampleDetails extends React.Component {
     const { sample, isCasLoading } = this.state;
     const { molecule, xref } = sample;
     const cas = xref ? xref.cas : "";
+    const casLabel = cas && cas.label ? cas.label : "";
     let casArr = [];
     if(molecule && molecule.cas) {
       casArr = molecule.cas.map(c => Object.assign({label: c}, {value: c}));
@@ -433,7 +432,7 @@ export default class SampleDetails extends React.Component {
           <OverlayTrigger placement="bottom"
                           overlay={this.clipboardTooltip()} >
             <Button active className="clipboardBtn"
-                    data-clipboard-text={cas} >
+                    data-clipboard-text={casLabel} >
               <i className="fa fa-clipboard"></i>
             </Button>
           </OverlayTrigger>

@@ -1,266 +1,358 @@
 import React from 'react';
-import {Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel, Glyphicon, Row, Col} from 'react-bootstrap';
-
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import { Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
+  Table, Glyphicon } from 'react-bootstrap';
 import Select from 'react-select';
-
-import {solventOptions} from './staticDropdownOptions/options';
-
-
-
+import DetailActions from './actions/DetailActions';
+import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
+import { solventOptions } from './staticDropdownOptions/options';
 
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      sample: props.sample
-    }
+      sample: props.sample,
+      molarityBlocked: (props.sample.molarity_value || 0) <= 0,
+      isMolNameLoading: false,
+    };
+
+    this.handleFieldChanged = this.handleFieldChanged.bind(this);
+    this.updateMolName = this.updateMolName.bind(this);
+    this.addMolName = this.addMolName.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({ isMolNameLoading: false });
   }
 
   handleAmountChanged(amount) {
-    let sample = this.state.sample;
+    const sample = this.state.sample;
     sample.setAmountAndNormalizeToGram(amount);
-    this.setState({
-      sample: sample
-    });
+
+    this.setState({ sample });
   }
 
-  handleUnitChanged(unit, nextUnit, value) {
-    let convertedValue = value;
-    if(unit && nextUnit && unit != nextUnit) {
-      switch(unit) {
-        case 'g':
-          if(nextUnit == 'mol') {
-            convertedValue = value * 2;
-          }
-          break;
-        case 'mol':
-          if(nextUnit == 'g') {
-            convertedValue = value / 2;
-          }
-          break;
-      }
-    }
-    return convertedValue;
+  handleMolarityChanged(molarity) {
+    const sample = this.state.sample;
+    sample.setMolarity(molarity);
+
+    this.setState({ sample, molarityBlocked: false });
+  }
+
+  handleDensityChanged(density) {
+    const sample = this.state.sample;
+    sample.setDensity(density);
+
+    this.setState({ sample, molarityBlocked: true });
   }
 
   showStructureEditor() {
     this.props.parent.setState({
-      showStructureEditor: true
-    })
+      showStructureEditor: true,
+    });
   }
 
   structureEditorButton(isDisabled) {
     return (
-      <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
-        <Glyphicon glyph='pencil'/>
+      <Button
+        onClick={this.showStructureEditor}
+        disabled={isDisabled}
+      >
+        <Glyphicon glyph="pencil" />
       </Button>
-    )
+    );
   }
 
-  // Input components of sample details should be disabled if detail level does not allow to read their content
+  // Input components of sample details should be disabled if detail level
+  // does not allow to read their content
   topSecretCheckbox(sample) {
-    if(sample.can_update) {
+    if (sample.can_update) {
       return (
-        <Checkbox ref="topSecretInput"
-        checked={sample.is_top_secret}
-        onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
-        >Top secret</Checkbox>
-      )
+        <Checkbox
+          ref="topSecretInput"
+          checked={sample.is_top_secret}
+          onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
+        >
+          Top secret
+        </Checkbox>
+      );
+    }
+
+    return (<span />);
+  }
+
+  openMolName(moleculeNames) {
+    const { sample } = this.state;
+    if (moleculeNames.length <= 1) {
+      this.setState({ isMolNameLoading: true });
+      DetailActions.updateMoleculeNames(sample);
     }
   }
 
+  addMolName(moleculeName) {
+    const { sample } = this.state;
+    this.setState({ isMolNameLoading: true });
+    DetailActions.updateMoleculeNames(sample, moleculeName.label);
+  }
+
+  updateMolName(e) {
+    const { sample } = this.state;
+    sample.molecule_name = e;
+    this.props.parent.setState({ sample });
+  }
+
   moleculeInput(sample) {
+    const mnos = sample.molecule_names;
+    const mno = sample.molecule_name;
+    let moleculeNames = mno ? [mno] : [];
+    if (sample && mnos) {
+      moleculeNames = mnos.map(n => (
+        Object.assign({ label: n.name, value: n.id })
+      ));
+    }
+
+    const onOpenMolName = () => this.openMolName(moleculeNames);
+
     return (
-      <FormGroup>
+      <FormGroup style={{ width: '100%' }}>
         <ControlLabel>Molecule</ControlLabel>
         <InputGroup>
-          <FormControl type="text" ref="moleculeInput"
-            value={sample.molecule_name}
+          <Select.Creatable
+            name="moleculeName"
+            multi={false}
             disabled={!sample.can_update}
-            readOnly={!sample.can_update}
-            onChange={(e) => this.handleFieldChanged(sample, 'molecule_iupac_name', e.target.value)}
+            options={moleculeNames}
+            onOpen={onOpenMolName}
+            onChange={this.updateMolName}
+            isLoading={this.state.isMolNameLoading}
+            value={mno && mno.value}
+            onNewOptionClick={this.addMolName}
+            clearable={false}
           />
           <InputGroup.Button>
             {this.structureEditorButton(!sample.can_update)}
           </InputGroup.Button>
         </InputGroup>
       </FormGroup>
-    )
+    );
   }
 
   handleFieldChanged(sample, field, e) {
-    if(/amount/.test(field))
+    if (/amount/.test(field)) {
       this.handleAmountChanged(e);
-    else if (e && e.value) // for numeric inputs
+    } else if (/molarity/.test(field)) {
+      this.handleMolarityChanged(e);
+    } else if (/density/.test(field)) {
+      this.handleDensityChanged(e);
+    } else if (e && e.value) {
+      // for numeric inputs
       sample[field] = e.value;
-    else
+    } else {
       sample[field] = e;
+    }
 
-    this.props.parent.setState({
-      sample: sample
-    });
+    this.props.parent.setState({ sample });
   }
 
   textInput(sample, field, label, disabled = false) {
     return (
       <FormGroup>
         <ControlLabel>{label}</ControlLabel>
-        <FormControl type="text"
+        <FormControl
+          type="text"
           value={sample[field] || ''}
           onChange={(e) => {this.handleFieldChanged(sample, field, e.target.value)}}
           disabled={disabled || !sample.can_update}
           readOnly={disabled || !sample.can_update}
         />
       </FormGroup>
-    )
+    );
   }
 
   sampleSolvent(sample) {
     return (
-      <Select ref='solventInput'
-              name='solvents'
-              multi={false}
-              options={solventOptions}
-              onChange={(e) => this.handleFieldChanged(sample, 'solvent', e)}
-              value={sample.solvent}
-              disabled={!sample.can_update}
+      <Select
+        ref="solventInput"
+        id="solventInput"
+        name="solvents"
+        style={{ marginBottom: '15px' }}
+        multi={false}
+        options={solventOptions}
+        value={sample.solvent}
+        disabled={!sample.can_update}
+        onChange={(e) => this.handleFieldChanged(sample, 'solvent', e)}
       />
-    )
+    );
   }
 
   attachedAmountInput(sample, size) {
-    if(!sample.contains_residues)
-      return false;
+    if (!sample.contains_residues) return false;
 
     return this.numInput(sample, 'defined_part_amount', 'g',
-    ['milli','none'], 4, 'Attached', 'attachedAmountMg', true, "Weight of the defined part", size)
+      ['milli', 'none'], 4, 'Attached', 'attachedAmountMg',
+      true, 'Weight of the defined part');
   }
 
   numInput(sample, field, unit, prefixes, precision, label, ref = '',
-    disabled = false, title='', size=2, notApplicable = false) {
-    if(sample.contains_residues && unit == 'l')
-      return false;
-    let value = notApplicable ? 'N/A' : (!isNaN(sample[field]) ? sample[field] : null)
+    disabled = false, title = '', block = false, notApplicable = false) {
+    if (sample.contains_residues && unit === 'l') return false;
+    const value = !isNaN(sample[field]) ? sample[field] : null;
+
     return (
-      <Col md={size} key={field + sample.id.toString()}>
+      <td key={field + sample.id.toString()}>
         <NumeralInputWithUnitsCompo
-          value={value}
+          value={notApplicable ? 'N/A' : value}
           unit={unit}
           label={label}
           ref={ref}
           metricPrefix={prefixes[0]}
-          metricPrefixes = {prefixes}
+          metricPrefixes={prefixes}
           precision={precision}
           title={title}
           disabled={disabled}
+          block={block}
           onChange={(e) => this.handleFieldChanged(sample, field, e)}
         />
-      </Col>
-    )
+      </td>
+    );
   }
 
-  sampleAmount(sample, inputsSize=2) {
-    let content = [];
+  sampleAmount(sample) {
+    const content = [];
     const isDisabled = !sample.can_update;
-    if(sample.isMethodDisabled('amount_value') == false) {
-      if(sample.isMethodRestricted('molecule') == true) {
-        content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '', inputsSize)
-        )
-      } else {
-        content.push(
-          this.numInput(sample, 'amount_g', 'g',['milli','none'], 4, 'Amount', 'massMgInput', isDisabled, '', inputsSize)
-        )
+    const { molarityBlocked } = this.state;
+    const volumeBlocked = !sample.has_density && !sample.has_molarity;
 
-        if(!sample.contains_residues)
-          content.push(
-            this.numInput(sample, 'amount_l', 'l', ['milli','micro','none'], 5, '\u202F', 'l', isDisabled, '', inputsSize)
-          )
+    if (sample.isMethodDisabled('amount_value') === false) {
+      // if (sample.isMethodRestricted('molecule') === true) {
+      //   content.push(this.numInput(sample, 'amount_g', 'g', ['milli', 'none'],
+      //     4, 'Amount', 'massMgInput', isDisabled, ''));
+      // } else {
+      content.push(this.numInput(sample, 'amount_g', 'g', ['milli', 'none'],
+        4, 'Amount', 'massMgInput', isDisabled, ''));
 
-        content.push(
-          this.numInput(sample, 'amount_mol', 'mol', ['milli','none'], 4, '\u202F', 'amountInput', isDisabled, '', inputsSize)
-        )
-
-        if(sample.contains_residues)
-          content.push(
-            this.attachedAmountInput(sample, inputsSize)
-          )
+      if (!sample.contains_residues) {
+        content.push(this.numInput(sample, 'amount_l', 'l',
+          ['milli', 'micro', 'none'], 5, '\u202F', 'l',
+          isDisabled, '', volumeBlocked));
       }
-     return content;
-    } else {
-      return (
-        <FormGroup>
-          <ControlLabel>Amount</ControlLabel>
-          <FormControl type="text" disabled defaultValue="***" readOnly/>
-        </FormGroup>
-      )
+
+      content.push(this.numInput(sample, 'amount_mol', 'mol',
+        ['milli', 'none'], 4, '\u202F', 'amountInput', isDisabled, ''));
+
+      if (sample.contains_residues) {
+        content.push(this.attachedAmountInput(sample));
+      }
+
+      return content;
     }
+
+    return (
+      <FormGroup>
+        <ControlLabel>Amount</ControlLabel>
+        <FormControl type="text" disabled defaultValue="***" readOnly />
+      </FormGroup>
+    );
   }
 
   sampleDescription(sample) {
     return (
       <FormGroup>
         <ControlLabel>Description</ControlLabel>
-        <FormControl componentClass="textarea"  ref="descriptionInput"
-             placeholder={sample.description}
-             value={sample.description || ''}
-             onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}
-             rows={2}
-             disabled={!sample.can_update}
+        <FormControl
+          componentClass="textarea"
+          ref="descriptionInput"
+          placeholder={sample.description}
+          value={sample.description || ''}
+          onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}
+          rows={2}
+          disabled={!sample.can_update}
         />
       </FormGroup>
-    )
+    );
   }
 
   render() {
-    let sample = this.state.sample || {}
-    let isPolymer = sample.molfile.indexOf(" R# ") !== -1
+    const sample = this.state.sample || {};
+    const isPolymer = sample.molfile.indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
+    const polyDisabled = isPolymer || isDisabled;
+    const molarityBlocked = isDisabled ? true : this.state.molarityBlocked;
+    const densityBlocked = isDisabled ? true : !molarityBlocked;
 
     return (
-      <div className="sample-form">
-        <Row>
-          <Col md={6}>{this.moleculeInput(sample)}</Col>
-          <Col md={6} className="top-secret-checkbox">
-            {this.topSecretCheckbox(sample)}
-          </Col>
-        </Row>
+      <Table responsive className="sample-form">
+        <tbody>
+          <tr>
+            <td colSpan="4">
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ width: '82%' }}>
+                  {this.moleculeInput(sample)}
+                </div>
+                <div style={{ width: '15%' }} className="top-secret-checkbox">
+                  {this.topSecretCheckbox(sample)}
+                </div>
+              </div>
+            </td>
+          </tr>
 
-        <Row>
-          <Col md={4}>{this.textInput(sample, 'name', 'Name')}</Col>
-          <Col md={4}>
-            {this.textInput(sample, 'external_label', 'External label')}
-          </Col>
-          <Col md={4}>{this.textInput(sample, 'location', 'Location')}</Col>
-        </Row>
+          <tr>
+            <td colSpan="4">
+              <div className="name-form">
+                <div style={{ width: '20%' }}>
+                  {this.textInput(sample, 'name', 'Name')}
+                </div>
+                <div style={{ width: '20%' }}>
+                  {this.textInput(sample, 'external_label', 'External label')}
+                </div>
+                <div style={{ width: '19%' }}>
+                  {this.textInput(sample, 'location', 'Location')}
+                </div>
+                <div style={{ width: '40%' }}>
+                  <label htmlFor="solventInput">Solvent</label>
+                  {this.sampleSolvent(sample)}
+                </div>
+              </div>
+            </td>
+          </tr>
 
-        <Row className="visible-hd">
-          {this.sampleAmount(sample)}
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer || isDisabled, '', 2, isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer || isDisabled, '', 2, isPolymer)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer || isDisabled, '', 2, isPolymer)}
-        </Row>
+          <tr className="visible-hd">
+            {this.sampleAmount(sample)}
+            {
+              this.numInput(sample, 'boiling_point', '°C', ['none'], 5,
+                'Boiling point', '', polyDisabled, '', false, isPolymer)
+            }
+          </tr>
 
-        <Row className="hidden-hd">
-          {this.sampleAmount(sample, 4)}
-        </Row>
-        <Row className="hidden-hd" style={ { 'paddingTop': "15px"  }}>
-          {this.numInput(sample, 'density', 'g/ml', ['none'], 5, 'Density', '', isPolymer || isDisabled, '', 4, isPolymer)}
-          {this.numInput(sample, 'boiling_point', '°C', ['none'], 5, 'Boiling point', '', isPolymer || isDisabled, '', 4, isPolymer)}
-          {this.numInput(sample, 'melting_point', '°C', ['none'], 5, 'Melting point', '', isPolymer || isDisabled, '', 4, isPolymer)}
-        </Row>
-        <Row style={ { 'paddingTop': "15px"  } }>
-          <Col md={4}>{this.sampleDescription(sample)}</Col>
-          {this.numInput(sample, 'purity', 'none', ['none'], 5, 'Purity', '', isDisabled)}
-          <Col md={2}>{this.textInput(sample, 'impurities', 'Impurities')}</Col>
-          <Col md={4}>
-            <label>Solvent</label>
-            {this.sampleSolvent(sample)}
-          </Col>
-        </Row>
-      </div>
-    )
+          <tr>
+            {
+              this.numInput(sample, 'density', 'g/ml', ['none'], 5,
+                'Density', '', polyDisabled, '', densityBlocked, isPolymer)
+            }
+            {
+              this.numInput(sample, 'molarity_value', 'M', ['none'],
+                5, 'Molarity', '', polyDisabled, '', molarityBlocked, isPolymer)
+            }
+            {
+              this.numInput(sample, 'purity', 'none', ['none'], 5,
+                'Purity', '', isDisabled)
+            }
+            {
+              this.numInput(sample, 'melting_point', '°C', ['none'], 5,
+                'Melting point', '', polyDisabled, '', false, isPolymer)
+            }
+          </tr>
+
+          <tr style={{ paddingTop: '15px' }}>
+            <td colSpan="4">{this.sampleDescription(sample)}</td>
+          </tr>
+        </tbody>
+      </Table>
+    );
   }
+}
+
+SampleForm.propTypes = {
+  sample: React.PropTypes.object,
+  parent: React.PropTypes.object
 }

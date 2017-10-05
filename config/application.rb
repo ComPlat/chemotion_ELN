@@ -115,7 +115,6 @@ module Chemotion
     # The default is none
     config.browserify_rails.source_map_environments << "development"
 
-
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded.

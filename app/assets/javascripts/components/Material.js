@@ -1,11 +1,12 @@
 import React, {Component, PropTypes} from 'react';
-import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
+        Label} from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName'
 import ElementActions from './actions/ElementActions'
-import { UrlSilentNavigation } from './utils/ElementUtils';
+import { UrlSilentNavigation, Alphabet } from './utils/ElementUtils';
 
 const source = {
   beginDrag(props) {
@@ -30,7 +31,7 @@ class Material extends Component {
     return (
       <td style={inputsStyle}>
         <FormControl type="text"
-               value="N / A"
+               value="n/a"
                disabled={true}
                />
       </td>
@@ -48,10 +49,10 @@ class Material extends Component {
             value={material.amount_l}
             unit='l'
             metricPrefix='milli'
-            metricPrefixes = {['milli','none','micro']}
+            metricPrefixes = {['milli', 'none', 'micro']}
             precision={3}
-            onChange={(amount) => this.handleAmountUnitChange(amount)}
-            bsStyle={ material.amount_unit === 'l' ? 'success' : 'default' }
+            onChange={amount => this.handleAmountUnitChange(amount)}
+            bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
           />
         </td>
       )
@@ -130,7 +131,9 @@ class Material extends Component {
   equivalentOrYield(material) {
     if(this.props.materialGroup == 'products') {
       return (
-        <FormControl type="text"
+        <FormControl
+          type="text"
+          style={{ height: '30px' }}
           bsClass='bs-form--compact form-control'
           value={`${((material.equivalent || 0 ) * 100).toFixed(0)}%`}
           disabled={true}
@@ -358,12 +361,14 @@ class Material extends Component {
           <Button
             bsStyle="danger"
             bsSize="small"
-            onClick={() => deleteMaterial(material)} >
-            <i className="fa fa-trash-o"></i>
+            style={{ height: '30px' }}
+            onClick={() => deleteMaterial(material)}
+          >
+            <i className="fa fa-trash-o" />
           </Button>
         </td>
       </tr>
-    )
+    );
   }
 
   toggleTarget(isTarget) {
@@ -438,7 +443,7 @@ class Material extends Component {
               bsStyle={isTarget ? 'success' : 'primary'}
               bsSize='small'
               >
-        {isTarget ? "T" : "R"}
+        {isTarget ? 't' : 'r'}
       </Button>
     )
   }
@@ -496,12 +501,15 @@ class Material extends Component {
       iupacStyle = {display: "none"}
       br = ""
     }
+    const mAlphabet = Alphabet(this.props.index);
 
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div style={{display: "inline-block", maxWidth: "100%"}}>
-          {materialName}
-          {br}
+          <div className="inline-inside">
+            <Label bsStyle="primary">{mAlphabet}</Label>&nbsp;
+            {materialName}
+          </div>
           <span style={iupacStyle}>
             {moleculeIupacName}
           </span>

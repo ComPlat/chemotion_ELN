@@ -13,7 +13,8 @@ class CollectionSerializer < ActiveModel::Serializer
   end
 
   def is_remote
-    object.is_shared && (object.shared_by_id != scope.current_user.id)
+    object.is_shared &&
+      (scope && (object.shared_by_id != scope.current_user.id))
   end
 
   def descendant_ids

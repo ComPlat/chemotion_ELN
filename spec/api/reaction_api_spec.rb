@@ -399,6 +399,7 @@ describe Chemotion::ReactionAPI do
           :sample, name: 'Sample 1', container: FactoryGirl.create(:container)
         )
       }
+      let(:molfile_1) { sample_1.molecule.molfile }
 
       context 'creating new materials' do
         let(:params) {
@@ -417,7 +418,7 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
-                'molecule' => { molfile: '' },
+                'molecule' => { molfile: molfile_1 },
                 'container' => new_root_container
               ],
               'reactants' => [
@@ -431,7 +432,7 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 2,
                 'is_new' => true,
                 'is_split' => false,
-                'molecule' => { molfile: '' },
+                'molecule' => { molfile: molfile_1 },
                 'container' => new_root_container
               ]
             }
@@ -511,7 +512,7 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
-                'molecule' => { molfile: '' },
+                'molecule' => { molfile: molfile_1 },
                 'container' => new_container
               ]
             }

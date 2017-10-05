@@ -51,6 +51,7 @@ class UIStore {
         currentId: null,
         page: 1,
       },
+
       showPreviews: true,
       showAdvancedSearch: false,
       number_of_results: 15,
@@ -150,14 +151,17 @@ class UIStore {
 
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = Immutable.List();
-      this.state[type].checkedIds = this.state[type].checkedIds.concat(curPageIds)
+      let checked = this.state[type].checkedIds.concat(curPageIds);
+      // Remove duplicates
+      this.state[type].checkedIds = checked.toSet().toList();
     } else {
       this.handleUncheckAllElements(params)
     }
   }
 
-  handleToggleShowPreviews() {
-    this.state.showPreviews = !this.state.showPreviews;
+  handleToggleShowPreviews(show) {
+    if (show == null) show = !this.state.showPreviews;
+    this.state.showPreviews = show;
   }
 
   handleToggleAdvancedSearch(show) {
@@ -226,55 +230,41 @@ class UIStore {
 
   handleSelectCollection(collection) {
     let state = this.state;
-    let hasChanged =
-      (!state.currentCollection || state.isSync || state.currentCollection.id != collection.id)
-      || (state.currentSearchSelection != null);
+    let isSync = collection.is_sync_to_me ? true : false;
+    let hasChanged = !state.currentCollection
+    hasChanged = hasChanged || state.currentCollection.id != collection.id;
+    hasChanged = hasChanged || isSync != state.isSync;
+    hasChanged = hasChanged || state.currentSearchSelection != null;
+
+    if (collection['clearSearch']){
+      this.handleClearSearchSelection();
+      hasChanged = true;
+      collection['clearSearch'] = undefined;
+    }
 
     if(hasChanged) {
-      this.state.isSync = false
+      this.state.isSync = isSync
       this.state.currentCollection = collection;
       this.state.number_of_results = 15;
       if (!collection.noFetch){
-        // FIXME state.pagination is undefined
-        // It should be like {page: 1,per_page: 15}.
         ElementActions.fetchSamplesByCollectionId(collection.id,
-          state.pagination);
+          state.pagination, isSync);
         ElementActions.fetchReactionsByCollectionId(collection.id,
-          state.pagination);
+          state.pagination, isSync);
         ElementActions.fetchWellplatesByCollectionId(collection.id,
-          state.pagination);
+          state.pagination, isSync);
         ElementActions.fetchScreensByCollectionId(collection.id,
-          state.pagination);
-        ElementActions.fetchResearchPlansByCollectionId(collection.id,
-          state.pagination);
+          state.pagination, isSync);
+        if (!isSync){
+          ElementActions.fetchResearchPlansByCollectionId(collection.id,
+            state.pagination)
+        }
       }
     }
   }
 
   handleSelectSyncCollection(collection) {
-    let state = this.state;
-    let hasChanged =
-      (!state.currentCollection || !state.isSync || state.currentCollection.id != collection.id)
-      || (state.currentSearchSelection != null);
-
-    if(hasChanged) {
-      this.state.isSync = true
-      let isSync = this.state.isSync
-      this.state.currentCollection = collection;
-      this.state.number_of_results = 15;
-      if (!collection.noFetch){
-        // FIXME state.pagination is undefined
-        // It should be like {page: 1,per_page: 15}.
-        ElementActions.fetchSamplesByCollectionId(collection.id,
-          state.pagination, isSync);
-        ElementActions.fetchReactionsByCollectionId(collection.id,
-          state.pagination, isSync);
-        ElementActions.fetchWellplatesByCollectionId(collection.id,
-          state.pagination, isSync);
-        ElementActions.fetchScreensByCollectionId(collection.id,
-          state.pagination, isSync);
-      }
-    }
+    this.handleSelectCollection(collection)
   }
 
   // FIXME this method is also defined in ElementStore
@@ -289,6 +279,7 @@ class UIStore {
 
   handleSelectCollectionWithoutUpdating(collection) {
     this.state.currentCollection = collection;
+    this.state.isSync = collection.is_sync_to_me ? true : false;
   }
 
   handleClearSearchSelection() {

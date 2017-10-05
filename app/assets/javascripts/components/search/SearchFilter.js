@@ -11,9 +11,18 @@ export default class SearchFilter extends React.Component {
     this.state = {
       showFilters: props.show,
       filters: [
-        { link: "", match: "EXACT", field: "", value: "" }
-      ]
-    }
+        {
+          link: '',
+          match: 'EXACT',
+          field: {
+            table: 'samples',
+            column: 'name',
+            label: 'Sample Name',
+          },
+          value: '',
+        },
+      ],
+    };
 
     this.listOptions = [
       {
@@ -43,7 +52,7 @@ export default class SearchFilter extends React.Component {
     ]
 
     for (let i = 0; i < XSearchParams.count; i++){
-      if (XSearchParams[`on${i}`]){
+      if (XSearchParams[`on${i}`]) {
         this.listOptions = this.listOptions.concat(XSearchParams[`content${i}`])
       }
     }
@@ -79,17 +88,19 @@ export default class SearchFilter extends React.Component {
   }
 
   handleUpdateFilters(idx, field, val) {
-    let {filters} = this.state
+    const { filters } = this.state;
 
-    filters[idx][field] = val
+    filters[idx][field] = val;
 
-    let filter = filters[filters.length - 1]
-    let check = (filter.field && filter.value && filter.link) ||
-                (idx == 0 && filter.field && filter.value)
+    const filter = filters[filters.length - 1];
+    const check = (filter.field && filter.value && filter.link) ||
+                (idx == 0 && filter.field && filter.value);
 
-    if (check) filters.push({link: "OR", match: "EXACT", field: "", value: ""})
+    if (check) {
+      filters.push({ link: 'OR', match: 'EXACT', field: '', value: '' });
+    }
 
-    this.setState(filters)
+    this.setState(filters);
   }
 
   search() {

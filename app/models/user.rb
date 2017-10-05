@@ -7,7 +7,7 @@ class User < ActiveRecord::Base
 
   has_one :profile, dependent: :destroy
   has_one :container, :as => :containable
-  
+
   has_many :collections
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
@@ -26,8 +26,8 @@ class User < ActiveRecord::Base
   has_many :reports_users
   has_many :reports, through: :reports_users
 
-  has_many :user_affiliations
-  has_many :affiliations, through: :user_affiliations, :dependent => :destroy
+  has_many :user_affiliations, :dependent => :destroy
+  has_many :affiliations, through: :user_affiliations
 
   accepts_nested_attributes_for :affiliations
 
@@ -37,9 +37,15 @@ class User < ActiveRecord::Base
     message: "can be alphanumeric, middle '_' and '-' are allowed,"+
     " but leading digit, or trailing '-' and '_' are not."}
   validate :name_abbreviation_length
-
+# validate :academic_email
+  validate :mail_checker
   after_create :create_chemotion_public_collection, :create_all_collection,
                :has_profile
+
+  scope :by_name, ->(query) {
+    where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
+          "#{query.downcase}%", "#{query.downcase}%")
+  }
 
   def name_abbreviation_length
     na = name_abbreviation
@@ -53,6 +59,18 @@ class User < ActiveRecord::Base
       na.blank? || !na.length.between?(2, 3)  && errors.add(:name_abbreviation,
         "has to be 2 to 3 characters long")
     end
+  end
+
+  def academic_email
+    Swot::is_academic?(email) || errors.add(
+      :email, 'not from an academic organization'
+    )
+  end
+
+  def mail_checker
+    MailChecker.valid?(email) || errors.add(
+      :email, 'from throwable email providers not accepted'
+    )
   end
 
   def owns_collections?(collections)
@@ -120,6 +138,15 @@ class User < ActiveRecord::Base
     SyncCollectionsUser.where("user_id IN (?) ", [self.id]+self.groups.pluck(:id))
   end
 
+  def current_affiliations
+    Affiliation.joins(
+     "INNER JOIN user_affiliations ua ON ua.affiliation_id = affiliations.id"
+    ).where(
+      "(ua.user_id = ?) and (ua.deleted_at ISNULL) \
+      and (ua.to ISNULL or ua.to > ?)", id, Time.now
+    ).order("ua.from DESC")
+  end
+
   private
 
   # These user collections are locked, i.e., the user is not allowed to:
@@ -137,7 +164,6 @@ class User < ActiveRecord::Base
 end
 
 class Person < User
-
   has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
   has_many :groups, through: :users_groups
 

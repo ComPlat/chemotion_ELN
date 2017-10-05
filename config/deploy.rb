@@ -1,4 +1,4 @@
-lock '3.4.1'
+lock '3.9.1'
 
 set :application, 'chemotion'
 set :repo_url, 'git@github.com:ComPlat/chemotion_ELN.git'
@@ -23,18 +23,26 @@ set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
 # Default value for :log_level is :debug
 # set :log_level, :debug
+set :format_options, command_output: true
+set :log_file, 'log/capistrano.log'
 
 # Default value for :pty is false
 # set :pty, true
 
 # Default value for :linked_files is []
-set :linked_files, fetch(:linked_files, []).push('config/database.yml', 'config/storage.yml', 'config/datamailcollector.yml', 'config/secrets.yml', '.env')
+set :linked_files, fetch(:linked_files, []).push(
+  'config/database.yml',
+  'config/storage.yml',
+  'config/datamailcollector.yml',
+  'config/secrets.yml',
+  '.env'
+)
 
 # Default value for linked_dirs is []
 set :linked_dirs, fetch(:linked_dirs, []).push(
   'backup/deploy_backup', 'backup/weekly_backup',
   'node_modules',
-  'log', 
+  'log',
   'public/images', 'public/docx', 'public/simulations',
   'tmp/pids', 'tmp/cache', 'tmp/sockets', 'tmp/uploads',
   'uploads', 'uploadNew'
@@ -42,13 +50,15 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
 
 set :rvm_ruby_version, (`cat .ruby-version`).strip
 
+set :slackistrano, false
+
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
 
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
-before 'deploy:migrate', 'deploy:backup'
+#before 'deploy:migrate', 'deploy:backup'
 after 'deploy:publishing', 'deploy:restart'
 
 

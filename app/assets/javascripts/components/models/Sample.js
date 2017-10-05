@@ -1,30 +1,33 @@
-import React from 'react'
+import React from 'react';
+import _ from 'lodash';
+
 import Element from './Element';
 import Molecule from './Molecule';
-import _ from 'lodash';
 import UserActions from '../actions/UserActions';
 import UserStore from '../stores/UserStore';
 import Container from './Container.js';
 
 export default class Sample extends Element {
-  isMethodRestricted(m) {
-    return false;
-  }
+  // isMethodRestricted(m) {
+  //   return false;
+  // }
 
   static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
-    let newSample = sample.buildCopy()
+    let newSample = sample.buildCopy();
 
-    newSample.collection_id = collection_id
-    if (sample.name) newSample.name = sample.name
-    if (sample.external_label)
-      newSample.external_label = sample.external_label
+    newSample.collection_id = collection_id;
+    if (sample.name) newSample.name = sample.name;
+    if (sample.external_label) {
+      newSample.external_label = sample.external_label;
+    }
 
-    if(structure_only)
-      newSample = newSample.filterSampleData()
-    else if (sample.elemental_compositions)
-      newSample.elemental_compositions = sample.elemental_compositions
+    if(structure_only) {
+      newSample = newSample.filterSampleData();
+    } else if (sample.elemental_compositions) {
+      newSample.elemental_compositions = sample.elemental_compositions;
+    }
 
-    return newSample
+    return newSample;
   }
 
   filterSampleData() {
@@ -79,11 +82,12 @@ export default class Sample extends Element {
       external_label: '',
       target_amount_value: 0,
       target_amount_unit: 'g',
+      molarity_value: 0,
+      molarity_unit: 'M',
       description: '',
       purity: 1,
-      density: 1,
+      density: 0,
       solvent: '',
-      impurities: '',
       location: '',
       molfile: '',
       molecule: { id: '_none_' },
@@ -116,6 +120,7 @@ export default class Sample extends Element {
     sample.short_label = sample.short_label + " Copy"
 
     sample.container = Container.init();
+    sample.can_update = true;
 
     return sample;
   }
@@ -131,7 +136,8 @@ export default class Sample extends Element {
     newSample.molfile = sample.molfile || '';
     newSample.sample_svg_file = sample.sample_svg_file;
     newSample.residues = sample.residues || [];
-    newSample.contains_residues = sample.contains_residues;
+    newSample.contains_residues = sample.contains_residues
+    newSample.density = sample.density;
 
     return newSample;
   }
@@ -186,14 +192,16 @@ export default class Sample extends Element {
       target_amount_unit: this.target_amount_unit,
       real_amount_value: this.real_amount_value,
       real_amount_unit: this.real_amount_unit,
+      molarity_value: this.molarity_value,
+      molarity_unit: this.molarity_unit,
       description: this.description,
       purity: this.purity,
       short_label: this.short_label,
       solvent: this.solvent,
-      impurities: this.impurities,
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
+      molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
       parent_id: this.parent_id,
@@ -251,7 +259,7 @@ export default class Sample extends Element {
     return this._contains_residues;
   }
 
-  title(selected=false) {
+  title(selected = false) {
     const profile = UserStore.getState().profile
     const show_external_name = profile ? profile.show_external_name : false
     const external_label = this.external_label;
@@ -281,16 +289,16 @@ export default class Sample extends Element {
     return cssClass;
   }
 
-  get molecule_name(){
-    if (this.contains_residues) {
-      let polymer_name = this.polymer_type.charAt(0).toUpperCase()
-          + this.polymer_type.slice(1);
-      let val = polymer_name.replace('_', '-') + ' - ';
-      val += this.molecule.sum_formular;
-      return val;
-    }
-    else
-      return this.molecule && (this.molecule.iupac_name || this.molecule.sum_formular || '')
+  get molecule_name_label() {
+    return this.molecule_name_hash && this.molecule_name_hash.label;
+  }
+
+  get molecule_name() {
+    return this.molecule_name_hash;
+  }
+
+  set molecule_name(mno) {
+    this.molecule_name_hash = mno;
   }
 
   get name() {
@@ -345,12 +353,20 @@ export default class Sample extends Element {
     this._description = description;
   }
 
-  get impurities() {
-    return this._impurities;
+  get molarity_value() {
+    return this._molarity_value;
   }
 
-  set impurities(impurities) {
-    this._impurities = impurities;
+  set molarity_value(molarity_value) {
+    this._molarity_value = molarity_value;
+  }
+
+  get molarity_unit() {
+    return this._molarity_unit;
+  }
+
+  set molarity_unit(molarity_unit) {
+    this._molarity_unit = molarity_unit;
   }
 
   get imported_readout() {
@@ -361,15 +377,30 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
+  // setAmount(amount) {
+  //   this.amount_value = amount.value;
+  //   this.amount_unit = amount.unit;
+  // }
 
   setAmountAndNormalizeToGram(amount) {
-    this.amount_value = this.convertToGram(amount.value, amount.unit)
-    this.amount_unit = 'g'
+    this.amount_value = this.convertToGram(amount.value, amount.unit);
+    this.amount_unit = 'g';
   }
 
   setAmountAndUnit(amount) {
-    this.amount_value = amount.value
-    this.amount_unit = amount.unit
+    this.amount_value = amount.value;
+    this.amount_unit = amount.unit;
+  }
+
+  setDensity(density) {
+    this.density = density.value;
+    this.molarity_value = 0;
+  }
+
+  setMolarity(molarity) {
+    this.molarity_value = molarity.value;
+    this.molarity_unit = molarity.unit;
+    this.density = 0;
   }
 
   get amountType() {
@@ -381,7 +412,7 @@ export default class Sample extends Element {
   }
 
   defaultAmountType() {
-    return this.real_amount_value ? 'real' : 'target';
+    return (this.real_amount_value ? 'real' : 'target');
   }
 
   get defined_part_amount() {
@@ -422,6 +453,14 @@ export default class Sample extends Element {
     }
   }
 
+  get has_molarity() {
+    return this.molarity_value > 0 && this.density === 0;
+  }
+
+  get has_density() {
+    return this.density > 0 && this.molarity_value === 0;
+  }
+
   // target amount
 
   get target_amount_value() {
@@ -458,23 +497,22 @@ export default class Sample extends Element {
     this._real_amount_unit = amount_unit
   }
 
-
   get amount_g() {
-    return this.convertToGram(this.amount_value, this.amount_unit)
+    return this.convertToGram(this.amount_value, this.amount_unit);
   }
 
   get amount_l() {
-    return this.convertGramToUnit(this.amount_g, 'l')
+    return this.convertGramToUnit(this.amount_g, 'l');
   }
 
   get amount_mol() {
-    return this.convertGramToUnit(this.amount_g, 'mol')
+    return this.convertGramToUnit(this.amount_g, 'mol');
   }
 
-  //Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
-	//Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
-	//Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
-	//Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
+  // Menge in mmol = Menge (mg) * Reinheit  / Molmasse (g/mol)
+  // Volumen (ml) = Menge (mg) / Dichte (g/ml) / 1000
+  // Menge (mg)  = Volumen (ml) * Dichte (g/ml) * 1000
+  // Menge (mg) = Menge (mmol)  * Molmasse (g/mol) / Reinheit
 
   convertGramToUnit(amount_g = 0, unit) {
     if(this.contains_residues) {
@@ -482,10 +520,8 @@ export default class Sample extends Element {
       switch (unit) {
         case 'g':
           return amount_g;
-          break;
         case 'mol':
-            return (loading * amount_g) / 1000.0; // loading is always in mmol/g
-            break;
+          return (loading * amount_g) / 1000.0; // loading is always in mmol/g
         default:
           return amount_g;
       }
@@ -493,61 +529,68 @@ export default class Sample extends Element {
       switch (unit) {
         case 'g':
           return amount_g;
+        case 'l': {
+          if (this.has_molarity) {
+            return this.amount_mol / this.molarity_value;
+          } else if (this.has_density) {
+            const density = this.density;
+            return amount_g / (density * 1000);
+          }
+
+          return 0;
+        }
+        case 'mol': {
+          const molecularWeight = this.molecule_molecular_weight;
+          const purity = this.purity || 1.0;
+          if (molecularWeight) {
+            return (amount_g * purity) / molecularWeight;
+          }
+
           break;
-        case 'l':
-          let density = this.density || 1.0;
-          if(density) {
-            return amount_g / density / 1000 ;
-            break;
-          }
-        case 'mol':
-          let molecule_molecular_weight = this.molecule_molecular_weight
-          if (molecule_molecular_weight) {
-            return amount_g * (this.purity || 1.0) / molecule_molecular_weight;
-            break;
-          }
+        }
         default:
-          return amount_g
+          return amount_g;
       }
     }
   }
 
   convertToGram(amount_value, amount_unit) {
-    if(this.contains_residues) {
+    if (this.contains_residues) {
+      const amountValue = amount_value;
       switch (amount_unit) {
         case 'g':
-          return amount_value;
-          break;
+          return amountValue;
         case 'mg':
-          return amount_value / 1000.0;
-          break;
-        case 'mol':
-          let loading = this.residues[0].custom_info.loading;
-          if(!loading) {
-            return 0.0;
-          } else {
-            return amount_value / loading * 1000.0;
-          }
-          break;
+          return amountValue / 1000.0;
+        case 'mol': {
+          const loading = this.residues[0].custom_info.loading;
+          if (!loading) return 0.0;
+
+          return (amountValue / loading) * 1000.0;
+        }
         default:
-          return amount_value
+          return amountValue;
       }
     } else {
       switch (amount_unit) {
         case 'g':
           return amount_value;
-          break;
         case 'mg':
           return amount_value / 1000.0;
-          break;
         case 'l':
-          return amount_value * (this.density || 1.0) * 1000;
-          break;
+          if (this.has_molarity) {
+            return amount_value * this.molarity_value;
+          } else if (this.has_density) {
+            // has_density
+            return amount_value * (this.density || 1.0) * 1000;
+          }
+
+          return 0;
         case 'mol':
-          return amount_value / (this.purity || 1.0) * this.molecule_molecular_weight;
-          break;
+          const molecularWeight = this.molecule_molecular_weight;
+          return (amount_value / (this.purity || 1.0)) * molecularWeight;
         default:
-          return amount_value
+          return amount_value;
       }
     }
   }
@@ -691,11 +734,14 @@ export default class Sample extends Element {
     this.container.children.filter(
       element => ~element.container_type.indexOf('analyses')
     )[0].children.push(analysis);
-
   }
 
-
-};
+  analysesContainers() {
+    return this.container
+      .children
+      .filter(el => ~el.container_type.indexOf('analyses'));
+  }
+}
 
 Sample.counter = 0;
-Sample.children_count = {}
+Sample.children_count = {};

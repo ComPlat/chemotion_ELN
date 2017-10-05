@@ -43,7 +43,8 @@ const routes = {
             if(currentSearchSelection) {
               UIActions.selectCollectionWithoutUpdating(collection)
               ElementActions.fetchBasedOnSearchSelectionAndCollection(
-                currentSearchSelection, collection.id, 1, uiState.isSync)
+                currentSearchSelection, collection.id, 1,
+                collection.is_sync_to_me ? true : false)
             } else {
               UIActions.selectCollection(collection);
             }
@@ -81,9 +82,10 @@ const routes = {
             let collection = result.sync_collections_user;
 
             if(currentSearchSelection) {
-              // TODO
-              // UIActions.selectCollectionWithoutUpdating(collection)
-              // ElementActions.fetchBasedOnSearchSelectionAndCollection(currentSearchSelection, collection.id);
+              UIActions.selectCollectionWithoutUpdating(collection)
+              ElementActions.fetchBasedOnSearchSelectionAndCollection(
+                currentSearchSelection, collection.id, 1,
+                collection.is_sync_to_me ? true : false)
             } else {
               UIActions.selectSyncCollection(collection);
             }

@@ -1,18 +1,24 @@
 import React, {Component} from 'react';
-import { ListGroup, ListGroupItem,Tooltip, OverlayTrigger,
-         Tabs, Tab, Row, Col, Collapse, Button, ButtonGroup } from 'react-bootstrap';
+import {
+  ListGroup, ListGroupItem, FormGroup, ControlLabel,
+  Row, Col, Collapse, Button, ButtonGroup, Checkbox,
+} from 'react-bootstrap';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import QuillEditor from './QuillEditor';
 
-import NotificationActions from './actions/NotificationActions'
+import NotificationActions from './actions/NotificationActions';
+import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
-    let {reaction} = props;
+    let { reaction } = props;
     this.state = { reaction };
+
+    this.onClickRoleRadio = this.onClickRoleRadio.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -22,8 +28,8 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   dropSample(sample, materialGroup, external_label) {
-    let {reaction} = this.state;
-    let splitSample ;
+    let { reaction } = this.state;
+    let splitSample;
 
     if (sample instanceof Molecule || materialGroup == 'products'){
       // Create new Sample with counter
@@ -45,7 +51,7 @@ export default class ReactionDetailsScheme extends Component {
         splitSample = sample.buildChild();
       }
     }
-  
+
     this.insertSolventExtLabel(splitSample, materialGroup, external_label);
 
     reaction.addMaterial(splitSample, materialGroup);
@@ -57,6 +63,42 @@ export default class ReactionDetailsScheme extends Component {
     if(external_label && materialGroup === 'solvents' && !splitSample.external_label) {
       splitSample.external_label = external_label;
     }
+  }
+
+  onClickRoleRadio(e) {
+    const { onInputChange, reaction } = this.props;
+    const value = e.target.value;
+    if (reaction.role === value) {
+      onInputChange('role', null);
+    } else {
+      onInputChange('role', value);
+    }
+  }
+
+  renderRole() {
+    const { role } = this.props.reaction;
+    return (
+      <span className="reaction-role">
+        <Checkbox inline name="rxnRole1"
+                onClick={this.onClickRoleRadio}
+                checked={role === "gp"}
+                value="gp">
+          GP<i className="fa fa-home c-bs-primary"/>
+        </Checkbox>
+        <Checkbox inline name="rxnRole2"
+                onClick={this.onClickRoleRadio}
+                checked={role === "parts"}
+                value="parts">
+          parts of GP<i className="fa fa-bookmark c-bs-success"/>
+        </Checkbox>
+        <Checkbox inline name="rxnRole"
+                onClick={this.onClickRoleRadio}
+                checked={role === "single"}
+                value="single">
+          Single<i className="fa fa-asterisk c-bs-danger"/>
+        </Checkbox>
+      </span>
+    );
   }
 
   deleteMaterial(material, materialGroup) {
@@ -139,8 +181,8 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionForAmountChange(changeEvent) {
-    let {sampleID, amount} = changeEvent;
-    let updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, amount } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
 
     // normalize to milligram
     updatedSample.setAmountAndNormalizeToGram(amount);
@@ -221,49 +263,44 @@ export default class ReactionDetailsScheme extends Component {
   checkMassMolecule(referenceM, updatedS) {
     let errorMsg;
     let mFull;
-    let mwb = updatedS.molecule.molecular_weight;
+    const mwb = updatedS.molecule.molecular_weight;
 
     // mass check apply to 'polymers' only
-    if(!updatedS.contains_residues) {
+    if (!updatedS.contains_residues) {
       mFull = referenceM.amount_mol * mwb;
     } else {
-      let mwa = referenceM.molecule.molecular_weight;
-      let deltaM = mwb - mwa;
-      let massA = referenceM.amount_g;
-      mFull = massA + referenceM.amount_mol * deltaM;
+      const mwa = referenceM.molecule.molecular_weight;
+      const deltaM = mwb - mwa;
+      const massA = referenceM.amount_g;
+      mFull = massA + (referenceM.amount_mol * deltaM);
+      const massExperimental = updatedS.amount_g;
 
-      let massExperimental = updatedS.amount_g;
-      if(deltaM > 0) { //expect weight gain
-        if(massExperimental > mFull) {
-          errorMsg = 'Experimental mass value is more than possible \
-                      by 100% conversion! Please check your data.';
-        } else if(massExperimental < massA) {
-          errorMsg = 'Material loss! \
-                    Experimental mass value is less than possible! \
-                    Please check your data.';
+      if (deltaM > 0) { // expect weight gain
+        if (massExperimental > mFull) {
+          errorMsg = 'Experimental mass value is more than possible\n' +
+            'by 100% conversion! Please check your data.';
+        } else if (massExperimental < massA) {
+          errorMsg = 'Material loss! ' +
+            'Experimental mass value is less than possible!\n' +
+            'Please check your data.';
         }
-      } else { //expect weight loss
-        if(massExperimental < mFull) {
-          errorMsg = 'Experimental mass value is less than possible \
-                      by 100% conversion! Please check your data.';
-        }
+      } else if (massExperimental < mFull) { // expect weight loss
+        errorMsg = 'Experimental mass value is less than possible\n' +
+          'by 100% conversion! Please check your data.';
       }
     }
 
-    if(errorMsg) {
+    if (errorMsg) {
       updatedS.error_mass = true;
       NotificationActions.add({
         message: errorMsg,
-        level: 'error'
+        level: 'error',
       });
     } else {
       updatedS.error_mass = false;
     }
 
-    return {
-      mFull: mFull,
-      errorMsg: errorMsg
-    }
+    return { mFull, errorMsg };
   }
 
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
@@ -322,17 +359,23 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForEquivalentChange(samples, updatedSample) {
-    const {referenceMaterial} = this.props.reaction;
+    const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
-      if (sample.id == updatedSample.id) {
+      if (sample.id === updatedSample.id) {
         sample.equivalent = updatedSample.equivalent;
-        if(referenceMaterial && referenceMaterial.amount_value) {
-          sample.setAmountAndNormalizeToGram({value:updatedSample.equivalent * referenceMaterial.amount_mol, unit:'mol'});
-        }
-        else if(sample.amount_value) {
-          sample.setAmountAndNormalizeToGram({value:updatedSample.equivalent * sample.amount_mol,unit: 'mol'});
+        if (referenceMaterial && referenceMaterial.amount_value) {
+          sample.setAmountAndNormalizeToGram({
+            value: updatedSample.equivalent * referenceMaterial.amount_mol,
+            unit: 'mol',
+          });
+        } else if (sample.amount_value) {
+          sample.setAmountAndNormalizeToGram({
+            value: updatedSample.equivalent * sample.amount_mol,
+            unit: 'mol'
+          });
         }
       }
+
       return sample;
     });
   }
@@ -409,6 +452,10 @@ export default class ReactionDetailsScheme extends Component {
       reaction.markSampleAsReference(refM.id);
     }
 
+    const headReactants = reaction.starting_materials.length;
+    const headSolvents = headReactants + reaction.reactants.length;
+    const headProducts = headSolvents + reaction.solvents.length;
+
     return (
       <div>
         <ListGroup fill>
@@ -422,7 +469,8 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              headIndex={0} />
           </ListGroupItem>
           <ListGroupItem style={minPadding} >
 
@@ -434,8 +482,8 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
-
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              headIndex={headReactants} />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
 
@@ -447,8 +495,8 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
-
+              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+              headIndex={headProducts} />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
             { this.solventCollapseBtn() }
@@ -462,15 +510,35 @@ export default class ReactionDetailsScheme extends Component {
                   deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                   dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
                   showLoadingColumn={reaction.hasPolymers()}
-                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)} />
+                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
+                  headIndex={headSolvents} />
               </div>
             </Collapse>
           </ListGroupItem>
         </ListGroup>
 
-        <ReactionDetailsMainProperties
-          reaction={reaction}
-          onInputChange={(type, event) => this.props.onInputChange(type, event)} />
+        <ListGroup>
+          <ListGroupItem>
+            <div className="reaction-scheme-props">
+              <ReactionDetailsMainProperties
+                reaction={reaction}
+                onInputChange={(type, event) => this.props.onInputChange(type, event)}
+              />
+            </div>
+            <Row>
+              <Col md={12}>
+                <FormGroup>
+                  <ControlLabel>Description {this.renderRole()}</ControlLabel>
+                  <QuillEditor
+                    value={reaction.description}
+                    onChange={event => this.props.onInputChange('description', event)}
+                    toolbarSymbol={reactionToolbarSymbol}
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
+          </ListGroupItem>
+        </ListGroup>
       </div>
     );
   }

@@ -9,10 +9,10 @@ module SampleLevelSerializable
     has_one :container
     has_one :tag
 
-    alias_method :original_initialize, :initialize
+    alias_method :policy_initialize, :initialize
 
-    def initialize(element, nested_detail_levels)
-      original_initialize(element)
+    def initialize(element, options={})
+      policy_initialize(element, options)
     end
 
     def type
@@ -35,6 +35,8 @@ module SampleLevelSerializable
             false
           when :container
             nil
+          when :molecule_name_hash
+            {}
           else
             '***'
           end

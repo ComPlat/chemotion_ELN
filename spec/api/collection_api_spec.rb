@@ -420,7 +420,7 @@ describe Chemotion::CollectionAPI do
             {
               current_collection_id: nil,
               collection_attributes: attributes_for(:collection),
-              user_ids: [user.id],
+              user_ids: [{value: user.id}, {value: u2.email}],
               elements_filter: {
                 sample: {
                   all: false,
@@ -475,6 +475,15 @@ describe Chemotion::CollectionAPI do
             expect(c.reactions).to match_array [r1]
             expect(c.wellplates).to match_array [w1]
             expect(c.screens).to match_array [sc1, sc2]
+
+            # naming convention for shared collections
+            c2 = Collection.find_by(label: "My project with #{u2.name}")
+            expect(c2).to_not be_nil
+            expect(c2.user_id).to eq u2.id
+            expect(c2.samples).to match_array [s1, s2]
+            expect(c2.reactions).to match_array [r1]
+            expect(c2.wellplates).to match_array [w1]
+            expect(c2.screens).to match_array [sc1, sc2]
           end
         end
 
@@ -488,7 +497,7 @@ describe Chemotion::CollectionAPI do
             {
               current_collection_id: nil,
               collection_attributes: attributes_for(:collection),
-              user_ids: [user.id],
+              user_ids: [user.id, u2.email],
               elements_filter: {
                 sample: {
                   all: false,

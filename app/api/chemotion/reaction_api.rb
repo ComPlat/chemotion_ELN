@@ -227,7 +227,7 @@ module Chemotion
             optional :excluded_ids, type: Array
           end
           optional :options, type: Hash do
-            optional :delete_subsamples, type: Boolean
+            optional :deleteSubsamples, type: Boolean
           end
         end
 
@@ -239,7 +239,7 @@ module Chemotion
           reactions = Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])
           options = params[:options]
 
-          if options && options.fetch(:delete_subsamples, false)
+          if options && options.fetch(:deleteSubsamples, false)
             reactions.flat_map(&:samples).map(&:destroy)
           end
 
@@ -330,7 +330,7 @@ module Chemotion
         optional :description, type: Hash
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
-        optional :observation, type: String
+        optional :observation, type: Hash
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
         optional :tlc_solvents, type: String
@@ -339,6 +339,8 @@ module Chemotion
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :role, type: String
+        optional :origin, type: Hash
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
@@ -379,7 +381,7 @@ module Chemotion
         optional :description, type: Hash
         optional :timestamp_start, type: String
         optional :timestamp_stop, type: String
-        optional :observation, type: String
+        optional :observation, type: Hash
         optional :purification, type: Array[String]
         optional :dangerous_products, type: Array[String]
         optional :tlc_solvents, type: String
@@ -388,6 +390,8 @@ module Chemotion
         optional :rf_value, type: String
         optional :temperature, type: Hash
         optional :status, type: String
+        optional :role, type: String
+        optional :origin, type: Hash
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
@@ -416,6 +420,13 @@ module Chemotion
         CollectionsReaction.create(reaction: reaction, collection: Collection.get_all_collection_for_user(current_user.id))
 
         if reaction
+          if attributes['origin'] && attributes['origin'].short_label
+            materials.products&.map! do |prod|
+              prod.name.gsub! attributes['origin'].short_label, reaction.short_label
+              prod
+            end
+          end
+
           update_materials_for_reaction(reaction, materials, current_user)
           update_literatures_for_reaction(reaction, literatures)
           reaction.reload

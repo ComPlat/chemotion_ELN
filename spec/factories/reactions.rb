@@ -16,6 +16,6 @@ FactoryGirl.define do
     rf_value 0.99
     tlc_solvents "D2O"
     tlc_description "I am tlc_description"
-    observation "I am observation"
+    observation {{ "ops" => [{ "insert" => "I am observation" }] }}
   end
 end

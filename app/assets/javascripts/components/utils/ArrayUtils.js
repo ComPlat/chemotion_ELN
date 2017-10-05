@@ -38,4 +38,23 @@ export default class ArrayUtils {
   static flatten2D(array_2d) {
     return array_2d.reduce((a, b) => a.concat(b), []);
   }
+
+  static sortArrByIndex(arr) {
+    return arr.concat().sort((a, b) => {
+      const aIndex = parseInt(a.extended_metadata.index, 10);
+      const bIndex = parseInt(b.extended_metadata.index, 10);
+      if (isNaN(aIndex)) return false;
+      if (isNaN(bIndex)) return true;
+      return aIndex - bIndex;
+    });
+  }
+
+  static uniqSortById(items) {
+    let ids = items.map(a => a.id);
+    ids = ids.unique().sort((a, b) => a - b);
+    const output = ids.map(id => (
+      items.find(item => item.id === id)
+    )).filter(r => r);
+    return output;
+  }
 }

@@ -31,10 +31,14 @@ feature 'Sample management' do
       split_sample_label = sample.short_label  + '-1 ' + sample.name
       find('tr', text: split_sample_label).click
 
-      expect(find_bs_field('Molecule').value).to eq(sample.molecule.iupac_name)
+      moleculeName = find('label', text: 'Molecule')
+        .find(:xpath, '..')
+        .find('.Select-value-label')
+        .text
+      expect(moleculeName).to eq(sample.molecule.iupac_name)
 
-      %w(name external_label location purity impurities solvent
-      density boiling_point melting_point).each do |field|
+      %w(name external_label location purity solvent
+          density boiling_point melting_point).each do |field|
         label = field.capitalize.gsub('_', ' ')
         value = find_bs_field(label).value
         if (Float(value) rescue false)
@@ -44,8 +48,11 @@ feature 'Sample management' do
         end
       end
 
-      amount = sample.target_amount_value.to_s
-      expect(find_bs_field('Amount').value).to eq(amount)
+      amount = sample.target_amount_value * 1000
+      expect(find_bs_field('Amount').value.to_f).to eq(amount)
+
+      molarity = sample.molarity_value
+      expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
 
       # test read-only molecule data
       { inchistring: 'InChI', cano_smiles: 'Canonical Smiles' }.each do |f, v|

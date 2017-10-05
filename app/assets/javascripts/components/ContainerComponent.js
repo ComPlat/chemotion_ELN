@@ -1,67 +1,108 @@
-import React, {Component} from 'react';
-import {Col, FormControl,FormGroup, ControlLabel} from 'react-bootstrap';
-import Select from 'react-select'
+import React, { Component } from 'react';
+import { Button, Col, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
+import Select from 'react-select';
 import ContainerDatasets from './ContainerDatasets';
-import QuillEditor from './QuillEditor'
-import QuillViewer from './QuillViewer'
+import QuillEditor from './QuillEditor';
+import QuillViewer from './QuillViewer';
 
-import {sampleAnalysesContentSymbol} from './utils/quillToolbarSymbol'
-import {confirmOptions, kindOptions} from './staticDropdownOptions/options';
+import { sampleAnalysesContentSymbol } from './utils/quillToolbarSymbol';
+import { sampleAnalysesFormatPattern } from './utils/ElementUtils';
+import { searchAndReplace } from './utils/quillFormat';
+import { confirmOptions, kindOptions } from './staticDropdownOptions/options';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
     super();
-    const {container} = props;
+    const { container } = props;
     this.state = {
-      container
+      container,
     };
+
+    this.onChange = this.onChange.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.reformatContent = this.reformatContent.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState({
-      container: nextProps.container
+      container: nextProps.container,
     });
   }
 
-  handleInputChange(type, event) {
-    const {container} = this.state;
-    const {value} = event.target;
-    switch(type) {
+  onChange(container) {
+    this.props.onChange(container);
+  }
+
+  handleInputChange(type, ev) {
+    const { container } = this.state;
+    let isChanged = false;
+
+    switch (type) {
       case 'name':
-        container.name = value;
-        break;
-      case 'kind':
-        container.extended_metadata['kind'] = value;
-        break;
-      case 'status':
-        container.extended_metadata['status'] = value;
-        break;
-      case 'content':
-        container.extended_metadata['content'] = value;
+        container.name = ev.currentTarget.value;
+        isChanged = true;
         break;
       case 'description':
-        container.description = value;
+        container.description = ev.currentTarget.value;
+        isChanged = true;
+        break;
+      case 'kind':
+        container.extended_metadata.kind = ev ? ev.value : undefined;
+        isChanged = true;
+        break;
+      case 'status':
+        container.extended_metadata.status = ev ? ev.value : undefined;
+        isChanged = true;
+        break;
+      case 'content':
+        container.extended_metadata.content = ev;
+        isChanged = true;
+        break;
+      default:
         break;
     }
-    this.props.onChange(container);
 
+    if (isChanged) this.onChange(container);
+  }
+
+  reformatContent() {
+    const { container } = this.state;
+    const kind = container.extended_metadata.kind || '';
+    let content = { ...container.extended_metadata.content };
+    const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
+
+    sampleAnalysesFormatPattern[type].forEach((patt) => {
+      content = searchAndReplace(content, patt.pattern, patt.replace);
+    });
+
+    container.extended_metadata.content = content;
+    this.onChange(container);
   }
 
   render() {
-    const {container} = this.state;
-    const {readOnly, disabled} = this.props;
+    const { container } = this.state;
+    const { readOnly, disabled } = this.props;
 
-    let quill = (<span />)
+    const formatButton = (
+      <Button bsSize="xsmall" onClick={this.reformatContent}>
+        <i className="fa fa-magic" />
+      </Button>
+    );
+
+    let quill = (<span />);
     if (readOnly || disabled) {
       quill = (
-        <QuillViewer value={container.extended_metadata['content']} />
+        <QuillViewer value={container.extended_metadata.content} />
       )
     } else {
       quill = (
-        <QuillEditor value={container.extended_metadata['content']}
-          onChange={event => this.handleInputChange('content', {target: {value: event}})}
+        <QuillEditor
+          height="120px"
+          value={container.extended_metadata.content}
+          onChange={this.handleInputChange.bind(this, 'content')}
           disabled={readOnly}
           toolbarSymbol={sampleAnalysesContentSymbol}
+          customToolbar={formatButton}
         />
       )
     }
@@ -74,7 +115,7 @@ export default class ContainerComponent extends Component {
             type="text"
             label="Name"
             value={container.name || '***'}
-            onChange={event => this.handleInputChange('name', event)}
+            onChange={this.handleInputChange.bind(this, 'name')}
             disabled={disabled}/>
         </Col>
         <Col md={4}>
@@ -86,8 +127,7 @@ export default class ContainerComponent extends Component {
               options={kindOptions}
               value={container.extended_metadata['kind']}
               disabled={readOnly || disabled}
-              onChange={event => this.handleInputChange('kind',
-                {target: {value: event && event.value}})}
+              onChange={this.handleInputChange.bind(this, 'kind')}
               />
           </div>
         </Col>
@@ -100,8 +140,7 @@ export default class ContainerComponent extends Component {
               options={confirmOptions}
               value={container.extended_metadata['status']}
               disabled={readOnly || disabled}
-              onChange={event => this.handleInputChange('status',
-                {target: {value: event && event.value}})}
+              onChange={this.handleInputChange.bind(this, 'status')}
             />
           </div>
         </Col>
@@ -117,7 +156,7 @@ export default class ContainerComponent extends Component {
               label="Description"
               value={container.description || ''}
               disabled={readOnly || disabled}
-              onChange={event => this.handleInputChange('description', event)}
+              onChange={this.handleInputChange.bind(this, 'description')}
               />
           </FormGroup>
         </Col>
@@ -127,10 +166,17 @@ export default class ContainerComponent extends Component {
             container={container}
             readOnly={readOnly}
             disabled={disabled}
-            onChange={container => this.props.onChange(container)}
+            onChange={this.onChange}
             />
         </Col>
       </div>
     );
   }
+}
+
+ContainerComponent.propTypes = {
+  onChange: React.PropTypes.func,
+  readOnly: React.PropTypes.bool,
+  disabled: React.PropTypes.bool,
+  container: React.PropTypes.object
 }

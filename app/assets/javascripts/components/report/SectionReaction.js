@@ -35,6 +35,7 @@ const SectionReaction = ({reaction, settings, configs}) => {
       <SolventContent show={settings.material}
                       solvents={solvents}
                       solvent={solvent} />
+      <h4> Description </h4>
       <DescriptionContent show={settings.description && description}
                           description={description} />
       <PurificationContent show={settings.purification && purification && purification.length != 0}
@@ -117,6 +118,19 @@ const StatusContent = ({status}) => {
         </OverlayTrigger>
       )
       break;
+    case "General Procedure":
+      tooltip = (<Tooltip id="general_procedure">General Procedure</Tooltip>);
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+        <a style={{marginLeft: '10px',
+                   padding: '3px',
+                   backgroundColor: 'white',
+                   color:'blue'}} >
+          <i className="fa fa-home"/>
+        </a>
+        </OverlayTrigger>
+      )
+      break;
     default:
       return null;
   }
@@ -160,22 +174,21 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
         : null
     )
   }
-  const table = (rows) => {
-    return (
-      <Table striped condensed hover>
-        <thead>
-          <tr>
-            <th>Formula</th>
-            <th>Mass(mg)</th>
-            <th>Vol(ml)</th>
-            <th>Amount(mmol)</th>
-            <th>Equiv/Yield</th>
-          </tr>
-        </thead>
-        {rows}
-      </Table>
-    )
-  }
+  const table = (dataRows) => (
+    <Table striped condensed hover>
+      <thead>
+        <tr>
+          <th>Formula</th>
+          <th>Mass(mg)</th>
+          <th>Vol(ml)</th>
+          <th>Amount(mmol)</th>
+          <th>Equiv/Yield</th>
+        </tr>
+      </thead>
+      {dataRows}
+    </Table>
+  );
+
   return (
     show
       ? <div>
@@ -238,14 +251,7 @@ const SolventContent = ({show, solvents, solvent}) => {
 }
 
 const DescriptionContent = ({show, description}) => {
-  return (
-    show
-      ? <div>
-          <h4> Description </h4>
-          <QuillViewer value={description} />
-        </div>
-      : null
-  )
+  return show ? <QuillViewer value={description} /> : null;
 }
 
 const PurificationContent = ({show, puri}) => {
@@ -279,7 +285,7 @@ const ObservationContent = ({show, observation}) => {
     show
       ? <div>
           <h4> Observation </h4>
-          <pre className="noBorder">{observation}</pre>
+          <QuillViewer value={observation} />
         </div>
       : null
   )
@@ -352,4 +358,4 @@ const LiteratureContent = ({show, literatures}) => {
   )
 }
 
-export default SectionReaction;
+export { SectionReaction, SVGContent, DescriptionContent };

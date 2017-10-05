@@ -13,8 +13,8 @@ import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
 import ElementsTableSampleEntries from './ElementsTableSampleEntries'
-import ElementsSvgCheckbox from './ElementsSvgCheckbox';
 import Switch from './Switch.js';
+
 import deepEqual from 'deep-equal';
 
 export default class ElementsTable extends React.Component {
@@ -35,6 +35,7 @@ export default class ElementsTable extends React.Component {
     this.onChangeUI = this.onChangeUI.bind(this)
 
     this.collapseSample = this.collapseSample.bind(this)
+    this.changeSort = this.changeSort.bind(this)
   }
 
   componentDidMount() {
@@ -68,15 +69,13 @@ export default class ElementsTable extends React.Component {
     let currentId = state.sample.currentId || state.reaction.currentId ||
                     state.wellplate.currentId;
 
-    if (checkedIds || uncheckedIds || checkedAll || currentId ||
-        state.showPreviews) {
+    if (checkedIds || uncheckedIds || checkedAll || currentId) {
       this.setState({
         ui: {
           checkedIds: checkedIds,
           uncheckedIds: uncheckedIds,
           checkedAll: checkedAll,
           currentId: currentId,
-          showPreviews: state.showPreviews,
           number_of_results: state.number_of_results
         }
       });
@@ -112,13 +111,15 @@ export default class ElementsTable extends React.Component {
       this.setState({
         elements, page, pages, perPage, totalElements, currentElement
       }),
-      () => this.initializePagination()
+
+      this.initializePagination()
     }
     else if (currentElementDidChange) {
       this.setState({
         page, pages, perPage, totalElements, currentElement
       }),
-      () => this.initializePagination()
+
+      this.initializePagination()
     }
   }
 
@@ -162,16 +163,6 @@ export default class ElementsTable extends React.Component {
             bsSize="small"
             onSelect={(eventKey) => this.handlePaginationSelect(eventKey)}/>
         </div>
-      )
-    }
-  }
-
-  previewCheckbox() {
-    const {ui} = this.state;
-    const {type} = this.props;
-    if(type == 'reaction' || type == 'sample') {
-      return (
-        <ElementsSvgCheckbox checked={ui.showPreviews}/>
       )
     }
   }
@@ -221,12 +212,13 @@ export default class ElementsTable extends React.Component {
     } else {
       switchBtnTitle = switchBtnTitle + (moleculeSort ? "Sample" : "Molecule")
     }
+
     let headerRight = (<span />)
     if (type === 'sample') {
       headerRight = (
         <div className="header-right">
           <Switch checked={moleculeSort} style={{width: "90px"}}
-            onChange={() => this.changeSort()}
+            onChange={this.changeSort}
             title={switchBtnTitle}
             checkedChildren={checkedLbl}
             unCheckedChildren={uncheckedLbl}/>
@@ -297,11 +289,8 @@ export default class ElementsTable extends React.Component {
         {this.renderEntries()}
         <div className="list-container-bottom">
           <Row>
-            <Col sm={6}>{this.previewCheckbox()}</Col>
+            <Col sm={6}>{this.pagination()}</Col>
             <Col sm={6}>{this.numberOfResultsInput()}</Col>
-          </Row>
-          <Row>
-            <Col sm={12}>{this.pagination()}</Col>
           </Row>
         </div>
       </div>

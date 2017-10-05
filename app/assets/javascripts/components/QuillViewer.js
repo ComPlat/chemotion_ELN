@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import Quill from 'quill'
+import _ from 'lodash';
 
 export default class QuillViewer extends React.Component {
   constructor (props) {
@@ -11,6 +12,14 @@ export default class QuillViewer extends React.Component {
 
   componentDidMount() {
     this.initQuill();
+  }
+
+  componentWillReceiveProps(nextProps) {
+    const oldVal = this.props.value;
+    const newVal = nextProps.value;
+    if (oldVal && newVal && !_.isEqual(newVal, oldVal)) {
+      this.viewer.setContents(newVal);
+    }
   }
 
   initQuill() {

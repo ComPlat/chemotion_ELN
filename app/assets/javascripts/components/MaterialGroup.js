@@ -12,10 +12,12 @@ export default class MaterialGroup extends Component {
 
   render() {
     const { materials, materialGroup, deleteMaterial, onChange, showLoadingColumn,
-            reaction, addDefaultSolvent } = this.props;
+            reaction, addDefaultSolvent, headIndex } = this.props;
     let contents = [];
+    let index = headIndex;
 
     materials.map((material, key) => {
+      index += 1;
       contents.push(
         (<Material
           reaction={reaction}
@@ -24,7 +26,8 @@ export default class MaterialGroup extends Component {
           material={material}
           materialGroup={materialGroup}
           showLoadingColumn={showLoadingColumn}
-          deleteMaterial={material => deleteMaterial(material, materialGroup)} />)
+          deleteMaterial={material => deleteMaterial(material, materialGroup)}
+          index={index} />)
       );
 
       if(materialGroup == 'products' && material.adjusted_loading && material.error_mass)
@@ -32,7 +35,7 @@ export default class MaterialGroup extends Component {
           (<MaterialCalculations
             material={material}
             materialGroup={materialGroup}
-            />)
+            index={index} />)
         );
     })
 
@@ -88,20 +91,20 @@ const GeneralMaterialGroup = ({contents, materialGroup, showLoadingColumn,reacti
     <div>
       <table width="100%" className="reaction-scheme">
         <thead><tr>
-        <th width="4%">{addSampleButton}</th>
-        <th width={showLoadingColumn ? "8%" : "15%"}>{headers.group}</th>
-        <th width="4%">{refTHead}</th>
-        <th width="3%">{headers.tr}</th>
-        <th width="10%">{headers.amount}</th>
-        <th width={showLoadingColumn ? "9%" : "10%"}></th>
-        <th width={showLoadingColumn ? "11%" : "12%"}></th>
-        {loadingTHead}
-        <th width={showLoadingColumn ? "11%" : "12%"}>{headers.concn}</th>
-        <th width={showLoadingColumn ? "8%" : "9%"}>{headers.eq}</th>
-        <th width="4%"></th>
+          <th width="4%">{addSampleButton}</th>
+          <th width={showLoadingColumn ? '8%' : '15%'}>{headers.group}</th>
+          <th width="4%">{refTHead}</th>
+          <th width="3%">{headers.tr}</th>
+          <th width="10%">{headers.amount}</th>
+          <th width={showLoadingColumn ? '9%' : '10%'}></th>
+          <th width={showLoadingColumn ? '11%' : '12%'}></th>
+          {loadingTHead}
+          <th width={showLoadingColumn ? '11%' : '12%'}>{headers.concn}</th>
+          <th width={showLoadingColumn ? '8%' : '9%'}>{headers.eq}</th>
+          <th width='4%'></th>
         </tr></thead>
         <tbody>
-          {contents.map( item => item )}
+          {contents.map(item => item)}
         </tbody>
       </table>
     </div>
@@ -114,11 +117,14 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction, addDefaultSol
       <Glyphicon glyph="plus" />
   </Button>
 
-  const createDefaultSolventsForReaction = (external_label, molfile) => {
-    MoleculesFetcher.fetchByMolfile(molfile)
+  const createDefaultSolventsForReaction = (event) => {
+    const solvent = event.value
+    MoleculesFetcher.fetchByMolfile(solvent.molfile)
       .then((result) => {
         const molecule = new Molecule(result);
-        addDefaultSolvent(molecule, materialGroup, external_label);
+        const d = molecule.density
+        molecule.density = d && d > 0 && d || solvent.density
+        addDefaultSolvent(molecule, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -136,8 +142,7 @@ const SolventsMaterialGroup = ({contents, materialGroup, reaction, addDefaultSol
             multi={false}
             options={defaultMultiSolventsOptions}
             placeholder='Default solvents'
-            onChange={ (e) => {if (e && e.value){
-              createDefaultSolventsForReaction(e.value[0], e.value[1]) }}} />
+            onChange={createDefaultSolventsForReaction} />
         </th>
         <th width="4%">T/R</th>
         <th width="26%">Label</th>

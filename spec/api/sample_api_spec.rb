@@ -81,6 +81,47 @@ describe Chemotion::SampleAPI do
         it 'returns serialized sample' do
           expect(JSON.parse(response.body)['sample']['name']).to eq sample.name
         end
+
+        it 'returns correct can_publish & can_update' do
+          expect(JSON.parse(response.body)['sample']['can_update']).to eq true
+          expect(JSON.parse(response.body)['sample']['can_publish']).to eq true
+        end
+      end
+
+      context 'with appropriate permissions & shared collections' do
+        let!(:c_shared) { create(:collection, user_id: user.id, is_shared: true) }
+        let!(:sample)   { create(:sample) }
+
+        before do
+          CollectionsSample.create!(sample: sample, collection: c_shared)
+        end
+
+        context 'permission_level = 0' do
+          it 'returns correct can_publish & can_update' do
+            c_shared.update_attributes(permission_level: 0)
+            get "/api/v1/samples/#{sample.id}"
+            expect(JSON.parse(response.body)['sample']['can_update']).to eq false
+            expect(JSON.parse(response.body)['sample']['can_publish']).to eq false
+          end
+        end
+
+        context 'permission_level = 1' do
+          it 'returns correct can_publish & can_update' do
+            c_shared.update_attributes(permission_level: 1)
+            get "/api/v1/samples/#{sample.id}"
+            expect(JSON.parse(response.body)['sample']['can_update']).to eq true
+            expect(JSON.parse(response.body)['sample']['can_publish']).to eq false
+          end
+        end
+
+        context 'permission_level = 3' do
+          it 'returns correct can_publish & can_update' do
+            c_shared.update_attributes(permission_level: 3)
+            get "/api/v1/samples/#{sample.id}"
+            expect(JSON.parse(response.body)['sample']['can_update']).to eq true
+            expect(JSON.parse(response.body)['sample']['can_publish']).to eq true
+          end
+        end
       end
 
       context 'with inappropriate permissions' do
@@ -113,10 +154,11 @@ describe Chemotion::SampleAPI do
             name: 'updated name',
             target_amount_value: 0,
             target_amount_unit: 'g',
+            molarity_value: nil,
+            molarity_unit: 'M',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
-            impurities: '',
             location: '',
             molfile: '',
             is_top_secret: false,
@@ -176,10 +218,11 @@ describe Chemotion::SampleAPI do
             name: 'updated name',
             target_amount_value: 0,
             target_amount_unit: 'g',
+            molarity_value: nil,
+            molarity_unit: 'M',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
-            impurities: '',
             location: '',
             molfile: '',
             is_top_secret: false
@@ -238,11 +281,12 @@ describe Chemotion::SampleAPI do
             name: 'test',
             target_amount_value: 0,
             target_amount_unit: 'g',
+            molarity_value: nil,
+            molarity_unit: 'M',
             external_label: 'test extlabel',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
-            impurities: '',
             location: '',
             density: 0.5,
             boiling_point: 100,
@@ -292,10 +336,11 @@ describe Chemotion::SampleAPI do
             name: 'test',
             target_amount_value: 0,
             target_amount_unit: 'g',
+            molarity_value: nil,
+            molarity_unit: 'M',
             description: 'Test Sample',
             purity: 1,
             solvent: '',
-            impurities: '',
             location: '',
             molfile: '',
             is_top_secret: false

@@ -28,8 +28,24 @@ $(function() {
     }
   })
 
+
   attachAutoComplete("countries", "country-select")
   attachAutoComplete("organizations", "organization-select")
   attachAutoComplete("departments", "department-select")
   attachAutoComplete("groups", "group-select")
-})
+
+});
+$("input#user_email").focusout(
+  function(){
+    var email = $(this).val(), domain_match, domain;
+    if (!email || !(domain_match = email.match(/\@(.*)/))){return}
+    domain = domain_match[1]
+    $.getJSON(
+      '/api/v1/public/affiliations/swot?domain='+ encodeURIComponent(domain)
+    ).done(
+      function(organization){
+        $("input#organization-select").val(organization)
+      }
+    );
+  }
+);

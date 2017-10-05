@@ -150,7 +150,8 @@ export default class ElementsTableEntries extends Component {
       tdExtraContents.push(<NoName element={element}/>);
     }
 
-    if(ui.showPreviews && (element.type == 'sample' || element.type == 'reaction' || element.type == 'research_plan')) {
+    const {showPreviews} = UIStore.getState();
+    if(showPreviews && (element.type == 'reaction' || element.type == 'research_plan')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
@@ -176,38 +177,82 @@ export default class ElementsTableEntries extends Component {
   }
 
   reactionStatus(element) {
+    if (element.type === 'reaction' && element.status) {
+      const tooltip = (
+        <Tooltip id={`reaction_${element.status}`}>
+          {element.status} Reaction
+        </Tooltip>
+      );
 
+      let icon = null;
+      switch (element.status) {
+        case 'Planned':
+          icon = <i className="fa fa-clock-o c-bs-warning" />;
+          break;
+        case 'Running':
+          icon = (
+            <span
+              style={{ width: '12px', height: '14px', lineHeight: '14px' }}
+              className="fa fa-stack"
+            >
+              <i className="fa fa-stack-1x fa-hourglass-1 running-1 c-bs-warning" />
+              <i className="fa fa-stack-1x fa-hourglass-2 running-2 c-bs-warning" />
+              <i className="fa fa-stack-1x fa-hourglass-3 running-3 c-bs-warning" />
+            </span>
+          );
+          break;
+        case 'Done':
+          icon = <i className="fa fa-hourglass-3 c-bs-primary" />;
+          break;
+        case 'Analyses Pending':
+          icon = <i className="fa fa-ellipsis-h c-bs-primary" />;
+          break;
+        case 'Successful':
+          icon = <i className="fa fa-check-circle-o c-bs-success" />;
+          break;
+        case 'Not Successful':
+          icon = <i className="fa fa-times-circle-o c-bs-danger" />;
+          break;
+        default:
+          break;
+      }
+
+      return (
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          {icon}
+        </OverlayTrigger>
+      );
+    }
+  }
+
+  reactionRole(element) {
     let tooltip = null;
     if (element.type == 'reaction') {
-      switch (element.status) {
-
-        case "Successful":
-          tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
+      switch (element.role) {
+        case "gp":
+          tooltip = <Tooltip id="roleTp">General Procedure</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'green'}} ><i className="fa fa-check-circle-o"/></a>
+              <i className="fa fa-home c-bs-primary"/>
             </OverlayTrigger>
           )
           break;
-
-        case "Planned":
-          tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
+        case "parts":
+          tooltip = <Tooltip id="roleTp">Parts of General Procedure</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'orange'}} ><i className="fa fa-clock-o"/></a>
+              <i className="fa fa-bookmark c-bs-success"/>
             </OverlayTrigger>
           )
           break;
-
-        case "Not Successful":
-          tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
+        case "single":
+          tooltip = <Tooltip id="roleTp">Single</Tooltip>;
           return (
             <OverlayTrigger placement="top" overlay={tooltip}>
-              <a style={{color:'red'}} ><i className="fa fa-times-circle-o"/></a>
+              <i className="fa fa-asterisk c-bs-danger"/>
             </OverlayTrigger>
           )
           break;
-
         default:
           break;
       }
@@ -249,6 +294,8 @@ export default class ElementsTableEntries extends Component {
               <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
                 {element.title()}&nbsp;
                 {this.reactionStatus(element)}
+                {' '}
+                {this.reactionRole(element)}
                 <br/>
                 {sampleMoleculeName}
                 <ElementCollectionLabels element={element} key={element.id}/>

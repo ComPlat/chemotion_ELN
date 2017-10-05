@@ -7,6 +7,10 @@ RSpec.describe Sample, type: :model do
     it 'is possible to create a valid sample' do
       expect(sample.valid?).to be(true)
     end
+
+    it 'has molecule_name_id' do
+      expect(sample.molecule_name_id).not_to be_blank
+    end
   end
 
   describe 'after creation' do
@@ -107,7 +111,7 @@ MOLFILE
     let(:mol_attributes){
       {
         "boiling_point" => nil,
-              "density" => nil,
+              "density" => 0.0,
              "inchikey" => "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
         "inchistring" => "InChI=1S/H2O/h1H2",
           "iupac_name" => "oxidane",
