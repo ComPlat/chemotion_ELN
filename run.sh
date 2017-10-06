@@ -16,5 +16,5 @@ done
 >&2 echo "Postgres is up"
 
 echo "Starting rails server"
-rm -f tmp/pids/server.pid && bundle exec rails s -b 0.0.0.0
+rm -f tmp/pids/server.pid && bundle exec passenger start -b 0.0.0.0 --max-pool-size 5
 
