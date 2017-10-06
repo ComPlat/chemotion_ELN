@@ -72,12 +72,7 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 
 # Docker setup
 * Initial setup: `docker-compose up`
-* For Linux users: use docker-compose run with user docker, e.g., `docker-compose run --user=docker bundle exec rails g migration new_migration`
-
-## Workarounds:
-
-* npm packages, database.yml und migrations still need to be performed manually
-* `cp config/database.yml{.example,}`
-* `docker-compose run app bash`
-* in the container: `$ npm i && bundle exec rake db:setup`
+* Initial setup and detach: `docker-compose up -d`
+* Initialize database: `docker-compose run app bundle exec rake db:create db:migrate`
+* Start interactive shell with docker: `docker-compose run app /bin/bash`
 
