@@ -74,5 +74,6 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 * Initial setup: `docker-compose up`
 * Initial setup and detach: `docker-compose up -d`
 * Initialize database: `docker-compose run app bundle exec rake db:create db:migrate`
+* Initialize database: `docker-compose run app bundle exec rake assets:precompile`
 * Start interactive shell with docker: `docker-compose run app /bin/bash`
 
