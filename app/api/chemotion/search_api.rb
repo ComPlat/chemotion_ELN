@@ -298,7 +298,7 @@ module Chemotion
         end
 
         if search_method == 'advanced' && molecule_sort == false
-          arg_value_str = arg.first.value.gsub(/(\r)?\n/, ",")
+          arg_value_str = arg.first.value.gsub(/(\r)?\n/, ',').gsub(/\s/, '')
           return scope.order('position(\',\'||(' + arg.first.field.column +
                              "::text)||\',\' in ',#{arg_value_str},')")
         elsif search_method == 'advanced' && molecule_sort == true
