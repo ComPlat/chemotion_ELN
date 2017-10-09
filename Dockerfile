@@ -62,6 +62,7 @@ ADD app-env.conf /etc/nginx/config.d/00_app_env.conf
 
 # configure app
 RUN cp -a config/database.yml.example config/database.yml
+RUN cp -a config/storage.yml.example config/storage.yml
 RUN chmod +x run.sh
 # RUN chown -R app:app $APP_HOME
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
