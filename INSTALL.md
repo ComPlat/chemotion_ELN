@@ -71,9 +71,10 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 * `brew install eot-utils`
 
 # Docker setup
-* Initial setup: `docker-compose up`
-* Initial setup and detach: `docker-compose up -d`
-* Initialize database: `docker-compose run app bundle exec rake db:create db:migrate`
-* Initialize database: `docker-compose run app bundle exec rake assets:precompile`
+* 1 - Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
+* 2 - Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
+* 3 - First run: `docker-compose up`
+*     Or initial setup and detach: `docker-compose up -d`
 * Start interactive shell with docker: `docker-compose run app /bin/bash`
+* NOTE: In this Docker image, we disabled the email verification progress
 

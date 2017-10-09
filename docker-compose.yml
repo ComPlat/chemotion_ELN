@@ -24,6 +24,7 @@ services:
 
   app:
     build: .
+    image: complat/chemotion_eln
     depends_on:
       - postgres
     command:
@@ -37,6 +38,7 @@ services:
     links:
       - sftp
     environment:
+      RAILS_ENV: production
       DOCKER: 'true'
       DATABASE_URL: postgres://postgres:3x4mpl3@postgres:5432/chemotion_production
       PGPASSWORD: 3x4mpl3
