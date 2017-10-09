@@ -195,11 +195,12 @@ module Chemotion
         }
 
         ids = Kaminari.paginate_array(wellplates).page(page).per(page_size)
+        klass = "WellplateListSerializer::Level#{@dl_wp}".constantize
         serialized_wellplates = Wellplate.includes(
           collections: :sync_collections_users,
           wells: :sample
         ).find(ids).map{ |s|
-          WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys
+          klass.new(s,1).serializable_hash.deep_symbolize_keys
         }
 
         ids = Kaminari.paginate_array(screens).page(page).per(page_size)
