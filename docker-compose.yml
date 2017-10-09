@@ -5,19 +5,23 @@ services:
     image: busybox
     volumes:
       - /bundle
+
   db_data:
     image: busybox
     volumes:
       - /var/lib/postgresql
+
   postgres:
     image: 'postgres:9.5'
     environment:
       POSTGRES_PASSWORD: 3x4mpl3
+
   sftp:
     image: atmoz/sftp
     ports:
       - "2222:22"
     command: sftp_test:sftp_test:::uploads
+
   app:
     build: .
     depends_on:
@@ -33,7 +37,6 @@ services:
     links:
       - sftp
     environment:
-      RAILS_ENV: production
       DOCKER: 'true'
       DATABASE_URL: postgres://postgres:3x4mpl3@postgres:5432/chemotion_production
       PGPASSWORD: 3x4mpl3

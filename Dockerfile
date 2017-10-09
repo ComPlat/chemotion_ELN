@@ -29,14 +29,13 @@ RUN add-apt-repository ppa:inkscape.dev/stable && \
 
 # WORKDIR /tmp
 # node + npm via nvm; install npm packages
-WORKDIR $APP_HOME
+WORKDIR /tmp
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | NVM_DIR=/usr/local/nvm bash
 # Gem caching
-WORKDIR /tmp
-ADD Gemfile /tmp/
-ADD Gemfile.lock /tmp/
-ADD package.json /tmp/
-ADD .nvmrc /tmp/
+ADD Gemfile .
+ADD Gemfile.lock .
+ADD package.json .
+ADD .nvmrc .
 
 RUN /bin/bash -c 'bundle install'
 RUN /bin/bash -c 'source /usr/local/nvm/nvm.sh;\
@@ -44,6 +43,7 @@ RUN /bin/bash -c 'source /usr/local/nvm/nvm.sh;\
   nvm use;\
   npm install;'
 
+RUN mkdir -p $APP_HOME
 WORKDIR $APP_HOME
 ADD . $APP_HOME
 RUN cp -a /tmp/node_modules $APP_HOME
@@ -53,12 +53,10 @@ RUN echo '[ -s /usr/local/nvm/nvm.sh ] && . /usr/local/nvm/nvm.sh' >> /home/app/
 # nginx. https://github.com/phusion/passenger-docker#configuring-nginx
 RUN rm -f /etc/service/nginx/down
 RUN rm /etc/nginx/sites-enabled/default
-ADD webapp.conf /etc/nginx/sites-enabled/webapp.conf
+ADD chemotion_eln.conf /etc/nginx/sites-enabled/chemotion_eln.conf
 ADD secret_key.conf /etc/nginx/main.d/secret_key.conf
 ADD gzip_max.conf /etc/nginx/conf.d/gzip_max.conf
 ADD postgres-env.conf /etc/nginx/main.d/postgres-env.conf
-ADD rails-env.conf /etc/nginx/main.d/rails-env.conf
-ADD app-env.conf /etc/nginx/config.d/00_app_env.conf
 
 # configure app
 RUN cp -a config/database.yml.example config/database.yml
