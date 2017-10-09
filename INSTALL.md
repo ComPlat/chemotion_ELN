@@ -71,9 +71,13 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 * `brew install eot-utils`
 
 # Docker setup
-* 1 - Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
-* 2 - Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
-* 3 - First run: `docker-compose up`
+This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
+(For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
+* 1 - Build the image from Dockerfile `docker-compose build`
+* or pull the image directly: `docker pull complat/chemotion_eln`
+* 2 - Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
+* 3 - Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
+* 4 - First run: `docker-compose up`
 *     Or initial setup and detach: `docker-compose up -d`
 * Start interactive shell with docker: `docker-compose run app /bin/bash`
 * NOTE: In this Docker image, we disabled the email verification progress
