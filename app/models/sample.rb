@@ -142,7 +142,7 @@ class Sample < ActiveRecord::Base
   validates :creator, presence: true
 
   before_save :attach_svg, :init_elemental_compositions,
-              :set_loading_from_ea
+              :set_loading_from_ea, :update_molecule_name
 
   before_create :auto_set_short_label
 
@@ -478,11 +478,19 @@ private
     end
   end
 
+  def assign_molecule_name
+    target = molecule_iupac_name || molecule_sum_formular
+    mn = molecule.molecule_names.find_by(name: target)
+    self.molecule_name_id = mn.id
+  end
+
   def check_molecule_name
-    if molecule_name_id.blank?
-      target = molecule_iupac_name || molecule_sum_formular
-      mn = molecule.molecule_names.find_by(name: target)
-      self.molecule_name_id = mn.id
-    end
+    return unless molecule_name_id.blank?
+    assign_molecule_name
+  end
+
+  def update_molecule_name
+    return unless changed.count.positive? && changed.include?('molfile')
+    assign_molecule_name
   end
 end
