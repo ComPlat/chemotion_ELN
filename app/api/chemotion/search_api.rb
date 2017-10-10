@@ -195,11 +195,12 @@ module Chemotion
         }
 
         ids = Kaminari.paginate_array(wellplates).page(page).per(page_size)
+        klass = "WellplateListSerializer::Level#{@dl_wp}".constantize
         serialized_wellplates = Wellplate.includes(
           collections: :sync_collections_users,
           wells: :sample
         ).find(ids).map{ |s|
-          WellplateSerializer.new(s).serializable_hash.deep_symbolize_keys
+          klass.new(s,1).serializable_hash.deep_symbolize_keys
         }
 
         ids = Kaminari.paginate_array(screens).page(page).per(page_size)
@@ -298,7 +299,8 @@ module Chemotion
         end
 
         if search_method == 'advanced' && molecule_sort == false
-          arg_value_str = arg.first.value.gsub(/(\r)?\n/, ",")
+          arg_value_str = arg.first.value.split(/(\r)?\n|,/).map(&:strip)
+                             .select{ |s| !s.empty? }.join(',')
           return scope.order('position(\',\'||(' + arg.first.field.column +
                              "::text)||\',\' in ',#{arg_value_str},')")
         elsif search_method == 'advanced' && molecule_sort == true

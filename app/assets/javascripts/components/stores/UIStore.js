@@ -148,12 +148,21 @@ class UIStore {
       let curPageIds = elements[type + "s"].elements.reduce(
         function(a, b) { return a.concat(b); }, []
       ).map((e) => { return e.id });
-
       this.state[type].checkedAll = false;
       this.state[type].uncheckedIds = Immutable.List();
-      let checked = this.state[type].checkedIds.concat(curPageIds);
-      // Remove duplicates
-      this.state[type].checkedIds = checked.toSet().toList();
+      let checked = this.state[type].checkedIds
+      // Remove duplicates, conserve sorting
+      if(checked.size > 0) {
+        let checkedMap = checked.reduce(function(mp,e){ mp[e]=1; return mp }, {})
+        for(var i = 0; i < curPageIds.length; i++){
+          if(!checkedMap[curPageIds[i]]) {
+            checked = checked.push(curPageIds[i]);
+          }
+        }
+        this.state[type].checkedIds = checked;
+      } else {
+        this.state[type].checkedIds = Immutable.List(curPageIds);
+      }
     } else {
       this.handleUncheckAllElements(params)
     }

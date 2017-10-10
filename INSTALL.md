@@ -71,13 +71,14 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 * `brew install eot-utils`
 
 # Docker setup
-* Initial setup: `docker-compose up`
-* For Linux users: use docker-compose run with user docker, e.g., `docker-compose run --user=docker bundle exec rails g migration new_migration`
-
-## Workarounds:
-
-* npm packages, database.yml und migrations still need to be performed manually
-* `cp config/database.yml{.example,}`
-* `docker-compose run app bash`
-* in the container: `$ npm i && bundle exec rake db:setup`
+This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
+(For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
+* 1 - Build the image from Dockerfile `docker-compose build`
+* or pull the image directly: `docker pull complat/chemotion_eln`
+* 2 - Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
+* 3 - Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
+* 4 - First run: `docker-compose up`
+*     Or initial setup and detach: `docker-compose up -d`
+* Start interactive shell with docker: `docker-compose run app /bin/bash`
+* NOTE: In this Docker image, we disabled the email verification progress
 
