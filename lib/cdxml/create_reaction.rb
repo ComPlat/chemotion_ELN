@@ -60,7 +60,7 @@ module Cdxml
     end
 
     def text_template(el)
-      text = el[:value]
+      text = " #{el[:value]} "
       x = el[:x]
       y = el[:y]
       "\n <t p=\"#{x} #{y}\"><s font=\"20\" size=\"12\" color=\"0\">#{text}</s></t>"
