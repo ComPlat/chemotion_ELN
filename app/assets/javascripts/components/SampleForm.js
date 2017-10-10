@@ -19,6 +19,7 @@ export default class SampleForm extends React.Component {
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.updateMolName = this.updateMolName.bind(this);
     this.addMolName = this.addMolName.bind(this);
+    this.showStructureEditor = this.showStructureEditor.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
