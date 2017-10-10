@@ -32,7 +32,8 @@ module Cdx
         elsif name == "fragment"
           @str += CdxStatic.fragment
         elsif name == "n"
-          @str += CdxNode.new(line.root, id).content
+          bid = backup_id
+          @str += CdxNode.new(line.root, id, bid).content
         elsif name == "b"
           @str += CdxBond.new(line.root, id).content
         elsif name == "arrow"
@@ -56,6 +57,11 @@ module Cdx
       end
       hex = "#{"%04X" % root["id"].to_i}"
       self.little_endian(hex) + "00 00 "
+    end
+
+    def backup_id
+      empty_root = { "id": nil }
+      root_id(empty_root)
     end
 
     def str_to_cdx(input)

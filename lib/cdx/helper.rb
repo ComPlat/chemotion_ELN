@@ -15,6 +15,25 @@ module Cdx
       target ? "0A 00 02 00 " + little_endian(hex) : ""
     end
 
+    def default_z_index(z = 0)
+      root = { "Z": z }
+      z_index(root)
+    end
+
+    def hex_character(chr)
+      chr.unpack("H*")[0].upcase
+    end
+
+    def hex_string(str)
+      str.split("").map do |chr|
+        hex_character(chr)
+      end.join(" ")
+    end
+
+    def hex_integer(target)
+      ("%02X" % target.to_i)[-2..-1].gsub(".", "F")
+    end
+
     def ending
       CdxStatic.ending
     end
@@ -22,16 +41,17 @@ module Cdx
 
   class CdxBasic
     include Helper
-    attr_reader :root, :id
-    def initialize(root, id)
+    attr_reader :root, :id, :bid
+    def initialize(root, id, bid = nil)
       @root = root
       @id = id
+      @bid = bid
     end
   end
 
   class CdxNode < CdxBasic
     def content
-      start + id + z_index(root) + position + element + ending
+      start + id + z_index(root) + position + element + charge + ending
     end
 
     private
@@ -53,7 +73,107 @@ module Cdx
 
     def element
       target = root["Element"]
+      return polymer_text if target == "0"
       target ? "02 04 02 00 #{"%02X" % target.to_i}  00 " : ""
+    end
+
+    def charge
+      chg = root["Charge"]
+      return "" if chg.blank? || chg == "0"
+      chg_hex = hex_integer(chg)
+      "21 04 01 00 #{chg_hex} 48 04 00 00 37 04 01 00 01 "
+    end
+
+    def polymer_text
+      CdxText.new(root, bid, nil, "R#").content
+    end
+  end
+
+  class CdxText < CdxBasic
+    def initialize(root, id, bid = nil, txt = "")
+      super(root, id, bid)
+      @txt = txt
+    end
+
+    def content
+      start + id + default_z_index(6) + style(@txt) + line_starts +
+        label_alignment + position_1 + position_2 + label_justification +
+        ending
+    end
+
+    private
+    def start
+      "06 80 "
+    end
+
+    def style(str)
+      str_hex = hex_string(str)
+      "00 07 0E 00 01 00 00 00 03 00 60 00 C8 00 03 00 #{str_hex} "
+    end
+
+    def line_starts
+      "04 07 06 00 02 00 02 00 03 00 "
+    end
+
+    def label_alignment
+      "05 07 01 00 04 "
+    end
+
+    def position_1
+      x, y = root["p"].split(" ").map(&:to_i)
+      "00 02 08 00 " + "00 00 #{pt(y)} " + "00 00 #{pt(x)} " + "04 02 10 00 "
+    end
+
+    def position_2
+      x, y = root["p"].split(" ").map(&:to_i)
+      "11 f1 d6 00 " + "00 00 #{pt(x)} " + "00 00 #{pt(y)} " + "80 c4 b2 00 "
+    end
+
+    def label_justification
+      "23 08 01 00 00 "
+    end
+  end
+
+  class CdxGraph < CdxBasic
+    def content
+      start + id + position + middle + charge
+    end
+
+    private
+    def start
+      "00 00 07 80 "
+    end
+
+    def position
+      target = root["p"]
+      str = ""
+      if target
+        y, x = target.split(" ")
+        x = x.to_i - 8
+        y = y.to_i + 10
+        str += "04 02 10 00 "
+        str += "00 00 #{pt(x)}"
+        str += "00 00 #{pt(y)}"
+        str += "00 00 #{pt(x)}"
+        str += "00 00 #{pt(y)}"
+      end
+      str
+    end
+
+    def middle
+      "0a 00 02 00 \
+       09 00 0e 00 06 00 04 00 00 00 21 04 00 0a 02 00 \
+       07 00 07 0a 02 00 "
+    end
+
+    def charge
+      if root["Charge"] == "1"
+        "08 00 "
+      elsif root["Charge"] == "-1"
+        "09 00 "
+      else
+        "08 00 "
+      end
     end
   end
 
