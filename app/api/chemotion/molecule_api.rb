@@ -59,7 +59,10 @@ module Chemotion
         mol.create_molecule_name_by_user(new_name, user_id) if new_name.present?
 
         mol.molecule_names.map do |mn|
-          { id: mn.id, name: mn.name }
+          {
+            value: mn.id, label: mn.name,
+            desc: mn.description, mid: mn.molecule_id
+          }
         end
       end
     end

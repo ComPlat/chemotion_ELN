@@ -125,6 +125,7 @@ class Sample < ActiveRecord::Base
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+  before_save :update_molecule_name
   before_save :check_molfile_polymer_section
   before_save :find_or_create_fingerprint
 
@@ -142,7 +143,7 @@ class Sample < ActiveRecord::Base
   validates :creator, presence: true
 
   before_save :attach_svg, :init_elemental_compositions,
-              :set_loading_from_ea, :update_molecule_name
+              :set_loading_from_ea
 
   before_create :auto_set_short_label
 
@@ -369,7 +370,9 @@ class Sample < ActiveRecord::Base
 
   def molecule_name_hash
     mn = molecule_name
-    mn ? { label: mn.name, value: mn.id, desc: mn.description } : {}
+    mn ? {
+      label: mn.name, value: mn.id, desc: mn.description , mid: mn.molecule_id
+      } : {}
   end
 
 private
@@ -490,7 +493,7 @@ private
   end
 
   def update_molecule_name
-    return unless changed.count.positive? && changed.include?('molfile')
+    return unless molecule_id_changed? && molecule_name&.molecule_id != molecule_id
     assign_molecule_name
   end
 end
