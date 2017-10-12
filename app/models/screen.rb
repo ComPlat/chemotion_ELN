@@ -31,6 +31,8 @@ class Screen < ActiveRecord::Base
 
   has_one :container, :as => :containable
 
+  accepts_nested_attributes_for :collections_screens
+
   def analyses
     self.container ? self.container.analyses : []
   end

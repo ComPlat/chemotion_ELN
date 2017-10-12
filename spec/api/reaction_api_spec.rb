@@ -14,35 +14,31 @@ describe Chemotion::ReactionAPI do
     end
 
     describe 'GET /api/v1/reactions' do
-      let(:c1) {
+      let!(:c1) {
         create(:collection, label: 'C1', user: user, is_shared: false)
       }
-      let(:r1) { create(:reaction, name: 'r1') } # , collections: [c1]) }
-      let(:r2) { create(:reaction, name: 'r2') } # , collections: [c1]) }
+      let!(:r1) { create(:reaction, name: 'r1', collections: [c1]) }
+      let!(:r2) { create(:reaction, name: 'r2', collections: [c1]) }
 
-      before do
-        CollectionsReaction.create!(reaction: r1, collection: c1)
-        CollectionsReaction.create!(reaction: r2, collection: c1)
-        get '/api/v1/reactions'
-      end
+      before { get '/api/v1/reactions' }
 
       it 'returns serialized (unshared) reactions roots of logged in user' do
         reactions = JSON.parse(response.body)['reactions']
         expect(reactions.map { |r| [r['id'], r['name']] }).to match_array(
           [[r1.id, r1.name], [r2.id, r2.name]]
         )
-        expect(reactions.first.symbolize_keys).to include(
-          id: r2.id, name: r2.name, type: 'reaction',
-          tag: include(
+        expect(reactions.first).to include(
+          'id' => r2.id, 'name' => r2.name, 'type'=> 'reaction',
+          'tag' => include(
             'taggable_id' => r2.id, 'taggable_type' => 'Reaction',
             'taggable_data' => include(
-              'collection_labels' => [
+              'collection_labels' => include(
                 {
                   'name' => 'C1', 'is_shared' => false, 'id' => c1.id,
                   'user_id' => user.id, 'shared_by_id' => c1.shared_by_id,
                   'is_synchronized' => c1.is_synchronized
                 }
-              ]
+              )
             )
           )
         )

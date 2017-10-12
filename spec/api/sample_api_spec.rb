@@ -243,33 +243,33 @@ describe Chemotion::SampleAPI do
 
     # not permission related endpoints
     describe 'GET /api/v1/samples' do
-      let!(:c) { create(:collection, label: 'C1', user: user, is_shared: false) }
-      let(:s)  { create(:sample) }
-
-      before do
-        CollectionsSample.create!(sample: s, collection: c)
-      end
+      let!(:c) { create(:collection, user: user, is_shared: false) }
+      let!(:s) { create(:sample, collections: [c]) }
 
       it 'returns serialized (unshared) samples roots of logged in user' do
         get '/api/v1/samples'
-        first_sample = JSON.parse(response.body)['molecules'].first['samples'].first
-        expect(first_sample.symbolize_keys).to include(
+        first_sample = JSON.parse(response.body)['molecules'].first['samples']
+                           .first.symbolize_keys
+        expect(first_sample).to include(
           id: s.id,
           name: s.name,
-          type: 'sample',
-          tag: include(
-            "taggable_data" => include(
-              "collection_labels" => include({
-                "name" => 'C1',
-                "is_shared" => false,
-                "id"=>c.id,
-                "user_id" => user.id,
-                "shared_by_id" => c.shared_by_id,
-                "is_synchronized" => c.is_synchronized
-              })
-            )
-          )
+          type: 'sample'
         )
+        expect(
+          first_sample[:tag]['taggable_data']["collection_labels"]
+        ).to include(
+          {
+            "name" => c.label,
+            "is_shared" => false,
+            "id"=>c.id,
+            "user_id" => user.id,
+            "shared_by_id" => c.shared_by_id,
+            "is_synchronized" => c.is_synchronized
+          }
+        )
+        expect(
+          first_sample[:tag]['taggable_data']["analyses"]
+        ).to include( {"confirmed"=>{"13C NMR"=>1}})
       end
     end
 

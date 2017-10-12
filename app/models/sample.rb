@@ -136,7 +136,7 @@ class Sample < ActiveRecord::Base
 
   accepts_nested_attributes_for :molecule, update_only: true
   accepts_nested_attributes_for :residues, :elemental_compositions, :container,
-                                allow_destroy: true
+                                :tag, allow_destroy: true
   accepts_nested_attributes_for :collections_samples
 
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'

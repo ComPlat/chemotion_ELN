@@ -41,14 +41,15 @@ FactoryGirl.define do
   factory :analysis_container, class: Container do
     sequence(:name) { |i| "Analysis #{i}" }
     attachments []
-    extended_metadata = {
-      'kind' => '13C NMR',
-      'status' => 'Confirmed',
-      #'datasets' => [],
-      'content' => "{\"ops\": [{\"insert\": \"analysis contents\"}]}"
-    }
     description 'no description'
     container_type 'analysis'
-
+    after(:build) do |analysis|
+      analysis.extended_metadata = {
+        'kind' => '13C NMR',
+        'status' => 'Confirmed',
+        #'datasets' => [],
+        'content' => "{\"ops\": [{\"insert\": \"analysis contents\"}]}"
+      }.merge(analysis.extended_metadata || {})
+    end
   end
 end
