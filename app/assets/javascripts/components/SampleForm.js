@@ -9,9 +9,8 @@ import { solventOptions } from './staticDropdownOptions/options';
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
-
+    const sample = props.sample
     this.state = {
-      sample: props.sample,
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
     };
@@ -19,6 +18,7 @@ export default class SampleForm extends React.Component {
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.updateMolName = this.updateMolName.bind(this);
     this.addMolName = this.addMolName.bind(this);
+    this.showStructureEditor = this.showStructureEditor.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -26,24 +26,23 @@ export default class SampleForm extends React.Component {
   }
 
   handleAmountChanged(amount) {
-    const sample = this.state.sample;
+    const sample = this.props.sample;
     sample.setAmountAndNormalizeToGram(amount);
 
-    this.setState({ sample });
   }
 
   handleMolarityChanged(molarity) {
-    const sample = this.state.sample;
+    const sample = this.props.sample;
     sample.setMolarity(molarity);
 
-    this.setState({ sample, molarityBlocked: false });
+    this.setState({ molarityBlocked: false });
   }
 
   handleDensityChanged(density) {
-    const sample = this.state.sample;
+    const sample = this.props.sample;
     sample.setDensity(density);
 
-    this.setState({ sample, molarityBlocked: true });
+    this.setState({ molarityBlocked: true });
   }
 
   showStructureEditor() {
@@ -81,38 +80,32 @@ export default class SampleForm extends React.Component {
     return (<span />);
   }
 
-  openMolName(moleculeNames) {
-    const { sample } = this.state;
-    if (moleculeNames.length <= 1) {
-      this.setState({ isMolNameLoading: true });
-      DetailActions.updateMoleculeNames(sample);
-    }
+  openMolName(sample) {
+    this.setState({ isMolNameLoading: true });
+    DetailActions.updateMoleculeNames(sample);
   }
 
   addMolName(moleculeName) {
-    const { sample } = this.state;
+    const { sample } = this.props;
     this.setState({ isMolNameLoading: true });
     DetailActions.updateMoleculeNames(sample, moleculeName.label);
   }
 
   updateMolName(e) {
-    const { sample } = this.state;
+    const { sample } = this.props;
     sample.molecule_name = e;
     this.props.parent.setState({ sample });
   }
 
-  moleculeInput(sample) {
+  moleculeInput() {
+    const sample = this.props.sample
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    let moleculeNames = mno ? [mno] : [];
-    if (sample && mnos) {
-      moleculeNames = mnos.map(n => (
-        Object.assign({ label: n.name, value: n.id })
-      ));
-    }
-
-    const onOpenMolName = () => this.openMolName(moleculeNames);
-
+    const newMolecule = !mno || sample._molecule.id !== mno.mid
+    let moleculeNames = newMolecule ? [] : [mno];
+    if (sample && mnos ) { moleculeNames = moleculeNames.concat(mnos) }
+    const onOpenMolName = () => this.openMolName(sample);
+    const value =  !newMolecule && mno && mno.value
     return (
       <FormGroup style={{ width: '100%' }}>
         <ControlLabel>Molecule</ControlLabel>
@@ -125,7 +118,7 @@ export default class SampleForm extends React.Component {
             onOpen={onOpenMolName}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={mno && mno.value}
+            value={value}
             onNewOptionClick={this.addMolName}
             clearable={false}
           />
@@ -273,7 +266,7 @@ export default class SampleForm extends React.Component {
   }
 
   render() {
-    const sample = this.state.sample || {};
+    const sample = this.props.sample || {};
     const isPolymer = sample.molfile.indexOf(' R# ') !== -1;
     const isDisabled = !sample.can_update;
     const polyDisabled = isPolymer || isDisabled;
@@ -287,7 +280,7 @@ export default class SampleForm extends React.Component {
             <td colSpan="4">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <div style={{ width: '82%' }}>
-                  {this.moleculeInput(sample)}
+                  {this.moleculeInput()}
                 </div>
                 <div style={{ width: '15%' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}

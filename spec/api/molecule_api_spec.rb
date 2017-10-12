@@ -87,7 +87,7 @@ M  END"
 
       it 'returns molecule_names hash' do
         get "/api/v1/molecules/names?inchikey=#{m.inchikey}"
-        mns = JSON.parse(response.body)["molecules"].map { |m| m["name"] }
+        mns = JSON.parse(response.body)["molecules"].map { |m| m["label"] }
         expect(mns).to include(m.sum_formular)
       end
     end

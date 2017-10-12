@@ -125,6 +125,7 @@ class Sample < ActiveRecord::Base
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
+  before_save :update_molecule_name
   before_save :check_molfile_polymer_section
   before_save :find_or_create_fingerprint
 
@@ -369,7 +370,9 @@ class Sample < ActiveRecord::Base
 
   def molecule_name_hash
     mn = molecule_name
-    mn ? { label: mn.name, value: mn.id, desc: mn.description } : {}
+    mn ? {
+      label: mn.name, value: mn.id, desc: mn.description , mid: mn.molecule_id
+      } : {}
   end
 
 private
@@ -478,11 +481,19 @@ private
     end
   end
 
+  def assign_molecule_name
+    target = molecule_iupac_name || molecule_sum_formular
+    mn = molecule.molecule_names.find_by(name: target)
+    self.molecule_name_id = mn.id
+  end
+
   def check_molecule_name
-    if molecule_name_id.blank?
-      target = molecule_iupac_name || molecule_sum_formular
-      mn = molecule.molecule_names.find_by(name: target)
-      self.molecule_name_id = mn.id
-    end
+    return unless molecule_name_id.blank?
+    assign_molecule_name
+  end
+
+  def update_molecule_name
+    return unless molecule_id_changed? && molecule_name&.molecule_id != molecule_id
+    assign_molecule_name
   end
 end
