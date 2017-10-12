@@ -9,8 +9,13 @@ if there are errors with nokogiri compilation with new xcode7:
 `gem install nokogiri -- --with-xml2-include=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/usr/include/libxml2 --use-system-libraries`
 
 ## openbabel
-* `brew install cmake` for OSX
-* install openbabel as described in its [documentation](https://github.com/cubuslab/openbabel/blob/master/INSTALL)
+* Require
+  1. CMake (the `cmake` package in Ubuntu)
+  2. Eigen (the `libeigen2-dev` or `libeigen3-dev` package in Ubuntu)
+  3. Swig (the `swig`package in Ubuntu)
+  4. libxml2 (the `libxml2-dev` package in Ubuntu)
+
+* openbabel will be automatically installed through `bundle install`
 
 ## rmagick
 * `brew install imagemagick gs` for OSX
