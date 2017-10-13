@@ -112,20 +112,20 @@ module Reporter
       return op["insert"] if (!op["attributes"])
 
       styles = []
-      tag = ""
+      tags = []
 
       (op["attributes"].keys || []).each do |html_attr|
         value = op["attributes"][html_attr].to_s
 
         case html_attr
         when "bold"
-          tag = "b" if value == "true"
+          tags += ["b"] if value == "true"
         when "underline"
-          tag = "u" if value == "true"
+          tags += ["u"] if value == "true"
         when "italic"
-          tag = "i" if value == "true"
+          tags += ["i"] if value == "true"
         when "script"
-          tag = value
+          tags += [value]
         when "color"
           styles << "color: #{value}"
         when "background"
@@ -135,10 +135,15 @@ module Reporter
         end
       end
 
-      style = styles.count > 0 ? " style=\"#{styles.join(";")}\"" : ""
-      tag = tag === "" ? "span" : tag
+      html_with_tags_style(op, tags, styles)
+    end
 
-      "<#{tag}#{style}>#{op["insert"]}</#{tag}>"
+    def html_with_tags_style(op, tags, styles)
+      style = styles.count > 0 ? " style=\"#{styles.join(";")}\"" : ""
+      html = "<span#{style}>#{op["insert"]}</span>"
+
+      tags.each { |tag| html = "<#{tag}>#{html}</#{tag}>" }
+      html
     end
   end
 end

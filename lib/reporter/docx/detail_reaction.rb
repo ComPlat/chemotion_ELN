@@ -365,8 +365,8 @@ module Reporter
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
-        [{"attributes"=>{"italic"=> true}, "insert"=>"R"},
-          {"attributes"=>{"italic"=> true, "script"=>"sub"}, "insert"=>"f"},
+        [{"attributes"=>{"italic"=> "true"}, "insert"=>"R"},
+          {"attributes"=>{"italic"=> "true", "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{obj.rf_value} (#{obj.tlc_solvents})."}]
       end
 
