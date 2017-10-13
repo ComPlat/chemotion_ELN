@@ -535,12 +535,11 @@ export default class Sample extends Element {
         case 'mol': {
           if (this.has_molarity) {
             return this.amount_l * this.molarity_value;
-          } else if (this.has_density) {
-            const molecularWeight = this.molecule_molecular_weight;
-            const purity = this.purity || 1.0;
-            return (amount_g * purity) / molecularWeight;
           }
-          return 0;
+
+          const molecularWeight = this.molecule_molecular_weight;
+          const purity = this.purity || 1.0;
+          return (amount_g * purity) / molecularWeight;
         }
         default:
           return amount_g;
