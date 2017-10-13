@@ -398,7 +398,7 @@ module Reporter
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
-                      "#{fixed_digit(m[:equiv], 2)} equiv.); "}]
+                      "#{fixed_digit(m[:equiv], 2)} equiv); "}]
         end
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
