@@ -202,7 +202,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>serial, "attributes"=>{"bold"=>"true"}},
           {"insert"=>"} "},
           {"insert"=>"#{s2.molecule_name_hash[:label]}"},
-          {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv.); "},
+          {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv); "},
           {"insert"=>"{B"},
           {"insert"=>"} "},
           {"insert"=>s4.preferred_label},

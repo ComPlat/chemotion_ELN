@@ -111,7 +111,7 @@ const stAndReContent = (el, prevCounter, prevContent, molSerials) => {
       deltaUserSerial(elm.molecule, molSerials),
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
-      { insert: ` (${elm.amount_g} g, ${digit(elm.amount_mol * 1000, 4)} mmol, ${digit(elm.equivalent, 2)} equiv.); ` }];
+      { insert: ` (${elm.amount_g} g, ${digit(elm.amount_mol * 1000, 4)} mmol, ${digit(elm.equivalent, 2)} equiv); ` }];
   });
   return { counter, content };
 };
