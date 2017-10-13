@@ -9,8 +9,13 @@ if there are errors with nokogiri compilation with new xcode7:
 `gem install nokogiri -- --with-xml2-include=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/usr/include/libxml2 --use-system-libraries`
 
 ## openbabel
-* `brew install cmake` for OSX
-* install openbabel as described in its [documentation](https://github.com/cubuslab/openbabel/blob/master/INSTALL)
+* Require
+  1. CMake (the `cmake` package in Ubuntu)
+  2. Eigen (the `libeigen2-dev` or `libeigen3-dev` package in Ubuntu)
+  3. Swig (the `swig`package in Ubuntu)
+  4. libxml2 (the `libxml2-dev` package in Ubuntu)
+
+* openbabel will be automatically installed through `bundle install`
 
 ## rmagick
 * `brew install imagemagick gs` for OSX
@@ -73,12 +78,12 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 # Docker setup
 This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
 (For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
-* 1 - Build the image from Dockerfile `docker-compose build`
-* or pull the image directly: `docker pull complat/chemotion_eln`
-* 2 - Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
-* 3 - Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
-* 4 - First run: `docker-compose up`
-*     Or initial setup and detach: `docker-compose up -d`
+
+1. Build the image from Dockerfile `docker-compose build` or pull the image: `docker-compose pull`
+2. Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
+3. Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
+4. To start the server: `docker-compose up` or start server and detach: `docker-compose up -d`
+
 * Start interactive shell with docker: `docker-compose run app /bin/bash`
 * NOTE: In this Docker image, we disabled the email verification progress
 
