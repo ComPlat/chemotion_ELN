@@ -4,9 +4,9 @@ import { rmDeltaRedundantSpaceBreak } from '../utils/quillFormat';
 
 const Title = ({el, counter}) => {
   return (
-    <p>
-      [3.{counter}] {el.name} ({el.short_label})
-    </p>
+    <h5>
+      3.{counter} {el.name} ({el.short_label})
+    </h5>
   );
 }
 

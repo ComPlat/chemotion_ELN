@@ -47,15 +47,15 @@ const Title = ({ el, counter, molSerials }) => {
     const smn = sampleMoleculeName(p);
     title = smn
       ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
-      : [...title, <span key={key}>"<b>NAME</b>"</span>, comma];
+      : [...title, <span key={key}>"<b>NAME</b>" (<b>{us}</b>)</span>, comma];
   });
   title = _.flatten(title).slice(0, -1);
 
   return (
-    <p>
-      <span>[4.{counter}] </span>
+    <h5>
+      <span>4.{counter} </span>
       <span>{title}</span>
-    </p>
+    </h5>
   );
 };
 
