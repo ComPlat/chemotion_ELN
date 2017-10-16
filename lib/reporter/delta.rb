@@ -132,6 +132,8 @@ module Reporter
           styles << "background-color: #{value}"
         when "font-family"
           styles << "font-family: #{value}"
+        when "font-size"
+          styles << "font-size: #{value}"
         end
       end
 
