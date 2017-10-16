@@ -12,7 +12,6 @@ const toolbarOptions = [
   [{ list: 'ordered' }, { list: 'bullet' }],
   [{ script: 'sub' }, { script: 'super' }],
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
-  [{ color: [] }, { background: [] }],
   // [{ 'font': [] }],
   // ['blockquote', 'code-block'],
   // [{ 'header': 1 }, { 'header': 2 }],
@@ -199,7 +198,7 @@ export default class QuillEditor extends React.Component {
           }
         }
 
-        return (<span />);
+        return (<span key={`span_empty_${index}`}/>);
       });
 
       return (
