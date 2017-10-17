@@ -59,9 +59,13 @@ module Reporter
       end
 
       def gp_title_delta
-        delta = [{"insert"=>"[3.#{@index + 1}] "}]
-        delta += [{"insert"=>"#{obj.name} "}]
-        delta += [{"insert"=>"(#{obj.short_label})"}]
+        font_size = 13
+        delta = [{ 'attributes' => { 'font-size' => font_size },
+                   'insert' => "3.#{@index + 1} " }]
+        delta += [{ 'attributes' => { 'font-size' => font_size },
+                    'insert' => "#{obj.name} "}]
+        delta += [{ 'attributes' => { 'font-size' => font_size },
+                    'insert' => "(#{obj.short_label})"}]
         delta
       end
 
@@ -73,14 +77,19 @@ module Reporter
       end
 
       def synthesis_title_delta
-        delta = [{ 'insert' => "[4.#{@index + 1}] " }]
+        font_size = 13
+        delta = [{ 'attributes' => { 'font-size' => font_size },
+                   'insert' => "4.#{@index + 1} " }]
         obj.products.each do |p|
           delta = delta +
-                  sample_molecule_name_delta(p) +
-                  [{ 'insert' => ' (' }] +
-                  mol_serial_delta(p[:molecule][:id]) +
-                  [{ 'insert' => ')' }] +
-                  [{ 'insert' => ', ' }]
+                  sample_molecule_name_delta(p, font_size) +
+                  [{ 'attributes' => { 'font-size' => font_size },
+                     'insert' => ' (' }] +
+                  mol_serial_delta(p[:molecule][:id], font_size) +
+                  [{ 'attributes' => { 'font-size' => font_size },
+                     'insert' => ')' }] +
+                  [{ 'attributes' => { 'font-size' => font_size },
+                     'insert' => ', ' }]
         end
         delta.pop
         delta
@@ -365,8 +374,8 @@ module Reporter
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
-        [{"attributes"=>{"italic"=> true}, "insert"=>"R"},
-          {"attributes"=>{"italic"=> true, "script"=>"sub"}, "insert"=>"f"},
+        [{"attributes"=>{"italic"=> "true"}, "insert"=>"R"},
+          {"attributes"=>{"italic"=> "true", "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{obj.rf_value} (#{obj.tlc_solvents})."}]
       end
 
@@ -436,18 +445,23 @@ module Reporter
         ])
       end
 
-      def sample_molecule_name_delta(sample)
+      def sample_molecule_name_delta(sample, font_size = 12)
         mnh = sample[:molecule_name_hash]
         smn = mnh && mnh[:desc] != 'sum_formular' ? mnh[:label] : nil
         iupac = sample[:molecule] ? sample[:molecule][:iupac_name] : nil
         if smn.present?
-          [{ 'insert' => smn.to_s }]
+          [{ 'attributes' => { 'font-size' => font_size },
+             'insert' => smn.to_s }]
         elsif iupac.present?
-          [{ 'insert' => iupac.to_s }]
+          [{ 'attributes' => { 'font-size' => font_size },
+             'insert' => iupac.to_s }]
         else
-          [{ 'insert' => '"' },
-           { 'attributes' => { 'bold' => 'true' }, 'insert' => 'NAME' },
-           { 'insert' => '"' }]
+          [{ 'attributes' => { 'font-size' => font_size },
+             'insert' => '"' },
+           { 'attributes' => { 'bold' => 'true', 'font-size' => font_size },
+             'insert' => 'NAME' },
+           { 'attributes' => { 'font-size' => font_size },
+             'insert' => '"' }]
         end
       end
 
@@ -479,9 +493,10 @@ module Reporter
         s.present? && s['value'].present? && s['value'] || 'xx'
       end
 
-      def mol_serial_delta(mol_id)
+      def mol_serial_delta(mol_id, font_size = 12)
         serial = mol_serial(mol_id)
-        [{ 'insert' => serial, 'attributes' => { 'bold' => 'true' } }]
+        [{ 'attributes' => { 'bold' => 'true', 'font-size' => font_size },
+           'insert' => serial }]
       end
     end
   end

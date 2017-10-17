@@ -36,21 +36,20 @@ const SiPreviews = ({ selectedObjs, configs, molSerials }) => {
     <div>
       <p>Experimental Part:</p>
       <br />
-      <p>[1 Versions] Version InCHI (), Version SMILES()</p>
+      <h4>1 Versions</h4>
+      <p>Version InCHI (), Version SMILES()</p>
       <br />
-      <p>[2 General remarks]</p>
+      <h4>2 General remarks</h4>
       <br />
-      <p>[3 General procedures]</p>
+      <h4>3 General procedures</h4>
       <SectionSiProcedures selectedObjs={selectedObjs} />
       <br />
-      <p>[4 Synthesis]</p>
+      <h4>4 Synthesis</h4>
       <SectionSiSynthesis
         selectedObjs={selectedObjs}
         configs={configsPairs}
         molSerials={molSerials}
       />
-      <br />
-      <p>[5 Spectra and Copies]</p>
       <br />
     </div>
   );
