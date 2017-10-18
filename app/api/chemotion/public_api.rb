@@ -2,23 +2,14 @@ module Chemotion
   class PublicAPI < Grape::API
 
     namespace :public do
-      before do
-        error!('Unauthorized' , 401) unless TokenAuthentication.new(request).is_successful?
-      end
-
-      resources :samples do
-        desc "Return samples of all chemotion.net collections"
-
-        get do
-          Collection.for_publication.flat_map(&:samples).uniq
-        end
+      get 'ping' do
+        status 200
       end
     end
-      # TODO further resources?
 
     namespace :upload do
       before do
-        error!('Unauthorized' , 401) unless TokenIPAuthentication.new(request).is_successful?
+        error!('Unauthorized' , 401) unless TokenAuthentication.new(request, with_remote_addr: true).is_successful?
       end
       resource :attachments do
         desc "Upload files"
@@ -33,10 +24,10 @@ module Chemotion
           params.delete(:recipient_email)
 
           token = request.headers['Auth-Token'] || request.params['auth_token']
-          key = API::AuthenticationKey.find_by(token: token)
+          key = AuthenticationKey.find_by(token: token)
 
 
-          helper = CollectorHelper.new(key.device.email , recipient_email)
+          helper = CollectorHelper.new(key.user.email , recipient_email)
 
           if helper.sender_recipient_known?
             dataset = helper.prepare_dataset(subject)
