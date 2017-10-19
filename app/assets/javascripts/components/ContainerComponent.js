@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Button, Col, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
+import Delta from 'quill-delta';
 import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
@@ -68,10 +69,10 @@ export default class ContainerComponent extends Component {
   reformatContent() {
     const { container } = this.state;
     const kind = container.extended_metadata.kind || '';
-    let content = { ...container.extended_metadata.content };
+    let content = new Delta({ ...container.extended_metadata.content });
     const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
 
-    sampleAnalysesFormatPattern[type].forEach((patt) => {
+    (sampleAnalysesFormatPattern[type] || []).forEach((patt) => {
       content = searchAndReplace(content, patt.pattern, patt.replace);
     });
 
