@@ -50,18 +50,6 @@ table.reaction-scheme-solvent {
   }
 }
 
-.reaction-role {
-  background-color: #eee;
-  border: 1px solid #bbb;
-  border-radius: 5px;
-  margin-left: 20px;
-  padding: 5px;
-
-  .checkbox-inline + .checkbox-inline {
-    margin-left: 20px;
-  }
-}
-
 .reaction-scheme-props {
   width: 100%;
 
@@ -75,5 +63,25 @@ table.reaction-scheme-solvent {
     div.Select-menu-outer {
       z-index: 5;
     }
+  }
+}
+
+.gp-drop-zone {
+  background-color: #eee;
+  border-radius: 5px;
+  height: 36px;
+  text-align: center;
+  width: 100%;
+
+  .gp-icon {
+    font-size: 20px;
+    line-height: 36px;
+    vertical-align: middle;
+  }
+
+  .gp-content {
+    font-size: 14px;
+    line-height: 36px;
+    vertical-align: middle;
   }
 }

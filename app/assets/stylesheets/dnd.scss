@@ -1,0 +1,10 @@
+.dnd-arrow-disable {
+  color: lightgray;
+  cursor: not-allowed;
+  font-size: 24px !important;
+}
+
+.dnd-arrow-enable {
+  cursor: move;
+  font-size: 24px !important;
+}

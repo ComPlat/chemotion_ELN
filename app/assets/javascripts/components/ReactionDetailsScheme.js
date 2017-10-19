@@ -1,8 +1,9 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
   ListGroup, ListGroupItem, FormGroup, ControlLabel,
-  Row, Col, Collapse, Button, ButtonGroup, Checkbox,
+  Row, Col, Collapse, Button, ButtonGroup,
 } from 'react-bootstrap';
+import Select from 'react-select';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
 import Molecule from './models/Molecule';
@@ -11,6 +12,8 @@ import QuillEditor from './QuillEditor';
 
 import NotificationActions from './actions/NotificationActions';
 import { reactionToolbarSymbol } from './utils/quillToolbarSymbol';
+import GeneralProcedureDnd from './GeneralProcedureDnD';
+import { rolesOptions } from './staticDropdownOptions/options';
 
 export default class ReactionDetailsScheme extends Component {
   constructor(props) {
@@ -18,7 +21,8 @@ export default class ReactionDetailsScheme extends Component {
     let { reaction } = props;
     this.state = { reaction };
 
-    this.onClickRoleRadio = this.onClickRoleRadio.bind(this);
+    this.onChangeRole = this.onChangeRole.bind(this);
+    this.renderRole = this.renderRole.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -65,39 +69,65 @@ export default class ReactionDetailsScheme extends Component {
     }
   }
 
-  onClickRoleRadio(e) {
-    const { onInputChange, reaction } = this.props;
-    const value = e.target.value;
-    if (reaction.role === value) {
-      onInputChange('role', null);
-    } else {
-      onInputChange('role', value);
-    }
+  onChangeRole(e) {
+    const { onInputChange } = this.props;
+    const value = e && e.value;
+    onInputChange('role', value);
+  }
+
+  renderGPDnD() {
+    const { reaction } = this.props;
+    return (
+      <GeneralProcedureDnd
+        reaction={reaction}
+      />
+    );
+  }
+
+  renderRolesOptions(opt) {
+    const className = `fa ${opt.icon} ${opt.bsStyle}`;
+    return (
+      <span>
+        <i className={className} />
+        <span className="spacer-10" />
+        {opt.label}
+      </span>
+    );
+  }
+
+  renderRoleSelect() {
+    const { role } = this.props.reaction;
+    return (
+      <Select
+        name="role"
+        options={rolesOptions}
+        optionRenderer={this.renderRolesOptions}
+        multi={false}
+        clearable
+        value={role}
+        onChange={this.onChangeRole}
+      />
+    );
   }
 
   renderRole() {
     const { role } = this.props.reaction;
+    const accordTo = role === 'parts' ? 'According to' : null;
     return (
-      <span className="reaction-role">
-        <Checkbox inline name="rxnRole1"
-                onClick={this.onClickRoleRadio}
-                checked={role === "gp"}
-                value="gp">
-          GP<i className="fa fa-home c-bs-primary"/>
-        </Checkbox>
-        <Checkbox inline name="rxnRole2"
-                onClick={this.onClickRoleRadio}
-                checked={role === "parts"}
-                value="parts">
-          parts of GP<i className="fa fa-bookmark c-bs-success"/>
-        </Checkbox>
-        <Checkbox inline name="rxnRole"
-                onClick={this.onClickRoleRadio}
-                checked={role === "single"}
-                value="single">
-          Single<i className="fa fa-asterisk c-bs-danger"/>
-        </Checkbox>
-      </span>
+      <Row>
+        <Col md={4}>
+          <FormGroup>
+            <ControlLabel>Role</ControlLabel>
+            {this.renderRoleSelect()}
+          </FormGroup>
+        </Col>
+        <Col md={4}>
+          <FormGroup>
+            <ControlLabel>{accordTo}</ControlLabel>
+            {this.renderGPDnD()}
+          </FormGroup>
+        </Col>
+      </Row>
     );
   }
 
@@ -525,10 +555,11 @@ export default class ReactionDetailsScheme extends Component {
                 onInputChange={(type, event) => this.props.onInputChange(type, event)}
               />
             </div>
+            {this.renderRole()}
             <Row>
               <Col md={12}>
                 <FormGroup>
-                  <ControlLabel>Description {this.renderRole()}</ControlLabel>
+                  <ControlLabel>Description</ControlLabel>
                   <QuillEditor
                     value={reaction.description}
                     onChange={event => this.props.onInputChange('description', event)}
