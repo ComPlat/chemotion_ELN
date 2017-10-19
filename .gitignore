@@ -14,6 +14,7 @@
 /log/*
 !/log/.keep
 /tmp
+/tmp/*
 
 .ruby-gemset
 .ruby-version
@@ -22,6 +23,7 @@
 .env
 /config/mailcollector.yml
 /config/datamailcollector.yml
+/config/datacollectors.yml
 /config/database.yml
 /config/storage.yml
 /node_modules
