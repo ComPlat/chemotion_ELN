@@ -3,54 +3,54 @@ require 'rails_helper'
 
 # test for ExportJson ImportJson
 RSpec.describe 'ImportSdf' do
-  let!(:u1) {
+  let(:u1) {
     create(:person, first_name: 'P', last_name: '1', name_abbreviation: 'P1T')
   }
-  let!(:u2) {
+  let(:u2) {
     create(:person, first_name: 'P', last_name: '2', name_abbreviation: 'P2T')
   }
-  let!(:c1) { create(:collection, user_id: u1.id) }
-  let!(:c2) { create(:collection, user_id: u2.id) }
+  let(:c1) { create(:collection, user_id: u1.id) }
+  let(:c2) { create(:collection, user_id: u2.id) }
 
-  let!(:mf){
+  let(:mf){
     #file_fixture("test_2.mol").read
     IO.read(Rails.root.join("spec", "fixtures", "test_2.mol"))
   }
-  let!(:svg) {
+  let(:svg) {
     #file_fixture("test_2.mol").read
     IO.read(Rails.root.join("spec", "fixtures", "images", "molecule.svg"))
   }
-  let!(:s0) {
+  let(:s0) {
     build(
       :sample, created_by: u1.id, name: 'Sample zero', molfile: mf,
       collections: [c1]
     )
   }
-  let!(:s1) {
+  let(:s1) {
     build(
       :sample, created_by: u1.id, name: 'Starting mat', molfile: mf,
       collections: [c1]
     )
   }
-  let!(:s2) {
+  let(:s2) {
     build(
       :sample, created_by: u1.id, name: 'Solvent', molfile: mf,
       collections: [c1]
     )
   }
-  let!(:s3) {
+  let(:s3) {
     build(
       :sample, created_by: u1.id, name: 'Reactant', molfile: mf,
       collections: [c1]
     )
   }
-  let!(:s4) {
+  let(:s4) {
     build(
       :sample, created_by: u1.id, name: 'Product', molfile: mf,
       collections: [c1]
     )
   }
-  let!(:rxn) {
+  let(:rxn) {
     build(
       :reaction, created_by: u1.id, name: 'Reaction 0',
       starting_materials: [s1],

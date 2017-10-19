@@ -8,8 +8,6 @@ class Sample < ActiveRecord::Base
   include UnitConvertable
   include Taggable
 
-  has_many :analyses_experiments
-
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
     :molecule_iupac_name, :molecule_inchistring, :molecule_cano_smiles
@@ -92,6 +90,19 @@ class Sample < ActiveRecord::Base
     return scope
   }
 
+  before_save :auto_set_molfile_to_molecules_molfile
+  before_save :find_or_create_molecule_based_on_inchikey
+  before_save :update_molecule_name
+  before_save :check_molfile_polymer_section
+  before_save :find_or_create_fingerprint
+  before_save :attach_svg, :init_elemental_compositions,
+              :set_loading_from_ea
+  before_create :auto_set_short_label
+  before_create :check_short_label
+  before_create :check_molecule_name
+  after_create :update_counter
+  after_create :create_root_container
+  after_save :update_data_for_reactions
 
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
@@ -107,15 +118,15 @@ class Sample < ActiveRecord::Base
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   has_many :devices_samples
+  has_many :analyses_experiments
 
-  belongs_to :molecule
   belongs_to :fingerprints
   belongs_to :user
   belongs_to :molecule_name
 
   has_one :container, :as => :containable
-
   has_one :well, dependent: :destroy
+
   has_many :wellplates, through: :well
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
@@ -123,36 +134,19 @@ class Sample < ActiveRecord::Base
   has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
-  before_save :auto_set_molfile_to_molecules_molfile
-  before_save :find_or_create_molecule_based_on_inchikey
-  before_save :update_molecule_name
-  before_save :check_molfile_polymer_section
-  before_save :find_or_create_fingerprint
-
   has_ancestry
 
-  validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
-  validate :has_collections
+  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  belongs_to :molecule
 
+  accepts_nested_attributes_for :collections_samples
   accepts_nested_attributes_for :molecule, update_only: true
   accepts_nested_attributes_for :residues, :elemental_compositions, :container,
                                 :tag, allow_destroy: true
-  accepts_nested_attributes_for :collections_samples
 
-  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
+  validate :has_collections
   validates :creator, presence: true
-
-  before_save :attach_svg, :init_elemental_compositions,
-              :set_loading_from_ea
-
-  before_create :auto_set_short_label
-
-  after_save :update_data_for_reactions
-  before_create :check_short_label
-  before_create :check_molecule_name
-
-  after_create :update_counter
-  after_create :create_root_container
 
   def molecule_sum_formular
     self.molecule ? self.molecule.sum_formular : ""
@@ -244,7 +238,6 @@ class Sample < ActiveRecord::Base
     reactions.first.try(:description)
   end
 
-  #todo: find_or_create_molecule_based_on_inchikey
   def auto_set_molfile_to_molecules_molfile
     if molecule && molecule.molfile
       self.molfile ||= molecule.molfile
