@@ -299,18 +299,32 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   dragHandle(element) {
-    let sourceType = this.isCurrentElementDropTargetForType('sample')
-      ? sourceType = DragDropItemTypes.SAMPLE
-      : ""
-    return <ElementContainer key={element.id} sourceType={sourceType} element={element}/>
+    const sourceType = this.dropSourceType();
+    return (
+      <ElementContainer
+        key={element.id}
+        sourceType={sourceType}
+        element={element}
+      />
+    );
   }
 
-  isCurrentElementDropTargetForType(type) {
-    const {currentElement} = ElementStore.getState()
+  dropSourceType() {
+    const isDropForSpl = this.isCurrEleDropType('sample');
+    let sourceType = '';
+    if (isDropForSpl) {
+      sourceType = DragDropItemTypes.SAMPLE;
+    }
+    return sourceType;
+  }
+
+  isCurrEleDropType(type) {
+    const { currentElement } = ElementStore.getState();
     const targets = {
-      sample: ['reaction', 'wellplate', 'device']
+      sample: ['reaction', 'wellplate', 'device'],
     };
-    return type && currentElement && targets[type].includes(currentElement.type)
+    return type && currentElement &&
+      targets[type].includes(currentElement.type);
   }
 
   showDetails(id) {
