@@ -230,7 +230,7 @@ const sampleAnalysesContentSymbol = [
     name: 'ir',
     ops: [
       { insert: 'IR (ATR, ṽ) = cm' },
-      { attributes: { script: 'super' }, insert: '-1' },
+      { attributes: { script: 'super' }, insert: '–1' },
       { insert: '.' },
     ],
   },
