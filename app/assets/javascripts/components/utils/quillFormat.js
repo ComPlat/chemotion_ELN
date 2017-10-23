@@ -38,49 +38,9 @@ const mapValueToGroupRegex = (content, matchedGroup) => {
   return newContent;
 };
 
-const searchAndReplace = (contents, pattern, regexReplace) => {
-  const contentsDelta = new Delta(contents);
-
-  const replacedContents = contentsDelta.map((content) => {
-    if (typeof content.insert !== 'string') return content;
-
-    const contentDelta = new Delta([content]);
-    const regexMatch = new RegExp(pattern, 'g');
-
-    let replaced = new Delta();
-    let cur = 0;
-
-    let matched = regexMatch.exec(content.insert);
-    while (matched) {
-      const l = matched[0].length;
-      const retain = matched.index - cur;
-      const change = new Delta().retain(retain).delete(l);
-      cur = matched.index + l;
-
-      let mappedReplace;
-      if (typeof regexReplace === 'function') {
-        mappedReplace = new Delta(regexReplace(matched));
-      } else {
-        const cloneRegex = _.cloneDeep(regexReplace.ops);
-        const group = matched.slice(1);
-        mappedReplace = mapValueToGroupRegex(cloneRegex, group);
-      }
-
-      replaced = replaced.concat(change.concat(new Delta(mappedReplace)));
-      matched = regexMatch.exec(content.insert);
-    }
-
-    return contentDelta.compose(replaced).ops;
-  });
-
-  const newDelta = replacedContents.reduce((acc, cur) => acc.concat(cur), []);
-  return new Delta(newDelta);
-};
-
 module.exports = {
   rmDeltaRedundantSpaceBreak,
   rmOpsRedundantSpaceBreak,
   rmRedundantSpaceBreak,
   frontBreak,
-  searchAndReplace,
 };
