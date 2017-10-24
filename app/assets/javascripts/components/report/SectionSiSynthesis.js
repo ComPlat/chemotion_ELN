@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import { SVGContent } from './SectionReaction';
 import QuillViewer from '../QuillViewer';
-import { digit } from '../utils/MathUtils';
+import { fixDigit, guiltyDigit } from '../utils/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
 import ArrayUtils from '../utils/ArrayUtils';
 import { Alphabet } from '../utils/ElementUtils';
@@ -86,8 +86,8 @@ const ProductsInfo = ({ products = [] }) => {
     const pCAS = `CAS: ${cas}; `;
     const pSmiles = `Smiles: ${m.cano_smiles}; `;
     const pInCHI = `InCHI: ${m.inchikey}; `;
-    const pMMass = `Molecular Mass: ${digit(m.molecular_weight, 4)}; `;
-    const pEMass = `Exact Mass: ${digit(m.exact_molecular_weight, 4)}; `;
+    const pMMass = `Molecular Mass: ${fixDigit(m.molecular_weight, 4)}; `;
+    const pEMass = `Exact Mass: ${fixDigit(m.exact_molecular_weight, 4)}; `;
     const pEA = `EA: ${ea}.`;
     content = [...content,
       { insert: 'Name: ' },
@@ -111,7 +111,7 @@ const stAndReContent = (el, prevCounter, prevContent, molSerials) => {
       deltaUserSerial(elm.molecule, molSerials),
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
-      { insert: ` (${elm.amount_g} g, ${digit(elm.amount_mol * 1000, 4)} mmol, ${digit(elm.equivalent, 2)} equiv); ` }];
+      { insert: ` (${guiltyDigit(elm.amount_g, 3)} g, ${guiltyDigit(elm.amount_mol * 1000, 3)} mmol, ${guiltyDigit(elm.equivalent, 3)} equiv); ` }];
   });
   return { counter, content };
 };
@@ -125,7 +125,7 @@ const solventsContent = (el, prevCounter, prevContent) => {
       { insert: `{${Alphabet(counter)}` },
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
-      { insert: ` (${digit(elm.amount_l * 1000, 2)} mL); ` }];
+      { insert: ` (${guiltyDigit(elm.amount_l * 1000, 2)} mL); ` }];
   });
   return { counter, content };
 };
@@ -141,8 +141,8 @@ const porductsContent = (el, prevCounter, prevContent, molSerials) => {
       { insert: `{${Alphabet(counter)}|` },
       deltaUserSerial(m, molSerials),
       { insert: '} ' },
-      { insert: ` = ${digit(p.equivalent * 100, 0)}%` },
-      { insert: ` (${p.amount_g} g, ${digit(p.amount_mol * 1000, 4)} mmol)` },
+      { insert: ` = ${guiltyDigit(p.equivalent * 100, 0)}%` },
+      { insert: ` (${guiltyDigit(p.amount_g, 3)} g, ${guiltyDigit(p.amount_mol * 1000, 3)} mmol)` },
       { insert: '; ' }];
   });
   content = content.slice(0, -1);
