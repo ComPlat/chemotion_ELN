@@ -6,29 +6,29 @@ const dtConverter = {
   inline: {
     bold: ['**', '**'],
     italic: ['*', '*'],
-    underline: ['<u>', '</u>'],
+    underline: ['<u>', '</u>']
   },
   script: {
     super: ['<sup>', '</sup>'],
-    sub: ['<sub>', '</sub>'],
+    sub: ['<sub>', '</sub>']
   },
   block: {
     header: {
-      1: function() { return '# ' },
-      2: function() { return '## ' },
-      3: function() { return '### ' },
-      4: function() { return '#### ' },
-      5: function() { return '##### ' },
-      6: function() { return '###### ' },
+      1: function() { return '# '; },
+      2: function() { return '## '; },
+      3: function() { return '### '; },
+      4: function() { return '#### '; },
+      5: function() { return '##### '; },
+      6: function() { return '###### '; }
     },
     list: {
-      bullet: function() { return '* '},
+      bullet: function() { return '* '; },
       ordered: function(count) {
         return `${count}. `;
       },
     },
   },
-}
+};
 
 const deltaToMarkdown = (delta) => {
   let mdString = '';
@@ -67,16 +67,16 @@ const deltaToMarkdown = (delta) => {
     });
 
     mdString += text;
-  })
+  });
 
   // \n is considered as a soft-break in markdown, use \n\n to indicate new line
-  mdString = mdString.replace(/\n/g, '\n\n')
+  mdString = mdString.replace(/\n/g, '\n\n');
   // However in list group, only \n is used
-  mdString = mdString.replace(/(\d+\. [^\n]*)\n{2}(?=\d+\. )/g, '$1\n')
-  mdString = mdString.replace(/(\* [^\n]*)\n{2}(?=\* )/g, '$1\n')
+  mdString = mdString.replace(/(\d+\. [^\n]*)\n{2}(?=\d+\. )/g, '$1\n');
+  mdString = mdString.replace(/(\* [^\n]*)\n{2}(?=\* )/g, '$1\n');
 
   return mdString;
-}
+};
 
 const changeAttribute = (attributes, event, attribute, value) => {
   if (event.entering) {
@@ -86,7 +86,7 @@ const changeAttribute = (attributes, event, attribute, value) => {
   }
 
   return attributes;
-}
+};
 
 const applyAttribute = (node, event, attributes, attribute) => {
   if (typeof attribute == 'string') {
@@ -94,7 +94,7 @@ const applyAttribute = (node, event, attributes, attribute) => {
   } else if (typeof attribute == 'function') {
     attribute(node, event, attributes);
   }
-}
+};
 
 const mdConverter = [
   { filter: 'emph', attribute: 'italic' },
@@ -204,7 +204,7 @@ const markdownToDelta = (md) => {
           }
         }
       }
-    })
+    });
   }
 
   let endNewLine = deltas[deltas.length - 1].insert.indexOf("\n") == -1;
@@ -214,9 +214,9 @@ const markdownToDelta = (md) => {
   let delta = new Delta().compose(new Delta(deltas));
 
   return delta;
-}
+};
 
 module.exports = {
   deltaToMarkdown,
   markdownToDelta,
-}
+};

@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { Button, Col, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
+import {
+  Button, Col, FormControl, FormGroup, ControlLabel
+} from 'react-bootstrap';
 import Select from 'react-select';
 import Delta from 'quill-delta';
 import ContainerDatasets from './ContainerDatasets';
@@ -7,8 +9,13 @@ import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
 
 import { sampleAnalysesContentSymbol } from './utils/quillToolbarSymbol';
-import { sampleAnalysesFormatPattern } from './utils/ElementUtils';
-import { searchAndReplace } from './utils/quillFormat';
+import {
+  sampleAnalysesFormatPattern, commonFormatPattern
+} from './utils/ElementUtils';
+import {
+  deltaToMarkdown, markdownToDelta
+} from './utils/deltaMarkdownConverter';
+import { searchAndReplace } from './utils/markdownUtils';
 import { confirmOptions, kindOptions } from './staticDropdownOptions/options';
 
 export default class ContainerComponent extends Component {
@@ -72,9 +79,13 @@ export default class ContainerComponent extends Component {
     let content = new Delta({ ...container.extended_metadata.content });
     const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
 
-    (sampleAnalysesFormatPattern[type] || []).forEach((patt) => {
-      content = searchAndReplace(content, patt.pattern, patt.replace);
+    let md = deltaToMarkdown(content);
+    let formatPattern = (sampleAnalysesFormatPattern[type] || []);
+    formatPattern = formatPattern.concat(commonFormatPattern);
+    formatPattern.forEach((patt) => {
+      md = searchAndReplace(md, patt.pattern, patt.replace);
     });
+    content = markdownToDelta(md);
 
     container.extended_metadata.content = content;
     this.onChange(container);
@@ -94,7 +105,7 @@ export default class ContainerComponent extends Component {
     if (readOnly || disabled) {
       quill = (
         <QuillViewer value={container.extended_metadata.content} />
-      )
+      );
     } else {
       quill = (
         <QuillEditor
@@ -105,7 +116,7 @@ export default class ContainerComponent extends Component {
           toolbarSymbol={sampleAnalysesContentSymbol}
           customToolbar={formatButton}
         />
-      )
+      );
     }
 
     return (
