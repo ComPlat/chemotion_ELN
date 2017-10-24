@@ -1,11 +1,15 @@
 import React from 'react';
+import Aviator from 'aviator';
 import {Glyphicon, Label, Button, OverlayTrigger} from 'react-bootstrap';
+
 import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import UserInfos from './UserInfos';
-import Aviator from 'aviator';
+import GatePushBtn from './common/GatePushBtn'
+
+
 
 export default class CollectionSubtree extends React.Component {
   constructor(props) {
@@ -225,14 +229,17 @@ export default class CollectionSubtree extends React.Component {
         marginBottom: 0
       };
     }
-
+    const gated = root && root.is_locked && label=='chemotion.net' ?
+      <GatePushBtn collection_id={root.id}/> : null;
     return (
       <div className="tree-view" key={root.id}>
         {this.takeOwnershipButton()}
+
         <div className={"title " + this.selectedCssClass()}
              onClick={this.handleClick}>
           {this.expandButton()}
           {this.synchronizedIcon()}
+          {gated}
           {label}
         </div>
         <ul style={style}>
