@@ -90,6 +90,19 @@ module Chemotion::Calculations
     return 0.0
   end
 
+  def self.fixed_digit(input_num, digit_num)
+    "%.#{digit_num}f" % input_num.try(:to_f).try(:round, digit_num).to_f
+  end
+
+  def self.guilty_digit(input_num, precision)
+    num = input_num.to_f
+    num_str = ("%f" % num).split('.')
+    head_len = num_str[0].gsub(/^[0]+/, '').length
+    tail_len = num_str[1].gsub(/[1-9]+\d*/, '').length
+    return larger_than_zero(num, head_len, tail_len, precision) if num >= 1.0
+    smaller_than_zero(num, tail_len, precision)
+  end
+
 private
 
   def self.get_polymer_composition m_formula, p_formula, p_loading
@@ -182,5 +195,24 @@ private
     elements.each do |key, value|
       elements[key] = (value.to_d * 100.0).round 2 # convert to %
     end
+  end
+
+  def self.prec_limit(precision)
+    return 20 if precision > 20
+    return 0 if precision < 0
+    precision
+  end
+
+  def self.larger_than_zero(num, head_len, tail_len, pc)
+    return "%.#{0}f" % num.try(:round, 0) if (pc - head_len) < 0
+    prec = prec_limit(pc - head_len)
+    "%.#{prec}f" % num.try(:round, prec)
+  end
+
+  def self.smaller_than_zero(num, tail_len, pc)
+    pc_for_zero = prec_limit(pc - 1)
+    return "%.#{pc_for_zero}f" % num.try(:round, pc_for_zero) if num == 0.0
+    pc_non_zero = prec_limit(pc + tail_len)
+    "%.#{pc_non_zero}f" % num.try(:round, pc_non_zero)
   end
 end

@@ -114,7 +114,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     it "has correct content" do
       expect(content[:title]).to eq(tit)
-      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.000ml)")
+      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.00ml)")
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML())
       )
@@ -202,19 +202,19 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
-          {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv); "},
+          {"insert"=>" (1.00 g, 55.5 mmol, 0.880 equiv); "},
           {"insert"=>"{B"},
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>s4.preferred_label},
-          {"insert"=>" (0.00 mL); "},
+          {"insert"=>" (0.0 mL); "},
           {"insert"=>"Yield "},
           {"insert"=>"{C|"},
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
-          {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
+          {"insert"=>"} = #{(equiv * 100).to_i}% (0.00 g, 0.00 mmol)"},
           {"insert"=>"; "},
           {"insert"=>"{D|"},
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
-          {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
+          {"insert"=>"} = #{(equiv * 100).to_i}% (0.00 g, 0.00 mmol)"},
           {"insert"=>"."},
           {"insert"=>"\n"},
           {"insert"=>"#{correct_obsv}"},
