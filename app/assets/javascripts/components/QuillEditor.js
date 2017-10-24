@@ -147,7 +147,9 @@ export default class QuillEditor extends React.Component {
             let contents = editor.getContents();
             let elementOps = toolbarSymbol.find(x => x.name === element).ops;
             const insertDelta = new Delta(elementOps);
-            elementOps = [{ retain: range.index }].concat(elementOps);
+            if (range.index > 0) {
+              elementOps = [{ retain: range.index }].concat(elementOps);
+            }
             const elementDelta = new Delta(elementOps);
             contents = contents.compose(elementDelta);
 
