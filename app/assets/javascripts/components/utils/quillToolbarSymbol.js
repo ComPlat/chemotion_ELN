@@ -243,7 +243,35 @@ const sampleAnalysesContentSymbol = [
   {
     name: 'hr',
     ops: [
-      { insert: 'HRMS (): calc. , found .' },
+      { insert: 'HRMS (): calcd , found .' },
+    ],
+  },
+  {
+    name: 'hr1',
+    ops: [
+      { insert: 'HRMS–EI ' },
+      { insert: '(m/z)', attributes: { italic: true } },
+      { insert: ': [M]' },
+      { insert: '+', attributes: { script: 'super' } },
+      { insert: ' calcd for , ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '; found, ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '.' },
+    ],
+  },
+  {
+    name: 'hr2',
+    ops: [
+      { insert: 'HRMS–FAB ' },
+      { insert: '(m/z)', attributes: { italic: true } },
+      { insert: ': [M + H]' },
+      { insert: '+', attributes: { script: 'super' } },
+      { insert: ' calcd for , ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '; found, ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '.' },
     ],
   },
   {
