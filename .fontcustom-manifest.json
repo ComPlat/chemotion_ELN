@@ -1,13 +1,14 @@
 {
   "checksum": {
-    "previous": "ebea6970ab34b700768ce8bafe0ee0ca02daf2bf9277ec0e6b7ac5d7bbcb09c0",
-    "current": "ebea6970ab34b700768ce8bafe0ee0ca02daf2bf9277ec0e6b7ac5d7bbcb09c0"
+    "previous": "dd832ad0716db3e5d9d4471567047066742da49b6953efd5ce967167d6c61529",
+    "current": "dd832ad0716db3e5d9d4471567047066742da49b6953efd5ce967167d6c61529"
   },
   "fonts": [
     "app/assets/fonts/icons.ttf",
     "app/assets/fonts/icons.svg",
     "app/assets/fonts/icons.woff",
-    "app/assets/fonts/icons.eot"
+    "app/assets/fonts/icons.eot",
+    "app/assets/fonts/icons.woff2"
   ],
   "glyphs": {
     "acidified-hcl": {
@@ -49,6 +50,14 @@
     "hr": {
       "codepoint": 61722,
       "source": "app/assets/images/svg_icons/hr.svg"
+    },
+    "hr1": {
+      "codepoint": 61726,
+      "source": "app/assets/images/svg_icons/hr1.svg"
+    },
+    "hr2": {
+      "codepoint": 61727,
+      "source": "app/assets/images/svg_icons/hr2.svg"
     },
     "ir": {
       "codepoint": 61723,
@@ -124,10 +133,12 @@
     }
   },
   "options": {
-    "autowidth": false,
+    "autowidth": true,
     "config": "fontcustom.yml",
+    "copyright": "",
+    "css3": false,
     "css_selector": ".icon-{{glyph}}",
-    "debug": true,
+    "debug": false,
     "font_ascent": 448,
     "font_descent": 64,
     "font_design_size": 16,

@@ -13,7 +13,7 @@
    viewBox="0 0 162 162"
    preserveAspectRatio="xMidYMid meet"
    id="svg77"
-   sodipodi:docname="ei.svg"
+   sodipodi:docname="hr1.svg"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <metadata
      id="metadata83">
@@ -43,23 +43,27 @@
      id="namedview79"
      showgrid="false"
      inkscape:zoom="3.2045455"
-     inkscape:cx="197.09017"
+     inkscape:cx="304.43602"
      inkscape:cy="96.894893"
      inkscape:window-x="0"
      inkscape:window-y="22"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg77" />
   <g
-     aria-label="EI"
+     aria-label="HR1"
      style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:144px;line-height:1.25;font-family:'Noto Sans Meetei Mayek';-inkscape-font-specification:'Noto Sans Meetei Mayek';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75"
      id="text172">
     <path
-       d="M 89.142567,157.8063 H 3.3735237 V 4.3248596 H 89.142567 V 21.331696 H 22.68993 V 69.202789 H 85.258289 V 85.999664 H 22.68993 v 54.799806 h 66.452637 z"
+       d="M 120.74169,157.8063 H 101.42528 V 86.209625 H 22.68993 V 157.8063 H 3.3735237 V 4.3248596 H 22.68993 V 69.202789 h 78.73535 V 4.3248596 h 19.31641 z"
        style="font-size:215px;stroke-width:0.75"
-       id="path435" />
+       id="path314" />
     <path
-       d="m 166.19823,157.8063 h -55.42969 v -11.12792 l 18.05664,-4.09424 V 19.756989 l -18.05664,-4.3042 V 4.3248596 h 55.42969 V 15.452789 l -18.05664,4.3042 V 142.58414 l 18.05664,4.09424 z"
+       d="m 182.26024,78.021149 h 22.99073 q 18.68652,0 27.29492,-7.348633 8.6084,-7.348633 8.6084,-21.835938 0,-14.487304 -8.71338,-21.101074 -8.71338,-6.71875 -28.23975,-6.71875 h -21.94092 z m 0,16.376953 V 157.8063 h -19.3164 V 4.3248596 h 42.30713 q 28.55468,0 42.20214,10.9179684 13.75244,10.812989 13.75244,32.648926 0,30.549317 -30.75927,41.152344 L 272.54345,157.8063 H 249.97264 L 212.80956,94.398102 Z"
        style="font-size:215px;stroke-width:0.75"
-       id="path437" />
+       id="path316" />
+    <path
+       d="M 352.3286,157.8063 H 333.85204 V 50.516266 q 0,-14.277344 0.83984,-26.455078 -2.93945,3.149414 -6.29883,5.878906 -10.708,8.92334 -23.41064,19.316406 L 295.11425,36.553864 336.68651,4.3248596 h 15.64209 z"
+       style="font-size:215px;stroke-width:0.75"
+       id="path318" />
   </g>
 </svg>
