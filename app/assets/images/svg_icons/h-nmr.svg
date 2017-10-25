@@ -1,14 +1,61 @@
-<?xml version="1.0" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
- "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
-<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
- width="162.000000pt" height="154.000000pt" viewBox="0 0 162.000000 154.000000"
- preserveAspectRatio="xMidYMid meet">
-
-<g transform="translate(0.000000,154.000000) scale(0.100000,-0.100000)"
-fill="#000000" stroke="none">
-<path d="M485 1178 c-3 -7 -4 -189 -3 -403 l3 -390 45 0 45 0 3 188 2 187 188
--2 187 -3 3 -188 2 -188 48 3 47 3 0 400 0 400 -45 0 -45 0 -3 -167 -2 -168
--190 0 -190 0 -2 168 -3 167 -43 3 c-28 2 -44 -1 -47 -10z"/>
-</g>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="162pt"
+   height="162pt"
+   viewBox="0 0 162 162"
+   preserveAspectRatio="xMidYMid meet"
+   id="svg77"
+   sodipodi:docname="h-nmr.svg"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
+  <metadata
+     id="metadata83">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs81" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2556"
+     inkscape:window-height="1552"
+     id="namedview79"
+     showgrid="false"
+     inkscape:zoom="4.5319116"
+     inkscape:cx="93.793356"
+     inkscape:cy="99.650954"
+     inkscape:window-x="0"
+     inkscape:window-y="22"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg77" />
+  <g
+     aria-label="H"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:220px;line-height:1.25;font-family:'Noto Sans Meetei Mayek';-inkscape-font-specification:'Noto Sans Meetei Mayek';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75"
+     id="text172">
+    <path
+       d="M 140.45702,159.6373 H 120.69139 V 86.37558 H 40.124989 V 159.6373 H 20.359364 V 2.5865173 H 40.124989 V 68.973236 H 120.69139 V 2.5865173 h 19.76563 z"
+       style="font-size:220px;stroke-width:0.75"
+       id="path174" />
+  </g>
 </svg>

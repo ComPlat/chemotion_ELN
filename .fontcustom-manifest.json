@@ -1,7 +1,7 @@
 {
   "checksum": {
-    "previous": "08c13c2d35ae5b4b18870bd6965264fbc8aa9ec804eafab90e8731d22b01578b",
-    "current": "08c13c2d35ae5b4b18870bd6965264fbc8aa9ec804eafab90e8731d22b01578b"
+    "previous": "dd832ad0716db3e5d9d4471567047066742da49b6953efd5ce967167d6c61529",
+    "current": "dd832ad0716db3e5d9d4471567047066742da49b6953efd5ce967167d6c61529"
   },
   "fonts": [
     "app/assets/fonts/icons.ttf",
@@ -133,12 +133,12 @@
     }
   },
   "options": {
-    "autowidth": false,
+    "autowidth": true,
     "config": "fontcustom.yml",
     "copyright": "",
     "css3": false,
     "css_selector": ".icon-{{glyph}}",
-    "debug": true,
+    "debug": false,
     "font_ascent": 448,
     "font_descent": 64,
     "font_design_size": 16,

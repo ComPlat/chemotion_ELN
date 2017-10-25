@@ -8,27 +8,27 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    version="1.0"
-   width="162.000000pt"
-   height="154.000000pt"
-   viewBox="0 0 162.000000 154.000000"
+   width="162pt"
+   height="162pt"
+   viewBox="0 0 162 162"
    preserveAspectRatio="xMidYMid meet"
-   id="svg673"
+   id="svg77"
    sodipodi:docname="hr1.svg"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <metadata
-     id="metadata679">
+     id="metadata83">
     <rdf:RDF>
       <cc:Work
          rdf:about="">
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <defs
-     id="defs677" />
+     id="defs81" />
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -38,39 +38,32 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1276"
+     inkscape:window-width="2556"
      inkscape:window-height="1552"
-     id="namedview675"
+     id="namedview79"
      showgrid="false"
-     inkscape:zoom="1.1493506"
-     inkscape:cx="-52.0904"
-     inkscape:cy="102.66667"
-     inkscape:window-x="1280"
+     inkscape:zoom="3.2045455"
+     inkscape:cx="304.43602"
+     inkscape:cy="96.894893"
+     inkscape:window-x="0"
      inkscape:window-y="22"
      inkscape:window-maximized="0"
-     inkscape:current-layer="svg673" />
+     inkscape:current-layer="svg77" />
   <g
-     transform="matrix(0.1,0,0,-0.1,-9,154)"
-     id="g671"
-     style="fill:#000000;stroke:none">
+     aria-label="HR1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:144px;line-height:1.25;font-family:'Noto Sans Meetei Mayek';-inkscape-font-specification:'Noto Sans Meetei Mayek';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75"
+     id="text172">
     <path
-       d="m 165,1148 c -3,-7 -4,-189 -3,-403 l 3,-390 h 45 45 l 3,188 2,187 188,-2 187,-3 3,-188 2,-188 48,3 47,3 v 400 400 H 690 645 L 642,988 640,820 H 450 260 l -2,168 -3,167 -43,3 c -28,2 -44,-1 -47,-10 z"
-       id="path667"
-       inkscape:connector-curvature="0" />
+       d="M 120.74169,157.8063 H 101.42528 V 86.209625 H 22.68993 V 157.8063 H 3.3735237 V 4.3248596 H 22.68993 V 69.202789 h 78.73535 V 4.3248596 h 19.31641 z"
+       style="font-size:215px;stroke-width:0.75"
+       id="path314" />
     <path
-       d="m 872,1148 c -16,-12 -17,-45 -15,-403 l 3,-390 h 45 45 l 3,179 2,178 77,-4 c 75,-3 76,-4 113,-45 25,-29 51,-78 80,-155 58,-155 61,-158 115,-158 58,0 58,7 -1,152 -64,156 -78,182 -119,216 l -36,29 25,7 c 32,8 93,60 112,97 8,16 14,56 14,95 0,129 -62,188 -217,204 -125,13 -226,12 -246,-2 z m 293,-96 c 64,-31 87,-115 52,-182 -28,-51 -78,-73 -175,-74 l -82,-1 -3,138 -3,137 h 88 c 64,0 98,-5 123,-18 z"
-       id="path669"
-       inkscape:connector-curvature="0" />
-  </g>
-  <g
-     transform="matrix(3.0434354,0,0,3.1328881,-16.248033,-139.81512)"
-     aria-label="1"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'Noto Sans Meetei Mayek';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.5625"
-     id="text683">
+       d="m 182.26024,78.021149 h 22.99073 q 18.68652,0 27.29492,-7.348633 8.6084,-7.348633 8.6084,-21.835938 0,-14.487304 -8.71338,-21.101074 -8.71338,-6.71875 -28.23975,-6.71875 h -21.94092 z m 0,16.376953 V 157.8063 h -19.3164 V 4.3248596 h 42.30713 q 28.55468,0 42.20214,10.9179684 13.75244,10.812989 13.75244,32.648926 0,30.549317 -30.75927,41.152344 L 272.54345,157.8063 H 249.97264 L 212.80956,94.398102 Z"
+       style="font-size:215px;stroke-width:0.75"
+       id="path316" />
     <path
-       inkscape:connector-curvature="0"
-       d="M 56.373875,82.26754 H 53.79575 V 67.296837 q 0,-1.992188 0.117187,-3.691406 -0.410156,0.439453 -0.878906,0.820312 -1.494141,1.245117 -3.266602,2.695313 l -1.376953,-1.772461 5.800781,-4.497071 h 2.182618 z"
-       style="stroke-width:0.5625"
-       id="path738" />
+       d="M 352.3286,157.8063 H 333.85204 V 50.516266 q 0,-14.277344 0.83984,-26.455078 -2.93945,3.149414 -6.29883,5.878906 -10.708,8.92334 -23.41064,19.316406 L 295.11425,36.553864 336.68651,4.3248596 h 15.64209 z"
+       style="font-size:215px;stroke-width:0.75"
+       id="path318" />
   </g>
 </svg>

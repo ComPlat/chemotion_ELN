@@ -1,4 +1,23 @@
+import React from 'react';
+
+const minusRender = (name) => (
+  <span
+    key={`${name}_key`}
+    id={`${name}_id`}
+    style={{ marginRight: '10px', cursor: 'pointer' }}
+  >
+    <i className='fa fa-minus' />
+  </span>
+);
+
 const reactionToolbarSymbol = [
+  {
+    name: 'ndash',
+    ops: [
+      { insert: '–' },
+    ],
+    render: minusRender,
+  },
   {
     name: 'water-free',
     ops: [
@@ -204,6 +223,13 @@ const reactionToolbarSymbol = [
 ];
 
 const sampleAnalysesContentSymbol = [
+  {
+    name: 'ndash',
+    render: minusRender,
+    ops: [
+      { insert: '–' },
+    ],
+  },
   {
     name: 'h-nmr',
     ops: [
