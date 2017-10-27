@@ -77,14 +77,15 @@ export default class ElementCollectionLabels extends React.Component {
     let shared_labels = []
     let labels = []
     let sync_labels = []
-
-    collection_labels.map((label, index) => {
-      if (label.is_shared == false && label.user_id == currentUser.id) {
-        labels.push(label)
-      } else if (label.is_shared == true && label.shared_by_id == currentUser.id) {
-        shared_labels.push(label)
-      } else if (label.is_synchronized == true) {
-        sync_labels.push(label)
+    collection_labels.map((label) => {
+      if (label) {
+        if (label.is_shared == false && label.user_id == currentUser.id) {
+          labels.push(label)
+        } else if (label.is_shared == true && label.shared_by_id == currentUser.id) {
+          shared_labels.push(label)
+        } else if (label.is_synchronized == true) {
+          sync_labels.push(label)
+        }
       }
     })
 
