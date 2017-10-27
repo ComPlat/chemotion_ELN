@@ -1,16 +1,33 @@
 require 'rails_helper'
 
 RSpec.describe Wellplate, type: :model do
-  describe 'creation' do
-    let(:wellplate) { create(:wellplate) }
+  let!(:collection) { create(:collection) }
+  let!(:screen)     { create(:screen, collections: [collection]) }
+  let!(:wellplate)  {
+    create(:wellplate, collections: [collection], screens: [screen])
+  }
+  let!(:sample)     { create(:sample, collections: [collection]) }
+  let!(:well)       {
+    create(:well, sample_id: sample.id, wellplate_id: wellplate.id)
+  }
 
+  describe 'creation' do
     it 'is possible to create a valid screen' do
       expect(wellplate.valid?).to be(true)
     end
   end
 
   describe 'after creation' do
-    let(:wellplate) { create(:wellplate) }
+    it 'has associations' do
+      expect(
+        CollectionsWellplate.find_by(wellplate_id: wellplate.id)
+      ).to_not be_nil
+      expect(wellplate.wells.pluck(:id)).to include(well.id)
+      expect(wellplate.samples.pluck(:id)).to include(sample.id)
+      expect(
+        collection.collections_wellplates.find_by(wellplate_id: wellplate.id)
+      ).to_not be_nil
+    end
 
     it 'has a CodeLog' do
       expect(wellplate.code_log.value).to match(/\d{40}/)
@@ -21,27 +38,38 @@ RSpec.describe Wellplate, type: :model do
   end
 
   describe 'deletion' do
-    let(:screen)     { create(:screen) }
-    let(:wellplate)  { create(:wellplate) }
-    let(:sample)     { create(:sample) }
-    let(:well)       { create(:well, sample: sample, wellplate: wellplate) }
-    let(:collection) { create(:collection) }
-
-    before do
-      CollectionsWellplate.create!(wellplate: wellplate, collection: collection)
-      ScreensWellplate.create!(wellplate: wellplate, screen: screen)
-      wellplate.destroy
-    end
+    before { wellplate.destroy! }
 
     it 'destroys associations properly' do
-      expect(collection.collections_wellplates).to eq []
-      expect(screen.screens_wellplates).to eq []
-      expect(Well.count).to eq 0
+      expect(
+        CollectionsWellplate.find_by(wellplate_id: wellplate.id)
+      ).to be_nil
+      expect(Well.find_by(id: well.id)).to be_nil
+      # TOCHECK should samples be deleted?
+      # expect(Sample.find_by(id: sample.id)).to be_nil
+      expect(
+        collection.collections_wellplates.find_by(wellplate_id: wellplate.id)
+      ).to be_nil
+      expect(wellplate.screens).to eq [screen]
+      expect(wellplate.screens_wellplates).to be_empty
     end
 
     it 'only soft deletes wellplate and associated sample' do
-      expect(Wellplate.with_deleted).to eq [wellplate]
-      expect(Sample.with_deleted).to eq [sample]
+      expect(wellplate.deleted_at).to_not be_nil
+      expect(wellplate.wells.only_deleted.find_by(id: well.id)).to_not be_nil
+      # TOCHECK should samples be deleted?
+      # expect(
+      #   wellplate.samples.only_deleted.find_by(id: sample.id)
+      # ).to_not be_nil
+      expect(
+        CollectionsWellplate.only_deleted.find_by(wellplate_id: wellplate.id)
+      ).to_not be_nil
+      expect(
+        ScreensWellplate.only_deleted.find_by(
+          screen_id: screen.id, wellplate_id: wellplate.id
+        )
+      ).to_not be_nil
+      expect(wellplate.screens_wellplates.only_deleted).to_not be_empty
     end
   end
 end

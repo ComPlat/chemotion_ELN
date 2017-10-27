@@ -17,5 +17,15 @@ FactoryGirl.define do
     tlc_solvents "D2O"
     tlc_description "I am tlc_description"
     observation {{ "ops" => [{ "insert" => "I am observation" }] }}
+
+    factory :valid_reaction do
+      after(:build) do |reaction|
+        creator = FactoryGirl.create(:user)
+        collection = FactoryGirl.create(:collection, user_id: creator.id)
+        reaction.creator = creator unless reaction.creator
+        reaction.collections << collection if reaction.collections.blank?
+        reaction.container = FactoryGirl.build(:container) unless reaction.container
+      end
+    end
   end
 end

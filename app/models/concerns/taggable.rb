@@ -1,85 +1,100 @@
+# frozen_string_literal: true
+
+# Module for tag behaviour
 module Taggable
   extend ActiveSupport::Concern
 
   included do
     has_one :tag, as: :taggable, dependent: :destroy, class_name: 'ElementTag'
-
-    after_save :update_tag
+    before_save :update_tag_callback
   end
 
-  def update_tag
-    self.tag = ElementTag.create unless self.tag
-    et = self.tag
-    return if et.destroyed?
+  def update_tag_callback
+    args = is_a?(Molecule) && { pubchem_tag: true } || {
+      analyses_tag: true, collection_tag: new_record?
+    }
+    update_tag(**args)
+  end
 
-    et.taggable_id = self.id
-    et.taggable_type = self.class
+  def update_tag(**args)
+    build_tag(taggable_data: {}) if new_record? || !tag
+    return if tag.destroyed?
+    data = tag.taggable_data || {}
+    data['reaction_id'] = args[:reaction_tag] if args[:reaction_tag]
+    data['pubchem_cid'] = pubchem_tag if args[:pubchem_tag]
+    data['analyses'] = analyses_tag if args[:analyses_tag]
+    data['collection_labels'] = collection_tag if args[:collection_tag]
+    tag.taggable_data = remove_blank_value(data)
+  end
 
-    # Populate Collections tag
-    collections = self.collections.where.not(label: 'All')
-    collection_labels = collections.map { |c|
-      collection_id =
-        if c.is_synchronized
-          SyncCollectionsUser.where(collection_id: c.id).first.id
-        else
-          c.id
-        end
+  def update_tag!(**args)
+    update_tag(**args)
+    tag.save!
+  end
 
+  def remove_blank_value(hash)
+    hash.delete_if do |_, value| value.blank? end
+  end
+
+  def inchikey?
+    inchikey && !inchikey.to_s.empty?
+  end
+
+  def pubchem_check
+    inchikey? && tag.taggable_data&.fetch('pubchem_cid', nil)
+  end
+
+  def collection_id(c)
+    if c.is_synchronized
+      SyncCollectionsUser.where(collection_id: c.id).first.id
+    else
+      c.id
+    end
+  end
+
+  # Populate Collections tag
+  def collection_tag
+    klass = "collections_#{self.class.name.underscore.pluralize}"
+    send(klass).map { |cc|
+      next unless c = cc.collection
+      next if c.label == 'All' # TODO
+      cid = collection_id(c)
       {
         name: c.label, is_shared: c.is_shared, user_id: c.user_id,
-        id: collection_id, shared_by_id: c.shared_by_id,
+        id: cid, shared_by_id: c.shared_by_id,
         is_synchronized: c.is_synchronized
       }
-    }.uniq
-
-    # Populate PubChem tag
-    pubchem_cid = nil
-    if self.class.to_s === 'Molecule'
-       self.inchikey && !self.inchikey.to_s.empty? &&
-       (!self.tag.taggable_data || !self.tag.taggable_data["pubchem_cid"])
-      pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([self.inchikey]))
-      prop = pubchem_json.dig("PropertyTable", "Properties")
-      if prop && prop.first && prop.first["CID"] && Float(prop.first["CID"])
-        pubchem_cid = prop.first["CID"]
-      end
-    end
-
-    # Populate Sample - Reaction tag
-    reaction_id = nil
-    analyses = nil
-
-    if self.class.to_s === 'Sample'
-      associated_reaction = [
-        self.reactions_as_starting_material,
-        self.reactions_as_product
-      ].flatten.compact.uniq
-
-      if associated_reaction.count > 0
-        reaction_id = associated_reaction.first.id
-      end
-
-
-      # Populate Sample - Analyses tag
-      if self.analyses.count > 0
-        group = self.analyses.map(&:extended_metadata)
-                    .map {|x| x.extract!("kind", "status") }
-                    .group_by{|x| x["status"]}
-
-        analyses = group.map { |key, val|
-          new_val = val.group_by{|x| x["kind"]}.map{|k, v| [k, v.length]}
-          [key.to_s.downcase, new_val.to_h]
-        }.to_h
-      end
-    end
-
-    et.taggable_data = {
-      collection_labels: collection_labels,
-      reaction_id: reaction_id,
-      analyses: analyses,
-      pubchem_cid: pubchem_cid,
     }
-    et.taggable_data.delete_if { |key, value| value.blank? }
+  end
 
-    et.save!
+  def grouped_analyses
+    analyses.map(&:extended_metadata).map { |x| x.extract!('kind', 'status') }
+            .group_by { |x| x['status'] }
+  end
+
+  def count_by_kind(analyses)
+    analyses.group_by { |x| x['kind'] }.map { |k, v| [k, v.length] }.to_h
+  end
+
+  def analyses_tag
+    return nil unless is_a?(Sample) && analyses.count.positive?
+    grouped_analyses.map { |key, val|
+      vv = count_by_kind(val)
+      kk = key.to_s.downcase
+      [kk, vv]
+    }.to_h
+  end
+
+  def pubchem_response_check(json)
+    prop = json.dig('PropertyTable', 'Properties')
+    return nil unless prop.is_a?(Array)
+    prop.first.dig('CID')
+  end
+
+  def pubchem_tag
+    return nil unless is_a?(Molecule)
+    return tag.taggable_data['pubchem_cid'] if pubchem_check
+    pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([inchikey]))
+    pubchem_response_check pubchem_json
   end
 end

@@ -43,10 +43,11 @@ class Wellplate < ActiveRecord::Base
   scope :by_sample_ids, -> (ids) { joins(:samples).where('samples.id in (?)', ids) }
   scope :by_screen_ids, -> (ids) { joins(:screens).where('screens.id in (?)', ids) }
 
+
   has_many :collections_wellplates, dependent: :destroy
   has_many :collections, through: :collections_wellplates
 
-  has_many :wells
+  has_many :wells, dependent: :destroy
   has_many :samples, through: :wells
   has_many :molecules, through: :samples
 
@@ -57,10 +58,12 @@ class Wellplate < ActiveRecord::Base
 
   has_one :container, :as => :containable
 
+  accepts_nested_attributes_for :collections_wellplates
+
   def self.associated_by_user_id_and_screen_ids(user_id, screen_ids)
     for_user(user_id).by_screen_ids(screen_ids)
   end
-  
+
   def analyses
     self.container ? self.container.analyses : []
   end
