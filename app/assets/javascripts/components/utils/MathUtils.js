@@ -26,7 +26,7 @@ const smallerThanOne = (num, tailLen, precision) => {
   return num.toFixed(precLimit(precision + tailLen));
 };
 
-const guiltyDigit = (input, precision) => {
+const validDigit = (input, precision) => {
   const num = input || 0.0;
   const numStr = num.toFixed(10).toString().split('.');
   const headLen = numStr[0].replace(/^[0]+/g, '').length;
@@ -37,4 +37,4 @@ const guiltyDigit = (input, precision) => {
   return smallerThanOne(num, tailLen, precision);
 };
 
-module.exports = { fixDigit, guiltyDigit };
+module.exports = { fixDigit, validDigit };

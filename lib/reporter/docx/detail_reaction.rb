@@ -230,21 +230,21 @@ module Reporter
           iupac_name: m[:iupac_name],
           short_label: s.short_label,
           formular: m[:sum_formular],
-          mol_w: guilty_digit(m[:molecular_weight], digit),
-          mass: guilty_digit(s.amount_g, digit),
-          vol: guilty_digit(s.amount_ml, digit),
-          density: guilty_digit(s.density, digit),
-          mol: guilty_digit(s.amount_mmol, digit),
-          equiv: guilty_digit(s.equivalent, digit),
+          mol_w: valid_digit(m[:molecular_weight], digit),
+          mass: valid_digit(s.amount_g, digit),
+          vol: valid_digit(s.amount_ml, digit),
+          density: valid_digit(s.density, digit),
+          mol: valid_digit(s.amount_mmol, digit),
+          equiv: valid_digit(s.equivalent, digit),
           molecule_name_hash: s[:molecule_name_hash]
         }
 
         if is_product
-          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{guilty_digit(s.equivalent * 100, 0)}%"
+          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{valid_digit(s.equivalent * 100, 0)}%"
           sample_hash.update({
-            mass: guilty_digit(s.real_amount_g, digit),
-            vol: guilty_digit(s.real_amount_ml, digit),
-            mol: guilty_digit(s.real_amount_mmol, digit),
+            mass: valid_digit(s.real_amount_g, digit),
+            vol: valid_digit(s.real_amount_ml, digit),
+            mol: valid_digit(s.real_amount_mmol, digit),
             equiv: equiv,
             molecule_name_hash: s[:molecule_name_hash]
           })
@@ -302,9 +302,9 @@ module Reporter
           solvents.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.target_amount_value
-              " (#{guilty_digit(s.amount_ml, digit)}ml)"
+              " (#{valid_digit(s.amount_ml, digit)}ml)"
             elsif s.real_amount_value
-              " (#{guilty_digit(s.amount_ml, digit)}ml)"
+              " (#{valid_digit(s.amount_ml, digit)}ml)"
             end
             s.preferred_label + volume if s.preferred_label
           end.join(", ")
@@ -415,7 +415,7 @@ module Reporter
           delta += [{"insert"=>"{#{alphabet(counter)}"},
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
-                    {"insert"=>" (#{guilty_digit(m[:vol], 2)} mL); "}]
+                    {"insert"=>" (#{valid_digit(m[:vol], 2)} mL); "}]
         end
         delta += [{"insert"=>"Yield "}]
         obj.products.each do |material|

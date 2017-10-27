@@ -2,7 +2,7 @@ import React from 'react';
 import _ from 'lodash';
 import { SVGContent } from './SectionReaction';
 import QuillViewer from '../QuillViewer';
-import { fixDigit, guiltyDigit } from '../utils/MathUtils';
+import { fixDigit, validDigit } from '../utils/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
 import ArrayUtils from '../utils/ArrayUtils';
 import { Alphabet } from '../utils/ElementUtils';
@@ -111,7 +111,7 @@ const stAndReContent = (el, prevCounter, prevContent, molSerials) => {
       deltaUserSerial(elm.molecule, molSerials),
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
-      { insert: ` (${guiltyDigit(elm.amount_g, 3)} g, ${guiltyDigit(elm.amount_mol * 1000, 3)} mmol, ${guiltyDigit(elm.equivalent, 3)} equiv); ` }];
+      { insert: ` (${validDigit(elm.amount_g, 3)} g, ${validDigit(elm.amount_mol * 1000, 3)} mmol, ${validDigit(elm.equivalent, 3)} equiv); ` }];
   });
   return { counter, content };
 };
@@ -125,7 +125,7 @@ const solventsContent = (el, prevCounter, prevContent) => {
       { insert: `{${Alphabet(counter)}` },
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
-      { insert: ` (${guiltyDigit(elm.amount_l * 1000, 2)} mL); ` }];
+      { insert: ` (${validDigit(elm.amount_l * 1000, 2)} mL); ` }];
   });
   return { counter, content };
 };
@@ -141,8 +141,8 @@ const porductsContent = (el, prevCounter, prevContent, molSerials) => {
       { insert: `{${Alphabet(counter)}|` },
       deltaUserSerial(m, molSerials),
       { insert: '} ' },
-      { insert: ` = ${guiltyDigit(p.equivalent * 100, 0)}%` },
-      { insert: ` (${guiltyDigit(p.amount_g, 3)} g, ${guiltyDigit(p.amount_mol * 1000, 3)} mmol)` },
+      { insert: ` = ${validDigit(p.equivalent * 100, 0)}%` },
+      { insert: ` (${validDigit(p.amount_g, 3)} g, ${validDigit(p.amount_mol * 1000, 3)} mmol)` },
       { insert: '; ' }];
   });
   content = content.slice(0, -1);

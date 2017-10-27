@@ -96,8 +96,8 @@ module Reporter
         Chemotion::Calculations.fixed_digit(input_num, digit_num)
       end
 
-      def guilty_digit(input_num, digit_num)
-        Chemotion::Calculations.guilty_digit(input_num, digit_num)
+      def valid_digit(input_num, digit_num)
+        Chemotion::Calculations.valid_digit(input_num, digit_num)
       end
     end
   end

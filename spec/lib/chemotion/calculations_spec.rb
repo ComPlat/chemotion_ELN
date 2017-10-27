@@ -164,10 +164,10 @@ describe "Chemotion::Calculations" do
     end
   end
 
-  describe ".guilty_digit" do
+  describe ".valid_digit" do
     it 'returns number0 with correct precisons' do
       num = 12345.67890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '12346'
 
       expect(result).to eq(target)
@@ -175,7 +175,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number1 with correct precisons' do
       num = 1234.567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '1235'
 
       expect(result).to eq(target)
@@ -183,7 +183,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number2 with correct precisons' do
       num = 123.4567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '123'
 
       expect(result).to eq(target)
@@ -191,7 +191,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number3 with correct precisons' do
       num = 12.34567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '12.3'
 
       expect(result).to eq(target)
@@ -199,7 +199,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number4 with correct precisons' do
       num = 1.234567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '1.23'
 
       expect(result).to eq(target)
@@ -207,7 +207,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number5 with correct precisons' do
       num = 0.1234567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.123'
 
       expect(result).to eq(target)
@@ -215,7 +215,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number6 with correct precisons' do
       num = 0.01234567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.0123'
 
       expect(result).to eq(target)
@@ -223,7 +223,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number7 with correct precisons' do
       num = 0.001234567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.00123'
 
       expect(result).to eq(target)
@@ -231,7 +231,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number8 with correct precisons' do
       num = 0.0001234567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.000123'
 
       expect(result).to eq(target)
@@ -239,7 +239,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number9 with correct precisons' do
       num = 0.00001234567890
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.0000123'
 
       expect(result).to eq(target)
@@ -247,7 +247,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number10 with correct precisons' do
       num = 0.0
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.00'
 
       expect(result).to eq(target)
@@ -255,7 +255,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number11 with correct precisons' do
       num = 1.0
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '1.00'
 
       expect(result).to eq(target)
@@ -263,7 +263,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number12 with correct precisons' do
       num = 1.000000
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '1.00'
 
       expect(result).to eq(target)
@@ -271,7 +271,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number14 with correct precisons' do
       num =  1.00012345678
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '1.00'
 
       expect(result).to eq(target)
@@ -279,7 +279,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number14 with correct precisons' do
       num = 12.00012345678
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '12.0'
 
       expect(result).to eq(target)
@@ -287,7 +287,7 @@ describe "Chemotion::Calculations" do
 
     it 'returns number15 with correct precisons' do
       num = 0
-      result = Chemotion::Calculations.guilty_digit(num, 0)
+      result = Chemotion::Calculations.valid_digit(num, 0)
       target = '0'
 
       expect(result).to eq(target)
@@ -295,8 +295,24 @@ describe "Chemotion::Calculations" do
 
     it 'returns number16 with correct precisons' do
       num = 0.10000000000
-      result = Chemotion::Calculations.guilty_digit(num, 3)
+      result = Chemotion::Calculations.valid_digit(num, 3)
       target = '0.100'
+
+      expect(result).to eq(target)
+    end
+
+    it 'returns number17 with correct precisons' do
+      num = 0.0000000058688
+      result = Chemotion::Calculations.valid_digit(num, 3)
+      target = '0.00000000587'
+
+      expect(result).to eq(target)
+    end
+
+    it 'returns number18 with correct precisons' do
+      num = 1234567890.1234567890
+      result = Chemotion::Calculations.valid_digit(num, 3)
+      target = '1234567890'
 
       expect(result).to eq(target)
     end

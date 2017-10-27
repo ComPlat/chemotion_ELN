@@ -94,11 +94,11 @@ module Chemotion::Calculations
     "%.#{digit_num}f" % input_num&.to_f&.round(digit_num).to_f
   end
 
-  def self.guilty_digit(input_num, precision)
-    num = input_num.to_f
-    num_str = ("%f" % num).split('.')
-    head_len = num_str[0].gsub(/^[0]+/, '').length
-    tail_len = num_str[1].gsub(/[1-9]+\d*/, '').length
+  def self.valid_digit(input_num, precision)
+    num = BigDecimal.new(input_num.to_s)
+    num_str = num.to_s('F')
+    num_str =~ /^0*([1-9]+\d*)?.?(0*)([1-9]*)/
+    head_len, tail_len = $1&.size || 0, $3 && $2&.size || 0
     return larger_than_zero(num, head_len, tail_len, precision) if num >= 1.0
     smaller_than_zero(num, tail_len, precision)
   end
