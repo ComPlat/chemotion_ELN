@@ -474,7 +474,7 @@ module Reporter
       def sort_by_index(analyses)
         analyses.sort_by do |a|
           analy_index = a[:extended_metadata][:index]
-          analy_index ? analy_index.try(:to_i) : -1
+          analy_index ? analy_index&.to_i : -1
         end
       end
 

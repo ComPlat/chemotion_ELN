@@ -91,7 +91,7 @@ module Chemotion::Calculations
   end
 
   def self.fixed_digit(input_num, digit_num)
-    "%.#{digit_num}f" % input_num.try(:to_f).try(:round, digit_num).to_f
+    "%.#{digit_num}f" % input_num&.to_f&.round(digit_num).to_f
   end
 
   def self.guilty_digit(input_num, precision)
@@ -204,15 +204,15 @@ private
   end
 
   def self.larger_than_zero(num, head_len, tail_len, pc)
-    return "%.#{0}f" % num.try(:round, 0) if (pc - head_len) < 0
+    return "%.#{0}f" % num&.round(0) if (pc - head_len) < 0
     prec = prec_limit(pc - head_len)
-    "%.#{prec}f" % num.try(:round, prec)
+    "%.#{prec}f" % num&.round(prec)
   end
 
   def self.smaller_than_zero(num, tail_len, pc)
     pc_for_zero = prec_limit(pc - 1)
-    return "%.#{pc_for_zero}f" % num.try(:round, pc_for_zero) if num == 0.0
+    return "%.#{pc_for_zero}f" % num&.round(pc_for_zero) if num == 0.0
     pc_non_zero = prec_limit(pc + tail_len)
-    "%.#{pc_non_zero}f" % num.try(:round, pc_non_zero)
+    "%.#{pc_non_zero}f" % num&.round(pc_non_zero)
   end
 end
