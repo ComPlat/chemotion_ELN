@@ -37,7 +37,7 @@ const SiPreviews = ({ selectedObjs, configs, molSerials }) => {
       <p>Experimental Part:</p>
       <br />
       <h4>1 Versions</h4>
-      <p>Version InCHI (), Version SMILES()</p>
+      <p>Version InCHI (1.04), Version SMILES (Daylight)</p>
       <br />
       <h4>2 General remarks</h4>
       <br />
