@@ -8,16 +8,11 @@
 # Delayed::Worker.raise_signal_exceptions = :term
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 
-if Rails.env.production? && Delayed::Job.column_names.include?('cron')
-  if Rails.configuration.respond_to?(:datamailcollector)
-    CollectDataFromMailJob.set(cron: '*/15 * * * *').perform_later if Delayed::Job.where("handler like ?", "%CollectDataFromMailJob%").empty?
-  else
+begin  
+  if ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
     Delayed::Job.where("handler like ?", "%CollectDataFromMailJob%").destroy_all
-  end
-
-  if Rails.configuration.respond_to?(:datacollector)
-    CollectDataFromDevicesJob.set(cron: '*/5 * * * *').perform_later if Delayed::Job.where("handler like ?", "%CollectDataFromDevicesJob%").empty?
-  else
     Delayed::Job.where("handler like ?", "%CollectDataFromDevicesJob%").destroy_all
   end
+rescue PG::ConnectionBad => e
+   puts e.message
 end
