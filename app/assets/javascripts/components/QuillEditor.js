@@ -12,7 +12,6 @@ const toolbarOptions = [
   [{ list: 'ordered' }, { list: 'bullet' }],
   [{ script: 'sub' }, { script: 'super' }],
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
-  [{ color: [] }, { background: [] }],
   // [{ 'font': [] }],
   // ['blockquote', 'code-block'],
   // [{ 'header': 1 }, { 'header': 2 }],
@@ -41,7 +40,12 @@ export default class QuillEditor extends React.Component {
     this.height = props.height;
     if (!props.height || props.height === '') this.height = '230px';
 
-    this.toolbar = (props.toolbarSymbol || []).map(x => x.name);
+    this.toolbar = (props.toolbarSymbol || []).map(x => {
+      return {
+        name: x.name,
+        render: x.render,
+      }
+    });
 
     this.editor = false;
     this.id = _.uniqueId('quill-editor-');
@@ -138,7 +142,7 @@ export default class QuillEditor extends React.Component {
       const toolbarSymbol = this.props.toolbarSymbol;
 
       this.toolbar.forEach((element) => {
-        const selector = `#toolbar-${id} #${element}_id`;
+        const selector = `#toolbar-${id} #${element.name}_id`;
         const btn = document.querySelector(selector);
 
         btn.addEventListener('click', () => {
@@ -146,9 +150,11 @@ export default class QuillEditor extends React.Component {
 
           if (range) {
             let contents = editor.getContents();
-            let elementOps = toolbarSymbol.find(x => x.name === element).ops;
+            let elementOps = toolbarSymbol.find(x => x.name === element.name).ops;
             const insertDelta = new Delta(elementOps);
-            elementOps = [{ retain: range.index }].concat(elementOps);
+            if (range.index > 0) {
+              elementOps = [{ retain: range.index }].concat(elementOps);
+            }
             const elementDelta = new Delta(elementOps);
             contents = contents.compose(elementDelta);
 
@@ -199,7 +205,7 @@ export default class QuillEditor extends React.Component {
           }
         }
 
-        return (<span />);
+        return (<span key={`span_empty_${index}`}/>);
       });
 
       return (
@@ -217,21 +223,24 @@ export default class QuillEditor extends React.Component {
       return (<span />);
     }
 
-    const customToolbarElement = this.toolbar.map(element => (
-      <span
-        key={`${element}_key`}
-        id={`${element}_id`}
-        style={{ marginRight: '5px', cursor: 'pointer' }}
-      >
-        <i className={`icon-${element}`} />
-      </span>
-    ));
+    const customToolbarElement = this.toolbar.map(element => {
+      if (element.render) {
+        return element.render(element.name);
+      }
+
+      return (
+        <span
+          key={`${element.name}_key`}
+          id={`${element.name}_id`}
+          style={{ marginRight: '10px', cursor: 'pointer' }}
+        >
+          <i className={`icon-${element.name}`} />
+        </span>
+      )
+    });
 
     return (
-      <span
-        className="ql-formats custom-toolbar"
-        style={{ fontSize: '22px' }}
-      >
+      <span className="ql-formats custom-toolbar" >
         { customToolbarElement }
       </span>
     );

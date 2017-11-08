@@ -10,4 +10,5 @@ export default {
   UNLINKED_DATA: 'unlinked_data',
   DATASET: 'dataset',
   CONTAINER: 'container',
+  GENERALPROCEDURE: 'generalProcedure',
 };

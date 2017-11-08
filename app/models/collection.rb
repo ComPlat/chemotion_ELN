@@ -3,17 +3,17 @@ class Collection < ActiveRecord::Base
   belongs_to :user
   has_ancestry
 
-  has_many :collections_samples
-  has_many :collections_reactions
-  has_many :collections_wellplates
-  has_many :collections_screens
-  has_many :collections_research_plans
+  has_many :collections_samples, dependent: :destroy
+  has_many :collections_reactions, dependent: :destroy
+  has_many :collections_wellplates, dependent: :destroy
+  has_many :collections_screens, dependent: :destroy
+  has_many :collections_research_plans, dependent: :destroy
 
-  has_many :samples, through: :collections_samples, dependent: :destroy
-  has_many :reactions, through: :collections_reactions, dependent: :destroy
-  has_many :wellplates, through: :collections_wellplates, dependent: :destroy
-  has_many :screens, through: :collections_screens, dependent: :destroy
-  has_many :research_plans, through: :collections_research_plans, dependent: :destroy
+  has_many :samples, through: :collections_samples
+  has_many :reactions, through: :collections_reactions
+  has_many :wellplates, through: :collections_wellplates
+  has_many :screens, through: :collections_screens
+  has_many :research_plans, through: :collections_research_plans
 
   has_many :sync_collections_users,  foreign_key: :collection_id, dependent: :destroy
   has_many :shared_users, through: :sync_collections_users, source: :user
@@ -21,10 +21,6 @@ class Collection < ActiveRecord::Base
   # A collection is locked if it is not allowed to rename or rearrange it
   scope :unlocked, -> { where(is_locked: false) }
   scope :locked, -> { where(is_locked: true) }
-
-  # A collection is for_publication if it has the 'chemotion.net' label. In this collection
-  # are elements which maybe shared on chemotion.net
-  scope :for_publication, -> { where(label: 'chemotion.net') }
 
   scope :ordered, -> { order("position ASC") }
   scope :unshared, -> { where(is_shared: false) }

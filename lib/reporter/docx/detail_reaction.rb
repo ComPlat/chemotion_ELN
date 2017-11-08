@@ -59,9 +59,13 @@ module Reporter
       end
 
       def gp_title_delta
-        delta = [{"insert"=>"[3.#{@index + 1}] "}]
-        delta += [{"insert"=>"#{obj.name} "}]
-        delta += [{"insert"=>"(#{obj.short_label})"}]
+        font_size = 13
+        delta = [{ 'attributes' => { 'font-size' => font_size },
+                   'insert' => "3.#{@index + 1} " }]
+        delta += [{ 'attributes' => { 'font-size' => font_size },
+                    'insert' => "#{obj.name} "}]
+        delta += [{ 'attributes' => { 'font-size' => font_size },
+                    'insert' => "(#{obj.short_label})"}]
         delta
       end
 
@@ -73,14 +77,19 @@ module Reporter
       end
 
       def synthesis_title_delta
-        delta = [{ 'insert' => "[4.#{@index + 1}] " }]
+        font_size = 13
+        delta = [{ 'attributes' => { 'font-size' => font_size },
+                   'insert' => "4.#{@index + 1} " }]
         obj.products.each do |p|
           delta = delta +
-                  sample_molecule_name_delta(p) +
-                  [{ 'insert' => ' (' }] +
-                  mol_serial_delta(p[:molecule][:id]) +
-                  [{ 'insert' => ')' }] +
-                  [{ 'insert' => ', ' }]
+                  sample_molecule_name_delta(p, font_size) +
+                  [{ 'attributes' => { 'font-size' => font_size },
+                     'insert' => ' (' }] +
+                  mol_serial_delta(p[:molecule][:id], font_size) +
+                  [{ 'attributes' => { 'font-size' => font_size },
+                     'insert' => ')' }] +
+                  [{ 'attributes' => { 'font-size' => font_size },
+                     'insert' => ', ' }]
         end
         delta.pop
         delta
@@ -221,21 +230,21 @@ module Reporter
           iupac_name: m[:iupac_name],
           short_label: s.short_label,
           formular: m[:sum_formular],
-          mol_w: fixed_digit(m[:molecular_weight], digit),
-          mass: fixed_digit(s.amount_g, digit),
-          vol: fixed_digit(s.amount_ml, digit),
-          density: fixed_digit(s.density, digit),
-          mol: fixed_digit(s.amount_mmol, digit),
-          equiv: fixed_digit(s.equivalent, digit),
+          mol_w: valid_digit(m[:molecular_weight], digit),
+          mass: valid_digit(s.amount_g, digit),
+          vol: valid_digit(s.amount_ml, digit),
+          density: valid_digit(s.density, digit),
+          mol: valid_digit(s.amount_mmol, digit),
+          equiv: valid_digit(s.equivalent, digit),
           molecule_name_hash: s[:molecule_name_hash]
         }
 
         if is_product
-          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{fixed_digit(s.equivalent * 100, 0)}%"
+          equiv = s.equivalent.nil? || (s.equivalent*100).nan? ? "0%" : "#{valid_digit(s.equivalent * 100, 0)}%"
           sample_hash.update({
-            mass: fixed_digit(s.real_amount_g, digit),
-            vol: fixed_digit(s.real_amount_ml, digit),
-            mol: fixed_digit(s.real_amount_mmol, digit),
+            mass: valid_digit(s.real_amount_g, digit),
+            vol: valid_digit(s.real_amount_ml, digit),
+            mol: valid_digit(s.real_amount_mmol, digit),
             equiv: equiv,
             molecule_name_hash: s[:molecule_name_hash]
           })
@@ -293,9 +302,9 @@ module Reporter
           solvents.map do |solvent|
             s = OpenStruct.new(solvent)
             volume = if s.target_amount_value
-              " (#{fixed_digit(s.amount_ml, digit)}ml)"
+              " (#{valid_digit(s.amount_ml, digit)}ml)"
             elsif s.real_amount_value
-              " (#{fixed_digit(s.amount_ml, digit)}ml)"
+              " (#{valid_digit(s.amount_ml, digit)}ml)"
             end
             s.preferred_label + volume if s.preferred_label
           end.join(", ")
@@ -365,8 +374,8 @@ module Reporter
 
       def tlc_delta
         return [] if obj.tlc_solvents.blank?
-        [{"attributes"=>{"italic"=> true}, "insert"=>"R"},
-          {"attributes"=>{"italic"=> true, "script"=>"sub"}, "insert"=>"f"},
+        [{"attributes"=>{"italic"=> "true"}, "insert"=>"R"},
+          {"attributes"=>{"italic"=> "true", "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{obj.rf_value} (#{obj.tlc_solvents})."}]
       end
 
@@ -398,7 +407,7 @@ module Reporter
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
-                      "#{fixed_digit(m[:equiv], 2)} equiv.); "}]
+                      "#{m[:equiv]} equiv); "}]
         end
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
@@ -406,7 +415,7 @@ module Reporter
           delta += [{"insert"=>"{#{alphabet(counter)}"},
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
-                    {"insert"=>" (#{fixed_digit(m[:vol], 2)} mL); "}]
+                    {"insert"=>" (#{valid_digit(m[:vol], 2)} mL); "}]
         end
         delta += [{"insert"=>"Yield "}]
         obj.products.each do |material|
@@ -436,18 +445,23 @@ module Reporter
         ])
       end
 
-      def sample_molecule_name_delta(sample)
+      def sample_molecule_name_delta(sample, font_size = 12)
         mnh = sample[:molecule_name_hash]
         smn = mnh && mnh[:desc] != 'sum_formular' ? mnh[:label] : nil
         iupac = sample[:molecule] ? sample[:molecule][:iupac_name] : nil
         if smn.present?
-          [{ 'insert' => smn.to_s }]
+          [{ 'attributes' => { 'font-size' => font_size },
+             'insert' => smn.to_s }]
         elsif iupac.present?
-          [{ 'insert' => iupac.to_s }]
+          [{ 'attributes' => { 'font-size' => font_size },
+             'insert' => iupac.to_s }]
         else
-          [{ 'insert' => '"' },
-           { 'attributes' => { 'bold' => 'true' }, 'insert' => 'NAME' },
-           { 'insert' => '"' }]
+          [{ 'attributes' => { 'font-size' => font_size },
+             'insert' => '"' },
+           { 'attributes' => { 'bold' => 'true', 'font-size' => font_size },
+             'insert' => 'NAME' },
+           { 'attributes' => { 'font-size' => font_size },
+             'insert' => '"' }]
         end
       end
 
@@ -460,12 +474,8 @@ module Reporter
       def sort_by_index(analyses)
         analyses.sort_by do |a|
           analy_index = a[:extended_metadata][:index]
-          analy_index ? analy_index.try(:to_i) : -1
+          analy_index ? analy_index&.to_i : -1
         end
-      end
-
-      def fixed_digit(input_num, digit_num)
-        "%.#{digit_num}f" % input_num.try(:to_f).try(:round, digit_num).to_f
       end
 
       def alphabet(counter)
@@ -479,9 +489,10 @@ module Reporter
         s.present? && s['value'].present? && s['value'] || 'xx'
       end
 
-      def mol_serial_delta(mol_id)
+      def mol_serial_delta(mol_id, font_size = 12)
         serial = mol_serial(mol_id)
-        [{ 'insert' => serial, 'attributes' => { 'bold' => 'true' } }]
+        [{ 'attributes' => { 'bold' => 'true', 'font-size' => font_size },
+           'insert' => serial }]
       end
     end
   end

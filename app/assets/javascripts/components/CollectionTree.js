@@ -105,7 +105,7 @@ export default class CollectionTree extends React.Component {
         <div className="title" style={{backgroundColor:'white'}}
              onClick={() => this.setState({sharedToCollectionVisible: !sharedToCollectionVisible})}>
           <i className="fa fa-share-alt share-icon" />&nbsp;&nbsp;
-          My shared collections 
+          My shared collections
         </div>
       </div>
     )

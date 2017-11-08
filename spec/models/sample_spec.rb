@@ -1,4 +1,5 @@
 require 'rails_helper'
+require Rails.root.join 'spec/concerns/taggable.rb'
 
 RSpec.describe Sample, type: :model do
   describe 'creation' do
@@ -11,6 +12,13 @@ RSpec.describe Sample, type: :model do
     it 'has molecule_name_id' do
       expect(sample.molecule_name_id).not_to be_blank
     end
+  end
+
+  describe 'taggable' do
+    # it_behaves_like 'taggable_element_before_and_after_create'
+    # it_behaves_like 'taggable_element_before_and_after_collection_update'
+    # it_behaves_like 'taggable_reaction_sample_before_and_after_update'
+    it_behaves_like 'taggable_element_before_and_after_analyses_update'
   end
 
   describe 'after creation' do
@@ -57,7 +65,7 @@ RSpec.describe Sample, type: :model do
     end
 
     it 'also destroys corresponding CodeLog' do
-      expect(CodeLog.where(source: "sample",source_id: sample.id)).to be_empty
+      expect(CodeLog.where(source: 'sample', source_id: sample.id)).to be_empty
     end
   end
 

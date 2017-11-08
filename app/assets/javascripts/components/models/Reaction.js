@@ -552,19 +552,25 @@ export default class Reaction extends Element {
     return !_.isEmpty(this) && (this.isNew || this.changed);
   }
 
+  extractNameFromOri(origin) {
+    const ori = origin || this.origin;
+    const oriSLabel = ori && ori.short_label;
+    const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
+    const name = `According to General Procedure ${oriSLNum}`;
+    return name;
+  }
+
   nameFromRole(role) {
     let name = this.name;
     const sLabel = this.short_label;
     const sLNum = sLabel ? sLabel.split('-').slice(-1)[0] : 'xx';
-    const oriSLabel = this.origin && this.origin.short_label;
-    const oriSLNum = oriSLabel ? oriSLabel.split('-').slice(-1)[0] : 'xx';
 
     switch (role) {
       case 'gp':
         name = `General Procedure ${sLNum}`;
         break;
       case 'parts':
-        name = `According to General Procedure ${oriSLNum}`;
+        name = this.extractNameFromOri();
         break;
       case 'single':
         name = `Single ${sLNum}`;

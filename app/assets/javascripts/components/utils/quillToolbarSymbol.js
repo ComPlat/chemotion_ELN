@@ -1,4 +1,23 @@
+import React from 'react';
+
+const minusRender = (name) => (
+  <span
+    key={`${name}_key`}
+    id={`${name}_id`}
+    style={{ marginRight: '10px', cursor: 'pointer' }}
+  >
+    <i className='fa fa-minus' />
+  </span>
+);
+
 const reactionToolbarSymbol = [
+  {
+    name: 'ndash',
+    ops: [
+      { insert: '–' },
+    ],
+    render: minusRender,
+  },
   {
     name: 'water-free',
     ops: [
@@ -205,6 +224,13 @@ const reactionToolbarSymbol = [
 
 const sampleAnalysesContentSymbol = [
   {
+    name: 'ndash',
+    render: minusRender,
+    ops: [
+      { insert: '–' },
+    ],
+  },
+  {
     name: 'h-nmr',
     ops: [
       { attributes: { script: 'super' }, insert: '1' },
@@ -230,7 +256,7 @@ const sampleAnalysesContentSymbol = [
     name: 'ir',
     ops: [
       { insert: 'IR (ATR, ṽ) = cm' },
-      { attributes: { script: 'super' }, insert: '-1' },
+      { attributes: { script: 'super' }, insert: '–1' },
       { insert: '.' },
     ],
   },
@@ -243,7 +269,35 @@ const sampleAnalysesContentSymbol = [
   {
     name: 'hr',
     ops: [
-      { insert: 'HRMS (): calc. , found .' },
+      { insert: 'HRMS (): calcd , found .' },
+    ],
+  },
+  {
+    name: 'hr1',
+    ops: [
+      { insert: 'HRMS–EI ' },
+      { insert: '(m/z)', attributes: { italic: true } },
+      { insert: ': [M]' },
+      { insert: '+', attributes: { script: 'super' } },
+      { insert: ' calcd for , ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '; found, ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '.' },
+    ],
+  },
+  {
+    name: 'hr2',
+    ops: [
+      { insert: 'HRMS–FAB ' },
+      { insert: '(m/z)', attributes: { italic: true } },
+      { insert: ': [M + H]' },
+      { insert: '+', attributes: { script: 'super' } },
+      { insert: ' calcd for , ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '; found, ' },
+      { insert: 'MASS', attributes: { bold: true } },
+      { insert: '.' },
     ],
   },
   {

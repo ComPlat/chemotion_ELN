@@ -1,42 +1,36 @@
-import React, {Component, PropTypes} from 'react';
-import {DragSource} from 'react-dnd';
+import React, { PropTypes } from 'react';
+import { DragSource } from 'react-dnd';
+import DragDropItemTypes from './DragDropItemTypes';
 
-const sampleSource = {
+const listSource = {
   beginDrag(props) {
     return props;
-  }
+  },
 };
 
 const collectSource = (connect, monitor) => ({
   connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging()
+  isDragging: monitor.isDragging(),
 });
 
-class ElementContainer extends Component {
-  constructor(props) {
-    super(props);
+const ElementContainer = ({ connectDragSource, sourceType }) => {
+  if (sourceType === DragDropItemTypes.SAMPLE) {
+    return connectDragSource(
+      <span className="fa fa-arrows dnd-arrow-enable text-info" />,
+      { dropEffect: 'copy' },
+    );
+  } else if (sourceType === DragDropItemTypes.GENERALPROCEDURE) {
+    return connectDragSource(
+      <span className="fa fa-home dnd-arrow-enable text-info" />,
+    );
   }
+  return <span className="fa fa-arrows dnd-arrow-disable" />;
+};
 
-  render() {
-    const {connectDragSource, sourceType} = this.props;
-    if(sourceType == "") {
-      return <span style={ {fontSize: '18pt', cursor: 'not-allowed',
-                            color: 'lightgray'}}
-                  className='fa fa-arrows'></span>;
-    } else {
-      return connectDragSource(
-        <span style={{fontSize: '18pt', cursor: 'move'}}
-          className='text-info fa fa-arrows'></span>,
-        {dropEffect: 'copy'}
-      );
-    }
-  }
-}
-
-export default DragSource(props => props.sourceType, sampleSource,
+export default DragSource(props => props.sourceType, listSource,
   collectSource)(ElementContainer);
 
 ElementContainer.propTypes = {
   connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired
+  sourceType: PropTypes.string.isRequired,
 };

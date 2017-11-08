@@ -13,9 +13,21 @@ FactoryGirl.define do
       sample.creator = FactoryGirl.build(:user) unless sample.creator
       sample.collections << FactoryGirl.build(:collection) #if sample.collections.blank?
       sample.molecule = FactoryGirl.build(:molecule) unless sample.molecule
-
       unless sample.container
         sample.container = FactoryGirl.create(:container, :with_analysis)
+      end
+    end
+
+    factory :valid_sample do
+      after(:build) do |sample|
+        creator = FactoryGirl.create(:user)
+        sample.creator = creator unless sample.creator
+        collection = FactoryGirl.create(:collection, user_id: creator.id)
+        sample.collections << collection if sample.collections.blank?
+        sample.molecule = FactoryGirl.build(:molecule) unless sample.molecule
+        unless sample.container
+          sample.container = FactoryGirl.create(:container, :with_analysis)
+        end
       end
     end
   end

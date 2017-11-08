@@ -1,16 +1,61 @@
-<?xml version="1.0" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
- "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
-<svg version="1.0" xmlns="http://www.w3.org/2000/svg"
- width="162.000000pt" height="154.000000pt" viewBox="0 0 162.000000 154.000000"
- preserveAspectRatio="xMidYMid meet">
-
-<g transform="translate(0.000000,154.000000) scale(0.100000,-0.100000)"
-fill="#000000" stroke="none">
-<path d="M799 1159 c-67 -7 -148 -49 -191 -98 -78 -89 -117 -245 -99 -391 16
--119 52 -199 115 -253 98 -84 276 -96 401 -29 48 26 50 29 53 76 2 26 0 46 -5
-45 -4 -2 -38 -19 -75 -38 -83 -41 -138 -48 -210 -27 -41 12 -65 27 -96 60
--118 128 -100 430 31 530 76 58 195 56 291 -5 26 -16 52 -27 57 -24 5 4 9 24
-9 45 0 31 -6 43 -29 59 -58 42 -155 61 -252 50z"/>
-</g>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="162pt"
+   height="162pt"
+   viewBox="0 0 162 162"
+   preserveAspectRatio="xMidYMid meet"
+   id="svg77"
+   sodipodi:docname="c-nmr.svg"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
+  <metadata
+     id="metadata83">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs81" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="2556"
+     inkscape:window-height="1552"
+     id="namedview79"
+     showgrid="false"
+     inkscape:zoom="4.5319116"
+     inkscape:cx="172.95694"
+     inkscape:cy="95.650954"
+     inkscape:window-x="0"
+     inkscape:window-y="22"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="text172" />
+  <g
+     aria-label="C"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:144px;line-height:1.25;font-family:'Noto Sans Meetei Mayek';-inkscape-font-specification:'Noto Sans Meetei Mayek';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.75"
+     id="text172">
+    <path
+       d="m 94.591297,19.127106 q -24.77539,0 -38.947754,16.586914 -14.172363,16.586914 -14.172363,45.351562 0,29.709468 13.752441,45.876468 13.752442,16.06201 39.157715,16.06201 16.376954,0 36.848144,-6.08887 v 16.79688 q -9.76318,3.56933 -18.7915,4.8291 -9.02832,1.36474 -20.786136,1.36474 -33.908691,0 -52.280273,-20.57617 -18.266602,-20.68115 -18.266602,-58.474119 0,-23.725586 8.713379,-41.572265 8.818359,-17.84668 25.510254,-27.504883 16.796875,-9.6582032 39.472656,-9.6582032 24.355472,0 42.412112,9.0283202 l -7.76856,16.376953 Q 111.07323,19.127106 94.591297,19.127106 Z"
+       style="font-size:215px;stroke-width:0.75"
+       id="path208" />
+  </g>
 </svg>

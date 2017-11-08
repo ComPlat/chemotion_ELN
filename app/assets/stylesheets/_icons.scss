@@ -4,11 +4,12 @@
 
 @font-face {
   font-family: "icons";
-  src: asset_url("icons.eot");
-  src: asset_url("icons.eot?#iefix") format("embedded-opentype"),
-       asset_url("icons.woff") format("woff"),
-       asset_url("icons.ttf") format("truetype"),
-       asset_url("icons.svg#icons") format("svg");
+  src: url("icons.eot");
+  src: url("icons.eot?#iefix") format("embedded-opentype"),
+       url("icons.woff2") format("woff2"),
+       url("icons.woff") format("woff"),
+       url("icons.ttf") format("truetype"),
+       url("icons.svg#icons") format("svg");
   font-weight: normal;
   font-style: normal;
 }
@@ -16,7 +17,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: "icons";
-    src: asset_url("icons.svg#icons") format("svg");
+    src: url("icons.svg#icons") format("svg");
   }
 }
 
@@ -33,6 +34,8 @@
 .icon-h-nmr:before,
 .icon-hand-stop:before,
 .icon-hr:before,
+.icon-hr1:before,
+.icon-hr2:before,
 .icon-ir:before,
 .icon-isolated:before,
 .icon-polymer:before,
@@ -75,6 +78,8 @@
 .icon-h-nmr:before { content: "\f119"; }
 .icon-hand-stop:before { content: "\f105"; }
 .icon-hr:before { content: "\f11a"; }
+.icon-hr1:before { content: "\f11e"; }
+.icon-hr2:before { content: "\f11f"; }
 .icon-ir:before { content: "\f11b"; }
 .icon-isolated:before { content: "\f10e"; }
 .icon-polymer:before { content: "\f104"; }
@@ -104,6 +109,8 @@ $font-icons-gpx-b: "\f10d";
 $font-icons-h-nmr: "\f119";
 $font-icons-hand-stop: "\f105";
 $font-icons-hr: "\f11a";
+$font-icons-hr1: "\f11e";
+$font-icons-hr2: "\f11f";
 $font-icons-ir: "\f11b";
 $font-icons-isolated: "\f10e";
 $font-icons-polymer: "\f104";

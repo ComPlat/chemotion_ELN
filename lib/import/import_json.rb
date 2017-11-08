@@ -104,13 +104,9 @@ class Import::ImportJson
       @log['collections'] = 'could not find collection or user'
       return @log
     end
-    #begin
-      import_reactions
-      import_samples
-      import_attachments
-    #rescue
-    #end
-    File.write("log_#{Time.now.to_i}.json", JSON.pretty_generate(@log))
+    import_reactions
+    import_samples
+    #File.write("log_#{Time.now.to_i}.json", JSON.pretty_generate(@log))
   end
 
   def collection_id= id
@@ -130,7 +126,7 @@ class Import::ImportJson
   def import_reactions
     return unless collections?
     attribute_names = filter_attributes(Reaction)
-    reactions.each do |el|
+    reactions.each_value do |el|
       attribs = el.slice(*attribute_names).merge(
         created_by: user_id,
         collections_reactions_attributes: [
@@ -145,7 +141,7 @@ class Import::ImportJson
   def import_samples
     return unless collections?
     attribute_names = filter_attributes(Sample)
-    samples.each do |el|
+    samples.each_value do |el|
       attribs = el.slice(*attribute_names).merge(
         created_by: user_id,
         collections_samples_attributes: [
@@ -169,11 +165,10 @@ class Import::ImportJson
   end
 
   def map_data_uuids(h)
-    reactions.map do |r|
-      r['uuid'].is_a?(String) && h['reactions'][r['uuid']] = {}
-    end
-    samples.map do |r|
-      r['uuid'].is_a?(String) && h['samples'][r['uuid']] = {}
+    %w(reactions samples).each do |method|
+      send(method).each_key do |uuid|
+        h[method][uuid] = {}
+      end
     end
   end
 
@@ -198,6 +193,7 @@ class Import::ImportJson
           )
         end
         create_analyses(uuid, new_el)
+        create_datasets(uuid, new_el)
         new_el
       else
         @log[source + 's'][uuid]['created_at'] = 'not created'
@@ -212,7 +208,25 @@ class Import::ImportJson
         .first.children.create(
         container_type: 'analysis',
         extended_metadata: a['extended_metadata'],
-        description: a['description']
+        description: a['description'],
+        name: a['name']
+      )
+      @log['analyses'] ||= {}
+      remote_id = a['id']
+      @log['analyses'][remote_id] = new_a.id
+
+    end
+  end
+
+  def create_datasets(uuid, el)
+    datasets[uuid]&.each do |a|
+      next unless (remote_id = a['analysis_id'])
+      next unless (analysis_id = @log['analyses'][remote_id])
+      new_a = Container.find_by(id: analysis_id).children.create(
+        container_type: 'dataset',
+        extended_metadata: a['extended_metadata'],
+        description: a['description'],
+        name: a['name']
       )
       a['attachments']&.each do |att|
         @new_attachments[att['identifier']] = Attachment.new(
@@ -230,7 +244,7 @@ class Import::ImportJson
     case klass
     when Sample
       attributes -= [
-        'ancestry', 'molecule_id', 'xref', 'fingerprint_id',
+        'ancestry', 'molecule_id', 'xref', 'fingerprint_id', 'molecule_name_id',
         'is_top_secret', 'molecule_svg_file'
        ]
       attributes += ['residues_attributes', 'elemental_compositions_attributes']
@@ -252,15 +266,19 @@ class Import::ImportJson
   end
 
   def reactions
-    data && data['reactions'] || []
+    data && data['reactions'] || {}
   end
 
   def samples
-    data && data['samples'] || []
+    data && data['samples'] || {}
   end
 
   def analyses
-    data && data['analyses'] || []
+    data && data['analyses'] || {}
+  end
+
+  def datasets
+    data && data['datasets'] || {}
   end
 
   def collections?

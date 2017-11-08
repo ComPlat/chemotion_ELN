@@ -91,6 +91,14 @@ module Reporter
           op
         end
       end
+
+      def fixed_digit(input_num, digit_num)
+        Chemotion::Calculations.fixed_digit(input_num, digit_num)
+      end
+
+      def valid_digit(input_num, digit_num)
+        Chemotion::Calculations.valid_digit(input_num, digit_num)
+      end
     end
   end
 end

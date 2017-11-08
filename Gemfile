@@ -35,7 +35,7 @@ group :development do
   gem 'web-console', '~> 2.0'
 end
 
-gem 'pg'
+gem 'pg', '~> 0.20.0'
 gem 'pg_search'
 
 gem 'devise'

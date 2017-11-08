@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171004132647) do
+ActiveRecord::Schema.define(version: 20171019102800) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -72,9 +72,11 @@ ActiveRecord::Schema.define(version: 20171004132647) do
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
-    t.string  "token",     null: false
-    t.integer "device_id"
+    t.string  "token",   null: false
+    t.integer "user_id"
     t.inet    "ip"
+    t.string  "role"
+    t.string  "fqdn"
   end
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
@@ -436,18 +438,18 @@ ActiveRecord::Schema.define(version: 20171004132647) do
 
   create_table "reactions", force: :cascade do |t|
     t.string   "name"
-    t.datetime "created_at",                                                                      null: false
-    t.datetime "updated_at",                                                                      null: false
+    t.datetime "created_at",                                                                   null: false
+    t.datetime "updated_at",                                                                   null: false
     t.text     "description"
     t.string   "timestamp_start"
     t.string   "timestamp_stop"
     t.text     "observation"
-    t.string   "purification",       default: [],                                                              array: true
-    t.string   "dangerous_products", default: [],                                                              array: true
+    t.string   "purification",       default: [],                                                           array: true
+    t.string   "dangerous_products", default: [],                                                           array: true
     t.string   "tlc_solvents"
     t.text     "tlc_description"
     t.string   "rf_value"
-    t.text     "temperature",        default: "---\nvalueUnit: \"°C\"\nuserText: ''\ndata: []\n"
+    t.jsonb    "temperature",        default: {"data"=>[], "userText"=>"", "valueUnit"=>"°C"}
     t.string   "status"
     t.string   "reaction_svg_file"
     t.string   "solvent"

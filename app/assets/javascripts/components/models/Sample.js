@@ -377,19 +377,9 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
-  // setAmount(amount) {
-  //   this.amount_value = amount.value;
-  //   this.amount_unit = amount.unit;
-  // }
-
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
-  }
-
-  setAmountAndUnit(amount) {
-    this.amount_value = amount.value;
-    this.amount_unit = amount.unit;
   }
 
   setDensity(density) {
@@ -531,7 +521,10 @@ export default class Sample extends Element {
           return amount_g;
         case 'l': {
           if (this.has_molarity) {
-            return this.amount_mol / this.molarity_value;
+            const molecularWeight = this.molecule_molecular_weight;
+            const purity = this.purity || 1.0;
+            const molarity = this.molarity_value;
+            return (amount_g * purity) / (molarity * molecularWeight);
           } else if (this.has_density) {
             const density = this.density;
             return amount_g / (density * 1000);
@@ -540,13 +533,13 @@ export default class Sample extends Element {
           return 0;
         }
         case 'mol': {
-          const molecularWeight = this.molecule_molecular_weight;
-          const purity = this.purity || 1.0;
-          if (molecularWeight) {
-            return (amount_g * purity) / molecularWeight;
+          if (this.has_molarity) {
+            return this.amount_l * this.molarity_value;
           }
 
-          break;
+          const molecularWeight = this.molecule_molecular_weight;
+          const purity = this.purity || 1.0;
+          return (amount_g * purity) / molecularWeight;
         }
         default:
           return amount_g;
@@ -579,12 +572,11 @@ export default class Sample extends Element {
           return amount_value / 1000.0;
         case 'l':
           if (this.has_molarity) {
-            return amount_value * this.molarity_value;
+            const molecularWeight = this.molecule_molecular_weight;
+            return amount_value * this.molarity_value * molecularWeight;
           } else if (this.has_density) {
-            // has_density
             return amount_value * (this.density || 1.0) * 1000;
           }
-
           return 0;
         case 'mol':
           const molecularWeight = this.molecule_molecular_weight;

@@ -81,11 +81,12 @@ export default class ElementsTableEntries extends Component {
     return (currentElement && currentElement.id == element.id);
   }
 
-  isCurrentElementDropTargetForType(type) {
+  isCurrEleDropType(type) {
     const {currentElement} = ElementStore.getState();
     const targets = {
       sample: ['reaction', 'wellplate'],
-      wellplate: ['screen']
+      wellplate: ['screen'],
+      generalProcedure: ['reaction'],
     };
     return type && currentElement && targets[type].includes(currentElement.type)
   }
@@ -99,13 +100,32 @@ export default class ElementsTableEntries extends Component {
   }
 
   dragHandle(element) {
-    let sourceType =  "";
-    if (element.type == 'sample' && this.isCurrentElementDropTargetForType('sample')) {
+    const sourceType = this.dropSourceType(element);
+    return (
+      <ElementContainer
+        key={element.id}
+        sourceType={sourceType}
+        element={element}
+      />
+    );
+  }
+
+  dropSourceType(el) {
+    let sourceType = '';
+    const isDropForSample =
+      el.type === 'sample' && this.isCurrEleDropType('sample');
+    const isDropForWellPlate =
+      el.type === 'wellplate' && this.isCurrEleDropType('wellplate');
+    const isDropForGP = el.type === 'reaction' && el.role === 'gp' &&
+      this.isCurrEleDropType('generalProcedure');
+    if (isDropForSample) {
       sourceType = DragDropItemTypes.SAMPLE;
-    } else if (element.type == 'wellplate' && this.isCurrentElementDropTargetForType('wellplate')) {
+    } else if (isDropForWellPlate) {
       sourceType = DragDropItemTypes.WELLPLATE;
+    } else if (isDropForGP) {
+      sourceType = DragDropItemTypes.GENERALPROCEDURE;
     }
-    return <ElementContainer key={element.id} sourceType={sourceType} element={element}/>;
+    return sourceType;
   }
 
   topSecretIcon(element) {

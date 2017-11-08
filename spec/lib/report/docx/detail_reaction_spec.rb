@@ -114,7 +114,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     it "has correct content" do
       expect(content[:title]).to eq(tit)
-      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.000ml)")
+      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.00ml)")
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML())
       )
@@ -139,29 +139,29 @@ describe 'Reporter::Docx::DetailReaction instance' do
       expect(target.send(:title)).to eq(tit)
       expect(target.send(:gp_title_delta)).to eq(
         [
-          {"insert"=>"[3.#{prev_index + 1}] "},
-          {"insert"=>"#{tit} "},
-          {"insert"=>"(#{r1.short_label})"}
+          {"attributes"=>{"font-size"=>13}, "insert"=>"3.#{prev_index + 1} "},
+          {"attributes"=>{"font-size"=>13}, "insert"=>"#{tit} "},
+          {"attributes"=>{"font-size"=>13}, "insert"=>"(#{r1.short_label})"}
         ]
       )
       expect(target.send(:synthesis_title_delta)).to eq(
         [
-          {"insert"=>"[4.#{prev_index + 1}] "},
-          {"insert"=>"#{s2.molecule_name_hash[:label]}"},
-          {"insert"=>" ("},
-          {"insert"=>serial, "attributes"=>{"bold"=>"true"}},
-          {"insert"=>")"},
-          {"insert"=>", "},
-          {"insert"=>"#{s3.molecule_name_hash[:label]}"},
-          {"insert"=>" ("},
-          {"insert"=>serial, "attributes"=>{"bold"=>"true"}},
-          {"insert"=>")"},
+          {"attributes"=>{"font-size"=>13}, "insert"=>"4.#{prev_index + 1} "},
+          {"attributes"=>{"font-size"=>13}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
+          {"attributes"=>{"font-size"=>13}, "insert"=>" ("},
+          {"attributes"=>{"font-size"=>13, "bold"=>"true"}, "insert"=>serial},
+          {"attributes"=>{"font-size"=>13}, "insert"=>")"},
+          {"attributes"=>{"font-size"=>13}, "insert"=>", "},
+          {"attributes"=>{"font-size"=>13}, "insert"=>"#{s3.molecule_name_hash[:label]}"},
+          {"attributes"=>{"font-size"=>13}, "insert"=>" ("},
+          {"attributes"=>{"font-size"=>13, "bold"=>"true"}, "insert"=>serial},
+          {"attributes"=>{"font-size"=>13}, "insert"=>")"},
         ]
       )
       expect(target.send(:products_delta)).to eq(
         [
           {"insert"=>"Name: "},
-          {"insert"=>"#{s2.molecule_name_hash[:label]}"},
+          {"attributes"=>{"font-size"=>12}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>"; "},
           {"insert"=>"Formula: "},
           {"insert"=>"H"},
@@ -177,7 +177,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"."},
           {"insert"=>"\n"},
           {"insert"=>"Name: "},
-          {"insert"=>"#{s3.molecule_name_hash[:label]}"},
+          {"attributes"=>{"font-size"=>12}, "insert"=>"#{s3.molecule_name_hash[:label]}"},
           {"insert"=>"; "},
           {"insert"=>"Formula: "},
           {"insert"=>"H"},
@@ -199,29 +199,29 @@ describe 'Reporter::Docx::DetailReaction instance' do
         [
           {"insert"=>"#{tit}: "},
           {"insert"=>"{A|"},
-          {"insert"=>serial, "attributes"=>{"bold"=>"true"}},
+          {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
           {"insert"=>"} "},
-          {"insert"=>"#{s2.molecule_name_hash[:label]}"},
-          {"insert"=>" (1.000 g, 55.508 mmol, 0.88 equiv.); "},
+          {"attributes"=>{"font-size"=>12}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
+          {"insert"=>" (1.00 g, 55.5 mmol, 0.880 equiv); "},
           {"insert"=>"{B"},
           {"insert"=>"} "},
-          {"insert"=>s4.preferred_label},
-          {"insert"=>" (0.00 mL); "},
+          {"attributes"=>{"font-size"=>12}, "insert"=>s4.preferred_label},
+          {"insert"=>" (0.0 mL); "},
           {"insert"=>"Yield "},
           {"insert"=>"{C|"},
-          {"insert"=>serial, "attributes"=>{"bold"=>"true"}},
-          {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
+          {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
+          {"insert"=>"} = #{(equiv * 100).to_i}% (0.00 g, 0.00 mmol)"},
           {"insert"=>"; "},
           {"insert"=>"{D|"},
-          {"insert"=>serial, "attributes"=>{"bold"=>"true"}},
-          {"insert"=>"} = #{(equiv * 100).to_i}% (0.000 g, 0.000 mmol)"},
+          {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
+          {"insert"=>"} = #{(equiv * 100).to_i}% (0.00 g, 0.00 mmol)"},
           {"insert"=>"."},
           {"insert"=>"\n"},
           {"insert"=>"#{correct_obsv}"},
           {"insert"=>"."},
           {"insert"=>" "},
-          {"attributes"=>{"italic"=>true}, "insert"=>"R"},
-          {"attributes"=>{"italic"=>true, "script"=>"sub"}, "insert"=>"f"},
+          {"attributes"=>{"italic"=>"true"}, "insert"=>"R"},
+          {"attributes"=>{"italic"=>"true", "script"=>"sub"}, "insert"=>"f"},
           {"insert"=>" = #{rf} (#{t_sol})."}, {"insert"=>"\n"},
           {"attributes"=>{"color"=>"black", "script"=>"super"}, "insert"=>"-1"},
           {"insert"=>correct_content},

@@ -6,7 +6,6 @@ class Reaction < ActiveRecord::Base
   include ElementCodes
   include Taggable
 
-  serialize :temperature, Hash
   serialize :description, Hash
   serialize :observation, Hash
 
