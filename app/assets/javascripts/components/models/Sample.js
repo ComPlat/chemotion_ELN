@@ -651,7 +651,7 @@ export default class Sample extends Element {
   }
 
   get polymer_type() {
-    if (this.contains_residues == false) return false;
+    if (!this.contains_residues) return false;
 
     let info = this.residues[0].custom_info;
     let type = info.polymer_type ? info.polymer_type : info.surface_type
