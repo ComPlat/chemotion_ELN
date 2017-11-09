@@ -76,10 +76,18 @@ export default class PolymerSection extends React.Component {
 
   handlePolymerTypeSelectChanged(value, residue, sample){
     residue.custom_info['polymer_type'] = value;
+    delete residue.custom_info['surface_type'];
 
     // tell parent (SampleDetails) component about changes
     this.props.parent.handleSampleChanged(sample);
   }
+
+  handleSurfaceTypeSelectChanged(value, residue, sample){
+    residue.custom_info['surface_type'] = value;
+    delete residue.custom_info['polymer_type'];
+    this.props.parent.handleSampleChanged(sample);
+  }
+
 
   checkInputStatus(sample, key) {
     if (sample['error_' + key]) {
@@ -211,6 +219,26 @@ export default class PolymerSection extends React.Component {
     )
   }
 
+  surfaceType(sample, residue) {
+    let selectOptions = [
+      {label: 'Glass', value: 'glass'},
+      {label: 'Si native oxide', value: 'si Native Oxide'},
+      {label: 'Si, 5nm Ti, 100nm Au', value: 'si, 5nm Ti, 100nm Au'}
+    ];
+
+    return (
+      <Select
+        options={selectOptions}
+        simpleValue
+        key={`surface_type_${sample.id}`}
+        name="surface_type"
+        value={residue.custom_info.surface_type}
+        clearable={false}
+        onChange={(v) => this.handleSurfaceTypeSelectChanged(v, residue, sample)}
+      />
+    )
+  }
+
   polymerCrossLinkage(sample, residue) {
     return (
       <FormGroup>
@@ -235,13 +263,23 @@ export default class PolymerSection extends React.Component {
     return (
       <div className="polymer-section">
         <Row>
-          <Col md={4}>
+          <Col md={6}>
             <label>Polymer type</label>
             {this.polymerType(sample, residue)}
           </Col>
-          <Col md={4}>{this.polymerCrossLinkage(sample, residue)}</Col>
-
-          <Col md={4}>{this.polymerFormula(sample, residue)}</Col>
+          <Col md={6}>
+            <label>Surface type</label>
+            {this.surfaceType(sample, residue)}
+          </Col>
+        </Row>
+        <br />
+        <Row>
+          <Col md={6}>
+            {this.polymerCrossLinkage(sample, residue)}
+          </Col>
+          <Col md={6}>
+            {this.polymerFormula(sample, residue)}
+          </Col>
         </Row>
         <Row>
           <Col md={8}>
