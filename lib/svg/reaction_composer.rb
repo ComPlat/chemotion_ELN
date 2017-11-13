@@ -232,7 +232,7 @@ module SVG
         yield_amount = amount && !amount.to_f.nan? && !amount.to_f.infinite? ? (amount * 100).try(:round, 0) : 0
         yield_svg = <<-END
           <svg font-family="sans-serif">
-            <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f+YIELD_YOFFSET}" x="#{x}">#{yield_amount} %</text>
+            <text text-anchor="middle" font-size="#{word_size + 1}" y="#{y.to_f+YIELD_YOFFSET}" x="#{x}">#{yield_amount}%</text>
           </svg>
         END
       end
