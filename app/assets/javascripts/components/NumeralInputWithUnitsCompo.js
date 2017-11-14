@@ -134,10 +134,8 @@ export default class NumeralInputWithUnitsCompo extends Component {
         <InputGroup.Button>
           <Button active
             onClick={() =>{this.togglePrefix()}}
-            bsClass='bs-btnTxt--small btn'
             bsStyle={bsStyleBtnAfter}
             bsSize={bsSize}
-            style={{padding:"6px 2px 6px 2px"}}
           >
             {mp + unit}
           </Button>
@@ -145,7 +143,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       )
 
       return (
-        <div>
+        <div className="numeric-input-unit">
           {labelWrap}
           <InputGroup
             onDoubleClick={(event)=>this.handleInputDoubleClick(event)}
@@ -167,7 +165,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
       );
     } else {
       return(
-        <div>
+        <div className="numeric-input-unit">
           {labelWrap}
           <div onDoubleClick={(event)=>this.handleInputDoubleClick(event)}>
             <FormControl

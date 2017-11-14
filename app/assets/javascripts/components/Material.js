@@ -4,8 +4,8 @@ import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
-import SampleName from './common/SampleName'
-import ElementActions from './actions/ElementActions'
+import SampleName from './common/SampleName';
+import ElementActions from './actions/ElementActions';
 import { UrlSilentNavigation, Alphabet } from './utils/ElementUtils';
 
 const source = {
@@ -24,26 +24,30 @@ class Material extends Component {
     let { reaction } = this.props;
     UrlSilentNavigation(sample);
     sample.updateChecksum();
-    ElementActions.showReactionMaterial({ sample: sample, reaction: reaction })
+    ElementActions.showReactionMaterial({ sample: sample, reaction: reaction });
   }
 
-  notApplicableInput(inputsStyle) {
+  notApplicableInput() {
     return (
-      <td style={inputsStyle}>
-        <FormControl type="text"
-               value="n/a"
-               disabled={true}
-               />
+      <td>
+        <FormControl
+          bsClass='bs-form--compact form-control'
+          bsSize="small"
+          style={{ textAlign: 'center'}}
+          type="text"
+          value="n/a"
+          disabled={true}
+        />
       </td>
     )
   }
 
-  materialVolume(material, inputsStyle) {
+  materialVolume(material) {
     if (material.contains_residues)
-      return this.notApplicableInput(inputsStyle);
+      return this.notApplicableInput();
     else
       return(
-        <td style={inputsStyle}>
+        <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_l}
@@ -59,15 +63,15 @@ class Material extends Component {
   }
 
 
-  materialLoading(material, inputsStyle, showLoadingColumn) {
+  materialLoading(material, showLoadingColumn) {
     if(!showLoadingColumn) {
       return false;
     } else if (!material.contains_residues)
-      return this.notApplicableInput(inputsStyle);
+      return this.notApplicableInput();
     else {
       let disabled = this.props.materialGroup == 'products';
       return(
-        <td style={inputsStyle}>
+        <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.loading}
@@ -84,11 +88,11 @@ class Material extends Component {
     }
   }
 
-  materialRef(material, inputsStyle) {
+  materialRef(material) {
     return (
       this.props.materialGroup == 'products'
-      ? <td style={inputsStyle}></td>
-      : <td style={inputsStyle}>
+      ? <td />
+      : <td>
           <Radio
             name="reference"
             checked={material.reference}
@@ -101,30 +105,30 @@ class Material extends Component {
   }
 
   render() {
-    const { material, deleteMaterial, isDragging, connectDragSource,
-            showLoadingColumn } = this.props;
+    const { material, isDragging } = this.props;
 
-    let style = {padding: "0"};
+    let style = { padding: "0" };
     if (isDragging) {
       style.opacity = 0.3;
     }
-    let handleStyle = {
-      cursor: 'move',
-      lineHeight: 2,
-      verticalAlign: 'middle'
-    };
-    const inputsStyle = {
-      padding: "0px 2px 0px 2px",
-      margin: "0px"
-    };
+
+    // let handleStyle = {
+    //   cursor: 'move',
+    //   lineHeight: 2,
+    //   verticalAlign: 'middle'
+    // };
+    // const inputsStyle = {
+    //   padding: "0px 2px 0px 2px",
+    //   margin: "0px"
+    // };
 
     if(this.props.materialGroup == 'products')
       material.amountType = 'real';//always take real amount for product
 
     return (
       this.props.materialGroup !== 'solvents'
-        ? this.generalMaterial(this.props, style, handleStyle, inputsStyle)
-        : this.solventMaterial(this.props, style, handleStyle, inputsStyle)
+        ? this.generalMaterial(this.props, style)
+        : this.solventMaterial(this.props, style)
     )
   }
 
@@ -133,8 +137,8 @@ class Material extends Component {
       return (
         <FormControl
           type="text"
-          style={{ height: '30px' }}
-          bsClass='bs-form--compact form-control'
+          bsClass="bs-form--compact form-control"
+          bsSize="small"
           value={`${((material.equivalent || 0 ) * 100).toFixed(0)}%`}
           disabled={true}
         />
@@ -282,8 +286,8 @@ class Material extends Component {
     return this.props.material
   }
 
-  generalMaterial(props, style, handleStyle, inputsStyle) {
-    const { material, deleteMaterial, isDragging, connectDragSource,
+  generalMaterial(props) {
+    const { material, deleteMaterial, connectDragSource,
             showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target'
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default'
@@ -292,25 +296,25 @@ class Material extends Component {
     const concn = mol / reaction.solventVolume;
 
     return (
-      <tr style={style}>
+      <tr className="general-material">
         {connectDragSource(
-          <td style={handleStyle}>
+          <td className="drag-source">
             <span className='text-info fa fa-arrows'></span>
           </td>,
           {dropEffect: 'copy'}
         )}
 
-        <td style={inputsStyle} style={{width: "25%", maxWidth: "50px"}}>
+        <td style={{width: "25%", maxWidth: "50px"}}>
           {this.materialNameWithIupac(material)}
         </td>
 
-        {this.materialRef(material, inputsStyle)}
+        {this.materialRef(material)}
 
-        <td style={inputsStyle} >
+        <td>
           {this.switchTargetReal(isTarget)}
         </td>
 
-        <td style={inputsStyle}>
+        <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_g}
@@ -323,9 +327,9 @@ class Material extends Component {
           />
         </td>
 
-        {this.materialVolume(material, inputsStyle)}
+        {this.materialVolume(material)}
 
-        <td style={inputsStyle}>
+        <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_mol}
@@ -339,9 +343,9 @@ class Material extends Component {
           />
         </td>
 
-        {this.materialLoading(material, inputsStyle, showLoadingColumn)}
+        {this.materialLoading(material, showLoadingColumn)}
 
-        <td style={inputsStyle}>
+        <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={concn}
@@ -354,14 +358,13 @@ class Material extends Component {
           />
         </td>
 
-        <td style={inputsStyle}>
+        <td>
           {this.equivalentOrYield(material)}
         </td>
-        <td style={inputsStyle}>
+        <td>
           <Button
             bsStyle="danger"
             bsSize="small"
-            style={{ height: '30px' }}
             onClick={() => deleteMaterial(material)}
           >
             <i className="fa fa-trash-o" />
@@ -376,37 +379,42 @@ class Material extends Component {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real')
   }
 
-  solventMaterial(props, style, handleStyle, inputsStyle) {
-    const {material, deleteMaterial, isDragging, connectDragSource,
-           showLoadingColumn } = props;
+  solventMaterial(props) {
+    const {material, deleteMaterial, connectDragSource } = props;
     const isTarget = material.amountType === 'target'
 
     return (
-      <tr style={style}>
+      <tr className="solvent-material">
         {connectDragSource(
-          <td style={handleStyle}>
+          <td className='drag-source'>
             <span className='text-info fa fa-arrows'></span>
           </td>,
           {dropEffect: 'copy'}
         )}
 
-        <td style={inputsStyle} style={{width: "25%", maxWidth: "50px"}}>
+        <td style={{width: "25%", maxWidth: "50px"}}>
           {this.materialNameWithIupac(material)}
         </td>
         <td>
           {this.switchTargetReal(isTarget)}
         </td>
 
-        <td style={inputsStyle}>
+        <td>
           <InputGroup>
             <FormControl
               type="text"
+              bsClass="bs-form--compact form-control"
+              bsSize="small"
               value={material.external_label}
               placeholder={material.molecule.iupac_name}
               onChange={event => this.handleExternalLabelChange(event)} />
             <InputGroup.Button>
               <OverlayTrigger placement="bottom" overlay={this.refreshSvgTooltip()}>
-                <Button active style={ {padding: '6px'}} onClick={e => this.handleExternalLabelCompleted()} >
+                <Button
+                  active
+                  onClick={e => this.handleExternalLabelCompleted()}
+                  bsSize="small"
+                >
                   <i className="fa fa-refresh"></i>
                 </Button>
               </OverlayTrigger>
@@ -414,10 +422,13 @@ class Material extends Component {
           </InputGroup>
         </td>
 
-        {this.materialVolume(material, inputsStyle)}
+        {this.materialVolume(material)}
 
-        <td style={inputsStyle}>
-          <FormControl type="text"
+        <td>
+          <FormControl
+            type="text"
+            bsClass="bs-form--compact form-control"
+            bsSize="small"
             value={this.solvConcentration(material, props.reaction.solventVolume)}
             disabled={true}
           />
@@ -435,7 +446,7 @@ class Material extends Component {
     )
   }
 
-  switchTargetReal(isTarget, style={padding: "6px 4px"}) {
+  switchTargetReal(isTarget, style={padding: "5px 4px"}) {
     return (
       <Button active
               style= {style}
@@ -451,7 +462,7 @@ class Material extends Component {
   materialNameWithIupac(material) {
     // Skip shortLabel for reactants and solvents
     let skipIupacName = this.props.materialGroup == 'reactants' ||
-                         this.props.materialGroup == 'solvents'
+                        this.props.materialGroup == 'solvents'
     let materialName = ""
     let moleculeIupacName = ""
     let iupacStyle = {

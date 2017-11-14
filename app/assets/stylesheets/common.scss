@@ -171,3 +171,10 @@
 .spacer-10 {
   margin: 0 10px;
 }
+
+.numeric-input-unit {
+  .input-group-btn button {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
