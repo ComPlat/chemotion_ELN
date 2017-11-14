@@ -112,16 +112,6 @@ class Material extends Component {
       style.opacity = 0.3;
     }
 
-    // let handleStyle = {
-    //   cursor: 'move',
-    //   lineHeight: 2,
-    //   verticalAlign: 'middle'
-    // };
-    // const inputsStyle = {
-    //   padding: "0px 2px 0px 2px",
-    //   margin: "0px"
-    // };
-
     if(this.props.materialGroup == 'products')
       material.amountType = 'real';//always take real amount for product
 
