@@ -1,5 +1,7 @@
 module Chemotion
   class ReportAPI < Grape::API
+    helpers ReportHelpers
+    helpers SyncHelpers
     helpers do
       def hashize(inputs)
         output = {}
@@ -64,28 +66,7 @@ module Chemotion
       end
 
       params do
-        requires :columns, type: Array[String]
-        requires :exportType, type: Integer
-        requires :uiState, type: Hash do
-          requires :sample, type: Hash do
-            requires :checkedIds, type: Array
-            requires :uncheckedIds, type: Array
-            requires :checkedAll, type: Boolean
-          end
-          requires :reaction, type: Hash do
-            requires :checkedIds, type: Array
-            requires :uncheckedIds, type: Array
-            requires :checkedAll, type: Boolean
-          end
-          requires :wellplate, type: Hash do
-            requires :checkedIds, type: Array
-            requires :uncheckedIds, type: Array
-            requires :checkedAll, type: Boolean
-          end
-          requires :currentCollection, type: Integer
-          requires :isSync, type: Boolean
-        end
-        requires :columns, type: Array
+        use :export_params
       end
       post :export_samples_from_selections do
         env['api.format'] = :binary
@@ -127,6 +108,29 @@ module Chemotion
           samples.each { |sample| export.add_sample(sample) }
         end
         export.generate_file(excluded_field, included_field, removed_field)
+      end
+
+      params do
+        use :export_params
+      end
+      post :export_reactions_from_selections do
+        env['api.format'] = :binary
+        params[:exportType]
+        content_type('text/csv')
+        fileName = 'reaction_smiles_' + time_now + '.csv'
+        fileURI = URI.escape(fileName)
+        header 'Content-Disposition', "attachment; filename=\"#{fileURI}\""
+        real_coll_id = fetch_collection_id_w_current_user(
+          params[:uiState][:currentCollection], params[:uiState][:isSync]
+        )
+        return unless (p_t = params[:uiState][:reaction])
+        results = reaction_smiles_hash(
+          real_coll_id,
+          p_t[:checkedAll] && p_t[:uncheckedIds] || p_t[:checkedIds],
+          p_t[:checkedAll]
+        ) || {}
+        smiles_construct = "r_smiles_#{params[:exportType]}"
+        results.map { |_, v| send(smiles_construct, v) }.join("\r\n")
       end
 
       params do
