@@ -30,7 +30,7 @@ services:
     command:
       ["./run.sh", "postgres"]
     volumes:
-      - .:/home/app/chemotion_eln
+      - .:/home/app/chemotion_ELN
     volumes_from:
       - db_data
     ports:
