@@ -1,6 +1,41 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.3.0]
+> 2017-11-15
+* Features
+  * Export reaction smiles
+  * reporting: revamp of UI
+  * reporting: analysis metadata formating
+  * user affiliations management
+  * revamp of sample/reaction detail UI
+  * select the sample molecule_name to display
+  * fetch CAS from pubchem
+  * uuid (qr code) for each element (sample, reaction, analyse)
+  * export samples as sdf
+  * adv search
+  * Docker install
+  * ....
+* Fixes
+  * search result element ordering
+  * dependent destroy of collections-elements
+  * sample density default set to 0
+  * react production build
+  * ....
+
+## [v0.2.1]
+> 2016-11-02
+* Features
+  * Temperature Chart with unit converter (°C, °F , K) for reaction
+  * Import molecules and create samples from a sd file
+    (R group and polymer support are not supported)
+  * Images in report doc are from eps files
+  * rearrange the reaction list for a report by Drag-and-drop -ing
+  * Text editing and formating tool bar for the reaction description
+* Fixes
+  * upgrade to Ruby 2.3.1
+  * The Upload of analyses files does not fail if the thumbnail creation does
+
 ## [v0.2.0]
 
 > 2016-10-17
