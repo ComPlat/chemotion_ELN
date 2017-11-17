@@ -4,6 +4,7 @@ import {Dropdown, Button, MenuItem, Glyphicon}
 import ElementActions from '../actions/ElementActions';
 import ModalImport from './ModalImport';
 import ModalExport from './ModalExport';
+import ModalReactionExport from './ModalReactionExport';
 
 const ExportImportButton = ({isDisabled, updateModalProps}) => {
   return (
@@ -15,6 +16,10 @@ const ExportImportButton = ({isDisabled, updateModalProps}) => {
         <MenuItem onSelect={() => exportFunction(updateModalProps)}
           title='Export to spreadsheet'>
           Export samples from selection
+        </MenuItem>
+        <MenuItem onSelect={() => exportReactionFunction(updateModalProps)}
+          title='Export reaction smiles to csv'>
+          Export reactions from selection
         </MenuItem>
         <MenuItem divider />
         <MenuItem onSelect={() => importFunction(updateModalProps)}
@@ -47,6 +52,17 @@ const exportFunction = (updateModalProps) => {
   const modalProps = {
     show: true,
     title,
+    component,
+    customModal: "exportModal"
+  };
+  updateModalProps(modalProps);
+}
+
+const exportReactionFunction = (updateModalProps) => {
+  const component = ModalReactionExport;
+  const modalProps = {
+    show: true,
+    title: "Reaction Smiles Export",
     component,
     customModal: "exportModal"
   };

@@ -18,8 +18,8 @@ describe Chemotion::ReportAPI do
     let!(:rp_others) { create(:report, user: other) }
     let!(:s1)   { create(:sample) }
     let!(:s2)   { create(:sample) }
-    let!(:r1)   { create(:reaction, id: 1) }
-    let!(:r2)   { create(:reaction, id: 2) }
+    let!(:r1)   { create(:reaction) }
+    let!(:r2)   { create(:reaction) }
     let!(:c)    { create(:collection, user_id: user.id) }
 
     before do
@@ -91,6 +91,152 @@ describe Chemotion::ReportAPI do
       it 'returns a header with excel-type' do
         expect(response['Content-Type']).to eq(excel_mime_type)
         expect(response['Content-Disposition']).to include('.xlsx')
+      end
+    end
+
+    describe 'POST /api/v1/reports/export_reactions_from_selections' do
+      let!(:c1) { create(:collection, user_id: user.id) }
+      let!(:c2) {
+        create(
+          :collection,
+          user_id: user.id + 1, is_shared: true, sample_detail_level: 0
+        )
+      }
+      let!(:mf) {
+        IO.read(Rails.root.join('spec', 'fixtures', 'test_2.mol'))
+      }
+      let!(:s0) {
+        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      }
+      let!(:s1) {
+        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      }
+      let!(:s2) {
+        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      }
+      let!(:s3) {
+        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      }
+      let!(:s4) {
+        build(:sample, created_by: user.id, molfile: mf, collections: [c1])
+      }
+      let(:smi_0) { s0.molecule.cano_smiles }
+      let(:smi_1) { s1.molecule.cano_smiles }
+      let(:smi_2) { s2.molecule.cano_smiles }
+      let(:smi_3) { s3.molecule.cano_smiles }
+      let(:smi_4) { s4.molecule.cano_smiles }
+      let!(:rxn) {
+        build(:valid_reaction,
+              name: 'Reaction 0',
+              starting_materials: [s0, s1],
+              solvents: [s2],
+              reactants: [s3],
+              products: [s4],
+              collections: [c1, c2])
+      }
+      let(:params) {
+        {
+          exportType: 0, columns: [],
+          uiState: {
+            sample: {
+              checkedIds: [],
+              uncheckedIds: [],
+              checkedAll: false
+            },
+            reaction: {
+              checkedIds: [rxn.id],
+              uncheckedIds: [],
+              checkedAll: false
+            },
+            wellplate: {
+              checkedIds: [],
+              uncheckedIds: [],
+              checkedAll: false
+            },
+            currentCollection: c1.id,
+            isSync: false
+          }
+        }
+      }
+
+      let(:subj) { Class.new { |inst| inst.extend(ReportHelpers) } }
+      let(:result) { subj.reaction_smiles_hash(c1.id, rxn.id, false, user.id) }
+      let(:result_for_shared) {
+        subj.reaction_smiles_hash(c2.id, rxn.id, false, user.id + 1)
+      }
+
+      before do
+        c1.save!
+        c2.save!
+        s0.save!
+        s1.save!
+        s2.save!
+        s3.save!
+        s4.save!
+        rxn.save!
+      end
+
+      it 'returns a txt file with reaction smiles' do
+        post(
+          '/api/v1/reports/export_reactions_from_selections', params.to_json,
+          'HTTP_ACCEPT' => 'text/plain, text/csv',
+          'CONTENT_TYPE' => 'application/json'
+        )
+        expect(response['Content-Type']).to eq('text/csv')
+      end
+
+      describe 'ReportHelpers' do
+        it 'concats the smiles SM>>P' do
+          expect(subj.r_smiles_0(result.first.second)).to eq(
+            [smi_0, smi_1].join('.') + '>>' + smi_4
+          )
+        end
+        it 'concats the smiles SM.R>>P' do
+          expect(subj.r_smiles_1(result.first.second)).to eq(
+            [smi_0, smi_1, smi_2].join('.') + '>>' + smi_4
+          )
+        end
+        it 'concats the smiles SM.R.S>>P' do
+          expect(subj.r_smiles_2(result.first.second)).to eq(
+            [smi_0, smi_1, smi_2, smi_3].join('.') + '>>' + smi_4
+          )
+        end
+        it 'concats the smiles SM>R>P' do
+          expect(subj.r_smiles_3(result.first.second)).to eq(
+            [smi_0, smi_1].join('.') + '>' + smi_2 \
+            + '>' + smi_4
+          )
+        end
+        it 'concats the smiles SM>R.S>P' do
+          expect(subj.r_smiles_4(result.first.second)).to eq(
+            [smi_0, smi_1].join('.') + '>' + [smi_2, smi_3].join('.') \
+            + '>' + smi_4
+          )
+        end
+        context 'user owned reaction, ' do
+          it 'queries the cano_smiles from reaction associated samples' do
+            expect(result.fetch(rxn.id.to_s)).to eq(
+              {
+                '0' => [smi_0, smi_1],
+                '1' => [smi_2],
+                '2' => [smi_3],
+                '3' => [smi_4]
+              }
+            )
+          end
+        end
+        context 'shared reaction,' do
+          it 'returns * as smiles for hidden structure' do
+            expect(result_for_shared.fetch(rxn.id.to_s)).to eq(
+              {
+                '0' => ['*', '*'],
+                '1' => ['*'],
+                '2' => ['*'],
+                '3' => ['*']
+              }
+            )
+          end
+        end
       end
     end
 

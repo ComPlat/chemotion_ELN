@@ -74,13 +74,13 @@ export default class ReportsFetcher {
     return promise;
   }
 
-  static createDownloadFile(params, filename) {
+  static createDownloadFile(params, filename, route = 'export_samples_from_selections') {
     let file_name = filename
-    let promise = fetch('/api/v1/reports/export_samples_from_selections', {
+    let promise = fetch(`/api/v1/reports/${route}`, {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/vnd.ms-excel, chemical/x-mdl-sdfile',
+        'Accept': 'application/vnd.ms-excel, chemical/x-mdl-sdfile, text/csv',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params),
