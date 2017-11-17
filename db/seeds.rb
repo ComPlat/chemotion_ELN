@@ -1,5 +1,10 @@
-# create initial test user
-u = User.create!(email: 'test@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Test', last_name: 'Ninja', name_abbreviation: 'TN')
+#desc ketcherails  common-templates, amino-acid, name-abbreviations seeds
+#Ketcherails::Engine.load_seed
+!User.find_by(email: 'template.moderator@eln.edu') && User.create!(
+  email: 'template.moderator@eln.edu', password: '@eln.edu', first_name: 'Template', last_name: 'Moderator',
+  name_abbreviation: 'TMo', confirmed_at: Time.now,
+  is_templates_moderator: true
+)
 
 # hattori = User.create!(email: 'hattori@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Hattori', last_name: 'Hanzo')
 # momochi = User.create!(email: 'momochi@ninjaconcept.com', password: 'ninjaconcept', password_confirmation: 'ninjaconcept', first_name: 'Momochi', last_name: 'Sandayu')
