@@ -1,0 +1,12 @@
+.drag-source {
+  cursor: 'move';
+  line-height: 2;
+  vertical-align: 'middle';
+}
+
+.general-material, .solvent-material {
+  td {
+    padding: 1px 2px;
+    margin: 0px;
+  }
+}

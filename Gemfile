@@ -77,8 +77,8 @@ gem 'roo', '>2.5.0'
 
 gem 'faraday', '~> 0.11.0'
 gem 'httparty'
-gem 'ketcherails',  git: 'https://github.com/ComPlat/ketcher-rails',
-                    ref: 'aae1ba59e96ac5604449cf260a347a65e4bdb637'
+gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails',
+                   ref: 'bbc54084cd6365bcc9229dfe43f8e7dc8c16a845'
 # Ketcher editor
 
 # Free font icons
