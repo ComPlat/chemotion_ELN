@@ -80,10 +80,18 @@ This is a setup for a 'pseudo' production stage using passenger and aimed for us
 (For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
 
 1. Build the image from Dockerfile `docker-compose build` or pull the image: `docker-compose pull`
-2. Initialize database FIRST: `docker-compose run app bundle exec rake db:create db:migrate`
+2. Initialize database FIRST:
+  * `docker-compose run app bundle exec rake db:create`
+  * `docker-compose run app bundle exec rake db:migrate`
+  * `docker-compose run app bundle exec rake db:seed` (optional). A "seed"
+    user will be inserted into the db with the information as below: template.moderator@eln.edu - password: "@eln.edu"
+  * `docker-compose run app rake ketcherails:import:common_templates` (optional)
 3. Precompile assets: `docker-compose run app bundle exec rake assets:precompile`
 4. To start the server: `docker-compose up` or start server and detach: `docker-compose up -d`
 
 * Start interactive shell with docker: `docker-compose run app /bin/bash`
 * NOTE: In this Docker image, we disabled the email verification progress
+
+* To enable email confirmation, uncomment ":confirmable" at line 5 of `app/models/user.rb`, stop the `docker-compose` by `docker-compose stop` and start `docker-compose`.
+
 
