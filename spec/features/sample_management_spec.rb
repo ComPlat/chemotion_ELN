@@ -5,7 +5,8 @@ feature 'Sample management' do
   let(:sample) { create(:sample, creator: user) }
 
   background do
-    user.confirm
+    user.confirmed_at = Time.now
+    user.save
     sign_in(user)
   end
 
