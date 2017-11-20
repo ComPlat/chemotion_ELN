@@ -30,7 +30,7 @@ module Chemotion
           helper = CollectorHelper.new(key.user.email , recipient_email)
 
           if helper.sender_recipient_known?
-            dataset = helper.prepare_dataset(subject)
+            dataset = helper.prepare_new_dataset(subject)
             params.each do |file_id, file|
               if tempfile = file.tempfile
                 a = Attachment.new(

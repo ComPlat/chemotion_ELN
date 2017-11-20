@@ -21,9 +21,12 @@
 .coveralls.yml
 
 .env
+
 /config/mailcollector.yml
 /config/datamailcollector.yml
+/config/datacollector.yml
 /config/datacollectors.yml
+
 /config/database.yml
 /config/storage.yml
 /node_modules
