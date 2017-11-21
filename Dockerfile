@@ -27,26 +27,17 @@ RUN add-apt-repository ppa:inkscape.dev/stable && \
       libeigen3-dev build-essential wget nodejs sudo postgresql-client \
       libmagickcore-dev libmagickwand-dev imagemagick tzdata --fix-missing
 
-# WORKDIR /tmp
 # node + npm via nvm; install npm packages
-WORKDIR /tmp
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | NVM_DIR=/usr/local/nvm bash
-# Gem caching
-ADD Gemfile .
-ADD Gemfile.lock .
-ADD package.json .
-ADD .nvmrc .
+RUN mkdir -p $APP_HOME
+WORKDIR $APP_HOME
+ADD . $APP_HOME
 
 RUN /bin/bash -c 'bundle install'
 RUN /bin/bash -c 'source /usr/local/nvm/nvm.sh;\
   nvm install;\
   nvm use;\
-  npm install;'
-
-RUN mkdir -p $APP_HOME
-WORKDIR $APP_HOME
-ADD . $APP_HOME
-RUN cp -a /tmp/node_modules $APP_HOME
+  npm install'
 
 RUN echo '[ -s /usr/local/nvm/nvm.sh ] && . /usr/local/nvm/nvm.sh' >> /home/app/.bashrc
 
@@ -62,5 +53,6 @@ ADD postgres-env.conf /etc/nginx/main.d/postgres-env.conf
 RUN cp -a config/database.yml.example config/database.yml
 RUN cp -a config/storage.yml.example config/storage.yml
 RUN chmod +x run.sh
+
 # RUN chown -R app:app $APP_HOME
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/*

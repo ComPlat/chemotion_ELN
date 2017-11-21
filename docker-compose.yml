@@ -31,6 +31,7 @@ services:
       ["./run.sh", "postgres"]
     volumes:
       - .:/home/app/chemotion_ELN
+      - /home/app/chemotion_ELN/node_modules
     volumes_from:
       - db_data
     ports:
