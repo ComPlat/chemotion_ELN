@@ -1,6 +1,11 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.3.dev]
+* Features
+* Fixes
+  * Docker: node_modules as volume
+
 ## [v0.3.0]
 > 2017-11-15
 * Features
