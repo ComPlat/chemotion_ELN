@@ -11,9 +11,10 @@
     "browser": true,
     "node": true
   },
-  "extends": ["eslint:recommended", "plugin:react/recommended"],
+  "extends": ["airbnb", "plugin:react/recommended"],
   "rules": {
     "no-console": ["off"],
-    "comma-dangle": [1,"only-multiline"]
-    }
+    "comma-dangle": [1,"only-multiline"],
+    "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }]
+  }
 }
