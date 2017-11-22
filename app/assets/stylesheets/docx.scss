@@ -1,0 +1,28 @@
+.docx-content-row {
+  .docx-header-dropzone {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+  }
+
+  .docx-file-item {
+    .docx-file-name {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .remove-btn {
+      background-color: white;
+      float: right;
+      &:hover {
+        background-color: #f5f5f5;
+      }
+    }
+  }
+
+  .docx-dropzone {
+    width: 100%;
+    line-height: 20px;
+    text-align: center;
+  }
+}
