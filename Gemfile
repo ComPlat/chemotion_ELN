@@ -176,11 +176,11 @@ group :test do
   gem 'factory_girl_rails'
 
   gem 'capybara', '~> 2.7.1'
-  gem 'chromedriver-helper', '1.0.0'
+  gem 'chromedriver-helper', '1.1.0'
   gem 'faker', '~> 1.6.6'
   gem 'headless', '2.0.0'
   gem 'launchy', '~> 2.4.3'
-  gem 'selenium-webdriver', '~> 3.0.5'
+  gem 'selenium-webdriver', '~> 3.7.0'
   gem 'webmock'
 end
 
