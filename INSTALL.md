@@ -1,7 +1,8 @@
 # Basic Setup
 * Copy `config/database.yml.example` to `config/database.yml` and enter your database connection information.
+* Copy `config/storage.yml.example` to `config/storage.yml` and enter your database connection information.
 * Copy `.ruby-gemset.example` to `.ruby-gemset`.
-* Copy `.ruby-version.example` to `.ruby-version`.
+* Copy `.ruby-version.example` to `.ruby-version`. (Skip this step if you want to use Docker)
 * Reload directory to create rvm gemset.
 
 ## nokogiri
