@@ -8,10 +8,13 @@ class CollectorHelper
       prepare_containers
     elsif cc
       @sender = Device.find_by email: from
+      @sender = Device.find_by email: from.downcase unless @sender
       @recipient = User.find_by email: cc
+      @recipient = User.find_by email: cc.downcase unless @recipient
       prepare_containers if @sender && @recipient
     else
       @sender = User.find_by email: from
+      @sender = User.find_by email: from.downcase unless @sender
       @recipient = @sender
       prepare_containers if @sender
     end
