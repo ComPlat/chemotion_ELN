@@ -5,6 +5,7 @@
 * Features
 * Fixes
   * Docker: node_modules as volume
+  * collection_tag update after element re-assignmnet to former collection
 
 ## [v0.3.0]
 > 2017-11-15
