@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171019102800) do
+ActiveRecord::Schema.define(version: 20171121171212) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -122,13 +122,15 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
   add_index "collections_reactions", ["deleted_at"], name: "index_collections_reactions_on_deleted_at", using: :btree
-  add_index "collections_reactions", ["reaction_id"], name: "index_collections_reactions_on_reaction_id", using: :btree
+  add_index "collections_reactions", ["reaction_id", "collection_id"], name: "index_collections_reactions_on_reaction_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_research_plans", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "research_plan_id"
     t.datetime "deleted_at"
   end
+
+  add_index "collections_research_plans", ["research_plan_id", "collection_id"], name: "index_collections_research_plans_on_rplan_id_and_coll_id", unique: true, using: :btree
 
   create_table "collections_samples", force: :cascade do |t|
     t.integer  "collection_id"
@@ -139,7 +141,6 @@ ActiveRecord::Schema.define(version: 20171019102800) do
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["deleted_at"], name: "index_collections_samples_on_deleted_at", using: :btree
   add_index "collections_samples", ["sample_id", "collection_id"], name: "index_collections_samples_on_sample_id_and_collection_id", unique: true, using: :btree
-  add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
 
   create_table "collections_screens", force: :cascade do |t|
     t.integer  "collection_id"
@@ -149,7 +150,7 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   add_index "collections_screens", ["collection_id"], name: "index_collections_screens_on_collection_id", using: :btree
   add_index "collections_screens", ["deleted_at"], name: "index_collections_screens_on_deleted_at", using: :btree
-  add_index "collections_screens", ["screen_id"], name: "index_collections_screens_on_screen_id", using: :btree
+  add_index "collections_screens", ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_wellplates", force: :cascade do |t|
     t.integer  "collection_id"
@@ -159,7 +160,7 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
   add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
-  add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
+  add_index "collections_wellplates", ["wellplate_id", "collection_id"], name: "index_collections_wellplates_on_wellplate_id_and_collection_id", unique: true, using: :btree
 
   create_table "collector_errors", force: :cascade do |t|
     t.string   "error_code"

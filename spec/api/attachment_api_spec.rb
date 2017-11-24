@@ -5,13 +5,16 @@ require 'rails_helper'
 describe Chemotion::AttachmentAPI do
   let(:file_upload) {
     {
-      file_1: fixture_file_upload('spec/fixtures/upload.txt', 'text/plain'),
-      file_2: fixture_file_upload('spec/fixtures/upload.txt', 'text/plain')
+      file_1: fixture_file_upload(
+        Rails.root.join('spec/fixtures/upload.txt'), 'text/plain'),
+      file_2: fixture_file_upload(
+        Rails.root.join('spec/fixtures/upload.txt'), 'text/plain')
     }
   }
   let(:img_upload) {
     {
-      file_1: fixture_file_upload('spec/fixtures/upload.jpg')
+      file_1: fixture_file_upload(
+        Rails.root.join('spec/fixtures/upload.jpg'))
     }
   }
 

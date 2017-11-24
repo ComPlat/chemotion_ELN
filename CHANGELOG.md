@@ -3,6 +3,7 @@
 
 ## [v0.3.dev]
 * Features
+  * upg Rails to 4.2.10 nvm to 6.10.2
 * Fixes
   * Docker: node_modules as volume
   * collection_tag update after element re-assignmnet to former collection
