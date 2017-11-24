@@ -27,6 +27,35 @@ module SVG
       init_svg
     end
 
+    def self.reaction_svg_from_rsmi(rsmi)
+      mol_arr = rsmi.split('>')
+      @starting_materials = mol_arr[0].split('.')
+      @reactants = mol_arr[1].split('.')
+      @products = mol_arr[2].split('.')
+      name_arr = %w[starting_materials reactants products]
+
+      files = {}
+      name_arr.each do |g|
+        files[g.to_sym] = instance_variable_get("@#{g}").map { |r, i|
+          mol_svg = Chemotion::OpenBabelService.smi_to_trans_svg(r)
+          tmp_file = Tempfile.new
+          tmp_file.write(mol_svg)
+          tmp_file.close
+          tmp_file
+        }
+      end
+      paths = {}
+      name_arr.each do |g|
+        paths[g.to_sym] = files[g.to_sym].map(&:to_path)
+      end
+
+      svg = new(paths, rails_path: false).compose_reaction_svg
+      name_arr.each do |g|
+        files[g.to_sym].map(&:unlink)
+      end
+      svg
+    end
+
     def compose_reaction_svg_and_save(options = {})
       prefix = options[:temp] ? "temp-" : ""
       svg = compose_reaction_svg
@@ -59,6 +88,7 @@ module SVG
         @show_yield = options[:show_yield]
         @box_width = options[:supporting_information] ? 2000 : 1560
         @box_height = 440
+        @rails_path = options[:rails_path].nil? ? true : options[:rails_path]
       end
 
       def init_word_size
@@ -167,7 +197,7 @@ module SVG
       end
 
       def inner_file_content svg_path
-        file = "#{Rails.root}/public#{svg_path}"
+        file = @rails_path ? "#{Rails.root}/public#{svg_path}" : svg_path
         doc = Nokogiri::XML(File.open(file))
         if(svg_path.include? '/samples')
           doc.at_css("svg")
