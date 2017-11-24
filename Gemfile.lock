@@ -369,8 +369,8 @@ GEM
       mime-types
       mimemagic (~> 0.3.0)
     parallel (1.11.2)
-    paranoia (2.1.5)
-      activerecord (~> 4.0)
+    paranoia (2.4.0)
+      activerecord (>= 4.0, < 5.2)
     parser (2.4.0.0)
       ast (~> 2.2)
     pdf-core (0.6.1)

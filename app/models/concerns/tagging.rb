@@ -5,6 +5,7 @@ module Tagging
   included do
     after_create :update_tag
     after_destroy :update_tag
+    after_restore :update_tag
   end
 
   def update_tag
