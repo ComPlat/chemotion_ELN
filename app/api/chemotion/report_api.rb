@@ -1,7 +1,7 @@
 module Chemotion
   class ReportAPI < Grape::API
     helpers ReportHelpers
-    helpers SyncHelpers
+    helpers CollectionHelpers
     helpers do
       def hashize(inputs)
         output = {}

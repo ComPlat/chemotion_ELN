@@ -1,6 +1,7 @@
 import alt from '../alt';
 import _ from 'lodash';
 import ElementActions from '../actions/ElementActions';
+import CollectionActions from '../actions/CollectionActions';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
@@ -469,6 +470,7 @@ class ElementStore {
   }
 
   handleUpdateElementsCollection(params) {
+    CollectionActions.fetchUnsharedCollectionRoots();
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
       params.ui_state.isSync, this.state.moleculeSort);
@@ -478,6 +480,7 @@ class ElementStore {
   }
 
   handleAssignElementsCollection(params) {
+    CollectionActions.fetchUnsharedCollectionRoots();
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
       params.ui_state.isSync, this.state.moleculeSort);

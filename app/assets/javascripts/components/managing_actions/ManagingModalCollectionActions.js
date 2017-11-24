@@ -10,25 +10,19 @@ export default class ManagingModalCollectionActions extends React.Component {
   constructor(props) {
     super(props);
     const options = this.collectionOptions();
-    const selected = options[0].value;
     this.state = {
       newLabel: null,
       options: options,
-      selected: selected,
+      selected: null,
     }
     this.onSelectChange = this.onSelectChange.bind(this);
-    this.addCollection = this.addCollection.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
-  }
-
-  componentDidMount() {
-
   }
 
   onSelectChange(e) {
     let selected = e && e.value
-    this.setState((previousProps,previousState)=>{
-      return {...previousState,selected: selected}});
+    this.setState((previousProps,previousState) => {
+      return {...previousState, selected: selected}});
   }
 
   writableColls(colls) {
@@ -74,7 +68,6 @@ export default class ManagingModalCollectionActions extends React.Component {
   collectionOptions() {
     const cAllTree = this.collectionEntries();
     if (cAllTree.length === 0) return [];
-
     const options = cAllTree.map( leaf => {
       const indent = "\u00A0".repeat(leaf.depth * 3 + 1);
       const className = leaf.first ? "separator" : "";
@@ -85,32 +78,10 @@ export default class ManagingModalCollectionActions extends React.Component {
     return options;
   }
 
-  addCollection() {
-    const label = ReactDOM.findDOMNode(this.refs["collectionLabelInput"]).value;
-    if(label) {
-      CollectionActions.createUnsharedCollection({label: label});
-      this.setState({ newLabel: label });
-    }
-  }
-
-  useNewCollectionId() {
-    const unsharedCollections = CollectionStore.getState().unsharedRoots;
-    const { newLabel } = this.state;
-    const newCollection = unsharedCollections.filter((collection) => {
-      return collection.label == newLabel;
-    }).pop();
-    return newCollection.id;
-  }
-
   handleSubmit() {
     const { selected, newLabel } = this.state;
-    let collection_id = parseInt(selected.split("-")[0]);
-    let is_sync_to_me = selected.split("-")[1] == "is_sync_to_me";
-
-    if(newLabel) {
-      collection_id = this.useNewCollectionId();
-      is_sync_to_me = false;
-    }
+    let collection_id = selected && parseInt(selected.split("-")[0]);
+    let is_sync_to_me = selected && selected.split("-")[1] == "is_sync_to_me";
 
     const uiStoreState = UIStore.getState();
     const ui_state = {
@@ -146,41 +117,53 @@ export default class ManagingModalCollectionActions extends React.Component {
 
     this.props.action({ ui_state: ui_state,
                         collection_id: collection_id,
-                        is_sync_to_me: is_sync_to_me});
+                        is_sync_to_me: is_sync_to_me,
+                        newLabel: newLabel
+                      });
     this.props.onHide();
+  }
+
+  submitButton(){
+    const {newLabel, selected} = this.state
+    const l = newLabel && newLabel.length
+    return l && l > 0 ?
+      <Button bsStyle="warning" onClick={this.handleSubmit}>
+        Create collection '{newLabel}' and Submit
+      </Button>
+      : <Button bsStyle="warning" onClick={this.handleSubmit}
+          disabled={!selected}>
+          Submit
+        </Button>
   }
 
   render() {
     const { options, selected } = this.state;
+    const onChange = (e) => {
+      const val = e.target && e.target.value
+      this.setState((previousState) => {
+        return { ...previousState, newLabel: val }
+      });
+    }
     return (
       <div>
-      <FormGroup>
-        <ControlLabel>Select a Collection</ControlLabel>
-        <Select options={options}
-                value={selected}
-                onChange={this.onSelectChange}
-                className="select-assign-collection"/>
-      </FormGroup>
-
-        <table width="100%"><tbody>
-          <tr>
-            <td width="95%" className="padding-right">
-              <FormGroup>
-                <ControlLabel>Create a Collection</ControlLabel>
-                <FormControl type="text" ref="collectionLabelInput"
-                  placeholder="-- Please insert collection name --"
-                />
-              </FormGroup>
-            </td>
-            <td width="5%">
-              <Button bsSize="small" className="managing-actions-add-btn"
-                      bsStyle="success" onClick={this.addCollection}>
-                <i className="fa fa-plus"></i>
-              </Button>
-            </td>
-          </tr>
-        </tbody></table>
-        <Button bsStyle="warning" onClick={this.handleSubmit}>Submit</Button>
+        <FormGroup>
+          <ControlLabel>Select a Collection</ControlLabel>
+          <Select
+            options={options}
+            value={selected}
+            onChange={this.onSelectChange}
+            className="select-assign-collection"
+          />
+        </FormGroup>
+        <FormGroup>
+          <ControlLabel>or Create a new Collection</ControlLabel>
+          <FormControl
+            type="text"
+            placeholder="-- Please insert collection name --"
+            onChange={onChange}
+          />
+        </FormGroup>
+        {this.submitButton()}
       </div>
     )
   }
