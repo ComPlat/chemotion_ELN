@@ -35,7 +35,12 @@ module Chemotion
               cmd += "/openbabel/bin/obabel -icdx #{cdx_path} -orsmi"
               Open3.popen3(cmd) do |_, stdout, _, wait_thr|
                 rsmi = stdout.gets.delete("\n").strip
-                rsmi_obj[:rsmi].push(rsmi) unless rsmi.empty?
+                res = {}
+                unless rsmi.empty?
+                  res[:svg] = SVG::ReactionComposer.reaction_svg_from_rsmi rsmi
+                  res[:smi] = rsmi
+                  rsmi_obj[:rsmi].push(res)
+                end
                 wait_thr.value
               end
             end
@@ -47,6 +52,22 @@ module Chemotion
           end
 
           rsmi_arr
+        end
+      end
+
+      resource :svg do
+        desc 'Convert svg from smi'
+        post 'smi' do
+          smi_arr = params[:smiArr]
+          res = []
+          smi_arr.each do |smi|
+            res.push(
+              uid: smi[:uid],
+              rsmiIdx: smi[:rsmiIdx],
+              svg: SVG::ReactionComposer.reaction_svg_from_rsmi(smi[:newSmi])
+            )
+          end
+          res
         end
       end
     end

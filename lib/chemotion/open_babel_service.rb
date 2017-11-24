@@ -254,4 +254,21 @@ M  END
     shifted_cdxml, geometry = Cdxml::Shifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).convey
     return { content: shifted_cdxml, geometry: geometry, path: output }
   end
+
+  def self.smi_to_svg(smi)
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+    c.set_in_and_out_formats('smi', 'svg')
+    c.read_string(m, smi)
+
+    c.write_string(m, true)
+  end
+
+  def self.smi_to_trans_svg(smi)
+    rect = '<rect x="0" y="0" width="100" '
+    rect += 'height="100" fill="white"/>'
+    svg = smi_to_svg(smi)
+    svg.slice!(rect)
+    svg
+  end
 end
