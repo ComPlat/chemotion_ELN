@@ -3,33 +3,30 @@ import {
   PanelGroup, ListGroup, ListGroupItem, Grid, Row, Col, Panel
 } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
-/* import SvgFileZoomPan from 'react-svg-file-zoom-pan'; */
-import SVGInline from 'react-svg-inline';
 
 import Navigation from '../Navigation';
-import SmilesEditingDropdown from './SmilesEditingDropdown';
+import SmilesEditing from './SmilesEditing';
+import RsmiItem from './RsmiItem';
 
-class RsmiItem extends React.Component {
+class CloseBtn extends React.Component {
   constructor() {
     super();
-
-    this.selectSmi = this.selectSmi.bind(this);
+    this.onClick = this.onClick.bind(this);
   }
 
-  selectSmi() {
-    const { uid, idx } = this.props;
-    this.props.selectSmi(uid, idx);
+  onClick() {
+    const { obj, onClick } = this.props;
+    onClick(obj);
   }
 
   render() {
-    const { uid, idx, selected } = this.props;
-    const sel = selected.filter(x => x.uid === uid && x.rsmiIdx === idx);
-    const className = sel.length > 0 ? 'list-group-item-info' : '';
-
     return (
-      <ListGroupItem onClick={this.selectSmi} className={className}>
-        {this.props.children}
-      </ListGroupItem>
+      <button
+        className="remove-btn btn btn-xs"
+        onClick={this.onClick}
+      >
+        <i className="fa fa-times" />
+      </button>
     );
   }
 }
@@ -39,24 +36,21 @@ function Docx({
 }) {
   let listItems = <span />;
   let fileContents = <span />;
+  let disabled = true;
+  if (selected.length > 0) disabled = false;
 
   if (files.length > 0) {
     listItems = files.map(x => (
       <ListGroupItem key={x.uid}>
         <div className="docx-file-item">
-          <button
-            className="remove-btn btn btn-xs"
-            onClick={() => removeFile(x)}
-          >
-            <i className="fa fa-times" />
-          </button>
+          <CloseBtn obj={x} onClick={removeFile} />
           <div className="docx-file-name">{x.name}</div>
         </div>
       </ListGroupItem>
     ));
 
     fileContents = (
-      <PanelGroup defaultActiveKey="0">
+      <PanelGroup defaultActiveKey="0" className="docx-files-list">
         {files.map((x, index) => (
           <Panel
             header={x.name}
@@ -73,10 +67,9 @@ function Docx({
                   idx={idx}
                   selectSmi={selectSmi}
                   selected={selected}
-                >
-                  {i.smi}
-                  <SVGInline svg={i.svg} width="100%" />
-                </RsmiItem>
+                  svg={i.svg}
+                  smi={i.smi}
+                />
               ))}
             </ListGroup>
           </Panel>
@@ -86,33 +79,43 @@ function Docx({
   }
 
   return (
-    <Grid fluid>
-      <Row className="card-navigation">
-        <Navigation />
-      </Row>
-      <Row className="docx-content-row">
+    <Grid fluid className="docx-grid">
+      <br />
+      <Row className="docx-smiles-editing">
         <Col xs={4} md={2}>
-          <ListGroup>
-            <ListGroupItem className="docx-header-dropzone">
+          <ListGroup className="docx-files-menu">
+            <div className="docx-header">
               <Dropzone
                 className="docx-dropzone"
                 onDrop={file => addFile(file)}
               >
                 Drop Files, or Click to add File.
               </Dropzone>
-            </ListGroupItem>
+            </div>
             {listItems}
           </ListGroup>
+        </Col>
+        <Col xs={14} md={10}>
           <ListGroup>
-            <ListGroupItem className="docx-header-dropzone">
+            <div className="docx-header">
               SMILES Editing
-            </ListGroupItem>
-            <ListGroupItem>
-              <SmilesEditingDropdown editFunc={editSmiles} />
+            </div>
+            <ListGroupItem className="docx-categories">
+              <SmilesEditing
+                disabled={disabled}
+                editFunc={editSmiles}
+                className="smiles-edit"
+              />
             </ListGroupItem>
           </ListGroup>
         </Col>
-        <Col xs={14} md={10}> {fileContents} </Col>
+      </Row>
+      <Row className="docx-content-row">
+        <Col xs={18} md={12}>
+          <div className="docx-files-contents">
+            {fileContents}
+          </div>
+        </Col>
       </Row>
     </Grid>
   );
@@ -127,12 +130,9 @@ Docx.propTypes = {
   editSmiles: React.PropTypes.func.isRequired
 };
 
-RsmiItem.propTypes = {
-  selectSmi: React.PropTypes.func.isRequired,
-  uid: React.PropTypes.string.isRequired,
-  idx: React.PropTypes.number.isRequired,
-  selected: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  children: React.PropTypes.node
+CloseBtn.propTypes = {
+  onClick: React.PropTypes.func.isRequired,
+  obj: React.PropTypes.object.isRequired
 };
 
 

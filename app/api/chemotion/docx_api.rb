@@ -34,7 +34,7 @@ module Chemotion
               cmd = Gem.loaded_specs['openbabel'].full_gem_path
               cmd += "/openbabel/bin/obabel -icdx #{cdx_path} -orsmi"
               Open3.popen3(cmd) do |_, stdout, _, wait_thr|
-                rsmi = stdout.gets.delete("\n").strip
+                rsmi = (stdout.gets || '').delete("\n").strip
                 res = {}
                 unless rsmi.empty?
                   res[:svg] = SVG::ReactionComposer.reaction_svg_from_rsmi rsmi
