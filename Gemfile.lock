@@ -468,6 +468,9 @@ GEM
     ruby-mailchecker (3.0.27)
     ruby-ole (1.2.12)
     ruby-progressbar (1.8.1)
+    rubyXL (3.3.26)
+      nokogiri (>= 1.4.4)
+      rubyzip (>= 1.1.6)
     ruby_dep (1.5.0)
     ruby_parser (3.8.4)
       sexp_processor (~> 4.1)
@@ -641,6 +644,7 @@ DEPENDENCIES
   rubocop
   ruby-mailchecker
   ruby-ole
+  rubyXL (= 3.3.26)
   sablon!
   sass-rails (~> 5.0, >= 5.0.6)
   sdoc (~> 0.4.0)

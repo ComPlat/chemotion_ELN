@@ -46,7 +46,7 @@
     "react-qr-reader": "^0.3.1",
     "react-select": "1.0.0-rc.5",
     "react-stickydiv": "^3.4.19",
-    "react-svg-file-zoom-pan": "0.0.6",
+    "react-svg-file-zoom-pan": "0.1.4",
     "react-svg-inline": "^1.2.0",
     "react-treeview": "0.4.7",
     "react-ui-tree": "3.0.0",

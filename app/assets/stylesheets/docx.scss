@@ -1,34 +1,147 @@
-.docx-content-row {
-  .docx-header-dropzone {
-    background-color: #f5f5f5;
-    border-color: #ddd;
+.docx-grid {
+  .docx-smiles-editing > div:first-child {
+    padding-right: 5px !important;
   }
 
-  .docx-file-item {
-    .docx-file-name {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+  .docx-smiles-editing > div:last-child {
+    padding-left: 0px !important;
+  }
+
+  .docx-smiles-editing {
+    .docx-header {
+      position: relative;
+      display: block;
+      padding: 10px 15px;
+      margin-bottom: -1px;
+      border: 1px solid #ddd;
+      background-color: #f5f5f5;
+      border-top-right-radius: 4px;
+      border-top-left-radius: 4px;
+      text-align: center;
     }
 
-    .remove-btn {
-      background-color: white;
-      float: right;
-      &:hover {
-        background-color: #f5f5f5;
+    .docx-dropzone {
+      width: 100%;
+      line-height: 20px;
+      text-align: center;
+    }
+
+    .docx-categories {
+      padding: 0 !important;
+    }
+
+    .docx-files-menu {
+      overflow-x: hidden;
+      overflow-y: scroll;
+      max-height: 266px;
+    }
+
+    .docx-file-item {
+      .docx-file-name {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .remove-btn {
+        background-color: white;
+        float: right;
+        &:hover {
+          background-color: #f5f5f5;
+        }
+      }
+    }
+
+    .docx-smiles-menu {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 5px;
+
+      .form-group {
+        margin: 5px;
+        width: 180px;
       }
     }
   }
 
-  .docx-dropzone {
-    width: 100%;
-    line-height: 20px;
-    text-align: center;
+  .docx-content-row > div {
+    padding-right: 0 !important;
   }
 
-  .rsmi-svg {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .docx-content-row {
+    .docx-files-contents {
+      overflow-x: hidden;
+      overflow-y: scroll;
+      max-height: calc(100vh - 325px);
+    }
+
+    .rsmi-svg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .docx-files-list {
+    }
+
+    .smi-text {
+      word-wrap: break-word;
+      font-size: 18px;
+    }
+
+    .rsmi-item {
+      display: flow-root;
+
+      .svg-file-container {
+        float: right;
+        width: 500px;
+      }
+
+      .svg-file-container > svg {
+        min-height: 0;
+      }
+    }
+  }
+
+  ::-webkit-scrollbar {
+    background: transparent;
+    overflow: visible;
+    width: 17px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: solid #fff;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  ::-webkit-scrollbar-thumb:horizontal {
+    border-width: 4px 6px;
+    min-width: 40px;
+  }
+
+  ::-webkit-scrollbar-thumb:vertical {
+    border-width: 6px 4px;
+    min-height: 40px;
+  }
+
+  ::-webkit-scrollbar-track-piece {
+    background-color: #fff;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #ADADAD;
+    -webkit-box-shadow: inset 1px 1px 0 rgba(0,0,0,0.10),inset 0 -1px 0 rgba(0,0,0,0.07);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
   }
 }

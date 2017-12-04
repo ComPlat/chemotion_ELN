@@ -118,8 +118,9 @@ class DocxContainer extends React.Component {
       const file = files.filter(x => x.uid === s.uid);
       if (!file) return;
       const smiArr = file[0].rsmi[s.rsmiIdx].smi.split('>');
-      const curSolventSmi = smiArr[1] === '' ? '' : `${smiArr[1]}.`;
-      smiArr[1] = curSolventSmi.concat(`${solventSmi}`);
+      /* const curSolventSmi = smiArr[1] === '' ? '' : `${smiArr[1]}.`;
+       * smiArr[1] = curSolventSmi.concat(`${solventSmi}`); */
+      smiArr[1] = solventSmi;
       const newSmi = smiArr.join('>');
       file[0].rsmi[s.rsmiIdx].smi = newSmi;
       addedSmi.push({ uid: s.uid, rsmiIdx: s.rsmiIdx, newSmi });

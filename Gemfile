@@ -169,6 +169,7 @@ group :development, :test do
   gem 'capistrano-rvm'
   # gem 'capistrano3-delayed-job'
   gem 'slackistrano'
+  gem 'rubyXL', '3.3.26'
 end
 
 group :test do
