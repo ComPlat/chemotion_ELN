@@ -49,15 +49,23 @@ class Mailcollector
       message = Mail.read_from_string raw_message
       helper = create_helper(envelope)
       log_info 'Mail from ' + message.from.to_s
-      if helper && helper.sender_recipient_known?
-        if message.attachments
-          handle_new_message(message, helper)
-          log_info message.from.to_s + ' Data stored!'
-        else
-          log_info message.from.to_s + ' No data!'
-        end
-      else
+      unless helper
+        log_info message.from.to_s + ' Email format incorrect or sender unknown!'
+        return nil
+      end
+      unless helper.sender
+        log_info message.from.to_s + ' Sender unknown!'
+        return nil
+      end
+      unless helper.recipient
         log_info message.from.to_s + ' Recipient unknown!'
+        return nil
+      end
+      if message.attachments
+        handle_new_message(message, helper)
+        log_info message.from.to_s + ' Data stored!'
+      else
+        log_info message.from.to_s + ' No data!'
       end
       imap.store(message_id, '+FLAGS', [:Deleted])
       log_info message.from.to_s + ' Email processed!'
@@ -87,35 +95,37 @@ class Mailcollector
     helper = nil
     if (envelope.cc && envelope.cc.length == 1) &&
        (envelope.to && envelope.to.length == 1)
-      # "CC method"
+      log_info "Using CC method..."
       mail_to = envelope.to[0].mailbox.to_s + '@' + envelope.to[0].host.to_s
-      if mail_to == @mail_address || (@aliases && @aliases.include?(mail_to))
+      if mail_to.casecmp(@mail_address) == 0 || (@aliases && @aliases.any?{ |s|
+          s.casecmp(mail_to)==0
+        })
         helper = CollectorHelper.new(
           envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s,
           envelope.cc[0].mailbox.to_s + '@' + envelope.cc[0].host.to_s
         )
       end
     elsif !envelope.cc && envelope.to && envelope.to.length == 2
-      # "To method"
+      log_info "Using To method..."
       mail_to_first = envelope.to[0].mailbox.to_s + '@' + envelope.to[0].host.to_s
       mail_to_second = envelope.to[1].mailbox.to_s + '@' + envelope.to[1].host.to_s
-      if  mail_to_first == @mail_address ||
-          (@aliases && @aliases.include?(mail_to_first))
+      if  mail_to_first.casecmp(@mail_address) == 0 ||
+          (@aliases && @aliases.any?{ |s| s.casecmp(mail_to_first)==0 } )
         helper = CollectorHelper.new(
           envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s,
           mail_to_second
         )
-      elsif mail_to_second == @mail_address ||
-            (@aliases && @aliases.include?(mail_to_second))
+      elsif mail_to_second.casecmp(@mail_address) == 0 ||
+            (@aliases && @aliases.any?{ |s| s.casecmp(mail_to_second)==0 })
         helper = CollectorHelper.new(
           envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s,
           mail_to_first
         )
       end
     elsif !envelope.cc && envelope.to && envelope.to.length == 1
-      # "Sender = Recipient method"
+      log_info "Using Sender = Recipient method..."
       mail_to = envelope.to[0].mailbox.to_s + '@' + envelope.to[0].host.to_s
-      if mail_to == @mail_address || (@aliases && @aliases.include?(mail_to))
+      if mail_to.casecmp(@mail_address) == 0 || (@aliases && @aliases.any?{ |s| s.casecmp(mail_to)==0 })
         helper = CollectorHelper.new(
           envelope.from[0].mailbox.to_s + '@' + envelope.from[0].host.to_s
         )
