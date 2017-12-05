@@ -7,6 +7,7 @@ import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName';
 import ElementActions from './actions/ElementActions';
 import { UrlSilentNavigation, Alphabet } from './utils/ElementUtils';
+import { validDigit } from './utils/MathUtils';
 
 const source = {
   beginDrag(props) {
@@ -20,6 +21,12 @@ const collect = (connect, monitor) => ({
 });
 
 class Material extends Component {
+  constructor(props) {
+    super(props);
+
+    this.createParagraph = this.createParagraph.bind(this);
+  }
+
   handleMaterialClick(sample) {
     let { reaction } = this.props;
     UrlSilentNavigation(sample);
@@ -268,6 +275,27 @@ class Material extends Component {
     }
   }
 
+  createParagraph(m) {
+    const molName = m.molecule.iupac_name;
+    const weight = `${validDigit(m.amount_g, 3)} g`;
+    const mmol = `${validDigit(m.amount_mol * 1000, 3)} mmol`;
+    const vol = `${validDigit(m.amount_l * 1000, 2)} mL`;
+    const equiv = `${validDigit(m.equivalent, 3)} equiv`;
+    return this.props.materialGroup === 'solvents'
+      ? `${molName} (${vol})`
+      : `${molName} (${weight}, ${mmol}, ${equiv})`;
+  }
+
+  handleAddToDesc(material) {
+    if (this.props.onChange) {
+      const event = {
+        type: 'addToDesc',
+        paragraph: this.createParagraph(material),
+      };
+      this.props.onChange(event);
+    }
+  }
+
   materialId() {
     return this.material().id
   }
@@ -504,11 +532,24 @@ class Material extends Component {
     }
     const mAlphabet = Alphabet(this.props.index);
 
+    const tp = (
+      <Tooltip id="tp-alphabet">Add to description</Tooltip>
+    );
+
+    const addToDesc = (e) => {
+      e.stopPropagation();
+      this.handleAddToDesc(material);
+    };
+
     return (
       <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
         <div style={{display: "inline-block", maxWidth: "100%"}}>
           <div className="inline-inside">
-            <Label bsStyle="primary">{mAlphabet}</Label>&nbsp;
+            <OverlayTrigger placement="top" overlay={tp}>
+              <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc}>
+                {mAlphabet}
+              </Button>
+            </OverlayTrigger>&nbsp;
             {materialName}
           </div>
           <span style={iupacStyle}>

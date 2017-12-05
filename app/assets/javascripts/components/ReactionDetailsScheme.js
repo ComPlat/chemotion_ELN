@@ -4,6 +4,7 @@ import {
   Row, Col, Collapse, Button, ButtonGroup,
 } from 'react-bootstrap';
 import Select from 'react-select';
+import Delta from 'quill-delta';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
 import Molecule from './models/Molecule';
@@ -23,6 +24,7 @@ export default class ReactionDetailsScheme extends Component {
 
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
+    this.addSampleToDescription = this.addSampleToDescription.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -188,7 +190,19 @@ export default class ReactionDetailsScheme extends Component {
         const {reaction} = this.state;
         this.onReactionChange(reaction, {schemaChanged: true});
         break;
+      case 'addToDesc':
+        this.addSampleToDescription(changeEvent);
+        break;
     }
+  }
+
+  addSampleToDescription(e) {
+    const { description } = this.state.reaction;
+    const newDesc = {
+      ops: [...description.ops, { insert: e.paragraph }],
+    };
+    const newDescDelta = new Delta(newDesc);
+    this.props.onInputChange('description', newDescDelta);
   }
 
   updatedReactionForExternalLabelChange(changeEvent) {
