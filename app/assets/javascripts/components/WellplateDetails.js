@@ -181,7 +181,7 @@ export default class WellplateDetails extends Component {
         <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
               id="wellplateDetailsTab">
           <Tab eventKey={0} title={'Designer'}>
-            <Row>
+            <Row className="wellplate-detail">
               <Col md={10}>
                 <Well>
                   <Wellplate
