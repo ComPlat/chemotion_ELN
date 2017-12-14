@@ -33,9 +33,9 @@ export default class CollectionTree extends React.Component {
       lockedRoots: collecState.lockedRoots,
       syncInRoots: collecState.syncInRoots,
       ownCollectionVisible: true,
-      sharedWithCollectionVisible: true,
-      sharedToCollectionVisible: true,
-      syncCollectionVisible: true,
+      sharedWithCollectionVisible: false,
+      sharedToCollectionVisible: false,
+      syncCollectionVisible: false,
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
       inboxVisible: false
