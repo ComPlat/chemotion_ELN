@@ -232,6 +232,16 @@ export default class ElementsTableSampleEntries extends Component {
         style = {color: '#fff', background: '#337ab7'}
       }
 
+      let xvial = <span />;
+      if (sample.external_label.match(/^X\d+.*/)) {
+        xvial = (
+          <i
+            className="icon-xvial"
+            style={{ marginRight: '5px', fontSize: '20px' }}
+          />
+        );
+      }
+
       return (
         <tr key={index} style={style}>
           <td width="30px">
@@ -241,7 +251,8 @@ export default class ElementsTableSampleEntries extends Component {
           <td style={{cursor: 'pointer'}}
               onClick={() => this.showDetails(sample.id)}>
             {sample.title(selected)}
-            <div style={{float: 'right'}}>
+            <div style={{ float: 'right', display: 'flex', alignItems: 'center' }}>
+              {xvial}
               <ElementReactionLabels element={sample} key={sample.id + "_reactions"}/>
               <ElementCollectionLabels element={sample} key={sample.id}/>
               <ElementAnalysesLabels element={sample} key={sample.id+"_analyses"}/>
