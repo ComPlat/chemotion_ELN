@@ -2,7 +2,7 @@ module Chemotion
   class SuggestionAPI < Grape::API
     include Grape::Kaminari
 
-    helpers SyncHelpers
+    helpers CollectionHelpers
     helpers do
       def page_size
         7

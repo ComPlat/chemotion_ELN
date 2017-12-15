@@ -3,7 +3,7 @@ module Chemotion
     include Grape::Kaminari
 
     # TODO implement search cache?
-    helpers SyncHelpers
+    helpers CollectionHelpers
     helpers do
       def page_size
         params[:per_page] == nil ? 7 : params[:per_page].to_i

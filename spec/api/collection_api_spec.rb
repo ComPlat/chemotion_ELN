@@ -18,7 +18,7 @@ describe Chemotion::CollectionAPI do
     let(:u2)    { create(:user) }
     let(:group) { create(:group)}
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
-    let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true) }
+    let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true, permission_level: 1) }
     let!(:c3)   { create(:collection, user: user, is_shared: false) }
     let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true) }
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
@@ -229,7 +229,6 @@ describe Chemotion::CollectionAPI do
         {
           ui_state: ui_state,
           collection_id: c3.id,
-          is_sync_to_me: false
         }
       }
 
@@ -237,7 +236,6 @@ describe Chemotion::CollectionAPI do
         {
           ui_state: ui_state,
           collection_id: c2.id,
-          is_sync_to_me: false
         }
       }
 
@@ -303,6 +301,7 @@ describe Chemotion::CollectionAPI do
       describe 'POST /api/v1/collections/elements' do
         it 'should be able to assign elements to an unshared collection' do
           post '/api/v1/collections/elements', params
+          File.write('error.html', response.body)
           c1.reload
           c3.reload
           expect(c1.samples).to match_array [s1, s2]
@@ -316,7 +315,7 @@ describe Chemotion::CollectionAPI do
           expect(c3.research_plans).to match_array [rp1]
         end
         it 'should be able to assign elements to a shared collection' do
-          post '/api/v1/collections/elements', params_shared
+          post('/api/v1/collections/elements', params_shared.to_json, 'CONTENT_TYPE' => 'application/json')
           c1.reload
           c2.reload
           expect(c1.samples).to match_array [s1, s2]
