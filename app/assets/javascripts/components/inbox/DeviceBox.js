@@ -29,26 +29,38 @@ export default class DeviceBox extends React.Component {
       )
     })
 
+    let textStyle = {
+      display: "block", whiteSpace: "nowrap", overflow: "hidden",
+      textOverflow: "ellipsis", maxWidth: "100%", cursor: 'move'
+    }
+
     return (
       visible
           ?
-          <li><div className="tree-view"><div className="title"><i className="fa fa-folder-open" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> {device_box.name} </i>
+          <div className="tree-view">
+            <div className="title" style={textStyle}>
             {datasets.length == 0
-              ? <a className="close" onClick={() => this.deleteDeviceBox(device_box)}>&times;</a>
-              : ""
-            }</div></div>
-              <ul> {datasets} </ul>
-            </li>
-
-          : <li><div className="tree-view"><div className="title"><i className="fa fa-folder" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> {device_box.name}</i>
-            {datasets.length == 0
-              ? <a className="close" onClick={() => this.deleteDeviceBox(device_box)}>&times;</a>
+              ? <i className="fa fa-trash-o" onClick={() => this.deleteDeviceBox(device_box)} style={{cursor: "pointer"}}>&nbsp;&nbsp;</i>
               : ""
             }
-            </div></div>
-            </li>
-    )
+              <i className="fa fa-folder-open" aria-hidden="true"
+                onClick={() => this.setState({visible: !visible})}> {device_box.name}
+              </i>
+            </div>
+            <div>{datasets}</div>
+          </div>
+
+          : <div className="tree-view">
+              <div className="title" style={textStyle}>
+              {datasets.length == 0
+                ? <i className="fa fa-trash-o" onClick={() => this.deleteDeviceBox(device_box)} style={{cursor: "pointer"}}>&nbsp;&nbsp;</i>
+                : ""
+              }
+                <i className="fa fa-folder" aria-hidden="true"
+                  onClick={() => this.setState({visible: !visible})}> {device_box.name}
+                </i>
+              </div>
+            </div>
+          )
   }
 }

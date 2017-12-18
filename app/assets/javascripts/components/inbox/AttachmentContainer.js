@@ -2,6 +2,8 @@ import React, { Component, PropTypes } from 'react';
 import {DragSource} from 'react-dnd';
 import InboxActions from '../actions/InboxActions';
 import DragDropItemTypes from '../DragDropItemTypes';
+import Utils from '../utils/Functions';
+import Attachment from '../models/Attachment';
 
 const dataSource = {
   beginDrag(props) {
@@ -25,20 +27,26 @@ class AttachmentContainer extends Component {
     }
   }
 
+  handleAttachmentDownload(attachment) {
+    Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+  }
+
   render() {
     const {connectDragSource, sourceType, attachment} = this.props;
-
+    let textStyle = {
+      display: "block", whiteSpace: "nowrap", overflow: "hidden",
+      textOverflow: "ellipsis", maxWidth: "100%", cursor: 'move'
+    }
     if(sourceType == DragDropItemTypes.DATA ||
     sourceType == DragDropItemTypes.UNLINKED_DATA) {
       return connectDragSource(
-        <li><span style={{cursor: 'move'}}
-          className='text-info fa fa-arrows'>
-          <i className="fa fa-file-text" aria-hidden="true">
-          &nbsp; {attachment.filename} </i>
+        <div style={textStyle}>
+          &nbsp;&nbsp;<i className="fa fa-trash-o" onClick={() => this.deleteAttachment(attachment)} style={{cursor: "pointer"}}></i>&nbsp;&nbsp;
+          <i className="fa fa-download" onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: "pointer"}}></i>&nbsp;&nbsp;&nbsp;
+          <span  className='text-info fa fa-arrows'>
+            &nbsp; {attachment.filename}
           </span>
-          <a className="close"
-          onClick={() => this.deleteAttachment(attachment)}>&times;</a>
-          </li>
+        </div>
           ,
         {dropEffect: 'move'}
       );

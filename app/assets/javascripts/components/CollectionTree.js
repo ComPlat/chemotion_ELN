@@ -156,13 +156,11 @@ export default class CollectionTree extends React.Component {
     }
     return(
       <div className="tree-view">
-        <ul key="inbox">
-          {boxes}
-          {inbox.unlinked_attachments
-            ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
-            : ""
-          }
-        </ul>
+        {boxes}
+        {inbox.unlinked_attachments
+          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
+          : ""
+        }
       </div>
     )
   }
