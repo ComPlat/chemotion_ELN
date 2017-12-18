@@ -1,6 +1,16 @@
 
 # Chemotion_ELN Changelog
 
+## [v0.4.0]
+* Features
+  * Element list: added time range filter / product filter
+  * enhanced data collector, new configuration (Breaking change)
+  * Export reactions as reaction smiles
+  * Extract RSMI from docx embedded cdx object
+* Fixes
+  * Report formating
+  * shared collection from deleted account  
+
 ## [v0.3.dev]
 * Features
   * upg Rails to 4.2.10 nvm to 6.10.2

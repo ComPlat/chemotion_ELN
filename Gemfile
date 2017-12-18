@@ -75,10 +75,10 @@ gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 # Import of elements from XLS and CSV file
 gem 'roo', '>2.5.0'
 
-gem 'faraday', '~> 0.11.0'
+gem 'faraday', '~> 0.12.1'
 gem 'httparty'
 gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails',
-                   ref: 'bbc54084cd6365bcc9229dfe43f8e7dc8c16a845'
+                   ref: '19b5bd5344462295a2633ccfefed8a5bb4f85f28'
 # Ketcher editor
 
 # Free font icons
@@ -185,8 +185,10 @@ group :test do
   gem 'webmock'
 end
 
-# Chemotion plugins: list your chemotion specific plugin gems here
-
-#gem 'scifinding', '0.1.0', git: 'https://github.com/ComPlat/scifinding' , :group => [:plugins,:development,:production]
+# Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
+eln_plugin = File.join(File.dirname(__FILE__), "Gemfile.plugin")
+if File.exists?(eln_plugin)
+  eval_gemfile eln_plugin
+end
 
 ####
