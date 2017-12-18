@@ -1,6 +1,8 @@
-import React, {Component} from 'react'
-import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
-  OverlayTrigger, Tooltip} from 'react-bootstrap';
+import React, { Component } from 'react';
+import {
+  Col, Panel, ListGroupItem, ButtonToolbar, Button,
+  Tabs, Tab, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -14,11 +16,11 @@ import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import Utils from './utils/Functions';
-import PrintCodeButton from './common/PrintCodeButton'
-import XTabs from "./extra/ReactionDetailsXTabs";
+import PrintCodeButton from './common/PrintCodeButton';
+import XTabs from './extra/ReactionDetailsXTabs';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
-import {setReactionByType} from './ReactionDetailsShare'
+import { setReactionByType } from './ReactionDetailsShare';
 import { sampleShowOrNew } from './routesUtils';
 
 
@@ -137,17 +139,15 @@ export default class ReactionDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    let value
-    if (type == "temperatureUnit" || type == "temperatureData" ||
-        type == "description" || type == "role" || type === 'observation') {
+    let { value } = event.target;
+    if (type === 'temperatureUnit' || type === 'temperatureData' ||
+        type === 'description' || type === 'role' || type === 'observation') {
       value = event;
-    } else {
-      value = event.target.value;
     }
 
-    const {reaction} = this.state;
+    const { reaction } = this.state;
 
-    const {newReaction, options} = setReactionByType(reaction, type, value)
+    const { newReaction, options } = setReactionByType(reaction, type, value);
     this.handleReactionChange(newReaction, options);
   }
 

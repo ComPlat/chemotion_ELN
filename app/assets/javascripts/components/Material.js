@@ -8,6 +8,8 @@ import SampleName from './common/SampleName';
 import ElementActions from './actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from './utils/ElementUtils';
 import { validDigit } from './utils/MathUtils';
+import Reaction from './models/Reaction';
+import Sample from './models/Sample';
 
 const source = {
   beginDrag(props) {
@@ -587,11 +589,11 @@ class Material extends Component {
 export default DragSource(DragDropItemTypes.MATERIAL, source, collect)(Material);
 
 Material.propTypes = {
-  reaction: PropTypes.object.isRequired,
-  material: PropTypes.object.isRequired,
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  material: PropTypes.instanceOf(Sample).isRequired,
   materialGroup: PropTypes.string.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  showLoadingColumn: PropTypes.object,
-  index: PropTypes.number,
+  showLoadingColumn: PropTypes.bool.isRequired,
+  index: PropTypes.number
 };

@@ -24,6 +24,28 @@ export default class MoleculesFetcher {
     return promise;
   }
 
+  static fetchBySmi(smi) {
+    let promise = fetch('/api/v1/molecules/smiles', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        smiles: smi
+      })
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static fetchCas(inchikey) {
     let promise = fetch(`/api/v1/molecules/cas?inchikey=${inchikey}`, {
         credentials: 'same-origin'
