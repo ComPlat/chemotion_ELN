@@ -53,32 +53,43 @@ export default class SamplesFetcher {
 
   static fetchByCollectionId(id, queryParams={}, isSync = false, moleculeSort = false) {
     let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || UIStore.getState().number_of_results
-    let api =  `/api/v1/samples.json?${isSync ? "sync_" : "" }` +
-               `collection_id=${id}&page=${page}&per_page=${per_page}&` +
-               `molecule_sort=${moleculeSort ? 1 : 0}`
-    let promise = fetch(api, {
-        credentials: 'same-origin'
+    let per_page = queryParams.per_page || UIStore.getState().number_of_results;
+    let from_date = '';
+    if (queryParams.fromDate) {
+      from_date = `&from_date=${queryParams.fromDate.unix()}`
+    }
+    let to_date = '';
+    if (queryParams.toDate) {
+      to_date = `&to_date=${queryParams.toDate.unix()}`
+    }
+    const api = `/api/v1/samples.json?${isSync ? "sync_" : "" }` +
+          `collection_id=${id}&page=${page}&per_page=${per_page}&` +
+          `product_only=${queryParams.productOnly || false}` +
+          `${from_date}${to_date}&` +
+          `molecule_sort=${moleculeSort ? 1 : 0}`
+
+    let promise = fetch(
+      api,
+      { credentials: 'same-origin' }
+    ).then((response) => {
+      return response.json().then((json) => {
+        return {
+          elements: json.molecules.map( m => {
+            return m.samples.map( s => new Sample(s) )
+          }),
+          totalElements: parseInt(json.samples_count),
+          page: parseInt(response.headers.get('X-Page')),
+          pages: parseInt(response.headers.get('X-Total-Pages')),
+          perPage: parseInt(response.headers.get('X-Per-Page'))
+        }
       })
-      .then((response) => {
-        return response.json().then((json) => {
-          return {
-            elements: json.molecules.map( m => {
-              return m.samples.map( s => new Sample(s) )
-            }),
-            totalElements: parseInt(json.samples_count),
-            page: parseInt(response.headers.get('X-Page')),
-            pages: parseInt(response.headers.get('X-Total-Pages')),
-            perPage: parseInt(response.headers.get('X-Per-Page'))
-          }
-        })
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
 
     return promise;
   }
-  
+
   static update(sample) {
     let files = AttachmentFetcher.getFileListfrom(sample.container)
     let promise = ()=> fetch('/api/v1/samples/' + sample.id, {

@@ -59,6 +59,7 @@ class Sample < ActiveRecord::Base
   scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_as_solvent).where('reactions.id in (?)', ids) }
   scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
   scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
+  scope :product_only, -> { where('samples.id IN (SELECT DISTINCT(sample_id) FROM reactions_product_samples)') }
 
   scope :search_by_fingerprint, -> (molfile, userid, collection_id,
                                     type, threshold = 0.01) {

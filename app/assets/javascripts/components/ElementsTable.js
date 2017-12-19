@@ -1,9 +1,10 @@
 import React from 'react';
 
 import {
-  Pagination, Table, Form, Col, Row, Button, InputGroup, 
-  FormGroup, FormControl, ControlLabel, Glyphicon
+  Pagination, Form, Col, Row, InputGroup, FormGroup, FormControl, Glyphicon
 } from 'react-bootstrap';
+import DatePicker from 'react-datepicker';
+import deepEqual from 'deep-equal';
 
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
@@ -12,10 +13,8 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import ElementAllCheckbox from './ElementAllCheckbox';
 import ElementsTableEntries from './ElementsTableEntries';
-import ElementsTableSampleEntries from './ElementsTableSampleEntries'
-import Switch from './Switch.js';
-
-import deepEqual from 'deep-equal';
+import ElementsTableSampleEntries from './ElementsTableSampleEntries';
+import Switch from './Switch';
 
 export default class ElementsTable extends React.Component {
   constructor(props) {
@@ -28,14 +27,18 @@ export default class ElementsTable extends React.Component {
       sampleCollapseAll: false,
       moleculeSort: false,
       advancedSearch: false,
-      selectAllCurrentPage: true
-    }
+      productOnly: false,
+    };
 
-    this.onChange = this.onChange.bind(this)
-    this.onChangeUI = this.onChangeUI.bind(this)
+    this.onChange = this.onChange.bind(this);
+    this.onChangeUI = this.onChangeUI.bind(this);
 
-    this.collapseSample = this.collapseSample.bind(this)
-    this.changeSort = this.changeSort.bind(this)
+    this.collapseSample = this.collapseSample.bind(this);
+    this.changeSort = this.changeSort.bind(this);
+
+    this.toggleProductOnly = this.toggleProductOnly.bind(this);
+    this.setFromDate = this.setFromDate.bind(this);
+    this.setToDate = this.setToDate.bind(this);
   }
 
   componentDidMount() {
@@ -51,45 +54,41 @@ export default class ElementsTable extends React.Component {
     UIStore.unlisten(this.onChangeUI);
   }
 
-  initializePagination() {
-    const {page, pages, perPage, totalElements} = this.state;
-    this.setState({
-      page, pages, perPage, totalElements
-    });
-  }
-
-  initState(){
-    this.onChange(ElementStore.getState());
-  }
-
   onChangeUI(state) {
-    let {checkedIds, uncheckedIds, checkedAll} = state[this.props.type];
+    const { checkedIds, uncheckedIds, checkedAll } = state[this.props.type];
+    const {
+      fromDate, toDate, number_of_results, currentSearchSelection, productOnly
+    } = state;
 
     // check if element details of any type are open at the moment
-    let currentId = state.sample.currentId || state.reaction.currentId ||
-                    state.wellplate.currentId;
+    const currentId = state.sample.currentId || state.reaction.currentId ||
+                      state.wellplate.currentId;
 
-    if (checkedIds || uncheckedIds || checkedAll || currentId) {
-      this.setState({
-        ui: {
-          checkedIds: checkedIds,
-          uncheckedIds: uncheckedIds,
-          checkedAll: checkedAll,
-          currentId: currentId,
-          number_of_results: state.number_of_results
-        }
-      });
+    let isAdvS = false;
+    if (currentSearchSelection && currentSearchSelection.search_by_method) {
+      isAdvS = currentSearchSelection.search_by_method === 'advanced';
     }
 
-    let {currentSearchSelection} = state
-    let isAdvS = false
-    if (currentSearchSelection && currentSearchSelection.search_by_method) {
-      isAdvS = currentSearchSelection.search_by_method == "advanced" ? true : false
-      if (isAdvS != this.state.advancedSearch) {
-        this.setState({advancedSearch: isAdvS})
-      }
-    } else if (this.state.advancedSearch == true) {
-      this.setState({advancedSearch: false})
+    const stateChange = (
+      checkedIds || uncheckedIds || checkedAll || currentId ||
+      fromDate || toDate || productOnly !== this.state.productOnly ||
+      isAdvS !== this.state.advancedSearch
+    );
+
+    if (stateChange) {
+      this.setState({
+        ui: {
+          checkedIds,
+          uncheckedIds,
+          checkedAll,
+          currentId,
+          number_of_results,
+          fromDate,
+          toDate
+        },
+        productOnly,
+        advancedSearch: isAdvS
+      });
     }
   }
 
@@ -121,6 +120,19 @@ export default class ElementsTable extends React.Component {
 
       this.initializePagination()
     }
+  }
+
+  initState() {
+    this.onChange(ElementStore.getState());
+  }
+
+  initializePagination() {
+    const {
+      page, pages, perPage, totalElements
+    } = this.state;
+    this.setState({
+      page, pages, perPage, totalElements
+    });
   }
 
   collapseSample(sampelCollapseAll) {
@@ -190,60 +202,121 @@ export default class ElementsTable extends React.Component {
     );
   }
 
+  toggleProductOnly() {
+    UIActions.setProductOnly(!this.state.productOnly);
+  }
+
+  setFromDate(fromDate) {
+    if (this.state.fromDate !== fromDate) UIActions.setFromDate(fromDate);
+  }
+
+  setToDate(toDate) {
+    if (this.state.toDate !== toDate) UIActions.setToDate(toDate);
+  }
+
   renderHeader() {
     const {
       sampleCollapseAll,
       moleculeSort, ui,
-      selectAllCurrentPage
-    } = this.state
+      advancedSearch, productOnly
+    } = this.state;
+    const { fromDate, toDate } = ui;
+    const { type, showReport } = this.props;
 
-    const {type, showReport } = this.props
-    const {advancedSearch} = this.state
+    const collapseIcon = sampleCollapseAll ? 'chevron-right' : 'chevron-down';
 
-    let collapseIcon = sampleCollapseAll ? "chevron-right" : "chevron-down"
-
-    let switchBtnTitle = "Change sorting to sort by "
-    let checkedLbl = "Molecule"
-    let uncheckedLbl = "Sample"
+    let switchBtnTitle = 'Change sorting to sort by ';
+    let checkedLbl = 'Molecule';
+    let uncheckedLbl = 'Sample';
     if (advancedSearch) {
-      switchBtnTitle = switchBtnTitle + (moleculeSort ? "order of input" : "sample last updated")
-      checkedLbl = "Updated"
-      uncheckedLbl = "Order"
+      switchBtnTitle += (moleculeSort ? 'order of input' : 'sample last updated');
+      checkedLbl = 'Updated';
+      uncheckedLbl = 'Order';
     } else {
-      switchBtnTitle = switchBtnTitle + (moleculeSort ? "Sample" : "Molecule")
+      switchBtnTitle += (moleculeSort ? 'Sample' : 'Molecule');
     }
 
-    let headerRight = (<span />)
+    let sampleHeader = (<span />);
     if (type === 'sample') {
-      headerRight = (
-        <div className="header-right">
-          <Switch checked={moleculeSort} style={{width: "90px"}}
+      const color = productOnly ? '#5cb85c' : 'currentColor';
+      sampleHeader = (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <Switch
+            checked={moleculeSort}
+            style={{ marginTop: '3px', width: '85px' }}
             onChange={this.changeSort}
             title={switchBtnTitle}
             checkedChildren={checkedLbl}
-            unCheckedChildren={uncheckedLbl}/>
-
-          &nbsp;&nbsp;&nbsp;&nbsp;
-
-          <Glyphicon glyph={collapseIcon} 
+            unCheckedChildren={uncheckedLbl}
+          />
+          &nbsp;&nbsp;
+          <button
+            style={{ border: 'none' }}
+            onClick={this.toggleProductOnly}
+          >
+            <i
+              style={{ cursor: 'pointer', color }}
+              className="fa fa-lg fa-product-hunt"
+            />
+          </button>
+          &nbsp;&nbsp;
+          <Glyphicon
+            glyph={collapseIcon}
             title="Collapse/Uncollapse"
             onClick={() => this.collapseSample(sampleCollapseAll)}
             style={{
-              fontSize: "20px", cursor: "pointer",
-              top: 0, color: '#337ab7'
-            }}/> 
+              fontSize: '20px',
+              cursor: 'pointer',
+              color: '#337ab7',
+              top: 0
+            }}
+          />
         </div>
-      )
+      );
     }
+
+    const headerRight = (
+      <div className="header-right">
+        <div className="sample-list-from-date">
+          <DatePicker
+            selected={fromDate}
+            placeholderText="From"
+            onChange={this.setFromDate}
+            popperPlacement="left-start"
+            isClearable
+            dateFormat="DD-MM-YY"
+          />
+        </div>
+        <div className="sample-list-to-date">
+          <DatePicker
+            selected={toDate}
+            placeholderText="To"
+            popperPlacement="left-start"
+            onChange={this.setToDate}
+            isClearable
+            dateFormat="DD-MM-YY"
+          />
+        </div>
+        &nbsp;&nbsp;
+        {sampleHeader}
+      </div>
+    );
+
 
     return (
       <div className="table-header" >
         <div className="select-all">
-          <ElementAllCheckbox type={type} ui={ui} showReport={showReport}/>
+          <ElementAllCheckbox type={type} ui={ui} showReport={showReport} />
         </div>
         {headerRight}
       </div>
-    )
+    );
   }
 
   renderEntries() {
@@ -254,7 +327,7 @@ export default class ElementsTable extends React.Component {
       sampleCollapseAll,
       moleculeSort
     } = this.state
-    
+
     const {overview, type} = this.props
     let elementsTableEntries = null
 

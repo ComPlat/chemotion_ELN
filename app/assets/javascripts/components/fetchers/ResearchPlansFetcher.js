@@ -21,8 +21,17 @@ export default class ResearchPlansFetcher {
   static fetchByCollectionId(id, queryParams={}, isSync = false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || 7;
-    let api =  `/api/v1/research_plans.json?${isSync ? "sync_" : "" }` +
-               `collection_id=${id}&page=${page}&per_page=${per_page}`
+    let from_date = '';
+    if (queryParams.fromDate) {
+      from_date = `&from_date=${queryParams.fromDate.unix()}`
+    }
+    let to_date = '';
+    if (queryParams.toDate) {
+      to_date = `&to_date=${queryParams.toDate.unix()}`
+    }
+    let api = `/api/v1/research_plans.json?${isSync ? "sync_" : "" }` +
+              `collection_id=${id}&page=${page}&per_page=${per_page}` +
+              `${from_date}${to_date}`;
     let promise = fetch(api, {
         credentials: 'same-origin'
       })

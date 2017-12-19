@@ -156,5 +156,6 @@ class DocxContainer extends React.Component {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  ReactDOM.render(<DocxContainer />, document.getElementById('Docx'));
+  const docxDOM = document.getElementById('Docx');
+  if (docxDOM) ReactDOM.render(<DocxContainer />, docxDOM);
 });

@@ -1,3 +1,26 @@
+// https://github.com/Hacker0x01/react-datepicker/issues/624#issuecomment-261696513
+
+.react-datepicker {
+  font-size: 1.3rem !important;
+}
+
+.react-datepicker__current-month {
+  font-size: 1.5rem !important;
+}
+
+.react-datepicker__header {
+  padding-top: 6px !important;
+}
+
+.react-datepicker__navigation {
+  top: 13px !important;
+}
+
+.react-datepicker__day-name, .react-datepicker__day {
+  margin: 0.5rem !important;
+}
+// ===================================================================
+
 .pagination {
   margin-top: 0 !important;
 }
@@ -45,6 +68,21 @@ th.drag {
 
 .pubchem-logo {
   max-height: 22px;
+}
+
+.sample-list-from-date, .sample-list-to-date {
+  float: right;
+  margin-right: 2px;
+
+  input {
+    font-size: 13px;
+    border-radius: 4px;
+    box-shadow: inset 0 2px 2px #e9e9e9;
+    border: 1px solid #aeaeae;
+    line-height: 16px;
+    padding: 6px 10px 5px;
+    width: 95px;
+  }
 }
 
 /* .panel-title div:empty:after {

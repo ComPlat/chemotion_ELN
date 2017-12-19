@@ -43,28 +43,33 @@ class API < Grape::API
     end
 
     def group_by_molecule(samples, own_collection = false)
-      groups = Hash.new
+      groups = {}
       sample_serializer_selector =
         if own_collection
-          lambda { |s| SampleListSerializer::Level10.new(s, 10).serializable_hash }
+          ->(s) { SampleListSerializer::Level10.new(s, 10).serializable_hash }
         else
-          lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+          lambda do |s|
+            ElementListPermissionProxy.new(current_user, s, user_ids).serialized
+          end
         end
 
       samples.each do |sample|
-        next if sample == nil
-        moleculeName = get_molecule_name(sample)
+        next if sample.nil?
+        molecule_name = get_molecule_name(sample)
         serialized_sample = sample_serializer_selector.call(sample)
-        groups[moleculeName] = (groups[moleculeName] || []).push(serialized_sample)
+        groups[molecule_name] = (
+          groups[molecule_name] || []
+        ).push(serialized_sample)
       end
-      return to_molecule_array(groups)
+
+      to_molecule_array(groups)
     end
 
     def group_by_order(samples)
-      groups = Array.new
+      groups = []
 
       samples.each do |sample|
-        next if sample == nil
+        next if sample.nil?
         moleculeName = get_molecule_name(sample)
         serialized_sample = ElementListPermissionProxy.new(current_user, sample, user_ids).serialized
         recent_group = groups.last
@@ -73,12 +78,12 @@ class API < Grape::API
         else
           groups.push(
             moleculeName: moleculeName,
-            samples: Array.new.push(serialized_sample)
+            samples: [].push(serialized_sample)
           )
         end
       end
 
-      return groups
+      groups
     end
 
 
