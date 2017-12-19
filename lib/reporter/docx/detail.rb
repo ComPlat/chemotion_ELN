@@ -99,6 +99,12 @@ module Reporter
       def valid_digit(input_num, digit_num)
         Chemotion::Calculations.valid_digit(input_num, digit_num)
       end
+
+      def alphabet(counter)
+        alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        counter = counter >= 1 && counter <=26 ? counter - 1 : 25
+        alphabets[counter]
+      end
     end
   end
 end

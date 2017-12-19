@@ -409,19 +409,21 @@ module Reporter
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
                       "#{m[:equiv]} equiv); "}]
         end
+        counter = 0
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{alphabet(counter)}"},
+          delta += [{"insert"=>"{S#{counter}"},
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
                     {"insert"=>" (#{valid_digit(m[:vol], 2)} mL); "}]
         end
         delta += [{"insert"=>"Yield "}]
+        counter = 0
         obj.products.each do |material|
           p = material_hash(material, true)
           counter += 1
-          delta += [{"insert"=>"{#{alphabet(counter)}|"},
+          delta += [{"insert"=>"{P#{counter}|"},
                     *mol_serial_delta(material[:molecule][:id]),
                     {"insert"=>"} = #{p[:equiv]} (#{p[:mass]} g, " +
                       "#{p[:mol]} mmol)"},
@@ -476,12 +478,6 @@ module Reporter
           analy_index = a[:extended_metadata][:index]
           analy_index ? analy_index&.to_i : -1
         end
-      end
-
-      def alphabet(counter)
-        alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        counter = counter >= 1 && counter <=26 ? counter - 1 : 25
-        alphabets[counter]
       end
 
       def mol_serial(mol_id)

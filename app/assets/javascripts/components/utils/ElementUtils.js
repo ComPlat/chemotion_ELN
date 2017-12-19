@@ -139,10 +139,22 @@ const Alphabet = (input = 1) => {
   return alphabets[index];
 };
 
+const SampleCode = (index, materialGp) => {
+  switch (materialGp) {
+    case 'solvents':
+      return `S${index}`;
+    case 'products':
+      return `P${index}`;
+    default:
+      return Alphabet(index);
+  }
+};
+
 module.exports = {
   SameEleTypId,
   UrlSilentNavigation,
   sampleAnalysesFormatPattern,
   commonFormatPattern,
   Alphabet,
+  SampleCode,
 };

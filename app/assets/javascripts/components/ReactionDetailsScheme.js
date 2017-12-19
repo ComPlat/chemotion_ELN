@@ -497,8 +497,6 @@ export default class ReactionDetailsScheme extends Component {
     }
 
     const headReactants = reaction.starting_materials.length;
-    const headSolvents = headReactants + reaction.reactants.length;
-    const headProducts = headSolvents + reaction.solvents.length;
 
     return (
       <div>
@@ -540,7 +538,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
               onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              headIndex={headProducts} />
+              headIndex={0} />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
             { this.solventCollapseBtn() }
@@ -555,7 +553,7 @@ export default class ReactionDetailsScheme extends Component {
                   dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
                   showLoadingColumn={reaction.hasPolymers()}
                   onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-                  headIndex={headSolvents} />
+                  headIndex={0} />
               </div>
             </Collapse>
           </ListGroupItem>

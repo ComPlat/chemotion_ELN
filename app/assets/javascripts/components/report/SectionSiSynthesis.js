@@ -101,8 +101,8 @@ const ProductsInfo = ({ products = [] }) => {
   return <QuillViewer value={{ ops: content }} />;
 };
 
-const stAndReContent = (el, prevCounter, prevContent, molSerials) => {
-  let counter = prevCounter;
+const stAndReContent = (el, prevContent, molSerials) => {
+  let counter = 0;
   let content = prevContent;
   [...el.starting_materials, ...el.reactants].forEach((elm) => {
     counter += 1;
@@ -113,32 +113,32 @@ const stAndReContent = (el, prevCounter, prevContent, molSerials) => {
       deltaSampleMoleculeName(elm),
       { insert: ` (${validDigit(elm.amount_g, 3)} g, ${validDigit(elm.amount_mol * 1000, 3)} mmol, ${validDigit(elm.equivalent, 3)} equiv); ` }];
   });
-  return { counter, content };
+  return { content };
 };
 
-const solventsContent = (el, prevCounter, prevContent) => {
-  let counter = prevCounter;
+const solventsContent = (el, prevContent) => {
+  let counter = 0;
   let content = prevContent;
   el.solvents.forEach((elm) => {
     counter += 1;
     content = [...content,
-      { insert: `{${Alphabet(counter)}` },
+      { insert: `{S${counter}` },
       { insert: '} ' },
       deltaSampleMoleculeName(elm),
       { insert: ` (${validDigit(elm.amount_l * 1000, 2)} mL); ` }];
   });
-  return { counter, content };
+  return { content };
 };
 
-const porductsContent = (el, prevCounter, prevContent, molSerials) => {
-  let counter = prevCounter;
+const porductsContent = (el, prevContent, molSerials) => {
+  let counter = 0;
   let content = prevContent;
   content = [...content, { insert: 'Yield: ' }];
   el.products.forEach((p) => {
     const m = p.molecule;
     counter += 1;
     content = [...content,
-      { insert: `{${Alphabet(counter)}|` },
+      { insert: `{P${counter}|` },
       deltaUserSerial(m, molSerials),
       { insert: '} ' },
       { insert: ` = ${validDigit(p.equivalent * 100, 0)}%` },
@@ -147,16 +147,14 @@ const porductsContent = (el, prevCounter, prevContent, molSerials) => {
   });
   content = content.slice(0, -1);
   content = [...content, { insert: '.' }];
-  return { counter, content };
+  return { content };
 };
 
 const materailsContent = (el, molSerials) => {
-  const counter = 0;
   const content = [];
-  const stAndRe = stAndReContent(el, counter, content, molSerials);
-  const solvCon = solventsContent(el, stAndRe.counter, stAndRe.content);
-  const prodCon = porductsContent(el, solvCon.counter,
-    solvCon.content, molSerials);
+  const stAndRe = stAndReContent(el, content, molSerials);
+  const solvCon = solventsContent(el, stAndRe.content);
+  const prodCon = porductsContent(el, solvCon.content, molSerials);
 
   return prodCon.content;
 };
@@ -266,7 +264,10 @@ const descContent = (el) => {
   return block;
 };
 
-const synNameContent = el => [{ insert: `${el.name}: ` }];
+const synNameContent = (el) => {
+  const title = el.name || el.short_label;
+  return [{ insert: `${title}: ` }];
+};
 
 const ContentBlock = ({ el, molSerials }) => {
   const synName = synNameContent(el);

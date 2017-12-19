@@ -6,7 +6,7 @@ import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName';
 import ElementActions from './actions/ElementActions';
-import { UrlSilentNavigation, Alphabet } from './utils/ElementUtils';
+import { UrlSilentNavigation, SampleCode } from './utils/ElementUtils';
 import { validDigit } from './utils/MathUtils';
 
 const source = {
@@ -478,9 +478,10 @@ class Material extends Component {
   }
 
   materialNameWithIupac(material) {
+    const { index, materialGroup } = this.props;
     // Skip shortLabel for reactants and solvents
-    let skipIupacName = this.props.materialGroup == 'reactants' ||
-                        this.props.materialGroup == 'solvents'
+    let skipIupacName = materialGroup == 'reactants' ||
+                        materialGroup == 'solvents'
     let materialName = ""
     let moleculeIupacName = ""
     let iupacStyle = {
@@ -492,7 +493,7 @@ class Material extends Component {
 
     if (skipIupacName) {
       let materialDisplayName = material.molecule_iupac_name || material.name
-      if(this.props.materialGroup == 'solvents') {
+      if(materialGroup == 'solvents') {
         materialDisplayName = material.external_label || materialDisplayName
       }
       if (materialDisplayName == null || materialDisplayName == "") {
@@ -530,10 +531,10 @@ class Material extends Component {
       iupacStyle = {display: "none"}
       br = ""
     }
-    const mAlphabet = Alphabet(this.props.index);
+    const serialCode = SampleCode(index, materialGroup);
 
     const tp = (
-      <Tooltip id="tp-alphabet">Add to description</Tooltip>
+      <Tooltip id="tp-spl-code">Add to description</Tooltip>
     );
 
     const addToDesc = (e) => {
@@ -547,7 +548,7 @@ class Material extends Component {
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={tp}>
               <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc}>
-                {mAlphabet}
+                {serialCode}
               </Button>
             </OverlayTrigger>&nbsp;
             {materialName}
@@ -592,4 +593,5 @@ Material.propTypes = {
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.object,
+  index: PropTypes.number,
 };
