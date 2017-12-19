@@ -858,29 +858,17 @@ class ElementStore {
       ElementActions.fetchBasedOnSearchSelectionAndCollection.defer(currentSearchSelection,
         uiState.currentCollection.id, page, uiState.isSync, moleculeSort)
     } else {
-      ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id,
-        {page: page, per_page: uiState.number_of_results},
-        uiState.isSync, moleculeSort);
-
-      switch (type) {
-        // fetch samples to handle creation of split samples
-        case 'reaction':
-          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-        case 'wellplate':
-          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-        case 'screen':
-          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-        case 'research_plan':
-          ElementActions.fetchResearchPlansByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-      }
+      const per_page = uiState.number_of_results;
+      const { fromDate, toDate, productOnly } = uiState;
+      const params = { page, per_page, fromDate, toDate, productOnly };
+      const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
+      const fn = `fetch${fnName}ByCollectionId`;
+      ElementActions[fn](
+        uiState.currentCollection.id,
+        params,
+        uiState.isSync,
+        moleculeSort
+      );
     }
   }
 

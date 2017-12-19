@@ -65,6 +65,8 @@
 /public/docx/*
 !/public/docx/.keep
 
+/public/assets/*.js
+
 /coverage/
 
 /uploadNew/
@@ -91,3 +93,4 @@ backup/weekly_backup
 
 # vim tags
 tags
+tags.temp

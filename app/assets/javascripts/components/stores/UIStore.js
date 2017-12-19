@@ -54,6 +54,9 @@ class UIStore {
 
       showPreviews: true,
       showAdvancedSearch: false,
+      fromDate: null,
+      toDate: null,
+      productOnly: false,
       number_of_results: 15,
       currentCollection: null,
       currentSearchSelection: null,
@@ -94,6 +97,9 @@ class UIStore {
       handleCloseDeviceManagement: UIActions.closeDeviceManagement,
       handleShowModalChange: UIActions.updateModalProps,
       handleHideModal: UIActions.hideModal,
+      handleSetFromDate: UIActions.setFromDate,
+      handleSetToDate: UIActions.setToDate,
+      handleSetProductOnly: UIActions.setProductOnly,
     });
   }
 
@@ -237,13 +243,17 @@ class UIStore {
     this.state[element.type].currentId = element.id;
   }
 
-  handleSelectCollection(collection) {
-    let state = this.state;
-    let isSync = collection.is_sync_to_me ? true : false;
-    let hasChanged = !state.currentCollection
-    hasChanged = hasChanged || state.currentCollection.id != collection.id;
-    hasChanged = hasChanged || isSync != state.isSync;
-    hasChanged = hasChanged || state.currentSearchSelection != null;
+  handleSelectCollection(collection, hasChanged = false) {
+    const state = this.state;
+    const isSync = collection.is_sync_to_me ? true : false;
+    const { fromDate, toDate, productOnly } = state;
+
+    if (!hasChanged) {
+      hasChanged = !state.currentCollection;
+      hasChanged = hasChanged || state.currentCollection.id != collection.id;
+      hasChanged = hasChanged || isSync != state.isSync;
+      hasChanged = hasChanged || state.currentSearchSelection != null;
+    }
 
     if (collection['clearSearch']){
       this.handleClearSearchSelection();
@@ -251,23 +261,38 @@ class UIStore {
       collection['clearSearch'] = undefined;
     }
 
-    if(hasChanged) {
-      this.state.isSync = isSync
+    if(hasChanged && !collection.noFetch) {
+      this.state.isSync = isSync;
       this.state.currentCollection = collection;
-      this.state.number_of_results = 15;
-      if (!collection.noFetch){
-        ElementActions.fetchSamplesByCollectionId(collection.id,
-          state.pagination, isSync);
-        ElementActions.fetchReactionsByCollectionId(collection.id,
-          state.pagination, isSync);
-        ElementActions.fetchWellplatesByCollectionId(collection.id,
-          state.pagination, isSync);
-        ElementActions.fetchScreensByCollectionId(collection.id,
-          state.pagination, isSync);
-        if (!isSync){
-          ElementActions.fetchResearchPlansByCollectionId(collection.id,
-            state.pagination)
-        }
+      const per_page = state.number_of_results;
+      const params = { per_page, fromDate, toDate, productOnly };
+
+      ElementActions.fetchSamplesByCollectionId(
+        collection.id,
+        Object.assign(params, { page: state.sample.page }),
+        isSync,
+        ElementStore.getState().moleculeSort
+      );
+      ElementActions.fetchReactionsByCollectionId(
+        collection.id,
+        Object.assign(params, { page: state.reaction.page }),
+        isSync
+      );
+      ElementActions.fetchWellplatesByCollectionId(
+        collection.id,
+        Object.assign(params, { page: state.wellplate.page }),
+        isSync
+      );
+      ElementActions.fetchScreensByCollectionId(
+        collection.id,
+        Object.assign(params, { page: state.screen.page }),
+        isSync
+      );
+      if (!isSync){
+        ElementActions.fetchResearchPlansByCollectionId(
+          collection.id,
+          Object.assign(params, { page: state.research_plan.page }),
+        );
       }
     }
   }
@@ -312,6 +337,21 @@ class UIStore {
       component: "",
       action: null
     }
+  }
+
+  handleSetFromDate(fromDate) {
+    this.state.fromDate = fromDate;
+    this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleSetToDate(toDate) {
+    this.state.toDate = toDate;
+    this.handleSelectCollection(this.state.currentCollection, true);
+  }
+
+  handleSetProductOnly(productOnly) {
+    this.state.productOnly = productOnly;
+    this.handleSelectCollection(this.state.currentCollection, true);
   }
 }
 

@@ -105,6 +105,18 @@ class UIActions {
   hideModal(){
     return null
   }
+
+  setFromDate(date) {
+    return date;
+  }
+
+  setToDate(date) {
+    return date;
+  }
+
+  setProductOnly(bool) {
+    return bool;
+  }
 }
 
 export default alt.createActions(UIActions);

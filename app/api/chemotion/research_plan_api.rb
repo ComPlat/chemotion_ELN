@@ -7,6 +7,8 @@ module Chemotion
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
@@ -27,6 +29,11 @@ module Chemotion
           # All collection of current_user
           ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
+
+        from = params[:from_date]
+        to = params[:to_date]
+        scope = scope.where('CAST(CREATED_AT AS DATE) >= ?', Time.at(from)) if from
+        scope = scope.where('CAST(CREATED_AT AS DATE) <= ?', Time.at(to)) if to
 
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
