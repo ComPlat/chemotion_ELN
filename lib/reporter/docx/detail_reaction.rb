@@ -36,7 +36,7 @@ module Reporter
           is_reaction: true,
           gp_title_html: gp_title_html,
           synthesis_title_html: synthesis_title_html,
-          products_html: products_html,
+          products_html: is_disable_all ? nil : products_html,
           synthesis_html: synthesis_html,
         }
       end
@@ -104,18 +104,34 @@ module Reporter
 
       def products_delta
         delta = []
+        st = @si_rxn_settings
+        st_name, st_formula, st_cas = st[:Name], st[:Formula], st[:CAS]
+        st_smiles, st_inchi, st_ea = st[:Smiles], st[:InCHI], st[:EA]
+        st_m_mass, st_e_mass = st[:"Molecular Mass"], st[:"Exact Mass"]
         obj.products.each do |p|
           m = p[:molecule]
           cas = (p[:xref] && p[:xref][:cas] && p[:xref][:cas][:label]) || "- "
-          delta += [{"insert"=> "Name: " }] +
-                    sample_molecule_name_delta(p) +
-                    [{"insert"=> "; " }]
-          delta += sum_formular_delta(m)
-          delta += misc_delta(cas, m)
-          delta += ea_delta(p)
+          mol_name = sample_molecule_name_delta(p)
+          delta += st_name ? name_delta(mol_name) : []
+          delta += st_formula ? sum_formular_delta(m) : []
+          delta += st_cas ? cas_delta(cas) : []
+          delta += st_smiles ? smiles_delta(m) : []
+          delta += st_inchi ? inchi_delta(m) : []
+          delta += st_m_mass ? mol_mass_delta(m) : []
+          delta += st_e_mass ? eat_mass_delta(m) : []
+          delta += st_ea ? ea_delta(p) : []
           delta += [{"insert"=>"\n"}]
         end
         delta
+      end
+
+      def is_disable_all
+        st = @si_rxn_settings
+        !st.map { |_, v| v }.any?
+      end
+
+      def name_delta(mol_name)
+        [{"insert"=> "Name: " }] + mol_name + [{"insert"=> "; " }]
       end
 
       def sum_formular_delta(m)
@@ -131,13 +147,24 @@ module Reporter
         delta = [{"insert"=>"Formula: "}] + delta + [{"insert"=>"; "}]
       end
 
-      def misc_delta(cas, m)
-        delta = "CAS: #{cas}; " +
-                "Smiles: #{m[:cano_smiles]}; " +
-                "InCHI: #{m[:inchikey]}; " +
-                "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " +
-                "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; "
-        [{"insert"=>delta}]
+      def cas_delta(cas)
+        [{ "insert" => "CAS: #{cas}; " }]
+      end
+
+      def smiles_delta(m)
+        [{ "insert" => "Smiles: #{m[:cano_smiles]}; " }]
+      end
+
+      def inchi_delta(m)
+        [{ "insert" => "InCHI: #{m[:inchikey]}; " }]
+      end
+
+      def mol_mass_delta(m)
+        [{ "insert" => "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " }]
+      end
+
+      def eat_mass_delta(m)
+        [{ "insert" => "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; " }]
       end
 
       def ea_delta(p)

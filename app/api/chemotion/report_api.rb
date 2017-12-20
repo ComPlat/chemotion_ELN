@@ -221,6 +221,7 @@ module Chemotion
       requires :objTags, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :splSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :rxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
+      requires :siRxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :configs, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :molSerials, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w(png eps emf)
@@ -231,6 +232,7 @@ module Chemotion
     post :reports, each_serializer: ReportSerializer do
       spl_settings = hashize(params[:splSettings])
       rxn_settings = hashize(params[:rxnSettings])
+      si_rxn_settings = hashize(params[:siRxnSettings])
       configs = hashize(params[:configs])
       mol_serials = params[:molSerials].map(&:to_hash)
 
@@ -240,6 +242,7 @@ module Chemotion
         configs: configs,
         sample_settings: spl_settings,
         reaction_settings: rxn_settings,
+        si_reaction_settings: si_rxn_settings,
         mol_serials: mol_serials,
         objects: params[:objTags],
         img_format: params[:imgFormat],

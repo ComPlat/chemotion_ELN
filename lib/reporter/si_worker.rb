@@ -11,8 +11,9 @@ module Reporter
     def contents
       @contents ||= Docx::Document.new(
                             objs: @content_objs,
-                            spl_settings: spl_settings,
-                            rxn_settings: rxn_settings,
+                            spl_settings: @spl_settings,
+                            rxn_settings: @rxn_settings,
+                            si_rxn_settings: @si_rxn_settings,
                             configs: @configs,
                             img_format: img_format,
                             font_family: "Times New Roman",
@@ -24,8 +25,9 @@ module Reporter
     def procedures
       @procedures ||= Docx::Document.new(
                               objs: @procedure_objs,
-                              spl_settings: spl_settings,
-                              rxn_settings: rxn_settings,
+                              spl_settings: @spl_settings,
+                              rxn_settings: @rxn_settings,
+                              si_rxn_settings: @si_rxn_settings,
                               configs: procedure_config,
                               img_format: img_format,
                               font_family: "Times New Roman",
@@ -51,20 +53,11 @@ module Reporter
       @substance ||= {
         contents: contents,
         procedures: procedures,
-        spl_settings: spl_settings,
-        rxn_settings: rxn_settings,
+        spl_settings: @spl_settings,
+        rxn_settings: @rxn_settings,
+        si_rxn_settings: @si_rxn_settings,
         configs: @configs,
       }
-    end
-
-    def spl_settings
-      { diagram: true, collection: true,
-        analyses: true, reaction_description: true}
-    end
-
-    def rxn_settings
-      { diagram: true, material: true, description: true, purification: true,
-        tlc: true, observation: true, analysis: true, literature: true }
     end
 
     def procedure_config
