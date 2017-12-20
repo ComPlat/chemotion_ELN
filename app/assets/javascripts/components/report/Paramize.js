@@ -1,3 +1,29 @@
+const objTags = (selectedObjs) => (
+  selectedObjs.map(obj => ({ id: obj.id, type: obj.type }))
+);
+
+const abstractSplSettings = (splSettings) => (
+  splSettings.map(obj => (
+    { text: obj.text.replace(' ', '_'), checked: obj.checked }
+  ))
+);
+
+const abstractConfigs = (configs) => (
+  configs.map((obj) => {
+    switch (obj.text) {
+      case 'Page Break':
+        return { text: 'page_break', checked: obj.checked };
+      case 'Show all chemicals in schemes (unchecked to show products only)':
+        if (obj.checked) {
+          return { text: 'whole_diagram', checked: obj.checked };
+        }
+        return { text: 'product_diagram', checked: !obj.checked };
+      default:
+        return obj;
+    }
+  })
+);
+
 const paramize = (state) => {
   const { selectedObjs, splSettings, rxnSettings, configs, selMolSerials,
     fileName, fileDescription, imgFormat, template } = state;
@@ -16,33 +42,4 @@ const paramize = (state) => {
   return params;
 };
 
-const objTags = (selectedObjs) => {
-  return selectedObjs.map(obj => {
-    return { id: obj.id, type: obj.type };
-  });
-};
-
-const abstractSplSettings = (splSettings) => {
-    return splSettings.map(obj => {
-      return { text: obj.text.replace(" ", "_"), checked: obj.checked };
-    });
-  }
-
-const abstractConfigs = (configs) => {
-    return configs.map(obj => {
-      switch(obj.text) {
-        case 'Page Break':
-          return { text: "page_break", checked: obj.checked };
-        case 'Show all chemicals in schemes (unchecked to show products only)':
-          if(obj.checked) {
-            return { text: "whole_diagram", checked: obj.checked };
-          } else {
-            return { text: "product_diagram", checked: !obj.checked };
-          }
-        default:
-          return obj;
-      }
-    });
-  }
-
-export default paramize
+export default paramize;
