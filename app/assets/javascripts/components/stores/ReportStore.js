@@ -23,12 +23,23 @@ class ReportStore {
       { checked: true, text: 'analysis' },
       { checked: true, text: 'literature' },
     ];
+    this.siRxnSettings = [
+      { checked: true, text: 'Name' },
+      { checked: true, text: 'CAS' },
+      { checked: true, text: 'Formula' },
+      { checked: true, text: 'Smiles' },
+      { checked: true, text: 'InCHI' },
+      { checked: true, text: 'Molecular Mass' },
+      { checked: true, text: 'Exact Mass' },
+      { checked: true, text: 'EA' },
+    ];
     this.configs = [
       { checked: true, text: 'Page Break' },
       { checked: true, text: 'Show all chemicals in schemes (unchecked to show products only)' },
     ];
     this.checkedAllSplSettings = true;
     this.checkedAllRxnSettings = true;
+    this.checkedAllSiRxnSettings = true;
     this.checkedAllConfigs = true;
     this.processingReport = false;
     this.defaultObjTags = { sampleIds: [], reactionIds: [] };
@@ -48,6 +59,8 @@ class ReportStore {
       handleToggleSplSettingsCheckAll: ReportActions.toggleSplSettingsCheckAll,
       handleUpdateRxnSettings: ReportActions.updateRxnSettings,
       handleToggleRxnSettingsCheckAll: ReportActions.toggleRxnSettingsCheckAll,
+      handleUpdateSiRxnSettings: ReportActions.updateSiRxnSettings,
+      handleToggleSiRxnSettingsCheckAll: ReportActions.toggleSiRxnSettingsCheckAll,
       handleUpdateConfigs: ReportActions.updateConfigs,
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
       handleGenerateReport: ReportActions.generateReport,
@@ -139,6 +152,27 @@ class ReportStore {
         Object.assign({}, s, { checked: newCheckValue })
       )),
       checkedAllRxnSettings: newCheckValue,
+    });
+  }
+
+  handleUpdateSiRxnSettings(target) {
+    this.setState({
+      siRxnSettings: this.siRxnSettings.map((s) => {
+        if (s.text === target.text) {
+          return Object.assign({}, s, { checked: !target.checked });
+        }
+        return s;
+      }),
+    });
+  }
+
+  handleToggleSiRxnSettingsCheckAll() {
+    const newCheckValue = !this.checkedAllSiRxnSettings;
+    this.setState({
+      siRxnSettings: this.siRxnSettings.map(s => (
+        Object.assign({}, s, { checked: newCheckValue })
+      )),
+      checkedAllSiRxnSettings: newCheckValue,
     });
   }
 
@@ -311,6 +345,7 @@ class ReportStore {
     const { template, file_description, img_format, configs } = archive;
     const ss = archive.sample_settings;
     const rs = archive.reaction_settings;
+    const siRs = archive.si_reaction_settings;
     const defaultObjTags = { sampleIds: tags.sample,
       reactionIds: tags.reaction };
     const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
@@ -327,6 +362,7 @@ class ReportStore {
       imgFormat: img_format,
       checkedAllSplSettings: false,
       checkedAllRxnSettings: false,
+      checkedAllSiRxnSettings: false,
       checkedAllConfigs: false,
       splSettings:
         [
@@ -345,6 +381,17 @@ class ReportStore {
           { text: 'observation', checked: rs.observation },
           { text: 'analysis', checked: rs.analysis },
           { text: 'literature', checked: rs.literature },
+        ],
+      siRxnSettings:
+        [
+          { checked: siRs.Name, text: 'Name' },
+          { checked: siRs.CAS, text: 'CAS' },
+          { checked: siRs.Formula, text: 'Formula' },
+          { checked: siRs.Smiles, text: 'Smiles' },
+          { checked: siRs.InCHI, text: 'InCHI' },
+          { checked: siRs['Molecular Mass'], text: 'Molecular Mass' },
+          { checked: siRs['Exact Mass'], text: 'Exact Mass' },
+          { checked: siRs.EA, text: 'EA' },
         ],
       configs:
         [
@@ -397,6 +444,7 @@ class ReportStore {
       imgFormat: 'png',
       checkedAllSplSettings: true,
       checkedAllRxnSettings: true,
+      checkedAllSiRxnSettings: true,
       checkedAllConfigs: true,
       splSettings:
         [
@@ -415,6 +463,17 @@ class ReportStore {
           { text: 'observation', checked: true },
           { text: 'analysis', checked: true },
           { text: 'literature', checked: true },
+        ],
+      siRxnSettings:
+        [
+          { checked: true, text: 'Name' },
+          { checked: true, text: 'CAS' },
+          { checked: true, text: 'Formula' },
+          { checked: true, text: 'Smiles' },
+          { checked: true, text: 'InCHI' },
+          { checked: true, text: 'Molecular Mass' },
+          { checked: true, text: 'Exact Mass' },
+          { checked: true, text: 'EA' },
         ],
       configs:
         [

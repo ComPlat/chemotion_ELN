@@ -47,7 +47,7 @@ const Title = ({ el, counter, molSerials }) => {
     const smn = sampleMoleculeName(p);
     title = smn
       ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
-      : [...title, <span key={key}>"<b>NAME</b>" (<b>{us}</b>)</span>, comma];
+      : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
   });
   title = _.flatten(title).slice(0, -1);
 
@@ -67,37 +67,65 @@ const deltaSampleMoleculeName = (s) => {
   return { attributes: { bold: 'true' }, insert: '"NAME"' };
 };
 
-const ProductsInfo = ({ products = [] }) => {
-  let content = [];
-  products.forEach((p) => {
-    let ea = [];
-    const m = p.molecule;
-    p.elemental_compositions.forEach((ec) => {
-      if (ec.description === 'By molecule formula') {
-        for (let [k, v] of Object.entries(ec.data)) {
-          ea = [...ea, `${k}, ${v}`];
-        }
+const isDisableAll = (settings) => {
+  let status = false;
+  const settingKeys = Object.keys(settings);
+  settingKeys.forEach((key) => {
+    status = status || settings[key];
+  });
+  return !status;
+};
+
+const productEA = (p) => {
+  let ea = [];
+  p.elemental_compositions.forEach((ec) => {
+    if (ec.description === 'By molecule formula') {
+      for (let [k, v] of Object.entries(ec.data)) {
+        ea = [...ea, `${k}, ${v}`];
       }
-      return null;
-    });
-    ea = ea.filter(r => r != null).join('; ');
+    }
+    return null;
+  });
+  ea = ea.filter(r => r != null).join('; ');
+  return ea;
+};
+
+const productContent = (products, settings) => {
+  let content = [];
+
+  products.forEach((p) => {
+    const m = p.molecule;
+    const ea = productEA(p);
+
     const cas = p.xref && p.xref.cas ? p.xref.cas.value : '- ';
-    const pFormula = `Formula: ${m.sum_formular}; `;
-    const pCAS = `CAS: ${cas}; `;
-    const pSmiles = `Smiles: ${m.cano_smiles}; `;
-    const pInCHI = `InCHI: ${m.inchikey}; `;
-    const pMMass = `Molecular Mass: ${fixDigit(m.molecular_weight, 4)}; `;
-    const pEMass = `Exact Mass: ${fixDigit(m.exact_molecular_weight, 4)}; `;
-    const pEA = `EA: ${ea}.`;
-    content = [...content,
+    const deltaName = settings.Name ? [
       { insert: 'Name: ' },
       deltaSampleMoleculeName(p),
       { insert: '; ' },
+    ] : [];
+    const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
+    const pCAS = settings.CAS ? `CAS: ${cas}; ` : '';
+    const pSmiles = settings.Smiles ? `Smiles: ${m.cano_smiles}; ` : '';
+    const pInCHI = settings.InCHI ? `InCHI: ${m.inchikey}; ` : '';
+    const pMMass = settings.MolecularMas
+      ? `Molecular Mass: ${fixDigit(m.molecular_weight, 4)}; ` : '';
+    const pEMass = settings.ExactMass
+      ? `Exact Mass: ${fixDigit(m.exact_molecular_weight, 4)}; ` : '';
+    const pEA = settings.EA ? `EA: ${ea}.` : '';
+
+    content = [...content, ...deltaName,
       { insert: pFormula + pCAS + pSmiles + pInCHI + pMMass + pEMass + pEA },
       { insert: '\n' },
     ];
   });
-  content = content.slice(0, -1);
+  return content.slice(0, -1);
+};
+
+const ProductsInfo = ({ products = [], settings }) => {
+  const disableAll = isDisableAll(settings);
+  if (disableAll) return null;
+
+  const content = productContent(products, settings);
   return <QuillViewer value={{ ops: content }} />;
 };
 
@@ -279,7 +307,7 @@ const ContentBlock = ({ el, molSerials }) => {
   return <QuillViewer value={{ ops: block }} />;
 };
 
-const SynthesisRow = ({ el, counter, configs, molSerials }) => (
+const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
   <div>
     <Title el={el} counter={counter} molSerials={molSerials} />
     <SVGContent
@@ -288,13 +316,14 @@ const SynthesisRow = ({ el, counter, configs, molSerials }) => (
       products={el.products}
       isProductOnly={!configs.Showallchemi}
     />
-    <ProductsInfo products={el.products} />
+    <ProductsInfo products={el.products} settings={settings} />
     <ContentBlock el={el} molSerials={molSerials} />
     <DangerBlock el={el} />
   </div>
 );
 
-const SectionSiSynthesis = ({ selectedObjs, configs, molSerials }) => {
+const SectionSiSynthesis = ({ selectedObjs, configs, molSerials,
+  settings }) => {
   let counter = 0;
   const contents = selectedObjs.map((obj) => {
     if (obj.type === 'reaction' && obj.role !== 'gp') {
@@ -307,6 +336,7 @@ const SectionSiSynthesis = ({ selectedObjs, configs, molSerials }) => {
           counter={counter}
           configs={configs}
           molSerials={molSerials}
+          settings={settings}
         />
       );
     }

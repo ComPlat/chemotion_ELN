@@ -39,8 +39,9 @@ const StdPreviews = ({ selectedObjs, splSettings, rxnSettings, configs }) => {
   );
 };
 
-const SiPreviews = ({ selectedObjs, configs, molSerials }) => {
+const SiPreviews = ({ selectedObjs, configs, molSerials, siRxnSettings }) => {
   const configsPairs = objToKeyValPairs(configs);
+  const setPairs = objToKeyValPairs(siRxnSettings);
 
   return (
     <div>
@@ -59,6 +60,7 @@ const SiPreviews = ({ selectedObjs, configs, molSerials }) => {
         selectedObjs={selectedObjs}
         configs={configsPairs}
         molSerials={molSerials}
+        settings={setPairs}
       />
       <br />
     </div>
@@ -66,13 +68,14 @@ const SiPreviews = ({ selectedObjs, configs, molSerials }) => {
 };
 
 const Previews = ({ selectedObjs, splSettings, rxnSettings, configs, template,
-  molSerials }) => {
+  molSerials, siRxnSettings }) => {
   const content = template === 'supporting_information'
     ? (
       <SiPreviews
         selectedObjs={selectedObjs}
         configs={configs}
         molSerials={molSerials}
+        siRxnSettings={siRxnSettings}
       />
     )
     : (
