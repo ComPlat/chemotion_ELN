@@ -160,7 +160,7 @@ module Chemotion
 
         post do
           uids = params[:user_ids].map do |user_id|
-            val = user_id[:value].to_s
+            val = user_id[:value].to_s.downcase
             if val =~ /^[0-9]+$/
               val.to_i
             # elsif val =~ Devise::email_regexp
