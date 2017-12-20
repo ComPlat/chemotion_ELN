@@ -285,7 +285,7 @@ module Reporter
 
       def description
         delta_desc = obj.description.deep_stringify_keys["ops"]
-        clean_desc = { "ops" => remove_redundant_space_break(delta_desc) }
+        clean_desc = { "ops" => delta_desc }
         Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML())
       end
 
