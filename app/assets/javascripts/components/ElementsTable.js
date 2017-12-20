@@ -193,7 +193,7 @@ export default class ElementsTable extends React.Component {
         <FormGroup>
           <InputGroup>
             <InputGroup.Addon>Show</InputGroup.Addon>
-            <FormControl type="text" style={{textAlign: 'center'}}
+            <FormControl type="text" style={{textAlign: 'center', zIndex: 0}}
                onChange={event => this.handleNumberOfResultsChange(event)}
                value={ui.number_of_results ? ui.number_of_results : 0} />
           </InputGroup>
@@ -288,7 +288,7 @@ export default class ElementsTable extends React.Component {
             selected={fromDate}
             placeholderText="From"
             onChange={this.setFromDate}
-            popperPlacement="left-start"
+            popperPlacement="bottom-start"
             isClearable
             dateFormat="DD-MM-YY"
           />
