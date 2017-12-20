@@ -57,8 +57,7 @@ RSpec.configure do |config|
     stub_request(:post, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/property/InChIKey/JSON").
       with( :headers => {'Accept'=>'*/*',
                          'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-                         'Content-Type'=>'application/x-www-form-urlencoded',
-                         'User-Agent'=>'Faraday v0.11.0'}).
+                         'Content-Type'=>'application/x-www-form-urlencoded'}).
       to_return { |request| { body: get_cids_from_inchikeys(request.body) } }
   end
 

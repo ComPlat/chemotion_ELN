@@ -1,0 +1,2 @@
+# gem 'scifinding', '0.1.6', git: 'https://github.com/ComPlat/scifinding' , :group => [:plugins,:development,:production]
+# gem 'nmr_sim', git: 'https://github.com/ComPlat/nmr_sim', ref: '151ff413a82031ce9c99b3e8cab45d85552e644a', group: [:plugins,:development,:production]
