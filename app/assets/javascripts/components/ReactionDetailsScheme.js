@@ -239,7 +239,8 @@ export default class ReactionDetailsScheme extends Component {
     let updatedSample = this.props.reaction.sampleById(sampleID);
 
     // normalize to milligram
-    updatedSample.setAmountAndNormalizeToGram(amount);
+    // updatedSample.setAmountAndNormalizeToGram(amount);
+    updatedSample.setAmount(amount);
 
     return this.updatedReactionWithSample(this.updatedSamplesForAmountChange.bind(this), updatedSample)
   }
