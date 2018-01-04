@@ -35,9 +35,10 @@ module Chemotion
           Collection.find(currentCollection)
                     .send(elements).where.not(id: uncheckedIds).order(updated_at: :desc)
         else
+          ids = checkedIds.join(',')
           Collection.find(currentCollection)
                     .send(elements).where(id: checkedIds)
-                    .order("position(#{type}s.id::text in '#{checkedIds}')")
+                    .order("position(','||#{type}s.id::text||',' in ',#{ids},')")
         end
       end
 
