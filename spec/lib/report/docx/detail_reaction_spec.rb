@@ -91,7 +91,8 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let!(:target) do
     Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(r1_serialized),
                                         mol_serials: mol_serials,
-                                        index: prev_index)
+                                        index: prev_index,
+                                        si_rxn_settings: all_si_rxn_settings)
   end
 
   context '.content' do
@@ -168,10 +169,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"script"=>"sub"}, "insert"=>"2"},
           {"insert"=>"O"},
           {"insert"=>"; "},
-          {"insert"=>"CAS: - ; " +
-                      "Smiles: #{s2.molecule.cano_smiles}; " +
-                      "InCHI: #{s2.molecule.inchikey}; " +
-                      "Molecular Mass: 18.0153; Exact Mass: 18.0106; "},
+          {"insert"=>"CAS: - ; "},
+          {"insert"=>"Smiles: #{s2.molecule.cano_smiles}; "},
+          {"insert"=>"InCHI: #{s2.molecule.inchikey}; "},
+          {"insert"=>"Molecular Mass: 18.0153; "},
+          {"insert"=>"Exact Mass: 18.0106; "},
           {"insert"=>"EA: "},
           {"insert"=>"H, 11.19; O, 88.81"},
           {"insert"=>"."},
@@ -184,11 +186,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"script"=>"sub"}, "insert"=>"2"},
           {"insert"=>"O"},
           {"insert"=>"; "},
-          {"insert"=>"CAS: - ; " +
-                      "Smiles: #{s3.molecule.cano_smiles}; " +
-                      "InCHI: #{s3.molecule.inchikey}; " +
-                      "Molecular Mass: 18.0153; " +
-                      "Exact Mass: 18.0106; "},
+          {"insert"=>"CAS: - ; "},
+          {"insert"=>"Smiles: #{s2.molecule.cano_smiles}; "},
+          {"insert"=>"InCHI: #{s2.molecule.inchikey}; "},
+          {"insert"=>"Molecular Mass: 18.0153; "},
+          {"insert"=>"Exact Mass: 18.0106; "},
           {"insert"=>"EA: "},
           {"insert"=>"H, 11.19; O, 88.81"},
           {"insert"=>"."},

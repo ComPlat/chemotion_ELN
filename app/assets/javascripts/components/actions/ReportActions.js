@@ -30,6 +30,14 @@ class ReportActions {
     return null;
   }
 
+  updateSiRxnSettings(target) {
+    return target;
+  }
+
+  toggleSiRxnSettingsCheckAll() {
+    return null;
+  }
+
   updateConfigs(target) {
     return target;
   }

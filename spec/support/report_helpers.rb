@@ -27,4 +27,17 @@ module ReportHelpers
       whole_diagram: true,
     }
   end
+
+  def all_si_rxn_settings
+    {
+      Name: true,
+      CAS: true,
+      Formula: true,
+      Smiles: true,
+      InCHI: true,
+      :"Molecular Mass" => true,
+      :"Exact Mass" => true,
+      EA: true
+    }
+  end
 end

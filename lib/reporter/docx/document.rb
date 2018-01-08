@@ -6,6 +6,7 @@ module Reporter
         @objs = args[:objs]
         @spl_settings = args[:spl_settings]
         @rxn_settings = args[:rxn_settings]
+        @si_rxn_settings = args[:si_rxn_settings]
         @configs = args[:configs]
         @contents = Array.new
         @img_format = args[:img_format]
@@ -30,6 +31,7 @@ module Reporter
           index: index,
           spl_settings: @spl_settings,
           rxn_settings: @rxn_settings,
+          si_rxn_settings: @si_rxn_settings,
           configs: @configs,
           last_id: last_id,
           img_format: @img_format,

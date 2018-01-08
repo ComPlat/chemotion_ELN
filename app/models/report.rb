@@ -4,6 +4,7 @@ class Report < ActiveRecord::Base
   serialize :configs, Hash
   serialize :sample_settings, Hash
   serialize :reaction_settings, Hash
+  serialize :si_reaction_settings, Hash
   serialize :objects, Array
   serialize :mol_serials, Array
 
