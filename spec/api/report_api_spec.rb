@@ -304,6 +304,8 @@ describe Chemotion::ReportAPI do
             {\"text\":\"analyses\",\"checked\":true}]",
           rxnSettings: "[{\"text\":\"diagram\",\"checked\":true}, \
             {\"text\":\"material\",\"checked\":true}]",
+          siRxnSettings: "[{\"text\":\"Name\",\"checked\":true}, \
+            {\"text\":\"CAS\",\"checked\":true}]",
           configs: "[{\"text\":\"page_break\",\"checked\":true}, \
             {\"text\":\"whole_diagram\",\"checked\":true}]",
           imgFormat: 'png',
