@@ -377,6 +377,13 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
+  setAmount(amount) {
+    if (amount.value && amount.unit) {
+      this.amount_value = amount.value;
+      this.amount_unit = amount.unit;
+    }
+  }
+
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
@@ -492,6 +499,7 @@ export default class Sample extends Element {
   }
 
   get amount_l() {
+    if (this.amount_unit === 'l') return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'l');
   }
 
