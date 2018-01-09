@@ -1,7 +1,9 @@
+import moment from 'moment';
 import alt from '../alt';
 import ReportActions from '../actions/ReportActions';
 import Utils from '../utils/Functions';
 import ArrayUtils from '../utils/ArrayUtils';
+import UserStore from './UserStore';
 import { reOrderArr } from '../utils/DndControl';
 import { UpdateSelectedObjs } from '../utils/ReportHelper';
 
@@ -256,11 +258,19 @@ class ReportStore {
     });
   }
 
+  stdReportPrefix() {
+    const { currentUser } = UserStore.getState();
+    return currentUser.initials;
+  }
+
   initFileName(template = 'supporting_information') {
     let prefix = 'Supporting_Information_';
+    let datetime = moment().format('YYYY-MM-DD[H]HH[M]mm[S]ss');
+
     switch (template) {
       case 'standard':
-        prefix = 'ELN_Report_';
+        prefix = this.stdReportPrefix();
+        datetime = moment().format('YYYYMMDD');
         break;
       case 'supporting_information':
         prefix = 'Supporting_Information_';
@@ -270,15 +280,6 @@ class ReportStore {
         break;
     }
 
-    const dt = new Date();
-    const yy = dt.getFullYear();
-    const mm = dt.getMonth() + 1;
-    const dd = dt.getDate();
-    const h = dt.getHours();
-    const m = dt.getMinutes();
-    const s = dt.getSeconds();
-
-    const datetime = `${yy}-${mm}-${dd}H${h}M${m}S${s}`;
     return prefix + datetime;
   }
 
