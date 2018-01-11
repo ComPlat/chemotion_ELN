@@ -21,8 +21,10 @@ class API < Grape::API
     end
 
     def is_public_request?
-      request.path.include?('/api/v1/public/') ||
-        request.path.include?('/api/v1/ketcher/layout')
+      request.path.start_with?(
+        '/api/v1/public/',
+        '/api/v1/ketcher/layout'
+      )
     end
 
     def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
