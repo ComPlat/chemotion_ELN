@@ -78,7 +78,7 @@ M  END
 
     c.set_out_format 'inchikey'
     inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
-    
+
     return inchikey
   end
 
@@ -199,8 +199,11 @@ M  END
     fp_16[14] = fp[3]  << 32 | fp[2]
     fp_16[15] = fp[1]  << 32 | fp[0]
 
-    return fp_16
+    fp_16
+  end
 
+  def self.bin_fingerprint_from_molfile molfile
+    fingerprint_from_molfile(molfile).map {|e| "%064b" % e}
   end
 
   def self.get_smiles_from_molfile molfile
