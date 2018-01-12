@@ -406,7 +406,7 @@ export default class ReactionDetailsScheme extends Component {
   updatedSamplesForEquivalentChange(samples, updatedSample) {
     const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
-      if (sample.id === updatedSample.id) {
+      if (sample.id === updatedSample.id && updatedSample.equivalent) {
         sample.equivalent = updatedSample.equivalent;
         if (referenceMaterial && referenceMaterial.amount_value) {
           sample.setAmountAndNormalizeToGram({
