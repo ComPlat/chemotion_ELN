@@ -495,13 +495,13 @@ export default class Reaction extends Element {
 
     let i = 0
     while (i < cats.length) {
-      let group = this['_' + cats[i]]
+      const groupName = "_" + cats[i];
+      const group = this[groupName];
       if (group) {
         let index = group.findIndex(x => x.id == material.id)
-
         if (index >= 0) {
-          this['_' + cats[i]][index] = new Sample(material)
-          break
+          group[index] = new Sample(material);
+          break;
         }
       }
 

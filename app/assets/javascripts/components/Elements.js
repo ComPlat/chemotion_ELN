@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {DragDropContext} from 'react-dnd';
 import {Col} from 'react-bootstrap';
 import HTML5Backend from 'react-dnd-html5-backend';
+import _ from 'lodash';
 
 import List from './List';
 import ElementDetails from './ElementDetails';
@@ -26,7 +27,10 @@ export default class Elements extends Component {
 
   handleOnChange(state) {
     const { currentElement } = state;
-    this.setState({ currentElement });
+    const isNewElement = !_.isEqual(currentElement, this.state.currentElement);
+    if (isNewElement) {
+      this.setState({ currentElement });
+    }
   }
 
   render() {
