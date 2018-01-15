@@ -27,10 +27,7 @@ export default class Elements extends Component {
 
   handleOnChange(state) {
     const { currentElement } = state;
-    const isNewElement = !_.isEqual(currentElement, this.state.currentElement);
-    if (isNewElement) {
-      this.setState({ currentElement });
-    }
+    this.setState({ currentElement });
   }
 
   render() {
