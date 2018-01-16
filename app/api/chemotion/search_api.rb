@@ -41,13 +41,13 @@ module Chemotion
         return Sample.none if not_permitted
         molfile = Fingerprint.standardized_molfile arg
         threshold = params[:selection].tanimoto_threshold
-        type = params[:selection].search_type
 
         # TODO implement this: http://pubs.acs.org/doi/abs/10.1021/ci600358f
-        Sample.by_collection_id(c_id)
-              .search_by_fingerprint(
-                molfile, current_user.id, c_id, type, threshold
-              )
+        if params[:selection].search_type == 'similar'
+          Sample.by_collection_id(c_id).search_by_fingerprint_sim(molfile,threshold)
+        else
+          Sample.by_collection_id(c_id).search_by_fingerprint_sub(molfile)
+        end
       end
 
       def whitelisted_table(table:, column:, **_)
@@ -403,7 +403,7 @@ module Chemotion
           params[:collection_id], params[:is_sync]
         )
         @dl = permission_level_for_collection(
-          params[:collection_id], params[:isSync]
+          params[:collection_id], params[:is_sync]
         )
         @dl_s = @dl[:sample_detail_level]
         @dl_r = @dl[:reaction_detail_level]
@@ -432,7 +432,7 @@ module Chemotion
           arg = get_arg()
           return if arg.to_s.strip.length == 0
 
-          molecule_sort = params[:molecule_sort] == 1 ? true : false
+          molecule_sort = params[:molecule_sort] == 1
 
           # molfile = Fingerprint.standardized_molfile arg
           # opt = [latest_updated, "search-all"]

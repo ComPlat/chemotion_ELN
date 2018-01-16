@@ -61,35 +61,23 @@ class Sample < ActiveRecord::Base
   scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
   scope :product_only, -> { where('samples.id IN (SELECT DISTINCT(sample_id) FROM reactions_product_samples)') }
 
-  scope :search_by_fingerprint, -> (molfile, userid, collection_id,
-                                    type, threshold = 0.01) {
-    fp_vector =
-      Chemotion::OpenBabelService.fingerprint_from_molfile(molfile)
-
-    if (type == 'similar')
-      threshold = threshold.to_f
-      fp_ids = Fingerprint.search_similar(fp_vector, threshold)
-      scope = where(:fingerprint_id => fp_ids)
-      scope = scope.order("position(fingerprint_id::text in '#{fp_ids.join(',')}')")
-    else # substructure search
-      fp_ids = Fingerprint.screen_sub(fp_vector)
-      list_molfile = Sample.where(:fingerprint_id => fp_ids)
-                           .for_user(userid)
-                           .by_collection_id(collection_id.to_i)
-
-      smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
-
-      sample_ids = []
-      list_molfile.each do |sample|
-        if Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
-          sample_ids << sample.id
-        end
-
-      end
-      scope = Sample.where(:id => sample_ids)
-    end
-    return scope
+  scope :search_by_fingerprint_sim, ->(molfile, threshold = 0.01) {
+    joins(:fingerprint).merge(
+      Fingerprint.search_similar(nil, threshold, false, molfile)
+    ).order('tanimoto desc')
   }
+
+  scope :search_by_fingerprint_sub, ->(molfile, as_array = false) {
+    fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
+    smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
+    samples = joins(:fingerprint).merge(Fingerprint.screen_sub(fp_vector))
+    samples = samples.select do |sample|
+      Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
+    end
+    return samples if as_array
+    Sample.where(id: samples.map(&:id))
+  }
+
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
@@ -121,7 +109,7 @@ class Sample < ActiveRecord::Base
   has_many :devices_samples
   has_many :analyses_experiments
 
-  belongs_to :fingerprints
+  belongs_to :fingerprint
   belongs_to :user
   belongs_to :molecule_name
 
@@ -262,9 +250,7 @@ class Sample < ActiveRecord::Base
   end
 
   def find_or_create_fingerprint
-    if self.fingerprint_id == nil
-      self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
-    end
+    fingerprint_id ||= Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
   end
 
   def get_svg_path
@@ -413,7 +399,7 @@ private
     end
 
     self.molfile = lines.join
-    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
+    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
   end
 
   def set_loading_from_ea

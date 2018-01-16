@@ -15,3 +15,6 @@ Metrics/ModuleLength:
 Metrics/BlockLength:
   Exclude:
     - "**/*_spec.rb"
+    
+Metrics/LineLength:
+  Max: 100
