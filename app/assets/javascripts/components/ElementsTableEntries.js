@@ -13,7 +13,8 @@ import KeyboardStore from './stores/KeyboardStore';
 import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
-import XTdCont from "./extra/ElementsTableEntriesXTdCont";
+import XTdCont from './extra/ElementsTableEntriesXTdCont';
+import { reactionShow, wellplateShowOrNew, screenShowOrNew, researchPlanshowOrNew } from './routesUtils';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -92,11 +93,30 @@ export default class ElementsTableEntries extends Component {
   }
 
   showDetails(element) {
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
-      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
-    );
+    const { currentCollection, isSync } = UIStore.getState();
+    const { id, type } = element;
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+    const e = { params: {
+      reactionID: id, wellplateID: id, screenID: id, researchPlanID: id,
+      collectionID: currentCollection.id
+    } };
+    switch(type) {
+      case 'reaction':
+        reactionShow(e);
+        break;
+      case 'wellplate':
+        wellplateShowOrNew(e);
+        break;
+      case 'screen':
+        screenShowOrNew(e);
+        break;
+      case 'researchPlan':
+        researchPlanshowOrNew(e);
+        break;
+    }
   }
 
   dragHandle(element) {
