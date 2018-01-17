@@ -2,6 +2,7 @@ import React from 'react';
 import {Button, Popover, Overlay, ControlLabel, FormGroup, FormControl} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import UIStore from './stores/UIStore';
+import { wellplateShowSample } from './routesUtils';
 
 const WellOverlay = ({show, well, placement, target, handleClose, removeSampleFromWell}) => {
   return (
@@ -120,9 +121,9 @@ const sampleName = (sample) => {
 }
 
 const handleSampleClick = (sample) => {
-  const {currentCollection,isSync} = UIStore.getState();
-  const currentURI = Aviator.getCurrentURI();
-  Aviator.navigate(`${currentURI}/sample/${sample.id}`);
+  const { params, uri } = Aviator.getCurrentRequest();
+  Aviator.navigate(`${uri}/sample/${sample.id}`, { silent: true });
+  wellplateShowSample({ params: { ...params, sampleID: sample.id } });
 }
 
 export default WellOverlay;

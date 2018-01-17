@@ -29,13 +29,13 @@ const collectionShow = (e) => {
       UIActions.selectCollection(collection);
     }
 
-    if (!e.params['sampleID'] && !e.params['reactionID'] &&
-        !e.params['wellplateID'] && !e.params['screenID']) {
-      UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-      UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-      UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-      UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    }
+    // if (!e.params['sampleID'] && !e.params['reactionID'] &&
+        // !e.params['wellplateID'] && !e.params['screenID']) {
+    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    // }
   });
 };
 
@@ -64,12 +64,12 @@ const scollectionShow = (e) => {
       UIActions.selectSyncCollection(collection);
     }
 
-    if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
-      UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
-      UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
-      UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
-      UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
-    }
+    // if (!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
+    UIActions.uncheckAllElements({ type: 'sample', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'reaction', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'wellplate', range: 'all' });
+    UIActions.uncheckAllElements({ type: 'screen', range: 'all' });
+    // }
   });
 };
 
@@ -79,8 +79,6 @@ const reportShowReport = () => {
 
 const sampleShowOrNew = (e) => {
   const { sampleID, collectionID } = e.params;
-  UIActions.selectElement({ type: 'sample', id: sampleID });
-
   if (sampleID === 'new') {
     ElementActions.generateEmptySample(collectionID);
   } else if (sampleID === 'copy') {
@@ -164,6 +162,27 @@ const researchPlanShowOrNew = (e) => {
   }
 };
 
+const elementShowOrNew = (e) => {
+  const type = e.type;
+  switch(type) {
+    case 'sample':
+      sampleShowOrNew(e);
+      break;
+    case 'reaction':
+      reactionShow(e);
+      break;
+    case 'wellplate':
+      wellplateShowOrNew(e);
+      break;
+    case 'screen':
+      screenShowOrNew(e);
+      break;
+    case 'researchPlan':
+      researchPlanshowOrNew(e);
+      break;
+  }
+}
+
 module.exports = {
   collectionShow,
   scollectionShow,
@@ -179,5 +198,6 @@ module.exports = {
   devicesAnalysisShow,
   deviceShow,
   deviceShowDeviceManagement,
-  researchPlanShowOrNew
+  researchPlanShowOrNew,
+  elementShowOrNew
 };

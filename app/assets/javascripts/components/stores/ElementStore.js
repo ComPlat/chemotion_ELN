@@ -26,6 +26,7 @@ import {extraThing} from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
 import Xhandlers from '../extra/ElementStoreXhandlers';
 import Xstate from '../extra/ElementStoreXstate';
+import { elementShowOrNew } from '../routesUtils';
 
 import Aviator from 'aviator'
 
@@ -651,7 +652,7 @@ class ElementStore {
 
   handleFetchWellplateById(result) {
     this.state.currentElement = result;
-    this.navigateToNewElement(result)
+  //  this.navigateToNewElement(result)
   }
 
   handleFetchWellplatesByCollectionId(result) {
@@ -811,11 +812,12 @@ class ElementStore {
 
   navigateToNewElement(element) {
     this.waitFor(UIStore.dispatchToken);
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
-      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
-    );
+    const { type, id } = element;
+    const { uri, namedParams } = Aviator.getCurrentRequest();
+    const uriArray = uri.split(/\//);
+    namedParams[`${type}ID`] = id;
+    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
+    elementShowOrNew({ type, params: namedParams });
   }
 
   handleGenerateEmptyElement(element) {

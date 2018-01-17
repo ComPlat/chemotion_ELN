@@ -14,7 +14,7 @@ import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
-import { reactionShow, wellplateShowOrNew, screenShowOrNew, researchPlanshowOrNew } from './routesUtils';
+import { elementShowOrNew } from './routesUtils';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -99,24 +99,9 @@ export default class ElementsTableEntries extends Component {
       ? `/scollection/${currentCollection.id}/${type}/${id}`
       : `/collection/${currentCollection.id}/${type}/${id}`;
     Aviator.navigate(uri, { silent: true });
-    const e = { params: {
-      reactionID: id, wellplateID: id, screenID: id, researchPlanID: id,
-      collectionID: currentCollection.id
-    } };
-    switch(type) {
-      case 'reaction':
-        reactionShow(e);
-        break;
-      case 'wellplate':
-        wellplateShowOrNew(e);
-        break;
-      case 'screen':
-        screenShowOrNew(e);
-        break;
-      case 'researchPlan':
-        researchPlanshowOrNew(e);
-        break;
-    }
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = id;
+    elementShowOrNew(e)
   }
 
   dragHandle(element) {

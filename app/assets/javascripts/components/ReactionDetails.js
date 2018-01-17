@@ -19,6 +19,7 @@ import XTabs from "./extra/ReactionDetailsXTabs";
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import {setReactionByType} from './ReactionDetailsShare'
+import { sampleShowOrNew } from './routesUtils';
 
 
 export default class ReactionDetails extends Component {
@@ -151,8 +152,10 @@ export default class ReactionDetails extends Component {
   }
 
   handleProductClick(product) {
-    let currentURI = Aviator.getCurrentURI();
-    Aviator.navigate(`${currentURI}/sample/${product.id}`);
+    const uri = Aviator.getCurrentURI();
+    const uriArray = uri.split(/\//);
+    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+    sampleShowOrNew({ params: { sampleID: product.id} });
   }
 
   handleProductChange(product) {
