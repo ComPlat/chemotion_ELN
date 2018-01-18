@@ -3,6 +3,7 @@ import {Button} from 'react-bootstrap';
 import {DropTarget} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
+import { wellplateShowOrNew } from './routesUtils';
 
 import QuillEditor from './QuillEditor'
 
@@ -35,10 +36,10 @@ const collect = (connect, monitor) => ({
 class ScreenWellplates extends Component {
   handleWellplateClick(wellplate) {
     const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/wellplate/${wellplate.id}`
-      : `/collection/${currentCollection.id}/wellplate/${wellplate.id}`
-    );
+    const wellplateID = wellplate.id
+    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
+    Aviator.navigate(uri, { silent: true });
+    wellplateShowOrNew({ params: { wellplateID } });
   }
 
   render() {

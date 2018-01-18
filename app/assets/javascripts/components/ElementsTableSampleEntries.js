@@ -18,6 +18,7 @@ import DragDropItemTypes from './DragDropItemTypes';
 import SampleName from './common/SampleName'
 import XMolHeadCont from "./extra/ElementsTableSampleEntriesXMolHeadCont";
 import Sample from './models/Sample'
+import { sampleShowOrNew } from './routesUtils'
 
 
 export default class ElementsTableSampleEntries extends Component {
@@ -339,11 +340,12 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   showDetails(id) {
-    const {currentCollection,isSync} = UIStore.getState()
-    Aviator.navigate(isSync
+    const { currentCollection, isSync } = UIStore.getState();
+    const uri = isSync
       ? `/scollection/${currentCollection.id}/sample/${id}`
-      : `/collection/${currentCollection.id}/sample/${id}`
-    );
+      : `/collection/${currentCollection.id}/sample/${id}`;
+    Aviator.navigate(uri, { silent: true });
+    sampleShowOrNew({ params: { sampleID: id, collectionID: currentCollection.id } });
   }
 
   topSecretIcon(element) {

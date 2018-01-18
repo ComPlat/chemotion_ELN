@@ -6,233 +6,98 @@ import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 import rXr from './extra/routesXroutes';
+import routesUtils from './routesUtils';
 
-let allRoutes = (r)=>{
-  let rts ={...r};
-  for (let i=0;i<rXr.count;i++){rts={...rts,...rXr['content'+i]} }
+const allRoutes = (r) => {
+  let rts = { ...r };
+  for (let i = 0; i < rXr.count; i++) { rts = { ...rts, ...rXr[`content${i}`] }; }
   return rts;
 }
 
 
 const routes = {
-    '/': 'root',
+  '/': 'root',
+  target: {
+    root() { Aviator.navigate('/collection/all'); }
+  },
+
+  '/collection': {
     target: {
-      root: function(e) {
-        Aviator.navigate('/collection/all');
-      }
+      show: routesUtils.collectionShow,
+      showCollectionManagement: routesUtils.collectionShowCollectionManagement
     },
+    '/management': 'showCollectionManagement',
+    '/:collectionID': 'show'
+  },
 
-    '/collection': {
-      target: {
-        show: function(e) {
-          UIActions.showElements();
-          UserActions.fetchCurrentUser();
-          let uiState = UIStore.getState();
-          let currentSearchSelection = uiState.currentSearchSelection;
-          let collectionId = e.params['collectionID'];
-          let collectionPromise = null;
-          if(collectionId == 'all') {
-            collectionPromise = CollectionStore.findAllCollection();
-          } else {
-            collectionPromise = CollectionStore.findById(collectionId);
-          }
-
-          collectionPromise.then((result) => {
-            let collection = result.collection;
-
-            if(currentSearchSelection) {
-              UIActions.selectCollectionWithoutUpdating(collection)
-              ElementActions.fetchBasedOnSearchSelectionAndCollection(
-                currentSearchSelection, collection.id, 1,
-                collection.is_sync_to_me ? true : false)
-            } else {
-              UIActions.selectCollection(collection);
-            }
-
-            if (!e.params['sampleID'] && !e.params['reactionID'] &&
-                !e.params['wellplateID'] && !e.params['screenID']) {
-              UIActions.uncheckAllElements({type: 'sample', range: 'all'});
-              UIActions.uncheckAllElements({type: 'reaction', range: 'all'});
-              UIActions.uncheckAllElements({type: 'wellplate', range: 'all'});
-              UIActions.uncheckAllElements({type: 'screen', range: 'all'});
-            }
-          });
-        },
-
-        showCollectionManagement: function(e) {
-          UIActions.showCollectionManagement();
-        }
-      },
-      '/management': 'showCollectionManagement',
-      '/:collectionID': 'show'
+  '/scollection': {
+    target: {
+      show: routesUtils.scollectionShow,
+      showCollectionManagement: routesUtils.collectionShowCollectionManagement
     },
+    '/management': 'showCollectionManagement',
+    '/:collectionID': 'show'
+  },
 
-    '/scollection': {
-      target: {
-        show: function(e) {
-          UIActions.showElements();
-          UserActions.fetchCurrentUser();
-          let uiState = UIStore.getState();
-          let currentSearchSelection = uiState.currentSearchSelection;
-          let collectionId = e.params['collectionID'];
-          let collectionPromise = null;
-          collectionPromise = CollectionStore.findBySId(collectionId);
-
-          collectionPromise.then((result) => {
-            let collection = result.sync_collections_user;
-
-            if(currentSearchSelection) {
-              UIActions.selectCollectionWithoutUpdating(collection)
-              ElementActions.fetchBasedOnSearchSelectionAndCollection(
-                currentSearchSelection, collection.id, 1,
-                collection.is_sync_to_me ? true : false)
-            } else {
-              UIActions.selectSyncCollection(collection);
-            }
-
-            if(!e.params['sampleID'] && !e.params['reactionID'] && !e.params['wellplateID'] && !e.params['screenID']) {
-              UIActions.uncheckAllElements({type: 'sample', range: 'all'});
-              UIActions.uncheckAllElements({type: 'reaction', range: 'all'});
-              UIActions.uncheckAllElements({type: 'wellplate', range: 'all'});
-              UIActions.uncheckAllElements({type: 'screen', range: 'all'});
-            }
-          });
-        },
-
-        showCollectionManagement: function(e) {
-          UIActions.showCollectionManagement();
-        }
-      },
-      '/management': 'showCollectionManagement',
-      '/:collectionID': 'show'
+  '/report': {
+    target: {
+      showReport: routesUtils.reportShowReport
     },
+    '/': 'showReport'
+  },
 
-    '/report': {
-      target: {
-        showReport: function(e) {
-          ElementActions.showReportContainer();
-        }
-      },
-      '/': 'showReport'
+  '/sample': {
+    target: {
+      showOrNew: routesUtils.sampleShowOrNew
     },
+    '/:sampleID': 'showOrNew'
+  },
 
-    '/sample': {
-      target: {
-        showOrNew: function(e) {
-          const {sampleID, collectionID} = e.params;
-          UIActions.selectElement({type: 'sample', id: sampleID})
-
-          if (sampleID == 'new') {
-            ElementActions.generateEmptySample(collectionID)
-          } else if(sampleID == 'copy') {
-            ElementActions.copySampleFromClipboard(collectionID);
-          } else {
-            ElementActions.fetchSampleById(sampleID);
-          }
-          //UIActions.selectTab(1);
-        }
-      },
-      '/:sampleID': 'showOrNew'
+  '/reaction': {
+    target: {
+      show: routesUtils.reactionShow,
+      showSample: routesUtils.reactionShowSample
     },
-
-    '/reaction': {
-      target: {
-        show: function(e) {
-          const {reactionID, collectionID} = e.params;
-          //UIActions.selectTab(2);
-          if (reactionID != 'new') {
-            ElementActions.fetchReactionById(reactionID);
-          }  else if(reactionID == 'copy') {
-            ElementActions.copyReactionFromClipboard(collectionID);
-          } else {
-            ElementActions.generateEmptyReaction(collectionID)
-          }
-        },
-        showSample: function(e) {
-          const {reactionID, collectionID, sampleID} = e.params;
-          ElementActions.editReactionSample(reactionID, sampleID);
-        }
-      },
-      '/:reactionID': 'show',
-      '/sample/:sampleID': 'showSample',
+    '/:reactionID': 'show',
+    '/sample/:sampleID': 'showSample',
+  },
+  '/wellplate': {
+    target: {
+      showOrNew: routesUtils.wellplateShowOrNew,
+      showSample: routesUtils.wellplateShowSample
     },
-    '/wellplate': {
-      target: {
-        showOrNew(e) {
-          const {wellplateID, collectionID} = e.params;
-
-          if (wellplateID == 'new') {
-            ElementActions.generateEmptyWellplate(collectionID);
-          } else if(wellplateID == 'template') {
-            ElementActions.generateWellplateFromClipboard(collectionID);
-          } else {
-            ElementActions.fetchWellplateById(wellplateID);
-          }
-        },
-        showSample: function(e) {
-          const {wellplateID, collectionID, sampleID} = e.params;
-          ElementActions.editWellplateSample(wellplateID, sampleID);
-        }
-      },
-      '/:wellplateID': 'showOrNew',
-      '/sample/:sampleID': 'showSample',
+    '/:wellplateID': 'showOrNew',
+    '/sample/:sampleID': 'showSample',
+  },
+  '/screen': {
+    target: {
+      showOrNew: routesUtils.screenShowOrNew
     },
-    '/screen': {
-      target: {
-        showOrNew(e) {
-          const {screenID, collectionID} = e.params;
-          if (screenID == 'new') {
-            ElementActions.generateEmptyScreen(collectionID);
-          } else if(screenID == 'template') {
-            ElementActions.generateScreenFromClipboard(collectionID);
-          } else {
-            ElementActions.fetchScreenById(screenID);
-          }
-        }
-      },
-      '/:screenID': 'showOrNew'
+    '/:screenID': 'showOrNew'
+  },
+  '/devicesAnalysis': {
+    target: {
+      create: routesUtils.devicesAnalysisCreate,
+      show: routesUtils.devicesAnalysisShow
     },
-    '/devicesAnalysis': {
-      target: {
-        create: function(e) {
-          const {deviceId, analysisType} = e.params;
-          ElementActions.createDeviceAnalysis(deviceId, analysisType)
-        },
-        show: function(e) {
-          const {analysisId} = e.params;
-          ElementActions.fetchDeviceAnalysisById(analysisId)
-        },
-      },
-      '/new/:deviceId/:analysisType': 'create',
-      '/:analysisId': 'show',
+    '/new/:deviceId/:analysisType': 'create',
+    '/:analysisId': 'show',
+  },
+  '/device': {
+    target: {
+      show: routesUtils.deviceShow,
+      showDeviceManagement: routesUtils.deviceShowDeviceManagement,
     },
-    '/device': {
-      target: {
-        show: function(e) {
-          const {deviceId} = e.params;
-          ElementActions.fetchDeviceById(deviceId)
-        },
-        showDeviceManagement: function(e) {
-          UIActions.showDeviceManagement()
-        },
-      },
-      '/management': 'showDeviceManagement',
-      '/:deviceId': 'show',
+    '/management': 'showDeviceManagement',
+    '/:deviceId': 'show',
+  },
+  '/research_plan': {
+    target: {
+      showOrNew: routesUtils.researchPlanShowOrNew
     },
-    '/research_plan': {
-      target: {
-        showOrNew(e) {
-          const {researchPlanID, collectionID} = e.params;
-          if (researchPlanID == 'new') {
-            ElementActions.generateEmptyResearchPlan(collectionID);
-          } else {
-            ElementActions.fetchResearchPlanById(researchPlanID);
-          }
-        }
-      },
-      '/:researchPlanID': 'showOrNew'
-    }
-}
+    '/:researchPlanID': 'showOrNew'
+  }
+};
 
 export default function() {
   Aviator.root = '/';
