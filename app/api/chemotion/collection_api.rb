@@ -209,6 +209,7 @@ module Chemotion
             ).compact
             e[2].move_to_collection(ids, current_collection_id, collection_id)
           end
+          status 204
         end
 
         desc 'Assign a collection to a set of elements by UI state'
@@ -236,6 +237,7 @@ module Chemotion
             )
             e[2].create_in_collection(ids, collection_id)
           end
+          status 204
         end
 
         desc "Remove from a collection a set of elements by UI state"
@@ -277,6 +279,7 @@ module Chemotion
             current_collection_id
           )
           CollectionsScreen.remove_in_collection(screen_ids, current_collection_id)
+          status 204
         end
 
       end
