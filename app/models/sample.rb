@@ -250,7 +250,8 @@ class Sample < ActiveRecord::Base
   end
 
   def find_or_create_fingerprint
-    fingerprint_id ||= Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
+    return unless molecule_id_changed? || molfile_changed? || fingerprint_id.nil?
+    fingerprint_id = Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
   end
 
   def get_svg_path
