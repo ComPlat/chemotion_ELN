@@ -40,27 +40,38 @@ class DatasetContainer extends Component {
             attachment={attachment} />
         )
     })
+    let textStyle = {
+      display: "block", whiteSpace: "nowrap", overflow: "hidden",
+      textOverflow: "ellipsis", maxWidth: "100%", cursor: 'move'
+    }
 
     if(sourceType == DragDropItemTypes.DATASET) {
       return connectDragSource(
         visible
-          ? <li><span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
-                  <i className="fa fa-folder-open" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
-                    &nbsp; {dataset.name}</i> </span>
-                    {attachments.length == 0 && this.state.cache.length == 0
-                    ? <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
-                    : ""
-                    }
-                <ul> {attachments} </ul>
-            </li>
-          : <li> <span style={{cursor: 'move'}} className='text-info fa fa-arrows'>
-                  <i className="fa fa-folder" aria-hidden="true" onClick={() => this.setState({visible: !visible})}>
-                    &nbsp; {dataset.name}</i> </span>
-                    {attachments.length == 0 && this.state.cache.length == 0
-                    ? <a className="close" onClick={() => this.deleteDataset(dataset)}>&times;</a>
-                    : ""
-                    }
-                  </li>
+          ? <div>
+              <div style={textStyle}>
+                {attachments.length == 0 && this.state.cache.length == 0
+                  ? <i className="fa fa-trash-o" onClick={() => this.deleteDataset(dataset)} style={{cursor: "pointer"}}>&nbsp;&nbsp;</i>
+                  : ""
+                }
+                <span className='text-info fa fa-arrows'>
+                  <i className="fa fa-folder-open" onClick={() => this.setState({visible: !visible})} style={{cursor: "pointer"}}></i>
+                  <i onClick={() => this.setState({visible: !visible})}>&nbsp; {dataset.name}</i>
+                </span>
+              </div>
+              <div>{attachments}</div>
+            </div>
+          : <div style={textStyle}>
+              {attachments.length == 0 && this.state.cache.length == 0
+                ? <i className="fa fa-trash-o" onClick={() => this.deleteDataset(dataset)} style={{cursor: "pointer"}}>&nbsp;&nbsp;</i>
+                : ""
+              }
+              <span className='text-info fa fa-arrows'>
+                <i className="fa fa-folder" onClick={() => this.setState({visible: !visible})} style={{cursor: "pointer"}}></i>
+                <i onClick={() => this.setState({visible: !visible})}>&nbsp; {dataset.name}</i>
+              </span>
+            </div>
+
           ,
         {dropEffect: 'move'}
       );
