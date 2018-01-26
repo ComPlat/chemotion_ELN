@@ -491,24 +491,25 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material) {
-    var cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    this._updateEquivalentForMaterial(material);
+    const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
 
-    let i = 0
+    let i = 0;
+    let group;
+    let index;
     while (i < cats.length) {
-      const groupName = "_" + cats[i];
-      const group = this[groupName];
+      const groupName = `_${cats[i]}`;
+      group = this[groupName];
       if (group) {
-        let index = group.findIndex(x => x.id == material.id)
+        const index = group.findIndex(x => x.id == material.id);
         if (index >= 0) {
           group[index] = new Sample(material);
           break;
         }
       }
 
-      i = i + 1
+      i += 1;
     }
-
-    this._updateEquivalentForMaterial(material);
   }
 
   // literatures
