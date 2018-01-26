@@ -17,6 +17,7 @@ const templateOpts = () => (
   [
     { label: 'Standard', value: 'standard' },
     { label: 'Supporting Information', value: 'supporting_information' },
+    { label: 'Supporting Information - Spectra', value: 'spectrum' },
   ]
 );
 
@@ -51,13 +52,14 @@ const ImgFormat = ({ imgFormat }) => (
   </Row>
 );
 
-const FileDescription = () => (
+const FileDescription = ({ fileDescription }) => (
   <FormGroup>
     <ControlLabel>File description</ControlLabel>
     <FormControl
       componentClass="textarea"
       onChange={ReportActions.updateFileDescription}
       rows={2}
+      value={fileDescription}
     />
   </FormGroup>
 );
@@ -111,7 +113,8 @@ const toggleConfigsAll = () => {
   ReportActions.toggleConfigsCheckAll();
 };
 
-const SiConfig = ({ template, configs, fileName, checkedAllConfigs }) => {
+const suiConfig = ({ template, configs, fileName, checkedAllConfigs,
+  fileDescription }) => {
 
   const filteredConfigs = configs.filter(c => c.text === 'Show all chemicals in schemes (unchecked to show products only)');
   return (
@@ -120,7 +123,7 @@ const SiConfig = ({ template, configs, fileName, checkedAllConfigs }) => {
       <Template template={template} />
       <br />
       <FileName fileName={fileName} />
-      <FileDescription />
+      <FileDescription fileDescription={fileDescription} />
       <CheckBoxs
         items={filteredConfigs}
         toggleCheckbox={toggleConfigs}
@@ -131,15 +134,15 @@ const SiConfig = ({ template, configs, fileName, checkedAllConfigs }) => {
   );
 };
 
-const GeneralConfig = ({template, configs, fileName, checkedAllConfigs,
-  imgFormat }) => {
+const stdConfig = ({template, configs, fileName, checkedAllConfigs,
+  imgFormat, fileDescription }) => {
   return (
     <div>
       <br />
       <Template template={template} />
       <br />
       <FileName fileName={fileName} />
-      <FileDescription />
+      <FileDescription fileDescription={fileDescription} />
       <CheckBoxs
         items={configs}
         toggleCheckbox={toggleConfigs}
@@ -151,22 +154,29 @@ const GeneralConfig = ({template, configs, fileName, checkedAllConfigs,
   );
 };
 
-const Config = ({ imgFormat, configs, fileName, checkedAllConfigs,
-  template }) => (
-  template === 'supporting_information'
-    ? <SiConfig
-      configs={configs}
-      fileName={fileName}
-      checkedAllConfigs={checkedAllConfigs}
-      template={template}
-    />
-    : <GeneralConfig
-      imgFormat={imgFormat}
-      configs={configs}
-      fileName={fileName}
-      checkedAllConfigs={checkedAllConfigs}
-      template={template}
-    />
-);
+const spcConfig = ({ template, fileName, fileDescription }) => {
+  return (
+    <div>
+      <br />
+      <Template template={template} />
+      <br />
+      <FileName fileName={fileName} />
+      <FileDescription fileDescription={fileDescription} />
+    </div>
+  );
+};
+
+const Config = (props) => {
+  switch (props.template) {
+    case 'standard':
+      return stdConfig(props);
+    case 'spectrum':
+      return spcConfig(props);
+    case 'supporting_information':
+      return suiConfig(props);
+    default:
+      return null;
+  }
+};
 
 export default Config;

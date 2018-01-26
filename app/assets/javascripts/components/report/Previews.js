@@ -3,6 +3,7 @@ import { SectionReaction } from './SectionReaction';
 import SectionSample from './SectionSample';
 import SectionSiProcedures from './SectionSiProcedures';
 import SectionSiSynthesis from './SectionSiSynthesis';
+import SectionSpectrum from  './SectionSpectrum';
 
 const objToKeyValPairs = (obj = []) => (
   obj.reduce((ob, { text, checked }) => {
@@ -13,7 +14,7 @@ const objToKeyValPairs = (obj = []) => (
   }, {})
 );
 
-const StdPreviews = ({ selectedObjs, splSettings, rxnSettings, configs }) => {
+const stdPreviews = ({ selectedObjs, splSettings, rxnSettings, configs }) => {
   const splSettingsPairs = objToKeyValPairs(splSettings);
   const rxnSettingsPairs = objToKeyValPairs(rxnSettings);
   const configsPairs = objToKeyValPairs(configs);
@@ -39,7 +40,7 @@ const StdPreviews = ({ selectedObjs, splSettings, rxnSettings, configs }) => {
   );
 };
 
-const SiPreviews = ({ selectedObjs, configs, molSerials, siRxnSettings }) => {
+const suiPreviews = ({ selectedObjs, configs, molSerials, siRxnSettings }) => {
   const configsPairs = objToKeyValPairs(configs);
   const setPairs = objToKeyValPairs(siRxnSettings);
 
@@ -67,31 +68,34 @@ const SiPreviews = ({ selectedObjs, configs, molSerials, siRxnSettings }) => {
   );
 };
 
-const Previews = ({ selectedObjs, splSettings, rxnSettings, configs, template,
-  molSerials, siRxnSettings }) => {
-  const content = template === 'supporting_information'
-    ? (
-      <SiPreviews
-        selectedObjs={selectedObjs}
-        configs={configs}
-        molSerials={molSerials}
-        siRxnSettings={siRxnSettings}
-      />
-    )
-    : (
-      <StdPreviews
-        selectedObjs={selectedObjs}
-        splSettings={splSettings}
-        rxnSettings={rxnSettings}
-        configs={configs}
-      />
-    );
+const spcPreviews = ({ prdAtts, molSerials, attThumbNails }) => (
+  <div>
+    <SectionSpectrum
+      prdAtts={prdAtts}
+      molSerials={molSerials}
+      attThumbNails={attThumbNails}
+    />
+    <br />
+  </div>
+);
 
-  return (
-    <div className="report-preview">
-      {content}
-    </div>
-  );
+const previewsContent = (props) => {
+  switch (props.template) {
+    case 'standard':
+      return stdPreviews(props);
+    case 'spectrum':
+      return spcPreviews(props);
+    case 'supporting_information':
+      return suiPreviews(props);
+    default:
+      return null;
+  }
 };
+
+const Previews = props => (
+  <div className="report-preview">
+    { previewsContent(props) }
+  </div>
+);
 
 export default Previews;

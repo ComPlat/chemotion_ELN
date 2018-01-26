@@ -7,6 +7,7 @@ class Report < ActiveRecord::Base
   serialize :si_reaction_settings, Hash
   serialize :objects, Array
   serialize :mol_serials, Array
+  serialize :prd_atts, Array
 
   has_many :reports_users
   has_many :users, through: :reports_users
@@ -19,8 +20,10 @@ class Report < ActiveRecord::Base
     template = self.template
     template_path = self.class.docx_template_path(template)
     case template
+      when "spectrum"
+        Reporter::WorkerSpectrum.new(report: self, template_path: template_path).process
       when "supporting_information"
-        Reporter::SiWorker.new(report: self, template_path: template_path).process
+        Reporter::WorkerSi.new(report: self, template_path: template_path).process
       else
         Reporter::Worker.new(report: self, template_path: template_path).process
     end
@@ -62,6 +65,8 @@ class Report < ActiveRecord::Base
     case template
       when "supporting_information"
         Rails.root.join("lib", "template", "Supporting_information.docx")
+      when "spectrum"
+        Rails.root.join("lib", "template", "Spectra.docx")
       when "single_reaction"
         Rails.root.join("lib", "template", "ELN_Objs.docx")
       else

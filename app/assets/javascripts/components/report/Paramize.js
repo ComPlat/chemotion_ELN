@@ -26,13 +26,15 @@ const abstractConfigs = (configs) => (
 
 const paramize = (state) => {
   const { selectedObjs, splSettings, rxnSettings, configs, selMolSerials,
-    fileName, fileDescription, imgFormat, template, siRxnSettings } = state;
+    fileName, fileDescription, imgFormat, template, siRxnSettings,
+    prdAtts } = state;
   const params = {
     objTags: JSON.stringify(objTags(selectedObjs)),
     splSettings: JSON.stringify(abstractSplSettings(splSettings)),
     rxnSettings: JSON.stringify(rxnSettings),
     siRxnSettings: JSON.stringify(siRxnSettings),
     configs: JSON.stringify(abstractConfigs(configs)),
+    prdAtts: JSON.stringify(prdAtts),
     imgFormat,
     fileName,
     fileDescription,

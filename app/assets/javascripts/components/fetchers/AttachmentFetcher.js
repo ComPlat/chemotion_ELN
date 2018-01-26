@@ -18,6 +18,26 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static fetchThumbnails(ids) {
+    let promise = fetch('/api/v1/attachments/thumbnails/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static getFileListfrom(container){
     var allFiles = new Array();
     this.filterAllAttachments(allFiles, container.children);

@@ -100,7 +100,8 @@ export default class ReportContainer extends Component {
     const { splSettings, checkedAllSplSettings, archives, activeKey,
       rxnSettings, checkedAllRxnSettings, imgFormat, fileName, template,
       configs, checkedAllConfigs, selectedObjs, selMolSerials,
-      siRxnSettings, checkedAllSiRxnSettings } = this.state;
+      siRxnSettings, checkedAllSiRxnSettings, fileDescription,
+      prdAtts, attThumbNails } = this.state;
     const archivesTitle = this.archivesTitle();
 
     return (
@@ -117,6 +118,7 @@ export default class ReportContainer extends Component {
             <Config
               imgFormat={imgFormat}
               fileName={fileName}
+              fileDescription={fileDescription}
               configs={configs}
               checkedAllConfigs={checkedAllConfigs}
               template={template}
@@ -155,6 +157,8 @@ export default class ReportContainer extends Component {
                 configs={configs}
                 template={template}
                 molSerials={selMolSerials}
+                prdAtts={prdAtts}
+                attThumbNails={attThumbNails}
               />
             </div>
           </Tab>

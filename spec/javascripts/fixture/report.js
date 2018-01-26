@@ -53,6 +53,8 @@ const originalState = {
   processings: [],
   template: 'supporting_information',
   selMolSerials: [],
+  attThumbNails: [],
+  prdAtts: [],
 };
 
 export { originalState, splSettings, rxnSettings, configs };

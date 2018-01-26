@@ -49,7 +49,7 @@ const toggleSiRxnSettingsAll = () => {
   ReportActions.toggleSiRxnSettingsCheckAll();
 };
 
-const siSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
+const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
   <div>
     <Panel header="Synthesis Products Information" bsStyle="default">
       <CheckBoxs
@@ -62,10 +62,23 @@ const siSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
   </div>
 );
 
-const Setting = (props) => (
-  props.template === 'supporting_information'
-    ? siSetting(props)
-    : stdSetting(props)
+const spcSetting = () => (
+  <div>
+    <h5>Not applicable.</h5>
+  </div>
 );
+
+const Setting = (props) => {
+  switch (props.template) {
+    case 'standard':
+      return stdSetting(props);
+    case 'spectrum':
+      return spcSetting();
+    case 'supporting_information':
+      return suiSetting(props);
+    default:
+      return null;
+  }
+};
 
 export default Setting;

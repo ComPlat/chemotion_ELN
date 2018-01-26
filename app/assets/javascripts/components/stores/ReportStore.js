@@ -1,4 +1,5 @@
 import moment from 'moment';
+import _ from 'lodash';
 import alt from '../alt';
 import ReportActions from '../actions/ReportActions';
 import Utils from '../utils/Functions';
@@ -55,6 +56,8 @@ class ReportStore {
     this.activeKey = 0;
     this.processings = [];
     this.template = 'supporting_information';
+    this.prdAtts = [];
+    this.attThumbNails = [];
 
     this.bindListeners({
       handleUpdateSplSettings: ReportActions.updateSplSettings,
@@ -81,6 +84,7 @@ class ReportStore {
       hadnleRemove: ReportActions.remove,
       hadnleReset: ReportActions.reset,
       handleUpdMSVal: ReportActions.updMSVal,
+      handleUpdateThumbNails: ReportActions.updateThumbNails,
     });
   }
 
@@ -91,16 +95,18 @@ class ReportStore {
   handleUpdateTemplate(value) {
     const newSelectedObjs = this.orderObjsForTemplate(value);
     const molSerials = this.updMolSerials(newSelectedObjs, value);
+    const newPrdAtts = this.extractPrdAtts(newSelectedObjs);
     this.setState({ template: value,
       fileName: this.initFileName(value),
       selectedObjs: newSelectedObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
 
   orderObjsForTemplate(template, oldObjs = null) {
     const oldSelectedObjs = oldObjs || this.selectedObjs;
-    if (template === 'supporting_information') {
+    if (template !== 'standard') {
       let frontObjs = [];
       let rearObjs = [];
       oldSelectedObjs.forEach((obj) => {
@@ -237,8 +243,10 @@ class ReportStore {
     );
     const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
     const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
     this.setState({
       selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -252,8 +260,10 @@ class ReportStore {
     const newObjs = reOrderArr(sourceTag, targetTag, this.isEqTypeId, oldObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
     const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
     this.setState({
       selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -271,6 +281,9 @@ class ReportStore {
       case 'standard':
         prefix = this.stdReportPrefix();
         datetime = moment().format('YYYYMMDD');
+        break;
+      case 'spectrum':
+        prefix = 'Spectra_';
         break;
       case 'supporting_information':
         prefix = 'Supporting_Information_';
@@ -354,6 +367,7 @@ class ReportStore {
     const orderedArTpObjs = this.orderObjsForTemplate(template, orderedArObjs);
     const molSerials = archive.mol_serials ||
       this.updMolSerials(orderedArTpObjs);
+    const newPrdAtts = this.extractPrdAtts(orderedArTpObjs);
 
     this.setState({
       activeKey: 0,
@@ -402,6 +416,7 @@ class ReportStore {
       defaultObjTags,
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: orderedArTpObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -427,11 +442,13 @@ class ReportStore {
     const newObjs = UpdateSelectedObjs(sTags, currentObjs, dTags, currentObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
     const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
 
     this.setState({
       defaultObjTags: dTags,
       selectedObjTags: sTags,
       selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -485,6 +502,8 @@ class ReportStore {
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: [],
       selMolSerials: [],
+      prdAtts: [],
+      attThumbNails: [],
     });
   }
 
@@ -498,7 +517,7 @@ class ReportStore {
 
   updMolSerials(objs, template) {
     const currentTemplate = template || this.template;
-    if (currentTemplate !== 'supporting_information') return [];
+    if (currentTemplate === 'standard') return [];
     if (objs.length === 0) return [];
 
     return this.extractMolSerials(objs);
@@ -558,6 +577,52 @@ class ReportStore {
       return ms;
     });
     this.setState({ selMolSerials: newSelMolSerials });
+  }
+
+  extractPrdAtts(selectedObjs) {
+    if (selectedObjs.length > 0) {
+      const prdAtts = selectedObjs.map((obj) => {
+        if (obj.role !== 'gp') {
+          return this.extractPrdsAtts(obj);
+        }
+        return null;
+      }).filter(r => r !== null);
+      return [].concat(...prdAtts).filter(r => r.atts.length !== 0);
+    }
+    return [];
+  }
+
+  extractPrdsAtts(obj) {
+    if (obj.type === 'reaction') {
+      return obj.products.map((prd) => {
+        const prdId = prd.id;
+        const { iupac_name, sum_formular, id } = prd.molecule;
+        const atts = this.extractAtts(prd);
+        return Object.assign(
+          {}, { atts, prdId, iupac_name, sum_formular, molId: id },
+        );
+      });
+    }
+    return null;
+  }
+
+  extractAtts(prd) {
+    const atts = prd.container.children[0].children.map((container) => {
+      const isReport = container.extended_metadata.report;
+      if (!isReport) return null;
+      const kind = container.extended_metadata.kind;
+      return container.children.map(analysis => (
+        analysis.attachments.map(att => (
+          Object.assign({}, att, { kind })
+        ))
+      ));
+    });
+    return _.flattenDeep(atts).filter(r => r !== null);
+  }
+
+  handleUpdateThumbNails(result) {
+    const thumbs = result.thumbnails;
+    this.setState({ attThumbNails: thumbs });
   }
 }
 

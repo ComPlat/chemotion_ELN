@@ -85,7 +85,7 @@ const GenerateReportBtn = ({ allState, updateQueue }) => {
         disabled={!(showGeneReportBtn && hasObj)}
         onClick={onClick}
       >
-        <span><i className="fa fa-file-text-o" /> Generate Report</span>
+        <span><i className="fa fa-file-text-o" /> Generate</span>
       </Button>
       : <Button
         bsStyle="danger"

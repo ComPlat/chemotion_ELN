@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171220140635) do
+ActiveRecord::Schema.define(version: 20180115110710) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -535,6 +535,7 @@ ActiveRecord::Schema.define(version: 20171220140635) do
     t.string   "template",             default: "standard"
     t.text     "mol_serials",          default: "--- []\n"
     t.text     "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
+    t.text     "prd_atts",             default: "--- []\n"
   end
 
   add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree

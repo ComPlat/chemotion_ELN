@@ -224,6 +224,7 @@ module Chemotion
       requires :siRxnSettings, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :configs, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :molSerials, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
+      requires :prdAtts, type: Array[Hash], coerce_with: ->(val) { JSON.parse(val) }
       requires :imgFormat, type: String, default: 'png', values: %w(png eps emf)
       requires :fileName, type: String, default: "ELN_Report_" + Time.now.strftime("%Y-%m-%dT%H-%M-%S")
       requires :template, type: String, default: "standard"
@@ -235,6 +236,7 @@ module Chemotion
       si_rxn_settings = hashize(params[:siRxnSettings])
       configs = hashize(params[:configs])
       mol_serials = params[:molSerials].map(&:to_hash)
+      prd_atts = params[:prdAtts].map(&:to_hash)
 
       attributes = {
         file_name: params[:fileName],
@@ -244,6 +246,7 @@ module Chemotion
         reaction_settings: rxn_settings,
         si_reaction_settings: si_rxn_settings,
         mol_serials: mol_serials,
+        prd_atts: prd_atts,
         objects: params[:objTags],
         img_format: params[:imgFormat],
         template: params[:template],

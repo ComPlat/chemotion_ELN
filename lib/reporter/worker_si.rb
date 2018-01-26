@@ -1,5 +1,5 @@
 module Reporter
-  class SiWorker < Worker
+  class WorkerSi < Worker
     attr_reader :objs, :content_objs, :procedure_objs,
                 :contents, :procedures
     def initialize(args)
@@ -36,20 +36,8 @@ module Reporter
                             ).convert
     end
 
-    def prism
-      @content_objs, @procedure_objs = [], []
-      @objs.each do |obj|
-        next if obj[:type] == "sample"
-        is_general_procedure(obj) ? @procedure_objs.push(obj) : @content_objs.push(obj)
-      end
-    end
-
-    def is_general_procedure(obj)
-      obj[:type] == "reaction" && obj[:role] == "gp"
-    end
-
     def substance
-      prism
+      @content_objs, @procedure_objs = prism(@objs)
       @substance ||= {
         contents: contents,
         procedures: procedures,
