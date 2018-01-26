@@ -5,6 +5,15 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API
+    helpers do
+      def thumbnail(att)
+        att.thumb ? Base64.encode64(att.read_thumbnail) : nil
+      end
+
+      def thumbnail_obj(att)
+        { id: att.id, thumbnail: thumbnail(att) }
+      end
+    end
 
     rescue_from ActiveRecord::RecordNotFound do |error|
       message = "Could not find attachment"
@@ -114,6 +123,23 @@ module Chemotion
         else
           nil
         end
+      end
+
+      desc 'Return Base64 encoded thumbnails'
+      params do
+        requires :ids, type: Array[Integer]
+      end
+      post 'thumbnails' do
+        thumbnails = params[:ids].map do |a_id|
+          att = Attachment.find(a_id)
+          can_dwnld = if att
+            element = att.container.root.containable
+            can_read = ElementPolicy.new(current_user, element).read?
+            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+          end
+          can_dwnld ? thumbnail_obj(att) : nil
+        end
+        { thumbnails: thumbnails }
       end
 
       namespace :svgs do

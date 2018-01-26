@@ -1,16 +1,16 @@
-import React, {Component} from 'react'
+import React from 'react';
 import SVG from 'react-inlinesvg';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import { Panel, Button } from 'react-bootstrap';
-import DragDropItemTypes from '../DragDropItemTypes'
+import DragDropItemTypes from '../DragDropItemTypes';
 import ReportActions from '../actions/ReportActions';
 import UIActions from '../actions/UIActions';
 
 const orderSource = {
   beginDrag(props) {
     return { id: props.id, type: props.element.type };
-  }
+  },
 };
 
 const orderTarget = {
@@ -18,26 +18,26 @@ const orderTarget = {
     const targetTag = { id: targetProps.id, type: targetProps.element.type };
     const sourceProps = monitor.getItem();
     const sourceTag = { id: sourceProps.id, type: sourceProps.type };
-    if(targetTag.type !== sourceTag.type || targetTag.id !== sourceTag.id) {
-      ReportActions.move({sourceTag, targetTag});
+    if (targetTag.type !== sourceTag.type || targetTag.id !== sourceTag.id) {
+      ReportActions.move({ sourceTag, targetTag });
     }
-  }
+  },
 };
 
-const orderDragCollect = (connect, monitor) => {
-  return {
+const orderDragCollect = (connect, monitor) => (
+  {
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging(),
   }
-}
+);
 
-const orderDropCollect = (connect, monitor) => {
-  return {
+const orderDropCollect = (connect, monitor) => (
+  {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
     canDrop: monitor.canDrop(),
   }
-}
+);
 
 const headerTitle = (el, icon) => {
   const clickToRm = () => {
@@ -58,9 +58,10 @@ const headerTitle = (el, icon) => {
       </Button>
     </span>
   );
-}
+};
 
-const ObjRow = ({element, template, connectDragSource, connectDropTarget, isDragging, isOver, canDrop}) => {
+const ObjRow = ({ element, template, connectDragSource, connectDropTarget,
+  isDragging, isOver, canDrop }) => {
   const style = {};
   if (canDrop) {
     style.borderStyle = 'dashed';
@@ -73,41 +74,49 @@ const ObjRow = ({element, template, connectDragSource, connectDropTarget, isDrag
     style.opacity = 0.2;
   }
 
-  let bsStyle = "default";
+  let bsStyle = 'default';
   let icon = null;
-  if(element.type === 'sample') {
+  const isStdTemplate = template === 'standard';
+  const { type, role } = element;
+  if (type === 'sample') {
     bsStyle = 'success';
-  } else if (template === 'supporting_information' && element.type === 'reaction' && element.role === 'gp') {
+  } else if (!isStdTemplate && type === 'reaction' && role === 'gp') {
     bsStyle = 'primary';
     icon = <i className="fa fa-home c-bs-info" />;
-  } else if (template === 'supporting_information' && element.type === 'reaction' && element.role === 'single') {
+  } else if (!isStdTemplate && type === 'reaction' && role === 'single') {
     bsStyle = 'default';
     icon = <i className="fa fa-asterisk c-bs-danger" />;
-  } else if (template === 'supporting_information' && element.type === 'reaction' && element.role === 'parts') {
+  } else if (!isStdTemplate && type === 'reaction' && role === 'parts') {
     bsStyle = 'info';
     icon = <i className="fa fa-bookmark c-bs-success" />;
-  } else if (element.type === 'reaction') {
+  } else if (type === 'reaction') {
     bsStyle = 'info';
   }
 
   return compose(connectDragSource, connectDropTarget)(
     <div>
-      <Panel style={style} header={headerTitle(element, icon)} bsStyle={bsStyle}>
+      <Panel
+        style={style}
+        header={headerTitle(element, icon)}
+        bsStyle={bsStyle}
+      >
         <div className="row">
           <div className="svg">
-            <SVG src={element.svgPath} key={element.svgPath}/>
+            <SVG src={element.svgPath} key={element.svgPath} />
           </div>
           <div className="dnd-btn">
-            <span style={{fontSize: '18pt', cursor: 'move'}}
-                  className='text-info fa fa-arrows' />
+            <span
+              style={{ fontSize: '18pt', cursor: 'move' }}
+              className="text-info fa fa-arrows"
+            />
           </div>
         </div>
       </Panel>
-    </div>
+    </div>,
   );
-}
+};
 
 export default compose(
   DragSource(DragDropItemTypes.GENERAL, orderSource, orderDragCollect),
-  DropTarget(DragDropItemTypes.GENERAL, orderTarget, orderDropCollect)
+  DropTarget(DragDropItemTypes.GENERAL, orderTarget, orderDropCollect),
 )(ObjRow);

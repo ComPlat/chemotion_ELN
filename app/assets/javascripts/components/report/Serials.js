@@ -5,7 +5,7 @@ import Formula from '../common/Formula';
 import CommonInput from '../common/CommonInput';
 import ReportActions from '../actions/ReportActions';
 
-const Serial = ({serial, counter}) => {
+const Serial = ({ serial, counter }) => {
   if (!serial) return null;
   const mol = serial.mol;
   const oddClass = counter % 2 === 1 ? 'order-even' : null;
@@ -35,16 +35,30 @@ const Serial = ({serial, counter}) => {
   );
 };
 
-const Serials = ({selMolSerials, template}) => {
-  if (template !== 'supporting_information') {
-    return <h5>This is only available for Supporting Information.</h5>;
-  }
+const stdSerials = () => (<h5>Not applicable.</h5>);
 
+const suiSerials = (props) => {
+  const { selMolSerials, template } = props;
   const contents = selMolSerials.map((molSer, i) => (
     <Serial id={i} key={`ms-${molSer.mol.id}`} serial={molSer} counter={i} />
   ));
 
   return <div className="report-serials">{contents}</div>;
+};
+
+const spcSerials = props => suiSerials(props);
+
+const Serials = (props) => {
+  switch (props.template) {
+    case 'standard':
+      return stdSerials();
+    case 'spectrum':
+      return spcSerials(props);
+    case 'supporting_information':
+      return suiSerials(props);
+    default:
+      return null;
+  }
 };
 
 export default Serials;

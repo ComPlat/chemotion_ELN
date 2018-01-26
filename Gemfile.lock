@@ -22,7 +22,7 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/sablon
-  revision: 7b688bfd5f7459ca49e786ea9908996d44c2f825
+  revision: 0bb0e77a8eb5ed2953d81af42558e568845c3777
   specs:
     sablon (0.0.19)
       nokogiri (>= 1.6.0)

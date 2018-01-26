@@ -1,23 +1,54 @@
-import React, {Component} from 'react'
-import { Table } from 'react-bootstrap';
+import React from 'react';
 import ObjRow from './OrdersDnD';
 
-const Orders = ({selectedObjs, template}) => {
-  const allContent = selectedObjs.map( obj => {
-    return <ObjRow id={obj.id} key={obj.id} element={obj} template={template} />
-  })
+const allContent = ({ selectedObjs, template }) => (
+  selectedObjs.map(obj => (
+    <ObjRow
+      id={obj.id}
+      key={obj.id}
+      element={obj}
+      template={template}
+    />
+  ))
+);
 
-  const siContent = selectedObjs.map( obj => {
-    if(obj.type === 'reaction') {
-      return <ObjRow id={obj.id} key={obj.id} element={obj} template={template} />
+const suiContent = ({ selectedObjs, template }) => (
+  selectedObjs.map((obj) => {
+    if (obj.type === 'reaction') {
+      return (
+        <ObjRow
+          id={obj.id}
+          key={obj.id}
+          element={obj}
+          template={template}
+        />
+      );
     }
-  })
+    return null;
+  }).filter(r => r != null)
+);
 
-  return (
-    <div className="report-orders">
-      {template === 'supporting_information' ? siContent : allContent}
-    </div>
-  )
-}
+const spcContent = props => (
+  suiContent(props)
+);
+
+const ordersContent = (props) => {
+  switch (props.template) {
+    case 'standard':
+      return allContent(props);
+    case 'spectrum':
+      return spcContent(props);
+    case 'supporting_information':
+      return suiContent(props);
+    default:
+      return null;
+  }
+};
+
+const Orders = props => (
+  <div className="report-orders">
+    { ordersContent(props) }
+  </div>
+);
 
 export default Orders;

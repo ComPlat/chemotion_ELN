@@ -312,7 +312,30 @@ describe Chemotion::ReportAPI do
           fileName: fileName,
           molSerials: "[{\"mol\":{\"id\":1, \"svgPath\":\"1a.svg\", \
             \"sumFormula\":\"C6H6\", \"iupacName\":\"benzene\"}, \
-            \"value\":\"1a\"}]"
+            \"value\":\"1a\"}]",
+          prdAtts: "{\"atts\": \
+                      [ \
+                        { \
+                          \"id\":2, \
+                          \"container_id\":121, \
+                          \"filename\":\"kit_logo.png\", \
+                          \"identifier\":\"123\", \
+                          \"checksum\":\"456\", \
+                          \"storage\":\"local\", \
+                          \"created_by\":1, \
+                          \"created_for\":1, \
+                          \"version\":0, \
+                          \"created_at\":\"2018-01-03T15:24:19.751Z\", \
+                          \"updated_at\":\"2018-01-03T15:24:28.686Z\", \
+                          \"content_type\":\"image/png\", \
+                          \"bucket\":\"1\", \
+                          \"key\":\"987\", \
+                          \"thumb\":true, \
+                          \"folder\":\"\", \
+                          \"kind\":\"GCMS\" \
+                        } \
+                      ] \
+                    }"
         }
       end
 

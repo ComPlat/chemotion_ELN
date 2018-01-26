@@ -35,6 +35,14 @@ class Attachment < ActiveRecord::Base
     store.read_thumb if self.thumb
   end
 
+  def abs_path
+    store.path
+  end
+
+  def abs_prev_path
+    store.prev_path
+  end
+
   def store
     Storage.new_store(self)
   end

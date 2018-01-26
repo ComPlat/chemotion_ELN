@@ -74,5 +74,18 @@ module Reporter
         objs: contents
       }
     end
+
+    def prism(objs)
+      cont_objs, proc_objs = [], []
+      objs.each do |obj|
+        next if obj[:type] == "sample"
+        is_general_procedure(obj) ? proc_objs.push(obj) : cont_objs.push(obj)
+      end
+      return cont_objs, proc_objs
+    end
+
+    def is_general_procedure(obj)
+      obj[:type] == "reaction" && obj[:role] == "gp"
+    end
   end
 end
