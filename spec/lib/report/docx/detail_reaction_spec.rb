@@ -115,7 +115,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     it "has correct content" do
       expect(content[:title]).to eq(tit)
-      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.00ml)")
+      expect(content[:solvents]).to eq("#{s4.preferred_label} (55.5ml)")
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML())
       )
@@ -208,7 +208,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"{S1"},
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>s4.preferred_label},
-          {"insert"=>" (0.0 mL); "},
+          {"insert"=>" (56 mL); "},
           {"insert"=>"Yield "},
           {"insert"=>"{P1|"},
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
