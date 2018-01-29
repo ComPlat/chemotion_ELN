@@ -1,32 +1,37 @@
 module UnitConvertable
   extend ActiveSupport::Concern
 
-  def convert_to_unit value, unit, milli = false
+  def convert_to_unit amount_g, unit, milli = false
     val = if self.contains_residues
       case unit
       when 'g'
-        value
+        amount_g
       when 'mol'
-        (self.loading * value) / 1000.0 # loading is always in mmol/g
+        (self.loading * amount_g) / 1000.0 # loading is always in mmol/g
       else
-        value
+        amount_g
       end
     else
       case unit
       when 'g'
-        value
+        amount_g
       when 'l'
-        self.density || 1.0;
-        if density
-          value / density / 1000 ;
+        if has_molarity
+          mol_weight = molecule.molecular_weight
+          secure_purity = purity || 1.0
+          (amount_g * secure_purity) / (molarity_value * mol_weight)
+        elsif has_density
+          amount_g / (density * 1000)
+        else
+          0
         end
       when 'mol'
         molecular_weight = self.molecule.molecular_weight
         if molecular_weight
-          value * (self.purity || 1.0) / molecular_weight
+          amount_g * (self.purity || 1.0) / molecular_weight
         end
       else
-        value
+        amount_g
       end
     end
 
@@ -57,7 +62,13 @@ module UnitConvertable
       when 'mg'
         value / 1000.0;
       when 'l'
-        value * (self.density || 1.0) * 1000;
+        if has_molarity
+          value * molarity_value * molecule.molecular_weight
+        elsif has_density
+          value * (density || 1.0) * 1000
+        else
+          0
+        end
       when 'mol'
         value / (self.purity || 1.0) * self.molecule.molecular_weight;
       else
@@ -69,6 +80,8 @@ module UnitConvertable
   def amount_mmol type = 'target'
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
+    return value * 1000 if unit == 'mol'
+
     val_g = self.convert_to_gram(value, unit)
     self.convert_to_unit(val_g, 'mol', true)
   end
@@ -90,6 +103,8 @@ module UnitConvertable
 
     value = self["#{type}_amount_value"] || 0.0
     unit = self["#{type}_amount_unit"]
+    return value * 1000 if unit == 'l'
+
     val_g = self.convert_to_gram(value, unit)
     self.convert_to_unit(val_g, 'l', true)
   end
