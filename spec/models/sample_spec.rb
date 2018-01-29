@@ -195,4 +195,56 @@ MOLFILE
       expect(sample.children.count).to eq(3)
     end
   end
+
+  describe 'unit conversion' do
+    let(:sample) { create(:sample) }
+
+    context 'given l & molarity' do
+      before do
+        sample.target_amount_value = 0.001991
+        sample.target_amount_unit = 'l'
+        sample.molarity_value = 1.23
+        sample.density = 0
+        sample.save!
+      end
+
+      it 'returns correct values' do
+        expect(sample.amount_g.round(3)).to be(0.044)
+        expect(sample.amount_ml.round(3)).to be(1.991)
+        expect(sample.amount_mmol.round(3)).to be(2.449)
+      end
+    end
+
+    context 'given l' do
+      before do
+        sample.target_amount_value = 0.002231
+        sample.target_amount_unit = 'l'
+        sample.molarity_value = 0
+        sample.density = 0
+        sample.save!
+      end
+
+      it 'returns correct values' do
+        expect(sample.amount_g.round(3)).to be(0.0)
+        expect(sample.amount_ml.round(3)).to be(2.231)
+        expect(sample.amount_mmol.round(3)).to be(0.0)
+      end
+    end
+
+    context 'given mol' do
+      before do
+        sample.target_amount_value = 0.00119
+        sample.target_amount_unit = 'mol'
+        sample.molarity_value = 0
+        sample.density = 0
+        sample.save!
+      end
+
+      it 'returns correct values' do
+        expect(sample.amount_g.round(3)).to be(0.021)
+        expect(sample.amount_ml.round(3)).to be(0.0)
+        expect(sample.amount_mmol.round(3)).to be(1.19)
+      end
+    end
+  end
 end

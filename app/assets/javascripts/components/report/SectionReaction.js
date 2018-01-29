@@ -164,7 +164,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
               </tr>
               <tr>
                 <td style={{width: '20%'}}>{sample.molecule.sum_formular}</td>
-                <td style={{width: '20%'}}>{materialCalc(sample.amount_g, 1000, 3)}</td>
+                <td style={{width: '20%'}}>{materialCalc(sample.amount_g, 1, 3)}</td>
                 <td style={{width: '20%'}}>{materialCalc(sample.amount_l, 1000, 3)}</td>
                 <td style={{width: '20%'}}>{materialCalc(sample.amount_mol, 1000, 3)}</td>
                 <td style={{width: '20%'}}>{equiv_or_yield(sample, isProduct)}</td>
@@ -179,7 +179,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
       <thead>
         <tr>
           <th>Formula</th>
-          <th>Mass(mg)</th>
+          <th>Mass(g)</th>
           <th>Vol(ml)</th>
           <th>Amount(mmol)</th>
           <th>Equiv/Yield</th>

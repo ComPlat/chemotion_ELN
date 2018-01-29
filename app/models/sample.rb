@@ -477,4 +477,12 @@ private
     return unless molecule_id_changed? && molecule_name&.molecule_id != molecule_id
     assign_molecule_name
   end
+
+  def has_molarity
+    molarity_value > 0 && density == 0
+  end
+
+  def has_density
+    density > 0 && molarity_value == 0
+  end
 end
