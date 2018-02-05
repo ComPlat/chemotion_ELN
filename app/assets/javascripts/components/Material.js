@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
-        Label} from 'react-bootstrap';
+import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
+  Label } from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
@@ -52,11 +52,22 @@ class Material extends Component {
   }
 
   materialVolume(material) {
-    if (material.contains_residues)
+    if (material.contains_residues) {
       return this.notApplicableInput();
-    else
-      return(
-        <td>
+    }
+    const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
+    const tooltip = has_density || has_molarity ?
+      (
+        <Tooltip>
+          { has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}` }
+        </Tooltip>
+      )
+      : <Tooltip>no density or molarity defined</Tooltip>;
+
+    return (
+      <td>
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          <div>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_l}
@@ -66,9 +77,10 @@ class Material extends Component {
             precision={3}
             onChange={amount => this.handleAmountUnitChange(amount)}
             bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
-          />
-        </td>
-      )
+          /></div></OverlayTrigger>
+
+      </td>
+    )
   }
 
 

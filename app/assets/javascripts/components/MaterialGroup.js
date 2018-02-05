@@ -7,7 +7,6 @@ import ElementActions from './actions/ElementActions';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import Molecule from './models/Molecule';
 import Reaction from './models/Reaction';
-import { solvents } from './staticDropdownOptions/solvents';
 import { defaultMultiSolventsSmilesOptions } from './staticDropdownOptions/options';
 import { ionic_liquids } from './staticDropdownOptions/ionic_liquids';
 import { reagents_kombi } from './staticDropdownOptions/reagents_kombi';
@@ -208,14 +207,16 @@ const SolventsMaterialGroup = ({
       });
   };
 
-  const solventObj = Object.assign({}, solvents, ionic_liquids);
-  const solventOptions = [];
-  Object.keys(solventObj).forEach((x) => {
-    solventOptions.push({
-      label: x,
-      value: solventObj[x]
-    });
-  });
+  const solventOptions = Object.keys(ionic_liquids).reduce(
+    (solvents, ionicLiquid) => solvents.concat({
+      label: ionicLiquid,
+      value: {
+        external_label: ionicLiquid,
+        smiles: ionic_liquids[ionicLiquid],
+        density: 1.0
+      }
+    }), defaultMultiSolventsSmilesOptions
+  );
 
   return (
     <div>
@@ -228,7 +229,7 @@ const SolventsMaterialGroup = ({
                 className="solvents-select"
                 name="default solvents"
                 multi={false}
-                options={defaultMultiSolventsSmilesOptions}
+                options={solventOptions}
                 placeholder="Default solvents"
                 onChange={createDefaultSolventsForReaction}
               />
