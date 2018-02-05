@@ -1,6 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-import {Radio,FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
-        Label} from 'react-bootstrap';
+import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
+  Label } from 'react-bootstrap';
 import {DragSource} from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
@@ -8,6 +8,8 @@ import SampleName from './common/SampleName';
 import ElementActions from './actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from './utils/ElementUtils';
 import { validDigit } from './utils/MathUtils';
+import Reaction from './models/Reaction';
+import Sample from './models/Sample';
 
 const source = {
   beginDrag(props) {
@@ -50,11 +52,22 @@ class Material extends Component {
   }
 
   materialVolume(material) {
-    if (material.contains_residues)
+    if (material.contains_residues) {
       return this.notApplicableInput();
-    else
-      return(
-        <td>
+    }
+    const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
+    const tooltip = has_density || has_molarity ?
+      (
+        <Tooltip>
+          { has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}` }
+        </Tooltip>
+      )
+      : <Tooltip>no density or molarity defined</Tooltip>;
+
+    return (
+      <td>
+        <OverlayTrigger placement="top" overlay={tooltip}>
+          <div>
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_l}
@@ -64,9 +77,10 @@ class Material extends Component {
             precision={3}
             onChange={amount => this.handleAmountUnitChange(amount)}
             bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
-          />
-        </td>
-      )
+          /></div></OverlayTrigger>
+
+      </td>
+    )
   }
 
 
@@ -587,11 +601,11 @@ class Material extends Component {
 export default DragSource(DragDropItemTypes.MATERIAL, source, collect)(Material);
 
 Material.propTypes = {
-  reaction: PropTypes.object.isRequired,
-  material: PropTypes.object.isRequired,
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  material: PropTypes.instanceOf(Sample).isRequired,
   materialGroup: PropTypes.string.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
-  showLoadingColumn: PropTypes.object,
-  index: PropTypes.number,
+  showLoadingColumn: PropTypes.bool.isRequired,
+  index: PropTypes.number
 };

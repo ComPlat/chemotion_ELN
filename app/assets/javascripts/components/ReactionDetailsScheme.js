@@ -7,6 +7,7 @@ import Select from 'react-select';
 import Delta from 'quill-delta';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import Sample from './models/Sample';
+import Reaction from './models/Reaction';
 import Molecule from './models/Molecule';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import QuillEditor from './QuillEditor';
@@ -480,10 +481,10 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   render() {
-    let { reaction } = this.state;
-    let minPadding = {padding: "1px 2px 2px 0px"}
-    if(reaction.editedSample != undefined) {
-      if(reaction.editedSample.amountType == 'target') {
+    const { reaction } = this.state;
+    const minPadding = { padding: '1px 2px 2px 0px' };
+    if (reaction.editedSample !== undefined) {
+      if (reaction.editedSample.amountType === 'target') {
         this.updatedSamplesForEquivalentChange(reaction.samples, reaction.editedSample);
       } else { // real amount, so that we update amount in mmol
         this.updatedSamplesForAmountChange(reaction.samples, reaction.editedSample);
@@ -492,8 +493,8 @@ export default class ReactionDetailsScheme extends Component {
     }
 
     // if no reference material then mark first starting material
-    let refM = this.props.reaction.starting_materials[0];
-    if(!this.props.reaction.referenceMaterial && refM) {
+    const refM = this.props.reaction.starting_materials[0];
+    if (!this.props.reaction.referenceMaterial && refM) {
       reaction.markSampleAsReference(refM.id);
     }
 
@@ -512,8 +513,9 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              headIndex={0} />
+              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              headIndex={0}
+            />
           </ListGroupItem>
           <ListGroupItem style={minPadding} >
 
@@ -525,8 +527,9 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              headIndex={headReactants} />
+              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              headIndex={headReactants}
+            />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
 
@@ -538,12 +541,13 @@ export default class ReactionDetailsScheme extends Component {
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
               showLoadingColumn={reaction.hasPolymers()}
-              onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-              headIndex={0} />
+              onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              headIndex={0}
+            />
           </ListGroupItem>
           <ListGroupItem style={minPadding}>
             { this.solventCollapseBtn() }
-            <Collapse in={ this.state.open }>
+            <Collapse in={this.state.open}>
               <div>
                 <MaterialGroupContainer
                   reaction={reaction}
@@ -553,8 +557,9 @@ export default class ReactionDetailsScheme extends Component {
                   deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                   dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
                   showLoadingColumn={reaction.hasPolymers()}
-                  onChange={(changeEvent) => this.handleMaterialsChange(changeEvent)}
-                  headIndex={0} />
+                  onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  headIndex={0}
+                />
               </div>
             </Collapse>
           </ListGroupItem>
@@ -589,7 +594,7 @@ export default class ReactionDetailsScheme extends Component {
 }
 
 ReactionDetailsScheme.propTypes = {
-  reaction: React.PropTypes.object,
-  onReactionChange: React.PropTypes.func,
-  onInputChange: React.PropTypes.func
-}
+  reaction: React.PropTypes.instanceOf(Reaction).isRequired,
+  onReactionChange: React.PropTypes.func.isRequired,
+  onInputChange: React.PropTypes.func.isRequired
+};
