@@ -74,7 +74,7 @@ module ReportHelpers
       selection = r_ids
     end
     return '' if selection.empty?
-    <<-SQL
+    <<~SQL
     select json_object_agg(r_id, smiles_json) as result from (
     select r_id, json_object_agg(stype, smiles_arr) as smiles_json from (
       select r_id, array_agg( smiles) as smiles_arr, coalesce(s_type) as stype
@@ -87,13 +87,11 @@ module ReportHelpers
             (shared_sync isnull and dl_s > 0) then m.cano_smiles
           else '*' end as smiles
         , case
-          when rsm.reaction_id > 0 then 0
-          when rr.reaction_id > 0 then 1
-          when rs.reaction_id > 0 then 2
-          when rp.reaction_id > 0 then 3 end as s_type
-        , coalesce(
-          rsm.reaction_id, rs.reaction_id, rp.reaction_id, rr.reaction_id
-        ) as r_id
+          when rsm.type = 'ReactionsStartingMaterialSample' then 0
+          when rsm.type = 'ReactionsReactantSample' then 1
+          when rsm.type = 'ReactionsSolventSample' then 2
+          when rsm.type = 'ReactionsProductSample' then 3 end as s_type
+        , rsm.reaction_id as r_id
         -- , pl, dl_s , co_id, scu_id
         from (
           select s.id as s_id, s.molecule_id
@@ -117,28 +115,13 @@ module ReportHelpers
             and (co.id is not null or scu.id is not null)
           group by s_id
         ) as s
-      -- starting materials
-      left join reactions_starting_material_samples rsm on (
+      -- reactions_samples
+      left join reactions_samples rsm on (
         rsm.sample_id = s_id and rsm.deleted_at isnull
-      )
-      -- solvents
-      left join reactions_solvent_samples rs on (
-        rs.sample_id = s_id and rs.deleted_at isnull
-      )
-      -- reactants
-      left join reactions_reactant_samples rr on (
-        rr.sample_id = s_id and rr.deleted_at isnull
-      )
-      -- products
-      left join reactions_product_samples rp on (
-        rp.sample_id = s_id and rp.deleted_at isnull
       )
       -- molecules
       inner join molecules m on s.molecule_id = m.id
-      where (
-        rsm.reaction_id in (#{selection}) or rr.reaction_id in (#{selection})
-        or rs.reaction_id in (#{selection}) or rp.reaction_id in (#{selection})
-      )
+      where rsm.reaction_id in (#{selection})
       ) group_1
       group by r_id, s_type
     ) group_0 group by r_id order by #{order}

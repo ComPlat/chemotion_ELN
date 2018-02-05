@@ -151,15 +151,7 @@ class Import::ImportJson
       )
       new_el = create_element(el['uuid'], attribs, Sample, 'sample')
       next unless new_el
-      klass = if el['reaction_sample'][0]
-                ReactionsStartingMaterialSample
-              elsif el['reaction_sample'][2]
-                ReactionsReactantSample
-              elsif el['reaction_sample'][1]
-                ReactionsSolventSample
-              elsif el['reaction_sample'][3]
-                ReactionsProductSample
-              end
+      klass = el['reaction_sample']&.constantize
       add_to_reaction(klass, el, new_el) if klass
     end
   end
@@ -261,7 +253,7 @@ class Import::ImportJson
     eq = el['r_equivalent']
     @log['samples'][el_uuid][klass.name] = klass.create!(
       sample_id: new_el.id, reaction_id: new_data[r_uuid]['id'],
-      reference: ref, equivalent: eq
+      reference: ref, equivalent: eq, position: el['r_position']
     ) && '201' || '500'
   end
 
