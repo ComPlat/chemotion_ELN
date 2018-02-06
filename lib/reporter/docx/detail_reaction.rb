@@ -372,7 +372,8 @@ module Reporter
           materials_table_delta +
           obsv_tlc_delta +
           product_analyses_delta +
-          dangerous_delta
+          dangerous_delta +
+          bib_delta
       end
 
       def synthesis_name_delta
@@ -472,6 +473,45 @@ module Reporter
           {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
           {"insert"=>content}
         ])
+      end
+
+      def parse_bib(bib_str, idx)
+        html = Nokogiri::HTML(bib_str)
+        target = html.css('div.csl-right-inline')
+        parse_bib_nokogiri(target.children, idx)
+      end
+
+      def parse_bib_nokogiri(els, idx)
+        font_size = 12
+        delta = els.map do |el|
+          if el.name == 'i'
+            {
+              'attributes' => { 'italic' => 'true', 'font-size' => font_size },
+              'insert' => el.children.first.text
+            }
+          elsif el.name == 'b'
+            {
+              'attributes' => { 'bold' => 'true', 'font-size' => font_size },
+              'insert' => el.children.first.text
+            }
+          else
+            {
+              'attributes' => { 'font-size' => font_size },
+              'insert' => el.text
+            }
+          end
+        end
+        [{'insert' => "[#{ idx + 1 }] "}] + delta + [{'insert' => "\n"}]
+      end
+
+      def bib_delta
+        refs = obj.references || []
+        return [] if refs.length == 0
+        delta = [{'insert' => "\n"}]
+        refs.each_with_index  do |ref, idx|
+          delta += parse_bib(ref[:bib], idx)
+        end
+        delta
       end
 
       def sample_molecule_name_delta(sample, font_size = 12)
