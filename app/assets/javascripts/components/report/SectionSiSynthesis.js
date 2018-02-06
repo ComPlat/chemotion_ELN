@@ -307,6 +307,45 @@ const ContentBlock = ({ el, molSerials }) => {
   return <QuillViewer value={{ ops: block }} />;
 };
 
+const docFragment = (input) => {
+  const t = document.createElement('template');
+  t.innerHTML = input;
+  try {
+    return t.content.childNodes[0].childNodes[1].childNodes[2].childNodes;
+  } catch (err) {
+    return null;
+  }
+};
+
+const bibContent = (bib, idx) => {
+  let delta = [{ insert: `[${idx + 1}] ` }];
+  const nodes = docFragment(bib);
+  if (!nodes) return [];
+  nodes.forEach((node) => {
+    const text = node.textContent;
+    let target = { insert: text };
+    if (node.nodeName === 'I') {
+      target = { attributes: { italic: 'true' }, insert: text };
+    } else if (node.nodeName === 'B') {
+      target = { attributes: { bold: 'true' }, insert: text };
+    }
+    delta = [...delta, target];
+  });
+  return [...delta, { insert: '\n' }];
+};
+
+const ZoteroBlock = ({ el }) => {
+  const refs = el.references || [];
+  let bibs = [];
+  refs.forEach((ref, idx) => {
+    bibs = [...bibs, ...bibContent(ref.bib, idx)];
+  });
+
+  return bibs.length > 0
+    ? <QuillViewer value={{ ops: bibs }} />
+    : null;
+};
+
 const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
   <div>
     <Title el={el} counter={counter} molSerials={molSerials} />
@@ -319,6 +358,7 @@ const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
     <ProductsInfo products={el.products} settings={settings} />
     <ContentBlock el={el} molSerials={molSerials} />
     <DangerBlock el={el} />
+    <ZoteroBlock el={el} />
   </div>
 );
 
