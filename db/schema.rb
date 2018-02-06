@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180115110710) do
+ActiveRecord::Schema.define(version: 20180205132254) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -493,6 +493,19 @@ ActiveRecord::Schema.define(version: 20180115110710) do
   add_index "reactions_reactant_samples", ["deleted_at"], name: "index_reactions_reactant_samples_on_deleted_at", using: :btree
   add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
   add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
+
+  create_table "reactions_samples", force: :cascade do |t|
+    t.integer  "reaction_id"
+    t.integer  "sample_id"
+    t.boolean  "reference"
+    t.float    "equivalent"
+    t.integer  "position"
+    t.string   "type"
+    t.datetime "deleted_at"
+  end
+
+  add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
+  add_index "reactions_samples", ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
 
   create_table "reactions_solvent_samples", force: :cascade do |t|
     t.integer  "reaction_id"

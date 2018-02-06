@@ -59,7 +59,7 @@ module ReactionHelpers
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
-        reaction_samples_association = reaction.public_send("reactions_#{material_group}_samples")
+        reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
         samples.each do |sample|
           #create new subsample
           if sample.is_new
@@ -97,16 +97,11 @@ module ReactionHelpers
               subsample.save!
               subsample.reload
               included_sample_ids << subsample.id
-
-              reaction_samples_association.create!(
-                sample_id: subsample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
+              s_id = subsample.id
             #create new sample
             else
               attributes = sample.to_h
-                .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
+                .except(:id, :is_new, :is_split, :reference, :equivalent, :position, :type, :molecule, :collection_id, :short_label)
                 .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
 
               # update attributes[:name] for a copied reaction
@@ -128,14 +123,18 @@ module ReactionHelpers
 
               new_sample.collections << collections
               new_sample.save!
-
-              reaction_samples_association.create(
-                sample_id: new_sample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
               included_sample_ids << new_sample.id
+              s_id = new_sample.id
             end
+            ReactionsSample.create!(
+              sample_id: s_id,
+              reaction_id: reaction.id,
+              equivalent: sample.equivalent,
+              reference: sample.reference,
+              position: sample.position,
+              type: reactions_sample_klass
+            ) if s_id
+            s_id = nil
           #update the existing sample
           else
             existing_sample = Sample.find(sample.id)
@@ -159,44 +158,36 @@ module ReactionHelpers
             existing_sample.save!
             included_sample_ids << existing_sample.id
 
-            existing_association = reaction_samples_association.find_by(sample_id: sample.id)
+            existing_association = ReactionsSample.find_by(sample_id: sample.id)
 
             #update existing associations
-            if existing_association.present?
+            if existing_association
               existing_association.update_attributes!(
+                reaction_id: reaction.id,
                 equivalent: sample.equivalent,
-                reference: sample.reference
+                reference: sample.reference,
+                position: sample.position,
+                type: reactions_sample_klass
               )
             #sample was moved to other materialgroup
             else
-              #clear existing associations
-              reaction.reactions_starting_material_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_reactant_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_solvent_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_product_samples.find_by(sample_id: sample.id).try(:destroy)
-
               #create a new association
-              reaction_samples_association.create(
+              ReactionsSample.create!(
                 sample_id: sample.id,
+                reaction_id: reaction.id,
                 equivalent: sample.equivalent,
-                reference: sample.reference
+                reference: sample.reference,
+                position: sample.position,
+                type: reactions_sample_klass
               )
             end
           end
-
-
         end
       end
 
       #delete all samples not anymore in one of the groups
 
-      current_sample_ids = [
-        reaction.reactions_starting_material_samples.pluck(:sample_id),
-        reaction.reactions_reactant_samples.pluck(:sample_id),
-        reaction.reactions_solvent_samples.pluck(:sample_id),
-        reaction.reactions_product_samples.pluck(:sample_id)
-      ].flatten.uniq
-
+      current_sample_ids = reaction.reactions_samples.pluck(:sample_id)
       deleted_sample_ids = current_sample_ids - included_sample_ids
       Sample.where(id: deleted_sample_ids).destroy_all
 
@@ -358,11 +349,13 @@ module Chemotion
       end
       route_param :id do
 
-        before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).update?
+        after_validation do
+          @reaction = Reaction.find_by(id: params[:id])
+          error!('401 Unauthorized', 401) unless @reaction && ElementPolicy.new(current_user, @reaction).update?
         end
 
         put do
+          reaction = @reaction
           attributes = declared(params, include_missing: false).symbolize_keys
           materials = attributes.delete(:materials)
           literatures = attributes.delete(:literatures)
@@ -371,13 +364,11 @@ module Chemotion
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
-          if reaction = Reaction.find(id)
-            reaction.update_attributes!(attributes)
-            reaction.touch
-            update_materials_for_reaction(reaction, materials, current_user)
-            update_literatures_for_reaction(reaction, literatures)
-            reaction.reload
-          end
+          reaction.update_attributes!(attributes)
+          reaction.touch
+          update_materials_for_reaction(reaction, materials, current_user)
+          update_literatures_for_reaction(reaction, literatures)
+          reaction.reload
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
       end

@@ -69,6 +69,10 @@ class Reaction < ActiveRecord::Base
   has_many :collections, through: :collections_reactions
   accepts_nested_attributes_for :collections_reactions
 
+  has_many :reactions_samples, dependent: :destroy
+  has_many :samples, through: :reactions_samples, source: :sample
+  has_many :sample_molecules, through: :samples, source: :molecule
+
   has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
   has_many :starting_material_molecules, through: :starting_materials, source: :molecule
@@ -106,10 +110,6 @@ class Reaction < ActiveRecord::Base
       ReactionsStartingMaterialSample.get_samples(reaction_ids) +
       ReactionsReactantSample.get_samples(reaction_ids)
     ).compact
-  end
-
-  def samples
-    starting_materials + reactants + products + solvents
   end
 
   def analyses
