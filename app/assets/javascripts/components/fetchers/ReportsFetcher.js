@@ -80,12 +80,12 @@ export default class ReportsFetcher {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/vnd.ms-excel, chemical/x-mdl-sdfile, text/csv',
+        'Accept': 'application/vnd.ms-excel, chemical/x-mdl-sdfile, text/csv, application/zip, application/octet-stream',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params),
     }).then((response) => {
-      let disposition = response.headers.get('Content-Disposition')
+      const disposition = response.headers.get('Content-Disposition')
       if (disposition && disposition.indexOf('attachment') !== -1) {
         let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
         let matches = filenameRegex.exec(disposition);
@@ -95,8 +95,7 @@ export default class ReportsFetcher {
       }
       return response.blob()
     }).then((blob) => {
-      console.log(blob);
-      let a = document.createElement("a");
+      const a = document.createElement("a");
       a.style = "display: none";
       document.body.appendChild(a);
       let url = window.URL.createObjectURL(blob);
