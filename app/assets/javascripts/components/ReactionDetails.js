@@ -139,10 +139,12 @@ export default class ReactionDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    let { value } = event.target;
+    let value;
     if (type === 'temperatureUnit' || type === 'temperatureData' ||
         type === 'description' || type === 'role' || type === 'observation') {
       value = event;
+    } else {
+      value = event.target.value;
     }
 
     const { reaction } = this.state;
