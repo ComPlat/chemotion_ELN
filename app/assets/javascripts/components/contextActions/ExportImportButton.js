@@ -8,7 +8,7 @@ import ModalReactionExport from './ModalReactionExport';
 
 const ExportImportButton = ({isDisabled, updateModalProps}) => {
   return (
-    <Dropdown id='export-dropdown' disabled={isDisabled} >
+    <Dropdown id='export-dropdown'>
       <Dropdown.Toggle>
         <Glyphicon glyph="import"/> <Glyphicon glyph="export"/>
       </Dropdown.Toggle>
@@ -22,7 +22,7 @@ const ExportImportButton = ({isDisabled, updateModalProps}) => {
           Export reactions from selection
         </MenuItem>
         <MenuItem divider />
-        <MenuItem onSelect={() => importFunction(updateModalProps)}
+        <MenuItem onSelect={() => importFunction(updateModalProps)} disabled={isDisabled}
           title='Import from spreadsheet or sdf'>
           Import samples to collection
         </MenuItem>
