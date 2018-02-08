@@ -20,7 +20,7 @@ class UserStore {
       handleFetchProfile: UserActions.fetchProfile,
       handleChangeLayout: UserActions.changeLayout,
       handleSelectTab: UserActions.selectTab,
-      handleUpdateShowSampleExt: UserActions.updateShowSampleExt
+      handleUpdateUserProfile: UserActions.updateUserProfile
     })
   }
 
@@ -47,9 +47,9 @@ class UserStore {
     this.state.currentUser.layout = result
   }
 
-  handleUpdateShowSampleExt(result) {
-    if (this.state.profile && result >= 0) {
-      this.state.profile.show_external_name = result
+  handleUpdateUserProfile(result) {
+    if (this.state.profile && result) {
+      this.state.profile = result
     }
   }
 

@@ -56,21 +56,6 @@ module Chemotion
           current_user.layout
         end
       end
-
-      namespace :profile do
-        desc 'Update profile'
-        params do
-          requires :show_external_name, type: Boolean
-        end
-
-        post do
-          profile = current_user.profile
-          params.keys.each do |attr|
-            profile[attr] = params[attr]
-          end
-          current_user.save!
-        end
-      end
     end
 
     resource :groups do
