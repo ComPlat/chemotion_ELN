@@ -4,7 +4,8 @@ module Chemotion
       desc "Return the profile of the current_user"
       get do
         profile = current_user.profile
-        { **profile.data, show_external_name: profile.show_external_name}
+        data = profile.data || {}
+        { **data, show_external_name: profile.show_external_name}
       end
 
       desc 'update user profile'
