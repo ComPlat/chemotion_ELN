@@ -1,4 +1,8 @@
 export const reagents_kombi = {
+  "ferrocene": "[CH-]1C=CC=C1.[CH-]1C=CC=C1.[Fe+2]",
+  "1,1'-Bis(diphenylphosphino)ferrocene  (dppf)": "c1ccc(cc1)P(c1ccccc1)C1=CC=C[CH-]1.c1ccc(cc1)P(c1ccccc1)C1=CC=C[CH-]1.[Fe+2]",
+  "[1,1'-Bis(diphenylphosphino)ferrocene]palladium(II) dichloride": "c1ccc(cc1)P(c1ccccc1)C1=CC=C[CH-]1.c1ccc(cc1)P(c1ccccc1)C1=CC=C[CH-]1.Cl[Pd]Cl.[Fe+2]",
+  "[1,1′-Bis(diphenylphosphino)ferrocene]dichloropalladium(II), complex with dichloromethane": "c1ccc(cc1)P(c1ccccc1)C1=CC=C[CH-]1.c1ccc(cc1)P(c1ccccc1)C1=CC=C[CH-]1.ClCCl.Cl[Pd]Cl.[Fe+2]",
   "(-)-10,2-Camphorsultam": "CC1(C)C2(C3)CCC1CC2NS3(=O)=O",
   "(-)-10-Camphorsulfonic Acid": "O=C(CC(C(C)1C)CC2)C21CS(=O)(O)=O",
   "(-)-2,2'-Methylenebis[(3aS,8aR)-3a,8a-dihydro-8H-indeno[1,2-d]oxazole]": "[H][C@@]12N=C(CC3=N[C@]4([H])[C@](CC5=C4C=CC=C5)([H])O3)O[C@]1([H])CC6=C2C=CC=C6",
