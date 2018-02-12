@@ -14,18 +14,25 @@ begin
     Delayed::Job.where("handler like ?", "%CollectFileFrom%").destroy_all
     if Rails.configuration.datacollectors && Rails.configuration.datacollectors.services
       for service in Rails.configuration.datacollectors.services do
+        cron_config = nil
+        config = service[:every].to_s.strip
+        cron_config = '*/' + config + ' * * * *' if config.split(/\s/).size == 1
+        config = service[:cron].to_s.strip
+        cron_config = config if config.split(/\s/).size == 5
         case service[:name].to_s
         when 'mailcollector'
-          CollectDataFromMailJob.set(cron: '*/' + service[:every].to_s + ' * * * *').perform_later
+          CollectDataFromMailJob
         when 'folderwatchersftp'
-          CollectDataFromSftpJob.set(cron: '*/' + service[:every].to_s + ' * * * *').perform_later
+          CollectDataFromSftpJob
         when 'folderwatcherlocal'
-          CollectDataFromLocalJob.set(cron: '*/' + service[:every].to_s + ' * * * *').perform_later
+          CollectDataFromLocalJob
         when 'filewatcherlocal'
-          CollectFileFromLocalJob.set(cron: '*/' + service[:every].to_s + ' * * * *').perform_later
+          CollectFileFromLocalJob
         when 'filewatchersftp'
-          CollectFileFromSftpJob.set(cron: '*/' + service[:every].to_s + ' * * * *').perform_later
-        end
+          CollectFileFromSftpJob
+        else
+          nil
+        end&.set(cron: cron_config).perform_later if cron_config
       end
     end
   end

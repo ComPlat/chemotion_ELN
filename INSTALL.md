@@ -41,6 +41,15 @@ Production
 
 * `cp .env.production{.example,}  # optionally enter SFTP credentials`
 
+## Configure Data Collection
+
+* copy the config example file and edit the entries
+
+* create device entries and configure their profiles
+
+`cp db/datacollectors.yml.example db/datacollectors.yml`
+
+
 # Deployment notes
 
 The search feature uses the Postgres extension pg_trgm (http://www.postgresql.org/docs/9.3/static/pgtrgm.html). For the first installation on the production machine you have to install the `postgres-contrib` package in order to enable Postgres extensions.
@@ -94,5 +103,3 @@ This is a setup for a 'pseudo' production stage using passenger and aimed for us
 * NOTE: In this Docker image, we disabled the email verification progress
 
 * To enable email confirmation, uncomment ":confirmable" at line 5 of `app/models/user.rb`, stop the `docker-compose` by `docker-compose stop` and start `docker-compose`.
-
-
