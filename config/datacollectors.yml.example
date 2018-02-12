@@ -1,7 +1,7 @@
 development:
   :services:
     - :name: 'mailcollector'
-      :every: 5 # minutes
+      :cron: '5,20,35,50 * * * *' # every 15 minutes starting a xx:05
     - :name: 'folderwatchersftp'
       :every: 5 # minutes
     - :name: 'folderwatcherlocal'
