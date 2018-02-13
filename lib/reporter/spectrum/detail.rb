@@ -38,14 +38,16 @@ module Reporter
       def atts_content
         @prd['atts'].map do |att|
           att_content(att)
-        end
+        end.compact
       end
 
       def att_content(att)
+        return nil unless att
+        img = image(att[:obj])
+        return nil unless img
         @index += 1
-        return nil if !att
         {
-          img: image(att[:obj]),
+          img: img,
           kind: kind_html(att[:kind]),
           page_break: page_break_when_even_index
         }
@@ -69,10 +71,14 @@ module Reporter
       end
 
       def image(target)
-        img = scale_img(target)
-        Sablon::Image::Definition.new(
-          target.filename, img.to_blob, img.columns, img.rows
-        )
+        begin
+          img = scale_img(target)
+          Sablon::Image::Definition.new(
+            target.filename, img.to_blob, img.columns, img.rows
+          )
+        rescue
+          nil
+        end
       end
 
       def scale_img(target)
