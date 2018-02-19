@@ -1,7 +1,8 @@
 import React, {Component, PropTypes} from 'react';
 import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
   Label } from 'react-bootstrap';
-import {DragSource} from 'react-dnd';
+import { DragSource, DropTarget } from 'react-dnd';
+import { compose } from 'redux';
 import DragDropItemTypes from './DragDropItemTypes';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName';
@@ -11,15 +12,49 @@ import { validDigit } from './utils/MathUtils';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
 
-const source = {
+const matSource = {
   beginDrag(props) {
     return props;
-  }
+  },
 };
 
-const collect = (connect, monitor) => ({
+const matTarget = {
+  drop(tagProps, monitor) {
+    const { dropSample, dropMaterial } = tagProps;
+    const srcItem = monitor.getItem();
+    const srcType = monitor.getItemType();
+
+    if (srcType === 'sample') {
+      dropSample(
+        srcItem.element,
+        tagProps.material,
+        tagProps.materialGroup,
+      );
+    } else if (srcType === 'material') {
+      dropMaterial(
+        srcItem.material,
+        srcItem.materialGroup,
+        tagProps.material,
+        tagProps.materialGroup,
+      );
+    }
+  },
+  canDrop(tagProps, monitor) {
+    const srcType = monitor.getItemType();
+    const isCorrectType = srcType === 'material' || srcType === 'sample';
+    return isCorrectType;
+  },
+};
+
+const matSrcCollect = (connect, monitor) => ({
   connectDragSource: connect.dragSource(),
-  isDragging: monitor.isDragging()
+  isDragging: monitor.isDragging(),
+});
+
+const matTagCollect = (connect, monitor) => ({
+  connectDropTarget: connect.dropTarget(),
+  isOver: monitor.isOver(),
+  canDrop: monitor.canDrop(),
 });
 
 class Material extends Component {
@@ -126,11 +161,20 @@ class Material extends Component {
   }
 
   render() {
-    const { material, isDragging } = this.props;
+    const { material, isDragging, canDrop, isOver } = this.props;
 
     let style = { padding: "0" };
     if (isDragging) {
       style.opacity = 0.3;
+    }
+    if (canDrop) {
+      style.borderStyle = 'dashed';
+      style.borderWidth = 2;
+    }
+    if (isOver) {
+      style.borderColor = '#337ab7';
+      style.opacity = 0.6;
+      style.backgroundColor = '#337ab7';
     }
 
     if(this.props.materialGroup == 'products')
@@ -318,8 +362,8 @@ class Material extends Component {
     return this.props.material
   }
 
-  generalMaterial(props) {
-    const { material, deleteMaterial, connectDragSource,
+  generalMaterial(props, style) {
+    const { material, deleteMaterial, connectDragSource, connectDropTarget,
             showLoadingColumn, reaction } = props;
     const isTarget = material.amountType === 'target'
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default'
@@ -329,8 +373,8 @@ class Material extends Component {
 
     return (
       <tr className="general-material">
-        {connectDragSource(
-          <td className="drag-source">
+        {compose(connectDragSource, connectDropTarget)(
+          <td className="drag-source" style={style}>
             <span className='text-info fa fa-arrows'></span>
           </td>,
           {dropEffect: 'copy'}
@@ -411,14 +455,15 @@ class Material extends Component {
       this.handleAmountTypeChange(!isTarget ? 'target' : 'real')
   }
 
-  solventMaterial(props) {
-    const {material, deleteMaterial, connectDragSource } = props;
+  solventMaterial(props, style) {
+    const { material, deleteMaterial, connectDragSource,
+      connectDropTarget } = props;
     const isTarget = material.amountType === 'target'
 
     return (
       <tr className="solvent-material">
-        {connectDragSource(
-          <td className='drag-source'>
+        {compose(connectDragSource, connectDropTarget)(
+          <td className='drag-source' style={style}>
             <span className='text-info fa fa-arrows'></span>
           </td>,
           {dropEffect: 'copy'}
@@ -598,7 +643,18 @@ class Material extends Component {
   }
 }
 
-export default DragSource(DragDropItemTypes.MATERIAL, source, collect)(Material);
+export default compose(
+  DragSource(
+    DragDropItemTypes.MATERIAL,
+    matSource,
+    matSrcCollect,
+  ),
+  DropTarget(
+    [DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL],
+    matTarget,
+    matTagCollect,
+  ),
+)(Material);
 
 Material.propTypes = {
   reaction: PropTypes.instanceOf(Reaction).isRequired,

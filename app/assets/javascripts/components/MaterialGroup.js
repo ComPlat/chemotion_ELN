@@ -13,7 +13,8 @@ import { reagents_kombi } from './staticDropdownOptions/reagents_kombi';
 
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
-  showLoadingColumn, reaction, addDefaultSolvent, headIndex
+  showLoadingColumn, reaction, addDefaultSolvent, headIndex,
+  dropMaterial, dropSample,
 }) => {
   const contents = [];
   let index = headIndex;
@@ -30,6 +31,8 @@ const MaterialGroup = ({
         showLoadingColumn={showLoadingColumn}
         deleteMaterial={m => deleteMaterial(m, materialGroup)}
         index={index}
+        dropMaterial={dropMaterial}
+        dropSample={dropSample}
       />
     ));
 
@@ -92,7 +95,7 @@ const GeneralMaterialGroup = ({
       .then((result) => {
         const molecule = new Molecule(result);
         molecule.density = molecule.density || 0;
-        addDefaultSolvent(molecule, materialGroup, event.label);
+        addDefaultSolvent(molecule, null, materialGroup, event.label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -201,7 +204,7 @@ const SolventsMaterialGroup = ({
         const d = molecule.density;
         const solventDensity = solvent.density || 1;
         molecule.density = (d && d > 0) || solventDensity;
-        addDefaultSolvent(molecule, materialGroup, solvent.external_label);
+        addDefaultSolvent(molecule, null, materialGroup, solvent.external_label);
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -257,7 +260,9 @@ MaterialGroup.propTypes = {
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
-  addDefaultSolvent: PropTypes.func.isRequired
+  addDefaultSolvent: PropTypes.func.isRequired,
+  dropMaterial: PropTypes.func.isRequired,
+  dropSample: PropTypes.func.isRequired,
 };
 
 GeneralMaterialGroup.propTypes = {

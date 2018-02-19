@@ -26,6 +26,8 @@ export default class ReactionDetailsScheme extends Component {
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
     this.addSampleToDescription = this.addSampleToDescription.bind(this);
+    this.dropMaterial = this.dropMaterial.bind(this);
+    this.dropSample = this.dropSample.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -34,36 +36,34 @@ export default class ReactionDetailsScheme extends Component {
     this.setState({ reaction: nextReaction });
   }
 
-  dropSample(sample, materialGroup, external_label) {
-    let { reaction } = this.state;
+  dropSample(srcSample, tagMaterial, tagGroup, extLabel) {
+    const { reaction } = this.state;
     let splitSample;
 
-    if (sample instanceof Molecule || materialGroup == 'products'){
+    if (srcSample instanceof Molecule || tagGroup === 'products') {
       // Create new Sample with counter
-      splitSample = Sample.buildNew(sample, reaction.collection_id);
-    } else if (sample instanceof Sample) {
+      splitSample = Sample.buildNew(srcSample, reaction.collection_id);
+    } else if (srcSample instanceof Sample) {
       // Else split Sample
-      if(reaction.hasSample(sample.id)) {
+      if (reaction.hasSample(srcSample.id)) {
         NotificationActions.add({
           message: 'The sample is already present in current reaction.',
-          level: 'error'
+          level: 'error',
         });
         return false;
       }
 
-      if (materialGroup == 'reactants' || materialGroup == 'solvents') {
+      if (tagGroup === 'reactants' || tagGroup === 'solvents') {
         // Skip counter for reactants or solvents
-        splitSample = sample.buildChildWithoutCounter();
+        splitSample = srcSample.buildChildWithoutCounter();
       } else {
-        splitSample = sample.buildChild();
+        splitSample = srcSample.buildChild();
       }
     }
 
-    this.insertSolventExtLabel(splitSample, materialGroup, external_label);
-
-    reaction.addMaterial(splitSample, materialGroup);
-
-    this.onReactionChange(reaction, {schemaChanged: true});
+    this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
+    reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+    this.onReactionChange(reaction, { schemaChanged: true });
   }
 
   insertSolventExtLabel(splitSample, materialGroup, external_label) {
@@ -140,10 +140,10 @@ export default class ReactionDetailsScheme extends Component {
     this.onReactionChange(reaction, {schemaChanged: true});
   }
 
-  dropMaterial(material, previousMaterialGroup, materialGroup) {
-    const {reaction} = this.state;
-    reaction.moveMaterial(material, previousMaterialGroup, materialGroup);
-    this.onReactionChange(reaction, {schemaChanged: true});
+  dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
+    const { reaction } = this.state;
+    reaction.moveMaterial(srcMat, srcGroup, tagMat, tagGroup);
+    this.onReactionChange(reaction, { schemaChanged: true });
   }
 
   onReactionChange(reaction, options={}) {
@@ -509,9 +509,9 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="starting_materials"
               materials={reaction.starting_materials}
-              dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+              dropMaterial={this.dropMaterial}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-              dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              dropSample={this.dropSample}
               showLoadingColumn={reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               headIndex={0}
@@ -523,9 +523,9 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="reactants"
               materials={reaction.reactants}
-              dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+              dropMaterial={this.dropMaterial}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-              dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              dropSample={this.dropSample}
               showLoadingColumn={reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               headIndex={headReactants}
@@ -537,9 +537,9 @@ export default class ReactionDetailsScheme extends Component {
               reaction={reaction}
               materialGroup="products"
               materials={reaction.products}
-              dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+              dropMaterial={this.dropMaterial}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-              dropSample={(sample, materialGroup) => this.dropSample(sample, materialGroup)}
+              dropSample={this.dropSample}
               showLoadingColumn={reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               headIndex={0}
@@ -553,9 +553,9 @@ export default class ReactionDetailsScheme extends Component {
                   reaction={reaction}
                   materialGroup="solvents"
                   materials={reaction.solvents}
-                  dropMaterial={(material, previousMaterialGroup, materialGroup) => this.dropMaterial(material, previousMaterialGroup, materialGroup)}
+                  dropMaterial={this.dropMaterial}
                   deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
-                  dropSample={(sample, materialGroup, external_label) => this.dropSample(sample, materialGroup, external_label)}
+                  dropSample={this.dropSample}
                   showLoadingColumn={reaction.hasPolymers()}
                   onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
                   headIndex={0}

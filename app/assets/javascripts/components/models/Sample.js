@@ -726,6 +726,7 @@ export default class Sample extends Element {
     let params = this.serialize();
     let extra_params = {
       equivalent: this.equivalent,
+      position: this.position,
       reference: this.reference || false
     }
     _.merge(params, extra_params);

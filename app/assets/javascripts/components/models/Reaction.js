@@ -277,30 +277,77 @@ export default class Reaction extends Element {
     return this.name ? `${short_label} ${this.name}` : short_label
   }
 
-  addMaterial(material, materialGroup) {
-    const materials = this[materialGroup];
+  addMaterial(material, group) {
+    const materials = this[group];
+    const newMaterial = this.materialPolicy(material, null, group);
+    this[group] = [...materials, newMaterial];
 
-    material = this.materialPolicy(material, null, materialGroup);
-    materials.push(material);
-
-    this.rebuildReference(material);
+    this.rebuildReference(newMaterial);
+    this.setPositions(group);
   }
 
-  deleteMaterial(material, materialGroup) {
-    const materials = this[materialGroup];
-    const materialIndex = materials.indexOf(material);
-    materials.splice(materialIndex, 1);
+  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp) {
+    const materials = this[tagGp];
+    const idx = materials.indexOf(tagMaterial);
+    const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
 
-    this.rebuildReference(material);
+    if (idx === -1) {
+      this[tagGp] = [...materials, newSrcMaterial];
+    } else {
+      this[tagGp] = [
+        ...materials.slice(0, idx),
+        newSrcMaterial,
+        ...materials.slice(idx),
+      ];
+    }
+
+    this.rebuildReference(newSrcMaterial);
+    this.setPositions(tagGp);
   }
 
-  moveMaterial(material, previousMaterialGroup, materialGroup) {
-    const materials = this[materialGroup];
-    this.deleteMaterial(material, previousMaterialGroup);
-    material = this.materialPolicy(material, previousMaterialGroup, materialGroup);
-    materials.push(material);
+  deleteMaterial(material, group) {
+    const materials = this[group];
+    const idx = materials.indexOf(material);
+    this[group] = [
+      ...materials.slice(0, idx),
+      ...materials.slice(idx + 1),
+    ];
 
     this.rebuildReference(material);
+    this.setPositions(group);
+  }
+
+  swapMaterial(srcMaterial, tagMaterial, group) {
+    const srcIdx = this[group].indexOf(srcMaterial);
+    const tagIdx = this[group].indexOf(tagMaterial);
+    const groupWoSrc = [
+      ...this[group].slice(0, srcIdx),
+      ...this[group].slice(srcIdx + 1),
+    ];
+    const newGroup = [
+      ...groupWoSrc.slice(0, tagIdx),
+      srcMaterial,
+      ...groupWoSrc.slice(tagIdx),
+    ];
+    this[group] = newGroup.filter(o => o != null) || [];
+
+    this.rebuildReference(srcMaterial);
+    this.setPositions(group);
+  }
+
+  moveMaterial(srcMaterial, srcGp, tagMaterial, tagGp) {
+    if (srcGp === tagGp) {
+      this.swapMaterial(srcMaterial, tagMaterial, tagGp);
+    } else {
+      this.deleteMaterial(srcMaterial, srcGp);
+      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp);
+    }
+  }
+
+  setPositions(group) {
+    this[group] = this[group].map((m, idx) => (
+      Object.assign({}, m, { position: idx })
+    ));
   }
 
   // We will process all reaction policy here
