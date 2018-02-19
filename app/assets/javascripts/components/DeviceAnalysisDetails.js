@@ -26,27 +26,39 @@ const DeviceAnalysisDetails = ({analysis, toggleFullScreen}) => {
 
 export default DeviceAnalysisDetails
 
-const Header = ({analysis, toggleFullScreen}) => {
+const Header = ({ analysis, toggleFullScreen }) => {
   return (
     <div>
       {analysis.title}
-      <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="closeReaction">Close</Tooltip>}>
-        <Button bsStyle="danger" bsSize="xsmall" className="button-right"
-            onClick={() => DetailActions.close(analysis)}>
-          <i className="fa fa-times"></i>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="closeReaction">Close</Tooltip>}
+      >
+        <Button
+          bsStyle="danger"
+          bsSize="xsmall"
+          className="button-right"
+          onClick={() => DetailActions.close(analysis)}
+        >
+          <i className="fa fa-times" />
         </Button>
       </OverlayTrigger>
-      <OverlayTrigger placement="bottom"
-          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-      <Button bsStyle="info" bsSize="xsmall" className="button-right"
-        onClick={() => toggleFullScreen()}>
-        <i className="fa fa-expand"></i>
-      </Button>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+      >
+        <Button
+          bsStyle="info"
+          bsSize="xsmall"
+          className="button-right"
+          onClick={() => toggleFullScreen()}
+        >
+          <i className="fa fa-expand" />
+        </Button>
       </OverlayTrigger>
     </div>
-  )
-}
+  );
+};
 
 const MainContent = ({analysis}) => {
   switch(analysis.analysisType) {
