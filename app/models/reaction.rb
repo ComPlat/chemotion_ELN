@@ -73,19 +73,19 @@ class Reaction < ActiveRecord::Base
   has_many :samples, through: :reactions_samples, source: :sample
   has_many :sample_molecules, through: :samples, source: :molecule
 
-  has_many :reactions_starting_material_samples, dependent: :destroy
+  has_many :reactions_starting_material_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
   has_many :starting_material_molecules, through: :starting_materials, source: :molecule
 
-  has_many :reactions_solvent_samples, dependent: :destroy
+  has_many :reactions_solvent_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :solvents, through: :reactions_solvent_samples, source: :sample
   has_many :solvent_molecules, through: :solvents, source: :molecule
 
-  has_many :reactions_reactant_samples, dependent: :destroy
+  has_many :reactions_reactant_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
-  has_many :reactions_product_samples, dependent: :destroy
+  has_many :reactions_product_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
 
