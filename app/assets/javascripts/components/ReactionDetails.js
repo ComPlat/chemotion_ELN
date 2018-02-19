@@ -259,25 +259,37 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.props.toggleFullScreen()}>
-          <i className="fa fa-expand"></i>
-        </Button>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+        >
+          <Button
+            bsStyle="info"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.props.toggleFullScreen()}
+          >
+            <i className="fa fa-expand" />
+          </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}>
-          <Button bsStyle="success" bsSize="xsmall" className="button-right"
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+        >
+          <Button
+            bsStyle="success"
+            bsSize="xsmall"
+            className="button-right"
             disabled={reaction.changed || reaction.isNew}
             title={(reaction.changed || reaction.isNew) ?
-                 "Report can be generated after reaction is saved."
-                 : "Generate report for this reaction"}
+              "Report can be generated after reaction is saved."
+              : "Generate report for this reaction"}
             onClick={() => Utils.downloadFile({
               contents: "api/v1/reports/docx?id=" + reaction.id,
               name: reaction.name
-            })} >
-            <i className="fa fa-cogs"></i>
+            })}
+          >
+            <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
         <div style={{display: "inline-block", marginLeft: "10px"}}>
@@ -286,7 +298,7 @@ export default class ReactionDetails extends Component {
         </div>
         <PrintCodeButton element={reaction}/>
       </h4>
-    )
+    );
   }
 
   handleSelect(key) {

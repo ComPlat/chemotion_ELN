@@ -244,7 +244,7 @@ export default class ElementsTableEntries extends Component {
 
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-          {icon}
+          <div>{icon}</div>
         </OverlayTrigger>
       );
     }

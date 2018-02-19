@@ -77,64 +77,49 @@ const SVGContent = ({show, svgPath, products, isProductOnly}) => {
   )
 }
 
-const StatusContent = ({status}) => {
+const StatusContent = ({ status }) => {
   let tooltip = null;
   switch(status) {
     case "Successful":
       tooltip = (<Tooltip id="reaction_success">Successful Reaction</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-          <a style={{marginLeft: '10px',
-                   padding: '3px',
-                   color:'white'}} >
-            <i className="fa fa-check-circle"/>
+          <a style={{ marginLeft: '10px', padding: '3px', color: 'white' }} >
+            <i className="fa fa-check-circle" />
           </a>
         </OverlayTrigger>
-      )
-      break;
+      );
     case "Planned":
       tooltip = (<Tooltip id="reaction_planned">Planned Reaction</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-        <a style={{marginLeft: '10px',
-                   padding: '3px',
-                   backgroundColor: 'white',
-                   color:'orange'}} >
-          <i className="fa fa-clock-o"/>
-        </a>
+          <a style={{ marginLeft: '10px', padding: '3px', backgroundColor: 'white', color: 'orange' }} >
+            <i className="fa fa-clock-o" />
+          </a>
         </OverlayTrigger>
-      )
-      break;
+      );
     case "Not Successful":
       tooltip = (<Tooltip id="reaction_fail">Not Successful Reaction</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-        <a style={{marginLeft: '10px',
-                   padding: '3px',
-                   backgroundColor: 'white',
-                   color:'red'}} >
-          <i className="fa fa-times-circle-o"/>
-        </a>
+          <a style={{ marginLeft: '10px', padding: '3px', backgroundColor: 'white', color: 'red' }} >
+            <i className="fa fa-times-circle-o" />
+          </a>
         </OverlayTrigger>
-      )
-      break;
+      );
     case "General Procedure":
       tooltip = (<Tooltip id="general_procedure">General Procedure</Tooltip>);
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-        <a style={{marginLeft: '10px',
-                   padding: '3px',
-                   backgroundColor: 'white',
-                   color:'blue'}} >
-          <i className="fa fa-home"/>
-        </a>
+          <a style={{ marginLeft: '10px', padding: '3px', backgroundColor: 'white', color: 'blue' }} >
+            <i className="fa fa-home" />
+          </a>
         </OverlayTrigger>
-      )
-      break;
+      );
     default:
       return null;
   }
-}
+};
 
 const MaterialContent = ({show, starting_materials, reactants, products}) => {
   const materialCalc = (target, multi, precision) => {
