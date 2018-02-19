@@ -179,7 +179,8 @@ module Cdx
 
   class CdxBond < CdxBasic
     def content
-      start + id + z_index(root) + order + begin_pt + end_pt + ending
+      start + id + z_index(root) + order + bond_display +
+        begin_pt + end_pt + ending
     end
 
     private
@@ -195,6 +196,45 @@ module Cdx
     def end_pt
       target = root["E"]
       target ? "05 06 04 00 #{"%02X" % target.to_i} 00 00 00 " : ""
+    end
+
+    def bond_display
+      disp = root["Display"]
+      return "" unless disp
+
+      disp_hex = case disp
+      when "Dash"
+        "01 00 "
+      when "Hash"
+        "02 00 "
+      when "WedgedHashBegin"
+        "03 00 "
+      when "WedgedHashEnd"
+        "04 00 "
+      when "Bold"
+        "05 00 "
+      when "WedgeBegin"
+        "06 00 "
+      when "WedgeEnd"
+        "07 00 "
+      when "Wavy"
+        "08 00 "
+      when "HollowWedgeBegin"
+        "09 00 "
+      when "HollowWedgeEnd"
+        "10 00 "
+      when "WavyWedgeBegin"
+        "11 00 "
+      when "WavyWedgeEnd"
+        "12 00 "
+      when "Dot"
+        "13 00 "
+      when "DashDot"
+        "14 00 "
+      else
+        "00 00 "
+      end
+      "01 06 02 00 " + disp_hex
     end
 
     def order
