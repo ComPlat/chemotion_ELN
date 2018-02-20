@@ -125,20 +125,17 @@ export default class Sample extends Element {
     return sample;
   }
 
-  static buildNew(sample, collection_id) {
-    let newSample = Sample.buildEmpty(collection_id)
-
-    newSample.molecule = sample.molecule == undefined ? sample : sample.molecule
-
-    if (sample instanceof Sample)
-      newSample.split_label = sample.buildSplitShortLabel();
-
-    newSample.molfile = sample.molfile || '';
+  static buildNew(sample, collection_id, matGroup = null) {
+    const newSample = Sample.buildEmpty(collection_id)
+    const fixedLabel = (matGroup === 'reactants' || matGroup === 'solvents') && matGroup
+    newSample.molecule = sample.molecule === undefined ? sample : sample.molecule
+    if (fixedLabel) { newSample.short_label = fixedLabel.slice(0, -1); }
+    if (sample instanceof Sample) { newSample.split_label = sample.buildSplitShortLabel(); }
     newSample.sample_svg_file = sample.sample_svg_file;
     newSample.residues = sample.residues || [];
-    newSample.contains_residues = sample.contains_residues
+    newSample.contains_residues = sample.contains_residues;
     newSample.density = sample.density;
-
+    newSample.molfile = sample.molfile || '';
     return newSample;
   }
 
@@ -152,7 +149,7 @@ export default class Sample extends Element {
   }
 
   buildChildWithoutCounter() {
-    let splitSample = this.clone();
+    const splitSample = this.clone();
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
