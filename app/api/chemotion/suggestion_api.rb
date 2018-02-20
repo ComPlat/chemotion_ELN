@@ -8,6 +8,12 @@ module Chemotion
         7
       end
 
+      params :suggestion_params do
+        requires :collection_id, type: String
+        requires :query, type: String, desc: 'Search query'
+        requires :isSync, type: Boolean
+      end
+
       def search_possibilities_to_suggestions(search_possibilities)
         suggestions = []
         search_possibilities.each do |k,v|
@@ -17,9 +23,7 @@ module Chemotion
       end
 
       def search_possibilities_by_type_user_and_collection(type)
-        collection_id = fetch_collection_id_w_current_user(
-          params[:collection_id], params[:isSync]
-        )
+        collection_id = @collection_id
         dl = permission_level_for_collection(
           params[:collection_id], params[:isSync]
         )
@@ -136,14 +140,16 @@ module Chemotion
     end
 
     resource :suggestions do
+      after_validation do
+        @collection_id = fetch_collection_id_w_current_user(
+          params[:collection_id], params[:isSync]
+        )
+      end
 
       namespace :all do
         desc 'Return all suggestions for AutoCompleteInput'
         params do
-          optional :user_id, type: Integer, desc: 'Current user id'
-          requires :collection_id, type: String
-          requires :query, type: String, desc: 'Search query'
-          requires :isSync, type: Boolean
+          use :suggestion_params
         end
         route_param :query do
           get do
@@ -161,7 +167,7 @@ module Chemotion
       namespace :samples do
         desc 'Return sample suggestions for AutoCompleteInput'
         params do
-          requires :query, type: String, desc: 'Search query'
+          use :suggestion_params
         end
         route_param :query do
           get do
@@ -178,7 +184,7 @@ module Chemotion
       namespace :reactions do
         desc 'Return reaction suggestions for AutoCompleteInput'
         params do
-          requires :query, type: String, desc: 'Search query'
+          use :suggestion_params
         end
         route_param :query do
           get do
@@ -195,7 +201,7 @@ module Chemotion
       namespace :wellplates do
         desc 'Return wellplate suggestions for AutoCompleteInput'
         params do
-          requires :query, type: String, desc: 'Search query'
+          use :suggestion_params
         end
         route_param :query do
           get do
@@ -212,7 +218,7 @@ module Chemotion
       namespace :screens do
         desc 'Return screen suggestions for AutoCompleteInput'
         params do
-          requires :query, type: String, desc: 'Search query'
+          use :suggestion_params
         end
         route_param :query do
           get do
