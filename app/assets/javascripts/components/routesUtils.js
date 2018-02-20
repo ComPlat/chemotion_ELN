@@ -154,11 +154,11 @@ const deviceShowDeviceManagement = () => {
 };
 
 const researchPlanShowOrNew = (e) => {
-  const { researchPlanID, collectionID } = e.params;
-  if (researchPlanID === 'new') {
+  const { research_planID, collectionID } = e.params;
+  if (research_planID === 'new') {
     ElementActions.generateEmptyResearchPlan(collectionID);
   } else {
-    ElementActions.fetchResearchPlanById(researchPlanID);
+    ElementActions.fetchResearchPlanById(research_planID);
   }
 };
 
@@ -177,11 +177,13 @@ const elementShowOrNew = (e) => {
     case 'screen':
       screenShowOrNew(e);
       break;
-    case 'researchPlan':
-      researchPlanshowOrNew(e);
+    case 'research_plan':
+      researchPlanShowOrNew(e);
       break;
+    default: return null;
   }
-}
+  return null;
+};
 
 module.exports = {
   collectionShow,

@@ -95,7 +95,7 @@ const routes = {
     target: {
       showOrNew: routesUtils.researchPlanShowOrNew
     },
-    '/:researchPlanID': 'showOrNew'
+    '/:research_planID': 'showOrNew'
   }
 };
 
