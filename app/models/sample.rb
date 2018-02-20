@@ -53,13 +53,17 @@ class Sample < ActiveRecord::Base
     where(id: sample_ids)
   }
   scope :by_wellplate_ids,         ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
-  scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_as_reactant).where('reactions.id in (?)', ids) }
-  scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
-  scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
-  scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_as_solvent).where('reactions.id in (?)', ids) }
-  scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
-  scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
-  scope :product_only, -> { where('samples.id IN (SELECT DISTINCT(sample_id) FROM reactions_product_samples)') }
+  scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_reactant_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_product_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_ids,  ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
+
+
+  scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
+  scope :sample_or_startmat_or_products, -> {
+    joins("left join reactions_samples rs on rs.sample_id = samples.id").where("rs.id isnull or rs.\"type\" in ('ReactionsProductSample', 'ReactionsStartingMaterialSample')")
+  }
 
   scope :search_by_fingerprint_sim, ->(molfile, threshold = 0.01) {
     joins(:fingerprint).merge(
@@ -96,11 +100,13 @@ class Sample < ActiveRecord::Base
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
+  has_many :reactions_samples, dependent: :destroy
   has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
 
+  has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
   has_many :reactions_as_reactant, through: :reactions_reactant_samples, source: :reaction
   has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
@@ -158,7 +164,7 @@ class Sample < ActiveRecord::Base
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
-    (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq
+    (for_user(user_id).by_reaction_ids(reaction_ids)).uniq
   end
 
   def self.associated_by_user_id_and_wellplate_ids(user_id, wellplate_ids)
@@ -217,10 +223,6 @@ class Sample < ActiveRecord::Base
     elsif
       self.short_label ||= 'NEW'
     end
-  end
-
-  def reactions
-    reactions_as_starting_material + reactions_as_reactant + reactions_as_solvent + reactions_as_product
   end
 
   def reaction_description
