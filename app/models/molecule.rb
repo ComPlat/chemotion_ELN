@@ -31,16 +31,11 @@ class Molecule < ActiveRecord::Base
   }
 
   scope :with_reactions, -> {
-    sample_ids = ReactionsProductSample.pluck(:sample_id) +
-      ReactionsReactantSample.pluck(:sample_id) +
-      ReactionsStartingMaterialSample.pluck(:sample_id)
-    molecule_ids = Sample.find(sample_ids).flat_map(&:molecule).map(&:id)
-    where(id: molecule_ids)
+    joins(:samples).joins("inner join reactions_samples rs on rs.sample_id = samples.id" ).uniq
   }
+
   scope :with_wellplates, -> {
-    molecule_ids =
-      Wellplate.all.flat_map(&:samples).flat_map(&:molecule).map(&:id)
-    where(id: molecule_ids)
+    joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
   }
 
   def self.find_or_create_by_molfile molfile, is_partial = false

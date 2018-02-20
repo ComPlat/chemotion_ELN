@@ -45,12 +45,10 @@ class Sample < ActiveRecord::Base
   scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{query}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?',"%#{query}%") }
   scope :with_reactions, -> {
-    sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
-    where(id: sample_ids)
+    joins(:reactions_samples)
   }
   scope :with_wellplates, -> {
-    sample_ids = Wellplate.all.flat_map(&:samples).map(&:id)
-    where(id: sample_ids)
+    joins(:well)
   }
   scope :by_wellplate_ids,         ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
   scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_reactant_samples).where('reactions_samples.reaction_id in (?)', ids) }
