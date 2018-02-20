@@ -88,10 +88,9 @@ class Sample < ActiveRecord::Base
   before_save :find_or_create_fingerprint
   before_save :attach_svg, :init_elemental_compositions,
               :set_loading_from_ea
-  before_create :auto_set_short_label
-  before_create :check_short_label
+  before_save :auto_set_short_label
   before_create :check_molecule_name
-  after_create :update_counter
+  after_save :update_counter
   after_create :create_root_container
   after_save :update_data_for_reactions
 
@@ -207,20 +206,6 @@ class Sample < ActiveRecord::Base
     subsample.save!
 
     subsample
-  end
-
-  def auto_set_short_label
-    return if (self.short_label == 'reactant' || self.short_label == 'solvent')
-
-    self.short_label = nil if self.short_label == 'NEW SAMPLE'
-
-    if parent
-      self.short_label ||= "#{parent.short_label}-#{parent.children.count.to_i + 1}"
-    elsif creator && creator.counters['samples']
-      self.short_label ||= "#{creator.initials}-#{creator.counters['samples'].succ}"
-    elsif
-      self.short_label ||= 'NEW'
-    end
   end
 
   def reaction_description
@@ -441,19 +426,29 @@ private
     end
   end
 
-  def check_short_label
-    return if self.parent
-    return if (self.short_label =~ /solvents?|reactants?/)
+  def auto_set_short_label
+    sh_label = self['short_label']
+    return if sh_label =~ /solvents?|reactants?/
+    return if short_label && !short_label_changed?
 
-    abbr = self.creator.name_abbreviation
-    if Sample.find_by(short_label: self.short_label)
-      self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i + 1}"
+    if sh_label && Sample.find_by(short_label: sh_label)
+      if parent && !((parent_label = parent.short_label) =~ /solvents?|reactants?/)
+        self.short_label = "#{parent_label}-#{parent.children.count.to_i.succ}"
+      elsif creator && creator.counters['samples']
+        abbr = self.creator.name_abbreviation
+        self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
+      end
+    elsif !sh_label && creator && creator.counters['samples']
+      abbr = self.creator.name_abbreviation
+      self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
     end
   end
 
   def update_counter
-    return if (self.short_label == 'reactants' || self.short_label == 'solvents')
-    self.creator.increment_counter 'samples' unless self.parent
+    return if short_label =~ /solvents?|reactants?/ || self.parent
+    return unless short_label_changed?
+    return unless short_label =~ /^#{self.creator.name_abbreviation}-\d+$/
+    self.creator.increment_counter 'samples'
   end
 
   def create_root_container

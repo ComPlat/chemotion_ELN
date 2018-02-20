@@ -188,7 +188,7 @@ export default class ReactionDetails extends Component {
     const {products} = this.state.reaction;
 
     let tabs = products.map((product, key) =>
-      <Tab key={product.short_label} eventKey={key}
+      <Tab key={product.id} eventKey={key}
            title={this.productLink(product)}>
         <ReactionSampleDetailsContainers sample={product}
           setState={(product) => this.handleProductChange(product)}
