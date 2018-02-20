@@ -93,11 +93,11 @@ class Material extends Component {
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
       (
-        <Tooltip>
+        <Tooltip id="density_info">
           { has_density ? `density = ${density}` : `molarity = ${molarity_value} ${molarity_unit}` }
         </Tooltip>
       )
-      : <Tooltip>no density or molarity defined</Tooltip>;
+      : <Tooltip id="density_info">no density or molarity defined</Tooltip>;
 
     return (
       <td>

@@ -27,6 +27,7 @@
     "moment-precise-range-plugin": "^1.2.4",
     "numeral": "^1.5.3",
     "path": "^0.12.7",
+    "prop-types": "15.6.0",
     "qrcode.react": "^0.6.1",
     "quagga": "^0.11.5",
     "quill": "1.1.9",

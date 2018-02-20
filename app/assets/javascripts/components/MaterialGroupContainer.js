@@ -1,8 +1,10 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import { MaterialGroup } from './MaterialGroup';
 import Reaction from './models/Reaction';
+
 
 const target = {
   drop(tagProps, monitor) {
@@ -91,8 +93,8 @@ MaterialGroupContainer.propTypes = {
   dropMaterial: PropTypes.func.isRequired,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   showLoadingColumn: PropTypes.bool,
-  isOver: PropTypes.func.isRequired,
-  canDrop: PropTypes.func.isRequired,
+  isOver: PropTypes.bool.isRequired,
+  canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
 };
 

@@ -443,10 +443,10 @@ private
 
   def check_short_label
     return if self.parent
-    return if !!(self.short_label =~ /(solvent|solvents|reactant|reactants)/)
+    return if (self.short_label =~ /solvents?|reactants?/)
 
     abbr = self.creator.name_abbreviation
-    if Sample.where(short_label: self.short_label).count > 0
+    if Sample.find_by(short_label: self.short_label)
       self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i + 1}"
     end
   end

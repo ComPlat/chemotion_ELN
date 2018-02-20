@@ -42,20 +42,12 @@ export default class ReactionDetailsScheme extends Component {
 
     if (srcSample instanceof Molecule || tagGroup === 'products') {
       // Create new Sample with counter
-      splitSample = Sample.buildNew(srcSample, reaction.collection_id);
+      splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
     } else if (srcSample instanceof Sample) {
-      // Else split Sample
-      if (reaction.hasSample(srcSample.id)) {
-        NotificationActions.add({
-          message: 'The sample is already present in current reaction.',
-          level: 'error',
-        });
-        return false;
-      }
-
       if (tagGroup === 'reactants' || tagGroup === 'solvents') {
         // Skip counter for reactants or solvents
         splitSample = srcSample.buildChildWithoutCounter();
+        splitSample.short_label = tagGroup.slice(0, -1);
       } else {
         splitSample = srcSample.buildChild();
       }

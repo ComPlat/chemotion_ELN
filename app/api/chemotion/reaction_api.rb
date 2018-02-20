@@ -59,6 +59,7 @@ module ReactionHelpers
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
+        fixed_label = material_group =~ /solvents?|reactants?/ && $&
         reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
         samples.each do |sample|
           #create new subsample
@@ -70,10 +71,8 @@ module ReactionHelpers
               first_collection_id = collections.first.id
               subsample = parent_sample.create_subsample current_user, first_collection_id
 
-              if (material_group == :reactant || material_group == :solvent)
-                # Use 'reactant' or 'solvent' as short_label
-                subsample.short_label = sample.short_label
-              end
+              # Use 'reactant' or 'solvent' as short_label
+              subsample.short_label = fixed_label if fixed_label
 
               subsample.target_amount_value = sample.target_amount_value
               subsample.target_amount_unit = sample.target_amount_unit
@@ -89,10 +88,7 @@ module ReactionHelpers
 
               #add new data container
               #subsample.container = create_root_container
-
-              if sample.container
-                subsample.container = update_datamodel(sample.container)
-              end
+              subsample.container = update_datamodel(sample.container) if sample.container
 
               subsample.save!
               subsample.reload
@@ -117,6 +113,9 @@ module ReactionHelpers
               new_sample = Sample.new(
                 attributes
               )
+
+              # Use 'reactant' or 'solvent' as short_label
+              new_sample.short_label = fixed_label if fixed_label
 
               #add new data container
               new_sample.container = update_datamodel(container_info)
@@ -145,6 +144,7 @@ module ReactionHelpers
             existing_sample.real_amount_unit = sample.real_amount_unit
             existing_sample.external_label = sample.external_label if sample.external_label
             existing_sample.short_label = sample.short_label if sample.short_label
+            existing_sample.short_label = fixed_label if fixed_label
             existing_sample.name = sample.name if sample.name
 
             if r = existing_sample.residues[0]
