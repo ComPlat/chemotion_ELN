@@ -338,19 +338,13 @@ module Chemotion
         when Sample
           elements[:samples] = scope.pluck(:id)
           elements[:reactions] = (
-            user_reactions.by_material_ids(scope.map(&:id)).pluck(:id) +
-            user_reactions.by_reactant_ids(scope.map(&:id)).pluck(:id) +
-            user_reactions.by_product_ids(scope.map(&:id)).pluck(:id)
+            user_reactions.by_sample_ids(scope.map(&:id)).pluck(:id)
           ).uniq
           elements[:wellplates] = user_wellplates.by_sample_ids(scope.map(&:id)).uniq.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
         when Reaction
           elements[:reactions] = scope.pluck(:id)
-          elements[:samples] = (
-            user_samples.by_reaction_reactant_ids(scope.map(&:id)).pluck(:id) +
-            user_samples.by_reaction_product_ids(scope.map(&:id)).pluck(:id) +
-            user_samples.by_reaction_material_ids(scope.map(&:id)).pluck(:id)
-          ).uniq
+          elements[:samples] = user_samples.by_reaction_ids(scope.map(&:id)).pluck(:id).uniq
           elements[:wellplates] = user_wellplates.by_sample_ids(elements[:samples]).uniq.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
         when Wellplate
@@ -358,18 +352,14 @@ module Chemotion
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
           elements[:samples] = user_samples.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
           elements[:reactions] = (
-            user_reactions.by_material_ids(elements[:samples]).pluck(:id) +
-            user_reactions.by_reactant_ids(elements[:samples]).pluck(:id) +
-            user_reactions.by_product_ids(elements[:samples]).pluck(:id)
+            user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq
         when Screen
           elements[:screens] = scope.pluck(:id)
           elements[:wellplates] = user_wellplates.by_screen_ids(scope).uniq.pluck(:id)
           elements[:samples] = user_samples.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
           elements[:reactions] = (
-            user_reactions.by_material_ids(elements[:samples]).pluck(:id) +
-            user_reactions.by_reactant_ids(elements[:samples]).pluck(:id) +
-            user_reactions.by_product_ids(elements[:samples]).pluck(:id)
+            user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
@@ -377,11 +367,7 @@ module Chemotion
 
           elements[:reactions] = (
             scope.reactions_ids +
-            (
-              user_reactions.by_material_ids(elements[:samples]).pluck(:id) +
-              user_reactions.by_reactant_ids(elements[:samples]).pluck(:id) +
-              user_reactions.by_product_ids(elements[:samples]).pluck(:id)
-            )
+            user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq
 
           elements[:wellplates] = (

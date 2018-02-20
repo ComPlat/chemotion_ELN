@@ -189,12 +189,11 @@ module Chemotion
           collections: :sync_collections_users,
           molecule: :tag
         )
-
         prod_only = params[:product_only] || false
         scope = if prod_only
                   scope.product_only
                 else
-                  scope.uniq.not_reactant.not_solvents
+                  scope.uniq.sample_or_startmat_or_products
                 end
 
         from = params[:from_date]
