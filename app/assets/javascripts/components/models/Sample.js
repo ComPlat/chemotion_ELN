@@ -12,58 +12,85 @@ export default class Sample extends Element {
   //   return false;
   // }
 
-  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
-    let newSample = sample.buildCopy();
-
+  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false, keepResidueInfo = false) {
+    const newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
-    if (sample.name) newSample.name = sample.name;
-    if (sample.external_label) {
-      newSample.external_label = sample.external_label;
-    }
+    if (sample.name) { newSample.name = sample.name; }
+    if (sample.external_label) { newSample.external_label = sample.external_label; }
 
     if(structure_only) {
-      newSample = newSample.filterSampleData();
-    } else if (sample.elemental_compositions) {
+      newSample.filterSampleData();
+      newSample.filterResidueData(true);
+    } else {
+      newSample.filterResidueData(keepResidueInfo);
+    }
+
+    if (sample.elemental_compositions) {
       newSample.elemental_compositions = sample.elemental_compositions;
     }
+
+    newSample.filterElementalComposition();
 
     return newSample;
   }
 
-  filterSampleData() {
-    let el_c = this.elemental_compositions.find(function(item) {
-      if(item.composition_type == 'formula') {
+  filterElementalComposition() {
+    const elemComp = (this.elemental_compositions || []).find((item) => {
+      if (item.composition_type == 'formula') {
         item.id = null;
         return item;
       }
     });
-    this.elemental_compositions = el_c ? [el_c] : [];
+    this.elemental_compositions = elemComp ? [elemComp] : [];
     this.elemental_compositions.push({
       composition_type: 'found',
       data: {},
       description: 'Experimental'
     });
-
-    if(this.contains_residues) { this.setDefaultResidue(); }
-
     return this;
   }
 
-  setDefaultResidue() {
-    // set default polymer data
-    this.residues = [
-      {
-        residue_type: 'polymer', custom_info: {
-          "formula": 'CH',
-          "loading": null,
-          "polymer_type": "polystyrene",
-          "loading_type": "external",
-          "external_loading": 0.0,
-          "reaction_product": (this.reaction_product ? true : null),
-          "cross_linkage": null
-        }
+  filterResidueData(keepResidueInfo = false) {
+    if (this.contains_residues) {
+      if (keepResidueInfo) {
+        // only reset loading
+        this.residues.map((residue) => {
+          Object.assign(residue.custom_info, {
+            external_loading: 0.0,
+            loading: null,
+            loading_type: "external"
+          });
+        });
+      } else {
+        // set default polymer data
+        this.residues.map((residue) => {
+          Object.assign(residue, {
+            residue_type: 'polymer',
+            custom_info: {
+              "formula": 'CH',
+              "loading": null,
+              "polymer_type": "polystyrene",
+              "loading_type": "external",
+              "external_loading": 0.0,
+              "reaction_product": (this.reaction_product ? true : null),
+              "cross_linkage": null
+            }
+          });
+        });
       }
-    ];
+    }
+    return this;
+  }
+
+  filterSampleData() {
+    // reset to default values
+    this.target_amount_value = 0;
+    this.real_amount_value = 0;
+    this.description = '';
+    this.purity = 1;
+    this.imported_readout = '';
+
+    return this;
   }
 
   static buildNewShortLabel() {
@@ -116,12 +143,10 @@ export default class Sample extends Element {
   }
 
   buildCopy() {
-    let sample = super.buildCopy()
-    sample.short_label = sample.short_label + " Copy"
-
+    const sample = super.buildCopy();
+    sample.short_label = Sample.buildNewShortLabel();
     sample.container = Container.init();
     sample.can_update = true;
-
     return sample;
   }
 
@@ -141,7 +166,7 @@ export default class Sample extends Element {
 
   buildChild() {
     Sample.counter += 1;
-    let splitSample = this.buildChildWithoutCounter();
+    const splitSample = this.buildChildWithoutCounter();
     splitSample.short_label = splitSample.split_label;
     Sample.children_count[this.id] = this.getChildrenCount() + 1;
 
