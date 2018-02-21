@@ -392,33 +392,31 @@ export default class Reaction extends Element {
 
   shortLabelPolicy(material, oldGroup, newGroup) {
     if (oldGroup) {
-      // Save old short_label
-      material[oldGroup + "_short_label"] = material.short_label;
-      if (material[newGroup + "_short_label"]) {
-        material.short_label = material[newGroup + "_short_label"];
+      // Save previous short_label
+      material[`short_label_${oldGroup}`] = material.short_label;
+
+      // Reassign previous short_label if present
+      if (material[`short_label_${newGroup}`]) {
+        material.short_label = material[`short_label_${newGroup}`];
         return 0;
       }
-
-      if (newGroup == "products") {
-        let savedStartingMaterial = oldGroup == "starting_materials" && !material.isNew
-        if (!savedStartingMaterial) {
-          material.short_label =
-            Sample.buildNewShortLabel();
-        }
-      } else if (newGroup == "starting_materials") {
-        if (material.split_label) {
-          material.short_label = material.split_label;
-        } else {
-          material.short_label =
-            Sample.buildNewShortLabel();
+      // routines below are for exisiting samples moved a first time
+      if (newGroup === 'products') {
+        // products are new samples => build new short_label
+        material.short_label = Sample.buildNewShortLabel();
+      } else if (newGroup === 'starting_materials') {
+        if (oldGroup !== 'products') {
+          // if starting_materials from products, reuse product short_label (do nothing)
+          material.short_label = Sample.buildNewShortLabel();
         }
       }
+      // else when newGroup is reactant/solvent do nothing because not displayed (short_label set in BE)
     } else {
-      if (newGroup == "starting_materials") {
-        if (material.split_label) material.short_label = material.split_label;
-      } else if (newGroup == "products") {
-        material.short_label =
-          Sample.buildNewShortLabel();
+      if (newGroup === "starting_materials") {
+        if (material.split_label) { material.short_label = material.split_label; }
+      } else if (newGroup === "products") {
+        // products are new samples => build new short_label
+        material.short_label = Sample.buildNewShortLabel();
       } else {
         material.short_label = newGroup.slice(0, -1); // "reactant" or "solvent"
       }
