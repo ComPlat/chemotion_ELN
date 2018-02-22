@@ -20,7 +20,6 @@ import KeyboardActions from './actions/KeyboardActions';
 export default class List extends React.Component {
   constructor(props) {
     super(props);
-
     this.state = {
       totalSampleElements: 0,
       totalReactionElements: 0,
@@ -60,6 +59,19 @@ export default class List extends React.Component {
     UIStore.unlisten(this.onChangeUI);
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextProps.overview !== this.props.overview ||
+    nextProps.showReport !== this.props.showReport ||
+    nextState.totalSampleElements !== this.state.totalSampleElements ||
+    nextState.totalReactionElements !== this.state.totalReactionElements ||
+    nextState.totalWellplateElements !== this.state.totalWellplateElements ||
+    nextState.totalScreenElements !== this.state.totalScreenElements ||
+    nextState.totalResearchPlanElements !== this.state.totalResearchPlanElements ||
+    nextState.visible !== this.state.visible ||
+    nextState.hidden !== this.state.hidden ||
+    nextState.currentTab !== this.state.currentTab;
+  }
+
   initState(){
     this.onChange(ElementStore.getState())
   }
@@ -81,12 +93,12 @@ export default class List extends React.Component {
       hidden = ArrayUtils.pushUniq(hidden, "hidden")
     }
 
-    let currentType = state.currentType
+    const currentType = state.currentType
     let currentTabIndex = visible.findIndex((e) => e === currentType)
     if (currentTabIndex < 0) currentTabIndex = 0;
 
     let type = state.currentType
-    if (type == "") type = visible.get(0)
+    if (type == "") { type = visible.get(0); }
 
     KeyboardActions.contextChange.defer(type)
 
@@ -94,23 +106,25 @@ export default class List extends React.Component {
       currentTab: currentTabIndex,
       visible: visible,
       hidden: hidden
-    })
+    });
   }
 
   onChangeUI(state) {
-    let { totalCheckedElements } = this.state;
-
+    const { totalCheckedElements } = this.state;
+    let forceUpdate = false;
     ["sample", "reaction", "wellplate", "screen", "research_plan"].forEach((type) => {
-      let elementUI = state[type];
-      let element   = ElementStore.getState()['elements'][type+"s"]
-      if (elementUI.checkedAll) {
-        totalCheckedElements[type] = element.totalElements - elementUI.uncheckedIds.size
-      } else {
-        totalCheckedElements[type] = elementUI.checkedIds.size
-      }
-    })
+      const elementUI = state[type];
+      const element = ElementStore.getState()['elements'][`${type}s`];
+      const nextCount = elementUI.checkedAll ?
+        (element.totalElements - elementUI.uncheckedIds.size) :
+        elementUI.checkedIds.size;
+      if (!forceUpdate && nextCount !== totalCheckedElements[type]) { forceUpdate = true; }
+      totalCheckedElements[type] = nextCount
+    });
 
-    this.setState({totalCheckedElements})
+    this.setState((previousState) => { return { ...previousState, totalCheckedElements }; });
+    // could not use shouldComponentUpdate because state.totalCheckedElements has already changed independently of setstate
+    if (forceUpdate) { this.forceUpdate(); }
   }
 
 
@@ -118,14 +132,14 @@ export default class List extends React.Component {
     UserActions.selectTab(tab);
 
     // TODO sollte in tab action handler
-    let uiState = UIStore.getState();
-    let type = this.state.visible.get(tab);
+    const uiState = UIStore.getState();
+    const type = this.state.visible.get(tab);
 
-    if (!uiState[type] || !uiState[type].page) return;
+    if (!uiState[type] || !uiState[type].page) { return; }
 
-    let page = uiState[type].page;
+    const page = uiState[type].page;
 
-    UIActions.setPagination({type: type, page: page});
+    UIActions.setPagination({ type, page });
 
     KeyboardActions.contextChange(type);
   }
@@ -134,36 +148,36 @@ export default class List extends React.Component {
     let array = Immutable.List()
 
     Object.keys(layout).forEach(function (key) {
-      let order = layout[key]
-      if (isVisible && order < 0) return;
-      if (!isVisible && order > 0) return;
+      const order = layout[key]
+      if (isVisible && order < 0) { return; }
+      if (!isVisible && order > 0) { return; }
 
       array = array.set(Math.abs(order), key)
     })
 
-    array = array.filter(function(n){ return n != undefined })
+    array = array.filter(function(n) { return n != undefined })
 
     return array
   }
 
   render() {
     let {
-      visible, hidden, currentTab, treeView, 
-      totalCheckedElements, 
+      visible, hidden, currentTab, treeView,
+      totalCheckedElements,
     } = this.state
 
-    const {overview, showReport} = this.props
+    const { overview, showReport } = this.props;
     const elementState = this.state
 
-    let navItems = []
-    let tabContents = []
+    const navItems = []
+    const tabContents = []
     for (let i = 0; i < visible.size; i++) {
       let value = visible.get(i)
       let camelized_value = value.split('_').map(function(word){
         return word.charAt(0).toUpperCase() + word.slice(1);
       }).join('');
 
-      let navItem = (
+      const navItem = (
         <NavItem eventKey={i} key={value + "_navItem"}>
           <i className={"icon-" + value}>
             {elementState["total" + camelized_value + "Elements"]}
@@ -171,7 +185,7 @@ export default class List extends React.Component {
           </i>
         </NavItem>
       )
-      let tabContent = (
+      const tabContent = (
         <Tab.Pane eventKey={i} key={value + "_tabPanel"}>
            <ElementsTable overview={overview} showReport={showReport}
                          type={value}/>
@@ -184,7 +198,7 @@ export default class List extends React.Component {
 
     return (
       <Tab.Container  id="tabList" defaultActiveKey={0} activeKey={currentTab}
-                      onSelect={(e) => this.handleTabSelect(e)}>
+                      onSelect={this.handleTabSelect}>
         <Row className="clearfix">
           <Col sm={12}>
             <Nav bsStyle="tabs">
