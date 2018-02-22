@@ -81,7 +81,7 @@ module Cdx
       chg = root["Charge"]
       return "" if chg.blank? || chg == "0"
       chg_hex = hex_integer(chg)
-      "21 04 01 00 #{chg_hex} 48 04 00 00 37 04 01 00 01 "
+      "21 04 01 00 #{chg_hex} "
     end
 
     def polymer_text
