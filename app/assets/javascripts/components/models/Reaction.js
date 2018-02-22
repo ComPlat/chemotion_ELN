@@ -11,33 +11,30 @@ import UserStore from '../stores/UserStore';
 const TemperatureUnit = ["°C", "°F", "K"]
 
 export default class Reaction extends Element {
+
   static buildEmpty(collection_id) {
-    let temperature_default = {
+    const temperatureDefault = {
       "valueUnit": "°C",
       "userText": "",
       "data": []
     }
 
-    let description_default = {
-      "ops": [{ "insert": "" }]
-    }
-
-    let reaction = new Reaction({
-      collection_id: collection_id,
+    const reaction = new Reaction({
+      collection_id,
       type: 'reaction',
       name: '',
       status: "",
       role: "",
-      description: description_default,
+      description: Reaction.quillDefault(),
       timestamp_start: "",
       timestamp_stop: "",
       duration: "",
-      observation: description_default,
+      observation: Reaction.quillDefault(),
       purification: "",
       dangerous_products: "",
       tlc_solvents: "",
       rf_value: 0.00,
-      temperature: temperature_default,
+      temperature: temperatureDefault,
       tlc_description: "",
       starting_materials: [],
       reactants: [],
@@ -256,19 +253,39 @@ export default class Reaction extends Element {
     return [...this.starting_materials, ...this.reactants, ...this.solvents, ...this.products]
   }
 
-  static copyFromReactionAndCollectionId(reaction, collection_id) {
-    const copy = reaction.buildCopy();
-    copy.role = "parts";
-    copy.origin = { id: reaction.id, short_label: reaction.short_label };
-    copy.name = copy.nameFromRole(copy.role);
-    copy.collection_id = collection_id;
-    copy.starting_materials = reaction.starting_materials.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
-    copy.reactants = reaction.reactants.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
-    copy.solvents = reaction.solvents.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
-    copy.products = reaction.products.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
+  buildCopy(params = {}) {
+    const copy = super.buildCopy();
+    Object.assign(copy, params);
+
+    copy.starting_materials = this.starting_materials.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.reactants = this.reactants.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.solvents = this.solvents.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.products = this.products.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true)
+    );
 
     copy.container = Container.init();
+    return copy;
+  }
 
+  static copyFromReactionAndCollectionId(reaction, collection_id) {
+    const params = {
+      collection_id,
+      role: 'parts',
+      timestamp_start: '',
+      timestamp_stop: '',
+      rf_value: 0.00,
+      status: '',
+    }
+    const copy = reaction.buildCopy(params);
+    copy.origin = { id: reaction.id, short_label: reaction.short_label };
+    copy.name = copy.nameFromRole(copy.role);
     return copy;
   }
 

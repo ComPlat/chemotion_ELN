@@ -81,4 +81,9 @@ export default class Element {
     let cleanParams = _.omit(paramsWithoutNullEntries, (x) => { return x == '***'})
     return cleanParams;
   }
+
+  // Default empty quill-delta
+  static quillDefault() {
+    return { "ops": [{ "insert": "" }] }
+  }
 }

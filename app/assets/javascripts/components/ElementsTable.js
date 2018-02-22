@@ -28,6 +28,10 @@ export default class ElementsTable extends React.Component {
       moleculeSort: false,
       advancedSearch: false,
       productOnly: false,
+      page: null,
+      pages: null,
+      perPage: null,
+      totalElements: null
     };
 
     this.onChange = this.onChange.bind(this);
@@ -45,7 +49,6 @@ export default class ElementsTable extends React.Component {
     UIStore.getState();
     ElementStore.listen(this.onChange);
     UIStore.listen(this.onChangeUI);
-    this.initializePagination();
     this.initState();
   }
 
@@ -93,56 +96,35 @@ export default class ElementsTable extends React.Component {
   }
 
   onChange(state) {
-    let type = this.props.type + 's';
-    let elementsState = state.elements[type];
+    const type = this.props.type + 's';
+    const elementsState = state.elements[type];
 
-    const {elements, page, pages, perPage, totalElements} = elementsState;
+    const { elements, page, pages, perPage, totalElements } = elementsState;
 
     let currentElement;
     if(!state.currentElement || state.currentElement.type == this.props.type) {
       currentElement = state.currentElement
     }
 
-    let elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
-    let currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
+    const elementsDidChange = elements && ! deepEqual(elements, this.state.elements);
+    const currentElementDidChange = !deepEqual(currentElement, this.state.currentElement);
 
-    if (elementsDidChange) {
-      this.setState({
-        elements, page, pages, perPage, totalElements, currentElement
-      }),
-
-      this.initializePagination()
-    }
-    else if (currentElementDidChange) {
-      this.setState({
-        page, pages, perPage, totalElements, currentElement
-      }),
-
-      this.initializePagination()
-    }
+    const nextState = { page, pages, perPage, totalElements, currentElement }
+    if (elementsDidChange) { nextState.elements = elements; }
+    if (elementsDidChange || currentElementDidChange) { this.setState(nextState); }
   }
 
   initState() {
     this.onChange(ElementStore.getState());
   }
 
-  initializePagination() {
-    const {
-      page, pages, perPage, totalElements
-    } = this.state;
-    this.setState({
-      page, pages, perPage, totalElements
-    });
-  }
-
-  collapseSample(sampelCollapseAll) {
-    this.setState({sampleCollapseAll: !sampelCollapseAll})
+  collapseSample(sampleCollapseAll) {
+    this.setState({sampleCollapseAll: !sampleCollapseAll})
   }
 
   changeSort() {
     let {moleculeSort} = this.state
     moleculeSort = !moleculeSort
-
     this.setState({
       moleculeSort
     }, () => ElementActions.changeSorting(moleculeSort))

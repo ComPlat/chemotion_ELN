@@ -11,9 +11,9 @@ export default class CollectionManagement extends React.Component {
   }
 
   extraTab(ind,offset=0){
-    let num = ind + offset + 1 ;
-    let NoName =  XTabs["content"+ind];
-    let Title = XTabs["title"+ind];
+    const num = ind + offset + 1 ;
+    let NoName =  XTabs[`content${ind}`];
+    const Title = XTabs[`title${ind}`];
     return(
        <Tab eventKey={num} key={num} title={Title} >
            <NoName />
@@ -22,7 +22,7 @@ export default class CollectionManagement extends React.Component {
   }
 
   render() {
-    let tabContents = []
+    const tabContents = []
     for (let j=0;j < XTabs.count;j++){
       if (XTabs['on'+j]()){
         tabContents.push((i)=>this.extraTab(i,2))

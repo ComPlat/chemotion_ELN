@@ -41,27 +41,27 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    let displayedMoleculeGroup = []
+    const displayedMoleculeGroup = [];
 
     nextProps.elements.forEach(function(groupSample, index) {
-      let numSamples = groupSample.length
-      displayedMoleculeGroup[index] = groupSample
-      if (nextProps.moleculeSort && numSamples > 3) numSamples = 3
-      displayedMoleculeGroup[index].numSamples = numSamples
+      let numSamples = groupSample.length;
+      displayedMoleculeGroup[index] = groupSample;
+      if (nextProps.moleculeSort && numSamples > 3) { numSamples = 3 }
+      displayedMoleculeGroup[index].numSamples = numSamples;
     })
 
     this.setState({
+      displayedMoleculeGroup,
       collapseAll: nextProps.collapseAll,
-      displayedMoleculeGroup
-    }, () => this.buildFlattenSampleIds())
+      flattenSamplesId: this.buildFlattenSampleIds(displayedMoleculeGroup)
+    });
   }
 
   componentWillUnmount() {
     KeyboardStore.unlisten(this.sampleOnKeyDown)
   }
 
-  buildFlattenSampleIds() {
-    let {displayedMoleculeGroup} = this.state
+  buildFlattenSampleIds(displayedMoleculeGroup) {
     let flatIndex = 0
     let flattenSamplesId = []
 
@@ -75,7 +75,7 @@ export default class ElementsTableSampleEntries extends Component {
       flatIndex = flatIndex + length
     })
 
-    this.setState({flattenSamplesId})
+    return flattenSamplesId;
   }
 
   sampleOnKeyDown(state) {
@@ -117,15 +117,18 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   showMoreSamples(index) {
-    let {displayedMoleculeGroup} = this.state
-    let length = displayedMoleculeGroup[index].numSamples
-    length += 3
+    let { displayedMoleculeGroup } = this.state;
+    let length = displayedMoleculeGroup[index].numSamples;
+    length += 3;
     if (displayedMoleculeGroup[index].length < length) {
       length = displayedMoleculeGroup[index].length
     }
-    displayedMoleculeGroup[index].numSamples = length
+    displayedMoleculeGroup[index].numSamples = length;
 
-    this.setState({displayedMoleculeGroup}, () => this.buildFlattenSampleIds())
+    this.setState({
+      displayedMoleculeGroup,
+      flattenSamplesId: this.buildFlattenSampleIds(displayedMoleculeGroup)
+    })
   }
 
   render() {
@@ -158,18 +161,18 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   renderMoleculeHeader(sample, show) {
-    let {molecule} = sample
-    let showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right'
+    const { molecule } = sample;
+    const showIndicator = (show) ? 'glyphicon-chevron-down' : 'glyphicon-chevron-right';
 
-    let tdExtraContents = []
+    const tdExtraContents = []
 
-    for (let j=0;j < XMolHeadCont.count;j++){
+    for (let j=0;j < XMolHeadCont.count;j++) {
       let NoName = XMolHeadCont["content"+j];
       tdExtraContents.push(<NoName element={sample} key={"exMolHead"+j}/>);
     }
     let dragItem;
     // in molecule dnd we use sample if molecule is a partial
-    const {collId, showPreviews} = UIStore.getState()
+    const { collId, showPreviews } = UIStore.getState();
     if(sample.contains_residues) {
       dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
       dragItem.id = null;
@@ -177,23 +180,21 @@ export default class ElementsTableSampleEntries extends Component {
       dragItem = molecule;
     }
 
-    let svgPreview = (<span></span>)
-    if(showPreviews) {
-      svgPreview = (
-        <div style={{float: 'left'}}>
-          <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
-        </div>
-      )
-    }
+    const svgPreview = showPreviews ? (
+      <div style={{float: 'left'}}>
+        <SVG src={sample.svgPath} className="molecule" key={sample.svgPath}/>
+      </div>
+    ) : <span/>;
 
-    let moleculeToggle = molecule.iupac_name || molecule.inchistring
-    let overlayToggle = (
+
+    const moleculeToggle = molecule.iupac_name || molecule.inchistring
+    const overlayToggle = (
       <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>
     )
-
     return (
       <tr style={{backgroundColor: '#F5F5F5', cursor: 'pointer'}}
-          onClick={() => this.handleMoleculeToggle(moleculeToggle)}>
+            onClick={()=>this.handleMoleculeToggle(moleculeToggle)}
+          >
         <td colSpan="2" style={{position: 'relative'}}>
           {svgPreview}
           <div style={{position: 'absolute', right: '3px', top: '14px'}}>
@@ -286,7 +287,7 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   handleMoleculeToggle(moleculeName) {
-    let {moleculeGroupsShown} = this.state
+    let { moleculeGroupsShown } = this.state
     if(!moleculeGroupsShown.includes(moleculeName)) {
       moleculeGroupsShown = moleculeGroupsShown.concat(moleculeName)
     } else {
@@ -298,7 +299,7 @@ export default class ElementsTableSampleEntries extends Component {
   }
 
   dragColumn(element) {
-    const {showDragColumn} = this.props
+    const { showDragColumn } = this.props;
     if(showDragColumn) {
       return (
         <td style={{verticalAlign: 'middle', textAlign: 'center'}}>

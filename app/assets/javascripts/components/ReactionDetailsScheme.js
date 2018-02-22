@@ -504,7 +504,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={this.dropMaterial}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={this.dropSample}
-              showLoadingColumn={reaction.hasPolymers()}
+              showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               headIndex={0}
             />
@@ -518,7 +518,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={this.dropMaterial}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={this.dropSample}
-              showLoadingColumn={reaction.hasPolymers()}
+              showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               headIndex={headReactants}
             />
@@ -532,7 +532,7 @@ export default class ReactionDetailsScheme extends Component {
               dropMaterial={this.dropMaterial}
               deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
               dropSample={this.dropSample}
-              showLoadingColumn={reaction.hasPolymers()}
+              showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
               headIndex={0}
             />
@@ -548,7 +548,7 @@ export default class ReactionDetailsScheme extends Component {
                   dropMaterial={this.dropMaterial}
                   deleteMaterial={(material, materialGroup) => this.deleteMaterial(material, materialGroup)}
                   dropSample={this.dropSample}
-                  showLoadingColumn={reaction.hasPolymers()}
+                  showLoadingColumn={!!reaction.hasPolymers()}
                   onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
                   headIndex={0}
                 />
