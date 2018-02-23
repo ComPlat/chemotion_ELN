@@ -48,24 +48,22 @@ class DetailStore {
   }
 
   handleChangeCurrentElement({oriEl, nextEl}) {
-    const selecteds = this.selecteds
-    const index = this.elementIndex(selecteds, nextEl)
-    let activeKey = index
-    let newSelecteds = null
-
-    let sync = this.synchronizeElements(oriEl, nextEl)
-    oriEl = sync.ori
-    nextEl = sync.next
-
-    if(!oriEl || index === -1) {
+    const selecteds = this.selecteds;
+    const index = this.elementIndex(selecteds, nextEl);
+    let activeKey = index;
+    let newSelecteds = null;
+    const sync = this.synchronizeElements(oriEl, nextEl);
+    oriEl = sync.ori;
+    nextEl = sync.next;
+    if (index === -1) {
       activeKey = selecteds.length
       newSelecteds = this.addElement(nextEl)
     } else {
       newSelecteds = this.updateElement(nextEl, index)
     }
 
-    this.setState({ selecteds: newSelecteds })
-    this.resetActiveKey(activeKey)
+    this.setState({ selecteds: newSelecteds });
+    this.resetActiveKey(activeKey);
   }
 
   handleGetMoleculeCas(updatedSample) {
@@ -85,28 +83,28 @@ class DetailStore {
   }
 
   synchronizeElements(close, open) {
-    let associatedSampleFromReaction = (
+    const associatedSampleFromReaction = (
       close instanceof Reaction && open instanceof Sample &&
       close.samples.map(s => s.id).includes(open.id)
-    )
+    );
 
-    let associatedReactionFromSample = (
+    const associatedReactionFromSample = (
       close instanceof Sample && open instanceof Reaction &&
       open.samples.map(s => s.id).includes(close.id)
-    )
+    );
 
     if (associatedSampleFromReaction) {
-      let s = close.samples.filter(x => x.id == open.id)[0]
+      const s = close.samples.filter(x => x.id == open.id)[0];
 
-      open.amount_value = s.amount_value
-      open.amount_unit = s.amount_unit
-      open.container = s.container
+      open.amount_value = s.amount_value;
+      open.amount_unit = s.amount_unit;
+      open.container = s.container;
     } else if (associatedReactionFromSample) {
-      open.updateMaterial(close)
-      if (close.isPendingToSave) open.changed = close.isPendingToSave
+      open.updateMaterial(close);
+      if (close.isPendingToSave) { open.changed = close.isPendingToSave; }
     }
 
-    return {ori: close, next: open}
+    return { ori: close, next: open };
   }
 
   addElement(addEl) {
