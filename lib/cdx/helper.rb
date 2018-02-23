@@ -51,7 +51,8 @@ module Cdx
 
   class CdxNode < CdxBasic
     def content
-      start + id + z_index(root) + position + element + charge + ending
+      start + id + z_index(root) + position + element + charge +
+        isotope + ending
     end
 
     private
@@ -81,7 +82,14 @@ module Cdx
       chg = root["Charge"]
       return "" if chg.blank? || chg == "0"
       chg_hex = hex_integer(chg)
-      "21 04 01 00 #{chg_hex} 48 04 00 00 37 04 01 00 01 "
+      "21 04 01 00 #{chg_hex} "
+    end
+
+    def isotope
+      iso = root["Isotope"]
+      return "" if iso.blank?
+      iso_hex = hex_integer(iso)
+      "20 04 01 00 #{iso_hex} "
     end
 
     def polymer_text
