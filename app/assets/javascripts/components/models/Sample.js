@@ -50,6 +50,23 @@ export default class Sample extends Element {
     return this;
   }
 
+  setDefaultResidue() {
+    // set default polymer data
+    this.residues = [
+      {
+        residue_type: 'polymer', custom_info: {
+          "formula": 'CH',
+          "loading": null,
+          "polymer_type": "polystyrene",
+          "loading_type": "external",
+          "external_loading": 0.0,
+          "reaction_product": (this.reaction_product ? true : null),
+          "cross_linkage": null
+        }
+      }
+    ];
+  }
+
   filterResidueData(keepResidueInfo = false) {
     if (this.contains_residues) {
       if (keepResidueInfo) {
