@@ -91,17 +91,12 @@ module Chemotion
           tables.push(table)
           field = filter.field.column
           words = filter.value.split(/,|(\r)?\n/).map!(&:strip)
+          filter['match'] =~ /\=|(NOT )?I?LIKE/
+          match_operator = $& || 'LIKE'
+          words = words.map { |e| "%#{e}%" } unless match_operator == '='
 
-          if filter.match.casecmp('exact').zero?
-            match = '='
-          else
-            match = 'LIKE'
-            words = words.map { |e| "%#{e}%" }
-          end
-
-          conditions = words.collect {
-            table + '.' + field + ' ' + match + ' ? '
-          }.join(' OR ')
+          conditions = words.collect { table + '.' + field + ' ' + match_operator + ' ? ' }
+                            .join(' OR ')
 
           query = query + ' ' + filter.link + ' (' + conditions + ') '
           cond_val += words
