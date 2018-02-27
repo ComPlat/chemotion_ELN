@@ -63,8 +63,11 @@ export default class SearchFilter extends React.Component {
     ]
 
     this.matchOps = [
-      { value: "EXACT", label: "EXACT" },
-      { value: "LIKE", label: "SUBSTRING" }
+      { value: "=", label: "EXACT" },
+      { value: "LIKE", label: "LIKE (substring)" },
+      { value: "ILIKE", label: "LIKE (case insensitive substring)" },
+      { value: "NOT LIKE", label: "NOT LIKE (substring)" },
+      { value: "NOT ILIKE", label: "NOT LIKE (case insensitive substring)" }
     ]
 
     this.search = this.search.bind(this)
