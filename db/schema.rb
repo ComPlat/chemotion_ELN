@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180205132254) do
+ActiveRecord::Schema.define(version: 20180226130229) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -400,22 +400,23 @@ ActiveRecord::Schema.define(version: 20180205132254) do
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
     t.string   "inchistring"
-    t.float    "density",                default: 0.0
+    t.float    "density",                           default: 0.0
     t.float    "molecular_weight"
     t.binary   "molfile"
     t.float    "melting_point"
     t.float    "boiling_point"
     t.string   "sum_formular"
-    t.string   "names",                  default: [],                 array: true
+    t.string   "names",                             default: [],                 array: true
     t.string   "iupac_name"
     t.string   "molecule_svg_file"
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
+    t.datetime "created_at",                                        null: false
+    t.datetime "updated_at",                                        null: false
     t.datetime "deleted_at"
-    t.boolean  "is_partial",             default: false, null: false
+    t.boolean  "is_partial",                        default: false, null: false
     t.float    "exact_molecular_weight"
     t.string   "cano_smiles"
     t.text     "cas"
+    t.string   "molfile_version",        limit: 20
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
@@ -590,20 +591,20 @@ ActiveRecord::Schema.define(version: 20180205132254) do
 
   create_table "samples", force: :cascade do |t|
     t.string   "name"
-    t.float    "target_amount_value", default: 0.0
-    t.string   "target_amount_unit",  default: "g"
-    t.datetime "created_at",                          null: false
-    t.datetime "updated_at",                          null: false
-    t.text     "description",         default: ""
+    t.float    "target_amount_value",            default: 0.0
+    t.string   "target_amount_unit",             default: "g"
+    t.datetime "created_at",                                     null: false
+    t.datetime "updated_at",                                     null: false
+    t.text     "description",                    default: ""
     t.integer  "molecule_id"
     t.binary   "molfile"
-    t.float    "purity",              default: 1.0
-    t.string   "solvent",             default: ""
-    t.string   "impurities",          default: ""
-    t.string   "location",            default: ""
-    t.boolean  "is_top_secret",       default: false
+    t.float    "purity",                         default: 1.0
+    t.string   "solvent",                        default: ""
+    t.string   "impurities",                     default: ""
+    t.string   "location",                       default: ""
+    t.boolean  "is_top_secret",                  default: false
     t.string   "ancestry"
-    t.string   "external_label",      default: ""
+    t.string   "external_label",                 default: ""
     t.integer  "created_by"
     t.string   "short_label"
     t.float    "real_amount_value"
@@ -613,14 +614,15 @@ ActiveRecord::Schema.define(version: 20180205132254) do
     t.string   "sample_svg_file"
     t.integer  "user_id"
     t.string   "identifier"
-    t.float    "density",             default: 0.0
+    t.float    "density",                        default: 0.0
     t.float    "melting_point"
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
-    t.jsonb    "xref",                default: {}
-    t.float    "molarity_value",      default: 0.0
-    t.string   "molarity_unit",       default: "M"
+    t.jsonb    "xref",                           default: {}
+    t.float    "molarity_value",                 default: 0.0
+    t.string   "molarity_unit",                  default: "M"
     t.integer  "molecule_name_id"
+    t.string   "molfile_version",     limit: 20
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

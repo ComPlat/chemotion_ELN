@@ -120,12 +120,14 @@ class Import::ImportSamples
   end
 
   def get_data_from_molfile_and_smiles(row)
-    molfile = Molecule.skip_residues row["molfile"].to_s
-    molfile_smiles = Chemotion::OpenBabelService.get_smiles_from_molfile molfile
-    if mandatory_check["smiles"]
-      molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles
+    molfile = row["molfile"].presence
+    if molfile
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+      molfile_smiles = babel_info[:smiles]
+      if mandatory_check["smiles"]
+        molfile_smiles = Chemotion::OpenBabelService.canon_smiles_to_smiles molfile_smiles
+      end
     end
-
     if molfile_smiles.blank? &&
       (molfile_smiles != row["cano_smiles"] && molfile_smiles != row["smiles"])
       @unprocessable << { row: row, index: i }
@@ -136,15 +138,12 @@ class Import::ImportSamples
 
   def get_data_from_molfile(row)
     molfile = row["molfile"].to_s
-    if molfile.include? ' R# '
-      molecule = Molecule.find_or_create_by_molfile(molfile.clone, true)
-    else
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-      inchikey = babel_info[:inchikey]
-      unless inchikey.blank?
-        unless molecule && molecule.inchikey == inchikey
-          molecule = Molecule.find_or_create_by_molfile(molfile)
-        end
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    inchikey = babel_info[:inchikey]
+    is_partial = babel_info[:is_partial]
+    if inchikey.presence
+      if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+        molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
       end
     end
     return molfile, molecule

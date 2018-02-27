@@ -30,8 +30,7 @@ module Chemotion
           svg_file.write(svg)
           svg_file.close
 
-          is_part = molfile.include? ' R# '
-          molecule = Molecule.find_or_create_by_molfile(molfile, is_part)
+          molecule = Molecule.find_or_create_by_molfile(molfile)
 
           molecule.attributes.merge({ temp_svg: svg_file_name })
         end
@@ -59,8 +58,7 @@ module Chemotion
         svg_file.write(svg)
         svg_file.close
 
-        is_part = molfile.include? ' R# '
-        molecule = Molecule.find_or_create_by_molfile(molfile, is_part)
+        molecule = Molecule.find_or_create_by_molfile(molfile)
 
         molecule.attributes.merge({ temp_svg: svg_file_name })
       end

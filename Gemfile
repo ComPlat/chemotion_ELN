@@ -77,9 +77,10 @@ gem 'roo', '>2.5.0'
 
 gem 'faraday', '~> 0.12.1'
 gem 'httparty'
-gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails',
-                   ref: '19b5bd5344462295a2633ccfefed8a5bb4f85f28'
-# Ketcher editor
+
+gem 'ketcherails', git: 'https://git.scc.kit.edu/ComPlat/ketcher-rails.git', branch: 'coordination_bond_suppport'
+# git: 'https://github.com/ComPlat/ketcher-rails',
+#                   ref: '19b5bd5344462295a2633ccfefed8a5bb4f85f28'
 
 # Free font icons
 gem 'font-awesome-rails'
