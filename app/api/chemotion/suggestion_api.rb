@@ -68,6 +68,7 @@ module Chemotion
         when 'reaction'
           reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
           reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
+          reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
           sample_name = dl_s > 0 && d_for.call(Sample).with_reactions.by_name(qry).pluck(:name).uniq || []
           iupac_name = dl_s > 0 && d_for.call(Molecule).with_reactions.by_iupac_name(qry).pluck(:iupac_name).uniq || []
           inchistring = dl_s > 0 && d_for.call(Molecule).with_reactions.by_inchistring(qry).pluck(:inchistring).uniq || []
@@ -75,6 +76,7 @@ module Chemotion
           {
             reaction_name: reaction_name,
             reaction_short_label: reaction_short_label,
+            reaction_status: reaction_status,
             sample_name: sample_name,
             iupac_name: iupac_name,
             inchistring: inchistring,
@@ -114,6 +116,7 @@ module Chemotion
           inchistring = dl_s > 0 && search_by_field.call(Molecule, :inchistring, qry) || []
           cano_smiles = dl_s > 0 && search_by_field.call(Molecule, :cano_smiles, qry) || []
           reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
+          reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
           reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
           wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
           screen_name = dl_sc > -1 && search_by_field.call(Screen, :name, qry) || []
@@ -130,6 +133,7 @@ module Chemotion
             cano_smiles: cano_smiles,
             reaction_name: reaction_name,
             reaction_short_label: reaction_short_label,
+            reaction_status: reaction_status,
             wellplate_name: wellplate_name,
             screen_name: screen_name,
             conditions: conditions,

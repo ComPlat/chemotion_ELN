@@ -15,7 +15,9 @@ module Chemotion
             # sample_external_label sum_formula iupac_name inchistring cano_smiles
             # polymer_type
           #]
-          optional :elementType, type: String, values: %w[all All Samples Reactions Wellplates Screens]
+          optional :elementType, type: String, values: %w[
+            All Samples Reactions Wellplates Screens all samples reactions wellplates screens
+          ]
           optional :molfile, type: String
           optional :search_type, type: String, values: %w[similar sub]
           optional :tanimoto_threshold, type: Float
@@ -281,7 +283,7 @@ module Chemotion
           else
             Sample.none
           end
-        when 'reaction_name', 'reaction_short_label'
+        when 'reaction_name', 'reaction_short_label', 'reaction_status'
           Reaction.by_collection_id(c_id).search_by(search_method, arg)
         when 'wellplate_name'
           Wellplate.by_collection_id(c_id).search_by(search_method, arg)
