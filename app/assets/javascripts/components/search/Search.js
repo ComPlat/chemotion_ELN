@@ -59,6 +59,7 @@ export default class Search extends React.Component {
       search_type: this.state.searchType,
       tanimoto_threshold: tanimoto,
       page_size: uiState.number_of_results,
+      search_by_method: 'structure',
       structure_search: true
     }
     UIActions.setSearchSelection(selection)
