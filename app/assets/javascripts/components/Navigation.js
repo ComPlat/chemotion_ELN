@@ -81,7 +81,7 @@ export default class Navigation extends React.Component {
 
     let selection = {
       elementType: "all",
-      name: filters,
+      advanced_params: filters,
       search_by_method: "advanced",
       page_size: uiState.number_of_results
     }

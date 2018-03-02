@@ -21,7 +21,7 @@ export default class SearchFetcher {
           page: currentPage,
           per_page: selection.page_size,
           is_sync: isSync,
-          molecule_sort: moleculeSort ? 1 : 0,
+          molecule_sort: moleculeSort,
         })
       })
       .then((response) => {

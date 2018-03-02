@@ -59,7 +59,7 @@ gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
                 branch: 'allow-port-option'
 
 # API
-gem 'grape'
+gem 'grape', '<1.0.0'
 gem 'grape-active_model_serializers'
 gem 'grape-kaminari'
 gem 'hashie-forbidden_attributes'

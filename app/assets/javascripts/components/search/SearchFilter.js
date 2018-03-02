@@ -107,9 +107,9 @@ export default class SearchFilter extends React.Component {
   }
 
   search() {
-    let {filters} = this.state
+    let { filters } = this.state;
 
-    // Remove illegal filter
+    // Remove invalid filter
     filters = filters.filter((f, id) => {
       return (f.field && f.link && f.value) ||
         (id == 0 && f.field && f.value)
@@ -117,7 +117,7 @@ export default class SearchFilter extends React.Component {
 
     this.setState({
       showFilters: false,
-      filters: filters
+      filters
     }, this.props.searchFunc(filters))
   }
 
