@@ -282,7 +282,8 @@ module Chemotion
 
       route_param :id do
         before do
-          @element_policy = ElementPolicy.new(current_user, Sample.find(params[:id]))
+          @sample = Sample.find(params[:id])
+          @element_policy = ElementPolicy.new(current_user, @sample)
           error!('401 Unauthorized', 401) unless @element_policy.update?
         end
         put do
@@ -304,17 +305,15 @@ module Chemotion
             ) unless prop_value.blank?
           end
 
-          if sample = Sample.find(params[:id])
-            sample.update!(attributes)
-          end
+          @sample.update!(attributes)
 
           serialized_sample = ElementPermissionProxy.new(
                                 current_user,
-                                sample,
+                                @sample,
                                 user_ids,
                                 @element_policy,
                               ).serialized
-          {sample: serialized_sample}
+          { sample: serialized_sample }
         end
       end
 

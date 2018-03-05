@@ -213,24 +213,18 @@ class Sample < ActiveRecord::Base
   end
 
   def auto_set_molfile_to_molecules_molfile
-    if molecule && molecule.molfile
-      self.molfile ||= molecule.molfile
-    end
+    self.molfile = self.molfile.presence || molecule&.molfile
   end
 
   def find_or_create_molecule_based_on_inchikey
-    if molfile
-      if molfile.include? ' R# '
-        self.molecule = Molecule.find_or_create_by_molfile(molfile.clone, true)
-      else
-        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-        inchikey = babel_info[:inchikey]
-        unless inchikey.blank?
-          unless molecule && molecule.inchikey == inchikey
-            self.molecule = Molecule.find_or_create_by_molfile(molfile)
-          end
-        end
-      end
+    return unless molfile.present?
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    inchikey = babel_info[:inchikey]
+    return unless  inchikey.present?
+    is_partial = babel_info[:is_partial]
+    molfile_version = babel_info[:version]
+    if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+      self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
     end
   end
 

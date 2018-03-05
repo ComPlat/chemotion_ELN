@@ -206,7 +206,7 @@ module ReportHelpers
     <<~SQL
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
-      , res.residue_type
+      , res.residue_type, s.molfile_version
       , #{columns}
       from (
         select
@@ -271,7 +271,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_wp
-      , res.residue_type
+      , res.residue_type, s.molfile_version
       , #{columns}
       from (
         select
@@ -326,7 +326,7 @@ module ReportHelpers
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_r
-      , res.residue_type
+      , res.residue_type, s.molfile_version
       -- , r_s.type as "type"
       -- , r_s.position
       , #{columns}

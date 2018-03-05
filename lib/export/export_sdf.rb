@@ -38,6 +38,9 @@ module Export
       if sample['shared_sync'] == 'f' || sample['shared_sync'] == false
         data = validate_molfile(sample['molfile'])
         return nil unless data.presence
+        if sample['molfile_version'] =~ /^(V2000).*T9/
+          data = Chemotion::OpenBabelService.mofile_clear_coord_bonds(data, $1)
+        end
         data += "\n"
 
         @headers.each do |column|
