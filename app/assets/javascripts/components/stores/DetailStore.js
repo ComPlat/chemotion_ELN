@@ -24,18 +24,15 @@ class DetailStore {
   }
 
   handleSelect(index) {
-    this.resetCurrentElement(index, this.selecteds)
+    this.resetCurrentElement(index, this.selecteds);
   }
 
-  handleClose({deleteEl, force}) {
-    let isDeletable = this.isDeletable(deleteEl)
+  handleClose({ deleteEl, force }) {
     // Currently ignore report "isPendingToSave"
-    if (deleteEl.type === "report") isDeletable = true
-
-    if(force || isDeletable) {
-      this.deleteCurrentElement(deleteEl)
+    if (force || deleteEl.type === 'report' || this.isDeletable(deleteEl)) {
+      this.deleteCurrentElement(deleteEl);
     } else {
-      this.setState({ deletingElement: deleteEl })
+      this.setState({ deletingElement: deleteEl });
     }
   }
 
@@ -120,21 +117,17 @@ class DetailStore {
   }
 
   deleteElement(deleteEl) {
-    const selecteds = this.selecteds
-
-    return selecteds.map( s => {
-      const isSame = SameEleTypId(s, deleteEl)
-      return isSame ? null : s
-    }).filter(r => r != null)
+    return this.selecteds.filter(el => !SameEleTypId(el, deleteEl));
   }
 
   elementIndex(selecteds, newSelected) {
-    let index = -1
-    selecteds.forEach( (s, i) => {
-      const isSame = SameEleTypId(s, newSelected)
-      if(isSame) { index = i }
-    })
-    return index
+    let index = -1;
+    if (newSelected) {
+      selecteds.forEach((s, i) => {
+        if (SameEleTypId(s, newSelected)) { index = i; }
+      });
+    }
+    return index;
   }
 
   resetCurrentElement(newKey, newSelecteds) {

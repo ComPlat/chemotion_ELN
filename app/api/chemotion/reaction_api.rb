@@ -79,10 +79,11 @@ module ReactionHelpers
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
 
-              if ra = (sample.residues_attributes || sample.residues)
-                subsample.residues_attributes =
-                  ra.uniq || ra.each do |i| i.delete :id end
-              end
+
+              # if ra = (sample.residues_attributes || sample.residues)
+              #   subsample.residues_attributes =
+              #     ra.uniq || ra.each do |i| i.delete :id end
+              # end
 
               subsample.collections << collections.where.not(id: first_collection_id)
 
@@ -234,7 +235,7 @@ module Chemotion
             reactions.flat_map(&:samples).map(&:destroy)
           end
 
-          reactions.destroy_all
+          reactions.presence&.destroy_all || { ui_state: [] }
         end
       end
 

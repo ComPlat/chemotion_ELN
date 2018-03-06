@@ -436,15 +436,16 @@ class ElementStore {
   }
 
   closeElementWhenDeleted(ui_state) {
-    let currentElement = this.state.currentElement;
+    const currentElement = this.state.currentElement;
     if (currentElement) {
-      let type_state = ui_state[currentElement.type]
-      let checked = type_state.checkedIds.indexOf(currentElement.id) > -1
-      let checked_all_and_not_unchecked = type_state.checkedAll &&
-        type_state.uncheckedIds.indexOf(currentElement.id) == -1
+      const type_state = ui_state[currentElement.type];
+      const checked = type_state.checkedIds.indexOf(currentElement.id) > -1;
+      const checked_all_and_not_unchecked = type_state.checkedAll &&
+        type_state.uncheckedIds.indexOf(currentElement.id) === -1;
 
       if (checked_all_and_not_unchecked || checked) {
         this.state.currentElement = null;
+        // this.navigateToNewElement(); // TODO: should instead reset DetailStore.selected
       }
     }
   }
@@ -453,14 +454,25 @@ class ElementStore {
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    ElementActions.deleteSamplesByUIState(ui_state);
-    ElementActions.deleteReactionsByUIState({
-      ui_state,
-      options
-    });
-    ElementActions.deleteWellplatesByUIState(ui_state);
-    ElementActions.deleteScreensByUIState(ui_state);
-    ElementActions.deleteResearchPlansByUIState(ui_state);
+    const { sample, reaction, wellplate, screen, research_plan } = ui_state;
+    if (sample.checkedAll || sample.checkedIds.size !== 0) {
+      ElementActions.deleteSamplesByUIState(ui_state);
+    }
+    if (reaction.checkedAll || reaction.checkedIds.size !== 0) {
+      ElementActions.deleteReactionsByUIState({
+        ui_state,
+        options
+      });
+    }
+    if (wellplate.checkedAll || wellplate.checkedIds.size !== 0) {
+      ElementActions.deleteWellplatesByUIState(ui_state);
+    }
+    if (screen.checkedAll || screen.checkedIds.size !== 0) {
+      ElementActions.deleteScreensByUIState(ui_state);
+    }
+    if (research_plan.checkedAll || research_plan.checkedIds.size !== 0) {
+      ElementActions.deleteResearchPlansByUIState(ui_state);
+    }
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
@@ -810,14 +822,19 @@ class ElementStore {
 
   // -- Generic --
 
-  navigateToNewElement(element) {
+  navigateToNewElement(element = {}) {
     this.waitFor(UIStore.dispatchToken);
     const { type, id } = element;
     const { uri, namedParams } = Aviator.getCurrentRequest();
     const uriArray = uri.split(/\//);
+    if (!type) {
+      Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}`, { silent: true });
+      return null;
+    }
     namedParams[`${type}ID`] = id;
     Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
     elementShowOrNew({ type, params: namedParams });
+    return null;
   }
 
   handleGenerateEmptyElement(element) {

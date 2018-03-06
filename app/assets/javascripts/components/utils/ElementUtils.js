@@ -4,11 +4,10 @@ import Delta from 'quill-delta';
 import UIStore from '../stores/UIStore';
 
 const SameEleTypId = (orig, next) => {
-  let same = false;
   if (orig && next && orig.type === next.type && orig.id === next.id) {
-    same = true;
+    return true;
   }
-  return same;
+  return false;
 };
 
 const UrlSilentNavigation = (element) => {

@@ -71,6 +71,7 @@ export default class Sample extends Element {
     if (this.contains_residues) {
       if (keepResidueInfo) {
         // only reset loading
+        console.log(this.residues);
         this.residues.map((residue) => {
           Object.assign(residue.custom_info, {
             external_loading: 0.0,
@@ -111,17 +112,14 @@ export default class Sample extends Element {
   }
 
   static buildNewShortLabel() {
-    let {currentUser} = UserStore.getState();
-    if(!currentUser) {
-      return 'NEW SAMPLE';
-    } else {
-      return `${currentUser.initials}-${currentUser.samples_count + 1}`;
-    }
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return 'NEW SAMPLE'; }
+    return `${currentUser.initials}-${currentUser.samples_count + 1}`;
   }
 
   static buildEmpty(collection_id) {
-    let sample = new Sample({
-      collection_id: collection_id,
+    const sample = new Sample({
+      collection_id,
       type: 'sample',
       external_label: '',
       target_amount_value: 0,
@@ -168,14 +166,20 @@ export default class Sample extends Element {
   }
 
   static buildNew(sample, collection_id, matGroup = null) {
-    const newSample = Sample.buildEmpty(collection_id)
-    const fixedLabel = (matGroup === 'reactants' || matGroup === 'solvents') && matGroup
-    newSample.molecule = sample.molecule === undefined ? sample : sample.molecule
-    if (fixedLabel) { newSample.short_label = fixedLabel.slice(0, -1); }
-    if (sample instanceof Sample) { newSample.split_label = sample.buildSplitShortLabel(); }
-    newSample.sample_svg_file = sample.sample_svg_file;
+    const newSample = Sample.buildEmpty(collection_id);
+
+    if (matGroup === 'reactants' || matGroup === 'solvents') {
+      newSample.short_label = matGroup.slice(0, -1);
+    }
+    if (sample instanceof Sample) {
+      newSample.molecule = sample.molecule;
+      newSample.sample_svg_file = sample.sample_svg_file;
+    } else {
+      newSample.molecule = sample;
+    }
     newSample.residues = sample.residues || [];
     newSample.contains_residues = sample.contains_residues;
+    newSample.filterResidueData(true);
     newSample.density = sample.density;
     newSample.molfile = sample.molfile || '';
     return newSample;
@@ -195,23 +199,20 @@ export default class Sample extends Element {
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
-    if (this.name) splitSample.name = this.name
-    if (this.external_label) splitSample.external_label = this.external_label
-    if (this.elemental_compositions)
-      splitSample.elemental_compositions = this.elemental_compositions
-
+    if (this.name) { splitSample.name = this.name; }
+    if (this.external_label) { splitSample.external_label = this.external_label; }
+    if (this.elemental_compositions) {
+      splitSample.elemental_compositions = this.elemental_compositions;
+    }
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.target_amount_value = 0;
     splitSample.real_amount_value = null;
     splitSample.is_split = true;
     splitSample.is_new = true;
-
     splitSample.split_label = splitSample.buildSplitShortLabel();
-
-    //Todo ???
+    // Todo ???
     splitSample.container = Container.init();
-
     return splitSample;
   }
 
@@ -269,7 +270,6 @@ export default class Sample extends Element {
 
   set contains_residues(value) {
     this._contains_residues = value;
-
     if(value) {
       if(!this.residues.length) {
 
@@ -283,7 +283,7 @@ export default class Sample extends Element {
           item._destroy = true;
       });
     } else {
-      this.sample_svg_file = '';
+      // this.sample_svg_file = '';
       if(this.residues.length)
         this.residues[0]._destroy = true; // delete residue info
 

@@ -36,11 +36,11 @@ export default class ReactionDetailsScheme extends Component {
     this.setState({ reaction: nextReaction });
   }
 
-  dropSample(srcSample, tagMaterial, tagGroup, extLabel) {
+  dropSample(srcSample, tagMaterial, tagGroup, extLabel, isNewSample = false) {
     const { reaction } = this.state;
     let splitSample;
 
-    if (srcSample instanceof Molecule || tagGroup === 'products') {
+    if (srcSample instanceof Molecule || isNewSample) {
       // Create new Sample with counter
       splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
     } else if (srcSample instanceof Sample) {

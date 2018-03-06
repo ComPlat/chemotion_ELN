@@ -12,13 +12,21 @@ const target = {
     const srcItem = monitor.getItem();
     const srcType = monitor.getItemType();
 
-    if (srcType === 'sample') {
+    if (srcType === DragDropItemTypes.SAMPLE) {
       dropSample(
         srcItem.element,
         tagProps.material,
         tagProps.materialGroup,
       );
-    } else if (srcType === 'material') {
+    } else if (srcType === DragDropItemTypes.MOLECULE) {
+      dropSample(
+        srcItem.element,
+        tagProps.material,
+        tagProps.materialGroup,
+        null,
+        true,
+      );
+    } else if (srcType === DragDropItemTypes.MATERIAL) {
       dropMaterial(
         srcItem.material,
         srcItem.materialGroup,
@@ -29,7 +37,9 @@ const target = {
   },
   canDrop(tagProps, monitor) {
     const srcType = monitor.getItemType();
-    const isCorrectType = srcType === 'material' || srcType === 'sample';
+    const isCorrectType = srcType === DragDropItemTypes.MATERIAL
+      || srcType === DragDropItemTypes.SAMPLE
+      || srcType === DragDropItemTypes.MOLECULE;
     const noMaterial = tagProps.materials.length === 0;
     return noMaterial && isCorrectType;
   },
@@ -78,7 +88,7 @@ class MaterialGroupContainer extends Component {
 }
 
 export default DropTarget(
-  [DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL],
+  [DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE, DragDropItemTypes.MATERIAL],
   target,
   collect,
 )(MaterialGroupContainer);
