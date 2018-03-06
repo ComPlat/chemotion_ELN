@@ -148,7 +148,7 @@ module Chemotion
         end
 
         delete do
-          Screen.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
+          Screen.for_user(current_user.id).for_ui_state(params[:ui_state]).presence&.destroy_all || { ui_state: [] }
         end
       end
 

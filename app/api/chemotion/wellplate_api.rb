@@ -37,7 +37,8 @@ module Chemotion
         end
 
         delete do
-          Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
+          Wellplate.for_user(current_user.id).for_ui_state(params[:ui_state])
+            .presence&.destroy_all || { ui_state: [] }
         end
 
         desc "Get Wellplates by UI state"

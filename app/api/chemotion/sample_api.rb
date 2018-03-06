@@ -50,15 +50,14 @@ module Chemotion
         end
 
         delete do
-          samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
-          samples.map{|sample|
+          Sample.for_user(current_user.id).for_ui_state(params[:ui_state]).map { |sample|
             # DevicesSample.find_by(sample_id: sample.id).destroy
             # sample.devices_analyses.map{|d|
             #   d.analyses_experiments.destroy_all
             #   d.destroy
             # }
             sample.destroy
-          }
+          }.presence || { ui_state: [] }
         end
       end
 
@@ -377,10 +376,15 @@ module Chemotion
         }
 
         # otherwise ActiveRecord::UnknownAttributeError appears
+        # TODO should be in params validation
         attributes[:elemental_compositions].each do |i|
           i.delete :description
           i.delete :id
         end if attributes[:elemental_compositions]
+
+        attributes[:residues].each do |i|
+          i.delete :id
+        end if attributes[:residues]
 
         # set nested attributes
         %i(molecule residues elemental_compositions).each do |prop|
