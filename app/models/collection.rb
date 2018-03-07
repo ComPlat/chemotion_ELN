@@ -101,10 +101,9 @@ class Collection < ActiveRecord::Base
   end
 
   def self.delete_set(user_id, deleted_ids)
-    Collection.where(
-      id: deleted_ids, user_id: user_id
-    ).each do |c|
-      c.destroy
-    end
+    (
+      Collection.where(id: deleted_ids, user_id: user_id) |
+      Collection.where(id: deleted_ids, shared_by_id: user_id)
+    ).each { |c| c.destroy }
   end
 end
