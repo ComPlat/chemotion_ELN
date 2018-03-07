@@ -14,23 +14,24 @@ module Chemotion
         post do
           smiles = params[:smiles]
           svg = params[:svg_file]
-          molfile = OpenBabelService.smiles_to_molfile smiles if smiles
-          return {} unless molfile
+          inchikey = OpenBabelService.smiles_to_inchikey(smiles)
+          return {} unless inchikey
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
+
+          unless molecule
+            molfile = OpenBabelService.smiles_to_molfile smiles if smiles
+            return {} unless molfile
+            molecule = Molecule.find_or_create_by_molfile(molfile)
+          end
+          return unless molecule
 
           # write temporary SVG
-          processor = Ketcherails::SVGProcessor.new svg
-          svg = processor.centered_and_scaled_svg
-
-          digest = Digest::SHA256.hexdigest molfile
+          digest = Digest::SHA256.hexdigest molecule.inchikey
           digest = Digest::SHA256.hexdigest digest
           svg_file_name = "TMPFILE#{digest}.svg"
-          svg_file_path = "public/images/samples/#{svg_file_name}"
-
-          svg_file = File.new(svg_file_path, 'w+')
-          svg_file.write(svg)
-          svg_file.close
-
-          molecule = Molecule.find_or_create_by_molfile(molfile)
+          svg_file_path = File.join('public','images', 'samples', svg_file_name)
+          svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
+          FileUtils.cp(svg_file_src, svg_file_path)
 
           molecule.attributes.merge({ temp_svg: svg_file_name })
         end
