@@ -82,6 +82,13 @@ table.reaction-scheme-solvent {
   }
 }
 
+.solvents-select {
+  .Select-menu-outer {
+    z-index: 3;
+    width: 250%;
+  }
+}
+
 .reagents-select {
   .Select-control {
     height: 28px;
