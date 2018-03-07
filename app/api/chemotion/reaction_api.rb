@@ -68,8 +68,7 @@ module ReactionHelpers
               parent_sample = Sample.find(sample.parent_id)
 
               #TODO extract subsample method
-              first_collection_id = collections.first.id
-              subsample = parent_sample.create_subsample current_user, first_collection_id
+              subsample = parent_sample.create_subsample(current_user, collections, true)
 
               # Use 'reactant' or 'solvent' as short_label
               subsample.short_label = fixed_label if fixed_label
@@ -78,14 +77,6 @@ module ReactionHelpers
               subsample.target_amount_unit = sample.target_amount_unit
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
-
-
-              # if ra = (sample.residues_attributes || sample.residues)
-              #   subsample.residues_attributes =
-              #     ra.uniq || ra.each do |i| i.delete :id end
-              # end
-
-              subsample.collections << collections.where.not(id: first_collection_id)
 
               #add new data container
               #subsample.container = create_root_container

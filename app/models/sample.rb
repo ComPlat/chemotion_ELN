@@ -168,44 +168,37 @@ class Sample < ActiveRecord::Base
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_subsample user, collection_id, copy_ea = false
+  def create_subsample user, collection_ids, copy_ea = false
     subsample = self.dup
+    subsample.name = self.name if self.name.present?
+    subsample.external_label = self.external_label if self.external_label.present?
 
-    if self.name.to_s != ''
-      subsample.name = self.name
-    end
-    if self.external_label.to_s != ''
-      subsample.external_label = self.external_label
-    end
+    # Ex(p|t)ensive method to get a proper counter:
+    # take into consideration sample children that have been hard/soft deleted
+    children_count = self.children.with_deleted.count
+    last_child_label = self.children.with_deleted.order("created_at")
+                     .where('short_label LIKE ?', "#{self.short_label}-%").last&.short_label
+    last_child_counter = last_child_label &&
+      last_child_label.match(/^#{self.short_label}-(\d+)/) && $1.to_i || 0
 
-    children_count = self.children.count
-    subsample.short_label = self.short_label + "-" + (children_count + 1).to_s
+    counter = [last_child_counter, children_count].max
+    subsample.short_label = "#{self.short_label}-#{counter + 1}"
 
     subsample.parent = self
     subsample.created_by = user.id
-    subsample.residues_attributes = self.residues.to_a.map do |r|
-      result = r.attributes.to_h
-      result.delete 'id'
-      result.delete 'sample_id'
-      result
-    end
+    subsample.residues_attributes = self.residues.select(:custom_info, :residue_type).as_json
+    subsample.elemental_compositions_attributes = self.elemental_compositions.select(
+     :composition_type, :data, :loading).as_json if copy_ea
 
-    if copy_ea
-      subsample.elemental_compositions_attributes = self.elemental_compositions.map do |ea|
-        result = ea.attributes.to_h
-        result.delete 'id'
-        result.delete 'sample_id'
-        result
-      end
-    end
-
-    subsample.collections << Collection.find(collection_id)
+    # associate to arg collections and creator's All collection
+    collections = (
+      Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
+    )
+    subsample.collections << collections
 
     subsample.container = Container.create_root_container
 
-    subsample.save!
-
-    subsample
+    subsample.save! && subsample
   end
 
   def reaction_description
