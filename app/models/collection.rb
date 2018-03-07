@@ -38,7 +38,7 @@ class Collection < ActiveRecord::Base
   default_scope { ordered }
 
   def self.get_all_collection_for_user(user_id)
-    where(user_id: user_id, label: 'All', is_locked: true).first
+    find_by(user_id: user_id, label: 'All', is_locked: true)
   end
 
   def self.bulk_update(user_id, collection_attributes, deleted_ids)
