@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip,
-  Label } from 'react-bootstrap';
+import { Radio, FormControl, Button, InputGroup, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import { compose } from 'redux';
 import DragDropItemTypes from './DragDropItemTypes';
@@ -68,39 +67,48 @@ const matTagCollect = (connect, monitor) => ({
   canDrop: monitor.canDrop(),
 });
 
+const notApplicableInput = () => (
+  <td>
+    <FormControl
+      bsClass="bs-form--compact form-control"
+      bsSize="small"
+      style={{ textAlign: 'center' }}
+      type="text"
+      value="n/a"
+      disabled
+    />
+  </td>
+);
+
+const iupacNameTooltip = iupacName => <Tooltip id="iupac_name_tooltip">{iupacName}</Tooltip>;
+
+const refreshSvgTooltip = <Tooltip id="refresh_svg_tooltip">Refresh reaction diagram</Tooltip>;
+
+const AddtoDescToolTip = <Tooltip id="tp-spl-code">Add to description</Tooltip>;
+
+const solvConcentration = (material, solventVolume) => {
+  const concn = ((material.amount_l / solventVolume) * 100).toFixed(1);
+  if (isNaN(concn) || !isFinite(concn)) { return 'n.d.'; }
+  return `${concn}%`;
+};
+
 class Material extends Component {
   constructor(props) {
     super(props);
 
     this.createParagraph = this.createParagraph.bind(this);
+    this.handleAmountUnitChange = this.handleAmountUnitChange.bind(this);
   }
 
   handleMaterialClick(sample) {
-    let { reaction } = this.props;
+    const { reaction } = this.props;
     UrlSilentNavigation(sample);
     sample.updateChecksum();
-    ElementActions.showReactionMaterial({ sample: sample, reaction: reaction });
-  }
-
-  notApplicableInput() {
-    return (
-      <td>
-        <FormControl
-          bsClass='bs-form--compact form-control'
-          bsSize="small"
-          style={{ textAlign: 'center'}}
-          type="text"
-          value="n/a"
-          disabled={true}
-        />
-      </td>
-    )
+    ElementActions.showReactionMaterial({ sample, reaction });
   }
 
   materialVolume(material) {
-    if (material.contains_residues) {
-      return this.notApplicableInput();
-    }
+    if (material.contains_residues) { return notApplicableInput(); }
     const { density, molarity_value, molarity_unit, has_density, has_molarity } = material;
     const tooltip = has_density || has_molarity ?
       (
@@ -114,182 +122,150 @@ class Material extends Component {
       <td>
         <OverlayTrigger placement="top" overlay={tooltip}>
           <div>
-          <NumeralInputWithUnitsCompo
-            key={material.id}
-            value={material.amount_l}
-            unit='l'
-            metricPrefix='milli'
-            metricPrefixes = {['milli', 'none', 'micro']}
-            precision={3}
-            onChange={amount => this.handleAmountUnitChange(amount)}
-            bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
-          /></div></OverlayTrigger>
-
+            <NumeralInputWithUnitsCompo
+              key={material.id}
+              value={material.amount_l}
+              unit="l"
+              metricPrefix="milli"
+              metricPrefixes={['milli', 'none', 'micro']}
+              precision={3}
+              onChange={this.handleAmountUnitChange}
+              bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
+            />
+          </div>
+        </OverlayTrigger>
       </td>
-    )
+    );
   }
 
 
   materialLoading(material, showLoadingColumn) {
-    if(!showLoadingColumn) {
+    if (!showLoadingColumn) {
       return false;
-    } else if (!material.contains_residues)
-      return this.notApplicableInput();
-    else {
-      let disabled = this.props.materialGroup == 'products';
-      return(
-        <td>
-          <NumeralInputWithUnitsCompo
-            key={material.id}
-            value={material.loading}
-            unit='mmol/g'
-            metricPrefix='none'
-            metricPrefixes={['none']}
-            bsStyle={material.error_loading ? 'error' : 'success'}
-            precision={3}
-            disabled={disabled}
-            onChange={(loading) => this.handleLoadingChange(loading)}
-          />
-        </td>
-      )
+    } else if (!material.contains_residues) {
+      return notApplicableInput();
     }
+    return (
+      <td>
+        <NumeralInputWithUnitsCompo
+          key={material.id}
+          value={material.loading}
+          unit="mmol/g"
+          metricPrefix="none"
+          metricPrefixes={['none']}
+          bsStyle={material.error_loading ? 'error' : 'success'}
+          precision={3}
+          disabled={this.props.materialGroup === 'products'}
+          onChange={loading => this.handleLoadingChange(loading)}
+        />
+      </td>
+    );
   }
 
   materialRef(material) {
     return (
-      this.props.materialGroup == 'products'
-      ? <td />
-      : <td>
+      this.props.materialGroup === 'products'
+        ? <td />
+        : <td>
           <Radio
             name="reference"
             checked={material.reference}
-            onChange={event => this.handleReferenceChange(event)}
+            onChange={e => this.handleReferenceChange(e)}
             bsSize="xsmall"
-            style={{margin: 0}}
+            style={{ margin: 0 }}
           />
         </td>
-    )
-  }
-
-  render() {
-    const { material, isDragging, canDrop, isOver } = this.props;
-
-    let style = { padding: "0" };
-    if (isDragging) {
-      style.opacity = 0.3;
-    }
-    if (canDrop) {
-      style.borderStyle = 'dashed';
-      style.borderWidth = 2;
-    }
-    if (isOver) {
-      style.borderColor = '#337ab7';
-      style.opacity = 0.6;
-      style.backgroundColor = '#337ab7';
-    }
-
-    if(this.props.materialGroup == 'products')
-      material.amountType = 'real';//always take real amount for product
-
-    return (
-      this.props.materialGroup !== 'solvents'
-        ? this.generalMaterial(this.props, style)
-        : this.solventMaterial(this.props, style)
-    )
+    );
   }
 
   equivalentOrYield(material) {
-    if(this.props.materialGroup == 'products') {
+    if (this.props.materialGroup === 'products') {
       return (
         <FormControl
           type="text"
           bsClass="bs-form--compact form-control"
           bsSize="small"
-          value={`${((material.equivalent || 0 ) * 100).toFixed(0)}%`}
-          disabled={true}
-        />
-      );
-    } else {
-      return (
-        <NumeralInputWithUnitsCompo
-          precision={4}
-          value={material.equivalent}
-          disabled={((material.reference || false) && material.equivalent) !== false}
-          onChange={(e) => this.handleEquivalentChange(e)}
+          value={`${((material.equivalent || 0) * 100).toFixed(0)}%`}
+          disabled
         />
       );
     }
+    return (
+      <NumeralInputWithUnitsCompo
+        precision={4}
+        value={material.equivalent}
+        disabled={((material.reference || false) && material.equivalent) !== false}
+        onChange={e => this.handleEquivalentChange(e)}
+      />
+    );
   }
 
   handleExternalLabelChange(event) {
-    let value = event.target.value;
-
-    if(this.props.onChange) {
-       let event = {
-         type: 'externalLabelChanged',
-         materialGroup: this.props.materialGroup,
-         sampleID: this.materialId(),
-         externalLabel: value
-       };
-       this.props.onChange(event);
+    const value = event.target.value;
+    if (this.props.onChange) {
+      const e = {
+        type: 'externalLabelChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        externalLabel: value
+      };
+      this.props.onChange(e);
     }
   }
 
   handleExternalLabelCompleted() {
-    if(this.props.onChange) {
-       let event = {
-         type: 'externalLabelCompleted'
-       };
-       this.props.onChange(event);
+    if (this.props.onChange) {
+      const event = {
+        type: 'externalLabelCompleted'
+      };
+      this.props.onChange(event);
     }
   }
 
-  handleReferenceChange(event) {
-    let value = event.target.value;
-
-    if(this.props.onChange) {
-       let event = {
-         type: 'referenceChanged',
-         materialGroup: this.props.materialGroup,
-         sampleID: this.materialId(),
-         value: value
-       };
-       this.props.onChange(event);
-    }
-  }
-
-  handleAmountTypeChange(amountType) {
-    if(this.props.onChange) {
-      let event = {
-        type: 'amountTypeChanged',
+  handleReferenceChange(e) {
+    const value = e.target.value;
+    if (this.props.onChange) {
+      const event = {
+        type: 'referenceChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        amountType: amountType
+        value
       };
       this.props.onChange(event);
     }
   }
 
   handleAmountChange(amount) {
-
-    if(this.props.onChange) {
-      let event = {
+    if (this.props.onChange) {
+      const event = {
         type: 'amountChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        amount: amount
+        amount
+      };
+      this.props.onChange(event);
+    }
+  }
+
+  handleAmountTypeChange(amountType) {
+    if (this.props.onChange) {
+      const event = {
+        type: 'amountTypeChanged',
+        materialGroup: this.props.materialGroup,
+        sampleID: this.materialId(),
+        amountType
       };
       this.props.onChange(event);
     }
   }
 
   handleAmountUnitChange(amount) {
-    if(this.props.onChange) {
-      let event = {
+    if (this.props.onChange) {
+      const event = {
         type: 'amountUnitChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        amount: amount
+        amount
       };
       this.props.onChange(event);
     }
@@ -299,8 +275,8 @@ class Material extends Component {
     this.props.material.residues[0].custom_info.loading = newLoading.value;
 
     // just recalculate value in mg using the new loading value
-    if(this.props.onChange) {
-      let event = {
+    if (this.props.onChange) {
+      const event = {
         type: 'amountChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
@@ -310,35 +286,14 @@ class Material extends Component {
     }
   }
 
-  handleUnitChange(unit, nextUnit, value) {
-
-    if(this.props.onChange) {
-      let event = {
-        type: 'unitChanged',
-        materialGroup: this.props.materialGroup,
-        sampleID: this.materialId(),
-        unitChange: {
-          unit: unit,
-          nextUnit: nextUnit,
-          value: value
-        }
-      };
-      this.props.onChange(event);
-    }
-
-    //TODO: currently returns the convertedValue, but we should set it from outside
-    return value
-  }
-
   handleEquivalentChange(e) {
-    let equivalent = e.value;
-
-    if(this.props.onChange) {
-      let event = {
+    const equivalent = e.value;
+    if (this.props.onChange) {
+      const event = {
         type: 'equivalentChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        equivalent: equivalent
+        equivalent
       };
       this.props.onChange(event);
     }
@@ -366,19 +321,18 @@ class Material extends Component {
   }
 
   materialId() {
-    return this.material().id
+    return this.material().id;
   }
 
   material() {
-    return this.props.material
+    return this.props.material;
   }
 
   generalMaterial(props, style) {
     const { material, deleteMaterial, connectDragSource, connectDropTarget,
-            showLoadingColumn, reaction } = props;
-    const isTarget = material.amountType === 'target'
-    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default'
-
+      showLoadingColumn, reaction } = props;
+    const isTarget = material.amountType === 'target';
+    const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
     const mol = material.amount_mol;
     const concn = mol / reaction.solventVolume;
 
@@ -386,12 +340,12 @@ class Material extends Component {
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
           <td className="drag-source" style={style}>
-            <span className='text-info fa fa-arrows'></span>
+            <span className="text-info fa fa-arrows" />
           </td>,
-          {dropEffect: 'copy'}
+          { dropEffect: 'copy' }
         )}
 
-        <td style={{width: "25%", maxWidth: "50px"}}>
+        <td style={{ width: '25%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
 
@@ -405,11 +359,11 @@ class Material extends Component {
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_g}
-            unit='g'
-            metricPrefix='milli'
-            metricPrefixes = {['milli','none','micro']}
+            unit="g"
+            metricPrefix="milli"
+            metricPrefixes={['milli', 'none', 'micro']}
             precision={4}
-            onChange={(amount) => this.handleAmountUnitChange(amount)}
+            onChange={this.handleAmountUnitChange}
             bsStyle={material.error_mass ? 'error' : massBsStyle}
           />
         </td>
@@ -420,13 +374,13 @@ class Material extends Component {
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={material.amount_mol}
-            unit='mol'
-            metricPrefix='milli'
-            metricPrefixes = {['milli','none']}
+            unit="mol"
+            metricPrefix="milli"
+            metricPrefixes={['milli', 'none']}
             precision={4}
-            disabled={this.props.materialGroup == 'products'}
-            onChange={(amount) => this.handleAmountUnitChange(amount)}
-            bsStyle={ material.amount_unit === 'mol' ? 'success' : 'default' }
+            disabled={this.props.materialGroup === 'products'}
+            onChange={this.handleAmountUnitChange}
+            bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
           />
         </td>
 
@@ -436,12 +390,12 @@ class Material extends Component {
           <NumeralInputWithUnitsCompo
             key={material.id}
             value={concn}
-            unit='mol/l'
-            metricPrefix='milli'
-            metricPrefixes = {['milli','none']}
+            unit="mol/l"
+            metricPrefix="milli"
+            metricPrefixes={['milli', 'none']}
             precision={4}
-            disabled={true}
-            onChange={(amount) => this.handleAmountUnitChange(amount)}
+            disabled
+            onChange={this.handleAmountUnitChange}
           />
         </td>
 
@@ -462,25 +416,26 @@ class Material extends Component {
   }
 
   toggleTarget(isTarget) {
-    if(this.props.materialGroup != 'products')
-      this.handleAmountTypeChange(!isTarget ? 'target' : 'real')
+    if (this.props.materialGroup !== 'products') {
+      this.handleAmountTypeChange(!isTarget ? 'target' : 'real');
+    }
   }
 
   solventMaterial(props, style) {
     const { material, deleteMaterial, connectDragSource,
       connectDropTarget } = props;
-    const isTarget = material.amountType === 'target'
+    const isTarget = material.amountType === 'target';
 
     return (
       <tr className="solvent-material">
         {compose(connectDragSource, connectDropTarget)(
-          <td className='drag-source' style={style}>
-            <span className='text-info fa fa-arrows'></span>
+          <td className="drag-source" style={style}>
+            <span className="text-info fa fa-arrows" />
           </td>,
-          {dropEffect: 'copy'}
+          { dropEffect: 'copy' }
         )}
 
-        <td style={{width: "25%", maxWidth: "50px"}}>
+        <td style={{ width: '25%', maxWidth: '50px' }}>
           {this.materialNameWithIupac(material)}
         </td>
         <td>
@@ -495,16 +450,15 @@ class Material extends Component {
               bsSize="small"
               value={material.external_label}
               placeholder={material.molecule.iupac_name}
-              onChange={event => this.handleExternalLabelChange(event)} />
+              onChange={event => this.handleExternalLabelChange(event)}
+            />
             <InputGroup.Button>
-              <OverlayTrigger placement="bottom" overlay={this.refreshSvgTooltip()}>
+              <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
                 <Button
                   active
-                  onClick={e => this.handleExternalLabelCompleted()}
+                  onClick={e => this.handleExternalLabelCompleted(e)}
                   bsSize="small"
-                >
-                  <i className="fa fa-refresh"></i>
-                </Button>
+                ><i className="fa fa-refresh" /></Button>
               </OverlayTrigger>
             </InputGroup.Button>
           </InputGroup>
@@ -517,8 +471,8 @@ class Material extends Component {
             type="text"
             bsClass="bs-form--compact form-control"
             bsSize="small"
-            value={this.solvConcentration(material, props.reaction.solventVolume)}
-            disabled={true}
+            value={solvConcentration(material, props.reaction.solventVolume)}
+            disabled
           />
         </td>
 
@@ -526,86 +480,88 @@ class Material extends Component {
           <Button
             bsStyle="danger"
             bsSize="small"
-            onClick={() => deleteMaterial(material)} >
-            <i className="fa fa-trash-o"></i>
-          </Button>
+            onClick={() => deleteMaterial(material)}
+          ><i className="fa fa-trash-o" /></Button>
         </td>
       </tr>
-    )
+    );
   }
 
-  switchTargetReal(isTarget, style={padding: "5px 4px"}) {
+  switchTargetReal(isTarget, style = { padding: '5px 4px' }) {
     return (
-      <Button active
-              style= {style}
-              onClick={() => this.toggleTarget(isTarget)}
-              bsStyle={isTarget ? 'success' : 'primary'}
-              bsSize='small'
-              >
-        {isTarget ? 't' : 'r'}
-      </Button>
-    )
+      <Button
+        active
+        style={style}
+        onClick={() => this.toggleTarget(isTarget)}
+        bsStyle={isTarget ? 'success' : 'primary'}
+        bsSize="small"
+      >{isTarget ? 't' : 'r'}</Button>
+    );
   }
 
   materialNameWithIupac(material) {
     const { index, materialGroup } = this.props;
     // Skip shortLabel for reactants and solvents
-    let skipIupacName = materialGroup == 'reactants' ||
-                        materialGroup == 'solvents'
-    let materialName = ""
-    let moleculeIupacName = ""
-    let iupacStyle = {
-      display: "block", whiteSpace: "nowrap", overflow: "hidden",
-      textOverflow: "ellipsis", maxWidth: "100%"
-    }
+    const skipIupacName = materialGroup === 'reactants' || materialGroup === 'solvents';
+    let materialName = '';
+    let moleculeIupacName = '';
+    const iupacStyle = {
+      display: 'block',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '100%'
+    };
 
-    var idCheck = /^\d+$/
+    const idCheck = /^\d+$/;
 
     if (skipIupacName) {
-      let materialDisplayName = material.molecule_iupac_name || material.name
-      if(materialGroup == 'solvents') {
-        materialDisplayName = material.external_label || materialDisplayName
+      let materialDisplayName = material.molecule_iupac_name || material.name;
+      if (materialGroup === 'solvents') {
+        materialDisplayName = material.external_label || materialDisplayName;
       }
-      if (materialDisplayName == null || materialDisplayName == "") {
+      if (materialDisplayName === null || materialDisplayName === '') {
         materialDisplayName = (
           <span>
-            <SampleName sample={material}/>
+            <SampleName sample={material} />
           </span>
-        )
+        );
       }
 
       if (idCheck.test(material.id)) {
-        materialName =
-          <a onClick={() => this.handleMaterialClick(material)}
-             style={{cursor: 'pointer'}}>
-            {materialDisplayName}
-          </a>
+        materialName = (
+          <a
+            role="link"
+            tabIndex={0}
+            onClick={() => this.handleMaterialClick(material)}
+            style={{ cursor: 'pointer' }}
+          >{materialDisplayName}</a>
+        );
       } else {
-        materialName = <span>{materialDisplayName}</span>
+        materialName = <span>{materialDisplayName}</span>;
       }
     } else {
-      moleculeIupacName = material.molecule_iupac_name
-      let materialDisplayName = material.title() == ""
-                                ? <SampleName sample={material}/>
-                                : material.title()
+      moleculeIupacName = material.molecule_iupac_name;
+      const materialDisplayName = material.title() === ''
+        ? <SampleName sample={material} />
+        : material.title();
       materialName = (
-        <a onClick={() => this.handleMaterialClick(material)} style={{cursor: 'pointer'}}>
-          {materialDisplayName}
-        </a>
-      )
+        <a
+          role="link"
+          tabIndex={0}
+          onClick={() => this.handleMaterialClick(material)}
+          style={{ cursor: 'pointer' }}
+        >{materialDisplayName}</a>
+      );
 
-      if (material.isNew) materialName = materialDisplayName
+      if (material.isNew) { materialName = materialDisplayName; }
     }
-    let br = <br />
-    if (moleculeIupacName == "") {
-      iupacStyle = {display: "none"}
-      br = ""
+    let br = <br />;
+    if (moleculeIupacName === '') {
+      iupacStyle.display = 'none';
+      br = '';
     }
     const serialCode = SampleCode(index, materialGroup);
-
-    const tp = (
-      <Tooltip id="tp-spl-code">Add to description</Tooltip>
-    );
 
     const addToDesc = (e) => {
       e.stopPropagation();
@@ -613,10 +569,10 @@ class Material extends Component {
     };
 
     return (
-      <OverlayTrigger placement="bottom" overlay={this.iupacNameTooltip(material.molecule.iupac_name)}>
-        <div style={{display: "inline-block", maxWidth: "100%"}}>
+      <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material.molecule.iupac_name)} >
+        <div style={{ display: 'inline-block', maxWidth: '100%' }}>
           <div className="inline-inside">
-            <OverlayTrigger placement="top" overlay={tp}>
+            <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
               <Button bsStyle="primary" bsSize="xsmall" onClick={addToDesc}>
                 {serialCode}
               </Button>
@@ -628,29 +584,32 @@ class Material extends Component {
           </span>
         </div>
       </OverlayTrigger>
-    )
+    );
   }
 
-  solvConcentration(material, solventVolume) {
-    const concn = (material.amount_l / solventVolume * 100).toFixed(1);
-    const nanOrInfinity = isNaN(concn) || !isFinite(concn)
-    if (nanOrInfinity){
-      return 'n.d.';
-    } else {
-      return `${concn}%`;
+  render() {
+    const { material, isDragging, canDrop, isOver } = this.props;
+    const style = { padding: '0' };
+    if (isDragging) { style.opacity = 0.3; }
+    if (canDrop) {
+      style.borderStyle = 'dashed';
+      style.borderWidth = 2;
     }
-  }
+    if (isOver) {
+      style.borderColor = '#337ab7';
+      style.opacity = 0.6;
+      style.backgroundColor = '#337ab7';
+    }
 
-  refreshSvgTooltip() {
-    return(
-      <Tooltip id="refresh_svg_tooltip">Refresh reaction diagram</Tooltip>
-    )
-  }
+    if (this.props.materialGroup === 'products') {
+      material.amountType = 'real'; // always take real amount for product
+    }
 
-  iupacNameTooltip(iupacName) {
-    return(
-      <Tooltip id="iupac_name_tooltip">{iupacName}</Tooltip>
-    )
+    return (
+      this.props.materialGroup !== 'solvents'
+        ? this.generalMaterial(this.props, style)
+        : this.solventMaterial(this.props, style)
+    );
   }
 }
 
@@ -674,5 +633,8 @@ Material.propTypes = {
   deleteMaterial: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   showLoadingColumn: PropTypes.bool.isRequired,
-  index: PropTypes.number
+  index: PropTypes.number,
+  isDragging: PropTypes.bool,
+  canDrop: PropTypes.bool,
+  isOver: PropTypes.bool,
 };

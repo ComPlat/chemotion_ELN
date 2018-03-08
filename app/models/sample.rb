@@ -310,7 +310,8 @@ class Sample < ActiveRecord::Base
   end
 
   def preferred_label
-    self.external_label.present? ? self.external_label : self.molecule.iupac_name
+    self.external_label.presence || self.molecule_name_hash[:label].presence ||
+      self.molecule.iupac_name
   end
 
   def preferred_tag

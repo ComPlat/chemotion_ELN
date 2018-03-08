@@ -26,7 +26,7 @@ module Chemotion
           return unless molecule
 
           # write temporary SVG
-          digest = Digest::SHA256.hexdigest molecule.inchikey
+          digest = Digest::SHA256.hexdigest "#{molecule.inchikey}#{Time.now}"
           digest = Digest::SHA256.hexdigest digest
           svg_file_name = "TMPFILE#{digest}.svg"
           svg_file_path = File.join('public','images', 'samples', svg_file_name)
