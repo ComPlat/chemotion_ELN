@@ -84,7 +84,7 @@ class Import::ImportSdf
             sample = Sample.new(
               created_by: current_user_id,
               molfile: molfile,
-              molfile_version: babel_info[:molfile_version]
+              molfile_version: babel_info[:molfile_version],
               molecule_id: molecule.id
             )
             sample.collections << Collection.find(collection_id)
@@ -108,7 +108,7 @@ class Import::ImportSdf
               sample = Sample.new(
                 created_by: current_user_id,
                 molfile: molfile,
-                molfile_version: babel_info[:molfile_version]
+                molfile_version: babel_info[:molfile_version],
                 molecule_id: molecule.id
               )
               attribs.each do |attrib|
@@ -146,7 +146,7 @@ class Import::ImportSdf
         mf = molfiles[i]
         m = Molecule.find_or_create_by_molfile(mf, babel_info)
         process_molfile_opt_data(mf).merge(
-          inchikey: m.inchikey, svg: "molecules/#{m.molecule_svg_file}", name: m.iupac_name
+          inchikey: m.inchikey, svg: "molecules/#{m.molecule_svg_file}", name: m.iupac_name, molfile: mf
         )
       else
         { name: nil,inchikey: nil ,svg: "no_image_180.svg" }
