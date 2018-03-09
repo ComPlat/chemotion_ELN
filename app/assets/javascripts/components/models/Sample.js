@@ -635,7 +635,8 @@ export default class Sample extends Element {
   }
 
   get molecule_iupac_name() {
-    return this.molecule && this.molecule.iupac_name;
+    return this.molecule_name_hash && this.molecule_name_hash.label
+     || this.molecule && this.molecule.iupac_name;
   }
 
   set molecule_iupac_name(iupac_name) {
@@ -675,58 +676,53 @@ export default class Sample extends Element {
   }
 
   set molecule(molecule) {
-    this._molecule = new Molecule(molecule)
-    if(molecule.temp_svg) {
-      this.sample_svg_file = molecule.temp_svg;
-    }
+    this._molecule = new Molecule(molecule);
+    if (molecule.temp_svg) { this.sample_svg_file = molecule.temp_svg; }
   }
 
   get polymer_formula() {
-    return this.contains_residues
-            && this.residues[0].custom_info.formula.toString();
+    return this.contains_residues && this.residues[0].custom_info.formula.toString();
   }
 
   get concat_formula() {
     // TODO Workaround, need to check how can molecule is null
-    if (!this.molecule)
-      return '';
-
-    if(this.contains_residues)
+    if (!this.molecule) { return ''; }
+    if(this.contains_residues) {
       return (this.molecule.sum_formular || '') + this.polymer_formula;
-    else
-      return (this.molecule.sum_formular || '');
+    }
+    return (this.molecule.sum_formular || '');
   }
 
   get polymer_type() {
-    if (!this.contains_residues) return false;
-
-    let info = this.residues[0].custom_info;
-    let type = info.polymer_type ? info.polymer_type : info.surface_type
-    return type.toString();
+    if (this.contains_residues) {
+      const info = this.residues[0].custom_info;
+      return (info.polymer_type ? info.polymer_type : info.surface_type).toString();
+    }
+    return false;
   }
 
   get loading() {
-    if(!this.contains_residues)
-      return false;
-
-    return this.residues[0].custom_info.loading;
+    if(this.contains_residues) {
+      return this.residues[0].custom_info.loading;
+    }
+    return false;
   }
 
   set loading(loading) {
-    if(this.contains_residues)
-      this.residues[0].custom_info.loading = loading;
+    if(this.contains_residues) { this.residues[0].custom_info.loading = loading; }
   }
 
   get external_loading() {
-    if(!this.contains_residues)
-      return false;
-
-    return this.residues[0].custom_info.external_loading;
+    if(this.contains_residues) {
+      return this.residues[0].custom_info.external_loading;
+    }
+    return false;
   }
 
   set external_loading(loading) {
-    if(this.contains_residues)
+    if(this.contains_residues) {
       this.residues[0].custom_info.external_loading = loading;
+    }
   }
 
   get error_loading() {

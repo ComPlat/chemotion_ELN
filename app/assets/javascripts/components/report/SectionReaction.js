@@ -143,7 +143,7 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
               <tr>
                 <td colSpan="5">
                   <i className="fa fa-arrow-circle-right"></i>
-                  {sample.molecule.iupac_name}
+                  {sample.molecule_iupac_name}
                   ({sample.short_label})
                 </td>
               </tr>

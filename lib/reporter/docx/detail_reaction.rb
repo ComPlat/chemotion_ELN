@@ -254,7 +254,7 @@ module Reporter
         m = s.molecule
         sample_hash = {
           name: s.name,
-          iupac_name: m[:iupac_name],
+          iupac_name: s.molecule_name_hash[:label].presence || m[:iupac_name],
           short_label: s.short_label,
           formular: m[:sum_formular],
           mol_w: valid_digit(m[:molecular_weight], digit),
