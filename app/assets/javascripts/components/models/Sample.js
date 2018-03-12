@@ -71,7 +71,6 @@ export default class Sample extends Element {
     if (this.contains_residues) {
       if (keepResidueInfo) {
         // only reset loading
-        console.log(this.residues);
         this.residues.map((residue) => {
           Object.assign(residue.custom_info, {
             external_loading: 0.0,
@@ -417,7 +416,7 @@ export default class Sample extends Element {
   }
 
   setAmount(amount) {
-    if (amount.value && amount.unit) {
+    if (amount.unit && !isNaN(amount.value)) {
       this.amount_value = amount.value;
       this.amount_unit = amount.unit;
     }

@@ -90,7 +90,7 @@ module ReactionHelpers
             else
               attributes = sample.to_h
                 .except(:id, :is_new, :is_split, :reference, :equivalent, :position, :type, :molecule, :collection_id, :short_label)
-                .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
+                .merge(created_by: current_user.id)
 
               # update attributes[:name] for a copied reaction
               if reaction.name.include?("Copy") && attributes[:name].present?
@@ -101,7 +101,6 @@ module ReactionHelpers
 
               container_info = attributes[:container]
               attributes.delete(:container)
-
               new_sample = Sample.new(
                 attributes
               )
