@@ -462,10 +462,10 @@ private
   end
 
   def has_molarity
-    molarity_value > 0 && density == 0
+    molarity_value.present? && molarity_value > 0 && density.zero?
   end
 
   def has_density
-    density > 0 && molarity_value == 0
+    density.present? && density > 0 && (!molarity_value.present? || molarity_value.zero?)
   end
 end
