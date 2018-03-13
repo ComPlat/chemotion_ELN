@@ -114,6 +114,8 @@ class Import::ImportSdf
               attribs.each do |attrib|
                 sample[attrib] = row[attrib] if (row[attrib].is_a?(Numeric) || row[attrib] && !row[attrib].empty?)
               end
+              properties = process_molfile_opt_data(molfile)
+              sample.validate_stereo({ 'abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'] })
 
               sample.collections << Collection.find(collection_id)
               sample.collections << Collection.get_all_collection_for_user(current_user_id)
