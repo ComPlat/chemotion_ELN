@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180226130229) do
+ActiveRecord::Schema.define(version: 20180312095413) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -623,6 +623,7 @@ ActiveRecord::Schema.define(version: 20180226130229) do
     t.string   "molarity_unit",                  default: "M"
     t.integer  "molecule_name_id"
     t.string   "molfile_version",     limit: 20
+    t.jsonb    "stereo"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree

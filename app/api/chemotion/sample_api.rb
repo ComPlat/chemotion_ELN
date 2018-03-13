@@ -274,6 +274,7 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :stereo, type: Hash
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         #use :root_container_params
