@@ -31,7 +31,7 @@ const SampleName = ({ sample }) => {
   if (sample.stereo) {
     const stereoInfo = Object.keys(sample.stereo).reduce((acc, k) => {
       const val = sample.stereo[k];
-      if (val === 'any') return acc;
+      if (val === 'any' || !val) return acc;
 
       const linker = acc === '' ? '' : ', ';
       return `${acc}${linker}${k}: ${val}`;
