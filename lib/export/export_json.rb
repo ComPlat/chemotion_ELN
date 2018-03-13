@@ -9,12 +9,7 @@ module Export
       @reaction_ids = args[:reaction_ids]
       s_ids = []
       if @reaction_ids.is_a?(Array)
-        [
-          ReactionsSolventSample, ReactionsProductSample,
-          ReactionsReactantSample,  ReactionsStartingMaterialSample
-        ].each do |material|
-          s_ids += material.where(reaction_id: reaction_ids).pluck(:sample_id)
-        end
+        s_ids += ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
         s_ids.compact!
       end
       unless s_ids.empty?
@@ -148,7 +143,7 @@ module Export
         , s.purity, s.solvent, s.impurities, s.location, s.is_top_secret
         , s.external_label, s.short_label
         , s.imported_readout, s.sample_svg_file, s.identifier
-        , s.density, s.melting_point, s.boiling_point
+        , s.density, s.melting_point, s.boiling_point, s.stereo
         , m.inchikey, m.molecule_svg_file
         , cl.id as uuid
         , cl_r.id as r_uuid

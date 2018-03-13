@@ -8,6 +8,10 @@ class Sample < ActiveRecord::Base
   include UnitConvertable
   include Taggable
 
+  STEREO_ABS = ['any', 'rac' , '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)']
+  STEREO_REL = ['any', 'syn', 'anti']
+  STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }
+
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
     :molecule_iupac_name, :molecule_inchistring, :molecule_cano_smiles
@@ -207,6 +211,14 @@ class Sample < ActiveRecord::Base
 
   def auto_set_molfile_to_molecules_molfile
     self.molfile = self.molfile.presence || molecule&.molfile
+  end
+
+  def validate_stereo(_stereo = {})
+    self.stereo ||= Sample::STEREO_DEF
+    self.stereo.merge!(_stereo.slice('abs','rel'))
+    self.stereo['abs'] = 'any' unless Sample::STEREO_ABS.include?(self.stereo['abs'])
+    self.stereo['rel'] = 'any' unless Sample::STEREO_REL.include?(self.stereo['rel'])
+    self.stereo
   end
 
   def find_or_create_molecule_based_on_inchikey

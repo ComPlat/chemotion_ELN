@@ -274,7 +274,10 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
-        optional :stereo, type: Hash
+        optional :stereo, type: Hash do
+          optional :abs, type: String, values: Sample::STEREO_ABS, default: Sample::STEREO_DEF['abs']
+          optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
+        end
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         #use :root_container_params
@@ -344,6 +347,10 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :stereo, type: Hash do
+          optional :abs, type: String, values: Sample::STEREO_ABS, default: Sample::STEREO_DEF['abs']
+          optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
+        end
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
       end
@@ -373,6 +380,7 @@ module Chemotion
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
           xref: params[:xref],
+          stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id]
         }
 

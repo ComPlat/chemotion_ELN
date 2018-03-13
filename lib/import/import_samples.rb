@@ -53,13 +53,13 @@ class Import::ImportSamples
     @sheet = xlsx.sheet(0)
     @header = sheet.row(1)
     @mandatory_check = {}
-    ["molfile", "smiles", "cano_smiles"].each do |check|
+    ["molfile", "smiles", "cano_smiles", "canonical smiles"].each do |check|
       if header.find { |e| /^\s*#{check}?/i =~ e } != nil
         @mandatory_check[check] = true
       end
     end
-    if mandatory_check.length == 0
-      raise "Column headers should have: molfile, or Smiles (or cano_smiles)"
+    if mandatory_check.length.zero?
+      raise "Column headers should have: molfile, or Smiles (or cano_smiles, canonical smiles)"
     end
   end
 
@@ -114,8 +114,8 @@ class Import::ImportSamples
   end
 
   def has_smiles(row)
-    header = mandatory_check["smiles"] || mandatory_check["cano_smiles"]
-    cell = row["smiles"].to_s.present? || row["cano_smiles"].to_s.present?
+    header = mandatory_check["smiles"] || mandatory_check["cano_smiles"] || mandatory_check["canonical smiles"]
+    cell = row["smiles"].to_s.present? || row["cano_smiles"].to_s.present? || row["canonical smiles"].to_s.present?
     header && cell
   end
 
@@ -129,7 +129,7 @@ class Import::ImportSamples
       end
     end
     if molfile_smiles.blank? &&
-      (molfile_smiles != row["cano_smiles"] && molfile_smiles != row["smiles"])
+      (molfile_smiles != row["cano_smiles"] && molfile_smiles != row["smiles"] && molfile_smiles != row["canonical smiles"])
       @unprocessable << { row: row, index: i }
       go_to_next = true
     end
@@ -150,7 +150,9 @@ class Import::ImportSamples
   end
 
   def get_data_from_smiles(row)
-    smiles = mandatory_check["smiles"] ? row["smiles"] : Chemotion::OpenBabelService.canon_smiles_to_smiles(row["cano_smiles"])
+    smiles = (mandatory_check['smiles'] && row['smiles'].presence) ||
+      (mandatory_check['cano_smiles'] && row['cano_smiles'].presence) ||
+      (mandatory_check['canonical smiles'] && row['canonical smiles'].presence)
     inchikey = Chemotion::OpenBabelService.smiles_to_inchikey smiles
     ori_molf = Chemotion::OpenBabelService.smiles_to_molfile smiles
     babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(ori_molf)
@@ -179,10 +181,15 @@ class Import::ImportSamples
     sample.molfile = molfile
     sample.molecule = molecule
     # Populate new sample
+    stereo = {}
     header.each_with_index do |field, index|
+      if field.to_s.strip =~ /^(stereo_(abs|rel))$/
+        stereo[$1] = row[field]
+      end
       next unless included_fields.include?(field)
       sample[field] = row[field]
     end
+    sample.validate_stereo(stereo)
     sample.collections << Collection.find(collection_id)
     sample.collections << Collection.get_all_collection_for_user(current_user_id)
     sample.save!
