@@ -206,7 +206,8 @@ module ReportHelpers
     <<~SQL
       select
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
-      , res.residue_type, s.molfile_version, s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
+      , res.residue_type, s.molfile_version
+      , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
       from (
         select
@@ -272,6 +273,7 @@ module ReportHelpers
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_wp
       , res.residue_type, s.molfile_version
+      , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       , #{columns}
       from (
         select
@@ -327,6 +329,7 @@ module ReportHelpers
       s_id, ts, co_id, scu_id, shared_sync, pl, dl_s
       , dl_r
       , res.residue_type, s.molfile_version
+      , s.stereo->>'abs' as "stereo_abs", s.stereo->>'rel' as "stereo_rel"
       -- , r_s.type as "type"
       -- , r_s.position
       , #{columns}
