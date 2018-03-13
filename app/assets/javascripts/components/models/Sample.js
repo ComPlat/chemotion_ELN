@@ -116,6 +116,10 @@ export default class Sample extends Element {
     return `${currentUser.initials}-${currentUser.samples_count + 1}`;
   }
 
+  static defaultStereo() {
+    return { abs: 'any', rel: 'any' };
+  }
+
   static buildEmpty(collection_id) {
     const sample = new Sample({
       collection_id,
@@ -141,6 +145,7 @@ export default class Sample extends Element {
       attached_amount_mg: '', // field for polymers calculations
       container: Container.init(),
       can_update: true,
+      stereo: Sample.defaultStereo()
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -164,8 +169,8 @@ export default class Sample extends Element {
     return sample;
   }
 
-  static buildNew(sample, collection_id, matGroup = null) {
-    const newSample = Sample.buildEmpty(collection_id);
+  static buildNew(sample, collectionId, matGroup = null) {
+    const newSample = Sample.buildEmpty(collectionId);
 
     if (matGroup === 'reactants' || matGroup === 'solvents') {
       newSample.short_label = matGroup.slice(0, -1);
@@ -175,6 +180,10 @@ export default class Sample extends Element {
       newSample.sample_svg_file = sample.sample_svg_file;
     } else {
       newSample.molecule = sample;
+    }
+    if (sample.stereo) {
+      const { abs, rel } = sample.stereo;
+      newSample.stereo = { abs, rel };
     }
     newSample.residues = sample.residues || [];
     newSample.contains_residues = sample.contains_residues;
