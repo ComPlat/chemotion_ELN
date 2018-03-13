@@ -31,9 +31,9 @@ module Chemotion
           svg_file_name = "TMPFILE#{digest}.svg"
           svg_file_path = File.join('public','images', 'samples', svg_file_name)
           svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
-          FileUtils.cp(svg_file_src, svg_file_path)
+          FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
 
-          molecule.attributes.merge({ temp_svg: svg_file_name })
+          molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name })
         end
       end
 

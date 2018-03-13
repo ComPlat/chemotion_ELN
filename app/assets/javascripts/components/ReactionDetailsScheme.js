@@ -239,8 +239,8 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionForLoadingChange(changeEvent) {
-    let {sampleID, amountType} = changeEvent;
-    let updatedSample = this.props.reaction.sampleById(sampleID);
+    const { sampleID, amountType } = changeEvent;
+    const updatedSample = this.props.reaction.sampleById(sampleID);
 
     updatedSample.amountType = amountType;
 
@@ -248,7 +248,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionForAmountTypeChange(changeEvent) {
-    let {sampleID, amountType} = changeEvent;
+    let { sampleID, amountType } = changeEvent;
     let updatedSample = this.props.reaction.sampleById(sampleID);
 
     updatedSample.amountType = amountType;
@@ -342,7 +342,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   checkMassPolymer(referenceM, updatedS, massAnalyses) {
-    let equivalent = this.calculateEquivalent(referenceM, updatedS);
+    const equivalent = this.calculateEquivalent(referenceM, updatedS);
     updatedS.equivalent = equivalent;
     let fconv_loading = referenceM.amount_mol / updatedS.amount_g * 1000.0;
     updatedS.residues[0].custom_info['loading_full_conv'] = fconv_loading;
@@ -358,22 +358,21 @@ export default class ReactionDetailsScheme extends Component {
       newAmountMol = referenceM.amount_mol;
     }
 
-    let newLoading;
     newAmountMol = referenceM.amount_mol * equivalent;
-    newLoading = newAmountMol / updatedS.amount_g * 1000.0;
+    const newLoading = (newAmountMol / updatedS.amount_g) * 1000.0;
 
     updatedS.residues[0].custom_info.loading = newLoading;
   }
 
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
-    const {referenceMaterial} = this.props.reaction;
+    const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
-      if (sample.id == updatedSample.id) {
-        if(referenceMaterial) {
-          if(!updatedSample.reference && referenceMaterial.amount_value) {
-            if(materialGroup == 'products') {
-              let massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
-              if(updatedSample.contains_residues) {
+      if (referenceMaterial) {
+        if (sample.id === updatedSample.id) {
+          if (!updatedSample.reference && referenceMaterial.amount_value) {
+            if (materialGroup === 'products') {
+              const massAnalyses = this.checkMassMolecule(referenceMaterial, updatedSample);
+              if (updatedSample.contains_residues) {
                 this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
                 return sample;
               }
@@ -382,16 +381,15 @@ export default class ReactionDetailsScheme extends Component {
           } else {
             sample.equivalent = 1.0;
           }
+        } else {
+          // calculate equivalent, don't touch real amount
+          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
         }
-      } else {
-        // calculate equivalent, don't touch real amount
-        sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
-      }
 
-      if(materialGroup == 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))){
-        sample.equivalent = 1.0;
+        if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
+          sample.equivalent = 1.0;
+        }
       }
-
       return sample;
     });
   }
@@ -419,9 +417,9 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedSamplesForExternalLabelChange(samples, updatedSample) {
-    const {referenceMaterial} = this.props.reaction;
+    const { referenceMaterial } = this.props.reaction;
     return samples.map((sample) => {
-      if (sample.id == updatedSample.id) {
+      if (sample.id === updatedSample.id) {
         sample.external_label = updatedSample.external_label;
       }
       return sample;
@@ -430,14 +428,13 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedSamplesForReferenceChange(samples, referenceMaterial) {
     return samples.map((sample) => {
-      if (sample.id == referenceMaterial.id) {
+      if (sample.id === referenceMaterial.id) {
         sample.equivalent = 1.0;
         sample.reference = true;
-      }
-      else {
-        if(sample.amount_value) {
-          let referenceAmount = referenceMaterial.amount_mol;
-          if(referenceMaterial && referenceAmount) {
+      } else {
+        if (sample.amount_value) {
+          const referenceAmount = referenceMaterial.amount_mol;
+          if (referenceMaterial && referenceAmount) {
             sample.equivalent = sample.amount_mol / referenceAmount;
           }
         }
@@ -448,7 +445,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   updatedReactionWithSample(updateFunction, updatedSample) {
-    const {reaction} = this.state;
+    const { reaction } = this.state;
     reaction.starting_materials = updateFunction(reaction.starting_materials, updatedSample, 'starting_materials');
     reaction.reactants = updateFunction(reaction.reactants, updatedSample, 'reactants');
     reaction.solvents = updateFunction(reaction.solvents, updatedSample, 'solvents');
@@ -459,15 +456,15 @@ export default class ReactionDetailsScheme extends Component {
   solventCollapseBtn() {
     const open = this.state.open;
     const arrow = open
-      ? <i className="fa fa-angle-double-up"/>
-      : <i className="fa fa-angle-double-down"/>;
+      ? <i className="fa fa-angle-double-up" />
+      : <i className="fa fa-angle-double-down" />;
     return (
       <ButtonGroup vertical block>
-        <Button bsSize="xsmall"
-                style={{ backgroundColor: '#ddd' }}
-                onClick={ () => this.setState({ open: !open }) }>
-          { arrow } &nbsp; Solvents
-        </Button>
+        <Button
+          bsSize="xsmall"
+          style={{ backgroundColor: '#ddd' }}
+          onClick={() => this.setState({ open: !open })}
+        >{arrow} &nbsp; Solvents</Button>
       </ButtonGroup>
     );
   }

@@ -428,7 +428,8 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 2,
                 'is_new' => true,
                 'is_split' => false,
-                'molecule' => { molfile: molfile_1 },
+                # 'molecule' => { molfile: molfile_1 },
+                'molfile' => molfile_1,
                 'container' => new_root_container
               ]
             }
@@ -508,7 +509,8 @@ describe Chemotion::ReactionAPI do
                 'equivalent' => 1,
                 'is_new' => true,
                 'is_split' => true,
-                'molecule' => { molfile: molfile_1 },
+                # 'molecule' => { molfile: molfile_1 },
+                'molfile' => molfile_1,
                 'container' => new_container
               ]
             }
@@ -521,7 +523,7 @@ describe Chemotion::ReactionAPI do
 
         let(:r) { Reaction.last }
 
-        it 'create products with name realted to teh reaction short_label' do
+        it 'create products with name realted to the reaction short_label' do
           product = r.products.first
           expect(product.name).to include(r.short_label)
         end

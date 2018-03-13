@@ -235,37 +235,38 @@ class Material extends Component {
     }
   }
 
-  handleAmountChange(amount) {
-    if (this.props.onChange) {
+  handleAmountChange(e) {
+    if (this.props.onChange && e) {
       const event = {
+        amount: e,
         type: 'amountChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        amount
       };
       this.props.onChange(event);
     }
   }
 
-  handleAmountTypeChange(amountType) {
-    if (this.props.onChange) {
+  handleAmountTypeChange(e) {
+    if (this.props.onChange && e) {
       const event = {
+        amountType: e,
         type: 'amountTypeChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        amountType
       };
       this.props.onChange(event);
     }
   }
 
-  handleAmountUnitChange(amount) {
-    if (this.props.onChange) {
+  handleAmountUnitChange(e) {
+    if (this.props.onChange && e) {
       const event = {
+        amount: e,
         type: 'amountUnitChanged',
         materialGroup: this.props.materialGroup,
         sampleID: this.materialId(),
-        amount
+
       };
       this.props.onChange(event);
     }

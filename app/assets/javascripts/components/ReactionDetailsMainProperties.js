@@ -9,7 +9,6 @@ import Reaction from './models/Reaction';
 
 import { statusOptions } from './staticDropdownOptions/options'
 
-import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import LineChartContainer from './lineChart/LineChartContainer'
 import EditableTable from './lineChart/EditableTable'
 
