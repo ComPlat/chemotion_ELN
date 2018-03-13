@@ -183,7 +183,7 @@ class Import::ImportSamples
     # Populate new sample
     stereo = {}
     header.each_with_index do |field, index|
-      if field.to_s.strip =~ /^(stereo_(abs|rel))$/
+      if field.to_s.strip =~ /^stereo_(abs|rel)$/
         stereo[$1] = row[field]
       end
       next unless included_fields.include?(field)
