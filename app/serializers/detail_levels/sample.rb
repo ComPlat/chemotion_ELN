@@ -8,7 +8,7 @@ class DetailLevels::Sample
       :children_count, :parent_id, :imported_readout, :_contains_residues,
       :sample_svg_file, :density, :boiling_point, :melting_point,
       :reaction_description, :container, :pubchem_tag, :xref, :code_log,
-      :can_update, :can_publish, :molecule_name_hash
+      :can_update, :can_publish, :molecule_name_hash, :stereo
     ]
   end
 

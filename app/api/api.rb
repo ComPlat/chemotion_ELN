@@ -126,11 +126,27 @@ class API < Grape::API
         name += 'part_' # group polymers to different array
         name += sample.residues[0].residue_type.to_s
       end
-      return name
+
+      stereo = get_stereo_name(sample)
+      name = "#{name} - #{stereo}" unless stereo.empty?
+      name
+    end
+
+    def get_stereo_name(sample)
+      return '' if sample.stereo.nil?
+
+      stereo = sample.stereo.keys.reduce('') { |acc, k|
+        val = sample.stereo[k]
+        next acc if val == 'any'
+        linker = acc.empty? ? '' : ', '
+        acc + "#{linker}#{k}: #{val}"
+      }
+
+      stereo
     end
 
     def to_molecule_array(hash_groups)
-      target = Array.new
+      target = []
       hash_groups.each do |key, value|
         target.push(moleculeName: key, samples: value)
       end

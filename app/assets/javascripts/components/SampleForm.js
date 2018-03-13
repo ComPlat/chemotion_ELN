@@ -16,6 +16,8 @@ export default class SampleForm extends React.Component {
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.updateMolName = this.updateMolName.bind(this);
+    this.updateStereoAbs = this.updateStereoAbs.bind(this);
+    this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.showStructureEditor = this.showStructureEditor.bind(this);
   }
@@ -87,6 +89,77 @@ export default class SampleForm extends React.Component {
     const { sample } = this.props;
     sample.molecule_name = e;
     this.props.parent.setState({ sample });
+  }
+
+  updateStereoAbs(e) {
+    const { sample } = this.props;
+    if (!sample.stereo) sample.stereo = {};
+    sample.stereo.abs = e.value;
+    this.props.parent.setState({ sample });
+  }
+
+  updateStereoRel(e) {
+    const { sample } = this.props;
+    if (!sample.stereo) sample.stereo = {};
+    sample.stereo.rel = e.value;
+    this.props.parent.setState({ sample });
+  }
+
+  stereoAbsInput() {
+    const { sample } = this.props;
+
+    const absOptions = [
+      { label: 'any', value: 'any' },
+      { label: 'rac', value: 'rac' },
+      { label: '(S)', value: '(S)' },
+      { label: '(R)', value: '(R)' },
+      { label: '(Sp)', value: '(Sp)' },
+      { label: '(Rp)', value: '(Rp)' },
+      { label: '(Sa)', value: '(Sa)' },
+      { label: '(Ra)', value: '(Ra)' },
+    ];
+
+    const value = sample.stereo ? sample.stereo.abs : 'any';
+
+    return (
+      <FormGroup style={{ width: '50%' }}>
+        <ControlLabel>Stereo Abs</ControlLabel>
+        <Select
+          name="stereoAbs"
+          clearable={false}
+          disabled={!sample.can_update}
+          options={absOptions}
+          onChange={this.updateStereoAbs}
+          value={value}
+        />
+      </FormGroup>
+    );
+  }
+
+  stereoRelInput() {
+    const { sample } = this.props;
+
+    const relOptions = [
+      { label: 'any', value: 'any' },
+      { label: 'syn', value: 'syn' },
+      { label: 'anti', value: 'anti' },
+    ];
+
+    const value = sample.stereo ? sample.stereo.rel : 'any';
+
+    return (
+      <FormGroup style={{ width: '50%' }}>
+        <ControlLabel>Stereo Rel</ControlLabel>
+        <Select
+          name="stereoRel"
+          clearable={false}
+          disabled={!sample.can_update}
+          options={relOptions}
+          onChange={this.updateStereoRel}
+          value={value}
+        />
+      </FormGroup>
+    );
   }
 
   moleculeInput() {
@@ -271,8 +344,10 @@ export default class SampleForm extends React.Component {
           <tr>
             <td colSpan="4">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '82%' }}>
+                <div style={{ width: '82%', display: 'flex' }}>
                   {this.moleculeInput()}
+                  {this.stereoAbsInput()}
+                  {this.stereoRelInput()}
                 </div>
                 <div style={{ width: '15%' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}

@@ -254,6 +254,7 @@ export default class Sample extends Element {
       imported_readout: this.imported_readout,
       container: this.container,
       xref: this.xref,
+      stereo: this.stereo,
     });
 
     return serialized;
