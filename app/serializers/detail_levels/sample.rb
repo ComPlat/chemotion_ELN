@@ -41,7 +41,7 @@ class DetailLevels::Sample
       :real_amount_unit, :purity, :solvent, :molarity_value, :molarity_unit,
       :children_count, :parent_id, :imported_readout, :location,
       :boiling_point, :melting_point, :reaction_description,
-      :can_update, :can_publish, :molecule_name_hash
+      :can_update, :can_publish, :molecule_name_hash, :code_log
     ]
   end
 

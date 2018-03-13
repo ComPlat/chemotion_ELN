@@ -31,6 +31,6 @@ class WellSerializer::Level10 < WellSerializer
   end
 
   def sample
-    "SampleSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(object.sample, @nested_dl).serializable_hash
+    "SampleListSerializer::Level#{@nested_dl[:sample] || 0}".constantize.new(object.sample, @nested_dl).serializable_hash
   end
 end
