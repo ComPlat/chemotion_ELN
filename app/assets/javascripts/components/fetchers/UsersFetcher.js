@@ -86,4 +86,17 @@ export default class UsersFetcher {
 
     return promise;
   }
+
+  static fetchNoVNCDevices() {
+    return fetch('/api/v1/devices/novnc', {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+    }).then(response => response.json())
+      .then(json => json.devices)
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }
