@@ -8,7 +8,7 @@ class Sample < ActiveRecord::Base
   include UnitConvertable
   include Taggable
 
-  STEREO_ABS = ['any', 'rac', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
+  STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para'].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
 
