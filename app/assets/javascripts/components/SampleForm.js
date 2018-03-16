@@ -111,6 +111,7 @@ export default class SampleForm extends React.Component {
     const absOptions = [
       { label: 'any', value: 'any' },
       { label: 'rac', value: 'rac' },
+      { label: 'meso', value: 'meso' },
       { label: '(S)', value: '(S)' },
       { label: '(R)', value: '(R)' },
       { label: '(Sp)', value: '(Sp)' },
