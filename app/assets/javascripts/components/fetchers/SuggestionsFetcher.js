@@ -1,19 +1,13 @@
 import 'whatwg-fetch';
 
 export default class SuggestionsFetcher {
-  static fetchSuggestionsForCurrentUser(endpoint, query, userId, collectionId,
+  static fetchSuggestionsForCurrentUser(elementType, query, collectId,
     isSync = false) {
-    let promise = fetch(endpoint + query + '.json?user_id=' + userId +
-      '&collection_id=' + collectionId + '&isSync=' + isSync,
-      { credentials: 'same-origin'})
-      .then(response => {
-        return response.json();
-      }).then(json => {
-        return json.suggestions;
-      }).catch(errorMessage => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return fetch(
+      `/api/v1/suggestions/${elementType}/${query}.json?collection_id=${collectId}&isSync=${isSync}`,
+      { credentials: 'same-origin' }
+    ).then(response => response.json())
+      .then(json => json.suggestions)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }
