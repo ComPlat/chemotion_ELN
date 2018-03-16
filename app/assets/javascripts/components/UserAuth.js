@@ -44,30 +44,24 @@ export default class UserAuth extends Component {
   }
 
   render() {
-    const style = {
-      marginRight: '5px'
-    };
-
-    let templatesLink;
-    if(this.state.currentUser.is_templates_moderator) {
-      templatesLink = (
-        <MenuItem eventKey="2" href="ketcher/common_templates">
-          Common Templates
-        </MenuItem>
-      );
-    }
+    const templatesLink = (
+      <MenuItem eventKey="2" href="ketcher/common_templates">Template Management</MenuItem>
+    );
 
     return (
       <Nav navbar pullRight>
         <NavDropdown title={`Logged in as ${this.state.currentUser.name}`} id="bg-nested-dropdown">
-          <MenuItem eventKey="1" href="pages/settings" >Account settings</MenuItem>
-          {templatesLink}
-          <MenuItem eventKey="2" href="users/edit" >Change Password</MenuItem>
-          <MenuItem eventKey="3" href="pages/affiliations" >My Affiliations</MenuItem>
-          <MenuItem eventKey="4" href="pages/profiles" >Change profiles</MenuItem>
-          <MenuItem eventKey="5" href="pages/groups" >My groups</MenuItem>
+          <MenuItem eventKey="1" href="pages/settings" >Account Settings</MenuItem>
+          {this.state.currentUser.is_templates_moderator ? templatesLink : null}
+          <MenuItem eventKey="3" href="users/edit" >Change Password</MenuItem>
+          <MenuItem eventKey="4" href="pages/profiles" >Change Profile</MenuItem>
+          <MenuItem eventKey="5" href="pages/affiliations" >My Affiliations</MenuItem>
+          <MenuItem eventKey="6" href="pages/groups" >My Groups</MenuItem>
+          {/* <MenuItem eventKey="7" href="command_n_control" >My Devices</MenuItem> */}
         </NavDropdown>
-        <NavItem onClick={() => this.logout()} style={style} className='' title='Log out'> <Glyphicon glyph="log-out" /> </NavItem>
+        <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
+          <Glyphicon glyph="log-out" />
+        </NavItem>
       </Nav>
 
     );
