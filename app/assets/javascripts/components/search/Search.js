@@ -1,49 +1,47 @@
 import alt from 'alt';
 import React from 'react';
+import { Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
+  Form, FormControl, Radio, Grid, Row, Col } from 'react-bootstrap';
+
 import AutoCompleteInput from './AutoCompleteInput';
-import {Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
-        Form, FormGroup, FormControl, HelpBlock, Radio, Grid, Row, Col}
-  from 'react-bootstrap';
-
-import StructureEditorModal from '../structure_editor/StructureEditorModal'
-
+import StructureEditorModal from '../structure_editor/StructureEditorModal';
 import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
-import SuggestionActions from '../actions/SuggestionActions';
-import SuggestionStore from '../stores/SuggestionStore';
 import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
-import UserStore from '../stores/UserStore';
 
 export default class Search extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       elementType: 'All',
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'similar',
       tanimotoThreshold: 0.7
-    }
-    this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this)
+    };
+    this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
   }
 
   handleSelectionChange(selection) {
-    let uiState = UIStore.getState()
-    selection.elementType = this.state.elementType
-    UIActions.setSearchSelection(selection)
-    selection.page_size = uiState.number_of_results
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
-      uiState.currentCollection.id, 1, uiState.isSync)
+    const uiState = UIStore.getState();
+    const { currentCollection } = uiState;
+    const id = currentCollection ? currentCollection.id : null;
+    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    selection.elementType = this.state.elementType;
+    UIActions.setSearchSelection(selection);
+    selection.page_size = uiState.number_of_results;
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, id, 1, isSync);
   }
 
   search(query) {
-    let userState = UserStore.getState()
-    let uiState = UIStore.getState()
-    let promise = SuggestionsFetcher.fetchSuggestionsForCurrentUser(
-      '/api/v1/suggestions/' + this.state.elementType.toLowerCase() + '/',
-      query, userState.currentUser.id, uiState.currentCollection.id, uiState.isSync)
-    return promise
+    const uiState = UIStore.getState();
+    const { currentCollection } = uiState;
+    const id = currentCollection ? currentCollection.id : null;
+    const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
+    return SuggestionsFetcher.fetchSuggestionsForCurrentUser(
+      this.state.elementType.toLowerCase(), query, id, isSync
+    );
   }
 
   structureSearch(molfile) {
