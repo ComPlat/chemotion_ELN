@@ -124,12 +124,10 @@ export default class Navigation extends React.Component {
       : <Navbar fluid className='navbar-custom'>
           {this.navHeader()}
           <Nav navbar className='navbar-form'>
-            <Search />
+            <Search noSubmit={true} />
           </Nav>
           <NavNewSession authenticityToken={this.token()}/>
           <div style={{clear: "both"}} />
-          <SearchFilter searchFunc={this.advancedSearch}
-            show={this.state.showAdvancedSearch}/>
         </Navbar>
     )
   }
