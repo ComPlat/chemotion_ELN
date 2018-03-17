@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import RFB from '@novnc/novnc/lib/rfb';
+// import RFB from '@novnc/novnc/lib/rfb';
 import { Button, Label } from 'react-bootstrap';
 
 // import omit from 'object.omit';
@@ -60,7 +60,7 @@ export default class DisplayNoVNC extends React.Component {
     const { id, novnc } = this.props.device;
     if (!this.canvas || !id || !novnc) { return; }
 
-    const rfb = new RFB(
+    /* const rfb = new RFB(
       this.canvas,
       novnc.target,
       {
@@ -73,6 +73,7 @@ export default class DisplayNoVNC extends React.Component {
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
     this.setState(prevState => ({ ...prevState, rfb }));
+   */
   }
 
 

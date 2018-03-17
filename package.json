@@ -56,7 +56,8 @@
     "sha256": "^0.2.0",
     "uuid": "^2.0.2",
     "commonmark": "^0.28.1",
-    "whatwg-fetch": "1.0.0"
+    "whatwg-fetch": "1.0.0",
+    "@novnc/noVNC": "novnc/noVNC#v1.0.0"
   },
   "browserify": {
     "transform": [
