@@ -57,7 +57,7 @@ export default class Search extends React.Component {
 
     const selection = {
       elementType: this.state.elementType,
-      molfile
+      molfile,
       search_type: this.state.searchType,
       tanimoto_threshold: tanimoto,
       page_size: uiState.number_of_results,
