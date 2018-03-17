@@ -125,5 +125,11 @@ module Chemotion
         end
       end
     end
+
+    resource :devices do
+      get :novnc, each_serializer: DeviceNovncSerializer do
+        Device.by_user_ids(user_ids).novnc
+      end
+    end
   end
 end

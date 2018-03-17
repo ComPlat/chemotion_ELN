@@ -29,12 +29,11 @@ class UserActions {
   }
 
   fetchProfile() {
-    return (dispatch) => { UsersFetcher.fetchProfile()
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+    return (dispatch) => {
+      UsersFetcher.fetchProfile()
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   changeLayout(layout) {
@@ -60,6 +59,13 @@ class UserActions {
       });};
   }
 
+  fetchNoVNCDevices() {
+    return (dispatch) => {
+      UsersFetcher.fetchNoVNCDevices()
+        .then(result => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
+  }
 }
 
 export default alt.createActions(UserActions);

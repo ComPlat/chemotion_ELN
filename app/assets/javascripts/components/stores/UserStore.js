@@ -12,7 +12,8 @@ class UserStore {
       currentUser: null,
       profile: null,
       currentTab: 0,
-      currentType: ""
+      currentType: '',
+      devices: [],
     };
 
     this.bindListeners({
@@ -20,7 +21,8 @@ class UserStore {
       handleFetchProfile: UserActions.fetchProfile,
       handleChangeLayout: UserActions.changeLayout,
       handleSelectTab: UserActions.selectTab,
-      handleUpdateUserProfile: UserActions.updateUserProfile
+      handleUpdateUserProfile: UserActions.updateUserProfile,
+      handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
     })
   }
 
@@ -61,6 +63,9 @@ class UserStore {
 
     this.state.currentTab = tab
     this.state.currentType = type
+  }
+  handleFetchNoVNCDevices(devices) {
+    if (devices) { this.state.devices = devices; }
   }
 }
 

@@ -14,9 +14,11 @@ Rails.application.routes.draw do
 
     # Standalone page for docx processing
     get 'docx', to: 'pages#docx'
+    get 'command_n_control', to: 'pages#cnc'
   end
 
   get 'home', to: 'pages#home'
+  get 'command_n_control', to: 'pages#home'
 
   mount API => '/'
 
