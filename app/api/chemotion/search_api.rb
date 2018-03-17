@@ -393,19 +393,6 @@ module Chemotion
 
         elements
       end
-
-      def set_var
-        @c_id = fetch_collection_id_w_current_user(
-          params[:collection_id], params[:is_sync]
-        )
-        @dl = permission_level_for_collection(
-          params[:collection_id], params[:is_sync]
-        )
-        @dl_s = @dl[:sample_detail_level]
-        @dl_r = @dl[:reaction_detail_level]
-        @dl_wp = @dl[:wellplate_detail_level]
-        @dl_sc = @dl[:screen_detail_level]
-      end
     end
 
     resource :search do

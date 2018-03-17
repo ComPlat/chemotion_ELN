@@ -23,10 +23,8 @@ module Chemotion
       end
 
       def search_possibilities_by_type_user_and_collection(type)
-        collection_id = @collection_id
-        dl = permission_level_for_collection(
-          params[:collection_id], params[:isSync]
-        )
+        collection_id = @c_id
+        dl = @dl
         dl_s = dl[:sample_detail_level]
         dl_r = dl[:reaction_detail_level]
         dl_wp = dl[:wellplate_detail_level]
@@ -145,9 +143,7 @@ module Chemotion
 
     resource :suggestions do
       after_validation do
-        @collection_id = fetch_collection_id_w_current_user(
-          params[:collection_id], params[:isSync]
-        )
+        set_var
       end
 
       namespace :all do
