@@ -22,9 +22,10 @@ const collectionShow = (e) => {
 
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection(
-        currentSearchSelection, collection.id, 1,
-        collection.is_sync_to_me ? true : false)
+      ElementActions.fetchBasedOnSearchSelectionAndCollection({
+        selection: currentSearchSelection,
+        collectionId: collection.id,
+        isSync: !!collection.is_sync_to_me });
     } else {
       UIActions.selectCollection(collection);
     }
@@ -57,9 +58,10 @@ const scollectionShow = (e) => {
 
     if (currentSearchSelection) {
       UIActions.selectCollectionWithoutUpdating(collection);
-      ElementActions.fetchBasedOnSearchSelectionAndCollection(
-        currentSearchSelection, collection.id, 1,
-        collection.is_sync_to_me ? true : false);
+      ElementActions.fetchBasedOnSearchSelectionAndCollection({
+        selection: currentSearchSelection,
+        collectionId: collection.id,
+        isSync: !!collection.is_sync_to_me });
     } else {
       UIActions.selectSyncCollection(collection);
     }

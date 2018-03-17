@@ -27,12 +27,14 @@ export default class Search extends React.Component {
   handleSelectionChange(selection) {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
-    const id = currentCollection ? currentCollection.id : null;
+    const collectionId = currentCollection ? currentCollection.id : null;
+    const isPublic = this.props.isPublic;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     selection.elementType = this.state.elementType;
     UIActions.setSearchSelection(selection);
     selection.page_size = uiState.number_of_results;
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, id, 1, isSync);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(
+      { selection, collectionId, isSync, isPublic });
   }
 
   search(query) {
@@ -47,15 +49,15 @@ export default class Search extends React.Component {
   structureSearch(molfile) {
     const uiState = UIStore.getState();
     const { currentCollection } = uiState;
-    const id = currentCollection ? currentCollection.id : null;
+    const collectionId = currentCollection ? currentCollection.id : null;
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
-
+    const isPublic = this.props.isPublic;
     let tanimoto = this.state.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
 
     const selection = {
       elementType: this.state.elementType,
-      molfile: molfile,
+      molfile
       search_type: this.state.searchType,
       tanimoto_threshold: tanimoto,
       page_size: uiState.number_of_results,
@@ -63,7 +65,8 @@ export default class Search extends React.Component {
       structure_search: true
     };
     UIActions.setSearchSelection(selection);
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection, id, 1, isSync);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection(
+      { selection, collectionId, isSync, isPublic });
   }
 
   handleClearSearchSelection() {

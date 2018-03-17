@@ -78,17 +78,18 @@ export default class Navigation extends React.Component {
 
   advancedSearch(filters) {
     const uiState = UIStore.getState();
-
     const selection = {
-      elementType: "all",
+      elementType: 'all',
       advanced_params: filters,
-      search_by_method: "advanced",
+      search_by_method: 'advanced',
       page_size: uiState.number_of_results
     };
     UIActions.setSearchSelection(selection);
-
-    ElementActions.fetchBasedOnSearchSelectionAndCollection(selection,
-      uiState.currentCollection.id, 1, uiState.isSync);
+    ElementActions.fetchBasedOnSearchSelectionAndCollection({
+      selection,
+      collectionId: uiState.currentCollection.id,
+      isSync: uiState.isSync
+    });
   }
 
   navHeader() {
