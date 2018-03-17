@@ -165,8 +165,7 @@ class ElementActions {
 
   // -- Search --
 
-  fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-      currentPage, isSync = false, moleculeSort = false) {
+  fetchBasedOnSearchSelectionAndCollection(params) {
     let uid;
     NotificationActions.add({
       title: "Searching ...",
@@ -176,15 +175,12 @@ class ElementActions {
     });
 
     return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection,
-        collectionId, currentPage, isSync, moleculeSort)
-                   .then((result) => {
-                     dispatch(result);
-                     NotificationActions.removeByUid(uid);
-                   }).catch((errorMessage) => {
-                     console.log(errorMessage);
-                   })
-    }
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
+        .then((result) => {
+          dispatch(result);
+          NotificationActions.removeByUid(uid);
+        }).catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   // -- Collections --

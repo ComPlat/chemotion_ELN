@@ -872,10 +872,15 @@ class ElementStore {
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
-    if(currentSearchSelection != null) {
+    if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results
-      ElementActions.fetchBasedOnSearchSelectionAndCollection.defer(currentSearchSelection,
-        uiState.currentCollection.id, page, uiState.isSync, moleculeSort)
+      ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
+        selection: currentSearchSelection,
+        collectionId: uiState.currentCollection.id,
+        page,
+        isSync: uiState.isSync,
+        moleculeSort
+      });
     } else {
       const per_page = uiState.number_of_results;
       const { fromDate, toDate, productOnly } = uiState;
