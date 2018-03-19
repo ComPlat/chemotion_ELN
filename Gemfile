@@ -42,7 +42,7 @@ gem 'devise'
 
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
-gem 'browserify-rails', '~> 3.0.1'
+gem 'browserify-rails', '~> 4.2.0'
 
 # for collection tree structure
 gem 'ancestry'

@@ -132,9 +132,10 @@ GEM
     bootstrap-sass (3.3.6)
       autoprefixer-rails (>= 5.2.1)
       sass (>= 3.3.4)
-    browserify-rails (3.0.1)
-      railties (>= 4.0.0, < 5.0)
-      sprockets (>= 3.5.2)
+    browserify-rails (4.2.0)
+      addressable (>= 2.4.0)
+      railties (>= 4.0.0, < 5.2)
+      sprockets (>= 3.6.0)
     builder (3.2.3)
     bullet (5.5.0)
       activesupport (>= 3.0.0)
@@ -579,7 +580,7 @@ DEPENDENCIES
   better_errors
   binding_of_caller
   bootstrap-sass (~> 3.3.5)
-  browserify-rails (~> 3.0.1)
+  browserify-rails (~> 4.2.0)
   bullet
   byebug
   capistrano (= 3.9.1)
