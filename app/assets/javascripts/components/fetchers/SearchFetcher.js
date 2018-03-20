@@ -7,7 +7,7 @@ import Screen from '../models/Screen';
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
     const { selection, collectionId, currentPage, isSync, moleculeSort, isPublic } = params;
-    const promise = fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
+    return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -25,50 +25,23 @@ export default class SearchFetcher {
       })
     }).then(response => response.json())
       .then((json) => {
-        const sampleElements = json.samples.totalElements > 0
-          ? json.samples.elements.molecules.map(m => (m.samples.map(s => (new Sample(s)))))
-          : [];
-        const samples = {
-          elements: sampleElements,
-          totalElements: json.samples.totalElements,
-          page: json.samples.page,
-          pages: json.samples.pages,
-          perPage: json.samples.per_page,
-          ids: json.samples.ids
-        };
-        const reactions = {
-          elements: json.reactions.elements.map(r => (new Reaction(r))),
-          totalElements: json.reactions.totalElements,
-          page: json.reactions.page,
-          pages: json.reactions.pages,
-          perPage: json.reactions.per_page,
-          ids: json.reactions.ids
-        };
-        const wellplates = {
-          elements: json.wellplates.elements.map(w => (new Wellplate(w))),
-          totalElements: json.wellplates.totalElements,
-          page: json.wellplates.page,
-          pages: json.wellplates.pages,
-          perPage: json.wellplates.per_page,
-          ids: json.wellplates.ids
-        };
-        const screens = {
-          elements: json.screens.elements.map(s => (new Screen(s))),
-          totalElements: json.screens.totalElements,
-          page: json.screens.page,
-          pages: json.screens.pages,
-          perPage: json.screens.per_page,
-          ids: json.screens.ids
-        };
-
-        return {
-          samples,
-          reactions,
-          wellplates,
-          screens
-        };
+        const { samples, reactions, wellplates, screens } = json;
+        const result = { ...json };
+        if (samples && samples.totalElements && samples.totalElements > 0) {
+          result.samples.elements = samples.elements.molecules.map(
+            m => (m.samples.map(s => (new Sample(s))))
+          );
+        } else { result.samples = { elements: [], totalElements: 0, ids: [] }; }
+        if (reactions && reactions.totalElements && reactions.totalElements > 0) {
+          result.reactions.elements = reactions.elements.map(r => (new Reaction(r)));
+        } else { result.reactions = { elements: [], totalElements: 0, ids: [] }; }
+        if (wellplates && wellplates.totalElements && wellplates.totalElements > 0) {
+          result.wellplates.elements = wellplates.elements.map(s => (new Wellplate(s)));
+        } else { result.wellplates = { elements: [], totalElements: 0, ids: [] }; }
+        if (screens && screens.totalElements && screens.totalElements > 0) {
+          result.screens.elements = screens.elements.map(s => (new Screen(s)));
+        } else { result.screens = { elements: [], totalElements: 0, ids: [] }; }
+        return result;
       }).catch((errorMessage) => { console.log(errorMessage); });
-
-    return promise;
   }
 }
