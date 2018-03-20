@@ -35,6 +35,7 @@ module Chemotion
         optional :is_sync, type: Boolean
         optional :molecule_sort, type: Boolean, default: false
         optional :per_page, type: Integer, default: 7
+        optional :is_public, type: Boolean, default: false
       end
 
       def page_size
@@ -222,7 +223,7 @@ module Chemotion
             totalElements: samples_size,
             page: page,
             pages: pages(samples_size),
-            per_page: page_size,
+            perPage: page_size,
             ids: samples
           },
           reactions: {
@@ -230,7 +231,7 @@ module Chemotion
             totalElements: reactions.size,
             page: page,
             pages: pages(reactions.size),
-            per_page: page_size,
+            perPage: page_size,
             ids: reactions
           },
           wellplates: {
@@ -238,7 +239,7 @@ module Chemotion
             totalElements: wellplates.size,
             page: page,
             pages: pages(wellplates.size),
-            per_page: page_size,
+            perPage: page_size,
             ids: wellplates
           },
           screens: {
@@ -246,7 +247,7 @@ module Chemotion
             totalElements: screens.size,
             page: page,
             pages: pages(screens.size),
-            per_page: page_size,
+            perPage: page_size,
             ids: screens
           }
         }
@@ -294,12 +295,9 @@ module Chemotion
           # MW + external_label (dl_s = 0) and the other info only available
           # from dl_s > 0. For now one can use the suggested search instead.
           if dl_s > 0
-            AllElementSearch.new(
-              arg,
-              current_user.id
-            ).search_by_substring.by_collection_id(c_id)
+            AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id)
           else
-            AllElementSearch::Results.new(Sample.none,current_user.id)
+            AllElementSearch::Results.new(Sample.none)
           end
         when 'structure'
           sample_structure_search
