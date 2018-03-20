@@ -173,7 +173,6 @@ class ElementActions {
       position: "tc",
       onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
-
     return (dispatch) => {
       SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
         .then((result) => {

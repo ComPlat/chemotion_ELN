@@ -6,7 +6,7 @@ import Screen from '../models/Screen';
 
 export default class SearchFetcher {
   static fetchBasedOnSearchSelectionAndCollection(params) {
-    const { selection, collectionId, currentPage, isSync, moleculeSort, isPublic } = params;
+    const { selection, collectionId, page, isSync, moleculeSort, isPublic } = params;
     return fetch(`/api/v1/search/${selection.elementType.toLowerCase()}`, {
       credentials: 'same-origin',
       method: 'POST',
@@ -17,7 +17,7 @@ export default class SearchFetcher {
       body: JSON.stringify({
         selection,
         collection_id: collectionId,
-        page: currentPage || 1,
+        page: page || 1,
         per_page: selection.page_size,
         is_sync: isSync || false,
         molecule_sort: moleculeSort || false,
