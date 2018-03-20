@@ -859,21 +859,21 @@ class ElementStore {
 
   handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
-    let uiState = UIStore.getState();
+    const uiState = UIStore.getState();
 
     if (!uiState.currentCollection || !uiState.currentCollection.id) return;
 
-    let page = uiState[type].page;
-    const moleculeSort = this.state.moleculeSort
+    const page = uiState[type].page;
+    const moleculeSort = this.state.moleculeSort;
 
-    this.state.elements[type+'s'].page = page;
-    let currentSearchSelection = uiState.currentSearchSelection;
+    this.state.elements[`${type}s`].page = page;
+    const currentSearchSelection = uiState.currentSearchSelection;
 
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
     if (currentSearchSelection != null) {
-      currentSearchSelection.page_size = uiState.number_of_results
+      currentSearchSelection.page_size = uiState.number_of_results;
       ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
         selection: currentSearchSelection,
         collectionId: uiState.currentCollection.id,
