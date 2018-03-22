@@ -185,7 +185,6 @@ class Import::ImportJson
           )
         end
         create_analyses(uuid, new_el)
-        create_datasets(uuid, new_el)
         new_el
       else
         @log[source + 's'][uuid]['created_at'] = 'not created'
@@ -207,14 +206,16 @@ class Import::ImportJson
       remote_id = a['id']
       @log['analyses'][remote_id] = new_a.id
 
+      create_datasets(a.fetch('datasets',[]), new_a)
     end
   end
 
-  def create_datasets(uuid, el)
-    datasets[uuid]&.each do |a|
-      next unless (remote_id = a['analysis_id'])
-      next unless (analysis_id = @log['analyses'][remote_id])
-      new_a = Container.find_by(id: analysis_id).children.create(
+  def create_datasets(datasets, analysis)
+    datasets.each do |a|
+      # next unless (remote_id = a['analysis_id'])
+      # next unless (analysis_id = @log['analyses'][remote_id])
+      # new_a = Container.find_by(id: analysis_id).children.create(
+      new_a = analysis.children.create(
         container_type: 'dataset',
         extended_metadata: a['extended_metadata'],
         description: a['description'],
@@ -251,10 +252,14 @@ class Import::ImportJson
     r_uuid = el['r_uuid']
     ref = (el['r_reference'] == 't') || el['r_reference'] == 'f'
     eq = el['r_equivalent']
-    @log['samples'][el_uuid][klass.name] = klass.create!(
-      sample_id: new_el.id, reaction_id: new_data[r_uuid]['id'],
-      reference: ref, equivalent: eq, position: el['r_position']
-    ) && '201' || '500'
+    if new_data &&  new_data[r_uuid] && new_data[r_uuid]['id']
+      @log['samples'][el_uuid][klass.name] = klass.create(
+        sample_id: new_el.id, reaction_id: new_data[r_uuid]['id'],
+        reference: ref, equivalent: eq, position: el['r_position']
+      ) && '201' || '500'
+    else
+      @log['samples'][el_uuid][klass.name] = '404'
+    end
   end
 
   def reactions
