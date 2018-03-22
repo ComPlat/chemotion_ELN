@@ -76,9 +76,7 @@ export default class ReactionsFetcher {
           included_ids: ui_state.reaction.checkedIds,
           excluded_ids: ui_state.reaction.uncheckedIds
         },
-        options: {
-          delete_subsamples: options.delete_subsamples
-        }
+        options
       })
     }).then((response) => {
       return response.json()

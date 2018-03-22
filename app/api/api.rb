@@ -190,4 +190,5 @@ class API < Grape::API
   mount Chemotion::V1PublicAPI
   mount Chemotion::DocxAPI
   mount Chemotion::GateAPI
+  mount Chemotion::ElementAPI
 end

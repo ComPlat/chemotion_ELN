@@ -152,6 +152,7 @@ export default class SamplesFetcher {
         ui_state: {
           all: params.sample.checkedAll,
           collection_id: params.currentCollection.id,
+          is_sync: params.currentCollection.is_sync_to_me,
           included_ids: params.sample.checkedIds,
           excluded_ids: params.sample.uncheckedIds
         }

@@ -1,15 +1,15 @@
 module Usecases
   module Sharing
     class ShareWithUser
-      def initialize(params)
+      def initialize(**params)
         @params = params
+        @collection_attributes = @params.fetch(:collection_attributes, {})
+        @current_user_id = @collection_attributes[:shared_by_id]
       end
 
       def execute!
         ActiveRecord::Base.transaction do
-          collection_attributes = @params.fetch(:collection_attributes, {}).merge(is_shared: true)
-          c = Collection.create(collection_attributes)
-          current_user_id = collection_attributes.fetch(:shared_by_id)
+          c = Collection.create(@collection_attributes)
 
           sample_ids = @params.fetch(:sample_ids, [])
           reaction_ids =  @params.fetch(:reaction_ids, [])
@@ -18,25 +18,24 @@ module Usecases
           research_plan_ids = @params.fetch(:research_plan_ids, [])
 
           # Reactions and Wellplates have associated Samples
-          associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(current_user_id, wellplate_ids).map(&:id)
+          associated_sample_ids = Sample.associated_by_user_id_and_reaction_ids(@current_user_id, reaction_ids).map(&:id) + Sample.associated_by_user_id_and_wellplate_ids(@current_user_id, wellplate_ids).map(&:id)
           # Screens have associated Wellplates
-          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(current_user_id, screen_ids).map(&:id)
+          associated_wellplate_ids = Wellplate.associated_by_user_id_and_screen_ids(@current_user_id, screen_ids).map(&:id)
 
           sample_ids = (sample_ids + associated_sample_ids).uniq
           wellplate_ids = (wellplate_ids + associated_wellplate_ids).uniq
 
           # find or create and assign parent collection ()
-          root_label = "with %s" %c.user.name_abbreviation
+          root_label = "with %s" % c.user.name_abbreviation
           root_collection_attributes = {
-            label: root_label,
-            user_id: collection_attributes[:user_id],
-            shared_by_id: current_user_id,
+            user_id: @collection_attributes[:user_id],
+            shared_by_id: @current_user_id,
             is_locked: true,
             is_shared: true
-
           }
 
-          rc = Collection.find_or_create_by(root_collection_attributes)
+          rc = Collection.only_deleted.find_by(**root_collection_attributes)&.restore
+          rc ||= Collection.find_or_create_by(**root_collection_attributes, label: root_label)
           c.update(parent: rc)
 
           sample_ids.each do |sample_id|

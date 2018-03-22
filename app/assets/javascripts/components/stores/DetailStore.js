@@ -1,21 +1,22 @@
-import alt from '../alt'
-import DetailActions from '../actions/DetailActions'
-import ElementActions from '../actions/ElementActions'
-import Utils from '../utils/Functions'
-import ArrayUtils from '../utils/ArrayUtils'
-import Sample from '../models/Sample'
-import Reaction from '../models/Reaction'
-import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils'
+import { intersectionWith } from 'lodash';
+import alt from '../alt';
+import DetailActions from '../actions/DetailActions';
+import ElementActions from '../actions/ElementActions';
+import ElementStore from '../stores/ElementStore';
+import Sample from '../models/Sample';
+import Reaction from '../models/Reaction';
+import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 
 class DetailStore {
   constructor() {
-    this.selecteds = []
-    this.activeKey = 0
-    this.deletingElement = null
+    this.selecteds = [];
+    this.activeKey = 0;
+    this.deletingElement = null;
 
     this.bindListeners({
       handleSelect: DetailActions.select,
       handleClose: DetailActions.close,
+      handleDeletingElements: ElementActions.deleteElementsByUIState,
       handleConfirmDelete: DetailActions.confirmDelete,
       handleChangeCurrentElement: DetailActions.changeCurrentElement,
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
@@ -44,7 +45,7 @@ class DetailStore {
     this.setState({ deletingElement: null })
   }
 
-  handleChangeCurrentElement({oriEl, nextEl}) {
+  handleChangeCurrentElement({ oriEl, nextEl }) {
     const selecteds = this.selecteds;
     const index = this.elementIndex(selecteds, nextEl);
     let activeKey = index;
@@ -156,6 +157,19 @@ class DetailStore {
 
   resetActiveKey(activeKey) {
     setTimeout(this.setState.bind(this, { activeKey }), 300)
+  }
+
+  handleDeletingElements(response) {
+    const elements = response && response.selecteds;
+    const { currentElement } = ElementStore.getState();
+    const currentNotDeleted = intersectionWith([currentElement], elements, SameEleTypId)[0];
+    const newSelecteds = intersectionWith(this.selecteds, elements, SameEleTypId);
+
+    if (currentNotDeleted) {
+      this.setState({ selecteds: newSelecteds });
+    } else {
+      this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));
+    }
   }
 }
 

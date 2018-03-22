@@ -599,7 +599,28 @@ class ElementActions {
   }
 
   // - ...
-
+  deleteElementsByUIState(params) {
+    return (dispatch) => {
+      fetch('/api/v1/ui_state/', {
+        credentials: 'same-origin',
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+      }).then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      }).then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
   deleteSamplesByUIState(ui_state) {
     return (dispatch) => { SamplesFetcher.deleteSamplesByUIState(ui_state)
       .then((result) => {

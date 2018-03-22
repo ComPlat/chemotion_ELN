@@ -6,6 +6,7 @@ import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
 import ClipboardStore from './ClipboardStore';
+import DetailStore from './DetailStore';
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
@@ -435,51 +436,28 @@ class ElementStore {
     });
   }
 
-  closeElementWhenDeleted(ui_state) {
-    const currentElement = this.state.currentElement;
-    if (currentElement) {
-      const type_state = ui_state[currentElement.type];
-      const checked = type_state.checkedIds.indexOf(currentElement.id) > -1;
-      const checked_all_and_not_unchecked = type_state.checkedAll &&
-        type_state.uncheckedIds.indexOf(currentElement.id) === -1;
-
-      if (checked_all_and_not_unchecked || checked) {
-        this.state.currentElement = null;
-        // this.navigateToNewElement(); // TODO: should instead reset DetailStore.selected
-      }
-    }
-  }
-
   // -- Elements --
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    const { sample, reaction, wellplate, screen, research_plan } = ui_state;
-    if (sample.checkedAll || sample.checkedIds.size !== 0) {
-      ElementActions.deleteSamplesByUIState(ui_state);
-    }
-    if (reaction.checkedAll || reaction.checkedIds.size !== 0) {
-      ElementActions.deleteReactionsByUIState({
-        ui_state,
-        options
-      });
-    }
-    if (wellplate.checkedAll || wellplate.checkedIds.size !== 0) {
-      ElementActions.deleteWellplatesByUIState(ui_state);
-    }
-    if (screen.checkedAll || screen.checkedIds.size !== 0) {
-      ElementActions.deleteScreensByUIState(ui_state);
-    }
-    if (research_plan.checkedAll || research_plan.checkedIds.size !== 0) {
-      ElementActions.deleteResearchPlansByUIState(ui_state);
-    }
+    const { selecteds } = DetailStore.getState();
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection } = ui_state;
+    ElementActions.deleteElementsByUIState({
+      options,
+      sample,
+      reaction,
+      wellplate,
+      screen,
+      research_plan,
+      currentCollection,
+      selecteds: selecteds.map(s => ({ id: s.id, type: s.type }))
+    });
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
-    this.closeElementWhenDeleted(ui_state);
   }
 
   handleUpdateElementsCollection(params) {

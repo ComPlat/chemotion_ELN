@@ -1,6 +1,7 @@
 module Chemotion
   class CollectionAPI < Grape::API
     helpers CollectionHelpers
+    helpers ParamsHelpers
     resource :collections do
 
       namespace :all do
@@ -85,38 +86,19 @@ module Chemotion
         params do
           requires :elements_filter, type: Hash do
             requires :sample, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             requires :reaction, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             requires :wellplate, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             requires :screen, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             optional :research_plan, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
           end
           requires :collection_attributes, type: Hash do
@@ -127,17 +109,22 @@ module Chemotion
             requires :screen_detail_level, type: Integer
             optional :research_plan_detail_level, type: Integer
           end
-          requires :user_ids, type: Array
-          optional :current_collection_id, type: Integer
+          requires :user_ids, type: Array do
+            requires :value
+          end
+          requires :currentCollection, type: Hash do
+            requires :id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
+          end
         end
 
         after_validation do
-
-          samples = Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])
-          reactions = Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])
-          wellplates = Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])
-          screens = Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])
-          research_plans = ResearchPlan.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:research_plan])
+          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          samples = Sample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
+          reactions = Reaction.by_collection_id(@cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
+          wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
+          screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
+          research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
 
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
@@ -156,6 +143,11 @@ module Chemotion
             share_wellplates && share_screens && share_research_plans
 
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
+          @sample_ids = samples.pluck(:id)
+          @reaction_ids = reactions.pluck(:id)
+          @wellplate_ids = wellplates.pluck(:id)
+          @screen_ids = screens.pluck(:id)
+          @research_plan_ids = research_plans.pluck(:id)
         end
 
         post do
@@ -168,10 +160,15 @@ module Chemotion
               User.where(email: val).pluck :id
             end
           end.flatten.compact.uniq
-
-          params[:user_ids] = uids
-
-          Usecases::Sharing::ShareWithUsers.new(params, current_user).execute!
+          Usecases::Sharing::ShareWithUsers.new(
+            user_ids: uids,
+            sample_ids: @sample_ids,
+            reaction_ids: @reaction_ids,
+            wellplate_ids: @wellplate_ids,
+            screen_ids: @screen_ids,
+            research_plan_ids: @research_plan_ids,
+            collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
+          ).execute!
         end
       end
 

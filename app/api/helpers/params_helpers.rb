@@ -1,6 +1,18 @@
 module ParamsHelpers
   extend Grape::API::Helpers
 
+  params :ui_state_params do
+    optional :checkedAll, type: Boolean, default: false
+    optional :checkedIds, type: Array, default: []
+    optional :uncheckedIds, type: Array, default: []
+    # legacy
+    optional :all, type: Boolean, default: false
+    optional :included_ids, type: Array, default: []
+    optional :excluded_ids, type: Array, default: []
+    optional :collection_id, type: Integer
+    optional :is_sync_to_me, type: Boolean, default: false
+  end
+
   params :common_container_params do
     optional :id, type: Integer
     optional :name, type: String

@@ -7,6 +7,7 @@ class SyncCollectionsUser < ActiveRecord::Base
   has_many :reactions, through: :collection
   has_many :wellplates, through: :collection
   has_many :screens, through: :collection
+  has_many :research_plans, through: :collection
 
   before_create :auto_set_synchronized_flag
   after_destroy :check_collection_if_synced

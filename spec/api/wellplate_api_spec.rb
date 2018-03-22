@@ -103,7 +103,7 @@ describe Chemotion::WellplateAPI do
           CollectionsWellplate.create(wellplate_id: wellplate_2.id, collection_id: 1)
           w = Wellplate.find_by(id: wellplate_3.id)
           expect(w).to_not be_nil
-          delete '/api/v1/wellplates/ui_state/', { ui_state: params_all_false }
+          delete '/api/v1/wellplates/ui_state/', { ui_state: params_all_false }.to_json, 'CONTENT_TYPE' => 'application/json'
           w = Wellplate.find_by(id: wellplate_3.id)
           expect(w).to_not be_nil
           array = Wellplate.where(id: wellplate_ids).to_a

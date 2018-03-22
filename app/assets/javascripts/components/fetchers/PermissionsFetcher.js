@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 
 export default class PermissionsFetcher {
   static fetchPermissionStatus(params) {
-    let promise = fetch('/api/v1/permissions/status/', {
+    return fetch('/api/v1/permissions/status/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -10,7 +10,8 @@ export default class PermissionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        elements_filter: params.elements_filter
+        elements_filter: params.elements_filter,
+        currentCollection: params.currentCollection
       })
     }).then((response) => {
       return response.json()
@@ -19,9 +20,7 @@ export default class PermissionsFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-
-    return promise;
   }
 
-  
+
 }

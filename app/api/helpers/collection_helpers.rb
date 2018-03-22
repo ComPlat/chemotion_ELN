@@ -11,14 +11,22 @@ module CollectionHelpers
         id: id.to_i, user_id: user_ids
       )&.collection_id
     else
-      Collection.find_by(
-        id: id.to_i, user_id: user_ids
-      )&.id
+      (Collection.find_by(id: id.to_i, user_id: user_ids) ||
+        Collection.find_by(id: id.to_i, shared_by_id: current_user.id))&.id
     end.to_i
   end
 
+  def fetch_collection_w_current_user(id, is_sync = false)
+    if is_sync
+      SyncCollectionsUser.find_by(id: id.to_i, user_id: user_ids)
+    else
+      Collection.find_by(id: id.to_i, user_id: user_ids) ||
+        Collection.find_by(id: id.to_i, shared_by_id: current_user.id)
+    end
+  end
+
   # desc: given an id of coll or sync coll return detail levels as array
-  def permission_level_for_collection(id, is_sync = false)
+  def detail_level_for_collection(id, is_sync = false)
     (is_sync && SyncCollectionsUser || Collection).find_by(
       id: id.to_i, user_id: user_ids
     )&.slice(
@@ -60,7 +68,7 @@ module CollectionHelpers
     @c_id = fetch_collection_id_w_current_user(
       params[:collection_id], params[:is_sync]
     )
-    @dl = permission_level_for_collection(
+    @dl = detail_level_for_collection(
       params[:collection_id], params[:is_sync]
     )
     @dl_s = @dl[:sample_detail_level]
