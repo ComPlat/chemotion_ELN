@@ -39,6 +39,7 @@ gem 'pg', '~> 0.20.0'
 gem 'pg_search'
 
 gem 'devise'
+gem 'jwt'
 
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 

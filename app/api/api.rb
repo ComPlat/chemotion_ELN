@@ -23,7 +23,8 @@ class API < Grape::API
     def is_public_request?
       request.path.start_with?(
         '/api/v1/public/',
-        '/api/v1/ketcher/layout'
+        '/api/v1/ketcher/layout',
+        '/api/v1/gate/receiving'
       )
     end
 
@@ -188,4 +189,5 @@ class API < Grape::API
   mount Chemotion::GeneralAPI
   mount Chemotion::V1PublicAPI
   mount Chemotion::DocxAPI
+  mount Chemotion::GateAPI
 end
