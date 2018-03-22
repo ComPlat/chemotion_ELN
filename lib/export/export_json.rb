@@ -59,7 +59,7 @@ module Export
 
     def analyses_data(type)
       a = @data[type + '_analyses'][0].delete(type + '_analyses') || '{}'
-      @data['analyses'].merge(JSON.parse a)
+      @data['analyses'].merge!(JSON.parse a)
     end
 
     def samples_data
