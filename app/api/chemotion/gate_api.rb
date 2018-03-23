@@ -36,8 +36,7 @@ module Chemotion
               )
               tmp_files = []
               attachments.each do |att|
-                cont_type = att.content_type || MimeMagic.by_path(att.filename)
-                            .type
+                cont_type = att.content_type || MimeMagic.by_path(att.filename)&.type
                 tmp_files << Tempfile.new( encoding: 'ascii-8bit')
                 tmp_files[-1].write(att.read_file)
                 tmp_files[-1].rewind
@@ -68,8 +67,8 @@ module Chemotion
             end
             if resp.status.to_s =~ /20(0|1)/
               tr_col = @collection.children.find_or_create_by(user_id: @collection.user_id, label: 'transferred')
-              CollectionsSample.move_to_collection(@collection.samples, @collection, tr_col.id)
-              CollectionsReaction.move_to_collection(@collection.reactions, @collection, tr_col.id)
+              CollectionsSample.move_to_collection(@collection.samples.pluck(:id), @collection, tr_col.id)
+              CollectionsReaction.move_to_collection(@collection.reactions.pluck(:id), @collection, tr_col.id)
             end
             resp.status
           end
