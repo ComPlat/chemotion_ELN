@@ -15,16 +15,17 @@ describe Chemotion::PermissionAPI do
     end
 
     describe 'POST /api/v1/permissions/sharing' do
-      let(:s1) { create(:sample) }
-      let(:s2) { create(:sample) }
-      let(:r1) { create(:reaction) }
-      let(:r2) { create(:reaction) }
-      let(:w1) { create(:wellplate) }
-      let(:w2) { create(:wellplate) }
-      let(:sc1) { create(:screen) }
+      let(:s1) { create(:sample, collections: [c1, c3]) }
+      let(:s2) { create(:sample, collections: [c1]) }
+      let(:r1) { create(:reaction, collections: [c1]) }
+      let(:r2) { create(:reaction, collections: [c1]) }
+      let(:w1) { create(:wellplate, collections: [c1]) }
+      let(:w2) { create(:wellplate, collections: [c1]) }
+      let(:sc1) { create(:screen, collections: [c1]) }
 
       let!(:params) {
         {
+          currentCollection: { id: c1.id }, 
           elements_filter: {
             sample: {
               all: true,
@@ -50,22 +51,9 @@ describe Chemotion::PermissionAPI do
         }
       }
 
-      before do
-        CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
-        CollectionsSample.create!(collection_id: c3.id, sample_id: s1.id)
-        CollectionsSample.create!(collection_id: c1.id, sample_id: s2.id)
-        CollectionsSample.create!(collection_id: c2.id, sample_id: sample_a.id)
-        CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
-        CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
-        CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
-        CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w2.id)
-        CollectionsScreen.create!(collection_id: c1.id, screen_id: sc1.id)
-
-        post '/api/v1/permissions/status', params
-      end
-
 
       it 'responds with true if sharing allowed' do
+        post '/api/v1/permissions/status', params.to_json, 'CONTENT_TYPE' => 'application/json'
         expect(JSON.parse(response.body)['sharing_allowed']).to eq true
       end
     end

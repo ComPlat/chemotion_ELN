@@ -197,35 +197,30 @@ module Chemotion
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ReactionHelpers
+    helpers ParamsHelpers
+    helpers CollectionHelpers
 
     resource :reactions do
       namespace :ui_state do
         desc "Delete reactions by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected reactions from the UI" do
-            requires :all, type: Boolean
-            requires :collection_id
-            optional :included_ids, type: Array
-            optional :excluded_ids, type: Array
+            use :ui_state_params
           end
           optional :options, type: Hash do
-            optional :deleteSubsamples, type: Boolean
+            optional :deleteSubsamples, type: Boolean, default: false
           end
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @reactions = Reaction.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @reactions).destroy?
         end
 
         delete do
-          reactions = Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])
-          options = params[:options]
-
-          if options && options.fetch(:deleteSubsamples, false)
-            reactions.flat_map(&:samples).map(&:destroy)
-          end
-
-          reactions.presence&.destroy_all || { ui_state: [] }
+          @reactions.flat_map(&:samples).map(&:destroy) if params[:options][:deleteSubsamples]
+          @reactions.presence&.destroy_all || { ui_state: [] }
         end
       end
 
@@ -299,19 +294,21 @@ module Chemotion
         end
       end
 
-      desc "Delete reactions by UI state"
-      params do
-        requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
-      end
-      route_param :id do
-        before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
-        end
-
-        delete do
-          Reaction.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
-        end
-      end
+      # ??
+      # desc "Delete reactions by UI state"
+      # params do
+      #   requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
+      # end
+      # route_param :id do
+      #   before do
+      #     @reactions = Reaction.for_user(current_user.id).by_ui_state(params[:ui_state])
+      #     error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @reactions).destroy?
+      #   end
+      #
+      #   delete do
+      #     @reactions.destroy_all
+      #   end
+      # end
 
       desc "Update reaction by id"
       params do

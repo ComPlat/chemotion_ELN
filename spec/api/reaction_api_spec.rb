@@ -126,17 +126,17 @@ describe Chemotion::ReactionAPI do
       end
 
       context 'with UIState' do
-        let(:c1) { create(:collection, user: user) }
-        let!(:reaction_1) { create(:reaction, name: 'test_1') }
-        let!(:reaction_2) { create(:reaction, name: 'test_2') }
-        let!(:reaction_3) { create(:reaction, name: 'test_3') }
+        let!(:c1) { create(:collection, user: user) }
+        let!(:r1) { create(:reaction, name: 'test_1', collections: [c1]) }
+        let!(:r2) { create(:reaction, name: 'test_2', collections: [c1]) }
+        let!(:r3) { create(:reaction, name: 'test_3', collections: [c1]) }
 
         let!(:params_all_false) {
           {
             all: false,
             collection_id: c1.id,
-            included_ids: [reaction_1.id, reaction_2.id],
-            excluded_ids: []
+            included_ids: [r1.id, r2.id],
+            excluded_ids: [],
           }
         }
 
@@ -145,49 +145,20 @@ describe Chemotion::ReactionAPI do
             all: true,
             collection_id: c1.id,
             included_ids: [],
-            excluded_ids: [reaction_3.id]
+            excluded_ids: [r3.id],
           }
         }
 
-        before do
-          CollectionsReaction.create!(collection: c1, reaction: reaction_1)
-          CollectionsReaction.create!(collection: c1, reaction: reaction_2)
-          CollectionsReaction.create!(collection: c1, reaction: reaction_3)
-        end
-
         it 'should be able to delete reaction when "all" is false' do
-          reaction_ids = [reaction_1.id, reaction_2.id]
-          array = Reaction.where(id: reaction_ids).to_a
-          expect(array).to match_array([reaction_1, reaction_2])
-          CollectionsReaction.create(
-            reaction_id: reaction_1.id, collection_id: 1
-          )
-          CollectionsReaction.create(
-            reaction_id: reaction_2.id, collection_id: 1
-          )
-          r = Reaction.find_by(id: reaction_3.id)
-          expect(r).to_not be_nil
-          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_false }
-          r = Reaction.find_by(id: reaction_3.id)
-          expect(r).to_not be_nil
-          array = Reaction.where(id: reaction_ids).to_a
-          expect(array).to match_array([])
-          a = CollectionsReaction.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
-          a = ReactionsProductSample.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
-          a = ReactionsReactantSample.where(reaction_id: reaction_ids).to_a
-          expect(a).to match_array([])
-          a = ReactionsStartingMaterialSample.where(reaction_id: reaction_ids)
-                                             .to_a
-          expect(a).to match_array([])
+          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_false, options: {} }.to_json, 'CONTENT_TYPE' => 'application/json'
+          expect(c1.reactions).to match_array([r3])
+          expect(Reaction.only_deleted.where(id: [r1.id, r2.id, r3.id])).to match_array([r1, r2])
         end
 
         it 'should be able to delete reactions when "all" is true' do
-          old_reaction_ids = [reaction_1.id, reaction_2.id]
-          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_true }
-
-          expect(Reaction.where(id: old_reaction_ids)).to eq []
+          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_true, options: {} }.to_json, 'CONTENT_TYPE' => 'application/json'
+          expect(Reaction.only_deleted.where(id: [r1.id, r2.id, r3.id])).to match_array([r1, r2])
+          expect(c1.reactions.where(id: [r1.id, r2.id, r3.id])).to match_array([r3])
         end
       end
     end

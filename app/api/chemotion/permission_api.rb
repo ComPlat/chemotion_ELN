@@ -1,5 +1,7 @@
 module Chemotion
   class PermissionAPI < Grape::API
+    helpers CollectionHelpers
+    helpers ParamsHelpers
     helpers do
       def non_empty(filter)
         return true if filter.all
@@ -15,58 +17,60 @@ module Chemotion
         params do
           requires :elements_filter, type: Hash do
             optional :sample, type: Hash do
-              optional :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
+              use :ui_state_params
             end
-
             optional :reaction, type: Hash do
-              optional :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
+              use :ui_state_params
             end
-
             optional :wellplate, type: Hash do
-              optional :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
+              use :ui_state_params
             end
-
             optional :screen, type: Hash do
-              optional :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
+              use :ui_state_params
             end
+            optional :research_plan, type: Hash do
+              use :ui_state_params
+            end
+          end
+          requires :currentCollection, type: Hash do
+            requires :id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
           end
         end
 
         post do
-          spl_exist = non_empty(params[:elements_filter][:sample])
-          rxn_exist = non_empty(params[:elements_filter][:reaction])
-          wlp_exist = non_empty(params[:elements_filter][:wellplate])
-          scn_exist = non_empty(params[:elements_filter][:screen])
+          cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          samples = Sample.by_collection_id(cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
+          reactions = Reaction.by_collection_id(cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
+          wellplates = Wellplate.by_collection_id(cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
+          screens = Screen.by_collection_id(cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
 
-          top_secret_sample = spl_exist ? Sample.for_user(current_user.id).for_ui_state(params[:elements_filter][:sample]).pluck(:is_top_secret).any? : false
-          top_secret_reaction = top_secret_sample || rxn_exist ? Reaction.for_user(current_user.id).for_ui_state(params[:elements_filter][:reaction]).lazy.flat_map(&:samples).map(&:is_top_secret).any? : false
-          top_secret_wellplate = top_secret_reaction || wlp_exist ? Wellplate.for_user(current_user.id).for_ui_state(params[:elements_filter][:wellplate]).lazy.flat_map(&:samples).map(&:is_top_secret).any? : false
-          top_secret_screen = top_secret_wellplate || scn_exist ? Screen.for_user(current_user.id).for_ui_state(params[:elements_filter][:screen]).lazy.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any? : false
+          spl_exist = samples.present?
+          rxn_exist = reactions.present?
+          wlp_exist = wellplates.present?
+          scn_exist = screens.present?
+
+          top_secret_sample = spl_exist ? samples.pluck(:is_top_secret).any? : false
+          top_secret_reaction = top_secret_sample || rxn_exist ? reactions.lazy.flat_map(&:samples).map(&:is_top_secret).any? : false
+          top_secret_wellplate = top_secret_reaction || wlp_exist ? wellplates.lazy.flat_map(&:samples).map(&:is_top_secret).any? : false
+          top_secret_screen = top_secret_wellplate || scn_exist ? screens.lazy.flat_map(&:wellplates).flat_map(&:samples).map(&:is_top_secret).any? : false
 
           is_top_secret = top_secret_screen
 
-          deletion_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).destroy? : true
-          deletion_allowed_reaction = deletion_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).destroy? : true
-          deletion_allowed_wellplate = deletion_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).destroy? : true
-          deletion_allowed_screen = deletion_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).destroy? : true
+          deletion_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, samples).destroy? : true
+          deletion_allowed_reaction = deletion_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, reactions).destroy? : true
+          deletion_allowed_wellplate = deletion_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, wellplates).destroy? : true
+          deletion_allowed_screen = deletion_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, screens).destroy? : true
 
           deletion_allowed = deletion_allowed_screen
 
           if deletion_allowed
             sharing_allowed = true
           else
-            sharing_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])).share? : true
-            sharing_allowed_reaction = sharing_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])).share? : true
-            sharing_allowed_wellplate = sharing_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])).share? : true
-            sharing_allowed_screen = sharing_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])).share? : true
+            sharing_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, samples).share? : true
+            sharing_allowed_reaction = sharing_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, reactions).share? : true
+            sharing_allowed_wellplate = sharing_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, wellplates).share? : true
+            sharing_allowed_screen = sharing_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, screens).share? : true
 
             sharing_allowed = sharing_allowed_screen
           end

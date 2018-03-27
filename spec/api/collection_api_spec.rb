@@ -405,31 +405,28 @@ describe Chemotion::CollectionAPI do
       describe 'sharing' do
         context 'with appropriate permissions' do
           let(:c1)  { create(:collection, user: user) }
-          let(:c2)  { create(:collection, user: user, is_shared: true, permission_level: 2) }
-          let(:s1)  { create(:sample) }
-          let(:s2)  { create(:sample) }
-          let(:r1)  { create(:reaction) }
-          let(:r2)  { create(:reaction) }
-          let(:w1)  { create(:wellplate) }
-          let(:w2)  { create(:wellplate) }
-          let(:sc1) { create(:screen) }
-          let(:sc2) { create(:screen) }
+          let(:s1)  { create(:sample, collections: [c1]) }
+          let(:s2)  { create(:sample, collections: [c1]) }
+          let(:s3)  { create(:sample, collections: [c1]) }
+          let!(:r1)  { create(:reaction, collections: [c1], samples: [s3]) }
+          let(:w1)  { create(:wellplate, collections: [c1]) }
+          let(:sc1) { create(:screen, collections: [c1]) }
 
           let!(:params) {
             {
-              current_collection_id: nil,
+              currentCollection: { id: c1.id },
               collection_attributes: attributes_for(:collection),
-              user_ids: [{value: user.id}, {value: u2.email}],
+              user_ids: [{ value: u2.email }],
               elements_filter: {
                 sample: {
-                  all: false,
-                  included_ids: [s1.id, s2.id],
-                  excluded_ids: []
+                  all: true,
+                  included_ids: [s1.id],
+                  excluded_ids: [s2.id]
                 },
                 reaction: {
                   all: true,
                   included_ids: [],
-                  excluded_ids: [r2.id]
+                  excluded_ids: []
                 },
                 wellplate: {
                   all: false,
@@ -437,108 +434,56 @@ describe Chemotion::CollectionAPI do
                   excluded_ids: []
                 },
                 screen: {
-                  all: false,
-                  included_ids: [sc1.id, sc2.id],
-                  excluded_ids: []
-                },
-                research_plan: {
-                  all: false,
+                  all: true,
                   included_ids: [],
-                  excluded_ids: []
-                }
+                  excluded_ids: [sc1.id]
+                },
+                research_plan: {}
               }
             }
           }
 
-          before do
-            CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
-            CollectionsSample.create!(collection_id: c2.id, sample_id: s2.id)
-            CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
-            CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
-            CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
-            CollectionsWellplate.create!(collection_id: c2.id, wellplate_id: w2.id)
-            CollectionsScreen.create!(collection_id: c1.id, screen_id: sc1.id)
-            CollectionsScreen.create!(collection_id: c1.id, screen_id: sc2.id)
-
-            post '/api/v1/collections/shared', params
-          end
-
           it 'creates shared collection with given samples' do
-            post '/api/v1/collections/shared', params
-
+            post '/api/v1/collections/shared', params.to_json, 'CONTENT_TYPE' => 'application/json'
             # naming convention for shared collections
-            c = Collection.find_by(label: 'My project with Musashi M')
+            c = Collection.where(is_shared: true, user_id: u2.id, shared_by_id: user.id)
+              .where("label LIKE 'My project with%'").first
             expect(c).to_not be_nil
-            expect(c.user_id).to eq user.id
-            expect(c.samples).to match_array [s1, s2]
+            expect(c.samples).to match_array [s1, s3]
             expect(c.reactions).to match_array [r1]
             expect(c.wellplates).to match_array [w1]
-            expect(c.screens).to match_array [sc1, sc2]
-
-            # naming convention for shared collections
-            c2 = Collection.find_by(label: "My project with #{u2.name}")
-            expect(c2).to_not be_nil
-            expect(c2.user_id).to eq u2.id
-            expect(c2.samples).to match_array [s1, s2]
-            expect(c2.reactions).to match_array [r1]
-            expect(c2.wellplates).to match_array [w1]
-            expect(c2.screens).to match_array [sc1, sc2]
+            expect(c.screens).to match_array []
           end
         end
 
         context 'with inappropriate permissions' do
-          let(:c1) { create(:collection, user: user) }
-          let(:c2) { create(:collection, user: user, is_shared: true, permission_level: 1) }
-          let(:s1) { create(:sample) }
-          let(:s2) { create(:sample) }
+          let(:c1) { create(:collection, user: user, is_shared: true, permission_level: 1) }
+          let(:s1) { create(:sample, collections: [c1]) }
 
           let!(:params) {
             {
-              current_collection_id: nil,
+              currentCollection: { id: c1.id },
               collection_attributes: attributes_for(:collection),
-              user_ids: [user.id, u2.email],
+              user_ids: [u2.id],
               elements_filter: {
                 sample: {
-                  all: false,
-                  included_ids: [s1.id, s2.id],
+                  all: true,
+                  included_ids: [s1.id],
                   excluded_ids: [],
-                  collection_id: 1
+                  collection_id: c1.id
                 },
-                reaction: {
-                  all: false,
-                  included_ids: [],
-                  excluded_ids: [],
-                  collection_id: 2
-                },
-                wellplate: {
-                  all: false,
-                  included_ids: [],
-                  excluded_ids: []
-                },
-                screen: {
-                  all: false,
-                  included_ids: [],
-                  excluded_ids: []
-                },
-                research_plan: {
-                  all: false,
-                  included_ids: [],
-                  excluded_ids: []
-                }
+                reaction: {},
+                wellplate: {},
+                screen: {},
+                research_plan: {},
               }
             }
           }
 
-          before do
-            CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
-            CollectionsSample.create!(collection_id: c2.id, sample_id: s2.id)
-          end
-
           it 'creates no shared collection' do
-            post '/api/v1/collections/shared', params
-
-            c = Collection.find_by(label: 'My project with Musashi M')
-            expect(c).to be_nil
+            post '/api/v1/collections/shared', params.to_json, 'CONTENT_TYPE' => 'application/json'
+            expect(Collection.where(is_shared: true, user_id: u2.id, shared_by_id: user.id)
+              .where("label LIKE 'My project with%'").first).to be_nil
           end
         end
       end

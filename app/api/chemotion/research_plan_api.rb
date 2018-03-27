@@ -1,6 +1,8 @@
 module Chemotion
   class ResearchPlanAPI < Grape::API
     include Grape::Kaminari
+    helpers ParamsHelpers
+    helpers CollectionHelpers
 
     namespace :research_plans do
       desc "Return serialized research plans of current user"
@@ -132,20 +134,18 @@ module Chemotion
         desc "Delete research  plans by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected research plans from the UI" do
-            requires :all, type: Boolean
-            requires :collection_id
-            optional :included_ids, type: Array
-            optional :excluded_ids, type: Array
+            use :ui_state_params
           end
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, ResearchPlan.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @research_plans = ResearchPlan.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @research_plans).destroy?
         end
 
         delete do
-          ResearchPlan.for_user(current_user.id).for_ui_state(params[:ui_state])
-            .presence&.destroy_all || { ui_state: [] }
+          @research_plans.presence&.destroy_all || { ui_state: [] }
         end
       end
 

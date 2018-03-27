@@ -6,6 +6,8 @@ module Chemotion
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ParamsHelpers
+    helpers CollectionHelpers
+    
     resource :samples do
 
       # TODO Refactoring: Use Grape Entities
@@ -18,21 +20,22 @@ module Chemotion
             optional :excluded_ids, type: Array
             optional :from_date, type: Date
             optional :to_date, type: Date
-            optional :collection_id
+            optional :collection_id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: "Limit number of samples"
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Sample.for_user(current_user.id).for_ui_state(params[:ui_state])).read?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read?
         end
 
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
-          samples = samples.limit(params[:limit]) if params[:limit]
-
-          {samples: samples.map{|s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}}
+          @samples = @samples.limit(params[:limit]) if params[:limit]
+          { samples: @samples.map{ |s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}  }
         end
 
         desc "Delete samples by UI state"
@@ -42,15 +45,18 @@ module Chemotion
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
             requires :collection_id
+            optional :is_sync_to_me, type: Boolean, default: false
           end
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Sample.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).destroy?
         end
 
         delete do
-          Sample.for_user(current_user.id).for_ui_state(params[:ui_state]).map { |sample|
+          samples = @samples.map { |sample|
             # DevicesSample.find_by(sample_id: sample.id).destroy
             # sample.devices_analyses.map{|d|
             #   d.analyses_experiments.destroy_all

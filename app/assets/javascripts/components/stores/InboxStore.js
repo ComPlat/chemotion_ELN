@@ -3,6 +3,7 @@ import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
 import DetailStore from './DetailStore';
+import ElementStore from './ElementStore';
 import _ from 'lodash'
 
 class InboxStore {
@@ -37,12 +38,7 @@ class InboxStore {
       ],
       handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
-      handleDeleteElement: [
-        ElementActions.deleteSamplesByUIState,
-        ElementActions.deleteReactionsByUIState,
-        ElementActions.deleteWellplatesByUIState,
-        ElementActions.deleteScreensByUIState
-      ]
+      handleDeleteElement: ElementActions.deleteElementsByUIState
     })
   }
 
@@ -158,11 +154,11 @@ class InboxStore {
   }
 
   handleDeleteElement(result) {
-    if (!result || !result.ui_state) { return null; }
+    // if (!result || !result.selecteds) { return null; }
+    this.waitFor(ElementStore.dispatchToken);
+    this.waitFor(DetailStore.dispatchToken);
     const { selecteds } = DetailStore.getState();
-    const shownElements = _.differenceBy(selecteds, result.ui_state, 'id');
-
-    shownElements.forEach(element => this.handleUpdateCreateElement(element));
+    selecteds.forEach(element => this.handleUpdateCreateElement(element));
   }
 
   sync() {
