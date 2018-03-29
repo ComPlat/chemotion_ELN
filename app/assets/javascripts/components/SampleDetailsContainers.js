@@ -10,9 +10,7 @@ import { RndNotAvailable, RndNoAnalyses, RndOrder,
 export default class SampleDetailsContainers extends Component {
   constructor(props) {
     super();
-    const { sample } = props;
     this.state = {
-      sample,
       activeAnalysis: UIStore.getState().sample.activeAnalysis,
       mode: 'edit',
     };
@@ -36,37 +34,36 @@ export default class SampleDetailsContainers extends Component {
     UIStore.listen(this.onUIStoreChange);
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      sample: nextProps.sample,
-    });
-  }
+  // componentWillReceiveProps(nextProps) {
+  // }
 
   componentWillUnmount() {
     UIStore.unlisten(this.onUIStoreChange);
   }
 
   onUIStoreChange(state) {
-    if (state.sample.activeAnalysis !== this.state.sample.activeAnalysis) {
+    if (state.sample.activeAnalysis !== this.state.activeAnalysis) {
       this.setState({ activeAnalysis: state.sample.activeAnalysis });
     }
   }
 
   handleChange(container) {
-    const { sample } = this.state;
-    const analyses = sample.container.children.find(child => (
-      child.container_type === 'analyses'
-    ));
-    let analysis = analyses.children.find(child => (
-      child.container_type === 'analysis' && child.id === container.id
-    ));
-    if (analysis) analysis = container;
+    const { sample } = this.props;
+    // const analyses = sample.container.children.find(child => (
+    //   child.container_type === 'analyses'
+    // ));
+    // analyses.children.map((child, ind) => {
+    //   if (child.container_type === 'analysis' && child.id === container.id) {
+    //     analyses.children[ind] = container;
+    //   }
+    //   return null;
+    // });
 
     this.props.handleSampleChanged(sample);
   }
 
   handleAdd() {
-    const { sample } = this.state;
+    const { sample } = this.props;
     const newContainer = this.buildEmptyAnalyContainer();
 
     const sortedConts = this.sortedContainers(sample);
@@ -74,20 +71,20 @@ export default class SampleDetailsContainers extends Component {
     const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
-    this.props.setState({ sample },
+    this.props.setState(prevState => ({ ...prevState, sample }),
       this.handleAccordionOpen(newContainer.id),
     );
   }
 
   handleMove(source, target) {
-    const { sample } = this.state;
+    const { sample } = this.props;
 
     const sortedConts = this.sortedContainers(sample);
     const newSortConts = reOrderArr(source, target, this.isEqCId, sortedConts);
     const newIndexedConts = this.indexedContainers(newSortConts);
 
     sample.analysesContainers()[0].children = newIndexedConts;
-    this.props.setState({ sample });
+    this.props.setState(prevState => ({ ...prevState, sample }));
   }
 
   sortedContainers(sample) {
@@ -115,17 +112,17 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleRemove(container) {
-    const { sample } = this.state;
+    const { sample } = this.props;
     container.is_deleted = true;
 
-    this.props.setState({ sample });
+    this.props.setState(prevState => ({ ...prevState, sample }));
   }
 
   handleUndo(container) {
     const { sample } = this.state;
     container.is_deleted = false;
 
-    this.props.setState({ sample });
+    this.props.setState(prevState => ({ ...prevState, sample }));
   }
 
   handleAccordionOpen(newKey) {
@@ -171,8 +168,8 @@ export default class SampleDetailsContainers extends Component {
   }
 
   render() {
-    const { sample, activeAnalysis, mode } = this.state;
-    const { readOnly } = this.props;
+    const { activeAnalysis, mode } = this.state;
+    const { readOnly, sample } = this.props;
     const isDisabled = !sample.can_update;
 
     if (sample.container == null) return <RndNotAvailable />;
