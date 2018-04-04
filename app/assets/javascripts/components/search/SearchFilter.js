@@ -48,8 +48,17 @@ export default class SearchFilter extends React.Component {
           label: 'Sample External Label'
         },
         label: 'Sample External Label'
+      },
+      {
+        value: {
+          table: 'molecules',
+          column: 'cas',
+          ext_key: 'molecule_id',
+          label: 'CAS'
+        },
+        label: 'CAS'
       }
-    ]
+    ];
 
     for (let i = 0; i < XSearchParams.count; i++){
       if (XSearchParams[`on${i}`]) {

@@ -161,7 +161,8 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w(name short_label external_label)
+    'samples' => %w(name short_label external_label),
+    'molecules' => %w(cas)
   }
 
   mount Chemotion::ContainerAPI
