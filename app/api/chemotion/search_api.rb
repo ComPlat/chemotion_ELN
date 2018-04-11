@@ -105,7 +105,7 @@ module Chemotion
           next unless whitelisted_table(**adv_field)
           next unless filter_with_detail_level(**adv_field)
           table = filter['field']['table']
-          tables.push(table)
+          tables.push(table: table, ext_key: filter['field']['ext_key'])
           field = filter['field']['column']
           words = filter['value'].split(/,|(\r)?\n/).map!(&:strip)
           words = words.map { |e| "%#{e}%" } unless filter['match'] == '='
@@ -116,11 +116,18 @@ module Chemotion
         end
 
         scope = Sample.by_collection_id(c_id.to_i)
-        tables.each do |table|
-          if table.casecmp('samples') != 0
-            scope = scope.joins("INNER JOIN #{table} ON "\
-                                "#{table}.sample_id = samples.id")
-          end
+        tables.each do |table_info|
+          table = table_info[:table]
+          ext_key = table_info[:ext_key]
+          next if table.casecmp('samples').zero?
+
+          scope = if ext_key.nil?
+                    scope = scope.joins("INNER JOIN #{table} ON "\
+                                        "#{table}.sample_id = samples.id")
+                  else
+                    scope = scope.joins("INNER JOIN #{table} ON "\
+                                        "samples.#{ext_key} = #{table}.id")
+                  end
         end
         scope = scope.where([query] + cond_val)
 
