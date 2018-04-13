@@ -13,13 +13,13 @@ export default class ModalExport extends React.Component {
     this.state = {
       columns: {
         sample: [
-          {value: ["sample_svg_file", "molecule_svg_file"], text: "image", checked: true},
+          {value: ["sample_svg_file", "molecule_svg_file"], text: "image", checked: false},
           {value: "name", text: "name", checked: true},
           {value: "molecule_name", text: "molecule name", checked: true},
           {value: "external_label", text: "external label", checked: false},
           {value: "short_label", text: "short label", checked: false},
-          {value: "description", text: "description", checked: true},
-          {value: ["real_amount_value", "real_amount_unit"], text: "real amount", checked: false},
+          {value: "description", text: "description", checked: false},
+          {value: ["real_amount_value", "real_amount_unit"], text: "real amount", checked: true},
           {value: ["target_amount_value", "target_amount_unit"], text: "target amount", checked: false},
           {value: ["molarity_value", "molarity_unit"], text: "molarity", checked: false},
           {value: "density", text: "density", checked: false},
@@ -38,9 +38,9 @@ export default class ModalExport extends React.Component {
         ],
         molecule: [
           {value: "cano_smiles", text: "canonical smiles", checked: true},
-          {value: "inchistring", text: "InChIstring", checked: true},
-          {value: "inchikey", text: "InChIkey", checked: true},
-          {value: "sum_formular", text: "sum formula", checked: true},
+          {value: "inchistring", text: "InChIstring", checked: false},
+          {value: "inchikey", text: "InChIkey", checked: false},
+          {value: "sum_formular", text: "sum formula", checked: false},
           {value: "molecular_weight", text: "molecular weight", checked: false},
         ],
         reaction: [
