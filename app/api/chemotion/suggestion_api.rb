@@ -12,6 +12,7 @@ module Chemotion
         requires :collection_id, type: String
         requires :query, type: String, desc: 'Search query'
         optional :is_sync, type: Boolean, default: false
+        requires :query, type: String
       end
 
       def search_possibilities_to_suggestions(search_possibilities)
@@ -42,7 +43,7 @@ module Chemotion
         qry = params[:query]
 
         case type
-        when 'sample'
+        when 'samples'
           sample_short_label = dl_s > 0 && search_by_field.call(Sample, :short_label, qry) || []
           sample_external_label = dl_s > -1 && search_by_field.call(Sample, :external_label, qry) || []
           sample_name = dl_s > 0 && search_by_field.call(Sample, :name, qry) || []
@@ -63,7 +64,7 @@ module Chemotion
             inchistring: inchistring,
             cano_smiles: cano_smiles
           }
-        when 'reaction'
+        when 'reactions'
           reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
           reaction_short_label = dl_r > -1 && search_by_field.call(Reaction, :short_label, qry) || []
           reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
@@ -80,7 +81,7 @@ module Chemotion
             inchistring: inchistring,
             cano_smiles: cano_smiles
           }
-        when 'wellplate'
+        when 'wellplates'
           wellplate_name = dl_wp > -1 && search_by_field.call(Wellplate, :name, qry) || []
           sample_name = dl_s > 0 && d_for.call(Sample).with_wellplates.by_name(qry).pluck(:name).uniq || []
           iupac_name = dl_s > 0 && d_for.call(Molecule).with_wellplates.by_iupac_name(qry).pluck(:iupac_name).uniq || []
@@ -93,7 +94,7 @@ module Chemotion
             inchistring: inchistring,
             cano_smiles: cano_smiles
           }
-        when 'screen'
+        when 'screens'
           screen_name = dl_sc > -1 &&  search_by_field.call(Screen, :name, qry) || []
           conditions = dl_sc > -1 &&  search_by_field.call(Screen, :conditions, qry) || []
           requirements = dl_sc > -1 &&  search_by_field.call(Screen, :requirements, qry) || []
@@ -146,92 +147,17 @@ module Chemotion
         set_var
       end
 
-      namespace :all do
+      route_param :element_type, type: String, values: %w[all samples reactions wellplates screens] do
         desc 'Return all suggestions for AutoCompleteInput'
         params do
           use :suggestion_params
         end
-        route_param :query do
-          get do
-            search_possibilities =
-              search_possibilities_by_type_user_and_collection('all')
-
-            {
-              suggestions:
-                search_possibilities_to_suggestions(search_possibilities)
-            }
-          end
+        get do
+          params[:element_type]
+          search_possibilities = search_possibilities_by_type_user_and_collection(params[:element_type])
+          { suggestions: search_possibilities_to_suggestions(search_possibilities) }
         end
       end
-
-      namespace :samples do
-        desc 'Return sample suggestions for AutoCompleteInput'
-        params do
-          use :suggestion_params
-        end
-        route_param :query do
-          get do
-            search_possibilities =
-              search_possibilities_by_type_user_and_collection('sample')
-            {
-              suggestions:
-                search_possibilities_to_suggestions(search_possibilities)
-            }
-          end
-        end
-      end
-
-      namespace :reactions do
-        desc 'Return reaction suggestions for AutoCompleteInput'
-        params do
-          use :suggestion_params
-        end
-        route_param :query do
-          get do
-            search_possibilities =
-              search_possibilities_by_type_user_and_collection('reaction')
-            {
-              suggestions:
-                search_possibilities_to_suggestions(search_possibilities)
-            }
-          end
-        end
-      end
-
-      namespace :wellplates do
-        desc 'Return wellplate suggestions for AutoCompleteInput'
-        params do
-          use :suggestion_params
-        end
-        route_param :query do
-          get do
-            search_possibilities =
-              search_possibilities_by_type_user_and_collection('wellplate')
-            {
-              suggestions:
-                search_possibilities_to_suggestions(search_possibilities)
-            }
-          end
-        end
-      end
-
-      namespace :screens do
-        desc 'Return screen suggestions for AutoCompleteInput'
-        params do
-          use :suggestion_params
-        end
-        route_param :query do
-          get do
-            search_possibilities =
-              search_possibilities_by_type_user_and_collection('screen')
-            {
-              suggestions:
-                search_possibilities_to_suggestions(search_possibilities)
-            }
-          end
-        end
-      end
-
     end
   end
 end
