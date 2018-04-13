@@ -15,8 +15,8 @@ export default class ModalExport extends React.Component {
         sample: [
           {value: ["sample_svg_file", "molecule_svg_file"], text: "image", checked: false},
           {value: "name", text: "name", checked: true},
-          {value: "molecule_name", text: "molecule name", checked: true},
-          {value: "external_label", text: "external label", checked: false},
+          {value: "molecule_name", text: "molecule name", checked: false},
+          {value: "external_label", text: "external label", checked: true},
           {value: "short_label", text: "short label", checked: false},
           {value: "description", text: "description", checked: false},
           {value: ["real_amount_value", "real_amount_unit"], text: "real amount", checked: true},
@@ -33,7 +33,7 @@ export default class ModalExport extends React.Component {
         //  {value: "identifier", text: "identifier", checked: false},
           {value: "melting_point", text: "melting point", checked: false},
           {value: "boiling_point", text: "boiling point", checked: false},
-          {value: "created_at", text: "created at", checked: false},
+          {value: "created_at", text: "created at", checked: true},
           {value: "updated_at", text: "updated at", checked: false},
         ],
         molecule: [
@@ -44,8 +44,8 @@ export default class ModalExport extends React.Component {
           {value: "molecular_weight", text: "molecular weight", checked: false},
         ],
         reaction: [
-          {value: "name", text: "reaction name", checked: true},
-          {value: "short_label", text: "r short label", checked: true},
+          {value: "name", text: "reaction name", checked: false},
+          {value: "short_label", text: "r short label", checked: false},
           {value: "reference", text: "reference", checked: false},
           {value: "equivalent", text: "equivalent", checked: false},
         ],
