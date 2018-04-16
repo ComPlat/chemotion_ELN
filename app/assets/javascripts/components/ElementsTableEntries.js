@@ -83,7 +83,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   isCurrEleDropType(type) {
-    const {currentElement} = ElementStore.getState();
+    const { currentElement } = ElementStore.getState();
     const targets = {
       sample: ['reaction', 'wellplate'],
       wellplate: ['screen'],
