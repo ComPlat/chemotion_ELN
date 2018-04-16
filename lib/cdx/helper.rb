@@ -206,6 +206,10 @@ module Cdx
       target ? "05 06 04 00 #{"%02X" % target.to_i} 00 00 00 " : ""
     end
 
+# **workaround openbabel
+# Mol and chemdraw have differnet y-axis direction
+# Here I invert WedgedHash & Wedge
+# This will be reverted when openbabel is improved.
     def bond_display
       disp = root["Display"]
       return "" unless disp
@@ -216,15 +220,15 @@ module Cdx
       when "Hash"
         "02 00 "
       when "WedgedHashBegin"
-        "03 00 "
+        "06 00 "
       when "WedgedHashEnd"
-        "04 00 "
+        "07 00 "
       when "Bold"
         "05 00 "
       when "WedgeBegin"
-        "06 00 "
+        "03 00 "
       when "WedgeEnd"
-        "07 00 "
+        "04 00 "
       when "Wavy"
         "08 00 "
       when "HollowWedgeBegin"
