@@ -153,12 +153,18 @@ module Chemotion
             collection_id: @collection.id
           )
           imp.import
+          primary_store = Rails.configuration.storage.primary_store
+          new_attachments = []
           imp.new_attachments.each_pair do |key, att|
             next unless (tmp = params[key]&.fetch('tempfile', nil))
             att.file_path = tmp.path
             att.created_by = @user.id
+            att.created_for = nil
             att.save!
+            new_attachments << att
           end
+          # TODO: delayed_jobs this
+          new_attachments.each { |att| att.update!(storage: primary_store) }
           status(200)
         end
       end
