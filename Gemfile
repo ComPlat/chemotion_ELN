@@ -77,6 +77,7 @@ gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 gem 'roo', '>2.5.0'
 
 gem 'faraday', '~> 0.12.1'
+gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
 gem 'ketcherails', git: 'https://git.scc.kit.edu/ComPlat/ketcher-rails.git', branch: 'coordination_bond_suppport'

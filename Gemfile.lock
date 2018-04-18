@@ -238,6 +238,8 @@ GEM
       i18n (~> 0.5)
     faraday (0.12.2)
       multipart-post (>= 1.2, < 3)
+    faraday_middleware (0.12.2)
+      faraday (>= 0.7.4, < 1.0)
     fast_stack (0.2.0)
     ffi (1.9.18)
     flamegraph (0.9.5)
@@ -604,6 +606,7 @@ DEPENDENCIES
   factory_girl_rails
   faker (~> 1.6.6)
   faraday (~> 0.12.1)
+  faraday_middleware (~> 0.12.1)
   fast_stack
   flamegraph
   font-awesome-rails

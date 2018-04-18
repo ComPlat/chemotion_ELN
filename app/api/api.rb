@@ -24,7 +24,8 @@ class API < Grape::API
       request.path.start_with?(
         '/api/v1/public/',
         '/api/v1/ketcher/layout',
-        '/api/v1/gate/receiving'
+        '/api/v1/gate/receiving',
+        '/api/v1/gate/ping'
       )
     end
 
