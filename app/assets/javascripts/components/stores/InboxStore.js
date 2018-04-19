@@ -2,7 +2,6 @@ import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
-import DetailStore from './DetailStore';
 import ElementStore from './ElementStore';
 import _ from 'lodash'
 
@@ -156,8 +155,7 @@ class InboxStore {
   handleDeleteElement(result) {
     // if (!result || !result.selecteds) { return null; }
     this.waitFor(ElementStore.dispatchToken);
-    this.waitFor(DetailStore.dispatchToken);
-    const { selecteds } = DetailStore.getState();
+    const { selecteds } = ElementStore.getState();
     selecteds.forEach(element => this.handleUpdateCreateElement(element));
   }
 

@@ -28,7 +28,7 @@ export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
 
-    const {reaction} = props;
+    const { reaction } = props;
     this.state = {
       reaction: reaction,
       activeTab: UIStore.getState().reaction.activeTab,
@@ -58,30 +58,28 @@ export default class ReactionDetails extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {reaction} = this.state;
+    const { reaction } = this.state;
     const nextReaction = nextProps.reaction;
 
-    if (nextReaction.id != reaction.id ||
-        nextReaction.updated_at != reaction.updated_at ||
-        nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+    if (nextReaction.id !== reaction.id ||
+        nextReaction.updated_at !== reaction.updated_at ||
+        nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
         nextReaction.changed || nextReaction.editedSample) {
-      this.setState({
-        reaction: nextReaction
-      });
+      this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    let nextReaction = nextProps.reaction;
-    let nextActiveTab = nextState.activeTab
-    const {reaction, activeTab} = this.state;
+    const nextReaction = nextProps.reaction;
+    const nextActiveTab = nextState.activeTab;
+    const { reaction, activeTab } = this.state;
     return (
-      nextReaction.id != reaction.id ||
-      nextReaction.updated_at != reaction.updated_at ||
-      nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+      nextReaction.id !== reaction.id ||
+      nextReaction.updated_at !== reaction.updated_at ||
+      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab != activeTab
-    )
+      nextActiveTab !== activeTab
+    );
   }
 
   updateReactionSvg() {
@@ -109,7 +107,7 @@ export default class ReactionDetails extends Component {
     ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 
-  handleSubmit() {
+  handleSubmit(closeView = false) {
     const {reaction} = this.state;
 
     if(reaction && reaction.isNew) {
@@ -118,9 +116,8 @@ export default class ReactionDetails extends Component {
       ElementActions.updateReaction(reaction);
     }
 
-    if(reaction.is_new) {
-      const force = true;
-      DetailActions.close(reaction, force);
+    if(reaction.is_new || closeView) {
+      DetailActions.close(reaction, true);
     }
   }
 
@@ -248,6 +245,20 @@ export default class ReactionDetails extends Component {
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
               onClick={() => DetailActions.close(reaction)}>
             <i className="fa fa-times"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.handleSubmit(true)}
+            disabled={!this.reactionIsValid() || reaction.isNew}
+            style={{ display: hasChanged }}
+          >
+            <i className="fa fa-floppy-o" />
+            <i className="fa fa-times" />
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"

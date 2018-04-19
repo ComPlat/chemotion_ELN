@@ -8,7 +8,7 @@ class DetailActions {
   }
 
   close(deleteEl, force = false) {
-    return {deleteEl, force}
+    return { deleteEl, force }
   }
 
   confirmDelete(confirm) {

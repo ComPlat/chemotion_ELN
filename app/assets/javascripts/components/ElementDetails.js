@@ -11,16 +11,19 @@ import { ConfirmModal } from './common/ConfirmModal';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
 import DetailActions from './actions/DetailActions';
-import DetailStore from './stores/DetailStore';
+import ElementStore from './stores/ElementStore';
+import { SameEleTypId } from './utils/ElementUtils';
 
 export default class ElementDetails extends Component {
   constructor(props) {
     super(props);
-
+    const { selecteds, activeKey, deletingElement } = ElementStore.getState();
     this.state = {
       offsetTop: 70,
       fullScreen: false,
-      ...DetailStore.getState()
+      selecteds,
+      activeKey,
+      deletingElement,
     };
 
     this.handleResize = this.handleResize.bind(this);
@@ -32,22 +35,31 @@ export default class ElementDetails extends Component {
     window.addEventListener('resize', this.handleResize);
     window.scrollTo(window.scrollX, window.scrollY + 1);
     // imitate scroll event to make StickyDiv element visible in current area
-    DetailStore.listen(this.onDetailChange);
-    DetailActions.changeCurrentElement.defer(null, this.props.currentElement);
+    ElementStore.listen(this.onDetailChange);
+    if (this.props.currentElement !== null) {
+      DetailActions.changeCurrentElement.defer(null, this.props.currentElement);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
-    const oriProps = this.props;
-    DetailActions.changeCurrentElement.defer(oriProps.currentElement, nextProps.currentElement);
+    if (!SameEleTypId(this.props.currentElement, nextProps.currentElement)) {
+      DetailActions.changeCurrentElement.defer(this.props.currentElement, nextProps.currentElement);
+    }
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+
+    return true;
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
-    DetailStore.unlisten(this.onDetailChange);
+    ElementStore.unlisten(this.onDetailChange);
   }
 
   onDetailChange(state) {
-    this.setState({ ...state });
+    const { selecteds, activeKey, deletingElement } = state;
+    this.setState(prevState => ({ ...prevState, selecteds, activeKey, deletingElement }));
   }
 
   toggleFullScreen() {
@@ -163,8 +175,7 @@ export default class ElementDetails extends Component {
   confirmDeleteContent() {
     return (
       <div>
-        <p>If you select Yes, you will lose the unsaved data.</p>
-        <p>Are you sure to close it?</p>
+        <p>Unsaved data will be lost.</p>
       </div>
     );
   }

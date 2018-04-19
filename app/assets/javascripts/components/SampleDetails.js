@@ -138,8 +138,8 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
-    let {sample} = this.state;
-    if(sample.belongTo && sample.belongTo.type === 'reaction') {
+    const { sample } = this.state;
+    if (sample.belongTo && sample.belongTo.type === 'reaction') {
       let reaction = sample.belongTo;
       reaction.editedSample = sample;
       const materialGroup = sample.matGroup;
@@ -163,8 +163,7 @@ export default class SampleDetails extends React.Component {
       }
     }
     if(sample.is_new || closeView) {
-      const force = true;
-      DetailActions.close(sample, force);
+      DetailActions.close(sample, true);
     }
     sample.updateChecksum();
   }
@@ -291,6 +290,16 @@ export default class SampleDetails extends React.Component {
           <Button bsStyle="danger" bsSize="xsmall" className="button-right"
             onClick={() => DetailActions.close(sample)}>
             <i className="fa fa-times"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+            onClick={() => this.handleSubmit(true)}
+            style={{display: saveBtnDisplay}}
+            disabled={!this.sampleIsValid() || !sample.can_update} >
+            <i className="fa fa-floppy-o" />
+            <i className="fa fa-times"  />
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
