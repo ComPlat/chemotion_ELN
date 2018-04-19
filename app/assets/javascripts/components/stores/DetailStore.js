@@ -21,6 +21,7 @@ class DetailStore {
       handleChangeCurrentElement: DetailActions.changeCurrentElement,
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
       handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
+      handleUpdateMoleculeCas: DetailActions.updateMoleculeCas,
     })
   }
 
@@ -71,13 +72,21 @@ class DetailStore {
     this.setState({ selecteds: newSelecteds })
   }
 
-  handleUpdateMoleculeNames(updatedSample) {
+  UpdateMolecule(updatedSample) {
     if (updatedSample) {
       const selecteds = this.selecteds;
       const index = this.elementIndex(selecteds, updatedSample);
       const newSelecteds = this.updateElement(updatedSample, index);
       this.setState({ selecteds: newSelecteds });
     }
+  }
+
+  handleUpdateMoleculeNames(updatedSample) {
+    this.UpdateMolecule(updatedSample);
+  }
+
+  handleUpdateMoleculeCas(updatedSample) {
+    this.UpdateMolecule(updatedSample);
   }
 
   synchronizeElements(close, open) {

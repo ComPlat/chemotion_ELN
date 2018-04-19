@@ -135,12 +135,11 @@ class Molecule < ActiveRecord::Base
     end.join
   end
 
-  def load_cas
-    if inchikey.present? && cas.blank?
-      xref = Chemotion::PubchemService.xref_from_inchikey(inchikey)
-      self.cas = get_cas(xref)
-      self.save
-    end
+  def load_cas(force = false)
+    return unless inchikey.present?
+    return unless force || cas.blank?
+    self.cas = PubChem.get_cas_from_cid(cid)
+    save
   end
 
   def create_molecule_names
@@ -172,12 +171,8 @@ private
     end
   end
 
-  def get_cas xref
-    begin
-      xref_json = JSON.parse(xref)
-      xref_json["InformationList"]["Information"].first["RN"]
-    rescue
-      []
-    end
+  def cid
+    tag.taggable_data['pubchem_cid'] ||
+      PubChem.get_cid_from_inchikey(inchikey)
   end
 end

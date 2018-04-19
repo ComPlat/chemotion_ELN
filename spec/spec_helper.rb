@@ -59,6 +59,14 @@ RSpec.configure do |config|
                          'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
                          'Content-Type'=>'application/x-www-form-urlencoded'}).
       to_return { |request| { body: get_cids_from_inchikeys(request.body) } }
+
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/123456789/XML?heading=CAS').
+      with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(
+        status: 200,
+        body: File.read(Rails.root + 'spec/fixtures/body_123456789_CAS.xml'),
+        headers: {"Content-Type"=> "application/xml"}
+      )
   end
 
   config.expect_with :rspec do |expectations|
