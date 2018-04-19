@@ -106,6 +106,7 @@ gem 'rubocop', require: false
 gem 'yaml_db'
 
 gem 'ruby-ole'
+gem 'ruby-geometry', require: 'geometry'
 
 # CI
 gem 'coveralls', require: false
@@ -114,8 +115,8 @@ gem 'coveralls', require: false
 # to compile from github/openbabel/openbabel master
 # gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem'
 # to compile from github/openbabel/openbabel branch openbabel-2-4-x
-gem 'openbabel', '2.4.0.1', git: 'https://github.com/ComPlat/openbabel-gem',
-                            branch: 'openbabel-2-4-x'
+gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem',
+                            branch: 'cdx-extraction'
 
 gem 'barby'
 gem 'prawn'
