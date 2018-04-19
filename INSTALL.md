@@ -88,6 +88,7 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 # Docker setup
 This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
 (For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
+**Make sure you have finished the BASIC SETUP FIRST**
 
 1. Build the image from Dockerfile `docker-compose build` or pull the image: `docker-compose pull`
 2. Initialize database FIRST:
