@@ -55,6 +55,7 @@ export default class SampleDetails extends React.Component {
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
+    this.addManualCas = this.addManualCas.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -405,6 +406,10 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  addManualCas(e) {
+    DetailActions.updateMoleculeCas(this.props.sample, e.value);
+  }
+
   moleculeCas() {
     const { sample, isCasLoading } = this.state;
     const { molecule, xref } = sample;
@@ -414,19 +419,23 @@ export default class SampleDetails extends React.Component {
     if(molecule && molecule.cas) {
       casArr = molecule.cas.map(c => Object.assign({label: c}, {value: c}));
     }
+    const onChange = e => this.updateCas(e);
+    const onOpen = e => this.onCasSelectOpen(e, casArr);
 
     return (
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>CAS</InputGroup.Addon>
-        <Select ref='casSelect'
-                name='cas'
-                multi={false}
-                options={casArr}
-                onChange={(e) => this.updateCas(e)}
-                onOpen={(e) => this.onCasSelectOpen(e, casArr)}
-                isLoading={isCasLoading}
-                value={cas}
-                disabled={!sample.can_update}
+        <Select.Creatable
+          ref='casSelect'
+          name='cas'
+          multi={false}
+          options={casArr}
+          onChange={onChange}
+          onOpen={onOpen}
+          onNewOptionClick={this.addManualCas}
+          isLoading={isCasLoading}
+          value={cas}
+          disabled={!sample.can_update}
         />
         <InputGroup.Button>
           <OverlayTrigger placement="bottom"

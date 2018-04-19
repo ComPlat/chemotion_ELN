@@ -77,7 +77,7 @@ M  END"
 
         get "/api/v1/molecules/cas?inchikey=#{m.inchikey}"
         expect(JSON.parse(response.body)["cas"])
-          .to eq ["123-456-789", "987-654-321", "558440-22-5"]
+          .to eq ["110-86-1"]
       end
     end
 

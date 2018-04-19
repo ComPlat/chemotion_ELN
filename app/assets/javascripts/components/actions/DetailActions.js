@@ -46,6 +46,13 @@ class DetailActions {
         .catch(errorMessage => console.log(errorMessage));
     };
   }
+
+  updateMoleculeCas(sample, newCas = '') {
+    const m = sample.molecule;
+    m.cas = [...m.cas, newCas];
+    sample.molecule = m;
+    return sample;
+  }
 }
 
 export default alt.createActions(DetailActions)
