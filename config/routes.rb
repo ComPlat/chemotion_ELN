@@ -13,7 +13,8 @@ Rails.application.routes.draw do
     patch 'pages/update_affiliations', to: 'pages#update_affiliations'
 
     # Standalone page for docx processing
-    get 'docx', to: 'pages#docx'
+    # get 'docx', to: 'pages#docx'
+    get 'docx', to: 'pages#chemread'
     get 'command_n_control', to: 'pages#cnc'
   end
 

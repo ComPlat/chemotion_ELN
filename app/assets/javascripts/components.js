@@ -2,8 +2,8 @@
 
 var React = require('react');
 var Home = require('./libHome/Home');
-var Docx = require('./components/docx/DocxContainer');
 var CnC = require('./libCnC/CnC');
+var ChemRead = require('./components/chemread/ChemReadContainer');
 var App = require('./components/App');
 
 //= require_self

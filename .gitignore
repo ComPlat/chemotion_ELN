@@ -58,14 +58,14 @@
 /public/images/*
 !/public/images/wild_card/
 
-/uploads/attachments/*
-/uploads/thumbnails
+/uploads/*
 !/public/attachments/.keep
+
 
 /public/docx/*
 !/public/docx/.keep
 
-/public/assets/*.js
+/public/assets/*
 
 /coverage/
 
