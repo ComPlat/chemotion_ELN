@@ -14,7 +14,8 @@ import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
-import DeviceFetcher from '../fetchers/DeviceFetcher'
+import DeviceFetcher from '../fetchers/DeviceFetcher';
+import ContainerFetcher from '../fetchers/ContainerFetcher';
 
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -22,6 +23,7 @@ import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
+import Format from '../models/Format';
 import DeviceControl from '../models/DeviceControl'
 
 import _ from 'lodash';
@@ -571,6 +573,10 @@ class ElementActions {
     return  Report.buildEmpty()
   }
 
+  showFormatContainer() {
+    return Format.buildEmpty();
+  }
+
   // -- General --
 
   refreshElements(type) {
@@ -698,6 +704,17 @@ class ElementActions {
 
   changeSorting(sort) {
     return sort;
+  }
+
+  updateContainerContent(params) {
+    return (dispatch) => {
+      ContainerFetcher.updateContainerContent(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
 }

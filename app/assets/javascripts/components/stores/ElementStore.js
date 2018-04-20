@@ -184,6 +184,7 @@ class ElementStore {
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
           ElementActions.showReportContainer,
+          ElementActions.showFormatContainer,
           ElementActions.showDeviceControl,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,

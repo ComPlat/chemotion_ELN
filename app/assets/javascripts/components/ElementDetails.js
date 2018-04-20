@@ -9,6 +9,7 @@ import ScreenDetails from './ScreenDetails';
 import ResearchPlanDetails from './ResearchPlanDetails';
 import { ConfirmModal } from './common/ConfirmModal';
 import ReportContainer from './report/ReportContainer';
+import FormatContainer from './FormatContainer';
 import DetailActions from './actions/DetailActions';
 import DetailStore from './stores/DetailStore';
 
@@ -112,6 +113,8 @@ export default class ElementDetails extends Component {
         );
       case 'report':
         return <ReportContainer report={el} />;
+      case 'format':
+        return <FormatContainer format={el}/>;
       default:
         return (<span />);
     }
@@ -140,6 +143,14 @@ export default class ElementDetails extends Component {
         <span>
           <i className="fa fa-bar-chart" />
           <i className="fa fa-cogs" />
+        </span>
+      );
+    } else if (el.type === 'format') {
+      title = "Format";
+      bsStyle = "primary";
+      iconElement = (
+        <span>
+          <i className="fa fa-magic" />
         </span>
       );
     }
