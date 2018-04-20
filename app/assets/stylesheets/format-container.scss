@@ -1,0 +1,8 @@
+.format-analysis-panel .ql-hidden {
+  display: none;
+}
+
+.format-analysis-panel > .panel-body {
+  overflow-y: scroll;
+  max-height: calc(100vh - 250px);
+}

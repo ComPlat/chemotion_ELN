@@ -3,7 +3,7 @@ import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'rea
 import UIStore from './../stores/UIStore';
 import UIActions from './../actions/UIActions'
 import CreateButton from './CreateButton';
-import ReportButton from './ReportButton';
+import ReportUtilButton from './ReportUtilButton';
 import ExportImportButton from './ExportImportButton';
 import ScanCodeButton from './ScanCodeButton';
 //import DeviceButton from './DeviceButton'
@@ -55,10 +55,11 @@ export default class ContextActions extends React.Component {
     return (
       <div style={{display: 'inline', float: 'left'}}>
         <ButtonGroup>
-          <ExportImportButton isDisabled={this.isDisabled()}
-                              updateModalProps={updateModalProps} />
-          <ReportButton />
-        
+          <ExportImportButton
+            isDisabled={this.isDisabled()}
+            updateModalProps={updateModalProps}
+          />
+          <ReportUtilButton />
         </ButtonGroup>
         <ButtonGroup style={{marginLeft: '10px'}}>
           <CreateButton isDisabled={this.isCreateDisabled()}/>
