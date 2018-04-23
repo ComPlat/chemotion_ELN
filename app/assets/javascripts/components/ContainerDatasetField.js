@@ -3,6 +3,7 @@ import {Button, ButtonToolbar} from 'react-bootstrap';
 import InboxActions from './actions/InboxActions';
 import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
+import AttachmentFetcher from './fetchers/AttachmentFetcher';
 
 const dataTarget = {
   canDrop(props, monitor) {
@@ -105,7 +106,7 @@ class ContainerDatasetField extends Component{
           {dataset_container.name}
         </a>
         <ButtonToolbar className="pull-right">
-          <Button bsSize="xsmall" bsStyle="info" onClick={() => alert("zip download not implemented yet.")}>
+          <Button bsSize="xsmall" bsStyle="info" onClick={() => AttachmentFetcher.downloadZip(dataset_container.id)}>
             <i className="fa fa-download"></i>
           </Button>
           {this.removeButton(dataset_container)}

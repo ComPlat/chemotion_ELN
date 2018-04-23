@@ -49,7 +49,7 @@ module Chemotion
           can_dwnld = false
           if request.url =~ /zip/
             @container = Container.find(params[:container_id])
-            if (element = container.root.containable)
+            if (element = @container.root.containable)
               can_read = ElementPolicy.new(current_user, element).read?
               can_dwnld = can_read &&
                           ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
@@ -111,9 +111,20 @@ module Chemotion
 
       desc "Download the zip attachment file"
       get 'zip/:container_id' do
-        @container.attachments.each do |att|
-          #TODO
+        env['api.format'] = :binary
+        content_type('application/zip, application/octet-stream')
+        filename = URI.escape("#{@container.parent&.name.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
+        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+        zip = Zip::OutputStream.write_buffer do |zip|
+          @container.attachments.each do |att|
+            zip.put_next_entry att.filename
+            zip.write att.read_file
+          end
+          zip.put_next_entry "dataset_description.txt"
+          zip.write @container.description
         end
+        zip.rewind
+        zip.read
       end
 
       desc 'Return Base64 encoded thumbnail'
