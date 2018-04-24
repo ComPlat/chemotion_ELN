@@ -15,10 +15,9 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/openbabel-gem
-  revision: b651909dc84ea33ab79a8e95dc50486ba272a3d4
-  branch: cdx-extraction
+  revision: 34841ba87e7691d7062229087fff49cd1db3ec17
   specs:
-    openbabel (2.4.1.2)
+    openbabel (2.4.90.1)
 
 GIT
   remote: https://github.com/ComPlat/sablon
@@ -636,7 +635,7 @@ DEPENDENCIES
   net-sftp
   net-ssh
   nokogiri
-  openbabel (= 2.4.1.2)!
+  openbabel (= 2.4.90.1)!
   paranoia (~> 2.0)
   pg (~> 0.20.0)
   pg_search
