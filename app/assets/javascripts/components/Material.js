@@ -8,7 +8,7 @@ import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 import SampleName from './common/SampleName';
 import ElementActions from './actions/ElementActions';
 import { UrlSilentNavigation, SampleCode } from './utils/ElementUtils';
-import { validDigit } from './utils/MathUtils';
+import { correctPrefix, validDigit } from './utils/MathUtils';
 import Reaction from './models/Reaction';
 import Sample from './models/Sample';
 
@@ -301,14 +301,30 @@ class Material extends Component {
   }
 
   createParagraph(m) {
+    const { materialGroup } = this.props;
     const molName = m.molecule.iupac_name;
-    const weight = `${validDigit(m.amount_g, 3)} g`;
-    const mmol = `${validDigit(m.amount_mol * 1000, 3)} mmol`;
-    const vol = `${validDigit(m.amount_l * 1000, 2)} mL`;
-    const equiv = `${validDigit(m.equivalent, 3)} equiv`;
-    return this.props.materialGroup === 'solvents'
-      ? `${molName} (${vol})`
-      : `${molName} (${weight}, ${mmol}, ${equiv})`;
+    const gUnit = correctPrefix(m.amount_g, 3);
+    const lUnit = correctPrefix(m.amount_l, 3);
+    const molUnit = correctPrefix(m.amount_mol, 2);
+
+    const grm = gUnit ? `${gUnit}g, ` : '';
+    const vol = lUnit ? `${lUnit}L, ` : '';
+    const solVol = vol.substr(0, vol.length - 2);
+    const mol = molUnit ? `${molUnit}mol, ` : '';
+    const eqv = `${validDigit(m.equivalent, 3)}`;
+    const yld = `${Math.round(m.equivalent * 100)}%`;
+
+    switch (materialGroup) {
+      case 'solvents': {
+        return `${molName} (${solVol})`;
+      }
+      case 'products': {
+        return `${molName} (${grm}${vol}${mol}${yld} yield)`;
+      }
+      default: {
+        return `${molName} (${grm}${vol}${mol}${eqv} equiv)`;
+      }
+    }
   }
 
   handleAddToDesc(material) {
