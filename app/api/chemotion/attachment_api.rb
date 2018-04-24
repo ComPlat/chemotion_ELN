@@ -121,7 +121,11 @@ module Chemotion
             zip.write att.read_file
           end
           zip.put_next_entry "dataset_description.txt"
-          zip.write @container.description
+          zip.write <<~DESC
+          instrument: #{@container.extended_metadata.fetch('instrument', nil)}
+
+          #{@container.description}
+          DESC
         end
         zip.rewind
         zip.read

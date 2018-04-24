@@ -927,7 +927,6 @@ class ElementStore {
   }
 
   handleClose({ deleteEl, force }) {
-    // this.waitFor(ElementStore.dispatchToken);
     // Currently ignore report "isPendingToSave"
     if (force || deleteEl.type === 'report' || this.isDeletable(deleteEl)) {
       this.deleteCurrentElement(deleteEl);
@@ -959,9 +958,9 @@ class ElementStore {
       newSelecteds = this.updateElement(nextEl, index)
     }
 
-    // this.setState({ selecteds: newSelecteds });
-    this.state.selecteds =  newSelecteds;
-    this.resetActiveKey(activeKey);
+    this.state.selecteds = newSelecteds;
+    this.state.activeKey = activeKey;
+    return true
   }
 
   handleGetMoleculeCas(updatedSample) {
@@ -1026,10 +1025,12 @@ class ElementStore {
   }
 
   updateElement(updateEl, index) {
-    const selecteds = this.state.selecteds
-    return  [ ...selecteds.slice(0, index),
-              updateEl,
-              ...selecteds.slice(index + 1) ]
+    const selecteds = this.state.selecteds;
+    return [
+      ...selecteds.slice(0, index),
+      updateEl,
+      ...selecteds.slice(index + 1)
+    ];
   }
 
   deleteElement(deleteEl) {
@@ -1049,11 +1050,9 @@ class ElementStore {
   resetCurrentElement(newKey, newSelecteds) {
     const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey]
     if(newSelecteds.length === 0) {
-      // ElementActions.deselectCurrentElement.defer()
       this.state.currentElement = null;
     } else {
       this.state.currentElement = newCurrentElement;
-      // ElementActions.setCurrentElement.defer(newCurrentElement)
     }
 
     UrlSilentNavigation(newCurrentElement)
@@ -1070,10 +1069,6 @@ class ElementStore {
 
   isDeletable(deleteEl) {
     return deleteEl && deleteEl.isPendingToSave ? false : true
-  }
-
-  resetActiveKey(activeKey) {
-    setTimeout(this.setState.bind(this, { activeKey }), 300)
   }
 
   handleDeletingElements(response) {

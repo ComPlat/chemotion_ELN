@@ -352,7 +352,7 @@ class Material extends Component {
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
     const mol = material.amount_mol;
     const concn = mol / reaction.solventVolume;
-
+    const mw = material.molecule && material.molecule.molecular_weight
     return (
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -373,16 +373,20 @@ class Material extends Component {
         </td>
 
         <td>
-          <NumeralInputWithUnitsCompo
-            key={material.id}
-            value={material.amount_g}
-            unit="g"
-            metricPrefix="milli"
-            metricPrefixes={['milli', 'none', 'micro']}
-            precision={4}
-            onChange={this.handleAmountUnitChange}
-            bsStyle={material.error_mass ? 'error' : massBsStyle}
-          />
+          <OverlayTrigger placement="top" overlay={<Tooltip id="molecular-weight-info">{mw} g/mol</Tooltip>}>
+            <div>
+              <NumeralInputWithUnitsCompo
+                key={material.id}
+                value={material.amount_g}
+                unit="g"
+                metricPrefix="milli"
+                metricPrefixes={['milli', 'none', 'micro']}
+                precision={4}
+                onChange={this.handleAmountUnitChange}
+                bsStyle={material.error_mass ? 'error' : massBsStyle}
+              />
+            </div>
+          </OverlayTrigger>
         </td>
 
         {this.materialVolume(material)}
@@ -442,7 +446,7 @@ class Material extends Component {
     const { material, deleteMaterial, connectDragSource,
       connectDropTarget } = props;
     const isTarget = material.amountType === 'target';
-
+    const mw = material.molecule && material.molecule.molecular_weight
     return (
       <tr className="solvent-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -461,14 +465,21 @@ class Material extends Component {
 
         <td>
           <InputGroup>
-            <FormControl
-              type="text"
-              bsClass="bs-form--compact form-control"
-              bsSize="small"
-              value={material.external_label}
-              placeholder={material.molecule.iupac_name}
-              onChange={event => this.handleExternalLabelChange(event)}
-            />
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="molecular-weight-info">{material.amount_g} g - {mw} g/mol</Tooltip>}
+            >
+              <div>
+                <FormControl
+                  type="text"
+                  bsClass="bs-form--compact form-control"
+                  bsSize="small"
+                  value={material.external_label}
+                  placeholder={material.molecule.iupac_name}
+                  onChange={event => this.handleExternalLabelChange(event)}
+                />
+              </div>
+            </OverlayTrigger>
             <InputGroup.Button>
               <OverlayTrigger placement="bottom" overlay={refreshSvgTooltip}>
                 <Button
