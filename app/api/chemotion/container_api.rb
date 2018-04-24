@@ -11,13 +11,11 @@ module Chemotion
       end
 
       delete ':container_id' do
-        if current_user && current_user.container && container
-          #User und Container Besitzer vergleichen
-          if @container.children.length == 0 && @container.attachments.length == 0
-            @container.destroy
-          end
-        end
-        true
+        error!('401 Unauthorized', 401) unless current_user && current_user.container
+          # NB: attachments are destroy through container (DJ in production)
+          # NB: attachments are not paranoidized so cannot be restored)
+        @container.self_and_descendants.each(&:destroy)
+        status 200
       end
 
       desc 'Update Container Content'
