@@ -44,7 +44,7 @@ export default class ReactionDetailsLiteratures extends Component {
 
   literatureUrl(literature) {
     const { url } = literature;
-    if(url.includes("http://")) {
+    if(url.match(/https?\:\/\//)) {
       return url;
     } else {
       return `//${url}`;
