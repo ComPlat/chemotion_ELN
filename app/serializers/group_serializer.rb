@@ -1,7 +1,7 @@
 class GroupSerializer < ActiveModel::Serializer
   attributes :id, :name, :initials, :samples_count, :reactions_count
-  has_many :users,  :serializer => UserSerializer
-  has_many :admins,  :serializer => UserSerializer
+  has_many :users,  :serializer => UserSimpleSerializer
+  has_many :admins,  :serializer => UserSimpleSerializer
 
   def samples_count
     object.counters['samples'].to_i

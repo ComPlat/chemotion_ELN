@@ -15,12 +15,12 @@ class CollectionRemoteSerializer < ActiveModel::Serializer
 
   def shared_by
     sharing_user = User.find_by(id: object.shared_by_id) || User.new
-    UserSerializer.new(sharing_user).serializable_hash.deep_symbolize_keys
+    UserSimpleSerializer.new(sharing_user).serializable_hash.deep_symbolize_keys
   end
 
   def shared_to
     if object.is_shared && object.user.is_a?(Group)
-      UserSerializer.new(object.user).serializable_hash.deep_symbolize_keys
+      UserSimpleSerializer.new(object.user).serializable_hash.deep_symbolize_keys
     end
   end
 end
