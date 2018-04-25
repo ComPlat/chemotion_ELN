@@ -53,7 +53,7 @@ gem 'net-sftp'
 gem 'net-ssh'
 
 # svg composer
-gem 'nokogiri'
+gem 'nokogiri', '~> 1.8.2'
 
 # SFTP client
 gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
