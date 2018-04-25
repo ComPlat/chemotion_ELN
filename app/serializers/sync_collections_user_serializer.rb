@@ -9,11 +9,11 @@ class SyncCollectionsUserSerializer < ActiveModel::Serializer
   end
 
   def user
-    UserSerializer.new(object.user).serializable_hash.deep_symbolize_keys
+    UserSimpleSerializer.new(object.user || User.new).serializable_hash.deep_symbolize_keys
   end
 
   def sharer
-    UserSerializer.new(object.sharer).serializable_hash.deep_symbolize_keys
+    UserSimpleSerializer.new(object.sharer || User.new).serializable_hash.deep_symbolize_keys
   end
 
   def label
