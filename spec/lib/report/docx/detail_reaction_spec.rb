@@ -91,7 +91,8 @@ describe 'Reporter::Docx::DetailReaction instance' do
   let!(:target) do
     Reporter::Docx::DetailReaction.new(reaction: OpenStruct.new(r1_serialized),
                                         mol_serials: mol_serials,
-                                        index: prev_index)
+                                        index: prev_index,
+                                        si_rxn_settings: all_si_rxn_settings)
   end
 
   context '.content' do
@@ -114,7 +115,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
 
     it "has correct content" do
       expect(content[:title]).to eq(tit)
-      expect(content[:solvents]).to eq("#{s4.preferred_label} (0.00ml)")
+      expect(content[:solvents]).to eq("#{s4.preferred_label} (55.5ml)")
       expect(content[:description]).to eq(
         Sablon.content(:html, Reporter::Delta.new(des).getHTML())
       )
@@ -168,10 +169,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"script"=>"sub"}, "insert"=>"2"},
           {"insert"=>"O"},
           {"insert"=>"; "},
-          {"insert"=>"CAS: - ; " +
-                      "Smiles: #{s2.molecule.cano_smiles}; " +
-                      "InCHI: #{s2.molecule.inchikey}; " +
-                      "Molecular Mass: 18.0153; Exact Mass: 18.0106; "},
+          {"insert"=>"CAS: - ; "},
+          {"insert"=>"Smiles: #{s2.molecule.cano_smiles}; "},
+          {"insert"=>"InCHI: #{s2.molecule.inchikey}; "},
+          {"insert"=>"Molecular Mass: 18.0153; "},
+          {"insert"=>"Exact Mass: 18.0106; "},
           {"insert"=>"EA: "},
           {"insert"=>"H, 11.19; O, 88.81"},
           {"insert"=>"."},
@@ -184,11 +186,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"script"=>"sub"}, "insert"=>"2"},
           {"insert"=>"O"},
           {"insert"=>"; "},
-          {"insert"=>"CAS: - ; " +
-                      "Smiles: #{s3.molecule.cano_smiles}; " +
-                      "InCHI: #{s3.molecule.inchikey}; " +
-                      "Molecular Mass: 18.0153; " +
-                      "Exact Mass: 18.0106; "},
+          {"insert"=>"CAS: - ; "},
+          {"insert"=>"Smiles: #{s2.molecule.cano_smiles}; "},
+          {"insert"=>"InCHI: #{s2.molecule.inchikey}; "},
+          {"insert"=>"Molecular Mass: 18.0153; "},
+          {"insert"=>"Exact Mass: 18.0106; "},
           {"insert"=>"EA: "},
           {"insert"=>"H, 11.19; O, 88.81"},
           {"insert"=>"."},
@@ -203,16 +205,16 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>" (1.00 g, 55.5 mmol, 0.880 equiv); "},
-          {"insert"=>"{B"},
+          {"insert"=>"{S1"},
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>s4.preferred_label},
-          {"insert"=>" (0.0 mL); "},
+          {"insert"=>" (56 mL); "},
           {"insert"=>"Yield "},
-          {"insert"=>"{C|"},
+          {"insert"=>"{P1|"},
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.00 g, 0.00 mmol)"},
           {"insert"=>"; "},
-          {"insert"=>"{D|"},
+          {"insert"=>"{P2|"},
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
           {"insert"=>"} = #{(equiv * 100).to_i}% (0.00 g, 0.00 mmol)"},
           {"insert"=>"."},

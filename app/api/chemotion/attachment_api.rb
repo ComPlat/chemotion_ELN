@@ -5,6 +5,15 @@ require 'digest'
 
 module Chemotion
   class AttachmentAPI < Grape::API
+    helpers do
+      def thumbnail(att)
+        att.thumb ? Base64.encode64(att.read_thumbnail) : nil
+      end
+
+      def thumbnail_obj(att)
+        { id: att.id, thumbnail: thumbnail(att) }
+      end
+    end
 
     rescue_from ActiveRecord::RecordNotFound do |error|
       message = "Could not find attachment"
@@ -17,7 +26,7 @@ module Chemotion
           if !current_user.container
             current_user.container = Container.create(name: "inbox", container_type: "root")
           end
-          unlinked_attachments = Attachment.where(:container_id => nil, :created_for => current_user.id)
+          # unlinked_attachments = Attachment.where(container_id: nil, created_for: current_user.id)
           InboxSerializer.new(current_user.container)
         end
       end
@@ -25,32 +34,35 @@ module Chemotion
 
     resource :attachments do
       before do
+        @attachment = Attachment.find_by(id: params[:attachment_id])
         case request.env['REQUEST_METHOD']
         when /delete/i
-          if @attachment = Attachment.find(params[:attachment_id])
-            if element = @attachment.container && @attachment.container.root.containable
-              can_delete = ElementPolicy.new(current_user, element).update?
-            else
-              can_delete = @attachment.created_for == current_user.id
-            end
-            error!('401 Unauthorized', 401) unless can_delete
+          error!('401 Unauthorized', 401) unless @attachment
+          can_delete = @attachment.container_id.nil? && @attachment.created_for == current_user.id
+          if !can_delete && (element = @attachment.container&.root&.containable)
+            can_delete = element.is_a?(User) && (element == current_user) ||
+                         ElementPolicy.new(current_user, element).update?
           end
-        when /post/i
-
+          error!('401 Unauthorized', 401) unless can_delete
+        # when /post/i
         when /get/i
-          if request.url.match(/zip/)
+          can_dwnld = false
+          if request.url =~ /zip/
             @container = Container.find(params[:container_id])
-            if element = container.root.containable
+            if (element = @container.root.containable)
               can_read = ElementPolicy.new(current_user, element).read?
-              can_dwnld = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+              can_dwnld = can_read &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
             end
-            error!('401 Unauthorized', 401) unless can_dwnld
-          elsif @attachment = Attachment.find(params[:attachment_id])
-             element = @attachment.container.root.containable
-             can_read = ElementPolicy.new(current_user, element).read?
-             can_dwnld = can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
-             error!('401 Unauthorized', 401) unless can_dwnld
+          elsif @attachment
+            can_dwnld = @attachment.container_id.nil? && @attachment.created_for == current_user.id
+            if !can_dwnld && (element = @attachment.container&.root&.containable)
+              can_dwnld = element.is_a?(User) && (element == current_user) ||
+                          ElementPolicy.new(current_user, element).read? &&
+                          ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+            end
           end
+          error!('401 Unauthorized', 401) unless can_dwnld
         end
       end
 
@@ -99,9 +111,24 @@ module Chemotion
 
       desc "Download the zip attachment file"
       get 'zip/:container_id' do
-        @container.attachments.each do |att|
-          #TODO
+        env['api.format'] = :binary
+        content_type('application/zip, application/octet-stream')
+        filename = URI.escape("#{@container.parent&.name.gsub(/\s+/, '_')}-#{@container.name.gsub(/\s+/, '_')}.zip")
+        header('Content-Disposition', "attachment; filename=\"#{filename}\"")
+        zip = Zip::OutputStream.write_buffer do |zip|
+          @container.attachments.each do |att|
+            zip.put_next_entry att.filename
+            zip.write att.read_file
+          end
+          zip.put_next_entry "dataset_description.txt"
+          zip.write <<~DESC
+          instrument: #{@container.extended_metadata.fetch('instrument', nil)}
+
+          #{@container.description}
+          DESC
         end
+        zip.rewind
+        zip.read
       end
 
       desc 'Return Base64 encoded thumbnail'
@@ -111,6 +138,23 @@ module Chemotion
         else
           nil
         end
+      end
+
+      desc 'Return Base64 encoded thumbnails'
+      params do
+        requires :ids, type: Array[Integer]
+      end
+      post 'thumbnails' do
+        thumbnails = params[:ids].map do |a_id|
+          att = Attachment.find(a_id)
+          can_dwnld = if att
+            element = att.container.root.containable
+            can_read = ElementPolicy.new(current_user, element).read?
+            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+          end
+          can_dwnld ? thumbnail_obj(att) : nil
+        end
+        { thumbnails: thumbnails }
       end
 
       namespace :svgs do

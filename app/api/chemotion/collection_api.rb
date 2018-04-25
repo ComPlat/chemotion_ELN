@@ -1,5 +1,7 @@
 module Chemotion
   class CollectionAPI < Grape::API
+    helpers CollectionHelpers
+    helpers ParamsHelpers
     resource :collections do
 
       namespace :all do
@@ -84,38 +86,19 @@ module Chemotion
         params do
           requires :elements_filter, type: Hash do
             requires :sample, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             requires :reaction, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             requires :wellplate, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             requires :screen, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
-
             optional :research_plan, type: Hash do
-              requires :all, type: Boolean
-              optional :included_ids, type: Array
-              optional :excluded_ids, type: Array
-              optional :collection_id
+              use :ui_state_params
             end
           end
           requires :collection_attributes, type: Hash do
@@ -126,17 +109,22 @@ module Chemotion
             requires :screen_detail_level, type: Integer
             optional :research_plan_detail_level, type: Integer
           end
-          requires :user_ids, type: Array
-          optional :current_collection_id, type: Integer
+          requires :user_ids, type: Array do
+            requires :value
+          end
+          requires :currentCollection, type: Hash do
+            requires :id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
+          end
         end
 
         after_validation do
-
-          samples = Sample.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:sample])
-          reactions = Reaction.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:reaction])
-          wellplates = Wellplate.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:wellplate])
-          screens = Screen.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:screen])
-          research_plans = ResearchPlan.for_user_n_groups(user_ids).for_ui_state(params[:elements_filter][:research_plan])
+          @cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          samples = Sample.by_collection_id(@cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
+          reactions = Reaction.by_collection_id(@cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
+          wellplates = Wellplate.by_collection_id(@cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
+          screens = Screen.by_collection_id(@cid).by_ui_state(params[:elements_filter][:screen]).for_user_n_groups(user_ids)
+          research_plans = ResearchPlan.by_collection_id(@cid).by_ui_state(params[:elements_filter][:research_plan]).for_user_n_groups(user_ids)
 
           top_secret_sample = samples.pluck(:is_top_secret).any?
           top_secret_reaction = reactions.flat_map(&:samples).map(&:is_top_secret).any?
@@ -155,144 +143,98 @@ module Chemotion
             share_wellplates && share_screens && share_research_plans
 
           error!('401 Unauthorized', 401) if (!sharing_allowed || is_top_secret)
+          @sample_ids = samples.pluck(:id)
+          @reaction_ids = reactions.pluck(:id)
+          @wellplate_ids = wellplates.pluck(:id)
+          @screen_ids = screens.pluck(:id)
+          @research_plan_ids = research_plans.pluck(:id)
         end
 
         post do
           uids = params[:user_ids].map do |user_id|
-            val = user_id[:value].to_s
-            if val =~ /^[0-9]+$/ 
+            val = user_id[:value].to_s.downcase
+            if val =~ /^[0-9]+$/
               val.to_i
             # elsif val =~ Devise::email_regexp
             else
               User.where(email: val).pluck :id
             end
           end.flatten.compact.uniq
-
-          params[:user_ids] = uids
-
-          Usecases::Sharing::ShareWithUsers.new(params, current_user).execute!
+          Usecases::Sharing::ShareWithUsers.new(
+            user_ids: uids,
+            sample_ids: @sample_ids,
+            reaction_ids: @reaction_ids,
+            wellplate_ids: @wellplate_ids,
+            screen_ids: @screen_ids,
+            research_plan_ids: @research_plan_ids,
+            collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
+          ).execute!
         end
       end
 
       namespace :elements do
-        desc "Update the collection of a set of elements by UI state"
+        desc 'Update the collection of a set of elements by UI state'
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI"
-          requires :collection_id, type: Integer, desc: "Destination collection id"
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI'
+          optional :collection_id, type: Integer, desc: 'Destination collect id'
+          optional :newCollection, type: String, desc: 'Label for a new collion'
         end
+
         put do
+          collection_id = fetch_collection_id_for_assign(params)
+          collection = Collection.find_by(id: collection_id)
+          # can only move to collection  owned or shared by current_user
+          if !collection || params[:is_sync_to_me] || collection.is_shared
+            error!('401 Unauthorized collection', 401)
+          end
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollection].id
-          collection_id = params[:collection_id]
-
-          unless Collection.find(collection_id).is_shared
-            # Move Sample
-            sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[:sample],
-              CollectionsSample,
-              current_collection_id
-            ).compact
-            CollectionsSample.move_to_collection(sample_ids,
-              current_collection_id, collection_id)
-
-            # Move Reaction
-            reaction_ids = Reaction.for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[:reaction],
-              CollectionsReaction,
-              current_collection_id
-            ).compact
-            CollectionsReaction.move_to_collection(reaction_ids,
-              current_collection_id, collection_id)
-
-            # Move Wellplate
-            wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[:wellplate],
-              CollectionsWellplate,
-              current_collection_id
-            ).compact
-            CollectionsWellplate.move_to_collection(wellplate_ids,
-              current_collection_id, collection_id)
-
-            # Move Screen
-            screen_ids = Screen.for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[:screen],
-              CollectionsScreen,
-              current_collection_id
-            ).compact
-            CollectionsScreen.move_to_collection(screen_ids,
-              current_collection_id, collection_id)
-
-            # Move ResearchPlan
-            research_plan_ids = ResearchPlan.for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[:research_plan],
-              CollectionsResearchPlan,
-              current_collection_id
-            ).compact
-            CollectionsResearchPlan.move_to_collection(research_plan_ids,
-              current_collection_id, collection_id)
+          # cannot moved from 'All' collection
+          if Collection.get_all_collection_for_user(current_user)
+                       .id == current_collection_id
+            error!('401 Cannot move element out of root collection', 401)
           end
+          [
+            [Sample, :sample, CollectionsSample],
+            [Reaction, :reaction, CollectionsReaction],
+            [Wellplate, :wellplate, CollectionsWellplate],
+            [Screen, :screen, CollectionsScreen],
+            [ResearchPlan, :research_plan, CollectionsResearchPlan]
+          ].each do |e|
+            ids = e[0].for_user(current_user.id).for_ui_state_with_collection(
+              ui_state[e[1]], e[2], current_collection_id
+            ).compact
+            e[2].move_to_collection(ids, current_collection_id, collection_id)
+          end
+          status 204
         end
 
-        desc "Assign a collection to a set of elements by UI state"
+        desc 'Assign a collection to a set of elements by UI state'
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI"
-          requires :collection_id, type: Integer, desc: "Destination collection id"
-          requires :is_sync_to_me, type: Boolean, desc: "Destination collection is_sync_to_me"
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI'
+          optional :collection_id, type: Integer, desc: 'Destination collection id'
+          optional :newCollection, type: String, desc: 'Label for a new collection'
+          optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
+
         post do
+          collection_id = fetch_collection_id_for_assign(params)
+          error!('401 Unauthorized collection', 401) unless collection_id
           ui_state = params[:ui_state]
-          is_sync_to_me = params[:is_sync_to_me]
-          collection_id = params[:collection_id]
           current_collection_id = ui_state[:currentCollection].id
-
-          if is_sync_to_me
-            sync_coll_user = SyncCollectionsUser.find(collection_id)
-            accessible = sync_coll_user && sync_coll_user.user_id == current_user.id
-            writable = sync_coll_user && sync_coll_user.permission_level >= 1
-            if accessible && writable
-              collection_id = sync_coll_user.collection_id
-            end
+          [
+            [Sample, :sample, CollectionsSample],
+            [Reaction, :reaction, CollectionsReaction],
+            [Wellplate, :wellplate, CollectionsWellplate],
+            [Screen, :screen, CollectionsScreen],
+            [ResearchPlan, :research_plan, CollectionsResearchPlan]
+          ].each do |e|
+            ids = e[0].for_user(current_user.id).for_ui_state_with_collection(
+              ui_state[e[1]], e[2], current_collection_id
+            )
+            e[2].create_in_collection(ids, collection_id)
           end
-
-          # Assign Sample
-          sample_ids = Sample.for_user(current_user.id).for_ui_state_with_collection(
-            ui_state[:sample],
-            CollectionsSample,
-            current_collection_id
-          )
-          CollectionsSample.create_in_collection(sample_ids, collection_id)
-
-          # Assign Reaction
-          reaction_ids = Reaction.for_user(current_user.id).for_ui_state_with_collection(
-            ui_state[:reaction],
-            CollectionsReaction,
-            current_collection_id
-          )
-          CollectionsReaction.create_in_collection(reaction_ids, collection_id)
-
-          # Assign Wellplate
-          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(
-            ui_state[:wellplate],
-            CollectionsWellplate,
-            current_collection_id
-          )
-          CollectionsWellplate.create_in_collection(wellplate_ids, collection_id)
-
-          # Assign Screen
-          screen_ids = Screen.for_user(current_user.id).for_ui_state_with_collection(
-            ui_state[:screen],
-            CollectionsScreen,
-            current_collection_id
-          )
-          CollectionsScreen.create_in_collection(screen_ids, collection_id)
-
-          # Assign ResearchPlan
-          research_plan_ids = ResearchPlan.for_user(current_user.id).for_ui_state_with_collection(
-            ui_state[:research_plan],
-            CollectionsResearchPlan,
-            current_collection_id
-          )
-          CollectionsResearchPlan.create_in_collection(research_plan_ids, collection_id)
+          status 204
         end
 
         desc "Remove from a collection a set of elements by UI state"
@@ -302,17 +244,6 @@ module Chemotion
         delete do
           ui_state = params[:ui_state]
           current_collection_id = ui_state[:currentCollection].id
-
-          # selection = ui_state[:currentSearchSelection]
-          # search_method = if selection.structure_search
-          #                   "structure"
-          #                 else 
-          #                   selection.search_by_method
-          #                 end
-          # arg = selection.structure_search ? selection.molfile : selection.name
-          # molfile = Fingerprint.standardized_molfile arg
-          # cache_key = cache_key(search_method, arg, molfile,
-          #   current_collection_id, params[:molecule_sort])
 
           # Remove Sample
           sample_ids = Sample.for_ui_state_with_collection(
@@ -345,6 +276,7 @@ module Chemotion
             current_collection_id
           )
           CollectionsScreen.remove_in_collection(screen_ids, current_collection_id)
+          status 204
         end
 
       end

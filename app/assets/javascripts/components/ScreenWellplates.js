@@ -1,10 +1,10 @@
-import React, {Component, PropTypes} from 'react';
-import {Button} from 'react-bootstrap';
-import {DropTarget} from 'react-dnd';
+import React, { Component, PropTypes } from 'react';
+import { Button } from 'react-bootstrap';
+import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 import UIStore from './stores/UIStore';
-
-import QuillEditor from './QuillEditor'
+import { wellplateShowOrNew } from './routesUtils';
+import QuillViewer from './QuillViewer';
 
 const target = {
   drop(props, monitor){
@@ -35,17 +35,15 @@ const collect = (connect, monitor) => ({
 class ScreenWellplates extends Component {
   handleWellplateClick(wellplate) {
     const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/wellplate/${wellplate.id}`
-      : `/collection/${currentCollection.id}/wellplate/${wellplate.id}`
-    );
+    const wellplateID = wellplate.id
+    const uri = `/${isSync ? 's' : ''}collection/${currentCollection.id}/wellplate/${wellplateID}`;
+    Aviator.navigate(uri, { silent: true });
+    wellplateShowOrNew({ params: { wellplateID } });
   }
 
   render() {
     const {wellplates, isOver, canDrop, connectDropTarget, deleteWellplate} = this.props;
-    let style = {
-      padding: 10
-    };
+    const style = { padding: 10 };
     if (isOver && canDrop) {
       style.borderStyle = 'dashed';
       style.borderColor = '#337ab7';
@@ -56,33 +54,36 @@ class ScreenWellplates extends Component {
       <div style={style}>
         <table width="100%">
           <thead><tr>
-          <th width="45%">Name</th>
-          <th width="50%">Description</th>
-          <th width="5%"></th>
+            <th width="45%">Name</th>
+            <th width="50%">Description</th>
+            <th width="5%"></th>
           </tr></thead>
           <tbody>
-          {wellplates.map((wellplate, key) => {
-            return (
-              <tr key={key} style={{height: "80px", verticalAlign: 'middle'}}>
-                <td>
-                  <a onClick={() => this.handleWellplateClick(wellplate)}
-                     style={{cursor: 'pointer'}}>
-                    {wellplate.name}
-                  </a>
-                </td>
-                <td>
-                  <QuillEditor value={wellplate.description} disabled={true}
-                               theme="bubble" height="44px"/>
-                </td>
-                <td style={{verticalAlign: 'middle'}}>
-                  <Button bsStyle="danger" style={{marginLeft: "10px"}}
-                          onClick={() => deleteWellplate(wellplate)}>
-                    <i className="fa fa-trash-o"></i>
-                  </Button>
-                </td>
-              </tr>
-            )
-          })}
+            {wellplates.map((wellplate, key) => {
+              return (
+                <tr key={key} style={{height: "80px", verticalAlign: 'middle'}}>
+                  <td>
+                    <a onClick={() => this.handleWellplateClick(wellplate)}
+                       style={{cursor: 'pointer'}}>
+                      {wellplate.name}
+                    </a>
+                  </td>
+                  <td>
+                    <QuillViewer
+                      value={wellplate.description}
+                      theme="bubble"
+                      height="44px"
+                    />
+                  </td>
+                  <td style={{verticalAlign: 'middle'}}>
+                    <Button bsStyle="danger" style={{marginLeft: "10px"}}
+                            onClick={() => deleteWellplate(wellplate)}>
+                      <i className="fa fa-trash-o"></i>
+                    </Button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

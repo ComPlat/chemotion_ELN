@@ -2,7 +2,6 @@ class CollectionsWellplate < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :collection
   belongs_to :wellplate
-  validate :collection_wellplate_id_uniqueness
 
   include Tagging
 
@@ -57,11 +56,5 @@ class CollectionsWellplate < ActiveRecord::Base
     CollectionsSample.create_in_collection(sample_ids, collection_id)
     # Create new wellplate in collection
     self.static_create_in_collection(wellplate_ids, collection_id)
-  end
-
-  def collection_wellplate_id_uniqueness
-    unless CollectionsWellplate.where(collection_id: collection_id, wellplate_id: wellplate_id).empty?
-      errors.add(:collection_wellplate_id_uniqueness, 'Violates uniqueness of wellplate_id and collection_id')
-    end
   end
 end

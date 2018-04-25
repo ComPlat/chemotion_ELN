@@ -5,6 +5,8 @@ class PagesController < ApplicationController
 
   def home; end
 
+  def docx; end
+
   def welcome; end
 
   def update_user

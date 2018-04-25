@@ -34,7 +34,7 @@ export default class ManagingModalSharing extends React.Component {
     this.handleSelectUser = this.handleSelectUser.bind(this);
     this.handleSharing = this.handleSharing.bind(this);
     this.promptTextCreator = this.promptTextCreator.bind(this);
-    
+
     // this.loadUserByName = debounce(this.loadUserByName.bind(this), 300);
     this.loadUserByName = this.loadUserByName.bind(this);
   }
@@ -163,33 +163,35 @@ export default class ManagingModalSharing extends React.Component {
     }
 
     if (this.props.collAction == "Create") {
-      let userIds = this.state.selectedUsers;
-      let uiState = UIStore.getState();
-      let currentCollectionId = uiState.currentCollection.Id;
-      let filterParams =
-        this.isSelectionEmpty(uiState) 
-        ? this.filterParamsWholeCollection(uiState) 
-        : this.filterParamsFromUIState(uiState);
+      const userIds = this.state.selectedUsers;
+      const uiState = UIStore.getState();
+      const currentCollection = uiState.currentCollection;
+      const filterParams =
+        this.isSelectionEmpty(uiState)
+          ? this.filterParamsWholeCollection(uiState)
+          : this.filterParamsFromUIState(uiState);
       params = {
         ...params,
         elements_filter: filterParams,
         user_ids: userIds,
-        current_collection_id: currentCollectionId
-      }
+        currentCollection
+      };
+      console.log('uiState', uiState);
+      console.log(params);
       CollectionActions.createSharedCollections(params);
     }
 
-    if (this.props.collAction == "Update") {CollectionActions.updateSharedCollection(params);}
+    if (this.props.collAction === 'Update') { CollectionActions.updateSharedCollection(params); }
 
-    if (this.props.collAction == "EditSync") {CollectionActions.editSync(params);}
+    if (this.props.collAction === 'EditSync') { CollectionActions.editSync(params); }
 
-    if (this.props.collAction == "CreateSync"){
-      let userIds = this.state.selectedUsers;
+    if (this.props.collAction === 'CreateSync') {
+      const userIds = this.state.selectedUsers;
       params = {
         ...params,
         user_ids: userIds,
-      }
-      CollectionActions.createSync(params)
+      };
+      CollectionActions.createSync(params);
     }
 
     this.props.onHide();

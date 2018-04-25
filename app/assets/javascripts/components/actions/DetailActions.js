@@ -8,7 +8,7 @@ class DetailActions {
   }
 
   close(deleteEl, force = false) {
-    return {deleteEl, force}
+    return { deleteEl, force }
   }
 
   confirmDelete(confirm) {
@@ -45,6 +45,13 @@ class DetailActions {
         })
         .catch(errorMessage => console.log(errorMessage));
     };
+  }
+
+  updateMoleculeCas(sample, newCas = '') {
+    const m = sample.molecule;
+    m.cas = [...m.cas, newCas];
+    sample.molecule = m;
+    return sample;
   }
 }
 

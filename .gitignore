@@ -21,9 +21,12 @@
 .coveralls.yml
 
 .env
+
 /config/mailcollector.yml
 /config/datamailcollector.yml
+/config/datacollector.yml
 /config/datacollectors.yml
+
 /config/database.yml
 /config/storage.yml
 /node_modules
@@ -55,12 +58,14 @@
 /public/images/*
 !/public/images/wild_card/
 
-/uploads/attachments/*
-/uploads/thumbnails
+/uploads/*
 !/public/attachments/.keep
+
 
 /public/docx/*
 !/public/docx/.keep
+
+/public/assets/*
 
 /coverage/
 
@@ -88,3 +93,4 @@ backup/weekly_backup
 
 # vim tags
 tags
+tags.temp

@@ -4,6 +4,25 @@ import Select from 'react-select';
 import Aviator from 'aviator';
 import UserStore from '../stores/UserStore';
 
+const getKetcher = () => {
+  const ketcherFrame = document.getElementById('ifKetcher');
+  if (ketcherFrame && ('contentDocument' in ketcherFrame)) {
+    return ketcherFrame.contentWindow.ketcher;
+  }
+  return document.frames['ifKetcher'].window.ketcher;
+};
+
+
+const getMolfileFromEditor = () => {
+  const ketcher = getKetcher();
+  return ketcher.getMolfile();
+};
+
+const getSVGFromEditor = () => {
+  const ketcher = getKetcher();
+  return ketcher.getSVG();
+};
+
 export default class StructureEditorModal extends React.Component {
   constructor(props) {
     super(props);
@@ -22,64 +41,32 @@ export default class StructureEditorModal extends React.Component {
     })
   }
 
-  getKetcher() {
-    let ketcherFrame = document.getElementById("ifKetcher");
-    let ketcher = null;
-
-    if (ketcherFrame && ("contentDocument" in ketcherFrame))
-      ketcher = ketcherFrame.contentWindow.ketcher;
-    else
-      ketcher = document.frames['ifKetcher'].window.ketcher;
-
-    return ketcher;
-  }
-
   initializeEditor() {
-    var ketcher = this.getKetcher();
-
-    let molfile = this.state.molfile;
-    ketcher.setMolecule(molfile);
-  }
-
-  getMolfileFromEditor() {
-    var ketcher = this.getKetcher();
-
-    return ketcher.getMolfile();
-  }
-
-  getSVGFromEditor() {
-    var ketcher = this.getKetcher();
-
-    return ketcher.getSVG();
+    const ketcher = getKetcher();
+    ketcher.setMolecule(this.state.molfile);
   }
 
   handleCancelBtn() {
     this.hideModal();
-    if(this.props.onCancel) {
-      this.props.onCancel()
-    }
+    if (this.props.onCancel) { this.props.onCancel(); }
   }
 
   handleSaveBtn() {
-    let molfile = this.getMolfileFromEditor()
-    let svg_file = this.getSVGFromEditor()
+    const molfile = getMolfileFromEditor();
+    const svgFile = getSVGFromEditor();
     this.hideModal();
-    if(this.props.onSave) {
-      this.props.onSave(molfile, svg_file)
-    }
+    if (this.props.onSave) { this.props.onSave(molfile, svgFile); }
   }
 
   hideModal() {
     this.setState({
       showModal: false,
       showWarning: this.props.hasChildren || this.props.hasParent
-    })
+    });
   }
 
   hideWarning() {
-    this.setState({
-      showWarning: false
-    })
+    this.setState({ showWarning: false });
   }
   // TODO: can we catch the ketcher on draw event, instead on close button click?
   // This woul allow us to show molecule information to the user while he draws,
@@ -90,33 +77,29 @@ export default class StructureEditorModal extends React.Component {
     const userState = UserStore.getState();
     const disableSearch = userState.currentUser == null;
 
-    let editorContent = this.state.showWarning ?
-      <WarningBox handleCancelBtn={this.handleCancelBtn.bind(this)}
-                  hideWarning={this.hideWarning.bind(this)} />
-      :
-      <StructureEditor
-        handleCancelBtn = { this.handleCancelBtn.bind(this) }
-        handleSaveBtn = { this.handleSaveBtn.bind(this) }
-        cancelBtnText = {
-          this.props.cancelBtnText ? this.props.cancelBtnText : "Cancel"
-        }
-        submitBtnText = {
-          this.props.submitBtnText ? this.props.submitBtnText : "Save"
-        }
-        submitAddons = {
-          this.props.submitAddons ? this.props.submitAddons : ""
-        }
-        disableSearch = { disableSearch }
+    const editorContent = this.state.showWarning ? (
+      <WarningBox
+        handleCancelBtn={this.handleCancelBtn.bind(this)}
+        hideWarning={this.hideWarning.bind(this)}
       />
-
-    let dom_class = this.state.showWarning ? "" : "structure-editor-modal"
+    ) : (
+      <StructureEditor
+        handleCancelBtn={this.handleCancelBtn.bind(this)}
+        handleSaveBtn={!this.props.onSave ? null : this.handleSaveBtn.bind(this)}
+        cancelBtnText={this.props.cancelBtnText ? this.props.cancelBtnText : 'Cancel'}
+        submitBtnText={this.props.submitBtnText ? this.props.submitBtnText : 'Save'}
+        submitAddons={this.props.submitAddons ? this.props.submitAddons : ''}
+        disableSearch={disableSearch}
+      />
+    )
     return (
       <div>
-        <Modal dialogClassName={dom_class}
+        <Modal
+          dialogClassName={this.state.showWarning ? '' : 'structure-editor-modal'}
           animation show={this.state.showModal}
           onLoad={this.initializeEditor.bind(this)}
-          onHide={this.handleCancelBtn.bind(this)}>
-
+          onHide={this.handleCancelBtn.bind(this)}
+        >
           <Modal.Header closeButton>
             <Modal.Title>Structure Editor</Modal.Title>
           </Modal.Header>
@@ -125,37 +108,32 @@ export default class StructureEditorModal extends React.Component {
           </Modal.Body>
         </Modal>
       </div>
-    )
+    );
   }
 }
 
-const StructureEditor = ({handleCancelBtn, handleSaveBtn, cancelBtnText,
-                          submitBtnText, submitAddons, disableSearch}) => {
-    return (
+const StructureEditor = ({handleCancelBtn, handleSaveBtn, cancelBtnText = 'Cancel', submitBtnText = 'Submit', submitAddons}) => {
+  return (
+    <div>
       <div>
-        <div>
-          <iframe id="ifKetcher" src="/ketcher">
-          </iframe>
-        </div>
-        <div style={{marginTop: "20px"}}>
-          <ButtonToolbar>
-            <Button bsStyle="warning" onClick={handleCancelBtn}>
-              {cancelBtnText}
-            </Button>
-            <Button
-              bsStyle="primary"
-              onClick={handleSaveBtn}
-              style={{marginRight:"20px"}}
-              disabled={disableSearch}
-            >
+        <iframe id="ifKetcher" src="/ketcher" title="ketcher-rails structure editor" />
+      </div>
+      <div style={{ marginTop: '20px' }}>
+        <ButtonToolbar>
+          <Button bsStyle="warning" onClick={handleCancelBtn}>
+            {cancelBtnText}
+          </Button>
+          {!handleSaveBtn ? null : (
+            <Button bsStyle="primary" onClick={handleSaveBtn} style={{ marginRight: '20px' }} >
               {submitBtnText}
             </Button>
-            {submitAddons}
-          </ButtonToolbar>
-        </div>
+          )}
+          {!handleSaveBtn ? null : submitAddons}
+        </ButtonToolbar>
       </div>
-    )
-  }
+    </div>
+  );
+}
 
 const WarningBox = ({handleCancelBtn, hideWarning}) => {
   return (

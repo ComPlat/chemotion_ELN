@@ -37,4 +37,11 @@ const validDigit = (input, precision) => {
   return smallerThanOne(num, tailLen, precision);
 };
 
-module.exports = { fixDigit, validDigit };
+const correctPrefix = (input, precision) => {
+  if (input === 0.0) { return false; }
+  if (input >= 1.0) { return `${validDigit(input, precision)} `; }
+  if (input >= 0.001) { return `${validDigit(input * 1000, precision)} m`; }
+  return `${validDigit(input * 1000000, precision)} \u03BC`;
+};
+
+module.exports = { fixDigit, validDigit, correctPrefix };

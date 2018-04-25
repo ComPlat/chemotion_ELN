@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.2.0'
+gem 'rails', '4.2.10'
 
 gem 'thor', '0.19.1'
 
@@ -39,10 +39,11 @@ gem 'pg', '~> 0.20.0'
 gem 'pg_search'
 
 gem 'devise'
+gem 'jwt'
 
 gem 'dotenv-rails', require: 'dotenv/rails-now'
 
-gem 'browserify-rails', '~> 3.0.1'
+gem 'browserify-rails', '~> 4.2.0'
 
 # for collection tree structure
 gem 'ancestry'
@@ -59,7 +60,7 @@ gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
                 branch: 'allow-port-option'
 
 # API
-gem 'grape'
+gem 'grape', '<1.0.0'
 gem 'grape-active_model_serializers'
 gem 'grape-kaminari'
 gem 'hashie-forbidden_attributes'
@@ -75,11 +76,13 @@ gem 'sablon', git: 'https://github.com/ComPlat/sablon'
 # Import of elements from XLS and CSV file
 gem 'roo', '>2.5.0'
 
-gem 'faraday', '~> 0.11.0'
+gem 'faraday', '~> 0.12.1'
+gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
-gem 'ketcherails', git: 'https://github.com/ComPlat/ketcher-rails',
-                   ref: 'bbc54084cd6365bcc9229dfe43f8e7dc8c16a845'
-# Ketcher editor
+
+gem 'ketcherails', git: 'https://git.scc.kit.edu/ComPlat/ketcher-rails.git', branch: 'coordination_bond_suppport'
+# git: 'https://github.com/ComPlat/ketcher-rails',
+#                   ref: '19b5bd5344462295a2633ccfefed8a5bb4f85f28'
 
 # Free font icons
 gem 'font-awesome-rails'
@@ -103,6 +106,7 @@ gem 'rubocop', require: false
 gem 'yaml_db'
 
 gem 'ruby-ole'
+gem 'ruby-geometry', require: 'geometry'
 
 # CI
 gem 'coveralls', require: false
@@ -111,8 +115,7 @@ gem 'coveralls', require: false
 # to compile from github/openbabel/openbabel master
 # gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem'
 # to compile from github/openbabel/openbabel branch openbabel-2-4-x
-gem 'openbabel', '2.4.0.1', git: 'https://github.com/ComPlat/openbabel-gem',
-                            branch: 'openbabel-2-4-x'
+gem 'openbabel', '2.4.90.1', git: 'https://github.com/ComPlat/openbabel-gem'
 
 gem 'barby'
 gem 'prawn'
@@ -169,6 +172,7 @@ group :development, :test do
   gem 'capistrano-rvm'
   # gem 'capistrano3-delayed-job'
   gem 'slackistrano'
+  gem 'rubyXL', '3.3.26'
 end
 
 group :test do
@@ -176,16 +180,18 @@ group :test do
   gem 'factory_girl_rails'
 
   gem 'capybara', '~> 2.7.1'
-  gem 'chromedriver-helper', '1.0.0'
+  gem 'chromedriver-helper', '1.1.0'
   gem 'faker', '~> 1.6.6'
   gem 'headless', '2.0.0'
   gem 'launchy', '~> 2.4.3'
-  gem 'selenium-webdriver', '~> 3.0.5'
+  gem 'selenium-webdriver', '~> 3.7.0'
   gem 'webmock'
 end
 
-# Chemotion plugins: list your chemotion specific plugin gems here
-
-#gem 'scifinding', '0.1.0', git: 'https://github.com/ComPlat/scifinding' , :group => [:plugins,:development,:production]
+# Chemotion plugins: list your ELN specific plugin gems in the Gemfile.plugin
+eln_plugin = File.join(File.dirname(__FILE__), "Gemfile.plugin")
+if File.exists?(eln_plugin)
+  eval_gemfile eln_plugin
+end
 
 ####

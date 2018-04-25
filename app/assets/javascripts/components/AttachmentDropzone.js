@@ -67,7 +67,7 @@ class AttachmentDropzone extends Component{
     return connectDropTarget(
       <div>
       <i style={{color: 'gray', padding: 2, textAlign: 'center'}}>
-      Drop File(s) for new Dataset.
+      Drop File(s) from the inbox
       {isOver && canDrop && this.renderOverlay('green')}
       </i>
       </div>

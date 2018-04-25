@@ -18,6 +18,26 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static fetchThumbnails(ids) {
+    let promise = fetch('/api/v1/attachments/thumbnails/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static getFileListfrom(container){
     var allFiles = new Array();
     this.filterAllAttachments(allFiles, container.children);
@@ -103,5 +123,34 @@ export default class AttachmentFetcher {
     });
 
     return promise;
+  }
+
+  static downloadZip(id){
+    let file_name = 'dataset.zip'
+    return fetch(`/api/v1/attachments/zip/${id}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+    }).then((response) => {
+      const disposition = response.headers.get('Content-Disposition')
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        let filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+        let matches = filenameRegex.exec(disposition);
+        if (matches != null && matches[1]) {
+          file_name = matches[1].replace(/['"]/g, '');
+        }
+      }
+      return response.blob()
+    }).then((blob) => {
+      const a = document.createElement("a");
+      a.style = "display: none";
+      document.body.appendChild(a);
+      let url = window.URL.createObjectURL(blob);
+      a.href = url;
+      a.download = file_name
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 }

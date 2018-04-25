@@ -23,7 +23,7 @@ const CheckBoxs = ({items, toggleCheckbox, toggleCheckAll, checkedAll, customCla
           <th>
             <input type="checkbox"
                    checked={checkedAll}
-                   onChange={toggleCheckAll}
+                   onChange={toggleCheckAll.bind(null)}
                    className="common-checkbox" />
             <span className="g-marginLeft--10">
               {checkedAll ? "Deselect all" : "Select all"}

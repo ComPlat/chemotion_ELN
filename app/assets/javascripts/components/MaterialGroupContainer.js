@@ -1,44 +1,65 @@
-import React, {Component, PropTypes} from 'react';
-import {DropTarget} from 'react-dnd';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { DropTarget } from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
-import MaterialGroup from './MaterialGroup';
+import { MaterialGroup } from './MaterialGroup';
+import Reaction from './models/Reaction';
+
 
 const target = {
-  drop(props, monitor){
-    const {dropSample, dropMaterial, materialGroup} = props;
-    const item = monitor.getItem();
-    const itemType = monitor.getItemType();
-    if (itemType == 'sample') {
-      dropSample(item.element, materialGroup);
-    } else if (itemType == 'material') {
-      dropMaterial(item.material, item.materialGroup, materialGroup);
+  drop(tagProps, monitor) {
+    const { dropSample, dropMaterial } = tagProps;
+    const srcItem = monitor.getItem();
+    const srcType = monitor.getItemType();
+
+    if (srcType === DragDropItemTypes.SAMPLE) {
+      dropSample(
+        srcItem.element,
+        tagProps.material,
+        tagProps.materialGroup,
+      );
+    } else if (srcType === DragDropItemTypes.MOLECULE) {
+      dropSample(
+        srcItem.element,
+        tagProps.material,
+        tagProps.materialGroup,
+        null,
+        true,
+      );
+    } else if (srcType === DragDropItemTypes.MATERIAL) {
+      dropMaterial(
+        srcItem.material,
+        srcItem.materialGroup,
+        tagProps.material,
+        tagProps.materialGroup,
+      );
     }
   },
-  canDrop(props, monitor){
-    const {materialGroup} = props;
-    const item = monitor.getItem();
-    const itemType = monitor.getItemType();
-    if (itemType == 'material' && item.materialGroup != materialGroup) {
-      return true;
-    } else if (itemType == 'sample') {
-      return true;
-    }
-  }
+  canDrop(tagProps, monitor) {
+    const srcType = monitor.getItemType();
+    const isCorrectType = srcType === DragDropItemTypes.MATERIAL
+      || srcType === DragDropItemTypes.SAMPLE
+      || srcType === DragDropItemTypes.MOLECULE;
+    const noMaterial = tagProps.materials.length === 0;
+    return noMaterial && isCorrectType;
+  },
 };
 
 const collect = (connect, monitor) => ({
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
-  canDrop: monitor.canDrop()
+  canDrop: monitor.canDrop(),
 });
 
 class MaterialGroupContainer extends Component {
   render() {
-    const { materials, materialGroup, isOver, canDrop, connectDropTarget,
-            showLoadingColumn, deleteMaterial, onChange, reaction,
-            dropSample, headIndex } = this.props;
-    let style = {
-      padding: '2px 5px'
+    const {
+      materials, materialGroup, showLoadingColumn, headIndex,
+      isOver, canDrop, connectDropTarget,
+      deleteMaterial, onChange, reaction, dropSample, dropMaterial,
+    } = this.props;
+    const style = {
+      padding: '2px 5px',
     };
     if (isOver && canDrop) {
       style.borderStyle = 'dashed';
@@ -46,6 +67,7 @@ class MaterialGroupContainer extends Component {
     } else if (canDrop) {
       style.borderStyle = 'dashed';
     }
+
     return connectDropTarget(
       <div style={style}>
         <MaterialGroup
@@ -56,19 +78,36 @@ class MaterialGroupContainer extends Component {
           showLoadingColumn={showLoadingColumn}
           deleteMaterial={deleteMaterial}
           addDefaultSolvent={dropSample}
-          headIndex={headIndex} />
-      </div>
+          dropSample={dropSample}
+          dropMaterial={dropMaterial}
+          headIndex={headIndex}
+        />
+      </div>,
     );
   }
 }
 
-export default DropTarget([DragDropItemTypes.SAMPLE, DragDropItemTypes.MATERIAL], target, collect)(MaterialGroupContainer);
+export default DropTarget(
+  [DragDropItemTypes.SAMPLE, DragDropItemTypes.MOLECULE, DragDropItemTypes.MATERIAL],
+  target,
+  collect,
+)(MaterialGroupContainer);
 
 MaterialGroupContainer.propTypes = {
-  materials: PropTypes.array.isRequired,
+  materials: PropTypes.arrayOf(PropTypes.shape).isRequired,
+  headIndex: PropTypes.number.isRequired,
   materialGroup: PropTypes.string.isRequired,
   deleteMaterial: PropTypes.func.isRequired,
-  showLoadingColumn: PropTypes.object,
-  onChange: PropTypes.func,
-  reaction: PropTypes.object,
+  onChange: PropTypes.func.isRequired,
+  dropSample: PropTypes.func.isRequired,
+  dropMaterial: PropTypes.func.isRequired,
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  showLoadingColumn: PropTypes.bool,
+  isOver: PropTypes.bool.isRequired,
+  canDrop: PropTypes.bool.isRequired,
+  connectDropTarget: PropTypes.func.isRequired,
+};
+
+MaterialGroupContainer.defaultProps = {
+  showLoadingColumn: false,
 };

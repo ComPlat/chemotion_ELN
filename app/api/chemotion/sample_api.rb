@@ -6,6 +6,8 @@ module Chemotion
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ParamsHelpers
+    helpers CollectionHelpers
+    
     resource :samples do
 
       # TODO Refactoring: Use Grape Entities
@@ -16,21 +18,24 @@ module Chemotion
             optional :all, type: Boolean
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
-            optional :collection_id
+            optional :from_date, type: Date
+            optional :to_date, type: Date
+            optional :collection_id, type: Integer
+            optional :is_sync_to_me, type: Boolean, default: false
           end
           optional :limit, type: Integer, desc: "Limit number of samples"
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Sample.for_user(current_user.id).for_ui_state(params[:ui_state])).read?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).read?
         end
 
         # we are using POST because the fetchers don't support GET requests with body data
         post do
-          samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
-          samples = samples.limit(params[:limit]) if params[:limit]
-
-          {samples: samples.map{|s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}}
+          @samples = @samples.limit(params[:limit]) if params[:limit]
+          { samples: @samples.map{ |s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}  }
         end
 
         desc "Delete samples by UI state"
@@ -40,23 +45,25 @@ module Chemotion
             optional :included_ids, type: Array
             optional :excluded_ids, type: Array
             requires :collection_id
+            optional :is_sync_to_me, type: Boolean, default: false
           end
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Sample.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).destroy?
         end
 
         delete do
-          samples = Sample.for_user(current_user.id).for_ui_state(params[:ui_state])
-          samples.map{|sample|
+          samples = @samples.map { |sample|
             # DevicesSample.find_by(sample_id: sample.id).destroy
             # sample.devices_analyses.map{|d|
             #   d.analyses_experiments.destroy_all
             #   d.destroy
             # }
             sample.destroy
-          }
+          }.presence || { ui_state: [] }
         end
       end
 
@@ -136,59 +143,85 @@ module Chemotion
         end
       end
 
-      desc "Return serialized molecules_samples_groups of current user"
+      desc 'Return serialized molecules_samples_groups of current user'
       params do
-        optional :collection_id, type: Integer, desc: "Collection id"
-        optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
-        optional :molecule_sort, type: Integer, desc: "Sort by parameter"
+        optional :collection_id, type: Integer, desc: 'Collection id'
+        optional :sync_collection_id,
+                 type: Integer,
+                 desc: 'SyncCollectionsUser id'
+        optional :molecule_sort, type: Integer, desc: 'Sort by parameter'
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
+        optional :product_only, type: Boolean, desc: 'query only reaction products'
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
 
       get do
         own_collection = false
-        scope = if params[:collection_id]
+        scope = Sample.none
+        if params[:collection_id]
           begin
-            c = Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
-                .find(params[:collection_id])
+            c = Collection.belongs_to_or_shared_by(
+              current_user.id, current_user.group_ids
+            ).find(params[:collection_id])
 
-            !c.is_shared && (c.shared_by_id != current_user.id) && (own_collection = true)
+            !c.is_shared && (c.shared_by_id != current_user.id) &&
+              (own_collection = true)
 
-            Collection.belongs_to_or_shared_by(current_user.id,current_user.group_ids)
-                      .find(params[:collection_id])
-                      .samples
+            scope = Collection.belongs_to_or_shared_by(
+              current_user.id, current_user.group_ids
+            ).find(params[:collection_id]).samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         elsif params[:sync_collection_id]
           begin
             own_collection = false
+            c = current_user.all_sync_in_collections_users
+                            .find(params[:sync_collection_id])
 
-            c = current_user.all_sync_in_collections_users.find(params[:sync_collection_id])
-
-            c.collection
-             .samples
+            scope = c.collection.samples
           rescue ActiveRecord::RecordNotFound
             Sample.none
           end
         else
           # All collection
           own_collection = true
-          Sample.for_user(current_user.id).uniq
-        end.includes(:residues, :tag, collections: :sync_collections_users, molecule: :tag)
+          scope = Sample.for_user(current_user.id).uniq
+        end
+        scope = scope.includes(
+          :residues, :tag,
+          collections: :sync_collections_users,
+          molecule: :tag
+        )
+        prod_only = params[:product_only] || false
+        scope = if prod_only
+                  scope.product_only
+                else
+                  scope.uniq.sample_or_startmat_or_products
+                end
 
-        scope = scope.uniq.not_reactant.not_solvents
+        from = params[:from_date]
+        to = params[:to_date]
+        scope = scope.where('CAST(CREATED_AT AS DATE) >= ?', Time.at(from)) if from
+        scope = scope.where('CAST(CREATED_AT AS DATE) <= ?', Time.at(to)) if to
 
         if params[:molecule_sort] == 1
-          molecule_scope = Molecule.where(id: (scope.pluck :molecule_id))
-            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
-            .order(:sum_formular)
+          molecule_scope = Molecule
+                           .where(id: (scope.pluck :molecule_id))
+                           .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
+                           .order(:sum_formular)
 
           results = {
-            molecules: create_group_molecule(paginate(molecule_scope), scope, own_collection),
+            molecules: create_group_molecule(
+              paginate(molecule_scope),
+              scope,
+              own_collection
+            ),
             samples_count: scope.count
           }
         else
-          scope = scope.order("updated_at DESC")
+          scope = scope.order('updated_at DESC')
           results = {
             molecules: group_by_molecule(paginate(scope), own_collection),
             samples_count: scope.count
@@ -247,6 +280,10 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :stereo, type: Hash do
+          optional :abs, type: String, values: Sample::STEREO_ABS, default: Sample::STEREO_DEF['abs']
+          optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
+        end
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
         #use :root_container_params
@@ -254,7 +291,8 @@ module Chemotion
 
       route_param :id do
         before do
-          @element_policy = ElementPolicy.new(current_user, Sample.find(params[:id]))
+          @sample = Sample.find(params[:id])
+          @element_policy = ElementPolicy.new(current_user, @sample)
           error!('401 Unauthorized', 401) unless @element_policy.update?
         end
         put do
@@ -276,17 +314,15 @@ module Chemotion
             ) unless prop_value.blank?
           end
 
-          if sample = Sample.find(params[:id])
-            sample.update!(attributes)
-          end
+          @sample.update!(attributes)
 
           serialized_sample = ElementPermissionProxy.new(
                                 current_user,
-                                sample,
+                                @sample,
                                 user_ids,
                                 @element_policy,
                               ).serialized
-          {sample: serialized_sample}
+          { sample: serialized_sample }
         end
       end
 
@@ -317,6 +353,10 @@ module Chemotion
         optional :residues, type: Array
         optional :elemental_compositions, type: Array
         optional :xref, type: Hash
+        optional :stereo, type: Hash do
+          optional :abs, type: String, values: Sample::STEREO_ABS, default: Sample::STEREO_DEF['abs']
+          optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
+        end
         optional :molecule_name_id, type: Integer
         requires :container, type: Hash
       end
@@ -346,14 +386,20 @@ module Chemotion
           elemental_compositions: params[:elemental_compositions],
           created_by: current_user.id,
           xref: params[:xref],
+          stereo: params[:stereo],
           molecule_name_id: params[:molecule_name_id]
         }
 
         # otherwise ActiveRecord::UnknownAttributeError appears
+        # TODO should be in params validation
         attributes[:elemental_compositions].each do |i|
           i.delete :description
           i.delete :id
         end if attributes[:elemental_compositions]
+
+        attributes[:residues].each do |i|
+          i.delete :id
+        end if attributes[:residues]
 
         # set nested attributes
         %i(molecule residues elemental_compositions).each do |prop|

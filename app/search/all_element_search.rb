@@ -1,23 +1,21 @@
 class AllElementSearch
-  def initialize(term, user_id)
+  def initialize(term)
     @term = term
-    @user_id = user_id
   end
 
   def search_by_substring
-    Results.new(PgSearch.multisearch(@term), @user_id)
+    Results.new(PgSearch.multisearch(@term))
   end
 
   class Results
     attr_reader :samples, :results
 
-    def initialize(results, user_id)
+    def initialize(results)
       @results = results
-      @user_id = user_id
     end
 
     def first
-      Results.new(@results.first, @user_id)
+      Results.new(@results.first)
     end
 
     def empty?
@@ -43,7 +41,7 @@ class AllElementSearch
         @results = @results.where(query)
       end
 
-      Results.new(@results, @user_id)
+      Results.new(@results)
     end
 
     def molecules

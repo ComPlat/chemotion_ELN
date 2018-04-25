@@ -22,7 +22,11 @@ class Tmp < Local
          else
            afp
          end
-    tn = Thumbnailer.create(fp)#, thumb_path)
+    return if fp.blank? || (fe = File.extname(fp)&.downcase).blank?
+    tmp = Tempfile.new([File.basename(fp, '.*'), fe], encoding: 'ascii-8bit')
+    tmp.write File.read(fp)
+    tmp.rewind
+    tn = Thumbnailer.create(tmp.path)#, thumb_path)
     #NB issue with Thumbnailer.create(source, destination)
     if tn && tn != thumb_path
       dir = File.dirname(thumb_path)

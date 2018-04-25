@@ -1,12 +1,9 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import { DragSource } from 'react-dnd';
 import DragDropItemTypes from './DragDropItemTypes';
 
-const listSource = {
-  beginDrag(props) {
-    return props;
-  },
-};
+const listSource = { beginDrag(props) { return props; } };
 
 const collectSource = (connect, monitor) => ({
   connectDragSource: connect.dragSource(),
@@ -14,7 +11,7 @@ const collectSource = (connect, monitor) => ({
 });
 
 const ElementContainer = ({ connectDragSource, sourceType }) => {
-  if (sourceType === DragDropItemTypes.SAMPLE) {
+  if (sourceType === DragDropItemTypes.SAMPLE || sourceType === DragDropItemTypes.MOLECULE) {
     return connectDragSource(
       <span className="fa fa-arrows dnd-arrow-enable text-info" />,
       { dropEffect: 'copy' },
@@ -22,6 +19,10 @@ const ElementContainer = ({ connectDragSource, sourceType }) => {
   } else if (sourceType === DragDropItemTypes.GENERALPROCEDURE) {
     return connectDragSource(
       <span className="fa fa-home dnd-arrow-enable text-info" />,
+    );
+  } else if (sourceType === DragDropItemTypes.WELLPLATE) {
+    return connectDragSource(
+      <span className="fa fa-arrows dnd-arrow-enable text-info" />,
     );
   }
   return <span className="fa fa-arrows dnd-arrow-disable" />;

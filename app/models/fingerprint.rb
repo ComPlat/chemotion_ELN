@@ -1,26 +1,28 @@
+# frozen_string_literal: true
+
 class Fingerprint < ActiveRecord::Base
-  acts_as_paranoid
+  # acts_as_paranoid
   include Collectable
 
-  has_many :samples, :dependent => :restrict_with_error
+  has_many :samples, dependent: :restrict_with_error
 
   validates :fp0, :fp1, :fp2, :fp3, :fp4, :fp5, :fp6, :fp7, :fp8,
             :fp9, :fp10, :fp11, :fp12, :fp13, :fp14, :fp15,
-            format: { with: /[01]/, message: "only allows 0 or 1" },
+            format: { with: /[01]/, message: 'only allows 0 or 1' },
             length: {
               minimum: 64,
               maximum: 64,
-              wrong_length: "must be exactly 64 characters"
+              wrong_length: 'must be exactly 64 characters'
             },
             presence: true
 
- validates :fp0, uniqueness: {
-                  scope: [
-                    :fp1, :fp2, :fp3, :fp4, :fp5, :fp6, :fp7, :fp8,
-                    :fp9, :fp10, :fp11, :fp12, :fp13, :fp14, :fp15
-                  ],
-                  message: "existed fingerprint"
-                 }
+  # validates :fp0, uniqueness: {
+  #                  scope: [
+  #                    :fp1, :fp2, :fp3, :fp4, :fp5, :fp6, :fp7, :fp8,
+  #                    :fp9, :fp10, :fp11, :fp12, :fp13, :fp14, :fp15
+  #                  ],
+  #                  message: 'existed fingerprint'
+  #                 }
 
 
   validates :num_set_bits,
@@ -29,152 +31,120 @@ class Fingerprint < ActiveRecord::Base
               only_integer: true,
               greater_than_or_equal_to: 0,
               less_than: 1024,
-              message: "must be integer between 0 and 1024"
+              message: 'must be integer between 0 and 1024'
             }
 
-  after_create :check_num_set_bits
-  before_save :check_fingerprint_exist
+  before_create :check_num_set_bits
+  # before_save :check_fingerprint_exist
 
-  NUMBER_OF_FINGERPRINT_COL = 16
+  # NUMBER OF FINGERPRINT COLUMNS - 1
+  NUMBER_OF_FINGERPRINT_COL = 15
 
-  def self.count_bits_set(fp_vector)
-    query_num_set_bits = 0
+  scope :search_similar, ->(fp_vector, threshold, tanimoto_ordered = true, molfile = nil) {
+    fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile) if molfile
+    threshold = threshold.to_f
+    query_num_set_bits = count_bits_set(fp_vector)
 
-    fp_vector.each do |fp|
-      num_bit_on = ("%064b" % fp).count("1")
-      query_num_set_bits = query_num_set_bits + num_bit_on
-    end
-
-    return query_num_set_bits
-  end
-
-  scope :search_similar, -> (fp_vector, threshold) {
-    query_num_set_bits = self.count_bits_set(fp_vector)
-
-    query = sanitize_sql_for_conditions(
-      ["id, num_set_bits,
-        fp0 & ? n0, fp1 & ? n1, fp2 & ? n2, fp3 & ? n3, fp4 & ? n4, fp5 & ? n5,
-        fp6 & ? n6, fp7 & ? n7, fp8 & ? n8, fp9 & ? n9, fp10 & ? n10,
-        fp11 & ? n11, fp12 & ? n12, fp13 & ? n13, fp14 & ? n14, fp15 & ? n15",
-        "%064b" % fp_vector[0],
-        "%064b" % fp_vector[1],
-        "%064b" % fp_vector[2],
-        "%064b" % fp_vector[3],
-        "%064b" % fp_vector[4],
-        "%064b" % fp_vector[5],
-        "%064b" % fp_vector[6],
-        "%064b" % fp_vector[7],
-        "%064b" % fp_vector[8],
-        "%064b" % fp_vector[9],
-        "%064b" % fp_vector[10],
-        "%064b" % fp_vector[11],
-        "%064b" % fp_vector[12],
-        "%064b" % fp_vector[13],
-        "%064b" % fp_vector[14],
-        "%064b" % fp_vector[15]
+    sim_query = sanitize_sql_for_conditions(
+      [sql_query_similar, query_num_set_bits] + fp_vector + [
+        (threshold * query_num_set_bits).floor,
+        (query_num_set_bits / threshold).ceil
       ]
     )
 
-    new_fp = Fingerprint.unscoped.select(query)
-            .where('num_set_bits >= ?', (threshold * query_num_set_bits).floor)
-            .where('num_set_bits <= ?', (query_num_set_bits / threshold).floor)
+    query = joins(sim_query)
+    tanimoto_ordered ? query.order('tanimoto desc') : query
+  }
 
-    common_set_bits = unscoped.from("(#{new_fp.to_sql}) AS new_fp")
-      .select(
-        "*,
-        LENGTH(TRANSLATE(
-          CONCAT(new_fp.n0::text, new_fp.n1::text, new_fp.n2::text,
-                 new_fp.n3::text, new_fp.n4::text, new_fp.n5::text,
-                 new_fp.n6::text, new_fp.n7::text, new_fp.n8::text,
-                 new_fp.n9::text, new_fp.n10::text, new_fp.n11::text,
-                 new_fp.n12::text, new_fp.n13::text,
-                 new_fp.n14::text, new_fp.n15::text),
-          '0',
-          '')) as common_set_bit")
-    query = sanitize_sql_for_conditions(
-      [
-        "id,
-        (common_set_bit::float8 / (? + num_set_bits - common_set_bit)::float8) AS tanimoto",
-        query_num_set_bits
-      ]
+  scope :screen_sub, ->(fp_vector) {
+    where(
+      (1..NUMBER_OF_FINGERPRINT_COL).inject('fp0 & ? = ?') { |a, b| a + " and fp#{b} & ? = ?" },
+      *fp_vector.inject([]) { |sum, v| sum + [v, v] }
     )
-    tanimoto = unscoped.from("(#{common_set_bits.to_sql}) AS common_bits ORDER BY tanimoto DESC")
-                       .select(query)
-
-    return tanimoto.map(&:id)
   }
 
-  scope :screen_sub, -> (fp_vector) {
-    screen = Fingerprint.all
-    NUMBER_OF_FINGERPRINT_COL.times do |i|
-      screen = screen.where("fp#{i} & ? = ?",
-                            "%064b" % fp_vector[i],
-                            "%064b" % fp_vector[i])
-    end
-
-    return screen.pluck(:id)
+  scope :by_bin_vector, ->(fp_vector) {
+    where(
+      (1..NUMBER_OF_FINGERPRINT_COL).inject('fp0 = ?') { |a, b| a + " and fp#{b} = ?" },
+      *fp_vector
+    )
   }
 
-  def self.find_or_create_by_molfile molfile
-    molfile = self.standardized_molfile(molfile)
-    fp_vector = Chemotion::OpenBabelService.fingerprint_from_molfile molfile
-    existed_fp = Fingerprint.all
-    NUMBER_OF_FINGERPRINT_COL.times do |i|
-      existed_fp = existed_fp.where("fp#{i} = ?", "%064b" % fp_vector[i])
+  class <<self
+    def sql_query_similar(table_column = 'fingerprints.id')
+      <<~SQL
+        INNER JOIN (
+          SELECT id,
+            (common_set_bit::float8 / (? + num_set_bits - common_set_bit)::float8) AS tanimoto
+          FROM (
+            SELECT id, num_set_bits,
+              LENGTH(TRANSLATE(CONCAT(
+                  (fp0 & ?)::text, (fp1 & ?)::text, (fp2 & ?)::text, (fp3 & ?)::text,
+                  (fp4 & ?)::text, (fp5 & ?)::text, (fp6 & ?)::text, (fp7 & ?)::text,
+                  (fp8 & ?)::text, (fp9 & ?)::text, (fp10 & ?)::text, (fp11 & ?)::text,
+                  (fp12 & ?)::text, (fp13 & ?)::text, (fp14 & ?)::text, (fp15 & ?)::text
+                ),'0','')
+              ) AS common_set_bit
+            FROM fingerprints
+            WHERE num_set_bits BETWEEN ? AND ? -- AND fingerprints."deleted_at" IS NULL
+          ) subquery
+        ) AS "fps" ON "fps"."id" = #{table_column}
+      SQL
     end
 
-    # Return id of the existed record
-    return existed_fp.first.id unless existed_fp.count == 0
+    def count_bits_set(fp_vector)
+      fp_vector.reduce(0) { |sum, v| sum + v.count('1') }
+    end
 
-    fp = Fingerprint.create()
+    def find_or_create_by_molfile(molfile)
+      molfile = standardized_molfile(molfile)
+      fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
 
-    NUMBER_OF_FINGERPRINT_COL.times { |i|
-      fp_name = "fp" + i.to_s + "="
-      fp.send(fp_name, "%064b" % fp_vector[i])
-    }
+      existed_fp = by_bin_vector(fp_vector).first
+      return existed_fp if existed_fp
 
-    fp.num_set_bits = self.count_bits_set(fp_vector)
-    fp.save!
-    return fp.id
-  end
-
-  def self.standardized_molfile molfile
-    return molfile unless molfile.include? 'R#'
-
-    molfile.gsub! /(> <PolymersList>[\W\w.\n]+[\d]+)/m, ''
-
-    if molfile.include? ' R# '
-      lines = molfile.split "\n"
-      lines[4..-1].each do |line|
-        break if line.match /(M.+END+)/
-        line.gsub! ' R# ', ' R1  '
+      fp = Fingerprint.new
+      (0..NUMBER_OF_FINGERPRINT_COL).each do |i|
+        fp['fp' + i.to_s] = fp_vector[i]
       end
-      molfile = lines.join "\n"
+      fp.num_set_bits = count_bits_set(fp_vector)
+      fp.save!
+      fp
     end
 
-    return molfile
+    def standardized_molfile(molfile)
+      return molfile unless molfile.include? 'R#'
+
+      molfile.gsub!(/(> <PolymersList>[\W\w.\n]+[\d]+)/m, '')
+
+      if molfile.include? ' R# '
+        lines = molfile.split "\n"
+        lines[4..-1].each do |line|
+          break if line =~ /(M.+END+)/
+          line.gsub!(' R# ', ' R1  ')
+        end
+        molfile = lines.join "\n"
+      end
+
+      molfile
+    end
+
+    def generate_sample_fingerprint
+      (1..64).map { [0, 1].sample }.join
+    end
   end
 
-  def self.generate_sample_fingerprint
-    (1..64).map { [0, 1].sample }.join
+  def vector_bin
+    Array.new(NUMBER_OF_FINGERPRINT_COL + 1) { |i| self['fp' + i.to_s] }
   end
 
+  # Self-generate num_set_bits if zero?
   def check_num_set_bits
-    return unless self.num_set_bits == 0
-
-    # Self-generate num_set_bits
-    NUMBER_OF_FINGERPRINT_COL.times { |i|
-      self.num_set_bits = self.num_set_bits +
-                          self.send("fp" + i.to_s).count("1")
-    }
+    return unless num_set_bits.zero?
+    self.num_set_bits = vector_bin.reduce(0) { |sum, v| sum + v.count('1') }
   end
 
   def check_fingerprint_exist
-    existed_fp = Fingerprint.all
-    NUMBER_OF_FINGERPRINT_COL.times do |i|
-      existed_fp = existed_fp.where("fp#{i} = ?", self["fp" + i.to_s])
-    end
-
-    return (existed_fp.count == 0)
+    self.class.by_bin_vector(vector_bin).count.zero?
   end
 end

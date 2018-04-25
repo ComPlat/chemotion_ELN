@@ -1,7 +1,8 @@
 # Basic Setup
 * Copy `config/database.yml.example` to `config/database.yml` and enter your database connection information.
+* Copy `config/storage.yml.example` to `config/storage.yml` and enter your database connection information.
 * Copy `.ruby-gemset.example` to `.ruby-gemset`.
-* Copy `.ruby-version.example` to `.ruby-version`.
+* Copy `.ruby-version.example` to `.ruby-version`. (Skip this step if you want to use Docker)
 * Reload directory to create rvm gemset.
 
 ## nokogiri
@@ -39,6 +40,15 @@ if there are errors with nokogiri compilation with new xcode7:
 Production
 
 * `cp .env.production{.example,}  # optionally enter SFTP credentials`
+
+## Configure Data Collection
+
+* copy the config example file and edit the entries
+
+* create device entries and configure their profiles
+
+`cp db/datacollectors.yml.example db/datacollectors.yml`
+
 
 # Deployment notes
 
@@ -78,6 +88,7 @@ Icons are now available as css classes: '.icon-<ICON_NAME'
 # Docker setup
 This is a setup for a 'pseudo' production stage using passenger and aimed for user testing.
 (For the development environment, change 'RAILS_ENV' to 'development' in docker-compose.yml)
+**Make sure you have finished the BASIC SETUP FIRST**
 
 1. Build the image from Dockerfile `docker-compose build` or pull the image: `docker-compose pull`
 2. Initialize database FIRST:
@@ -93,5 +104,3 @@ This is a setup for a 'pseudo' production stage using passenger and aimed for us
 * NOTE: In this Docker image, we disabled the email verification progress
 
 * To enable email confirmation, uncomment ":confirmable" at line 5 of `app/models/user.rb`, stop the `docker-compose` by `docker-compose stop` and start `docker-compose`.
-
-

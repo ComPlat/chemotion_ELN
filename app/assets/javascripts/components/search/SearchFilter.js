@@ -48,8 +48,17 @@ export default class SearchFilter extends React.Component {
           label: 'Sample External Label'
         },
         label: 'Sample External Label'
+      },
+      {
+        value: {
+          table: 'molecules',
+          column: 'cas',
+          ext_key: 'molecule_id',
+          label: 'CAS'
+        },
+        label: 'CAS'
       }
-    ]
+    ];
 
     for (let i = 0; i < XSearchParams.count; i++){
       if (XSearchParams[`on${i}`]) {
@@ -63,8 +72,11 @@ export default class SearchFilter extends React.Component {
     ]
 
     this.matchOps = [
-      { value: "EXACT", label: "EXACT" },
-      { value: "LIKE", label: "SUBSTRING" }
+      { value: "=", label: "EXACT" },
+      { value: "LIKE", label: "LIKE (substring)" },
+      { value: "ILIKE", label: "LIKE (case insensitive substring)" },
+      { value: "NOT LIKE", label: "NOT LIKE (substring)" },
+      { value: "NOT ILIKE", label: "NOT LIKE (case insensitive substring)" }
     ]
 
     this.search = this.search.bind(this)
@@ -104,9 +116,9 @@ export default class SearchFilter extends React.Component {
   }
 
   search() {
-    let {filters} = this.state
+    let { filters } = this.state;
 
-    // Remove illegal filter
+    // Remove invalid filter
     filters = filters.filter((f, id) => {
       return (f.field && f.link && f.value) ||
         (id == 0 && f.field && f.value)
@@ -114,7 +126,7 @@ export default class SearchFilter extends React.Component {
 
     this.setState({
       showFilters: false,
-      filters: filters
+      filters
     }, this.props.searchFunc(filters))
   }
 

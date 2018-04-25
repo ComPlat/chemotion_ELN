@@ -12,40 +12,41 @@ export default class Sample extends Element {
   //   return false;
   // }
 
-  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false) {
-    let newSample = sample.buildCopy();
-
+  static copyFromSampleAndCollectionId(sample, collection_id, structure_only = false, keepResidueInfo = false) {
+    const newSample = sample.buildCopy();
     newSample.collection_id = collection_id;
-    if (sample.name) newSample.name = sample.name;
-    if (sample.external_label) {
-      newSample.external_label = sample.external_label;
-    }
+    if (sample.name) { newSample.name = sample.name; }
+    if (sample.external_label) { newSample.external_label = sample.external_label; }
 
     if(structure_only) {
-      newSample = newSample.filterSampleData();
-    } else if (sample.elemental_compositions) {
+      newSample.filterSampleData();
+      newSample.filterResidueData(true);
+    } else {
+      newSample.filterResidueData(keepResidueInfo);
+    }
+
+    if (sample.elemental_compositions) {
       newSample.elemental_compositions = sample.elemental_compositions;
     }
+
+    newSample.filterElementalComposition();
 
     return newSample;
   }
 
-  filterSampleData() {
-    let el_c = this.elemental_compositions.find(function(item) {
-      if(item.composition_type == 'formula') {
+  filterElementalComposition() {
+    const elemComp = (this.elemental_compositions || []).find((item) => {
+      if (item.composition_type == 'formula') {
         item.id = null;
         return item;
       }
     });
-    this.elemental_compositions = el_c ? [el_c] : [];
+    this.elemental_compositions = elemComp ? [elemComp] : [];
     this.elemental_compositions.push({
       composition_type: 'found',
       data: {},
       description: 'Experimental'
     });
-
-    if(this.contains_residues) { this.setDefaultResidue(); }
-
     return this;
   }
 
@@ -66,18 +67,62 @@ export default class Sample extends Element {
     ];
   }
 
-  static buildNewShortLabel() {
-    let {currentUser} = UserStore.getState();
-    if(!currentUser) {
-      return 'NEW SAMPLE';
-    } else {
-      return `${currentUser.initials}-${currentUser.samples_count + 1}`;
+  filterResidueData(keepResidueInfo = false) {
+    if (this.contains_residues) {
+      if (keepResidueInfo) {
+        // only reset loading
+        this.residues.map((residue) => {
+          Object.assign(residue.custom_info, {
+            external_loading: 0.0,
+            loading: null,
+            loading_type: "external"
+          });
+        });
+      } else {
+        // set default polymer data
+        this.residues.map((residue) => {
+          Object.assign(residue, {
+            residue_type: 'polymer',
+            custom_info: {
+              "formula": 'CH',
+              "loading": null,
+              "polymer_type": "polystyrene",
+              "loading_type": "external",
+              "external_loading": 0.0,
+              "reaction_product": (this.reaction_product ? true : null),
+              "cross_linkage": null
+            }
+          });
+        });
+      }
     }
+    return this;
+  }
+
+  filterSampleData() {
+    // reset to default values
+    this.target_amount_value = 0;
+    this.real_amount_value = 0;
+    this.description = '';
+    this.purity = 1;
+    this.imported_readout = '';
+
+    return this;
+  }
+
+  static buildNewShortLabel() {
+    const { currentUser } = UserStore.getState();
+    if (!currentUser) { return 'NEW SAMPLE'; }
+    return `${currentUser.initials}-${currentUser.samples_count + 1}`;
+  }
+
+  static defaultStereo() {
+    return { abs: 'any', rel: 'any' };
   }
 
   static buildEmpty(collection_id) {
-    let sample = new Sample({
-      collection_id: collection_id,
+    const sample = new Sample({
+      collection_id,
       type: 'sample',
       external_label: '',
       target_amount_value: 0,
@@ -100,6 +145,7 @@ export default class Sample extends Element {
       attached_amount_mg: '', // field for polymers calculations
       container: Container.init(),
       can_update: true,
+      stereo: Sample.defaultStereo()
     });
 
     sample.short_label = Sample.buildNewShortLabel();
@@ -116,35 +162,40 @@ export default class Sample extends Element {
   }
 
   buildCopy() {
-    let sample = super.buildCopy()
-    sample.short_label = sample.short_label + " Copy"
-
+    const sample = super.buildCopy();
+    sample.short_label = Sample.buildNewShortLabel();
     sample.container = Container.init();
     sample.can_update = true;
-
     return sample;
   }
 
-  static buildNew(sample, collection_id) {
-    let newSample = Sample.buildEmpty(collection_id)
+  static buildNew(sample, collectionId, matGroup = null) {
+    const newSample = Sample.buildEmpty(collectionId);
 
-    newSample.molecule = sample.molecule == undefined ? sample : sample.molecule
-
-    if (sample instanceof Sample)
-      newSample.split_label = sample.buildSplitShortLabel();
-
-    newSample.molfile = sample.molfile || '';
-    newSample.sample_svg_file = sample.sample_svg_file;
+    if (matGroup === 'reactants' || matGroup === 'solvents') {
+      newSample.short_label = matGroup.slice(0, -1);
+    }
+    if (sample instanceof Sample) {
+      newSample.molecule = sample.molecule;
+      newSample.sample_svg_file = sample.sample_svg_file;
+    } else {
+      newSample.molecule = sample;
+    }
+    if (sample.stereo) {
+      const { abs, rel } = sample.stereo;
+      newSample.stereo = { abs, rel };
+    }
     newSample.residues = sample.residues || [];
-    newSample.contains_residues = sample.contains_residues
+    newSample.contains_residues = sample.contains_residues;
+    newSample.filterResidueData(true);
     newSample.density = sample.density;
-
+    newSample.molfile = sample.molfile || '';
     return newSample;
   }
 
   buildChild() {
     Sample.counter += 1;
-    let splitSample = this.buildChildWithoutCounter();
+    const splitSample = this.buildChildWithoutCounter();
     splitSample.short_label = splitSample.split_label;
     Sample.children_count[this.id] = this.getChildrenCount() + 1;
 
@@ -152,27 +203,24 @@ export default class Sample extends Element {
   }
 
   buildChildWithoutCounter() {
-    let splitSample = this.clone();
+    const splitSample = this.clone();
     splitSample.parent_id = this.id;
     splitSample.id = Element.buildID();
 
-    if (this.name) splitSample.name = this.name
-    if (this.external_label) splitSample.external_label = this.external_label
-    if (this.elemental_compositions)
-      splitSample.elemental_compositions = this.elemental_compositions
-
+    if (this.name) { splitSample.name = this.name; }
+    if (this.external_label) { splitSample.external_label = this.external_label; }
+    if (this.elemental_compositions) {
+      splitSample.elemental_compositions = this.elemental_compositions;
+    }
     splitSample.created_at = null;
     splitSample.updated_at = null;
     splitSample.target_amount_value = 0;
     splitSample.real_amount_value = null;
     splitSample.is_split = true;
     splitSample.is_new = true;
-
     splitSample.split_label = splitSample.buildSplitShortLabel();
-
-    //Todo ???
+    // Todo ???
     splitSample.container = Container.init();
-
     return splitSample;
   }
 
@@ -215,6 +263,7 @@ export default class Sample extends Element {
       imported_readout: this.imported_readout,
       container: this.container,
       xref: this.xref,
+      stereo: this.stereo,
     });
 
     return serialized;
@@ -230,7 +279,6 @@ export default class Sample extends Element {
 
   set contains_residues(value) {
     this._contains_residues = value;
-
     if(value) {
       if(!this.residues.length) {
 
@@ -244,7 +292,7 @@ export default class Sample extends Element {
           item._destroy = true;
       });
     } else {
-      this.sample_svg_file = '';
+      // this.sample_svg_file = '';
       if(this.residues.length)
         this.residues[0]._destroy = true; // delete residue info
 
@@ -377,6 +425,13 @@ export default class Sample extends Element {
     this._imported_readout = imported_readout;
   }
 
+  setAmount(amount) {
+    if (amount.unit && !isNaN(amount.value)) {
+      this.amount_value = amount.value;
+      this.amount_unit = amount.unit;
+    }
+  }
+
   setAmountAndNormalizeToGram(amount) {
     this.amount_value = this.convertToGram(amount.value, amount.unit);
     this.amount_unit = 'g';
@@ -492,6 +547,7 @@ export default class Sample extends Element {
   }
 
   get amount_l() {
+    if (this.amount_unit === 'l') return this.amount_value;
     return this.convertGramToUnit(this.amount_g, 'l');
   }
 
@@ -588,7 +644,8 @@ export default class Sample extends Element {
   }
 
   get molecule_iupac_name() {
-    return this.molecule && this.molecule.iupac_name;
+    return this.molecule_name_hash && this.molecule_name_hash.label
+     || this.molecule && this.molecule.iupac_name;
   }
 
   set molecule_iupac_name(iupac_name) {
@@ -628,58 +685,53 @@ export default class Sample extends Element {
   }
 
   set molecule(molecule) {
-    this._molecule = new Molecule(molecule)
-    if(molecule.temp_svg) {
-      this.sample_svg_file = molecule.temp_svg;
-    }
+    this._molecule = new Molecule(molecule);
+    if (molecule.temp_svg) { this.sample_svg_file = molecule.temp_svg; }
   }
 
   get polymer_formula() {
-    return this.contains_residues
-            && this.residues[0].custom_info.formula.toString();
+    return this.contains_residues && this.residues[0].custom_info.formula.toString();
   }
 
   get concat_formula() {
     // TODO Workaround, need to check how can molecule is null
-    if (!this.molecule)
-      return '';
-
-    if(this.contains_residues)
+    if (!this.molecule) { return ''; }
+    if(this.contains_residues) {
       return (this.molecule.sum_formular || '') + this.polymer_formula;
-    else
-      return (this.molecule.sum_formular || '');
+    }
+    return (this.molecule.sum_formular || '');
   }
 
   get polymer_type() {
-    if (!this.contains_residues) return false;
-
-    let info = this.residues[0].custom_info;
-    let type = info.polymer_type ? info.polymer_type : info.surface_type
-    return type.toString();
+    if (this.contains_residues) {
+      const info = this.residues[0].custom_info;
+      return (info.polymer_type ? info.polymer_type : info.surface_type).toString();
+    }
+    return false;
   }
 
   get loading() {
-    if(!this.contains_residues)
-      return false;
-
-    return this.residues[0].custom_info.loading;
+    if(this.contains_residues) {
+      return this.residues[0].custom_info.loading;
+    }
+    return false;
   }
 
   set loading(loading) {
-    if(this.contains_residues)
-      this.residues[0].custom_info.loading = loading;
+    if(this.contains_residues) { this.residues[0].custom_info.loading = loading; }
   }
 
   get external_loading() {
-    if(!this.contains_residues)
-      return false;
-
-    return this.residues[0].custom_info.external_loading;
+    if(this.contains_residues) {
+      return this.residues[0].custom_info.external_loading;
+    }
+    return false;
   }
 
   set external_loading(loading) {
-    if(this.contains_residues)
+    if(this.contains_residues) {
       this.residues[0].custom_info.external_loading = loading;
+    }
   }
 
   get error_loading() {
@@ -718,6 +770,7 @@ export default class Sample extends Element {
     let params = this.serialize();
     let extra_params = {
       equivalent: this.equivalent,
+      position: this.position,
       reference: this.reference || false
     }
     _.merge(params, extra_params);

@@ -214,7 +214,8 @@ export default class CollectionsFetcher {
       },
       body: JSON.stringify({
         ui_state: params.ui_state,
-        collection_id: params.collection_id
+        collection_id: params.collection_id,
+        newCollection: params.newLabel,
       })
     }).then((response) => {
       return response.json()
@@ -238,7 +239,8 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
         collection_id: params.collection_id,
-        is_sync_to_me: params.is_sync_to_me
+        is_sync_to_me: params.is_sync_to_me,
+        newCollection: params.newLabel,
       })
     }).then((response) => {
       return response.json()

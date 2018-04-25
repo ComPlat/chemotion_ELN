@@ -10,7 +10,3 @@ end
 every :sunday, at: '1am' do
   runner "ReallyDestroyTask.execute!"
 end
-
-#every 2.minutes do
-#  rake 'collect_mail_data'
-#end

@@ -29,14 +29,17 @@ export default class UnsortedBox extends React.Component {
     return (
       visible
           ?
-          <li><div className="tree-view"><div className="title"><i className="fa fa-folder-open" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> Unsorted </i></div></div>
-              <ul> {attachments} </ul>
-            </li>
-
-          : <li><div className="tree-view"><div className="title"><i className="fa fa-folder" aria-hidden="true"
+          <div className="tree-view">
+            <div className="title">
+              <i className="fa fa-folder-open" aria-hidden="true"
+                onClick={() => this.setState({visible: !visible})}> Unsorted
+                </i>
+            </div>
+            <div> {attachments} </div>
+          </div>
+          : <div className="tree-view"><div className="title"><i className="fa fa-folder" aria-hidden="true"
           onClick={() => this.setState({visible: !visible})}> Unsorted</i></div></div>
-            </li>
+
     )
   }
 }

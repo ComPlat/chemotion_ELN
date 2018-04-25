@@ -14,7 +14,8 @@ import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
-import DeviceFetcher from '../fetchers/DeviceFetcher'
+import DeviceFetcher from '../fetchers/DeviceFetcher';
+import ContainerFetcher from '../fetchers/ContainerFetcher';
 
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -22,6 +23,7 @@ import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
+import Format from '../models/Format';
 import DeviceControl from '../models/DeviceControl'
 
 import _ from 'lodash';
@@ -165,8 +167,7 @@ class ElementActions {
 
   // -- Search --
 
-  fetchBasedOnSearchSelectionAndCollection(selection, collectionId,
-      currentPage, isSync = false, moleculeSort = false) {
+  fetchBasedOnSearchSelectionAndCollection(params) {
     let uid;
     NotificationActions.add({
       title: "Searching ...",
@@ -174,17 +175,13 @@ class ElementActions {
       position: "tc",
       onAdd: function(notificationObject) { uid = notificationObject.uid; }
     });
-
     return (dispatch) => {
-      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(selection,
-        collectionId, currentPage, isSync, moleculeSort)
-                   .then((result) => {
-                     dispatch(result);
-                     NotificationActions.removeByUid(uid);
-                   }).catch((errorMessage) => {
-                     console.log(errorMessage);
-                   })
-    }
+      SearchFetcher.fetchBasedOnSearchSelectionAndCollection(params)
+        .then((result) => {
+          dispatch(result);
+          NotificationActions.removeByUid(uid);
+        }).catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   // -- Collections --
@@ -576,6 +573,10 @@ class ElementActions {
     return  Report.buildEmpty()
   }
 
+  showFormatContainer() {
+    return Format.buildEmpty();
+  }
+
   // -- General --
 
   refreshElements(type) {
@@ -604,7 +605,28 @@ class ElementActions {
   }
 
   // - ...
-
+  deleteElementsByUIState(params) {
+    return (dispatch) => {
+      fetch('/api/v1/ui_state/', {
+        credentials: 'same-origin',
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(params)
+      }).then((response) => {
+        return response.json()
+      }).then((json) => {
+        return json;
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      }).then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
   deleteSamplesByUIState(ui_state) {
     return (dispatch) => { SamplesFetcher.deleteSamplesByUIState(ui_state)
       .then((result) => {
@@ -682,6 +704,17 @@ class ElementActions {
 
   changeSorting(sort) {
     return sort;
+  }
+
+  updateContainerContent(params) {
+    return (dispatch) => {
+      ContainerFetcher.updateContainerContent(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
   }
 
 }

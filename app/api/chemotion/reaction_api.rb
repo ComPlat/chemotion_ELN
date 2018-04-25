@@ -59,7 +59,8 @@ module ReactionHelpers
     ActiveRecord::Base.transaction do
       included_sample_ids = []
       materials.each do |material_group, samples|
-        reaction_samples_association = reaction.public_send("reactions_#{material_group}_samples")
+        fixed_label = material_group =~ /solvents?|reactants?/ && $&
+        reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
         samples.each do |sample|
           #create new subsample
           if sample.is_new
@@ -67,47 +68,29 @@ module ReactionHelpers
               parent_sample = Sample.find(sample.parent_id)
 
               #TODO extract subsample method
-              first_collection_id = collections.first.id
-              subsample = parent_sample.create_subsample current_user, first_collection_id
+              subsample = parent_sample.create_subsample(current_user, collections, true)
 
-              if (material_group == :reactant || material_group == :solvent)
-                # Use 'reactant' or 'solvent' as short_label
-                subsample.short_label = sample.short_label
-              end
+              # Use 'reactant' or 'solvent' as short_label
+              subsample.short_label = fixed_label if fixed_label
 
               subsample.target_amount_value = sample.target_amount_value
               subsample.target_amount_unit = sample.target_amount_unit
               subsample.real_amount_value = sample.real_amount_value
               subsample.real_amount_unit = sample.real_amount_unit
 
-              if ra = (sample.residues_attributes || sample.residues)
-                subsample.residues_attributes =
-                  ra.uniq || ra.each do |i| i.delete :id end
-              end
-
-              subsample.collections << collections.where.not(id: first_collection_id)
-
               #add new data container
               #subsample.container = create_root_container
-
-              if sample.container
-                subsample.container = update_datamodel(sample.container)
-              end
+              subsample.container = update_datamodel(sample.container) if sample.container
 
               subsample.save!
               subsample.reload
               included_sample_ids << subsample.id
-
-              reaction_samples_association.create!(
-                sample_id: subsample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
+              s_id = subsample.id
             #create new sample
             else
               attributes = sample.to_h
-                .except(:id, :is_new, :is_split, :reference, :equivalent, :type, :molecule, :collection_id, :short_label)
-                .merge(molecule_attributes: {molfile: sample.molecule.molfile}, created_by: current_user.id)
+                .except(:id, :is_new, :is_split, :reference, :equivalent, :position, :type, :molecule, :collection_id, :short_label)
+                .merge(created_by: current_user.id)
 
               # update attributes[:name] for a copied reaction
               if reaction.name.include?("Copy") && attributes[:name].present?
@@ -118,24 +101,30 @@ module ReactionHelpers
 
               container_info = attributes[:container]
               attributes.delete(:container)
-
               new_sample = Sample.new(
                 attributes
               )
+
+              # Use 'reactant' or 'solvent' as short_label
+              new_sample.short_label = fixed_label if fixed_label
 
               #add new data container
               new_sample.container = update_datamodel(container_info)
 
               new_sample.collections << collections
               new_sample.save!
-
-              reaction_samples_association.create(
-                sample_id: new_sample.id,
-                equivalent: sample.equivalent,
-                reference: sample.reference
-              )
               included_sample_ids << new_sample.id
+              s_id = new_sample.id
             end
+            ReactionsSample.create!(
+              sample_id: s_id,
+              reaction_id: reaction.id,
+              equivalent: sample.equivalent,
+              reference: sample.reference,
+              position: sample.position,
+              type: reactions_sample_klass
+            ) if s_id
+            s_id = nil
           #update the existing sample
           else
             existing_sample = Sample.find(sample.id)
@@ -146,6 +135,7 @@ module ReactionHelpers
             existing_sample.real_amount_unit = sample.real_amount_unit
             existing_sample.external_label = sample.external_label if sample.external_label
             existing_sample.short_label = sample.short_label if sample.short_label
+            existing_sample.short_label = fixed_label if fixed_label
             existing_sample.name = sample.name if sample.name
 
             if r = existing_sample.residues[0]
@@ -159,44 +149,36 @@ module ReactionHelpers
             existing_sample.save!
             included_sample_ids << existing_sample.id
 
-            existing_association = reaction_samples_association.find_by(sample_id: sample.id)
+            existing_association = ReactionsSample.find_by(sample_id: sample.id)
 
             #update existing associations
-            if existing_association.present?
+            if existing_association
               existing_association.update_attributes!(
+                reaction_id: reaction.id,
                 equivalent: sample.equivalent,
-                reference: sample.reference
+                reference: sample.reference,
+                position: sample.position,
+                type: reactions_sample_klass
               )
             #sample was moved to other materialgroup
             else
-              #clear existing associations
-              reaction.reactions_starting_material_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_reactant_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_solvent_samples.find_by(sample_id: sample.id).try(:destroy)
-              reaction.reactions_product_samples.find_by(sample_id: sample.id).try(:destroy)
-
               #create a new association
-              reaction_samples_association.create(
+              ReactionsSample.create!(
                 sample_id: sample.id,
+                reaction_id: reaction.id,
                 equivalent: sample.equivalent,
-                reference: sample.reference
+                reference: sample.reference,
+                position: sample.position,
+                type: reactions_sample_klass
               )
             end
           end
-
-
         end
       end
 
       #delete all samples not anymore in one of the groups
 
-      current_sample_ids = [
-        reaction.reactions_starting_material_samples.pluck(:sample_id),
-        reaction.reactions_reactant_samples.pluck(:sample_id),
-        reaction.reactions_solvent_samples.pluck(:sample_id),
-        reaction.reactions_product_samples.pluck(:sample_id)
-      ].flatten.uniq
-
+      current_sample_ids = reaction.reactions_samples.pluck(:sample_id)
       deleted_sample_ids = current_sample_ids - included_sample_ids
       Sample.where(id: deleted_sample_ids).destroy_all
 
@@ -215,35 +197,30 @@ module Chemotion
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ReactionHelpers
+    helpers ParamsHelpers
+    helpers CollectionHelpers
 
     resource :reactions do
       namespace :ui_state do
         desc "Delete reactions by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected reactions from the UI" do
-            requires :all, type: Boolean
-            requires :collection_id
-            optional :included_ids, type: Array
-            optional :excluded_ids, type: Array
+            use :ui_state_params
           end
           optional :options, type: Hash do
-            optional :deleteSubsamples, type: Boolean
+            optional :deleteSubsamples, type: Boolean, default: false
           end
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @reactions = Reaction.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @reactions).destroy?
         end
 
         delete do
-          reactions = Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])
-          options = params[:options]
-
-          if options && options.fetch(:deleteSubsamples, false)
-            reactions.flat_map(&:samples).map(&:destroy)
-          end
-
-          reactions.destroy_all
+          @reactions.flat_map(&:samples).map(&:destroy) if params[:options][:deleteSubsamples]
+          @reactions.presence&.destroy_all || { ui_state: [] }
         end
       end
 
@@ -251,6 +228,8 @@ module Chemotion
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
       end
       paginate per_page: 7, offset: 0
 
@@ -277,6 +256,12 @@ module Chemotion
         else
           Reaction.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.includes(:tag, collections: :sync_collections_users).order("created_at DESC")
+
+        from = params[:from_date]
+        to = params[:to_date]
+        scope = scope.where('CAST(CREATED_AT AS DATE) >= ?', Time.at(from)) if from
+        scope = scope.where('CAST(CREATED_AT AS DATE) <= ?', Time.at(to)) if to
+
         paginate(scope).map{|s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 
@@ -309,19 +294,21 @@ module Chemotion
         end
       end
 
-      desc "Delete reactions by UI state"
-      params do
-        requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
-      end
-      route_param :id do
-        before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, Reaction.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
-        end
-
-        delete do
-          Reaction.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
-        end
-      end
+      # ??
+      # desc "Delete reactions by UI state"
+      # params do
+      #   requires :ui_state, type: Hash, desc: "Selected reactions from the UI"
+      # end
+      # route_param :id do
+      #   before do
+      #     @reactions = Reaction.for_user(current_user.id).by_ui_state(params[:ui_state])
+      #     error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @reactions).destroy?
+      #   end
+      #
+      #   delete do
+      #     @reactions.destroy_all
+      #   end
+      # end
 
       desc "Update reaction by id"
       params do
@@ -350,11 +337,13 @@ module Chemotion
       end
       route_param :id do
 
-        before do
-          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, Reaction.find(params[:id])).update?
+        after_validation do
+          @reaction = Reaction.find_by(id: params[:id])
+          error!('401 Unauthorized', 401) unless @reaction && ElementPolicy.new(current_user, @reaction).update?
         end
 
         put do
+          reaction = @reaction
           attributes = declared(params, include_missing: false).symbolize_keys
           materials = attributes.delete(:materials)
           literatures = attributes.delete(:literatures)
@@ -363,13 +352,11 @@ module Chemotion
           update_datamodel(attributes[:container])
           attributes.delete(:container)
 
-          if reaction = Reaction.find(id)
-            reaction.update_attributes!(attributes)
-            reaction.touch
-            update_materials_for_reaction(reaction, materials, current_user)
-            update_literatures_for_reaction(reaction, literatures)
-            reaction.reload
-          end
+          reaction.update_attributes!(attributes)
+          reaction.touch
+          update_materials_for_reaction(reaction, materials, current_user)
+          update_literatures_for_reaction(reaction, literatures)
+          reaction.reload
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
       end

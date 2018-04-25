@@ -77,7 +77,9 @@ export default class CreateButton extends React.Component {
 
     const storeExt = UserStore.getState().profile.show_external_name;
     if (this.state.showSampleExternalName != storeExt) {
-      UserActions.updateShowSampleExt(this.state.showSampleExternalName);
+      UserActions.updateUserProfile(
+        { show_external_name: this.state.showSampleExternalName }
+      );
     }
   }
 
@@ -157,14 +159,20 @@ export default class CreateButton extends React.Component {
     )
 
     return (
-      <OverlayTrigger trigger="click" placement="left"
-        overlay={popoverSettings} rootClose onExit={this.handleOnExit}
+      <OverlayTrigger
+        trigger="click"
+        placement="left"
+        overlay={popoverSettings}
+        rootClose
+        onExit={this.handleOnExit}
       >
-        <Button bsSize="xsmall" 
-                style={{margin: "10px 10px 10px 0", float: "right"}}>
-          <i className="fa fa-sliders"></i>
+        <Button
+          bsSize="xsmall"
+          style={{ margin: "10px 10px 10px 0", float: "right" }}
+        >
+          <i className="fa fa-sliders" />
         </Button>
       </OverlayTrigger>
-    )
+    );
   }
 }

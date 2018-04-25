@@ -27,12 +27,166 @@ module SVG
       init_svg
     end
 
+    def self.include_with_correct_order?(container, target)
+      first = target.first
+      index_first = container.find_index(first)
+      return false if index_first.nil?
+
+      target[1..-1].each_with_index do |val, k|
+        idx = container.find_index(val)
+        return false if idx.nil? || (idx != (index_first + k + 1))
+      end
+
+      true
+    end
+
+    def self.cr_reaction_svg_from_rsmi(rsmi, solvents_smis, reagents_smis)
+      mol_arr = rsmi.split('>')
+      return nil if mol_arr.size.zero?
+
+      @starting_materials = mol_arr[0].split('.')
+
+      @solvents = []
+      @reactants = []
+      rs = mol_arr[1]
+
+      unless rs.empty?
+        rs_arr = rs.split('.')
+
+        solvents_smis.each do |target|
+          target_arr = target.split('.')
+          check = include_with_correct_order?(rs_arr, target_arr)
+          next unless check
+          rs_arr -= target_arr
+          @solvents.push(target_arr.join('.'))
+        end
+
+        reagents_smis.each do |target|
+          target_arr = target.split('.')
+          check = include_with_correct_order?(rs_arr, target_arr)
+          next unless check
+          rs_arr -= target_arr
+          @reactants.push(target_arr.join('.'))
+        end
+
+        @solvents.reject!(&:empty?)
+        @reactants.concat(rs_arr).reject!(&:empty?)
+      end
+
+      @products = mol_arr[2].split('.')
+      name_arr = %w[starting_materials reactants solvents products]
+
+      files = {}
+      name_arr.each do |g|
+        files[g.to_sym] = instance_variable_get("@#{g}").map { |r, _|
+          mol_svg = Chemotion::OpenBabelService.smi_to_trans_svg(r)
+          tmp_file = Tempfile.new
+          tmp_file.write(mol_svg)
+          tmp_file.close
+          tmp_file
+        }
+      end
+      paths = {}
+      name_arr.each do |g|
+        paths[g.to_sym] = files[g.to_sym].map(&:to_path)
+      end
+
+      svg = new(
+        paths,
+        rails_path: false,
+        solvents: paths[:solvents]
+      ).compose_cr_reaction_svg
+
+      name_arr.each do |g|
+        files[g.to_sym].map(&:unlink)
+      end
+      svg
+    end
+
+    def self.reaction_svg_from_rsmi(rsmi)
+      mol_arr = rsmi.split('>')
+      return nil if mol_arr.size.zero?
+      @starting_materials = mol_arr[0].split('.')
+      @reactants = mol_arr[1].split('.')
+      @products = mol_arr[2].split('.')
+      name_arr = %w[starting_materials reactants products]
+
+      files = {}
+      name_arr.each do |g|
+        files[g.to_sym] = instance_variable_get("@#{g}").map { |r, i|
+          mol_svg = Chemotion::OpenBabelService.smi_to_trans_svg(r)
+          tmp_file = Tempfile.new
+          tmp_file.write(mol_svg)
+          tmp_file.close
+          tmp_file
+        }
+      end
+      paths = {}
+      name_arr.each do |g|
+        paths[g.to_sym] = files[g.to_sym].map(&:to_path)
+      end
+
+      svg = new(paths, rails_path: false).compose_reaction_svg
+      name_arr.each do |g|
+        files[g.to_sym].map(&:unlink)
+      end
+      svg
+    end
+
     def compose_reaction_svg_and_save(options = {})
       prefix = options[:temp] ? "temp-" : ""
       svg = compose_reaction_svg
       file_name = prefix + generate_filename
       File.open(file_path + "/" + file_name, 'w') { |file| file.write(svg) }
       file_name
+    end
+
+    def compose_cr_reaction_svg
+      set_cr_global_view_box_height
+
+      sections = {}
+      y_center = (global_view_box_array[3] / 2).round
+      sections[:starting_materials] = compose_material_group(
+        starting_materials,
+        start_at: 0,
+        y_center: y_center
+      )
+      arrow_x_shift = global_view_box_array[2] += 50
+      arrow_y_shift = y_center
+
+      sections[:reactants] = compose_material_group(
+        reactants,
+        start_at: global_view_box_array[2],
+        scale: REACTANT_SCALE,
+        arrow_width: true,
+        y_center: y_center - 30,
+        is_reactants: true
+      )
+
+      solvent_svg = compose_solvents_below_arrow(
+        solvents,
+        start_at: arrow_x_shift,
+        scale: REACTANT_SCALE,
+        plus_center: global_view_box_array[3],
+        y_center: arrow_y_shift
+      )
+
+      arrow = "<g transform='translate(#{arrow_x_shift}, #{arrow_y_shift})'>" +
+              arrow_it +
+              '</g>'
+      arrow += solvent_svg
+      sections[:arrow] = arrow
+
+      global_view_box_array[2] += 40 # adjust arrow to products
+      @max_height_for_products = find_material_max_height(products)
+      sections[:products] = compose_material_group(
+        products,
+        start_at: global_view_box_array[2],
+        y_center: y_center
+      )
+
+      @sections = sections
+      template_it.strip + sections_string_filtered + '</svg></svg>'
     end
 
     def compose_reaction_svg
@@ -59,6 +213,7 @@ module SVG
         @show_yield = options[:show_yield]
         @box_width = options[:supporting_information] ? 2000 : 1560
         @box_height = 440
+        @rails_path = options[:rails_path].nil? ? true : options[:rails_path]
       end
 
       def init_word_size
@@ -162,12 +317,26 @@ module SVG
         global_view_box_array[3] = [reactant_max*REACTANT_SCALE*2,material_max, global_view_box_array[3]].max+2*YIELD_YOFFSET + 15
       end
 
+      def set_cr_global_view_box_height
+        material_max = find_material_max_height(starting_materials + products)
+        reactant_max = find_material_max_height(reactants)
+        solvent_max = find_material_max_height(solvents)
+
+        global_view_box_array[3] = [
+          reactant_max * REACTANT_SCALE * 2,
+          solvent_max * REACTANT_SCALE * 2,
+          material_max,
+          global_view_box_array[3]
+        ].max + 2 *YIELD_YOFFSET + 15
+      end
+
+
       def file_path
         File.join(File.dirname(__FILE__), '..', '..', 'public', 'images', 'reactions')
       end
 
       def inner_file_content svg_path
-        file = "#{Rails.root}/public#{svg_path}"
+        file = @rails_path ? "#{Rails.root}/public#{svg_path}" : svg_path
         doc = Nokogiri::XML(File.open(file))
         if(svg_path.include? '/samples')
           doc.at_css("svg")
@@ -176,7 +345,54 @@ module SVG
         end
       end
 
-      def compose_material_group( material_group, options = {} )
+      def compose_solvents_below_arrow(solvent_group, options = {})
+        x_shift = options[:start_at] || 0
+        start_x = x_shift
+        y_center = options[:y_center] || 0
+        plus_center = options[:plus_center] || y_center
+        scale = options[:scale] || 1
+        output = ''
+        group_width = 0
+        solvent_group.map.with_index do |m, ind|
+          if ind.positive?
+            group_width += 10
+            output += divide_it(group_width, plus_center)
+            group_width += 50
+          end
+
+          material, = *separate_material_yield(m)
+          svg = inner_file_content(material)
+          vb = svg['viewBox'] && svg['viewBox'].split(/\s+/).map(&:to_i) || []
+          unless vb.empty?
+            x_shift = group_width + 10 - vb[0]
+            y_shift = (y_center + vb[3] / 2).round
+            group_width += vb[2] + 10
+            svg['width'] = "#{vb[2]}px;"
+            svg['height'] = "#{vb[3]}px;"
+            output += "<g transform='translate(#{x_shift}, #{y_shift})'>" +
+                      svg.inner_html.to_s +
+                      '</g>'
+          end
+        end
+
+        hold = output
+        output = "<g transform='translate(#{start_x + 30}, 0)'>"
+        output += "<g transform='scale(#{scale})'>#{hold}</g></g>"
+        scaled_group_width = (group_width * scale).round
+
+        sw = [scaled_group_width, 50].max + 80
+        if sw > @arrow_width
+          gvba = global_view_box_array[2]
+          gvba += (sw - @arrow_width)
+          global_view_box_array[2] = gvba
+
+          @arrow_width = sw
+        end
+
+        output
+      end
+
+      def compose_material_group(material_group, options = {})
         gvba = global_view_box_array
         w0 = gvba[2]
         x_shift = options[:start_at] || 0

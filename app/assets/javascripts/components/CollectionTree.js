@@ -33,9 +33,9 @@ export default class CollectionTree extends React.Component {
       lockedRoots: collecState.lockedRoots,
       syncInRoots: collecState.syncInRoots,
       ownCollectionVisible: true,
-      sharedWithCollectionVisible: true,
-      sharedToCollectionVisible: true,
-      syncCollectionVisible: true,
+      sharedWithCollectionVisible: false,
+      sharedToCollectionVisible: false,
+      syncCollectionVisible: false,
       inbox: inboxState.inbox,
       numberOfAttachments: inboxState.numberOfAttachments,
       inboxVisible: false
@@ -156,13 +156,11 @@ export default class CollectionTree extends React.Component {
     }
     return(
       <div className="tree-view">
-        <ul key="inbox">
-          {boxes}
-          {inbox.unlinked_attachments
-            ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
-            : ""
-          }
-        </ul>
+        {boxes}
+        {inbox.unlinked_attachments
+          ? <UnsortedBox key="unsorted_box" unsorted_box={inbox.unlinked_attachments} />
+          : ""
+        }
       </div>
     )
   }

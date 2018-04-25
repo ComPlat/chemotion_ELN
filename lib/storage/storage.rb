@@ -47,9 +47,10 @@ class Storage
   end
 
   def regenerate_thumbnail
-    return if (fn = attachment.filename).blank? || (fe = File.extname(fn)).blank?
+    return if (fn = attachment.filename).blank? || (fe = File.extname(fn)&.downcase).blank?
     tmp = Tempfile.new([fn, fe], encoding: 'ascii-8bit')
     tmp.write attachment.read_file
+    tmp.rewind
     attachment.thumb_path = Thumbnailer.create(tmp.path)
     if attachment.thumb_path && File.exist?(attachment.thumb_path)
       attachment.thumb = true

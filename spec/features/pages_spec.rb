@@ -4,7 +4,8 @@ feature 'Pages' do
   let!(:john) { create(:person) }
 
   background do
-    john.confirm
+    john.confirmed_at = Time.now
+    john.save
     sign_in(john)
   end
 

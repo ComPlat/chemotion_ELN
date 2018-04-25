@@ -2,10 +2,10 @@ import alt from '../alt';
 import InboxActions from '../actions/InboxActions';
 import ElementActions from '../actions/ElementActions';
 import DetailActions from '../actions/DetailActions';
-import DetailStore from './DetailStore';
+import ElementStore from './ElementStore';
 import _ from 'lodash'
 
-class InboxStore{
+class InboxStore {
 
   constructor() {
     this.state = {
@@ -35,24 +35,19 @@ class InboxStore{
         ElementActions.createScreen,
         ElementActions.updateScreen,
       ],
-      handleClose : DetailActions.close,
+      handleClose: DetailActions.close,
       handleConfirmDelete: DetailActions.confirmDelete,
-      handleDeleteElement: [
-        ElementActions.deleteSamplesByUIState,
-        ElementActions.deleteReactionsByUIState,
-        ElementActions.deleteWellplatesByUIState,
-        ElementActions.deleteScreensByUIState
-      ]
+      handleDeleteElement: ElementActions.deleteElementsByUIState
     })
   }
 
-  handleFetchInbox(result){
+  handleFetchInbox(result) {
     this.state.inbox = result;
     this.sync();
     this.countAttachments();
   }
 
-  handleRemoveAttachmentFromList(attachment){
+  handleRemoveAttachmentFromList(attachment) {
     let inbox = this.state.inbox
 
     inbox.children.forEach(device_box => {
@@ -68,7 +63,7 @@ class InboxStore{
     this.countAttachments();
   }
 
-  handleRemoveUnlinkedAttachmentFromList(attachment){
+  handleRemoveUnlinkedAttachmentFromList(attachment) {
     let inbox = this.state.inbox
 
     var index = inbox.unlinked_attachments.indexOf(attachment)
@@ -81,7 +76,7 @@ class InboxStore{
     this.countAttachments();
   }
 
-  handleRemoveDatasetFromList(dataset){
+  handleRemoveDatasetFromList(dataset) {
     let inbox = this.state.inbox;
 
     inbox.children.forEach(device_box => {
@@ -98,19 +93,19 @@ class InboxStore{
     this.countAttachments();
   }
 
-  handleDeleteAttachment(result){
+  handleDeleteAttachment(result) {
     InboxActions.fetchInbox();
   }
 
-  handleDeleteContainerLink(result){
+  handleDeleteContainerLink(result) {
     InboxActions.fetchInbox();
   }
 
-  handleDeleteContainer(result){
+  handleDeleteContainer(result) {
     InboxActions.fetchInbox();
   }
 
-  handleBackToInbox(attachment){
+  handleBackToInbox(attachment) {
     var attachments = this.state.cache.filter(function(item) {
       if (item.id == attachment.id){
         return item
@@ -126,7 +121,7 @@ class InboxStore{
     }
   }
 
-  getAttachments(containers, all_attachments){
+  getAttachments(containers, all_attachments) {
     containers.forEach(container => {
       all_attachments.push.apply(all_attachments, container.attachments)
       this.getAttachments(container.children, all_attachments)
@@ -134,40 +129,37 @@ class InboxStore{
     return all_attachments
   }
 
-  updateCache(attachments){
+  updateCache(attachments) {
     this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
   }
 
-  handleUpdateCreateElement(element){
-    if (element.isEdited && element.container){
-      var all_attachments = []
-      all_attachments = this.getAttachments(element.container.children, all_attachments)
-      this.updateCache(all_attachments)
+  handleUpdateCreateElement(element) {
+    if (element && element.isEdited && element.container) {
+      const all_attachments = this.getAttachments(element.container.children, [])
+      this.updateCache(all_attachments);
       InboxActions.fetchInbox();
     }
   }
 
-  handleClose({deleteEl, force}){
+  handleClose({deleteEl, force}) {
     this.state.deleteEl = deleteEl
   }
 
-  handleConfirmDelete(confirm){
+  handleConfirmDelete(confirm) {
     if(confirm){
       this.handleUpdateCreateElement(this.state.deleteEl)
     }
     this.state.deleteEl = null
   }
 
-  handleDeleteElement({ui_state}){
-    const {selecteds} = DetailStore.getState()
-    var shownElements = _.differenceBy(selecteds, ui_state, 'id')
-
-    shownElements.forEach(element => {
-      this.handleUpdateCreateElement(element)
-    })
+  handleDeleteElement(result) {
+    // if (!result || !result.selecteds) { return null; }
+    this.waitFor(ElementStore.dispatchToken);
+    const { selecteds } = ElementStore.getState();
+    selecteds.forEach(element => this.handleUpdateCreateElement(element));
   }
 
-  sync(){
+  sync() {
     let inbox = this.state.inbox
 
     inbox.children.forEach(device_box => {
@@ -180,16 +172,16 @@ class InboxStore{
     this.setState(inbox)
   }
 
-  countAttachments(){
-    var count = 0;
+  countAttachments() {
+    let count = 0;
     const inbox = this.state.inbox
     inbox.children.forEach(device_box => {
       device_box.children.forEach(dataset => {
         count += dataset.attachments.length
       })
-    })
+    });
     count += inbox.unlinked_attachments.length
-    this.state.numberOfAttachments = count
+    this.state.numberOfAttachments = count;
   }
 }
 

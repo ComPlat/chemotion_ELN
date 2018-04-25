@@ -25,7 +25,7 @@ test:
   script:
     - cp config/database.yml.gitlab config/database.yml
     - cp -f config/storage.yml.example config/storage.yml
-    - touch config/datamailcollector.yml
+    - touch config/datacollectors.yml
     - /bin/bash -l -c "gem install bundle && bundle install && source ~/.nvm/nvm.sh &&
         npm install && bundle exec rake db:test:prepare && bundle exec rake && npm test"
 # npm:

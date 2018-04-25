@@ -36,7 +36,7 @@ module Reporter
           is_reaction: true,
           gp_title_html: gp_title_html,
           synthesis_title_html: synthesis_title_html,
-          products_html: products_html,
+          products_html: is_disable_all ? nil : products_html,
           synthesis_html: synthesis_html,
         }
       end
@@ -104,18 +104,34 @@ module Reporter
 
       def products_delta
         delta = []
+        st = @si_rxn_settings
+        st_name, st_formula, st_cas = st[:Name], st[:Formula], st[:CAS]
+        st_smiles, st_inchi, st_ea = st[:Smiles], st[:InCHI], st[:EA]
+        st_m_mass, st_e_mass = st[:"Molecular Mass"], st[:"Exact Mass"]
         obj.products.each do |p|
           m = p[:molecule]
           cas = (p[:xref] && p[:xref][:cas] && p[:xref][:cas][:label]) || "- "
-          delta += [{"insert"=> "Name: " }] +
-                    sample_molecule_name_delta(p) +
-                    [{"insert"=> "; " }]
-          delta += sum_formular_delta(m)
-          delta += misc_delta(cas, m)
-          delta += ea_delta(p)
+          mol_name = sample_molecule_name_delta(p)
+          delta += st_name ? name_delta(mol_name) : []
+          delta += st_formula ? sum_formular_delta(m) : []
+          delta += st_cas ? cas_delta(cas) : []
+          delta += st_smiles ? smiles_delta(m) : []
+          delta += st_inchi ? inchi_delta(m) : []
+          delta += st_m_mass ? mol_mass_delta(m) : []
+          delta += st_e_mass ? eat_mass_delta(m) : []
+          delta += st_ea ? ea_delta(p) : []
           delta += [{"insert"=>"\n"}]
         end
         delta
+      end
+
+      def is_disable_all
+        st = @si_rxn_settings
+        !st.map { |_, v| v }.any?
+      end
+
+      def name_delta(mol_name)
+        [{"insert"=> "Name: " }] + mol_name + [{"insert"=> "; " }]
       end
 
       def sum_formular_delta(m)
@@ -131,13 +147,24 @@ module Reporter
         delta = [{"insert"=>"Formula: "}] + delta + [{"insert"=>"; "}]
       end
 
-      def misc_delta(cas, m)
-        delta = "CAS: #{cas}; " +
-                "Smiles: #{m[:cano_smiles]}; " +
-                "InCHI: #{m[:inchikey]}; " +
-                "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " +
-                "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; "
-        [{"insert"=>delta}]
+      def cas_delta(cas)
+        [{ "insert" => "CAS: #{cas}; " }]
+      end
+
+      def smiles_delta(m)
+        [{ "insert" => "Smiles: #{m[:cano_smiles]}; " }]
+      end
+
+      def inchi_delta(m)
+        [{ "insert" => "InCHI: #{m[:inchikey]}; " }]
+      end
+
+      def mol_mass_delta(m)
+        [{ "insert" => "Molecular Mass: #{fixed_digit(m[:molecular_weight], 4)}; " }]
+      end
+
+      def eat_mass_delta(m)
+        [{ "insert" => "Exact Mass: #{fixed_digit(m[:exact_molecular_weight], 4)}; " }]
       end
 
       def ea_delta(p)
@@ -227,7 +254,7 @@ module Reporter
         m = s.molecule
         sample_hash = {
           name: s.name,
-          iupac_name: m[:iupac_name],
+          iupac_name: s.molecule_name_hash[:label].presence || m[:iupac_name],
           short_label: s.short_label,
           formular: m[:sum_formular],
           mol_w: valid_digit(m[:molecular_weight], digit),
@@ -285,7 +312,7 @@ module Reporter
 
       def description
         delta_desc = obj.description.deep_stringify_keys["ops"]
-        clean_desc = { "ops" => remove_redundant_space_break(delta_desc) }
+        clean_desc = { "ops" => delta_desc }
         Sablon.content(:html, Delta.new(clean_desc, @font_family).getHTML())
       end
 
@@ -345,7 +372,8 @@ module Reporter
           materials_table_delta +
           obsv_tlc_delta +
           product_analyses_delta +
-          dangerous_delta
+          dangerous_delta +
+          bib_delta
       end
 
       def synthesis_name_delta
@@ -409,19 +437,21 @@ module Reporter
                     {"insert"=>" (#{m[:mass]} g, #{m[:mol]} mmol, " +
                       "#{m[:equiv]} equiv); "}]
         end
+        counter = 0
         obj.solvents.flatten.each do |material|
           m = material_hash(material, false)
           counter += 1
-          delta += [{"insert"=>"{#{alphabet(counter)}"},
+          delta += [{"insert"=>"{S#{counter}"},
                     {"insert"=>"} "},
                     *sample_molecule_name_delta(m),
                     {"insert"=>" (#{valid_digit(m[:vol], 2)} mL); "}]
         end
         delta += [{"insert"=>"Yield "}]
+        counter = 0
         obj.products.each do |material|
           p = material_hash(material, true)
           counter += 1
-          delta += [{"insert"=>"{#{alphabet(counter)}|"},
+          delta += [{"insert"=>"{P#{counter}|"},
                     *mol_serial_delta(material[:molecule][:id]),
                     {"insert"=>"} = #{p[:equiv]} (#{p[:mass]} g, " +
                       "#{p[:mol]} mmol)"},
@@ -443,6 +473,45 @@ module Reporter
           {"attributes"=>{"bold"=>"true"}, "insert"=>"Attention! "},
           {"insert"=>content}
         ])
+      end
+
+      def parse_bib(bib_str, idx)
+        html = Nokogiri::HTML(bib_str)
+        target = html.css('div.csl-right-inline')
+        parse_bib_nokogiri(target.children, idx)
+      end
+
+      def parse_bib_nokogiri(els, idx)
+        font_size = 12
+        delta = els.map do |el|
+          if el.name == 'i'
+            {
+              'attributes' => { 'italic' => 'true', 'font-size' => font_size },
+              'insert' => el.children.first.text
+            }
+          elsif el.name == 'b'
+            {
+              'attributes' => { 'bold' => 'true', 'font-size' => font_size },
+              'insert' => el.children.first.text
+            }
+          else
+            {
+              'attributes' => { 'font-size' => font_size },
+              'insert' => el.text
+            }
+          end
+        end
+        [{'insert' => "[#{ idx + 1 }] "}] + delta + [{'insert' => "\n"}]
+      end
+
+      def bib_delta
+        refs = obj.references || []
+        return [] if refs.length == 0
+        delta = [{'insert' => "\n"}]
+        refs.each_with_index  do |ref, idx|
+          delta += parse_bib(ref[:bib], idx)
+        end
+        delta
       end
 
       def sample_molecule_name_delta(sample, font_size = 12)
@@ -476,12 +545,6 @@ module Reporter
           analy_index = a[:extended_metadata][:index]
           analy_index ? analy_index&.to_i : -1
         end
-      end
-
-      def alphabet(counter)
-        alphabets = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        counter = counter >= 1 && counter <=26 ? counter - 1 : 25
-        alphabets[counter]
       end
 
       def mol_serial(mol_id)

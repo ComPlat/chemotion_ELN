@@ -1,6 +1,7 @@
 import alt from '../alt';
 import GeneralFetcher from '../fetchers/GeneralFetcher';
 import ReportsFetcher from '../fetchers/ReportsFetcher';
+import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 import _ from 'lodash';
 import { GetTypeIds } from '../utils/ReportHelper';
 
@@ -27,6 +28,14 @@ class ReportActions {
   }
 
   toggleRxnSettingsCheckAll() {
+    return null;
+  }
+
+  updateSiRxnSettings(target) {
+    return target;
+  }
+
+  toggleSiRxnSettingsCheckAll() {
     return null;
   }
 
@@ -139,6 +148,17 @@ class ReportActions {
 
   updMSVal(moleculeId, value) {
     return { moleculeId, value };
+  }
+
+  updateThumbNails(attIds) {
+    return (dispatch) => {
+      AttachmentFetcher.fetchThumbnails(attIds)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
   }
 }
 

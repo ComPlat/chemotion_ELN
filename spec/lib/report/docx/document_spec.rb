@@ -28,7 +28,8 @@ describe 'Reporter::Docx::Document instance' do
     instance = Reporter::Docx::Document.new(objs: objs_hash,
                 spl_settings: all_spl_settings,
                 rxn_settings: all_rxn_settings,
-                configs: all_configs)
+                configs: all_configs,
+                si_rxn_settings: all_si_rxn_settings)
     @content = instance.convert
   end
 

@@ -1,7 +1,8 @@
 import React, {Component} from 'react';
 import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab} from 'react-bootstrap';
-import StickyDiv from 'react-stickydiv'
+import StickyDiv from 'react-stickydiv';
+import { unionBy } from 'lodash';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
@@ -60,7 +61,7 @@ export default class ScreenDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    let {screen} = this.state;
+    const { screen } = this.state;
     const value = event.target.value;
     switch (type) {
       case 'name':
@@ -88,10 +89,9 @@ export default class ScreenDetails extends Component {
   }
 
   dropWellplate(wellplate) {
-    const {screen} = this.state;
-
-    screen.wellplates.push(wellplate);
-    this.setState({ screen });
+    const { screen } = this.state;
+    screen.wellplates = unionBy(screen.wellplates, [wellplate], 'id');
+    this.forceUpdate();
   }
 
   handleScreenChanged(screen) {

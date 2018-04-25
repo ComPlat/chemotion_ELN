@@ -1,5 +1,17 @@
 module Chemotion::OpenBabelService
 
+  # mdl V3000
+  MOLFILE_COUNT_LINE_START      = 'M  V30 COUNTS '
+  MOLFILE_BEGIN_CTAB_BLOCK_LINE = 'M  V30 BEGIN CTAB'
+  MOLFILE_BEGIN_ATOM_BLOCK_LINE = 'M  V30 BEGIN ATOM'
+  MOLFILE_END_ATOM_BLOCK_LINE   = 'M  V30 END ATOM'
+  MOLFILE_BEGIN_BOND_BLOCK_LINE = 'M  V30 BEGIN BOND'
+  MOLFILE_END_BOND_BLOCK_LINE   = 'M  V30 END BOND'
+  MOLFILE_END_CTAB_BLOCK_LINE   = 'M  V30 END CTAB'
+
+  # mdl V(2|3)000
+  MOLFILE_BLOCK_END_LINE = 'M  END'
+
   def self.samplemolfile
 
     <<-MOLFILE
@@ -34,11 +46,23 @@ M  END
   end
 
   def self.molecule_info_from_molfile molfile
+    version = molfile_version(molfile)
+    is_partial = molfile_has_R(molfile, version)
+
+    molfile = molfile_skip_R(molfile, version) if is_partial
+
+    mf = mofile_clear_coord_bonds(molfile, version)
+    if mf
+      version += ' T9'
+    else
+      mf = molfile
+    end
+
     c = OpenBabel::OBConversion.new
     c.set_in_format 'mol'
 
     m = OpenBabel::OBMol.new
-    c.read_string m, molfile
+    c.read_string m, mf
 
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
@@ -62,9 +86,12 @@ M  END
       inchikey: inchikey,
       inchi: inchi,
       formula: m.get_formula,
-      svg: svg_from_molfile(molfile),
+      svg: svg_from_molfile(mf),
       cano_smiles: ca_smiles,
-      fp: fingerprint_from_molfile(molfile)
+      fp: fingerprint_from_molfile(mf),
+      molfile_version: version,
+      is_partial: is_partial,
+      molfile: is_partial && molfile
     }
 
   end
@@ -78,14 +105,13 @@ M  END
 
     c.set_out_format 'inchikey'
     inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
-    
+
     return inchikey
   end
 
   def self.molecule_info_from_molfiles molfile_array
     molecule_info = []
     molfile_array.each do |molfile|
-      molfile = Molecule.skip_residues(molfile)
       begin
         ob_info = self.molecule_info_from_molfile(molfile)
       rescue
@@ -147,6 +173,176 @@ M  END
     c.write_string(m, false)
   end
 
+  def self.mofile_clear_coord_bonds(molfile, version = nil)
+    case version || molfile_version(molfile)
+    when 'V2000'
+      mofile_2000_clear_coord_bonds(molfile)
+    when 'V3000'
+      mofile_3000_clear_coord_bonds(molfile)
+    else
+      false
+    end
+  end
+
+  def self.mofile_2000_clear_coord_bonds(molfile)
+    # clear bond lines with bond type 8(any), 9(coord), or 10(hydrogen)
+    # split ctab from properties
+    mf = molfile.split(/^(#{MOLFILE_BLOCK_END_LINE}\r?\n)/)
+    ctab = mf[0]
+    # select lines
+    ctab_arr = ctab.lines
+    filtered_ctab_arr = ctab_arr.select do |line|
+      !line.match(
+        /^(  [0-9]| [1-9][0-9]|[1-9][0-9][0-9])(  [0-9]| [1-9][0-9]|[1-9][0-9][0-9])(  [89]| 10)(...)(...)(...)(...)/
+      )
+    end
+    coord_bond_count =  ctab_arr.size - filtered_ctab_arr.size
+    return false if coord_bond_count.zero?
+    original_count_line = ctab_arr[3]
+    original_count_line.match(/^(  [0-9]| [1-9][0-9]|[1-9][0-9][0-9])(  [0-9]| [1-9][0-9]|[1-9][0-9][0-9]).*V2000$/)
+    original_bond_count = $2.to_i
+    bond_count = original_bond_count - coord_bond_count
+    count_line = original_count_line.clone
+    count_line[3..5] = bond_count.to_s.rjust(3)
+    filtered_ctab_arr[3] = count_line
+
+    # concat to molfile
+    (filtered_ctab_arr + mf[1..-1]).join
+  end
+
+  def self.mofile_3000_clear_coord_bonds(molfile)
+    # clear bond lines with bond type 8(any), 9(coord), or 10(hydrogen)
+    # split ctab from properties asumming only 1 CTAB (no RGFile)
+    mf = molfile.split(/^(#{MOLFILE_BLOCK_END_LINE}\r?\n)/)
+    ctab = mf[0]
+    # select lines
+    ctab_arr = ctab.lines
+    id_count_line = nil
+    id_bond_block_start_line = nil
+    count_line_a = nil
+
+    filtered_ctab_arr = ctab_arr.select.with_index do |line, i|
+      unless id_count_line
+        line =~ /(#{MOLFILE_COUNT_LINE_START}\d+ )(\d+)/
+        if $&
+          count_line_a = [$1, $2.to_i, $']
+          id_count_line = i
+          ori_bond_count = $2.to_i
+        end
+      end
+      if !id_bond_block_start_line
+        line =~ /#{MOLFILE_BEGIN_BOND_BLOCK_LINE}/ && (id_bond_block_start_line = i)
+        next true
+      end
+      if line.match(/^M  V30 \d+ (8|9|10) \d+ \d+/)
+        count_line_a[1] -= 1
+        next false
+      end
+      true
+    end
+
+    coord_bond_count =  ctab_arr.size - filtered_ctab_arr.size
+    return false if !id_count_line
+    return nil if coord_bond_count.zero?
+    filtered_ctab_arr[id_count_line] = count_line_a.join
+
+    # concat to molfile
+    (filtered_ctab_arr + mf[1..-1]).join
+  end
+
+  def self.molfile_version(molfile)
+    return 'nil' unless molfile.present?
+    mf = molfile.lines[0..4]
+    return "V#{$1}000" if mf[3]&.strip =~ /V(2|3)000$/
+    return "V3000" if mf[4] =~ /^M  V30/
+    'unkwn'
+  end
+
+  def self.molfile_has_R(molfile, version = nil)
+    version = self.molfile_version(molfile) unless version
+    case version[0..5]
+    when 'V2000'
+      molfile_2000_has_R(molfile)
+    when  'V3000'
+      molfile_3000_has_R(molfile)
+    else
+      molfile.include? ' R# '
+    end
+  end
+
+  def self.molfile_2000_has_R(molfile)
+    molfile.lines[4..-1].each do |line|
+      return true if line =~ /^.{31}R\#/
+      return false if line =~ /^#{MOLFILE_BLOCK_END_LINE}/
+    end
+    false
+  end
+
+  def self.molfile_3000_has_R(molfile)
+    molfile.lines[4..-1].each do |line|
+      return true if line =~ /^M  V30 \d+ R\#/
+      return false if line =~ /^#{MOLFILE_END_ATOM_BLOCK_LINE}/
+    end
+    false
+  end
+
+  def self.molfile_skip_R(molfile, version = nil)
+    version = self.molfile_version(molfile) unless version
+    case version[0..5]
+    when 'V2000'
+      molfile_2000_skip_R(molfile)
+    when  'V3000'
+      molfile_3000_skip_R(molfile)
+    else
+      begin
+        molfile_2000_skip_R(molfile)
+      rescue
+        false
+      end
+    end
+  end
+
+  # skip residues in molfile and replace with Carbon
+  # TODO should be replaced with Hydrogens or removed
+  def self.molfile_2000_skip_R(molfile)
+    lines = molfile.lines
+    lines.size > 3 && lines[4..-1].each.with_index do |line, i|
+      break if line =~ /^#{MOLFILE_BLOCK_END_LINE}/
+      # replace residues with Carbons
+      lines[i+4] = "#{$1}C #{$'}" if line =~/^(.{31})R\#/
+      # delete R group info line
+      lines[i+4] = nil if line =~ /^M\s+RGP[\d ]+/
+    end
+    lines.join
+  end
+
+  def self.molfile_3000_skip_R(molfile)
+    lines = molfile.lines
+    lines.size > 3 && lines[4..-1].each.with_index do |line, i|
+      break if line =~ /^#{MOLFILE_END_ATOM_BLOCK_LINE}/
+      # lines[i+4] = "#{$1}C #{$'}" if line =~/^(M  V30 \d+ )R# /
+      # replace residues with Carbons, delete R group info
+      lines[i+4] = "#{$1}C#{$2}#{$3}#{$'}" if line =~/^(M  V30 \d+ )R#(.*)RGROUPS\=\([\d ]*\)(.*)/
+    end
+    lines.join
+  end
+
+
+  # TODO fix option settings
+  # def self.convert_3000_to_2000(molfile)
+  #   c = OpenBabel::OBConversion.new
+  #   c.set_in_format 'mol'
+  #
+  #   m = OpenBabel::OBMol.new
+  #   c.read_string m, mol
+  #   opts = OpenBabel::OBConversion::GENOPTIONS
+  #   c.set_options '3', OpenBabel::OBConversion::OUTOPTIONS
+  #   c.add_option 'gen2D', opts
+  #   c.set_out_format 'mol'
+  #   molfile = c.write_string(m, false).to_s.rstrip
+  # end
+
+
   private
 
   def self.svg_from_molfile molfile, options={}
@@ -199,8 +395,11 @@ M  END
     fp_16[14] = fp[3]  << 32 | fp[2]
     fp_16[15] = fp[1]  << 32 | fp[0]
 
-    return fp_16
+    fp_16
+  end
 
+  def self.bin_fingerprint_from_molfile molfile
+    fingerprint_from_molfile(molfile).map {|e| "%064b" % e}
   end
 
   def self.get_smiles_from_molfile molfile
@@ -253,5 +452,22 @@ M  END
     orig_cdxml = File.read(output)
     shifted_cdxml, geometry = Cdxml::Shifter.new({orig_cdxml: orig_cdxml, shifter: shifter}).convey
     return { content: shifted_cdxml, geometry: geometry, path: output }
+  end
+
+  def self.smi_to_svg(smi)
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+    c.set_in_and_out_formats('smi', 'svg')
+    c.read_string(m, smi)
+
+    c.write_string(m, true)
+  end
+
+  def self.smi_to_trans_svg(smi)
+    rect = '<rect x="0" y="0" width="100" '
+    rect += 'height="100" fill="white"/>'
+    svg = smi_to_svg(smi)
+    svg.slice!(rect)
+    svg
   end
 end

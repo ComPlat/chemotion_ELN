@@ -9,7 +9,6 @@ import { solventOptions } from './staticDropdownOptions/options';
 export default class SampleForm extends React.Component {
   constructor(props) {
     super(props);
-    const sample = props.sample
     this.state = {
       molarityBlocked: (props.sample.molarity_value || 0) <= 0,
       isMolNameLoading: false,
@@ -17,31 +16,27 @@ export default class SampleForm extends React.Component {
 
     this.handleFieldChanged = this.handleFieldChanged.bind(this);
     this.updateMolName = this.updateMolName.bind(this);
+    this.updateStereoAbs = this.updateStereoAbs.bind(this);
+    this.updateStereoRel = this.updateStereoRel.bind(this);
     this.addMolName = this.addMolName.bind(this);
     this.showStructureEditor = this.showStructureEditor.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps() {
     this.setState({ isMolNameLoading: false });
   }
 
   handleAmountChanged(amount) {
-    const sample = this.props.sample;
-    sample.setAmountAndNormalizeToGram(amount);
-
+    this.props.sample.setAmount(amount);
   }
 
   handleMolarityChanged(molarity) {
-    const sample = this.props.sample;
-    sample.setMolarity(molarity);
-
+    this.props.sample.setMolarity(molarity);
     this.setState({ molarityBlocked: false });
   }
 
   handleDensityChanged(density) {
-    const sample = this.props.sample;
-    sample.setDensity(density);
-
+    this.props.sample.setDensity(density);
     this.setState({ molarityBlocked: true });
   }
 
@@ -86,9 +81,8 @@ export default class SampleForm extends React.Component {
   }
 
   addMolName(moleculeName) {
-    const { sample } = this.props;
     this.setState({ isMolNameLoading: true });
-    DetailActions.updateMoleculeNames(sample, moleculeName.label);
+    DetailActions.updateMoleculeNames(this.props.sample, moleculeName.label);
   }
 
   updateMolName(e) {
@@ -97,15 +91,90 @@ export default class SampleForm extends React.Component {
     this.props.parent.setState({ sample });
   }
 
+  updateStereoAbs(e) {
+    const { sample } = this.props;
+    if (!sample.stereo) sample.stereo = {};
+    sample.stereo.abs = e.value;
+    this.props.parent.setState({ sample });
+  }
+
+  updateStereoRel(e) {
+    const { sample } = this.props;
+    if (!sample.stereo) sample.stereo = {};
+    sample.stereo.rel = e.value;
+    this.props.parent.setState({ sample });
+  }
+
+  stereoAbsInput() {
+    const { sample } = this.props;
+
+    const absOptions = [
+      { label: 'any', value: 'any' },
+      { label: 'rac', value: 'rac' },
+      { label: 'meso', value: 'meso' },
+      { label: '(S)', value: '(S)' },
+      { label: '(R)', value: '(R)' },
+      { label: '(Sp)', value: '(Sp)' },
+      { label: '(Rp)', value: '(Rp)' },
+      { label: '(Sa)', value: '(Sa)' },
+      { label: '(Ra)', value: '(Ra)' },
+    ];
+
+    const value = sample.stereo ? sample.stereo.abs : 'any';
+
+    return (
+      <FormGroup style={{ width: '50%' }}>
+        <ControlLabel>Stereo Abs</ControlLabel>
+        <Select
+          name="stereoAbs"
+          clearable={false}
+          disabled={!sample.can_update}
+          options={absOptions}
+          onChange={this.updateStereoAbs}
+          value={value}
+        />
+      </FormGroup>
+    );
+  }
+
+  stereoRelInput() {
+    const { sample } = this.props;
+
+    const relOptions = [
+      { label: 'any', value: 'any' },
+      { label: 'syn', value: 'syn' },
+      { label: 'anti', value: 'anti' },
+      { label: 'p-geminal', value: 'p-geminal' },
+      { label: 'p-ortho', value: 'p-ortho' },
+      { label: 'p-meta', value: 'p-meta' },
+      { label: 'p-para', value: 'p-para' },
+    ];
+
+    const value = sample.stereo ? sample.stereo.rel : 'any';
+
+    return (
+      <FormGroup style={{ width: '50%' }}>
+        <ControlLabel>Stereo Rel</ControlLabel>
+        <Select
+          name="stereoRel"
+          clearable={false}
+          disabled={!sample.can_update}
+          options={relOptions}
+          onChange={this.updateStereoRel}
+          value={value}
+        />
+      </FormGroup>
+    );
+  }
+
   moleculeInput() {
-    const sample = this.props.sample
+    const sample = this.props.sample;
     const mnos = sample.molecule_names;
     const mno = sample.molecule_name;
-    const newMolecule = !mno || sample._molecule.id !== mno.mid
+    const newMolecule = !mno || sample._molecule.id !== mno.mid;
     let moleculeNames = newMolecule ? [] : [mno];
-    if (sample && mnos ) { moleculeNames = moleculeNames.concat(mnos) }
+    if (sample && mnos) { moleculeNames = moleculeNames.concat(mnos); }
     const onOpenMolName = () => this.openMolName(sample);
-    const value =  !newMolecule && mno && mno.value
     return (
       <FormGroup style={{ width: '100%' }}>
         <ControlLabel>Molecule</ControlLabel>
@@ -118,7 +187,7 @@ export default class SampleForm extends React.Component {
             onOpen={onOpenMolName}
             onChange={this.updateMolName}
             isLoading={this.state.isMolNameLoading}
-            value={value}
+            value={!newMolecule && mno && mno.value}
             onNewOptionClick={this.addMolName}
             clearable={false}
           />
@@ -204,6 +273,7 @@ export default class SampleForm extends React.Component {
           title={title}
           disabled={disabled}
           block={block}
+          bsStyle={unit && sample.amount_unit === unit ? 'success' : 'default'}
           onChange={(e) => this.handleFieldChanged(sample, field, e)}
         />
       </td>
@@ -279,8 +349,10 @@ export default class SampleForm extends React.Component {
           <tr>
             <td colSpan="4">
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <div style={{ width: '82%' }}>
+                <div style={{ width: '82%', display: 'flex' }}>
                   {this.moleculeInput()}
+                  {this.stereoAbsInput()}
+                  {this.stereoRelInput()}
                 </div>
                 <div style={{ width: '15%' }} className="top-secret-checkbox">
                   {this.topSecretCheckbox(sample)}

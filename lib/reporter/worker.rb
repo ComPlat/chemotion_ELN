@@ -7,6 +7,7 @@ module Reporter
       @file_name = @report.file_name
       @spl_settings = @report.sample_settings
       @rxn_settings = @report.reaction_settings
+      @si_rxn_settings = @report.si_reaction_settings
       @configs = @report.configs
       @img_format = @report.img_format
       @template_path = args[:template_path]
@@ -56,6 +57,7 @@ module Reporter
                       objs: @objs,
                       spl_settings: @spl_settings,
                       rxn_settings: @rxn_settings,
+                      si_rxn_settings: @si_rxn_settings,
                       configs: @configs,
                       img_format: @img_format
                     ).convert
@@ -67,9 +69,23 @@ module Reporter
         author: "#{@author.name}",
         spl_settings: @spl_settings,
         rxn_settings: @rxn_settings,
+        si_rxn_settings: @si_rxn_settings,
         configs: @configs,
         objs: contents
       }
+    end
+
+    def prism(objs)
+      cont_objs, proc_objs = [], []
+      objs.each do |obj|
+        next if obj[:type] == "sample"
+        is_general_procedure(obj) ? proc_objs.push(obj) : cont_objs.push(obj)
+      end
+      return cont_objs, proc_objs
+    end
+
+    def is_general_procedure(obj)
+      obj[:type] == "reaction" && obj[:role] == "gp"
     end
   end
 end

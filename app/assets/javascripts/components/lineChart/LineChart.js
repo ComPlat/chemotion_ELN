@@ -167,16 +167,16 @@ class D3LineChart {
              .attr('class', 'line')
              .attr('d', linePath(decimalData))
 
-    // responsive
-    const chart = $('#line-chart')
-    const aspect = chart.width() / chart.height()
-    const container = chart.parent()
-
-    $(window).on('resize', () => {
-      const targetWidth = container.width()
-      chart.attr('width', targetWidth)
-      chart.attr('height', Math.round(targetWidth / aspect))
-    }).trigger('resize')
+    // // responsive
+    // const chart = $('#line-chart')
+    // const aspect = chart.width() / chart.height()
+    // const container = chart.parent()
+    //
+    // $(window).on('resize', () => {
+    //   const targetWidth = container.width()
+    //   chart.attr('width', targetWidth)
+    //   chart.attr('height', Math.round(targetWidth / aspect))
+    // }).trigger('resize')
   }
 }
 

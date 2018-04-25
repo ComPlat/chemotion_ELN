@@ -49,12 +49,13 @@ export default class ManagingActions extends React.Component {
   }
 
   onChange(state) {
-    if (this.checkUIState(state)){
-      let elementsFilter = this.filterParamsFromUIState(state);
-      let params = {
-        elements_filter: elementsFilter
-      }
-      PermissionActions.fetchPermissionStatus(params)
+    if (this.checkUIState(state)) {
+      const elementsFilter = this.filterParamsFromUIState(state);
+      const params = {
+        elements_filter: elementsFilter,
+        currentCollection: state.currentCollection
+      };
+      PermissionActions.fetchPermissionStatus(params);
       this.setState({
         currentCollection:          state.currentCollection,
         sample_checkedAll:          state.sample.checkedAll,
@@ -72,8 +73,7 @@ export default class ManagingActions extends React.Component {
         research_plan_checkedAll:   state.research_plan.checkedAll,
         research_plan_checkedIds:   state.research_plan.checkedIds,
         research_plan_uncheckedIds: state.research_plan.uncheckedIds,
-
-        })
+      });
     }
   }
 
@@ -129,41 +129,46 @@ export default class ManagingActions extends React.Component {
   }
 
   filterParamsFromUIState(uiState) {
-    let collectionId = uiState.currentCollection && uiState.currentCollection.id;
+    const collection_id = uiState.currentCollection && uiState.currentCollection.id;
+    const is_sync_to_me = uiState.currentCollection && uiState.currentCollection.is_sync_to_me;
 
-    let filterParams = {
+    return {
       sample: {
         all: uiState.sample.checkedAll,
         included_ids: uiState.sample.checkedIds,
         excluded_ids: uiState.sample.uncheckedIds,
-        collection_id: collectionId
+        collection_id,
+        is_sync_to_me
       },
       reaction: {
         all: uiState.reaction.checkedAll,
         included_ids: uiState.reaction.checkedIds,
         excluded_ids: uiState.reaction.uncheckedIds,
-        collection_id: collectionId
+        collection_id,
+        is_sync_to_me
       },
       wellplate: {
         all: uiState.wellplate.checkedAll,
         included_ids: uiState.wellplate.checkedIds,
         excluded_ids: uiState.wellplate.uncheckedIds,
-        collection_id: collectionId
+        collection_id,
+        is_sync_to_me
       },
       screen: {
         all: uiState.screen.checkedAll,
         included_ids: uiState.screen.checkedIds,
         excluded_ids: uiState.screen.uncheckedIds,
-        collection_id: collectionId
+        collection_id,
+        is_sync_to_me
       },
       research_plan: {
         all: uiState.research_plan.checkedAll,
         included_ids: uiState.research_plan.checkedIds,
         excluded_ids: uiState.research_plan.uncheckedIds,
-        collection_id: collectionId
+        collection_id,
+        is_sync_to_me
       }
     };
-    return filterParams;
   }
 
   isMoveDisabled() {

@@ -4,6 +4,39 @@ module Chemotion
 
     resource :molecules do
 
+      namespace :smiles do
+        desc "Return molecule by SMILES"
+        params do
+          requires :smiles, type: String, desc: "Input SMILES"
+          optional :svg_file, type: String, desc: "Molecule svg file"
+        end
+
+        post do
+          smiles = params[:smiles]
+          svg = params[:svg_file]
+          inchikey = OpenBabelService.smiles_to_inchikey(smiles)
+          return {} unless inchikey
+          molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
+
+          unless molecule
+            molfile = OpenBabelService.smiles_to_molfile smiles if smiles
+            return {} unless molfile
+            molecule = Molecule.find_or_create_by_molfile(molfile)
+          end
+          return unless molecule
+
+          # write temporary SVG
+          digest = Digest::SHA256.hexdigest "#{molecule.inchikey}#{Time.now}"
+          digest = Digest::SHA256.hexdigest digest
+          svg_file_name = "TMPFILE#{digest}.svg"
+          svg_file_path = File.join('public','images', 'samples', svg_file_name)
+          svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
+          FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
+
+          molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name })
+        end
+      end
+
       desc "Return molecule by Molfile"
       params do
         requires :molfile, type: String, desc: "Molecule molfile"
@@ -26,8 +59,7 @@ module Chemotion
         svg_file.write(svg)
         svg_file.close
 
-        is_part = molfile.include? ' R# '
-        molecule = Molecule.find_or_create_by_molfile(molfile, is_part)
+        molecule = Molecule.find_or_create_by_molfile(molfile)
 
         molecule.attributes.merge({ temp_svg: svg_file_name })
       end

@@ -55,6 +55,7 @@ export default class SampleDetails extends React.Component {
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
+    this.addManualCas = this.addManualCas.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -137,8 +138,8 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
-    let {sample} = this.state;
-    if(sample.belongTo && sample.belongTo.type === 'reaction') {
+    const { sample } = this.state;
+    if (sample.belongTo && sample.belongTo.type === 'reaction') {
       let reaction = sample.belongTo;
       reaction.editedSample = sample;
       const materialGroup = sample.matGroup;
@@ -162,8 +163,7 @@ export default class SampleDetails extends React.Component {
       }
     }
     if(sample.is_new || closeView) {
-      const force = true;
-      DetailActions.close(sample, force);
+      DetailActions.close(sample, true);
     }
     sample.updateChecksum();
   }
@@ -293,6 +293,16 @@ export default class SampleDetails extends React.Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveCloseSample">Save and Close Sample</Tooltip>}>
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+            onClick={() => this.handleSubmit(true)}
+            style={{display: saveBtnDisplay}}
+            disabled={!this.sampleIsValid() || !sample.can_update} >
+            <i className="fa fa-floppy-o" />
+            <i className="fa fa-times"  />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveSample">Save Sample</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
             onClick={() => this.handleSubmit()}
@@ -405,6 +415,10 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  addManualCas(e) {
+    DetailActions.updateMoleculeCas(this.props.sample, e.value);
+  }
+
   moleculeCas() {
     const { sample, isCasLoading } = this.state;
     const { molecule, xref } = sample;
@@ -414,19 +428,23 @@ export default class SampleDetails extends React.Component {
     if(molecule && molecule.cas) {
       casArr = molecule.cas.map(c => Object.assign({label: c}, {value: c}));
     }
+    const onChange = e => this.updateCas(e);
+    const onOpen = e => this.onCasSelectOpen(e, casArr);
 
     return (
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>CAS</InputGroup.Addon>
-        <Select ref='casSelect'
-                name='cas'
-                multi={false}
-                options={casArr}
-                onChange={(e) => this.updateCas(e)}
-                onOpen={(e) => this.onCasSelectOpen(e, casArr)}
-                isLoading={isCasLoading}
-                value={cas}
-                disabled={!sample.can_update}
+        <Select.Creatable
+          ref='casSelect'
+          name='cas'
+          multi={false}
+          options={casArr}
+          onChange={onChange}
+          onOpen={onOpen}
+          onNewOptionClick={this.addManualCas}
+          isLoading={isCasLoading}
+          value={cas}
+          disabled={!sample.can_update}
         />
         <InputGroup.Button>
           <OverlayTrigger placement="bottom"

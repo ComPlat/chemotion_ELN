@@ -13,7 +13,8 @@ import KeyboardStore from './stores/KeyboardStore';
 import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
-import XTdCont from "./extra/ElementsTableEntriesXTdCont";
+import XTdCont from './extra/ElementsTableEntriesXTdCont';
+import { elementShowOrNew } from './routesUtils';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -82,7 +83,7 @@ export default class ElementsTableEntries extends Component {
   }
 
   isCurrEleDropType(type) {
-    const {currentElement} = ElementStore.getState();
+    const { currentElement } = ElementStore.getState();
     const targets = {
       sample: ['reaction', 'wellplate'],
       wellplate: ['screen'],
@@ -92,11 +93,15 @@ export default class ElementsTableEntries extends Component {
   }
 
   showDetails(element) {
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
-      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
-    );
+    const { currentCollection, isSync } = UIStore.getState();
+    const { id, type } = element;
+    const uri = isSync
+      ? `/scollection/${currentCollection.id}/${type}/${id}`
+      : `/collection/${currentCollection.id}/${type}/${id}`;
+    Aviator.navigate(uri, { silent: true });
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = id;
+    elementShowOrNew(e)
   }
 
   dragHandle(element) {
@@ -239,7 +244,7 @@ export default class ElementsTableEntries extends Component {
 
       return (
         <OverlayTrigger placement="top" overlay={tooltip}>
-          {icon}
+          <div>{icon}</div>
         </OverlayTrigger>
       );
     }

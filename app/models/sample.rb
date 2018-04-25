@@ -8,7 +8,9 @@ class Sample < ActiveRecord::Base
   include UnitConvertable
   include Taggable
 
-  has_many :analyses_experiments
+  STEREO_ABS = ['any', 'rac', 'meso', '(S)', '(R)', '(Sp)', '(Rp)', '(Sa)'].freeze
+  STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para'].freeze
+  STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
@@ -47,75 +49,80 @@ class Sample < ActiveRecord::Base
   scope :by_short_label, ->(query) { where('short_label ILIKE ?',"%#{query}%") }
   scope :by_external_label, ->(query) { where('external_label ILIKE ?',"%#{query}%") }
   scope :with_reactions, -> {
-    sample_ids = ReactionsProductSample.pluck(:sample_id) + ReactionsReactantSample.pluck(:sample_id) + ReactionsStartingMaterialSample.pluck(:sample_id)
-    where(id: sample_ids)
+    joins(:reactions_samples)
   }
   scope :with_wellplates, -> {
-    sample_ids = Wellplate.all.flat_map(&:samples).map(&:id)
-    where(id: sample_ids)
+    joins(:well)
   }
   scope :by_wellplate_ids,         ->(ids) { joins(:wellplates).where('wellplates.id in (?)', ids) }
-  scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_as_reactant).where('reactions.id in (?)', ids) }
-  scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_as_product).where('reactions.id in (?)', ids) }
-  scope :by_reaction_material_ids, ->(ids) { joins(:reactions_as_starting_material).where('reactions.id in (?)', ids) }
-  scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_as_solvent).where('reactions.id in (?)', ids) }
-  scope :not_reactant, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_reactant_samples)') }
-  scope :not_solvents, -> { where('samples.id NOT IN (SELECT DISTINCT(sample_id) FROM reactions_solvent_samples)') }
+  scope :by_reaction_reactant_ids, ->(ids) { joins(:reactions_reactant_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_product_ids,  ->(ids) { joins(:reactions_product_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_material_ids, ->(ids) { joins(:reactions_starting_material_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_solvent_ids,  ->(ids) { joins(:reactions_solvent_samples).where('reactions_samples.reaction_id in (?)', ids) }
+  scope :by_reaction_ids,  ->(ids) { joins(:reactions_samples).where('reactions_samples.reaction_id in (?)', ids) }
 
-  scope :search_by_fingerprint, -> (molfile, userid, collection_id,
-                                    type, threshold = 0.01) {
-    fp_vector =
-      Chemotion::OpenBabelService.fingerprint_from_molfile(molfile)
 
-    if (type == 'similar')
-      threshold = threshold.to_f
-      fp_ids = Fingerprint.search_similar(fp_vector, threshold)
-      scope = where(:fingerprint_id => fp_ids)
-      scope = scope.order("position(fingerprint_id::text in '#{fp_ids.join(',')}')")
-    else # substructure search
-      fp_ids = Fingerprint.screen_sub(fp_vector)
-      list_molfile = Sample.where(:fingerprint_id => fp_ids)
-                           .for_user(userid)
-                           .by_collection_id(collection_id.to_i)
-
-      smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
-
-      sample_ids = []
-      list_molfile.each do |sample|
-        if Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
-          sample_ids << sample.id
-        end
-
-      end
-      scope = Sample.where(:id => sample_ids)
-    end
-    return scope
+  scope :product_only, -> { joins(:reactions_samples).where("reactions_samples.type = 'ReactionsProductSample'") }
+  scope :sample_or_startmat_or_products, -> {
+    joins("left join reactions_samples rs on rs.sample_id = samples.id").where("rs.id isnull or rs.\"type\" in ('ReactionsProductSample', 'ReactionsStartingMaterialSample')")
   }
 
+  scope :search_by_fingerprint_sim, ->(molfile, threshold = 0.01) {
+    joins(:fingerprint).merge(
+      Fingerprint.search_similar(nil, threshold, false, molfile)
+    ).order('tanimoto desc')
+  }
+
+  scope :search_by_fingerprint_sub, ->(molfile, as_array = false) {
+    fp_vector = Chemotion::OpenBabelService.bin_fingerprint_from_molfile(molfile)
+    smarts_query = Chemotion::OpenBabelService.get_smiles_from_molfile(molfile)
+    samples = joins(:fingerprint).merge(Fingerprint.screen_sub(fp_vector))
+    samples = samples.select do |sample|
+      Chemotion::OpenBabelService.substructure_match(smarts_query, sample.molfile)
+    end
+    return samples if as_array
+    Sample.where(id: samples.map(&:id))
+  }
+
+
+  before_save :auto_set_molfile_to_molecules_molfile
+  before_save :find_or_create_molecule_based_on_inchikey
+  before_save :update_molecule_name
+  before_save :check_molfile_polymer_section
+  before_save :find_or_create_fingerprint
+  before_save :attach_svg, :init_elemental_compositions,
+              :set_loading_from_ea
+  before_save :auto_set_short_label
+  before_create :check_molecule_name
+  after_save :update_counter
+  after_create :create_root_container
+  after_save :update_data_for_reactions
 
   has_many :collections_samples, inverse_of: :sample, dependent: :destroy
   has_many :collections, through: :collections_samples
 
+  has_many :reactions_samples, dependent: :destroy
   has_many :reactions_starting_material_samples, dependent: :destroy
   has_many :reactions_reactant_samples, dependent: :destroy
   has_many :reactions_solvent_samples, dependent: :destroy
   has_many :reactions_product_samples, dependent: :destroy
 
+  has_many :reactions, through: :reactions_samples
   has_many :reactions_as_starting_material, through: :reactions_starting_material_samples, source: :reaction
   has_many :reactions_as_reactant, through: :reactions_reactant_samples, source: :reaction
   has_many :reactions_as_solvent, through: :reactions_solvent_samples, source: :reaction
   has_many :reactions_as_product, through: :reactions_product_samples, source: :reaction
 
   has_many :devices_samples
+  has_many :analyses_experiments
 
-  belongs_to :molecule
-  belongs_to :fingerprints
+  belongs_to :fingerprint
   belongs_to :user
   belongs_to :molecule_name
 
   has_one :container, :as => :containable
-
   has_one :well, dependent: :destroy
+
   has_many :wellplates, through: :well
   has_many :residues, dependent: :destroy
   has_many :elemental_compositions, dependent: :destroy
@@ -123,36 +130,19 @@ class Sample < ActiveRecord::Base
   has_many :sync_collections_users, through: :collections
   composed_of :amount, mapping: %w(amount_value, amount_unit)
 
-  before_save :auto_set_molfile_to_molecules_molfile
-  before_save :find_or_create_molecule_based_on_inchikey
-  before_save :update_molecule_name
-  before_save :check_molfile_polymer_section
-  before_save :find_or_create_fingerprint
-
   has_ancestry
 
-  validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
-  validate :has_collections
+  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  belongs_to :molecule
 
+  accepts_nested_attributes_for :collections_samples
   accepts_nested_attributes_for :molecule, update_only: true
   accepts_nested_attributes_for :residues, :elemental_compositions, :container,
                                 :tag, allow_destroy: true
-  accepts_nested_attributes_for :collections_samples
 
-  belongs_to :creator, foreign_key: :created_by, class_name: 'User'
+  validates :purity, :numericality => { :greater_than_or_equal_to => 0.0, :less_than_or_equal_to => 1.0, :allow_nil => true }
+  validate :has_collections
   validates :creator, presence: true
-
-  before_save :attach_svg, :init_elemental_compositions,
-              :set_loading_from_ea
-
-  before_create :auto_set_short_label
-
-  after_save :update_data_for_reactions
-  before_create :check_short_label
-  before_create :check_molecule_name
-
-  after_create :update_counter
-  after_create :create_root_container
 
   def molecule_sum_formular
     self.molecule ? self.molecule.sum_formular : ""
@@ -175,102 +165,77 @@ class Sample < ActiveRecord::Base
   end
 
   def self.associated_by_user_id_and_reaction_ids(user_id, reaction_ids)
-    (for_user(user_id).by_reaction_material_ids(reaction_ids) + for_user(user_id).by_reaction_reactant_ids(reaction_ids) + for_user(user_id).by_reaction_product_ids(reaction_ids)).uniq
+    (for_user(user_id).by_reaction_ids(reaction_ids)).uniq
   end
 
   def self.associated_by_user_id_and_wellplate_ids(user_id, wellplate_ids)
     for_user(user_id).by_wellplate_ids(wellplate_ids)
   end
 
-  def create_subsample user, collection_id, copy_ea = false
+  def create_subsample user, collection_ids, copy_ea = false
     subsample = self.dup
+    subsample.name = self.name if self.name.present?
+    subsample.external_label = self.external_label if self.external_label.present?
 
-    if self.name.to_s != ''
-      subsample.name = self.name
-    end
-    if self.external_label.to_s != ''
-      subsample.external_label = self.external_label
-    end
+    # Ex(p|t)ensive method to get a proper counter:
+    # take into consideration sample children that have been hard/soft deleted
+    children_count = self.children.with_deleted.count
+    last_child_label = self.children.with_deleted.order("created_at")
+                     .where('short_label LIKE ?', "#{self.short_label}-%").last&.short_label
+    last_child_counter = last_child_label &&
+      last_child_label.match(/^#{self.short_label}-(\d+)/) && $1.to_i || 0
 
-    children_count = self.children.count
-    subsample.short_label = self.short_label + "-" + (children_count + 1).to_s
+    counter = [last_child_counter, children_count].max
+    subsample.short_label = "#{self.short_label}-#{counter + 1}"
 
     subsample.parent = self
     subsample.created_by = user.id
-    subsample.residues_attributes = self.residues.to_a.map do |r|
-      result = r.attributes.to_h
-      result.delete 'id'
-      result.delete 'sample_id'
-      result
-    end
+    subsample.residues_attributes = self.residues.select(:custom_info, :residue_type).as_json
+    subsample.elemental_compositions_attributes = self.elemental_compositions.select(
+     :composition_type, :data, :loading).as_json if copy_ea
 
-    if copy_ea
-      subsample.elemental_compositions_attributes = self.elemental_compositions.map do |ea|
-        result = ea.attributes.to_h
-        result.delete 'id'
-        result.delete 'sample_id'
-        result
-      end
-    end
-
-    subsample.collections << Collection.find(collection_id)
+    # associate to arg collections and creator's All collection
+    collections = (
+      Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
+    )
+    subsample.collections << collections
 
     subsample.container = Container.create_root_container
 
-    subsample.save!
-
-    subsample
-  end
-
-  def auto_set_short_label
-    return if (self.short_label == 'reactant' || self.short_label == 'solvent')
-
-    self.short_label = nil if self.short_label == 'NEW SAMPLE'
-
-    if parent
-      self.short_label ||= "#{parent.short_label}-#{parent.children.count.to_i + 1}"
-    elsif creator && creator.counters['samples']
-      self.short_label ||= "#{creator.initials}-#{creator.counters['samples'].succ}"
-    elsif
-      self.short_label ||= 'NEW'
-    end
-  end
-
-  def reactions
-    reactions_as_starting_material + reactions_as_reactant + reactions_as_solvent + reactions_as_product
+    subsample.save! && subsample
   end
 
   def reaction_description
     reactions.first.try(:description)
   end
 
-  #todo: find_or_create_molecule_based_on_inchikey
   def auto_set_molfile_to_molecules_molfile
-    if molecule && molecule.molfile
-      self.molfile ||= molecule.molfile
-    end
+    self.molfile = self.molfile.presence || molecule&.molfile
+  end
+
+  def validate_stereo(_stereo = {})
+    self.stereo ||= Sample::STEREO_DEF
+    self.stereo.merge!(_stereo.slice('abs','rel'))
+    self.stereo['abs'] = 'any' unless Sample::STEREO_ABS.include?(self.stereo['abs'])
+    self.stereo['rel'] = 'any' unless Sample::STEREO_REL.include?(self.stereo['rel'])
+    self.stereo
   end
 
   def find_or_create_molecule_based_on_inchikey
-    if molfile
-      if molfile.include? ' R# '
-        self.molecule = Molecule.find_or_create_by_molfile(molfile.clone, true)
-      else
-        babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-        inchikey = babel_info[:inchikey]
-        unless inchikey.blank?
-          unless molecule && molecule.inchikey == inchikey
-            self.molecule = Molecule.find_or_create_by_molfile(molfile)
-          end
-        end
-      end
+    return unless molfile.present?
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    inchikey = babel_info[:inchikey]
+    return unless  inchikey.present?
+    is_partial = babel_info[:is_partial]
+    molfile_version = babel_info[:version]
+    if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+      self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
     end
   end
 
   def find_or_create_fingerprint
-    if self.fingerprint_id == nil
-      self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
-    end
+    return unless molecule_id_changed? || molfile_changed? || fingerprint_id.nil?
+    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
   end
 
   def get_svg_path
@@ -357,7 +322,8 @@ class Sample < ActiveRecord::Base
   end
 
   def preferred_label
-    self.external_label.present? ? self.external_label : self.molecule.iupac_name
+    self.external_label.presence || self.molecule_name_hash[:label].presence ||
+      self.molecule.iupac_name
   end
 
   def preferred_tag
@@ -419,7 +385,7 @@ private
     end
 
     self.molfile = lines.join
-    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(self.molfile.clone)
+    self.fingerprint_id = Fingerprint.find_or_create_by_molfile(molfile.clone)&.id
   end
 
   def set_loading_from_ea
@@ -460,19 +426,29 @@ private
     end
   end
 
-  def check_short_label
-    return if self.parent
-    return if !!(self.short_label =~ /(solvent|solvents|reactant|reactants)/)
+  def auto_set_short_label
+    sh_label = self['short_label']
+    return if sh_label =~ /solvents?|reactants?/
+    return if short_label && !short_label_changed?
 
-    abbr = self.creator.name_abbreviation
-    if Sample.where(short_label: self.short_label).count > 0
-      self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i + 1}"
+    if sh_label && Sample.find_by(short_label: sh_label)
+      if parent && !((parent_label = parent.short_label) =~ /solvents?|reactants?/)
+        self.short_label = "#{parent_label}-#{parent.children.count.to_i.succ}"
+      elsif creator && creator.counters['samples']
+        abbr = self.creator.name_abbreviation
+        self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
+      end
+    elsif !sh_label && creator && creator.counters['samples']
+      abbr = self.creator.name_abbreviation
+      self.short_label = "#{abbr}-#{self.creator.counters['samples'].to_i.succ}"
     end
   end
 
   def update_counter
-    return if (self.short_label == 'reactants' || self.short_label == 'solvents')
-    self.creator.increment_counter 'samples' unless self.parent
+    return if short_label =~ /solvents?|reactants?/ || self.parent
+    return unless short_label_changed?
+    return unless short_label =~ /^#{self.creator.name_abbreviation}-\d+$/
+    self.creator.increment_counter 'samples'
   end
 
   def create_root_container
@@ -495,5 +471,13 @@ private
   def update_molecule_name
     return unless molecule_id_changed? && molecule_name&.molecule_id != molecule_id
     assign_molecule_name
+  end
+
+  def has_molarity
+    molarity_value.present? && molarity_value > 0 && density.zero?
+  end
+
+  def has_density
+    density.present? && density > 0 && (!molarity_value.present? || molarity_value.zero?)
   end
 end

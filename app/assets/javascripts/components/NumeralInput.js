@@ -35,18 +35,15 @@ export default class NumeralInput extends Component {
   //TODO fix issue that cursor is behind, when numeral inserts a comma:
   // containing comas need to be compared to previous amount
   _handleInputValueChange(event) {
-    let inputField = event.target;
-    let caretPosition = $(inputField).caret();
-    let {value} = inputField;
-    let formatedValue = this._convertValueToNumeralValue(value);
-    let unformatedValue = Numeral().unformat(formatedValue);
-    let {onChange} = this.props;
+    const inputField = event.target;
+    const { value, selectionStart } = inputField;
+    const formatedValue = this._convertValueToNumeralValue(value);
+    const unformatedValue = Numeral().unformat(formatedValue);
+    const { onChange } = this.props;
 
-    this.setState({
-        numeralValue: formatedValue
-      }, () => {
-        $(inputField).caret(caretPosition);
-      }
+    this.setState(
+      { numeralValue: formatedValue },
+      () => { inputField.selectionStart = selectionStart; }
     );
     onChange(unformatedValue);
   }

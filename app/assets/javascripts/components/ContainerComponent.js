@@ -3,19 +3,13 @@ import {
   Button, Col, FormControl, FormGroup, ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
-import Delta from 'quill-delta';
+import _ from 'lodash';
 import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
 
 import { sampleAnalysesContentSymbol } from './utils/quillToolbarSymbol';
-import {
-  sampleAnalysesFormatPattern, commonFormatPattern
-} from './utils/ElementUtils';
-import {
-  deltaToMarkdown, markdownToDelta
-} from './utils/deltaMarkdownConverter';
-import { searchAndReplace } from './utils/markdownUtils';
+import { formatAnalysisContent } from './utils/ElementUtils';
 import { confirmOptions, kindOptions } from './staticDropdownOptions/options';
 
 export default class ContainerComponent extends Component {
@@ -75,19 +69,8 @@ export default class ContainerComponent extends Component {
 
   reformatContent() {
     const { container } = this.state;
-    const kind = container.extended_metadata.kind || '';
-    let content = new Delta({ ...container.extended_metadata.content });
-    const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
 
-    let md = deltaToMarkdown(content);
-    let formatPattern = (sampleAnalysesFormatPattern[type] || []);
-    formatPattern = formatPattern.concat(commonFormatPattern);
-    formatPattern.forEach((patt) => {
-      md = searchAndReplace(md, patt.pattern, patt.replace);
-    });
-    content = markdownToDelta(md);
-
-    container.extended_metadata.content = content;
+    container.extended_metadata.content = formatAnalysisContent(container);
     this.onChange(container);
   }
 

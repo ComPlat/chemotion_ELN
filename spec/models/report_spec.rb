@@ -34,6 +34,7 @@ RSpec.describe Report, type: :report do
         configs: {},
         sample_settings: {},
         reaction_settings: {},
+        si_reaction_settings: {},
         objects: [{ "id" => r1.id, "type" => "reaction" }],
         img_format: "png",
         template: template,

@@ -47,14 +47,14 @@ class Import::ImportSdf
     @message[:error].empty? && "ok" || "error"
   end
 
-  def find_or_create_mol_by_batch(batch_size=50)
+  def find_or_create_mol_by_batch(batch_size = 50)
     n = batch_size - 1
-    inchikeys=[]
-    @processed_mol=[]
+    inchikeys = []
+    @processed_mol = []
     data = raw_data.dup
     while !data.empty?
       batch = data.slice!(0..n)
-      molecules = find_or_create_by_molfiles batch , false, false
+      molecules = find_or_create_by_molfiles(batch)
       inchikeys  += molecules.map{|m| m && m[:inchikey] || nil }
       @processed_mol += molecules
     end
@@ -69,21 +69,24 @@ class Import::ImportSdf
   end
 
   def create_samples
-
     ids = []
     read_data if (raw_data.empty? && rows.empty?)
 
     if !raw_data.empty? && inchi_array.empty?
       ActiveRecord::Base.transaction do
         raw_data.each do |molfile|
-          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
+          babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
           inchikey = babel_info[:inchikey]
-          unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
-            next unless i=inchi_array.index(inchikey)
-            @inchi_array[i]=nil
-            sample = Sample.new(created_by: current_user_id)
-            sample.molfile = molfile
-            sample.molecule = molecule
+          is_partial = babel_info[:is_partial]
+          if inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
+            next unless i = inchi_array.index(inchikey)
+            @inchi_array[i] = nil
+            sample = Sample.new(
+              created_by: current_user_id,
+              molfile: molfile,
+              molfile_version: babel_info[:molfile_version],
+              molecule_id: molecule.id
+            )
             sample.collections << Collection.find(collection_id)
             sample.collections << Collection.get_all_collection_for_user(current_user_id)
             sample.save!
@@ -98,16 +101,21 @@ class Import::ImportSdf
           rows.each do |row|
             next unless row
             molfile = row["molfile"]
-            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(Molecule.skip_residues(molfile))
+            babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
             inchikey = babel_info[:inchikey]
-            unless inchikey.blank? || !(molecule = Molecule.where(inchikey: inchikey).first)
-              sample = Sample.new(created_by: current_user_id)
-              sample.molfile = molfile
-              sample.molecule = molecule
-
+            is_partial = babel_info[:is_partial]
+            if inchikey.presence && (molecule = Molecule.find_by(inchikey: inchikey, is_partial: is_partial))
+              sample = Sample.new(
+                created_by: current_user_id,
+                molfile: molfile,
+                molfile_version: babel_info[:molfile_version],
+                molecule_id: molecule.id
+              )
               attribs.each do |attrib|
                 sample[attrib] = row[attrib] if (row[attrib].is_a?(Numeric) || row[attrib] && !row[attrib].empty?)
               end
+              properties = process_molfile_opt_data(molfile)
+              sample.validate_stereo({ 'abs' => properties['STEREO_ABS'], 'rel' => properties['STEREO_REL'] })
 
               sample.collections << Collection.find(collection_id)
               sample.collections << Collection.get_all_collection_for_user(current_user_id)
@@ -132,67 +140,20 @@ class Import::ImportSdf
     samples
   end
 
-  def find_or_create_by_molfiles molfiles, is_partial = false, is_compact = true
+  def find_or_create_by_molfiles(molfiles)
+    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
 
-    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
-    inchikeys = bi.map do |babel_info|
-      inchikey = babel_info[:inchikey]
-      !inchikey.blank? && inchikey || nil
-    end
-
-    compact_iks = inchikeys.compact
-    mol_to_get = []
-
-    iks = inchikeys.dup
-    unless compact_iks.empty?
-      existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
-      mol_to_get = compact_iks - existing_ik
-    end
-    unless mol_to_get.empty?
-      pi = Chemotion::PubchemService.molecule_info_from_inchikeys(mol_to_get)
-      pi.each do |pubchem_info|
-        ik = pubchem_info[:inchikey]
-        Molecule.find_or_create_by(inchikey: ik,
-          is_partial: is_partial) do |molecule|
-          i =  iks.index(ik)
-          iks[i] = nil
-          babel_info = bi[i]
-          molecule.molfile = molfiles[i]
-          molecule.assign_molecule_data babel_info, pubchem_info
-        end
+    babel_info_array.map.with_index do |babel_info, i|
+      if babel_info[:inchikey]
+        mf = molfiles[i]
+        m = Molecule.find_or_create_by_molfile(mf, babel_info)
+        process_molfile_opt_data(mf).merge(
+          inchikey: m.inchikey, svg: "molecules/#{m.molecule_svg_file}", name: m.iupac_name, molfile: mf
+        )
+      else
+        { name: nil,inchikey: nil ,svg: "no_image_180.svg" }
       end
     end
-
-    iks = inchikeys.dup
-    unless compact_iks.empty?
-      existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
-      mol_to_get = compact_iks - existing_ik
-    end
-    unless mol_to_get.empty?
-      mol_to_get.each do |ik|
-        Molecule.find_or_create_by(inchikey: ik,
-          is_partial: is_partial) do |molecule|
-          i =  iks.index(ik)
-          iks[i] = nil
-          babel_info = bi[i]
-          molecule.molfile = molfiles[i]
-          molecule.assign_molecule_data babel_info
-        end
-      end
-    end
-
-    molecules = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey,:molecule_svg_file,:iupac_name)
-    iks = inchikeys.dup
-    mol_array = Array.new(iks.size){ {name: nil,inchikey: nil ,svg: "no_image_180.svg"} }
-    molecules.each do |mol|
-
-      i = iks.index(mol[0])
-      if i
-        iks[i] = nil
-        mol_array[i]={name: mol[2],inchikey: mol[0],svg: "molecules/"+mol[1].to_s,molfile: molfiles[i]}.merge( process_molfile_opt_data( molfiles[i]))
-      end
-    end
-    mol_array
   end
 
   def process_molfile_opt_data molfile

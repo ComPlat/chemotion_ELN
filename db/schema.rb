@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20171019102800) do
+ActiveRecord::Schema.define(version: 20180312095413) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -122,13 +122,15 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   add_index "collections_reactions", ["collection_id"], name: "index_collections_reactions_on_collection_id", using: :btree
   add_index "collections_reactions", ["deleted_at"], name: "index_collections_reactions_on_deleted_at", using: :btree
-  add_index "collections_reactions", ["reaction_id"], name: "index_collections_reactions_on_reaction_id", using: :btree
+  add_index "collections_reactions", ["reaction_id", "collection_id"], name: "index_collections_reactions_on_reaction_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_research_plans", force: :cascade do |t|
     t.integer  "collection_id"
     t.integer  "research_plan_id"
     t.datetime "deleted_at"
   end
+
+  add_index "collections_research_plans", ["research_plan_id", "collection_id"], name: "index_collections_research_plans_on_rplan_id_and_coll_id", unique: true, using: :btree
 
   create_table "collections_samples", force: :cascade do |t|
     t.integer  "collection_id"
@@ -139,7 +141,6 @@ ActiveRecord::Schema.define(version: 20171019102800) do
   add_index "collections_samples", ["collection_id"], name: "index_collections_samples_on_collection_id", using: :btree
   add_index "collections_samples", ["deleted_at"], name: "index_collections_samples_on_deleted_at", using: :btree
   add_index "collections_samples", ["sample_id", "collection_id"], name: "index_collections_samples_on_sample_id_and_collection_id", unique: true, using: :btree
-  add_index "collections_samples", ["sample_id"], name: "index_collections_samples_on_sample_id", using: :btree
 
   create_table "collections_screens", force: :cascade do |t|
     t.integer  "collection_id"
@@ -149,7 +150,7 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   add_index "collections_screens", ["collection_id"], name: "index_collections_screens_on_collection_id", using: :btree
   add_index "collections_screens", ["deleted_at"], name: "index_collections_screens_on_deleted_at", using: :btree
-  add_index "collections_screens", ["screen_id"], name: "index_collections_screens_on_screen_id", using: :btree
+  add_index "collections_screens", ["screen_id", "collection_id"], name: "index_collections_screens_on_screen_id_and_collection_id", unique: true, using: :btree
 
   create_table "collections_wellplates", force: :cascade do |t|
     t.integer  "collection_id"
@@ -159,7 +160,13 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   add_index "collections_wellplates", ["collection_id"], name: "index_collections_wellplates_on_collection_id", using: :btree
   add_index "collections_wellplates", ["deleted_at"], name: "index_collections_wellplates_on_deleted_at", using: :btree
-  add_index "collections_wellplates", ["wellplate_id"], name: "index_collections_wellplates_on_wellplate_id", using: :btree
+  add_index "collections_wellplates", ["wellplate_id", "collection_id"], name: "index_collections_wellplates_on_wellplate_id_and_collection_id", unique: true, using: :btree
+
+  create_table "collector_errors", force: :cascade do |t|
+    t.string   "error_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|
     t.integer "ancestor_id",   null: false
@@ -393,22 +400,23 @@ ActiveRecord::Schema.define(version: 20171019102800) do
   create_table "molecules", force: :cascade do |t|
     t.string   "inchikey"
     t.string   "inchistring"
-    t.float    "density",                default: 0.0
+    t.float    "density",                           default: 0.0
     t.float    "molecular_weight"
     t.binary   "molfile"
     t.float    "melting_point"
     t.float    "boiling_point"
     t.string   "sum_formular"
-    t.string   "names",                  default: [],                 array: true
+    t.string   "names",                             default: [],                 array: true
     t.string   "iupac_name"
     t.string   "molecule_svg_file"
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
+    t.datetime "created_at",                                        null: false
+    t.datetime "updated_at",                                        null: false
     t.datetime "deleted_at"
-    t.boolean  "is_partial",             default: false, null: false
+    t.boolean  "is_partial",                        default: false, null: false
     t.float    "exact_molecular_weight"
     t.string   "cano_smiles"
     t.text     "cas"
+    t.string   "molfile_version",        limit: 20
   end
 
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
@@ -487,6 +495,19 @@ ActiveRecord::Schema.define(version: 20171019102800) do
   add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
   add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
 
+  create_table "reactions_samples", force: :cascade do |t|
+    t.integer  "reaction_id"
+    t.integer  "sample_id"
+    t.boolean  "reference"
+    t.float    "equivalent"
+    t.integer  "position"
+    t.string   "type"
+    t.datetime "deleted_at"
+  end
+
+  add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
+  add_index "reactions_samples", ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
+
   create_table "reactions_solvent_samples", force: :cascade do |t|
     t.integer  "reaction_id"
     t.integer  "sample_id"
@@ -523,10 +544,12 @@ ActiveRecord::Schema.define(version: 20171019102800) do
     t.string   "file_path"
     t.datetime "generated_at"
     t.datetime "deleted_at"
-    t.datetime "created_at",                             null: false
-    t.datetime "updated_at",                             null: false
-    t.string   "template",          default: "standard"
-    t.text     "mol_serials",       default: "--- []\n"
+    t.datetime "created_at",                                                                                                                                                        null: false
+    t.datetime "updated_at",                                                                                                                                                        null: false
+    t.string   "template",             default: "standard"
+    t.text     "mol_serials",          default: "--- []\n"
+    t.text     "si_reaction_settings", default: "---\n:Name: true\n:CAS: true\n:Formula: true\n:Smiles: true\n:InCHI: true\n:Molecular Mass: true\n:Exact Mass: true\n:EA: true\n"
+    t.text     "prd_atts",             default: "--- []\n"
   end
 
   add_index "reports", ["author_id"], name: "index_reports_on_author_id", using: :btree
@@ -568,20 +591,20 @@ ActiveRecord::Schema.define(version: 20171019102800) do
 
   create_table "samples", force: :cascade do |t|
     t.string   "name"
-    t.float    "target_amount_value", default: 0.0
-    t.string   "target_amount_unit",  default: "g"
-    t.datetime "created_at",                          null: false
-    t.datetime "updated_at",                          null: false
-    t.text     "description",         default: ""
+    t.float    "target_amount_value",            default: 0.0
+    t.string   "target_amount_unit",             default: "g"
+    t.datetime "created_at",                                     null: false
+    t.datetime "updated_at",                                     null: false
+    t.text     "description",                    default: ""
     t.integer  "molecule_id"
     t.binary   "molfile"
-    t.float    "purity",              default: 1.0
-    t.string   "solvent",             default: ""
-    t.string   "impurities",          default: ""
-    t.string   "location",            default: ""
-    t.boolean  "is_top_secret",       default: false
+    t.float    "purity",                         default: 1.0
+    t.string   "solvent",                        default: ""
+    t.string   "impurities",                     default: ""
+    t.string   "location",                       default: ""
+    t.boolean  "is_top_secret",                  default: false
     t.string   "ancestry"
-    t.string   "external_label",      default: ""
+    t.string   "external_label",                 default: ""
     t.integer  "created_by"
     t.string   "short_label"
     t.float    "real_amount_value"
@@ -591,14 +614,16 @@ ActiveRecord::Schema.define(version: 20171019102800) do
     t.string   "sample_svg_file"
     t.integer  "user_id"
     t.string   "identifier"
-    t.float    "density",             default: 0.0
+    t.float    "density",                        default: 0.0
     t.float    "melting_point"
     t.float    "boiling_point"
     t.integer  "fingerprint_id"
-    t.jsonb    "xref",                default: {}
-    t.float    "molarity_value",      default: 0.0
-    t.string   "molarity_unit",       default: "M"
+    t.jsonb    "xref",                           default: {}
+    t.float    "molarity_value",                 default: 0.0
+    t.string   "molarity_unit",                  default: "M"
     t.integer  "molecule_name_id"
+    t.string   "molfile_version",     limit: 20
+    t.jsonb    "stereo"
   end
 
   add_index "samples", ["deleted_at"], name: "index_samples_on_deleted_at", using: :btree
@@ -681,14 +706,14 @@ ActiveRecord::Schema.define(version: 20171019102800) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "type",                             default: "Person"
+    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 

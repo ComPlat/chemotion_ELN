@@ -11,33 +11,30 @@ import UserStore from '../stores/UserStore';
 const TemperatureUnit = ["°C", "°F", "K"]
 
 export default class Reaction extends Element {
+
   static buildEmpty(collection_id) {
-    let temperature_default = {
+    const temperatureDefault = {
       "valueUnit": "°C",
       "userText": "",
       "data": []
     }
 
-    let description_default = {
-      "ops": [{ "insert": "" }]
-    }
-
-    let reaction = new Reaction({
-      collection_id: collection_id,
+    const reaction = new Reaction({
+      collection_id,
       type: 'reaction',
       name: '',
       status: "",
       role: "",
-      description: description_default,
+      description: Reaction.quillDefault(),
       timestamp_start: "",
       timestamp_stop: "",
       duration: "",
-      observation: description_default,
+      observation: Reaction.quillDefault(),
       purification: "",
       dangerous_products: "",
       tlc_solvents: "",
       rf_value: 0.00,
-      temperature: temperature_default,
+      temperature: temperatureDefault,
       tlc_description: "",
       starting_materials: [],
       reactants: [],
@@ -256,19 +253,39 @@ export default class Reaction extends Element {
     return [...this.starting_materials, ...this.reactants, ...this.solvents, ...this.products]
   }
 
-  static copyFromReactionAndCollectionId(reaction, collection_id) {
-    const copy = reaction.buildCopy();
-    copy.role = "parts";
-    copy.origin = { id: reaction.id, short_label: reaction.short_label };
-    copy.name = copy.nameFromRole(copy.role);
-    copy.collection_id = collection_id;
-    copy.starting_materials = reaction.starting_materials.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
-    copy.reactants = reaction.reactants.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
-    copy.solvents = reaction.solvents.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
-    copy.products = reaction.products.map(sample => Sample.copyFromSampleAndCollectionId(sample, collection_id));
+  buildCopy(params = {}) {
+    const copy = super.buildCopy();
+    Object.assign(copy, params);
+
+    copy.starting_materials = this.starting_materials.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.reactants = this.reactants.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.solvents = this.solvents.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id)
+    );
+    copy.products = this.products.map(
+      sample => Sample.copyFromSampleAndCollectionId(sample, copy.collection_id, true, true)
+    );
 
     copy.container = Container.init();
+    return copy;
+  }
 
+  static copyFromReactionAndCollectionId(reaction, collection_id) {
+    const params = {
+      collection_id,
+      role: 'parts',
+      timestamp_start: '',
+      timestamp_stop: '',
+      rf_value: 0.00,
+      status: '',
+    }
+    const copy = reaction.buildCopy(params);
+    copy.origin = { id: reaction.id, short_label: reaction.short_label };
+    copy.name = copy.nameFromRole(copy.role);
     return copy;
   }
 
@@ -277,30 +294,77 @@ export default class Reaction extends Element {
     return this.name ? `${short_label} ${this.name}` : short_label
   }
 
-  addMaterial(material, materialGroup) {
-    const materials = this[materialGroup];
+  addMaterial(material, group) {
+    const materials = this[group];
+    const newMaterial = this.materialPolicy(material, null, group);
+    this[group] = [...materials, newMaterial];
 
-    material = this.materialPolicy(material, null, materialGroup);
-    materials.push(material);
-
-    this.rebuildReference(material);
+    this.rebuildReference(newMaterial);
+    this.setPositions(group);
   }
 
-  deleteMaterial(material, materialGroup) {
-    const materials = this[materialGroup];
-    const materialIndex = materials.indexOf(material);
-    materials.splice(materialIndex, 1);
+  addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp) {
+    const materials = this[tagGp];
+    const idx = materials.indexOf(tagMaterial);
+    const newSrcMaterial = this.materialPolicy(srcMaterial, srcGp, tagGp);
 
-    this.rebuildReference(material);
+    if (idx === -1) {
+      this[tagGp] = [...materials, newSrcMaterial];
+    } else {
+      this[tagGp] = [
+        ...materials.slice(0, idx),
+        newSrcMaterial,
+        ...materials.slice(idx),
+      ];
+    }
+
+    this.rebuildReference(newSrcMaterial);
+    this.setPositions(tagGp);
   }
 
-  moveMaterial(material, previousMaterialGroup, materialGroup) {
-    const materials = this[materialGroup];
-    this.deleteMaterial(material, previousMaterialGroup);
-    material = this.materialPolicy(material, previousMaterialGroup, materialGroup);
-    materials.push(material);
+  deleteMaterial(material, group) {
+    const materials = this[group];
+    const idx = materials.indexOf(material);
+    this[group] = [
+      ...materials.slice(0, idx),
+      ...materials.slice(idx + 1),
+    ];
 
     this.rebuildReference(material);
+    this.setPositions(group);
+  }
+
+  swapMaterial(srcMaterial, tagMaterial, group) {
+    const srcIdx = this[group].indexOf(srcMaterial);
+    const tagIdx = this[group].indexOf(tagMaterial);
+    const groupWoSrc = [
+      ...this[group].slice(0, srcIdx),
+      ...this[group].slice(srcIdx + 1),
+    ];
+    const newGroup = [
+      ...groupWoSrc.slice(0, tagIdx),
+      srcMaterial,
+      ...groupWoSrc.slice(tagIdx),
+    ];
+    this[group] = newGroup.filter(o => o != null) || [];
+
+    this.rebuildReference(srcMaterial);
+    this.setPositions(group);
+  }
+
+  moveMaterial(srcMaterial, srcGp, tagMaterial, tagGp) {
+    if (srcGp === tagGp) {
+      this.swapMaterial(srcMaterial, tagMaterial, tagGp);
+    } else {
+      this.deleteMaterial(srcMaterial, srcGp);
+      this.addMaterialAt(srcMaterial, srcGp, tagMaterial, tagGp);
+    }
+  }
+
+  setPositions(group) {
+    this[group] = this[group].map((m, idx) => (
+      Object.assign({}, m, { position: idx })
+    ));
   }
 
   // We will process all reaction policy here
@@ -345,33 +409,31 @@ export default class Reaction extends Element {
 
   shortLabelPolicy(material, oldGroup, newGroup) {
     if (oldGroup) {
-      // Save old short_label
-      material[oldGroup + "_short_label"] = material.short_label;
-      if (material[newGroup + "_short_label"]) {
-        material.short_label = material[newGroup + "_short_label"];
+      // Save previous short_label
+      material[`short_label_${oldGroup}`] = material.short_label;
+
+      // Reassign previous short_label if present
+      if (material[`short_label_${newGroup}`]) {
+        material.short_label = material[`short_label_${newGroup}`];
         return 0;
       }
-
-      if (newGroup == "products") {
-        let savedStartingMaterial = oldGroup == "starting_materials" && !material.isNew
-        if (!savedStartingMaterial) {
-          material.short_label =
-            Sample.buildNewShortLabel();
-        }
-      } else if (newGroup == "starting_materials") {
-        if (material.split_label) {
-          material.short_label = material.split_label;
-        } else {
-          material.short_label =
-            Sample.buildNewShortLabel();
+      // routines below are for exisiting samples moved a first time
+      if (newGroup === 'products') {
+        // products are new samples => build new short_label
+        material.short_label = Sample.buildNewShortLabel();
+      } else if (newGroup === 'starting_materials') {
+        if (oldGroup !== 'products') {
+          // if starting_materials from products, reuse product short_label (do nothing)
+          material.short_label = Sample.buildNewShortLabel();
         }
       }
+      // else when newGroup is reactant/solvent do nothing because not displayed (short_label set in BE)
     } else {
-      if (newGroup == "starting_materials") {
-        if (material.split_label) material.short_label = material.split_label;
-      } else if (newGroup == "products") {
-        material.short_label =
-          Sample.buildNewShortLabel();
+      if (newGroup === "starting_materials") {
+        if (material.split_label) { material.short_label = material.split_label; }
+      } else if (newGroup === "products") {
+        // products are new samples => build new short_label
+        material.short_label = Sample.buildNewShortLabel();
       } else {
         material.short_label = newGroup.slice(0, -1); // "reactant" or "solvent"
       }
@@ -491,24 +553,25 @@ export default class Reaction extends Element {
   }
 
   updateMaterial(material) {
-    var cats = ['starting_materials', 'reactants', 'solvents', 'products'];
+    this._updateEquivalentForMaterial(material);
+    const cats = ['starting_materials', 'reactants', 'solvents', 'products'];
 
-    let i = 0
+    let i = 0;
+    let group;
+    let index;
     while (i < cats.length) {
-      let group = this['_' + cats[i]]
+      const groupName = `_${cats[i]}`;
+      group = this[groupName];
       if (group) {
-        let index = group.findIndex(x => x.id == material.id)
-
+        const index = group.findIndex(x => x.id == material.id);
         if (index >= 0) {
-          this['_' + cats[i]][index] = new Sample(material)
-          break
+          group[index] = new Sample(material);
+          break;
         }
       }
 
-      i = i + 1
+      i += 1;
     }
-
-    this._updateEquivalentForMaterial(material);
   }
 
   // literatures

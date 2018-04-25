@@ -1,6 +1,19 @@
 module ElementUIStateScopes
   extend ActiveSupport::Concern
 
+  included do
+    scope :by_ui_state, ->(ui_state) {
+      # see ui_state_params in api/helpers/params_helpers.rb
+      # map legacy params
+      checked_all = ui_state[:checkedAll] || ui_state[:all]
+      checked_ids = ui_state[:checkedIds].presence || ui_state[:included_ids]
+
+      return none unless checked_all || checked_ids.present?
+      unchecked_ids = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+      checked_all ? where.not(id: unchecked_ids) : where(id: checked_ids)
+    }
+  end
+
   module ClassMethods
     def for_ui_state(ui_state)
       return self.none unless ui_state

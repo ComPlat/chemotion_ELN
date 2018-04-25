@@ -8,11 +8,34 @@
 # Delayed::Worker.raise_signal_exceptions = :term
 Delayed::Worker.logger = Logger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 
-begin  
+begin
   if ActiveRecord::Base.connection.table_exists?('delayed_jobs') && Delayed::Job.column_names.include?('cron')
-    Delayed::Job.where("handler like ?", "%CollectDataFromMailJob%").destroy_all
-    Delayed::Job.where("handler like ?", "%CollectDataFromDevicesJob%").destroy_all
+    Delayed::Job.where("handler like ?", "%CollectDataFrom%").destroy_all
+    Delayed::Job.where("handler like ?", "%CollectFileFrom%").destroy_all
+    if Rails.configuration.datacollectors && Rails.configuration.datacollectors.services
+      for service in Rails.configuration.datacollectors.services do
+        cron_config = nil
+        config = service[:every].to_s.strip
+        cron_config = '*/' + config + ' * * * *' if config.split(/\s/).size == 1
+        config = service[:cron].to_s.strip
+        cron_config = config if config.split(/\s/).size == 5
+        case service[:name].to_s
+        when 'mailcollector'
+          CollectDataFromMailJob
+        when 'folderwatchersftp'
+          CollectDataFromSftpJob
+        when 'folderwatcherlocal'
+          CollectDataFromLocalJob
+        when 'filewatcherlocal'
+          CollectFileFromLocalJob
+        when 'filewatchersftp'
+          CollectFileFromSftpJob
+        else
+          nil
+        end&.set(cron: cron_config).perform_later if cron_config
+      end
+    end
   end
 rescue PG::ConnectionBad => e
-   puts e.message
+  puts e.message
 end

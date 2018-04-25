@@ -21,7 +21,17 @@ export default class ScreensFetcher {
   static fetchByCollectionId(id, queryParams = {}, isSync=false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || UIStore.getState().number_of_results
-    let api = `/api/v1/screens.json?${isSync ? "sync_" : ""}collection_id=${id}&page=${page}&per_page=${per_page}`;
+    let from_date = '';
+    if (queryParams.fromDate) {
+      from_date = `&from_date=${queryParams.fromDate.unix()}`
+    }
+    let to_date = '';
+    if (queryParams.toDate) {
+      to_date = `&to_date=${queryParams.toDate.unix()}`
+    }
+    let api = `/api/v1/screens.json?${isSync ? "sync_" : ""}` +
+              `collection_id=${id}&page=${page}&per_page=${per_page}` +
+              `${from_date}${to_date}`;
     let promise = fetch(api, {
       credentials: 'same-origin'
     })
@@ -96,7 +106,7 @@ export default class ScreensFetcher {
   }
 
   static deleteScreensByUIState(ui_state) {
-    let promise = fetch('/api/v1/screens/ui_state/', {
+    const promise = fetch('/api/v1/screens/ui_state/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
@@ -111,13 +121,9 @@ export default class ScreensFetcher {
           excluded_ids: ui_state.screen.uncheckedIds
         }
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
+    }).then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => { console.log(errorMessage); });
 
     return promise;
   }

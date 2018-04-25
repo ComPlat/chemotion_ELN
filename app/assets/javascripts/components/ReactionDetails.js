@@ -1,6 +1,8 @@
-import React, {Component} from 'react'
-import {Col, Panel, ListGroupItem, ButtonToolbar, Button, Tabs, Tab,
-  OverlayTrigger, Tooltip} from 'react-bootstrap';
+import React, { Component } from 'react';
+import {
+  Col, Panel, ListGroupItem, ButtonToolbar, Button,
+  Tabs, Tab, OverlayTrigger, Tooltip
+} from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -14,18 +16,19 @@ import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import Utils from './utils/Functions';
-import PrintCodeButton from './common/PrintCodeButton'
-import XTabs from "./extra/ReactionDetailsXTabs";
+import PrintCodeButton from './common/PrintCodeButton';
+import XTabs from './extra/ReactionDetailsXTabs';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
-import {setReactionByType} from './ReactionDetailsShare'
+import { setReactionByType } from './ReactionDetailsShare';
+import { sampleShowOrNew } from './routesUtils';
 
 
 export default class ReactionDetails extends Component {
   constructor(props) {
     super(props);
 
-    const {reaction} = props;
+    const { reaction } = props;
     this.state = {
       reaction: reaction,
       activeTab: UIStore.getState().reaction.activeTab,
@@ -55,30 +58,28 @@ export default class ReactionDetails extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const {reaction} = this.state;
+    const { reaction } = this.state;
     const nextReaction = nextProps.reaction;
 
-    if (nextReaction.id != reaction.id ||
-        nextReaction.updated_at != reaction.updated_at ||
-        nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+    if (nextReaction.id !== reaction.id ||
+        nextReaction.updated_at !== reaction.updated_at ||
+        nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
         nextReaction.changed || nextReaction.editedSample) {
-      this.setState({
-        reaction: nextReaction
-      });
+      this.setState(prevState => ({ ...prevState, reaction: nextReaction }));
     }
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    let nextReaction = nextProps.reaction;
-    let nextActiveTab = nextState.activeTab
-    const {reaction, activeTab} = this.state;
+    const nextReaction = nextProps.reaction;
+    const nextActiveTab = nextState.activeTab;
+    const { reaction, activeTab } = this.state;
     return (
-      nextReaction.id != reaction.id ||
-      nextReaction.updated_at != reaction.updated_at ||
-      nextReaction.reaction_svg_file != reaction.reaction_svg_file ||
+      nextReaction.id !== reaction.id ||
+      nextReaction.updated_at !== reaction.updated_at ||
+      nextReaction.reaction_svg_file !== reaction.reaction_svg_file ||
       !!nextReaction.changed || !!nextReaction.editedSample ||
-      nextActiveTab != activeTab
-    )
+      nextActiveTab !== activeTab
+    );
   }
 
   updateReactionSvg() {
@@ -106,7 +107,7 @@ export default class ReactionDetails extends Component {
     ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
   }
 
-  handleSubmit() {
+  handleSubmit(closeView = false) {
     const {reaction} = this.state;
 
     if(reaction && reaction.isNew) {
@@ -115,9 +116,8 @@ export default class ReactionDetails extends Component {
       ElementActions.updateReaction(reaction);
     }
 
-    if(reaction.is_new) {
-      const force = true;
-      DetailActions.close(reaction, force);
+    if(reaction.is_new || closeView) {
+      DetailActions.close(reaction, true);
     }
   }
 
@@ -136,23 +136,25 @@ export default class ReactionDetails extends Component {
   }
 
   handleInputChange(type, event) {
-    let value
-    if (type == "temperatureUnit" || type == "temperatureData" ||
-        type == "description" || type == "role" || type === 'observation') {
+    let value;
+    if (type === 'temperatureUnit' || type === 'temperatureData' ||
+        type === 'description' || type === 'role' || type === 'observation') {
       value = event;
     } else {
       value = event.target.value;
     }
 
-    const {reaction} = this.state;
+    const { reaction } = this.state;
 
-    const {newReaction, options} = setReactionByType(reaction, type, value)
+    const { newReaction, options } = setReactionByType(reaction, type, value);
     this.handleReactionChange(newReaction, options);
   }
 
   handleProductClick(product) {
-    let currentURI = Aviator.getCurrentURI();
-    Aviator.navigate(`${currentURI}/sample/${product.id}`);
+    const uri = Aviator.getCurrentURI();
+    const uriArray = uri.split(/\//);
+    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/sample/${product.id}`, { silent: true });
+    sampleShowOrNew({ params: { sampleID: product.id} });
   }
 
   handleProductChange(product) {
@@ -183,7 +185,7 @@ export default class ReactionDetails extends Component {
     const {products} = this.state.reaction;
 
     let tabs = products.map((product, key) =>
-      <Tab key={product.short_label} eventKey={key}
+      <Tab key={product.id} eventKey={key}
            title={this.productLink(product)}>
         <ReactionSampleDetailsContainers sample={product}
           setState={(product) => this.handleProductChange(product)}
@@ -246,6 +248,20 @@ export default class ReactionDetails extends Component {
           </Button>
         </OverlayTrigger>
         <OverlayTrigger placement="bottom"
+            overlay={<Tooltip id="saveReaction">Save and Close Reaction</Tooltip>}>
+          <Button
+            bsStyle="warning"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.handleSubmit(true)}
+            disabled={!this.reactionIsValid() || reaction.isNew}
+            style={{ display: hasChanged }}
+          >
+            <i className="fa fa-floppy-o" />
+            <i className="fa fa-times" />
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="saveReaction">Save Reaction</Tooltip>}>
           <Button bsStyle="warning" bsSize="xsmall" className="button-right"
               onClick={() => this.handleSubmit()}
@@ -254,25 +270,37 @@ export default class ReactionDetails extends Component {
             <i className="fa fa-floppy-o "></i>
           </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.props.toggleFullScreen()}>
-          <i className="fa fa-expand"></i>
-        </Button>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="fullSample">FullScreen</Tooltip>}
+        >
+          <Button
+            bsStyle="info"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={() => this.props.toggleFullScreen()}
+          >
+            <i className="fa fa-expand" />
+          </Button>
         </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}>
-          <Button bsStyle="success" bsSize="xsmall" className="button-right"
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="generateReport">Generate Report</Tooltip>}
+        >
+          <Button
+            bsStyle="success"
+            bsSize="xsmall"
+            className="button-right"
             disabled={reaction.changed || reaction.isNew}
             title={(reaction.changed || reaction.isNew) ?
-                 "Report can be generated after reaction is saved."
-                 : "Generate report for this reaction"}
+              "Report can be generated after reaction is saved."
+              : "Generate report for this reaction"}
             onClick={() => Utils.downloadFile({
               contents: "api/v1/reports/docx?id=" + reaction.id,
               name: reaction.name
-            })} >
-            <i className="fa fa-cogs"></i>
+            })}
+          >
+            <i className="fa fa-cogs" />
           </Button>
         </OverlayTrigger>
         <div style={{display: "inline-block", marginLeft: "10px"}}>
@@ -281,7 +309,7 @@ export default class ReactionDetails extends Component {
         </div>
         <PrintCodeButton element={reaction}/>
       </h4>
-    )
+    );
   }
 
   handleSelect(key) {

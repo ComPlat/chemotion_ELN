@@ -51,7 +51,8 @@ module Cdx
 
   class CdxNode < CdxBasic
     def content
-      start + id + z_index(root) + position + element + charge + ending
+      start + id + z_index(root) + position + element + charge +
+        isotope + ending
     end
 
     private
@@ -81,7 +82,14 @@ module Cdx
       chg = root["Charge"]
       return "" if chg.blank? || chg == "0"
       chg_hex = hex_integer(chg)
-      "21 04 01 00 #{chg_hex} 48 04 00 00 37 04 01 00 01 "
+      "21 04 01 00 #{chg_hex} "
+    end
+
+    def isotope
+      iso = root["Isotope"]
+      return "" if iso.blank?
+      iso_hex = hex_integer(iso)
+      "20 04 01 00 #{iso_hex} "
     end
 
     def polymer_text
@@ -179,7 +187,8 @@ module Cdx
 
   class CdxBond < CdxBasic
     def content
-      start + id + z_index(root) + order + begin_pt + end_pt + ending
+      start + id + z_index(root) + order + bond_display +
+        begin_pt + end_pt + ending
     end
 
     private
@@ -195,6 +204,49 @@ module Cdx
     def end_pt
       target = root["E"]
       target ? "05 06 04 00 #{"%02X" % target.to_i} 00 00 00 " : ""
+    end
+
+# **workaround openbabel
+# Mol and chemdraw have differnet y-axis direction
+# Here I invert WedgedHash & Wedge
+# This will be reverted when openbabel is improved.
+    def bond_display
+      disp = root["Display"]
+      return "" unless disp
+
+      disp_hex = case disp
+      when "Dash"
+        "01 00 "
+      when "Hash"
+        "02 00 "
+      when "WedgedHashBegin"
+        "06 00 "
+      when "WedgedHashEnd"
+        "07 00 "
+      when "Bold"
+        "05 00 "
+      when "WedgeBegin"
+        "03 00 "
+      when "WedgeEnd"
+        "04 00 "
+      when "Wavy"
+        "08 00 "
+      when "HollowWedgeBegin"
+        "09 00 "
+      when "HollowWedgeEnd"
+        "10 00 "
+      when "WavyWedgeBegin"
+        "11 00 "
+      when "WavyWedgeEnd"
+        "12 00 "
+      when "Dot"
+        "13 00 "
+      when "DashDot"
+        "14 00 "
+      else
+        "00 00 "
+      end
+      "01 06 02 00 " + disp_hex
     end
 
     def order

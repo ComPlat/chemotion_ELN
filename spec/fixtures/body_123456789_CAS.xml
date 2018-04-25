@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Record
+    xmlns="http://pubchem.ncbi.nlm.nih.gov/pug_view"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema-instance"
+    xs:schemaLocation="http://pubchem.ncbi.nlm.nih.gov/pug_view https://pubchem.ncbi.nlm.nih.gov/pug_view/pug_view.xsd"
+>
+  <RecordType>CID</RecordType>
+  <RecordNumber>1049</RecordNumber>
+  <Section>
+    <TOCHeading>Names and Identifiers</TOCHeading>
+    <Description>Record identifiers, synonyms, chemical names, descriptors, etc.  &lt;a href=&quot;https://pubchem.ncbi.nlm.nih.gov/docs/subcmpd_summary_page_help.html#Identification&quot;&gt;Read more...&lt;/a&gt;</Description>
+    <Section>
+      <TOCHeading>Other Identifiers</TOCHeading>
+      <Description>Important identifiers assigned to this chemical substance by authoritative organizations</Description>
+      <Section>
+        <TOCHeading>CAS</TOCHeading>
+        <Description>A proprietary registry number assigned by the Chemical Abstracts Service (CAS) division of the American Chemical Society (ACS) often used to help describe chemical ingredients.  &lt;a href=&quot;http://en.wikipedia.org/wiki/CAS_Registry_Number&quot;&gt;Read more..&lt;/a&gt;</Description>
+        <Information>
+          <ReferenceNumber>1</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>3</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>6</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>7</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>8</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>10</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>15</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>16</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>23</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+        <Information>
+          <ReferenceNumber>107</ReferenceNumber>
+          <Name>CAS</Name>
+          <StringValue>110-86-1</StringValue>
+        </Information>
+      </Section>
+    </Section>
+  </Section>
+  <Reference>
+    <ReferenceNumber>1</ReferenceNumber>
+    <SourceName>CAMEO Chemicals</SourceName>
+    <SourceID>1403</SourceID>
+    <Name>PYRIDINE</Name>
+    <URL>https://cameochemicals.noaa.gov/chemical/1403</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>3</ReferenceNumber>
+    <SourceName>ChemIDplus</SourceName>
+    <SourceID>0000110861</SourceID>
+    <Name>Pyridine</Name>
+    <URL>https://chem.nlm.nih.gov/chemidplus/sid/0000110861</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>6</ReferenceNumber>
+    <SourceName>DTP/NCI</SourceName>
+    <SourceID>NSC 406123</SourceID>
+    <Name>PYRIDINE</Name>
+    <Description>The NCI Development Therapeutics Program (DTP) provides services and resources to the academic and private-sector research communities worldwide to facilitate the discovery and development of new cancer therapeutic agents.</Description>
+    <URL>https://dtp.cancer.gov/dtpstandard/servlet/dwindex?searchtype=NSC&amp;outputformat=html&amp;searchlist=406123</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>7</ReferenceNumber>
+    <SourceName>EPA Chemicals under the TSCA</SourceName>
+    <SourceID>110-86-1</SourceID>
+    <Name>Pyridine</Name>
+    <Description>The Chemical Data Reporting under the Toxic Substances Control Act (&lt;a class=&quot;pubchem-internal-link CID-110408&quot; href=&quot;https://pubchem.ncbi.nlm.nih.gov/compound/TSCA&quot;&gt;TSCA&lt;/a&gt;) contains chemical physical description and chemical use categories.</Description>
+    <URL>http://www.epa.gov/chemical-data-reporting</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>8</ReferenceNumber>
+    <SourceName>EPA DSStox</SourceName>
+    <SourceID>DTXSID9021924</SourceID>
+    <Name>Pyridine</Name>
+    <Description>DSSTox provides a high quality public chemistry resource for supporting improved predictive toxicology.</Description>
+    <URL>https://comptox.epa.gov/dashboard/dsstoxdb/results?search=DTXSID9021924</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>10</ReferenceNumber>
+    <SourceName>European Chemicals Agency - ECHA</SourceName>
+    <SourceID>203-809-9</SourceID>
+    <Name>Pyridine</Name>
+    <Description>The European Chemicals Agency (ECHA) is an agency of the European Union which is the driving force among regulatory authorities in implementing the EU&apos;s groundbreaking chemicals legislation for the benefit of human health and the environment as well as for innovation and competitiveness.</Description>
+    <URL>https://www.echa.europa.eu</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>15</ReferenceNumber>
+    <SourceName>Human Metabolome Database (HMDB)</SourceName>
+    <SourceID>HMDB0000926</SourceID>
+    <Name>Pyridine</Name>
+    <Description>The Human Metabolome Database (HMDB) is a freely available electronic database containing detailed information about small molecule metabolites found in the human body.</Description>
+    <URL>http://www.hmdb.ca/metabolites/HMDB0000926</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>16</ReferenceNumber>
+    <SourceName>ILO-ICSC</SourceName>
+    <SourceID>0323</SourceID>
+    <Name> PYRIDINE</Name>
+    <Description>International Chemical Safety Cards (ICSC) are data sheets intended to provide essential safety and health information on chemicals in a clear and concise way.</Description>
+    <URL>http://www.ilo.org/dyn/icsc/showcard.display?p_version=2&amp;p_card_id=0323</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>23</ReferenceNumber>
+    <SourceName>OSHA Occupational Chemical DB</SourceName>
+    <SourceID>119</SourceID>
+    <Name>PYRIDINE</Name>
+    <Description>The OSHA Occupational Chemical Database contains over 800 entries with information such as physical properties, exposure guidelines, etc.</Description>
+    <URL>http://www.osha.gov/chemicaldata/chemResult.html?RecNo=119</URL>
+  </Reference>
+  <Reference>
+    <ReferenceNumber>107</ReferenceNumber>
+    <SourceName>The National Institute for Occupational Safety and Health - NIOSH</SourceName>
+    <SourceID>UR8400000</SourceID>
+    <Name>Pyridine</Name>
+    <Description>The NIOSH Pocket Guide to Chemical Hazards is intended as a source of general industrial hygiene information on several hundred chemicals/classes for workers, employers, and occupational health professionals. &lt;a href=&quot;https://www.cdc.gov/niosh/npg/default.html&quot;&gt;Read more.&lt;/a&gt;</Description>
+    <URL>https://www.cdc.gov/niosh-rtecs/UR802C80.html</URL>
+  </Reference>
+</Record>

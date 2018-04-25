@@ -21,8 +21,12 @@ class API < Grape::API
     end
 
     def is_public_request?
-      request.path.include?('/api/v1/public/') ||
-        request.path.include?('/api/v1/ketcher/layout')
+      request.path.start_with?(
+        '/api/v1/public/',
+        '/api/v1/ketcher/layout',
+        '/api/v1/gate/receiving',
+        '/api/v1/gate/ping'
+      )
     end
 
     def cache_key search_method, arg, molfile, collection_id, molecule_sort, opt
@@ -43,28 +47,33 @@ class API < Grape::API
     end
 
     def group_by_molecule(samples, own_collection = false)
-      groups = Hash.new
+      groups = {}
       sample_serializer_selector =
         if own_collection
-          lambda { |s| SampleListSerializer::Level10.new(s, 10).serializable_hash }
+          ->(s) { SampleListSerializer::Level10.new(s, 10).serializable_hash }
         else
-          lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
+          lambda do |s|
+            ElementListPermissionProxy.new(current_user, s, user_ids).serialized
+          end
         end
 
       samples.each do |sample|
-        next if sample == nil
-        moleculeName = get_molecule_name(sample)
+        next if sample.nil?
+        molecule_name = get_molecule_name(sample)
         serialized_sample = sample_serializer_selector.call(sample)
-        groups[moleculeName] = (groups[moleculeName] || []).push(serialized_sample)
+        groups[molecule_name] = (
+          groups[molecule_name] || []
+        ).push(serialized_sample)
       end
-      return to_molecule_array(groups)
+
+      to_molecule_array(groups)
     end
 
     def group_by_order(samples)
-      groups = Array.new
+      groups = []
 
       samples.each do |sample|
-        next if sample == nil
+        next if sample.nil?
         moleculeName = get_molecule_name(sample)
         serialized_sample = ElementListPermissionProxy.new(current_user, sample, user_ids).serialized
         recent_group = groups.last
@@ -73,12 +82,12 @@ class API < Grape::API
         else
           groups.push(
             moleculeName: moleculeName,
-            samples: Array.new.push(serialized_sample)
+            samples: [].push(serialized_sample)
           )
         end
       end
 
-      return groups
+      groups
     end
 
 
@@ -119,11 +128,27 @@ class API < Grape::API
         name += 'part_' # group polymers to different array
         name += sample.residues[0].residue_type.to_s
       end
-      return name
+
+      stereo = get_stereo_name(sample)
+      name = "#{name} - #{stereo}" unless stereo.empty?
+      name
+    end
+
+    def get_stereo_name(sample)
+      return '' if sample.stereo.nil?
+
+      stereo = sample.stereo.keys.reduce('') { |acc, k|
+        val = sample.stereo[k]
+        next acc if val == 'any'
+        linker = acc.empty? ? '' : ', '
+        acc + "#{linker}#{k}: #{val}"
+      }
+
+      stereo
     end
 
     def to_molecule_array(hash_groups)
-      target = Array.new
+      target = []
       hash_groups.each do |key, value|
         target.push(moleculeName: key, samples: value)
       end
@@ -137,7 +162,8 @@ class API < Grape::API
 
   # desc: whitelisted tables and columns for advanced_search
   WL_TABLES = {
-    'samples' => %w(name short_label external_label)
+    'samples' => %w(name short_label external_label),
+    'molecules' => %w(cas)
   }
 
   mount Chemotion::ContainerAPI
@@ -164,4 +190,7 @@ class API < Grape::API
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GeneralAPI
   mount Chemotion::V1PublicAPI
+  mount Chemotion::GateAPI
+  mount Chemotion::ElementAPI
+  mount Chemotion::ChemReadAPI
 end

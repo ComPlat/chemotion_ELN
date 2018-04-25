@@ -1,9 +1,9 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
 
 import DatasetContainer from './DatasetContainer';
 import DragDropItemTypes from '../DragDropItemTypes';
 import InboxActions from '../actions/InboxActions';
+import InboxStore from '../stores/InboxStore';
 
 export default class DeviceBox extends React.Component {
 
@@ -14,41 +14,55 @@ export default class DeviceBox extends React.Component {
     }
   }
 
-  deleteDeviceBox(device_box){
-    InboxActions.deleteContainer(device_box)
+  deleteDeviceBox(deviceBox) {
+    InboxActions.deleteContainer(deviceBox);
   }
 
   render() {
-    let {device_box} = this.props
-    let {visible} = this.state
-    let datasets = device_box.children.map(dataset => {
+    const { device_box } = this.props;
+    const { visible } = this.state;
+    const cache = InboxStore.getState().cache;
+
+    const datasets = device_box.children.map((dataset) => {
       return(
-        <DatasetContainer key={"dataset_"+dataset.id}
-            sourceType={DragDropItemTypes.DATASET}
-            dataset={dataset} />
+        <DatasetContainer
+          key={`dataset_${dataset.id}`}
+          sourceType={DragDropItemTypes.DATASET}
+          dataset={dataset}
+          cache={cache}
+        />
       )
     })
 
-    return (
-      visible
-          ?
-          <li><div className="tree-view"><div className="title"><i className="fa fa-folder-open" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> {device_box.name} </i>
-            {datasets.length == 0
-              ? <a className="close" onClick={() => this.deleteDeviceBox(device_box)}>&times;</a>
-              : ""
-            }</div></div>
-              <ul> {datasets} </ul>
-            </li>
+    const textStyle = {
+      display: "block",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      maxWidth: "100%",
+      cursor: 'move'
+    }
 
-          : <li><div className="tree-view"><div className="title"><i className="fa fa-folder" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> {device_box.name}</i>
-            {datasets.length == 0
-              ? <a className="close" onClick={() => this.deleteDeviceBox(device_box)}>&times;</a>
-              : ""
-            }
-            </div></div>
-            </li>
+    return (
+      <div className="tree-view">
+        <div className="title" style={textStyle}>
+          {datasets.length === 0
+            ? (
+              <i
+                className="fa fa-trash-o"
+                onClick={() => this.deleteDeviceBox(device_box)}
+                style={{ cursor: "pointer" }}
+              >&nbsp;&nbsp;</i>
+            ) : null
+          }
+          <i
+            className={`fa fa-folder${visible ? '-open' : null}`}
+            aria-hidden="true"
+            onClick={() => this.setState({ visible: !visible })}
+          > {device_box.name}</i>
+        </div>
+        <div>{visible ? datasets : null}</div>
+      </div>
     )
   }
 }

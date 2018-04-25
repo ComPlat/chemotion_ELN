@@ -1,12 +1,16 @@
 module Chemotion
   class ResearchPlanAPI < Grape::API
     include Grape::Kaminari
+    helpers ParamsHelpers
+    helpers CollectionHelpers
 
     namespace :research_plans do
       desc "Return serialized research plans of current user"
       params do
         optional :collection_id, type: Integer, desc: "Collection id"
         optional :sync_collection_id, type: Integer, desc: "SyncCollectionsUser id"
+        optional :from_date, type: Integer, desc: 'created_date from in ms'
+        optional :to_date, type: Integer, desc: 'created_date to in ms'
       end
       paginate per_page: 7, offset: 0, max_per_page: 100
       get do
@@ -27,6 +31,11 @@ module Chemotion
           # All collection of current_user
           ResearchPlan.joins(:collections).where('collections.user_id = ?', current_user.id).uniq
         end.order("created_at DESC")
+
+        from = params[:from_date]
+        to = params[:to_date]
+        scope = scope.where('CAST(CREATED_AT AS DATE) >= ?', Time.at(from)) if from
+        scope = scope.where('CAST(CREATED_AT AS DATE) <= ?', Time.at(to)) if to
 
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
@@ -125,19 +134,18 @@ module Chemotion
         desc "Delete research  plans by UI state"
         params do
           requires :ui_state, type: Hash, desc: "Selected research plans from the UI" do
-            requires :all, type: Boolean
-            requires :collection_id
-            optional :included_ids, type: Array
-            optional :excluded_ids, type: Array
+            use :ui_state_params
           end
         end
 
         before do
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, ResearchPlan.for_user(current_user.id).for_ui_state(params[:ui_state])).destroy?
+          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
+          @research_plans = ResearchPlan.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
+          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @research_plans).destroy?
         end
 
         delete do
-          ResearchPlan.for_user(current_user.id).for_ui_state(params[:ui_state]).destroy_all
+          @research_plans.presence&.destroy_all || { ui_state: [] }
         end
       end
 

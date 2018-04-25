@@ -17,6 +17,8 @@ class DetailLevels::Wellplate
   end
 
   def list_removed_attributes
-    []
+    [
+      :code_log
+    ]
   end
 end

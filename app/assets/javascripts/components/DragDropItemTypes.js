@@ -3,6 +3,7 @@ export default {
   SAMPLE: 'sample',
   MATERIAL: 'material',
   WELLPLATE: 'wellplate',
+  MOLECULE: 'molecule',
   RESEARCH_PLAN: 'research_plan',
   LAYOUT: 'layout',
   GENERAL: 'general',

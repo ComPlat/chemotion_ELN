@@ -55,6 +55,7 @@ module Taggable
   # Populate Collections tag
   def collection_tag
     klass = "collections_#{self.class.name.underscore.pluralize}"
+    return unless respond_to?(klass)
     send(klass).map { |cc|
       next unless c = cc.collection
       next if c.label == 'All' # TODO

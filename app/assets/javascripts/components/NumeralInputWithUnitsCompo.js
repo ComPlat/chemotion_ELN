@@ -1,73 +1,93 @@
-import React, {Component} from 'react';
-import {FormControl, ControlLabel, InputGroup,Button} from 'react-bootstrap';
-import {metPreConv,metPrefSymbols} from './utils/metricPrefix';
+import React, { Component } from 'react';
+import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
+import { metPreConv, metPrefSymbols } from './utils/metricPrefix';
 
 export default class NumeralInputWithUnitsCompo extends Component {
   constructor(props) {
     super(props);
 
-    const { value, block, unit, metricPrefix, precision } = props;
-    this.state ={
-      unit,
+    const { value, block, metricPrefix, precision } = props;
+    this.state = {
       value,
       block,
-      metricPrefix: metricPrefix || "none",
+      metricPrefix: metricPrefix || 'none',
       currentPrecision: precision,
-      valueString:  0,
+      valueString: 0,
       showString: false,
     };
   }
 
+  componentDidMount() {
+    this.forceUpdate();
+  }
+
   componentWillReceiveProps(nextProps) {
-    const { value, unit, block } = nextProps;
-    this.setState({ unit, value, block });
+    const { value, block } = nextProps;
+    this.setState({ value, block });
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const hasChanged = nextProps.value !== this.props.value
+      || nextProps.block !== this.props.block
+      || nextProps.metricPrefix !== this.props.metricPrefix
+      || nextProps.bsStyle !== this.props.bsStyle
+      || nextProps.disabled !== this.props.disabled
+      || nextState.value !== this.state.value
+      || nextState.block !== this.state.block
+      || nextState.metricPrefix !== this.state.metricPrefix
+      || nextState.currentPrecision !== this.state.currentPrecision
+      || nextState.valueString !== this.state.valueString
+      || nextState.showString !== this.state.showString
+      || nextProps.label !== this.props.label
+      || nextProps.unit !== this.props.unit;
+    return hasChanged;
   }
 
   _handleValueChange(value) {
-    this.setState({
-      value: value
-    }, () => this._onChangeCallback());
+    this.setState({ value }, () => this._onChangeCallback());
   }
 
   _handleInputValueChange(event) {
     const inputField = event.target;
-    const caretPosition = $(inputField).caret();
-    let { value } = inputField;
+    inputField.focus();
+    const { value, selectionStart } = inputField;
     let { valueString } = this.state;
+    let newValue = value;
     const { metricPrefix } = this.state;
-    const lastChar = value[caretPosition - 1] || '';
+    const lastChar = value[selectionStart - 1] || '';
 
     if (lastChar !== '' && !lastChar.match(/-|\d|\.|(,)/)) return false;
+    // if (value[0] !== '0') { newValue = '0'.concat(newValue); }
 
     const md = lastChar.match(/-|\d/);
     const mc = lastChar.match(/\.|(,)/);
 
     if (mc && mc[1]) {
-      value = `${value.slice(0, caretPosition - 1)}.${value.slice(caretPosition)}`;
-    } else if (value === '0.' || value === '00') {
-      value = '0.0';
+      newValue = `${value.slice(0, selectionStart - 1)}.${value.slice(selectionStart)}`;
+    // } else if (value === '00') { // else if (value === '0.' || value === '00') {
+    //   newValue = '0.0';
     }
 
-    value = value.replace('--', '');
-    const matchMinus = value.match(/\d+(\-+)\d*/);
-    if (matchMinus && matchMinus[1]) value = value.replace(matchMinus[1], '');
+    newValue = newValue.replace('--', '');
+    newValue = newValue.replace('..', '.');
+    const matchMinus = newValue.match(/\d+(-+)\d*/);
+    if (matchMinus && matchMinus[1]) newValue = newValue.replace(matchMinus[1], '');
 
-    if (md || mc) valueString = value;
+    if (md || mc) { valueString = newValue; }
 
-    const val = metPreConv(value, metricPrefix, 'none');
-    this.setState({
-      value: val,
-      showString: true,
-      valueString,
-    }, () => {
-      this._onChangeCallback();
-      $(inputField).caret(caretPosition);
-    });
+    this.setState(
+      {
+        value: metPreConv(newValue, metricPrefix, 'none'),
+        showString: true,
+        valueString,
+      },
+      () => { this._onChangeCallback(); inputField.selectionStart = selectionStart; }
+    );
+    return null;
   }
 
-  _handleInputValueFocus(){
+  _handleInputValueFocus() {
     const { value, metricPrefix } = this.state;
-
     this.setState({
       currentPrecision: undefined,
       showString: true,
@@ -82,7 +102,7 @@ export default class NumeralInputWithUnitsCompo extends Component {
     }, () => this._onChangeCallback());
   }
 
-  handleInputDoubleClick(event) {
+  handleInputDoubleClick() {
     if (this.state.block) {
       this.setState({
         block: false,
@@ -93,60 +113,62 @@ export default class NumeralInputWithUnitsCompo extends Component {
 
   _onChangeCallback() {
     if (this.props.onChange) {
-      this.props.onChange(this.state);
+      this.props.onChange({ ...this.state, unit: this.props.unit });
     }
   }
 
-  togglePrefix(){
-    let {metricPrefixes} = this.props
-    let ind = metricPrefixes.indexOf(this.state.metricPrefix)
-    if (ind < metricPrefixes.length-1) {
-      ind +=1;
-    } else { ind=0;}
+  togglePrefix() {
+    const { metricPrefixes } = this.props;
+    let ind = metricPrefixes.indexOf(this.state.metricPrefix);
+    if (ind < metricPrefixes.length - 1) {
+      ind += 1;
+    } else {
+      ind = 0;
+    }
     this.setState({
       metricPrefix: metricPrefixes[ind]
     });
   }
 
   render() {
-    const { bsSize, bsStyle, disabled, label} = this.props;
-    let {
-      unit, showString, value, metricPrefix,
+    const { bsSize, bsStyle, disabled, label, unit } = this.props;
+    const {
+      showString, value, metricPrefix,
       currentPrecision, valueString, block,
     } = this.state;
-    let mp = metPrefSymbols[metricPrefix];
-    let val = () => {
-      const nanOrInfinity = isNaN(value) || !isFinite(value)
-      if (!showString && nanOrInfinity){
-        return 'n.d.'
+    const mp = metPrefSymbols[metricPrefix];
+    const nanOrInfinity = isNaN(value) || !isFinite(value);
+    const val = () => {
+      if (!showString && nanOrInfinity) {
+        return 'n.d.';
       } else if (!showString) {
-        return  metPreConv(value,"none",metricPrefix).toPrecision(currentPrecision);
-      } else {return valueString}
+        return metPreConv(value, 'none', metricPrefix).toPrecision(currentPrecision);
+      }
+      return valueString;
     };
-    let inputDisabled = disabled ? true : block;
-
-    let prefixSwitch;
+    const inputDisabled = disabled ? true : block;
     // BsStyle-s for Input and buttonAfter have differences
-    let bsStyleBtnAfter = bsStyle == 'error' ? 'danger' : bsStyle;
-    let labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null
-    if(unit != 'none') {
-      prefixSwitch = (
+    const bsStyleBtnAfter = bsStyle === 'error' ? 'danger' : bsStyle;
+    const labelWrap = label ? <ControlLabel>{label}</ControlLabel> : null;
+    if (unit !== 'none') {
+      const prefixSwitch = (
         <InputGroup.Button>
-          <Button active
-            onClick={() =>{this.togglePrefix()}}
+          <Button
+            active
+            onClick={() => { this.togglePrefix(); }}
             bsStyle={bsStyleBtnAfter}
             bsSize={bsSize}
           >
             {mp + unit}
           </Button>
         </InputGroup.Button>
-      )
+      );
 
       return (
         <div className="numeric-input-unit">
           {labelWrap}
           <InputGroup
-            onDoubleClick={(event)=>this.handleInputDoubleClick(event)}
+            onDoubleClick={event => this.handleInputDoubleClick(event)}
           >
             <FormControl
               type="text"
@@ -155,35 +177,34 @@ export default class NumeralInputWithUnitsCompo extends Component {
               bsSize={bsSize}
               bsStyle={bsStyle}
               value={val() || ''}
-              onChange={(event) => this._handleInputValueChange(event)}
-              onFocus={(event) => this._handleInputValueFocus(event)}
-              onBlur={(event)=>this._handleInputValueBlur(event)}
+              onChange={event => this._handleInputValueChange(event)}
+              onFocus={event => this._handleInputValueFocus(event)}
+              onBlur={event => this._handleInputValueBlur(event)}
             />
             {prefixSwitch}
           </InputGroup>
         </div>
       );
-    } else {
-      return(
-        <div className="numeric-input-unit">
-          {labelWrap}
-          <div onDoubleClick={(event)=>this.handleInputDoubleClick(event)}>
-            <FormControl
-              type="text"
-              bsClass="bs-form--compact form-control"
-              disabled={inputDisabled}
-              bsSize={bsSize}
-              bsStyle={bsStyle}
-              value={val() || ''}
-              onChange={(event) => this._handleInputValueChange(event)}
-              onFocus={(event) => this._handleInputValueFocus(event)}
-              onBlur={(event)=>this._handleInputValueBlur(event)}
-              onDoubleClick={(event)=>this.handleInputDoubleClick(event)}
-            />
-          </div>
-        </div>
-      );
     }
+    return (
+      <div className="numeric-input-unit">
+        {labelWrap}
+        <div onDoubleClick={event => this.handleInputDoubleClick(event)}>
+          <FormControl
+            type="text"
+            bsClass="bs-form--compact form-control"
+            disabled={inputDisabled}
+            bsSize={bsSize}
+            bsStyle={bsStyle}
+            value={val() || ''}
+            onChange={event => this._handleInputValueChange(event)}
+            onFocus={event => this._handleInputValueFocus(event)}
+            onBlur={event => this._handleInputValueBlur(event)}
+            onDoubleClick={event => this.handleInputDoubleClick(event)}
+          />
+        </div>
+      </div>
+    );
   }
 }
 

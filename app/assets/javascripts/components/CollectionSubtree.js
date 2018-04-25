@@ -8,6 +8,7 @@ import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import UserInfos from './UserInfos';
 import GatePushBtn from './common/GatePushBtn'
+import { collectionShow, scollectionShow } from './routesUtils';
 
 
 
@@ -156,16 +157,19 @@ export default class CollectionSubtree extends React.Component {
 
     visible = visible || this.isVisible(root, uiState)
     this.setState({visible: visible, isClicked: true})
-
-    if(root.label == 'All') {
-      Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`);
-    } else {
-      let url = (this.props.root.sharer)
-        ? `/scollection/${this.state.root.id}/${this.urlForCurrentElement()}`
-        : `/collection/${this.state.root.id}/${this.urlForCurrentElement()}`
-
-      Aviator.navigate(url)
+    let collectionID = 'all';
+    if (root.label === 'All' && root.is_locked) {
+      Aviator.navigate(`/collection/all/${this.urlForCurrentElement()}`, { silent: true });
+      collectionShow({ params: { collectionID } });
+      return;
     }
+    let url = (this.props.root.sharer)
+      ? `/scollection/${root.id}/${this.urlForCurrentElement()}`
+      : `/collection/${root.id}/${this.urlForCurrentElement()}`;
+    Aviator.navigate(url, { silent: true });
+    collectionID = this.state.root.id;
+    const collShow = this.props.root.sharer ? scollectionShow : collectionShow;
+    collShow({ params: { collectionID } });
   }
 
   urlForCurrentElement() {

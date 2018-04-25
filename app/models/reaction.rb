@@ -17,45 +17,25 @@ class Reaction < ActiveRecord::Base
   pg_search_scope :search_by_reaction_short_label, against: :short_label
 
   pg_search_scope :search_by_sample_name, associated_against: {
-    starting_materials: :name,
-    reactants: :name,
-    solvents: :name,
-    products: :name
+    samples: :name
   }
 
   pg_search_scope :search_by_iupac_name, associated_against: {
-    starting_material_molecules: :iupac_name,
-    reactant_molecules: :iupac_name,
-    solvent_molecules: :iupac_name,
-    product_molecules: :iupac_name
+    sample_molecules: :iupac_name
   }
 
   pg_search_scope :search_by_inchistring, associated_against: {
-    starting_material_molecules: :inchistring,
-    reactant_molecules: :inchistring,
-    solvent_molecules: :inchistring,
-    product_molecules: :inchistring
+    sample_molecules: :inchistring
   }
 
   pg_search_scope :search_by_cano_smiles, associated_against: {
-    starting_material_molecules: :cano_smiles,
-    reactant_molecules: :cano_smiles,
-    solvent_molecules: :cano_smiles,
-    product_molecules: :cano_smiles
+    sample_molecules: :cano_smiles
   }
 
-  pg_search_scope :search_by_substring, against: :name,
-                                        associated_against: {
-                                          starting_materials: :name,
-                                          reactants: :name,
-                                          solvents: :name,
-                                          products: :name,
-                                          starting_material_molecules: :iupac_name,
-                                          reactant_molecules: :iupac_name,
-                                          solvent_molecules: :iupac_name,
-                                          product_molecules: :iupac_name
-                                        },
-                                        using: {trigram: {threshold:  0.0001}}
+  pg_search_scope :search_by_substring, against: :name, associated_against: {
+    samples: :name,
+    sample_molecules: :iupac_name
+  }, using: { trigram: { threshold:  0.0001 } }
 
   # scopes for suggestions
   scope :by_name, ->(query) { where('name ILIKE ?', "%#{query}%") }
@@ -64,24 +44,31 @@ class Reaction < ActiveRecord::Base
   scope :by_solvent_ids, ->(ids) { joins(:solvents).where('samples.id IN (?)', ids) }
   scope :by_reactant_ids, ->(ids) { joins(:reactants).where('samples.id IN (?)', ids) }
   scope :by_product_ids,  ->(ids) { joins(:products).where('samples.id IN (?)', ids) }
+  scope :by_sample_ids,  ->(ids) { joins(:reactions_samples).where('samples.id IN (?)', ids) }
+  scope :by_status,  ->(query) { where('reactions.status ILIKE ?', "%#{query}%") }
+  scope :search_by_reaction_status, ->(query) { where(status: query) }
 
   has_many :collections_reactions, dependent: :destroy
   has_many :collections, through: :collections_reactions
   accepts_nested_attributes_for :collections_reactions
 
-  has_many :reactions_starting_material_samples, dependent: :destroy
+  has_many :reactions_samples, dependent: :destroy
+  has_many :samples, through: :reactions_samples, source: :sample
+  has_many :sample_molecules, through: :samples, source: :molecule
+
+  has_many :reactions_starting_material_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :starting_materials, through: :reactions_starting_material_samples, source: :sample
   has_many :starting_material_molecules, through: :starting_materials, source: :molecule
 
-  has_many :reactions_solvent_samples, dependent: :destroy
+  has_many :reactions_solvent_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :solvents, through: :reactions_solvent_samples, source: :sample
   has_many :solvent_molecules, through: :solvents, source: :molecule
 
-  has_many :reactions_reactant_samples, dependent: :destroy
+  has_many :reactions_reactant_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule
 
-  has_many :reactions_product_samples, dependent: :destroy
+  has_many :reactions_product_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
 
@@ -106,10 +93,6 @@ class Reaction < ActiveRecord::Base
       ReactionsStartingMaterialSample.get_samples(reaction_ids) +
       ReactionsReactantSample.get_samples(reaction_ids)
     ).compact
-  end
-
-  def samples
-    starting_materials + reactants + products + solvents
   end
 
   def analyses

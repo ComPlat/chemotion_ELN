@@ -81,3 +81,38 @@ table.reaction-scheme-solvent {
     vertical-align: middle;
   }
 }
+
+.solvents-select {
+  .Select-menu-outer {
+    z-index: 3;
+    width: 250%;
+  }
+}
+
+.reagents-select {
+  .Select-control {
+    height: 28px;
+  }
+  .Select-placeholder {
+    line-height: 24px;
+  }
+  .Select-value {
+    line-height: 24px;
+  }
+
+  .Select-value-label {
+    line-height: 24px;
+  }
+
+  .Select-input > input {
+    padding-top: 2px;
+  }
+
+  .Select-input {
+    height: 26px;
+  }
+
+  .Select-menu-outer {
+    z-index: 3;
+  }
+}

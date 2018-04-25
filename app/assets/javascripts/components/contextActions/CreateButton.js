@@ -2,6 +2,8 @@ import React from 'react';
 import {SplitButton, Button, ButtonToolbar, DropdownButton, FormControl,
   FormGroup, ControlLabel, Modal, MenuItem} from 'react-bootstrap';
 import Aviator from 'aviator';
+
+import { elementShowOrNew } from '../routesUtils';
 import UIStore from '../stores/UIStore';
 import UserStore from '../stores/UserStore';
 import ElementActions from '../actions/ElementActions';
@@ -176,10 +178,13 @@ export default class CreateButton extends React.Component {
 
   createElementOfType(type) {
     const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
+    const uri = isSync
       ? `/scollection/${currentCollection.id}/${type}/new`
-      : `/collection/${currentCollection.id}/${type}/new`
-    );
+      : `/collection/${currentCollection.id}/${type}/new`;
+    Aviator.navigate(uri, { silent: true} );
+    const e = { type, params: { collectionID: currentCollection.id } };
+    e.params[`${type}ID`] = 'new'
+    elementShowOrNew(e);
   }
 
   createBtn(type) {

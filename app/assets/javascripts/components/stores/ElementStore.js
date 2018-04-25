@@ -1,6 +1,7 @@
 import alt from '../alt';
-import _ from 'lodash';
+import { last, slice, intersectionWith } from 'lodash';
 import ElementActions from '../actions/ElementActions';
+import CollectionActions from '../actions/CollectionActions';
 import UIActions from '../actions/UIActions';
 import UserActions from '../actions/UserActions';
 import UIStore from './UIStore';
@@ -21,15 +22,24 @@ import DeviceFetcher from '../fetchers/DeviceFetcher'
 
 import ModalImportConfirm from '../contextActions/ModalImportConfirm'
 
-import {extraThing} from '../utils/Functions';
+import { extraThing } from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
 import Xhandlers from '../extra/ElementStoreXhandlers';
 import Xstate from '../extra/ElementStoreXstate';
+import { elementShowOrNew } from '../routesUtils';
 
-import Aviator from 'aviator'
+import DetailActions from '../actions/DetailActions';
+import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
+
+import Aviator from 'aviator';
 
 class ElementStore {
   constructor() {
+    // formerly from DetailStore
+    // this.selecteds = [];
+    // this.activeKey = 0;
+    // this.deletingElement = null;
+    // //
     this.state = {
       elements: {
         samples: {
@@ -76,8 +86,14 @@ class ElementStore {
       currentElement: null,
       elementWarning: false,
       moleculeSort: false,
+      // formerly from DetailStore
+      selecteds: [],
+      activeKey: 0,
+      deletingElement: null,
+      ////
       ...extraThing(Xstate)
     };
+
 
 
     for (let i = 0; i < Xlisteners.count; i++){
@@ -181,6 +197,7 @@ class ElementStore {
           ElementActions.generateEmptySample,
           ElementActions.generateEmptyReaction,
           ElementActions.showReportContainer,
+          ElementActions.showFormatContainer,
           ElementActions.showDeviceControl,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
@@ -190,6 +207,22 @@ class ElementStore {
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
+      // formerly from DetailStore
+      handleSelect: DetailActions.select,
+      handleClose: DetailActions.close,
+      handleDeletingElements: ElementActions.deleteElementsByUIState,
+      handleConfirmDelete: DetailActions.confirmDelete,
+      handleChangeCurrentElement: DetailActions.changeCurrentElement,
+      handleGetMoleculeCas: DetailActions.getMoleculeCas,
+      handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
+      handleUpdateMoleculeCas: DetailActions.updateMoleculeCas,
+      handleUpdateElement: [
+        ElementActions.updateReaction,
+        ElementActions.updateSample,
+        ElementActions.updateWellplate,
+        ElementActions.updateScreen,
+        ElementActions.updateResearchPlan
+      ],
     })
   }
 
@@ -257,7 +290,7 @@ class ElementStore {
         device.samples.push(deviceSample)
         DeviceFetcher.update(device)
         .then(device => {
-          const savedDeviceSample = _.last(device.samples)
+          const savedDeviceSample = last(device.samples)
           // add sampleAnalysis to experiments
           let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === "NMR")
           if(!deviceAnalysis) {
@@ -377,7 +410,7 @@ class ElementStore {
   handleFetchDeviceAnalysisById({analysis, device}) {
     const {experiments} = analysis
     const samplesOfAnalysisType = device.samples.filter(s => s.types.includes(analysis.analysisType))
-    const samplesWithoutOld = _.slice(samplesOfAnalysisType, experiments.length)
+    const samplesWithoutOld = slice(samplesOfAnalysisType, experiments.length)
     const promises = samplesWithoutOld.map(s => this.createAnalysisExperiment(s, analysis))
     Promise.all(promises)
     .then(experiments => {
@@ -433,42 +466,32 @@ class ElementStore {
     });
   }
 
-  closeElementWhenDeleted(ui_state) {
-    let currentElement = this.state.currentElement;
-    if (currentElement) {
-      let type_state = ui_state[currentElement.type]
-      let checked = type_state.checkedIds.indexOf(currentElement.id) > -1
-      let checked_all_and_not_unchecked = type_state.checkedAll &&
-        type_state.uncheckedIds.indexOf(currentElement.id) == -1
-
-      if (checked_all_and_not_unchecked || checked) {
-        this.state.currentElement = null;
-      }
-    }
-  }
-
   // -- Elements --
   handleDeleteElements(options) {
     this.waitFor(UIStore.dispatchToken);
     const ui_state = UIStore.getState();
-    ElementActions.deleteSamplesByUIState(ui_state);
-    ElementActions.deleteReactionsByUIState({
-      ui_state,
-      options
+    const { sample, reaction, wellplate, screen, research_plan, currentCollection } = ui_state;
+    const selecteds = this.state.selecteds.map(s => ({ id: s.id, type: s.type }));
+    ElementActions.deleteElementsByUIState({
+      options,
+      sample,
+      reaction,
+      wellplate,
+      screen,
+      research_plan,
+      currentCollection,
+      selecteds
     });
-    ElementActions.deleteWellplatesByUIState(ui_state);
-    ElementActions.deleteScreensByUIState(ui_state);
-    ElementActions.deleteResearchPlansByUIState(ui_state);
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort);
     ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
-    this.closeElementWhenDeleted(ui_state);
   }
 
   handleUpdateElementsCollection(params) {
+    CollectionActions.fetchUnsharedCollectionRoots();
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
       params.ui_state.isSync, this.state.moleculeSort);
@@ -478,6 +501,7 @@ class ElementStore {
   }
 
   handleAssignElementsCollection(params) {
+    CollectionActions.fetchUnsharedCollectionRoots();
     let collection_id = params.ui_state.currentCollection.id
     ElementActions.fetchSamplesByCollectionId(collection_id, {},
       params.ui_state.isSync, this.state.moleculeSort);
@@ -512,7 +536,7 @@ class ElementStore {
   }
 
   handleUpdateSample(sample) {
-    this.state.currentElement = sample;
+  //  this.state.currentElement = sample;
     this.handleRefreshElements('sample');
   }
 
@@ -546,13 +570,13 @@ class ElementStore {
   }
 
   handleUpdateSampleForReaction(reaction) {
-    UserActions.fetchCurrentUser();
+    // UserActions.fetchCurrentUser();
     this.state.currentElement = reaction;
     this.handleRefreshElements('sample');
   }
 
   handleUpdateSampleForWellplate(wellplate) {
-    UserActions.fetchCurrentUser()
+    // UserActions.fetchCurrentUser()
     this.state.currentElement = null;
     this.handleRefreshElements('sample')
 
@@ -581,7 +605,7 @@ class ElementStore {
   }
 
   handleCopySampleFromClipboard(collection_id) {
-    let clipboardSamples = ClipboardStore.getState().samples;
+    const clipboardSamples = ClipboardStore.getState().samples;
 
     this.state.currentElement =
       Sample.copyFromSampleAndCollectionId(clipboardSamples[0],
@@ -648,7 +672,7 @@ class ElementStore {
 
   handleFetchWellplateById(result) {
     this.state.currentElement = result;
-    this.navigateToNewElement(result)
+  //  this.navigateToNewElement(result)
   }
 
   handleFetchWellplatesByCollectionId(result) {
@@ -656,7 +680,7 @@ class ElementStore {
   }
 
   handleUpdateWellplate(wellplate) {
-    this.state.currentElement = wellplate;
+    // this.state.currentElement = wellplate;
     this.handleRefreshElements('wellplate');
     this.handleRefreshElements('sample');
   }
@@ -685,7 +709,7 @@ class ElementStore {
   }
 
   handleUpdateScreen(screen) {
-    this.state.currentElement = screen;
+    // this.state.currentElement = screen;
     this.handleRefreshElements('screen');
   }
 
@@ -712,7 +736,7 @@ class ElementStore {
   }
 
   handleUpdateResearchPlan(research_plan) {
-    this.state.currentElement = research_plan;
+    // this.state.currentElement = research_plan;
     this.handleRefreshElements('research_plan');
   }
 
@@ -727,7 +751,7 @@ class ElementStore {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
       this.state.currentElement = result;
       this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
-      this.navigateToNewElement(result);
+    //  this.navigateToNewElement(result);
     }
   }
 
@@ -757,9 +781,9 @@ class ElementStore {
   }
 
   handleUpdateReaction(reaction) {
-    UserActions.fetchCurrentUser();
+    // UserActions.fetchCurrentUser();
 
-    this.state.currentElement = reaction;
+    // this.state.currentElement = reaction;
     this.handleRefreshElements('reaction');
     this.handleRefreshElements('sample');
   }
@@ -806,13 +830,19 @@ class ElementStore {
 
   // -- Generic --
 
-  navigateToNewElement(element) {
+  navigateToNewElement(element = {}) {
     this.waitFor(UIStore.dispatchToken);
-    const {currentCollection,isSync} = UIStore.getState();
-    Aviator.navigate(isSync
-      ? `/scollection/${currentCollection.id}/${element.type}/${element.id}`
-      : `/collection/${currentCollection.id}/${element.type}/${element.id}`
-    );
+    const { type, id } = element;
+    const { uri, namedParams } = Aviator.getCurrentRequest();
+    const uriArray = uri.split(/\//);
+    if (!type) {
+      Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}`, { silent: true });
+      return null;
+    }
+    namedParams[`${type}ID`] = id;
+    Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${id}`, { silent: true });
+    elementShowOrNew({ type, params: namedParams });
+    return null;
   }
 
   handleGenerateEmptyElement(element) {
@@ -837,47 +867,40 @@ class ElementStore {
 
   handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
-    let uiState = UIStore.getState();
+    const uiState = UIStore.getState();
 
     if (!uiState.currentCollection || !uiState.currentCollection.id) return;
 
-    let page = uiState[type].page;
-    const moleculeSort = this.state.moleculeSort
+    const page = uiState[type].page;
+    const moleculeSort = this.state.moleculeSort;
 
-    this.state.elements[type+'s'].page = page;
-    let currentSearchSelection = uiState.currentSearchSelection;
+    this.state.elements[`${type}s`].page = page;
+    const currentSearchSelection = uiState.currentSearchSelection;
 
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
-    if(currentSearchSelection != null) {
-      currentSearchSelection.page_size = uiState.number_of_results
-      ElementActions.fetchBasedOnSearchSelectionAndCollection.defer(currentSearchSelection,
-        uiState.currentCollection.id, page, uiState.isSync, moleculeSort)
+    if (currentSearchSelection != null) {
+      currentSearchSelection.page_size = uiState.number_of_results;
+      ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
+        selection: currentSearchSelection,
+        collectionId: uiState.currentCollection.id,
+        page,
+        isSync: uiState.isSync,
+        moleculeSort
+      });
     } else {
-      ElementActions.fetchSamplesByCollectionId(uiState.currentCollection.id,
-        {page: page, per_page: uiState.number_of_results},
-        uiState.isSync, moleculeSort);
-
-      switch (type) {
-        // fetch samples to handle creation of split samples
-        case 'reaction':
-          ElementActions.fetchReactionsByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-        case 'wellplate':
-          ElementActions.fetchWellplatesByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-        case 'screen':
-          ElementActions.fetchScreensByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-        case 'research_plan':
-          ElementActions.fetchResearchPlansByCollectionId(uiState.currentCollection.id,
-            {page: page, per_page: uiState.number_of_results},uiState.isSync);
-          break;
-      }
+      const per_page = uiState.number_of_results;
+      const { fromDate, toDate, productOnly } = uiState;
+      const params = { page, per_page, fromDate, toDate, productOnly };
+      const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
+      const fn = `fetch${fnName}ByCollectionId`;
+      ElementActions[fn](
+        uiState.currentCollection.id,
+        params,
+        uiState.isSync,
+        moleculeSort
+      );
     }
   }
 
@@ -895,6 +918,173 @@ class ElementStore {
     this.waitFor(UIStore.dispatchToken);
     this.handleRefreshElements("sample");
   }
+
+  // //////////////////////
+  // formerly DetailStore
+  // TODO: clean this section
+  handleSelect(index) {
+    this.resetCurrentElement(index, this.state.selecteds);
+  }
+
+  handleClose({ deleteEl, force }) {
+    // Currently ignore report "isPendingToSave"
+    if (force || deleteEl.type === 'report' || this.isDeletable(deleteEl)) {
+      this.deleteCurrentElement(deleteEl);
+    } else {
+      this.setState({ deletingElement: deleteEl });
+    }
+  }
+
+  handleConfirmDelete(confirm) {
+    const deleteEl = this.state.deletingElement
+    if(confirm) {
+      this.deleteCurrentElement(deleteEl)
+    }
+    this.setState({ deletingElement: null })
+  }
+
+  handleChangeCurrentElement({ oriEl, nextEl }) {
+    const selecteds = this.state.selecteds;
+    const index = this.elementIndex(selecteds, nextEl);
+    let activeKey = index;
+    let newSelecteds = null;
+    const sync = this.synchronizeElements(oriEl, nextEl);
+    oriEl = sync.ori;
+    nextEl = sync.next;
+    if (index === -1) {
+      activeKey = selecteds.length
+      newSelecteds = this.addElement(nextEl)
+    } else {
+      newSelecteds = this.updateElement(nextEl, index)
+    }
+
+    this.state.selecteds = newSelecteds;
+    this.state.activeKey = activeKey;
+    return true
+  }
+
+  handleGetMoleculeCas(updatedSample) {
+    const selecteds = this.state.selecteds
+    const index = this.elementIndex(selecteds, updatedSample)
+    const newSelecteds = this.updateElement(updatedSample, index)
+    this.setState({ selecteds: newSelecteds })
+  }
+
+  UpdateMolecule(updatedSample) {
+    if (updatedSample) {
+      const selecteds = this.state.selecteds;
+      const index = this.elementIndex(selecteds, updatedSample);
+      const newSelecteds = this.updateElement(updatedSample, index);
+      this.setState({ selecteds: newSelecteds });
+    }
+  }
+
+  handleUpdateMoleculeNames(updatedSample) {
+    this.UpdateMolecule(updatedSample);
+  }
+
+  handleUpdateMoleculeCas(updatedSample) {
+    this.UpdateMolecule(updatedSample);
+  }
+
+  handleUpdateElement(updatedElement) {
+    this.state.selecteds = this.state.selecteds.map((e) => {
+      if (SameEleTypId(e, updatedElement)) { return updatedElement; }
+      return e;
+    });
+  }
+
+  synchronizeElements(close, open) {
+    const associatedSampleFromReaction = (
+      close instanceof Reaction && open instanceof Sample &&
+      close.samples.map(s => s.id).includes(open.id)
+    );
+
+    const associatedReactionFromSample = (
+      close instanceof Sample && open instanceof Reaction &&
+      open.samples.map(s => s.id).includes(close.id)
+    );
+
+    if (associatedSampleFromReaction) {
+      const s = close.samples.filter(x => x.id == open.id)[0];
+
+      open.amount_value = s.amount_value;
+      open.amount_unit = s.amount_unit;
+      open.container = s.container;
+    } else if (associatedReactionFromSample) {
+      open.updateMaterial(close);
+      if (close.isPendingToSave) { open.changed = close.isPendingToSave; }
+    }
+
+    return { ori: close, next: open };
+  }
+
+  addElement(addEl) {
+    const selecteds = this.state.selecteds
+    return [...selecteds, addEl]
+  }
+
+  updateElement(updateEl, index) {
+    const selecteds = this.state.selecteds;
+    return [
+      ...selecteds.slice(0, index),
+      updateEl,
+      ...selecteds.slice(index + 1)
+    ];
+  }
+
+  deleteElement(deleteEl) {
+    return this.state.selecteds.filter(el => !SameEleTypId(el, deleteEl));
+  }
+
+  elementIndex(selecteds, newSelected) {
+    let index = -1;
+    if (newSelected) {
+      selecteds.forEach((s, i) => {
+        if (SameEleTypId(s, newSelected)) { index = i; }
+      });
+    }
+    return index;
+  }
+
+  resetCurrentElement(newKey, newSelecteds) {
+    const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey]
+    if(newSelecteds.length === 0) {
+      this.state.currentElement = null;
+    } else {
+      this.state.currentElement = newCurrentElement;
+    }
+
+    UrlSilentNavigation(newCurrentElement)
+  }
+
+  deleteCurrentElement(deleteEl) {
+    const newSelecteds = this.deleteElement(deleteEl)
+    const left = this.state.activeKey - 1
+    this.setState(
+      prevState => ({ ...prevState, selecteds: newSelecteds }),
+      this.resetCurrentElement(left, newSelecteds)
+    )
+  }
+
+  isDeletable(deleteEl) {
+    return deleteEl && deleteEl.isPendingToSave ? false : true
+  }
+
+  handleDeletingElements(response) {
+    const elements = response && response.selecteds;
+    const { currentElement } = this.state;
+    const currentNotDeleted = intersectionWith([currentElement], elements, SameEleTypId)[0];
+    const newSelecteds = intersectionWith(this.state.selecteds, elements, SameEleTypId);
+
+    if (currentNotDeleted) {
+      this.setState({ selecteds: newSelecteds });
+    } else {
+      this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));
+    }
+  }
+  // End of DetailStore
+  /////////////////////
 }
 
 export default alt.createStore(ElementStore, 'ElementStore');

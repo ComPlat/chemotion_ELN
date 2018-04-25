@@ -11,15 +11,19 @@ Rails.application.routes.draw do
     get 'pages/affiliations', to: 'pages#affiliations'
     patch 'pages/create_affiliation', to: 'pages#create_affiliation'
     patch 'pages/update_affiliations', to: 'pages#update_affiliations'
+
+    # Standalone page for docx processing
+    # get 'docx', to: 'pages#docx'
+    get 'docx', to: 'pages#chemread'
+    get 'command_n_control', to: 'pages#cnc'
   end
 
   get 'home', to: 'pages#home'
+  get 'command_n_control', to: 'pages#home'
 
   mount API => '/'
 
-  root :to => redirect("home")
+  root to: redirect('home')
 
   get 'test', to: 'pages#test'
-
-
 end

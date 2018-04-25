@@ -1,48 +1,71 @@
-import alt from '../alt'
-import ReportActions from '../actions/ReportActions'
-import ElementStore from '../stores/ElementStore';
-import Utils from '../utils/Functions'
+import moment from 'moment';
+import _ from 'lodash';
+import alt from '../alt';
+import ReportActions from '../actions/ReportActions';
+import Utils from '../utils/Functions';
 import ArrayUtils from '../utils/ArrayUtils';
+import UserStore from './UserStore';
 import { reOrderArr } from '../utils/DndControl';
-import { UpdateSelectedObjs, GetTypeIds } from '../utils/ReportHelper';
+import { UpdateSelectedObjs } from '../utils/ReportHelper';
 
 class ReportStore {
   constructor() {
-    this.splSettings = [ {text: "diagram", checked: true},
-                          {text: "collection", checked: true},
-                          {text: "analyses", checked: true},
-                          {text: "reaction description", checked: true} ]
-    this.rxnSettings = [ {text: "diagram", checked: true},
-                          {text: "material", checked: true},
-                          {text: "description", checked: true},
-                          {text: "purification", checked: true},
-                          {text: "tlc", checked: true},
-                          {text: "observation", checked: true},
-                          {text: "analysis", checked: true},
-                          {text: "literature", checked: true} ]
-    this.configs = [ {text: "Page Break", checked: true},
-                     {text: "Show all chemicals in schemes (unchecked to show products only)", checked: true} ]
-    this.checkedAllSplSettings = true
-    this.checkedAllRxnSettings = true
-    this.checkedAllConfigs = true
-    this.processingReport = false
-    this.defaultObjTags = { sampleIds: [], reactionIds: [] }
-    this.selectedObjTags = { sampleIds: [], reactionIds: [] }
-    this.selectedObjs = []
-    this.selMolSerials = []
-    this.imgFormat = 'png'
-    this.archives = []
-    this.fileName = this.initFileName()
-    this.fileDescription = ''
-    this.activeKey = 0
-    this.processings = []
-    this.template = 'supporting_information'
+    this.splSettings = [
+      { checked: true, text: 'diagram' },
+      { checked: true, text: 'collection' },
+      { checked: true, text: 'analyses' },
+      { checked: true, text: 'reaction description' },
+    ];
+    this.rxnSettings = [
+      { checked: true, text: 'diagram' },
+      { checked: true, text: 'material' },
+      { checked: true, text: 'description' },
+      { checked: true, text: 'purification' },
+      { checked: true, text: 'tlc' },
+      { checked: true, text: 'observation' },
+      { checked: true, text: 'analysis' },
+      { checked: true, text: 'literature' },
+    ];
+    this.siRxnSettings = [
+      { checked: true, text: 'Name' },
+      { checked: true, text: 'CAS' },
+      { checked: true, text: 'Formula' },
+      { checked: true, text: 'Smiles' },
+      { checked: true, text: 'InCHI' },
+      { checked: true, text: 'Molecular Mass' },
+      { checked: true, text: 'Exact Mass' },
+      { checked: true, text: 'EA' },
+    ];
+    this.configs = [
+      { checked: true, text: 'Page Break' },
+      { checked: true, text: 'Show all chemicals in schemes (unchecked to show products only)' },
+    ];
+    this.checkedAllSplSettings = true;
+    this.checkedAllRxnSettings = true;
+    this.checkedAllSiRxnSettings = true;
+    this.checkedAllConfigs = true;
+    this.processingReport = false;
+    this.defaultObjTags = { sampleIds: [], reactionIds: [] };
+    this.selectedObjTags = { sampleIds: [], reactionIds: [] };
+    this.selectedObjs = [];
+    this.selMolSerials = [];
+    this.imgFormat = 'png';
+    this.archives = [];
+    this.fileName = this.initFileName();
+    this.fileDescription = '';
+    this.activeKey = 0;
+    this.processings = [];
+    this.template = 'supporting_information';
+    this.prdAtts = [];
+    this.attThumbNails = [];
 
     this.bindListeners({
       handleUpdateSplSettings: ReportActions.updateSplSettings,
       handleToggleSplSettingsCheckAll: ReportActions.toggleSplSettingsCheckAll,
       handleUpdateRxnSettings: ReportActions.updateRxnSettings,
       handleToggleRxnSettingsCheckAll: ReportActions.toggleRxnSettingsCheckAll,
+      handleUpdateSiRxnSettings: ReportActions.updateSiRxnSettings,
+      handleToggleSiRxnSettingsCheckAll: ReportActions.toggleSiRxnSettingsCheckAll,
       handleUpdateConfigs: ReportActions.updateConfigs,
       handleToggleConfigsCheckAll: ReportActions.toggleConfigsCheckAll,
       handleGenerateReport: ReportActions.generateReport,
@@ -61,29 +84,33 @@ class ReportStore {
       hadnleRemove: ReportActions.remove,
       hadnleReset: ReportActions.reset,
       handleUpdMSVal: ReportActions.updMSVal,
-    })
+      handleUpdateThumbNails: ReportActions.updateThumbNails,
+    });
   }
 
   handleUpdateImgFormat(value) {
-    this.setState({ imgFormat: value })
+    this.setState({ imgFormat: value });
   }
 
   handleUpdateTemplate(value) {
     const newSelectedObjs = this.orderObjsForTemplate(value);
     const molSerials = this.updMolSerials(newSelectedObjs, value);
+    const newPrdAtts = this.extractPrdAtts(newSelectedObjs);
     this.setState({ template: value,
       fileName: this.initFileName(value),
       selectedObjs: newSelectedObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
 
   orderObjsForTemplate(template, oldObjs = null) {
     const oldSelectedObjs = oldObjs || this.selectedObjs;
-    if(template === 'supporting_information') {
-      let frontObjs = [], rearObjs = [];
-      oldSelectedObjs.map(obj => {
-        if(obj.type === 'reaction' && obj.role === 'gp') {
+    if (template !== 'standard') {
+      let frontObjs = [];
+      let rearObjs = [];
+      oldSelectedObjs.forEach((obj) => {
+        if (obj.type === 'reaction' && obj.role === 'gp') {
           frontObjs = [...frontObjs, obj];
         } else {
           rearObjs = [...rearObjs, obj];
@@ -96,81 +123,104 @@ class ReportStore {
 
   handleUpdateSplSettings(target) {
     this.setState({
-      splSettings: this.splSettings.map( s => {
-        if(s.text === target.text) {
-          return Object.assign({}, s, {checked: !target.checked})
+      splSettings: this.splSettings.map((s) => {
+        if (s.text === target.text) {
+          return Object.assign({}, s, { checked: !target.checked });
         }
-        return s
-      })
-    })
+        return s;
+      }),
+    });
   }
 
   handleToggleSplSettingsCheckAll() {
-    const newCheckValue = !this.checkedAllSplSettings
+    const newCheckValue = !this.checkedAllSplSettings;
     this.setState({
-      splSettings: this.splSettings.map( s => {
-        return Object.assign({}, s, {checked: newCheckValue})
-      }),
-      checkedAllSplSettings: newCheckValue
-    })
+      splSettings: this.splSettings.map(s => (
+        Object.assign({}, s, { checked: newCheckValue })
+      )),
+      checkedAllSplSettings: newCheckValue,
+    });
   }
 
   handleUpdateRxnSettings(target) {
     this.setState({
-      rxnSettings: this.rxnSettings.map( s => {
-        if(s.text === target.text) {
-          return Object.assign({}, s, {checked: !target.checked})
+      rxnSettings: this.rxnSettings.map((s) => {
+        if (s.text === target.text) {
+          return Object.assign({}, s, { checked: !target.checked });
         }
-        return s
-      })
-    })
+        return s;
+      }),
+    });
   }
 
   handleToggleRxnSettingsCheckAll() {
-    const newCheckValue = !this.checkedAllRxnSettings
+    const newCheckValue = !this.checkedAllRxnSettings;
     this.setState({
-      rxnSettings: this.rxnSettings.map( s => {
-        return Object.assign({}, s, {checked: newCheckValue})
+      rxnSettings: this.rxnSettings.map(s => (
+        Object.assign({}, s, { checked: newCheckValue })
+      )),
+      checkedAllRxnSettings: newCheckValue,
+    });
+  }
+
+  handleUpdateSiRxnSettings(target) {
+    this.setState({
+      siRxnSettings: this.siRxnSettings.map((s) => {
+        if (s.text === target.text) {
+          return Object.assign({}, s, { checked: !target.checked });
+        }
+        return s;
       }),
-      checkedAllRxnSettings: newCheckValue
-    })
+    });
+  }
+
+  handleToggleSiRxnSettingsCheckAll() {
+    const newCheckValue = !this.checkedAllSiRxnSettings;
+    this.setState({
+      siRxnSettings: this.siRxnSettings.map(s => (
+        Object.assign({}, s, { checked: newCheckValue })
+      )),
+      checkedAllSiRxnSettings: newCheckValue,
+    });
   }
 
   handleUpdateConfigs(target) {
     this.setState({
-      configs: this.configs.map( s => {
-        if(s.text === target.text) {
-          return Object.assign({}, s, {checked: !target.checked})
+      configs: this.configs.map((s) => {
+        if (s.text === target.text) {
+          return Object.assign({}, s, { checked: !target.checked });
         }
-        return s
-      })
-    })
+        return s;
+      }),
+    });
   }
 
   handleToggleConfigsCheckAll() {
-    const newCheckValue = !this.checkedAllConfigs
+    const newCheckValue = !this.checkedAllConfigs;
     this.setState({
-      configs: this.configs.map( s => {
-        return Object.assign({}, s, {checked: newCheckValue})
-      }),
-      checkedAllConfigs: newCheckValue
-    })
+      configs: this.configs.map(s => (
+        Object.assign({}, s, { checked: newCheckValue })
+      )),
+      checkedAllConfigs: newCheckValue,
+    });
   }
 
   handleGenerateReport(result) {
     const newArchives = [result.report, ...this.archives];
-    this.setState({ processingReport: !this.processingReport,
-                    activeKey: 5,
-                    archives: newArchives,
-                    processings: this.getProcessings(newArchives),
-                    fileName: this.initFileName(this.template) });
+    this.setState({
+      processingReport: !this.processingReport,
+      activeKey: 5,
+      archives: newArchives,
+      processings: this.getProcessings(newArchives),
+      fileName: this.initFileName(this.template),
+    });
     this.loadingIcon();
   }
 
   getProcessings(archives) {
     let ids = [];
-    archives.forEach( a => {
-      if(!a.downloadable) {
+    archives.forEach((a) => {
+      if (!a.downloadable) {
         ids = [...ids, a.id];
       }
     });
@@ -178,19 +228,25 @@ class ReportStore {
   }
 
   loadingIcon() {
-    setTimeout(() => this.setState({processingReport: false}), 2500);
+    setTimeout(() => this.setState({
+      processingReport: false,
+    }), 2500);
   }
 
-  handleUpdateCheckedTags({newTags, newObjs}) {
-    this.setState({selectedObjTags: newTags});
-    const newSelectedObjs = UpdateSelectedObjs(newTags,
-                                                newObjs,
-                                                this.defaultObjTags,
-                                                this.selectedObjs);
+  handleUpdateCheckedTags({ newTags, newObjs }) {
+    this.setState({ selectedObjTags: newTags });
+    const newSelectedObjs = UpdateSelectedObjs(
+      newTags,
+      newObjs,
+      this.defaultObjTags,
+      this.selectedObjs,
+    );
     const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
     const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
     this.setState({
       selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -199,76 +255,82 @@ class ReportStore {
     return a.type === b.type && a.id === b.id;
   }
 
-  handleMove({sourceTag, targetTag}) {
+  handleMove({ sourceTag, targetTag }) {
     const oldObjs = this.selectedObjs || [];
     const newObjs = reOrderArr(sourceTag, targetTag, this.isEqTypeId, oldObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
     const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
     this.setState({
       selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
 
+  stdReportPrefix() {
+    const { currentUser } = UserStore.getState();
+    return currentUser.initials;
+  }
+
   initFileName(template = 'supporting_information') {
-    let prefix = "Supporting_Information_";
-    switch(template) {
-      case "standard":
-        prefix = "ELN_Report_";
+    let prefix = 'Supporting_Information_';
+    let datetime = moment().format('YYYY-MM-DD[H]HH[M]mm[S]ss');
+
+    switch (template) {
+      case 'standard':
+        prefix = this.stdReportPrefix();
+        datetime = moment().format('YYYYMMDD');
         break;
-      case "supporting_information":
-        prefix = "Supporting_Information_";
+      case 'spectrum':
+        prefix = 'Spectra_';
+        break;
+      case 'supporting_information':
+        prefix = 'Supporting_Information_';
+        break;
+      default:
+        prefix = '';
         break;
     }
 
-    const dt = new Date();
-    const datetime =  dt.getFullYear() + "-"
-                        + (dt.getMonth()+1)  + "-"
-                        + dt.getDate() + "H"
-                        + dt.getHours() + "M"
-                        + dt.getMinutes() + "S"
-                        + dt.getSeconds();
     return prefix + datetime;
   }
 
-  handleGetArchives({archives}) {
-    this.setState({archives: archives});
+  handleGetArchives({ archives }) {
+    this.setState({ archives });
   }
 
   handleUpdateFileName(value) {
     const validValue = this.validName(value);
-    this.setState({fileName: validValue});
+    this.setState({ fileName: validValue });
   }
 
   validName(text) {
-    if(text.length > 40) {
-      text = text.substring(0, 40);
-    }
-    text = text.replace(/[^a-zA-Z0-9\-\_]/g, '');
-    return text;
+    let name = text.substring(0, 40);
+    name = name.replace(/[^a-zA-Z0-9\-_]/g, '');
+    return name;
   }
 
   handleUpdateFileDescription(value) {
-    this.setState({fileDescription: value});
+    this.setState({ fileDescription: value });
   }
 
   handleUpdateActiveKey(key) {
-    this.setState({activeKey: key});
+    this.setState({ activeKey: key });
   }
 
   handleDownloadReport(id) {
     this.markReaded(id);
     Utils.downloadFile({
-      contents: "api/v1/download_report/docx?id=" + JSON.stringify(id),
-    })
+      contents: `api/v1/download_report/docx?id=${JSON.stringify(id)}`,
+    });
   }
 
   markReaded(id) {
-    const newArchives = this.archives.map(archive => {
-      if(archive.id === id) {
-        archive.unread = false;
-      }
-      return archive;
+    const newArchives = this.archives.map((archive) => {
+      const a = Object.assign({}, archive);
+      if (archive.id === id) a.unread = false;
+      return a;
     });
     this.setState({ archives: newArchives });
   }
@@ -277,12 +339,14 @@ class ReportStore {
     const updatedArchives = result.archives;
     const updatedIds = updatedArchives.map(a => a.id);
     const newProcessings = this.processings.filter(x => updatedIds.indexOf(x) === -1);
-    const newArchives = this.archives.map(a => {
+    const newArchives = this.archives.map((a) => {
       const index = updatedIds.indexOf(a.id);
       return index === -1 ? a : updatedArchives[index];
     });
-    this.setState({ archives: newArchives,
-                    processings: newProcessings });
+    this.setState({
+      archives: newArchives,
+      processings: newProcessings,
+    });
   }
 
   orderObjsForArchive(objs, order) {
@@ -295,6 +359,7 @@ class ReportStore {
     const { template, file_description, img_format, configs } = archive;
     const ss = archive.sample_settings;
     const rs = archive.reaction_settings;
+    const siRs = archive.si_reaction_settings;
     const defaultObjTags = { sampleIds: tags.sample,
       reactionIds: tags.reaction };
     const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
@@ -302,6 +367,7 @@ class ReportStore {
     const orderedArTpObjs = this.orderObjsForTemplate(template, orderedArObjs);
     const molSerials = archive.mol_serials ||
       this.updMolSerials(orderedArTpObjs);
+    const newPrdAtts = this.extractPrdAtts(orderedArTpObjs);
 
     this.setState({
       activeKey: 0,
@@ -311,6 +377,7 @@ class ReportStore {
       imgFormat: img_format,
       checkedAllSplSettings: false,
       checkedAllRxnSettings: false,
+      checkedAllSiRxnSettings: false,
       checkedAllConfigs: false,
       splSettings:
         [
@@ -330,6 +397,17 @@ class ReportStore {
           { text: 'analysis', checked: rs.analysis },
           { text: 'literature', checked: rs.literature },
         ],
+      siRxnSettings:
+        [
+          { checked: siRs.Name, text: 'Name' },
+          { checked: siRs.CAS, text: 'CAS' },
+          { checked: siRs.Formula, text: 'Formula' },
+          { checked: siRs.Smiles, text: 'Smiles' },
+          { checked: siRs.InCHI, text: 'InCHI' },
+          { checked: siRs['Molecular Mass'], text: 'Molecular Mass' },
+          { checked: siRs['Exact Mass'], text: 'Exact Mass' },
+          { checked: siRs.EA, text: 'EA' },
+        ],
       configs:
         [
           { text: 'Page Break', checked: configs.page_break },
@@ -338,6 +416,7 @@ class ReportStore {
       defaultObjTags,
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: orderedArTpObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -363,11 +442,13 @@ class ReportStore {
     const newObjs = UpdateSelectedObjs(sTags, currentObjs, dTags, currentObjs);
     const finalObjs = this.orderObjsForTemplate(this.template, newObjs);
     const molSerials = this.updMolSerials(finalObjs);
+    const newPrdAtts = this.extractPrdAtts(finalObjs);
 
     this.setState({
       defaultObjTags: dTags,
       selectedObjTags: sTags,
       selectedObjs: finalObjs,
+      prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
   }
@@ -381,6 +462,7 @@ class ReportStore {
       imgFormat: 'png',
       checkedAllSplSettings: true,
       checkedAllRxnSettings: true,
+      checkedAllSiRxnSettings: true,
       checkedAllConfigs: true,
       splSettings:
         [
@@ -400,6 +482,17 @@ class ReportStore {
           { text: 'analysis', checked: true },
           { text: 'literature', checked: true },
         ],
+      siRxnSettings:
+        [
+          { checked: true, text: 'Name' },
+          { checked: true, text: 'CAS' },
+          { checked: true, text: 'Formula' },
+          { checked: true, text: 'Smiles' },
+          { checked: true, text: 'InCHI' },
+          { checked: true, text: 'Molecular Mass' },
+          { checked: true, text: 'Exact Mass' },
+          { checked: true, text: 'EA' },
+        ],
       configs:
         [
           { text: 'Page Break', checked: true },
@@ -409,20 +502,22 @@ class ReportStore {
       selectedObjTags: { sampleIds: [], reactionIds: [] },
       selectedObjs: [],
       selMolSerials: [],
+      prdAtts: [],
+      attThumbNails: [],
     });
   }
 
-  handleDelete(deleted_id) {
-    const newArchives = this.archives.map((a) => {
-      if (a.id !== deleted_id) return a;
-    }).filter(r => r != null);
+  handleDelete(deletedId) {
+    const newArchives = this.archives.map(a => (
+      a.id !== deletedId ? a : null
+    )).filter(r => r != null);
 
     this.setState({ archives: newArchives });
   }
 
   updMolSerials(objs, template) {
     const currentTemplate = template || this.template;
-    if (currentTemplate !== 'supporting_information') return [];
+    if (currentTemplate === 'standard') return [];
     if (objs.length === 0) return [];
 
     return this.extractMolSerials(objs);
@@ -457,7 +552,9 @@ class ReportStore {
 
     rxns.forEach((o) => {
       const samples = [...o.starting_materials, ...o.reactants, ...o.products];
-      samples.forEach(s => msMols = [...msMols, this.createMSMol(s.molecule)]);
+      samples.forEach((s) => {
+        msMols = [...msMols, this.createMSMol(s.molecule)];
+      });
     });
     msMols = ArrayUtils.uniqSortById(msMols);
     return msMols;
@@ -480,6 +577,52 @@ class ReportStore {
       return ms;
     });
     this.setState({ selMolSerials: newSelMolSerials });
+  }
+
+  extractPrdAtts(selectedObjs) {
+    if (selectedObjs.length > 0) {
+      const prdAtts = selectedObjs.map((obj) => {
+        if (obj.role !== 'gp') {
+          return this.extractPrdsAtts(obj);
+        }
+        return null;
+      }).filter(r => r !== null);
+      return [].concat(...prdAtts).filter(r => r.atts.length !== 0);
+    }
+    return [];
+  }
+
+  extractPrdsAtts(obj) {
+    if (obj.type === 'reaction') {
+      return obj.products.map((prd) => {
+        const prdId = prd.id;
+        const { iupac_name, sum_formular, id } = prd.molecule;
+        const atts = this.extractAtts(prd);
+        return Object.assign(
+          {}, { atts, prdId, iupac_name, sum_formular, molId: id },
+        );
+      });
+    }
+    return null;
+  }
+
+  extractAtts(prd) {
+    const atts = prd.container.children[0].children.map((container) => {
+      const isReport = container.extended_metadata.report;
+      if (!isReport) return null;
+      const kind = container.extended_metadata.kind;
+      return container.children.map(analysis => (
+        analysis.attachments.map(att => (
+          Object.assign({}, att, { kind })
+        ))
+      ));
+    });
+    return _.flattenDeep(atts).filter(r => r !== null);
+  }
+
+  handleUpdateThumbNails(result) {
+    const thumbs = result.thumbnails;
+    this.setState({ attThumbNails: thumbs });
   }
 }
 

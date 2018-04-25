@@ -28,7 +28,17 @@ export default class ReactionsFetcher {
   static fetchByCollectionId(id, queryParams={}, isSync=false) {
     let page = queryParams.page || 1;
     let per_page = queryParams.per_page || UIStore.getState().number_of_results
-    let api = `/api/v1/reactions.json?${isSync ? "sync_" : ""}collection_id=${id}&page=${page}&per_page=${per_page}`;
+    let from_date = '';
+    if (queryParams.fromDate) {
+      from_date = `&from_date=${queryParams.fromDate.unix()}`
+    }
+    let to_date = '';
+    if (queryParams.toDate) {
+      to_date = `&to_date=${queryParams.toDate.unix()}`
+    }
+    let api = `/api/v1/reactions.json?${isSync ? "sync_" : ""}` +
+              `collection_id=${id}&page=${page}&per_page=${per_page}&` +
+              `${from_date}${to_date}`;
     let promise = fetch(api, {
         credentials: 'same-origin'
       })
@@ -66,9 +76,7 @@ export default class ReactionsFetcher {
           included_ids: ui_state.reaction.checkedIds,
           excluded_ids: ui_state.reaction.uncheckedIds
         },
-        options: {
-          delete_subsamples: options.delete_subsamples
-        }
+        options
       })
     }).then((response) => {
       return response.json()

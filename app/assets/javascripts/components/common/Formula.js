@@ -4,7 +4,7 @@ var _ = require('lodash');
 
 export default class Formula extends React.Component {
   render() {
-    let content = ''
+    let content = '';
 
     if(this.props.formula) {
       let keys = this.props.formula.split(/([A-Za-z]{1}[a-z]{0,2})(\+?)(\-?)(\d*)/)
@@ -18,9 +18,12 @@ export default class Formula extends React.Component {
       })
     }
 
+    const custom = this.props.customText ? this.props.customText : '';
+
     return (
       <span>
         {content}
+        {custom}
       </span>
     );
   }

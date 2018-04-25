@@ -31,119 +31,53 @@ class Molecule < ActiveRecord::Base
   }
 
   scope :with_reactions, -> {
-    sample_ids = ReactionsProductSample.pluck(:sample_id) +
-      ReactionsReactantSample.pluck(:sample_id) +
-      ReactionsStartingMaterialSample.pluck(:sample_id)
-    molecule_ids = Sample.find(sample_ids).flat_map(&:molecule).map(&:id)
-    where(id: molecule_ids)
+    joins(:samples).joins("inner join reactions_samples rs on rs.sample_id = samples.id" ).uniq
   }
+
   scope :with_wellplates, -> {
-    molecule_ids =
-      Wellplate.all.flat_map(&:samples).flat_map(&:molecule).map(&:id)
-    where(id: molecule_ids)
+    joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
   }
 
-  def self.find_or_create_by_molfile molfile, is_partial = false
-
-    molfile = self.skip_residues(molfile)
-
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-
-    inchikey = babel_info[:inchikey]
-    unless inchikey.blank?
-
-      #todo: consistent naming
-      molecule = Molecule.find_or_create_by(inchikey: inchikey,
-        is_partial: is_partial) do |molecule|
-        pubchem_info =
-          Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-        molecule.molfile = molfile
-        molecule.assign_molecule_data babel_info, pubchem_info
-      end
-      molecule
+  def self.find_or_create_by_molfile(molfile, **babel_info)
+    unless babel_info && babel_info[:inchikey]
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
+    inchikey = babel_info[:inchikey]
+    return unless inchikey.present?
+    is_partial = babel_info[:is_partial]
+    partial_molfile = babel_info[:molfile]
+    molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
+      pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+      molecule.molfile = partial_molfile || molfile
+      molecule.assign_molecule_data(babel_info, pubchem_info)
+    end
+    molecule
   end
 
-  def self.find_or_create_by_molfiles molfiles, is_partial = false, is_compact = true
-
-    bi = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles)
-    inchikeys = bi.map do |babel_info|
-      inchikey = babel_info[:inchikey]
-      !inchikey.blank? && inchikey || nil
-    end
-
-    compact_iks = inchikeys.compact
-    mol_to_get = []
-
-    iks = inchikeys.dup
-    unless compact_iks.empty?
-      existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
-      mol_to_get = compact_iks - existing_ik
-    end
-    unless mol_to_get.empty?
-      pi = Chemotion::PubchemService.molecule_info_from_inchikeys(mol_to_get)
-      pi.each do |pubchem_info|
-        ik = pubchem_info[:inchikey]
-        Molecule.find_or_create_by(inchikey: ik,
-          is_partial: is_partial) do |molecule|
-          i =  iks.index(ik)
-          iks[i] = nil
-          babel_info = bi[i]
-          molecule.molfile = molfiles[i]
-          molecule.assign_molecule_data babel_info, pubchem_info
-        end
+  def self.find_or_create_by_molfiles(molfiles_array)
+    babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array)
+    babel_info_array.map.with_index do |babel_info, i|
+      if babel_info[:inchikey]
+        Molecule.find_or_create_by_molfile(molfiles_array[i], babel_info)
+      else
+        nil
       end
-    end
-
-    iks = inchikeys.dup
-    unless compact_iks.empty?
-      existing_ik = Molecule.where('inchikey IN (?)',compact_iks).pluck(:inchikey)
-      mol_to_get = compact_iks - existing_ik
-    end
-    unless mol_to_get.empty?
-      mol_to_get.each do |ik|
-        Molecule.find_or_create_by(inchikey: ik,
-          is_partial: is_partial) do |molecule|
-          i =  iks.index(ik)
-          iks[i] = nil
-          babel_info = bi[i]
-          molecule.molfile = molfiles[i]
-          molecule.assign_molecule_data babel_info
-        end
-      end
-    end
-
-    molecules = where('inchikey IN (?)',compact_iks)
-    if is_compact
-      molecules
-    else
-      iks = inchikeys.dup
-      mol_array = Array.new(iks.size)
-      molecules.each do |mol|
-        i = iks.index(mol.inchikey)
-        if i
-          iks[i] = nil
-          mol_array[i]=mol
-        end
-      end
-      mol_array
     end
   end
 
   def refresh_molecule_data
-    babel_info =
-      Chemotion::OpenBabelService.molecule_info_from_molfile(self.molfile)
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(self.molfile)
+    # this is to not refresh is_partial, because the info has already been removed from the molfile
+    babel_info[:is_partial] = self.is_partial
     inchikey = babel_info[:inchikey]
-    unless inchikey.blank?
-      pubchem_info =
-        Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
 
-      self.assign_molecule_data babel_info, pubchem_info
-      self.save!
-    end
+    return unless inchikey.present?
+    pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
+    self.assign_molecule_data babel_info, pubchem_info
+    self.save!
   end
 
-  def assign_molecule_data babel_info, pubchem_info={}
+  def assign_molecule_data(babel_info, pubchem_info = {})
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
@@ -156,7 +90,8 @@ class Molecule < ActiveRecord::Base
     self.attach_svg babel_info[:svg]
 
     self.cano_smiles = babel_info[:cano_smiles]
-
+    self.molfile_version = babel_info[:molfile_version]
+    self.is_partial = babel_info[:is_partial]
   end
 
   def attach_svg svg_data
@@ -174,22 +109,6 @@ class Molecule < ActiveRecord::Base
     svg_file.close
 
     self.molecule_svg_file = svg_file_name
-  end
-
-  # skip residues in molfile and replace with Hydrogens
-  # in order to save at least known part of molecule
-  def self.skip_residues molfile
-    molfile.gsub! /(M.+RGP[\d ]+)/, ''
-    molfile.gsub! /(> <PolymersList>[\W\w.\n]+[\d]+)/m, ''
-
-    lines = molfile.split "\n"
-    if lines.size > 3
-      lines[4..-1].each do |line|
-        break if line.match /(M.+END+)/
-        line.gsub! ' R# ', ' C  ' # replace residues with Carbons
-      end
-    end
-    lines.join "\n"
   end
 
   # remove additional H in formula and in molecular_weight
@@ -216,12 +135,11 @@ class Molecule < ActiveRecord::Base
     end.join
   end
 
-  def load_cas
-    if inchikey.present? && cas.blank?
-      xref = Chemotion::PubchemService.xref_from_inchikey(inchikey)
-      self.cas = get_cas(xref)
-      self.save
-    end
+  def load_cas(force = false)
+    return unless inchikey.present?
+    return unless force || cas.blank?
+    self.cas = PubChem.get_cas_from_cid(cid)
+    save
   end
 
   def create_molecule_names
@@ -248,16 +166,13 @@ private
 
   # TODO: check that molecules are OK and remove this method. fix is in editor
   def sanitize_molfile
-    index = self.molfile.lines.index { |l| l.match /(M +END)/ }
-    self.molfile = self.molfile.lines[0..index].join if index.is_a?(Integer)
+    if self.molfile =~ /^(M +END$)/
+      self.molfile = $` + $1
+    end
   end
 
-  def get_cas xref
-    begin
-      xref_json = JSON.parse(xref)
-      xref_json["InformationList"]["Information"].first["RN"]
-    rescue
-      []
-    end
+  def cid
+    tag.taggable_data['pubchem_cid'] ||
+      PubChem.get_cid_from_inchikey(inchikey)
   end
 end

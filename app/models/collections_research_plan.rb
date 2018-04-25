@@ -2,8 +2,6 @@ class CollectionsResearchPlan < ActiveRecord::Base
   acts_as_paranoid
   belongs_to :collection
   belongs_to :research_plan
-  validates :collection, :research_plan, presence: true
-  validate :collection_research_plan_id_uniqueness
 
   include Tagging
 
@@ -44,13 +42,5 @@ class CollectionsResearchPlan < ActiveRecord::Base
   def self.create_in_collection(research_plan_ids, collection_id)
     # Create new research_plans in collection
     self.static_create_in_collection(research_plan_ids, collection_id)
-  end
-
-private
-
-  def collection_research_plan_id_uniqueness
-    unless CollectionsResearchPlan.where(collection_id: collection_id, research_plan_id: research_plan_id).empty?
-      errors.add(:collection_research_plan_id_uniqueness, 'Violates uniqueness of research_plan_id and collection_id')
-    end
   end
 end

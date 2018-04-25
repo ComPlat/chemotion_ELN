@@ -15,7 +15,7 @@ set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
 set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
-set :nvm_node, 'v6.2.2'
+set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v6.10.2'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
 # Default value for :format is :pretty
@@ -33,7 +33,8 @@ set :log_file, 'log/capistrano.log'
 set :linked_files, fetch(:linked_files, []).push(
   'config/database.yml',
   'config/storage.yml',
-  'config/datamailcollector.yml',
+  #'config/datacollector.yml',
+  #'config/datamailcollector.yml',
   'config/secrets.yml',
   '.env'
 )
@@ -45,7 +46,7 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
   'log',
   'public/images', 'public/docx', 'public/simulations',
   'tmp/pids', 'tmp/cache', 'tmp/sockets', 'tmp/uploads',
-  'uploads', 'uploadNew'
+  'uploads'
 )
 
 set :rvm_ruby_version, (`cat .ruby-version`).strip
