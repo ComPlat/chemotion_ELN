@@ -52,7 +52,7 @@
     "react-svg-inline": "^1.2.0",
     "react-treeview": "0.4.7",
     "react-ui-tree": "3.0.0",
-    "react-datepicker": "0.60.2",
+    "react-datepicker": "~1.4.1",
     "sha256": "^0.2.0",
     "uuid": "^2.0.2",
     "commonmark": "^0.28.1",
