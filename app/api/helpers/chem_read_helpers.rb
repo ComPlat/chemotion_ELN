@@ -106,13 +106,13 @@ module ChemReadHelpers
     end
   end
 
-  def refine_text(obj)
+  def refine_text(obj, group)
     t = obj[:text]
     return if t.nil? || t.empty?
 
     extract_text_info(obj)
 
-    expand_abb(obj)
+    expand_abb(obj) if group == 'reagents'
   end
 
   def extract_info(obj, get_mol)
@@ -142,17 +142,17 @@ module ChemReadHelpers
       if m[:text]
         # Scan the text, try to extract/parse it as a molecule if there are
         # any abbreviations in the list
-        smis = refine_text(m)
+        smis = refine_text(m, group)
         smi_array.concat(smis) unless smis.nil? || smis.empty?
       end
 
       desc[idx] = {
         text: m[:text],
         time: m[:time],
-        yield: m[:yield],
         detail: m[:detail],
         temperature: m[:temperature]
       }
+      desc[idx][:yield] = m[:yield] if %w[products reagents].include?(group)
     end
 
     { smis: smi_array, desc: desc }
@@ -182,13 +182,18 @@ module ChemReadHelpers
 
     %w[reactants products].each do |group|
       desc[group.to_sym].values.compact.each do |val|
-        %w[time yield temperature].each do |field|
+        %w[time temperature].each do |field|
           field_s = field.to_sym
           next if val[field_s].nil?
           desc[:reagents][field_s] = '' if desc[:reagents][field_s].nil?
           desc[:reagents][field_s] += ' ' + val[field_s]
           desc[:reagents][field_s].strip!
           val[field_s] = nil
+        end
+
+        unless val[:yield].nil?
+          desc[:reagents][:yield] = val[:yield]
+          val[:yield] = nil
         end
       end
     end
