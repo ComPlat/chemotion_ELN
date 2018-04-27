@@ -23,12 +23,16 @@ module ChemReadTextHelpers
   #   }
   # end
 
+  def join_words
+    %w[and with plus]
+  end
+
   def ending_regex
-    '(\s|,|\n|\r|\)|\]|\.|\z|$)'
+    '(\s|,|;|\n|\r|\)|\]|\.|\z|$)'
   end
 
   def beginning_regex
-    '(\s|,|\n|\r|\(|\[|\.|\A|^)'
+    '(\s|,|;|\n|\r|\(|\[|\.|\A|^)'
   end
 
   def unicode(uni_str)
@@ -50,21 +54,22 @@ module ChemReadTextHelpers
     ndash = unicode("\u2013")
     mdash = unicode("\u2014")
 
-    "(#{hyphen1}|#{hyphen2}|#{minus}|#{ndash}|#{mdash}|~)"
+    "(#{hyphen1}|#{hyphen2}|#{minus}|#{ndash}|#{mdash}|~|to|till|until)"
   end
 
   def range_number_regex(unit_regex, can_negative)
     sign = can_negative ? '-?\\s*' : ''
     real_number = '(\d+|\d+\.\d+)'
 
-    "#{sign}(#{real_number}\\s*#{unit_regex}?\\s*#{range_regex})?#{real_number}\\s*#{unit_regex}"
+    "#{sign}(#{real_number}\\s*#{unit_regex}?\\s*" \
+    "#{range_regex})?#{real_number}\\s*#{unit_regex}"
   end
 
   def expand_abb(obj)
     smis = []
 
     ABB.each_key do |k|
-      regex = Regexp.new("#{Regexp.escape(k)}#{ending_regex}", true)
+      regex = Regexp.new("#{beginning_regex}#{Regexp.escape(k)}#{ending_regex}", true)
       next unless obj[:text] =~ regex
       smis.push(ABB[k])
     end
@@ -72,33 +77,35 @@ module ChemReadTextHelpers
     smis.uniq
   end
 
-  def time_regex
-    day = '(days?|d)'
-    hour = '(hours?|h)'
+  def time_duration_range_regex
+    day = '(days?|dy|d)'
+    hour = '(hours?|hrs?|h)'
     minute = '(minutes?|mins?|m)'
     second = '(seconds?|secs?|s)'
 
+    real_number = '(\d+|\d+\.\d+)'
+    join_regex = "(#{join_words.join('|')})"
     time_unit = "(#{day}|#{hour}|#{minute}|#{second})"
-    time_regex_str = range_number_regex(time_unit, false)
 
-    /#{beginning_regex}+#{time_regex_str}#{ending_regex}+/i
+    time_regex = "(#{real_number}\\s*#{time_unit}?)"
+    linker_regex = "(#{range_regex}|#{join_regex})"
+    duration_regex = "(#{time_regex}?\\s*(#{linker_regex}\\s*)?(#{real_number}\\s*#{time_unit}))"
+
+    /#{beginning_regex}+#{duration_regex}#{ending_regex}+/i
   end
 
   def extract_time_info(obj)
     matches = []
 
-    obj[:text].scan(time_regex) do
-      m = Regexp.last_match[0]
-      matches << m.gsub(/#{ending_regex}/, ' ').strip
+    obj[:text].scan(time_duration_range_regex) do
+      matches << Regexp.last_match[2]
     end
 
-    ovn_regex = Regexp.union(%w[overnight ovn o/n]).source
-    m = obj[:text].match(/#{beginning_regex}+#{ovn_regex}?#{ending_regex}+/i)
+    ovn_regex = 'overnight|ovn|o/n'
+    m = obj[:text].match(/#{beginning_regex}+(#{ovn_regex}?)#{ending_regex}+/i)
     matches << '12h ~ 20h' unless m.nil? || m[0].empty?
 
-    return if matches.size.zero?
-
-    obj[:time] = matches.join(' ').gsub(/[()]/, '')
+    obj[:time] = matches.join(';') unless matches.size.zero?
   end
 
   def extract_text_info(obj)
@@ -125,7 +132,8 @@ module ChemReadTextHelpers
     return if m.nil? || m[0].empty?
 
     degree = unicode("\u00B0")
-    obj[:temperature] = (obj[:temperature] || '') + "20#{degree}C ~ 25#{degree}C"
+    temp = obj[:temperature].nil? ? '' : "#{obj[:temperature]};"
+    obj[:temperature] = temp + "20#{degree}C ~ 25#{degree}C"
   end
 
   def text_regex(obj, regex, field)
@@ -134,7 +142,10 @@ module ChemReadTextHelpers
     matched = m[0]
     return if matched.empty?
 
-    obj[field.to_sym] = matched.gsub(/#{ending_regex}/, ' ').strip
-    obj[field.to_sym] = matched.gsub(/#{beginning_regex}/, ' ').strip
+    obj[field.to_sym] = remove_begin_trailing(matched)
+  end
+
+  def remove_begin_trailing(str)
+    str.gsub(/#{ending_regex}/, ' ').gsub(/#{beginning_regex}/, ' ').strip
   end
 end
