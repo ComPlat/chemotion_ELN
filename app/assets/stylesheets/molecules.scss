@@ -62,3 +62,25 @@
   max-height: 200px;
   width: 100%;
 }
+
+.preview-modal {
+  width: 90% !important;
+}
+
+.preview-modal svg {
+  width: 90%;
+  margin: 20px;
+}
+
+.preview-modal .svg-file-container {
+  height: calc(100vh - 200px);
+}
+
+.preview-table {
+  border: 1px solid transparent;
+}
+
+.preview-table:hover {
+  border: 1px solid #5bc0de;
+  border-radius: 5px;
+}

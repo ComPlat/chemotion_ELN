@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Table, Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
-import SVG from 'react-inlinesvg';
 import Immutable from 'immutable';
 import PropTypes from 'prop-types';
 
@@ -21,7 +20,7 @@ import SampleName from './common/SampleName';
 import XMolHeadCont from './extra/ElementsTableSampleEntriesXMolHeadCont';
 import Sample from './models/Sample';
 import { sampleShowOrNew } from './routesUtils';
-
+import SvgWithModal from './common/SvgWithModal';
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
   const flattenSamplesId = [];
@@ -104,7 +103,11 @@ const overlayToggle = <Tooltip id="toggle_molecule">Toggle Molecule</Tooltip>;
 
 const svgPreview = (showPreviews, sample) => (
   <div style={{ float: 'left' }} >
-    {showPreviews ? <SVG src={sample.svgPath} className="molecule" key={sample.svgPath} /> : null}
+    {
+      showPreviews
+        ? <SvgWithModal element={sample} classNames='molecule' />
+        : null
+    }
   </div>
 );
 
