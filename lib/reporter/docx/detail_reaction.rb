@@ -106,7 +106,7 @@ module Reporter
         delta = []
         st = @si_rxn_settings
         st_name, st_formula, st_cas = st[:Name], st[:Formula], st[:CAS]
-        st_smiles, st_inchi, st_ea = st[:Smiles], st[:InCHI], st[:EA]
+        st_smiles, st_inchi, st_ea = st[:Smiles], st[:InChI], st[:EA]
         st_m_mass, st_e_mass = st[:"Molecular Mass"], st[:"Exact Mass"]
         obj.products.each do |p|
           m = p[:molecule]
@@ -115,12 +115,12 @@ module Reporter
           delta += st_name ? name_delta(mol_name) : []
           delta += st_formula ? sum_formular_delta(m) : []
           delta += st_cas ? cas_delta(cas) : []
-          delta += st_smiles ? smiles_delta(m) : []
-          delta += st_inchi ? inchi_delta(m) : []
           delta += st_m_mass ? mol_mass_delta(m) : []
           delta += st_e_mass ? eat_mass_delta(m) : []
           delta += st_ea ? ea_delta(p) : []
           delta += [{"insert"=>"\n"}]
+          delta += st_smiles ? smiles_delta(m) + [{"insert"=>"\n"}] : []
+          delta += st_inchi ? inchi_delta(m) + [{"insert"=>"\n"}] : []
         end
         delta
       end
@@ -152,11 +152,11 @@ module Reporter
       end
 
       def smiles_delta(m)
-        [{ "insert" => "Smiles: #{m[:cano_smiles]}; " }]
+        [{ "insert" => "Smiles: #{m[:cano_smiles]}" }]
       end
 
       def inchi_delta(m)
-        [{ "insert" => "InCHI: #{m[:inchikey]}; " }]
+        [{ "insert" => "InChIKey: #{m[:inchikey]}" }]
       end
 
       def mol_mass_delta(m)
