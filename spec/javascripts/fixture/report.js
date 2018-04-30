@@ -21,7 +21,7 @@ const siRxnSettings = [
   { checked: true, text: 'CAS' },
   { checked: true, text: 'Formula' },
   { checked: true, text: 'Smiles' },
-  { checked: true, text: 'InCHI' },
+  { checked: true, text: 'InChI' },
   { checked: true, text: 'Molecular Mass' },
   { checked: true, text: 'Exact Mass' },
   { checked: true, text: 'EA' },

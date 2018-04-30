@@ -105,17 +105,26 @@ const productContent = (products, settings) => {
     ] : [];
     const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
     const pCAS = settings.CAS ? `CAS: ${cas}; ` : '';
-    const pSmiles = settings.Smiles ? `Smiles: ${m.cano_smiles}; ` : '';
-    const pInCHI = settings.InCHI ? `InCHI: ${m.inchikey}; ` : '';
     const pMMass = settings.MolecularMas
       ? `Molecular Mass: ${fixDigit(m.molecular_weight, 4)}; ` : '';
     const pEMass = settings.ExactMass
       ? `Exact Mass: ${fixDigit(m.exact_molecular_weight, 4)}; ` : '';
     const pEA = settings.EA ? `EA: ${ea}.` : '';
 
+    const pSmiles = `Smiles: ${m.cano_smiles}`;
+    const pInChI = `InChIKey: ${m.inchikey}`;
+    const dSmiles = settings.Smiles
+      ? [{ insert: pSmiles }, { insert: '\n' }]
+      : [];
+    const dInChI = settings.InChI
+      ? [{ insert: pInChI }, { insert: '\n' }]
+      : [];
+
     content = [...content, ...deltaName,
-      { insert: pFormula + pCAS + pSmiles + pInCHI + pMMass + pEMass + pEA },
+      { insert: pFormula + pCAS + pMMass + pEMass + pEA },
       { insert: '\n' },
+      ...dSmiles,
+      ...dInChI,
     ];
   });
   return content.slice(0, -1);
