@@ -49,7 +49,10 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
   'uploads'
 )
 
-set :rvm_ruby_version, (`cat .ruby-version`).strip
+version = File.readlines('.ruby-version')[0].strip if File.exist?('.ruby-version')
+gemset = File.readlines('.ruby-gemset')[0].strip if File.exist?('.ruby-gemset')
+  
+set(:rvm_ruby_version, "#{version}#{'@' if gemset}#{gemset}") if File.exist?('.ruby-version')
 
 set :slackistrano, false
 

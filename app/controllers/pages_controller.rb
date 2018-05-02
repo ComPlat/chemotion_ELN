@@ -49,7 +49,7 @@ class PagesController < ApplicationController
     end
     @new_group = Group.new
     @users = Person.all.map do |u|
-      UserSerializer.new(u).serializable_hash.deep_stringify_keys
+      UserSimpleSerializer.new(u).serializable_hash.deep_stringify_keys
     end
   end
 

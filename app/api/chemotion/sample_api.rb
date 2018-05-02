@@ -7,7 +7,7 @@ module Chemotion
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers CollectionHelpers
-    
+
     resource :samples do
 
       # TODO Refactoring: Use Grape Entities
@@ -203,8 +203,8 @@ module Chemotion
 
         from = params[:from_date]
         to = params[:to_date]
-        scope = scope.where('CAST(CREATED_AT AS DATE) >= ?', Time.at(from)) if from
-        scope = scope.where('CAST(CREATED_AT AS DATE) <= ?', Time.at(to)) if to
+        scope = scope.created_time_from(Time.at(from)) if from
+        scope = scope.created_time_to(Time.at(to) + 1.day) if to
 
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
