@@ -161,7 +161,11 @@ describe 'Reporter::Docx::DetailReaction instance' do
       )
       expect(target.send(:products_delta)).to eq(
         [
-          {"insert"=>"Name: "},
+          {"insert"=>"Name "},
+          {"insert"=>"{P1|"},
+          {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>"1a"},
+          {"insert"=>"}"},
+          {"insert"=>": "},
           {"attributes"=>{"font-size"=>12}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
           {"insert"=>"; "},
           {"insert"=>"Formula: "},
@@ -180,7 +184,12 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"\n"},
           {"insert"=>"InChIKey: #{s2.molecule.inchikey}"},
           {"insert"=>"\n"},
-          {"insert"=>"Name: "},
+          {"insert"=>"\n"},
+          {"insert"=>"Name "},
+          {"insert"=>"{P2|"},
+          {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>"1a"},
+          {"insert"=>"}"},
+          {"insert"=>": "},
           {"attributes"=>{"font-size"=>12}, "insert"=>"#{s3.molecule_name_hash[:label]}"},
           {"insert"=>"; "},
           {"insert"=>"Formula: "},
@@ -198,6 +207,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"Smiles: #{s2.molecule.cano_smiles}"},
           {"insert"=>"\n"},
           {"insert"=>"InChIKey: #{s2.molecule.inchikey}"},
+          {"insert"=>"\n"},
           {"insert"=>"\n"}
         ]
       )

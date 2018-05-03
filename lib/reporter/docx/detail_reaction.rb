@@ -104,15 +104,17 @@ module Reporter
 
       def products_delta
         delta = []
+        counter = 0
         st = @si_rxn_settings
         st_name, st_formula, st_cas = st[:Name], st[:Formula], st[:CAS]
         st_smiles, st_inchi, st_ea = st[:Smiles], st[:InChI], st[:EA]
         st_m_mass, st_e_mass = st[:"Molecular Mass"], st[:"Exact Mass"]
         obj.products.each do |p|
+          counter += 1
           m = p[:molecule]
           cas = (p[:xref] && p[:xref][:cas] && p[:xref][:cas][:label]) || "- "
           mol_name = sample_molecule_name_delta(p)
-          delta += st_name ? name_delta(mol_name) : []
+          delta += st_name ? name_delta(mol_name, counter, p) : []
           delta += st_formula ? sum_formular_delta(m) : []
           delta += st_cas ? cas_delta(cas) : []
           delta += st_m_mass ? mol_mass_delta(m) : []
@@ -121,6 +123,7 @@ module Reporter
           delta += [{"insert"=>"\n"}]
           delta += st_smiles ? smiles_delta(m) + [{"insert"=>"\n"}] : []
           delta += st_inchi ? inchi_delta(m) + [{"insert"=>"\n"}] : []
+          delta += [{"insert"=>"\n"}]
         end
         delta
       end
@@ -130,8 +133,16 @@ module Reporter
         !st.map { |_, v| v }.any?
       end
 
-      def name_delta(mol_name)
-        [{"insert"=> "Name: " }] + mol_name + [{"insert"=> "; " }]
+      def name_delta(mol_name, counter, material)
+        [{"insert"=> "Name " }] +
+          [
+            {"insert"=>"{P#{counter}|"},
+            *mol_serial_delta(material[:molecule][:id]),
+            {"insert"=>"}"}
+          ] +
+          [{"insert"=> ": " }] +
+          mol_name +
+          [{"insert"=> "; " }]
       end
 
       def sum_formular_delta(m)
