@@ -90,19 +90,32 @@ const productEA = (p) => {
   return ea;
 };
 
-const productContent = (products, settings) => {
+const prdIdentifier = (counter, mol, molSerials) => (
+  [
+    { insert: `{P${counter}|` },
+    deltaUserSerial(mol, molSerials),
+    { insert: '}' },
+  ]
+);
+
+const productContent = (products, settings, molSerials) => {
   let content = [];
+  let counter = 0;
 
   products.forEach((p) => {
     const m = p.molecule;
     const ea = productEA(p);
+    counter += 1;
 
     const cas = p.xref && p.xref.cas ? p.xref.cas.value : '- ';
     const deltaName = settings.Name ? [
-      { insert: 'Name: ' },
+      { insert: 'Name ' },
+      ...prdIdentifier(counter, m, molSerials),
+      { insert: ': ' },
       deltaSampleMoleculeName(p),
       { insert: '; ' },
     ] : [];
+
     const pFormula = settings.Formula ? `Formula: ${m.sum_formular}; ` : '';
     const pCAS = settings.CAS ? `CAS: ${cas}; ` : '';
     const pMMass = settings.MolecularMas
@@ -125,16 +138,17 @@ const productContent = (products, settings) => {
       { insert: '\n' },
       ...dSmiles,
       ...dInChI,
+      { insert: '\n' },
     ];
   });
-  return content.slice(0, -1);
+  return content;
 };
 
-const ProductsInfo = ({ products = [], settings }) => {
+const ProductsInfo = ({ products = [], settings, molSerials }) => {
   const disableAll = isDisableAll(settings);
   if (disableAll) return null;
 
-  const content = productContent(products, settings);
+  const content = productContent(products, settings, molSerials);
   return <QuillViewer value={{ ops: content }} />;
 };
 
@@ -172,12 +186,9 @@ const porductsContent = (el, prevContent, molSerials) => {
   let content = prevContent;
   content = [...content, { insert: 'Yield: ' }];
   el.products.forEach((p) => {
-    const m = p.molecule;
+    const mol = p.molecule;
     counter += 1;
-    content = [...content,
-      { insert: `{P${counter}|` },
-      deltaUserSerial(m, molSerials),
-      { insert: '} ' },
+    content = [...content, ...prdIdentifier(counter, mol, molSerials),
       { insert: ` = ${validDigit(p.equivalent * 100, 0)}%` },
       { insert: ` (${validDigit(p.amount_g, 3)} g, ${validDigit(p.amount_mol * 1000, 3)} mmol)` },
       { insert: '; ' }];
@@ -364,7 +375,11 @@ const SynthesisRow = ({ el, counter, configs, molSerials, settings }) => (
       products={el.products}
       isProductOnly={!configs.Showallchemi}
     />
-    <ProductsInfo products={el.products} settings={settings} />
+    <ProductsInfo
+      products={el.products}
+      settings={settings}
+      molSerials={molSerials}
+    />
     <ContentBlock el={el} molSerials={molSerials} />
     <DangerBlock el={el} />
     <ZoteroBlock el={el} />
