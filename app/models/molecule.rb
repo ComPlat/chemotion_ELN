@@ -1,6 +1,7 @@
 class Molecule < ActiveRecord::Base
   acts_as_paranoid
 
+  attr_accessor :pcid
   include Collectable
   include Taggable
 
@@ -84,7 +85,7 @@ class Molecule < ActiveRecord::Base
     self.exact_molecular_weight = babel_info[:mass]
     self.iupac_name = pubchem_info[:iupac_name]
     self.names = pubchem_info[:names]
-
+    self.pcid = pubchem_info[:cid]
     self.check_sum_formular # correct exact and average MW for resins
 
     self.attach_svg babel_info[:svg]
