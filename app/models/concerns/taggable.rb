@@ -86,16 +86,9 @@ module Taggable
     }.to_h
   end
 
-  def pubchem_response_check(json)
-    prop = json.dig('PropertyTable', 'Properties')
-    return nil unless prop.is_a?(Array)
-    prop.first.dig('CID')
-  end
-
   def pubchem_tag
     return nil unless is_a?(Molecule)
     return tag.taggable_data['pubchem_cid'] if pubchem_check
-    pubchem_json = JSON.parse(PubChem.get_cids_from_inchikeys([inchikey]))
-    pubchem_response_check pubchem_json
+    self.pcid.presence || PubChem.get_cid_from_inchikey(inchikey)
   end
 end
