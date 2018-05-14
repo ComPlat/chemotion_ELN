@@ -4,12 +4,13 @@
 class PubchemCidJob < ActiveJob::Base
   # NB: PC has request restriction policy and timeout , hence the sleep_time and batch_size params
   # see http://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access$_RequestVolumeLimitations
-  def perform(sleep_time: 10, batch_size: 200)
-    Molecule.joins("inner join element_tags et on et.taggable_id = molecules.id and et.taggable_type = 'Molecule'")
+  def perform(sleep_time: 10, batch_size: 50)
+    Molecule.joins(:samples)
+            .joins("inner join element_tags et on et.taggable_id = molecules.id and et.taggable_type = 'Molecule'")
             .where(is_partial: false)
             .where("et.taggable_data->>'pubchem_cid' isnull")
             .find_in_batches(batch_size: batch_size) do |batch|
-      iks = batch.pluck(:inchikey)
+      iks = batch.map(&:inchikey)
 
       ## This updates only cid
       # json = JSON.parse(PubChem.get_cids_from_inchikeys(iks))
@@ -27,6 +28,7 @@ class PubchemCidJob < ActiveJob::Base
       pb_info = Chemotion::PubchemService.molecule_info_from_inchikeys(iks)
       pb_info.each do |obj|
         m = Molecule.find_by(inchikey: obj[:inchikey], is_partial: false)
+        m.update_columns(iupac_name: obj[:iupac_name]) unless m.iupac_name.present?
         et = m.tag
         data = et.taggable_data || {}
         data['pubchem_cid'] = obj[:cid]
