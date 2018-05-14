@@ -8,7 +8,7 @@ class PubchemCidJob < ActiveJob::Base
     Molecule.joins("inner join element_tags et on et.taggable_id = molecules.id and et.taggable_type = 'Molecule'")
             .where(is_partial: false)
             .where("et.taggable_data->>'pubchem_cid' isnull")
-            .find_each(batch_size: batch_size) do |batch|
+            .find_in_batches(batch_size: batch_size) do |batch|
       iks = batch.pluck(:inchikey)
 
       ## This updates only cid
@@ -30,8 +30,8 @@ class PubchemCidJob < ActiveJob::Base
         et = m.tag
         data = et.taggable_data || {}
         data['pubchem_cid'] = obj[:cid]
-        et.update_columns!(taggable_data: data)
-        obj[:iupac_name].each do |name|
+        et.update_columns(taggable_data: data)
+        obj[:names].each do |name|
           MoleculeName.find_or_create_by(
             molecule_id: m.id,
             name: name,
