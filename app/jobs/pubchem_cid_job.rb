@@ -5,10 +5,11 @@ class PubchemCidJob < ActiveJob::Base
   # NB: PC has request restriction policy and timeout , hence the sleep_time and batch_size params
   # see http://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access$_RequestVolumeLimitations
   def perform(sleep_time: 10, batch_size: 50)
-    Molecule.joins(:samples)
+    Molecule.select(:inchikey).joins(:samples)
             .joins("inner join element_tags et on et.taggable_id = molecules.id and et.taggable_type = 'Molecule'")
             .where(is_partial: false)
             .where("et.taggable_data->>'pubchem_cid' isnull")
+            .uniq
             .find_in_batches(batch_size: batch_size) do |batch|
       iks = batch.map(&:inchikey)
 
