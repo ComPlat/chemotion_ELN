@@ -39,8 +39,8 @@ class User < ActiveRecord::Base
   validate :name_abbreviation_length
 # validate :academic_email
   validate :mail_checker
-  after_create :create_chemotion_public_collection, :create_all_collection,
-               :has_profile
+  after_create :create_chemotion_public_collection, if: Proc.new { |user| user.is_a?(Person) }
+  after_create :create_all_collection, :has_profile
 
   scope :by_name, ->(query) {
     where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
@@ -155,11 +155,11 @@ class User < ActiveRecord::Base
   # - add subcollections
   # - delete it
   def create_all_collection
-    Collection.create(user: self, label: 'All', is_locked: true)
+    Collection.create(user: self, label: 'All', is_locked: true, position: 0)
   end
 
   def create_chemotion_public_collection
-    Collection.create(user: self, label: 'chemotion.net', is_locked: true)
+    Collection.create(user: self, label: 'chemotion.net', is_locked: true, position: 1)
   end
 end
 
