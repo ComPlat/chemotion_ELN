@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180312095413) do
+ActiveRecord::Schema.define(version: 20180516151737) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -75,8 +75,8 @@ ActiveRecord::Schema.define(version: 20180312095413) do
     t.string  "token",   null: false
     t.integer "user_id"
     t.inet    "ip"
-    t.string  "role"
     t.string  "fqdn"
+    t.string  "role"
   end
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
@@ -471,30 +471,6 @@ ActiveRecord::Schema.define(version: 20180312095413) do
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
   add_index "reactions", ["role"], name: "index_reactions_on_role", using: :btree
 
-  create_table "reactions_product_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_product_samples", ["deleted_at"], name: "index_reactions_product_samples_on_deleted_at", using: :btree
-  add_index "reactions_product_samples", ["reaction_id"], name: "index_reactions_product_samples_on_reaction_id", using: :btree
-  add_index "reactions_product_samples", ["sample_id"], name: "index_reactions_product_samples_on_sample_id", using: :btree
-
-  create_table "reactions_reactant_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_reactant_samples", ["deleted_at"], name: "index_reactions_reactant_samples_on_deleted_at", using: :btree
-  add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
-  add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
-
   create_table "reactions_samples", force: :cascade do |t|
     t.integer  "reaction_id"
     t.integer  "sample_id"
@@ -507,30 +483,6 @@ ActiveRecord::Schema.define(version: 20180312095413) do
 
   add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
   add_index "reactions_samples", ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
-
-  create_table "reactions_solvent_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_solvent_samples", ["deleted_at"], name: "index_reactions_solvent_samples_on_deleted_at", using: :btree
-  add_index "reactions_solvent_samples", ["reaction_id"], name: "index_reactions_solvent_samples_on_reaction_id", using: :btree
-  add_index "reactions_solvent_samples", ["sample_id"], name: "index_reactions_solvent_samples_on_sample_id", using: :btree
-
-  create_table "reactions_starting_material_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_starting_material_samples", ["deleted_at"], name: "index_reactions_starting_material_samples_on_deleted_at", using: :btree
-  add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
-  add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
   create_table "reports", force: :cascade do |t|
     t.integer  "author_id"
@@ -706,14 +658,14 @@ ActiveRecord::Schema.define(version: 20180312095413) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 
