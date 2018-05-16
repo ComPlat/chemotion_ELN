@@ -84,7 +84,7 @@ class GateTransferJob < ActiveJob::Base
     end
     no_sample_left = CollectionsSample.select(:sample_id).where(collection_id: id)
                                       .limit(batch_size).pluck(:sample_id).empty?
-    if no_sample_left
+    unless no_sample_left
       GateTransferJob.set(queue: "gate_transfer_#{collection.id}")
                      .perform_later(id, url, req_headers, batch_size)
     end
