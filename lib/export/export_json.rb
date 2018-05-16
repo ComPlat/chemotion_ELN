@@ -5,17 +5,11 @@ module Export
 
     def initialize(**args)
       @collection_id = args[:collection_id]
-      @sample_ids = args[:sample_ids]
-      @reaction_ids = args[:reaction_ids]
-      s_ids = []
-      if @reaction_ids.is_a?(Array)
-        s_ids += ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
-        s_ids.compact!
-      end
-      unless s_ids.empty?
-        @sample_ids ||= []
-        @sample_ids += s_ids
-      end
+      @sample_ids = [args[:sample_ids]].flatten.compact.uniq || []
+      @reaction_ids = [args[:reaction_ids]].flatten.compact.uniq || []
+      s_ids = ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id).compact
+      @sample_ids = @sample_ids | s_ids unless s_ids.empty?
+
       @data = { 'reactions' => {}, 'samples' => {}, 'analysis' => {} }
     end
 
@@ -102,7 +96,7 @@ module Export
     end
 
     def ids_sql(arr, t, c = 'id')
-      return nil unless arr.is_a?(Array)
+      return nil if arr.blank?
       " and #{t}.#{c} in (#{arr.join(',')})"
     end
 

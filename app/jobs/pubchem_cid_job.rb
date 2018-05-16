@@ -2,6 +2,8 @@
 # associated CID (molecule tag) and iupac names (molecule_names) are updated if
 # inchikey found in PC db
 class PubchemCidJob < ActiveJob::Base
+  queue_as :pubchem
+  
   # NB: PC has request restriction policy and timeout , hence the sleep_time and batch_size params
   # see http://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access$_RequestVolumeLimitations
   def perform(sleep_time: 10, batch_size: 50)

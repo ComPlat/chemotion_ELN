@@ -47,6 +47,7 @@ module Chemotion
           ))
           @url = "http#{'s' if Rails.env.production?}://#{@jwt.fqdn}"
           @req_headers = { 'Authorization' => "Bearer #{@jwt.token}" }
+          @queue = "gate_transfer_#{@collection.id}"
           # TODO: use persistent connection
           connection = Faraday.new(url: @url) do |f|
             f.use FaradayMiddleware::FollowRedirects
@@ -59,58 +60,14 @@ module Chemotion
 
         route_param :id do
           get do
-            begin
-              exp = Export::ExportJson.new(collection_id: @collection.id).export
-              attachment_ids = exp.data.delete('attachments')
-              attachments = Attachment.where(id: attachment_ids)
-              data_file = Tempfile.new
-              data_file.write(exp.to_json)
-              data_file.rewind
-              req_payload = {}
-              req_payload[:data] = Faraday::UploadIO.new(
-                data_file.path, 'application/json', 'data.json'
-              )
-              tmp_files = []
-              attachments.each do |att|
-                cont_type = att.content_type || MimeMagic.by_path(att.filename)&.type
-                tmp_files << Tempfile.new(encoding: 'ascii-8bit')
-                tmp_files[-1].write(att.read_file)
-                tmp_files[-1].rewind
-                req_payload[att.identifier] = Faraday::UploadIO.new(
-                  tmp_files[-1].path, cont_type, att.filename
-                )
-              end
+            Delayed::Job.where(queue: @queue).destroy_all
+            GateTransferJob.set(queue: @queue)
+                           .perform_later(@collection.id, @url, @req_headers)
+            status 204
+          end
 
-              payload_connection = Faraday.new(url: @url) { |f|
-                f.use FaradayMiddleware::FollowRedirects
-                f.request :multipart
-                f.headers = @req_headers.merge('Accept' => 'application/json')
-                f.adapter :net_http
-              }
-              resp = payload_connection.post { |req|
-                req.url('/api/v1/gate/receiving')
-                req.body = req_payload
-              }
-              if resp.success?
-                tr_col = @collection.children.find_or_create_by(
-                  user_id: @collection.user_id, label: 'transferred'
-                )
-                CollectionsSample.move_to_collection(
-                  @collection.samples.pluck(:id), @collection, tr_col.id
-                )
-                CollectionsReaction.move_to_collection(
-                  @collection.reactions.pluck(:id), @collection, tr_col.id
-                )
-              end
-              status(resp.status)
-            ensure
-              data_file.close
-              data_file.unlink
-              tmp_files.each do |tf|
-                tf.close
-                tf.unlink
-              end
-            end
+          delete do
+            Delayed::Job.where(queue: @queue).destroy_all && status(202)
           end
         end
       end
