@@ -74,9 +74,13 @@ module PubChem
   end
 
   def self.get_cid_from_inchikey(inchikey)
-    @auth = {:username => '', :password => ''}
-    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
-    HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/cids/TXT', options).body.presence&.strip
+    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
+      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
+    end
+
+    resp = conn.get('/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT')
+    return nil unless resp.success?
+    resp.body.presence&.strip
   end
 
   def self.get_cas_from_cid(cid)

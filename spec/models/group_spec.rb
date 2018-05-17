@@ -9,8 +9,8 @@ RSpec.describe 'Group', type: :model do
       expect(group.type).to eq 'Group'
     end
 
-    it 'creates an All & chemotion.net collection' do
-      expect(group.collections.pluck(:label)).to match_array ['All', 'chemotion.net']
+    it 'creates an All collection' do
+      expect(group.collections.pluck(:label)).to match_array ['All']
     end
   end
 

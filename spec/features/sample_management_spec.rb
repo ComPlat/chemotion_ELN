@@ -1,8 +1,8 @@
 require 'rails_helper'
 
 feature 'Sample management' do
-  let(:user)    { create(:user) }
-  let(:sample) { create(:sample, creator: user) }
+  let!(:user)    { create(:person) }
+  let(:sample) { create(:sample, creator: user, collections: user.collections) }
 
   background do
     user.confirmed_at = Time.now
@@ -12,7 +12,7 @@ feature 'Sample management' do
 
   describe 'Split sample' do
     before do
-      CollectionsSample.create!(sample: sample, collection: user.collections[0])
+      user.collections.each { |c| CollectionsSample.find_or_create_by!(sample: sample, collection: c) }
     end
 
     scenario 'splits sample', js: true do
@@ -20,7 +20,7 @@ feature 'Sample management' do
       expect(find('button#create-split-button')[:disabled]).to eq('true')
 
       # check if split button is disabled unless we select sample
-      find('.tree-view', text: user.collections.first.label).click
+      find('.tree-view', text: 'chemotion.net').click
       click_button 'create-split-button'
       expect(find('li', text: 'Split Sample')[:class]).to eq('disabled')
       click_button 'create-split-button'
@@ -74,7 +74,7 @@ feature 'Sample management' do
           if(el_c.composition_type == 'found')
             expect(find_bs_field(element).value.to_f).to eq(value.to_f)
           else
-            opts = { text: "#{element} #{value.to_f}" }
+            opts = { text: /#{element}\s+#{value.to_f}/ }
             expect{ea_table.find('span.data-item', opts)}.not_to raise_error
           end
         end

@@ -66,11 +66,9 @@ RSpec.describe 'User', type: :model do
       expect(FactoryGirl.build(:group, :name_abbreviation => "asdfgh")).to_not be_valid
     end
 
-    it 'creates an All & chemotion.net collection' do
+    it 'creates an All collection' do
       user.save!
-      expect(user.collections.pluck(:label)).to match_array ['All', 'chemotion.net']
+      expect(user.collections.pluck(:label)).to match_array ['All']
     end
-
-
   end
 end
