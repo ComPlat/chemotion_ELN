@@ -179,8 +179,8 @@ group :test do
   gem 'database_cleaner'
   gem 'factory_girl_rails'
 
-  gem 'capybara', '~> 2.7.1'
-  gem 'chromedriver-helper', '1.1.0'
+  gem 'capybara', '~> 3.1.0'
+  gem 'chromedriver-helper', '1.2.0'
   gem 'faker', '~> 1.6.6'
   gem 'headless', '2.0.0'
   gem 'launchy', '~> 2.4.3'
