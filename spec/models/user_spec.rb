@@ -68,7 +68,7 @@ RSpec.describe 'User', type: :model do
 
     it 'creates an All collection' do
       user.save!
-      expect(user.collections.pluck(:label)).to match_array ['All']
+      expect(user.collections.find_by(label: 'All', is_locked: true)).to_not be_nil
     end
   end
 end
