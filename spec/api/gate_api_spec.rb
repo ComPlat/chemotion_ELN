@@ -46,13 +46,13 @@ describe Chemotion::GateAPI do
   end
   describe :jwt do
     before do
-      get "/api/v1/gate/jwt/new.json?collection_id=#{c1.id}&origin=eln.edu"
+      get URI::encode("/api/v1/gate/jwt/new.json?collection_id=#{c1.id}&origin=http://localhost:3000")
     end
     it 'returns a jwt' do
       jwt = JSON.parse(response.body)&.fetch('jwt',nil)
       secret = Rails.application.secrets.secret_key_base
-      expect(JWT.decode(jwt, secret)[0]).to eq({
-        'collection' => c1.id, 'iss' => user.email, 'origin' => 'eln.edu'
+      expect(JWT.decode(jwt, secret)[0]).to include({
+        'collection' => c1.id, 'iss' => user.email, 'origin' => 'http://localhost:3000'
       })
     end
 
@@ -60,7 +60,7 @@ describe Chemotion::GateAPI do
   end
   describe 'register_gate' do
     let(:gate_params) {
-      { collection_id: c1.id, destination: 'www.chemotion.net', token: 'qwerty'}
+      { collection_id: c1.id, destination: 'http://www.chemotion.net', token: 'qwerty'}
     }
     describe 'registering new gate' do
       before do

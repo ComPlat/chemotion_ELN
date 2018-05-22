@@ -1,6 +1,15 @@
 module Chemotion
   # API: GateAPI to exchange data between two ELN servers
   class GateAPI < Grape::API
+    class UriHTTPType
+      def self.parse(value)
+        URI.parse value
+      end
+      def self.parsed?(value)
+        value.is_a? URI::HTTP
+      end
+    end
+
     desc 'GateAPI to exchange data between two ELN servers'
     resource :gate do
       desc <<~DESC
@@ -12,16 +21,18 @@ module Chemotion
         http_token = if request.headers['Authorization'].present?
                        request.headers['Authorization'].split(' ').last
                      end
-        error!('401 Unauthorized', 401) unless http_token
+        error!('Token missing', 401) unless http_token
         secret = Rails.application.secrets.secret_key_base
         begin
           @auth_token = HashWithIndifferentAccess.new(
             JWT.decode(http_token, secret)[0]
           )
-        rescue JWT::VerificationError, JWT::DecodeError => e
-          error!("401 #{e}", 401)
+        rescue JWT::VerificationError, JWT::DecodeError, JWT::ExpiredSignature => e
+          error!("#{e}", 401)
         end
+        error!('host vs origin mismatch', 401) unless @auth_token[:origin] == request.headers['Origin']
         status 200
+        { expire_at: Time.at(@auth_token[:exp]) }
       end
 
       desc <<~DESC
@@ -31,22 +42,33 @@ module Chemotion
       namespace :transmitting do
         params do
           requires :id, type: Integer, desc: 'Collection id'
+          optional :target, type: UriHTTPType, default: API::TARGET
         end
 
         # Authorization and remote service checks.
         # Check proper acces to local collection and existence of an associated {AuthenticationKey},
         # and ping remote server for up service and JWT validation.
         after_validation do
+          target = URI.join(params[:target], '/').to_s
+          resp_body = { target: target }
           unless (@collection = Collection.find_by(
             id: params[:id], user_id: current_user.id, is_shared: false
           ))
-            error!('401 Unauthorized Access to Collection', 401)
+            resp_body['error'] = 'Unauthorized Access to Collection'
+            error!(resp_body, 401)
           end
-          error!('404 Token missing', 404) unless (@jwt = AuthenticationKey.find_by(
+          unless (tokens = AuthenticationKey.where(
             user_id: current_user.id, role: "gate out #{@collection.id}"
           ))
-          @url = "http#{'s' if Rails.env.production?}://#{@jwt.fqdn}"
-          @req_headers = { 'Authorization' => "Bearer #{@jwt.token}" }
+            resp_body['error'] = 'Token missing for this collection'
+            error!(resp_body, 404)
+          end
+          unless (@jwt = tokens.find_by(fqdn: params[:target]))
+            resp_body['error'] = 'Token missing for the target'
+            error!(resp_body, 404)
+          end
+          @url = @jwt.fqdn # fqdn should actually be eq to an orgin (proto/host/port)
+          @req_headers = { 'Authorization' => "Bearer #{@jwt.token}", 'Origin' => request.headers['Referer'] }
           @queue = "gate_transfer_#{@collection.id}"
           # TODO: use persistent connection
           connection = Faraday.new(url: @url) do |f|
@@ -55,11 +77,18 @@ module Chemotion
             f.adapter :net_http
           end
           resp = connection.get { |req| req.url('/api/v1/gate/ping') }
-          error!(resp.reason_phrase, resp.status) unless resp.success?
+          resp_body.merge!(JSON.parse(resp.body)) if resp.headers["content-type"] == "application/json"
+
+          error!(resp_body , resp.status) unless resp.success?
+          @resp_body = resp_body
         end
 
         route_param :id do
           get do
+            @resp_body
+          end
+
+          post do
             Delayed::Job.where(queue: @queue).destroy_all
             GateTransferJob.set(queue: @queue)
                            .perform_later(@collection.id, @url, @req_headers)
@@ -85,21 +114,21 @@ module Chemotion
           http_token = if request.headers['Authorization'].present?
                          request.headers['Authorization'].split(' ').last
                        end
-          error!('401 Unauthorized', 401) unless http_token
+          error!('Unauthorized', 401) unless http_token
           secret = Rails.application.secrets.secret_key_base
           begin
             @auth_token = HashWithIndifferentAccess.new(
               JWT.decode(http_token, secret)[0]
             )
-          rescue JWT::VerificationError, JWT::DecodeError => e
-            error!("401 #{e}", 401)
+          rescue JWT::VerificationError, JWT::DecodeError, JWT::ExpiredSignature => e
+            error!("#{e}", 401)
           end
           @user = Person.find_by(email: @auth_token[:iss])
-          error!('401 Unauthorized', 401) unless @user
+          error!('Unauthorized', 401) unless @user
           @collection = Collection.find_by(
             id: @auth_token[:collection], user_id: @user.id, is_shared: false
           )
-          error!('401 Unauthorized access to collection', 401) unless @collection
+          error!('Unauthorized access to collection', 401) unless @collection
         end
 
         post do
@@ -129,7 +158,7 @@ module Chemotion
       namespace :register_gate do
         params do
           requires :collection_id, type: Integer, desc: 'Collection id'
-          requires :destination, type: String, desc: 'remote eln adress'
+          requires :destination, type: UriHTTPType, desc: 'remote eln adress'
           requires :token, type: String, desc: 'token'
         end
         after_validation do
@@ -149,10 +178,33 @@ module Chemotion
         end
       end
 
+      namespace :register_repo do
+        params do
+          requires :token, type: String, desc: 'token'
+        end
+
+        after_validation do
+          error!('Unauthorized', 401) unless (@collec = Collection.find_by(
+            user_id: current_user.id, is_locked: true, label: 'chemotion.net'
+          ))
+        end
+
+        get do
+          ak = AuthenticationKey.find_or_initialize_by(
+            user_id: current_user.id,
+            fqdn: API::TARGET,
+            role: "gate out #{@collec.id}"
+          )
+          ak.token = params[:token]
+          ak.save!
+          redirect('/')
+        end
+      end
+
       namespace :jwt do
         params do
           requires :collection_id, type: Integer, desc: 'Collection id'
-          optional :origin, type: String, desc: 'remote eln adress'
+          optional :origin, type: UriHTTPType, desc: 'remote eln adress'
         end
 
         after_validation do
@@ -166,8 +218,8 @@ module Chemotion
           payload = {
             collection: @collec.id,
             # label: @collec.label[0..20],
-            iss: current_user.email
-            # exp: Time.now + 7.days
+            iss: current_user.email,
+            exp: (Time.now + 7.days).to_i
           }
           payload[:origin] = params[:origin] if params[:origin]
           secret = Rails.application.secrets.secret_key_base
