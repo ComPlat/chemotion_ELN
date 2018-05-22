@@ -43,7 +43,8 @@ const deltaToMarkdown = (delta) => {
       if (dtConverter.inline[attr]) {
         const open = dtConverter.inline[attr][0];
         const close = dtConverter.inline[attr][1];
-        text = `${open}${text}${close}`;
+        const replaceText = `$1${open}$2${close}$3`;
+        text = text.replace(/(\s*)(.*)(\s*)/, replaceText);
       } else if (dtConverter.script[attrVal]) {
         const open = dtConverter.script[attrVal][0];
         const close = dtConverter.script[attrVal][1];
