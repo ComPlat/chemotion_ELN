@@ -80,26 +80,19 @@ export default class CollectionsFetcher {
   }
 
   static createSharedCollections(params) {
-    let promise = fetch('/api/v1/collections/shared/', {
+    return fetch('/api/v1/collections/shared/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        collection_attributes: params.collection_attributes,
-        elements_filter: params.elements_filter,
-        user_ids: params.user_ids,
-        current_collection_id: params.current_collection_id
-      })
-    })
-
-    return promise;
+      body: JSON.stringify(params)
+    });
   }
 
   static createSync(params) {
-    let promise = fetch('/api/v1/syncCollections/', {
+    return fetch('/api/v1/syncCollections/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -111,9 +104,7 @@ export default class CollectionsFetcher {
         user_ids: params.user_ids,
         id: params.id,
       })
-    })
-
-    return promise;
+    });
   }
 
   static editSync(params) {
