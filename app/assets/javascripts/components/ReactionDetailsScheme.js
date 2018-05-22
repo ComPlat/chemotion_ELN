@@ -127,9 +127,26 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   deleteMaterial(material, materialGroup) {
-    let {reaction} = this.state;
+    let { reaction } = this.state;
     reaction.deleteMaterial(material, materialGroup);
-    this.onReactionChange(reaction, {schemaChanged: true});
+    let refMaterialGroup = materialGroup;
+    if (reaction[materialGroup].length === 0) {
+      refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
+    }
+
+    if (reaction[materialGroup].length > 0) {
+      const refMaterial = reaction[materialGroup][0];
+
+      const event = {
+        type: 'referenceChanged',
+        materialGroup,
+        sampleID: refMaterial.id,
+        value: 'on'
+      };
+      this.updatedReactionForReferenceChange(event);
+    }
+
+    this.onReactionChange(reaction, { schemaChanged: true });
   }
 
   dropMaterial(srcMat, srcGroup, tagMat, tagGroup) {
