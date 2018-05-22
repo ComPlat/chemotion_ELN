@@ -148,10 +148,12 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   handleSharing() {
-    let {permissionLevel, sampleDetailLevel, reactionDetailLevel,wellplateDetailLevel,
-    screenDetailLevel}= this.state
+    const {
+      permissionLevel, sampleDetailLevel, reactionDetailLevel,
+      wellplateDetailLevel, screenDetailLevel
+    } = this.state;
 
-    let params = {
+    const params = {
       id: this.props.collectionId,
       collection_attributes: {
         permission_level: permissionLevel,
@@ -160,9 +162,9 @@ export default class ManagingModalSharing extends React.Component {
         wellplate_detail_level: wellplateDetailLevel,
         screen_detail_level: screenDetailLevel
       },
-    }
+    };
 
-    if (this.props.collAction == "Create") {
+    if (this.props.collAction === "Create") {
       const userIds = this.state.selectedUsers;
       const uiState = UIStore.getState();
       const currentCollection = uiState.currentCollection;
@@ -170,15 +172,13 @@ export default class ManagingModalSharing extends React.Component {
         this.isSelectionEmpty(uiState)
           ? this.filterParamsWholeCollection(uiState)
           : this.filterParamsFromUIState(uiState);
-      params = {
+      const fullParams = {
         ...params,
         elements_filter: filterParams,
         user_ids: userIds,
         currentCollection
       };
-      console.log('uiState', uiState);
-      console.log(params);
-      CollectionActions.createSharedCollections(params);
+      CollectionActions.createSharedCollections(fullParams);
     }
 
     if (this.props.collAction === 'Update') { CollectionActions.updateSharedCollection(params); }
@@ -187,11 +187,11 @@ export default class ManagingModalSharing extends React.Component {
 
     if (this.props.collAction === 'CreateSync') {
       const userIds = this.state.selectedUsers;
-      params = {
+      const fullParams = {
         ...params,
         user_ids: userIds,
       };
-      CollectionActions.createSync(params);
+      CollectionActions.createSync(fullParams);
     }
 
     this.props.onHide();
