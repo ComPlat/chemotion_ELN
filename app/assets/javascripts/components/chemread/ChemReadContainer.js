@@ -5,168 +5,11 @@ import _ from 'lodash';
 import 'whatwg-fetch';
 import XLSX from 'xlsx';
 
-import { solvents } from '../staticDropdownOptions/reagents/solvents';
-
+import ChemReadFetcher from './ChemReadFetcher';
 import ChemRead from './ChemRead';
-import NotificationActions from '../actions/NotificationActions';
+import { generateExportRow } from './ChemReadObjectHelper';
 
-function fetchInfo(files, getMol) {
-  const data = new FormData();
-  data.append('get_mol', getMol);
-  files.forEach(file => data.append(file.uid, file.file));
-
-  return fetch('/api/v1/chemread/embedded/upload', {
-    credentials: 'same-origin',
-    method: 'post',
-    body: data
-  }).then((response) => {
-    if (response.ok === false) {
-      let msg = 'Files uploading failed: ';
-      if (response.status === 413) {
-        msg += 'File size limit exceeded. Max size is 50MB';
-      } else {
-        msg += response.statusText;
-      }
-
-      NotificationActions.add({
-        message: msg,
-        level: 'error'
-      });
-    }
-    return response.json();
-  });
-}
-
-function fetchSvgFromSmis(smiArr) {
-  return fetch('/api/v1/chemread/svg/smi', {
-    credentials: 'same-origin',
-    method: 'post',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ smiArr })
-  }).then((response) => {
-    if (response.ok === false) {
-      let msg = 'Files uploading failed: ';
-      if (response.status === 413) {
-        msg += 'File size limit exceeded. Max size is 50MB';
-      } else {
-        msg += response.statusText;
-      }
-
-      NotificationActions.add({
-        message: msg,
-        level: 'error'
-      });
-    }
-    return response.json();
-  });
-}
-
-function generateTextFromInfo(name, info) {
-  if (!info) return '';
-
-  const descArr = [];
-
-  Object.keys(info).forEach((key) => {
-    const desc = info[key];
-    if (!desc) return;
-    descArr.push(`${name} ${key}:`);
-
-    Object.keys(desc).forEach((x) => {
-      const dProp = desc[x];
-      if (!dProp) return;
-
-      if (x === 'detail') {
-        Object.keys(dProp).forEach((propKey) => {
-          if (propKey === 'ID' || propKey === 'parentID' || !dProp[propKey]) return;
-          descArr.push(` - ${propKey}: ${dProp[propKey]}`);
-        });
-      } else {
-        if (!desc[x]) return;
-        descArr.push(` - ${x}: ${desc[x]}`);
-      }
-    });
-  });
-
-  return descArr.join('\n');
-}
-
-function generateExportRow(info) {
-  const row = [];
-  const smiArr = info.smi.split('>');
-  let solventsAdded = '';
-
-  if (info.editedSmi && info.editedSmi !== '') {
-    const editedSmiArr = info.editedSmi.split(',');
-    solventsAdded = editedSmiArr.filter(x => (
-      Object.values(solvents).indexOf(x) > -1
-    )).join(',');
-
-    const allSolvents = smiArr[1].split('.').concat(editedSmiArr);
-    smiArr[1] = allSolvents.filter(x => x).join('.');
-  }
-
-  const temperature = [];
-  const time = [];
-  const reactionDesc = [];
-  const reactionYield = [];
-
-  let reactantDescs = '';
-  let productDescs = '';
-
-  if (info.desc) {
-    if (info.desc.reagents) {
-      Object.keys(info.desc.reagents).forEach((key) => {
-        const desc = info.desc.reagents[key];
-        temperature.push(desc.temperature);
-        time.push(desc.time);
-        reactionYield.push(desc.yield);
-        reactionDesc.push(`- Description: ${desc.text}`);
-      });
-    }
-
-    if (info.desc.detail) {
-      Object.keys(info.desc.detail).forEach((k) => {
-        const details = info.desc.detail[k];
-
-        details.forEach((detail, idx) => {
-          const detailKey = details.length === 1 ? k : `${k} ${idx + 1}`;
-          const dconstructor = detail.constructor;
-
-          if (dconstructor === Object) {
-            Object.keys(detail).forEach((dkey) => {
-              if (!detail[dkey]) return;
-              reactionDesc.push(`- ${dkey}: ${detail[dkey]}`);
-            });
-          } else if (dconstructor === String) {
-            if (!detail) return;
-            reactionDesc.push(`- ${detailKey}: ${detail}`);
-          }
-        });
-      });
-    }
-
-    reactantDescs = generateTextFromInfo('Reactant', info.desc.reactants);
-    productDescs = generateTextFromInfo('Product', info.desc.products);
-  }
-
-  row.push(smiArr.join('>'));
-  row.push(solventsAdded);
-
-  row.push(temperature.filter(x => x).join(';'));
-  row.push(reactionYield.filter(x => x).join(';'));
-  row.push(time.filter(x => x).join(';'));
-  row.push(reactionDesc.filter(x => x).join('\n'));
-
-  row.push(reactantDescs);
-  row.push(productDescs);
-
-  return row;
-}
-
-class ChemReadContainer extends React.Component {
+export default class ChemReadContainer extends React.Component {
   constructor() {
     super();
     this.state = {
@@ -195,7 +38,7 @@ class ChemReadContainer extends React.Component {
     });
 
     let rsmis = [];
-    fetchInfo(fileArr, this.state.getMol).then((res) => {
+    ChemReadFetcher.fetchInfo(fileArr, this.state.getMol).then((res) => {
       rsmis = [].concat(res.embedded);
       this.setState({ files: this.state.files.concat(rsmis) });
     });
@@ -296,7 +139,7 @@ class ChemReadContainer extends React.Component {
       addedSmi.push({ uid: s.uid, smiIdx: s.smiIdx, newSmi });
     });
 
-    fetchSvgFromSmis(addedSmi).then((r) => {
+    ChemReadFetcher.fetchSvgFromSmis(addedSmi).then((r) => {
       r.svg.forEach((svgInfo) => {
         const file = files.filter(x => x.uid === svgInfo.uid)[0];
         if (!file) return;

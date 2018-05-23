@@ -173,6 +173,8 @@ GEM
       archive-zip (~> 0.10)
       nokogiri (~> 1.8)
     chronic (0.10.2)
+    chronic_duration (0.10.6)
+      numerizer (~> 0.1.1)
     chunky_png (1.3.8)
     climate_control (0.2.0)
     closure_tree (6.2.0)
@@ -365,6 +367,7 @@ GEM
     net-ssh (4.2.0)
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
+    numerizer (0.1.1)
     open4 (1.3.4)
     orm_adapter (0.5.0)
     paperclip (5.2.1)
@@ -601,6 +604,7 @@ DEPENDENCIES
   capistrano-rvm
   capybara (~> 3.1.0)
   chromedriver-helper (= 1.2.0)
+  chronic_duration
   closure_tree
   countries
   coveralls

@@ -55,6 +55,11 @@ class Molecule < ActiveRecord::Base
     molecule
   end
 
+  def self.find_or_create_by_cano_smiles(cano_smiles)
+    molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
+    Molecule.find_or_create_by_molfile(molfile)
+  end
+
   def self.find_or_create_by_molfiles(molfiles_array)
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array)
     babel_info_array.map.with_index do |babel_info, i|

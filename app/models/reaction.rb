@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Reaction < ActiveRecord::Base
   acts_as_paranoid
   include ElementUIStateScopes

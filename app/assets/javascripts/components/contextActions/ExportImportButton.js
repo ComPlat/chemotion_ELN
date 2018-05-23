@@ -2,7 +2,10 @@ import React, {Component} from 'react';
 import {Dropdown, Button, MenuItem, Glyphicon}
   from 'react-bootstrap';
 import ElementActions from '../actions/ElementActions';
+import UIActions from '../actions/UIActions';
+
 import ModalImport from './ModalImport';
+import ModalImportChemDraw from './ModalImportChemDraw';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
 
@@ -22,20 +25,24 @@ const ExportImportButton = ({isDisabled, updateModalProps}) => {
           Export reactions from selection
         </MenuItem>
         <MenuItem divider />
-        <MenuItem onSelect={() => importFunction(updateModalProps)} disabled={isDisabled}
+        <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
           title='Import from spreadsheet or sdf'>
           Import samples to collection
+        </MenuItem>
+        <MenuItem onSelect={() => importReactionFunction(updateModalProps)} disabled={isDisabled}
+          title='Import from Docs'>
+          Import reactions from Docs
         </MenuItem>
       </Dropdown.Menu>
     </Dropdown>
   )
 }
 
-const importFunction = (updateModalProps) => {
+const importSampleFunction = (updateModalProps) => {
   const title = "Import Samples from File";
   const component = ModalImport;
   const action = ElementActions.importSamplesFromFile;
-  const listSharedCollections = false
+  const listSharedCollections = false;
   const modalProps = {
     show: true,
     title,
@@ -44,7 +51,22 @@ const importFunction = (updateModalProps) => {
     listSharedCollections,
   };
   updateModalProps(modalProps);
-}
+};
+
+const importReactionFunction = (updateModalProps) => {
+  const title = 'Import Reactions from Docs';
+  const component = ModalImportChemDraw;
+  const listSharedCollections = false;
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    customModal: 'importChemDrawModal',
+    listSharedCollections,
+  };
+
+  updateModalProps(modalProps);
+};
 
 const exportFunction = (updateModalProps) => {
   const title = "Select Data to Export";
