@@ -14,6 +14,7 @@ class NotificationStore {
       handleRemove: NotificationActions.remove,
       handleRemoveByUid: NotificationActions.removeByUid,
       handleNotificationImportSamplesFromFile: ElementActions.importSamplesFromFile,
+      handleUploadErrorNotify: NotificationActions.uploadErrorNotify,
       handleSetComponentReference: NotificationActions.setComponentReference
     })
   }
@@ -28,6 +29,10 @@ class NotificationStore {
 
   handleRemoveByUid(uid) {
     this.state.notificationSystem.removeNotification(uid)
+  }
+
+  handleClearNotifications() {
+    this.state.notificationSystem.clearNotifications();
   }
 
   handleNotificationImportSamplesFromFile(result) {
@@ -79,6 +84,20 @@ class NotificationStore {
   handleSetComponentReference(ref) {
     this.state.notificationSystem = ref;
   }
+
+  handleUploadErrorNotify(message) {
+    // this.handleRemoveByUid('import_samples_upload');
+    this.handleClearNotifications();
+
+    const notification = {
+      title: 'Error',
+      message,
+      level: 'error',
+      uid: 'import_reactions_upload',
+      position: 'bl'
+    };
+    this.handleAdd(notification);
+  }
 }
 
-export default alt.createStore(NotificationStore, 'NotificationStore')
+export default alt.createStore(NotificationStore, 'NotificationStore');

@@ -303,6 +303,16 @@ class ElementActions {
       });};
   }
 
+  importReactionsFromChemRead(params) {
+    return (dispatch) => {
+      ReactionsFetcher.importReactionsFromChemRead(params).then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   importSamplesFromFileConfirm(params) {
     return (dispatch) => { SamplesFetcher.importSamplesFromFileConfirm(params)
       .then((result) => {

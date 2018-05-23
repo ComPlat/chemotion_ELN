@@ -111,10 +111,9 @@ class User < ActiveRecord::Base
   end
 
   def increment_counter key
-    if (self.counters[key] != nil)
-      self.counters[key] = self.counters[key].succ
-      self.save!
-    end
+    return if self.counters[key].nil?
+    self.counters[key] = self.counters[key].succ
+    self.save!
   end
 
   def has_profile
