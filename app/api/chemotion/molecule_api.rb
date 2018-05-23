@@ -37,6 +37,49 @@ module Chemotion
         end
       end
 
+      namespace :compute do
+        desc 'Compute molecule by SMILES'
+        params do
+          requires :smiles, type: String, desc: 'Input SMILES'
+          requires :short_label, type: String, desc: 'Sample Short Label'
+        end
+
+        post do
+          cconfig = Rails.configuration.compute_config
+          error!('No computation configuration!') if cconfig.nil?
+          error!('Unauthorized') unless cconfig.allowed_uids.include?(current_user.id)
+
+          sample = Sample.where(short_label: params[:short_label]).first
+          error!(204) if sample.nil?
+
+          cp = sample.molecule_computed_prop
+          if cp.nil?
+            cp = ComputedProp.new
+            cp.status = 0
+            cp.molecule_id = sample.molecule.id
+            cp.save!
+          end
+
+          if cp.status == 'not_computed'
+            options = {
+              timeout: 10,
+              headers: { 'Content-Type' => 'application/json' },
+              body: {
+                hmac_secret: cconfig.hmac_secret,
+                smiles: params[:smiles],
+                name: params[:short_label]
+              }.to_json
+            }
+
+            HTTParty.post(cconfig.server, options)
+            cp.status = 'in_progress'
+          end
+          cp.save!
+
+          status 200
+        end
+      end
+
       desc "Return molecule by Molfile"
       params do
         requires :molfile, type: String, desc: "Molecule molfile"

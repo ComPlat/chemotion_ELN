@@ -71,4 +71,20 @@ export default class MoleculesFetcher {
 
     return promise;
   }
+
+  static computePropsFromSmiles(short_label, smiles) {
+    const promise = fetch('/api/v1/molecules/compute', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ smiles, short_label })
+    }).then(response => response.json()).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

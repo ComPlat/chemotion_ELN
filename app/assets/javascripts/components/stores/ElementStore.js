@@ -199,6 +199,7 @@ class ElementStore {
           ElementActions.generateEmptyReaction,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
+          ElementActions.showComputedPropsGraph,
           ElementActions.showDeviceControl,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,

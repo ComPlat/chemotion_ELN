@@ -11,6 +11,8 @@ class Molecule < ActiveRecord::Base
   has_many :collections, through: :samples
   has_many :molecule_names
 
+  has_one :computed_prop
+
   before_save :sanitize_molfile
   after_create :create_molecule_names
   skip_callback :save, before: :sanitize_molfile, if: :skip_sanitize_molfile

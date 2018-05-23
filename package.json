@@ -53,6 +53,7 @@
     "react-treeview": "0.4.7",
     "react-ui-tree": "3.0.0",
     "react-datepicker": "~1.4.1",
+    "recharts": "1.0.0-beta.10",
     "sha256": "^0.2.0",
     "uuid": "^2.0.2",
     "commonmark": "^0.28.1",

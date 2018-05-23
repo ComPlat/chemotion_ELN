@@ -5,6 +5,25 @@ module Chemotion
       get 'ping' do
         status 200
       end
+
+      resource :computed_props do
+        params do
+          requires :token, type: String
+          requires :name, type: String
+
+          requires :data, type: String
+        end
+
+        post do
+          cconfig = Rails.configuration.compute_config
+          error!('No computation configuration!') if cconfig.nil?
+          error!('Unauthorized') unless cconfig.receiving_secret == params[:token]
+
+          ComputedProp.from_raw(params[:name], params[:data])
+
+          status 200
+        end
+      end
     end
 
     namespace :upload do
@@ -54,7 +73,6 @@ module Chemotion
           end
           true
         end
-
       end
     end
   end
