@@ -10,6 +10,7 @@ import ResearchPlanDetails from './ResearchPlanDetails';
 import { ConfirmModal } from './common/ConfirmModal';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
+import GraphContainer from './computed_props/GraphContainer';
 import DetailActions from './actions/DetailActions';
 import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
@@ -126,7 +127,9 @@ export default class ElementDetails extends Component {
       case 'report':
         return <ReportContainer report={el} />;
       case 'format':
-        return <FormatContainer format={el}/>;
+        return <FormatContainer format={el} />;
+      case 'graph':
+        return <GraphContainer graph={el} />;
       default:
         return (<span />);
     }
@@ -163,6 +166,14 @@ export default class ElementDetails extends Component {
       iconElement = (
         <span>
           <i className="fa fa-magic" />
+        </span>
+      );
+    } else if (el.type === 'graph') {
+      title = 'Graph';
+      bsStyle = 'primary';
+      iconElement = (
+        <span>
+          <i className="fa fa-area-chart" />
         </span>
       );
     }

@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# encoding: utf-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180516151737) do
+ActiveRecord::Schema.define(version: 20180518053658) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -166,6 +166,23 @@ ActiveRecord::Schema.define(version: 20180516151737) do
     t.string   "error_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "computed_props", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.float    "max_potential",      default: 0.0
+    t.float    "min_potential",      default: 0.0
+    t.float    "mean_potential",     default: 0.0
+    t.float    "lumo",               default: 0.0
+    t.float    "homo",               default: 0.0
+    t.float    "ip",                 default: 0.0
+    t.float    "ea",                 default: 0.0
+    t.float    "dipol_debye",        default: 0.0
+    t.integer  "status",             default: 0
+    t.jsonb    "data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.float    "mean_abs_potential", default: 0.0
   end
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|

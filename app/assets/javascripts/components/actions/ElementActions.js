@@ -24,6 +24,7 @@ import Screen from '../models/Screen';
 import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
 import Format from '../models/Format';
+import Graph from '../models/Graph';
 import DeviceControl from '../models/DeviceControl'
 
 import _ from 'lodash';
@@ -587,6 +588,10 @@ class ElementActions {
     return Format.buildEmpty();
   }
 
+  showComputedPropsGraph() {
+    return Graph.buildEmptyScatter();
+  }
+
   // -- General --
 
   refreshElements(type) {
@@ -724,6 +729,17 @@ class ElementActions {
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
+    };
+  }
+
+  computePropsFromSmiles(short_label, smiles) {
+    return (dispatch) => {
+      MoleculesFetcher.computePropsFromSmiles(short_label, smiles)
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     };
   }
 
