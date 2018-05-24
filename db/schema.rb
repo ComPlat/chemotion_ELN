@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180518053658) do
+ActiveRecord::Schema.define(version: 20180524103806) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -72,12 +72,16 @@ ActiveRecord::Schema.define(version: 20180518053658) do
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
-    t.string  "token",   null: false
-    t.integer "user_id"
-    t.inet    "ip"
-    t.string  "fqdn"
-    t.string  "role"
+    t.string   "token",      null: false
+    t.integer  "user_id"
+    t.inet     "ip"
+    t.string   "fqdn"
+    t.string   "role"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
+
+  add_index "authentication_keys", ["user_id"], name: "index_authentication_keys_on_user_id", using: :btree
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
     t.string   "source"

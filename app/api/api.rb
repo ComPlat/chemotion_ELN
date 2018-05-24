@@ -9,7 +9,7 @@ class API < Grape::API
   helpers do
 
     def current_user
-      @current_user = WardenAuthentication.new(env).current_user
+      @current_user ||= WardenAuthentication.new(env).current_user
     end
 
     def user_ids
@@ -165,6 +165,7 @@ class API < Grape::API
     'samples' => %w(name short_label external_label),
     'molecules' => %w(cas)
   }
+  TARGET = Rails.env.production? ? 'https://chemotion.net/' : 'http://localhost:3000/'
 
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
@@ -189,7 +190,6 @@ class API < Grape::API
   mount Chemotion::IconNmrAPI
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GeneralAPI
-  mount Chemotion::V1PublicAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
   mount Chemotion::ChemReadAPI
