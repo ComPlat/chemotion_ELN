@@ -58,7 +58,7 @@ export default class SampleDetails extends React.Component {
       isCasLoading: false,
     };
 
-    const data = UserStore.getState().profile || {};
+    const data = UserStore.getState().profile.data || {};
     this.enableComputedProps = _.get(data, 'computed_props.enable', false);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
