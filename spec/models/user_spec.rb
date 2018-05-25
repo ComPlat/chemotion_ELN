@@ -5,6 +5,7 @@ RSpec.describe 'User', type: :model do
     let(:user) { build(:user) }
     let(:person) { build(:person) }
     let(:group) { build(:group) }
+    let!(:user_deleted) { create(:person, email: 'user_deleted@eln.edu', name_abbreviation: 'UD') }
 
 
     it 'is possible to create a valid user' do
@@ -69,6 +70,12 @@ RSpec.describe 'User', type: :model do
     it 'creates an All collection' do
       user.save!
       expect(user.collections.find_by(label: 'All', is_locked: true)).to_not be_nil
+    end
+
+    it 'reset email after soft deletion' do
+      user_deleted.destroy!
+      expect(User.with_deleted.find_by(email: 'user_deleted@eln.edu')).to be_nil
+      expect(User.only_deleted.where("email LIKE ?", "#{user_deleted.id}_%").where("email LIKE ?", '%@deleted').present?).to be true
     end
   end
 end

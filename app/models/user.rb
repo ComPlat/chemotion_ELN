@@ -172,7 +172,7 @@ def delete_data
     # + self.wellplates.count
     # + self.screens.count
     # + self.research_plans.count
-  self.update_columns(email: "id@deleted")
+  self.update_columns(email: "#{id}_#{name_abbreviation}@deleted")
   self.update_columns(name_abbreviation: nil )if count.zero?
 end
 
