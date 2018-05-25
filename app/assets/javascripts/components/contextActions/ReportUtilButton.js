@@ -20,7 +20,7 @@ const showComputedPropsGraph = () => {
 };
 
 const ReportUtilButton = () => {
-  const data = UserStore.getState().profile || {};
+  const data = UserStore.getState().profile.data || {};
   const enableComputedProps = _.get(data, 'computed_props.enable', false);
 
   const graphItem = enableComputedProps ? (
