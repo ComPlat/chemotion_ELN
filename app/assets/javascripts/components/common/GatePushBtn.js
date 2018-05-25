@@ -1,5 +1,5 @@
 import React from 'react';
-import { ButtonGroup, Button, Tooltip } from 'react-bootstrap';
+import { ButtonGroup, Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
 
 class GatePushBtn extends React.Component {
   constructor(props) {
@@ -7,13 +7,9 @@ class GatePushBtn extends React.Component {
     this.state = {};
   }
 
-  toggleTooltip(e, params = {}) {
-    e.stopPropagation();
-    this.setState(prevState => ({ tooltip: !prevState.tooltip, ...params }));
-  }
-
   transmitting(e, collection_id, method = 'GET') {
-    e.stopPropagation();
+    if (this.ovltg) { this.ovltg.hide(); }
+    this.setState(() => ({}))
     return fetch(`/api/v1/gate/transmitting/${collection_id}`, {
       credentials: 'same-origin',
       headers: {
@@ -24,7 +20,7 @@ class GatePushBtn extends React.Component {
     }).then(resp => resp.json().then(data => ({
       status: resp.status, ok: resp.ok, error: data && data.error, target: data && data.target
     }))).then((response) => {
-      const newState = { tooltip: true, redirect: true, target: response.target };
+      const newState = { status: 'redirect', target: response.target };
       if (response.status === 404) {
         newState.message = 'The access token is not set. Retrieve one now on chemotion.net?';
       } else if (response.status === 401) {
@@ -34,23 +30,19 @@ class GatePushBtn extends React.Component {
           newState.message = `The access token is misconfigured ('${response.error}'). Renew it now on chemotion.net?`;
         }
       } else if (!response.ok) {
-        newState.redirect = false;
-        newState.unavailable = true;
+        newState.status = 'unavailable';
       } else {
-        newState.redirect = false;
-        newState.tooltip = method === 'GET';
-        newState.confirm = true;
+        newState.status = 'confirm';
       }
       this.setState(() => (newState));
-    }).catch((errorMessage) => {
-      // console.log(errorMessage);
     });
   }
 
   tooltipContent() {
-    const { confirm, unavailable, redirect, message, target } = this.state;
-    if (confirm) {
-      return (
+    const { status, message, target } = this.state;
+    let content;
+    if (status === 'confirm') {
+      content = (
         <div>
           Mirror Sample and Reaction data to your chemotion.net account ?
           <ButtonGroup>
@@ -63,28 +55,28 @@ class GatePushBtn extends React.Component {
             <Button
               bsStyle="warning"
               bsSize="xsmall"
-              onClick={e => this.toggleTooltip(e)}
+              onClick={() => this.ovltg.hide()}
             >No
             </Button>
           </ButtonGroup>
         </div>
       );
-    } else if (unavailable) {
-      return (
+    } else if (status === 'unavailable') {
+      content = (
         <div>
           Sorry, it seems chemotion.net can not be reached at the moment
           <ButtonGroup>
             <Button
               bsStyle="warning"
               bsSize="xsmall"
-              onClick={e => this.toggleTooltip(e)}
+              onClick={() => this.ovltg.hide()}
             >OK
             </Button>
           </ButtonGroup>
         </div>
       );
-    } else if (redirect) {
-      return (
+    } else if (status === 'redirect') {
+      content = (
         <div>
           {message} &nbsp;
           <ButtonGroup>
@@ -92,42 +84,36 @@ class GatePushBtn extends React.Component {
               bsStyle="danger"
               bsSize="xsmall"
               onClick={(e) => {
-                this.toggleTooltip(e);
-                // window.open(`${target}/pages/tokens`);
-                window.location.replace(`${target}pages/tokens?origin=${encodeURI(window.location.origin)}`);
+                this.ovltg.hide();
+                window.location.assign(`${target}pages/tokens?origin=${encodeURI(window.location.origin)}`);
+                // window.open(`${target}pages/tokens?origin=${encodeURI(window.location.origin)}` , '_blank');
               }}
             >Yes
             </Button>
             <Button
               bsStyle="warning"
               bsSize="xsmall"
-              onClick={e => this.toggleTooltip(e)}
+              onClick={() => this.ovltg.hide()}
             >No
             </Button>
           </ButtonGroup>
         </div>
       );
-    }
-    return null;
+    } else if (this.ovlg) { this.ovltg.hide(); }
+    return <Tooltip id="chemotion-net-gate">{content}</Tooltip>;
   }
 
   render() {
-    const { tooltip } = this.state;
     return (
       <ButtonGroup>
-        <Button
-          bsStyle="success"
-          bsSize="xsmall"
-          onClick={e => this.transmitting(e, this.props.collection_id)}
-        >
-          <i className="fa fa-cloud">
-            {tooltip ? (
-              <Tooltip placement="bottom" className="cloud-tooltip" id="tooltip-bottom">
-                { this.tooltipContent() }
-              </Tooltip>
-            ) : null}
-          </i>
-        </Button>
+        <OverlayTrigger trigger="click" overlay={this.tooltipContent()} placement="bottom" ref={(ov) => { this.ovltg = ov }}>
+          <Button
+            bsStyle="success"
+            bsSize="xsmall"
+            onClick={e => this.transmitting(e, this.props.collection_id)}
+          ><i className="fa fa-cloud" />
+          </Button>
+        </OverlayTrigger>
       </ButtonGroup>
     );
   }

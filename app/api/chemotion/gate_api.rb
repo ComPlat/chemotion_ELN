@@ -51,6 +51,20 @@ module Chemotion
         after_validation do
           target = URI.join(params[:target], '/').to_s
           resp_body = { target: target }
+          connection = Faraday.new(url: target) do |f|
+            f.use FaradayMiddleware::FollowRedirects
+            f.adapter :net_http
+          end
+          begin
+            resp = connection.get { |req| req.url('/api/v1/public/ping') }
+            unless resp.success?
+              resp_body['error'] = resp.reason_phrase
+              error!(resp_body , resp.status)
+            end
+          rescue StandardError => e
+            resp_body['error'] = e
+            error!(resp_body , 503)
+          end
           unless (@collection = Collection.find_by(
             id: params[:id], user_id: current_user.id, is_shared: false
           ))
@@ -63,7 +77,7 @@ module Chemotion
             resp_body['error'] = 'Token missing for this collection'
             error!(resp_body, 404)
           end
-          unless (@jwt = tokens.find_by(fqdn: params[:target]))
+          unless (@jwt = tokens.find_by(fqdn: target))
             resp_body['error'] = 'Token missing for the target'
             error!(resp_body, 404)
           end

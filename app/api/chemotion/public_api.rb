@@ -3,7 +3,7 @@ module Chemotion
 
     namespace :public do
       get 'ping' do
-        status 200
+        status 204
       end
 
       resource :computed_props do
