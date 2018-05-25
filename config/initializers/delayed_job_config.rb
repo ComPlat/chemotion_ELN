@@ -35,6 +35,8 @@ begin
         end&.set(cron: cron_config).perform_later if cron_config
       end
     end
+    Delayed::Job.where("handler like ?", "%PubchemCidJob%").destroy_all
+    PubchemCidJob.set(cron: '15 1 * * 0').perform_later
   end
 rescue PG::ConnectionBad => e
   puts e.message

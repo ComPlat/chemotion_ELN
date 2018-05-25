@@ -65,6 +65,7 @@ module Cdx
 
         @molmap.each_value do |val|
           val[:smi] = molecule_output(val[:mol], 'can')
+          val[:mdl] = molecule_output(val[:mol], 'mdl')
         end
       end
 

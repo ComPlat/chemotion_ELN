@@ -18,7 +18,7 @@ RSpec.describe Molecule, type: :model do
 
     it 'have a tag with CID' do
       molecule.save!
-      expect(molecule.tag.taggable_data["pubchem_cid"]).to eq(123456789)
+      expect(molecule.tag.taggable_data["pubchem_cid"]).to eq('123456789')
     end
 
     it 'has molecule_names' do

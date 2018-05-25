@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# encoding: utf-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180312095413) do
+ActiveRecord::Schema.define(version: 20180524103806) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -72,12 +72,16 @@ ActiveRecord::Schema.define(version: 20180312095413) do
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
-    t.string  "token",   null: false
-    t.integer "user_id"
-    t.inet    "ip"
-    t.string  "role"
-    t.string  "fqdn"
+    t.string   "token",      null: false
+    t.integer  "user_id"
+    t.inet     "ip"
+    t.string   "fqdn"
+    t.string   "role"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
+
+  add_index "authentication_keys", ["user_id"], name: "index_authentication_keys_on_user_id", using: :btree
 
   create_table "code_logs", id: :uuid, default: "uuid_generate_v4()", force: :cascade do |t|
     t.string   "source"
@@ -166,6 +170,23 @@ ActiveRecord::Schema.define(version: 20180312095413) do
     t.string   "error_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "computed_props", force: :cascade do |t|
+    t.integer  "molecule_id"
+    t.float    "max_potential",      default: 0.0
+    t.float    "min_potential",      default: 0.0
+    t.float    "mean_potential",     default: 0.0
+    t.float    "lumo",               default: 0.0
+    t.float    "homo",               default: 0.0
+    t.float    "ip",                 default: 0.0
+    t.float    "ea",                 default: 0.0
+    t.float    "dipol_debye",        default: 0.0
+    t.integer  "status",             default: 0
+    t.jsonb    "data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.float    "mean_abs_potential", default: 0.0
   end
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|
@@ -471,30 +492,6 @@ ActiveRecord::Schema.define(version: 20180312095413) do
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
   add_index "reactions", ["role"], name: "index_reactions_on_role", using: :btree
 
-  create_table "reactions_product_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_product_samples", ["deleted_at"], name: "index_reactions_product_samples_on_deleted_at", using: :btree
-  add_index "reactions_product_samples", ["reaction_id"], name: "index_reactions_product_samples_on_reaction_id", using: :btree
-  add_index "reactions_product_samples", ["sample_id"], name: "index_reactions_product_samples_on_sample_id", using: :btree
-
-  create_table "reactions_reactant_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_reactant_samples", ["deleted_at"], name: "index_reactions_reactant_samples_on_deleted_at", using: :btree
-  add_index "reactions_reactant_samples", ["reaction_id"], name: "index_reactions_reactant_samples_on_reaction_id", using: :btree
-  add_index "reactions_reactant_samples", ["sample_id"], name: "index_reactions_reactant_samples_on_sample_id", using: :btree
-
   create_table "reactions_samples", force: :cascade do |t|
     t.integer  "reaction_id"
     t.integer  "sample_id"
@@ -507,30 +504,6 @@ ActiveRecord::Schema.define(version: 20180312095413) do
 
   add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
   add_index "reactions_samples", ["sample_id"], name: "index_reactions_samples_on_sample_id", using: :btree
-
-  create_table "reactions_solvent_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_solvent_samples", ["deleted_at"], name: "index_reactions_solvent_samples_on_deleted_at", using: :btree
-  add_index "reactions_solvent_samples", ["reaction_id"], name: "index_reactions_solvent_samples_on_reaction_id", using: :btree
-  add_index "reactions_solvent_samples", ["sample_id"], name: "index_reactions_solvent_samples_on_sample_id", using: :btree
-
-  create_table "reactions_starting_material_samples", force: :cascade do |t|
-    t.integer  "reaction_id"
-    t.integer  "sample_id"
-    t.boolean  "reference"
-    t.float    "equivalent"
-    t.datetime "deleted_at"
-  end
-
-  add_index "reactions_starting_material_samples", ["deleted_at"], name: "index_reactions_starting_material_samples_on_deleted_at", using: :btree
-  add_index "reactions_starting_material_samples", ["reaction_id"], name: "index_reactions_starting_material_samples_on_reaction_id", using: :btree
-  add_index "reactions_starting_material_samples", ["sample_id"], name: "index_reactions_starting_material_samples_on_sample_id", using: :btree
 
   create_table "reports", force: :cascade do |t|
     t.integer  "author_id"
@@ -706,14 +679,14 @@ ActiveRecord::Schema.define(version: 20180312095413) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 

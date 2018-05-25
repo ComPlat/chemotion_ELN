@@ -81,7 +81,9 @@ function FormatComponentHeader({ onClose, onSave, onFormat }) {
   return <PanelHeader title="Analyses Formatting" btns={btns} />;
 }
 
-function FormatComponent({ list, bsStyle, onSave, onFormat, onClose }) {
+function FormatComponent({
+  list, bsStyle, onSave, onFormat, onClose
+}) {
   const elements = list.map((el, idx) => (
     <ElementAnalyses key={el.id} element={el} idx={idx} />
   ));

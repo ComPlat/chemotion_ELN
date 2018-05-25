@@ -95,7 +95,7 @@ module Chemotion::Calculations
   end
 
   def self.valid_digit(input_num, precision)
-    num = BigDecimal.new(input_num.to_s)
+    num = BigDecimal.new((input_num.presence || 0).to_s)
     num_str = num.to_s('F')
     num_str =~ /^0*([1-9]+\d*)?.?(0*)([1-9]*)/
     head_len, tail_len = $1&.size || 0, $3 && $2&.size || 0

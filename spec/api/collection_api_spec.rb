@@ -14,7 +14,7 @@ describe Chemotion::CollectionAPI do
   }
 
   context 'authorized user logged in' do
-    let(:user)  { create(:user, first_name: 'Musashi', last_name: 'M') }
+    let(:user)  { create(:person, first_name: 'Musashi', last_name: 'M') }
     let(:u2)    { create(:user) }
     let(:group) { create(:group)}
     let!(:c1)   { create(:collection, user: user, is_shared: false) }

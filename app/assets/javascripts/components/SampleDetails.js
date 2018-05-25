@@ -1,17 +1,20 @@
 import React from 'react';
-import {Button, ButtonToolbar, InputGroup, ControlLabel, FormGroup, FormControl,
+import {Button, ButtonToolbar, InputGroup, Form, FormGroup, FormControl,
         Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
-        Tooltip, OverlayTrigger, DropdownButton, MenuItem, SplitButton, ButtonGroup} from 'react-bootstrap';
+        Tooltip, OverlayTrigger, DropdownButton, MenuItem, SplitButton,
+        ControlLabel, ButtonGroup, Grid} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
 import Barcode from 'react-barcode';
 import Select from 'react-select';
+import _ from 'lodash';
 
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
 
 import UIStore from './stores/UIStore';
+import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -34,6 +37,7 @@ import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 import SampleForm from './SampleForm'
+import SampleComputedPropsContainer from './computed_props/SampleComputedPropsContainer';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
 
@@ -52,7 +56,11 @@ export default class SampleDetails extends React.Component {
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: "",
       isCasLoading: false,
-    }
+    };
+
+    const data = UserStore.getState().profile.data || {};
+    this.enableComputedProps = _.get(data, 'computed_props.enable', false);
+
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
     this.addManualCas = this.addManualCas.bind(this);
@@ -602,9 +610,26 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  extraTab(ind){
+  moleculeComputedProps(ind) {
+    const { sample } = this.state;
+    if (!this.enableComputedProps) return <span />;
+
+    return (
+      <Tab
+        eventKey={ind}
+        title={'Computed Properties'}
+        key={'computed_props' + sample.id.toString()}
+      >
+        <ListGroupItem style={{paddingBottom: 20}}>
+          <SampleComputedPropsContainer sample={sample} />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
+  extraTab(ind, tabCount){
     let sample = this.state.sample || {}
-    let num = ind - 3 ;
+    let num = ind - tabCount;
     let NoName =  XTabs["content"+num];
     let Title = XTabs["title"+num];
     return(
@@ -684,15 +709,18 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
-    let sample = this.state.sample || {}
-    let tabContents = [
-                       (i)=>(this.samplePropertiesTab(i)),
-                       (i)=>(this.sampleContainerTab(i)),
-                       (i)=>(this.sampleImportReadoutTab(i))
-                      ];
-    for (let j=0;j < XTabs.count;j++){
-      if (XTabs['on'+j](sample)){
-        tabContents.push((i)=>this.extraTab(i))
+    let sample = this.state.sample || {};
+    const tabContents = [
+      (i)=>(this.samplePropertiesTab(i)),
+      (i)=>(this.sampleContainerTab(i)),
+      (i)=>(this.sampleImportReadoutTab(i)),
+      (i)=>(this.moleculeComputedProps(i))
+    ];
+
+    const tabCount = tabContents.length;
+    for (let j = 0; j < XTabs.count; j++){
+      if (XTabs['on' + j](sample)){
+        tabContents.push((i)=>this.extraTab(i, tabCount));
       }
     }
 

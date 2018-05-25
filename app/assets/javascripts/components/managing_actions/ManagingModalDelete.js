@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, ButtonToolbar, Checkbox } from 'react-bootstrap';
+import { Button, ButtonToolbar, Checkbox, OverlayTrigger, Tooltip, Label } from 'react-bootstrap';
 
 export default class ManagingModalDelete extends React.Component {
   constructor(props) {
@@ -38,7 +38,13 @@ export default class ManagingModalDelete extends React.Component {
           onChange={this.handleCheck}
           checked={this.state.deleteSubsamples}
         >
-          Also delete reaction subsamples?
+          Also delete reaction associated samples&nbsp;
+          <OverlayTrigger
+            placement="bottom"
+            overlay={<Tooltip id="delete_reaction_samples_info">if left unchecked, only the solvent and reactant samples of the selected reactions will be deleted</Tooltip>}
+          >
+            <Label>?</Label>
+          </OverlayTrigger>
         </Checkbox>
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={this.onHide}>Cancel</Button>

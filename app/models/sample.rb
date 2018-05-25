@@ -341,6 +341,10 @@ class Sample < ActiveRecord::Base
       } : {}
   end
 
+  def molecule_computed_prop
+    molecule.computed_prop
+  end
+
 private
 
   def has_collections

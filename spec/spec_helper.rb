@@ -67,6 +67,10 @@ RSpec.configure do |config|
         body: File.read(Rails.root + 'spec/fixtures/body_123456789_CAS.xml'),
         headers: {"Content-Type"=> "application/xml"}
       )
+    stub_request(:get, /http:\/\/pubchem.ncbi.nlm.nih.gov\/rest\/pug\/compound\/inchikey\/\S+\/cids\/TXT/).
+      # with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(:status => 200, :body => '123456789', :headers => {})
+
   end
 
   config.expect_with :rspec do |expectations|

@@ -1,6 +1,7 @@
 class Molecule < ActiveRecord::Base
   acts_as_paranoid
 
+  attr_accessor :pcid
   include Collectable
   include Taggable
 
@@ -9,6 +10,8 @@ class Molecule < ActiveRecord::Base
   has_many :samples
   has_many :collections, through: :samples
   has_many :molecule_names
+
+  has_one :computed_prop
 
   before_save :sanitize_molfile
   after_create :create_molecule_names
@@ -54,6 +57,11 @@ class Molecule < ActiveRecord::Base
     molecule
   end
 
+  def self.find_or_create_by_cano_smiles(cano_smiles)
+    molfile = Chemotion::OpenBabelService.molfile_from_cano_smiles(cano_smiles)
+    Molecule.find_or_create_by_molfile(molfile)
+  end
+
   def self.find_or_create_by_molfiles(molfiles_array)
     babel_info_array = Chemotion::OpenBabelService.molecule_info_from_molfiles(molfiles_array)
     babel_info_array.map.with_index do |babel_info, i|
@@ -84,7 +92,7 @@ class Molecule < ActiveRecord::Base
     self.exact_molecular_weight = babel_info[:mass]
     self.iupac_name = pubchem_info[:iupac_name]
     self.names = pubchem_info[:names]
-
+    self.pcid = pubchem_info[:cid]
     self.check_sum_formular # correct exact and average MW for resins
 
     self.attach_svg babel_info[:svg]

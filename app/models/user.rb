@@ -12,6 +12,7 @@ class User < ActiveRecord::Base
   has_many :samples, -> { unscope(:order).distinct }, :through => :collections
   has_many :reactions, through: :collections
   has_many :wellplates, through: :collections
+  has_many :screens, through: :collections
   has_many :research_plans, :through => :collections
 
   has_many :samples_created, foreign_key: :created_by, class_name: 'Sample'
@@ -39,8 +40,9 @@ class User < ActiveRecord::Base
   validate :name_abbreviation_length
 # validate :academic_email
   validate :mail_checker
-  after_create :create_chemotion_public_collection, :create_all_collection,
-               :has_profile
+  after_create :create_chemotion_public_collection
+  after_create :create_all_collection, :has_profile
+  before_destroy :delete_data
 
   scope :by_name, ->(query) {
     where('LOWER(first_name) ILIKE ? OR LOWER(last_name) ILIKE ?',
@@ -109,10 +111,9 @@ class User < ActiveRecord::Base
   end
 
   def increment_counter key
-    if (self.counters[key] != nil)
-      self.counters[key] = self.counters[key].succ
-      self.save!
-    end
+    return if self.counters[key].nil?
+    self.counters[key] = self.counters[key].succ
+    self.save!
   end
 
   def has_profile
@@ -155,12 +156,24 @@ class User < ActiveRecord::Base
   # - add subcollections
   # - delete it
   def create_all_collection
-    Collection.create(user: self, label: 'All', is_locked: true)
+    Collection.create(user: self, label: 'All', is_locked: true, position: 0)
   end
 
   def create_chemotion_public_collection
-    Collection.create(user: self, label: 'chemotion.net', is_locked: true)
+    return unless self.type == 'Person'
+    Collection.create(user: self, label: 'chemotion.net', is_locked: true, position: 1)
   end
+end
+
+def delete_data
+  # TODO: logic to check if user can be really destroy or which data can be deleted
+  count = self.samples.count
+    # + self.reactions.count
+    # + self.wellplates.count
+    # + self.screens.count
+    # + self.research_plans.count
+  self.update_columns(email: "#{id}_#{name_abbreviation}@deleted")
+  self.update_columns(name_abbreviation: nil )if count.zero?
 end
 
 class Person < User

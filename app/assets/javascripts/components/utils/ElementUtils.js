@@ -73,8 +73,12 @@ const commonFormatPattern = [
 const sampleAnalysesFormatPattern = {
   _13cnmr: [
     {
-      pattern: '(\\W|^)13 {0,1}C NMR',
+      pattern: '(\\W|^)13 {0,1}C( |-)NMR',
       replace: '$1<sup>13</sup>C NMR'
+    },
+    {
+      pattern: '<sup>13</sup>C-NMR',
+      replace: '<sup>13</sup>C NMR'
     },
     {
       pattern: '(\\d+) C',
@@ -83,8 +87,12 @@ const sampleAnalysesFormatPattern = {
   ],
   _1hnmr: [
     {
-      pattern: '(\\W|^)1 {0,1}H NMR',
+      pattern: '(\\W|^)1 {0,1}H( |-)NMR',
       replace: '$1<sup>1</sup>H NMR'
+    },
+    {
+      pattern: '<sup>1</sup>H-NMR',
+      replace: '<sup>1</sup>H NMR'
     },
   ],
   _ea: [
@@ -140,8 +148,10 @@ const formatAnalysisContent = function autoFormatAnalysisContentByPattern(analys
   const kind = analysis.extended_metadata.kind || '';
   const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
   let md = deltaToMarkdown(content);
+  console.log(md);
   let formatPattern = (sampleAnalysesFormatPattern[type] || []);
   formatPattern = formatPattern.concat(commonFormatPattern);
+  console.log(formatPattern);
   formatPattern.forEach((patt) => {
     md = searchAndReplace(md, patt.pattern, patt.replace);
   });

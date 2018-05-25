@@ -8,6 +8,7 @@ module ChemReadHelpers
   reagents_paths = Dir.glob('lib/cdx/below_arrow/*.yaml')
                       .reject { |f| f.end_with?('solvents.yaml') }
                       .map { |f| Rails.root + f }
+  reagents_paths.push(Rails.root + 'lib/cdx/parser/abbreviations.yaml')
   REAGENTS_SMI = reagents_paths.reduce([]) { |acc, val|
     acc.concat(YAML.safe_load(File.open(val)).values)
   }
@@ -150,6 +151,7 @@ module ChemReadHelpers
         text: m[:text],
         time: m[:time],
         detail: m[:detail],
+        mdl: m[:mdl],
         temperature: m[:temperature]
       }
       desc[idx][:yield] = m[:yield] if %w[products reagents].include?(group)
@@ -206,8 +208,11 @@ module ChemReadHelpers
   def mol_info(obj)
     return if obj[:mol].nil?
 
-    smi = obj[:smi].nil? ? '' : obj[:smi]
-    res = { smi: smi, desc: {} }
+    res = {
+      desc: {},
+      smi: (obj[:smi].nil? || ''),
+      mdl: (obj[:mdl].nil? || '')
+    }
 
     extract_text_info(obj) unless obj[:text].nil?
 

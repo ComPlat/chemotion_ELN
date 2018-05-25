@@ -33,8 +33,9 @@ module SVG
       return false if index_first.nil?
 
       target[1..-1].each_with_index do |val, k|
-        idx = container.find_index(val)
-        return false if idx.nil? || (idx != (index_first + k + 1))
+        container_idx = index_first + k + 1
+        container_value = container[container_idx]
+        return false unless container_value == val
       end
 
       true

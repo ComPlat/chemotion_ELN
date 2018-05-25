@@ -14,7 +14,7 @@ function extractAnalyses(listEls) {
   const listObjs = [];
   listEls.forEach((el) => {
     let obj = {};
-    if (el.constructor.name === 'Sample') {
+    if (el.type === 'sample') {
       obj = {
         type: 'Sample',
         id: el.id,
@@ -23,7 +23,7 @@ function extractAnalyses(listEls) {
         children: []
       };
       listObjs.push(obj);
-    } else if (el.constructor.name === 'Reaction') {
+    } else if (el.type === 'reaction') {
       let rAna = [];
       const ana = el.container.children
         .filter(x => x.container_type === 'analyses')[0];
@@ -85,9 +85,9 @@ export default class FormatContainer extends React.Component {
       reactionIds: state.reaction.checkedIds.toArray()
     };
     const oldTags = this.state.selectedObjTags;
-    const defaultTags = this.state.defaultObjTags;
 
     if (_.isEqual(newTags, oldTags) === false) {
+      const defaultTags = this.state.defaultObjTags;
       ReportActions.updateCheckedTags.defer(oldTags, newTags, defaultTags);
     }
   }

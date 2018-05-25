@@ -6,7 +6,8 @@ function ListProps({ label, listProps }) {
   if (Object.values(listProps).filter(x => x).length === 0) return (<span />);
 
   const list = Object.keys(listProps).filter(x => (
-    x !== 'ID' && x !== 'parentID' && listProps[x] && typeof listProps[x] !== 'object'
+    x !== 'ID' && x !== 'parentID' && x !== 'mdl' &&
+    listProps[x] && typeof listProps[x] !== 'object'
   ));
   if (list.length === 0) return <span />;
 

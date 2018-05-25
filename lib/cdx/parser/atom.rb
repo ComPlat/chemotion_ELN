@@ -125,10 +125,12 @@ module Cdx
         atom.set_vector(props[:x], props[:y], 0) unless props[:x].nil? || props[:y].nil?
 
         # Check R-group
-        r_group = attext == 'R' || (attext.size == 2 && attext[1].to_i.positive?)
+        # r_group = attext == 'R' || (attext.size == 2 && attext[1].to_i.positive?)
+        r_group = !(attext =~ /R\d?/).nil?
 
         # If R-group
-        return atom_alias(atom, attext, props[:polygon]) if props[:type] == 7 && r_group
+        # return atom_alias(atom, attext, props[:polygon]) if props[:type] == 7 && r_group
+        return atom_r_group(atom, attext) if props[:type] == 7 && r_group
         # Treat text as an alias
         return do_alias(atom, atmap, almap, props) if props[:is_alias]
 
@@ -165,9 +167,18 @@ module Cdx
         # end
       end
 
+      def atom_r_group(atom, text)
+        ad = OpenBabel::AliasData.new
+        ad.set_alias(text)
+        ad.set_origin(OpenBabel::FileformatInput)
+        atom.set_atomic_num(0)
+        atom.clone_data(ad)
+      end
+
       def atom_alias(atom, text, polygon)
         data = OpenBabel::OBPairData.new
         data.set_attribute('Alias')
+
         unless polygon.nil?
           box = polygon.bounding_box
           text += "$$$$#{box.leftbottom.x}-#{box.leftbottom.y},\

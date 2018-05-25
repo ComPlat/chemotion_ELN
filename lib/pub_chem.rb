@@ -1,4 +1,6 @@
 require 'net/http'
+require 'net/ftp'
+
 
 module PubChem
   include HTTParty
@@ -72,13 +74,13 @@ module PubChem
   end
 
   def self.get_cid_from_inchikey(inchikey)
-    response = get_record_from_inchikey(inchikey)
-
-    begin
-      response['PC_Compounds'][0]['id']['id']['cid']
-    rescue
-      return nil
+    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
+      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
     end
+
+    resp = conn.get('/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT')
+    return nil unless resp.success?
+    resp.body.presence&.strip
   end
 
   def self.get_cas_from_cid(cid)
@@ -91,5 +93,89 @@ module PubChem
     cas_values = resp_doc.css('Name:contains("CAS")').map { |x| x.parent.css('StringValue').text }
     cas = Utils.most_occurance(cas_values)
     [cas]
+  end
+
+  FTP_PATH = 'ftp.ncbi.nlm.nih.gov'
+
+  # return list of week directory names
+  def self.update_list(type = 'Weekly')
+    dir_path = ftp_update_dir(type: type)
+    ftp = Net::FTP.new
+    ftp.connect(FTP_PATH)
+    ftp.login
+    ftp.chdir(dir_path)
+    dirname_list = ftp.list.map { |entry| entry.split(/\s+/)[-1]}
+    ftp.close
+    dirname_list
+  end
+
+  def self.date_select(date, date_list)
+    date = Date.parse(date) unless date.is_a?(Date)
+    date_list.select { |d|  d =~ /\d{4}-\d{1,2}-\d{1,2}/ && Date.parse(d) > date  }
+  end
+
+  def self.sdf_file_list(date, type = 'Weekly')
+    dir_path = ftp_update_dir(date: date, type: type)
+    ftp = Net::FTP.new
+    ftp.connect(FTP_PATH)
+    ftp.login
+    ftp.chdir(dir_path)
+    dirname_list = ftp.list('Compound*').map { |entry| entry.split(/\s+/)[-1]}
+    ftp.close
+    dirname_list
+  end
+
+  # compose the ftp directory
+  def self.ftp_update_dir(type: 'Weekly', date: nil)
+    return "/pubchem/Compound/#{type}/" unless date.present?
+    date = date.strftime('%Y-%m-%d') if date.is_a?(Date)
+    "/pubchem/Compound/#{type}/#{date}/SDF/"
+  end
+
+  # download an update sdf file given a path into a tempfile
+  def self.dowload_sdf_update_files(remotefile_path)
+    tf = Tempfile.new
+    tf.binmode
+    ftp = Net::FTP.new
+    ftp.connect(FTP_PATH)
+    ftp.login
+    begin
+      ftp.getbinaryfile(remotefile_path) { |data|  tf.write data }
+    ensure
+      ftp.close
+    end
+    tf.rewind
+    tf
+  end
+
+  def self.ungzip(tempfile)
+    tf = Tempfile.new
+    Zlib::GzipReader.open(tempfile.path) { |gz| tf.write(gz.read) }
+    tf.rewind
+    tempfile.close if tempfile.respond_to?(:close)
+    tempfile.unlink if tempfile.respond_to?(:unlink)
+    tf
+  end
+
+  def self.sdf_to_hash(tempfile)
+    tempfile.rewind
+    results = {}
+    IO.foreach(tempfile.path, "$$$$\n") do |molfile|
+      lines = molfile.lines
+      previous_line = ''
+      names = {}
+      cid = nil
+      ink = nil
+      lines.each.with_index do |line, i|
+        cid = line.strip if previous_line =~ />\s+<PUBCHEM_COMPOUND_CID>/
+        ink = line.strip if previous_line =~ />\s+<PUBCHEM_IUPAC_INCHIKEY>/
+        if previous_line =~ />\s+<PUBCHEM_IUPAC_(\w+)_NAME>/
+          names[$1] = line.strip
+        end
+        previous_line = line
+      end
+      results[ink] = { 'cid' => cid, 'names' => names }
+    end
+    results
   end
 end

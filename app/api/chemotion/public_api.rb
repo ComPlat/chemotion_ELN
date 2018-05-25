@@ -3,7 +3,53 @@ module Chemotion
 
     namespace :public do
       get 'ping' do
-        status 200
+        status 204
+      end
+
+      resource :computed_props do
+        params do
+          requires :token, type: String
+          requires :name, type: String
+
+          requires :data, type: String
+        end
+
+        post do
+          cconfig = Rails.configuration.compute_config
+          error!('No computation configuration!') if cconfig.nil?
+          error!('Unauthorized') unless cconfig.receiving_secret == params[:token]
+
+          ComputedProp.from_raw(params[:name], params[:data])
+
+          status 200
+        end
+      end
+
+      namespace :affiliations do
+        desc "Return all countries available"
+        get "countries" do
+          ISO3166::Country.all_translated
+        end
+
+        desc "Return all current organizations"
+        get "organizations" do
+          Affiliation.pluck("DISTINCT organization")
+        end
+
+        desc "Return all current departments"
+        get "departments" do
+          Affiliation.pluck("DISTINCT department")
+        end
+
+        desc "Return all current groups"
+        get "groups" do
+          Affiliation.pluck("DISTINCT affiliations.group")
+        end
+
+        desc "return organization's name from email domain"
+        get "swot" do
+          Swot::school_name "dummy@#{params[:domain]}"
+        end
       end
     end
 
@@ -54,7 +100,6 @@ module Chemotion
           end
           true
         end
-
       end
     end
   end

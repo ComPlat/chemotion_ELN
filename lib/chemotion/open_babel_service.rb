@@ -109,6 +109,19 @@ M  END
     return inchikey
   end
 
+  def self.molfile_from_cano_smiles(cano_smiles)
+    c = OpenBabel::OBConversion.new
+    c.set_in_format 'can'
+
+    m = OpenBabel::OBMol.new
+    c.read_string m, cano_smiles
+
+    c.set_out_format 'mol'
+    opts = OpenBabel::OBConversion::GENOPTIONS
+    c.add_option 'gen2D', opts
+    c.write_string(m, false).to_s
+  end
+
   def self.molecule_info_from_molfiles molfile_array
     molecule_info = []
     molfile_array.each do |molfile|

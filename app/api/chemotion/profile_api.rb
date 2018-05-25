@@ -5,7 +5,7 @@ module Chemotion
       get do
         profile = current_user.profile
         data = profile.data || {}
-        { **data, show_external_name: profile.show_external_name}
+        { data: data, show_external_name: profile.show_external_name }
       end
 
       desc 'update user profile'

@@ -1,8 +1,8 @@
 import 'whatwg-fetch';
 import Reaction from '../models/Reaction';
-import Literature from '../models/Literature';
-import UIStore from '../stores/UIStore'
-import AttachmentFetcher from './AttachmentFetcher'
+import UIStore from '../stores/UIStore';
+import NotificationActions from '../actions/NotificationActions';
+import AttachmentFetcher from './AttachmentFetcher';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -145,5 +145,24 @@ export default class ReactionsFetcher {
     }else{
       return promise()
     }
+  }
+
+  static importReactionsFromChemRead(reactionsList) {
+    const promise = fetch('/api/v1/reactions/import_chemread', {
+      credentials: 'same-origin',
+      method: 'post',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        reaction_list: reactionsList,
+        collection_id: UIStore.getState().currentCollection.id,
+      })
+    }).then(response => response.json()).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
   }
 }

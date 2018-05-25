@@ -144,6 +144,7 @@ class ElementStore {
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
+      handleImportReactionsFromChemRead: ElementActions.importReactionsFromChemRead,
 
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
@@ -198,6 +199,7 @@ class ElementStore {
           ElementActions.generateEmptyReaction,
           ElementActions.showReportContainer,
           ElementActions.showFormatContainer,
+          ElementActions.showComputedPropsGraph,
           ElementActions.showDeviceControl,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
@@ -661,6 +663,11 @@ class ElementStore {
     if (data.sdf){
       this.handleRefreshElements('sample');
     }
+  }
+
+  handleImportReactionsFromChemRead(data) {
+    this.handleRefreshElements('sample');
+    this.handleRefreshElements('reaction');
   }
 
   // -- Wellplates --

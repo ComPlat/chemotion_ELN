@@ -64,13 +64,13 @@ module Chemotion
           deleted[element] = @collection.send(element + 's').by_ui_state(params[element]).destroy_all.map(&:id)
         end
 
-        if params[:options][:deleteSubsamples]
-          # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
-          deleted['sample'] += Sample.joins("inner join reactions_samples on reactions_samples.sample_id = samples.id")
-            .joins(:collections)
-            .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
-            .destroy_all.map(&:id)
-        end
+        # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
+        sql_join = "inner join reactions_samples on reactions_samples.sample_id = samples.id"
+        sql_join += "and reactions_samples.type ('ReactionsSolventSample','ReactionsReactantSample')" unless params[:options][:deleteSubsamples]
+        deleted['sample'] += Sample.joins(sql_join).joins(:collections)
+          .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
+          .destroy_all.map(&:id)
+
         { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
       end
     end
