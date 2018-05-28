@@ -1,7 +1,8 @@
 import React from 'react';
 import _ from 'lodash';
-
+import PropTypes from 'prop-types';
 import { Dropdown, MenuItem } from 'react-bootstrap';
+
 import ElementActions from '../actions/ElementActions';
 import UserStore from '../stores/UserStore';
 
@@ -19,8 +20,9 @@ const showComputedPropsGraph = () => {
   ElementActions.showComputedPropsGraph();
 };
 
-const ReportUtilButton = () => {
-  const data = UserStore.getState().profile.data || {};
+const ReportUtilButton = ({ customClass  }) => {
+  const { profile } = UserStore.getState().profile || {};
+  const { data } = profile || {};
   const enableComputedProps = _.get(data, 'computed_props.enable', false);
 
   const graphItem = enableComputedProps ? (
@@ -31,9 +33,10 @@ const ReportUtilButton = () => {
     <span />
   );
 
+
   return (
     <Dropdown id="format-dropdown">
-      <Dropdown.Toggle className="btn-success">
+      <Dropdown.Toggle className={customClass || 'btn-success'}>
         <i className="fa fa-file-text-o" style={{ marginRight: 4 }} />
         <i className="fa fa-pencil" />
       </Dropdown.Toggle>
@@ -49,6 +52,14 @@ const ReportUtilButton = () => {
       </Dropdown.Menu>
     </Dropdown>
   );
+};
+
+ReportUtilButton.propTypes = {
+  customClass: PropTypes.string,
+};
+
+ReportUtilButton.defaultProps = {
+  customClass: null,
 };
 
 export default ReportUtilButton;

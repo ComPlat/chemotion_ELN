@@ -107,14 +107,16 @@ export default class Navigation extends React.Component {
 
   render() {
     const { modalProps, showAdvancedSearch } = this.state;
+    const { profile } = UserStore.getState();
+    const { customClass } = (profile && profile.data) || {};
 
     return (this.state.currentUser
       ? <Navbar fluid className='navbar-custom'>
           {this.navHeader()}
           <Nav navbar className='navbar-form'>
             <Search />
-            <ManagingActions updateModalProps={this.updateModalProps.bind(this)} />
-            <ContextActions updateModalProps={this.updateModalProps.bind(this)} />
+            <ManagingActions updateModalProps={() => this.updateModalProps} customClass={customClass} />
+            <ContextActions updateModalProps={() => this.updateModalProps} customClass={customClass} />
             <NavigationModal {...modalProps} />
           </Nav>
           <UserAuth/>

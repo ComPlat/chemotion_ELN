@@ -1,9 +1,8 @@
 import React from 'react';
-import {ButtonGroup} from 'react-bootstrap';
-import ShareButton from './ShareButton';
-import MoveOrAssignButton from './MoveOrAssignButton';
-import RemoveOrDeleteButton from './RemoveOrDeleteButton';
+import { ButtonGroup } from 'react-bootstrap';
+import PropTypes from 'prop-types';
 
+import { ShareButton, MoveOrAssignButton, RemoveOrDeleteButton } from './ManagingActionButtons';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
 import UserActions from './../actions/UserActions';
@@ -19,19 +18,18 @@ import ElementActions from '../actions/ElementActions';
 export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
-    let {currentUser} = UserStore.getState();
     this.state = {
-      currentUser: currentUser,
-      currentCollection: {id: 0},
+      currentUser: UserStore.getState(),
+      currentCollection: { id: 0 },
       sharing_allowed: false,
       deletion_allowed: false,
       is_top_secret: false,
-    }
+    };
 
-    this.handleButtonClick = this.handleButtonClick.bind(this)
-    this.onChange = this.onChange.bind(this)
-    this.onUserChange = this.onUserChange.bind(this)
-    this.onPermissionChange = this.onPermissionChange.bind(this)
+    this.handleButtonClick = this.handleButtonClick.bind(this);
+    this.onChange = this.onChange.bind(this);
+    this.onUserChange = this.onUserChange.bind(this);
+    this.onPermissionChange = this.onPermissionChange.bind(this);
   }
 
   componentDidMount() {
@@ -111,9 +109,9 @@ export default class ManagingActions extends React.Component {
   }
 
   onUserChange(state) {
-    let newId = state.currentUser ? state.currentUser.id : null
-    let oldId =this.state.currentUser ?  this.state.currentUser.id : null
-    if (newId !== oldId){
+    const newId = state.currentUser ? state.currentUser.id : null
+    const oldId = this.state.currentUser ? this.state.currentUser.id : null
+    if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
       });
@@ -186,7 +184,7 @@ export default class ManagingActions extends React.Component {
   }
 
   isShareBtnDisabled(selection) {
-    const {currentCollection} = this.state;
+    const { currentCollection } = this.state;
     let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
     return !selection || in_all_collection || this.state.sharing_allowed == false;
   }
@@ -249,24 +247,39 @@ export default class ManagingActions extends React.Component {
   }
 
   render() {
-    let sel = this.hasSelection();
+    const sel = this.hasSelection();
+
     return (
-      <div style={{display: 'inline', float: 'left', marginRight: 10}}>
+      <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
         <ButtonGroup>
-          <MoveOrAssignButton assignDisabled={this.isAssignDisabled(sel)}
+          <MoveOrAssignButton
+            assignDisabled={this.isAssignDisabled(sel)}
             moveDisabled={!sel || this.isMoveDisabled()}
-            onClick={this.handleButtonClick}/>
-          <RemoveOrDeleteButton removeDisabled={this.isRemoveDisabled(sel)}
+            onClick={this.handleButtonClick}
+            customClass={this.props.customClass}
+          />
+          <RemoveOrDeleteButton
+            removeDisabled={this.isRemoveDisabled(sel)}
             deleteDisabled={this.isDeleteDisabled(sel)}
-            onClick={this.handleButtonClick}/>
-          <ShareButton isDisabled={this.isShareBtnDisabled(sel)}
-            onClick={this.handleButtonClick}/>
+            onClick={this.handleButtonClick}
+            customClass={this.props.customClass}
+          />
+          <ShareButton
+            isDisabled={this.isShareBtnDisabled(sel)}
+            onClick={this.handleButtonClick}
+            customClass={this.props.customClass}
+          />
         </ButtonGroup>
       </div>
-    )
+    );
   }
 }
 
 ManagingActions.propTypes = {
-  updateModalProps: React.PropTypes.func.isRequired,
+  updateModalProps: PropTypes.func.isRequired,
+  customClass: PropTypes.string,
+};
+
+ManagingActions.defaultProps = {
+  customClass: null,
 };

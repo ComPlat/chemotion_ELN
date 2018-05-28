@@ -1,6 +1,9 @@
 import React from 'react';
-import {SplitButton, Button, ButtonToolbar, DropdownButton, FormControl,
-  FormGroup, ControlLabel, Modal, MenuItem} from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  SplitButton, Button, ButtonToolbar, DropdownButton, FormControl,
+  FormGroup, ControlLabel, Modal, MenuItem
+} from 'react-bootstrap';
 import Aviator from 'aviator';
 
 import { elementShowOrNew } from '../routesUtils';
@@ -196,14 +199,19 @@ export default class CreateButton extends React.Component {
   }
 
   render() {
-    const {isDisabled} = this.props
-    let type = UserStore.getState().currentType
+    const { isDisabled, customClass } = this.props
+    const type = UserStore.getState().currentType
 
     return (
       <div>
-        <SplitButton id='create-split-button' bsStyle="primary"
-                     title={this.createBtn(type)} disabled={isDisabled}
-                     onClick={() => this.createElementOfType(type)}>
+        <SplitButton
+          id='create-split-button'
+          bsStyle={customClass ? null : 'primary'}
+          className={customClass}
+          title={this.createBtn(type)}
+          disabled={isDisabled}
+          onClick={() => this.createElementOfType(type)}
+        >
           {this.createWellplateModal()}
 
           <MenuItem onSelect={() => this.createElementOfType('sample')}>Create Sample</MenuItem>
@@ -226,3 +234,11 @@ export default class CreateButton extends React.Component {
     )
   }
 }
+
+CreateButton.PropTypes = {
+  customClass: PropTypes.string,
+};
+
+CreateButton.defaultProps = {
+  customClass: null,
+};

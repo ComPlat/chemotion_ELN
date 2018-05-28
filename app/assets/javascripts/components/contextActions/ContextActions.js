@@ -1,5 +1,6 @@
 import React from 'react';
-import {ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem} from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem } from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
 import UIActions from './../actions/UIActions'
 import CreateButton from './CreateButton';
@@ -51,21 +52,22 @@ export default class ContextActions extends React.Component {
   }
 
   render() {
-    const { updateModalProps } = this.props;
+    const { updateModalProps, customClass } = this.props;
     return (
-      <div style={{display: 'inline', float: 'left'}}>
+      <div style={{ display: 'inline', float: 'left' }}>
         <ButtonGroup>
           <ExportImportButton
             isDisabled={this.isDisabled()}
             updateModalProps={updateModalProps}
+            customClass={customClass}
           />
-          <ReportUtilButton />
+          <ReportUtilButton customClass={customClass} />
         </ButtonGroup>
-        <ButtonGroup style={{marginLeft: '10px'}}>
-          <CreateButton isDisabled={this.isCreateDisabled()}/>
+        <ButtonGroup style={{ marginLeft: '10px' }}>
+          <CreateButton isDisabled={this.isCreateDisabled()} customClass={customClass} />
         </ButtonGroup>
-        <ButtonGroup style={{marginLeft: '10px'}}>
-          <ScanCodeButton/>
+        <ButtonGroup style={{ marginLeft: '10px' }}>
+          <ScanCodeButton customClass={customClass} />
         </ButtonGroup>
       </div>
     )
@@ -73,5 +75,10 @@ export default class ContextActions extends React.Component {
 }
 
 ContextActions.propTypes = {
-  updateModalProps: React.PropTypes.func.isRequired,
+  updateModalProps: PropTypes.func.isRequired,
+  customClass: PropTypes.string,
+};
+
+ContextActions.defaultProps = {
+  customClass: null,
 };
