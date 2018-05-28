@@ -54,9 +54,9 @@ module Export
         dl = sample['dl_wp'] || sample['dl_r'] || 0
         # NB: as of now , only dl 0 and 10 are implemented
         dl = 10 if dl.positive?
-        headers = instance_variable_get("headers#{sample['dl_s']}#{dl}")
-        data = headers.map { |column| column ? sample[:column] : nil }
-        data[@image_index] = svg_path(sample) if headers.key?('image')
+        headers = instance_variable_get("@headers#{sample['dl_s']}#{dl}")
+        data = headers.map { |column| column ? sample[column] : nil }
+        data[@image_index] = svg_path(sample) if headers.include?('image')
       end
 
       data
