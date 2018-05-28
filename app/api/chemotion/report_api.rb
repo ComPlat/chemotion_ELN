@@ -49,7 +49,7 @@ module Chemotion
           force_molfile_selection
         end
         c_id = params[:uiState][:currentCollection]
-        c_id = SyncCollectionsUser.find_by(c_id)&.collection_id if params[:uiState][:isSync]
+        c_id = SyncCollectionsUser.find(c_id)&.collection_id if params[:uiState][:isSync]
 
         %i[sample reaction wellplate].each do |table|
           next unless (p_t = params[:uiState][table])
