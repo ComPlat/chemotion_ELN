@@ -18,8 +18,9 @@ import ElementActions from '../actions/ElementActions';
 export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
+    const { currentUser } = UserStore.getState();
     this.state = {
-      currentUser: UserStore.getState(),
+      currentUser,
       currentCollection: { id: 0 },
       sharing_allowed: false,
       deletion_allowed: false,

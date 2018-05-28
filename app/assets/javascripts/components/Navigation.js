@@ -29,9 +29,10 @@ export default class Navigation extends React.Component {
         listSharedCollections: false,
       }
     }
-    this.onChange = this.onChange.bind(this)
-    this.onUIChange = this.onUIChange.bind(this)
-    this.toggleCollectionTree = this.toggleCollectionTree.bind(this)
+    this.onChange = this.onChange.bind(this);
+    this.onUIChange = this.onUIChange.bind(this);
+    this.toggleCollectionTree = this.toggleCollectionTree.bind(this);
+    this.updateModalProps = this.updateModalProps.bind(this);
   }
 
   componentDidMount() {
@@ -115,8 +116,8 @@ export default class Navigation extends React.Component {
           {this.navHeader()}
           <Nav navbar className='navbar-form'>
             <Search />
-            <ManagingActions updateModalProps={() => this.updateModalProps} customClass={customClass} />
-            <ContextActions updateModalProps={() => this.updateModalProps} customClass={customClass} />
+            <ManagingActions updateModalProps={this.updateModalProps} customClass={customClass} />
+            <ContextActions updateModalProps={this.updateModalProps} customClass={customClass} />
             <NavigationModal {...modalProps} />
           </Nav>
           <UserAuth/>

@@ -56,6 +56,9 @@ module Export
       @headers010 = @headers.map { |column|
         (HEADERS_SAMPLE_0 + HEADERS_WELLPLATE_10).include?(column) ? column : nil
       }
+      @headers100 = @headers.map { |column|
+        (HEADERS_SAMPLE_10 + HEADERS_WELLPLATE_0).include?(column) ? column : nil
+      }
       @headers00 = @headers.map { |column|
         (HEADERS_SAMPLE_0 + HEADERS_WELLPLATE_0).include?(column) ? column : nil
       }
@@ -65,6 +68,9 @@ module Export
       @headers010 = @headers.map { |column|
         (HEADERS_SAMPLE_0 + HEADERS_REACTION_10).include?(column) ? column : nil
       }
+      @headers100 = @headers.map { |column|
+        (HEADERS_SAMPLE_10 + HEADERS_REACTION_0).include?(column) ? column : nil
+      }
       @headers00 = @headers.map { |column|
         (HEADERS_SAMPLE_0 + HEADERS_REACTION_0).include?(column) ? column : nil
       }
@@ -73,6 +79,9 @@ module Export
     def generate_headers_sample
       @headers00 = @headers.map { |column|
         HEADERS_SAMPLE_0.include?(column) ? column : nil
+      }
+      @headers100 = @headers.map { |column|
+        HEADERS_SAMPLE_10.include?(column) ? column : nil
       }
     end
   end
