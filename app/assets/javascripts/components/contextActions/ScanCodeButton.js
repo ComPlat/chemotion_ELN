@@ -1,11 +1,14 @@
 import React from 'react';
-import ReactDOM from 'react-dom'
-import {Alert, Button, Modal, OverlayTrigger, Tooltip, SplitButton,
-  FormGroup, ControlLabel, FormControl, MenuItem, Form} from 'react-bootstrap';
+import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
+import {
+  Alert, Button, Modal, OverlayTrigger, Tooltip, SplitButton,
+  FormGroup, ControlLabel, FormControl, MenuItem, Form
+} from 'react-bootstrap';
+import 'whatwg-fetch';
 import Quagga from 'quagga';
 import QrReader from 'react-qr-reader';
 import UIActions from '../actions/UIActions';
-import 'whatwg-fetch';
 import Utils from '../utils/Functions';
 import UIStore from '../stores/UIStore';
 
@@ -201,45 +204,63 @@ export default class ScanCodeButton extends React.Component {
   }
 
   render() {
-    let ids = this.state.checkedIds.toArray()
-    let disabledPrint = !(ids.length > 0)
-    let contents_uri = `api/v1/code_logs/print_codes?element_type=sample&ids[]=${ids}`
-    let menuItems = [
+    const ids = this.state.checkedIds.toArray();
+    const disabledPrint = !(ids.length > 0);
+    const contentsUri = `api/v1/code_logs/print_codes?element_type=sample&ids[]=${ids}`;
+    const menuItems = [
       {
         key: 'smallCode',
-        contents: `${contents_uri}&size=small`,
+        contents: `${contentsUri}&size=small`,
         text: 'Small Label',
       },
       {
         key: 'bigCode',
-        contents: `${contents_uri}&size=big`,
+        contents: `${contentsUri}&size=big`,
         text: 'Large Label',
       },
-    ]
+    ];
 
-    let title = (
-      <span className="fa-stack" style={{top: -4}} >
-        <i className="fa fa-barcode fa-stack-1x"/>
-        <i className="fa fa-search fa-stack-1x" style={{ left: 7}}/>
+    const title = (
+      <span className="fa-stack" style={{ top: -4 }} >
+        <i className="fa fa-barcode fa-stack-1x" />
+        <i className="fa fa-search fa-stack-1x" style={{ left: 7 }} />
       </span>
-    )
-
+    );
+    const { customClass } = this.props;
     return (
       <div>
-        <SplitButton id="search-code-split-button" bsStyle="default"
-          title={title} onClick={this.open} style={{height: "34px"}}>
-            {menuItems.map(e=>
-              <MenuItem key={e.key}
-                disabled={disabledPrint}
-                onSelect={(eventKey,event) => {event.stopPropagation();
-                  Utils.downloadFile({contents: e.contents})}}>
-                {e.text}
-              </MenuItem>
-            )}
+        <SplitButton
+          id="search-code-split-button"
+          bsStyle={customClass ? null : 'default'}
+          className={customClass}
+          title={title}
+          onClick={this.open}
+          style={{ height: '34px' }}
+        >
+          {menuItems.map(e => (
+            <MenuItem key={e.key}
+              disabled={disabledPrint}
+              onSelect={(eventKey, event) => {
+                event.stopPropagation();
+                Utils.downloadFile({ contents: e.contents })
+              }}
+            >
+              {e.text}
+            </MenuItem>
+          ))}
         </SplitButton>
 
         {this.scanModal()}
       </div>
-    )
+    );
   }
 }
+
+
+ScanCodeButton.propTypes = {
+  customClass: PropTypes.string,
+};
+
+ScanCodeButton.defaultProps = {
+  customClass: null,
+};

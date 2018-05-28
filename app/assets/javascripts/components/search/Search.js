@@ -10,6 +10,7 @@ import SuggestionsFetcher from '../fetchers/SuggestionsFetcher';
 import ElementActions from '../actions/ElementActions';
 import UIStore from '../stores/UIStore';
 import UIActions from '../actions/UIActions';
+import UserStore from '../stores/UserStore';
 
 export default class Search extends React.Component {
   constructor(props) {
@@ -143,12 +144,15 @@ export default class Search extends React.Component {
   }
 
   render() {
+    const { profile } = UserStore.getState();
+    const { customClass } = (profile && profile.data) || {};
+
     const buttonAfter = (
       <ButtonGroup>
-        <Button bsStyle="primary" onClick={() => this.showStructureEditor()}>
+        <Button bsStyle={customClass ? null : 'primary'} className={customClass} onClick={() => this.showStructureEditor()}>
           <Glyphicon glyph="pencil" id="AutoCompletedrawAddon" />
         </Button>
-        <Button bsStyle="danger" onClick={this.handleClearSearchSelection}>
+        <Button bsStyle={customClass ? null : 'danger'} className={customClass} onClick={this.handleClearSearchSelection}>
           <i className="fa fa-times" />
         </Button>
       </ButtonGroup>
@@ -203,7 +207,7 @@ export default class Search extends React.Component {
     };
 
     const innerDropdown = (
-      <DropdownButton id="search-inner-dropdown" title={this.state.elementType} style={{ width: '100px' }}>
+      <DropdownButton className={customClass} id="search-inner-dropdown" title={this.state.elementType} style={{ width: '100px' }}>
         {this.renderMenuItems()}
       </DropdownButton>
     );
