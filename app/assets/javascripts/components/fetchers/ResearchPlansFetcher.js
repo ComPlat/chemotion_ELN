@@ -107,31 +107,4 @@ export default class ResearchPlansFetcher {
     });
     return promise;
   }
-
-  static deleteResearchPlansByUIState(params) {
-    let promise = fetch('/api/v1/research_plans/ui_state/', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: {
-          all: params.research_plan.checkedAll,
-          collection_id: params.currentCollection.id,
-          included_ids: params.research_plan.checkedIds,
-          excluded_ids: params.research_plan.uncheckedIds
-        }
-      })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
-  }
 }

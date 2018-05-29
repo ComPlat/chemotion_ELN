@@ -642,50 +642,6 @@ class ElementActions {
         console.log(errorMessage);
       });};
   }
-  deleteSamplesByUIState(ui_state) {
-    return (dispatch) => { SamplesFetcher.deleteSamplesByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteReactionsByUIState(params) {
-    return (dispatch) => { ReactionsFetcher.deleteReactionsByUIState(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteWellplatesByUIState(ui_state) {
-    return (dispatch) => { WellplatesFetcher.deleteWellplatesByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteScreensByUIState(ui_state) {
-    return (dispatch) => { ScreensFetcher.deleteScreensByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteResearchPlansByUIState(ui_state) {
-    return (dispatch) => { ResearchPlansFetcher.deleteResearchPlansByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
 
   updateElementsCollection(params) {
     return (dispatch) => { CollectionsFetcher.updateElementsCollection(params)

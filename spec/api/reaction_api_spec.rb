@@ -124,43 +124,6 @@ describe Chemotion::ReactionAPI do
           expect(a).to match_array([])
         end
       end
-
-      context 'with UIState' do
-        let!(:c1) { create(:collection, user: user) }
-        let!(:r1) { create(:reaction, name: 'test_1', collections: [c1]) }
-        let!(:r2) { create(:reaction, name: 'test_2', collections: [c1]) }
-        let!(:r3) { create(:reaction, name: 'test_3', collections: [c1]) }
-
-        let!(:params_all_false) {
-          {
-            all: false,
-            collection_id: c1.id,
-            included_ids: [r1.id, r2.id],
-            excluded_ids: [],
-          }
-        }
-
-        let!(:params_all_true) {
-          {
-            all: true,
-            collection_id: c1.id,
-            included_ids: [],
-            excluded_ids: [r3.id],
-          }
-        }
-
-        it 'should be able to delete reaction when "all" is false' do
-          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_false, options: {} }.to_json, 'CONTENT_TYPE' => 'application/json'
-          expect(c1.reactions).to match_array([r3])
-          expect(Reaction.only_deleted.where(id: [r1.id, r2.id, r3.id])).to match_array([r1, r2])
-        end
-
-        it 'should be able to delete reactions when "all" is true' do
-          delete '/api/v1/reactions/ui_state/', { ui_state: params_all_true, options: {} }.to_json, 'CONTENT_TYPE' => 'application/json'
-          expect(Reaction.only_deleted.where(id: [r1.id, r2.id, r3.id])).to match_array([r1, r2])
-          expect(c1.reactions.where(id: [r1.id, r2.id, r3.id])).to match_array([r3])
-        end
-      end
     end
 
     describe 'PUT /api/v1/reactions', focus: true do

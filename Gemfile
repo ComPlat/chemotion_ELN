@@ -25,6 +25,7 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 group :development do
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
+  gem 'better_errors' # allows to debug exception on backend from browser
   # For memory profiling (requires Ruby MRI 2.1+)
   gem 'memory_profiler'
 
@@ -60,7 +61,7 @@ gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
                 branch: 'allow-port-option'
 
 # API
-gem 'grape', '<1.0.0'
+gem 'grape', '< 1.0.0'#'~>1.0.3'
 gem 'grape-active_model_serializers'
 gem 'grape-kaminari'
 gem 'hashie-forbidden_attributes'
@@ -128,8 +129,6 @@ gem 'ruby-mailchecker'
 gem 'swot'
 
 group :development, :test do
-  # Rails better error page
-  gem 'better_errors' # allows to debug exception on backend from browser
   gem 'binding_of_caller'
 
   gem 'mailcatcher'

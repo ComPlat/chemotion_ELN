@@ -104,27 +104,4 @@ export default class ScreensFetcher {
     }
 
   }
-
-  static deleteScreensByUIState(ui_state) {
-    const promise = fetch('/api/v1/screens/ui_state/', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: {
-          all: ui_state.screen.checkedAll,
-          collection_id: ui_state.currentCollection.id,
-          included_ids: ui_state.screen.checkedIds,
-          excluded_ids: ui_state.screen.uncheckedIds
-        }
-      })
-    }).then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => { console.log(errorMessage); });
-
-    return promise;
-  }
 }
