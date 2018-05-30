@@ -1,5 +1,5 @@
 import alt from '../alt';
-import GeneralFetcher from '../fetchers/GeneralFetcher';
+import UIFetcher from '../fetchers/UIFetcher';
 import ReportsFetcher from '../fetchers/ReportsFetcher';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 import _ from 'lodash';
@@ -57,19 +57,13 @@ class ReportActions {
     };
   }
 
-  updateCheckedTags(oldTags, newTags, defaultTags) {
-    let dfSIds = _.difference(newTags.sampleIds, oldTags.sampleIds);
-    let dfRIds = _.difference(newTags.reactionIds, oldTags.reactionIds);
-    dfSIds = dfSIds.filter(id => !defaultTags.sampleIds.includes(id));
-    dfRIds = dfRIds.filter(id => !defaultTags.reactionIds.includes(id));
-    const diffTags = { sample: dfSIds, reaction: dfRIds };
-    return (dispatch) => { GeneralFetcher.fetchListContent(diffTags)
-      .then((result) => {
-        dispatch({newTags: newTags, newObjs: result});
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    };
+  updateCheckedTags(uiState) {
+    return uiState;
+  }
+
+  //
+  updateDefaultTags(dTags) {
+    return dTags;
   }
 
   move({sourceTag, targetTag}) {
@@ -113,14 +107,16 @@ class ReportActions {
   }
 
   clone(archive) {
-    const tags = {
-      sample: GetTypeIds(archive.objects, 'sample'),
-      reaction: GetTypeIds(archive.objects, 'reaction'),
+    const sampleIds = GetTypeIds(archive.objects, 'sample')
+    const reactionIds = GetTypeIds(archive.objects, 'reaction')
+    const uiState = {
+      sample: { checkedIds: sampleIds },
+      reaction: { checkedIds: reactionIds },
     };
     return (dispatch) => {
-      GeneralFetcher.fetchListContent(tags)
+      UIFetcher.fetchByUIState(uiState)
         .then((result) => {
-          dispatch({ objs: result, archive, tags });
+          dispatch({ objs: result, archive, defaultObjTags: { sampleIds, reactionIds } });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
