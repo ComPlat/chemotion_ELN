@@ -3,11 +3,11 @@ import { ButtonGroup, Button } from 'react-bootstrap';
 
 import ElementActions from '../actions/ElementActions';
 
-import SampleNoComputedProps from './SampleNoComputedProps';
-import SampleComputedPropsGraph from './SampleComputedPropsGraph';
+import NoComputedProps from './NoComputedProps';
+import ComputedPropsGraphContainer from './ComputedPropsGraphContainer';
 import SampleComputedProps from './SampleComputedProps';
 
-export default class SampleComputedPropsContainer extends React.Component {
+export default class ComputedPropsContainer extends React.Component {
   constructor(props) {
     super(props);
 
@@ -38,7 +38,7 @@ export default class SampleComputedPropsContainer extends React.Component {
 
     if (!haveCprop) {
       return (
-        <SampleNoComputedProps computeFunc={this.computePropsFromSmiles} />
+        <NoComputedProps computeFunc={this.computePropsFromSmiles} />
       );
     }
 
@@ -57,22 +57,20 @@ export default class SampleComputedPropsContainer extends React.Component {
         <ButtonGroup vertical block>
           <Button
             bsSize="xsmall"
-            style={{ backgroundColor: '#ddd' }}
+            style={{ marginBottom: '20px', backgroundColor: '#ddd' }}
             onClick={this.toggleGraph}
           >
             {text} &nbsp; {arrow}
           </Button>
         </ButtonGroup>
-        <SampleComputedPropsGraph
-          show={showGraph}
+        <ComputedPropsGraphContainer show={showGraph}
           graphData={[{ name: sample.short_label, props: cprop }]}
-          style={{ margin: '0 auto' }}
         />
       </div>
     );
   }
 }
 
-SampleComputedPropsContainer.propTypes = {
+ComputedPropsContainer.propTypes = {
   sample: React.PropTypes.object.isRequired,
 };

@@ -21,9 +21,9 @@ const showComputedPropsGraph = () => {
 };
 
 const ReportUtilButton = ({ customClass  }) => {
-  const { profile } = UserStore.getState().profile || {};
-  const { data } = profile || {};
-  const enableComputedProps = _.get(data, 'computed_props.enable', false);
+  const userState = UserStore.getState();
+  const profileData = _.get(userState, 'profile.data', {});
+  const enableComputedProps = _.get(profileData, 'computed_props.enable', false);
 
   const graphItem = enableComputedProps ? (
     <MenuItem onSelect={showComputedPropsGraph} title="Graph">

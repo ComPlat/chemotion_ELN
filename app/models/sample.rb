@@ -144,6 +144,8 @@ class Sample < ActiveRecord::Base
   validate :has_collections
   validates :creator, presence: true
 
+  delegate :computed_prop, to: :molecule, prefix: true
+
   def molecule_sum_formular
     self.molecule ? self.molecule.sum_formular : ""
   end
@@ -339,10 +341,6 @@ class Sample < ActiveRecord::Base
     mn ? {
       label: mn.name, value: mn.id, desc: mn.description , mid: mn.molecule_id
       } : {}
-  end
-
-  def molecule_computed_prop
-    molecule.computed_prop
   end
 
 private

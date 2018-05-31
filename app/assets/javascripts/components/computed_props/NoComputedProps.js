@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
 
-function SampleNoComputedProps({ computeFunc }) {
+function NoComputedProps({ computeFunc }) {
   return (
     <span>
       No computed properties found.
@@ -18,8 +18,8 @@ function SampleNoComputedProps({ computeFunc }) {
   );
 }
 
-SampleNoComputedProps.propTypes = {
+NoComputedProps.propTypes = {
   computeFunc: React.PropTypes.func.isRequired,
 };
 
-export default SampleNoComputedProps;
+export default NoComputedProps;

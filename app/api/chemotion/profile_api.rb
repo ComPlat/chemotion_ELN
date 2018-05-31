@@ -29,9 +29,12 @@ module Chemotion
 
       put do
         data = current_user.profile.data || {}
-        new_data = data.merge(params[:data] || {})
-        new_profile = { **new_data, show_external_name: params[:show_external_name] }
-        current_user.profile.update!(**new_profile) && new_profile || error!('profile update failed',500)
+        new_profile = {
+          data: data.merge(params[:data] || {}),
+          show_external_name: params[:show_external_name]
+        }
+        current_user.profile.update!(**new_profile) &&
+          new_profile || error!('profile update failed', 500)
       end
     end
   end

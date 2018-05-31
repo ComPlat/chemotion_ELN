@@ -4,12 +4,12 @@ import React, { PropTypes } from 'react';
 import _ from 'lodash';
 import { Panel, Button, Accordion } from 'react-bootstrap';
 
-import ReportActions from '../actions/ReportActions';
-import DetailActions from '../actions/DetailActions';
-import UIStore from '../stores/UIStore';
-import ReportStore from '../stores/ReportStore';
+import ReportActions from './actions/ReportActions';
+import DetailActions from './actions/DetailActions';
+import UIStore from './stores/UIStore';
+import ReportStore from './stores/ReportStore';
 
-import SampleComputedPropsGraph from './SampleComputedPropsGraph';
+import ComputedPropsGraphContainer from './computed_props/ComputedPropsGraphContainer';
 
 export default class GraphContainer extends React.Component {
   constructor(props) {
@@ -90,12 +90,11 @@ export default class GraphContainer extends React.Component {
       <Panel
         bsStyle="primary"
         header={header}
-        className="computed-props-graph-panel"
       >
         <Accordion>
-          <SampleComputedPropsGraph
+          <ComputedPropsGraphContainer
             show
-            style={{ margin: '0 auto' }}
+            style={{ overflowY: 'auto', maxHeight: 'calc(100vh - 303px)' }}
             graphData={selectedComputedProps}
           />
         </Accordion>
