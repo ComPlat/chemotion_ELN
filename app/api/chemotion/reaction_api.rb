@@ -201,29 +201,6 @@ module Chemotion
     helpers CollectionHelpers
 
     resource :reactions do
-      namespace :ui_state do
-        desc "Delete reactions by UI state"
-        params do
-          requires :ui_state, type: Hash, desc: "Selected reactions from the UI" do
-            use :ui_state_params
-          end
-          optional :options, type: Hash do
-            optional :deleteSubsamples, type: Boolean, default: false
-          end
-        end
-
-        before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @reactions = Reaction.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @reactions).destroy?
-        end
-
-        delete do
-          @reactions.flat_map(&:samples).map(&:destroy) if params[:options][:deleteSubsamples]
-          @reactions.presence&.destroy_all || { ui_state: [] }
-        end
-      end
-
       namespace :import_chemread do
         desc 'Import Reactions'
         params do

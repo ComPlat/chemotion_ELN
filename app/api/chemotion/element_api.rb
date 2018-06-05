@@ -11,8 +11,8 @@ module Chemotion
     namespace :ui_state do
       desc 'Delete elements by UI state'
       params do
-        requires :currentCollection, type: Hash do
-          requires :id, type: Integer
+        optional :currentCollection, default: Hash.new, type: Hash do
+          optional :id, type: Integer
           optional :is_sync_to_me, type: Boolean, default: false
         end
         optional :options, type: Hash do
@@ -33,30 +33,42 @@ module Chemotion
         optional :research_plan, type: Hash do
           use :ui_state_params
         end
-        requires :selecteds, type: Array do
+        requires :optional, desc: 'Elements currently opened in detail tabs', type: Array do
           optional :type, type: String
           optional :id, type: Integer
         end
       end
 
       after_validation do
-        if params[:currentCollection][:is_sync_to_me]
-          @collection = SyncCollectionsUser.where(
-            'id = ? and user_id in (?) and permission_level > 2',
-            params[:currentCollection][:id],
-            user_ids
-          ).first
+        if params.fetch(:currentCollection, {}).fetch(:id, 0).zero?
+          @collection = Collection.get_all_collection_for_user(current_user)
         else
-          @collection = Collection.where(
-            'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > 2)) OR shared_by_id = ?)',
-            params[:currentCollection][:id],
-            user_ids,
-            current_user.id
-          ).first
+          pl =  case request.request_method
+          when 'POST' then -1
+                when 'DELETE' then 2
+                else 5
+                end
+          if params[:currentCollection][:is_sync_to_me]
+            @collection = SyncCollectionsUser.where(
+              'id = ? and user_id in (?) and permission_level > ?',
+              params[:currentCollection][:id],
+              user_ids,
+              pl
+            ).first
+          else
+            @collection = Collection.where(
+              'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?)) OR shared_by_id = ?)',
+              params[:currentCollection][:id],
+              user_ids,
+              pl,
+              current_user.id
+            ).first
+          end
         end
         error!('401 Unauthorized', 401) unless @collection
       end
 
+      desc "delete element from ui state selection."
       delete do
         deleted = { 'sample' => [] }
         %w[sample reaction wellplate screen research_plan].each do |element|
@@ -72,6 +84,20 @@ module Chemotion
           .destroy_all.map(&:id)
 
         { selecteds: params[:selecteds].select { |sel| !deleted.fetch(sel['type'], []).include?(sel['id']) } }
+      end
+
+      desc "return selected elements from the list. (only samples an reactions)"
+      post do
+        selected = { 'samples' => [], 'reactions' => [] }
+        %w[sample reaction].each do |element|
+          next unless params[element][:checkedAll] || params[element][:checkedIds].present?
+          selected[element + 's'] = @collection.send(element + 's').by_ui_state(params[element]).map do |e|
+            ElementPermissionProxy.new(current_user, e, user_ids).serialized
+          end
+        end
+        # TODO: fallback if sample are not in owned collection and currentCollection is missing
+        # (case when cloning report)
+        selected
       end
     end
   end

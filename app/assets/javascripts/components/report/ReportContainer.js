@@ -42,11 +42,7 @@ export default class ReportContainer extends Component {
   }
 
   onChangeUI(state) {
-    const newTags = { sampleIds: state.sample.checkedIds.toArray(),
-      reactionIds: state.reaction.checkedIds.toArray() };
-    const oldTags = this.state.selectedObjTags;
-    const defaultTags = this.state.defaultObjTags;
-    ReportActions.updateCheckedTags.defer(oldTags, newTags, defaultTags);
+    ReportActions.updateCheckedTags.defer(state);
   }
 
   panelHeader() {

@@ -8,8 +8,10 @@ import _ from 'lodash';
 import Container from '../models/Container';
 
 export default class SamplesFetcher {
-  static fetchByUIState(params) {
-    let promise = fetch('/api/v1/samples/ui_state/', {
+  static fetchSamplesByUIStateAndLimit(params) {
+    const limit = params.limit ? limit : null;
+
+    return fetch('/api/v1/samples/ui_state/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -22,7 +24,8 @@ export default class SamplesFetcher {
           included_ids: params.sample.included_ids,
           excluded_ids: params.sample.excluded_ids,
           collection_id: params.sample.collection_id
-        }
+        },
+        limit: params.limit
       })
     }).then((response) => {
       return response.json()
@@ -31,8 +34,6 @@ export default class SamplesFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-
-    return promise;
   }
 
   static fetchById(id) {
@@ -138,34 +139,6 @@ export default class SamplesFetcher {
     } else {
       return promise()
     }
-  }
-
-  static deleteSamplesByUIState(params) {
-    let promise = fetch('/api/v1/samples/ui_state/', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: {
-          all: params.sample.checkedAll,
-          collection_id: params.currentCollection.id,
-          is_sync: params.currentCollection.is_sync_to_me,
-          included_ids: params.sample.checkedIds,
-          excluded_ids: params.sample.uncheckedIds
-        }
-      })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
   }
 
   static splitAsSubsamples(params) {

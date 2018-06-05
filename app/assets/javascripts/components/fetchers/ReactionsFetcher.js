@@ -59,36 +59,6 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static deleteReactionsByUIState(params) {
-    const {ui_state, options} = params;
-
-    let promise = fetch('/api/v1/reactions/ui_state/', {
-      credentials: 'same-origin',
-      method: 'DELETE',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ui_state: {
-          all: ui_state.reaction.checkedAll,
-          collection_id: ui_state.currentCollection.id,
-          included_ids: ui_state.reaction.checkedIds,
-          excluded_ids: ui_state.reaction.uncheckedIds
-        },
-        options
-      })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
-  }
-
   static update(reaction) {
     let reactionFiles = AttachmentFetcher.getFileListfrom(reaction.container)
     let productsFiles = []

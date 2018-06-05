@@ -120,30 +120,28 @@ export default class WellplatesFetcher {
     }
   }
 
-  static deleteWellplatesByUIState(params) {
-    let promise = fetch('/api/v1/wellplates/ui_state/', {
+  static fetchWellplatesByUIState(params) {
+    return fetch('/api/v1/wellplates/ui_state/', {
       credentials: 'same-origin',
-      method: 'DELETE',
+      method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         ui_state: {
-          all: params.wellplate.checkedAll,
-          collection_id: params.currentCollection.id,
-          included_ids: params.wellplate.checkedIds,
-          excluded_ids: params.wellplate.uncheckedIds
+          all: params.wellplate.all,
+          included_ids: params.wellplate.included_ids,
+          excluded_ids: params.wellplate.excluded_ids,
+          collection_id: params.wellplate.collection_id
         }
       })
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      return json;
+      return json.wellplates.map((w) => new Wellplate(w));
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-
-    return promise;
   }
 }

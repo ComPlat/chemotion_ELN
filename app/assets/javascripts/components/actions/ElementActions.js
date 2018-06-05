@@ -4,7 +4,7 @@ import UIActions from './UIActions';
 import UserActions from './UserActions';
 
 import NotificationActions from './NotificationActions';
-
+import UIFetcher from '../fetchers/UIFetcher';
 import SamplesFetcher from '../fetchers/SamplesFetcher';
 import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
@@ -622,69 +622,10 @@ class ElementActions {
   // - ...
   deleteElementsByUIState(params) {
     return (dispatch) => {
-      fetch('/api/v1/ui_state/', {
-        credentials: 'same-origin',
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(params)
-      }).then((response) => {
-        return response.json()
-      }).then((json) => {
-        return json;
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      }).then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-  deleteSamplesByUIState(ui_state) {
-    return (dispatch) => { SamplesFetcher.deleteSamplesByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteReactionsByUIState(params) {
-    return (dispatch) => { ReactionsFetcher.deleteReactionsByUIState(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteWellplatesByUIState(ui_state) {
-    return (dispatch) => { WellplatesFetcher.deleteWellplatesByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteScreensByUIState(ui_state) {
-    return (dispatch) => { ScreensFetcher.deleteScreensByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  deleteResearchPlansByUIState(ui_state) {
-    return (dispatch) => { ResearchPlansFetcher.deleteResearchPlansByUIState(ui_state)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
+      UIFetcher.fetchByUIState(params, 'DELETE')
+        .then((result) => { dispatch(result); })
+        .catch((errorMessage) => { console.log(errorMessage); });
+    };
   }
 
   updateElementsCollection(params) {

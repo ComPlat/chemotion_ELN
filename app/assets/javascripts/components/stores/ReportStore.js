@@ -7,6 +7,7 @@ import ArrayUtils from '../utils/ArrayUtils';
 import UserStore from './UserStore';
 import { reOrderArr } from '../utils/DndControl';
 import { UpdateSelectedObjs } from '../utils/ReportHelper';
+import UIFetcher from '../fetchers/UIFetcher';
 
 class ReportStore {
   constructor() {
@@ -85,6 +86,7 @@ class ReportStore {
       hadnleReset: ReportActions.reset,
       handleUpdMSVal: ReportActions.updMSVal,
       handleUpdateThumbNails: ReportActions.updateThumbNails,
+      handleUpdateDefaultTags: ReportActions.updateDefaultTags,
     });
   }
 
@@ -233,22 +235,71 @@ class ReportStore {
     }), 2500);
   }
 
-  handleUpdateCheckedTags({ newTags, newObjs }) {
-    this.setState({ selectedObjTags: newTags });
-    const newSelectedObjs = UpdateSelectedObjs(
-      newTags,
-      newObjs,
-      this.defaultObjTags,
-      this.selectedObjs,
-    );
-    const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
-    const molSerials = this.updMolSerials(finalObjs);
-    const newPrdAtts = this.extractPrdAtts(finalObjs);
-    this.setState({
-      selectedObjs: finalObjs,
-      prdAtts: newPrdAtts,
-      selMolSerials: molSerials,
-    });
+  handleUpdateCheckedTags(uiState) {
+    const { sample, reaction, currentCollection } = uiState;
+    const sampleCheckedIds = sample.checkedIds.toArray();
+    const reactionCheckedIds = reaction.checkedIds.toArray();
+    const { sampleIds, reactionIds } = this.selectedObjTags;
+    const dfSIds = _.difference(sampleCheckedIds, sampleIds)
+      .filter(id => !this.defaultObjTags.sampleIds.includes(id));
+    const dfRIds = _.difference(reactionCheckedIds, reactionIds)
+      .filter(id => !this.defaultObjTags.reactionIds.includes(id));
+
+    // const diffTags = { sample: dfSIds, reaction: dfRIds };
+
+    const elementAdded = dfSIds.length > 0 || dfRIds.length > 0
+      || sample.checkedAll || reaction.checkedAll;
+
+    const elementSubs = _.difference(sampleIds, sampleCheckedIds).length > 0
+      || _.difference(reactionIds, reactionCheckedIds).length > 0;
+
+    if (elementAdded) {
+      UIFetcher.fetchByUIState({ sample, reaction, currentCollection })
+        .then((result) => {
+          const newTags = {
+            sampleIds: result.samples.map(e => e.id),
+            reactionIds: result.reactions.map(e => e.id)
+          };
+          const newObjs = result;
+          const newSelectedObjs = UpdateSelectedObjs(
+            newTags,
+            newObjs,
+            this.defaultObjTags,
+            this.selectedObjs,
+          );
+          const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
+          const molSerials = this.updMolSerials(finalObjs);
+          const newPrdAtts = this.extractPrdAtts(finalObjs);
+          this.setState({
+            selectedObjTags: newTags,
+            selectedObjs: finalObjs,
+            prdAtts: newPrdAtts,
+            selMolSerials: molSerials,
+          });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    } else if (elementSubs) {
+      const newTags = {
+        sampleIds: sampleCheckedIds,
+        reactionIds: reactionCheckedIds
+      };
+      const newSelectedObjs = UpdateSelectedObjs(
+        newTags,
+        { samples: [], reactions: [] },
+        this.defaultObjTags,
+        this.selectedObjs,
+      );
+      const finalObjs = this.orderObjsForTemplate(this.template, newSelectedObjs);
+      const molSerials = this.updMolSerials(finalObjs);
+      const newPrdAtts = this.extractPrdAtts(finalObjs);
+      this.setState({
+        selectedObjTags: newTags,
+        selectedObjs: finalObjs,
+        prdAtts: newPrdAtts,
+        selMolSerials: molSerials,
+      });
+    }
   }
 
   isEqTypeId(a, b) {
@@ -355,13 +406,11 @@ class ReportStore {
   }
 
   handleClone(result) {
-    const { objs, archive, tags } = result;
+    const { objs, archive, defaultObjTags } = result;
     const { template, file_description, img_format, configs } = archive;
     const ss = archive.sample_settings;
     const rs = archive.reaction_settings;
     const siRs = archive.si_reaction_settings;
-    const defaultObjTags = { sampleIds: tags.sample,
-      reactionIds: tags.reaction };
     const newObjs = UpdateSelectedObjs(defaultObjTags, objs, defaultObjTags);
     const orderedArObjs = this.orderObjsForArchive(newObjs, archive.objects);
     const orderedArTpObjs = this.orderObjsForTemplate(template, orderedArObjs);
@@ -623,6 +672,11 @@ class ReportStore {
   handleUpdateThumbNails(result) {
     const thumbs = result.thumbnails;
     this.setState({ attThumbNails: thumbs });
+  }
+
+  handleUpdateDefaultTags(defaultTags) {
+    this.setState({ defaultTags });
+    // TODO: update selectedObjs?
   }
 }
 

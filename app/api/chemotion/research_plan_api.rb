@@ -129,26 +129,6 @@ module Chemotion
           { research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized }
         end
       end
-
-      namespace :ui_state do
-        desc "Delete research  plans by UI state"
-        params do
-          requires :ui_state, type: Hash, desc: "Selected research plans from the UI" do
-            use :ui_state_params
-          end
-        end
-
-        before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @research_plans = ResearchPlan.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @research_plans).destroy?
-        end
-
-        delete do
-          @research_plans.presence&.destroy_all || { ui_state: [] }
-        end
-      end
-
     end
   end
 end

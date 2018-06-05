@@ -74,7 +74,7 @@ export default class CreateButton extends React.Component {
       sample: sampleFilter
     }
 
-    SamplesFetcher.fetchByUIState(params).then((result) => {
+    SamplesFetcher.fetchSamplesByUIStateAndLimit(params).then((result) => {
       const samples = result;
       const sampleCount = samples.length;
 

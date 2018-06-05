@@ -142,6 +142,11 @@ module Chemotion
     end
 
     resource :archives do
+      rescue_from ActiveRecord::RecordNotFound do |error|
+        message = "Archive not found"
+        error!(message, 404)
+      end
+
       desc 'return all reports of the user'
       params do
       end

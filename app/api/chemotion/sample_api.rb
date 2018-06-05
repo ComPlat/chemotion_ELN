@@ -37,34 +37,6 @@ module Chemotion
           @samples = @samples.limit(params[:limit]) if params[:limit]
           { samples: @samples.map{ |s| SampleSerializer.new(s).serializable_hash.deep_symbolize_keys}  }
         end
-
-        desc "Delete samples by UI state"
-        params do
-          requires :ui_state, type: Hash, desc: "Selected samples from the UI" do
-            optional :all, type: Boolean
-            optional :included_ids, type: Array
-            optional :excluded_ids, type: Array
-            requires :collection_id
-            optional :is_sync_to_me, type: Boolean, default: false
-          end
-        end
-
-        before do
-          cid = fetch_collection_id_w_current_user(params[:ui_state][:collection_id], params[:ui_state][:is_sync_to_me])
-          @samples = Sample.by_collection_id(cid).by_ui_state(params[:ui_state]).for_user(current_user.id)
-          error!('401 Unauthorized', 401) unless ElementsPolicy.new(current_user, @samples).destroy?
-        end
-
-        delete do
-          samples = @samples.map { |sample|
-            # DevicesSample.find_by(sample_id: sample.id).destroy
-            # sample.devices_analyses.map{|d|
-            #   d.analyses_experiments.destroy_all
-            #   d.destroy
-            # }
-            sample.destroy
-          }.presence || { ui_state: [] }
-        end
       end
 
       namespace :subsamples do
