@@ -320,5 +320,9 @@ export default class ComputedPropsGraphContainer extends React.Component {
 ComputedPropsGraphContainer.propTypes = {
   graphData: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
   show: React.PropTypes.bool.isRequired,
-  style: React.PropTypes.object.isRequired,
+  style: React.PropTypes.object,
 };
+
+ComputedPropsGraphContainer.defaultProps = {
+  style: {}
+}

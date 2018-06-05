@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactTable from 'react-table';
+import { FormControl } from 'react-bootstrap';
 
 export default class GraphReferenceTable extends React.Component {
   constructor(props) {
@@ -14,20 +15,17 @@ export default class GraphReferenceTable extends React.Component {
     const cellValue = data[cellInfo.index][cellInfo.column.id];
 
     return (
-      <div
+      <FormControl
         style={{ backgroundColor: '#fafafa', textAlign: 'center' }}
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={(e) => {
-          const value = e.target.innerHTML;
+        value={cellValue}
+        onChange={(e) => {
+          const { value } = e.target;
           const refs = [...data];
           refs[cellInfo.index][cellInfo.column.id] = value;
 
           updateData(refs);
         }}
-      >
-        {cellValue}
-      </div>
+      />
     );
   }
 
