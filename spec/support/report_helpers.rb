@@ -34,7 +34,7 @@ module ReportHelpers
       CAS: true,
       Formula: true,
       Smiles: true,
-      InCHI: true,
+      InChI: true,
       :"Molecular Mass" => true,
       :"Exact Mass" => true,
       EA: true
