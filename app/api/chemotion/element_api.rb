@@ -33,7 +33,7 @@ module Chemotion
         optional :research_plan, type: Hash do
           use :ui_state_params
         end
-        requires :optional, desc: 'Elements currently opened in detail tabs', type: Array do
+        optional :selecteds, desc: 'Elements currently opened in detail tabs', type: Array do
           optional :type, type: String
           optional :id, type: Integer
         end
