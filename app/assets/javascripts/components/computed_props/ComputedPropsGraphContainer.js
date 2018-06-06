@@ -174,13 +174,12 @@ export default class ComputedPropsGraphContainer extends React.Component {
   deleteTemplate() {
     const userProfile = UserStore.getState().profile;
     const { graphTemplates } = this.state;
-    let { curTemplateIdx } = this.state;
+    const { curTemplateIdx } = this.state;
     const newGraphTemplates = _.cloneDeep(graphTemplates);
     newGraphTemplates.splice(curTemplateIdx, 1);
-    curTemplateIdx = newGraphTemplates.length;
-    console.log(newGraphTemplates);
+    const newTemplateIdx = curTemplateIdx > 1 ? (curTemplateIdx - 1) : 0;
     _.set(userProfile, 'data.computed_props.graph_templates', newGraphTemplates);
-    _.set(userProfile, 'data.computed_props.cur_template_idx', curTemplateIdx);
+    _.set(userProfile, 'data.computed_props.cur_template_idx', newTemplateIdx);
     UserActions.updateUserProfile(userProfile);
   }
 
