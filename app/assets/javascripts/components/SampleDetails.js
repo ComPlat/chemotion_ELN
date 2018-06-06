@@ -37,7 +37,7 @@ import ElementalCompositionGroup from './ElementalCompositionGroup';
 import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 import SampleForm from './SampleForm'
-import SampleComputedPropsContainer from './computed_props/SampleComputedPropsContainer';
+import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
 
@@ -443,7 +443,6 @@ export default class SampleDetails extends React.Component {
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>CAS</InputGroup.Addon>
         <Select.Creatable
-          ref='casSelect'
           name='cas'
           multi={false}
           options={casArr}
@@ -621,7 +620,7 @@ export default class SampleDetails extends React.Component {
         key={'computed_props' + sample.id.toString()}
       >
         <ListGroupItem style={{paddingBottom: 20}}>
-          <SampleComputedPropsContainer sample={sample} />
+          <ComputedPropsContainer sample={sample} />
         </ListGroupItem>
       </Tab>
     );

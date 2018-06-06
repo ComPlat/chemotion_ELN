@@ -10,7 +10,7 @@ import ResearchPlanDetails from './ResearchPlanDetails';
 import { ConfirmModal } from './common/ConfirmModal';
 import ReportContainer from './report/ReportContainer';
 import FormatContainer from './FormatContainer';
-import GraphContainer from './computed_props/GraphContainer';
+import GraphContainer from './GraphContainer';
 import DetailActions from './actions/DetailActions';
 import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';

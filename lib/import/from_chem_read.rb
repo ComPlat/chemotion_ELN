@@ -395,7 +395,7 @@ module Import
         container_type: 'root',
         containable_type: type
       )
-
+      container.children.create(container_type: 'analyses')
       container
     end
   end

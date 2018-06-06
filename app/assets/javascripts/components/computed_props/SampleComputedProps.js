@@ -1,49 +1,51 @@
 import React from 'react';
 import {
-  Form, FormGroup, FormControl, Row, Col, ControlLabel, Grid
+  Form, FormGroup, Row, Col, ControlLabel, Grid
 } from 'react-bootstrap';
 
 function SampleComputedProps({ cprop }) {
   return (
     <Grid style={{ width: '100%' }}>
       <Row>
-        <Col xs={9} md={6}>
-          <Form>
+        <Col xs={18} md={12}>
+          <Form horizontal>
             <FormGroup>
-              <ControlLabel>Maximum potential</ControlLabel>
-              <FormControl.Static>{cprop.max_potential} mV</FormControl.Static>
+              <Col sm={6}>
+                <ControlLabel>Maximum potential: </ControlLabel>
+                {` ${cprop.max_potential} mV`}
+              </Col>
+              <Col sm={6}>
+                <ControlLabel>Minimum potential: </ControlLabel>
+                {` ${cprop.min_potential} mV`}
+              </Col>
             </FormGroup>
             <FormGroup>
-              <ControlLabel>Minimum potential</ControlLabel>
-              <FormControl.Static>{cprop.min_potential} mV</FormControl.Static>
+              <Col sm={6}>
+                <ControlLabel>Mean potential: </ControlLabel>
+                {` ${cprop.mean_potential} mV`}
+              </Col>
+              <Col sm={6}>
+                <ControlLabel>Mean absolute potential: </ControlLabel>
+                {` ${cprop.mean_abs_potential} mV`}
+              </Col>
             </FormGroup>
             <FormGroup>
-              <ControlLabel>Mean potential</ControlLabel>
-              <FormControl.Static>{cprop.mean_potential} mV</FormControl.Static>
-            </FormGroup>
-            <FormGroup>
-              <ControlLabel>Mean absolute potential</ControlLabel>
-              <FormControl.Static>{cprop.mean_abs_potential} mV</FormControl.Static>
-            </FormGroup>
-          </Form>
-        </Col>
-        <Col xs={9} md={6}>
-          <Form>
-            <FormGroup>
-              <ControlLabel>HOMO</ControlLabel>
-              <FormControl.Static>{cprop.homo} eV</FormControl.Static>
-            </FormGroup>
-            <FormGroup>
-              <ControlLabel>LUMO</ControlLabel>
-              <FormControl.Static>{cprop.lumo} eV</FormControl.Static>
-            </FormGroup>
-            <FormGroup>
-              <ControlLabel>IP</ControlLabel>
-              <FormControl.Static>{cprop.ip} eV</FormControl.Static>
-            </FormGroup>
-            <FormGroup>
-              <ControlLabel>EA</ControlLabel>
-              <FormControl.Static>{cprop.ea} eV</FormControl.Static>
+              <Col sm={3}>
+                <ControlLabel>HOMO: </ControlLabel>
+                {` ${cprop.homo} eV`}
+              </Col>
+              <Col sm={3}>
+                <ControlLabel>LUMO: </ControlLabel>
+                {` ${cprop.lumo} eV`}
+              </Col>
+              <Col sm={3}>
+                <ControlLabel>IP: </ControlLabel>
+                {` ${cprop.ip} eV`}
+              </Col>
+              <Col sm={3}>
+                <ControlLabel>EA: </ControlLabel>
+                {` ${cprop.ea} eV`}
+              </Col>
             </FormGroup>
           </Form>
         </Col>
