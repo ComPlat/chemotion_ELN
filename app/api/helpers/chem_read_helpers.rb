@@ -210,8 +210,8 @@ module ChemReadHelpers
 
     res = {
       desc: {},
-      smi: (obj[:smi].nil? || ''),
-      mdl: (obj[:mdl].nil? || '')
+      smi: (obj[:smi] || ''),
+      mdl: (obj[:mdl] || '')
     }
 
     extract_text_info(obj) unless obj[:text].nil?
