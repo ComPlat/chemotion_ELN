@@ -18,7 +18,9 @@ class ComputedProp < ActiveRecord::Base
     sample = Sample.where(short_label: name).first
     return if sample.nil?
 
-    cp = sample.molecule_computed_prop
+    mid = sample.molecule.id
+    cp = ComputedProp.where(molecule_id: mid, status: 1).first
+
     data_arr = data.split("\n").map { |x|
       x.gsub('   ---   ', '').gsub('   ###   ', '')
     }

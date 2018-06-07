@@ -1,30 +1,40 @@
 import React from 'react';
-import { ButtonGroup, Button } from 'react-bootstrap';
+import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
 
 import ElementActions from '../actions/ElementActions';
 
-import NoComputedProps from './NoComputedProps';
 import ComputedPropsGraphContainer from './ComputedPropsGraphContainer';
 import SampleComputedProps from './SampleComputedProps';
+import { ConfirmModal } from '../common/ConfirmModal';
 
 export default class ComputedPropsContainer extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      showGraph: false
+      showGraph: false,
+      compute: false
     };
 
+    this.onClickComputeBtn = this.onClickComputeBtn.bind(this);
     this.computePropsFromSmiles = this.computePropsFromSmiles.bind(this);
     this.toggleGraph = this.toggleGraph.bind(this);
   }
 
-  computePropsFromSmiles() {
-    const { sample } = this.props;
-    const sslabel = sample.short_label;
-    const ssmiles = sample.molecule.cano_smiles;
+  onClickComputeBtn() {
+    this.setState({ compute: true });
+  }
 
-    ElementActions.computePropsFromSmiles(sslabel, ssmiles);
+  computePropsFromSmiles(shouldPerform) {
+    if (shouldPerform) {
+      const { sample } = this.props;
+      const sslabel = sample.short_label;
+      const ssmiles = sample.molecule.cano_smiles;
+
+      ElementActions.computePropsFromSmiles(sslabel, ssmiles);
+    }
+
+    this.setState({ compute: false });
   }
 
   toggleGraph() {
@@ -33,16 +43,14 @@ export default class ComputedPropsContainer extends React.Component {
 
   render() {
     const { sample } = this.props;
-    const cprop = sample.molecule_computed_prop;
-    const haveCprop = (cprop && cprop.status === 'completed');
-
-    if (!haveCprop) {
-      return (
-        <NoComputedProps computeFunc={this.computePropsFromSmiles} />
-      );
+    const cprops = sample.molecule_computed_props || [];
+    let lastCProp = null;
+    if (cprops && cprops.length > 0) {
+      cprops.sort((a, b) => a.updated_at - b.updated_at);
+      lastCProp = cprops[cprops.length - 1];
     }
 
-    const { showGraph } = this.state;
+    const { compute, showGraph } = this.state;
     let text = 'Show Graph';
     let arrow = <i className="fa fa-angle-double-down" />;
 
@@ -50,10 +58,23 @@ export default class ComputedPropsContainer extends React.Component {
       text = 'Hide Graph';
       arrow = <i className="fa fa-angle-double-up" />;
     }
+    const confirmText = (
+      <ControlLabel>Would you like to simulate this molecule ?</ControlLabel>
+    );
 
     return (
       <div>
-        <SampleComputedProps cprop={cprop} />
+        <SampleComputedProps cprops={cprops} />
+        <Button
+          bsStyle="success"
+          bsSize="small"
+          className="button-right"
+          onClick={this.onClickComputeBtn}
+          style={{ marginTop: '10px', marginBottom: '10px' }}
+        >
+          <i className="fa fa-paper-plane" />
+          &nbsp;&nbsp; Compute
+        </Button>
         <ButtonGroup vertical block>
           <Button
             bsSize="xsmall"
@@ -63,8 +84,15 @@ export default class ComputedPropsContainer extends React.Component {
             {text} &nbsp; {arrow}
           </Button>
         </ButtonGroup>
-        <ComputedPropsGraphContainer show={showGraph}
-          graphData={[{ name: sample.short_label, props: cprop }]}
+        <ComputedPropsGraphContainer
+          show={showGraph}
+          graphData={[{ name: sample.short_label, props: lastCProp }]}
+        />
+        <ConfirmModal
+          showModal={compute}
+          title="Are you sure ?"
+          content={confirmText}
+          onClick={this.computePropsFromSmiles}
         />
       </div>
     );

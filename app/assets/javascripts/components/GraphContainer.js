@@ -47,9 +47,14 @@ export default class GraphContainer extends React.Component {
   }
 
   onChangeRp(state) {
-    const selectedComputedProps = state.selectedObjs.map(s => (
-      { name: s.short_label, props: s.molecule_computed_prop }
-    ));
+    const selectedComputedProps = [];
+    state.selectedObjs.filter(s => s.molecule_computed_props).forEach((s) => {
+      const cprops = s.molecule_computed_props.sort((a, b) => (
+        a.updated_at - b.updated_at
+      ));
+      const cprop = { name: s.short_label, props: cprops[cprops.length - 1] };
+      selectedComputedProps.push(cprop);
+    });
 
     this.setState({
       selectedComputedProps,
