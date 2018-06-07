@@ -22,6 +22,8 @@ gem 'jbuilder', '~> 2.0'
 # bundle exec rake doc:rails generates the API under doc/api.
 gem 'sdoc', '~> 0.4.0', group: :doc
 
+gem 'schmooze'
+
 group :development do
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
