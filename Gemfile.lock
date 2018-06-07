@@ -495,6 +495,7 @@ GEM
       sprockets (>= 2.8, < 4.0)
       sprockets-rails (>= 2.0, < 4.0)
       tilt (>= 1.1, < 3)
+    schmooze (0.2.0)
     sdoc (0.4.1)
       json (~> 1.7, >= 1.7.7)
       rdoc (~> 4.0)
@@ -665,6 +666,7 @@ DEPENDENCIES
   rubyXL (= 3.3.26)
   sablon!
   sass-rails (~> 5.0, >= 5.0.6)
+  schmooze
   sdoc (~> 0.4.0)
   selenium-webdriver (~> 3.7.0)
   slackistrano

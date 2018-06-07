@@ -32,6 +32,7 @@
     "quagga": "^0.11.5",
     "quill": "1.1.9",
     "quill-delta": "3.4.3",
+    "quill-delta-to-html": "0.8.2",
     "react": "15.3.2",
     "react-addons-update": "15.3.2",
     "react-barcode": "^1.1.0",
