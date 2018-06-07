@@ -8,7 +8,7 @@ class DetailLevels::Sample
       :children_count, :parent_id, :imported_readout, :_contains_residues,
       :sample_svg_file, :density, :boiling_point, :melting_point, :stereo,
       :reaction_description, :container, :pubchem_tag, :xref, :code_log,
-      :can_update, :can_publish, :molecule_name_hash, :molecule_computed_prop
+      :can_update, :can_publish, :molecule_name_hash, :molecule_computed_props
     ]
   end
 
@@ -41,7 +41,7 @@ class DetailLevels::Sample
       :real_amount_unit, :purity, :solvent, :molarity_value, :molarity_unit,
       :children_count, :parent_id, :imported_readout, :location,
       :boiling_point, :melting_point, :reaction_description, :code_log,
-      :can_update, :can_publish, :molecule_name_hash, :molecule_computed_prop
+      :can_update, :can_publish, :molecule_name_hash
     ]
   end
 

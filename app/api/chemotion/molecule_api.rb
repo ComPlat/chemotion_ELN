@@ -52,13 +52,10 @@ module Chemotion
           sample = Sample.where(short_label: params[:short_label]).first
           error!(204) if sample.nil?
 
-          cp = sample.molecule_computed_prop
-          if cp.nil?
-            cp = ComputedProp.new
-            cp.status = 0
-            cp.molecule_id = sample.molecule.id
-            cp.save!
-          end
+          cp = ComputedProp.new
+          cp.status = 0
+          cp.molecule_id = sample.molecule.id
+          cp.save!
 
           if cp.status == 'not_computed'
             options = {

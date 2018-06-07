@@ -1,61 +1,98 @@
 import React from 'react';
-import {
-  Form, FormGroup, Row, Col, ControlLabel, Grid
-} from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
 
-function SampleComputedProps({ cprop }) {
-  return (
-    <Grid style={{ width: '100%' }}>
-      <Row>
-        <Col xs={18} md={12}>
-          <Form horizontal>
-            <FormGroup>
-              <Col sm={6}>
-                <ControlLabel>Maximum potential: </ControlLabel>
-                {` ${cprop.max_potential} mV`}
-              </Col>
-              <Col sm={6}>
-                <ControlLabel>Minimum potential: </ControlLabel>
-                {` ${cprop.min_potential} mV`}
-              </Col>
-            </FormGroup>
-            <FormGroup>
-              <Col sm={6}>
-                <ControlLabel>Mean potential: </ControlLabel>
-                {` ${cprop.mean_potential} mV`}
-              </Col>
-              <Col sm={6}>
-                <ControlLabel>Mean absolute potential: </ControlLabel>
-                {` ${cprop.mean_abs_potential} mV`}
-              </Col>
-            </FormGroup>
-            <FormGroup>
-              <Col sm={3}>
-                <ControlLabel>HOMO: </ControlLabel>
-                {` ${cprop.homo} eV`}
-              </Col>
-              <Col sm={3}>
-                <ControlLabel>LUMO: </ControlLabel>
-                {` ${cprop.lumo} eV`}
-              </Col>
-              <Col sm={3}>
-                <ControlLabel>IP: </ControlLabel>
-                {` ${cprop.ip} eV`}
-              </Col>
-              <Col sm={3}>
-                <ControlLabel>EA: </ControlLabel>
-                {` ${cprop.ea} eV`}
-              </Col>
-            </FormGroup>
-          </Form>
-        </Col>
-      </Row>
-    </Grid>
-  );
+function dateFormatter(params) {
+  const dateTime = new Date(params.value);
+  return `${dateTime.getDate()}/${dateTime.getMonth()}/${dateTime.getFullYear()}`;
+}
+
+export default class SampleComputedProps extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    const { cprops } = this.props;
+    if (cprops.length === 0) {
+      return (
+        <span>No computed properties found. </span>
+      );
+    }
+
+    const columnDefs = [
+      {
+        headerName: 'MaP',
+        headerTooltip: 'Maximum Potential',
+        field: 'max_potential',
+        width: 67,
+      },
+      {
+        headerName: 'MiP',
+        headerTooltip: 'Minimum Potential',
+        field: 'min_potential',
+        width: 63,
+      },
+      {
+        headerName: 'MeP',
+        headerTooltip: 'Mean Potential',
+        field: 'mean_potential',
+        width: 66,
+      },
+      {
+        headerName: 'MeAbsP',
+        headerTooltip: 'Mean Absolute Potential',
+        width: 88,
+        field: 'mean_abs_potential',
+      },
+      {
+        headerName: 'HOMO',
+        field: 'homo',
+        width: 80,
+      },
+      {
+        headerName: 'LUMO',
+        field: 'lumo',
+        width: 77,
+      },
+      {
+        headerName: 'IP',
+        field: 'ip',
+        width: 53,
+      },
+      {
+        headerName: 'EA',
+        field: 'ea',
+        width: 55,
+      },
+      {
+        headerName: 'Dipol',
+        field: 'dipol_debye',
+        width: 72,
+      },
+      {
+        headerName: 'Date',
+        headerTooltip: 'Request Date',
+        field: 'created_at',
+        width: 81,
+        valueFormatter: dateFormatter,
+      },
+    ];
+
+    return (
+      <div className="ag-theme-balham">
+        <AgGridReact
+          suppressCellSelection
+          columnDefs={columnDefs}
+          editable={false}
+          rowData={cprops}
+          domLayout="autoHeight"
+          onGridReady={this.onGridReady}
+        />
+      </div>
+    );
+  }
 }
 
 SampleComputedProps.propTypes = {
-  cprop: React.PropTypes.object.isRequired,
+  cprops: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
 };
-
-export default SampleComputedProps;

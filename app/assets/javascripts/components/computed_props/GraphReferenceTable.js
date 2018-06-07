@@ -1,86 +1,122 @@
 import React from 'react';
-import ReactTable from 'react-table';
-import { FormControl } from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
+
+import { Button } from 'react-bootstrap';
+
+function TableEditBtn({ dataLength, onEditBtnClick, node }) {
+  const isAdd = node.rowIndex === dataLength;
+  const btnIcon = isAdd ? 'fa-plus' : 'fa-minus';
+
+  return (
+    <Button
+      active
+      onClick={() => onEditBtnClick(node.rowIndex)}
+      bsSize="xsmall"
+    >
+      <i className={`fa ${btnIcon}`} />
+    </Button>
+  );
+}
+
+TableEditBtn.propTypes = {
+  dataLength: React.PropTypes.number.isRequired,
+  onEditBtnClick: React.PropTypes.func.isRequired,
+  node: React.PropTypes.object.isRequired,
+};
 
 export default class GraphReferenceTable extends React.Component {
   constructor(props) {
     super(props);
 
-    this.renderEditable = this.renderEditable.bind(this);
-    this.renderButton = this.renderButton.bind(this);
+    this.onRefsChanged = this.onRefsChanged.bind(this);
+    this.onGridReady = this.onGridReady.bind(this);
+    this.onEditBtnClick = this.onEditBtnClick.bind(this);
+    this.autoSizeAll = this.autoSizeAll.bind(this);
   }
 
-  renderEditable(cellInfo) {
-    const { data, updateData } = this.props;
-    const cellValue = data[cellInfo.index][cellInfo.column.id];
-
-    return (
-      <FormControl
-        style={{ backgroundColor: '#fafafa', textAlign: 'center' }}
-        value={cellValue}
-        onChange={(e) => {
-          const { value } = e.target;
-          const refs = [...data];
-          refs[cellInfo.index][cellInfo.column.id] = value;
-
-          updateData(refs);
-        }}
-      />
-    );
+  componentDidMount() {
+    if (this.gridColumnApi) this.autoSizeAll();
   }
 
-  renderButton(cellInfo) {
+  componentDidUpdate() {
+    if (this.gridColumnApi) this.autoSizeAll();
+  }
+
+  onGridReady(params) {
+    this.gridColumnApi = params.columnApi;
+
+    this.autoSizeAll();
+  }
+
+  onRefsChanged(params) {
     const { data, updateData } = this.props;
-    const isAdd = cellInfo.index === (data.length - 1);
-    const btnIcon = isAdd ? 'fa-plus' : 'fa-minus';
+    const refs = [...data];
+    refs[params.rowIndex] = params.data;
 
-    return (
-      <i
-        className={`fa ${btnIcon} clickable-icon`}
-        aria-hidden="true"
-        onClick={() => {
-          const refs = [...data];
-          if (isAdd) {
-            refs.push({ x: '', y: '', type: 'reference' });
-          } else {
-            refs.splice(cellInfo.index, 1);
-          }
+    updateData(refs);
+  }
 
-          updateData(refs);
-        }}
-      />
-    );
+  onEditBtnClick(rIdx) {
+    const { data, updateData } = this.props;
+    const isAdd = rIdx === (data.length - 1);
+    const refs = [...data];
+
+    if (isAdd) {
+      refs.push({ x: '', y: '', type: 'reference' });
+    } else {
+      refs.splice(rIdx, 1);
+    }
+
+    updateData(refs);
+  }
+
+  autoSizeAll() {
+    const allColumnIds = [];
+    this.gridColumnApi.getAllColumns().forEach((column) => {
+      allColumnIds.push(column.colId);
+    });
+
+    this.gridColumnApi.autoSizeColumns(allColumnIds);
   }
 
   render() {
     const { xLabel, yLabel, data } = this.props;
-
-    const columns = [
+    const columnDefs = [
       {
-        Header: xLabel,
-        accessor: 'x',
-        Cell: this.renderEditable
+        headerName: xLabel,
+        field: 'x',
+        editable: true,
+        cellEditor: 'agTextCellEditor',
       },
       {
-        Header: yLabel,
-        accessor: 'y',
-        Cell: this.renderEditable
+        headerName: yLabel,
+        field: 'y',
+        editable: true,
+        cellEditor: 'agTextCellEditor',
       },
       {
-        Header: '',
-        accessor: 'type',
-        maxWidth: 30,
-        Cell: this.renderButton
+        headerName: '',
+        field: 'type',
+        editable: false,
+        cellRendererFramework: TableEditBtn,
+        cellRendererParams: {
+          dataLength: data.length - 1,
+          onEditBtnClick: this.onEditBtnClick
+        },
+        headerComponentParams: { headerName: '' }
       },
     ];
 
     return (
-      <ReactTable
-        data={data}
-        columns={columns}
-        defaultPageSize={10}
-        className="-striped -highlight"
-      />
+      <div className="ag-theme-material">
+        <AgGridReact
+          columnDefs={columnDefs}
+          rowData={data}
+          domLayout="autoHeight"
+          onGridReady={this.onGridReady}
+          onCellValueChanged={this.onRefsChanged}
+        />
+      </div>
     );
   }
 }

@@ -233,6 +233,14 @@ export default class ComputedPropsGraphContainer extends React.Component {
         </Row>
         <Row>
           <Col xs={9} md={6}>
+            <GraphReferenceTable
+              xLabel={xAxis.label}
+              yLabel={yAxis.label}
+              data={referencePoints}
+              updateData={this.updateReferences}
+            />
+          </Col>
+          <Col xs={9} md={6}>
             <Form horizontal>
               <FormGroup controlId="formInlineTemplate">
                 <Col componentClass={ControlLabel} sm={4}>
@@ -301,14 +309,6 @@ export default class ComputedPropsGraphContainer extends React.Component {
                 </Col>
               </FormGroup>
             </Form>
-          </Col>
-          <Col xs={9} md={6}>
-            <GraphReferenceTable
-              xLabel={xAxis.label}
-              yLabel={yAxis.label}
-              data={referencePoints}
-              updateData={this.updateReferences}
-            />
           </Col>
         </Row>
       </Grid>
