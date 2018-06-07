@@ -9,6 +9,7 @@ import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementReactionLabels from './ElementReactionLabels';
 import PubchemLabels from './PubchemLabels';
+import ComputedPropLabel from './computed_props/ComputedPropLabel';
 import ArrayUtils from './utils/ArrayUtils';
 import ElementContainer from './ElementContainer';
 
@@ -118,8 +119,8 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
   }
 
   const { collId, showPreviews } = UIStore.getState();
-//  const dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
-//  dragItem.id = null;
+   // const dragItem = Sample.copyFromSampleAndCollectionId(sample, collId, true);
+   // dragItem.id = null;
 
   return (
     <tr
@@ -141,6 +142,9 @@ const MoleculeHeader = ({ sample, show, showDragColumn, onClick, targetType }) =
         <div style={{ position: 'absolute', top: '10px', right: '25px', float: 'right' }} >
           {tdExtraContents.map(e => e)}
           <PubchemLabels element={sample} />
+        </div>
+        <div style={{ position: 'absolute', bottom: '10px', right: '25px', float: 'right' }} >
+          <ComputedPropLabel cprops={sample.molecule_computed_props} />
         </div>
       </td>
       {dragColumn(sample, showDragColumn, DragDropItemTypes.MOLECULE, targetType)}
