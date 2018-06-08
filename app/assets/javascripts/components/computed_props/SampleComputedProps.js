@@ -81,6 +81,7 @@ export default class SampleComputedProps extends React.Component {
     return (
       <div className="ag-theme-balham">
         <AgGridReact
+          enableColResize
           suppressCellSelection
           columnDefs={columnDefs}
           editable={false}
