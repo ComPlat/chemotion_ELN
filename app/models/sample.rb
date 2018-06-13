@@ -135,6 +135,7 @@ class Sample < ActiveRecord::Base
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   belongs_to :molecule
 
+  accepts_nested_attributes_for :molecule_name
   accepts_nested_attributes_for :collections_samples
   accepts_nested_attributes_for :molecule, update_only: true
   accepts_nested_attributes_for :residues, :elemental_compositions, :container,
@@ -460,9 +461,15 @@ private
   end
 
   def assign_molecule_name
-    target = molecule_iupac_name || molecule_sum_formular
-    mn = molecule.molecule_names.find_by(name: target)
-    self.molecule_name_id = mn.id
+    if molecule_name && molecule_name.new_record? && molecule.persisted? && molecule_name.name.present?
+      att = molecule_name.attributes.slice('user_id', 'description', 'name')
+      att['molecule_id'] = molecule.id
+      mn = MoleculeName.find_or_create_by(att)
+    else
+      target = molecule_iupac_name || molecule_sum_formular
+      mn = molecule.molecule_names.find_by(name: target)
+    end
+    self.molecule_name = mn
   end
 
   def check_molecule_name

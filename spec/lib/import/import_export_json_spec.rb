@@ -60,6 +60,12 @@ RSpec.describe 'ImportSdf' do
       collections: [c1]
     )
   }
+  let(:mol_name) { 'Awesome Molecule' }
+  let(:mn) {
+    build(
+      :molecule_name, user_id: u1.id, name: mol_name, molecule_id: s0.molecule_id
+    )
+  }
   before do
     u1.save!
     u2.save!
@@ -70,6 +76,8 @@ RSpec.describe 'ImportSdf' do
     s2.save!
     s3.save!
     s4.save!
+    mn.save!
+    s0.update!(molecule_name_id: mn.id)
     rxn.save!
   end
 
@@ -86,6 +94,9 @@ RSpec.describe 'ImportSdf' do
       it 'imports the exported sample' do
         expect(c2.samples).to_not be_empty
         expect(c2.samples.find_by(name: s0.name)).to_not be_nil
+      end
+      it 'imports the custom sample molecule name' do
+        expect(c2.samples.find_by(name: s0.name).molecule_name.name).to eq mol_name
       end
     end
 
