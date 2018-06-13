@@ -15,31 +15,77 @@ module Export
       @samples = samples
       return if samples.nil? # || samples.count.zero?
       generate_headers(table)
-
-      @xfile.workbook.add_worksheet(name: table.to_s) do |sheet|
-        sheet.add_row(@headers) # Add header
-        image_width = DEFAULT_ROW_WIDTH
-        row_height = DEFAULT_ROW_HEIGHT
-        row_image_width = DEFAULT_ROW_WIDTH
-        samples.each_with_index do |sample, row|
-          filtered_sample = filter_with_permission_and_detail_level(sample)
-          if @image_index && (svg_path = filtered_sample[@image_index].presence)
-            image_data = process_and_add_image(sheet, svg_path, row)
-            row_height = [image_data&.fetch(:height, nil).to_i, DEFAULT_ROW_HEIGHT].max
-            row_image_width = image_data&.fetch(:width, nil) || DEFAULT_ROW_WIDTH
-            filtered_sample[@image_index] = ''
-          end
-          image_width = row_image_width if row_image_width > image_width
-          # 3/4 -> The misterious ratio!
-          sheet.add_row(filtered_sample, sz: 12, height: row_height * 3 / 4)
+      sheet = @xfile.workbook.add_worksheet(name: table.to_s) #do |sheet|
+      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
+      light_grey = sheet.styles.add_style(bg_color: "FFCCCCCC",:border => { :style => :thin, :color => "FFCCCCCC", :edges => [:top] })
+      sheet.add_row(@headers, style: grey) # Add header
+      image_width = DEFAULT_ROW_WIDTH
+      row_height = DEFAULT_ROW_HEIGHT
+      row_image_width = DEFAULT_ROW_WIDTH
+      row_length = @headers.size
+      samples.each_with_index do |sample, row|
+        filtered_sample = filter_with_permission_and_detail_level(sample)
+        if @image_index && (svg_path = filtered_sample[@image_index].presence)
+          image_data = process_and_add_image(sheet, svg_path, row)
+          row_height = [image_data&.fetch(:height, nil).to_i, DEFAULT_ROW_HEIGHT].max
+          row_image_width = image_data&.fetch(:width, nil) || DEFAULT_ROW_WIDTH
+          filtered_sample[@image_index] = ''
         end
-        sheet.column_info[@image_index].width = image_width / 8 if @image_index
+        image_width = row_image_width if row_image_width > image_width
+        # 3/4 -> The misterious ratio!
+        sheet.add_row(filtered_sample, sz: 12, height: row_height * 3 / 4)
       end
+      sheet.column_info[@image_index].width = image_width / 8 if @image_index
+      # end
+      @samples = nil
+    end
+
+    #TODO: implement better detail level filter
+    def generate_analyses_sheet_with_samples(table, samples = nil, selected_columns)
+      @samples = samples
+      return if samples.nil? # || samples.count.zero?
+      generate_headers(table, [], selected_columns)
+      sheet = @xfile.workbook.add_worksheet(name: table.to_s) #do |sheet|
+      grey = sheet.styles.add_style(sz: 12, :border => { :style => :thick, :color => "FF777777", :edges => [:bottom] })
+      light_grey = sheet.styles.add_style(:border => { :style => :thick, :color => "FFCCCCCC", :edges => [:top] })
+      sheet.add_row(@headers, style: grey) # Add header
+      image_width = DEFAULT_ROW_WIDTH
+      row_height = DEFAULT_ROW_HEIGHT
+      row_image_width = DEFAULT_ROW_WIDTH
+      row_length = @headers.size
+      samples.each_with_index do |sample, row|
+        if (sample['shared_sync'] == 'f' || sample['shared_sync'] == false || sample['dl_s'] = 10)
+          data = (@row_headers & HEADERS_SAMPLE_ID).map { |column| sample[column] }
+          data[row_length - 1] = nil
+          analyses = prepare_sample_analysis_data(sample)
+          sheet.add_row(data, style: light_grey) if analyses.present?
+          analyses.each do |an|
+            data = @headers.map { |column| an[column] }
+            sheet.add_row(data, sz: 12)  if data.compact.present?
+            an['datasets'].map do |dataset|
+              data = @headers.map { |column| dataset[column] }
+              sheet.add_row(data, sz: 12) if data.compact.present?
+              dataset['attachments'].map do |att|
+                data = @headers.map { |column| att[column] }
+                sheet.add_row(data, sz: 12) if data.compact.present?
+              end
+            end
+          end
+        end
+      end
+      # end
       @samples = nil
     end
 
     def read
       @xfile.to_stream.read
+    end
+
+    def prepare_sample_analysis_data(sample)
+      JSON.parse(sample['analyses'].presence || '[]').map do |an|
+        an['content'] = quill_to_html_to_string(an['content'])
+        an
+      end
     end
 
     def filter_with_permission_and_detail_level(sample)
