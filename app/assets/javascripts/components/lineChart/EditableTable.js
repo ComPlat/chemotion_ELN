@@ -106,19 +106,19 @@ export default class EditableTable extends React.Component {
   }
 
   addRow() {
-    let {data} = this.state
-    let {updateTemperature} = this.props
-
-    let newTime = ReactDOM.findDOMNode(this.refs["newTime"]).value
+    let { data } = this.state
+    let { updateTemperature } = this.props
+    let newTime = this.newTime.value
     newTime = this.checkDefaultTime(newTime)
-    let newTemperature = ReactDOM.findDOMNode(this.refs["newTemperature"]).value
+    let newTemperature = this.newTemperature.value
     newTemperature = this.checkDefaultTemperature(newTemperature)
-    let newData = {time: newTime, value: newTemperature}
+    let newData = { time: newTime, value: newTemperature }
 
     data.push(newData)
     this.setState({
       data: data,
-      newTime: '', newTemperature: ''
+      newTime: '',
+      newTemperature: ''
     }, updateTemperature(data))
   }
 
@@ -174,22 +174,31 @@ export default class EditableTable extends React.Component {
           {rows}
           <tr>
             <td className="table-cell">
-              <input ref="newTime" value={newTime}
-                     onChange={this.handleNewTimeInput}/>
+              <input
+                ref={(n) => { this.newTime = n; }}
+                value={newTime}
+                onChange={this.handleNewTimeInput}
+              />
             </td>
             <td className="table-cell">
               <div>
-                <input ref="newTemperature" style={{width: "65%"}}
-                       value={newTemperature}
-                       onChange={this.handleNewTemperatureInput}/>
-                <i className="fa fa-plus clickable-icon" aria-hidden="true"
-                   onClick={this.addRow} />
+                <input
+                  ref={(m) => { this.newTemperature = m; }}
+                  style={{ width: '65%' }}
+                  value={newTemperature}
+                  onChange={this.handleNewTemperatureInput}
+                />
+                <i
+                  className="fa fa-plus clickable-icon"
+                  aria-hidden="true"
+                  onClick={this.addRow}
+                />
               </div>
             </td>
           </tr>
         </tbody>
       </Table>
-    )
+    );
   }
 }
 

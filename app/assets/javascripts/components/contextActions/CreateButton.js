@@ -77,8 +77,7 @@ export default class CreateButton extends React.Component {
     SamplesFetcher.fetchSamplesByUIStateAndLimit(params).then((result) => {
       const samples = result;
       const sampleCount = samples.length;
-
-      if(sampleCount <= 96) {
+      if (sampleCount <= 96) {
         ClipboardActions.fetchSamplesByUIStateAndLimit(params, 'template_wellplate');
       } else {
         const wellplateCount = Math.ceil(sampleCount / 96);
@@ -107,7 +106,7 @@ export default class CreateButton extends React.Component {
   }
 
   bulkCreateWellplates() {
-    const wellplateCount = this.refs.wellplateInput.getValue();
+    const wellplateCount = this.wellplateInput.value;
     const { collectionId, samples } = this.state;
 
     ElementActions.bulkCreateWellplatesFromSamples({
@@ -131,9 +130,11 @@ export default class CreateButton extends React.Component {
           <p />
           <FormGroup controlId="wellplateInput">
             <ControlLabel>Number of wellplates</ControlLabel>
-            <FormControl type="text"
-              ref="wellplateInput"
-              defaultValue={modalProps.wellplateCount || ''}/>
+            <FormControl
+              type="text"
+              inputRef={(input) => { this.wellplateInput = input; }}
+              defaultValue={modalProps.wellplateCount || ''}
+            />
           </FormGroup>
 
           <ButtonToolbar>

@@ -55,7 +55,6 @@ export default class Search extends React.Component {
     const isPublic = this.props.isPublic;
     let tanimoto = this.state.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
-
     const selection = {
       elementType: this.state.elementType,
       molfile,
@@ -67,7 +66,9 @@ export default class Search extends React.Component {
     };
     UIActions.setSearchSelection(selection);
     ElementActions.fetchBasedOnSearchSelectionAndCollection(
-      { selection, collectionId, isSync, isPublic });
+      {
+        selection, collectionId, isSync, isPublic
+      });
   }
 
   handleClearSearchSelection() {
@@ -163,7 +164,7 @@ export default class Search extends React.Component {
         <Col sm={6} md={4}>
           <Form inline>
             <Radio
-              ref="searchSimilarRadio"
+              ref={(input) => { this.searchSimilarRadio = input; }}
               value="similar"
               checked={this.state.searchType === 'similar'}
               onChange={e => this.handleSearchTypeChange(e)}
@@ -175,14 +176,14 @@ export default class Search extends React.Component {
               style={{ width: '40%' }}
               type="text"
               value={this.state.tanimotoThreshold}
-              ref="searchTanimotoInput"
+              ref={(input) => { this.searchTanimotoInput = input; }}
               onChange={e => this.handleTanimotoChange(e)}
             />
           </Form>
         </Col>
         <Col sm={4} md={2}>
           <Radio
-            ref="searchSubstructureRadio"
+            ref={(input) => { this.searchSubstructureRadio = input; }}
             value="sub"
             checked={this.state.searchType === 'sub'}
             onChange={e => this.handleSearchTypeChange(e)}
@@ -229,7 +230,7 @@ export default class Search extends React.Component {
             inputAttributes={inputAttributes}
             suggestionsAttributes={suggestionsAttributes}
             suggestions={input => this.search(input)}
-            ref="autoComplete"
+            ref={(input) => { this.autoComplete = input; }}
             onSelectionChange={selection => this.handleSelectionChange(selection)}
             buttonBefore={innerDropdown}
             buttonAfter={buttonAfter}

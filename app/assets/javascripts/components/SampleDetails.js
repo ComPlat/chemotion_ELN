@@ -587,26 +587,29 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  sampleImportReadoutTab(ind){
+  sampleImportReadoutTab(ind) {
     let sample = this.state.sample || {}
-    return(
-      <Tab eventKey={ind} title={'Results'}
-        key={'Results' + sample.id.toString()}>
-        <ListGroupItem style={{paddingBottom: 20}}>
-        <FormGroup controlId="importedReadoutInput">
-          <ControlLabel>Imported Readout</ControlLabel>
-          <InputGroup>
-            <FormControl type="text"
-              ref="importedReadoutInput"
-              value={sample.imported_readout || ''}
-             disabled
-             readOnly
-            />
-          </InputGroup>
-        </FormGroup>
+    return (
+      <Tab
+        eventKey={ind}
+        title={'Results'}
+        key={'Results' + sample.id.toString()}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }}>
+          <FormGroup controlId="importedReadoutInput">
+            <ControlLabel>Imported Readout</ControlLabel>
+            <InputGroup>
+              <FormControl
+                type="text"
+                value={sample.imported_readout || ''}
+                disabled
+                readOnly
+              />
+            </InputGroup>
+          </FormGroup>
         </ListGroupItem>
       </Tab>
-    )
+    );
   }
 
   moleculeComputedProps(ind) {
