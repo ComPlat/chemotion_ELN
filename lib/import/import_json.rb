@@ -149,6 +149,11 @@ class Import::ImportJson
           { collection_id: all_collection.id }
         ]
       )
+      if attribs['molecule_name_attributes']
+        attribs['molecule_name_attributes'].slice!('name','description','user_id')
+        attribs['molecule_name_attributes']['user_id'] = user_id if attribs['molecule_name_attributes']['user_id']
+      end
+      attribs['residues_attributes'] ||=  []
       new_el = create_element(el['uuid'], attribs, Sample, 'sample')
       next unless new_el
       klass = el['reaction_sample']&.constantize
@@ -234,14 +239,14 @@ class Import::ImportJson
 
   def filter_attributes(klass)
     attributes = klass.attribute_names - %w(id user_id created_by deleted_at )
-    case klass
-    when Sample
+    case klass.name
+    when 'Sample'
       attributes -= [
         'ancestry', 'molecule_id', 'xref', 'fingerprint_id', 'molecule_name_id',
         'is_top_secret', 'molecule_svg_file'
        ]
-      attributes += ['residues_attributes', 'elemental_compositions_attributes']
-    when Reaction
+      attributes += ['residues_attributes', 'elemental_compositions_attributes', 'molecule_name_attributes']
+    when 'Reaction'
       attributes -= ['reaction_svg_file']
     end
     attributes

@@ -9,7 +9,10 @@ module Export
       @reaction_ids = [args[:reaction_ids]].flatten.compact.uniq || []
       s_ids = ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id).compact
       @sample_ids = @sample_ids | s_ids unless s_ids.empty?
-
+      # FIXME: find a better way to bypass reaction query if only sample ids given
+      if @sample_ids.present? && @reaction_ids.blank?
+        @reaction_ids = [0]
+      end
       @data = { 'reactions' => {}, 'samples' => {}, 'analysis' => {} }
     end
 
@@ -150,8 +153,10 @@ module Export
              from (select ec.composition_type, ec.loading, ec."data" from elemental_compositions ec where s.id = ec.sample_id) ecd) as elemental_compositions_attributes
         , (select array_to_json(array_agg(row_to_json(red)))
             from (select re.custom_info,'residue_type', re.residue_type from residues re where s.id = re.sample_id) red) as residues_attributes
+        , row_to_json(mn) as molecule_name_attributes
       from samples s
       inner join molecules m on s.molecule_id = m.id
+      inner join molecule_names mn on mn.id = s.molecule_name_id
       inner join collections_samples cs on cs.sample_id = s.id and cs.deleted_at isnull
       inner join code_logs cl on cl."source" = 'sample' and cl.source_id = s.id
       left join reactions_samples rsm on (rsm.sample_id = s.id and rsm.deleted_at isnull)
