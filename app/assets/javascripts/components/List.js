@@ -205,8 +205,10 @@ export default class List extends React.Component {
               {navItems}
               &nbsp;&nbsp;&nbsp;
               <ElementsTableSettings
-                visible={visible} hidden={hidden}
-                ref="elementsTableSettings"/>
+                visible={visible}
+                hidden={hidden}
+                ref={(m) => { this.elementsTableSettings = m; }}
+              />
             </Nav>
           </Col>
           <Col sm={12}>

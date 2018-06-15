@@ -24,7 +24,7 @@ export default class QuillViewer extends React.Component {
 
   initQuill() {
     if (!this.viewer) {
-      const quillViewer = ReactDOM.findDOMNode(this.refs.quillViewer);
+      const quillViewer = this.quillViewer;
       const defaultOptions = {
         theme: this.theme,
         readOnly: this.readOnly,
@@ -66,9 +66,9 @@ export default class QuillViewer extends React.Component {
     return (
       this.props.preview
         ? <div className="quill-viewer">
-            <div ref="quillViewer"></div>
+            <div ref={(m) => { this.quillViewer = m; }}></div>
           </div>
-        : <spam ref="quillViewer" />
+        : <span ref={(n) => { this.quillViewer = n; }} />
     );
   }
 }

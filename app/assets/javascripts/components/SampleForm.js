@@ -63,7 +63,7 @@ export default class SampleForm extends React.Component {
     if (sample.can_update) {
       return (
         <Checkbox
-          ref="topSecretInput"
+          inputRef={(ref) => { this.topSecretInput = ref; }}
           checked={sample.is_top_secret}
           onChange={(e) => this.handleFieldChanged(sample, 'is_top_secret', e.target.checked)}
         >
@@ -234,7 +234,7 @@ export default class SampleForm extends React.Component {
   sampleSolvent(sample) {
     return (
       <Select
-        ref="solventInput"
+        ref={(input) => { this.solventInput = input; }}
         id="solventInput"
         name="solvents"
         style={{ marginBottom: '15px' }}
@@ -324,7 +324,7 @@ export default class SampleForm extends React.Component {
         <ControlLabel>Description</ControlLabel>
         <FormControl
           componentClass="textarea"
-          ref="descriptionInput"
+          ref={(input) => { this.descriptionInput = input; }}
           placeholder={sample.description}
           value={sample.description || ''}
           onChange={(e) => this.handleFieldChanged(sample, 'description', e.target.value)}

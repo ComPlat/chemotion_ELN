@@ -91,7 +91,8 @@ export default class AutoCompleteInput extends React.Component {
     newFocusDom.classList.add('active')
 
     this.setState(newState)
-    let listSuggestions = ReactDOM.findDOMNode(this.refs.listSuggestions)
+
+    let listSuggestions = this.listSuggestions;
 
     // Scroll to element
     if (listSuggestions &&
@@ -350,10 +351,13 @@ export default class AutoCompleteInput extends React.Component {
             onHide={() => this.abortAutoSelection()}
             placement='bottom'
             container={this}
-            rootClose={true}>
+            rootClose={true}
+          >
             <div style={containerStyle}>
-              <ListGroup {...this.props.suggestionsAttributes}
-                          ref='listSuggestions'>
+              <ListGroup
+                {...this.props.suggestionsAttributes}
+                ref={(alist) => { this.listSuggestions = alist; }}
+              >
                 {this.renderSuggestions()}
               </ListGroup>
             </div>

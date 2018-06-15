@@ -101,7 +101,7 @@ export default class CreateButton extends React.Component {
   }
 
   updateLayout() {
-    let {visible, hidden} = this.refs.layout.state
+    let { visible, hidden } = this.layout.state
 
     let layout = {}
 
@@ -145,13 +145,19 @@ export default class CreateButton extends React.Component {
     }
 
     let popoverSettings = (
-      <Popover  className="collection-overlay" id="popover-layout"
-          style={{maxWidth: "none", width: "335px"}}>
+      <Popover
+        className="collection-overlay"
+        id="popover-layout"
+        style={{ maxWidth: 'none', width: '335px' }}
+      >
         <div>
           <h3 className="popover-title">Table Layout</h3>
           <div className="popover-content">
-            <TabLayoutContainer visible={visible} hidden={hidden}
-              ref="layout" />
+            <TabLayoutContainer
+              visible={visible}
+              hidden={hidden}
+              ref={(n) => { this.layout = n; }}
+            />
           </div>
         </div>
         {sampleSettings}

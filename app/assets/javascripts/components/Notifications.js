@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import NotificationSystem from 'react-notification-system';
 import connectToStores from 'alt-utils/lib/connectToStores';
 
@@ -7,13 +7,13 @@ import NotificationStore from './stores/NotificationStore';
 
 class Notifications extends Component {
   componentDidMount() {
-    NotificationActions.setComponentReference(this.refs.notificationSystem);
+    NotificationActions.setComponentReference(this.notificationSystem);
   }
 
   render() {
     return (
       <div>
-        <NotificationSystem ref="notificationSystem" />
+        <NotificationSystem ref={(notification) => { this.notificationSystem = notification; }} />
       </div>
     );
   }
