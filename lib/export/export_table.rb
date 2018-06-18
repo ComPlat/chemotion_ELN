@@ -16,7 +16,11 @@ module Export
     # allowed sample/molecule headers for sample detail level 10
     HEADERS_SAMPLE_10 = HEADERS_SAMPLE_0 + [
       'molfile', 'sample readout', 'image', 'identifier', 'molecule name',
-      'canonical smiles', 'sum formula', 'inchistring', 'InChI'
+      'canonical smiles', 'sum formula', 'inchistring', 'InChI'#, 'analyses'
+    ].freeze
+
+    HEADERS_SAMPLE_ID = [
+      'sample external label', 'sample name', 'short label'
     ].freeze
 
     # allowed well/wellplate headers for wellplate detail level 0
@@ -39,16 +43,29 @@ module Export
       'r ref', 'r eq'
     ].freeze
 
-    def generate_headers(table, excluded_columns = [])
+
+    HEADERS_ANALYSIS_0 = [].freeze
+    HEADERS_ANALYSIS = ["name", "description", "uuid", "kind", "status", "content"].freeze
+    HEADERS_DATASET_0 = [].freeze
+    HEADERS_DATASET = ["dataset name", "instrument", "dataset description"].freeze
+    HEADERS_ATTACHMENT_0 = [].freeze
+    HEADERS_ATTACHMENT = ["filename", "checksum"].freeze
+
+    def generate_headers(table, excluded_columns = [], selected_columns = [])
       @row_headers = @samples.columns - excluded_columns
       @headers = @row_headers - %w[s_id ts co_id scu_id shared_sync pl dl_s dl_wp dl_r m_image molfile_version]
       @image_index = @headers.index('image')
-      case table
+      case table.to_sym
       when :wellplate
         generate_headers_wellplate
       when :reaction
         generate_headers_reaction
-      else generate_headers_sample
+      when :sample_analyses
+        generate_headers_sample_id
+        add_analyses_header(selected_columns)
+      when :sample
+        generate_headers_sample
+      else generate_headers_sample_id
       end
     end
 
@@ -83,6 +100,25 @@ module Export
       @headers100 = @headers.map { |column|
         HEADERS_SAMPLE_10.include?(column) ? column : nil
       }
+    end
+
+    def generate_headers_sample_id
+      @headers = @row_headers & HEADERS_SAMPLE_ID
+      @headers00 = @headers.dup
+      @headers100 = @headers.dup
+    end
+
+    def add_analyses_header(selected_headers)
+      h = HEADERS_ANALYSIS + HEADERS_DATASET + HEADERS_ATTACHMENT
+      h = h & selected_headers
+      @headers += h
+      # @headers00 << 'analyses'
+      @headers100 << 'analyses'
+    end
+
+    def quill_to_html_to_string(delta)
+      html_content = Chemotion::QuillToHtml.new.convert(delta)
+      Nokogiri::HTML( html_content).text
     end
   end
 end

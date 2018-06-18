@@ -25,6 +25,7 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 gem 'schmooze'
 
 group :development do
+  gem 'turbo-sprockets-rails4'
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
   gem 'better_errors' # allows to debug exception on backend from browser

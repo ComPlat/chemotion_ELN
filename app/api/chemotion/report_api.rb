@@ -56,11 +56,22 @@ module Chemotion
           ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
           next unless p_t[:checkedAll] || ids
           column_query = build_column_query(filter_column_selection(table))
-          sql_query = build_sql(table, column_query, c_id, ids, p_t[:checkedAll])
+          sql_query = send("build_sql_#{table}_sample",  column_query, c_id, ids, p_t[:checkedAll])
           next unless sql_query
           result = db_exec_query(sql_query)
           export.generate_sheet_with_samples(table, result)
         end
+
+        %i[sample].each do |table|
+          next unless (p_t = params[:uiState][table])
+          ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
+          next unless p_t[:checkedAll] || ids
+          column_query = build_column_query(filter_column_selection("#{table}_analyses".to_sym))
+          sql_query = send("build_sql_#{table}_analyses", column_query, c_id, ids, p_t[:checkedAll])
+          next unless sql_query
+          result = db_exec_query(sql_query)
+          export.generate_analyses_sheet_with_samples("#{table}_analyses".to_sym, result, params[:columns][:analyses])
+        end if params[:exportType] == 1 && params[:columns][:analyses].present?
 
         case export.file_extension
         when 'xlsx' # XLSX export
@@ -112,7 +123,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_wellplate)
-        sql_query = build_sql(:wellplate, column_query, nil, params[:id], false)
+        sql_query = build_sql_wellplate_sample(column_query, nil, params[:id], false)
         next unless sql_query
         result = db_exec_query(sql_query)
         export.generate_sheet_with_samples(:wellplate, result)
@@ -133,7 +144,7 @@ module Chemotion
         )
         export = Export::ExportExcel.new
         column_query = build_column_query(default_columns_reaction)
-        sql_query = build_sql(:reaction, column_query, nil, params[:id], false)
+        sql_query = build_sql_reaction_sample(column_query, nil, params[:id], false)
         next unless sql_query
         result = db_exec_query(sql_query)
         export.generate_sheet_with_samples(:reaction, result)

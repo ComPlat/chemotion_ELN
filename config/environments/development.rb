@@ -38,4 +38,18 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = { :address => "localhost", :port => 1025 }
   #config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  TurboSprockets.configure do |config|
+    config.precompiler.enabled = false
+    config.preloader.enabled = false
+    config.preloader.worker_count = 3
+    config.precompiler.worker_count = 3
+  end
+  config.after_initialize do
+#    Bullet.enable = true
+#    Bullet.alert = true
+#    Bullet.bullet_logger = true
+#    Bullet.console = true
+#    Bullet.rails_logger = true
+#    Bullet.add_footer = true
+  end
 end

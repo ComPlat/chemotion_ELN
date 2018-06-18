@@ -54,23 +54,37 @@ export default class ModalExport extends React.Component {
           {value: "position_x", text: "well x", checked: false},
           {value: "position_y", text: "well y", checked: false},
         ],
+        analyses: [
+          { value: "name", text: "analysis name", checked: false },
+          { value: "description", text: "analysis description", checked: false },
+          { value: "kind", text: "analysis type", checked: false },
+          { value: "content", text: "analysis content", checked: false },
+          { value: "status", text: "analysis status", checked: false },
+          { value: "uuid", text: "uuid", checked: false },
+          { value: "dataset name", text: "dataset name", checked: false },
+          { value: "dataset description", text: "dataset description", checked: false },
+          { value: "instrument", text: "instrument", checked: false },
+          { value: "filename", text: "file name", checked: false },
+          { value: "checksum", text: "file checksum", checked: false },
+        ],
       },
       checkedAllColumns: {
         sample: true,
         molecule: true,
         wellplate: false,
         reaction: false,
-      } ,
+        analysis: false,
+      },
     };
     this.handleClick = this.handleClick.bind(this)
   }
 
-  toggleColumns(text, checked, section){
+  toggleColumns(text, checked, section) {
     this.setState((prevState) => {
       const { columns } = prevState;
-      columns[section] = columns[section].map( col => {
-        if(col.text === text) {
-          return Object.assign({}, col, {checked: !checked})
+      columns[section] = columns[section].map((col) => {
+        if (col.text === text) {
+          return Object.assign({}, col, { checked: !checked })
         }
         return col
       })
@@ -78,47 +92,55 @@ export default class ModalExport extends React.Component {
     })
   }
 
-  toggleColumnsSample(text, checked){
+  toggleColumnsSample(text, checked) {
     this.toggleColumns(text, checked, 'sample');
   }
 
-  toggleColumnsReaction(text, checked){
+  toggleColumnsReaction(text, checked) {
     this.toggleColumns(text, checked, 'reaction');
   }
 
-  toggleColumnsMolecule(text, checked){
+  toggleColumnsMolecule(text, checked) {
     this.toggleColumns(text, checked, 'molecule');
   }
 
-  toggleColumnsWellplate(text, checked){
+  toggleColumnsWellplate(text, checked) {
     this.toggleColumns(text, checked, 'wellplate');
+  }
+
+  toggleColumnsAnalyses(text, checked) {
+    this.toggleColumns(text, checked, 'analyses');
   }
 
   toggleColumnsAll(section) {
     this.setState((prevState) => {
-      let { columns, checkedAllColumns } = prevState;
+      const { columns, checkedAllColumns } = prevState;
       checkedAllColumns[section] = !checkedAllColumns[section]
-      columns[section] = columns[section].map( col => {
-        return Object.assign({}, col, {checked: checkedAllColumns[section]})
-      })
-      return {columns, checkedAllColumns}
+      columns[section] = columns[section].map(
+        col => Object.assign({}, col, { checked: checkedAllColumns[section] })
+      );
+      return { columns, checkedAllColumns };
     })
   }
 
-  toggleColumnsAllSample(text, checked){
+  toggleColumnsAllSample(text, checked) {
     this.toggleColumnsAll('sample');
   }
 
-  toggleColumnsAllReaction(text, checked){
+  toggleColumnsAllReaction(text, checked) {
     this.toggleColumnsAll('reaction');
   }
 
-  toggleColumnsAllMolecule(text, checked){
+  toggleColumnsAllMolecule(text, checked) {
     this.toggleColumnsAll('molecule');
   }
 
-  toggleColumnsAllWellplate(text, checked){
+  toggleColumnsAllWellplate(text, checked) {
     this.toggleColumnsAll('wellplate');
+  }
+
+  toggleColumnsAllAnalyses(text, checked) {
+    this.toggleColumnsAll('analyses');
   }
 
   buttonBar() {
@@ -195,6 +217,12 @@ export default class ModalExport extends React.Component {
             toggleCheckbox={this.toggleColumnsWellplate.bind(this)}
             toggleCheckAll={this.toggleColumnsAllWellplate.bind(this)}
             checkedAll={this.state.checkedAllColumns.wellplate}
+          />
+          <h4>Analyses</h4>
+          <CheckBoxs  items={this.state.columns.analyses}
+            toggleCheckbox={this.toggleColumnsAnalyses.bind(this)}
+            toggleCheckAll={this.toggleColumnsAllAnalyses.bind(this)}
+            checkedAll={this.state.checkedAllColumns.analyses}
           />
         </div>
         {this.buttonBar()}
