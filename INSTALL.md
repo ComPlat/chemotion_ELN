@@ -19,16 +19,16 @@ if there are errors with nokogiri compilation with new xcode7:
 * openbabel will be automatically installed through `bundle install`
 
 ## rmagick
-* `brew install imagemagick gs` for OSX
+* `brew install imagemagick gs` for macOS
 * `apt-get install libmagickcore-dev libmagickwand-dev` for linux
-* if installing the rmagick gem fails you may try: `IM_PREFIX=$(brew list imagemagick 2>&1 | grep -E 'identify$' | sed 's/bin\/identify$//g') PKG_CONFIG_PATH=${IM_PREFIX}lib/pkgconfig/ C_INCLUDE_PATH=${IM_PREFIX}include/ImageMagick*/ gem install rmagick` (OSX only)
+* if installing the rmagick gem fails you may try: `IM_PREFIX=$(brew list imagemagick 2>&1 | grep -E 'identify$' | sed 's/bin\/identify$//g') PKG_CONFIG_PATH=${IM_PREFIX}lib/pkgconfig/ C_INCLUDE_PATH=${IM_PREFIX}include/ImageMagick*/ gem install rmagick` (macOS only)
 
 ## inkscape
 * `sudo apt-get install inkscape` for Linux
-* For Mac OSX, you need to install XQuartz before inkscape: `brew install Caskroom/cask/xquartz`, and `brew install homebrew/gui/inkscape`.
+* For macOS, you need to install XQuartz before inkscape: `brew install Caskroom/cask/xquartz`, and `brew install homebrew/gui/inkscape`.
 
 ## Dataset previews
-* `brew install imagemagick mplayer` for OSX
+* `brew install imagemagick mplayer` for macOS
 * `sudo apt-get -y install imagemagick mplayer` for Linux
 
 ## Application Setup
@@ -64,7 +64,7 @@ If you like to reset the database (after `cap production deploy`) you have to ex
 # JS Setup & Testing
 
 * Install `nvm`: `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash` (see https://github.com/creationix/nvm#installation)
-  or for OSX: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
+  or for macOS: `brew install nvm && echo "source $(brew --prefix nvm)/nvm.sh" >> ~/.profile`
 * Execute `nvm install` nvm will automatically use node 0.10.40 (in order to work with current jest-version)
 * Execute `npm install -g npm@3.10.8`
 * Execute `npm install`.
