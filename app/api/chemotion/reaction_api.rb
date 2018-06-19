@@ -52,6 +52,7 @@ module ReactionHelpers
       starting_material: Array(material_attributes['starting_materials']).map{|m| OSample.new(m)},
       reactant: Array(material_attributes['reactants']).map{|m| OSample.new(m)},
       solvent: Array(material_attributes['solvents']).map{|m| OSample.new(m)},
+      purification_solvent: Array(material_attributes['purification_solvents']).map{|m| OSample.new(m)},
       product: Array(material_attributes['products']).map{|m| OSample.new(m)}
     }
 
@@ -88,12 +89,13 @@ module ReactionHelpers
               s_id = subsample.id
             #create new sample
             else
-              attributes = sample.to_h
-                .except(:id, :is_new, :is_split, :reference, :equivalent, :position, :type, :molecule, :collection_id, :short_label)
-                .merge(created_by: current_user.id)
+              attributes = sample.to_h.except(
+                :id, :is_new, :is_split, :reference, :equivalent, :position,
+                :type, :molecule, :collection_id, :short_label, :waste, :coefficient
+              ).merge(created_by: current_user.id)
 
               # update attributes[:name] for a copied reaction
-              if reaction.name.include?("Copy") && attributes[:name].present?
+              if (reaction.name || '').include?("Copy") && attributes[:name].present?
                 named_by_reaction = "#{reaction.short_label}"
                 named_by_reaction += "-#{attributes[:name].split("-").last}"
                 attributes.merge!(name: named_by_reaction)
@@ -121,6 +123,8 @@ module ReactionHelpers
               reaction_id: reaction.id,
               equivalent: sample.equivalent,
               reference: sample.reference,
+              waste: sample.waste,
+              coefficient: sample.coefficient,
               position: sample.position,
               type: reactions_sample_klass
             ) if s_id
@@ -157,6 +161,8 @@ module ReactionHelpers
                 reaction_id: reaction.id,
                 equivalent: sample.equivalent,
                 reference: sample.reference,
+                waste: sample.waste,
+                coefficient: sample.coefficient,
                 position: sample.position,
                 type: reactions_sample_klass
               )
@@ -168,6 +174,8 @@ module ReactionHelpers
                 reaction_id: reaction.id,
                 equivalent: sample.equivalent,
                 reference: sample.reference,
+                waste: sample.waste,
+                coefficient: sample.coefficient,
                 position: sample.position,
                 type: reactions_sample_klass
               )

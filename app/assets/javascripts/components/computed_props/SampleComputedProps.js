@@ -87,7 +87,6 @@ export default class SampleComputedProps extends React.Component {
           editable={false}
           rowData={cprops}
           domLayout="autoHeight"
-          onGridReady={this.onGridReady}
         />
       </div>
     );

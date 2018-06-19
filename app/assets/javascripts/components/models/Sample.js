@@ -767,12 +767,14 @@ export default class Sample extends Element {
   }
 
   serializeMaterial() {
-    let params = this.serialize();
-    let extra_params = {
+    const params = this.serialize();
+    const extra_params = {
       equivalent: this.equivalent,
       position: this.position,
-      reference: this.reference || false
-    }
+      reference: this.reference || false,
+      waste: this.waste,
+      coefficient: this.coefficient,
+    };
     _.merge(params, extra_params);
     return params;
   }

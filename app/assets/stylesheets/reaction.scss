@@ -116,3 +116,60 @@ table.reaction-scheme-solvent {
     z-index: 3;
   }
 }
+
+.green-chemistry {
+  border: 1px solid #ddd;
+  border-top: none;
+
+  > div {
+    padding: 10px;
+  }
+
+  .purification-head {
+    display: flex;
+    align-items: center;
+
+    > div {
+      flex-grow: 1;
+    }
+  }
+
+  .green-material-name {
+    width: 100%;
+    display: flex;
+    align-items: center;
+
+    div:nth-child(2) {
+      flex-grow: 1;
+      button {
+        word-break: break-all;
+        white-space: normal;
+        text-align: left;
+      }
+    }
+  }
+
+  .solvents-select {
+    margin: 5px;
+  }
+
+  .waste-chkbx {
+    .checkbox {
+      text-align: center;
+      margin-top: 3px;
+    }
+  }
+}
+
+.menu-outer-top .Select-menu-outer {
+  top: auto;
+  bottom: 35px !important;
+  border-bottom-right-radius: 0px !important;
+  border-bottom-left-radius: 0px !important;
+  border-top-right-radius: 4px !important;
+  border-top-left-radius: 4px !important;
+}
+
+.e-factor {
+  padding: 10px !important;
+}

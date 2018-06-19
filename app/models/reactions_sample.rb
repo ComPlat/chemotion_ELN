@@ -26,6 +26,10 @@ class ReactionsSolventSample < ReactionsSample
   include Reactable
 end
 
+class ReactionsPurificationSolventSample < ReactionsSample
+  include Reactable
+end
+
 class ReactionsProductSample < ReactionsSample
   include Reactable
   include Tagging

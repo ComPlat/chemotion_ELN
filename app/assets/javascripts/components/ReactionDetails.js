@@ -15,6 +15,7 @@ import ReactionDetailsContainers from './ReactionDetailsContainers';
 import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
+import GreenChemistry from './green_chem/GreenChemistry';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton';
 import XTabs from './extra/ReactionDetailsXTabs';
@@ -38,6 +39,7 @@ export default class ReactionDetails extends Component {
       this.updateReactionSvg();
     }
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.handleReactionChange = this.handleReactionChange.bind(this);
 
   }
 
@@ -213,7 +215,7 @@ export default class ReactionDetails extends Component {
     let NoName =  XTabs["content"+num];
     let TabName = XTabs["title"+num];
     return(
-       <Tab eventKey={ind+4}  title={TabName} key={"sampleDetailsTab"+ind+3} >
+       <Tab eventKey={ind+5}  title={TabName} key={"sampleDetailsTab"+ind+3} >
          <ListGroupItem style={{paddingBottom: 20}}>
            <NoName  reaction={reaction}/>
          </ListGroupItem>
@@ -356,6 +358,12 @@ export default class ReactionDetails extends Component {
           </Tab>
           <Tab eventKey={3} title={'Analyses'}>
               {this.productData(reaction)}
+          </Tab>
+          <Tab eventKey={4} title="Green Chemistry">
+            <GreenChemistry
+              reaction={reaction}
+              onReactionChange={this.handleReactionChange}
+            />
           </Tab>
           {extraTabs.map((e,i)=>e(i))}
         </Tabs>

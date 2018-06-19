@@ -1,4 +1,4 @@
-# encoding: utf-8
+# encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180524103806) do
+ActiveRecord::Schema.define(version: 20180618052835) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -75,8 +75,8 @@ ActiveRecord::Schema.define(version: 20180524103806) do
     t.string   "token",      null: false
     t.integer  "user_id"
     t.inet     "ip"
-    t.string   "fqdn"
     t.string   "role"
+    t.string   "fqdn"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -500,6 +500,8 @@ ActiveRecord::Schema.define(version: 20180524103806) do
     t.integer  "position"
     t.string   "type"
     t.datetime "deleted_at"
+    t.boolean  "waste",       default: false
+    t.float    "coefficient", default: 1.0
   end
 
   add_index "reactions_samples", ["reaction_id"], name: "index_reactions_samples_on_reaction_id", using: :btree
@@ -679,14 +681,14 @@ ActiveRecord::Schema.define(version: 20180524103806) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "type",                             default: "Person"
+    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 

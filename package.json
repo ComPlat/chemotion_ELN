@@ -87,7 +87,7 @@
     "bundle-collapser": "^1.2.1",
     "envify": "^4.0.0",
     "enzyme": "^2.4.1",
-    "eslint": "^4.9.0",
+    "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-jsx-a11y": "^6.0.2",

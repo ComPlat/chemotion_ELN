@@ -16,6 +16,8 @@ class MaterialDecorator
       m.reference = rma['reference']
       m.equivalent = rma['equivalent']
       m.position = rma['position']
+      m.waste = rma['waste']
+      m.coefficient = rma['coefficient']
       m.container = reaction_material.sample.container
 
       m

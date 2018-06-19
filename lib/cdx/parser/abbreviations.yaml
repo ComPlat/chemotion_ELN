@@ -2775,3 +2775,11 @@ CCl4: "ClC(Cl)(Cl)Cl"
 HSCN: "SC#N"
 KSCN: "[S-]C#N.[K+]"
 H2O2: OO
+Oxalylchloride: "O=C(Cl)C(Cl)=O"
+pyridine: "C1=NC=CC=C1"
+pyridin: "C1=NC=CC=C1"
+"Cu-powder": Cu
+"Cu-Pulver": Cu
+DMEDA: CNCCNC
+Toluol: "CC1=CC=CC=C1"
+toluene: "CC1=CC=CC=C1"
