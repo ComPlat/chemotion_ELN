@@ -16,7 +16,7 @@ export default class GreenChemistry extends Component {
 
   updateGroupData() {
     const { reaction, onReactionChange } = this.props;
-    onReactionChange(reaction);
+    onReactionChange(reaction, { schemaChanged: false });
   }
 
   render() {
