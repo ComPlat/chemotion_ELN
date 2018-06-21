@@ -4,19 +4,19 @@ module ContainerHelpers
   def update_datamodel(container)
 
 #TODO check this logic, not sure this is still needed + containable_type should not be null
-    if container.is_new
+    if container[:is_new]
       root_container = Container.create(
         #name: "root",
-        container_type: container.containable_type #should be 'root'
+        container_type: container[:containable_type] #should be 'root'
       )
     else
-      root_container = Container.find_by id: container.id
+      root_container = Container.find_by id: container[:id]
       #root_container.name = "root" #if it is created from client.side
     end
     #root_container.save!
 #ODOT
-    if container.children != nil && !container.children.empty?
-      create_or_update_containers(container.children, root_container)
+    if container[:children] != nil && !container[:children].empty?
+      create_or_update_containers(container[:children], root_container)
     end
     root_container
   end
@@ -27,13 +27,13 @@ module ContainerHelpers
     return unless children
     return unless can_update_container(parent_container)
     children.each do |child|
-      if child.is_deleted
-        delete_containers_and_attachments(child) unless child.is_new
+      if child[:is_deleted]
+        delete_containers_and_attachments(child) unless child[:is_new]
         next
       end
 
-      extended_metadata = child.extended_metadata
-      if child.container_type == "analysis"
+      extended_metadata = child[:extended_metadata]
+      if child[:container_type] == "analysis"
           extended_metadata["content"] = if extended_metadata.key?("content")
             extended_metadata["content"].to_json
           else
@@ -41,27 +41,27 @@ module ContainerHelpers
           end
       end
 
-      if child.is_new
+      if child[:is_new]
         #Create container
         container = parent_container.children.create(
-          name: child.name,
-          container_type: child.container_type,
-          description: child.description,
+          name: child[:name],
+          container_type: child[:container_type],
+          description: child[:description],
           extended_metadata: extended_metadata
         )
       else
         #Update container
-        next unless container = Container.find_by(id: child.id)
+        next unless container = Container.find_by(id: child[:id])
         container.update!(
-          name: child.name,
-          container_type: child.container_type,
-          description: child.description,
+          name: child[:name],
+          container_type: child[:container_type],
+          description: child[:description],
           extended_metadata: extended_metadata
         )
       end
 
-      create_or_update_attachments(container.id, child.attachments) if child.attachments
-      create_or_update_containers(child.children, container)
+      create_or_update_attachments(container.id, child[:attachments]) if child[:attachments]
+      create_or_update_containers(child[:children], container)
     end
   end
 
@@ -71,16 +71,16 @@ module ContainerHelpers
     can_edit = true
     return unless can_update
     attachments.each do |att|
-      if att.is_new
-        attachment = Attachment.where(storage: 'tmp', key: att.id).last
+      if att[:is_new]
+        attachment = Attachment.where(storage: 'tmp', key: att[:id]).last
       else
-        attachment = Attachment.where( id: att.id).last
+        attachment = Attachment.where( id: att[:id]).last
         if attachment && attachment.container_id
           can_edit = can_update_container(attachment.container_id)
         end
       end
       if attachment
-        if att.is_deleted && can_edit
+        if att[:is_deleted] && can_edit
           attachment.destroy!
           next
         end
@@ -88,19 +88,19 @@ module ContainerHelpers
         attachment.update!(container_id: container_id)
         primary_store = Rails.configuration.storage.primary_store
 
-        attachment.update!(storage: primary_store) if att.is_new
+        attachment.update!(storage: primary_store) if att[:is_new]
       end
     end
   end
 
   def delete_containers_and_attachments(container)
-    Attachment.where(container_id: container.id).destroy_all
-    if container.children.length > 0
-      container.children.each do |tmp|
+    Attachment.where(container_id: container[:id]).destroy_all
+    if container[:children].length > 0
+      container[:children].each do |tmp|
         delete_containers_and_attachments(tmp)
       end
     end
-    Container.where(id: container.id).destroy_all
+    Container.where(id: container[:id]).destroy_all
   end
 
   def can_update_container(container)

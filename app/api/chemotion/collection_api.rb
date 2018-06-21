@@ -188,7 +188,7 @@ module Chemotion
             error!('401 Unauthorized collection', 401)
           end
           ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollection].id
+          current_collection_id = ui_state[:currentCollection][:id]
           # cannot moved from 'All' collection
           if Collection.get_all_collection_for_user(current_user)
                        .id == current_collection_id
@@ -221,7 +221,7 @@ module Chemotion
           collection_id = fetch_collection_id_for_assign(params)
           error!('401 Unauthorized collection', 401) unless collection_id
           ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollection].id
+          current_collection_id = ui_state[:currentCollection][:id]
           [
             [Sample, :sample, CollectionsSample],
             [Reaction, :reaction, CollectionsReaction],
@@ -243,7 +243,7 @@ module Chemotion
         end
         delete do
           ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollection].id
+          current_collection_id = ui_state[:currentCollection][:id]
 
           # Remove Sample
           sample_ids = Sample.for_ui_state_with_collection(
