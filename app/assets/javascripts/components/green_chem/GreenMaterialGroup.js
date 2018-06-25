@@ -7,7 +7,7 @@ import Sample from '../models/Sample';
 import SampleName from '../common/SampleName';
 
 function floatFormatter(params) {
-  return (params.value || 0).toFixed(2);
+  return (params.value || 0).toFixed(4);
 }
 
 function MaterialNameWithIupac({ group, node }) {
@@ -110,7 +110,7 @@ export default class GreenMaterialGroup extends React.Component {
     const columnDefs = [
       {
         headerName: _.startCase(group),
-        width: 160,
+        width: 170,
         cellRendererFramework: MaterialNameWithIupac,
         cellRendererParams: { group },
       },
@@ -119,18 +119,24 @@ export default class GreenMaterialGroup extends React.Component {
         headerName: "Volume",
         field: "amount_l",
         valueFormatter: floatFormatter,
-        width: 90,
+        width: 86,
       },
-      { headerName: "Moles", field: "amount_mol", valueFormatter: floatFormatter },
+      {
+        headerName: "Moles",
+        field: "amount_mol",
+        width: 76,
+        valueFormatter: floatFormatter,
+      },
       {
         headerName: 'Equiv.',
         field: 'equivalent',
+        width: 76,
         valueFormatter: floatFormatter
       },
       {
-        headerName: 'Waste',
+        headerName: group === 'products' ? 'Waste' : 'Recyclable',
         field: 'waste',
-        width: 77,
+        width: 104,
         cellRendererFramework: WasteCheckbox,
         cellRendererParams: { toggleWaste: this.toggleWaste },
       },
@@ -145,12 +151,12 @@ export default class GreenMaterialGroup extends React.Component {
 
     const defaultColDef = {
       editable: false,
-      width: 72,
+      width: 71,
       autoHeight: true,
     };
 
     return (
-      <div className="reaction-scheme ag-theme-balham">
+      <div className="ag-theme-balham">
         <AgGridReact
           enableColResize
           columnDefs={columnDefs}

@@ -159,6 +159,33 @@ table.reaction-scheme-solvent {
       margin-top: 3px;
     }
   }
+
+  .green-metrics {
+    padding: 10px !important;
+
+    .ag-header-cell-label .ag-header-cell-text {
+      color: #018786;
+      text-overflow: clip !important;
+      overflow: visible !important;
+      white-space: normal !important;
+    }
+  }
+
+  .e-factor-refs {
+    .ag-header-cell-label .ag-header-cell-text {
+      text-overflow: clip !important;
+      overflow: visible !important;
+      white-space: normal !important;
+    }
+  }
+
+  .metrics-refs {
+    display: flex;
+  }
+
+  .metrics-refs > div {
+    margin-right: 5px;
+  }
 }
 
 .menu-outer-top .Select-menu-outer {
@@ -168,8 +195,4 @@ table.reaction-scheme-solvent {
   border-bottom-left-radius: 0px !important;
   border-top-right-radius: 4px !important;
   border-top-left-radius: 4px !important;
-}
-
-.e-factor {
-  padding: 10px !important;
 }

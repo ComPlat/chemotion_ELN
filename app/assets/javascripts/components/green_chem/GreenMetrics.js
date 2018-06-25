@@ -8,7 +8,7 @@ function getWaste(samples) {
 }
 
 function getNonWaste(samples) {
-  return samples.filter(s => !s.waste);
+  return samples.filter(s => s == null || !s.waste);
 }
 
 function sumReducer(acc, cur) {
@@ -72,43 +72,50 @@ export default class GreenMetrics extends React.Component {
     const wastedProductsAmount = getWaste(reaction.products)
           .map(x => x.amount_g).reduce(sumReducer, 0);
 
-    const sef = (startsAmount + reactantsAmount) / prodsAmount;
+    const sef = (startsAmount + reactantsAmount + solventsAmount - prodsAmount) / prodsAmount;
     const cef = (
-      startsAmount + reactantsAmount + solventsAmount + pSolventsAmount
+      startsAmount + reactantsAmount + solventsAmount +
+      pSolventsAmount - prodsAmount
     ) / prodsAmount;
     const cuef = (
-      selectedStartsAmount + selectedReactantsAmount +
-      selectedSolventsAmount + selectedPSolventsAmount - wastedProductsAmount
+      selectedStartsAmount + selectedReactantsAmount + selectedSolventsAmount +
+      selectedPSolventsAmount - selectedProductsAmount - wastedProductsAmount
     ) / selectedProductsAmount;
 
     const aesm = reaction.starting_materials
           .map(x => x.molecule_molecular_weight * x.coefficient)
           .reduce(sumReducer, 0);
-    const aep = getWaste(reaction.products)
+    const aep = reaction.products
+          .map(x => x.molecule_molecular_weight * x.coefficient)
+          .reduce(sumReducer, 0);
+    const caep = getNonWaste(reaction.products)
           .map(x => x.molecule_molecular_weight * x.coefficient)
           .reduce(sumReducer, 0);
     const aer = reaction.reactants
           .map(x => x.equivalent < 0.3 ? 0 : (x.molecule_molecular_weight * x.coefficient))
           .reduce(sumReducer, 0);
-    const ae = (aep / (aesm + aep + aer));
+    const caer = getNonWaste(reaction.reactants)
+          .map(x => x.equivalent < 0.3 ? 0 : (x.molecule_molecular_weight * x.coefficient))
+          .reduce(sumReducer, 0);
+    const ae = (aep / (aesm + aer));
+    const cae = (caep / (aesm + caer));
 
     const data = [{
       sef: sef || '',
       cef: cef || '',
       cuef: cuef || '',
       ae: ae,
+      cae: cae,
     }];
 
     const columnDefs = [
       {
         headerName: 'Simple E factor (sEF)',
         field: 'sef',
-        width: 161,
       },
       {
         headerName: 'Complete E factor (cEF)',
         field: 'cef',
-        width: 178,
       },
       {
         headerName: 'Custom E factor',
@@ -118,22 +125,26 @@ export default class GreenMetrics extends React.Component {
         headerName: 'Atom economy (AE)',
         field: 'ae',
       },
+      {
+        headerName: 'Custom Atom economy',
+        field: 'cae',
+      },
     ];
 
     const defaultColDef = {
       editable: false,
-      width: 157,
       valueFormatter: floatFormatter,
     };
 
     return (
-      <div className="e-factor ag-theme-balham">
+      <div className="green-metrics ag-theme-balham">
         <AgGridReact
           enableColResize
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           rowData={data}
           onGridReady={this.onGridReady}
+          headerHeight={68}
           domLayout="autoHeight"
         />
       </div>
