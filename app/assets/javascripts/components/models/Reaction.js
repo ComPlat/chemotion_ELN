@@ -423,6 +423,9 @@ export default class Reaction extends Element {
     this.shortLabelPolicy(material, oldGroup, newGroup);
     this.namePolicy(material, oldGroup, newGroup);
 
+    material.coefficient = 1;
+    material.waste = false;
+
     return material;
   }
 
