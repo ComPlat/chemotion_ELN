@@ -170,6 +170,8 @@ const SampleCode = (index, materialGp) => {
   switch (materialGp) {
     case 'solvents':
       return `S${index}`;
+    case 'purification_solvents':
+      return `PS${index}`;
     case 'products':
       return `P${index}`;
     default:

@@ -315,6 +315,7 @@ class Material extends Component {
     const yld = `${Math.round(m.equivalent * 100)}%`;
 
     switch (materialGroup) {
+      case 'purification_solvents':
       case 'solvents': {
         return `${molName} (${solVol})`;
       }
@@ -529,8 +530,12 @@ class Material extends Component {
 
   materialNameWithIupac(material) {
     const { index, materialGroup } = this.props;
-    // Skip shortLabel for reactants and solvents
-    const skipIupacName = materialGroup === 'reactants' || materialGroup === 'solvents';
+    // Skip shortLabel for reactants and solvents/purification_solvents
+    const skipIupacName = (
+      materialGroup === 'reactants' ||
+      materialGroup === 'solvents' ||
+      materialGroup === 'purification_solvents'
+    );
     let materialName = '';
     let moleculeIupacName = '';
     const iupacStyle = {
@@ -545,7 +550,7 @@ class Material extends Component {
 
     if (skipIupacName) {
       let materialDisplayName = material.molecule_iupac_name || material.name;
-      if (materialGroup === 'solvents') {
+      if (materialGroup === 'solvents' || materialGroup === 'purification_solvents') {
         materialDisplayName = material.external_label || materialDisplayName;
       }
       if (materialDisplayName === null || materialDisplayName === '') {
@@ -616,7 +621,9 @@ class Material extends Component {
   }
 
   render() {
-    const { material, isDragging, canDrop, isOver } = this.props;
+    const {
+      material, isDragging, canDrop, isOver, materialGroup
+    } = this.props;
     const style = { padding: '0' };
     if (isDragging) { style.opacity = 0.3; }
     if (canDrop) {
@@ -633,11 +640,12 @@ class Material extends Component {
       material.amountType = 'real'; // always take real amount for product
     }
 
-    return (
-      this.props.materialGroup !== 'solvents'
-        ? this.generalMaterial(this.props, style)
-        : this.solventMaterial(this.props, style)
-    );
+    const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
+    const component = sp ?
+          this.solventMaterial(this.props, style) :
+          this.generalMaterial(this.props, style);
+
+    return component;
   }
 }
 

@@ -49,7 +49,8 @@ const MaterialGroup = ({
     }
   });
 
-  if (materialGroup === 'solvents') {
+  if (materialGroup === 'solvents' ||
+      materialGroup === 'purification_solvents') {
     return (
       <SolventsMaterialGroup
         contents={contents}

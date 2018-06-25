@@ -66,6 +66,15 @@ class Reaction < ActiveRecord::Base
   has_many :solvents, through: :reactions_solvent_samples, source: :sample
   has_many :solvent_molecules, through: :solvents, source: :molecule
 
+  has_many :reactions_purification_solvent_samples, -> { order(position: :asc) },
+           dependent: :destroy
+  has_many :purification_solvents,
+           through: :reactions_purification_solvent_samples,
+           source: :sample
+  has_many :purification_solvents_molecules,
+           through: :reactions_purification_solvent_samples,
+           source: :sample
+
   has_many :reactions_reactant_samples, -> { order(position: :asc) }, dependent: :destroy
   has_many :reactants, through: :reactions_reactant_samples, source: :sample
   has_many :reactant_molecules, through: :reactants, source: :molecule

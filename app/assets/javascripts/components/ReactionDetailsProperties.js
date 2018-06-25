@@ -10,9 +10,13 @@ import Clipboard from 'clipboard';
 import { purificationOptions,
   dangerousProductsOptions } from './staticDropdownOptions/options';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
+import MaterialGroupContainer from './MaterialGroupContainer';
 import QuillEditor from './QuillEditor';
+import Sample from './models/Sample';
 import StringTag from './StringTag.jsx';
 import { observationPurification, solventsTL } from './utils/reactionPredefined';
+
+function dummy() { return true; }
 
 export default class ReactionDetailsProperties extends Component {
   constructor(props) {
@@ -30,6 +34,9 @@ export default class ReactionDetailsProperties extends Component {
     this.handleOnReactionChange = this.handleOnReactionChange.bind(this);
     this.handleOnSolventSelect = this.handleOnSolventSelect.bind(this);
     this.setCurrentTime = this.setCurrentTime.bind(this);
+    this.handlePSolventChange = this.handlePSolventChange.bind(this);
+    this.deletePSolvent = this.deletePSolvent.bind(this);
+    this.dropPSolvent = this.dropPSolvent.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -89,6 +96,32 @@ export default class ReactionDetailsProperties extends Component {
     }
 
     return 0;
+  }
+
+  handlePSolventChange(changeEvent) {
+    const { sampleID, amount } = changeEvent;
+    const { reaction, onReactionChange } = this.props;
+
+    const updatedSample = reaction.sampleById(sampleID);
+    updatedSample.setAmount(amount);
+
+    onReactionChange(reaction);
+  }
+
+  deletePSolvent(material) {
+    const { reaction, onReactionChange } = this.props;
+    reaction.deleteMaterial(material, 'purification_solvents');
+
+    this.props.onReactionChange(reaction);
+  }
+
+  dropPSolvent(srcSample, tagMaterial, tagGroup, extLabel) {
+    const { reaction } = this.state;
+    let splitSample = Sample.buildNew(srcSample, reaction.collection_id, tagGroup);
+    splitSample.short_label = tagGroup.slice(0, -1);
+    splitSample.external_label = extLabel;
+    reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
+    this.props.onReactionChange(reaction, { schemaChanged: true });
   }
 
   handleMultiselectChange(type, selectedOptions) {
@@ -274,6 +307,22 @@ export default class ReactionDetailsProperties extends Component {
                   disabled={reaction.isMethodDisabled('dangerous_products')}
                   onChange={selectedOptions => this.handleMultiselectChange(
                     'dangerousProducts', selectedOptions)}
+                />
+              </Col>
+            </Row>
+            <Row style={{ marginTop: '10px' }}>
+              <Col md={12}>
+                <label>Purification Solvents</label>
+                <MaterialGroupContainer
+                  reaction={reaction}
+                  materialGroup="purification_solvents"
+                  materials={reaction.purification_solvents}
+                  dropMaterial={dummy}
+                  deleteMaterial={this.deletePSolvent}
+                  dropSample={this.dropPSolvent}
+                  showLoadingColumn={!!reaction.hasPolymers()}
+                  onChange={this.handlePSolventChange}
+                  headIndex={0}
                 />
               </Col>
             </Row>

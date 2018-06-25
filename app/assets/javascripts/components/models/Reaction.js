@@ -39,6 +39,7 @@ export default class Reaction extends Element {
       starting_materials: [],
       reactants: [],
       solvents: [],
+      purification_solvents: [],
       products: [],
       literatures: [],
       solvent: '',
@@ -98,6 +99,7 @@ export default class Reaction extends Element {
         starting_materials: this.starting_materials.map(s=>s.serializeMaterial()),
         reactants: this.reactants.map(s=>s.serializeMaterial()),
         solvents: this.solvents.map(s=>s.serializeMaterial()),
+        purification_solvents: this.purification_solvents.map(s=>s.serializeMaterial()),
         products: this.products.map(s=>s.serializeMaterial())
       },
       literatures: this.literatures.map(literature => literature.serialize()),
@@ -233,6 +235,14 @@ export default class Reaction extends Element {
     this._solvents = this._coerceToSamples(samples);
   }
 
+  get purification_solvents() {
+    return this._purification_solvents;
+  }
+
+  set purification_solvents(samples) {
+    this._purification_solvents = this._coerceToSamples(samples);
+  }
+
   get reactants() {
     return this._reactants
   }
@@ -250,7 +260,13 @@ export default class Reaction extends Element {
   }
 
   get samples() {
-    return [...this.starting_materials, ...this.reactants, ...this.solvents, ...this.products]
+    return [
+      ...this.starting_materials,
+      ...this.reactants,
+      ...this.solvents,
+      ...this.purification_solvents,
+      ...this.products,
+    ];
   }
 
   buildCopy(params = {}) {
@@ -388,7 +404,10 @@ export default class Reaction extends Element {
         material.start_parent = material.parent_id
         material.parent_id = null
       }
-    } else if (newGroup == "reactants" || newGroup == "solvents") {
+    } else if (
+      newGroup === "reactants" || newGroup === "solvents" ||
+      newGroup === "purification_solvents"
+    ) {
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
@@ -403,6 +422,9 @@ export default class Reaction extends Element {
 
     this.shortLabelPolicy(material, oldGroup, newGroup);
     this.namePolicy(material, oldGroup, newGroup);
+
+    material.coefficient = 1;
+    material.waste = false;
 
     return material;
   }
