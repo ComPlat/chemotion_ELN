@@ -112,8 +112,8 @@ describe Chemotion::ReactionAPI do
           reaction_id = r1.id
           r = Reaction.find_by(name: 'test')
           expect(r).to be_nil
-          a = Literature.where(reaction_id: reaction_id)
-          expect(a).to match_array([])
+          # a = Literature.where(reaction_id: reaction_id)
+          # expect(a).to match_array([])
           a = CollectionsReaction.where(reaction_id: reaction_id)
           expect(a).to match_array([])
           a = ReactionsProductSample.where(reaction_id: reaction_id)

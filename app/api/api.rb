@@ -167,6 +167,7 @@ class API < Grape::API
   }
   TARGET = Rails.env.production? ? 'https://chemotion.net/' : 'http://localhost:3000/'
 
+  mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI
   mount Chemotion::CollectionAPI

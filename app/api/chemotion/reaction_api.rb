@@ -27,22 +27,6 @@ class OSample < OpenStruct
 end
 
 module ReactionHelpers
-  def update_literatures_for_reaction(reaction, _literatures)
-    current_literature_ids = reaction.literature_ids
-    literatures = Array(_literatures)
-    literatures.each do |literature|
-      if literature.is_new
-        Literature.create(reaction_id: reaction.id, title: literature.title, url: literature.url)
-      else
-        #todo:
-        #update
-      end
-    end
-    included_literature_ids = literatures.map(&:id)
-    deleted_literature_ids = current_literature_ids - included_literature_ids
-    Literature.where(reaction_id: reaction.id, id: deleted_literature_ids).destroy_all
-  end
-
   def update_materials_for_reaction(reaction, material_attributes, current_user)
     collections = reaction.collections
 
@@ -208,6 +192,7 @@ module Chemotion
     helpers ReactionHelpers
     helpers ParamsHelpers
     helpers CollectionHelpers
+    helpers LiteratureHelpers
 
     resource :reactions do
       namespace :import_chemread do
@@ -367,7 +352,7 @@ module Chemotion
           reaction.update_attributes!(attributes)
           reaction.touch
           update_materials_for_reaction(reaction, materials, current_user)
-          update_literatures_for_reaction(reaction, literatures)
+          # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
@@ -427,7 +412,7 @@ module Chemotion
           end
 
           update_materials_for_reaction(reaction, materials, current_user)
-          update_literatures_for_reaction(reaction, literatures)
+          # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
           reaction
         end
