@@ -520,7 +520,7 @@ GEM
       capistrano (>= 3.8.1)
     spring (1.7.1)
     sprite-factory (1.7.1)
-    sprockets (3.7.1)
+    sprockets (3.7.2)
       concurrent-ruby (~> 1.0)
       rack (> 1, < 3)
     sprockets-rails (3.2.1)
@@ -688,4 +688,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   1.16.1
+   1.16.2
