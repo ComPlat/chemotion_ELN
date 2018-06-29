@@ -36,6 +36,7 @@
     "quill-delta-to-html": "0.8.2",
     "react": "15.3.2",
     "react-addons-update": "15.3.2",
+    "react-async-script-loader": "0.3.0",
     "react-barcode": "^1.1.0",
     "react-bootstrap": "~0.30.3",
     "react-cookie": "^0.4.8",
