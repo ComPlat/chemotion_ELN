@@ -28,9 +28,9 @@ const suiContent = ({ selectedObjs, template }) => (
   }).filter(r => r != null)
 );
 
-const spcContent = props => (
-  suiContent(props)
-);
+const spcContent = props => suiContent(props);
+
+const rxlContent = props => suiContent(props);
 
 const ordersContent = (props) => {
   switch (props.template) {
@@ -40,6 +40,8 @@ const ordersContent = (props) => {
       return spcContent(props);
     case 'supporting_information':
       return suiContent(props);
+    case 'rxn_list':
+      return rxlContent(props);
     default:
       return null;
   }

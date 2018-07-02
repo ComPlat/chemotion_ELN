@@ -12,14 +12,14 @@ const fileDescription = archive => (
     : <p className="text-comment">No file description</p>
 );
 
-const clickDownloadReport = (e, archiveId) => {
+const clickDownloadReport = (e, archiveId, template) => {
   e.stopPropagation();
-  ReportActions.downloadReport(archiveId);
+  ReportActions.downloadReport(archiveId, template);
 };
 
 const reportStatusBtn = (archive) => {
-  const { downloadable, id } = archive;
-  const onClickDownloadReport = e => clickDownloadReport(e, id);
+  const { downloadable, id, template } = archive;
+  const onClickDownloadReport = e => clickDownloadReport(e, id, template);
   const downloadTP = <Tooltip id="download-docx">Download docx</Tooltip>;
   const processTP = (
     <Tooltip id="wait-processing">
@@ -108,12 +108,22 @@ const suiLabel = () => (
 );
 
 const spcTooltip = () => (
-  <Tooltip id="spc-tp">Spectrum</Tooltip>
+  <Tooltip id="spc-tp">SI Spectrum</Tooltip>
 );
 
 const spcLabel = () => (
   <OverlayTrigger placement="right" overlay={spcTooltip()}>
-    <Label bsStyle="primary">SPC</Label>
+    <Label bsStyle="info">SI-SPC</Label>
+  </OverlayTrigger>
+);
+
+const rxlTooltip = () => (
+  <Tooltip id="spc-tp">SI Reaction List Xlsx</Tooltip>
+);
+
+const rxlLabel = () => (
+  <OverlayTrigger placement="right" overlay={rxlTooltip()}>
+    <Label bsStyle="info">SI-XLSX</Label>
   </OverlayTrigger>
 );
 
@@ -125,6 +135,8 @@ const templateLable = (archive) => {
       return spcLabel();
     case 'supporting_information':
       return suiLabel();
+    case 'rxn_list':
+      return rxlLabel();
     default:
       return null;
   }

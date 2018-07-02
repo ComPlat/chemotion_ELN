@@ -102,8 +102,8 @@ class ReportActions {
     return key;
   }
 
-  downloadReport(id) {
-    return id;
+  downloadReport(id, template) {
+    return { id, template };
   }
 
   clone(archive) {

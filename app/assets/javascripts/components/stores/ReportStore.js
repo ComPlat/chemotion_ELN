@@ -339,6 +339,9 @@ class ReportStore {
       case 'supporting_information':
         prefix = 'Supporting_Information_';
         break;
+      case 'rxn_list':
+        prefix = 'Reaction_List_';
+        break;
       default:
         prefix = '';
         break;
@@ -370,10 +373,12 @@ class ReportStore {
     this.setState({ activeKey: key });
   }
 
-  handleDownloadReport(id) {
+  handleDownloadReport({ id, template }) {
+    const ext = template === 'rxn_list' ? 'xlsx' : 'docx';
+    const target = `id=${JSON.stringify(id)}&ext=${ext}`;
     this.markReaded(id);
     Utils.downloadFile({
-      contents: `api/v1/download_report/docx?id=${JSON.stringify(id)}`,
+      contents: `api/v1/download_report/file?${target}`,
     });
   }
 

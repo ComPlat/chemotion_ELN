@@ -148,3 +148,8 @@
   display: block;
   width: 256px;
 }
+
+.one-line {
+  white-space: nowrap;
+  overflow: hidden;
+}

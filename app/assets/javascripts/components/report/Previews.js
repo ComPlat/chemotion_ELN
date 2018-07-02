@@ -3,7 +3,8 @@ import { SectionReaction } from './SectionReaction';
 import SectionSample from './SectionSample';
 import SectionSiProcedures from './SectionSiProcedures';
 import SectionSiSynthesis from './SectionSiSynthesis';
-import SectionSpectrum from  './SectionSpectrum';
+import SectionSpectrum from './SectionSpectrum';
+import SectionReactionList from './SectionReactionList';
 
 const objToKeyValPairs = (obj = []) => (
   obj.reduce((ob, { text, checked }) => {
@@ -79,6 +80,10 @@ const spcPreviews = ({ prdAtts, molSerials, attThumbNails }) => (
   </div>
 );
 
+const rxlPreviews = ({ selectedObjs }) => (
+  <SectionReactionList objs={selectedObjs} />
+);
+
 const previewsContent = (props) => {
   switch (props.template) {
     case 'standard':
@@ -87,6 +92,8 @@ const previewsContent = (props) => {
       return spcPreviews(props);
     case 'supporting_information':
       return suiPreviews(props);
+    case 'rxn_list':
+      return rxlPreviews(props);
     default:
       return null;
   }
