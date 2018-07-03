@@ -1,5 +1,10 @@
 module Reporter
   class Worker
+    DOCX_TYP = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    XLSX_TYP = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    CSV_TYP = 'text/csv'
+    HTML_TYP = 'text/html'
+
     def initialize(args)
       @report = args[:report]
       @author = User.find(@report.author_id)
@@ -13,33 +18,47 @@ module Reporter
       @img_format = @report.img_format
       @template_path = args[:template_path]
       @mol_serials = @report.mol_serials
+      init_specific_variable
     end
 
     def process
       raw = Sablon.template(@template_path).render_to_string(substance)
-      create_docx(raw)
-      save_report
+      tmpfile = create_tmp(raw)
+      create_attachment(tmpfile) if tmpfile
     end
 
     private
 
-    def save_report
-      @report.update_attributes(file_path: fulll_file_name_ext, generated_at: Time.zone.now)
+    def init_specific_variable
+      @full_filename = "#{@file_name}.docx"
+      @typ = DOCX_TYP
+      @primary_store = Rails.configuration.storage.primary_store
     end
 
-    def create_docx(raw)
-      File.open(file_path.to_s, "wb+") do |f|
-        f.write(raw)
+    def create_tmp(raw)
+      tmp_file = Tempfile.new
+      tmp_file.write(raw)
+      tmp_file.close
+      tmp_file
+    end
+
+    def create_attachment(tmp)
+      ActiveRecord::Base.transaction do
+        att = @report.attachments.create!(
+          filename: @full_filename,
+          key: File.basename(tmp.path),
+          file_path: tmp.path,
+          created_by: @author.id,
+          created_for: @author.id,
+          content_type: @typ
+        )
+        att.update!(storage: @primary_store)
+        @report.update_attributes(
+          generated_at: Time.zone.now
+        )
       end
-    end
-
-    def fulll_file_name_ext
-      @hash_name ||= Digest::SHA256.hexdigest(substance.to_s)
-      @fulll_file_name_ext ||= "#{@file_name}_#{@hash_name}.#{@ext}"
-    end
-
-    def file_path
-      @file_path ||= Rails.root.join('public', @ext, fulll_file_name_ext)
+    ensure
+      tmp.unlink
     end
 
     def user_ids

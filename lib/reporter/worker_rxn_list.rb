@@ -6,27 +6,18 @@ module Reporter
 
     def process
       @content_objs, @procedure_objs = prism(@objs)
+      @tmpfile = Tempfile.new
 
       case @ext
       when 'xlsx'
-        Reporter::Xlsx::ReactionList.new(
-          objs: @content_objs,
-          mol_serials: @mol_serials
-        ).create(file_path)
+        create_xlsx
       when 'csv'
-        Reporter::Csv::ReactionList.new(
-          objs: @content_objs,
-          mol_serials: @mol_serials
-        ).create(file_path)
+        create_csv
       when 'html'
-        Reporter::Html::ReactionList.new(
-          objs: @content_objs,
-          mol_serials: @mol_serials,
-          template_path: @template_path
-        ).create(file_path)
+        create_html
       end
 
-      save_report
+      create_attachment(@tmpfile) if @tmpfile
     end
 
     private
@@ -35,9 +26,32 @@ module Reporter
       @objs
     end
 
-    def fulll_file_name_ext
-      @hash_name ||= Digest::SHA256.hexdigest(substance.to_s)
-      @fulll_file_name_ext ||= "#{@file_name}_#{@hash_name}.#{@ext}"
+    def create_xlsx
+      @full_filename = "#{@file_name}.xlsx"
+      @typ = XLSX_TYP
+      Reporter::Xlsx::ReactionList.new(
+        objs: @content_objs,
+        mol_serials: @mol_serials
+      ).create(@tmpfile.path)
+    end
+
+    def create_csv
+      @full_filename = "#{@file_name}.csv"
+      @typ = CSV_TYP
+      Reporter::Csv::ReactionList.new(
+        objs: @content_objs,
+        mol_serials: @mol_serials
+      ).create(@tmpfile.path)
+    end
+
+    def create_html
+      @full_filename = "#{@file_name}.html"
+      @typ = HTML_TYP
+      Reporter::Html::ReactionList.new(
+        objs: @content_objs,
+        mol_serials: @mol_serials,
+        template_path: @template_path
+      ).create(@tmpfile.path)
     end
   end
 end
