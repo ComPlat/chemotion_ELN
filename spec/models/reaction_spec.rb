@@ -1,5 +1,6 @@
 require 'rails_helper'
 require Rails.root.join 'spec/concerns/taggable.rb'
+require Rails.root.join 'spec/concerns/reaction_rinchi.rb'
 
 RSpec.describe Reaction, type: :model do
   describe 'creation' do
@@ -71,5 +72,11 @@ RSpec.describe Reaction, type: :model do
         ].flatten
       ).to eq [s1.id, s2.id, s3.id, s4.id]
     end
+  end
+
+  describe 'include ReactionRinchi' do
+    it_behaves_like 'Esterification'
+    it_behaves_like '1_reactant_-_no_structure'
+    it_behaves_like 'Inverted_stereochemistry'
   end
 end

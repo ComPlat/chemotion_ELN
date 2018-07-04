@@ -352,17 +352,18 @@ describe Chemotion::ReportAPI do
       end
     end
 
-    describe 'GET /api/v1/download_report/docx' do
+    describe 'GET /api/v1/download_report/file' do
+      let(:ext) { 'docx' }
+
       before do
-        params = { id: rp1.id }
+        params = { id: rp1.id, ext: ext }
         allow(File).to receive(:read).and_return('stubbed read')
-        get '/api/v1/download_report/docx', params
+        get '/api/v1/download_report/file', params
       end
 
-      it 'returns a header with docx-type' do
-        expect(response['Content-Type']).to eq(docx_mime_type)
+      it 'returns a header with ext' do
         expect(response['Content-Disposition']).to(
-          include(rp1.file_name + '.docx')
+          include(rp1.file_name + '.' + ext)
         )
       end
     end

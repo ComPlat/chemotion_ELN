@@ -59,6 +59,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
     ReactionsSolventSample.create!(
       reaction: r1, sample: s4, equivalent: equiv
     )
+    r1.reload
     con = r1.products[0].container.children[0].children[0]
     con.extended_metadata["report"] = "true"
     con.extended_metadata["content"] = "{\"ops\":
