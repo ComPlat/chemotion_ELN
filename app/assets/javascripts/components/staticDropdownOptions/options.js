@@ -104,6 +104,11 @@ export const defaultMultiSolventsSmilesOptions = [{
            smiles: 'CC#N',
            density: 0.78 }
   }, {
+  label: 'Argon',
+  value: { external_label: 'Ar',
+           smiles: '[Ar]',
+          density: 0.001633 }
+  }, {
   label: 'Benzene',
   value: { external_label: 'Benzene',
            smiles: 'C1=CC=CC=C1',
@@ -178,6 +183,11 @@ export const defaultMultiSolventsSmilesOptions = [{
   value: { external_label: 'MTBE',
            smiles: 'O(C(C)(C)C)C',
            density: 0.74 }
+  }, {
+  label: 'N2',
+  value: { external_label: 'N2',
+           smiles: 'N#N',
+           density: 0.00125 }
   }, {
   label: 'n-Hexane',
   value: { external_label: 'n-Hexane',
