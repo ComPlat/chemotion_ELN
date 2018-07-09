@@ -6,13 +6,14 @@ class Container < ActiveRecord::Base
   before_destroy :delete_attachment
   has_closure_tree
 
-  def analyses
-    if self.children
-      analyses = self.children.where(container_type: 'analyses').first
+  scope :analyses_for_root, ->(root_id) {
+    where(container_type: 'analysis').joins(
+      "inner join container_hierarchies ch on ch.generations = 2 and ch.ancestor_id = #{root_id} and ch.descendant_id = containers.id "
+    )
+  }
 
-      return analyses.children.where(container_type: 'analysis') if analyses
-    end
-    Container.none
+  def analyses
+    Container.analyses_for_root(self.id)
   end
 
   def root_element
