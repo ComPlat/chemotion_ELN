@@ -44,8 +44,8 @@ export default class ModalExport extends React.Component {
           {value: "molecular_weight", text: "molecular weight", checked: false},
         ],
         reaction: [
-          {value: "name", text: "reaction name", checked: false},
-          {value: "short_label", text: "r short label", checked: false},
+          {value: "name", text: "reaction name", checked: true},
+          {value: "short_label", text: "r short label", checked: true},
           {value: "reference", text: "reference", checked: false},
           {value: "equivalent", text: "equivalent", checked: false},
         ],
