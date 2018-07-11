@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
-import {Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, ButtonToolbar} from 'react-bootstrap';
+import {Row, Col, FormGroup, FormControl, ControlLabel, Table, ListGroup, ListGroupItem, Button, ButtonToolbar, Overlay } from 'react-bootstrap';
 import Dropzone from 'react-dropzone';
+import debounce from 'es6-promise-debounce';
 import Utils from './utils/Functions';
 
 import Attachment from './models/Attachment';
@@ -9,14 +10,21 @@ import AttachmentFetcher from './fetchers/AttachmentFetcher';
 import Container from './models/Container';
 
 import InboxActions from './actions/InboxActions';
+import InstrumentsFetcher from './fetchers/InstrumentsFetcher';
+import ChildOverlay from './managing_actions/ChildOverlay';
 
 export default class ContainerDataset extends Component {
   constructor(props) {
     super();
     let dataset_container = Object.assign({}, props.dataset_container);
     this.state = {
-      dataset_container: dataset_container
+      dataset_container: dataset_container,
+      instruments: null,
+      valueBeforeFocus: null,
+      timeoutReference: null
     };
+    this.timeout = 6e2; // 600ms timeout for input typing
+    this.doneInstrumentTyping = this.doneInstrumentTyping.bind(this);
   }
 
   componentDidMount() {
@@ -59,6 +67,7 @@ export default class ContainerDataset extends Component {
     }
     this.setState({dataset_container});
   }
+
 
   handleFileDrop(files) {
     const {dataset_container} = this.state;
@@ -227,9 +236,147 @@ export default class ContainerDataset extends Component {
     }
   }
 
+
+  resetInstrumentComponent() {
+    const { dataset_container } = this.state;
+    this.setState({
+      value: '',
+      showInstruments: false,
+      instruments: null,
+      valueBeforeFocus: null,
+      error: ''
+    })
+    dataset_container.extended_metadata['instrument'] = '';
+  }
+
+  doneInstrumentTyping() {
+    const { value } = this.state
+    if (!value) {
+      this.resetInstrumentComponent();
+    } else {
+      this.fetchInstruments(value);
+    }
+  }
+
+  fetchInstruments(value, show = true) {
+    const debounced = debounce(function (query) {
+      return InstrumentsFetcher.fetchInstrumentsForCurrentUser(query)
+    }, 200);
+    debounced(value).then((result) => {
+      const newState = {};
+      if (result.length > 0) {
+        newState.instruments = result;
+        newState.showInstruments = show;
+      } else {
+        newState.instruments = null;
+        newState.error = '';
+        newState.showInstruments = false;
+      }
+      this.setState(newState)
+    }).catch(error => console.log(error))
+  }
+
+  handleInstrumentValueChange(event, doneInstrumentTyping) {
+    const { value } = event.target;
+    const { timeoutReference } = this.state;
+    if (!value) {
+      this.resetInstrumentComponent();
+      return;
+    }
+    if (timeoutReference) {
+      clearTimeout(timeoutReference)
+    }
+    this.setState({
+      value,
+      timeoutReference: setTimeout(function(){
+                                    doneInstrumentTyping()
+                                  }, this.timeout)
+    })
+    this.handleInputChange('instrument', event)
+  }
+
+  selectInstrument() {
+    const {
+      dataset_container,
+      timeoutReference,
+      value
+    } = this.state;
+
+    this.setState({
+      showInstruments: false,
+      valueBeforeFocus: null
+    })
+
+    if (!value || value.trim() === '') {
+      this.setState({ value: '' });
+      return 0
+    }
+    dataset_container.extended_metadata.instrument = value;
+    clearTimeout(timeoutReference);
+    return value;
+  }
+
+  focusInstrument(newFocus) {
+    const { instruments, valueBeforeFocus } = this.state;
+    const newState = {}
+    if (!valueBeforeFocus) {
+      newState.valueBeforeFocus = instruments[newFocus].name
+    }
+    newState.value = instruments[newFocus].name
+    this.setState(newState);
+  }
+
+  abortAutoSelection() {
+    const { valueBeforeFocus } = this.state
+    this.setState({
+      value: valueBeforeFocus,
+      valueBeforeFocus: null,
+    })
+  }
+
+  renderInstruments() {
+    const {
+      instruments,
+      error
+    } = this.state
+
+    if (instruments) {
+      return (
+        <div>
+          { instruments.map((instrument, index) => {
+            return (
+              <ListGroupItem
+                onClick={() => this.selectInstrument()}
+                onMouseEnter={() => this.focusInstrument(index)}
+                key={'instrument_' + index}
+                ref={'instrument_' + index}
+                header={instrument.name}
+              />
+            )
+          })}
+        </div>
+      )
+    } else if (error) {
+      return <ListGroupItem>{error}</ListGroupItem>
+    }
+    return (
+      <div />
+    )
+  }
+
   render() {
-    const {dataset_container} = this.state;
-    const {readOnly, onModalHide, disabled} = this.props;
+    const { dataset_container, showInstruments } = this.state;
+    const { readOnly, onModalHide, disabled } = this.props;
+
+    const overlayAttributes = {
+      style: {
+        position: 'absolute',
+        width: 300,
+        marginTop: 144,
+        marginLeft: 17
+      }
+    };
+
     return (
       <Row>
         <Col md={6} style={{paddingRight: 0}}>
@@ -241,19 +388,36 @@ export default class ContainerDataset extends Component {
                 value={dataset_container.name || ''}
                 disabled={readOnly || disabled}
                 onChange={event => this.handleInputChange('name', event)}
-                />
+              />
             </FormGroup>
-
           </Col>
-          <Col md={12} style={{padding: 0}}>
-          <FormGroup controlId="datasetInstrument">
-            <ControlLabel>Instrument</ControlLabel>
+          <Col md={12} style={{ padding: 0 }}>
+            <FormGroup controlId="datasetInstrument">
+              <ControlLabel>Instrument</ControlLabel>
               <FormControl
                 type="text"
                 value={dataset_container.extended_metadata['instrument'] || ''}
                 disabled={readOnly || disabled}
-                onChange={event => this.handleInputChange('instrument', event)}
+                onChange={event => this.handleInstrumentValueChange(event,
+                  this.doneInstrumentTyping)}
+                ref={(input) => { this.autoComplete = input; }}
+                autoComplete="off"
               />
+              <Overlay
+                placement="bottom"
+                style={{
+                  marginTop: 80, width: 398, height: 10, maxHeight: 20
+                }}
+                show={showInstruments}
+                container={this}
+                rootClose
+                onHide={() => this.abortAutoSelection()}
+              >
+                <ChildOverlay
+                  dataList={this.renderInstruments()}
+                  overlayAttributes={overlayAttributes}
+                />
+              </Overlay>
             </FormGroup>
           </Col>
           <Col md={12} style={{padding: 0}}>
