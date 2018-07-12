@@ -20,7 +20,8 @@ import SampleName from './common/SampleName';
 import XMolHeadCont from './extra/ElementsTableSampleEntriesXMolHeadCont';
 import Sample from './models/Sample';
 import { sampleShowOrNew } from './routesUtils';
-import SvgWithModal from './common/SvgWithModal';
+import SvgWithPopover from './common/SvgWithPopover';
+
 const buildFlattenSampleIds = (displayedMoleculeGroup) => {
   let flatIndex = 0;
   const flattenSamplesId = [];
@@ -105,7 +106,7 @@ const svgPreview = (showPreviews, sample) => (
   <div style={{ float: 'left' }} >
     {
       showPreviews
-        ? <SvgWithModal element={sample} classNames='molecule' />
+        ? <SvgWithPopover element={sample} classNames='molecule' />
         : null
     }
   </div>

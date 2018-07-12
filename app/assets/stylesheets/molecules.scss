@@ -67,6 +67,11 @@
   width: 90% !important;
 }
 
+.preview-popover svg {
+  max-width: 50vw;
+  max-height: calc(100vh - 200px);
+}
+
 .preview-modal svg {
   width: 90%;
   margin: 20px;
