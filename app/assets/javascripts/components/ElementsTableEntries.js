@@ -10,11 +10,11 @@ import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import KeyboardStore from './stores/KeyboardStore';
 
-import SVG from 'react-inlinesvg';
 import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
+import SvgWithPopover from './common/SvgWithPopover';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -176,10 +176,12 @@ export default class ElementsTableEntries extends Component {
     }
 
     const {showPreviews} = UIStore.getState();
+    const clickToShowDetails = e => this.showDetails(element);
+
     if(showPreviews && (element.type == 'reaction' || element.type == 'research_plan')) {
       return (
-        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
-          <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
+        <td style={svgContainerStyle} onClick={clickToShowDetails}>
+          <SvgWithPopover element={element} classNames={classNames} />
           {tdExtraContents.map((e)=>{return e;})}
         </td>
       );

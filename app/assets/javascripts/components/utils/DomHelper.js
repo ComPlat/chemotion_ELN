@@ -2,4 +2,9 @@ const stopBubble = (e) => {
   e.stopPropagation();
 };
 
-module.exports = { stopBubble };
+const stopEvent = (e) => {
+  e.stopPropagation();
+  e.preventDefault();
+};
+
+module.exports = { stopBubble, stopEvent };
