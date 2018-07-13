@@ -20,8 +20,10 @@ export default class SvgWithPopover extends Component {
   }
 
   popoverHoverFocus() {
-    const { element } = this.props;
+    const { element, classNames } = this.props;
     const title = this.extractTitle(element);
+    const popoverClass = classNames === 'molecule' ? 'preview-popover-fixed' : 'preview-popover';
+
     return (
       <div
         style={{
@@ -44,7 +46,7 @@ export default class SvgWithPopover extends Component {
             maxWidth: 'none'
           }}
         >
-          <div className="preview-popover">
+          <div className={popoverClass}>
             <SVG
               src={element.svgPath}
               key={element.svgPath}

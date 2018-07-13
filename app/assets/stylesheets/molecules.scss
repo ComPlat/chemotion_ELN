@@ -72,6 +72,11 @@
   max-height: calc(100vh - 200px);
 }
 
+.preview-popover-fixed svg {
+  width: 50vw;
+  height: 25vw;
+}
+
 .preview-modal svg {
   width: 90%;
   margin: 20px;
