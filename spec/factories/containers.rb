@@ -52,4 +52,31 @@ FactoryGirl.define do
       }.merge(analysis.extended_metadata || {})
     end
   end
+
+  # Inbox container root
+  factory :inbox_container_root, class: Container do
+    name "inbox"
+    containable_type "User"
+    description ""
+    extended_metadata {}
+    container_type "root"
+  end
+
+  # Inbox container with attachments
+  factory :inbox_container, class: Container do
+    name "IR"
+    description ""
+    extended_metadata {}
+    container_type "sender_box_68"
+
+    factory :inbox_container_with_attachments do
+      transient do
+        number_of_attachments 2
+      end
+      after(:create) do |inbox_container, files|
+        FactoryGirl.create_list(:attachment, files.number_of_attachments, container: inbox_container)
+      end
+    end
+  end
+  
 end
