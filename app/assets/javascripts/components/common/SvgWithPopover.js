@@ -77,6 +77,8 @@ export default class SvgWithPopover extends Component {
         <OverlayTrigger
           trigger={['hover', 'focus']}
           placement="right"
+          rootClose
+          onHide
           overlay={this.popoverHoverFocus()}
         >
           {this.renderPreview()}
