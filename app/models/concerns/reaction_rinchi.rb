@@ -27,7 +27,14 @@ module ReactionRinchi
   end
 
   def retrieve_molfiles
-    mole_molfile_or_no = ->(x) { x.molecule_molfile || no_structure }
+    mole_molfile_or_no = ->(x) {
+      mf = x.molecule_molfile || no_structure
+      version = x.molecule&.molfile_version
+      if version =~ /^(V2000).*T9/
+        mf = Chemotion::OpenBabelService.mofile_clear_coord_bonds(mf, $1)
+      end
+      mf
+    }
     mols_rcts = starting_materials.map(&mole_molfile_or_no)
     mols_agts = reactants.map(&mole_molfile_or_no)
     mols_sols = solvents.map(&mole_molfile_or_no)
@@ -37,12 +44,12 @@ module ReactionRinchi
   end
 
   def no_structure
-    <<-MOLFILE
-
-  ACCLDraw04191619342D
-
-  0  0  0  0  0  0  0  0  0  0999 V2000
-M  END
+    <<~MOLFILE
+    
+      ACCLDraw04191619342D
+    
+      0  0  0  0  0  0  0  0  0  0999 V2000
+    M  END
     MOLFILE
   end
 end
