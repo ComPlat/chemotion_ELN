@@ -14,6 +14,12 @@ GIT
       sprite-factory (= 1.7.1)
 
 GIT
+  remote: https://git.scc.kit.edu/ComPlat/rinchi-gem.git
+  revision: 214f7db7947c8098685d0617909de229b3dbb7ef
+  specs:
+    rinchi-gem (1.0.1)
+
+GIT
   remote: https://github.com/ComPlat/openbabel-gem
   revision: 34841ba87e7691d7062229087fff49cd1db3ec17
   specs:
@@ -658,6 +664,7 @@ DEPENDENCIES
   quiet_assets
   rack-mini-profiler!
   rails (= 4.2.10)
+  rinchi-gem (= 1.0.1)!
   rmagick
   roo (> 2.5.0)
   rqrcode
