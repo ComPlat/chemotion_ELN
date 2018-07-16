@@ -132,7 +132,6 @@ class ElementStore {
       handleFetchSampleById: ElementActions.fetchSampleById,
       handleFetchSamplesByCollectionId:
         ElementActions.fetchSamplesByCollectionId,
-      handleUpdateSample: ElementActions.updateSample,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
       handleEditReactionSample: ElementActions.editReactionSample,
@@ -155,11 +154,8 @@ class ElementStore {
       handleCloseWarning: ElementActions.closeWarning,
       handleFetchReactionsByCollectionId:
         ElementActions.fetchReactionsByCollectionId,
-      handleUpdateReaction: ElementActions.updateReaction,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
-      handleFetchReactionSvgByMaterialsSvgPaths:
-        ElementActions.fetchReactionSvgByMaterialsSvgPaths,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
 
       handleBulkCreateWellplatesFromSamples:
@@ -167,7 +163,6 @@ class ElementStore {
       handleFetchWellplateById: ElementActions.fetchWellplateById,
       handleFetchWellplatesByCollectionId:
         ElementActions.fetchWellplatesByCollectionId,
-      handleUpdateWellplate: ElementActions.updateWellplate,
       handleCreateWellplate: ElementActions.createWellplate,
       handleGenerateWellplateFromClipboard:
         ElementActions.generateWellplateFromClipboard,
@@ -177,12 +172,10 @@ class ElementStore {
       handleFetchScreenById: ElementActions.fetchScreenById,
       handleFetchScreensByCollectionId:
         ElementActions.fetchScreensByCollectionId,
-      handleUpdateScreen: ElementActions.updateScreen,
       handleCreateScreen: ElementActions.createScreen,
 
       handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchResearchPlanById: ElementActions.fetchResearchPlanById,
-      handleUpdateResearchPlan: ElementActions.updateResearchPlan,
       handleCreateResearchPlan: ElementActions.createResearchPlan,
 
       // FIXME ElementStore listens to UIActions?
@@ -537,11 +530,6 @@ class ElementStore {
     this.state.elements.samples = result;
   }
 
-  handleUpdateSample(sample) {
-  //  this.state.currentElement = sample;
-    this.handleRefreshElements('sample');
-  }
-
   handleCreateSample(sample) {
     UserActions.fetchCurrentUser();
 
@@ -686,12 +674,6 @@ class ElementStore {
     this.state.elements.wellplates = result;
   }
 
-  handleUpdateWellplate(wellplate) {
-    // this.state.currentElement = wellplate;
-    this.handleRefreshElements('wellplate');
-    this.handleRefreshElements('sample');
-  }
-
   handleCreateWellplate(wellplate) {
     this.handleRefreshElements('wellplate');
     this.navigateToNewElement(wellplate);
@@ -715,11 +697,6 @@ class ElementStore {
     this.state.elements.screens = result;
   }
 
-  handleUpdateScreen(screen) {
-    // this.state.currentElement = screen;
-    this.handleRefreshElements('screen');
-  }
-
   handleCreateScreen(screen) {
     this.handleRefreshElements('screen');
     this.navigateToNewElement(screen);
@@ -740,11 +717,6 @@ class ElementStore {
 
   handlefetchResearchPlanById(result) {
     this.state.currentElement = result;
-  }
-
-  handleUpdateResearchPlan(research_plan) {
-    // this.state.currentElement = research_plan;
-    this.handleRefreshElements('research_plan');
   }
 
   handleCreateResearchPlan(research_plan) {
@@ -787,14 +759,6 @@ class ElementStore {
     this.state.elements.reactions = result;
   }
 
-  handleUpdateReaction(reaction) {
-    // UserActions.fetchCurrentUser();
-
-    // this.state.currentElement = reaction;
-    this.handleRefreshElements('reaction');
-    this.handleRefreshElements('sample');
-  }
-
   handleCreateReaction(reaction) {
     UserActions.fetchCurrentUser();
     this.handleRefreshElements('reaction');
@@ -827,12 +791,6 @@ class ElementStore {
 
   handleFetchLiteraturesByReactionId(result) {
     this.state.currentElement.literatures = result.literatures;
-  }
-
-  // -- Reactions SVGs --
-
-  handleFetchReactionSvgByMaterialsSvgPaths(result) {
-    this.state.currentElement.reaction_svg_file = result;
   }
 
   // -- Generic --
@@ -995,6 +953,28 @@ class ElementStore {
   }
 
   handleUpdateElement(updatedElement) {
+    switch (updatedElement.type) {
+      case 'sample':
+        this.handleRefreshElements('sample');
+        break;
+      case 'reaction':
+        this.handleRefreshElements('reaction');
+        this.handleRefreshElements('sample');
+        break;
+      case 'screen':
+        this.handleRefreshElements('screen');
+        break;
+      case 'research_plan':
+        this.handleRefreshElements('research_plan');
+        break;
+      case 'wellplate':
+        this.handleRefreshElements('wellplate');
+        this.handleRefreshElements('sample');
+        break;
+      default:
+        break;
+    }
+
     this.state.selecteds = this.state.selecteds.map((e) => {
       if (SameEleTypId(e, updatedElement)) { return updatedElement; }
       return e;

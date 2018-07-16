@@ -23,7 +23,7 @@ import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 import { setReactionByType } from './ReactionDetailsShare';
 import { sampleShowOrNew } from './routesUtils';
-
+import ReactionSvgFetcher from './fetchers/ReactionSvgFetcher';
 
 export default class ReactionDetails extends Component {
   constructor(props) {
@@ -35,9 +35,11 @@ export default class ReactionDetails extends Component {
       activeTab: UIStore.getState().reaction.activeTab,
     };
 
-    if(reaction.hasMaterials()) {
-      this.updateReactionSvg();
-    }
+    // remarked because of #466 reaction load image issue (Paggy 12.07.2018)
+    // if(reaction.hasMaterials()) {
+    //   this.updateReactionSvg();
+    // }
+
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
 
@@ -106,7 +108,10 @@ export default class ReactionDetails extends Component {
       temperature = temperature + " " + reaction.temperature.valueUnit
     }
 
-    ElementActions.fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solventsArray);
+    ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents).then((result) => {
+      reaction.reaction_svg_file = result.reaction_svg;
+      this.setState(reaction);
+    });
   }
 
   handleSubmit(closeView = false) {
