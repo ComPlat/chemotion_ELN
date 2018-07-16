@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import { DragSource } from 'react-dnd';
 import { Button, ButtonGroup, Tooltip } from 'react-bootstrap';
 
-import AttachmentContainer from './AttachmentContainer'
+import AttachmentContainer from './AttachmentContainer';
 import DragDropItemTypes from '../DragDropItemTypes';
 import InboxActions from '../actions/InboxActions';
 
@@ -33,10 +33,17 @@ class DatasetContainer extends Component {
 
   deleteDataset() {
     if (this.attachmentCount() === 0) {
+      InboxActions.deleteContainerLinkUnselected(this.props.dataset);
       InboxActions.deleteContainer(this.props.dataset);
     } else {
       this.toggleTooltip();
     }
+  }
+
+  confirmDeleteDataset() {
+    InboxActions.deleteContainerLinkUnselected(this.props.dataset);
+    InboxActions.deleteContainer(this.props.dataset);
+    this.toggleTooltip();
   }
 
   confirmDeleteAttachments() {
@@ -68,7 +75,7 @@ class DatasetContainer extends Component {
         maxWidth: "100%",
         cursor: 'move'
       }
-      const trash = this.props.cache.length === 0
+      const trash = this.props.cache.length === this.props.cache.length // Set it as always show
         ? (
           <span>
             <i className="fa fa-trash-o" onClick={() => this.deleteDataset()} style={{ cursor: "pointer" }}>&nbsp;</i>
@@ -79,7 +86,7 @@ class DatasetContainer extends Component {
                   <Button
                     bsStyle="danger"
                     bsSize="xsmall"
-                    onClick={() => InboxActions.deleteContainer(this.props.dataset)}
+                    onClick={() => this.confirmDeleteDataset()}
                   >Yes</Button>
                   <Button
                     bsStyle="warning"

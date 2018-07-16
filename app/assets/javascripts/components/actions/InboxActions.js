@@ -3,7 +3,15 @@ import InboxFetcher from '../fetchers/InboxFetcher';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher'
 import ContainerFetcher from '../fetchers/ContainerFetcher'
 
-class InboxActions{
+class InboxActions {
+  deleteContainerLinkUnselected(params) {
+    return (dispatch) => { ContainerFetcher.deleteContainerLinkUnselected(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      }); };
+  }
 
   fetchInbox() {
     return (dispatch) => { InboxFetcher.fetchInbox()
