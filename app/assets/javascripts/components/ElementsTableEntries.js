@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
+import SVG from 'react-inlinesvg';
+import { Tooltip, OverlayTrigger, Table, Popover } from 'react-bootstrap';
 import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ElementAnalysesLabels from './ElementAnalysesLabels';
-import {Tooltip, OverlayTrigger, Table} from 'react-bootstrap';
 import ArrayUtils from './utils/ArrayUtils';
 
 import UIStore from './stores/UIStore';
@@ -14,7 +15,6 @@ import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
-import SvgWithPopover from './common/SvgWithPopover';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -180,8 +180,8 @@ export default class ElementsTableEntries extends Component {
 
     if(showPreviews && (element.type == 'reaction' || element.type == 'research_plan')) {
       return (
-        <td style={svgContainerStyle} onClick={clickToShowDetails}>
-          <SvgWithPopover element={element} classNames={classNames} />
+        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
+          <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
       );
@@ -294,6 +294,53 @@ export default class ElementsTableEntries extends Component {
     }
   }
 
+  extractTitle(el) {
+    switch (el.type) {
+      case 'reaction':
+        return el.short_label;
+      case 'sample':
+        return el.molecule_iupac_name;
+      default:
+        return '';
+    }
+  }
+
+  popoverHoverFocus(element) {
+    const title = this.extractTitle(element);
+
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          borderRadius: 3,
+          backgroundcolor: 'yellow',
+          marginLeft: -30,
+          marginTop: -120,
+          maxWidth: 'none',
+        }}
+      >
+        <Popover
+          id="popover-trigger-hover-focus"
+          title={title}
+          arrowOffsetTop="120px"
+          style={{
+            marginLeft: '25px',
+            marginTop: '-1px',
+            visibility: 'visible',
+            maxWidth: 'none'
+          }}
+        >
+          <div className='preview-popover'>
+            <SVG
+              src={element.svgPath}
+              key={element.svgPath}
+            />
+          </div>
+        </Popover>
+      </div>
+    );
+  }
+
   render() {
     const {elements} = this.props;
     let {keyboardElementIndex} = this.state
@@ -319,15 +366,25 @@ export default class ElementsTableEntries extends Component {
                 <ElementCheckbox element={element} key={element.id} checked={this.isElementChecked(element)}/><br/>
               </td>
               <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
-                {element.title()}&nbsp;
-                {this.reactionStatus(element)}
-                {' '}
-                {this.reactionRole(element)}
-                <br/>
-                {sampleMoleculeName}
-                <ElementCollectionLabels element={element} key={element.id}/>
-                {this.sampleAnalysesLabels(element)}
-                {this.topSecretIcon(element)}
+                <div>
+                  <OverlayTrigger
+                    trigger={['hover', 'focus']}
+                    placement="right"
+                    overlay={this.popoverHoverFocus(element)}
+                  >
+                    <div>
+                      {element.title()}&nbsp;
+                    </div>
+                  </OverlayTrigger>
+                  {this.reactionStatus(element)}
+                  {' '}
+                  {this.reactionRole(element)}
+                  <br/>
+                  {sampleMoleculeName}
+                  <ElementCollectionLabels element={element} key={element.id}/>
+                  {this.sampleAnalysesLabels(element)}
+                  {this.topSecretIcon(element)}
+                </div>
               </td>
               {this.previewColumn(element)}
               {this.dragColumn(element)}
