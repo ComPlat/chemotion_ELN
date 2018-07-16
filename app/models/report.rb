@@ -20,12 +20,14 @@ class Report < ActiveRecord::Base
     template = self.template
     template_path = self.class.docx_template_path(template)
     case template
-      when "spectrum"
-        Reporter::WorkerSpectrum.new(report: self, template_path: template_path).process
-      when "supporting_information"
-        Reporter::WorkerSi.new(report: self, template_path: template_path).process
-      else
-        Reporter::Worker.new(report: self, template_path: template_path).process
+    when 'spectrum'
+      Reporter::WorkerSpectrum.new(report: self, template_path: template_path).process
+    when 'supporting_information'
+      Reporter::WorkerSi.new(report: self, template_path: template_path).process
+    when 'rxn_list'
+      Reporter::WorkerRxnList.new(report: self, ext: 'xlsx').process
+    else
+      Reporter::Worker.new(report: self, template_path: template_path).process
     end
   end
   handle_asynchronously :create_docx

@@ -230,23 +230,25 @@ module Chemotion
     end
 
     resource :download_report do
-      desc 'return a report in docx format'
+      desc 'return a report in file format'
 
       params do
         requires :id, type: Integer
+        requires :ext, type: String
       end
 
-      get :docx do
+      get :file do
+        ext = params[:ext]
         report = current_user.reports.find(params[:id])
 
         if report
           # set readed
           ru = report.reports_users.find { |r| r.user_id == current_user.id }
           ru.touch :downloaded_at
-          # send docx back
-          full_file_path = Rails.root.join('public', 'docx', report.file_path)
-          file_name_ext = report.file_name + '.docx'
-          content_type MIME::Types.type_for(file_name_ext)[0].to_s
+          # send file back
+          full_file_path = Rails.root.join('public', ext, report.file_path)
+          file_name_ext = report.file_name + '.' + ext
+
           env['api.format'] = :binary
           header(
             'Content-Disposition',

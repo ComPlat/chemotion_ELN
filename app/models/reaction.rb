@@ -7,6 +7,7 @@ class Reaction < ActiveRecord::Base
   include Collectable
   include ElementCodes
   include Taggable
+  include ReactionRinchi
 
   serialize :description, Hash
   serialize :observation, Hash
