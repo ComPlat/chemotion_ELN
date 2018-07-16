@@ -10,7 +10,6 @@ import MoleculesFetcher from '../fetchers/MoleculesFetcher';
 import ReactionsFetcher from '../fetchers/ReactionsFetcher';
 import WellplatesFetcher from '../fetchers/WellplatesFetcher';
 import CollectionsFetcher from '../fetchers/CollectionsFetcher';
-import ReactionSvgFetcher from '../fetchers/ReactionSvgFetcher';
 import ScreensFetcher from '../fetchers/ScreensFetcher';
 import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
@@ -391,17 +390,6 @@ class ElementActions {
 
   openReactionDetails(reaction) {
     return  reaction;
-  }
-
-  // -- Reactions SVGs --
-
-  fetchReactionSvgByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents){
-    return (dispatch) => { ReactionSvgFetcher.fetchByMaterialsSvgPaths(materialsSvgPaths, temperature, solvents)
-      .then((result) => {
-        dispatch(result.reaction_svg);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
   }
 
   // -- Wellplates --
