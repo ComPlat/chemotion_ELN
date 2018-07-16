@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180618052835) do
+ActiveRecord::Schema.define(version: 20180704131215) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -487,9 +487,14 @@ ActiveRecord::Schema.define(version: 20180618052835) do
     t.integer  "created_by"
     t.string   "role"
     t.jsonb    "origin"
+    t.text     "rinchi_string"
+    t.text     "rinchi_long_key"
+    t.string   "rinchi_short_key"
+    t.string   "rinchi_web_key"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree
+  add_index "reactions", ["rinchi_web_key"], name: "index_reactions_on_rinchi_web_key", using: :btree
   add_index "reactions", ["role"], name: "index_reactions_on_role", using: :btree
 
   create_table "reactions_samples", force: :cascade do |t|

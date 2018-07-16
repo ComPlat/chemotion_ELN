@@ -344,6 +344,11 @@ class Sample < ActiveRecord::Base
       } : {}
   end
 
+  def molecule_molfile
+    return if molecule.blank?
+    molecule.molfile
+  end
+
 private
 
   def has_collections

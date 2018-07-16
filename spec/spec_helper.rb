@@ -18,31 +18,37 @@ Capybara.register_driver :selenium do |app|
   Capybara::Selenium::Driver.new(app, browser: :chrome, :http_client => http_client)
 end
 
+hostname = 'http://pubchem.ncbi.nlm.nih.gov'
+inchi_path = '/rest/pug/compound/inchikey/'
+
 RSpec.configure do |config|
   config.include FactoryGirl::Syntax::Methods
 
   config.before(:each) do
-    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/XLYOFNOQVPJJNP-UHFFFAOYSA-N/record/JSON").
-      with(:headers => {'Content-Type'=>'text/json'}).
-      to_return(
-        :status => 200,
-        :body => File.read(Rails.root+'spec/fixtures/body_XLYOFNOQVPJJNP-UHFFFAOYSA-N.json'),
-        :headers => {"Content-Type"=> "application/json"}
-      )
-    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/YJTKZCDBKVTVBY-UHFFFAOYSA-N/record/JSON").
-      with(:headers => {'Content-Type'=>'text/json'}).
-      to_return(
-        :status => 200,
-        :body => File.read(Rails.root+'spec/fixtures/body_YJTKZCDBKVTVBY-UHFFFAOYSA-N.json'),
-        :headers => {"Content-Type"=> "application/json"}
-      )
-    stub_request(:get, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/TXWRERCHRDBNLG-UHFFFAOYSA-N/record/JSON").
-      with(:headers => {'Content-Type'=>'text/json'}).
-      to_return(
-        :status => 200,
-        :body => File.read(Rails.root+'spec/fixtures/body_TXWRERCHRDBNLG-UHFFFAOYSA-N.json'),
-        :headers => {"Content-Type"=> "application/json"}
-      )
+    [
+      'XLYOFNOQVPJJNP-UHFFFAOYSA-N',
+      'YJTKZCDBKVTVBY-UHFFFAOYSA-N',
+      'TXWRERCHRDBNLG-UHFFFAOYSA-N',
+      'QTBSBXVTEAMEQO-UHFFFAOYSA-N',
+      'LFQSCWFLJHTTHZ-UHFFFAOYSA-N',
+      'XEKOWRVHYACXOJ-UHFFFAOYSA-N',
+      'QAOWNCQODCNURD-UHFFFAOYSA-N',
+      'XEGUVFFZWHRVAV-SFOWXEAESA-N',
+      'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
+      'QHDHNVFIKWGRJR-UHFFFAOYSA-N',
+      'XEGUVFFZWHRVAV-PVQJCKRUSA-N'
+    ].each do |target|
+      stub_request(:get, "#{hostname}#{inchi_path}#{target}/record/JSON")
+        .with(headers: { 'Content-Type' => 'text/json' })
+        .to_return(
+          status: 200,
+          body: File.read(
+            Rails.root + "spec/fixtures/body_#{target}.json"
+          ),
+          headers: { 'Content-Type' => 'application/json' }
+        )
+    end
+
     stub_request(:post, "http://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/record/JSON").
       with(:headers => {'Content-Type'=>'text/json'}, :body =>{"inchikey"=>"RDHQFKQIGNGIED-UHFFFAOYSA-N,RDHQFKQIGNGIED-UHFFFAOYSA-O"}).
       to_return(
@@ -70,7 +76,6 @@ RSpec.configure do |config|
     stub_request(:get, /http:\/\/pubchem.ncbi.nlm.nih.gov\/rest\/pug\/compound\/inchikey\/\S+\/cids\/TXT/).
       # with(:headers => {'Content-Type'=>'text/json'}).
       to_return(:status => 200, :body => '123456789', :headers => {})
-
   end
 
   config.expect_with :rspec do |expectations|

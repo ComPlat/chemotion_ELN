@@ -68,6 +68,12 @@ const spcSetting = () => (
   </div>
 );
 
+const rxlSetting = () => (
+  <div>
+    <h5>Not applicable.</h5>
+  </div>
+);
+
 const Setting = (props) => {
   switch (props.template) {
     case 'standard':
@@ -76,6 +82,8 @@ const Setting = (props) => {
       return spcSetting();
     case 'supporting_information':
       return suiSetting(props);
+    case 'rxn_list':
+      return rxlSetting(props);
     default:
       return null;
   }

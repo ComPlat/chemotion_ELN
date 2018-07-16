@@ -14,36 +14,17 @@ module Reporter
         Sablon::Chem.create(ole, img)
       end
 
-      private
-
       def img_path(products_only = false)
         load_svg_paths
         set_svg(products_only)
-        unless svg_data.nil?
-          svg_path = generate_svg_file_path
-          output_path = generate_ouput_file_path
-          inkscape_convert(svg_path, output_path)
-          return output_path
-        else
-          raise "Fehler: Kein Bild angegeben"
-        end
+        raise 'Fehler: Kein Bild angegeben' if svg_data.nil?
+        svg_path = Reporter::Img::Conv.data_to_svg(svg_data)
+        out_path = Reporter::Img::Conv.ext_to_path(@format)
+        Reporter::Img::Conv.by_inkscape(svg_path, out_path, @format)
+        out_path
       end
 
-      def generate_svg_file_path
-        svg_file = Tempfile.new(['diagram', '.svg'])
-        File.open(svg_file.path, 'w') { |file| file.write(svg_data) }
-        svg_file.path
-      end
-
-      def generate_ouput_file_path
-        output_file = Tempfile.new(['diagram', ".#{@format}"])
-        File.open(output_file.path, 'w')
-        output_file.path
-      end
-
-      def inkscape_convert(input, output)
-        system "inkscape --export-text-to-path --without-gui --file=#{input} --export-#{@format}=#{output} --export-width=1550 --export-height=440"
-      end
+      private
 
       def ole_path
         svg_paths_count = materials_svg_paths[:starting_materials].count +

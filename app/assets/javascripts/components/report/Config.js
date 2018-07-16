@@ -18,6 +18,7 @@ const templateOpts = () => (
     { label: 'Standard', value: 'standard' },
     { label: 'Supporting Information', value: 'supporting_information' },
     { label: 'Supporting Information - Spectra', value: 'spectrum' },
+    { label: 'Supporting Information - Reaction List (.xlsx)', value: 'rxn_list' },
   ]
 );
 
@@ -166,6 +167,8 @@ const spcConfig = ({ template, fileName, fileDescription }) => {
   );
 };
 
+const rxlConfig = props => spcConfig(props);
+
 const Config = (props) => {
   switch (props.template) {
     case 'standard':
@@ -174,6 +177,8 @@ const Config = (props) => {
       return spcConfig(props);
     case 'supporting_information':
       return suiConfig(props);
+    case 'rxn_list':
+      return rxlConfig(props);
     default:
       return null;
   }

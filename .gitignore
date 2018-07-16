@@ -65,6 +65,9 @@
 /public/docx/*
 !/public/docx/.keep
 
+/public/xlsx/*
+!/public/xlsx/.keep
+
 /public/assets/*
 
 /coverage/
