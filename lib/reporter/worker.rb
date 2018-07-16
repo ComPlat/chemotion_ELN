@@ -3,6 +3,7 @@ module Reporter
     def initialize(args)
       @report = args[:report]
       @author = User.find(@report.author_id)
+      @ext = args[:ext] || 'docx'
       @objs = extract(@report.objects)
       @file_name = @report.file_name
       @spl_settings = @report.sample_settings
@@ -34,11 +35,11 @@ module Reporter
 
     def fulll_file_name_ext
       @hash_name ||= Digest::SHA256.hexdigest(substance.to_s)
-      @fulll_file_name_ext ||= "#{@file_name}_#{@hash_name}.docx"
+      @fulll_file_name_ext ||= "#{@file_name}_#{@hash_name}.#{@ext}"
     end
 
     def file_path
-      @file_path ||= Rails.root.join("public", "docx", fulll_file_name_ext)
+      @file_path ||= Rails.root.join('public', @ext, fulll_file_name_ext)
     end
 
     def user_ids
