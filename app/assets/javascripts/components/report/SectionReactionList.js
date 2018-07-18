@@ -1,5 +1,6 @@
 import React from 'react';
 import { Table, Tooltip, OverlayTrigger } from 'react-bootstrap';
+import { UserSerial } from '../utils/ReportHelper';
 
 const rlRowTp = (content, rowId) => (
   <Tooltip id={rowId}>
@@ -31,9 +32,9 @@ const tableHeader = () => (
   </thead>
 );
 
-const rowContent = (p, long, short, web, idx) => (
+const rowContent = (p, long, short, web, molSerials, idx) => (
   <tr>
-    <td className="one-line" >{p.short_label}</td>
+    <td className="one-line" >{UserSerial(p.molecule, molSerials)}</td>
     <td className="one-line" >{}</td>
     <td className="one-line" >{rlRowCont(p.molecule.iupac_name)}</td>
     <td className="one-line" >{rlRowCont(p.molecule.inchikey)}</td>
@@ -44,25 +45,30 @@ const rowContent = (p, long, short, web, idx) => (
   </tr>
 );
 
-const tableBody = objs => (
-  <tbody>
-    {
-      objs.map((r, idx) => {
-        const long = r.rinchi_long_key;
-        const short = r.rinchi_short_key;
-        const web = r.rinchi_web_key;
-        return r.products.map(p => rowContent(p, long, short, web, idx));
-      })
+const tableBody = (objs, molSerials) => {
+  const contents = objs.map((r, idx) => {
+    if (r.type === 'reaction' && r.role !== 'gp') {
+      const long = r.rinchi_long_key;
+      const short = r.rinchi_short_key;
+      const web = r.rinchi_web_key;
+      return (
+        r.products.map(p => rowContent(p, long, short, web, molSerials, idx))
+      );
     }
-  </tbody>
-);
+    return null;
+  }).filter(r => r !== null);
 
-const SectionReactionList = ({ objs }) => (
+  return (
+    <tbody>{ contents }</tbody>
+  );
+};
+
+const SectionReactionList = ({ objs, molSerials }) => (
   <div>
     <p>* Images are hidden in the preview.</p>
     <Table striped bordered condensed hover>
       { tableHeader() }
-      { tableBody(objs) }
+      { tableBody(objs, molSerials) }
     </Table>
   </div>
 );
