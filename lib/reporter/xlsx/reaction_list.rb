@@ -12,6 +12,7 @@ module Reporter
 
       def initialize(args)
         @objs = args[:objs]
+        @mol_serials = args[:mol_serials] || []
       end
 
       def create_xlsx(file_name)
@@ -66,8 +67,9 @@ module Reporter
       end
 
       def add_content_to_row(p, long_key, web_key, short_key)
+        serial = Reporter::Helper.mol_serial(p[:molecule][:id], @mol_serials)
         @sheet.add_row [
-          p[:short_label],
+          serial,
           '',
           p[:molecule][:iupac_name],
           p[:molecule][:inchistring],

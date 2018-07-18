@@ -564,7 +564,7 @@ module Reporter
       end
 
       def mol_serial_delta(mol_id, font_size = 12)
-        serial = mol_serial(mol_id)
+        serial = Reporter::Helper.mol_serial(mol_id, @mol_serials)
         [{ 'attributes' => { 'bold' => 'true', 'font-size' => font_size },
            'insert' => serial }]
       end
