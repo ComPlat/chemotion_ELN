@@ -71,7 +71,7 @@ module Reporter
         @sheet.add_row [
           serial,
           '',
-          p[:molecule][:iupac_name],
+          p[:molecule_name_hash][:label] || p[:molecule][:iupac_name],
           p[:molecule][:inchistring],
           p[:molecule][:inchikey],
           long_key,
