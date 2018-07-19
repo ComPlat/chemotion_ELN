@@ -526,15 +526,10 @@ module Reporter
       end
 
       def sample_molecule_name_delta(sample, font_size = 12)
-        mnh = sample[:molecule_name_hash]
-        smn = mnh && mnh[:desc] != 'sum_formular' ? mnh[:label] : nil
-        iupac = sample[:molecule] ? sample[:molecule][:iupac_name] : nil
-        if smn.present?
+        showed_nm = sample[:showed_name] || sample[:iupac_name] || nil
+        if showed_nm.present?
           [{ 'attributes' => { 'font-size' => font_size },
-             'insert' => smn.to_s }]
-        elsif iupac.present?
-          [{ 'attributes' => { 'font-size' => font_size },
-             'insert' => iupac.to_s }]
+             'insert' => showed_nm.to_s }]
         else
           [{ 'attributes' => { 'font-size' => font_size },
              'insert' => '"' },

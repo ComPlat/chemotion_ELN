@@ -14,7 +14,7 @@ const TitleProduct = ({ prd, molSerials }) => {
 
   return (
     <h5>
-      [{serialContent}] { prd.iupac_name }
+      [{serialContent}] { prd.showedName }
     </h5>
   );
 };

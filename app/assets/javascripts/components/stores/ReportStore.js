@@ -652,8 +652,9 @@ class ReportStore {
         const prdId = prd.id;
         const { iupac_name, sum_formular, id } = prd.molecule;
         const atts = this.extractAtts(prd);
+        const showedName = prd.showedName();
         return Object.assign(
-          {}, { atts, prdId, iupac_name, sum_formular, molId: id },
+          {}, { atts, prdId, iupac_name, sum_formular, molId: id, showedName },
         );
       });
     }

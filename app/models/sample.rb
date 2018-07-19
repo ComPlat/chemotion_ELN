@@ -349,6 +349,14 @@ class Sample < ActiveRecord::Base
     molecule.molfile
   end
 
+  def showed_name
+    mn = molecule_name
+    mnl = mn && mn.name
+    mnd = mn && mn.description
+    is_sum_form = mnd && mnd.include?('sum_formula')
+    mnl && !is_sum_form ? mnl : molecule_iupac_name
+  end
+
 private
 
   def has_collections
