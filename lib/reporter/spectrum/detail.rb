@@ -31,7 +31,7 @@ module Reporter
         font_size = 14
         mol_serial_delta(@prd, font_size) +
           space_delta +
-          iupac_name_delta(@prd, font_size)
+          showed_name_delta(@prd, font_size)
       end
 
       # - - - - - - - - - -
@@ -91,9 +91,9 @@ module Reporter
         [{ 'insert' => ' ' }]
       end
 
-      def iupac_name_delta(prd, font_size = 12)
+      def showed_name_delta(prd, font_size = 12)
         [{ 'attributes' => { 'font-size' => font_size },
-           'insert' => prd['iupac_name'] }]
+           'insert' => prd.showedName }]
       end
 
       def mol_serial(mol_id)
