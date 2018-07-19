@@ -4,7 +4,7 @@
 require 'webmock/rspec'
 WebMock.disable_net_connect!(allow_localhost: true)
 
-require 'factory_girl_rails'
+require 'factory_bot_rails'
 require 'headless'
 require 'capybara'
 require 'rails_helper'
@@ -22,7 +22,7 @@ hostname = 'http://pubchem.ncbi.nlm.nih.gov'
 inchi_path = '/rest/pug/compound/inchikey/'
 
 RSpec.configure do |config|
-  config.include FactoryGirl::Syntax::Methods
+  config.include FactoryBot::Syntax::Methods
 
   config.before(:each) do
     [

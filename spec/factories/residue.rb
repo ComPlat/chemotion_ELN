@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :residue do
     residue_type "polymer"
     custom_info({

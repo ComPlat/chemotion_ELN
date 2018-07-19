@@ -183,7 +183,7 @@ end
 
 group :test do
   gem 'database_cleaner'
-  gem 'factory_girl_rails'
+  gem 'factory_bot_rails'
 
   gem 'capybara', '~> 3.1.0'
   gem 'chromedriver-helper', '1.2.0'

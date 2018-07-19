@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :fingerprint do
     fp0 Fingerprint.generate_sample_fingerprint
     fp1 Fingerprint.generate_sample_fingerprint

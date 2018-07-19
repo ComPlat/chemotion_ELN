@@ -326,7 +326,7 @@ describe Chemotion::ReactionAPI do
       }
       let(:sample_1) {
         create(
-          :sample, name: 'Sample 1', container: FactoryGirl.create(:container)
+          :sample, name: 'Sample 1', container: FactoryBot.create(:container)
         )
       }
       let(:molfile_1) { sample_1.molecule.molfile }

@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :authentication_key do
     user_id 10000
     role 'authentication'

@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :attachment do
   #  container_id nil
     filename 'upload.txt'
