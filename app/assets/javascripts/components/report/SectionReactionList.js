@@ -36,7 +36,7 @@ const rowContent = (p, long, short, web, molSerials, idx) => (
   <tr>
     <td className="one-line" >{UserSerial(p.molecule, molSerials)}</td>
     <td className="one-line" >{}</td>
-    <td className="one-line" >{rlRowCont(p.molecule_name_label)}</td>
+    <td className="one-line" >{rlRowCont(p.showedName())}</td>
     <td className="one-line" >{rlRowCont(p.molecule.inchikey)}</td>
     <td className="one-line" >{rlRowCont(p.molecule.inchistring)}</td>
     <td className="one-line" >{rlRowCont(long, idx)}</td>

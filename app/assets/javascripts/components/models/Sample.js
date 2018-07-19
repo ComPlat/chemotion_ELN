@@ -377,6 +377,10 @@ export default class Sample extends Element {
     return this._external_label || this.molecule.iupac_name || this.molecule.sum_formular;
   }
 
+  showedName() {
+    return this.showed_name;
+  }
+
   iupac_name_tag(length) {
     let iupac_name = this.molecule.iupac_name || "";
     return iupac_name.length > length ?

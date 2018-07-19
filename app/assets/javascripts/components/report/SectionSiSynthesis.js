@@ -14,18 +14,6 @@ const onlyBlank = (target) => {
   return !content;
 };
 
-const sampleMoleculeName = (s) => {
-  const mnh = s.molecule_name_hash;
-  const mnLabel = mnh && mnh.desc !== 'sum_formular' ? mnh.label : null;
-  const iupac = s.molecule.iupac_name;
-  if (mnLabel) {
-    return mnLabel;
-  } else if (iupac) {
-    return iupac;
-  }
-  return null;
-};
-
 const deltaUserSerial = (molecule, molSerials) => {
   const insert = UserSerial(molecule, molSerials);
   return { insert, attributes: { bold: 'true' } };
@@ -37,7 +25,7 @@ const Title = ({ el, counter, molSerials }) => {
     const us = UserSerial(p.molecule, molSerials);
     const key = `${i}-text`;
     const comma = <span key={`${i}-comma`}>, </span>;
-    const smn = sampleMoleculeName(p);
+    const smn = p.showedName();
     title = smn
       ? [...title, <span key={key}>{smn} (<b>{us}</b>)</span>, comma]
       : [...title, <span key={key}>&quot;<b>NAME</b>&quot; (<b>{us}</b>)</span>, comma];
@@ -53,7 +41,7 @@ const Title = ({ el, counter, molSerials }) => {
 };
 
 const deltaSampleMoleculeName = (s) => {
-  const smn = sampleMoleculeName(s);
+  const smn = s.showedName();
   if (smn) {
     return { insert: smn };
   }
