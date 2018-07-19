@@ -1,12 +1,17 @@
 module Reporter
   class WorkerRxnList < Worker
-    attr_reader :objs
     def initialize(args)
       super(args)
     end
 
     def process
-      Reporter::Xlsx::ReactionList.new(objs: objs).create_xlsx(file_path)
+      @content_objs, @procedure_objs = prism(@objs)
+
+      Reporter::Xlsx::ReactionList.new(
+        objs: @content_objs,
+        mol_serials: @mol_serials
+      ).create_xlsx(file_path)
+
       save_report
     end
 

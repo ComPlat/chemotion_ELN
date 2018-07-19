@@ -39,4 +39,12 @@ const GetTypeIds = (objs, type) => {
   }).filter(r => r !== null);
 };
 
-module.exports = { UpdateSelectedObjs, GetTypeIds };
+const UserSerial = (molecule, molSerials = []) => {
+  let output = 'xx';
+  molSerials.forEach((ms) => {
+    if (ms.mol.id === molecule.id && ms.value) output = ms.value;
+  });
+  return output;
+};
+
+module.exports = { UpdateSelectedObjs, GetTypeIds, UserSerial };

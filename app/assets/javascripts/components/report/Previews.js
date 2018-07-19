@@ -80,8 +80,11 @@ const spcPreviews = ({ prdAtts, molSerials, attThumbNails }) => (
   </div>
 );
 
-const rxlPreviews = ({ selectedObjs }) => (
-  <SectionReactionList objs={selectedObjs} />
+const rxlPreviews = ({ selectedObjs, molSerials }) => (
+  <SectionReactionList
+    objs={selectedObjs}
+    molSerials={molSerials}
+  />
 );
 
 const previewsContent = (props) => {

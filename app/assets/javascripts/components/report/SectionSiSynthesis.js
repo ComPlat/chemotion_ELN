@@ -6,6 +6,7 @@ import { fixDigit, validDigit } from '../utils/MathUtils';
 import { rmOpsRedundantSpaceBreak, frontBreak } from '../utils/quillFormat';
 import ArrayUtils from '../utils/ArrayUtils';
 import { Alphabet } from '../utils/ElementUtils';
+import { UserSerial } from '../utils/ReportHelper';
 
 const onlyBlank = (target) => {
   if (target.length === 0) return true;
@@ -25,23 +26,15 @@ const sampleMoleculeName = (s) => {
   return null;
 };
 
-const userSerial = (molecule, molSerials = []) => {
-  let output = 'xx';
-  molSerials.forEach((ms) => {
-    if (ms.mol.id === molecule.id && ms.value) output = ms.value;
-  });
-  return output;
-};
-
 const deltaUserSerial = (molecule, molSerials) => {
-  const insert = userSerial(molecule, molSerials);
+  const insert = UserSerial(molecule, molSerials);
   return { insert, attributes: { bold: 'true' } };
 };
 
 const Title = ({ el, counter, molSerials }) => {
   let title = [];
   el.products.forEach((p, i) => {
-    const us = userSerial(p.molecule, molSerials);
+    const us = UserSerial(p.molecule, molSerials);
     const key = `${i}-text`;
     const comma = <span key={`${i}-comma`}>, </span>;
     const smn = sampleMoleculeName(p);
