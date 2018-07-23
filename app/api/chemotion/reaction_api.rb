@@ -202,6 +202,7 @@ end
 
 module Chemotion
   class ReactionAPI < Grape::API
+    include Grape::Extensions::Hashie::Mash::ParamBuilder
     include Grape::Kaminari
     helpers ContainerHelpers
     helpers ReactionHelpers

@@ -69,8 +69,8 @@ describe Chemotion::CollectionAPI do
   let(:user_ids_) { [p1.id, g.id] }
 
   before do
-    subject.stub(:user_ids) { user_ids_ }
-    subject.stub(:current_user) { p1 }
+    allow(subject).to receive(:user_ids) { user_ids_ }
+    allow(subject).to receive(:current_user) { p1 }
   end
 
   describe 'fetch_collection_id_w_current_user to get collection id,' do

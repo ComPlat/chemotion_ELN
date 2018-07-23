@@ -80,15 +80,15 @@ module Chemotion
       desc "Upload attachments"
       post 'upload_dataset_attachments' do
         params.each do |file_id, file|
-          if tempfile = file.tempfile
+          if tempfile = file[:tempfile]
               a = Attachment.new(
-                bucket: file.container_id,
-                filename: file.filename,
-                key: file.name,
-                file_path: file.tempfile,
+                bucket: file[:container_id],
+                filename: file[:filename],
+                key: file[:name],
+                file_path: file[:tempfile],
                 created_by: current_user.id,
                 created_for: current_user.id,
-                content_type: file.type
+                content_type: file[:type]
               )
             begin
               a.save!
