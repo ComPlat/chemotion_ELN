@@ -69,6 +69,7 @@ gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
 gem 'grape', '~>1.0.3'
 gem 'grape-active_model_serializers'
 gem 'grape-kaminari'
+gem 'grape-entity'
 gem 'hashie-forbidden_attributes'
 gem 'kaminari'
 

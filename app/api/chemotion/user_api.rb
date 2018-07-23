@@ -1,6 +1,8 @@
+
 # frozen_string_literal: true
 module Chemotion
   class UserAPI < Grape::API
+
     resource :users do
 
       desc 'Find top 3 matched user names'
@@ -9,22 +11,16 @@ module Chemotion
       end
       get 'name' do
         unless params[:name].nil? || params[:name].empty?
-          User.where(type: %w(Person Group)).by_name(params[:name]).limit(3)
-              .map do |x|
-            {
-              name: x.first_name + " " + x.last_name,
-              id: x.id,
-              abb: x.name_abbreviation
-            }
-          end
+          { users: User.where(type: %w(Person Group)).by_name(params[:name]).limit(3)
+                       .select('first_name','last_name','name','id','name_abbreviation', 'name_abbreviation as abb')}
         else
-          {users: []}
+          { users: [] }
         end
       end
 
       desc 'Return current_user'
-      get 'current', serializer: UserSerializer do
-        current_user
+      get 'current' do
+        present current_user, with: Entities::UserEntity, root: 'user'
       end
 
       desc 'Log out current_user'
@@ -35,11 +31,17 @@ module Chemotion
       namespace :layout do
         desc 'Update user layout'
         params do
-          requires :layout, type: Hash
+          requires :layout, type: Hash do
+            requires :sample, type:Integer
+            requires :reaction, type:Integer
+            requires :wellplate, type:Integer
+            requires :screen, type:Integer
+            requires :research_plan, type:Integer
+          end
         end
 
         post do
-          current_user.layout = params[:layout]
+          current_user.layout = declared(params)[:layout]
           visible_count = current_user.layout.find_all { |_, value|
             value.to_i.positive?
           }.count
@@ -90,7 +92,7 @@ module Chemotion
 
         post do
           new_group = Group.new(@group_params)
-          new_group if new_group.save!
+          present new_group, with: Entities::GroupEntity, root: 'group' if new_group.save!
         end
       end
 
@@ -121,14 +123,16 @@ module Chemotion
             group.save!
             group.users.delete(User.where(id: rm_users))
             group
+            present group, with: Entities::GroupEntity, root: 'group'
           end
         end
       end
     end
 
     resource :devices do
-      get :novnc, each_serializer: DeviceNovncSerializer do
-        Device.by_user_ids(user_ids).novnc
+      get :novnc do
+        devices = Device.by_user_ids(user_ids).novnc.includes(:profile)
+        present devices, with: Entities::DeviceNovncEntity, root: 'devices'
       end
     end
   end

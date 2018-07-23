@@ -41,16 +41,11 @@ class PagesController < ApplicationController
   end
 
   def groups
-    @groups = (
-      current_user.groups + current_user.administrated_accounts
-                                        .where(type: 'Group')
-    ).uniq.map do |g|
-      GroupSerializer.new(g).serializable_hash.deep_stringify_keys
-    end
+    data = current_user.groups | current_user.administrated_accounts
+                                        .where(type: 'Group').uniq
+    @groups = Entities::GroupEntity.represent(data, serializable: true)
     @new_group = Group.new
-    @users = Person.all.map do |u|
-      UserSimpleSerializer.new(u).serializable_hash.deep_stringify_keys
-    end
+    @users = Entities::UserSimpleEntity.represent(Person.all, serializable: true)
   end
 
   def affiliations

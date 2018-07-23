@@ -25,7 +25,7 @@ RSpec.describe PagesController do
       g2.save!
       get :groups
       groups=assigns(:groups).map{|g| g.select{|k| k.match(/id|name|initials/)}}
-      expect(groups).to match_array([g1.as_json(json_options),g2.as_json(json_options)])
+      expect(groups).to match_array([g1.as_json(json_options).symbolize_keys,g2.as_json(json_options).symbolize_keys])
     end
 
     it "renders the groups template" do
