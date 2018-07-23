@@ -183,6 +183,7 @@ module Chemotion
                            .where(id: (scope.pluck :molecule_id))
                            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                            .order(:sum_formular)
+          reset_pagination_page(molecule_scope)
 
           results = {
             molecules: create_group_molecule(
@@ -194,6 +195,8 @@ module Chemotion
           }
         else
           scope = scope.order('updated_at DESC')
+          reset_pagination_page(scope)
+
           results = {
             molecules: group_by_molecule(paginate(scope), own_collection),
             samples_count: scope.count
