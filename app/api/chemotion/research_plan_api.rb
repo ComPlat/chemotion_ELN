@@ -37,6 +37,8 @@ module Chemotion
         scope = scope.created_time_from(Time.at(from)) if from
         scope = scope.created_time_to(Time.at(to) + 1.day) if to
 
+        reset_pagination_page(scope)
+
         paginate(scope).map{|s| ElementPermissionProxy.new(current_user, s, user_ids).serialized}
       end
 

@@ -53,4 +53,19 @@ module ParamsHelpers
 
     end
   end
+
+  # Back to page one if the clicked page number > total page number
+  def reset_pagination_page(scope)
+    your_page = params[:page]
+    per_page_recs = params[:per_page]
+    total_recs = scope.size
+    your_recs = your_page.to_i * per_page_recs.to_i
+    total_page = (total_recs.to_f / per_page_recs.to_f).ceil
+
+    if total_recs > 0 && your_page > total_page
+      your_page = 1
+    end
+
+    params[:page] = your_page
+  end
 end #module
