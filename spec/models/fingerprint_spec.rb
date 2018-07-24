@@ -10,27 +10,27 @@ RSpec.describe Fingerprint, type: :model do
     end
 
     it 'validates the presence of fp fields' do
-      expect(FactoryGirl.build(:fingerprint, :fp0 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp1 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp2 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp3 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp4 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp5 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp6 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp7 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp8 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp9 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp10 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp11 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp12 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp13 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp14 => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :fp15 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp0 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp1 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp2 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp3 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp4 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp5 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp6 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp7 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp8 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp9 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp10 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp11 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp12 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp13 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp14 => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :fp15 => "")).to_not be_valid
     end
 
     it 'validates the presence of num_set_bits' do
-      expect(FactoryGirl.build(:fingerprint, :num_set_bits => "")).to_not be_valid
-      expect(FactoryGirl.build(:fingerprint, :num_set_bits => nil)).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :num_set_bits => "")).to_not be_valid
+      expect(FactoryBot.build(:fingerprint, :num_set_bits => nil)).to_not be_valid
     end
 
     it 'invalid lenght of fingerprint is not 64' do

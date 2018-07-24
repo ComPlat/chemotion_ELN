@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :collection do
     user_id 10000
     sequence(:label) { |i| "Collection #{i}" }

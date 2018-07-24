@@ -6,15 +6,15 @@ RSpec.describe Attachment, type: :model do
     let(:file_path) { "#{Rails.root}/spec/fixtures/upload.txt" }
     let(:file_data) { File.read(file_path) }
     let(:file_name) { File.basename(file_path) }
-    let!(:attachment) { FactoryGirl.create(:attachment) }
+    let!(:attachment) { FactoryBot.create(:attachment) }
     let!(:attachment_with_file) {
-      FactoryGirl.create(:attachment, filename: file_name, file_data: file_data)
+      FactoryBot.create(:attachment, filename: file_name, file_data: file_data)
     }
     let(:new_attachment) {
-      FactoryGirl.build(:attachment, filename: file_name, file_data: file_data)
+      FactoryBot.build(:attachment, filename: file_name, file_data: file_data)
     }
     let(:new_attachment_with_img) {
-      FactoryGirl.build(
+      FactoryBot.build(
         :attachment, filename: 'upload.jpg', key: SecureRandom.uuid,
         file_path: "#{Rails.root}/spec/fixtures/upload.jpg"
         #file_data: File.read("#{Rails.root}/spec/fixtures/upload.jpg")

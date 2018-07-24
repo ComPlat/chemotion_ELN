@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :group do
     sequence(:email) { |n| "group#{n}@foo.bar" }
     first_name 'gro'

@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :container do
     name "root"
     attachments []
@@ -15,8 +15,8 @@ FactoryGirl.define do
           "content" => "{\"ops\": [{\"insert\": \"analysis contents\"}]}"
         }
 
-        analyses = FactoryGirl.create(:container, parent: container, container_type: "analyses")
-        analysis = FactoryGirl.create(:container, parent: analyses,
+        analyses = FactoryBot.create(:container, parent: container, container_type: "analyses")
+        analysis = FactoryBot.create(:container, parent: analyses,
           container_type: "analysis",
           name: "new",
           description: "analysis description",
@@ -34,7 +34,7 @@ FactoryGirl.define do
     extended_metadata {}
     container_type "root"
     after(:create) do |container|
-      analyses = FactoryGirl.create(:container, parent: container, container_type: "analyses")
+      analyses = FactoryBot.create(:container, parent: container, container_type: "analyses")
     end
   end
 
@@ -74,7 +74,7 @@ FactoryGirl.define do
         number_of_attachments 2
       end
       after(:create) do |inbox_container, files|
-        FactoryGirl.create_list(:attachment, files.number_of_attachments, container: inbox_container)
+        FactoryBot.create_list(:attachment, files.number_of_attachments, container: inbox_container)
       end
     end
   end

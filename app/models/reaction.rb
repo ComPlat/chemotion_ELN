@@ -84,7 +84,8 @@ class Reaction < ActiveRecord::Base
   has_many :products, through: :reactions_product_samples, source: :sample
   has_many :product_molecules, through: :products, source: :molecule
 
-  has_many :literatures, dependent: :destroy
+  has_many :literals, as: :element, dependent: :destroy
+  has_many :literatures, through: :literals
 
   has_many :sync_collections_users, through: :collections
 

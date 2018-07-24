@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :molecule do
     sequence(:inchikey) { |i| "XLYOFNOQVPJJNP-UHFFFAOYSA-#{i}" }
     inchistring       "inchistring"

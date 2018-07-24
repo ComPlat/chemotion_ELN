@@ -10,7 +10,7 @@ import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
-import ReactionDetailsLiteratures from './ReactionDetailsLiteratures';
+import ReactionDetailsLiteratures from './DetailsTabLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
 import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
@@ -357,9 +357,9 @@ export default class ReactionDetails extends Component {
           </Tab>
           <Tab eventKey={2} title={'References'}>
             <ReactionDetailsLiteratures
-              reaction={reaction}
-              onReactionChange={reaction => this.handleReactionChange(reaction)}
-              />
+              element={reaction}
+              onElementChange={reaction => this.handleReactionChange(reaction)}
+            />
           </Tab>
           <Tab eventKey={3} title={'Analyses'}>
               {this.productData(reaction)}

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180704131215) do
+ActiveRecord::Schema.define(version: 20180709180000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -390,17 +390,30 @@ ActiveRecord::Schema.define(version: 20180704131215) do
     t.string   "sprite_class"
   end
 
+  create_table "literals", force: :cascade do |t|
+    t.integer  "literature_id"
+    t.integer  "element_id"
+    t.string   "element_type",  limit: 40
+    t.string   "category",      limit: 40
+    t.integer  "user_id"
+    t.datetime "created_at",               null: false
+    t.datetime "updated_at",               null: false
+  end
+
+  add_index "literals", ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", unique: true, using: :btree
+  add_index "literals", ["literature_id", "element_type", "element_id"], name: "index_on_literature", using: :btree
+
   create_table "literatures", force: :cascade do |t|
-    t.integer  "reaction_id", null: false
     t.string   "title"
     t.string   "url"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.jsonb    "refs"
+    t.string   "doi"
   end
 
   add_index "literatures", ["deleted_at"], name: "index_literatures_on_deleted_at", using: :btree
-  add_index "literatures", ["reaction_id"], name: "index_literatures_on_reaction_id", using: :btree
 
   create_table "molecule_names", force: :cascade do |t|
     t.integer  "molecule_id"
@@ -750,4 +763,5 @@ ActiveRecord::Schema.define(version: 20180704131215) do
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
 
+  add_foreign_key "literals", "literatures"
 end

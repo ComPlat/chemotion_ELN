@@ -133,8 +133,8 @@ MOLFILE
     }
 
     before do
-      sample.collections << FactoryGirl.build(:collection)
-      sample.creator = FactoryGirl.build(:person)
+      sample.collections << FactoryBot.build(:collection)
+      sample.creator = FactoryBot.build(:person)
     end
 
     it 'should create a molecule' do

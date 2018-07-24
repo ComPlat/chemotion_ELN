@@ -26,6 +26,8 @@ gem 'schmooze'
 
 gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 
+gem 'bibtex-ruby'
+
 group :development do
   gem 'turbo-sprockets-rails4'
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
@@ -39,6 +41,7 @@ group :development do
   gem 'flamegraph'
   gem 'stackprof'     # For Ruby MRI 2.1+
   gem 'web-console', '~> 2.0'
+  gem 'immigrant'
 end
 
 gem 'pg', '~> 0.20.0'
@@ -183,7 +186,7 @@ end
 
 group :test do
   gem 'database_cleaner'
-  gem 'factory_girl_rails'
+  gem 'factory_bot_rails'
 
   gem 'capybara', '~> 3.1.0'
   gem 'chromedriver-helper', '1.2.0'

@@ -130,6 +130,8 @@ GEM
       coderay (>= 1.0.0)
       erubis (>= 2.6.6)
       rack (>= 0.9.0)
+    bibtex-ruby (4.4.7)
+      latex-decode (~> 0.0)
     binding_of_caller (0.7.2)
       debug_inspector (>= 0.0.1)
     bootstrap-kaminari-views (0.0.5)
@@ -237,10 +239,10 @@ GEM
     erubis (2.7.0)
     eventmachine (1.2.6)
     execjs (2.6.0)
-    factory_girl (4.7.0)
+    factory_bot (4.10.0)
       activesupport (>= 3.0.0)
-    factory_girl_rails (4.7.0)
-      factory_girl (~> 4.7.0)
+    factory_bot_rails (4.10.0)
+      factory_bot (~> 4.10.0)
       railties (>= 3.0.0)
     faker (1.6.6)
       i18n (~> 0.5)
@@ -305,6 +307,8 @@ GEM
     i18n (0.8.6)
     i18n_data (0.7.0)
     ice_nine (0.11.2)
+    immigrant (0.3.6)
+      activerecord (>= 3.0)
     io-like (0.3.0)
     iso_country_codes (0.7.8)
     jbuilder (2.4.1)
@@ -321,6 +325,7 @@ GEM
     kaminari (0.16.3)
       actionpack (>= 3.0.0)
       activesupport (>= 3.0.0)
+    latex-decode (0.3.1)
     launchy (2.4.3)
       addressable (~> 2.3)
     listen (3.1.5)
@@ -602,6 +607,7 @@ DEPENDENCIES
   backup
   barby
   better_errors
+  bibtex-ruby
   binding_of_caller
   bootstrap-sass (~> 3.3.5)
   browserify-rails (~> 4.2.0)
@@ -625,7 +631,7 @@ DEPENDENCIES
   delayed_job_active_record
   devise
   dotenv-rails
-  factory_girl_rails
+  factory_bot_rails
   faker (~> 1.6.6)
   faraday (~> 0.12.1)
   faraday_middleware (~> 0.12.1)
@@ -643,6 +649,7 @@ DEPENDENCIES
   hashie-forbidden_attributes
   headless (= 2.0.0)
   httparty
+  immigrant
   jbuilder (~> 2.0)
   jquery-rails
   jwt

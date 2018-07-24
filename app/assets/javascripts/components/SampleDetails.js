@@ -40,6 +40,7 @@ import SampleForm from './SampleForm'
 import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
+import SampleDetailsLiteratures from './DetailsTabLiteratures';
 
 const MWPrecision = 6;
 
@@ -587,6 +588,24 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  sampleLiteratureTab(ind) {
+    const { sample } = this.state;
+    if (!sample) { return null; }
+    return (
+      <Tab
+        eventKey={ind}
+        title="Literature"
+        key={`Literature_${sample.id}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }} >
+          <SampleDetailsLiteratures
+            element={sample}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   sampleImportReadoutTab(ind) {
     let sample = this.state.sample || {}
     return (
@@ -711,18 +730,19 @@ export default class SampleDetails extends React.Component {
   }
 
   render() {
-    let sample = this.state.sample || {};
+    const sample = this.state.sample || {};
     const tabContents = [
-      (i)=>(this.samplePropertiesTab(i)),
-      (i)=>(this.sampleContainerTab(i)),
-      (i)=>(this.sampleImportReadoutTab(i)),
-      (i)=>(this.moleculeComputedProps(i))
+      i => this.samplePropertiesTab(i),
+      i => this.sampleContainerTab(i),
+      i => this.sampleLiteratureTab(i),
+      i => this.sampleImportReadoutTab(i),
+      i => this.moleculeComputedProps(i)
     ];
 
     const tabCount = tabContents.length;
-    for (let j = 0; j < XTabs.count; j++){
-      if (XTabs['on' + j](sample)){
-        tabContents.push((i)=>this.extraTab(i, tabCount));
+    for (let j = 0; j < XTabs.count; j++) {
+      if (XTabs['on' + j](sample)) {
+        tabContents.push(i => this.extraTab(i, tabCount));
       }
     }
 
