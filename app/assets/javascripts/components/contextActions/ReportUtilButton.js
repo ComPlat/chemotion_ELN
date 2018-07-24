@@ -12,9 +12,9 @@ const showReportContainer = () => {
 
 const showFormatContainer = () => {
   ElementActions.showFormatContainer();
-  // TODO Aviator URL change
-  /* Aviator.navigate(`/collection/${currentCollection.id}/sample/${id}`);*/
 };
+
+
 
 const showComputedPropsGraph = () => {
   ElementActions.showComputedPropsGraph();
@@ -47,6 +47,9 @@ const ReportUtilButton = ({ customClass  }) => {
         <MenuItem divider />
         <MenuItem onSelect={showFormatContainer} title="Analyses Formatting">
           Format Analyses
+        </MenuItem>
+        <MenuItem onSelect={ElementActions.showLiteratureDetail} title="Reference Manager">
+          Literature
         </MenuItem>
         {graphItem}
       </Dropdown.Menu>

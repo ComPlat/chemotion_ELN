@@ -14,6 +14,7 @@ import GraphContainer from './GraphContainer';
 import DetailActions from './actions/DetailActions';
 import ElementStore from './stores/ElementStore';
 import { SameEleTypId } from './utils/ElementUtils';
+import LiteratureDetails from './LiteratureDetails'
 
 export default class ElementDetails extends Component {
   constructor(props) {
@@ -130,6 +131,8 @@ export default class ElementDetails extends Component {
         return <FormatContainer format={el} />;
       case 'graph':
         return <GraphContainer graph={el} />;
+      case 'literature_map':
+        return <LiteratureDetails literatureMap={el} />
       default:
         return (<span />);
     }
@@ -174,6 +177,14 @@ export default class ElementDetails extends Component {
       iconElement = (
         <span>
           <i className="fa fa-area-chart" />
+        </span>
+      );
+    } else if (el.type === 'literature_map') {
+      title = 'Literature';
+      bsStyle = 'primary';
+      iconElement = (
+        <span>
+          <i className="fa fa-book" aria-hidden="true" />
         </span>
       );
     }

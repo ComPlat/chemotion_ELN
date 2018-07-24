@@ -194,6 +194,7 @@ class ElementStore {
           ElementActions.showFormatContainer,
           ElementActions.showComputedPropsGraph,
           ElementActions.showDeviceControl,
+          ElementActions.showLiteratureDetail,
         ],
       handleFetchMoleculeByMolfile: ElementActions.fetchMoleculeByMolfile,
       handleDeleteElements: ElementActions.deleteElements,
@@ -811,7 +812,7 @@ class ElementStore {
   }
 
   handleGenerateEmptyElement(element) {
-    let {currentElement} = this.state;
+    const { currentElement } = this.state;
 
     const newElementOfSameTypeIsPresent =
       currentElement && currentElement.isNew && currentElement.type ==

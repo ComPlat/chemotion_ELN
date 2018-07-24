@@ -55,4 +55,39 @@ export default class LiteraturesFetcher {
     }).then(response => response.json())
       .catch((errorMessage) => { console.log(errorMessage); });
   }
+
+  static fetchReferencesByCollection(params) {
+    return fetch(`/api/v1/literatures/collection?id=${params.id}&is_sync_to_me=${params.is_sync_to_me || false}`, {
+      credentials: 'same-origin',
+    }).then(response => response.json())
+      .then((json) => {
+        const {
+          collectionRefs,
+          sampleRefs,
+          reactionRefs,
+          researchPlanRefs,
+        } = json;
+        return {
+          collectionRefs: Immutable.List(collectionRefs.map(lit => new Literature(lit))),
+          sampleRefs: Immutable.List(sampleRefs.map(lit => new Literature(lit))),
+          reactionRefs: Immutable.List(reactionRefs.map(lit => new Literature(lit))),
+          researchPlanRefs: Immutable.List(researchPlanRefs.map(lit => new Literature(lit))),
+        };
+      })
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static postReferencesByUIState(params, method = 'post') {
+    return fetch(`/api/v1/literatures/ui_state`, {
+      credentials: 'same-origin',
+      method,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then(response => response.json())
+      .then(json => Immutable.List(json.selectedRefs.map(lit => new Literature(lit))))
+      .catch((errorMessage) => { console.log(errorMessage); });
+  }
 }
