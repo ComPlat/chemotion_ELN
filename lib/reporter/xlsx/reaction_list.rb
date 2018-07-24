@@ -78,7 +78,8 @@ module Reporter
           web_key,
           short_key,
           ''
-        ], sz: TEXT_SIZE, height: ROW_HEIGHT
+        ], sz: TEXT_SIZE, height: ROW_HEIGHT,
+           types: %i[string string string string string string string string string]
       end
 
       def retreive_rinchi_keys(obj)
