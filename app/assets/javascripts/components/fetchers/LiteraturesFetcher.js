@@ -4,6 +4,9 @@ import Literature from '../models/Literature';
 
 export default class LiteraturesFetcher {
   static fetchElementReferences(element) {
+    if (!element || element.isNew) {
+      return Promise.resolve(Immutable.List())
+    }
     const { type, id } = element;
     return fetch(`/api/v1/literatures?element_type=${type}&element_id=${id}`, {
       credentials: 'same-origin'
@@ -17,6 +20,9 @@ export default class LiteraturesFetcher {
   static postElementReference(params) {
     const { element, literature } = params;
     const { type, id } = element;
+    if (!element || element.isNew) {
+      return Promise.resolve(Immutable.List())
+    }
     return fetch('/api/v1/literatures', {
       credentials: 'same-origin',
       method: 'post',
