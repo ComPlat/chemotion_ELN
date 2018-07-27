@@ -6,6 +6,7 @@ export default class Literature extends Element {
       title: '',
       url: '',
       doi: '',
+      type: 'literature'
     })
   }
 

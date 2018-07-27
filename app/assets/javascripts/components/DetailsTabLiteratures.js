@@ -1,138 +1,31 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Table, ListGroup, ListGroupItem, Button, Row, Col, FormControl, Glyphicon } from 'react-bootstrap';
+import {
+  Table,
+  ListGroup,
+  ListGroupItem,
+  Button,
+  Row,
+  Col,
+  Glyphicon
+} from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
 
-
+import {
+  Citation,
+  doiValid,
+  sanitizeDoi,
+  AddButton,
+  DoiInput,
+  UrlInput,
+  TitleInput
+} from './LiteratureCommon';
+import Sample from './models/Sample';
+import Reaction from './models/Reaction';
+import ResearchPlan from './models/ResearchPlan';
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
-
-
-const handleInputChange = (type, event, literature) => {
-  const { value } = event.target;
-  switch (type) {
-    case 'url':
-      literature.url = value;
-      break;
-    case 'title':
-      literature.title = value;
-      break;
-    case 'doi':
-      literature.doi = value;
-      break;
-    case 'year':
-       literature.year = value;
-    default:
-      break;
-  }
-};
-
-const TitleInput = ({ literature, handleInputChange }) => (
-  <FormControl
-    type="text"
-    onChange={event => handleInputChange('title', event)}
-    placeholder="Title..."
-    value={literature.title || ''}
-  />
-);
-
-const UrlInput = ({ literature, handleInputChange }) => (
-  <FormControl
-    type="text"
-    onChange={event => handleInputChange('url', event)}
-    placeholder="URL..."
-    value={literature.url || ''}
-  />
-);
-
-const DoiInput = ({ literature, handleInputChange }) => (
-  <FormControl
-    type="text"
-    onChange={event => handleInputChange('doi', event)}
-    placeholder="DOI: 10.... or  http://dx.doi.org/10... or 10. ..."
-    value={literature.doi || ''}
-  />
-);
-
-const isLiteratureValid = literature => (
-  literature.title !== '' && literature.url.concat(literature.doi) !== ''
-);
-
-const AddButton = ({ onLiteratureAdd, literature }) => (
-  <Button
-    bsStyle="success"
-    bsSize="small"
-    onClick={() => onLiteratureAdd(literature)}
-    style={{ marginTop: 2 }}
-    disabled={!isLiteratureValid(literature)}
-  >
-    <i className="fa fa-plus" />
-  </Button>
-);
-
-
-AddButton.propTypes = {
-  onLiteratureAdd: PropTypes.func.isRequired,
-  literature: PropTypes.object.isRequired
-};
-
-
-const literatureUrl = (literature) => {
-  const { url } = literature;
-  if (url.match(/https?\:\/\//)) {
-    return url;
-  }
-  return `//${url}`;
-};
-
-const sanitizeDoi = (doi) => {
-  const m = doi.match(/(?:\.*10\.)(\S+)\s*/);
-  return m ? '10.'.concat(m[1]) : null;
-};
-
-const doiValid = (doi) => {
-  const sanitized = sanitizeDoi(doi);
-  return sanitized && sanitized.match(/10.\w+\/\S+/) && true;
-};
-
-const Citation = ({ literature }) => {
-  const { title, year, doi, url, refs } = literature;
-  const formatedDoi = doi ? `https://dx.doi.org/${sanitizeDoi(doi)}` : null;
-  const link = formatedDoi || url;
-  let content;
-  if (refs && refs.citation) {
-    content = (
-      <div>
-        {refs.citation.format('bibliography', {
-           format: 'text',
-           template: 'apa',
-        })}
-      </div>
-    );
-  } else if (refs && refs.bibtex) {
-    const citation = new Cite(refs.bibtex);
-    content = (
-      <div>
-        {citation.format('bibliography', {
-           format: 'text',
-           template: 'apa',
-        })}
-      </div>
-    );
-  } else {
-    content = <p>{title}{year ? `, ${year}` : null}</p>;
-  }
-  return (
-    <a
-      href={link}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={link}
-    >{content}
-    </a>
-  );
-};
 
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
@@ -174,10 +67,10 @@ export default class DetailsTabLiteratures extends Component {
         break;
     }
     this.setState(prevState => ({ ...prevState, literature }));
-  };
+  }
 
   handleLiteratureRemove(literature) {
-    const { element, onElementChange } = this.props;
+    const { element } = this.props;
     LiteraturesFetcher.deleteElementReference({ element, literature })
       .then((literatures) => {
         this.setState(prevState => ({ ...prevState, literatures }));
@@ -185,7 +78,7 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   handleLiteratureAdd(literature) {
-    const { element, onElementChange } = this.props;
+    const { element } = this.props;
     const { doi, url, title } = literature;
 
     LiteraturesFetcher.postElementReference({
@@ -298,6 +191,9 @@ export default class DetailsTabLiteratures extends Component {
 }
 
 DetailsTabLiteratures.propTypes = {
-  element: React.PropTypes.object,
-  onElementChange: React.PropTypes.func
-}
+  element: PropTypes.oneOfType([
+    PropTypes.instanceOf(ResearchPlan),
+    PropTypes.instanceOf(Reaction),
+    PropTypes.instanceOf(Sample)
+  ]).isRequired,
+};

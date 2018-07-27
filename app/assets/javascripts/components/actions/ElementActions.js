@@ -24,7 +24,8 @@ import ResearchPlan from '../models/ResearchPlan';
 import Report from '../models/Report';
 import Format from '../models/Format';
 import Graph from '../models/Graph';
-import DeviceControl from '../models/DeviceControl'
+import DeviceControl from '../models/DeviceControl';
+import LiteratureMap from '../models/LiteratureMap';
 
 import _ from 'lodash';
 
@@ -579,6 +580,11 @@ class ElementActions {
   showComputedPropsGraph() {
     return Graph.buildEmptyScatter();
   }
+
+  showLiteratureDetail() {
+    return LiteratureMap.buildEmpty();
+  }
+
 
   // -- General --
 
