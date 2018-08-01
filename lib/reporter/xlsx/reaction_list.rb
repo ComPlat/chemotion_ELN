@@ -26,7 +26,7 @@ module Reporter
             row_content
             col_widths
 
-            @sheet['A1:H#{row_counts}'].each do |c| c.style = Axlsx::STYLE_THIN_BORDER end
+            @sheet['A3:H#{row_counts}'].each do |c| c.style = Axlsx::STYLE_THIN_BORDER end
           end
           p.serialize(file_name)
         end
@@ -46,8 +46,6 @@ module Reporter
         @sheet.add_row [
           'Article Reference', '', '', '', '', 'Article DOI', '', ''
         ], sz: TEXT_SIZE, height: ROW_HEIGHT, b: true
-        @sheet.merge_cells('A1:E1')
-        @sheet.merge_cells('F1:H1')
       end
 
       def row_info
@@ -55,8 +53,6 @@ module Reporter
           'reference', '', '', '', '', 'doi:', '', ''
         ], sz: TEXT_SIZE, height: ROW_HEIGHT
         @sheet['A2:H2'].each do |c| c.color = 'aaaaaa' end
-        @sheet.merge_cells('A2:E2')
-        @sheet.merge_cells('F2:H2')
       end
 
       def row_sub_title
@@ -79,7 +75,7 @@ module Reporter
           short_key,
           ''
         ], sz: TEXT_SIZE, height: ROW_HEIGHT,
-           types: %i[string string string string string string string string string]
+           types: %i[text string string string string string string string string]
       end
 
       def retreive_rinchi_keys(obj)
