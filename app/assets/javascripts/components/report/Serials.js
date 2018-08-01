@@ -58,7 +58,9 @@ const Serials = (props) => {
       return spcSerials(props);
     case 'supporting_information':
       return suiSerials(props);
-    case 'rxn_list':
+    case 'rxn_list_xlsx':
+    case 'rxn_list_csv':
+    case 'rxn_list_html':
       return rxlSerials(props);
     default:
       return null;

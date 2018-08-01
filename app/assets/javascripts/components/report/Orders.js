@@ -40,7 +40,9 @@ const ordersContent = (props) => {
       return spcContent(props);
     case 'supporting_information':
       return suiContent(props);
-    case 'rxn_list':
+    case 'rxn_list_xlsx':
+    case 'rxn_list_csv':
+    case 'rxn_list_html':
       return rxlContent(props);
     default:
       return null;

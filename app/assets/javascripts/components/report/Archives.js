@@ -20,7 +20,7 @@ const clickDownloadReport = (e, archiveId, template) => {
 const reportStatusBtn = (archive) => {
   const { downloadable, id, template } = archive;
   const onClickDownloadReport = e => clickDownloadReport(e, id, template);
-  const downloadTP = <Tooltip id="download-docx">Download docx</Tooltip>;
+  const downloadTP = <Tooltip id="download-docx">Download</Tooltip>;
   const processTP = (
     <Tooltip id="wait-processing">
       Processing the report. Please wait
@@ -121,9 +121,21 @@ const rxlTooltip = () => (
   <Tooltip id="spc-tp">SI Reaction List Xlsx</Tooltip>
 );
 
-const rxlLabel = () => (
+const rxlXlsxLabel = () => (
   <OverlayTrigger placement="right" overlay={rxlTooltip()}>
     <Label bsStyle="info">SI-XLSX</Label>
+  </OverlayTrigger>
+);
+
+const rxlCsvLabel = () => (
+  <OverlayTrigger placement="right" overlay={rxlTooltip()}>
+    <Label bsStyle="info">SI-CSV</Label>
+  </OverlayTrigger>
+);
+
+const rxlHtmlLabel = () => (
+  <OverlayTrigger placement="right" overlay={rxlTooltip()}>
+    <Label bsStyle="info">SI-HTML</Label>
   </OverlayTrigger>
 );
 
@@ -135,8 +147,12 @@ const templateLable = (archive) => {
       return spcLabel();
     case 'supporting_information':
       return suiLabel();
-    case 'rxn_list':
-      return rxlLabel();
+    case 'rxn_list_xlsx':
+      return rxlXlsxLabel();
+    case 'rxn_list_csv':
+      return rxlCsvLabel();
+    case 'rxn_list_html':
+      return rxlHtmlLabel();
     default:
       return null;
   }
