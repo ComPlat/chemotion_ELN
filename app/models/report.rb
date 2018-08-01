@@ -18,16 +18,32 @@ class Report < ActiveRecord::Base
 
   def create_docx
     template = self.template
-    template_path = self.class.docx_template_path(template)
+    tpl_path = self.class.template_path(template)
     case template
     when 'spectrum'
-      Reporter::WorkerSpectrum.new(report: self, template_path: template_path).process
+      Reporter::WorkerSpectrum.new(
+        report: self, template_path: tpl_path
+      ).process
     when 'supporting_information'
-      Reporter::WorkerSi.new(report: self, template_path: template_path).process
-    when 'rxn_list'
-      Reporter::WorkerRxnList.new(report: self, ext: 'xlsx').process
+      Reporter::WorkerSi.new(
+        report: self, template_path: tpl_path
+      ).process
+    when 'rxn_list_xlsx'
+      Reporter::WorkerRxnList.new(
+        report: self, ext: 'xlsx'
+      ).process
+    when 'rxn_list_csv'
+      Reporter::WorkerRxnList.new(
+        report: self, ext: 'csv'
+      ).process
+    when 'rxn_list_html'
+      Reporter::WorkerRxnList.new(
+        report: self, template_path: tpl_path, ext: 'zip'
+      ).process
     else
-      Reporter::Worker.new(report: self, template_path: template_path).process
+      Reporter::Worker.new(
+        report: self, template_path: tpl_path
+      ).process
     end
   end
   handle_asynchronously :create_docx
@@ -42,8 +58,8 @@ class Report < ActiveRecord::Base
     r = Reaction.find(params[:id])
     r_hash = ElementReportPermissionProxy.new(current_user, r, user_ids).serialized
     content = Reporter::Docx::Document.new(objs: [r_hash]).convert
-    template_path = docx_template_path(params[:template])
-    file = Sablon.template(template_path)
+    tpl_path = template_path(params[:template])
+    file = Sablon.template(tpl_path)
                   .render_to_string(merge(current_user,
                                           content,
                                           all_spl_settings,
@@ -63,16 +79,18 @@ class Report < ActiveRecord::Base
     end
   end
 
-  def self.docx_template_path(template)
+  def self.template_path(template)
     case template
-      when "supporting_information"
-        Rails.root.join("lib", "template", "Supporting_information.docx")
-      when "spectrum"
-        Rails.root.join("lib", "template", "Spectra.docx")
-      when "single_reaction"
-        Rails.root.join("lib", "template", "ELN_Objs.docx")
-      else
-        Rails.root.join("lib", "template", "ELN_Objs.docx")
+    when 'supporting_information'
+      Rails.root.join('lib', 'template', 'Supporting_information.docx')
+    when 'spectrum'
+      Rails.root.join('lib', 'template', 'Spectra.docx')
+    when 'single_reaction'
+      Rails.root.join('lib', 'template', 'ELN_Objs.docx')
+    when 'rxn_list_html'
+      Rails.root.join('lib', 'template', 'rxn_list.html.erb')
+    else
+      Rails.root.join('lib', 'template', 'ELN_Objs.docx')
     end
   end
 

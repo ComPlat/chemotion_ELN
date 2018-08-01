@@ -7,10 +7,24 @@ module Reporter
     def process
       @content_objs, @procedure_objs = prism(@objs)
 
-      Reporter::Xlsx::ReactionList.new(
-        objs: @content_objs,
-        mol_serials: @mol_serials
-      ).create_xlsx(file_path)
+      case @ext
+      when 'xlsx'
+        Reporter::Xlsx::ReactionList.new(
+          objs: @content_objs,
+          mol_serials: @mol_serials
+        ).create(file_path)
+      when 'csv'
+        Reporter::Csv::ReactionList.new(
+          objs: @content_objs,
+          mol_serials: @mol_serials
+        ).create(file_path)
+      when 'zip'
+        Reporter::Html::ReactionList.new(
+          objs: @content_objs,
+          mol_serials: @mol_serials,
+          template_path: @template_path
+        ).create(file_path)
+      end
 
       save_report
     end

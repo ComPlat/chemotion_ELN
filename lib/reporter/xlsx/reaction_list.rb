@@ -15,7 +15,7 @@ module Reporter
         @mol_serials = args[:mol_serials] || []
       end
 
-      def create_xlsx(file_name)
+      def create(file_name)
         Axlsx::Package.new do |p|
           p.workbook.add_worksheet(name: 'ELN Report Reaction List') do |st|
             @sheet = st
@@ -78,22 +78,8 @@ module Reporter
            types: %i[text string string string string string string string string]
       end
 
-      def retreive_rinchi_keys(obj)
-        long_key = obj[:rinchi_long_key]
-        web_key = obj[:rinchi_web_key]
-        short_key = obj[:rinchi_short_key]
-        [long_key, web_key, short_key]
-      end
-
-      def mol_img_path(p)
-        ext = 'png'
-        Reporter::Docx::DiagramSample.new(
-          obj: p, format: ext
-        ).img_path
-      end
-
       def add_img_to_row(p)
-        img_src = mol_img_path(p)
+        img_src = Reporter::Helper.mol_img_path(p)
         return if img_src.nil?
         @sheet.add_image(image_src: img_src) do |img|
           img.height = IMG_HEIGHT.to_i
@@ -105,7 +91,7 @@ module Reporter
       def row_content
         @counter = 0
         @objs.each do |obj|
-          long_key, web_key, short_key = retreive_rinchi_keys(obj)
+          long_key, web_key, short_key = Reporter::Helper.get_rinchi_keys(obj)
 
           obj[:products].each do |p|
             add_content_to_row(p, long_key, web_key, short_key)
