@@ -60,7 +60,7 @@ describe 'Reporter::Xlsx::ReactionList instance' do
       ElementReportPermissionProxy.new(user, o, [user.id]).serialized
     }
 
-    Reporter::Xlsx::ReactionList.new(objs: obj_hash).create_xlsx(t_xlsx.path)
+    Reporter::Xlsx::ReactionList.new(objs: obj_hash).create(t_xlsx.path)
   end
 
   it 'returns an array class' do
