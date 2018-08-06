@@ -82,7 +82,9 @@ const Setting = (props) => {
       return spcSetting();
     case 'supporting_information':
       return suiSetting(props);
-    case 'rxn_list':
+    case 'rxn_list_xlsx':
+    case 'rxn_list_csv':
+    case 'rxn_list_html':
       return rxlSetting(props);
     default:
       return null;

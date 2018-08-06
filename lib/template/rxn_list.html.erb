@@ -1,0 +1,110 @@
+<html>
+  <head>
+    <title></title>
+  </head>
+
+  <body>
+    <table>
+      <tr>
+        <th>
+          Article Reference
+        </th>
+        <th>
+          Article DOI
+        </th>
+      </tr>
+      <tr>
+        <td class="c-artical">
+          reference
+        </td>
+        <td class="c-artical">
+          doi:
+        </td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <th>
+          Label
+        </th>
+        <th>
+          Image
+        </th>
+        <th>
+          Name
+        </th>
+        <th>
+          InChI
+        </th>
+        <th>
+          InChIKey
+        </th>
+        <th>
+          Long-RInChIKey
+        </th>
+        <th>
+          Web-RInChIKey
+        </th>
+        <th>
+          Short-RInChIKey
+        </th>
+      </tr>
+      <% rows.each do |row| %>
+        <tr>
+          <td><%= row[:label] %></td>
+          <td>
+            <img
+              src=<%= row[:image] %>
+              style="max-width:300px;max-height:300px;"
+            >
+          </td>
+          <td><%= row[:showed_name] %></td>
+          <td><%= row[:inchi] %></td>
+          <td><%= row[:inchikey] %></td>
+          <td><%= row[:long_key] %></td>
+          <td><%= row[:web_key] %></td>
+          <td><%= row[:short_key] %></td>
+        </tr>
+      <% end %>
+    </table>
+  </body>
+
+
+  <!-- * * * * * * * * * * * * * * * * * * * * * * * * * -->
+  <style>
+
+    table {
+      border-collapse: collapse;
+      margin: 10px;
+      width: 90%;
+    }
+
+    table, th, td {
+      border: 1px solid #666666;
+    }
+
+    th {
+      background-color: #333333;
+      color: white;
+    }
+
+    tr {
+      line-height: 2;
+    }
+
+    tr:nth-child(odd) {
+      background-color: #f2f2f2;
+    }
+
+    th, td {
+      padding: 5px;
+      text-align: left;
+    }
+
+    .c-artical {
+      color: #aaaaaa;
+    }
+
+  </style>
+</html>

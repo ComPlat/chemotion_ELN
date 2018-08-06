@@ -339,7 +339,9 @@ class ReportStore {
       case 'supporting_information':
         prefix = 'Supporting_Information_';
         break;
-      case 'rxn_list':
+      case 'rxn_list_xlsx':
+      case 'rxn_list_csv':
+      case 'rxn_list_html':
         prefix = 'Reaction_List_';
         break;
       default:
@@ -374,7 +376,25 @@ class ReportStore {
   }
 
   handleDownloadReport({ id, template }) {
-    const ext = template === 'rxn_list' ? 'xlsx' : 'docx';
+    let ext = 'docx';
+    switch (template) {
+      case 'rxn_list_xlsx':
+        ext = 'xlsx';
+        break;
+      case 'rxn_list_csv':
+        ext = 'csv';
+        break;
+      case 'rxn_list_html':
+        ext = 'zip';
+        break;
+      case 'standard':
+      case 'spectrum':
+      case 'supporting_information':
+      default:
+        ext = 'docx';
+        break;
+    }
+
     const target = `id=${JSON.stringify(id)}&ext=${ext}`;
     this.markReaded(id);
     Utils.downloadFile({

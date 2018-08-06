@@ -68,6 +68,12 @@
 /public/xlsx/*
 !/public/xlsx/.keep
 
+/public/csv/*
+!/public/csv/.keep
+
+/public/zip/*
+!/public/zip/.keep
+
 /public/assets/*
 
 /coverage/

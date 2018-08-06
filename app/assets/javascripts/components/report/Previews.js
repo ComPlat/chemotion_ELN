@@ -95,7 +95,9 @@ const previewsContent = (props) => {
       return spcPreviews(props);
     case 'supporting_information':
       return suiPreviews(props);
-    case 'rxn_list':
+    case 'rxn_list_xlsx':
+    case 'rxn_list_csv':
+    case 'rxn_list_html':
       return rxlPreviews(props);
     default:
       return null;

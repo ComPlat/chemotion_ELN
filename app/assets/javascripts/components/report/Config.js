@@ -18,7 +18,9 @@ const templateOpts = () => (
     { label: 'Standard', value: 'standard' },
     { label: 'Supporting Information', value: 'supporting_information' },
     { label: 'Supporting Information - Spectra', value: 'spectrum' },
-    { label: 'Supporting Information - Reaction List (.xlsx)', value: 'rxn_list' },
+    { label: 'Supporting Information - Reaction List (.xlsx)', value: 'rxn_list_xlsx' },
+    { label: 'Supporting Information - Reaction List (.csv)', value: 'rxn_list_csv' },
+    { label: 'Supporting Information - Reaction List (.html)', value: 'rxn_list_html' },
   ]
 );
 
@@ -177,7 +179,9 @@ const Config = (props) => {
       return spcConfig(props);
     case 'supporting_information':
       return suiConfig(props);
-    case 'rxn_list':
+    case 'rxn_list_xlsx':
+    case 'rxn_list_csv':
+    case 'rxn_list_html':
       return rxlConfig(props);
     default:
       return null;
