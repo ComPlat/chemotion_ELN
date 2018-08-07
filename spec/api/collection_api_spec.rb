@@ -109,16 +109,10 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (unshared) collection roots of logged in user' do
         get '/api/v1/collections/roots'
         collections = JSON.parse(response.body)['collections']
-        shared_to = collections.map{ |c| c.delete("shared_to") }
-        is_remote = collections.map{ |c| c.delete("is_remote") }
+        data1 = Entities::CollectionRootEntity.represent(c1, serializable: true).as_json
+        data2 = Entities::CollectionRootEntity.represent(c3, serializable: true).as_json
+        expect(collections).to eq [data1,data2]
 
-        expect(collections).to eq [
-          c1.as_json(json_options),
-          c3.as_json(json_options)
-        ]
-
-        expect(shared_to.compact).to be_empty
-        expect(is_remote).to eq [false, false]
       end
     end
 
@@ -134,18 +128,26 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (shared) collection roots of logged in user' do
         get '/api/v1/collections/shared_roots'
         collections = JSON.parse(response.body)['collections']
-        shared_to = collections.map{|c| c.delete("shared_to")}
-        shared_by = collections.map{|c| c.delete("shared_by")}
-        is_remote = collections.map{|c| c.delete("is_remote")}
-        expect(collections).to eq [c2.as_json(json_options)]
-        expect(shared_to.map{|u| u&&u['id']||nil}).to eq [c2.user.id]
+
+        collections.map{|c| c['shared_to'] = nil}
+        collections.map{|c| c['shared_by'] = nil}
+        collections.map{|c| c['is_remoted'] = nil}
+        # shared_to = collections.map{|c| c.delete("shared_to")}
+        # shared_by = collections.map{|c| c.delete("shared_by")}
+        # is_remote = collections.map{|c| c.delete("is_remote")}
+
+        data2 = Entities::CollectionRootEntity.represent(c2, serializable: true).as_json
+        expect(collections).to eq [data2]
       end
     end
+
 
     describe 'GET /api/v1/collections/remote_roots' do
       it 'returns serialized (remote) collection roots of logged in user' do
         get '/api/v1/collections/remote_roots'
-        expect(JSON.parse(response.body)['collections'].first['label']).to eq c4.label
+        expect(JSON.parse(response.body)['collections'].select{ |dt| dt['is_locked'] == false }.first['label']).to eq c4.label
+
+         collections = JSON.parse(response.body)['collections']
       end
       context 'with a collection shared to a group' do
         let(:p2){ create(:person) }
@@ -162,9 +164,6 @@ describe Chemotion::CollectionAPI do
         end
       end
     end
-
-
-
 
     describe 'POST /api/v1/collections/unshared' do
       let(:params) {

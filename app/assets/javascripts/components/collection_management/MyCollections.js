@@ -143,7 +143,7 @@ export default class MyCollections extends React.Component {
         return(
           <div className="node">
             <span key={ind} className="collection-sync-info">
-              <UserInfoIcon type={collection.user.type}/> {collection.user.name}
+              <UserInfoIcon type={collection.type}/> {collection.name}
               &nbsp; <PermissionIcons pl={collection.permission_level}/>
             </span>
             <ButtonGroup className="actions">

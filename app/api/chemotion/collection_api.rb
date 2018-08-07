@@ -43,20 +43,63 @@ module Chemotion
           .locked.unshared.roots.order('label ASC')
       end
 
+      get_child = Proc.new do |children, collects|
+        children.each do |obj|
+          child = collects.select { |dt| dt['ancestry'] == obj['ancestry_root']}
+          get_child.call(child, collects) if child.count>0
+          obj[:children] = child
+        end
+      end
+
+      build_tree = Proc.new do |collects|
+        col_tree = []
+        collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
+        get_child.call(col_tree,collects)
+        Entities::CollectionRootEntity.represent(col_tree, serializable: true)
+      end
+
       desc "Return all unlocked unshared serialized collection roots of current user"
       get :roots do
-        current_user.collections.ordered.includes(:shared_users)
-          .unlocked.unshared.roots
+        collects = Collection.where(user_id: current_user.id).unlocked.unshared
+        .select(
+          <<~SQL
+            id, label, ancestry, is_synchronized, permission_level, position, collection_shared_names(user_id, id) as shared_names,
+            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked,is_shared,
+            case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
+          SQL
+        )
+        .as_json
+        build_tree.call(collects)
       end
 
       desc "Return all shared serialized collections"
       get :shared_roots do
-        Collection.shared(current_user.id).roots
+        collects = Collection.shared(current_user.id)
+        .select(
+          <<~SQL
+            id, user_id, label,ancestry, permission_level, user_as_json(collections.user_id) as shared_to,
+            is_shared, is_locked, is_synchronized, false as is_remoted,
+            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level,
+            case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root
+          SQL
+        )
+        .as_json
+        build_tree.call(collects)
       end
 
       desc "Return all remote serialized collections"
-      get :remote_roots, each_serializer: CollectionRemoteSerializer do
-        current_user.all_collections.remote(current_user.id).roots
+      get :remote_roots do
+        collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id])
+        .select(
+          <<~SQL
+            id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by,
+            case when (ancestry is null) then cast(id as text) else concat(ancestry, chr(47), id) end as ancestry_root,
+            reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared,
+            shared_user_as_json(collections.user_id, #{current_user.id}) as shared_to,position
+          SQL
+        ).as_json
+        build_tree.call(collects)
+
       end
 
       desc "Bulk update and/or create new collections"
