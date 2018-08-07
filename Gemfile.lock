@@ -259,6 +259,9 @@ GEM
       json (~> 1.4)
       listen (>= 1.0, < 4.0)
       thor (~> 0.14)
+    fx (0.3.1)
+      activerecord (>= 4.0.0)
+      railties (>= 4.0.0)
     globalid (0.4.1)
       activesupport (>= 4.2.0)
     gman (7.0.2)
@@ -640,6 +643,7 @@ DEPENDENCIES
   font-awesome-rails
   fontcustom
   fun_sftp!
+  fx
   gman
   grape (~> 1.0.3)
   grape-active_model_serializers
