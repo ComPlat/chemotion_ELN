@@ -18,8 +18,8 @@ RSpec.describe ElementPermissionProxy do
 
     context 'element is only in shared collections' do
       before do
-        c1.update(is_shared: true)
-        c2.update(is_shared: true)
+        c1.update(is_shared: true, sample_detail_level: 1)
+        c2.update(is_shared: true, sample_detail_level: 3)
       end
 
       describe 'detail_level_for_element' do
