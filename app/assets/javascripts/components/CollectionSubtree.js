@@ -210,7 +210,7 @@ export default class CollectionSubtree extends React.Component {
   }
 
   synchronizedIcon(){
-    let sharedUsers = this.state.root.shared_users
+    let sharedUsers = this.state.root.sync_collections_users
     return(
       sharedUsers && sharedUsers.length > 0
         ? <OverlayTrigger placement="bottom" overlay={UserInfos({users:sharedUsers})}>

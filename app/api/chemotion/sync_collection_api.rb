@@ -32,12 +32,46 @@ module Chemotion
          end
        end
 
+       get_child = Proc.new do |children, collections|
+         children.each do |obj|
+           child = collections.select { |dt| dt['ancestry'] == obj['id'].to_s}
+           obj[:children] = child if child.count>0
+         end
+       end
 
-      desc "Return all remote serialized collections"
-      get :sync_remote_roots, each_serializer: SyncCollectionRemoteSerializer do
-        current_user.all_collections.includes(:user).remote(current_user.id).roots
-      end
+       desc "Return all remote serialized collections"
+       get :sync_remote_roots do
+         collections = Collection.joins(:sync_collections_users)
+         .where([" sync_collections_users.user_id in (select user_ids(?)) and NOT sync_collections_users.shared_by_id = ? ",current_user.id,current_user.id])
+         .select(
+           <<~SQL
+             sync_collections_users.id, collections.label, collections.shared_by_id,
+             sync_collections_users.reaction_detail_level, sync_collections_users.sample_detail_level,
+             sync_collections_users.screen_detail_level, sync_collections_users.wellplate_detail_level,
+             user_as_json(collections.user_id) as temp_sharer,
+             sync_collections_users.fake_ancestry as ancestry, sync_collections_users.permission_level,
+             user_as_json(sync_collections_users.user_id) as temp_user
+           SQL
+         ).as_json
+         root_ancestries = []
+         collections.each do |obj|
+           root_ancestries.push(obj['ancestry'])
+         end
+         root_ancestries.map!(&:to_i)
+         col_tree = Collection.remote(current_user.id).where(id: root_ancestries)
+         .where([" user_id in (select user_ids(?))",current_user.id]).order('shared_by_id')
+         .select(
+           <<~SQL
+             id, user_id, label, ancestry, shared_by_id, permission_level,
+             shared_user_as_json(collections.user_id,#{current_user.id}) as shared_to,
+             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level,
+             user_as_json(collections.shared_by_id) as shared_by
+           SQL
+         ).as_json
 
+         get_child.call(col_tree,collections)
+         present col_tree, with: Entities::CollectionSyncEntity, root: 'syncCollections'
+       end
 
         desc "Update Sync collection"
         params do
