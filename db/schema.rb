@@ -866,4 +866,20 @@ ActiveRecord::Schema.define(version: 20180807153900) do
               return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
           end;$function$
   SQL
+
+  create_view "v_samples_collections",  sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
+  SQL
+
 end
