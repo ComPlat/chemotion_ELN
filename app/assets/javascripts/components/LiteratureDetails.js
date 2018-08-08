@@ -4,7 +4,12 @@ import {
   Table,
   PanelGroup,
   Button,
-  Panel
+  Panel,
+  ListGroup,
+  ListGroupItem,
+  Row,
+  Col,
+  Glyphicon
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
@@ -70,9 +75,10 @@ export default class LiteratureDetails extends Component {
     };
     this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
-    // this.handleInputChange = this.handleInputChange.bind(this);
-    // this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
-    // this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
+
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
+    this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
   }
 
   componentDidMount() {
@@ -163,6 +169,67 @@ export default class LiteratureDetails extends Component {
     ));
   }
 
+  handleInputChange(type, event) {
+    const { literature } = this.state;
+    const { value } = event.target;
+    switch (type) {
+      case 'url':
+        literature.url = value;
+        break;
+      case 'title':
+        literature.title = value;
+        break;
+      case 'doi':
+        literature.doi = value;
+        break;
+      default:
+        break;
+    }
+    this.setState(prevState => ({ ...prevState, literature }));
+  }
+
+  handleLiteratureAdd(literature) {
+    const { currentCollection, sample, reaction } = UIStore.getState();
+    const params = {
+      sample,
+      reaction,
+      id: currentCollection.id,
+      is_sync_to_me: currentCollection.is_sync_to_me,
+      ref: literature
+    };
+    LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
+      this.setState(prevState => ({
+        ...prevState,
+        selectedRefs,
+        currentCollection,
+        sample: { ...sample },
+        reaction: { ...reaction },
+      }));
+    });
+  }
+
+  fetchDOIMetadata() {
+    const { doi } = this.state.literature;
+    Cite.inputAsync(sanitizeDoi(doi)).then((json) => {
+      if (json[0]) {
+        const citation = new Cite(json[0]);
+        const { title, year } = json[0];
+        this.setState(prevState => ({
+          ...prevState,
+          literature: {
+            ...prevState.literature,
+            title,
+            year,
+            refs: {
+              citation,
+              bibtex: citation.format('bibtex')
+            }
+          }
+        }));
+      }
+    });
+  }
+
   render() {
     const {
       collectionRefs,
@@ -170,7 +237,8 @@ export default class LiteratureDetails extends Component {
       reactionRefs,
       // researchPlanRefs
       selectedRefs,
-      currentCollection
+      currentCollection,
+      literature
     } = this.state;
 
     const label = currentCollection ? currentCollection.label : null
@@ -221,6 +289,39 @@ export default class LiteratureDetails extends Component {
             collapsible
             header="References for selected Elements"
           >
+            <ListGroup>
+              <ListGroupItem>
+                <Row>
+                  <Col md={11} style={{ paddingRight: 0 }}>
+                    <DoiInput handleInputChange={this.handleInputChange} literature={literature} />
+                  </Col>
+                  <Col md={1} style={{ paddingRight: 0 }}>
+                    <Button
+                      onClick={this.fetchDOIMetadata}
+                      title="fetch metadata for this doi"
+                      disabled={!doiValid(literature.doi)}
+                    >
+                      <Glyphicon glyph="retweet" />
+                    </Button>
+                  </Col>
+                  <Col md={12} style={{ paddingRight: 0 }}>
+                    <Citation literature={literature} />
+                  </Col>
+                  <Col md={7} style={{ paddingRight: 0 }}>
+                    <TitleInput
+                      handleInputChange={this.handleInputChange}
+                      literature={literature}
+                    />
+                  </Col>
+                  <Col md={4} style={{ paddingRight: 0 }}>
+                    <UrlInput handleInputChange={this.handleInputChange} literature={literature} />
+                  </Col>
+                  <Col md={1}>
+                    <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
+                  </Col>
+                </Row>
+              </ListGroupItem>
+            </ListGroup>
             <Table>
               <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
               <tbody>{this.literatureRows(selectedRefs)}</tbody>
