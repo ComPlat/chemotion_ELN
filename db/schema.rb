@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180709180000) do
+ActiveRecord::Schema.define(version: 20180807153900) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -75,8 +75,8 @@ ActiveRecord::Schema.define(version: 20180709180000) do
     t.string   "token",      null: false
     t.integer  "user_id"
     t.inet     "ip"
-    t.string   "role"
     t.string   "fqdn"
+    t.string   "role"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -211,7 +211,7 @@ ActiveRecord::Schema.define(version: 20180709180000) do
     t.integer  "parent_id"
   end
 
-  add_index "containers", ["ancestry"], name: "index_containers_on_ancestry", using: :btree
+  add_index "containers", ["containable_type", "containable_id"], name: "index_containers_on_containable", using: :btree
 
   create_table "delayed_jobs", force: :cascade do |t|
     t.integer  "priority",   default: 0, null: false
@@ -699,14 +699,14 @@ ActiveRecord::Schema.define(version: 20180709180000) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 
@@ -765,120 +765,121 @@ ActiveRecord::Schema.define(version: 20180709180000) do
 
   add_foreign_key "literals", "literatures"
 
- execute "CREATE OR REPLACE FUNCTION user_ids(user_id integer)
-  RETURNS TABLE(user_ids integer)
-  LANGUAGE sql
-  AS $$
-    select $1 as id
-    union
-    (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-    and users.type in ('Group') and users_groups.user_id = $1)
-  $$"
+  create_function :user_instrument, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
+       RETURNS TABLE(instrument text)
+       LANGUAGE sql
+      AS $function$
+             select distinct extended_metadata -> 'instrument' as instrument from containers c
+             where c.container_type='dataset' and c.id in
+             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+             order by extended_metadata -> 'instrument' limit 10
+           $function$
+  SQL
+  create_function :collection_shared_names, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+           select array_to_json(array_agg(row_to_json(result))) from (
+           SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
+           sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
+           FROM sync_collections_users
+           INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
+           WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
+           group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
+           ) as result
+           $function$
+  SQL
+  create_function :user_ids, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
+       RETURNS TABLE(user_ids integer)
+       LANGUAGE sql
+      AS $function$
+             select $1 as id
+             union
+             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+             and users.type in ('Group') and users_groups.user_id = $1)
+           $function$
+  SQL
+  create_function :user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
+       RETURNS json
+       LANGUAGE sql
+      AS $function$
+             select row_to_json(result) from (
+            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           	   from users where id = $1
+         	   ) as result
+           $function$
+  SQL
+  create_function :shared_user_as_json, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
+       RETURNS json
+       LANGUAGE plpgsql
+      AS $function$
+             begin
+             	if (in_user_id = in_current_user_id) then
+             		return null;
+             	else
+             		return (select row_to_json(result) from (
+             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+             		from users where id = $1
+             		) as result);
+             	end if;
+              end;
+           $function$
+  SQL
+  create_function :detail_level_for_sample, sql_definition: <<-SQL
+      CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
+       RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
+       LANGUAGE plpgsql
+      AS $function$
+          declare
+          	i_detail_level_wellplate integer default 0;
+          	i_detail_level_sample integer default 0;
+          begin
+          	select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
+          	into i_detail_level_sample, i_detail_level_wellplate
+          	from
+          	(
+          		select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
+          			from v_samples_collections v_sams_cols
+          			where v_sams_cols.sams_id = in_sample_id
+          			and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
+          		union
+          		select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
+          			from sync_collections_users sync_cols
+          			inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
+          			where sync_cols.collection_id in
+          			(
+          				select v_sams_cols.cols_id
+          				from v_samples_collections v_sams_cols
+          				where v_sams_cols.sams_id = in_sample_id
+          			)
+          			and sync_cols.user_id in (select user_ids(in_user_id))
+          	) all_cols;
 
-  execute "CREATE OR REPLACE FUNCTION user_as_json(user_id integer)
-   RETURNS json
-   LANGUAGE sql
-   AS $$
-     select row_to_json(result) from (
-       select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-       from users where id = $1
-     ) as result
-   $$"
+              return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
+          end;$function$
+  SQL
 
-   execute "CREATE OR REPLACE FUNCTION shared_user_as_json(in_user_id integer, in_current_user_id integer)
-    RETURNS json
-    LANGUAGE plpgsql
-    AS $$
-      begin
-      	if (in_user_id = in_current_user_id) then
-      		return null;
-      	else
-      		return (select row_to_json(result) from (
-      		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-      		from users where id = $1
-      		) as result);
-      	end if;
-       end;
-    $$"
+  create_view "v_samples_collections",  sql_definition: <<-SQL
+      SELECT cols.id AS cols_id,
+      cols.user_id AS cols_user_id,
+      cols.sample_detail_level AS cols_sample_detail_level,
+      cols.wellplate_detail_level AS cols_wellplate_detail_level,
+      cols.shared_by_id AS cols_shared_by_id,
+      cols.is_shared AS cols_is_shared,
+      samples.id AS sams_id,
+      samples.name AS sams_name
+     FROM ((collections cols
+       JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
+       JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
+    WHERE (cols.deleted_at IS NULL);
+  SQL
 
-    execute "CREATE OR REPLACE FUNCTION user_instrument(user_id integer, sc text)
-     RETURNS TABLE(instrument text)
-     LANGUAGE sql
-     AS $$
-       select distinct extended_metadata -> 'instrument' as instrument from containers c
-       where c.container_type='dataset' and c.id in
-       (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-       where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-       and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-       and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-       order by extended_metadata -> 'instrument' limit 10
-     $$"
-
-
-   execute "create or replace
-     view v_samples_collections as select
-       cols.id cols_id,
-       cols.user_id cols_user_id,
-       cols.sample_detail_level cols_sample_detail_level,
-       cols.wellplate_detail_level cols_wellplate_detail_level,
-       cols.shared_by_id cols_shared_by_id,
-       cols.is_shared cols_is_shared,
-       samples.id sams_id,
-       samples.name sams_name
-     from
-       collections cols
-     inner join collections_samples col_samples on
-       col_samples.collection_id = cols.id
-       and col_samples.deleted_at is null
-     inner join samples on
-       samples.id = col_samples.sample_id
-       and samples.deleted_at is null
-     where
-       cols.deleted_at is null;"
-
-    execute "create or replace function detail_level_for_sample(in_user_id integer, in_sample_id integer)
-       returns table(detail_level_sample integer, detail_level_wellplate integer)
-       language plpgsql
-       as $function$
-       declare
-       	i_detail_level_wellplate integer default 0;
-       	i_detail_level_sample integer default 0;
-       begin
-       	select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
-       	into i_detail_level_sample, i_detail_level_wellplate
-       	from
-       	(
-       		select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
-       			from v_samples_collections v_sams_cols
-       			where v_sams_cols.sams_id = in_sample_id
-       			and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
-       		union
-       		select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
-       			from sync_collections_users sync_cols
-       			inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
-       			where sync_cols.collection_id in
-       			(
-       				select v_sams_cols.cols_id
-       				from v_samples_collections v_sams_cols
-       				where v_sams_cols.sams_id = in_sample_id
-       			)
-       			and sync_cols.user_id in (select user_ids(in_user_id))
-       	) all_cols;
-
-           return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
-       end;$function$;"
-
-     execute "CREATE OR REPLACE FUNCTION collection_shared_names(user_id integer, collection_id integer)
-      RETURNS json
-      LANGUAGE sql
-      AS $$
-      select array_to_json(array_agg(row_to_json(result))) from (
-      SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
-      sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
-      FROM sync_collections_users
-      INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
-      WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
-      group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
-      ) as result
-      $$"
 end

@@ -46,6 +46,8 @@ end
 
 gem 'pg', '~> 0.20.0'
 gem 'pg_search'
+gem 'fx'
+gem 'scenic'
 
 gem 'devise'
 gem 'jwt'
