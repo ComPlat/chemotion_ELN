@@ -187,12 +187,16 @@ module SVG
       )
 
       @sections = sections
+
       template_it.strip + sections_string_filtered + '</svg></svg>'
     end
 
     def compose_reaction_svg
       set_global_view_box_height
       section_it
+      if @core_only
+        return core_template_it.strip + sections_string_filtered + '</svg>'
+      end
       template_it.strip + sections_string_filtered + "</svg></svg>"
     end
 
@@ -215,6 +219,7 @@ module SVG
         @box_width = options[:supporting_information] ? 2000 : 1560
         @box_height = 440
         @rails_path = options[:rails_path].nil? ? true : options[:rails_path]
+        @core_only = options[:core_only].nil? ? false : options[:core_only]
       end
 
       def init_word_size
@@ -262,6 +267,12 @@ module SVG
             <rect  width="#{@box_width}" height="#{@box_height}" stroke-width="1" stroke="white" fill="none"/>
             <svg width="100%" #{preserve_aspect_ratio} viewBox="#{global_view_box_array.join(' ')}" >
             <title>Reaction 1</title>
+        END
+      end
+
+      def core_template_it
+        <<-END
+          <svg width="100%" #{preserve_aspect_ratio} viewBox="#{global_view_box_array.join(' ')}" >
         END
       end
 

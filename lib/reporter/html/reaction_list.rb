@@ -17,37 +17,24 @@ module Reporter
         @mol_serials = args[:mol_serials] || []
         @template_path = args[:template_path]
         @file_name = nil
-        @tmp_img_paths = []
-        @tmp_html = Tempfile.new
       end
 
       def create(f_name)
         @file_name = f_name
 
         generate_html
-        zip_files
       end
 
       private
-
-      def zip_files
-        Zip::File.open(@file_name, Zip::File::CREATE) do |zipfile|
-          zipfile.add(@file_name.sub_ext('.html').basename, @tmp_html.path)
-          zipfile.mkdir('images')
-
-          @tmp_img_paths.each do |p|
-            zipfile.add(get_zip_img_path(p), p)
-          end
-        end
-      end
 
       def generate_html
         erb_str = File.read(@template_path)
 
         result = render_erb(erb_str, wrap_data)
 
-        @tmp_html.write(result)
-        @tmp_html.close
+        File.open(@file_name, 'w+') do |f|
+          f.write(result)
+        end
       end
 
       def render_erb(template, data = {})
@@ -73,12 +60,14 @@ module Reporter
       end
 
       def row_content(p, long_key, web_key, short_key)
-        tmp_img_path = Reporter::Helper.mol_img_path(p)
-        @tmp_img_paths << tmp_img_path
+        paths = {}
+        paths[:products] = [p[:get_svg_path]]
+        svg_img = SVG::SampleComposer.new(paths, core_only: true).compose_svg
+
         serial = Reporter::Helper.mol_serial(p[:molecule][:id], @mol_serials)
         {
           label: serial,
-          image: get_zip_img_path(tmp_img_path),
+          svg_image: svg_img,
           showed_name: p[:showed_name],
           inchi: p[:molecule][:inchistring],
           inchikey: p[:molecule][:inchikey],
@@ -86,11 +75,6 @@ module Reporter
           web_key: web_key,
           short_key: short_key
         }
-      end
-
-      def get_zip_img_path(path)
-        pn = Pathname.new(path)
-        "./images/#{pn.basename}"
       end
     end
   end

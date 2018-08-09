@@ -71,8 +71,8 @@
 /public/csv/*
 !/public/csv/.keep
 
-/public/zip/*
-!/public/zip/.keep
+/public/html/*
+!/public/html/.keep
 
 /public/assets/*
 

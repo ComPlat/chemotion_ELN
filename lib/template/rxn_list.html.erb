@@ -52,19 +52,14 @@
       </tr>
       <% rows.each do |row| %>
         <tr>
-          <td><%= row[:label] %></td>
-          <td>
-            <img
-              src=<%= row[:image] %>
-              style="max-width:300px;max-height:300px;"
-            >
-          </td>
-          <td><%= row[:showed_name] %></td>
-          <td><%= row[:inchi] %></td>
-          <td><%= row[:inchikey] %></td>
-          <td><%= row[:long_key] %></td>
-          <td><%= row[:web_key] %></td>
-          <td><%= row[:short_key] %></td>
+          <td class="col-05"><%= row[:label] %></td>
+          <td class="col-15 molecule"><%= row[:svg_image] %></td>
+          <td class="col-10"><span><%= row[:showed_name] %></span></td>
+          <td class="col-10"><span><%= row[:inchi] %></span></td>
+          <td class="col-10"><span><%= row[:inchikey] %></span></td>
+          <td class="col-30"><%= row[:long_key] %></td>
+          <td class="col-10"><span><%= row[:web_key] %></span></td>
+          <td class="col-10"><span><%= row[:short_key] %></span></td>
         </tr>
       <% end %>
     </table>
@@ -77,7 +72,7 @@
     table {
       border-collapse: collapse;
       margin: 10px;
-      width: 90%;
+      width: 99%;
     }
 
     table, th, td {
@@ -102,8 +97,36 @@
       text-align: left;
     }
 
+    span {
+      display: block;
+      overflow-wrap: break-word;
+      width: 99%;
+      word-break: break-all;
+      word-wrap: break-word;
+    }
+
     .c-artical {
       color: #aaaaaa;
+    }
+
+    .col-05 {
+      width: 5% !important;
+    }
+
+    .col-10 {
+      width: 10% !important;
+    }
+
+    .col-15 {
+      width: 15% !important;
+    }
+
+    .col-30 {
+      width: 30% !important;
+    }
+
+    .molecule svg {
+      width: 99% !important;
     }
 
   </style>

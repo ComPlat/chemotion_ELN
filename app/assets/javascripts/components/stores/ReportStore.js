@@ -385,7 +385,7 @@ class ReportStore {
         ext = 'csv';
         break;
       case 'rxn_list_html':
-        ext = 'zip';
+        ext = 'html';
         break;
       case 'standard':
       case 'spectrum':
