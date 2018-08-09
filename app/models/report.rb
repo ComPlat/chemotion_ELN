@@ -38,7 +38,7 @@ class Report < ActiveRecord::Base
       ).process
     when 'rxn_list_html'
       Reporter::WorkerRxnList.new(
-        report: self, template_path: tpl_path, ext: 'zip'
+        report: self, template_path: tpl_path, ext: 'html'
       ).process
     else
       Reporter::Worker.new(

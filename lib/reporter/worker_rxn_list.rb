@@ -18,7 +18,7 @@ module Reporter
           objs: @content_objs,
           mol_serials: @mol_serials
         ).create(file_path)
-      when 'zip'
+      when 'html'
         Reporter::Html::ReactionList.new(
           objs: @content_objs,
           mol_serials: @mol_serials,
