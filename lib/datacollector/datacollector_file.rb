@@ -45,7 +45,7 @@ class DatacollectorFile < DatacollectorObject
   def add_attach_to_container(device, attach)
     helper = CollectorHelper.new(device, recipient)
     dataset = helper.prepare_dataset(Time.now.strftime('%Y-%m-%d'))
-    attach.update!(container_id: dataset.id)
+    attach.update_container!(dataset.id)
     primary_store = Rails.configuration.storage.primary_store
     attach.update!(storage: primary_store)
   end

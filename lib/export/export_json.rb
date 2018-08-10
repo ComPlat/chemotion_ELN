@@ -190,7 +190,7 @@ module Export
               from (
                 select att.filename, att.identifier, att.checksum
                 from attachments att
-                where att.container_id = datc.id
+                where att.attachable_id = datc.id and att.attachable_type = 'Container'
               ) attachment
             ) as attachments
           from  containers datc
@@ -217,7 +217,7 @@ module Export
       <<-SQL
       select array_to_json(array_agg(att.id)) as ids
       from attachments att
-      inner join containers dc on dc.id = att.container_id
+      inner join containers dc on dc.id = att.attachable_id and att.attachable_type = 'Container'
       inner join container_hierarchies ch on dc.id = ch.descendant_id and ch.generations = 3
       inner join containers rootc on rootc.id = ch.ancestor_id
       left join collections_samples cs on cs.sample_id = rootc.containable_id and rootc.containable_type = 'Sample' and cs.deleted_at isnull
