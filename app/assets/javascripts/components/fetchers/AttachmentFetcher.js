@@ -50,7 +50,8 @@ export default class AttachmentFetcher {
       const fileFromAttachment = function(attachment) {
         let file = attachment.file;
         file.id = attachment.id;
-        file.container_id = container.id;
+        file.attachable_id = container.id;
+        file.attachable_type = 'Container';
         return file;
       }
       var tmpArray = container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a));
