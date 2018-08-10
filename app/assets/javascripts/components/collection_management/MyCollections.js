@@ -152,7 +152,7 @@ export default class MyCollections extends React.Component {
                    <i className="fa fa-share-alt">edit</i>
               </Button>
               <Button bsSize="xsmall" bsStyle="danger"
-                onClick={()=>CollectionActions.deleteSync({id: collection.id})}
+                onClick={()=>CollectionActions.deleteSync({id: collection.id, is_syncd: false})}
               >
               <i className="fa fa-share-alt"/> <i className="fa fa-trash-o"></i>
               </Button>
@@ -190,7 +190,6 @@ export default class MyCollections extends React.Component {
       </Button>
     )
   }
-
 
   addSubcollection(node) {
     if(node.children) {

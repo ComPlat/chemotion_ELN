@@ -106,4 +106,10 @@ class Collection < ActiveRecord::Base
       Collection.where(id: deleted_ids, shared_by_id: user_id)
     ).each { |c| c.destroy }
   end
+
+  def self.reject_shared(user_id, collection_id)
+    (
+      Collection.where(id: collection_id, user_id: user_id, is_shared: true)
+    ).each { |c| c.destroy }
+  end
 end

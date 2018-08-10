@@ -52,8 +52,9 @@
 
   .inner {
     //color: #9DA5B4;
-    font-size: 12px;
-    font-family: Menlo;
+    font-size: 14px;
+    font-family: sans-serif;
+    color: black;
     position: relative;
     cursor: pointer;
   }
@@ -65,13 +66,18 @@
 
     .collection-label {
       @extend .inner;
-      font-size: 10px;
+      font-size: 14px;
       //background-color: #31363F;
-      color: #9DA5B4 !important;
-      width: 200px;
+      color: #000000 !important;
+      width: 400px;
       height: 22px;
       float: left;
       margin-left: 15px;
+    }
+
+    .m-node .children {
+      transition: 1s;
+      font-size: 22px;
     }
 
     .collection-sync-info {
@@ -93,7 +99,7 @@
     }
 
     &.is-active {
-      background-color: #31363F;
+      background-color: #000000
     }
   }
 
@@ -123,5 +129,4 @@
     content: '\25BE';
     font-size: 15px;
   }
-
 }

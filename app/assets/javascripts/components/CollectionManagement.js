@@ -3,6 +3,8 @@ import {Tabs, Tab} from 'react-bootstrap';
 
 import MyCollections from './collection_management/MyCollections';
 import MySharedCollections from './collection_management/MySharedCollections';
+import SharedWithMeCollections from './collection_management/SharedWithMeCollections';
+import SyncWithMeCollections from './collection_management/SyncWithMeCollections';
 import XTabs from "./extra/CollectionManagementXTabs";
 
 export default class CollectionManagement extends React.Component {
@@ -36,6 +38,12 @@ export default class CollectionManagement extends React.Component {
           </Tab>
           <Tab eventKey={2} title="My Shared Collections">
             <MySharedCollections />
+          </Tab>
+          <Tab eventKey={3} title="Collections shared with me ">
+            <SharedWithMeCollections />
+          </Tab>
+          <Tab eventKey={4} title="Collections synchronized with me ">
+            <SyncWithMeCollections />
           </Tab>
           {tabContents.map((e,i)=>e(i))}
         </Tabs>

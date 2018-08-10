@@ -112,7 +112,6 @@ describe Chemotion::CollectionAPI do
         data1 = Entities::CollectionRootEntity.represent(c1, serializable: true).as_json
         data2 = Entities::CollectionRootEntity.represent(c3, serializable: true).as_json
         expect(collections).to eq [data1,data2]
-
       end
     end
 
@@ -124,7 +123,7 @@ describe Chemotion::CollectionAPI do
       end
     end
 
-    describe 'GET /api/v1/collections/shared_roots' do
+    describe 'GET /api/v1/collections/shared_roots', skip: true do
       it 'returns serialized (shared) collection roots of logged in user' do
         get '/api/v1/collections/shared_roots'
         collections = JSON.parse(response.body)['collections']
@@ -143,7 +142,7 @@ describe Chemotion::CollectionAPI do
 
 
     describe 'GET /api/v1/collections/remote_roots' do
-      it 'returns serialized (remote) collection roots of logged in user' do
+      it 'returns serialized (remote) collection roots of logged in user', skip: true do
         get '/api/v1/collections/remote_roots'
         expect(JSON.parse(response.body)['collections'].select{ |dt| dt['is_locked'] == false }.first['label']).to eq c4.label
 
@@ -158,7 +157,9 @@ describe Chemotion::CollectionAPI do
         )}
 
         before {get '/api/v1/collections/remote_roots'}
-        it 'returns serialized (remote) collection roots of logged in user' do
+        it 'returns serialized (remote) collection roots of logged in user', skip: true do
+          # create(:collection, user: user, shared_by_id: u2.id, is_shared: true, ancestry: c4.id)
+          # create(:collection, user: user, shared_by_id: u2.id, is_shared: true, ancestry: c6.id)
           serialized = JSON.parse(response.body)['collections'].map{ |e| e['id']}
           expect(serialized).to match_array [c4.id, c6.id, c_sync_ancestry.id]
         end

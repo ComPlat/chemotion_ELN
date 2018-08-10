@@ -133,12 +133,11 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        is_syncd: params.is_syncd
       })
     })
-
     return promise;
   }
-
 
   static bulkUpdateUnsharedCollections(params) {
     let promise = fetch('/api/v1/collections', {
@@ -154,6 +153,21 @@ export default class CollectionsFetcher {
       })
     })
 
+    return promise;
+  }
+
+  static rejectShared(params) {
+    const promise = fetch('/api/v1/collections/reject_shared', {
+      credentials: 'same-origin',
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        id: params.id
+      })
+    })
     return promise;
   }
 

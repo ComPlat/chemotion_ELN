@@ -43,6 +43,8 @@ class CollectionStore {
         CollectionActions.editSync,
         CollectionActions.deleteSync
       ],
+      handleRejectSharedCollection: CollectionActions.rejectShared,
+      handleRejectSyncdCollection: CollectionActions.rejectSync,
       handleUpdateCollectrionTree: CollectionActions.updateCollectrionTree
     })
   }
@@ -97,6 +99,12 @@ class CollectionStore {
     this.state.visibleRootsIds = visibleRootsIds
   }
 
+  handleRejectSharedCollection(results) {
+    CollectionActions.fetchRemoteCollectionRoots();
+  }
+  handleRejectSyncdCollection(results) {
+    CollectionActions.fetchSyncInCollectionRoots();
+  }
 
   // 'repository' methods; returns a promise
   static findById(collectionId) {

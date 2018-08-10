@@ -120,6 +120,22 @@ class CollectionActions {
         console.log(errorMessage);
       });};
   }
+  rejectSync(params){
+    return (dispatch) => { CollectionsFetcher.deleteSync(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+  rejectShared(params){
+    return (dispatch) => { CollectionsFetcher.rejectShared(params)
+      .then(() => {
+        dispatch();
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
 
   updateCollectrionTree(visibleRootsIds) {
     return visibleRootsIds
