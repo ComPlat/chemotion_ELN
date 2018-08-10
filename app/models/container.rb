@@ -1,7 +1,7 @@
 class Container < ActiveRecord::Base
   include ElementCodes
   belongs_to :containable, polymorphic: true
-  has_many :attachments
+  has_many :attachments, as: :attachable
   # TODO: dependent destroy for attachments should be implemented when attachment get paranoidized instead of this DJ
   before_destroy :delete_attachment
   has_closure_tree

@@ -11,6 +11,7 @@ class Report < ActiveRecord::Base
 
   has_many :reports_users
   has_many :users, through: :reports_users
+  has_many :attachments, as: :attachable
 
   default_scope { includes(:reports_users) }
 

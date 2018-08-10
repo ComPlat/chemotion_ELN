@@ -1,6 +1,7 @@
 
 class Attachment < ActiveRecord::Base
-  belongs_to :container
+  include Attachable
+
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated
 
   before_create :generate_key
