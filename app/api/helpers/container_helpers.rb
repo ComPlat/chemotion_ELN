@@ -60,23 +60,25 @@ module ContainerHelpers
         )
       end
 
-      create_or_update_attachments(container.id, child[:attachments]) if child[:attachments]
+      create_or_update_attachments(container, child[:attachments]) if child[:attachments]
       create_or_update_containers(child[:children], container)
     end
   end
 
-  def create_or_update_attachments(container_id, attachments)
+  def create_or_update_attachments(container, attachments)
     return if attachments.empty?
-    can_update = can_update_container(container_id)
+    can_update = can_update_container(container)
     can_edit = true
     return unless can_update
     attachments.each do |att|
       if att[:is_new]
         attachment = Attachment.where(storage: 'tmp', key: att[:id]).last
       else
-        attachment = Attachment.where( id: att[:id]).last
-        if attachment && attachment.container_id
-          can_edit = can_update_container(attachment.container_id)
+        attachment = Attachment.where(id: att[:id]).last
+        container_id = attachment && attachment.container_id
+        if container_id
+          container = Container.find(container_id)
+          can_edit = can_update_container(container)
         end
       end
       if attachment
@@ -85,7 +87,7 @@ module ContainerHelpers
           next
         end
         #NB 2step update because moving store should be delayed job
-        attachment.update!(container_id: container_id)
+        attachment.update_container!(container.id)
         primary_store = Rails.configuration.storage.primary_store
 
         attachment.update!(storage: primary_store) if att[:is_new]
@@ -94,7 +96,7 @@ module ContainerHelpers
   end
 
   def delete_containers_and_attachments(container)
-    Attachment.where(container_id: container[:id]).destroy_all
+    Attachment.where_container(container[:id]).destroy_all
     if container[:children].length > 0
       container[:children].each do |tmp|
         delete_containers_and_attachments(tmp)
@@ -104,7 +106,6 @@ module ContainerHelpers
   end
 
   def can_update_container(container)
-    container = Container.find(container) if container.is_a?(Integer)
     if element = container.root.containable
       ElementPolicy.new(current_user, element).update?
     else
