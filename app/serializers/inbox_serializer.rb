@@ -7,7 +7,7 @@ class InboxSerializer < ActiveModel::Serializer
     root = all_containers.keys[0]
     arr = Array.new
     get_attchement_ids(arr, all_containers[root])
-    attachments = Attachment.where(container_id: arr)
+    attachments = Attachment.where_container(arr)
 
     json_tree(attachments, all_containers[root])
   end
@@ -21,7 +21,10 @@ class InboxSerializer < ActiveModel::Serializer
 
   def json_tree(attachments, containers)
       containers.map do |container, subcontainers|
-        current_attachments = attachments.select{|attach| attach.container_id == container.id}
+        current_attachments = attachments.select { |att|
+          att.for_container? && att.attachable_id == container.id
+        }
+
           {:id => container.id,
             :name => container.name,
             :container_type => container.container_type,
@@ -31,6 +34,10 @@ class InboxSerializer < ActiveModel::Serializer
   end
 
   def unlinked_attachments
-    Attachment.where(:container_id => nil, :created_for => object.containable.id)
+    Attachment.where(
+      attachable_type: 'Container',
+      attachable_id: nil,
+      created_for: object.containable.id
+    )
   end
 end
