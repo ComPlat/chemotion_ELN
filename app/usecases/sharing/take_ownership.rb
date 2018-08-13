@@ -11,7 +11,6 @@ module Usecases
           sc = SyncCollectionsUser.find(@params[:id])
           # if user already owns the (unshared) collection, there is nothing to do here
           return if (sc.shared_by_id == new_owner_id)
-
           c = Collection.find(sc.collection_id)
           previous_owner_id = sc.shared_by_id
           root_label = "with %s" % User.find(previous_owner_id).name_abbreviation
@@ -23,12 +22,26 @@ module Usecases
             is_shared: true
           }
 
+          sc_all = SyncCollectionsUser.where(collection_id: sc.collection_id, shared_by_id: sc.shared_by_id).where.not(user_id: @params[:current_user_id])
+
           ActiveRecord::Base.transaction do
             c.update(user_id: new_owner_id, ancestry: nil)
             rc = Collection.find_or_create_by(root_collection_attributes)
             sc.update(user_id: previous_owner_id , shared_by_id: new_owner_id,fake_ancestry: rc.id.to_s)
-          end
 
+            sc_all.each do |sc|
+              ancestry_label = "with %s" % User.find(sc.user_id).name_abbreviation
+              root_collection_attrs = {
+                label: ancestry_label,
+                user_id: sc.user_id,
+                shared_by_id: new_owner_id,
+                is_locked: true,
+                is_shared: true
+              }
+              rca = Collection.find_or_create_by(root_collection_attrs)
+              sc.update(shared_by_id: new_owner_id,fake_ancestry: rca.id.to_s)
+            end
+          end
         else
           c = Collection.find(@params[:id])
           # if user already owns the (unshared) collection, there is nothing to do here
