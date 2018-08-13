@@ -27,17 +27,22 @@ module CollectionHelpers
 
   # desc: given an id of coll or sync coll return detail levels as array
   def detail_level_for_collection(id, is_sync = false)
-    (is_sync && SyncCollectionsUser || Collection).find_by(
+    dl = (is_sync && SyncCollectionsUser || Collection).find_by(
       id: id.to_i, user_id: user_ids
     )&.slice(
+      :permission_level,
       :sample_detail_level, :reaction_detail_level,
-      :wellplate_detail_level, :screen_detail_level
-    ) || {
+      :wellplate_detail_level, :screen_detail_level,
+      :researchplan_detail_level
+    ).symbolize_keys
+    {
+      permission_level: 0,
       sample_detail_level: 0,
       reaction_detail_level: 0,
       wellplate_detail_level: 0,
-      screen_detail_level: 0
-    }
+      screen_detail_level: 0,
+      researchplan_detail_level: 0,
+    }.merge(dl || {})
   end
 
   # desc: return a collection id to which elements (eg samples) shld be assigned
@@ -64,16 +69,26 @@ module CollectionHelpers
     end
   end
 
-  def set_var
-    @c_id = fetch_collection_id_w_current_user(
-      params[:collection_id], params[:is_sync]
-    )
-    @dl = detail_level_for_collection(
-      params[:collection_id], params[:is_sync]
-    )
+  def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])
+    @c_id = fetch_collection_id_w_current_user(c_id, is_sync)
+    @c = Collection.find_by(id: @c_id)
+    @is_owned = (@c.user_id == current_user.id && !@c.is_shared) || @c.shared_by_id == current_user.id
+
+    @dl = {
+      permission_level: 10,
+      sample_detail_level: 10,
+      reaction_detail_level: 10,
+      wellplate_detail_level: 10,
+      screen_detail_level: 10,
+      researchplan_detail_level: 10,
+    }
+
+    @dl = detail_level_for_collection(c_id, is_sync) if !@is_owned
+    @pl = @dl[:permission_level]
     @dl_s = @dl[:sample_detail_level]
     @dl_r = @dl[:reaction_detail_level]
     @dl_wp = @dl[:wellplate_detail_level]
     @dl_sc = @dl[:screen_detail_level]
+    @dl_rp = @dl[:researchplan_detail_level]
   end
 end
