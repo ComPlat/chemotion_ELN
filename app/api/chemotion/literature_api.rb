@@ -96,18 +96,16 @@ module Chemotion
         end
 
         after_validation do
-          # NB only support owned collection for now
-          error!(401) if params[:is_sync_to_me]
-          @collection = Collection.find_by(id: params[:id], user: current_user, is_shared: false)
-          error!(404) unless @collection
+          set_var(params[:id], params[:is_sync_to_me])
+          error!(404) unless @c
         end
 
         get do
-          sample_ids = @collection.sample_ids
-          reaction_ids = @collection.reaction_ids
-          research_plan_ids = @collection.research_plan_ids
+          sample_ids = @dl_s > 1 ? @c.sample_ids : []
+          reaction_ids = @dl_r > 1 ? @c.reaction_ids : []
+          research_plan_ids = @dl_rp > 1 ? @c.research_plan_ids : []
           {
-            collectionRefs: Literature.by_element_attributes_and_cat(@collection.id, 'Collection', 'detail').group('literatures.id'),
+            collectionRefs: Literature.by_element_attributes_and_cat(@c_id, 'Collection', 'detail').group('literatures.id'),
             sampleRefs: Literature.by_element_attributes_and_cat(sample_ids, 'Sample', 'detail').group('literatures.id'),
             reactionRefs: Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction', 'detail').group('literatures.id'),
             researchPlanRefs: Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan', 'detail').group('literatures.id'),
@@ -138,12 +136,11 @@ module Chemotion
         end
 
         after_validation do
-          # NB only support owned collection for now
-          error!(401) if params[:is_sync_to_me]
-          @collection = Collection.find_by(id: params[:id], user: current_user, is_shared: false)
-          error!(404) unless @collection
-          @sids = @collection.samples.by_ui_state(declared(params)[:sample]).pluck(:id)
-          @rids = @collection.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id)
+          set_var(params[:id], params[:is_sync_to_me])
+          error!(404) unless @c
+
+          @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
+          @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []
           @sql = <<~SQL
           (literals.element_type = 'Sample' and literals.element_id in (?))
           or (literals.element_type = 'Reaction' and literals.element_id in (?))
@@ -158,7 +155,7 @@ module Chemotion
         end
 
         post do
-          if params[:ref]
+          if params[:ref] && @pl >= 1
             lit = if params[:ref][:is_new]
                   Literature.find_or_create_by(
                     doi: params[:ref][:doi],
