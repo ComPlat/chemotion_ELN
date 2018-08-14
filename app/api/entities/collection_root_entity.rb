@@ -6,6 +6,9 @@ module Entities
     expose :label do |obj|
         obj['label']
     end
+    expose :permission_level do |obj|
+        obj['permission_level']
+    end
     expose :reaction_detail_level do |obj|
         obj['reaction_detail_level']
     end

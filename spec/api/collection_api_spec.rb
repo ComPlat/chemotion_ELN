@@ -15,12 +15,16 @@ describe Chemotion::CollectionAPI do
 
   context 'authorized user logged in' do
     let(:user)  { create(:person, first_name: 'Musashi', last_name: 'M') }
-    let(:u2)    { create(:user) }
+    let(:u2)    { create(:person) }
     let(:group) { create(:group)}
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
-    let!(:c2)   { create(:collection, user: user, shared_by_id: user.id, is_shared: true, permission_level: 1) }
+
+    let!(:root_u2) { create(:collection, user: user, shared_by_id: u2.id, is_shared: true, is_locked: true) }
+    let!(:root_u) { create(:collection, user: u2, shared_by_id: user.id, is_shared: true, is_locked: true) }
+
+    let!(:c2)   { create(:collection, user: u2, shared_by_id: user.id, is_shared: true, permission_level: 1, ancestry: root_u.id.to_s)}
     let!(:c3)   { create(:collection, user: user, is_shared: false) }
-    let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true) }
+    let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true, ancestry: root_u2.id.to_s) }
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
     # - - - - sync collection
     let!(:owner) { create(:user) }
@@ -112,7 +116,6 @@ describe Chemotion::CollectionAPI do
         data1 = Entities::CollectionRootEntity.represent(c1, serializable: true).as_json
         data2 = Entities::CollectionRootEntity.represent(c3, serializable: true).as_json
         expect(collections).to eq [data1,data2]
-
       end
     end
 
@@ -128,39 +131,38 @@ describe Chemotion::CollectionAPI do
       it 'returns serialized (shared) collection roots of logged in user' do
         get '/api/v1/collections/shared_roots'
         collections = JSON.parse(response.body)['collections']
-
-        collections.map{|c| c['shared_to'] = nil}
-        collections.map{|c| c['shared_by'] = nil}
-        collections.map{|c| c['is_remoted'] = nil}
-        # shared_to = collections.map{|c| c.delete("shared_to")}
-        # shared_by = collections.map{|c| c.delete("shared_by")}
-        # is_remote = collections.map{|c| c.delete("is_remote")}
-
         data2 = Entities::CollectionRootEntity.represent(c2, serializable: true).as_json
-        expect(collections).to eq [data2]
+        data2.delete("shared_to")
+        data2.delete("is_remoted")
+        expect(collections.dig(0,'children', 0)).to include(data2)
       end
     end
-
 
     describe 'GET /api/v1/collections/remote_roots' do
       it 'returns serialized (remote) collection roots of logged in user' do
         get '/api/v1/collections/remote_roots'
-        expect(JSON.parse(response.body)['collections'].select{ |dt| dt['is_locked'] == false }.first['label']).to eq c4.label
-
-         collections = JSON.parse(response.body)['collections']
+        expect(
+          JSON.parse(response.body).dig('collections',0,'children').map { |c| c['id'] }
+          ).to include(c4.id)
       end
       context 'with a collection shared to a group' do
         let(:p2){ create(:person) }
         let!(:g1){ create(:group,users:[user]) }
+        let!(:root_g) { create(
+          :collection, user: user, shared_by_id: g1.id, is_shared: true, is_locked: true) }
         let!(:c6){ create(
           :collection, user: g1, is_shared: true,
-          shared_by_id: p2.id, is_locked:false
+          shared_by_id: p2.id, is_locked:false,
+          ancestry: root_g.id.to_s
         )}
 
-        before {get '/api/v1/collections/remote_roots'}
+        before { get '/api/v1/collections/remote_roots' }
         it 'returns serialized (remote) collection roots of logged in user' do
-          serialized = JSON.parse(response.body)['collections'].map{ |e| e['id']}
-          expect(serialized).to match_array [c4.id, c6.id, c_sync_ancestry.id]
+          expect(
+            JSON.parse(response.body)['collections'].map { |root|
+              root['children'].map{ |e| e['id'] }
+            }.flatten
+          ).to match_array [c4.id, c6.id]
         end
       end
     end

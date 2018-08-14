@@ -12,6 +12,9 @@ module Entities
     expose :ancestry do |obj|
         obj['ancestry']
     end
+    expose :is_locked do |obj|
+        obj['is_locked']
+    end
     expose :permission_level do |obj|
         obj['permission_level']
     end

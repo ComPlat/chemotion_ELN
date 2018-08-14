@@ -45,7 +45,7 @@ module Chemotion
          .where([" sync_collections_users.user_id in (select user_ids(?)) and NOT sync_collections_users.shared_by_id = ? ",current_user.id,current_user.id])
          .select(
            <<~SQL
-             sync_collections_users.id, collections.label, collections.shared_by_id,
+             sync_collections_users.id, collections.label, collections.shared_by_id,collections.is_locked,
              sync_collections_users.reaction_detail_level, sync_collections_users.sample_detail_level,
              sync_collections_users.screen_detail_level, sync_collections_users.wellplate_detail_level,
              user_as_json(collections.user_id) as temp_sharer,
@@ -62,7 +62,7 @@ module Chemotion
          .where([" user_id in (select user_ids(?))",current_user.id]).order('shared_by_id')
          .select(
            <<~SQL
-             id, user_id, label, ancestry, shared_by_id, permission_level,
+             id, user_id, label, ancestry, shared_by_id, permission_level,is_locked,
              shared_user_as_json(collections.user_id,#{current_user.id}) as shared_to,
              reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level,
              user_as_json(collections.shared_by_id) as shared_by
@@ -140,13 +140,17 @@ module Chemotion
         desc "delete sync by id"
         params do
           requires :id, type: Integer
+          requires :is_syncd, type: Boolean
         end
 
         delete ':id' do
-          sync = SyncCollectionsUser.where(id: params[:id],shared_by_id: current_user.id).first
+          if (params[:is_syncd])
+            sync = SyncCollectionsUser.where(id: params[:id],user_id: current_user.id).first
+          else
+            sync = SyncCollectionsUser.where(id: params[:id],shared_by_id: current_user.id).first
+          end
           sync && sync.destroy
         end
-
     end
   end
 end

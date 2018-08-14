@@ -51,10 +51,11 @@ module Chemotion
         end
       end
 
-      build_tree = Proc.new do |collects|
+      build_tree = Proc.new do |collects, delete_empty_root|
         col_tree = []
         collects.collect{ |obj| col_tree.push(obj) if obj['ancestry'].nil? }
         get_child.call(col_tree,collects)
+        col_tree.select! { |col| col[:children].count > 0 } if delete_empty_root
         Entities::CollectionRootEntity.represent(col_tree, serializable: true)
       end
 
@@ -69,7 +70,7 @@ module Chemotion
           SQL
         )
         .as_json
-        build_tree.call(collects)
+        build_tree.call(collects,false)
       end
 
       desc "Return all shared serialized collections"
@@ -84,7 +85,7 @@ module Chemotion
           SQL
         )
         .as_json
-        build_tree.call(collects)
+        build_tree.call(collects,true)
       end
 
       desc "Return all remote serialized collections"
@@ -97,14 +98,19 @@ module Chemotion
             reaction_detail_level, sample_detail_level, screen_detail_level, wellplate_detail_level, is_locked, is_shared,
             shared_user_as_json(collections.user_id, #{current_user.id}) as shared_to,position
           SQL
-        ).as_json
-        build_tree.call(collects)
-
+        )
+        .as_json
+        build_tree.call(collects,true)
       end
 
       desc "Bulk update and/or create new collections"
       patch '/' do
         Collection.bulk_update(current_user.id, params[:collections].as_json(except: :descendant_ids), params[:deleted_ids])
+      end
+
+      desc "reject a shared collections"
+      patch '/reject_shared' do
+        Collection.reject_shared(current_user.id, params[:id])
       end
 
       namespace :shared do
