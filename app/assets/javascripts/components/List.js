@@ -87,32 +87,41 @@ export default class List extends React.Component {
   }
 
   onChangeUser(state) {
-    let visible = this.getArrayFromLayout(state.currentUser.layout, true)
-    let hidden = this.getArrayFromLayout(state.currentUser.layout, false)
-    if (hidden.size == 0) {
-      hidden = ArrayUtils.pushUniq(hidden, "hidden")
+    let visible = '';
+    let hidden = '';
+    let currentTabIndex = 0;
+
+    const { currentType } = state
+    let type = state.currentType
+
+    if (typeof (state.profile) !== 'undefined' && state.profile &&
+      typeof (state.profile.data) !== 'undefined' && state.profile.data) {
+      visible = this.getArrayFromLayout(state.profile.data.layout, true)
+      hidden = this.getArrayFromLayout(state.profile.data.layout, false)
+      currentTabIndex = visible.findIndex(e => e === currentType)
+      if (type === '') { type = visible.get(0); }
+    }
+    if (hidden.size === 0) {
+      hidden = ArrayUtils.pushUniq(hidden, 'hidden')
     }
 
-    const currentType = state.currentType
-    let currentTabIndex = visible.findIndex((e) => e === currentType)
     if (currentTabIndex < 0) currentTabIndex = 0;
 
-    let type = state.currentType
-    if (type == "") { type = visible.get(0); }
+
 
     KeyboardActions.contextChange.defer(type)
 
     this.setState({
       currentTab: currentTabIndex,
-      visible: visible,
-      hidden: hidden
+      visible,
+      hidden
     });
   }
 
   onChangeUI(state) {
     const { totalCheckedElements } = this.state;
     let forceUpdate = false;
-    ["sample", "reaction", "wellplate", "screen", "research_plan"].forEach((type) => {
+    ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'].forEach((type) => {
       const elementUI = state[type];
       const element = ElementStore.getState()['elements'][`${type}s`];
       const nextCount = elementUI.checkedAll ?

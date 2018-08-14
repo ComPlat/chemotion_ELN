@@ -5,6 +5,13 @@ module Chemotion
       get do
         profile = current_user.profile
         data = profile.data || {}
+        data.merge!(layout: {
+          'sample' => 1,
+          'reaction' => 2,
+          'wellplate' => 3,
+          'screen' => 4,
+          'research_plan' => 5
+        }) if (data['layout'].nil?)
         { data: data, show_external_name: profile.show_external_name }
       end
 

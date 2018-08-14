@@ -47,26 +47,6 @@ export default class UsersFetcher {
     return promise;
   }
 
-  static updateCurrentUserLayout(layout) {
-    let promise = fetch('/api/v1/users/layout/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({layout})
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
-  }
-
   static updateUserProfile(params = {}) {
     let promise = fetch('/api/v1/profiles/', {
       credentials: 'same-origin',

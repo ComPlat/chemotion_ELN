@@ -3,9 +3,6 @@ import _ from 'lodash';
 
 import UserActions from '../actions/UserActions';
 
-import UIStore from './UIStore';
-import ElementStore from './ElementStore';
-
 class UserStore {
   constructor() {
     this.state = {
@@ -19,7 +16,6 @@ class UserStore {
     this.bindListeners({
       handleFetchCurrentUser: UserActions.fetchCurrentUser,
       handleFetchProfile: UserActions.fetchProfile,
-      handleChangeLayout: UserActions.changeLayout,
       handleSelectTab: UserActions.selectTab,
       handleUpdateUserProfile: UserActions.updateUserProfile,
       handleFetchNoVNCDevices: UserActions.fetchNoVNCDevices,
@@ -28,25 +24,18 @@ class UserStore {
 
   handleFetchCurrentUser(result) {
     this.state.currentUser = result
-
-    let layout = this.state.currentUser.layout
-    if (this.state.currentType == "") {
-      let currentTab = this.state.currentTab
-      let type = Object.keys(layout).filter(function(e) {
-        return layout[e] == currentTab + 1
-      })[0]
-
-      this.state.currentType = type
-    }
   }
 
   handleFetchProfile(result) {
     this.state.profile = result;
-  }
-
-  handleChangeLayout(result) {
-    this.waitFor(ElementStore.dispatchToken)
-    this.state.currentUser.layout = result
+    const { layout } = this.state.profile.data;
+    if (this.state.currentType === '') {
+      const { currentTab } = this.state
+      const type = Object.keys(layout).filter((e) => {
+        return layout[e] === currentTab + 1
+      })[0]
+      this.state.currentType = type
+    }
   }
 
   handleUpdateUserProfile(result) {
@@ -56,9 +45,9 @@ class UserStore {
   }
 
   handleSelectTab(tab) {
-    let layout = this.state.currentUser.layout
-    let type = Object.keys(layout).filter(function(e) {
-      return layout[e] == tab + 1
+    const { layout } = this.state.profile.data
+    const type = Object.keys(layout).filter((e) => {
+      return layout[e] === tab + 1
     })[0]
 
     this.state.currentTab = tab

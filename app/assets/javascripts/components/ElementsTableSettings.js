@@ -1,6 +1,7 @@
 import React from 'react';
 import Immutable from 'immutable';
 import {Popover, Button, FormGroup, Checkbox, OverlayTrigger} from 'react-bootstrap';
+import _ from 'lodash';
 
 import TabLayoutContainer from './TabLayoutContainer';
 
@@ -101,18 +102,19 @@ export default class CreateButton extends React.Component {
   }
 
   updateLayout() {
-    let { visible, hidden } = this.layout.state
+    const { visible, hidden } = this.layout.state;
+    const layout = {}
 
-    let layout = {}
-
-    visible.forEach(function (value, index) {
+    visible.forEach((value, index) => {
       layout[value] = (index + 1).toString()
     })
-    hidden.forEach(function (value, index) {
-      if (value != "hidden") layout[value] = (- index - 1).toString()
+    hidden.forEach((value, index) => {
+      if (value !== 'hidden') layout[value] = (- index - 1).toString()
     })
 
-    UserActions.changeLayout(layout)
+    const userProfile = UserStore.getState().profile;
+    _.set(userProfile, 'data.layout', layout);
+    UserActions.updateUserProfile(userProfile);
   }
 
   render() {
