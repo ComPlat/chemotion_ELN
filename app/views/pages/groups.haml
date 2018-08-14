@@ -52,11 +52,12 @@
           %button.close{"aria-label"=>"Close", "data-dismiss" => "modal", :type => "button"}
             %span{"aria-hidden"=>"true"} &times;
           %h3.modal-title Select users
-        .modal-body
-          %h4 Remove current users
-          %ol{id: 'currentGroupUsers' }
-          %h4 Add more users
-          %ol{id:'allUsers', 'data-all-users' => @users.to_json }
+        .modal-body{ style:"max-height: calc(100vh - 240px); overflow-y: auto"}
+          .div
+            %h4 Remove current users
+            %ol{id: 'currentGroupUsers' }
+            %h4 Add more users
+            %ol{id:'allUsers', 'data-all-users' => @users.to_json }
 
         .modal-footer
           =submit_tag 'update user list'
