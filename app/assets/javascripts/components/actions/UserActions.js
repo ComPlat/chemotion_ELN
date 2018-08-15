@@ -36,16 +36,6 @@ class UserActions {
     };
   }
 
-  changeLayout(layout) {
-    return (dispatch) => { UsersFetcher.updateCurrentUserLayout(layout)
-      .then((result) => {
-        dispatch(result)
-      }).catch((errorMessage) => {
-        console.log(errorMessage)
-      })
-    }
-  }
-
   selectTab(tab) {
     return  tab;
   }

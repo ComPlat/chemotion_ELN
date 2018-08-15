@@ -27,37 +27,6 @@ module Chemotion
       delete 'sign_out' do
         status 204
       end
-
-      namespace :layout do
-        desc 'Update user layout'
-        params do
-          requires :layout, type: Hash do
-            requires :sample, type:Integer
-            requires :reaction, type:Integer
-            requires :wellplate, type:Integer
-            requires :screen, type:Integer
-            requires :research_plan, type:Integer
-          end
-        end
-
-        post do
-          current_user.layout = declared(params)[:layout]
-          visible_count = current_user.layout.find_all { |_, value|
-            value.to_i.positive?
-          }.count
-          if current_user.layout.empty? || visible_count.zero?
-            current_user.layout = {
-              sample: 1,
-              reaction: 2,
-              wellplate: 3,
-              screen: 4,
-              research_plan: 5
-            }
-          end
-          current_user.save!
-          current_user.layout
-        end
-      end
     end
 
     resource :groups do
