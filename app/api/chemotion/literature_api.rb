@@ -3,6 +3,13 @@ module Chemotion
     helpers CollectionHelpers
     helpers ParamsHelpers
 
+    helpers do
+      def citation_for_elements(id = params[:element_id], type = @element_klass, cat = 'detail')
+        return Literature.none unless id.present?
+        Literature.by_element_attributes_and_cat(id, type, cat).add_user_info
+      end
+    end
+
     resource :literatures do
 
       after_validation do
@@ -26,8 +33,7 @@ module Chemotion
       end
 
       get do
-        literatures = Literature.by_element_attributes_and_cat(params[:element_id], @element_klass, 'detail')
-        { literatures: literatures }
+        { literatures: citation_for_elements }
       end
 
       desc 'create a literature entry'
@@ -59,16 +65,19 @@ module Chemotion
 
         lit.update!(refs: (lit.refs || {}).merge(declared(params)[:ref][:refs])) if params[:ref][:refs]
 
-        ltl = Literal.find_or_create_by(
+        attributes = {
           literature_id: lit.id,
           user_id: current_user.id,
           element_type: @element_klass,
           element_id: params[:element_id],
           category: 'detail'
-        ) if lit
-        # status(201) if ltl
-        literatures = Literature.by_element_attributes_and_cat(params[:element_id], @element_klass, 'detail')
-        { literatures: literatures }
+        }
+        unless Literal.find_by(attributes)
+          Literal.create(attributes)
+          @element.touch
+        end
+
+        { literatures: citation_for_elements }
       end
 
       params do
@@ -80,13 +89,11 @@ module Chemotion
       delete do
         Literal.find_by(
           literature_id: params[:id],
-          user_id: current_user.id,
+          # user_id: current_user.id,
           element_type: @element_klass,
           element_id: params[:element_id],
           category: 'detail'
-        ).destroy!
-        literatures = Literature.by_element_attributes_and_cat(params[:element_id], @element_klass, 'detail')
-        { literatures: literatures }
+        )&.destroy!
       end
 
       namespace :collection do
@@ -105,10 +112,10 @@ module Chemotion
           reaction_ids = @dl_r > 1 ? @c.reaction_ids : []
           research_plan_ids = @dl_rp > 1 ? @c.research_plan_ids : []
           {
-            collectionRefs: Literature.by_element_attributes_and_cat(@c_id, 'Collection', 'detail').group('literatures.id'),
-            sampleRefs: Literature.by_element_attributes_and_cat(sample_ids, 'Sample', 'detail').group('literatures.id'),
-            reactionRefs: Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction', 'detail').group('literatures.id'),
-            researchPlanRefs: Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan', 'detail').group('literatures.id'),
+            collectionRefs: Literature.by_element_attributes_and_cat(@c_id, 'Collection', 'detail').group_by_element,
+            sampleRefs: Literature.by_element_attributes_and_cat(sample_ids, 'Sample', 'detail').group_by_element,
+            reactionRefs: Literature.by_element_attributes_and_cat(reaction_ids, 'Reaction', 'detail').group_by_element,
+            researchPlanRefs: Literature.by_element_attributes_and_cat(research_plan_ids, 'ResearchPlan', 'detail').group_by_element,
           }
         end
       end
@@ -138,20 +145,9 @@ module Chemotion
         after_validation do
           set_var(params[:id], params[:is_sync_to_me])
           error!(404) unless @c
-
           @sids = @dl_s > 1 ? @c.samples.by_ui_state(declared(params)[:sample]).pluck(:id) : []
           @rids = @dl_r > 1 ? @c.reactions.by_ui_state(declared(params)[:reaction]).pluck(:id) : []
-          @sql = <<~SQL
-          (literals.element_type = 'Sample' and literals.element_id in (?))
-          or (literals.element_type = 'Reaction' and literals.element_id in (?))
-          SQL
-          @selection = <<~SQL
-          literatures.*
-          , literals.element_id, literals.element_type
-          , coalesce(reactions.short_label, samples.short_label ) as short_label
-          , coalesce(reactions.name, samples.name ) as name
-          , samples.external_label
-          SQL
+          @cat = "detail"
         end
 
         post do
@@ -182,13 +178,9 @@ module Chemotion
             end
           end
 
-          {
-            selectedRefs: Literature.joins(:literals)
-              .joins("left join samples on literals.element_type = 'Sample' and literals.element_id = samples.id")
-              .joins("left join reactions on literals.element_type = 'Reaction' and literals.element_id = reactions.id")
-              .where(@sql, @sids, @rids).where("literals.category = 'detail'").select(@selection),
-          }
-
+          # { selectedRefs: LiteralGroup.by_element_ids_and_cat(@sids, @rids, @cat).order(element_updated_at: :desc)  }
+          { selectedRefs: Literature.by_element_attributes_and_cat(@sids, 'Sample', @cat).add_element_and_user_info +
+              Literature.by_element_attributes_and_cat(@rids, 'Reaction', @cat).add_element_and_user_info }
         end
       end
 

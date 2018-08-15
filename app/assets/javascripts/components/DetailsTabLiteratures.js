@@ -14,8 +14,10 @@ import Cite from 'citation-js';
 
 import {
   Citation,
+  CitationUserRow,
   doiValid,
   sanitizeDoi,
+  groupByCitation,
   AddButton,
   DoiInput,
   UrlInput,
@@ -26,29 +28,116 @@ import Reaction from './models/Reaction';
 import ResearchPlan from './models/ResearchPlan';
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
+import UserStore from './stores/UserStore';
+
+
+
+
+const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
+  <Table>
+    <thead><tr>
+      <th width="90%"></th>
+      <th width="10%"></th>
+    </tr></thead>
+    <tbody>
+      {sortedIds.map((id, k, ids) => {
+        const citation = rows.get(id)
+        const prevCit = (k > 0) ? rows.get(ids[k-1]) : null
+        const sameRef = prevCit && prevCit.id === citation.id
+        return sameRef ? (
+          <tr key={`header-${id}-${citation.id}`} className={`collapse literature_id_${citation.id}`}>
+            <td className="padding-right">
+              <CitationUserRow literature={citation} userId={userId} />
+            </td>
+            <td>
+              <Button
+                bsSize="small"
+                bsStyle="danger"
+                onClick={() => removeCitation(citation)}
+              >
+                <i className="fa fa-trash-o" />
+              </Button>
+            </td>
+          </tr>
+        ) : (
+          <tr key={id} className={``}>
+            <td className="padding-right">
+              <Citation literature={citation}/>
+            </td>
+            <td>
+              <Button
+                data-toggle="collapse"
+                data-target={`.literature_id_${citation.id}`}
+                bsSize="sm"
+              >
+                <Glyphicon
+                  glyph={   true  ? 'chevron-right' : 'chevron-down' }
+                  title="Collapse/Uncollapse"
+                  // onClick={() => this.collapseSample(sampleCollapseAll)}
+                  style={{
+                    // fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#337ab7',
+                    top: 0
+                  }}
+                />
+              </Button>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </Table>
+);
+CitationTable.propTypes = {
+  rows: PropTypes.instanceOf(Immutable.Map),
+  sortedIds: PropTypes.array,
+  userId: PropTypes.number,
+  removeCitation: PropTypes.func
+};
+
+CitationTable.defaultProps = {
+  rows: new Immutable.Map(),
+  sortedIds: [],
+  userId: 0
+};
+
+const sameConseqLiteratureId = (citations, sortedIds, i) => {
+  if (i === 0) { return false; }
+  const a = citations.get(sortedIds[i])
+  const b = citations.get(sortedIds[i-1])
+  return (a.id === b.id)
+};
 
 export default class DetailsTabLiteratures extends Component {
   constructor(props) {
     super(props);
     this.state = {
       literature: Literature.buildEmpty(),
-      literatures: Immutable.List()
+      literatures: new Immutable.Map(),
+      sortedIds: [],
     };
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
+    this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
     this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
   }
 
   componentDidMount() {
     LiteraturesFetcher.fetchElementReferences(this.props.element).then((literatures) => {
-      this.setState(prevState => ({ ...prevState, literatures }));
+      const sortedIds = groupByCitation(literatures);
+      this.setState(prevState => ({
+        ...prevState,
+        literatures,
+        sortedIds,
+        sorting: 'literature_id'
+      }));
     });
   }
 
   // shouldComponentUpdate(nextProps, nextState){
   //
   // }
-
 
   handleInputChange(type, event) {
     const { literature } = this.state;
@@ -72,8 +161,12 @@ export default class DetailsTabLiteratures extends Component {
   handleLiteratureRemove(literature) {
     const { element } = this.props;
     LiteraturesFetcher.deleteElementReference({ element, literature })
-      .then((literatures) => {
-        this.setState(prevState => ({ ...prevState, literatures }));
+      .then(() => {
+        this.setState(prevState => ({
+          ...prevState,
+          literatures: prevState.literatures.delete(literature.literal_id),
+          sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
+        }));
       });
   }
 
@@ -90,7 +183,12 @@ export default class DetailsTabLiteratures extends Component {
         title: title.trim().replace(/ +/g, ' ')
       },
     }).then((literatures) => {
-      this.setState(() => ({ literature: Literature.buildEmpty(), literatures }));
+      this.setState(() => ({
+        literature: Literature.buildEmpty(),
+        literatures,
+        sortedIds: groupByCitation(literatures),
+        sorting: 'literature_id'
+      }));
     });
   }
 
@@ -116,45 +214,13 @@ export default class DetailsTabLiteratures extends Component {
     });
   }
 
-  removeButton(literature) {
-    return (
-      <Button
-        bsSize="small"
-        bsStyle="danger"
-        onClick={() => this.handleLiteratureRemove(literature)}
-      >
-        <i className="fa fa-trash-o" />
-      </Button>
-    );
-  }
-
-  literatureRows(literatures) {
-    return literatures.map(literature => (
-      <tr key={literature.id}>
-        <td className="padding-right">
-          <Citation literature={literature} />
-        </td>
-        <td>
-          {this.removeButton(literature)}
-        </td>
-      </tr>
-    ));
-  }
-
   render() {
-    const { literature, literatures } = this.state;
+    const { literature, literatures, sortedIds } = this.state;
+    const { currentUser } = UserStore.getState();
     return (
       <ListGroup fill>
         <ListGroupItem>
-          <Table>
-            <thead><tr>
-              <th width="90%"></th>
-              <th width="10%"></th>
-            </tr></thead>
-            <tbody>
-              {this.literatureRows(literatures)}
-            </tbody>
-          </Table>
+          <CitationTable rows={literatures} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
         </ListGroupItem>
         <ListGroupItem>
           <Row>

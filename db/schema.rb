@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180812115719) do
+ActiveRecord::Schema.define(version: 20180816161600) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -77,8 +77,8 @@ ActiveRecord::Schema.define(version: 20180812115719) do
     t.string   "token",      null: false
     t.integer  "user_id"
     t.inet     "ip"
-    t.string   "role"
     t.string   "fqdn"
+    t.string   "role"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -402,7 +402,7 @@ ActiveRecord::Schema.define(version: 20180812115719) do
     t.datetime "updated_at",               null: false
   end
 
-  add_index "literals", ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", unique: true, using: :btree
+  add_index "literals", ["element_type", "element_id", "literature_id", "category"], name: "index_on_element_literature", using: :btree
   add_index "literals", ["literature_id", "element_type", "element_id"], name: "index_on_literature", using: :btree
 
   create_table "literatures", force: :cascade do |t|
@@ -701,14 +701,14 @@ ActiveRecord::Schema.define(version: 20180812115719) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.string   "type",                             default: "Person"
     t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
+    t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
   end
 
@@ -772,14 +772,14 @@ ActiveRecord::Schema.define(version: 20180812115719) do
        RETURNS TABLE(instrument text)
        LANGUAGE sql
       AS $function$
-         select distinct extended_metadata -> 'instrument' as instrument from containers c
-         where c.container_type='dataset' and c.id in
-         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-         order by extended_metadata -> 'instrument' limit 10
-       $function$
+             select distinct extended_metadata -> 'instrument' as instrument from containers c
+             where c.container_type='dataset' and c.id in
+             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+             order by extended_metadata -> 'instrument' limit 10
+           $function$
   SQL
   create_function :collection_shared_names, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
@@ -882,6 +882,32 @@ ActiveRecord::Schema.define(version: 20180812115719) do
        JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
        JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
     WHERE (cols.deleted_at IS NULL);
+  SQL
+
+  create_view "literal_groups",  sql_definition: <<-SQL
+      SELECT lits.element_type,
+      lits.element_id,
+      lits.literature_id,
+      lits.category,
+      lits.count,
+      literatures.title,
+      literatures.doi,
+      literatures.url,
+      literatures.refs,
+      COALESCE(reactions.short_label, samples.short_label) AS short_label,
+      COALESCE(reactions.name, samples.name) AS name,
+      samples.external_label,
+      COALESCE(reactions.updated_at, samples.updated_at) AS element_updated_at
+     FROM (((( SELECT literals.element_type,
+              literals.element_id,
+              literals.literature_id,
+              literals.category,
+              count(*) AS count
+             FROM literals
+            GROUP BY literals.element_type, literals.element_id, literals.literature_id, literals.category) lits
+       JOIN literatures ON ((lits.literature_id = literatures.id)))
+       LEFT JOIN samples ON ((((lits.element_type)::text = 'Sample'::text) AND (lits.element_id = samples.id))))
+       LEFT JOIN reactions ON ((((lits.element_type)::text = 'Reaction'::text) AND (lits.element_id = reactions.id))));
   SQL
 
 end

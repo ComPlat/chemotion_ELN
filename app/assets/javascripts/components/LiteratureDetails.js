@@ -16,17 +16,21 @@ import Cite from 'citation-js';
 
 import {
   Citation,
+  CitationUserRow,
   doiValid,
   sanitizeDoi,
   AddButton,
   DoiInput,
   UrlInput,
-  TitleInput
+  TitleInput,
+  sortByElement,
+  sortByReference
 } from './LiteratureCommon';
 import Literature from './models/Literature';
 import LiteratureMap from './models/LiteratureMap';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 import UIStore from './stores/UIStore';
+import UserStore from './stores/UserStore';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
 import PanelHeader from './common/PanelHeader';
@@ -52,12 +56,22 @@ const ElementLink = ({ literature }) => {
     external_label,
     short_label,
     name,
-    element_type
+    element_type,
+    element_id,
   } = literature;
-
+  const type = element_type && element_type.toLowerCase();
   return (
-    <Button title={`${external_label ? external_label.concat(' - ') : null}${name}`} >
-      <i className={element_type ? 'icon-'.concat(element_type.toLowerCase()) : ''} />
+    <Button
+      title={`${external_label ? external_label.concat(' - ') : ''}${name}`}
+      onClick={() => {
+        const { uri, namedParams } = Aviator.getCurrentRequest();
+        const uriArray = uri.split(/\//);
+        if (type && element_id) {
+          Aviator.navigate(`/${uriArray[1]}/${uriArray[2]}/${type}/${element_id}`);
+        }
+      }}
+    >
+      <i className={element_type ? 'icon-'.concat(type) : ''} />
       &nbsp; {short_label}
     </Button>
   );
@@ -66,18 +80,103 @@ ElementLink.propTypes = {
   literature: PropTypes.instanceOf(Literature).isRequired,
 };
 
+const ElementTypeLink = ({ literature, type }) => {
+  const {
+    count
+  } = literature;
+  return (
+    <Button title={`cited in ${count} ${type}${count && count > 1 ? 's' : ''}`}>
+      <i className={`icon-${type}`} />
+      &nbsp; {count}
+    </Button>
+  );
+};
+ElementTypeLink.propTypes = {
+  literature: PropTypes.instanceOf(Literature).isRequired,
+  type: PropTypes.string
+};
+ElementTypeLink.defaultProps = {
+  type: 'sample'
+};
+
+
+const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
+  <Table>
+    <thead><tr>
+      <th width="10%"></th>
+      <th width="10%"></th>
+      <th width="10%"></th>
+    </tr></thead>
+    <tbody>
+      {sortedIds.map((id, k, ids) => {
+        const citation = rows.get(id)
+        const prevCit = (k > 0) ? rows.get(ids[k-1]) : null
+        const sameRef = prevCit && prevCit.id === citation.id
+        const sameElement = prevCit && prevCit.element_id === citation.element_id &&  prevCit.element_type === citation.element_type
+        return sameRef && sameElement ? (
+          <tr key={`header-${id}-${citation.id}`} className={`collapse cit_${citation.id}-${citation.element_type}_${citation.element_id}`}>
+            <td/>
+            <td className="padding-right">
+              <CitationUserRow literature={citation} userId={userId} />
+            </td>
+            <td>
+              <Button
+                bsSize="small"
+                bsStyle="danger"
+                onClick={() => removeCitation(citation)}
+              >
+                <i className="fa fa-trash-o" />
+              </Button>
+            </td>
+          </tr>
+        ) : (
+          <tr key={id} className={``}>
+            <td>{sameElement ? null : <ElementLink literature={citation}/>}</td>
+            <td className="padding-right">
+              <Citation literature={citation}/>
+            </td>
+            <td>
+              <Button
+                data-toggle="collapse"
+                data-target={`.cit_${citation.id}-${citation.element_type}_${citation.element_id}`}
+                bsSize="sm"
+              >
+                <Glyphicon
+                  glyph={   true  ? 'chevron-right' : 'chevron-down' }
+                  title="Collapse/Uncollapse"
+                  // onClick={() => this.collapseSample(sampleCollapseAll)}
+                  style={{
+                    // fontSize: '20px',
+                    cursor: 'pointer',
+                    color: '#337ab7',
+                    top: 0
+                  }}
+                />
+              </Button>
+            </td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </Table>
+);
+
 export default class LiteratureDetails extends Component {
   constructor(props) {
     super(props);
     this.state = {
       ...this.props.literatureMap,
       literature: Literature.buildEmpty(),
+      sorting: 'element',
+      sortedIds: [],
+      selectedRefs: new Immutable.Map()
     };
     this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
+    this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
     this.fetchDOIMetadata = this.fetchDOIMetadata.bind(this);
   }
 
@@ -90,6 +189,7 @@ export default class LiteratureDetails extends Component {
         currentCollection,
         sample: { ...sample },
         reaction: { ...reaction },
+
       }));
     });
     UIStore.listen(this.handleUIStoreChange);
@@ -99,7 +199,8 @@ export default class LiteratureDetails extends Component {
     UIStore.unlisten(this.handleUIStoreChange);
   }
   // shouldComponentUpdate(nextProps, nextState){
-  //
+  //   console.log(nextState);
+  //   return true;
   // }
 
   onClose() {
@@ -108,12 +209,13 @@ export default class LiteratureDetails extends Component {
 
   handleUIStoreChange(state) {
     const cCol = this.state.currentCollection;
-    const { currentCollection } = state;
+    const { currentCollection, sorting } = state;
 
     if (cCol && currentCollection &&
         (cCol.id !== currentCollection.id || cCol.is_sync_to_me !== currentCollection.is_sync_to_me)
     ) {
       LiteraturesFetcher.fetchReferencesByCollection(currentCollection).then((literatures) => {
+
         this.setState(prevState => ({
           ...prevState,
           ...literatures,
@@ -143,30 +245,30 @@ export default class LiteratureDetails extends Component {
 
       };
       LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
+        const sortedIds = sortByElement(selectedRefs);
         this.setState(prevState => ({
           ...prevState,
           selectedRefs,
           currentCollection,
           sample: { ...sample },
           reaction: { ...reaction },
+          sortedIds
         }));
       });
     }
     return null;
   }
 
-  literatureRows(literatures) {
-    return literatures.map(literature => (
-      <tr key={`${literature.id}-${literature.element_type}-${literature.element_id}`}>
-        <td><ElementLink literature={literature} /></td>
-        <td className="padding-right">
-          <Citation literature={literature} />
-        </td>
-        <td>
-          {/* {this.removeButton(literature)} */}
-        </td>
-      </tr>
-    ));
+  handleLiteratureRemove(literature) {
+    const { element_type, element_id } = literature;
+    LiteraturesFetcher.deleteElementReference({ element: { type: element_type.toLowerCase(), id: element_id }, literature })
+      .then(() => {
+        this.setState(prevState => ({
+          ...prevState,
+          literatures: prevState.selectedRefs.delete(literature.literal_id),
+          sortedIds: sortByElement(prevState.selectedRefs.delete(literature.literal_id))
+        }));
+      });
   }
 
   handleInputChange(type, event) {
@@ -189,13 +291,15 @@ export default class LiteratureDetails extends Component {
   }
 
   handleLiteratureAdd(literature) {
+    const { doi } = literature;
+
     const { currentCollection, sample, reaction } = UIStore.getState();
     const params = {
       sample,
       reaction,
       id: currentCollection.id,
       is_sync_to_me: currentCollection.is_sync_to_me,
-      ref: literature
+      ref: { ...literature, doi: sanitizeDoi(doi || '') }
     };
     LiteraturesFetcher.postReferencesByUIState(params).then((selectedRefs) => {
       this.setState(prevState => ({
@@ -237,10 +341,11 @@ export default class LiteratureDetails extends Component {
       reactionRefs,
       // researchPlanRefs
       selectedRefs,
+      sortedIds,
       currentCollection,
       literature
     } = this.state;
-
+    const { currentUser } = UserStore.getState();
     const label = currentCollection ? currentCollection.label : null
     return (
       <Panel
@@ -255,23 +360,23 @@ export default class LiteratureDetails extends Component {
       >
         <PanelGroup accordion defaultActiveKey="1">
           <Panel
-            eventKey="1"
-            collapsible
-            header="Collection References"
-          >
-            <Table>
-              <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
-              <tbody>{this.literatureRows(collectionRefs)}</tbody>
-            </Table>
-          </Panel>
-          <Panel
             eventKey="2"
             collapsible
             header="References for Samples"
           >
             <Table>
               <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
-              <tbody>{this.literatureRows(sampleRefs)}</tbody>
+              <tbody>
+                {sampleRefs.map(lit => (
+                  <tr key={`sampleRef-${lit.id}`}>
+                    <td><ElementTypeLink literature={lit} type="sample" /></td>
+                    <td className="padding-right">
+                      <Citation literature={lit} />
+                    </td>
+                    <td />
+                  </tr>
+                ))}
+              </tbody>
             </Table>
           </Panel>
           <Panel
@@ -281,7 +386,17 @@ export default class LiteratureDetails extends Component {
           >
             <Table>
               <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
-              <tbody>{this.literatureRows(reactionRefs)}</tbody>
+              <tbody>
+                {reactionRefs.map(lit => (
+                  <tr key={`reactionRef-${lit.id}`}>
+                    <td><ElementTypeLink literature={lit} type="reaction" /></td>
+                    <td className="padding-right">
+                      <Citation literature={lit} />
+                    </td>
+                    <td/>
+                  </tr>
+                ))}
+              </tbody>
             </Table>
           </Panel>
           <Panel
@@ -317,18 +432,14 @@ export default class LiteratureDetails extends Component {
                     <UrlInput handleInputChange={this.handleInputChange} literature={literature} />
                   </Col>
                   <Col md={1}>
-                    <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} />
+                    <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection"/>
                   </Col>
                 </Row>
               </ListGroupItem>
             </ListGroup>
-            <Table>
-              <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
-              <tbody>{this.literatureRows(selectedRefs)}</tbody>
-            </Table>
+            <CitationTable rows={selectedRefs} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
           </Panel>
         </PanelGroup>
-
       </Panel>
 
 

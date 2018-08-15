@@ -13,7 +13,7 @@ export default class LiteraturesFetcher {
     }).then(response => response.json())
       .then(json => json.literatures)
       .then(literatures => literatures.map(literature => new Literature(literature)))
-      .then(literatures => Immutable.List(literatures))
+      .then(lits => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -34,7 +34,7 @@ export default class LiteraturesFetcher {
     }).then(response => response.json())
       .then(json => json.literatures)
       .then(literatures => literatures.map(literature => new Literature(literature)))
-      .then(literatures => Immutable.List(literatures))
+      .then(lits => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 
@@ -48,11 +48,7 @@ export default class LiteraturesFetcher {
       headers: {
         'Accept': 'application/json',
       },
-    }).then(response => response.json())
-      .then(json => json.literatures)
-      .then(literatures => literatures.map(literature => new Literature(literature)))
-      .then(literatures => Immutable.List(literatures))
-      .catch((errorMessage) => { console.log(errorMessage); });
+    }).catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static fetchDOIMetadata(doi) {
@@ -93,7 +89,8 @@ export default class LiteraturesFetcher {
       },
       body: JSON.stringify(params)
     }).then(response => response.json())
-      .then(json => Immutable.List(json.selectedRefs.map(lit => new Literature(lit))))
+      .then(json => json.selectedRefs.map(lit => new Literature(lit)))
+      .then(lits => lits.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map()))
       .catch((errorMessage) => { console.log(errorMessage); });
   }
 }
