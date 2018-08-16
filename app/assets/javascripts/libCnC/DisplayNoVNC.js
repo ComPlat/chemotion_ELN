@@ -12,21 +12,18 @@ export default class DisplayNoVNC extends React.Component {
       connected: false,
       rfb: null
     };
-
-    this.connect = this.connect.bind(this);
-    this.disconnect = this.disconnect.bind(this);
+    // this.connect = this.connect.bind(this);
+    // this.disconnect = this.disconnect.bind(this);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
     this.handleMouseLeave = this.handleMouseLeave.bind(this);
   }
 
   componentDidMount() {
-    this.connect();
   }
 
-  // componentWillReceiveProps(nextProps) {
-  //   const { rfb } = this.state;
-  //   // if (!rfb) { return; }
-  // }
+  componentWillReceiveProps(nextProps) {
+      this.connect(nextProps);
+  }
 
   shouldComponentUpdate(nextProps, nextState) {
     return this.state.connected !== nextState.connected
@@ -50,17 +47,17 @@ export default class DisplayNoVNC extends React.Component {
     if (!this.state.rfb) {
       return;
     }
-
     this.state.rfb.disconnect();
     this.setState(prevState => ({ ...prevState, rfb: null }));
   }
 
-  connect() {
+  connect(props) {
     this.disconnect();
-    const { id, novnc } = this.props.device;
+    const { id, novnc } = props.device;
     if (!this.canvas || !id || !novnc) { return; }
 
-    /* const rfb = new RFB(
+    /* 
+    const rfb = new RFB(
       this.canvas,
       novnc.target,
       {
@@ -70,6 +67,7 @@ export default class DisplayNoVNC extends React.Component {
       }
     );
     rfb.viewOnly = false;
+    rfb.reconnect = true;
     rfb.addEventListener('connect', () => this.connected());
     rfb.addEventListener('disconnect', () => this.disconnected());
     this.setState(prevState => ({ ...prevState, rfb }));
@@ -90,19 +88,15 @@ export default class DisplayNoVNC extends React.Component {
   render() {
     const { connected } = this.state;
     const { id } = this.props.device;
-    return id ? (
+    return (
       <div>
-        <Label bsStyle={connected ? 'success' : 'default'}>
-          {connected ? 'Connected' : 'Disconnected'}
-        </Label>
-        {connected ? null : <Button onClick={this.connect} > Connect </Button>}
         <div
           ref={(ref) => { this.canvas = ref; }}
           onMouseEnter={this.handleMouseEnter}
           onMouseLeave={this.handleMouseLeave}
         />
       </div>
-    ) : null;
+    )
   }
 }
 
