@@ -10,5 +10,7 @@ module Collectable
     scope :created_time_from, ->(time) { where('created_at >= ?', time) }
     scope :updated_time_to, ->(time) { where('updated_at <= ?', time) }
     scope :updated_time_from, ->(time) { where('updated_at >= ?', time) }
+    scope :samples_created_time_from, ->(time) { where('samples.created_at >= ?', time) }
+    scope :samples_created_time_to, ->(time) { where('samples.created_at <= ?', time) }
   end
 end
