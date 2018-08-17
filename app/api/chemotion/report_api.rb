@@ -171,7 +171,7 @@ module Chemotion
       end
       post :downloadable, each_serializer: ReportSerializer do
         return current_user.reports.select do |r|
-          params[:ids].include?(r.id) && r.file_path.present?
+          params[:ids].include?(r.id) && r.generated_at.present?
         end
       end
 
