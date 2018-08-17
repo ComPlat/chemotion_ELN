@@ -52,14 +52,14 @@
       </tr>
       <% rows.each do |row| %>
         <tr>
-          <td class="col-05"><%= row[:label] %></td>
-          <td class="col-15 molecule"><%= row[:svg_image] %></td>
-          <td class="col-10"><span><%= row[:showed_name] %></span></td>
-          <td class="col-10"><span><%= row[:inchi] %></span></td>
-          <td class="col-10"><span><%= row[:inchikey] %></span></td>
-          <td class="col-30"><%= row[:long_key] %></td>
-          <td class="col-10"><span><%= row[:web_key] %></span></td>
-          <td class="col-10"><span><%= row[:short_key] %></span></td>
+          <td class="col-12"><%= row[:label] %></td>
+          <td class="col-12 molecule"><%= row[:svg_image] %></td>
+          <td class="col-12"><span><%= row[:showed_name] %></span></td>
+          <td class="col-12"><span><%= row[:inchi] %></span></td>
+          <td class="col-12"><span><%= row[:inchikey] %></span></td>
+          <td class="col-12"><%= row[:long_key] %></td>
+          <td class="col-12"><span><%= row[:web_key] %></span></td>
+          <td class="col-12"><span><%= row[:short_key] %></span></td>
         </tr>
       <% end %>
     </table>
@@ -113,8 +113,8 @@
       width: 5% !important;
     }
 
-    .col-10 {
-      width: 10% !important;
+    .col-12 {
+      width: 12% !important;
     }
 
     .col-15 {

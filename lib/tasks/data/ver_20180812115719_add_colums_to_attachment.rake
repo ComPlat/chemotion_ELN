@@ -45,19 +45,31 @@ namespace :data do
     end
 
     Report.find_each do |rp|
+      atts = rp.attachments
+      next if atts.present?
       next if rp.file_path.nil?
+
       tmp_path, typ, ext = get_configs(rp.template)
       tmp_path = tmp_path + '/' + rp.file_path
 
-      att = rp.attachments.create!(
-        filename: rp.file_name + '.' + ext,
-        key: File.basename(tmp_path),
-        file_path: tmp_path,
-        created_by: rp.author_id,
-        created_for: rp.author_id,
-        content_type: typ
-      )
-      att.update!(storage: PRIMARY_STORE)
+      unless File.exist?(tmp_path)
+        puts "#Report {rp.id}: file missing : #{tmp_path} "
+        next
+      end
+
+      begin
+        att = rp.attachments.create!(
+          filename: rp.file_name + ext,
+          key: File.basename(tmp_path),
+          file_path: tmp_path,
+          created_by: rp.author_id,
+          created_for: rp.author_id,
+          content_type: typ
+        )
+        att.update!(storage: PRIMARY_STORE)
+      rescue
+        puts "Report #{rp.id} att failed"
+      end
     end
   end
 end

@@ -5,11 +5,11 @@ FactoryBot.define do
     end
 
     trait :downloadable do
-      file_path "path"
+      generated_at { Time.zone.now }
     end
 
     trait :undownloadable do
-      file_path { nil }
+      generated_at { nil }
     end
 
     author_id { user.id }
@@ -28,7 +28,6 @@ FactoryBot.define do
                           analysis: true,
                           literature: true} }
     objects { [{ id: 4, type: "sample"}, { id: 5, type: "Reaction"}] }
-    generated_at { Time.zone.now }
 
     after(:create) do |report, elevator|
       elevator.user.reports << report
