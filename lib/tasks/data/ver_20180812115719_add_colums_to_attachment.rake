@@ -44,12 +44,6 @@ namespace :data do
       [tmp_path, typ, ext]
     end
 
-    Attachment.find_each do |att|
-      att.update_columns(
-        attachable_type: 'Container'
-      )
-    end
-
     Report.find_each do |rp|
       next if rp.file_path.nil?
       tmp_path, typ, ext = get_configs(rp.template)
