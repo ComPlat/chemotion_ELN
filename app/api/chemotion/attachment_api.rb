@@ -26,7 +26,7 @@ module Chemotion
           if !current_user.container
             current_user.container = Container.create(name: "inbox", container_type: "root")
           end
-          # unlinked_attachments = Attachment.where(container_id: nil, created_for: current_user.id)
+          # unlinked_attachments = Attachment.where(attachable_id: nil, attachable_type: 'Container', created_for: current_user.id)
           InboxSerializer.new(current_user.container)
         end
       end
@@ -73,7 +73,8 @@ module Chemotion
 
       desc "Delete container id of attachment"
       delete 'link/:attachment_id' do
-        @attachment.container_id = nil
+        @attachment.attachable_id = nil
+        @attachment.attachable_type = nil
         @attachment.save!
       end
 

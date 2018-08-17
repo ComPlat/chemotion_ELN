@@ -58,7 +58,8 @@ describe Chemotion::AttachmentAPI do
       cont_s1_analyses.children << cont_s1_analysis
       cont_s1_analyses.save!
 
-      img_attachments.last.container_id = cont_s1_analysis.id
+      img_attachments.last.attachable_id = cont_s1_analysis.id
+      img_attachments.last.attachable_type = 'Container'
       img_attachments.last.save!
     end
 

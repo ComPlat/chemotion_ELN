@@ -273,7 +273,7 @@ module ReportHelpers
               from (
                 select att.filename, att.checksum
                 from attachments att
-                where att.container_id = datc.id
+                where att.attachable_id = datc.id and att.attachable_type = 'Container'
               ) attachment
             ) as attachments
           from  containers datc

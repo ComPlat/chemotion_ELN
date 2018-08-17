@@ -181,7 +181,10 @@ module Chemotion
       end
       route_param :id do
         delete do
-          current_user.reports.find(params[:id]).destroy!
+          rp = current_user.reports.find(params[:id])
+          att = rp.attachments.first
+          att&.destroy!
+          rp.destroy!
         end
       end
     end
@@ -245,16 +248,15 @@ module Chemotion
           # set readed
           ru = report.reports_users.find { |r| r.user_id == current_user.id }
           ru.touch :downloaded_at
-          # send file back
-          full_file_path = Rails.root.join('public', ext, report.file_path)
-          file_name_ext = report.file_name + '.' + ext
-
+          # send file
+          att = report.attachments.first
+          content_type att.content_type
           env['api.format'] = :binary
           header(
             'Content-Disposition',
-            "attachment; filename*=UTF-8''#{CGI.escape(file_name_ext)}"
+            "attachment; filename*=UTF-8''#{CGI.escape(att.filename)}"
           )
-          File.read(full_file_path)
+          att.read_file
         end
       end
     end

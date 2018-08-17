@@ -16,7 +16,7 @@ class ContainerSerializer < ActiveModel::Serializer
     root = all_containers.keys[0]
     arr = []
     get_attachment_ids(arr, all_containers[root])
-    attachments = Attachment.where(container_id: arr)
+    attachments = Attachment.where_container(arr)
 
     json_tree(attachments, all_containers[root])
   end
@@ -30,9 +30,9 @@ class ContainerSerializer < ActiveModel::Serializer
 
   def json_tree(attachments, containers)
     containers.map do |container, subcontainers|
-      current_attachments = attachments.select do |attach|
-        attach.container_id == container.id
-      end
+      current_attachments = attachments.select { |att|
+        att.for_container? && att.attachable_id == container.id
+      }
       {
         id: container.id,
         name: container.name,

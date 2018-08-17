@@ -8,7 +8,19 @@ RSpec.describe Report, type: :report do
   let!(:rp1) {
     create(:report, :downloadable, user: user, file_name: 'ELN_Report_1')
   }
-  let (:full_file_path) { File.join(Rails.root, 'public', 'docx', 'ELN_Report_1.docx') }
+  let(:docx_mime_type) {
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  }
+  let(:ext) { 'docx' }
+  let!(:att1) {
+    create(
+      :attachment,
+      filename: rp1.file_name + '.' + ext,
+      attachable_id: rp1.id,
+      attachable_type: 'Report',
+      content_type: docx_mime_type
+    )
+  }
   before(:each) do
     CollectionsReaction.create!(reaction: r1, collection: c1)
     CollectionsReaction.create!(reaction: r2, collection: c1)
@@ -44,23 +56,24 @@ RSpec.describe Report, type: :report do
       report = Report.create(attributes)
       user.reports << report
       report.create_docx
-      expect(report.file_path).to include(file_name)
+      att = report.attachments.first
+      expect(att.filename).to include(file_name)
       expect(report.template).to include(template)
     end
   end
 
   describe 'delete archive file after Report is destroyed' do
+    let(:f_path) { att1.store.path }
+    let(:t_path) { att1.store.thumb_path }
+
     before do
-      FileUtils.touch(full_file_path) unless File.exist?(full_file_path)
       rp1.really_destroy!
+      att1.destroy!
     end
+
     it 'delete the archive file' do
-      expect(File.exist?(full_file_path)).to be false
-    end
-    after(:all) do
-      full_file_path = File.join(Rails.root, 'public', 'docx', 'ELN_Report_1.docx')
-      `rm  #{full_file_path}` if File.exist?(full_file_path)
-      puts "delete tmp reports  "
+      expect(File.exist?(f_path)).to be false
+      expect(File.exist?(t_path)).to be false
     end
   end
 end

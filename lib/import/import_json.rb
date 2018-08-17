@@ -231,7 +231,8 @@ class Import::ImportJson
           filename: att['filename'],
           identifier: att['identifier'],
           checksum: att['checksum'],
-          container_id: new_a.id
+          attachable_id: new_a.id,
+          attachable_type: 'Container'
         )
       end
     end

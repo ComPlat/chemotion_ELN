@@ -16,7 +16,7 @@ module Entities
       root = all_containers.keys[0]
       arr = []
       get_attachment_ids(arr, all_containers[root])
-      attachments = Attachment.where(container_id: arr)
+      attachments = Attachment.where_container(arr)
 
       json_tree(attachments, all_containers[root])
     end

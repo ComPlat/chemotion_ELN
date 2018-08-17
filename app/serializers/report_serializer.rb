@@ -5,7 +5,7 @@ class ReportSerializer < ActiveModel::Serializer
              :si_reaction_settings
 
   def downloadable
-    @downloadable ||= object.file_path.present?
+    @downloadable ||= object.generated_at.present?
   end
 
   def downloaded

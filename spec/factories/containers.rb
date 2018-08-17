@@ -74,9 +74,13 @@ FactoryBot.define do
         number_of_attachments 2
       end
       after(:create) do |inbox_container, files|
-        FactoryBot.create_list(:attachment, files.number_of_attachments, container: inbox_container)
+        FactoryBot.create_list(
+          :attachment,
+          files.number_of_attachments,
+          attachable: inbox_container,
+        )
       end
     end
   end
-  
+
 end

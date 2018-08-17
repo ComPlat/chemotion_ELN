@@ -10,11 +10,21 @@ describe Chemotion::ReportAPI do
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     }
     let(:excel_mime_type) { 'application/vnd.ms-excel' }
+    let(:ext) { 'docx' }
     let!(:rp1) {
       create(:report, :downloadable, user: user, file_name: 'ELN_Report_1')
     }
     let!(:rp2) { create(:report, :undownloadable, user: user) }
     let!(:rp3) { create(:report, :downloadable, user: user) }
+    let!(:att1) {
+      create(
+        :attachment,
+        filename: rp1.file_name + '.' + ext,
+        attachable_id: rp1.id,
+        attachable_type: 'Report',
+        content_type: docx_mime_type
+      )
+    }
     let!(:rp_others) { create(:report, user: other) }
     let!(:s1)   { create(:sample) }
     let!(:s2)   { create(:sample) }
@@ -317,7 +327,8 @@ describe Chemotion::ReportAPI do
                       [ \
                         { \
                           \"id\":2, \
-                          \"container_id\":121, \
+                          \"attachable_id\":121, \
+                          \"attachable_type\":\"Report\", \
                           \"filename\":\"kit_logo.png\", \
                           \"identifier\":\"123\", \
                           \"checksum\":\"456\", \
@@ -342,6 +353,7 @@ describe Chemotion::ReportAPI do
       it 'returns a created -standard- report' do
         params[:template] = "standard"
         post '/api/v1/reports', params
+
         expect(response.body).to include(fileName)
       end
 
@@ -353,11 +365,8 @@ describe Chemotion::ReportAPI do
     end
 
     describe 'GET /api/v1/download_report/file' do
-      let(:ext) { 'docx' }
-
       before do
         params = { id: rp1.id, ext: ext }
-        allow(File).to receive(:read).and_return('stubbed read')
         get '/api/v1/download_report/file', params
       end
 
