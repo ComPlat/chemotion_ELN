@@ -88,7 +88,7 @@ module Chemotion
 
       delete do
         Literal.find_by(
-          literature_id: params[:id],
+          id: params[:id],
           # user_id: current_user.id,
           element_type: @element_klass,
           element_id: params[:element_id],

@@ -308,6 +308,7 @@ export default class LiteratureDetails extends Component {
         currentCollection,
         sample: { ...sample },
         reaction: { ...reaction },
+        sortedIds: sortByElement(selectedRefs),
       }));
     });
   }
