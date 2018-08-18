@@ -41,7 +41,7 @@ export default class LiteraturesFetcher {
   static deleteElementReference(params) {
     const { element, literature } = params;
     const { type, id } = element;
-    const ref_id = literature.id;
+    const ref_id = literature.literal_id;
     return fetch(`/api/v1/literatures?id=${ref_id}&element_type=${type}&element_id=${id}`, {
       credentials: 'same-origin',
       method: 'delete',

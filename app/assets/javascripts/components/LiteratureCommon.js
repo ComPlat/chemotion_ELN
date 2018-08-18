@@ -167,7 +167,7 @@ const sortByElement = literatures => (
     if (i > 0) {
       const a = literatures.get(array[i]);
       const b = literatures.get(array[i - 1]);
-      if (a.id !== b.id && a.element_id === b.element_id && a.element_type === b.element_type) { acc.push(currentValue); }
+      if (a.id !== b.id || ( a.element_id !== b.element_id || a.element_type !== b.element_type)) { acc.push(currentValue); }
     } else { acc.push(currentValue); }
     return acc;
   }, [])
