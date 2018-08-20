@@ -14,24 +14,4 @@ RSpec.describe PagesController do
   before do
     sign__in(user)
   end
-
-  describe "GET groups" do
-
-
-    it "assigns @groups" do
-      g1.users << user
-      g1.save!
-      g2.admins << user
-      g2.save!
-      get :groups
-      groups=assigns(:groups).map{|g| g.select{|k| k.match(/id|name|initials/)}}
-      expect(groups).to match_array([g1.as_json(json_options).symbolize_keys,g2.as_json(json_options).symbolize_keys])
-    end
-
-    it "renders the groups template" do
-      get :groups
-      expect(response).to render_template("groups")
-    end
-  end
-
 end

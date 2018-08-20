@@ -7,7 +7,6 @@ Rails.application.routes.draw do
     get 'pages/profiles', to: 'pages#profiles'
     patch 'pages/update_profiles', to: 'pages#update_profiles'
     patch 'pages/update_user', to: 'pages#update_user'
-    get 'pages/groups', to: 'pages#groups'
     get 'pages/affiliations', to: 'pages#affiliations'
     patch 'pages/create_affiliation', to: 'pages#create_affiliation'
     patch 'pages/update_affiliations', to: 'pages#update_affiliations'
