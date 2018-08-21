@@ -1,8 +1,11 @@
 import React from 'react';
-import {Button, ButtonToolbar, InputGroup, Form, FormGroup, FormControl,
-        Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
-        Tooltip, OverlayTrigger, DropdownButton, MenuItem, SplitButton,
-        ControlLabel, ButtonGroup, Grid} from 'react-bootstrap';
+import {
+  Button, ButtonToolbar,
+  InputGroup, FormGroup, FormControl,
+  Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
+  Tooltip, OverlayTrigger, DropdownButton, MenuItem,
+  ControlLabel,
+} from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
 import Barcode from 'react-barcode';
@@ -23,12 +26,10 @@ import PubchemLabels from './PubchemLabels';
 import ElementReactionLabels from './ElementReactionLabels';
 import SampleDetailsContainers from './SampleDetailsContainers';
 
-import XLabels from "./extra/SampleDetailsXLabels";
-import XTabs from "./extra/SampleDetailsXTabs";
+import XLabels from './extra/SampleDetailsXLabels';
+import XTabs from './extra/SampleDetailsXTabs';
 
 import StructureEditorModal from './structure_editor/StructureEditorModal';
-
-import Aviator from 'aviator';
 
 import Sample from './models/Sample';
 import Container from './models/Container'
@@ -638,33 +639,20 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab
         eventKey={ind}
-        title={'Computed Properties'}
-        key={'computed_props' + sample.id.toString()}
+        title="Computed Properties"
+        key={`computed_props${sample.id}`}
       >
-        <ListGroupItem style={{paddingBottom: 20}}>
+        <ListGroupItem style={{ paddingBottom: 20 }}>
           <ComputedPropsContainer sample={sample} />
         </ListGroupItem>
       </Tab>
     );
   }
 
-  extraTab(ind, tabCount){
-    let sample = this.state.sample || {}
-    let num = ind - tabCount;
-    let NoName =  XTabs["content"+num];
-    let Title = XTabs["title"+num];
-    return(
-       <Tab eventKey={ind} key={ind} title={Title} >
-         <ListGroupItem style={{paddingBottom: 20}}>
-           <NoName  sample={sample}/>
-         </ListGroupItem>
-       </Tab>
-      )
-  }
-  extraLabels(){
+  extraLabels() {
     let labels = [];
-    for (let j=0;j < XLabels.count;j++){
-      labels.push(XLabels["content"+j])
+    for (let j = 0; j < XLabels.count; j += 1) {
+      labels.push(XLabels[`content${j}`]);
     }
     return labels;
   }
@@ -739,10 +727,17 @@ export default class SampleDetails extends React.Component {
       i => this.moleculeComputedProps(i)
     ];
 
-    const tabCount = tabContents.length;
-    for (let j = 0; j < XTabs.count; j++) {
-      if (XTabs['on' + j](sample)) {
-        tabContents.push(i => this.extraTab(i, tabCount));
+    const offset = tabContents.length;
+    for (let j = 0; j < XTabs.count; j += 1) {
+      if (XTabs[`on${j}`](sample)) {
+        const NoName = XTabs[`content${j}`];
+        tabContents.push((() => (
+          <Tab eventKey={offset + j} key={offset + j} title={XTabs[`title${j}`]} >
+            <ListGroupItem style={{ paddingBottom: 20 }} >
+              <NoName sample={sample} />
+            </ListGroupItem>
+          </Tab>
+        )));
       }
     }
 
