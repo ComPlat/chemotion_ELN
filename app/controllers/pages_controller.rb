@@ -40,14 +40,6 @@ class PagesController < ApplicationController
     end
   end
 
-  def groups
-    data = current_user.groups | current_user.administrated_accounts
-                                        .where(type: 'Group').uniq
-    @groups = Entities::GroupEntity.represent(data, serializable: true)
-    @new_group = Group.new
-    @users = Entities::UserSimpleEntity.represent(Person.all, serializable: true)
-  end
-
   def affiliations
 
   end

@@ -12,7 +12,7 @@ module Chemotion
       get 'name' do
         unless params[:name].nil? || params[:name].empty?
           { users: User.where(type: %w(Person Group)).by_name(params[:name]).limit(3)
-                       .select('first_name','last_name','name','id','name_abbreviation', 'name_abbreviation as abb')}
+                       .select('first_name','last_name','name','id','name_abbreviation', 'name_abbreviation as abb', 'type as user_type')}
         else
           { users: [] }
         end
@@ -65,6 +65,15 @@ module Chemotion
         end
       end
 
+      namespace :qrycurrent do
+        desc 'fetch groups of current user'
+        get do
+          data = current_user.groups | current_user.administrated_accounts
+                                              .where(type: 'Group').uniq
+          present data, with: Entities::GroupEntity, root: 'currentGroups'
+        end
+      end
+
       namespace :upd do
         desc 'update a group of persons'
         params do
@@ -75,7 +84,8 @@ module Chemotion
         end
 
         after_validation do
-          if current_user.administrated_accounts.where(id: params[:id]).empty?
+          if current_user.administrated_accounts.where(id: params[:id]).empty? &&
+             !params[:rm_users].nil? && current_user.id != params[:rm_users][0]
             error!('401 Unauthorized', 401)
           end
         end
