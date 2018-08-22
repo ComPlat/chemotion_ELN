@@ -136,8 +136,10 @@ module Chemotion
 
       def serialize_samples samples, page, search_method, molecule_sort
         return { data: [], size: 0 } if samples.empty?
-
         samples_size = samples.size
+        samplelist = []
+        sample_serializer_selector =
+        lambda { |s| ElementListPermissionProxy.new(current_user, s, user_ids).serialized }
 
         if search_method != 'advanced' && molecule_sort == true
           # Sorting by molecule for non-advanced search
@@ -152,10 +154,16 @@ module Chemotion
             :residues, :molecule, :tag, :container
           ).find(samples)
           samples_size = molecule_scope.size
-
-          serialized_samples = {
-            molecules: create_group_molecule(molecule_scope, sample_scope)
-          }
+          molecule_scope.each do |molecule|
+            next if molecule.nil?
+            samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
+            samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
+            samplesGroup.each do |sample|
+            serialized_sample = sample_serializer_selector.call(molecule)
+            samplelist.push(serialized_sample)
+            end
+          end
+          return samplelist
         else
           id_array = Kaminari.paginate_array(samples).page(page).per(page_size)
           ids = id_array.join(',')
@@ -169,18 +177,23 @@ module Chemotion
 
           if search_method == 'advanced'
             # sort by order - advanced search
-            group_molecule = group_by_order(paging_samples)
+            paging_samples.each do |sample|
+              next if sample.nil?
+              serialized_sample = ElementListPermissionProxy.new(current_user, sample, user_ids).serialized
+              samplelist.push(serialized_sample)
+            end
           else
-            group_molecule = group_by_molecule(paging_samples)
+            paging_samples.each do |sample|
+              next if sample.nil?
+              serialized_sample = sample_serializer_selector.call(sample)
+              samplelist.push(serialized_sample)
+            end
           end
-
-          serialized_samples = {
-            molecules: group_molecule
-          }
+          samplelist
         end
 
         return {
-          data: serialized_samples,
+          data: samplelist,
           size: samples_size
         }
 
