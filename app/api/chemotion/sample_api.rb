@@ -173,38 +173,49 @@ module Chemotion
                 else
                   scope.uniq.sample_or_startmat_or_products
                 end
-
         from = params[:from_date]
         to = params[:to_date]
         scope = scope.samples_created_time_from(Time.at(from)) if from
         scope = scope.samples_created_time_to(Time.at(to) + 1.day) if to
 
+        reset_pagination_page(scope)
+        sample_serializer_selector =
+          if own_collection
+            ->(s) { SampleListSerializer::Level10.new(s, 10).serializable_hash }
+          else
+            lambda do |s|
+              ElementListPermissionProxy.new(current_user, s, user_ids).serialized
+            end
+          end
+
+        samplelist = []
         if params[:molecule_sort] == 1
           molecule_scope = Molecule
                            .where(id: (scope.pluck :molecule_id))
                            .order("LENGTH(SUBSTRING(sum_formular, 'C\\d+'))")
                            .order(:sum_formular)
           reset_pagination_page(molecule_scope)
-
-          results = {
-            molecules: create_group_molecule(
-              paginate(molecule_scope),
-              scope,
-              own_collection
-            ),
-            samples_count: scope.count
-          }
+          paginate(molecule_scope).each do |molecule|
+            next if molecule.nil?
+            samplesGroup = scope.select {|v| v.molecule_id == molecule.id}
+            samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
+            samplesGroup.each do |sample|
+            serialized_sample = sample_serializer_selector.call(sample)
+            samplelist.push(serialized_sample)
+            end
+          end
         else
           scope = scope.order('updated_at DESC')
-          reset_pagination_page(scope)
-
-          results = {
-            molecules: group_by_molecule(paginate(scope), own_collection),
-            samples_count: scope.count
-          }
+          paginate(scope).each do |sample|
+            next if sample.nil?
+            serialized_sample = sample_serializer_selector.call(sample)
+            samplelist.push(serialized_sample)
+          end
         end
-
-        return results
+        return {
+          samples: samplelist,
+          samples_count: scope.count
+        }
       end
 
       desc "Return serialized sample by id"

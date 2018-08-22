@@ -69,15 +69,13 @@ export default class SamplesFetcher {
           `${from_date}${to_date}&` +
           `molecule_sort=${moleculeSort ? 1 : 0}`
 
-    let promise = fetch(
+    const promise = fetch(
       api,
       { credentials: 'same-origin' }
     ).then((response) => {
       return response.json().then((json) => {
         return {
-          elements: json.molecules.map( m => {
-            return m.samples.map( s => new Sample(s) )
-          }),
+          elements: json.samples.map(s => new Sample(s)),
           totalElements: parseInt(json.samples_count),
           page: parseInt(response.headers.get('X-Page')),
           pages: parseInt(response.headers.get('X-Total-Pages')),

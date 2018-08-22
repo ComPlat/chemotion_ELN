@@ -248,7 +248,7 @@ describe Chemotion::SampleAPI do
 
       it 'returns serialized (unshared) samples roots of logged in user' do
         get '/api/v1/samples'
-        first_sample = JSON.parse(response.body)['molecules'].first['samples']
+        first_sample = JSON.parse(response.body)['samples']
                            .first.symbolize_keys
         expect(first_sample).to include(
           id: s.id,

@@ -28,9 +28,7 @@ export default class SearchFetcher {
         const { samples, reactions, wellplates, screens } = json;
         const result = { ...json };
         if (samples && samples.totalElements && samples.totalElements > 0) {
-          result.samples.elements = samples.elements.molecules.map(
-            m => (m.samples.map(s => (new Sample(s))))
-          );
+          result.samples.elements = samples.elements.map(s => (new Sample(s)));
         } else { result.samples = { elements: [], totalElements: 0, ids: [] }; }
         if (reactions && reactions.totalElements && reactions.totalElements > 0) {
           result.reactions.elements = reactions.elements.map(r => (new Reaction(r)));

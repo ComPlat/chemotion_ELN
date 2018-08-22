@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Table, Button, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import Immutable from 'immutable';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
 
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -177,13 +178,23 @@ export default class ElementsTableSampleEntries extends Component {
   componentWillReceiveProps(nextProps) {
     const displayedMoleculeGroup = [];
     const { currentElement } = ElementStore.getState();
-    nextProps.elements.forEach((groupSample, index) => {
-      let numSamples = groupSample.length;
-      displayedMoleculeGroup[index] = groupSample;
-      if (nextProps.moleculeSort && numSamples > 3) { numSamples = 3; }
-      displayedMoleculeGroup[index].numSamples = numSamples;
+    const { elements } = nextProps;
+    const moleculelist = {};
+    elements.forEach((sample) => {
+      let samples = [];
+      const molId = `M${sample.molecule.id}`;
+      if (moleculelist[molId]) {
+        samples = moleculelist[molId];
+      }
+      samples.push(sample);
+      moleculelist[molId] = samples;
     });
-
+    Object.keys(moleculelist).forEach((moleculeId, idx) => {
+      displayedMoleculeGroup.push(moleculelist[moleculeId]);
+      let numSamples = moleculelist[moleculeId].length;
+      if (nextProps.moleculeSort && numSamples > 3) { numSamples = 3; }
+      displayedMoleculeGroup[idx].numSamples = numSamples;
+    })
     this.setState({
       displayedMoleculeGroup,
       targetType: currentElement && currentElement.type,
