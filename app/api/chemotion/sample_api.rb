@@ -62,9 +62,9 @@ module Chemotion
           error!('401 Unauthorized', 401) unless current_user.collections.find(params[:currentCollectionId])
         end
         post do
-          extname = File.extname(params[:file].filename)
+          extname = File.extname(params[:file][:filename])
           if extname.match(/\.sdf?/i)
-            sdf_import = Import::ImportSdf.new(file_path: params[:file].tempfile.path,
+            sdf_import = Import::ImportSdf.new(file_path: params[:file][:tempfile].path,
               collection_id: params[:currentCollectionId],
               mapped_keys: {
                 description: {field: "description", displayName: "Description", multiple: true},
@@ -84,7 +84,7 @@ module Chemotion
              }
           end
           # Creates the Samples from the XLS/CSV file. Empty Array if not successful
-          import = Import::ImportSamples.new.from_file(params[:file].tempfile.path,
+          import = Import::ImportSamples.new.from_file(params[:file][:tempfile].path,
             params[:currentCollectionId], current_user.id).process
         end
       end
