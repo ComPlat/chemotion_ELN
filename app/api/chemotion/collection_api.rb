@@ -61,7 +61,7 @@ module Chemotion
 
       desc "Return all unlocked unshared serialized collection roots of current user"
       get :roots do
-        collects = Collection.where(user_id: current_user.id).unlocked.unshared
+        collects = Collection.where(user_id: current_user.id).unlocked.unshared.order("id")
         .select(
           <<~SQL
             id, label, ancestry, is_synchronized, permission_level, position, collection_shared_names(user_id, id) as shared_names,
@@ -75,7 +75,7 @@ module Chemotion
 
       desc "Return all shared serialized collections"
       get :shared_roots do
-        collects = Collection.shared(current_user.id)
+        collects = Collection.shared(current_user.id).order("id")
         .select(
           <<~SQL
             id, user_id, label,ancestry, permission_level, user_as_json(collections.user_id) as shared_to,
@@ -90,7 +90,7 @@ module Chemotion
 
       desc "Return all remote serialized collections"
       get :remote_roots do
-        collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id])
+        collects = Collection.remote(current_user.id).where([" user_id in (select user_ids(?))",current_user.id]).order("id")
         .select(
           <<~SQL
             id, user_id, label, ancestry, permission_level, user_as_json(collections.shared_by_id) as shared_by,
@@ -218,6 +218,13 @@ module Chemotion
             research_plan_ids: @research_plan_ids,
             collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
           ).execute!
+
+          channel = Channel.find_by(subject: Channel::SHARED_COLLECTION_WITH_ME)
+          return if channel.nil?
+          content = channel.msg_template
+          return if (content.nil?)
+          content['data'] = content['data'] % {:shared_by => current_user.name }
+          message = Message.create_msg_notification(channel.id,content,current_user.id,uids)
         end
       end
 

@@ -7,6 +7,7 @@ import CreateButton from './CreateButton';
 import ReportUtilButton from './ReportUtilButton';
 import ExportImportButton from './ExportImportButton';
 import ScanCodeButton from './ScanCodeButton';
+import NoticeButton from './NoticeButton';
 //import DeviceButton from './DeviceButton'
 
 export default class ContextActions extends React.Component {
@@ -68,6 +69,9 @@ export default class ContextActions extends React.Component {
         </ButtonGroup>
         <ButtonGroup style={{ marginLeft: '10px' }}>
           <ScanCodeButton customClass={customClass} />
+        </ButtonGroup>
+        <ButtonGroup style={{ marginLeft: '10px' }}>
+          <NoticeButton />
         </ButtonGroup>
       </div>
     )

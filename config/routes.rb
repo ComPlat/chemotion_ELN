@@ -15,10 +15,14 @@ Rails.application.routes.draw do
     # get 'docx', to: 'pages#docx'
     get 'docx', to: 'pages#chemread'
     get 'command_n_control', to: 'pages#cnc'
+
+    get 'message_publish', to: 'pages#msg_pub'
   end
 
   get 'home', to: 'pages#home'
   get 'command_n_control', to: 'pages#home'
+
+  get 'message_publish', to: 'pages#home'
 
   mount API => '/'
 
