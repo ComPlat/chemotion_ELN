@@ -8,6 +8,8 @@ import UserActions from './actions/UserActions';
 import UserStore from './stores/UserStore';
 import Functions from './utils/Functions';
 import UsersFetcher from './fetchers/UsersFetcher';
+import MessagesFetcher from './fetchers/MessagesFetcher';
+import NotificationActions from '../components/actions/NotificationActions';
 
 export default class UserAuth extends Component {
   constructor(props) {
@@ -17,11 +19,15 @@ export default class UserAuth extends Component {
       showModal: false,
       currentGroups: [],
       selectedUsers: null,
+      showSubscription: false,
+      currentSubscriptions: [],
     };
 
     this.onChange = this.onChange.bind(this);
     this.handleShow = this.handleShow.bind(this);
     this.handleClose = this.handleClose.bind(this);
+    this.handleSubscriptionShow = this.handleSubscriptionShow.bind(this);
+    this.handleSubscriptionClose = this.handleSubscriptionClose.bind(this);
 
     this.promptTextCreator = this.promptTextCreator.bind(this);
     this.handleSelectUser = this.handleSelectUser.bind(this);
@@ -92,6 +98,22 @@ export default class UserAuth extends Component {
     this.setState({ showModal: false, selectedUsers: null });
   }
 
+  // show modal Subscription
+  handleSubscriptionShow() {
+    MessagesFetcher.fetchChannelWithUser()
+      .then((result) => {
+        this.setState({
+          showSubscription: true,
+          currentSubscriptions: result.channels
+        });
+      });
+  }
+
+  // hide modal Subscription
+  handleSubscriptionClose() {
+    this.setState({ showSubscription: false });
+  }
+
   // tooltip of yes/no confirmation
   handleClick() {
     this.setState({ show: !this.state.show });
@@ -118,6 +140,34 @@ export default class UserAuth extends Component {
       default:
         break;
     }
+  }
+
+  subscribe(node) {
+    const { currentSubscriptions } = this.state;
+
+    MessagesFetcher.subscribeChannel({ channel_id: node.id, subscribe: node.user_id == null })
+      .then((result) => {
+        if (result.error) {
+          // alert(result.error);
+          NotificationActions.add({
+            message: result.error,
+            level: 'error'
+          });
+        } else {
+          const actSubscription = _.filter(
+            this.state.currentSubscriptions,
+            o => o.id === result.channel_id
+          );
+          if (node.user_id != null) {
+            actSubscription[0].user_id = null;
+          } else {
+            actSubscription[0].user_id = result.user_id;
+          }
+          const idx = _.findIndex(this.state.currentSubscriptions, o => o.id === result.channel_id);
+          currentSubscriptions.splice(idx, 1, actSubscription[0]);
+          this.setState({ currentSubscriptions });
+        }
+      });
   }
 
   // confirm action after pressing yes
@@ -406,6 +456,48 @@ export default class UserAuth extends Component {
     );
   }
 
+
+  // render modal
+  renderSubscribeModal() {
+    if (this.state.showSubscription) {
+      const tbody = this.state.currentSubscriptions.map(g => (
+        <tr key={`row_${g.id}`} style={{ fontWeight: 'bold' }}>
+          <td width="10%" style={{ border: 'none' }}>
+            <Button
+              bsSize="xsmall"
+              bsStyle={g.user_id == null ? 'success' : 'default'}
+              onClick={() => this.subscribe(g)}
+            >
+              {g.user_id == null ? 'Subscribe' : 'Unsubscribe'}
+            </Button>
+          </td>
+          <td width="90%" style={{ border: 'none' }}><div>{g.subject}</div></td>
+        </tr>
+      ));
+
+      return (
+        <Modal
+          show={this.state.showSubscription}
+          onHide={this.handleSubscriptionClose}
+        >
+          <Modal.Header closeButton>
+            <Modal.Title>My Subscription</Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ overflow: 'auto' }}>
+            <div>
+              <Table>
+                <tbody>
+                  { tbody }
+                </tbody>
+              </Table>
+            </div>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    return (<div />);
+  }
+
   render() {
     const templatesLink = (
       <MenuItem eventKey="2" href="ketcher/common_templates">Template Management</MenuItem>
@@ -421,7 +513,8 @@ export default class UserAuth extends Component {
             <MenuItem eventKey="4" href="pages/profiles" >Change Profile</MenuItem>
             <MenuItem eventKey="5" href="pages/affiliations" >My Affiliations</MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups</MenuItem>
-            {/* <MenuItem eventKey="6" href="pages/groups" >My Groups</MenuItem> */}
+            {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
+                Disable for now as there is no subsciption channel yet (Paggy) */}
             {/* <MenuItem eventKey="7" href="command_n_control" >My Devices</MenuItem> */}
           </NavDropdown>
           <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
@@ -429,6 +522,7 @@ export default class UserAuth extends Component {
           </NavItem>
         </Nav>
         { this.renderModal() }
+        { this.renderSubscribeModal() }
       </div>
     );
   }

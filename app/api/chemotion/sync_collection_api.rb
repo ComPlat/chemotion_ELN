@@ -135,6 +135,13 @@ module Chemotion
 
           params[:user_ids] = uids
           Usecases::Sharing::SyncWithUsers.new(params, current_user).execute!
+          channel = Channel.find_by(subject: Channel::SYNCHRONIZED_COLLECTION_WITH_ME)
+          return if channel.nil?
+          content = channel.msg_template
+          return if (content.nil?)
+          c = Collection.find_by(id: params[:id])
+          content['data'] = content['data'] % {:synchronized_by => current_user.name, :collection_name => c.label }
+          message = Message.create_msg_notification(channel.id,content,current_user.id,uids)
         end
 
         desc "delete sync by id"
