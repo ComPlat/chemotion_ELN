@@ -1,5 +1,12 @@
+import {
+  last,
+  slice,
+  intersectionWith,
+  findIndex,
+} from 'lodash';
+import Aviator from 'aviator';
 import alt from '../alt';
-import { last, slice, intersectionWith } from 'lodash';
+
 import ElementActions from '../actions/ElementActions';
 import CollectionActions from '../actions/CollectionActions';
 import UIActions from '../actions/UIActions';
@@ -11,16 +18,15 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 
-import Device from '../models/Device'
-import Container from '../models/Container'
-import AnalysesExperiment from '../models/AnalysesExperiment'
-import DeviceAnalysis from '../models/DeviceAnalysis'
+import Device from '../models/Device';
+import Container from '../models/Container';
+import AnalysesExperiment from '../models/AnalysesExperiment';
+import DeviceAnalysis from '../models/DeviceAnalysis';
 import DeviceSample from '../models/DeviceSample';
-import NotificationActions from '../actions/NotificationActions'
-import SamplesFetcher from '../fetchers/SamplesFetcher'
-import DeviceFetcher from '../fetchers/DeviceFetcher'
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
-import ModalImportConfirm from '../contextActions/ModalImportConfirm'
+import SamplesFetcher from '../fetchers/SamplesFetcher';
+import DeviceFetcher from '../fetchers/DeviceFetcher';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ModalImportConfirm from '../contextActions/ModalImportConfirm';
 
 import { extraThing } from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -31,8 +37,6 @@ import { elementShowOrNew } from '../routesUtils';
 import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 
-import Aviator from 'aviator';
-import _ from 'lodash';
 
 class ElementStore {
   constructor() {
@@ -518,8 +522,18 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
+    // workaround solution for 507:
+    // always reset currentElement and selecteds if currentElement.type is sample
+    // (because this is a listener for fetching Sample; and also checksum might not be changed under some conditions)
+    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum || this.state.currentElement.type === 'sample') {
       this.state.currentElement = result;
+      if (this.state.currentElement.type === 'sample') {
+        const selecteds = this.state.selecteds;
+        const idx = findIndex(selecteds, function(o) { return o.id == result.id; });
+        if (idx === -1) {
+          this.state.selecteds.splice(selecteds.length, 1, result);
+        } else { this.state.selecteds.splice(idx, 1, result); }
+      }
     }
   }
 
@@ -1065,7 +1079,21 @@ class ElementStore {
     } else {
       this.state.currentElement = newCurrentElement;
     }
-
+    if (this.state.currentElement && this.state.currentElement.type === 'reaction') {
+      // workaround solution for 507:
+      // update samples data of Reaction
+      // this is executed when curretn element is set, but, for some cases it will not be called z.B. open window(Sample) from Reaction
+      const currentElementProducts = this.state.currentElement.products;
+      currentElementProducts.map((p) => {
+        SamplesFetcher.fetchById(p.id)
+          .then((newSample) => {
+            const idx = findIndex(this.state.currentElement.products, function(o) { return o.id == newSample.id; });
+            this.state.currentElement.products.splice(idx, 1, newSample);
+          }).catch((errorMessage) => {
+            console.log(errorMessage);
+          });
+      });
+    }
     UrlSilentNavigation(newCurrentElement)
   }
 
@@ -1090,7 +1118,7 @@ class ElementStore {
     const ui_state = UIStore.getState();
 
     if (currentNotDeleted) {
-      const currentIdx = _.findIndex(newSelecteds, o => o.id === currentElement.id) || 0;
+      const currentIdx = findIndex(newSelecteds, o => o.id === currentElement.id) || 0;
       this.setState({ selecteds: newSelecteds, activeKey: currentIdx });
     } else {
       this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));
