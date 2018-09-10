@@ -9,19 +9,24 @@ module Chemotion
         params do
           requires :smiles, type: String, desc: "Input SMILES"
           optional :svg_file, type: String, desc: "Molecule svg file"
+          optional :layout, type: String, desc: "Molecule molfile layout"
         end
 
         post do
           smiles = params[:smiles]
           svg = params[:svg_file]
+          layout = params[:layout]
+
           inchikey = OpenBabelService.smiles_to_inchikey(smiles)
           return {} unless inchikey
           molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
 
           unless molecule
-            molfile = OpenBabelService.smiles_to_molfile smiles if smiles
+            babel_info = OpenBabelService.molecule_info_from_structure(smiles,'smi')
+            molfile = babel_info[:molfile] if babel_info
+            molfile = OpenBabelService.smiles_to_molfile smiles unless molfile
             return {} unless molfile
-            molecule = Molecule.find_or_create_by_molfile(molfile)
+            molecule = Molecule.find_or_create_by_molfile(molfile, layout, smiles)
           end
           return unless molecule
 
@@ -30,9 +35,14 @@ module Chemotion
           digest = Digest::SHA256.hexdigest digest
           svg_file_name = "TMPFILE#{digest}.svg"
           svg_file_path = File.join('public','images', 'samples', svg_file_name)
-          svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
-          FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
-
+          if (svg)
+            svg_file = File.new(svg_file_path, 'w+')
+            svg_file.write(svg)
+            svg_file.close
+          else
+            svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
+            FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
+          end
           molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name })
         end
       end
@@ -100,7 +110,7 @@ module Chemotion
         svg_file.close
 
         molecule = Molecule.find_or_create_by_molfile(molfile)
-
+        
         molecule.attributes.merge({ temp_svg: svg_file_name })
       end
 

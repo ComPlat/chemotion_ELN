@@ -4,7 +4,7 @@ import {
   InputGroup, FormGroup, FormControl,
   Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel,
+  ControlLabel, Modal,
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
@@ -42,6 +42,7 @@ import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
+import MoleculesFetcher from './fetchers/MoleculesFetcher';
 
 const MWPrecision = 6;
 
@@ -58,6 +59,9 @@ export default class SampleDetails extends React.Component {
       activeTab: UIStore.getState().sample.activeTab,
       qrCodeSVG: "",
       isCasLoading: false,
+      showMolfileModal: false,
+      smileReadonly: true,
+      quickCreator: false,
     };
 
     const data = UserStore.getState().profile.data || {};
@@ -66,9 +70,16 @@ export default class SampleDetails extends React.Component {
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
     this.addManualCas = this.addManualCas.bind(this);
+    this.handleMolfileShow = this.handleMolfileShow.bind(this);
+    this.handleMolfileClose = this.handleMolfileClose.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
+    if (nextProps.sample.isNew && !nextProps.sample.molfile) {
+      this.setState({
+        smileReadonly: false,
+      });
+    }
     this.setState({
       sample: nextProps.sample,
       loadingMolecule: false,
@@ -93,6 +104,17 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  handleMolfileShow() {
+    this.setState({
+      showMolfileModal: true
+    });
+  }
+
+  handleMolfileClose() {
+    this.setState({
+      showMolfileModal: false
+    });
+  }
   handleSampleChanged(sample) {
     this.setState({
       sample
@@ -125,26 +147,55 @@ export default class SampleDetails extends React.Component {
     })
   }
 
-  updateMolecule(molfile, svg_file = null) {
-    ElementActions.fetchMoleculeByMolfile(molfile, svg_file);
+  handleMoleculeBySmile() {
+    const smi = this.smilesInput.value;
+    const { sample } = this.state;
+
+    MoleculesFetcher.fetchBySmi(smi)
+      .then((result) => {
+        if (!result || result == null) {
+          alert('Can not create molecule with this smiles!');
+        } else {
+          sample.molfile = result.molfile;
+          sample.molecule_id = result.id;
+          sample.molecule = result;
+          this.molfileInput.value = result.molfile;
+          this.inchistringInput.value = result.inchistring;
+          this.setState({ quickCreator: true, sample, smileReadonly: true });
+          ElementActions.refreshElements('sample');
+        }
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
   }
 
-  handleStructureEditorSave(molfile, svg_file = null) {
-    let {sample} = this.state;
-
+  handleStructureEditorSave(molfile, svg_file = null, config = null) {
+    const { sample } = this.state;
     sample.molfile = molfile
+    let smiles = null;
+    if (typeof (config) !== 'undefined' && config && sample.molecule) {
+       smiles = config["smiles"];
+    }
     sample.contains_residues = molfile.indexOf(' R# ') > -1;
     sample.formulaChanged = true;
-
-    this.setState({sample: sample, loadingMolecule: true});
-
-    this.updateMolecule(molfile, svg_file);
-
-    this.hideStructureEditor()
+    // this.updateMolecule(molfile, svg_file, smiles);
+    if (smiles == null) {
+      ElementActions.fetchMoleculeByMolfile(molfile, svg_file);
+      this.setState({ sample, loadingMolecule: true, smileReadonly: true });
+    } else {
+      this.setState({ loadingMolecule: true });
+      MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile)
+        .then((result) => {
+          sample.molecule = result;
+          sample.molecule_id = result.id;
+          this.setState({ sample, smileReadonly: true, loadingMolecule: false });
+        });
+    }
+    this.hideStructureEditor();
   }
 
   handleStructureEditorCancel() {
-    this.hideStructureEditor()
+    this.hideStructureEditor();
   }
 
   handleSubmit(closeView = false) {
@@ -379,15 +430,22 @@ export default class SampleDetails extends React.Component {
   }
 
   moleculeInchi(sample) {
+    if (typeof (this.inchistringInput) !== 'undefined' && this.inchistringInput
+        && typeof (sample.molecule_inchistring) !== 'undefined' && sample.molecule_inchistring) {
+      this.inchistringInput.value = sample.molecule_inchistring;
+    }
     return (
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>InChI</InputGroup.Addon>
-        <FormControl type="text"
-           key={sample.id}
-           defaultValue={sample.molecule_inchistring || ''}
-           disabled
-           readOnly
-        />
+        <FormGroup controlId="inchistringInput">
+          <FormControl type="text"
+             inputRef={(m) => { this.inchistringInput = m; }}
+             key={sample.id}
+             defaultValue={sample.molecule_inchistring || ''}
+             disabled
+             readOnly
+          />
+        </FormGroup>
         <InputGroup.Button>
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
             <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_inchistring || " "} >
@@ -405,21 +463,85 @@ export default class SampleDetails extends React.Component {
     )
   }
 
+  moleculeCreatorTooltip() {
+    return(
+      <Tooltip id="assign_button">create molecule</Tooltip>
+    )
+  }
+
   moleculeCanoSmiles(sample) {
+    if (this.state.smileReadonly && typeof (this.smilesInput) !== 'undefined'
+       && this.smilesInput && typeof (sample.molecule_cano_smiles) !== 'undefined'
+       && sample.molecule_cano_smiles) {
+      this.smilesInput.value = sample.molecule_cano_smiles;
+    }
     return (
       <InputGroup className='sample-molecule-identifier'>
         <InputGroup.Addon>Canonical Smiles</InputGroup.Addon>
-        <FormControl type="text"
-           defaultValue={sample.molecule_cano_smiles || ''}
-           disabled
-           readOnly
-        />
+        <FormGroup controlId="smilesInput">
+          <FormControl type="text"
+             inputRef={(m) => { this.smilesInput = m; }}
+             defaultValue={sample.molecule_cano_smiles || ''}
+             disabled={this.state.smileReadonly}
+             readOnly={this.state.smileReadonly}
+          />
+        </FormGroup>
         <InputGroup.Button>
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
             <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_cano_smiles || " "} >
               <i className="fa fa-clipboard"></i>
             </Button>
           </OverlayTrigger>
+        </InputGroup.Button>
+        <InputGroup.Button>
+          <OverlayTrigger placement="bottom" overlay={this.moleculeCreatorTooltip()}>
+            <Button active className="clipboardBtn"
+              disabled={this.state.smileReadonly}
+              readOnly={this.state.smileReadonly}
+              onClick={() => this.handleMoleculeBySmile()} >
+                <i className="fa fa-save"></i>
+            </Button>
+        </OverlayTrigger>
+        </InputGroup.Button>
+      </InputGroup>
+    )
+  }
+
+  moleculeMolfile(sample) {
+    if (typeof (this.molfileInput) !== 'undefined' && this.molfileInput
+        && typeof (sample.molfile) !== 'undefined' && sample.molfile) {
+      this.molfileInput.value = sample.molfile;
+    }
+
+  const textAreaStyle = {
+    height: '35px',
+    overflow: 'auto',
+    'white-space': 'pre',
+  };
+
+    return (
+      <InputGroup className='sample-molecule-identifier'>
+        <InputGroup.Addon>Molfile</InputGroup.Addon>
+        <FormGroup controlId="molfileInput">
+          <FormControl componentClass="textarea" style={textAreaStyle}
+             inputRef={(m) => { this.molfileInput = m; }}
+             defaultValue={sample.molfile || ''}
+             disabled={true}
+             readOnly={true}
+          />
+        </FormGroup>
+        <InputGroup.Button>
+          <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
+            <Button active className="clipboardBtn" data-clipboard-text={sample.molfile || " "} >
+              <i className="fa fa-clipboard"></i>
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
+        <InputGroup.Button>
+          <Button active className="clipboardBtn"
+            onClick={this.handleMolfileShow} >
+              <i className="fa fa-file-text"></i>
+          </Button>
         </InputGroup.Button>
       </InputGroup>
     )
@@ -568,6 +690,7 @@ export default class SampleDetails extends React.Component {
         <ListGroupItem>
           {this.moleculeInchi(sample)}
           {this.moleculeCanoSmiles(sample)}
+          {this.moleculeMolfile(sample)}
           {this.moleculeCas()}
         </ListGroupItem>
       </Tab>
@@ -658,8 +781,8 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleIsValid() {
-    const {sample, loadingMolecule} = this.state;
-    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true;
+    const { sample, loadingMolecule, quickCreator } = this.state;
+    return (sample.isValid && !loadingMolecule) || sample.is_scoped == true || quickCreator;
   }
 
   saveBtn(sample, closeView = false) {
@@ -717,6 +840,51 @@ export default class SampleDetails extends React.Component {
     UIActions.selectTab({tabKey: eventKey, type: 'sample'});
   }
 
+  renderMolfileModal() {
+    const textAreaStyle = {
+      width: '500px',
+      height: '640px',
+      margin: '30px',
+      'white-space': 'pre-line',
+    };
+    if (this.state.showMolfileModal) {
+      let molfile = this.molfileInput.value;
+      molfile = molfile.replace(/\r?\n/g, '<br />');
+      return (
+        <Modal
+          show={this.state.showMolfileModal}
+          dialogClassName="importChemDrawModal"
+          onHide={this.handleMolfileClose}
+        >
+
+          <Modal.Header closeButton>
+            <Modal.Title>Molfile</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div>
+              <FormGroup controlId="molfileInputModal">
+                <FormControl
+                  componentClass="textarea"
+                  style={textAreaStyle}
+                  readOnly={true}
+                  disabled={true}
+                  inputRef={(m) => { this.molfileInputModal = m; }}
+                  defaultValue={this.molfileInput.value || ''}
+                />
+              </FormGroup>
+            </div>
+            <div>
+              <Button bsStyle="warning" onClick={this.handleMolfileClose}>
+                Close
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    return (<div />);
+  }
+
   render() {
     const sample = this.state.sample || {};
     const tabContents = [
@@ -753,6 +921,7 @@ export default class SampleDetails extends React.Component {
         </ListGroup>
         {this.sampleFooter()}
         {this.structureEditorModal(sample)}
+        { this.renderMolfileModal()}
       </Panel>
     )
   }

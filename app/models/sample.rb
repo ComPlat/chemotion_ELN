@@ -159,8 +159,16 @@ class Sample < ActiveRecord::Base
     self.molecule ? self.molecule.inchistring : ""
   end
 
+  def molecule_inchikey
+    self.molecule ? self.molecule.inchikey : ""
+  end
+
   def molecule_cano_smiles
     self.molecule ? self.molecule.cano_smiles : ""
+  end
+
+  def molecule_id
+    self.molecule ? self.molecule.id : nil
   end
 
   def analyses
@@ -226,13 +234,19 @@ class Sample < ActiveRecord::Base
 
   def find_or_create_molecule_based_on_inchikey
     return unless molfile.present?
-    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-    inchikey = babel_info[:inchikey]
-    return unless  inchikey.present?
-    is_partial = babel_info[:is_partial]
-    molfile_version = babel_info[:version]
-    if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
-      self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+
+    if molecule_inchikey.present?
+      self.molecule = Molecule.find_by(inchikey: molecule_inchikey)
+    end
+    unless self.molecule.present?
+      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+      inchikey = babel_info[:inchikey]
+      return unless  inchikey.present?
+      is_partial = babel_info[:is_partial]
+      molfile_version = babel_info[:version]
+      if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+        self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
+      end
     end
   end
 

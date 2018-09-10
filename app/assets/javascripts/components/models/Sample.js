@@ -249,6 +249,7 @@ export default class Sample extends Element {
       location: this.location,
       molfile: this.molfile,
       molecule: this.molecule && this.molecule.serialize(),
+      molecule_id: this.molecule && this.molecule.id,
       molecule_name_id: this.molecule_name && this.molecule_name.value,
       sample_svg_file: this.sample_svg_file,
       is_top_secret: this.is_top_secret || false,
@@ -670,6 +671,10 @@ export default class Sample extends Element {
 
   get molecule_inchistring() {
     return this.molecule && this.molecule.inchistring;
+  }
+
+  get molecule_inchikey() {
+    return this.molecule && this.molecule.inchikey;
   }
 
   get molecule_cano_smiles() {

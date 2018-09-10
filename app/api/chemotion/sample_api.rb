@@ -275,7 +275,11 @@ module Chemotion
           optional :abs, type: String, values: Sample::STEREO_ABS, default: Sample::STEREO_DEF['abs']
           optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
         end
+        optional :molecule_id, type: Integer
         optional :molecule_name_id, type: Integer
+        optional :inchistring, type: String
+        optional :inchikey, type: String
+        optional :cano_smiles, type: String
         requires :container, type: Hash
         #use :root_container_params
       end
@@ -292,6 +296,7 @@ module Chemotion
           update_datamodel(attributes[:container]);
           attributes.delete(:container);
 
+
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
             i.delete :description
@@ -304,6 +309,10 @@ module Chemotion
               "#{prop}_attributes".to_sym => prop_value
             ) unless prop_value.blank?
           end
+
+          attributes.delete(:cano_smiles);
+          attributes.delete(:inchistring);
+          attributes.delete(:inchikey);
 
           @sample.update!(attributes)
 
@@ -349,6 +358,7 @@ module Chemotion
           optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
         end
         optional :molecule_name_id, type: Integer
+        optional :molecule_id, type: Integer
         requires :container, type: Hash
       end
       post do
@@ -368,6 +378,7 @@ module Chemotion
           solvent: params[:solvent],
           location: params[:location],
           molfile: params[:molfile],
+          molecule_id: params[:molecule_id],
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           density: params[:density],

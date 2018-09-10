@@ -45,24 +45,34 @@ M  END
 
   end
 
-  def self.molecule_info_from_molfile molfile
-    version = molfile_version(molfile)
-    is_partial = molfile_has_R(molfile, version)
+  def self.molecule_info_from_molfile(molfile)
+    self.molecule_info_from_structure(molfile, 'mol')
+  end
 
-    molfile = molfile_skip_R(molfile, version) if is_partial
+  def self.molecule_info_from_structure(structure, format = 'mol')
+    is_partial = nil
+    if format == 'mol'
 
-    mf = mofile_clear_coord_bonds(molfile, version)
-    if mf
-      version += ' T9'
-    else
-      mf = molfile
+      ink = inchikey_from_molfile(structure)
+      molfile = structure
+      version = molfile_version(molfile)
+      is_partial = molfile_has_R(molfile, version)
+
+      molfile = molfile_skip_R(molfile, version) if is_partial
+
+      mf = mofile_clear_coord_bonds(molfile, version)
+      if mf
+        version += ' T9'
+      else
+        mf = molfile
+      end
     end
 
     c = OpenBabel::OBConversion.new
-    c.set_in_format 'mol'
+    c.set_in_format format
 
     m = OpenBabel::OBMol.new
-    c.read_string m, mf
+    c.read_string m, structure
 
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
@@ -76,6 +86,16 @@ M  END
     c.set_out_format 'inchikey'
     inchikey = c.write_string(m, false).to_s.gsub(/\n/, "").strip
 
+    unless format == 'mol'
+      c.set_out_format 'mol'
+      # opts = OpenBabel::OBConversion::GENOPTIONS
+      # c.add_option('gen2D', opts)
+      pop = OpenBabel::OBOp.find_type("gen2D")
+      pop.do(m) if %w(can smi).include?(format)
+      molfile = c.write_string(m, false).to_s
+      version = 'V2000'
+    end
+
     {
       charge: m.get_total_charge,
       mol_wt: m.get_mol_wt,
@@ -86,12 +106,12 @@ M  END
       inchikey: inchikey,
       inchi: inchi,
       formula: m.get_formula,
-      svg: svg_from_molfile(mf),
+      svg: svg_from_molfile(mf || molfile),
       cano_smiles: ca_smiles,
-      fp: fingerprint_from_molfile(mf),
+      fp: fingerprint_from_molfile(mf || molfile),
       molfile_version: version,
       is_partial: is_partial,
-      molfile: is_partial && molfile
+      molfile: (format != 'mol' && molfile) ||  (is_partial && molfile)
     }
 
   end
