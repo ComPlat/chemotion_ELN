@@ -77,8 +77,8 @@ module ContainerHelpers
         attachment = Attachment.where(id: att[:id]).last
         container_id = attachment && attachment.container_id
         if container_id
-          container = Container.find(container_id)
-          can_edit = can_update_container(container)
+          att_container = Container.find(container_id)
+          can_edit = can_update_container(att_container)
         end
       end
       if attachment
