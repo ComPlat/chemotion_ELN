@@ -24,7 +24,6 @@ const EditorSelector = ({value, updateEditorSelection}) => (
   </FormGroup>
 )
 
-
 const getKetcher = () => {
   const ketcherFrame = document.getElementById('ifKetcher');
   if (ketcherFrame && ('contentDocument' in ketcherFrame)) {
@@ -57,22 +56,33 @@ const getMolfileFromEditor = (editor = 'ketcher') => {
   }
   if (editor === 'chemdraw') {
     // const frame = document.getElementById('ifChemDraw');
-    getChemdraw().getMOL((mf) => {  mol = mf; });
+    getChemdraw().getMOL((mf) => { mol = mf; });
     // return getChemdraw().getMOL();
   }
   return mol;
 };
 
+const getChemDrawConfigFromEditor = (editor = 'chemdraw') => {
+  if (editor !== 'chemdraw') {
+    return null;
+  }
+  const cdc = {};
+  let smiles = '';
+  let inchikey = '';
+  let inchi = '';
+  getChemdraw().getSMILES((mf) => { smiles = mf; });
+  cdc["smiles"] = smiles;
+  getChemdraw().getInChIKey((mf) => { inchikey = mf; });
+  cdc["inchikey"] = inchikey;
+  getChemdraw().getInChI((mf) => { inchi = mf; });
+  cdc["inchi"] = inchi;
+  return cdc;
+};
+
 const getSVGFromEditor = (editor = 'ketcher') => {
-  let svg;
   if (editor === 'ketcher') {
     return getKetcher().getSVG();
   }
-  if (editor === 'chemdraw') {
-    // only works with web service enabled
-    getChemdraw().getSVG((s, e) => { svg = s; console.log(e); });
-  }
-  return svg;
 };
 
 export default class StructureEditorModal extends React.Component {
@@ -87,7 +97,7 @@ export default class StructureEditorModal extends React.Component {
     }
 
     this.handleEditorSelection = this.handleEditorSelection.bind(this)
-
+    this.handleChamDrawSave = this.handleChamDrawSave.bind(this)
   }
 
   componentWillReceiveProps(nextProps) {
@@ -116,21 +126,43 @@ export default class StructureEditorModal extends React.Component {
     if (this.props.onCancel) { this.props.onCancel(); }
   }
 
+  handleChamDrawSave(molfile, config) {
+
+    const promise = new Promise((resolve, reject) => {
+      getChemdraw().getSVG((svg, error) => {
+        if (error) {
+          console.log(error);
+          return;
+        }
+        resolve(svg);
+      });
+    });
+
+    return promise.then((result) => {
+      this.setState({
+        showModal: false,
+        showWarning: this.props.hasChildren || this.props.hasParent
+      }, () => {if (this.props.onSave) { this.props.onSave(molfile, result, config); }});
+    });
+  }
+
   handleSaveBtn() {
-    if (this.state.editor === 'ketcher') {
-      return this.close();
-    }
     const molfile = getMolfileFromEditor(this.state.editor);
-    this.setState(prevState => ({
-      ...prevState, editor: 'ketcher', molfile
-    }), this.close);
+    if (this.state.editor === 'chemdraw') {
+      const cdc = getChemDrawConfigFromEditor(this.state.editor);
+      this.handleChamDrawSave(molfile, cdc);
+    } else {
+      const svgFile = getSVGFromEditor(this.state.editor);
+      this.hideModal();
+      if (this.props.onSave) { this.props.onSave(molfile, svgFile); }
+    }
   }
 
   close() {
     const molfile = getMolfileFromEditor(this.state.editor);
     const svgFile = getSVGFromEditor(this.state.editor);
     this.hideModal();
-    if (this.props.onSave) { this.props.onSave(molfile, svgFile); }
+    if (this.props.onSave) { this.props.onSave(molfile, svgFile, this.state.smiles); }
   }
 
   hideModal() {
