@@ -20,7 +20,9 @@ module Chemotion
       get 'list' do
         messages = NotifyMessage.where(receiver_id: current_user.id)
         messages = messages.where(is_ack: params[:is_ack]) if params[:is_ack] < 9
-        present messages, with: Entities::MessageEntity, root: 'messages'
+        asset_application = Rails.application.assets_manifest.assets['application.js']
+        cur = present(messages, with: Entities::MessageEntity, root: 'messages')
+        cur[:version] = asset_application
       end
 
       desc 'Return channels'
