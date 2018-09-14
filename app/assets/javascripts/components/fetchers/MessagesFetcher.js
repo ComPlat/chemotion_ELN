@@ -1,7 +1,6 @@
 import 'whatwg-fetch';
 
 export default class MessagesFetcher {
-
   static configuration() {
     const promise = fetch('/api/v1/messages/config.json', {
       credentials: 'same-origin'

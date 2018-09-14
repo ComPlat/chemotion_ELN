@@ -7,6 +7,67 @@ import MessagesFetcher from '../fetchers/MessagesFetcher';
 import CollectionActions from '../actions/CollectionActions';
 import NotificationActions from '../actions/NotificationActions';
 
+const handleNotification = (nots, act, needCallback = true) => {
+  nots.forEach((n) => {
+    if (act === 'rem') {
+      NotificationActions.removeByUid(n.id);
+    }
+    if (act === 'add') {
+      const newText = n.content.data.split('\n').map((i) => { return <p key={`${new Date().getTime() + i}`}>{i}</p> });
+      const notification = {
+        title: `From ${n.sender_name} on ${n.updated_at}`,
+        message: newText,
+        level: 'warning',
+        dismissible: 'button',
+        autoDismiss: 0,
+        position: 'tr',
+        uid: n.id,
+        action: {
+          label: 'Got it',
+          callback() {
+            if (needCallback) {
+              const params = {
+                ids: [],
+              };
+              params.ids[0] = n.id;
+              MessagesFetcher.acknowledgedMessage(params)
+                .then((result) => {
+                  console.log(JSON.stringify(result));
+                });
+            }
+          }
+        }
+      };
+      NotificationActions.add(notification);
+      if (n.content.action) {
+        if (n.content.action === 'CollectionActions.fetchRemoteCollectionRoots') {
+          CollectionActions.fetchRemoteCollectionRoots();
+        }
+        if (n.content.action === 'CollectionActions.fetchSyncInCollectionRoots') {
+          CollectionActions.fetchSyncInCollectionRoots();
+        }
+      }
+    }
+  });
+};
+
+const createUpgradeNotification = (serverVersion, localVersion) => {
+  const content = ['Dear ELNer,', 'A new version has been released. Please reload this page to enjoy the latest updates.',
+    'Thank you and have a nice day  :)',
+    '--------------------------',
+    `Your version: ${localVersion}`, `Current version: ${serverVersion}`
+  ].join('\n');
+  const contentJson = { data: content };
+  const infoTime = new Date();
+  const not = {
+    id: -1,
+    sender_name: 'System Adminstrator',
+    updated_at: `${infoTime.getDate()}.${infoTime.getMonth()}.${infoTime.getFullYear()}, ${infoTime.getHours()}:${infoTime.getMinutes()}`,
+    content: contentJson
+  };
+  handleNotification([not], 'add', false);
+};
+
 export default class NoticeButton extends React.Component {
   constructor(props) {
     super(props);
@@ -17,6 +78,8 @@ export default class NoticeButton extends React.Component {
       messageAutoInterval: 6000,
       lastActivityTime: new Date(),
       idleTimeout: 12,
+      serverVersion: '',
+      localVersion: '',
     };
     this.envConfiguration = this.envConfiguration.bind(this);
     this.handleShow = this.handleShow.bind(this);
@@ -39,10 +102,19 @@ export default class NoticeButton extends React.Component {
     const remMessages = _.filter(nots, o => !_.includes(nextNotIds, o.id));
 
     if (Object.keys(newMessages).length > 0) {
-      this.handleNotification(newMessages, 'add');
+      handleNotification(newMessages, 'add');
     }
     if (Object.keys(remMessages).length > 0) {
-      this.handleNotification(remMessages, 'rem');
+      handleNotification(remMessages, 'rem');
+    }
+    if (nextState.serverVersion && nextState.localVersion
+      && nextState.serverVersion !== this.state.serverVersion
+      && nextState.serverVersion !== nextState.localVersion) {
+      const serverVer = nextState.serverVersion.substring(nextState.serverVersion.indexOf('-') + 1, nextState.serverVersion.indexOf('.js'));
+      const localVer = nextState.localVersion.substring(nextState.localVersion.indexOf('-') + 1, nextState.localVersion.indexOf('.js'));
+      if (serverVer !== localVer) {
+        createUpgradeNotification(serverVer, localVer);
+      }
     }
 
     return true;
@@ -58,12 +130,20 @@ export default class NoticeButton extends React.Component {
   }
 
   envConfiguration() {
+    // use 'application' (not 'application-') as keyword because there is a
+    // difference between production and development environment
+    const documentIndex = 'application';
+    const applicationTag = _.filter(document.scripts, s => s.src.indexOf(documentIndex) > -1);
+    const applicationTagValue = applicationTag[0].src.substr(applicationTag[0].src
+      .indexOf(documentIndex));
+
     MessagesFetcher.configuration()
       .then((result) => {
         this.setState({
           messageEnable: result.messageEnable === 'true',
           messageAutoInterval: result.messageAutoInterval,
-          idleTimeout: result.idleTimeout
+          idleTimeout: result.idleTimeout,
+          localVersion: applicationTagValue
         });
         const { messageEnable, messageAutoInterval } = this.state;
 
@@ -91,48 +171,6 @@ export default class NoticeButton extends React.Component {
 
   handleHide() {
     this.setState({ showModal: false });
-  }
-
-  handleNotification(nots, act) {
-    nots.forEach((n) => {
-      if (act === 'rem') {
-        NotificationActions.removeByUid(n.id);
-      }
-      if (act === 'add') {
-        const notification = {
-          title: `From ${n.sender_name} on ${n.updated_at}`,
-          message: n.content.data,
-          level: 'warning',
-          dismissible: 'button',
-          autoDismiss: 0,
-          position: 'tr',
-          uid: n.id,
-          action: {
-            label: 'Got it',
-            callback() {
-              const params = {
-                ids: [],
-              };
-              params.ids[0] = n.id;
-              MessagesFetcher.acknowledgedMessage(params)
-                .then((result) => {
-                  // console.log(JSON.stringify(result));
-                });
-            }
-          }
-        };
-        NotificationActions.add(notification);
-        if (n.content.action) {
-          if (n.content.action === 'CollectionActions.fetchRemoteCollectionRoots') {
-            CollectionActions.fetchRemoteCollectionRoots();
-          }
-          if (n.content.action === 'CollectionActions.fetchSyncInCollectionRoots') {
-            CollectionActions.fetchSyncInCollectionRoots();
-          }
-        }
-      }
-    });
-    this.setState({ });
   }
 
   messageAck(idx, ackAll) {
@@ -165,7 +203,7 @@ export default class NoticeButton extends React.Component {
       MessagesFetcher.fetchMessages(0)
         .then((result) => {
           result.messages.sort((a, b) => (a.id - b.id));
-          this.setState({ dbNotices: result.messages });
+          this.setState({ dbNotices: result.messages, serverVersion: result.version });
         });
     }
   }

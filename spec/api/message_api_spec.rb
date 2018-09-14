@@ -35,6 +35,9 @@ describe Chemotion::MessageAPI do
         messages = JSON.parse(response.body)['messages']
         expect(messages.length).to eq 0
       end
+      it 'get system version' do
+        expect(response.body).to include("version")
+      end
     end
 
     describe 'Return unread messages of the current user, u1' do
@@ -46,6 +49,9 @@ describe Chemotion::MessageAPI do
       it 'unread messages' do
         messages = JSON.parse(response.body)['messages']
         expect(messages.length).to eq 1
+      end
+      it 'get system version' do
+        expect(response.body).to include("version")
       end
     end
   end
