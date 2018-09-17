@@ -36,6 +36,8 @@ module Chemotion
           svg_file_name = "TMPFILE#{digest}.svg"
           svg_file_path = File.join('public','images', 'samples', svg_file_name)
           if (svg)
+            processor = Chemotion::ChemdrawSvgProcessor.new svg
+            svg = processor.centered_and_scaled_svg
             svg_file = File.new(svg_file_path, 'w+')
             svg_file.write(svg)
             svg_file.close
@@ -98,6 +100,7 @@ module Chemotion
 
         # write temporary SVG
         processor = Ketcherails::SVGProcessor.new svg
+
         svg = processor.centered_and_scaled_svg
 
         digest = Digest::SHA256.hexdigest molfile
@@ -110,7 +113,7 @@ module Chemotion
         svg_file.close
 
         molecule = Molecule.find_or_create_by_molfile(molfile)
-        
+
         molecule.attributes.merge({ temp_svg: svg_file_name })
       end
 
