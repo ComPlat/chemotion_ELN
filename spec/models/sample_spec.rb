@@ -209,9 +209,9 @@ MOLFILE
       end
 
       it 'returns correct values' do
-        expect(sample.amount_g.round(3)).to be(0.044)
-        expect(sample.amount_ml.round(3)).to be(1.991)
-        expect(sample.amount_mmol.round(3)).to be(2.449)
+        expect(sample.amount_g.round(3)).to eq(0.044)
+        expect(sample.amount_ml.round(3)).to eq(1.991)
+        expect(sample.amount_mmol.round(3)).to eq(2.449)
       end
     end
 
@@ -225,9 +225,9 @@ MOLFILE
       end
 
       it 'returns correct values' do
-        expect(sample.amount_g.round(3)).to be(0.0)
-        expect(sample.amount_ml.round(3)).to be(2.231)
-        expect(sample.amount_mmol.round(3)).to be(0.0)
+        expect(sample.amount_g.round(3)).to eq(0.0)
+        expect(sample.amount_ml.round(3)).to eq(2.231)
+        expect(sample.amount_mmol.round(3)).to eq(0.0)
       end
     end
 
@@ -241,9 +241,9 @@ MOLFILE
       end
 
       it 'returns correct values' do
-        expect(sample.amount_g.round(3)).to be(0.021)
-        expect(sample.amount_ml.round(3)).to be(0.0)
-        expect(sample.amount_mmol.round(3)).to be(1.19)
+        expect(sample.amount_g.round(3)).to eq(0.021)
+        expect(sample.amount_ml.round(3)).to eq(0.0)
+        expect(sample.amount_mmol.round(3)).to eq(1.19)
       end
     end
   end

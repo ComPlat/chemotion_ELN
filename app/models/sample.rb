@@ -12,6 +12,7 @@ class Sample < ActiveRecord::Base
   STEREO_REL = ['any', 'syn', 'anti', 'p-geminal', 'p-ortho', 'p-meta', 'p-para'].freeze
   STEREO_DEF = { 'abs' => 'any', 'rel' => 'any' }.freeze
 
+
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
     :molecule_iupac_name, :molecule_inchistring, :molecule_cano_smiles
@@ -146,6 +147,7 @@ class Sample < ActiveRecord::Base
   validates :creator, presence: true
 
   delegate :computed_props, to: :molecule, prefix: true
+  delegate :inchikey, to: :molecule, prefix: true, allow_nil: true
 
   def molecule_sum_formular
     self.molecule ? self.molecule.sum_formular : ""
@@ -159,16 +161,8 @@ class Sample < ActiveRecord::Base
     self.molecule ? self.molecule.inchistring : ""
   end
 
-  def molecule_inchikey
-    self.molecule ? self.molecule.inchikey : ""
-  end
-
   def molecule_cano_smiles
     self.molecule ? self.molecule.cano_smiles : ""
-  end
-
-  def molecule_id
-    self.molecule ? self.molecule.id : nil
   end
 
   def analyses
@@ -234,19 +228,14 @@ class Sample < ActiveRecord::Base
 
   def find_or_create_molecule_based_on_inchikey
     return unless molfile.present?
-
-    if molecule_inchikey.present?
-      self.molecule = Molecule.find_by(inchikey: molecule_inchikey)
-    end
-    unless self.molecule.present?
-      babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
-      inchikey = babel_info[:inchikey]
-      return unless  inchikey.present?
-      is_partial = babel_info[:is_partial]
-      molfile_version = babel_info[:version]
-      if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
-        self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
-      end
+    return if molecule.present?
+    babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+    inchikey = babel_info[:inchikey]
+    return unless inchikey.present?
+    is_partial = babel_info[:is_partial]
+    molfile_version = babel_info[:version]
+    if molecule&.inchikey != inchikey || molecule.is_partial != is_partial
+      self.molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
     end
   end
 

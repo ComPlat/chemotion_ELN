@@ -12,7 +12,7 @@ FactoryBot.define do
     callback(:before_create) do |sample|
       sample.creator = FactoryBot.build(:user) unless sample.creator
       sample.collections << FactoryBot.build(:collection) #if sample.collections.blank?
-      sample.molecule = FactoryBot.build(:molecule) unless sample.molecule
+      sample.molecule = FactoryBot.create(:molecule) unless (sample.molecule || sample.molfile)
       unless sample.container
         sample.container = FactoryBot.create(:container, :with_analysis)
       end

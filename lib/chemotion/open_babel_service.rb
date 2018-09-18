@@ -50,16 +50,13 @@ M  END
   end
 
   def self.molecule_info_from_structure(structure, format = 'mol')
-    is_partial = nil
+    is_partial = false
+    mf = nil
     if format == 'mol'
-
-      ink = inchikey_from_molfile(structure)
+      version = molfile_version(structure)
+      is_partial = molfile_has_R(structure, version)
       molfile = structure
-      version = molfile_version(molfile)
-      is_partial = molfile_has_R(molfile, version)
-
-      molfile = molfile_skip_R(molfile, version) if is_partial
-
+      molfile = molfile_skip_R(structure, version) if is_partial
       mf = mofile_clear_coord_bonds(molfile, version)
       if mf
         version += ' T9'
@@ -72,7 +69,7 @@ M  END
     c.set_in_format format
 
     m = OpenBabel::OBMol.new
-    c.read_string m, structure
+    c.read_string m, mf || structure
 
     c.set_out_format 'smi'
     smiles = c.write_string(m, false).to_s.gsub(/\s.*/m, "").strip
@@ -111,7 +108,9 @@ M  END
       fp: fingerprint_from_molfile(mf || molfile),
       molfile_version: version,
       is_partial: is_partial,
-      molfile: (format != 'mol' && molfile) ||  (is_partial && molfile)
+      # TODO we could return 'molfile' in any case
+      # molfile: (format != 'mol' && molfile) || (is_partial && molfile)
+      molfile: molfile
     }
 
   end

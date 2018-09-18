@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 describe 'Reporter::Docx::Document instance' do
+  let(:svg_fixt_path) {  Rails.root.join("spec", "fixtures", "images", "molecule.svg") }
+  let(:svg_image_path) {  Rails.root.join("public", "images", "molecules", "molecule.svg") }
+
   let!(:user) { create(:user) }
   let!(:t1) { "title 1" }
   let!(:t2) { "title 2" }
@@ -15,6 +18,8 @@ describe 'Reporter::Docx::Document instance' do
                                   permission_level: 10) }
 
   before do
+    `ln -s #{svg_fixt_path} #{Rails.root.join("public", "images", "molecules")} ` unless File.exist?(svg_image_path)
+
     allow_any_instance_of(WardenAuthentication).to receive(:current_user).and_return(user)
     CollectionsSample.create!(sample: s1, collection: c)
     CollectionsReaction.create!(reaction: r1, collection: c)
@@ -48,5 +53,9 @@ describe 'Reporter::Docx::Document instance' do
     it "has correct sample titles" do
       expect(@content[2][:title]).to include(s1.molecule_iupac_name)
     end
+  end
+  after(:all) do
+    fp = Rails.root.join("public", "images", "molecules", "molecule.svg")
+    FileUtils.rm(fp, :force => true) if File.exist?(fp)
   end
 end

@@ -3,8 +3,8 @@ FactoryBot.define do
     sequence(:inchikey) { |i| "XLYOFNOQVPJJNP-UHFFFAOYSA-#{i}" }
     inchistring       "inchistring"
     density           0.12345
-    molecular_weight  0.54321
-    #molfile           "\n  Ketcher 05301616272D 1   1.00000     0.00000     0\n\n  2  1  0     0  0            999 V2000\n    1.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  1  2  1  0     0  0\nM  END\n"
+    molecular_weight  18.0153
+    exact_molecular_weight 18.0106
     molfile           <<-MOLFILE
 H2O Water 7732185
 ##CCCBDB 8251509:58
@@ -19,9 +19,9 @@ M  END
 MOLFILE
     melting_point     150.00
     boiling_point     100.00
-    sum_formular      "sum_formular"
-    names             %w(name1 name2 name3)
+    sum_formular      "H2O"
+    names             %w(name1  sum_formular iupac_name)
     iupac_name        "iupac_name"
-    molecule_svg_file "molecule_svg_file"
+    molecule_svg_file "molecule.svg"
   end
 end

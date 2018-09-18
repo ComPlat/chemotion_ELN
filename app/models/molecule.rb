@@ -41,8 +41,7 @@ class Molecule < ActiveRecord::Base
     joins(:samples).joins("inner join wells w on w.sample_id = samples.id" ).uniq
   }
 
-  def self.find_or_create_by_molfile(molfile, layout = nil, smiles = nil, **babel_info)
-    layout = molfile unless layout
+  def self.find_or_create_by_molfile(molfile, **babel_info)
     unless babel_info && babel_info[:inchikey]
       babel_info = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
     end
@@ -52,10 +51,9 @@ class Molecule < ActiveRecord::Base
     partial_molfile = babel_info[:molfile]
     molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      molecule.molfile = partial_molfile || layout
-      molecule.assign_molecule_data(babel_info, pubchem_info, smiles)
+      molecule.molfile = is_partial && partial_molfile || molfile
+      molecule.assign_molecule_data(babel_info, pubchem_info)
     end
-    molecule.molfile = partial_molfile || layout
     molecule
   end
 
@@ -87,7 +85,7 @@ class Molecule < ActiveRecord::Base
     self.save!
   end
 
-  def assign_molecule_data(babel_info, pubchem_info = {}, smiles = nil)
+  def assign_molecule_data(babel_info, pubchem_info = {})
     self.inchistring = babel_info[:inchi]
     self.sum_formular = babel_info[:formula]
     self.molecular_weight = babel_info[:mol_wt]
@@ -99,8 +97,7 @@ class Molecule < ActiveRecord::Base
 
     self.attach_svg babel_info[:svg]
 
-    self.cano_smiles = babel_info[:cano_smiles] unless smiles
-    self.cano_smiles = smiles if smiles
+    self.cano_smiles = babel_info[:cano_smiles]
     self.molfile_version = babel_info[:molfile_version]
     self.is_partial = babel_info[:is_partial]
   end

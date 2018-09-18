@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 describe 'Reporter::Docx::DetailReaction instance' do
+  let(:svg_fixt_path) {  Rails.root.join("spec", "fixtures", "images", "molecule.svg") }
+  let(:svg_image_path) {  Rails.root.join("public", "images", "molecules", "molecule.svg") }
+
   let(:tit)   { 'According to General Procedure N' }
   let(:sta)   { 'Planned' }
   let(:sol)   { 'correct solvent' }
@@ -76,7 +79,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
   end
   let!(:serial) { '1a' }
   let!(:mol_serials) do
-    mol = s2.molecule
+    mol = s1.molecule
+    mol2 = s2.molecule
+    mol3 = s3.molecule
     [
       {
         'mol' => {
@@ -84,6 +89,24 @@ describe 'Reporter::Docx::DetailReaction instance' do
           'svgPath' => mol.molecule_svg_file,
           'sumFormula' => mol.sum_formular,
           'iupacName' => mol.iupac_name
+        },
+        'value' => serial
+      },
+      {
+        'mol' => {
+          'id' => mol2.id,
+          'svgPath' => mol2.molecule_svg_file,
+          'sumFormula' => mol2.sum_formular,
+          'iupacName' => mol2.iupac_name
+        },
+        'value' => serial
+      },
+      {
+        'mol' => {
+          'id' => mol3.id,
+          'svgPath' => mol3.molecule_svg_file,
+          'sumFormula' => mol3.sum_formular,
+          'iupacName' => mol3.iupac_name
         },
         'value' => serial
       }
@@ -96,6 +119,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
                                         si_rxn_settings: all_si_rxn_settings)
   end
 
+  before do
+    `ln -s #{svg_fixt_path} #{Rails.root.join("public", "images", "molecules")} ` unless File.exist?(svg_image_path)
+  end
   context '.content' do
     let(:content) { target.content }
 
@@ -205,9 +231,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"H, 11.19; O, 88.81"},
           {"insert"=>"."},
           {"insert"=>"\n"},
-          {"insert"=>"Smiles: #{s2.molecule.cano_smiles}"},
+          {"insert"=>"Smiles: #{s3.molecule.cano_smiles}"},
           {"insert"=>"\n"},
-          {"insert"=>"InChIKey: #{s2.molecule.inchikey}"},
+          {"insert"=>"InChIKey: #{s3.molecule.inchikey}"},
           {"insert"=>"\n"},
           {"insert"=>"\n"}
         ]
@@ -218,7 +244,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"insert"=>"{A|"},
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
           {"insert"=>"} "},
-          {"attributes"=>{"font-size"=>12}, "insert"=>"#{s2.molecule_name_hash[:label]}"},
+          {"attributes"=>{"font-size"=>12}, "insert"=>"#{s1.molecule_name_hash[:label]}"},
           {"insert"=>" (1.00 g, 55.5 mmol, 0.880 equiv); "},
           {"insert"=>"{S1"},
           {"insert"=>"} "},
@@ -251,5 +277,9 @@ describe 'Reporter::Docx::DetailReaction instance' do
         ]
       )
     end
+  end
+  after(:all) do
+    fp = Rails.root.join("public", "images", "molecules", "molecule.svg")
+    FileUtils.rm(fp, :force => true) if File.exist?(fp)
   end
 end

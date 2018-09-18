@@ -15,18 +15,16 @@ module Chemotion
         post do
           smiles = params[:smiles]
           svg = params[:svg_file]
-          layout = params[:layout]
 
-          inchikey = OpenBabelService.smiles_to_inchikey(smiles)
+          babel_info = OpenBabelService.molecule_info_from_structure(smiles,'smi')
+          inchikey = babel_info[:inchikey]
           return {} unless inchikey
           molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
 
           unless molecule
-            babel_info = OpenBabelService.molecule_info_from_structure(smiles,'smi')
             molfile = babel_info[:molfile] if babel_info
-            molfile = OpenBabelService.smiles_to_molfile smiles unless molfile
             return {} unless molfile
-            molecule = Molecule.find_or_create_by_molfile(molfile, layout, smiles)
+            molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
           end
           return unless molecule
 

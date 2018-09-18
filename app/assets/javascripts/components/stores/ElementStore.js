@@ -584,7 +584,7 @@ class ElementStore {
   handleFetchMoleculeByMolfile(result) {
     // Attention: This is intended to update SampleDetails
     this.state.currentElement.molecule = result;
-    this.state.currentElement.molfile = result.molfile;
+    // this.state.currentElement.molfile = result.molfile;
     this.state.currentElement.molecule_id = result.id;
     this.handleRefreshElements('sample');
   }

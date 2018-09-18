@@ -263,7 +263,10 @@ module Chemotion
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
-        optional :molecule, type: Hash, desc: "Sample molecule"
+        # optional :molecule, type: Hash, desc: "Sample molecule" do
+          # optional :id, type: Integer
+        # end
+        optional :molecule_id, type: Integer
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
@@ -275,11 +278,7 @@ module Chemotion
           optional :abs, type: String, values: Sample::STEREO_ABS, default: Sample::STEREO_DEF['abs']
           optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
         end
-        optional :molecule_id, type: Integer
         optional :molecule_name_id, type: Integer
-        optional :inchistring, type: String
-        optional :inchikey, type: String
-        optional :cano_smiles, type: String
         requires :container, type: Hash
         #use :root_container_params
       end
@@ -309,10 +308,6 @@ module Chemotion
               "#{prop}_attributes".to_sym => prop_value
             ) unless prop_value.blank?
           end
-
-          attributes.delete(:cano_smiles);
-          attributes.delete(:inchistring);
-          attributes.delete(:inchikey);
 
           @sample.update!(attributes)
 
@@ -344,7 +339,7 @@ module Chemotion
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
-        optional :molecule, type: Hash, desc: "Sample molecule"
+        #optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
