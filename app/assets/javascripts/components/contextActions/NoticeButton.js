@@ -6,6 +6,7 @@ import _ from 'lodash';
 import MessagesFetcher from '../fetchers/MessagesFetcher';
 import CollectionActions from '../actions/CollectionActions';
 import NotificationActions from '../actions/NotificationActions';
+import InboxActions from '../actions/InboxActions';
 import ReportActions from '../actions/ReportActions';
 
 const handleNotification = (nots, act, needCallback = true) => {
@@ -46,6 +47,9 @@ const handleNotification = (nots, act, needCallback = true) => {
         }
         if (n.content.action === 'CollectionActions.fetchSyncInCollectionRoots') {
           CollectionActions.fetchSyncInCollectionRoots();
+        }
+        if (n.content.action === 'InboxActions.fetchInbox') {
+          InboxActions.fetchInbox();
         }
         if (n.content.action === 'ReportActions.updateProcessQueue') {
           const ids = [];

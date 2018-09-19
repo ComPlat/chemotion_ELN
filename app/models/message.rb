@@ -3,6 +3,7 @@
 # Publish-Subscription Model
 class Message < ActiveRecord::Base
   belongs_to :channel
+  scope :where_content, ->(field, value) { where("content ->> ? = ?", field, value) }
 
   def self.create_msg_notification(channel_id, p_content, user_id, p_user_ids)
     channel = Channel.find(channel_id)
