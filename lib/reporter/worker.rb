@@ -57,6 +57,16 @@ module Reporter
           generated_at: Time.zone.now
         )
       end
+
+      channel = Channel.find_by(subject: Channel::REPORT_GENERATOR_NOTIFICATION)
+      return if channel.nil?
+      content = channel.msg_template
+      return if (content.nil?)
+      content['data'] = content['data'] % {:report_name => @full_filename}
+      content['report_id'] = content['report_id'] % {:report_id => @report.id}
+
+      message = Message.create_msg_notification(channel.id,content,@author.id, [@author.id])
+
     ensure
       tmp.unlink
     end
