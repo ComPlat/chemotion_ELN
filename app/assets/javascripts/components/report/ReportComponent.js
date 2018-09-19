@@ -40,23 +40,9 @@ const ResetBtn = () => (
   </Button>
 );
 
-const updateProcessQueue = (updateQueue) => {
-  setTimeout(updateQueue, 1000 * 30);
-  setTimeout(updateQueue, 1000 * 60);
-  setTimeout(updateQueue, 1000 * 90);
-  setTimeout(updateQueue, 1000 * 120);
-  setTimeout(updateQueue, 1000 * 150);
-  setTimeout(updateQueue, 1000 * 180);
-  setTimeout(updateQueue, 1000 * 210);
-  setTimeout(updateQueue, 1000 * 240);
-  setTimeout(updateQueue, 1000 * 270);
-  setTimeout(updateQueue, 1000 * 300);
-};
-
 const generateReport = (allState, updateQueue) => {
   const report = paramize(allState);
   ReportActions.generateReport(report);
-  setTimeout(updateProcessQueue(updateQueue), 1000 * 10);
 };
 
 const GenerateReportBtn = ({ allState, updateQueue }) => {

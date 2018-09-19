@@ -8,4 +8,6 @@ class Channel < ActiveRecord::Base
   SYSTEM_MAINTENANCE = 'System Maintenance'
   SHARED_COLLECTION_WITH_ME = 'Shared Collection With Me'
   SYNCHRONIZED_COLLECTION_WITH_ME = 'Synchronized Collection With Me'
+
+  REPORT_GENERATOR_NOTIFICATION = 'Report Generator Notification'
 end
