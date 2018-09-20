@@ -68,11 +68,18 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
     `Your version: ${localVersion}`, `Current version: ${serverVersion}`
   ].join('\n');
   const contentJson = { data: content };
-  const infoTime = new Date();
+  const options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  };
+  const infoTimeString = new Date().toLocaleDateString('de-DE', options);
   const not = {
     id: -1,
     sender_name: 'System Adminstrator',
-    updated_at: `${infoTime.getDate()}.${infoTime.getMonth()}.${infoTime.getFullYear()}, ${infoTime.getHours()}:${infoTime.getMinutes()}`,
+    updated_at: `${infoTimeString}`,
     content: contentJson
   };
   handleNotification([not], 'add', false);
