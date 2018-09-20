@@ -18,7 +18,7 @@ feature 'Collection management' do
       find('div.take-ownership-btn').click
 
       # press Add(plus) button to add collection
-      find('div.root-actions button:nth-child(2)').click
+      find('div.root-actions').find(:xpath, '..').all('button')[1].click
 
       # input collection name
       factory_collection_name = 'Hello Collection'
@@ -27,7 +27,7 @@ feature 'Collection management' do
       new_collection.set(factory_collection_name)
 
       # press Update button to save
-      find('div.root-actions button:nth-child(1)').click
+      find('div.root-actions').find(:xpath, '..').all('button')[0].click
 
       # except
       expect(find('.tree-view', text: factory_collection_name).text).to eq(factory_collection_name)
@@ -51,7 +51,7 @@ feature 'Collection management' do
       find("div#collection-management-tab-pane-0 button[class='btn btn-xs btn-danger']:last-of-type").click
 
       # press Update button to save
-      find('div.root-actions button:nth-child(1)').click
+      find('div.root-actions').find(:xpath, '..').all('button')[0].click
 
       # except after deletion
       expect(page).not_to have_content(factory_collection_name)

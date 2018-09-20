@@ -57,15 +57,15 @@ class DatacollectorFile < DatacollectorObject
     content['data'] = content['data'] % {:device_name => helper.sender_container.name }
 
     # check if it is a new message content
-    messages = Message.where(channel_id: channel.id, created_by: 26).where_content('data', content['data']);
+    messages = Message.where(channel_id: channel.id, created_by: helper.sender.id).where_content('data', content['data']);
     if messages.empty?
       # message content does not exist, create a new message and notification
-      message = Message.create_msg_notification(channel.id, content, 26, [recipient.id])
+      message = Message.create_msg_notification(channel.id, content, helper.sender.id, [recipient.id])
     else
       # check if the notifications are acknowledged
       not_ack_notifications = Notification.where('user_id = (?) AND is_ack = (?) AND message_id in (?)', recipient.id, 0, messages.pluck(:id))
       if not_ack_notifications.empty?
-        message = Message.create_msg_notification(channel.id, content, 26, [recipient.id])
+        message = Message.create_msg_notification(channel.id, content, helper.sender.id, [recipient.id])
       end
     end
 
