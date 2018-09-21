@@ -29,10 +29,11 @@ module Entities
     end
 
     def json_tree(attachments, containers)
+
       containers.map do |container, subcontainers|
-        current_attachments = attachments.select do |attach|
-          attach.container_id == container.id
-        end
+        current_attachments = container.container_type == 'dataset' && attachments.select do |attach|
+          attach.attachable_id == container.id
+        end || []
         {
           id: container.id,
           name: container.name,
