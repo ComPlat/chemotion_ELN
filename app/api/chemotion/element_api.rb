@@ -78,7 +78,7 @@ module Chemotion
 
         # explicit inner join on reactions_samples to get soft deleted reactions_samples entries
         sql_join = "inner join reactions_samples on reactions_samples.sample_id = samples.id"
-        sql_join += " and reactions_samples.type ('ReactionsSolventSample','ReactionsReactantSample')" unless params[:options][:deleteSubsamples]
+        sql_join += " and reactions_samples.type in ('ReactionsSolventSample','ReactionsReactantSample')" unless params[:options][:deleteSubsamples]
         deleted['sample'] += Sample.joins(sql_join).joins(:collections)
           .where(collections: { id: @collection.id }, reactions_samples: { reaction_id: deleted['reaction'] })
           .destroy_all.map(&:id)
