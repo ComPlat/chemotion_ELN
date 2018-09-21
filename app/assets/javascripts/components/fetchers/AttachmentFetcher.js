@@ -1,6 +1,14 @@
 import 'whatwg-fetch';
 import Attachment from '../models/Attachment';
 
+const fileFromAttachment = (attachment, containerId) => {
+  const { file } = attachment;
+  file.id = attachment.id;
+  file.attachable_id = containerId;
+  file.attachable_type = 'Container';
+  return file;
+};
+
 export default class AttachmentFetcher {
 
   static fetchThumbnail(params) {
@@ -38,26 +46,19 @@ export default class AttachmentFetcher {
     return promise;
   }
 
-  static getFileListfrom(container){
-    var allFiles = new Array();
+  static getFileListfrom(container) {
+    const allFiles = [];
     this.filterAllAttachments(allFiles, container.children);
     return allFiles
   }
 
-  static filterAllAttachments(files, containers){
+  static filterAllAttachments(files, containers) {
+    containers.forEach((container) => {
+      const tmpArray = (container.attachments || []).filter(a => a.is_new)
+        .map(a => fileFromAttachment(a, container.id));
+      files.push.apply(files, tmpArray);
 
-    containers.forEach( (container) => {
-      const fileFromAttachment = function(attachment) {
-        let file = attachment.file;
-        file.id = attachment.id;
-        file.attachable_id = container.id;
-        file.attachable_type = 'Container';
-        return file;
-      }
-      var tmpArray = container.attachments.filter(a => a.is_new).map(a => fileFromAttachment(a));
-      files.push.apply(files, tmpArray)
-
-      if(container.children.length > 0){
+      if (container.children && container.children.length > 0) {
         this.filterAllAttachments(files, container.children);
       }
     });

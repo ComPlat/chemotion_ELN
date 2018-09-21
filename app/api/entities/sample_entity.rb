@@ -42,9 +42,9 @@ module Entities
       include SampleLevelEntity
       define_restricted_methods_for_level(3)
     end
-  end
 
-  class SampleEntity::Level10 < SampleEntity
-    include SamplePolicySerializable
+    class Level10 < SampleEntity
+      include SamplePolicySerializable
+    end
   end
 end
