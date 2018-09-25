@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Label } from 'react-bootstrap';
 
 function ListProps({ label, listProps }) {
@@ -29,8 +30,8 @@ function ListProps({ label, listProps }) {
 }
 
 ListProps.propTypes = {
-  label: React.PropTypes.string.isRequired,
-  listProps: React.PropTypes.object.isRequired
+  label: PropTypes.string.isRequired,
+  listProps: PropTypes.object.isRequired
 };
 
 export default ListProps;

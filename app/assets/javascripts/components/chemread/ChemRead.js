@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   PanelGroup, Panel, ListGroup, ListGroupItem, Grid, Col, Radio
 } from 'react-bootstrap';
@@ -34,10 +35,10 @@ class ClickableBtn extends React.Component {
 }
 
 ClickableBtn.propTypes = {
-  onClick: React.PropTypes.func.isRequired,
-  text: React.PropTypes.string.isRequired,
-  style: React.PropTypes.object,
-  obj: React.PropTypes.object.isRequired
+  onClick: PropTypes.func.isRequired,
+  text: PropTypes.string.isRequired,
+  style: PropTypes.object,
+  obj: PropTypes.object.isRequired
 };
 
 ClickableBtn.defaultProps = {
@@ -174,16 +175,16 @@ function ChemRead({
 }
 
 ChemRead.propTypes = {
-  files: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  selected: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  addFile: React.PropTypes.func.isRequired,
-  removeFile: React.PropTypes.func.isRequired,
-  selectSmi: React.PropTypes.func.isRequired,
-  removeSmi: React.PropTypes.func.isRequired,
-  changeType: React.PropTypes.func.isRequired,
-  editSmiles: React.PropTypes.func.isRequired,
-  exportSmi: React.PropTypes.func.isRequired,
-  getMol: React.PropTypes.bool.isRequired
+  files: PropTypes.arrayOf(PropTypes.object).isRequired,
+  selected: PropTypes.arrayOf(PropTypes.object).isRequired,
+  addFile: PropTypes.func.isRequired,
+  removeFile: PropTypes.func.isRequired,
+  selectSmi: PropTypes.func.isRequired,
+  removeSmi: PropTypes.func.isRequired,
+  changeType: PropTypes.func.isRequired,
+  editSmiles: PropTypes.func.isRequired,
+  exportSmi: PropTypes.func.isRequired,
+  getMol: PropTypes.bool.isRequired
 };
 
 export default ChemRead;

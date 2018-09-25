@@ -1,8 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { ButtonGroup, OverlayTrigger, DropdownButton, Button, MenuItem } from 'react-bootstrap';
+import { ButtonGroup } from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
-import UIActions from './../actions/UIActions'
 import CreateButton from './CreateButton';
 import ReportUtilButton from './ReportUtilButton';
 import ExportImportButton from './ExportImportButton';

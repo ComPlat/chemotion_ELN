@@ -1,5 +1,7 @@
-import React, {Component, PropTypes} from 'react';
-import {FormControl, Button} from 'react-bootstrap';
+import React, { Component } from 'react';
+// import PropTypes from 'prop-types';
+import { FormControl } from 'react-bootstrap';
+
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
 
 const source = {

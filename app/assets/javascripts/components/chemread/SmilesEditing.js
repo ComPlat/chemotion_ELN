@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { FormGroup, ControlLabel } from 'react-bootstrap';
 
 import { catalyst } from '../staticDropdownOptions/reagents/catalyst';
@@ -116,9 +117,9 @@ class SmilesEditing extends React.Component {
 }
 
 SmilesEditing.propTypes = {
-  editFunc: React.PropTypes.func.isRequired,
-  value: React.PropTypes.string,
-  disabled: React.PropTypes.bool
+  editFunc: PropTypes.func.isRequired,
+  value: PropTypes.string,
+  disabled: PropTypes.bool
 };
 
 SmilesEditing.defaultProps = {

@@ -1,4 +1,5 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {PanelGroup, Panel, Button, Row, Col} from 'react-bootstrap';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
@@ -160,6 +161,6 @@ export default class WellplateDetailsContainers extends Component {
 }
 
 WellplateDetailsContainers.propTypes = {
-  readOnly: React.PropTypes.bool,
-  parent: React.PropTypes.object,
+  readOnly: PropTypes.bool,
+  parent: PropTypes.object,
 };

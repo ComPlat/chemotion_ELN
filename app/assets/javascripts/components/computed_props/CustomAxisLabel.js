@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 function CustomAxisLabel({
   marginTop, marginLeft, innerWidth, innerHeight, title, xAxis
@@ -27,8 +28,8 @@ function CustomAxisLabel({
 }
 
 CustomAxisLabel.propTypes = {
-  title: React.PropTypes.string.isRequired,
-  xAxis: React.PropTypes.bool.isRequired,
+  title: PropTypes.string.isRequired,
+  xAxis: PropTypes.bool.isRequired,
 };
 
 CustomAxisLabel.defaultProps = {

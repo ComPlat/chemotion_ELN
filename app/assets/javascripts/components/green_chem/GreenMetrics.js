@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
 import Reaction from '../models/Reaction';
@@ -153,5 +154,5 @@ export default class GreenMetrics extends React.Component {
 }
 
 GreenMetrics.propTypes = {
-  reaction: React.PropTypes.instanceOf(Reaction).isRequired
+  reaction: PropTypes.instanceOf(Reaction).isRequired
 };

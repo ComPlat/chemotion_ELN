@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom'
 import Quill from 'quill'
 import _ from 'lodash';
@@ -74,5 +75,5 @@ export default class QuillViewer extends React.Component {
 }
 
 QuillViewer.propTypes = {
-  value: React.PropTypes.object,
+  value: PropTypes.object,
 }

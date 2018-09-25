@@ -1,6 +1,6 @@
-import React from 'react'
-import {Table, FormControl} from 'react-bootstrap'
-import ReactDOM from 'react-dom'
+import React from 'react';
+// import PropTypes from 'prop-types';
+import { Table } from 'react-bootstrap';
 
 import EditableCell from './EditableCell'
 
@@ -203,7 +203,7 @@ export default class EditableTable extends React.Component {
 }
 
 // EditableTable.propTypes = {
-//   onChangeHandler: React.PropTypes.func.isRequired,
-//   onCellValueChange: React.PropTypes.func.isRequired,
-//   onKeyDown: React.PropTypes.func.isRequired
+//   onChangeHandler: PropTypes.func.isRequired,
+//   onCellValueChange: PropTypes.func.isRequired,
+//   onKeyDown: PropTypes.func.isRequired
 // }

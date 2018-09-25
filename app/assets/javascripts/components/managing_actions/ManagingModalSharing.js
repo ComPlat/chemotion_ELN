@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 import Select from 'react-select';
 
@@ -367,16 +368,16 @@ export default class ManagingModalSharing extends React.Component {
 }
 
 ManagingModalSharing.propTypes = {
-          collectionId: React.PropTypes.number,
-          collAction: React.PropTypes.string,
-          selectUsers: React.PropTypes.bool,
-          permissionLevel: React.PropTypes.number,
-          sampleDetailLevel: React.PropTypes.number,
-          reactionDetailLevel: React.PropTypes.number,
-          wellplateDetailLevel: React.PropTypes.number,
-          screenDetailLevel: React.PropTypes.number,
-          onHide: React.PropTypes.func.isRequired,
-          listSharedCollections: React.PropTypes.bool
+          collectionId: PropTypes.number,
+          collAction: PropTypes.string,
+          selectUsers: PropTypes.bool,
+          permissionLevel: PropTypes.number,
+          sampleDetailLevel: PropTypes.number,
+          reactionDetailLevel: PropTypes.number,
+          wellplateDetailLevel: PropTypes.number,
+          screenDetailLevel: PropTypes.number,
+          onHide: PropTypes.func.isRequired,
+          listSharedCollections: PropTypes.bool
 };
 
 ManagingModalSharing.defaultProps = {

@@ -1,6 +1,9 @@
-import React, {Component} from 'react';
-import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Glyphicon, Row, Col} from 'react-bootstrap';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import {
+  FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Glyphicon, Row, Col
+} from 'react-bootstrap';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 import SVG from 'react-inlinesvg';
@@ -222,6 +225,6 @@ export default class ResearchPlanDetails extends Component {
 }
 
 ResearchPlanDetails.propTypes = {
-  research_plan: React.PropTypes.object,
-  toggleFullScreen: React.PropTypes.func,
+  research_plan: PropTypes.object,
+  toggleFullScreen: PropTypes.func,
 }

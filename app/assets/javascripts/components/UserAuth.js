@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types'
 import 'whatwg-fetch';
 import { ButtonGroup, OverlayTrigger, Popover, Nav, NavDropdown, NavItem, MenuItem, Glyphicon, Modal, Button, Table, Panel, Form, FormControl, FormGroup, ControlLabel } from 'react-bootstrap';
 import Select from 'react-select';
@@ -529,6 +530,6 @@ export default class UserAuth extends Component {
 }
 
 UserAuth.propTypes = {
-  currentUser: React.PropTypes.object,
-  selectUsers: React.PropTypes.bool,
+  currentUser: PropTypes.object,
+  selectUsers: PropTypes.bool,
 }

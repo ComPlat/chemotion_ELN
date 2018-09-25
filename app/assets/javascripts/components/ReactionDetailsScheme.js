@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {
   ListGroup, ListGroupItem, FormGroup, ControlLabel,
   Row, Col, Collapse, Button, ButtonGroup,
@@ -600,7 +601,7 @@ export default class ReactionDetailsScheme extends Component {
 }
 
 ReactionDetailsScheme.propTypes = {
-  reaction: React.PropTypes.instanceOf(Reaction).isRequired,
-  onReactionChange: React.PropTypes.func.isRequired,
-  onInputChange: React.PropTypes.func.isRequired
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  onReactionChange: PropTypes.func.isRequired,
+  onInputChange: PropTypes.func.isRequired
 };

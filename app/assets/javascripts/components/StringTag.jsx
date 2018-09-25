@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 function StringTag({ string }) {
   const arr = string.match(/<\s*(\w+\b)(?:(?!<\s*\/\s*\1\b)[\s\S])*<\s*\/\s*\1\s*>|[^<]+/g);
@@ -17,7 +18,7 @@ function StringTag({ string }) {
 }
 
 StringTag.propTypes = {
-  string: React.PropTypes.string.isRequired,
+  string: PropTypes.string.isRequired,
 };
 
 export default StringTag;

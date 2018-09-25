@@ -1,5 +1,6 @@
-import React, {Component} from 'react';
-import {PanelGroup, Panel, Button} from 'react-bootstrap';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { PanelGroup, Panel, Button } from 'react-bootstrap';
 
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
@@ -155,6 +156,6 @@ export default class ScreenDetailsContainers extends Component {
 }
 
 ScreenDetailsContainers.propTypes = {
-  readOnly: React.PropTypes.bool,
-  parent: React.PropTypes.object,
+  readOnly: PropTypes.bool,
+  parent: PropTypes.object,
 };

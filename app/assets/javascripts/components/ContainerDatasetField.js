@@ -1,7 +1,8 @@
-import React, {Component, PropTypes} from 'react';
-import {Button, ButtonToolbar} from 'react-bootstrap';
-import InboxActions from './actions/InboxActions';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { Button, ButtonToolbar } from 'react-bootstrap';
 import { DropTarget } from 'react-dnd';
+import InboxActions from './actions/InboxActions';
 import DragDropItemTypes from './DragDropItemTypes';
 import AttachmentFetcher from './fetchers/AttachmentFetcher';
 

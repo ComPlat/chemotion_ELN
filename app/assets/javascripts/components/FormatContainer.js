@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import _ from 'lodash';
 import FormatComponent from './FormatComponent';
 import ReportActions from './actions/ReportActions';

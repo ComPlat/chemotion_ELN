@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { FormControl, ControlLabel, InputGroup, Button } from 'react-bootstrap';
 import { metPreConv, metPrefSymbols } from './utils/metricPrefix';
 
@@ -209,16 +210,16 @@ export default class NumeralInputWithUnitsCompo extends Component {
 }
 
 NumeralInputWithUnitsCompo.propTypes = {
-  onChange: React.PropTypes.func,
-  unit: React.PropTypes.string,
-  units: React.PropTypes.array,
-  metricPrefix: React.PropTypes.string,
-  metricPrefixes: React.PropTypes.array,
-  precision: React.PropTypes.number,
-  disabled: React.PropTypes.bool,
-  label: React.PropTypes.node,
-  bsSize: React.PropTypes.string,
-  bsStyle: React.PropTypes.string,
+  onChange: PropTypes.func,
+  unit: PropTypes.string,
+  units: PropTypes.array,
+  metricPrefix: PropTypes.string,
+  metricPrefixes: PropTypes.array,
+  precision: PropTypes.number,
+  disabled: PropTypes.bool,
+  label: PropTypes.node,
+  bsSize: PropTypes.string,
+  bsStyle: PropTypes.string,
 };
 
 NumeralInputWithUnitsCompo.defaultProps = {

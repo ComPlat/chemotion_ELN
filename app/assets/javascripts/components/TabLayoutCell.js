@@ -1,6 +1,7 @@
-import React, {Component, PropTypes} from 'react';
-import {findDOMNode} from 'react-dom';
-import {DragSource, DropTarget} from 'react-dnd';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import { findDOMNode } from 'react-dom';
+import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 
 import DragDropItemTypes from './DragDropItemTypes';

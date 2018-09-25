@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   XYPlot, HorizontalGridLines, VerticalGridLines,
   XAxis, YAxis, Hint, DiscreteColorLegend, MarkSeries,
@@ -111,10 +112,10 @@ export default class ComputedPropsGraph extends React.Component {
 }
 
 ComputedPropsGraph.propTypes = {
-  data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  show: React.PropTypes.bool.isRequired,
-  xAxis: React.PropTypes.object.isRequired,
-  yAxis: React.PropTypes.object.isRequired,
-  referencePoints: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  // referenceDesc: React.PropTypes.string.isRequired,
+  data: PropTypes.arrayOf(PropTypes.object).isRequired,
+  show: PropTypes.bool.isRequired,
+  xAxis: PropTypes.object.isRequired,
+  yAxis: PropTypes.object.isRequired,
+  referencePoints: PropTypes.arrayOf(PropTypes.object).isRequired,
+  // referenceDesc: PropTypes.string.isRequired,
 };

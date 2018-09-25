@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {
   Button, Col, FormControl, FormGroup, ControlLabel
 } from 'react-bootstrap';
@@ -170,8 +171,8 @@ export default class ContainerComponent extends Component {
 }
 
 ContainerComponent.propTypes = {
-  onChange: React.PropTypes.func,
-  readOnly: React.PropTypes.bool,
-  disabled: React.PropTypes.bool,
-  container: React.PropTypes.object
+  onChange: PropTypes.func,
+  readOnly: PropTypes.bool,
+  disabled: PropTypes.bool,
+  container: PropTypes.object
 }

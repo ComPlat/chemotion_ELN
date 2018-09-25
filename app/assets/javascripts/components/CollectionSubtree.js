@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import Aviator from 'aviator';
 import {Glyphicon, Label, Button, OverlayTrigger} from 'react-bootstrap';
 
@@ -255,6 +256,6 @@ export default class CollectionSubtree extends React.Component {
 }
 
 CollectionSubtree.propTypes = {
-  isRemote: React.PropTypes.bool,
-  root: React.PropTypes.object
+  isRemote: PropTypes.bool,
+  root: PropTypes.object
 }

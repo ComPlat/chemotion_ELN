@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const UserInfoIcon = ({type}) =>{
   switch(type) {
@@ -12,7 +13,7 @@ const UserInfoIcon = ({type}) =>{
 }
 
 UserInfoIcon.propTypes = {
-  type: React.PropTypes.string.isRequired,
+  type: PropTypes.string.isRequired,
 }
 
 export default UserInfoIcon;

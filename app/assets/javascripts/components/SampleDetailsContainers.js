@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 import Container from './models/Container';
 import UIStore from './stores/UIStore';
@@ -226,7 +227,7 @@ export default class SampleDetailsContainers extends Component {
 }
 
 SampleDetailsContainers.propTypes = {
-  readOnly: React.PropTypes.bool,
-  parent: React.PropTypes.object,
-  sample: React.PropTypes.object,
+  readOnly: PropTypes.bool,
+  parent: PropTypes.object,
+  sample: PropTypes.object,
 };

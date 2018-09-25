@@ -1,6 +1,9 @@
 import React from 'react';
-import { Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
-  Table, Glyphicon } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  Button, Checkbox, FormGroup, FormControl, InputGroup, ControlLabel,
+  Table, Glyphicon
+} from 'react-bootstrap';
 import Select from 'react-select';
 import DetailActions from './actions/DetailActions';
 import NumeralInputWithUnitsCompo from './NumeralInputWithUnitsCompo';
@@ -418,6 +421,6 @@ export default class SampleForm extends React.Component {
 }
 
 SampleForm.propTypes = {
-  sample: React.PropTypes.object,
-  parent: React.PropTypes.object
+  sample: PropTypes.object,
+  parent: PropTypes.object
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Button } from 'react-bootstrap';
 
 function NoComputedProps({ computeFunc }) {
@@ -19,7 +20,7 @@ function NoComputedProps({ computeFunc }) {
 }
 
 NoComputedProps.propTypes = {
-  computeFunc: React.PropTypes.func.isRequired,
+  computeFunc: PropTypes.func.isRequired,
 };
 
 export default NoComputedProps;

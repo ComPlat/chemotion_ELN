@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Tooltip, OverlayTrigger, MenuItem, SplitButton,
    ButtonGroup} from 'react-bootstrap';
 
@@ -60,7 +61,7 @@ const PrintCodeButton = ({element, analyses, all_analyses, ident})=>{
 export default PrintCodeButton
 
 PrintCodeButton.propTypes = {
-  element: React.PropTypes.object,
-  analyses: React.PropTypes.array,
-  all_analyses: React.PropTypes.bool,
+  element: PropTypes.object,
+  analyses: PropTypes.array,
+  all_analyses: PropTypes.bool,
 }

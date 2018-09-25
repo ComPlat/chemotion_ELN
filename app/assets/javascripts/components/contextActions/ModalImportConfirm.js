@@ -1,8 +1,14 @@
-import React from 'react'
-import {Button, ButtonToolbar, FormGroup,FormControl,Checkbox} from 'react-bootstrap'
-import {AgGridReact} from 'ag-grid-react'
-import SVG from 'react-inlinesvg'
-import ElementActions from '../actions/ElementActions'
+import React from 'react';
+import PropTypes from 'prop-types';
+import {
+  Button,
+  ButtonToolbar,
+  FormGroup,
+  Checkbox
+} from 'react-bootstrap';
+import { AgGridReact } from 'ag-grid-react';
+import SVG from 'react-inlinesvg';
+import ElementActions from '../actions/ElementActions';
 
 
 const MyCell = ({col,data,rowIndex, ...props})=>{
@@ -14,7 +20,7 @@ const SvgCellRenderer = ({ value, ...props})=>{
 }
 
 SvgCellRenderer.propTypes = {
-  value: React.PropTypes.string,
+  value: PropTypes.string,
 }
 
 const SelectCellRenderer = ({ value, onSelectChange, rowIndex,...props})=>{

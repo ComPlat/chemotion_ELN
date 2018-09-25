@@ -1,7 +1,10 @@
 import React, { Component } from 'react';
-import { Row, Col, FormGroup, ControlLabel, FormControl, MenuItem, Button,
+import PropTypes from 'prop-types';
+import {
+  Row, Col, FormGroup, ControlLabel, FormControl, MenuItem, Button,
   ListGroupItem, ListGroup, InputGroup, OverlayTrigger, Tooltip,
-  DropdownButton } from 'react-bootstrap';
+  DropdownButton
+} from 'react-bootstrap';
 import Select from 'react-select';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
@@ -388,7 +391,7 @@ export default class ReactionDetailsProperties extends Component {
 }
 
 ReactionDetailsProperties.propTypes = {
-  reaction: React.PropTypes.object,
-  onReactionChange: React.PropTypes.func,
-  onInputChange: React.PropTypes.func
+  reaction: PropTypes.object,
+  onReactionChange: PropTypes.func,
+  onInputChange: PropTypes.func
 }

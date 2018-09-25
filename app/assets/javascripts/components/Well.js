@@ -1,4 +1,5 @@
-import React, {PropTypes, Component} from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import SVG from 'react-inlinesvg';
 
 export default class Well extends Component {

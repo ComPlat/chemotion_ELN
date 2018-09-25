@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import RsmiItem from './RsmiItem';
 import { renderSvg, extractDetails } from './ChemReadObjectHelper';
@@ -52,10 +53,10 @@ export default class RsmiItemContainer extends React.Component {
 }
 
 RsmiItemContainer.propTypes = {
-  selectSmi: React.PropTypes.func.isRequired,
-  removeSmi: React.PropTypes.func.isRequired,
-  uid: React.PropTypes.string.isRequired,
-  content: React.PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
-  idx: React.PropTypes.number.isRequired,
-  selected: React.PropTypes.arrayOf(React.PropTypes.shape).isRequired
+  selectSmi: PropTypes.func.isRequired,
+  removeSmi: PropTypes.func.isRequired,
+  uid: PropTypes.string.isRequired,
+  content: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
+  idx: PropTypes.number.isRequired,
+  selected: PropTypes.arrayOf(PropTypes.shape).isRequired
 };

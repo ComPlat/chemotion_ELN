@@ -1,9 +1,17 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {
-  Row, Col, FormGroup, FormControl, ControlLabel, Table,
-  OverlayTrigger, Button, Tooltip, InputGroup, Checkbox
-} from 'react-bootstrap'
-import Select from 'react-select'
+  Col,
+  FormGroup,
+  FormControl,
+  ControlLabel,
+  Table,
+  OverlayTrigger,
+  Button,
+  Tooltip,
+  InputGroup,
+} from 'react-bootstrap';
+import Select from 'react-select';
 
 import Reaction from './models/Reaction';
 
@@ -164,6 +172,6 @@ export default class ReactionDetailsMainProperties extends Component {
 }
 
 ReactionDetailsMainProperties.propTypes = {
-  reaction: React.PropTypes.object,
-  onInputChange: React.PropTypes.func
+  reaction: PropTypes.object,
+  onInputChange: PropTypes.func
 }

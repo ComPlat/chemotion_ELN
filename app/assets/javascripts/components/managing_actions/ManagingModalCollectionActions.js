@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Button, FormGroup, FormControl, ControlLabel} from 'react-bootstrap';
 import UIStore from '../stores/UIStore';
 import CollectionStore from '../stores/CollectionStore';
@@ -170,7 +171,7 @@ export default class ManagingModalCollectionActions extends React.Component {
 }
 
 ManagingModalCollectionActions.propTypes = {
-  action: React.PropTypes.func,
-  onHide: React.PropTypes.func,
-  listSharedCollections: React.PropTypes.bool,
+  action: PropTypes.func,
+  onHide: PropTypes.func,
+  listSharedCollections: PropTypes.bool,
 }

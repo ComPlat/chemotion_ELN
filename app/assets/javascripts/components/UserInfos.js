@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {Tooltip} from 'react-bootstrap';
 import UserInfoIcon from './UserInfoIcon';
 
@@ -14,7 +15,7 @@ const UserInfos = ({users}) => {
 }
 
 UserInfos.propTypes = {
-  users: React.PropTypes.array.isRequired,
+  users: PropTypes.array.isRequired,
 }
 
 export default UserInfos;

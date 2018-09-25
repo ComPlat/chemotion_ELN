@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { Panel, Button, Accordion } from 'react-bootstrap';
 
