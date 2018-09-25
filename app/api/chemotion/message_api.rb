@@ -48,6 +48,11 @@ module Chemotion
         present channels, with: Entities::ChannelEntity, root: 'channels'
       end
 
+      desc 'get Individual users notification channel'
+      get 'channel_individual' do
+        Channel.find_by(subject: Channel::SEND_INDIVIDUAL_USERS)
+      end
+
       namespace :ack do
         desc 'acknowledged message by current user'
         params do

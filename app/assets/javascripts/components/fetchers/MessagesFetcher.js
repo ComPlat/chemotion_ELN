@@ -37,6 +37,15 @@ export default class MessagesFetcher {
       });
     return promise;
   }
+  static channelIndividualUsers() {
+    const promise = fetch('/api/v1/messages/channel_individual.json', {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json()).then(json => json).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
   static acknowledgedMessage(params) {
     const promise = fetch('/api/v1/messages/ack/', {
       credentials: 'same-origin',

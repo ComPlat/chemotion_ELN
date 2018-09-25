@@ -86,4 +86,5 @@ class API < Grape::API
   mount Chemotion::ChemReadAPI
   mount Chemotion::InstrumentAPI
   mount Chemotion::MessageAPI
+  mount Chemotion::AdminAPI
 end

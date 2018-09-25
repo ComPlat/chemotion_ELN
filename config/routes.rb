@@ -1,6 +1,11 @@
 Rails.application.routes.draw do
   devise_for :users, controllers: { registrations: 'users/registrations' }
 
+  authenticated :user, lambda {|u| u.type == "Admin"} do
+    root to: 'pages#admin', as: :admin_root
+    get 'admin', to: 'pages#admin'
+  end
+
   authenticated :user do
     root to: 'pages#welcome', as: :authenticated_root
     get 'pages/settings', to: 'pages#settings'
@@ -15,14 +20,12 @@ Rails.application.routes.draw do
     # get 'docx', to: 'pages#docx'
     get 'docx', to: 'pages#chemread'
     get 'command_n_control', to: 'pages#cnc'
-
-    get 'message_publish', to: 'pages#msg_pub'
   end
 
   get 'home', to: 'pages#home'
   get 'command_n_control', to: 'pages#home'
 
-  get 'message_publish', to: 'pages#home'
+  get 'admin', to: 'pages#home'
 
   mount API => '/'
 
