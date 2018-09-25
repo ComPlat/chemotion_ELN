@@ -9,7 +9,7 @@ import UIStore from './stores/UIStore';
 import ElementStore from './stores/ElementStore';
 import InboxStore from './stores/InboxStore';
 import Xdiv from './extra/CollectionTreeXdiv';
-import update from 'react-addons-update';
+import update from 'immutability-helper';
 import UserInfos from './UserInfos';
 
 import DeviceBox from './inbox/DeviceBox';
