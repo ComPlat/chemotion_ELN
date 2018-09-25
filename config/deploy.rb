@@ -15,7 +15,7 @@ set :whenever_identifier, ->{ "#{fetch(:application)}_#{fetch(:stage)}" }
 set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
-set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v6.10.2'
+set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v8.12.0'
 set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip  || '6.4.1'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
