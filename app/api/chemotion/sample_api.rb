@@ -263,7 +263,10 @@ module Chemotion
         optional :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
-        optional :molecule, type: Hash, desc: "Sample molecule"
+        # optional :molecule, type: Hash, desc: "Sample molecule" do
+          # optional :id, type: Integer
+        # end
+        optional :molecule_id, type: Integer
         optional :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
         optional :boiling_point, type: Float, desc: "Sample boiling point"
@@ -291,6 +294,7 @@ module Chemotion
 
           update_datamodel(attributes[:container]);
           attributes.delete(:container);
+
 
           # otherwise ActiveRecord::UnknownAttributeError appears
           attributes[:elemental_compositions].each do |i|
@@ -335,7 +339,7 @@ module Chemotion
         requires :location, type: String, desc: "Sample location"
         optional :molfile, type: String, desc: "Sample molfile"
         optional :sample_svg_file, type: String, desc: "Sample SVG file"
-        optional :molecule, type: Hash, desc: "Sample molecule"
+        #optional :molecule, type: Hash, desc: "Sample molecule"
         optional :collection_id, type: Integer, desc: "Collection id"
         requires :is_top_secret, type: Boolean, desc: "Sample is marked as top secret?"
         optional :density, type: Float, desc: "Sample density"
@@ -349,6 +353,7 @@ module Chemotion
           optional :rel, type: String, values: Sample::STEREO_REL, default: Sample::STEREO_DEF['rel']
         end
         optional :molecule_name_id, type: Integer
+        optional :molecule_id, type: Integer
         requires :container, type: Hash
       end
       post do
@@ -368,6 +373,7 @@ module Chemotion
           solvent: params[:solvent],
           location: params[:location],
           molfile: params[:molfile],
+          molecule_id: params[:molecule_id],
           sample_svg_file: params[:sample_svg_file],
           is_top_secret: params[:is_top_secret],
           density: params[:density],

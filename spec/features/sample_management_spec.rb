@@ -8,6 +8,10 @@ feature 'Sample management' do
     user.confirmed_at = Time.now
     user.save
     sign_in(user)
+
+    fp = Rails.root.join("public", "images", "molecules")
+    `ln -s #{Rails.root.join("spec", "fixtures", "images", "molecule.svg")} #{fp} ` unless File.exist?(Rails.root.join(fp, "molecule.svg"))
+
   end
 
   describe 'Split sample' do
@@ -58,7 +62,7 @@ feature 'Sample management' do
       # test read-only molecule data
       { inchistring: 'InChI', cano_smiles: 'Canonical Smiles' }.each do |f, v|
         inchi_field = find_bs_field(v, 'span.input-group-addon')
-        expect(inchi_field.value).to eq(sample.molecule[f])
+        expect(inchi_field.value.presence).to eq(sample.molecule[f].presence)
         expect(inchi_field[:disabled]).to eq('true')
         expect(inchi_field[:readonly]).to eq('true')
       end

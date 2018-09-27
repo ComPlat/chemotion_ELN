@@ -9,19 +9,22 @@ module Chemotion
         params do
           requires :smiles, type: String, desc: "Input SMILES"
           optional :svg_file, type: String, desc: "Molecule svg file"
+          optional :layout, type: String, desc: "Molecule molfile layout"
         end
 
         post do
           smiles = params[:smiles]
           svg = params[:svg_file]
-          inchikey = OpenBabelService.smiles_to_inchikey(smiles)
+
+          babel_info = OpenBabelService.molecule_info_from_structure(smiles,'smi')
+          inchikey = babel_info[:inchikey]
           return {} unless inchikey
           molecule = Molecule.find_by(inchikey: inchikey, is_partial: false)
 
           unless molecule
-            molfile = OpenBabelService.smiles_to_molfile smiles if smiles
+            molfile = babel_info[:molfile] if babel_info
             return {} unless molfile
-            molecule = Molecule.find_or_create_by_molfile(molfile)
+            molecule = Molecule.find_or_create_by_molfile(molfile, babel_info)
           end
           return unless molecule
 
@@ -30,9 +33,16 @@ module Chemotion
           digest = Digest::SHA256.hexdigest digest
           svg_file_name = "TMPFILE#{digest}.svg"
           svg_file_path = File.join('public','images', 'samples', svg_file_name)
-          svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
-          FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
-
+          if (svg)
+            processor = Chemotion::ChemdrawSvgProcessor.new svg
+            svg = processor.centered_and_scaled_svg
+            svg_file = File.new(svg_file_path, 'w+')
+            svg_file.write(svg)
+            svg_file.close
+          else
+            svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
+            FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
+          end
           molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name })
         end
       end
@@ -88,6 +98,7 @@ module Chemotion
 
         # write temporary SVG
         processor = Ketcherails::SVGProcessor.new svg
+
         svg = processor.centered_and_scaled_svg
 
         digest = Digest::SHA256.hexdigest molfile

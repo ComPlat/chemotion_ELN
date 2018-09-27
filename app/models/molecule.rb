@@ -51,7 +51,7 @@ class Molecule < ActiveRecord::Base
     partial_molfile = babel_info[:molfile]
     molecule = Molecule.find_or_create_by(inchikey: inchikey, is_partial: is_partial) do |molecule|
       pubchem_info = Chemotion::PubchemService.molecule_info_from_inchikey(inchikey)
-      molecule.molfile = partial_molfile || molfile
+      molecule.molfile = is_partial && partial_molfile || molfile
       molecule.assign_molecule_data(babel_info, pubchem_info)
     end
     molecule

@@ -10,6 +10,9 @@ export default class Molecule extends Element {
       density: this.density,
       melting_point: this.melting_point,
       boiling_point: this.boiling_point,
+      inchistring: this.inchistring,
+      cano_smiles: this.cano_smiles,
+      inchikey: this.inchikey,
     })
   }
 }

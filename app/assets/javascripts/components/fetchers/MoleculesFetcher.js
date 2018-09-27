@@ -24,8 +24,8 @@ export default class MoleculesFetcher {
     return promise;
   }
 
-  static fetchBySmi(smi) {
-    let promise = fetch('/api/v1/molecules/smiles', {
+  static fetchBySmi(smi, svgfile, molfile) {
+    const promise = fetch('/api/v1/molecules/smiles', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -33,11 +33,11 @@ export default class MoleculesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        smiles: smi
+        smiles: smi,
+        svg_file: svgfile,
+        layout: molfile
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
+    }).then(response => response.json()).then((json) => {
       return json;
     }).catch((errorMessage) => {
       console.log(errorMessage);
