@@ -5,17 +5,17 @@ module Usecases::Wellplates::WellplateUpdater
     included_sample_ids = []
 
     wells.each do |well|
-      sample = well.sample
-      sample_id = sample && sample.id
+      sample = well[:sample]
+      sample_id = sample && sample[:id]
 
       if sample
-        if sample.is_new && sample.parent_id
-          parent_sample = Sample.find(sample.parent_id)
+        if sample[:is_new] && sample[:parent_id]
+          parent_sample = Sample.find(sample[:parent_id])
 
           subsample = parent_sample.dup
           subsample.parent = parent_sample
           subsample.short_label = nil #we don't want to inherit short_label from parent
-          subsample.name = sample.name
+          subsample.name = sample[:name]
 
           #assign subsample to all collections
           subsample.collections << collections
@@ -28,22 +28,22 @@ module Usecases::Wellplates::WellplateUpdater
       end
 
 
-      unless well.is_new
-        Well.find(well.id).update(
+      unless well[:is_new]
+        Well.find(well[:id]).update(
             sample_id: sample_id,
-            readout: well.readout,
-            additive: well.additive,
-            position_x: well.position.x,
-            position_y: well.position.y,
+            readout: well[:readout],
+            additive: well[:additive],
+            position_x: well[:position][:x],
+            position_y: well[:position][:y],
         )
       else
         Well.create(
           wellplate_id: wellplate.id,
           sample_id: sample_id,
-          readout: well.readout,
-          additive: well.additive,
-          position_x: well.position.x,
-          position_y: well.position.y,
+          readout: well[:readout],
+          additive: well[:additive],
+          position_x: well[:position][:x],
+          position_y: well[:position][:y],
         )
       end
     end
