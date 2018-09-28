@@ -20,8 +20,9 @@ export default class Search extends React.Component {
       queryMolfile: null,
       searchType: 'sub',
       tanimotoThreshold: 0.7,
+      pgcartridge: false,
     };
-    this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
+    this.handleClearSearchSelection = this.handleClearSearchSelection.bind( this);
   }
 
   handleSelectionChange(selection) {

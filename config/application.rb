@@ -22,6 +22,7 @@ module Chemotion
     }
     config.version['current_revision'] = File.read('REVISION') if File.exist?('REVISION')
 
+    config.pg_cartridge_installed = ENV['PG_CART_INSTALLED'] == 'true'
     config.action_dispatch.perform_deep_munge = false
 
     # TODO: Update autoload configuration to current rails standards

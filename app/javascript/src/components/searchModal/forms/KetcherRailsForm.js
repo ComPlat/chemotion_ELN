@@ -78,6 +78,7 @@ const KetcherRailsform = () => {
     const isSync = currentCollection ? currentCollection.is_sync_to_me : false;
     let tanimoto = searchStore.ketcherRailsValues.tanimotoThreshold;
     if (tanimoto <= 0 || tanimoto > 1) { tanimoto = 0.3; }
+    const pgCartridgeInstalled = UIStore.getState();
 
     const selection = {
       elementType: 'structure',

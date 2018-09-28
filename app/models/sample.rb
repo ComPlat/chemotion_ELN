@@ -162,6 +162,9 @@ class Sample < ApplicationRecord
     Sample.where(id: samples.map(&:id))
   }
 
+  scope :search_by_rdkit_sub, ->(molfile) {
+    where("mol_rdkit operator(@>) (select mol_from_ctab(encode((?), 'escape')::cstring)) ", molfile)
+  }
 
   before_save :auto_set_molfile_to_molecules_molfile
   before_save :find_or_create_molecule_based_on_inchikey
