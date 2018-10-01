@@ -182,8 +182,8 @@ const Archives = ({ archives }) => {
     <Panel
       eventKey={index}
       key={index}
-      header={title(archive)}
     >
+      <Panel.Heading>{title(archive)}</Panel.Heading>
       {fileDescription(archive)}
     </Panel>
   ));

@@ -178,9 +178,10 @@ export default class WellplateDetails extends Component {
     };
 
     return (
-      <Panel header={this.wellplateHeader(wellplate)}
-             bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'}
+      <Panel bsStyle={wellplate.isPendingToSave ? 'info' : 'primary'}
              className="panel-detail">
+        <Panel.Heading>{this.wellplateHeader(wellplate)}</Panel.Heading>
+        <Panel.Body className="panel-body">
         <Tabs activeKey={activeTab} onSelect={event => this.handleTabChange(event)}
               id="wellplateDetailsTab">
           <Tab eventKey={0} title={'Designer'}>
@@ -247,6 +248,7 @@ export default class WellplateDetails extends Component {
             Export samples
           </Button>
         </ButtonToolbar>
+        </Panel.Body>
       </Panel>
     );
   }

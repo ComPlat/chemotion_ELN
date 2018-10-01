@@ -14,7 +14,16 @@ const DeviceDetails = ({device, toggleFullScreen}) => {
       bsStyle={device.isPendingToSave ? 'info' : 'primary'}
     >
       <PanelGroup  defaultActiveKey="0" accordion>
-        <Panel header="Device Management" eventKey="1"><DeviceManagement/></Panel>
+        <Panel eventKey="1">
+          <Panel.Heading>
+            <Panel.Title>
+              Device Management
+            </Panel.Title>
+          </Panel.Heading>
+          <Panel.Body>
+            <DeviceManagement />
+          </Panel.Body>
+        </Panel>
       </PanelGroup>
 
       <ButtonToolbar>

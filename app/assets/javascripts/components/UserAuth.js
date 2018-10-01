@@ -408,48 +408,62 @@ export default class UserAuth extends Component {
         </Modal.Header>
         <Modal.Body style={modalStyle}>
           <div>
-            <Panel header="Create new group" bsStyle="success">
-              <Form inline>
-                <FormGroup controlId="formInlineName">
-                  <ControlLabel>Name</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    placeholder="eg: AK"
-                    onChange={this.handleInputChange.bind(this, 'first')}
-                  />
-                </FormGroup>
-                <FormGroup controlId="formInlineName">
-                  <FormControl
-                    type="text"
-                    placeholder="J. Moriarty"
-                    onChange={this.handleInputChange.bind(this, 'last')}
-                  />
-                </FormGroup>&nbsp;&nbsp;
-                <FormGroup controlId="formInlineNameAbbr">
-                  <ControlLabel>Name abbreviation</ControlLabel>&nbsp;&nbsp;
-                  <FormControl
-                    type="text"
-                    placeholder="AK-JM"
-                    onChange={this.handleInputChange.bind(this, 'abbr')}
-                  />
-                </FormGroup>&nbsp;&nbsp;
-                <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
+            <Panel bsStyle="success">
+              <Panel.Heading>
+                <Panel.Title>
                   Create new group
-                </Button>
-              </Form>
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body>
+                <Form inline>
+                  <FormGroup controlId="formInlineName">
+                    <ControlLabel>Name</ControlLabel>&nbsp;&nbsp;
+                    <FormControl
+                      type="text"
+                      placeholder="eg: AK"
+                      onChange={this.handleInputChange.bind(this, 'first')}
+                    />
+                  </FormGroup>
+                  <FormGroup controlId="formInlineName">
+                    <FormControl
+                      type="text"
+                      placeholder="J. Moriarty"
+                      onChange={this.handleInputChange.bind(this, 'last')}
+                    />
+                  </FormGroup>&nbsp;&nbsp;
+                  <FormGroup controlId="formInlineNameAbbr">
+                    <ControlLabel>Name abbreviation</ControlLabel>&nbsp;&nbsp;
+                    <FormControl
+                      type="text"
+                      placeholder="AK-JM"
+                      onChange={this.handleInputChange.bind(this, 'abbr')}
+                    />
+                  </FormGroup>&nbsp;&nbsp;
+                  <Button bsSize="xsmall" bsStyle="success" onClick={() => this.createGroup()}>
+                    Create new group
+                  </Button>
+                </Form>
+              </Panel.Body>
             </Panel>
-            <Panel header="My Groups" bsStyle="info">
-              <Table responsive condensed hover>
-                <thead>
-                  <tr style={{ backgroundColor: '#ddd' }}>
-                    <th width="20%">Name</th>
-                    <th width="10%">Kürzel</th>
-                    <th width="20%">Admin by</th>
-                    <th width="50%">&nbsp;</th>
-                  </tr>
-                </thead>
-                { tbody }
-              </Table>
+            <Panel bsStyle="info">
+              <Panel.Heading>
+                <Panel.Title>
+                  My Groups
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body>
+                <Table responsive condensed hover>
+                  <thead>
+                    <tr style={{ backgroundColor: '#ddd' }}>
+                      <th width="20%">Name</th>
+                      <th width="10%">Kürzel</th>
+                      <th width="20%">Admin by</th>
+                      <th width="50%">&nbsp;</th>
+                    </tr>
+                  </thead>
+                  { tbody }
+                </Table>
+              </Panel.Body>
             </Panel>
           </div>
         </Modal.Body>

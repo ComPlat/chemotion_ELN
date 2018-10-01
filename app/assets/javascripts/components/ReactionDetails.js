@@ -246,7 +246,7 @@ export default class ReactionDetails extends Component {
   reactionHeader(reaction) {
     let hasChanged = reaction.changed ? '' : 'none'
     return (
-      <h4>
+      <div>
         <i className="icon-reaction"/>&nbsp;{reaction.title()}
         <OverlayTrigger placement="bottom"
             overlay={<Tooltip id="closeReaction">Close Reaction</Tooltip>}>
@@ -316,7 +316,7 @@ export default class ReactionDetails extends Component {
           <ElementAnalysesLabels element={reaction} key={reaction.id+"_analyses"}/>
         </div>
         <PrintCodeButton element={reaction}/>
-      </h4>
+      </div>
     );
   }
 
@@ -337,54 +337,57 @@ export default class ReactionDetails extends Component {
     }
 
     return (
-      <Panel className='panel-detail' header={this.reactionHeader(reaction)}
+      <Panel className='panel-detail'
              bsStyle={reaction.isPendingToSave ? 'info' : 'primary'}>
-        {this.reactionSVG(reaction)}
-        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)}
-           id="reaction-detail-tab">
-          <Tab eventKey={0} title={'Scheme'}>
-            <ReactionDetailsScheme
-              reaction={reaction}
-              onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
-              onInputChange={(type, event) => this.handleInputChange(type, event)}
+        <Panel.Heading>{this.reactionHeader(reaction)}</Panel.Heading>
+        <Panel.Body>
+          {this.reactionSVG(reaction)}
+          <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect.bind(this)}
+             id="reaction-detail-tab">
+            <Tab eventKey={0} title={'Scheme'}>
+              <ReactionDetailsScheme
+                reaction={reaction}
+                onReactionChange={(reaction, options) => this.handleReactionChange(reaction, options)}
+                onInputChange={(type, event) => this.handleInputChange(type, event)}
+                />
+            </Tab>
+            <Tab eventKey={1} title={'Properties'}>
+              <ReactionDetailsProperties
+                reaction={reaction}
+                onReactionChange={reaction => this.handleReactionChange(reaction)}
+                onInputChange={(type, event) => this.handleInputChange(type, event)}
+                />
+            </Tab>
+            <Tab eventKey={2} title={'References'}>
+              <ReactionDetailsLiteratures
+                element={reaction}
+                onElementChange={reaction => this.handleReactionChange(reaction)}
               />
-          </Tab>
-          <Tab eventKey={1} title={'Properties'}>
-            <ReactionDetailsProperties
-              reaction={reaction}
-              onReactionChange={reaction => this.handleReactionChange(reaction)}
-              onInputChange={(type, event) => this.handleInputChange(type, event)}
+            </Tab>
+            <Tab eventKey={3} title={'Analyses'}>
+                {this.productData(reaction)}
+            </Tab>
+            <Tab eventKey={4} title="Green Chemistry">
+              <GreenChemistry
+                reaction={reaction}
+                onReactionChange={this.handleReactionChange}
               />
-          </Tab>
-          <Tab eventKey={2} title={'References'}>
-            <ReactionDetailsLiteratures
-              element={reaction}
-              onElementChange={reaction => this.handleReactionChange(reaction)}
-            />
-          </Tab>
-          <Tab eventKey={3} title={'Analyses'}>
-              {this.productData(reaction)}
-          </Tab>
-          <Tab eventKey={4} title="Green Chemistry">
-            <GreenChemistry
-              reaction={reaction}
-              onReactionChange={this.handleReactionChange}
-            />
-          </Tab>
-          {extraTabs.map((e,i)=>e(i))}
-        </Tabs>
-        <hr/>
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
-            Close
-          </Button>
-          <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
-            {submitLabel}
-          </Button>
-          <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
-            Export samples
-          </Button>
-        </ButtonToolbar>
+            </Tab>
+            {extraTabs.map((e,i)=>e(i))}
+          </Tabs>
+          <hr/>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(reaction)}>
+              Close
+            </Button>
+            <Button bsStyle="warning" onClick={() => this.handleSubmit()} disabled={!this.reactionIsValid()}>
+              {submitLabel}
+            </Button>
+            <Button bsStyle="default" onClick={() => CollectionActions.downloadReportReaction(reaction.id)}>
+              Export samples
+            </Button>
+          </ButtonToolbar>
+        </Panel.Body>
       </Panel>
     );
   }

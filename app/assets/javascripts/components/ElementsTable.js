@@ -142,23 +142,44 @@ export default class ElementsTable extends React.Component {
   }
 
   pagination() {
-    const {page, pages} = this.state;
-    if(pages > 1) {
-      return (
-        <div className="list-pagination">
-          <Pagination
-            prev
-            next
-            first
-            last
-            maxButtons={5}
-            activePage={page}
-            items={pages}
-            bsSize="small"
-            onSelect={(eventKey) => this.handlePaginationSelect(eventKey)}/>
-        </div>
-      )
+
+    if(pages <= 1) {
+      return;
     }
+
+    const {page, pages} = this.state;
+    let items = [];
+    const minPage = Math.max(page - 2, 1);
+    const maxPage = Math.min(minPage + 4, pages);
+    items.push(<Pagination.First onClick={() => this.handlePaginationSelect(1)} />);
+    if (page>1) {
+      items.push(<Pagination.Prev onClick={() => this.handlePaginationSelect(page - 1)} />);
+    }
+    for (let _page = minPage; _page <= maxPage; _page=_page+1) {
+      items.push(
+        <Pagination.Item
+          active={_page === page}
+          onClick={() => this.handlePaginationSelect(_page)}>
+            {_page}
+        </Pagination.Item>
+      );
+    }
+
+    if (pages > maxPage) {
+      items.push(<Pagination.Ellipsis />);
+    }
+    if (page==pages) {
+      items.push(<Pagination.Next onClick={() => this.handlePaginationSelect(page+1)} />);
+    }
+    items.push(<Pagination.Last onClick={() => this.handlePaginationSelect(pages)} />);
+
+    return (
+      <div className="list-pagination">
+      <Pagination>
+        { items }
+      </Pagination>
+      </div>
+    )
   }
 
   handleNumberOfResultsChange(event) {

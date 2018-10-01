@@ -22,21 +22,35 @@ const toggleRxnSettingsAll = () => {
 const stdSetting = ({ splSettings, checkedAllSplSettings, rxnSettings,
   checkedAllRxnSettings }) => (
   <div>
-    <Panel header="Sample" bsStyle="default">
-      <CheckBoxs
-        items={splSettings}
-        toggleCheckbox={toggleSplSettings}
-        toggleCheckAll={toggleSplSettingsAll}
-        checkedAll={checkedAllSplSettings}
-      />
+    <Panel bsStyle="default">
+      <Panel.Heading>
+        <Panel.Title>
+          Sample
+        </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <CheckBoxs
+          items={splSettings}
+          toggleCheckbox={toggleSplSettings}
+          toggleCheckAll={toggleSplSettingsAll}
+          checkedAll={checkedAllSplSettings}
+        />
+      </Panel.Body>
     </Panel>
-    <Panel header="Reaction" bsStyle="default">
-      <CheckBoxs
-        items={rxnSettings}
-        checkedAll={checkedAllRxnSettings}
-        toggleCheckbox={toggleRxnSettings}
-        toggleCheckAll={toggleRxnSettingsAll}
-      />
+    <Panel bsStyle="default">
+      <Panel.Heading>
+        <Panel.Title>
+          Reaction
+        </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <CheckBoxs
+          items={rxnSettings}
+          checkedAll={checkedAllRxnSettings}
+          toggleCheckbox={toggleRxnSettings}
+          toggleCheckAll={toggleRxnSettingsAll}
+        />
+      </Panel.Body>
     </Panel>
   </div>
 );
@@ -51,13 +65,20 @@ const toggleSiRxnSettingsAll = () => {
 
 const suiSetting = ({ siRxnSettings, checkedAllSiRxnSettings }) => (
   <div>
-    <Panel header="Synthesis Products Information" bsStyle="default">
-      <CheckBoxs
-        items={siRxnSettings}
-        checkedAll={checkedAllSiRxnSettings}
-        toggleCheckbox={toggleSiRxnSettings}
-        toggleCheckAll={toggleSiRxnSettingsAll}
-      />
+    <Panel bsStyle="default">
+      <Panel.Heading>
+        <Panel.Title>
+          Synthesis Products Information
+        </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <CheckBoxs
+          items={siRxnSettings}
+          checkedAll={checkedAllSiRxnSettings}
+          toggleCheckbox={toggleSiRxnSettings}
+          toggleCheckAll={toggleSiRxnSettingsAll}
+        />
+      </Panel.Body>
     </Panel>
   </div>
 );

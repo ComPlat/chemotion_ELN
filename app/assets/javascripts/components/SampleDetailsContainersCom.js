@@ -89,25 +89,28 @@ const RndEdit = ({ sample, mode, handleRemove, handleAccordionOpen,
           if (container.is_deleted) {
             return (
               <Panel
-                header={headerDeletedFunc(container)}
                 eventKey={id}
                 key={`${id}CRowEdit`}
-              />
+              >
+                <Panel.Heading>{headerDeletedFunc(container)}</Panel.Heading>
+              </Panel>
             );
           }
 
           return (
             <Panel
-              header={headerNormalFunc(container, id)}
               eventKey={id}
               key={`${id}CRowEdit`}
             >
+            <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
+            <Panel.Body>
               <ContainerComponent
                 readOnly={readOnly}
                 container={container}
                 disabled={isDisabled}
                 onChange={handleChange}
               />
+              </Panel.Body>
             </Panel>
           );
         })}

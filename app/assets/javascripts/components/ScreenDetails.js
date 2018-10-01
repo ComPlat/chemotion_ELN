@@ -249,26 +249,28 @@ export default class ScreenDetails extends Component {
     const submitLabel = screen.isNew ? "Create" : "Save";
 
     return (
-      <Panel header={this.screenHeader(screen)}
-             bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
+      <Panel bsStyle={screen.isPendingToSave ? 'info' : 'primary'}
              className="panel-detail">
-        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect}
-           id="screen-detail-tab">
-          <Tab eventKey={0} title={'Properties'}>
-            {this.propertiesFields(screen)}
-          </Tab>
-          <Tab eventKey={1} title={'Analyses'}>
-            <ScreenDetailsContainers
-              screen={screen}
-              parent={this}
-            />
-          </Tab>
-        </Tabs>
+        <Panel.Heading>{this.screenHeader(screen)}</Panel.Heading>
+        <Panel.Body>
+          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)} 
+             id="screen-detail-tab">
+            <Tab eventKey={0} title={'Properties'}>
+              {this.propertiesFields(screen)}
+            </Tab>
+            <Tab eventKey={1} title={'Analyses'}>
+              <ScreenDetailsContainers
+                screen={screen}
+                parent={this}
+              />
+            </Tab>
+          </Tabs>
 
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
-          <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
-        </ButtonToolbar>
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(screen)}>Close</Button>
+            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+          </ButtonToolbar>
+        </Panel.Body>
       </Panel>
     );
   }
