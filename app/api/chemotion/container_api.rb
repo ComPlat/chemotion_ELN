@@ -27,7 +27,7 @@ module Chemotion
           else
             begin
               # Remove the linkage (container_id) between the container and the attachment
-              attachment.update!(container_id: nil)
+              attachment.update!(attachable_id: nil)
             end
           end
         end
