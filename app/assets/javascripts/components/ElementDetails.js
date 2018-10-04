@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import StickyDiv from 'react-stickydiv';
 import { Tabs, Tab, Label } from 'react-bootstrap';
 import SampleDetails from './SampleDetails';
@@ -248,5 +249,5 @@ export default class ElementDetails extends Component {
 }
 
 // ElementDetails.propTypes = {
-//   currentElement: React.PropTypes.shape.isRequired
+//   currentElement: PropTypes.shape.isRequired
 // };

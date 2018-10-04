@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import VirtualizedSelect from 'react-virtualized-select';
 
 class SelectWrapper extends React.Component {
@@ -51,11 +52,11 @@ class SelectWrapper extends React.Component {
 }
 
 SelectWrapper.propTypes = {
-  obj: React.PropTypes.object.isRequired,
-  title: React.PropTypes.string,
-  value: React.PropTypes.string,
-  disabled: React.PropTypes.bool,
-  onSelect: React.PropTypes.func.isRequired
+  obj: PropTypes.object.isRequired,
+  title: PropTypes.string,
+  value: PropTypes.string,
+  disabled: PropTypes.bool,
+  onSelect: PropTypes.func.isRequired
 };
 
 SelectWrapper.defaultProps = {

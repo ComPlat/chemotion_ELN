@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ListGroupItem } from 'react-bootstrap';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
@@ -67,15 +68,15 @@ function RsmiItem({
 }
 
 RsmiItem.propTypes = {
-  desc: React.PropTypes.object.isRequired,
-  details: React.PropTypes.object.isRequired,
-  selectSmi: React.PropTypes.func.isRequired,
-  removeSmi: React.PropTypes.func.isRequired,
-  uid: React.PropTypes.string.isRequired,
-  svg: React.PropTypes.string.isRequired,
-  smi: React.PropTypes.string.isRequired,
-  idx: React.PropTypes.number.isRequired,
-  selected: React.PropTypes.bool.isRequired
+  desc: PropTypes.object.isRequired,
+  details: PropTypes.object.isRequired,
+  selectSmi: PropTypes.func.isRequired,
+  removeSmi: PropTypes.func.isRequired,
+  uid: PropTypes.string.isRequired,
+  svg: PropTypes.string.isRequired,
+  smi: PropTypes.string.isRequired,
+  idx: PropTypes.number.isRequired,
+  selected: PropTypes.bool.isRequired
 };
 
 export default RsmiItem;

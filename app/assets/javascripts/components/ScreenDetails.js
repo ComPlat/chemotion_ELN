@@ -1,12 +1,14 @@
-import React, {Component} from 'react';
-import {FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab} from 'react-bootstrap';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import {
+  FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Tabs, Tab
+} from 'react-bootstrap';
 import StickyDiv from 'react-stickydiv';
 import { unionBy } from 'lodash';
 
 import ElementCollectionLabels from './ElementCollectionLabels';
 import ScreenWellplates from './ScreenWellplates';
-import Utils from './utils/Functions';
 import QuillEditor from './QuillEditor'
 import ScreenDetailsContainers from './ScreenDetailsContainers';
 import ElementActions from './actions/ElementActions';
@@ -273,6 +275,6 @@ export default class ScreenDetails extends Component {
 }
 
 ScreenDetails.propTypes = {
-  screen: React.PropTypes.object,
-  toggleFullScreen: React.PropTypes.func,
+  screen: PropTypes.object,
+  toggleFullScreen: PropTypes.func,
 }

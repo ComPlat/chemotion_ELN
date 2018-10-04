@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import ListProps from './ListProps';
 
@@ -70,5 +71,5 @@ export default class XmlDetails extends React.Component {
 }
 
 XmlDetails.propTypes = {
-  details: React.PropTypes.object.isRequired
+  details: PropTypes.object.isRequired
 };

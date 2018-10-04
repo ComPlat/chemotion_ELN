@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  SplitButton, Button, ButtonToolbar, DropdownButton, FormControl,
+  SplitButton, Button, ButtonToolbar, FormControl,
   FormGroup, ControlLabel, Modal, MenuItem
 } from 'react-bootstrap';
 import Aviator from 'aviator';
@@ -236,7 +236,7 @@ export default class CreateButton extends React.Component {
   }
 }
 
-CreateButton.PropTypes = {
+CreateButton.propTypes = {
   customClass: PropTypes.string,
 };
 

@@ -1,14 +1,15 @@
-import React, {Component, PropTypes} from 'react';
-import {ListGroup, ListGroupItem, Button, ButtonToolbar, Well} from 'react-bootstrap';
+import React, { Component } from 'react';
+// import PropTypes from 'prop-types';
+import { ListGroup, ListGroupItem, Button, Well } from 'react-bootstrap';
 import ContainerDatasetModal from './ContainerDatasetModal';
 import ContainerDatasetField from './ContainerDatasetField';
 import Container from './models/Container';
-import AttachmentDropzone from './AttachmentDropzone'
+import AttachmentDropzone from './AttachmentDropzone';
 
 export default class ContainerDatasets extends Component {
   constructor(props) {
     super(props);
-    const {container} = props;
+    const { container } = props;
     this.state = {
       container,
       modal: {

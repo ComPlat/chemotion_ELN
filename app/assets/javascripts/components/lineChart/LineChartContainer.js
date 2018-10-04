@@ -1,6 +1,8 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { LineChart } from './LineChart'
+import React from 'react';
+import ReactDOM from 'react-dom';
+// import PropTypes from 'prop-types';
+
+import { LineChart } from './LineChart';
 
 export default class LineChartContainer extends React.Component {
   componentDidMount() {
@@ -37,12 +39,12 @@ export default class LineChartContainer extends React.Component {
 }
 
 // LineChartContainer.propTypes = {
-//   data: React.PropTypes.shape({
-//     timeUnit: React.PropTypes.string.isRequired,
-//     valueUnit: React.PropTypes.string.isRequired,
-//     data: React.PropTypes.arrayOf(React.PropTypes.shape({
-//       time: React.PropTypes.number.isRequired,
-//       value: React.PropTypes.number.isRequired
+//   data: PropTypes.shape({
+//     timeUnit: PropTypes.string.isRequired,
+//     valueUnit: PropTypes.string.isRequired,
+//     data: PropTypes.arrayOf(PropTypes.shape({
+//       time: PropTypes.number.isRequired,
+//       value: PropTypes.number.isRequired
 //     }))
 //   })
 // }

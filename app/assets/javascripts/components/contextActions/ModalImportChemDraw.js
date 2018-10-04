@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Button, ButtonToolbar } from 'react-bootstrap';
 
 import ChemReadContainer from '../chemread/ChemReadContainer';
@@ -70,5 +71,5 @@ export default class ModalImportChemDraw extends React.Component {
 }
 
 ModalImportChemDraw.propTypes = {
-  onHide: React.PropTypes.func.isRequired,
+  onHide: PropTypes.func.isRequired,
 };

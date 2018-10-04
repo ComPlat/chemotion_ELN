@@ -1,4 +1,5 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';

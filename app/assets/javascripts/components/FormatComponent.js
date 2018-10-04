@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import { Panel, Accordion, Button } from 'react-bootstrap';
 import QuillViewer from './QuillViewer';
 

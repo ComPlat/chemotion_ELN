@@ -1,4 +1,5 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import SampleDetailsContainers from './SampleDetailsContainers';
 
 export default class ReactionSampleDetailsContainers extends Component {
@@ -17,5 +18,5 @@ export default class ReactionSampleDetailsContainers extends Component {
 }
 
 ReactionSampleDetailsContainers.propTypes = {
-  sample: React.PropTypes.object
+  sample: PropTypes.object
 }

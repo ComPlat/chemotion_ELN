@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
 import Reaction from '../models/Reaction';
@@ -108,6 +109,6 @@ export default class GreenChemistry extends Component {
 }
 
 GreenChemistry.propTypes = {
-  reaction: React.PropTypes.instanceOf(Reaction).isRequired,
-  onReactionChange: React.PropTypes.func.isRequired,
+  reaction: PropTypes.instanceOf(Reaction).isRequired,
+  onReactionChange: PropTypes.func.isRequired,
 };

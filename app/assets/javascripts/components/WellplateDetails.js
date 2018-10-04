@@ -1,6 +1,9 @@
-import React, {PropTypes, Component} from 'react';
-import {Well, Panel, ListGroupItem, ButtonToolbar, Button,
-  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row} from 'react-bootstrap';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import {
+  Well, Panel, ListGroupItem, ButtonToolbar, Button,
+  Tabs, Tab, Tooltip, OverlayTrigger, Col, Row
+} from 'react-bootstrap';
 import Barcode from 'react-barcode';
 import SVG from 'react-inlinesvg';
 
@@ -251,5 +254,5 @@ export default class WellplateDetails extends Component {
 
 WellplateDetails.propTypes = {
   wellplate: PropTypes.object.isRequired,
-  toggleFullScreen: React.PropTypes.func,
+  toggleFullScreen: PropTypes.func,
 };

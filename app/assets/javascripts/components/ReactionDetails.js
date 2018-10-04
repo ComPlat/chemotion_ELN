@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import {
   Col, Panel, ListGroupItem, ButtonToolbar, Button,
   Tabs, Tab, OverlayTrigger, Tooltip
@@ -390,6 +391,6 @@ export default class ReactionDetails extends Component {
 }
 
 ReactionDetails.propTypes = {
-  reaction: React.PropTypes.object,
-  toggleFullScreen: React.PropTypes.func,
+  reaction: PropTypes.object,
+  toggleFullScreen: PropTypes.func,
 }

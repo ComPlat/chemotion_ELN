@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { ButtonGroup, Button, ControlLabel } from 'react-bootstrap';
 
 import ElementActions from '../actions/ElementActions';
@@ -100,5 +101,5 @@ export default class ComputedPropsContainer extends React.Component {
 }
 
 ComputedPropsContainer.propTypes = {
-  sample: React.PropTypes.object.isRequired,
+  sample: PropTypes.object.isRequired,
 };

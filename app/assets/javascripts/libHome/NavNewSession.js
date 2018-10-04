@@ -1,10 +1,17 @@
-import React from 'react'
-import {Button, FormGroup, FormControl, Glyphicon, Navbar, NavItem, Nav} from 'react-bootstrap';
+import React from 'react';
+import PropTypes from 'prop-types';
+import {
+  Button,
+  FormGroup,
+  FormControl,
+  Glyphicon,
+  Navbar,
+  NavItem,
+  Nav
+} from 'react-bootstrap';
 
-const NewSession = ({authenticityToken}) => {
-
-  return(
-    <div>
+const NewSession = ({ authenticityToken }) => (
+  <div>
     <Nav pullRight><NavItem  href='/users/sign_up'> or Sign Up </NavItem></Nav>
     <Navbar.Form pullRight>
       <form id="new_user" className="new_user" action="/users/sign_in" acceptCharset='UTF-8' method="post" >
@@ -21,13 +28,11 @@ const NewSession = ({authenticityToken}) => {
         </Button>
       </form>
     </Navbar.Form>
-
-    </div>
-  )
-}
+  </div>
+);
 
 NewSession.propTypes = {
-  authenticityToken: React.PropTypes.string.isRequired,
+  authenticityToken: PropTypes.string.isRequired,
 }
 
 export default NewSession;

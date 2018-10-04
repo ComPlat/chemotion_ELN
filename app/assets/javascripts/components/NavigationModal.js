@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Modal } from 'react-bootstrap';
 import UIActions from './actions/UIActions';
 
@@ -28,12 +29,12 @@ function NavigationModal({
 }
 
 NavigationModal.propTypes = {
-  show: React.PropTypes.bool,
-  customModal: React.PropTypes.string,
-  component: React.PropTypes.func,
-  title: React.PropTypes.oneOfType([
-    React.PropTypes.string,
-    React.PropTypes.element
+  show: PropTypes.bool,
+  customModal: PropTypes.string,
+  component: PropTypes.func,
+  title: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.element
   ]),
 };
 

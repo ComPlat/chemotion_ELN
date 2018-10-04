@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 export default class DeleteBtn extends React.Component {
   constructor() {
@@ -24,6 +25,6 @@ export default class DeleteBtn extends React.Component {
 }
 
 DeleteBtn.propTypes = {
-  onClick: React.PropTypes.func.isRequired,
-  obj: React.PropTypes.object.isRequired
+  onClick: PropTypes.func.isRequired,
+  obj: PropTypes.object.isRequired
 };

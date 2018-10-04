@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const PermissionIcons = ({pl}) =>{
   return(pl>-1 ?
@@ -15,7 +16,7 @@ const PermissionIcons = ({pl}) =>{
 }
 
 PermissionIcons.propTypes = {
-  pl: React.PropTypes.number.isRequired,
+  pl: PropTypes.number.isRequired,
 }
 
 export default PermissionIcons;

@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
 function dateFormatter(params) {
@@ -94,5 +95,5 @@ export default class SampleComputedProps extends React.Component {
 }
 
 SampleComputedProps.propTypes = {
-  cprops: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
+  cprops: PropTypes.arrayOf(PropTypes.object).isRequired,
 };

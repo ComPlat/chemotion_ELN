@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { AgGridReact } from 'ag-grid-react';
 
 import { Button } from 'react-bootstrap';
@@ -19,9 +20,9 @@ function TableEditBtn({ dataLength, onEditBtnClick, node }) {
 }
 
 TableEditBtn.propTypes = {
-  dataLength: React.PropTypes.number.isRequired,
-  onEditBtnClick: React.PropTypes.func.isRequired,
-  node: React.PropTypes.object.isRequired,
+  dataLength: PropTypes.number.isRequired,
+  onEditBtnClick: PropTypes.func.isRequired,
+  node: PropTypes.object.isRequired,
 };
 
 export default class GraphReferenceTable extends React.Component {
@@ -119,8 +120,8 @@ export default class GraphReferenceTable extends React.Component {
 }
 
 GraphReferenceTable.propTypes = {
-  data: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  updateData: React.PropTypes.func.isRequired,
-  xLabel: React.PropTypes.string.isRequired,
-  yLabel: React.PropTypes.string.isRequired,
+  data: PropTypes.arrayOf(PropTypes.object).isRequired,
+  updateData: PropTypes.func.isRequired,
+  xLabel: PropTypes.string.isRequired,
+  yLabel: PropTypes.string.isRequired,
 };

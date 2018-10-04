@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import {
   Button, ButtonToolbar,
   InputGroup, FormGroup, FormControl,
@@ -927,6 +928,6 @@ export default class SampleDetails extends React.Component {
   }
 }
 SampleDetails.propTypes = {
-  sample: React.PropTypes.object,
-  toggleFullScreen: React.PropTypes.func,
+  sample: PropTypes.object,
+  toggleFullScreen: PropTypes.func,
 }

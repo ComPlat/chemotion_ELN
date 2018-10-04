@@ -1,6 +1,12 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import Numeral from 'numeral';
-import {FormGroup, FormControl, ControlLabel,InputGroup} from 'react-bootstrap';
+import {
+  FormGroup,
+  FormControl,
+  ControlLabel,
+  InputGroup,
+} from 'react-bootstrap';
 
 export default class NumeralInput extends Component {
   constructor(props) {
@@ -84,12 +90,12 @@ NumeralInput.defaultProps = {
 };
 
 NumeralInput.propTypes = {
-  onChange: React.PropTypes.func,
-  numeralFormat: React.PropTypes.string,
-  disabled: React.PropTypes.bool,
-  addonAfter: React.PropTypes.node,
-  buttonAfter: React.PropTypes.node,
-  label: React.PropTypes.node,
-  bsSize: React.PropTypes.string,
-  bsStyle: React.PropTypes.string,
+  onChange: PropTypes.func,
+  numeralFormat: PropTypes.string,
+  disabled: PropTypes.bool,
+  addonAfter: PropTypes.node,
+  buttonAfter: PropTypes.node,
+  label: PropTypes.node,
+  bsSize: PropTypes.string,
+  bsStyle: PropTypes.string,
 };

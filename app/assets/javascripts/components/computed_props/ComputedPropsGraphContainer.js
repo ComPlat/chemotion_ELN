@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import _ from 'lodash';
 
 import Select from 'react-select';
@@ -317,9 +318,9 @@ export default class ComputedPropsGraphContainer extends React.Component {
 }
 
 ComputedPropsGraphContainer.propTypes = {
-  graphData: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  show: React.PropTypes.bool.isRequired,
-  style: React.PropTypes.object,
+  graphData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  show: PropTypes.bool.isRequired,
+  style: PropTypes.object,
 };
 
 ComputedPropsGraphContainer.defaultProps = {
