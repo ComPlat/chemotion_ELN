@@ -1,8 +1,5 @@
 import React from 'react';
-import {Button, ButtonToolbar, Input, Modal, Panel} from 'react-bootstrap';
-
-import scriptLoader from 'react-async-script-loader'
-
+import scriptLoader from 'react-async-script-loader';
 
 
 class StructureEditorContent extends React.Component {
