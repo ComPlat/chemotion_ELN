@@ -20,6 +20,9 @@ describe Chemotion::UserAPI do
       'research_plan' => '5'
     }
   }
+  let(:usrext) {
+    { 'confirmed_at' => nil, 'current_sign_in_at' => nil, 'email' => nil }
+  }
 
   context 'authorized user-person logged in' do
     let!(:p1)  { create(:person, first_name: 'Jane', last_name: 'Doe') }
@@ -98,7 +101,7 @@ describe Chemotion::UserAPI do
         get '/api/v1/users/current'
       end
       it 'Returns current user' do
-        expect(JSON.parse(response.body)['user']).to(
+        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'email')).to(
           eq p1.as_json(json_options).merge(srlzr).merge('layout' => layout)
         )
       end
@@ -120,21 +123,21 @@ describe Chemotion::UserAPI do
       it 'Creates a group of persons' do
         expect(
           Group.where(
-            email: 'jane.s@fan.club', last_name: 'Fanclub',
+            last_name: 'Fanclub',
             first_name: 'My', name_abbreviation: 'JFC'
           )
         ).to_not be_empty
         expect(
-          Group.where(email: 'jane.s@fan.club').last.users.pluck(:id)
+          Group.find_by(name_abbreviation: 'JFC').users.pluck(:id)
         ).to match_array [p1.id, p2.id]
         expect(
-          Group.where(email: 'jane.s@fan.club').last.admins
+          Group.find_by(name_abbreviation: 'JFC').admins
         ).to_not be_empty
         expect(
-          Group.where(email: 'jane.s@fan.club').last.admins.first
+          Group.find_by(name_abbreviation: 'JFC').admins.first
         ).to eq p1
         expect(
-          p1.administrated_accounts.where(email: 'jane.s@fan.club')
+          p1.administrated_accounts.where(name_abbreviation: 'JFC')
         ).not_to be_empty
       end
     end

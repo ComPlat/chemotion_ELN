@@ -51,7 +51,7 @@ module Chemotion
 
         after_validation do
           users = params[:group_param][:users] || []
-          @group_params = params[:group_param]
+          @group_params = declared(params, include_missing: false).symbolize_keys[:group_param]
           @group_params[:email] ||= "%i@eln.edu" % [Time.now.getutc.to_i]
           @group_params[:password] = Devise.friendly_token.first(8)
           @group_params[:password_confirmation] = @group_params[:password]

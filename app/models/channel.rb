@@ -10,4 +10,5 @@ class Channel < ActiveRecord::Base
   SYNCHRONIZED_COLLECTION_WITH_ME = 'Synchronized Collection With Me'
   INBOX_ARRIVALS_TO_ME = 'Inbox Arrivals To Me'
   REPORT_GENERATOR_NOTIFICATION = 'Report Generator Notification'
+  SEND_INDIVIDUAL_USERS = 'Send Individual Users'
 end

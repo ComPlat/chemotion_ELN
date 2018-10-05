@@ -3,7 +3,7 @@
 var React = require('react');
 var Home = require('./libHome/Home');
 var CnC = require('./libCnC/CnC');
-var MsgPub = require('./libMsg/MsgPub');
+var AdminHome = require('./admin/AdminHome');
 var ChemRead = require('./components/chemread/ChemReadContainer');
 var App = require('./components/App');
 
