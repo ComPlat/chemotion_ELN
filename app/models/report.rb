@@ -121,6 +121,7 @@ class Report < ActiveRecord::Base
       material: true,
       description: true,
       purification: true,
+      dangerous_products: true,
       tlc: true,
       observation: true,
       analysis: true,

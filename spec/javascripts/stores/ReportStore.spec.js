@@ -56,6 +56,7 @@ describe('ReportStore', () => {
                       {text: "material", checked: false},
                       {text: "description", checked: false},
                       {text: "purification", checked: false},
+                      {text: "dangerous products", checked: false},
                       {text: "tlc", checked: false},
                       {text: "observation", checked: false},
                       {text: "analysis", checked: false},
