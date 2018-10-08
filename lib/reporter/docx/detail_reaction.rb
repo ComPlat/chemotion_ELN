@@ -24,6 +24,7 @@ module Reporter
           solvents: displayed_solvents,
           description: description,
           purification: purification,
+          dangerous_products: dangerous_products,
           tlc_rf: rf_value,
           tlc_solvent: tlc_solvents,
           tlc_description: tlc_description,
@@ -319,6 +320,12 @@ module Reporter
         puri = obj.purification
         return puri if puri == "***"
         puri.compact.join(", ")
+      end
+
+      def dangerous_products
+        dang = obj.dangerous_products
+        return dang if dang == '***'
+        dang.compact.join(', ')
       end
 
       def description

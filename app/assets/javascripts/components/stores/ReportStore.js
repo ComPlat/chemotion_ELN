@@ -22,6 +22,7 @@ class ReportStore {
       { checked: true, text: 'material' },
       { checked: true, text: 'description' },
       { checked: true, text: 'purification' },
+      { checked: true, text: 'dangerous products' },
       { checked: true, text: 'tlc' },
       { checked: true, text: 'observation' },
       { checked: true, text: 'analysis' },
@@ -466,6 +467,7 @@ class ReportStore {
           { text: 'material', checked: rs.material },
           { text: 'description', checked: rs.description },
           { text: 'purification', checked: rs.purification },
+          { text: 'dangerous products', checked: this.boolOrUdfTrue(rs.dangerous_products) },
           { text: 'tlc', checked: rs.tlc },
           { text: 'observation', checked: rs.observation },
           { text: 'analysis', checked: rs.analysis },
@@ -493,6 +495,13 @@ class ReportStore {
       prdAtts: newPrdAtts,
       selMolSerials: molSerials,
     });
+  }
+
+  boolOrUdfTrue(inp) {
+    if (inp === undefined) {
+      return true;
+    }
+    return inp;
   }
 
   hadnleRemove(target) {
@@ -551,6 +560,7 @@ class ReportStore {
           { text: 'material', checked: true },
           { text: 'description', checked: true },
           { text: 'purification', checked: true },
+          { text: 'dangerous products', checked: true },
           { text: 'tlc', checked: true },
           { text: 'observation', checked: true },
           { text: 'analysis', checked: true },

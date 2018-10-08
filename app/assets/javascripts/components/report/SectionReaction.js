@@ -8,12 +8,21 @@ const SectionReaction = ({reaction, settings, configs}) => {
          products, solvents, solvent, dangerous_products, purification,
          observation, svgPath, tlc_description,
          tlc_solvents, rf_value, status } = reaction;
+  const dangerousProducts = dangerous_products;
 
   const has_analyses = products.map( sample => {
     if(sample.analyses.length != 0) {
       return true;
     }
   }).filter(r => r!=null).length != 0;
+
+  const showPuri = settings.purification
+    && purification
+    && purification.length !== 0;
+
+  const showDang = settings.dangerouspro
+    && dangerousProducts
+    && dangerousProducts.length !== 0;
 
   return (
     <div>
@@ -38,8 +47,14 @@ const SectionReaction = ({reaction, settings, configs}) => {
       <h4> Description </h4>
       <DescriptionContent show={settings.description && description}
                           description={description} />
-      <PurificationContent show={settings.purification && purification && purification.length != 0}
-                           purification={purification} />
+      <PurificationContent
+        show={showPuri}
+        puri={purification}
+      />
+      <DangerourProductsContent
+        show={showDang}
+        dang={dangerousProducts}
+      />
       <TLCContent show={settings.tlc && tlc_description}
                   tlc_description={tlc_description}
                   tlc_solvents={tlc_solvents}
@@ -239,17 +254,30 @@ const DescriptionContent = ({show, description}) => {
   return show ? <QuillViewer value={description} /> : null;
 }
 
-const PurificationContent = ({show, puri}) => {
-  const puriText = typeof puri === "object" ? puri.join(", ") : puri;
+const PurificationContent = ({ show, puri }) => {
+  const puriText = typeof puri === 'object' ? puri.join(', ') : puri;
   return (
     show
       ? <div>
-          <h4> Purification </h4>
+          <h4> Type of Purification </h4>
           <pre className="noBorder">{puriText}</pre>
         </div>
       : null
-  )
-}
+  );
+};
+
+const DangerourProductsContent = ({ show, dang }) => {
+  const dangText = typeof dang === 'object' ? dang.join(', ') : dang;
+  return (
+    show
+      ? <div>
+          <h4> Dangerous Products </h4>
+          <pre className="noBorder">{dangText}</pre>
+        </div>
+      : null
+  );
+};
+
 const TLCContent = ({show, tlc_description, tlc_solvents, rf_value}) => {
   return (
     show

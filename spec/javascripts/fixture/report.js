@@ -10,6 +10,7 @@ const rxnSettings = [
   { checked: true, text: 'material' },
   { checked: true, text: 'description' },
   { checked: true, text: 'purification' },
+  { checked: true, text: 'dangerous products' },
   { checked: true, text: 'tlc' },
   { checked: true, text: 'observation' },
   { checked: true, text: 'analysis' },

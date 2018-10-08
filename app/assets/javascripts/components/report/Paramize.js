@@ -1,14 +1,14 @@
-const objTags = (selectedObjs) => (
+const objTags = selectedObjs => (
   selectedObjs.map(obj => ({ id: obj.id, type: obj.type }))
 );
 
-const abstractSplSettings = (splSettings) => (
-  splSettings.map(obj => (
+const abstractSettings = settings => (
+  settings.map(obj => (
     { text: obj.text.replace(' ', '_'), checked: obj.checked }
   ))
 );
 
-const abstractConfigs = (configs) => (
+const abstractConfigs = configs => (
   configs.map((obj) => {
     switch (obj.text) {
       case 'Page Break':
@@ -30,8 +30,8 @@ const paramize = (state) => {
     prdAtts } = state;
   const params = {
     objTags: JSON.stringify(objTags(selectedObjs)),
-    splSettings: JSON.stringify(abstractSplSettings(splSettings)),
-    rxnSettings: JSON.stringify(rxnSettings),
+    splSettings: JSON.stringify(abstractSettings(splSettings)),
+    rxnSettings: JSON.stringify(abstractSettings(rxnSettings)),
     siRxnSettings: JSON.stringify(siRxnSettings),
     configs: JSON.stringify(abstractConfigs(configs)),
     prdAtts: JSON.stringify(prdAtts),
