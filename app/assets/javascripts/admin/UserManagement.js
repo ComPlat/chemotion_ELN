@@ -35,15 +35,21 @@ const handleResetPassword = (id) => {
     });
 };
 
+
 const validateEmail = mail => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
 
 const resetPasswordTooltip = () => (
-  <Tooltip id="assign_button">reset user password</Tooltip>
+  <Tooltip id="assign_button">reset account password</Tooltip>
 );
 const confirmUserTooltip = () => (
-  <Tooltip id="assign_button">confirm user account</Tooltip>
+  <Tooltip id="assign_button">confirm this account</Tooltip>
 );
-
+const disableTooltip = () => (
+  <Tooltip id="assign_button">lock this account</Tooltip>
+);
+const enableTooltip = () => (
+  <Tooltip id="assign_button">unlock this account</Tooltip>
+);
 export default class UserManagement extends React.Component {
   constructor(props) {
     super(props);
@@ -102,6 +108,15 @@ export default class UserManagement extends React.Component {
         this.setState({
           users: result.users
         });
+      });
+  }
+
+  handleEnableDisableAccount(id, lockedAt) {
+    AdminFetcher.enableDisableAccount({ user_id: id, enable: lockedAt !== null })
+      .then((result) => {
+        this.handleFetchUsers();
+        const message = lockedAt !== null ? 'Account unloacked!' : 'Account locked!'
+        alert(message);
       });
   }
 
@@ -360,7 +375,7 @@ export default class UserManagement extends React.Component {
           <OverlayTrigger placement="bottom" overlay={confirmUserTooltip()}>
             <Button
               bsSize="xsmall"
-              bsStyle="primary"
+              bsStyle="info"
               onClick={() => this.handleConfirmUserAccount(userId, false)}
             >
               <i className="fa fa-check-square" />
@@ -376,10 +391,10 @@ export default class UserManagement extends React.Component {
     const tcolumn = (
       <tr style={{ height: '26px', verticalAlign: 'middle' }}>
         <th width="1%">#</th>
-        <th width="5%" />
-        <th width="15%">Name</th>
+        <th width="12%">Actions</th>
+        <th width="12%">Name</th>
         <th width="6%">Abbr.</th>
-        <th width="10%">Email</th>
+        <th width="8%">Email</th>
         <th width="7%">Type</th>
         <th width="15%">Login at</th>
         <th width="2%">ID</th>
@@ -391,7 +406,7 @@ export default class UserManagement extends React.Component {
         <td width="1%">
           {idx + 1}
         </td>
-        <td width="5%">
+        <td width="12%">
           <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip()} >
             <Button
               bsSize="xsmall"
@@ -402,11 +417,21 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
+          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip() : enableTooltip()} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={g.locked_at === null ? 'light' : 'warning'}
+              onClick={() => this.handleEnableDisableAccount(g.id, g.locked_at, false)}
+            >
+              <i className={g.locked_at === null ? 'fa fa-lock' : 'fa fa-unlock'} />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
           { renderConfirmButton(g.confirmed_at == null || g.confirmed_at.length <= 0, g.id) }
         </td>
-        <td width="15%"> {g.name} </td>
+        <td width="12%"> {g.name} </td>
         <td width="6%"> {g.initials} </td>
-        <td width="10%"> {g.email} </td>
+        <td width="8%"> {g.email} </td>
         <td width="7%"> {g.type} </td>
         <td width="15%"> {g.current_sign_in_at} </td>
         <td width="2%"> {g.id} </td>

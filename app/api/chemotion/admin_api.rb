@@ -80,6 +80,19 @@ module Chemotion
         end
       end
 
+      namespace :enableDisableAccount do
+        desc 'enable or diable account'
+        params do
+          requires :user_id, type: Integer, desc: 'user id'
+          requires :enable, type: Boolean, desc: 'enable or disable account'
+        end
+        post do
+          user = User.find_by(id: params[:user_id]);
+          user.unlock_access!() if (params[:enable])
+          user.lock_access!(send_instructions: false) if (!params[:enable])
+        end
+      end
+
     end
   end
 end
