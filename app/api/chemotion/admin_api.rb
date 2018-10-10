@@ -18,6 +18,51 @@ module Chemotion
         { percent_used: stat.percent_used.round(2), mb_available: mb_available }
       end
 
+      namespace :listDevices do
+        desc 'Find all devices'
+        get 'all' do
+          present Device.all.order('first_name, last_name'), with: Entities::DeviceEntity, root: 'devices'
+        end
+      end
+
+      namespace :device do
+        desc 'Get device by Id'
+        params do
+          requires :id, type: Integer, desc: "device id"
+        end
+        route_param :id do
+          get do
+            present Device.find(params[:id]), with: Entities::DeviceEntity, root: 'device'
+          end
+        end
+      end
+
+      namespace :updateDeviceMethod do
+        desc 'Update device profile method'
+        params do
+          requires :id, type: Integer
+          requires :data, type: Hash do
+            requires :method, type: String
+            requires :method_params, type: Hash do
+              requires :dir, type: String
+              optional :host, type: String
+              optional :user, type: String
+              optional :number_of_files, type: Integer
+            end
+          end
+        end
+
+        post do
+          device = Device.find(params[:id])
+          data = device.profile.data || {}
+          new_profile = {
+            data: data.merge(params[:data] || {})
+          }
+          device.profile.update!(**new_profile) &&
+            new_profile || error!('profile update failed', 500)
+        end
+      end
+
       namespace :listUsers do
         desc 'Find all users'
         get 'all' do
