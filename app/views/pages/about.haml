@@ -1,0 +1,14 @@
+.container
+
+  %h2
+    Chemotion ELN:
+    = Chemotion::Application.config.version["version"]
+    %br/
+    %h2
+    = Chemotion::Application.config.version["revision"]
+
+
+  %br/
+  %br/
+
+  = link_to "Back", root_path

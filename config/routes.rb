@@ -23,6 +23,7 @@ Rails.application.routes.draw do
   end
 
   get 'home', to: 'pages#home'
+  get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'
 
   get 'admin', to: 'pages#home'
