@@ -63,7 +63,7 @@ module Chemotion
         end
         post do
           extname = File.extname(params[:file][:filename])
-          if extname.match(/\.sdf?/i)
+          if extname.match(/\.(sdf?|mol)/i)
             sdf_import = Import::ImportSdf.new(file_path: params[:file][:tempfile].path,
               collection_id: params[:currentCollectionId],
               mapped_keys: {
