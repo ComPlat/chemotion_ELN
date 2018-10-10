@@ -1,9 +1,11 @@
 class PagesController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:home]
+  skip_before_action :authenticate_user!, only: [:home, :about]
   before_action :fetch_affiliations, only: [:affiliations, :update_affiliations]
   before_action :build_affiliation, only: [:affiliations, :update_affiliations]
 
   def home; end
+
+  def about; end
 
   def docx; end
 
