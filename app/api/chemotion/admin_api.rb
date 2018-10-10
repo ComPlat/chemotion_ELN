@@ -74,21 +74,21 @@ module Chemotion
         desc 'reset user password'
         params do
           requires :user_id, type: Integer, desc: 'user id'
+          requires :random, type: Boolean, desc: 'random password?'
           optional :password, type: String, desc: 'user pwd', values: ->(v) { v.length > 7 }
         end
         post do
           u = User.find(params[:user_id])
           pwd = nil
-          rp = if params[:password] || !Rails.env.production?
+          rp = if params[:password] || !Rails.env.production? || params[:random]
                  pwd = params[:password].presence || Devise.friendly_token.first(8)
                  u.reset_password(pwd, pwd)
                else
                  pwd
                  u.send_reset_password_instructions if u.respond_to?(:send_reset_password_instructions)
-
                end
           status(400) unless rp
-          { pwd: pwd, rp: rp }
+          { pwd: pwd, rp: rp, email: u.email }
         end
       end
 
