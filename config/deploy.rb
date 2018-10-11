@@ -33,7 +33,7 @@ set :log_file, 'log/capistrano.log'
 set :linked_files, fetch(:linked_files, []).push(
   'config/database.yml',
   'config/storage.yml',
-  #'config/datacollector.yml',
+  # 'config/datacollectors.yml',
   #'config/datamailcollector.yml',
   'config/secrets.yml',
   '.env'
@@ -51,7 +51,6 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
 
 version = File.readlines('.ruby-version')[0].strip if File.exist?('.ruby-version')
 gemset = File.readlines('.ruby-gemset')[0].strip if File.exist?('.ruby-gemset')
-  
 set(:rvm_ruby_version, "#{version}#{'@' if gemset}#{gemset}") if File.exist?('.ruby-version')
 
 set :slackistrano, false
@@ -63,6 +62,8 @@ set :slackistrano, false
 # set :keep_releases, 5
 
 #before 'deploy:migrate', 'deploy:backup'
+before 'nvm:validate', 'deploy:nvm_check'
+before 'npm:install', 'deploy:clear_node_module'
 after 'deploy:publishing', 'deploy:restart'
 
 
@@ -77,6 +78,7 @@ namespace :git do
 end
 
 namespace :deploy do
+
 
   task :backup do
     server_name = ""
@@ -93,6 +95,18 @@ namespace :deploy do
     backup_dir = "#{fetch(:user)}@#{server_name}:#{fetch(:deploy_to)}/shared/backup"
     unless system("rsync -r #{backup_dir}/deploy_backup backup")
       raise 'Error while sync backup folder'
+    end
+  end
+
+  task :nvm_check do
+    on roles :app do
+      execute "source \"#{fetch(:nvm_path)}/nvm.sh\" && nvm install #{fetch(:nvm_node)} && nvm use #{fetch(:nvm_node)} && npm install -g npm"
+    end
+  end
+
+  task :clear_node_module do
+    on roles :app do
+      execute "cd #{fetch(:deploy_to)}/shared/node_modules/ && rm -rf *"
     end
   end
 
