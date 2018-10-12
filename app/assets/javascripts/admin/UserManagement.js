@@ -24,13 +24,21 @@ const loadUserByName = (input) => {
     });
 };
 
-const handleResetPassword = (id) => {
-  AdminFetcher.resetUserPassword({ user_id: id })
+const handleResetPassword = (id, random) => {
+  AdminFetcher.resetUserPassword({ user_id: id, random })
     .then((result) => {
       if (result.rp) {
-        const message = result.pwd ? `Password Reset! New Password: ${result.pwd}`
-          : 'Password Reset!';
+        let message = '';
+        if (random) {
+          message = result.pwd ? `Password reset! New password: \n ${result.pwd}`
+            : 'Password reset!';
+        } else {
+          message = result.email ? `Password reset! instructions sent to : \n ${result.email}`
+            : 'Password instruction sent!';
+        }
         alert(message);
+      } else {
+        alert(`Password reset fail: \n ${result.pwd}`);
       }
     });
 };
@@ -39,7 +47,10 @@ const handleResetPassword = (id) => {
 const validateEmail = mail => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
 
 const resetPasswordTooltip = () => (
-  <Tooltip id="assign_button">reset account password</Tooltip>
+  <Tooltip id="assign_button">reset password</Tooltip>
+);
+const resetPasswordInstructionsTooltip = () => (
+  <Tooltip id="assign_button">send password instructions</Tooltip>
 );
 const confirmUserTooltip = () => (
   <Tooltip id="assign_button">confirm this account</Tooltip>
@@ -410,7 +421,17 @@ export default class UserManagement extends React.Component {
           <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip()} >
             <Button
               bsSize="xsmall"
-              bsStyle="danger"
+              bsStyle="success"
+              onClick={() => handleResetPassword(g.id, true)}
+            >
+              <i className="fa fa-key" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip()} >
+            <Button
+              bsSize="xsmall"
+              bsStyle="primary"
               onClick={() => handleResetPassword(g.id, false)}
             >
               <i className="fa fa-key" />
