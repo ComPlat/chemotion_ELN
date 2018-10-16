@@ -208,7 +208,13 @@ export default class Search extends React.Component {
     };
 
     const innerDropdown = (
-      <DropdownButton className={customClass} id="search-inner-dropdown" title={this.state.elementType} style={{ width: '100px' }}>
+      <DropdownButton
+        className={customClass}
+        id="search-inner-dropdown"
+        title={this.state.elementType.toLowerCase() === 'all' ? 'All' :
+        <i className={`icon-${this.state.elementType.toLowerCase().slice(0, -1)}`} />}
+        style={{ width: '50px' }}
+      >
         {this.renderMenuItems()}
       </DropdownButton>
     );
