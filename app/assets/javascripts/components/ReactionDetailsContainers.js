@@ -7,7 +7,7 @@ import {
 } from 'react-bootstrap';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
-import PrintCodeButton from './common/PrintCodeButton'
+import PrintCodeButton from './common/PrintCodeButton';
 
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
@@ -39,10 +39,11 @@ export default class ReactionDetailsContainers extends Component {
   }
 
   handleUndo(container) {
-    let {reaction} = this.state;
+    const { reaction } = this.state;
     container.is_deleted = false;
 
-    this.props.parent.setState({reaction: reaction})
+    this.props.parent.setState({ reaction });
+    this.forceUpdate();
   }
 
   handleAdd() {
@@ -104,7 +105,6 @@ export default class ReactionDetailsContainers extends Component {
     const {reaction, activeContainer} = this.state;
     const {readOnly} = this.props;
 
-    let handleOnClickRemove = this.handleOnClickRemove;
     let containerHeader = (container) => {
       const kind = container.extended_metadata['kind'] && container.extended_metadata['kind'] != '';
       const titleKind = kind ? (' - Type: ' + container.extended_metadata['kind']) : '';
@@ -122,7 +122,7 @@ export default class ReactionDetailsContainers extends Component {
             bsStyle="danger"
             className="button-right"
             disabled={readOnly}
-            onClick={handleOnClickRemove}
+            onClick={() => this.handleOnClickRemove(container)}
           >
             <i className="fa fa-trash" />
           </Button>
@@ -131,7 +131,6 @@ export default class ReactionDetailsContainers extends Component {
       )
     };
 
-    let handleUndo = this.handleUndo;
     let containerHeaderDeleted = (container) => {
       const kind = container.extended_metadata['kind'] && container.extended_metadata['kind'] != '';
       const titleKind = kind ? (' - Type: ' + container.extended_metadata['kind']) : '';
@@ -147,7 +146,7 @@ export default class ReactionDetailsContainers extends Component {
             {titleStatus}
           </strike>
           <Button className="pull-right" bsSize="xsmall" bsStyle="danger"
-                  onClick={handleUndo}>
+                  onClick={() => this.handleUndo(container)}>
             <i className="fa fa-undo"></i>
           </Button>
         </div>
