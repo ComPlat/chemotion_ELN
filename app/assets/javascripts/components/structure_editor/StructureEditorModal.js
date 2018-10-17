@@ -5,24 +5,30 @@ import {
   ButtonToolbar,
   Modal,
   Panel,
-  FormGroup
+  FormGroup,
+  ControlLabel
 } from 'react-bootstrap';
 import Select from 'react-select';
 import StructureEditor from '../models/StructureEditor';
 // import StructureEditorContent from './StructureEditorContent';
 import { EditorListParams, EditorList } from './StructureEditorMap';
 
-
 const EditorSelector = ({ value, updateEditorSelection }) => (
-  <FormGroup style={{ width: '50%' }}>
-    <Select
-      name="editor selection"
-      clearable={false}
-      // disabled={}
-      options={EditorListParams}
-      onChange={updateEditorSelection}
-      value={value}
-    />
+  <FormGroup>
+    <div className="col-lg-2 col-md-2">
+      <ControlLabel>Structure Editor</ControlLabel>
+    </div>
+    <div className="col-lg-6 col-md-8">
+      <Select
+        name="editor selection"
+        clearable={false}
+        options={EditorListParams}
+        onChange={updateEditorSelection}
+        value={value}
+      />
+    </div>
+    <div className="col-lg-4 col-md-2">{' '}
+    </div>
   </FormGroup>
 );
 
@@ -111,6 +117,10 @@ export default class StructureEditorModal extends React.Component {
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const { editor, showWarning } = this.state;
 
+    const iframeHeight = showWarning ? '0px' : '730px';
+    const iframeStyle = showWarning ? { border: 'none' } : { };
+    const buttonToolStyle = showWarning ? { marginTop: '20px', display: 'none' } : { marginTop: '20px' };
+
     return (
       <div>
         <Modal
@@ -122,7 +132,6 @@ export default class StructureEditorModal extends React.Component {
         >
           <Modal.Header closeButton>
             <Modal.Title>
-              Structure Editor
               <EditorSelector
                 value={editor}
                 updateEditorSelection={this.handleEditorSelection}
@@ -140,12 +149,13 @@ export default class StructureEditorModal extends React.Component {
                 id={editor.id}
                 src={editor.src}
                 title={`${editor.title}`}
-                height="850px"
+                height={iframeHeight}
                 width="100%"
+                style={iframeStyle}
                 ref={(f) => { this.ifr = f; }}
               />
             </div>
-            <div style={{ marginTop: '20px' }}>
+            <div style={buttonToolStyle}>
               <ButtonToolbar>
                 <Button bsStyle="warning" onClick={this.handleCancelBtn.bind(this)}>
                   {cancelBtnText}
