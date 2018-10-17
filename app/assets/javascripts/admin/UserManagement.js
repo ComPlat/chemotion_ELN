@@ -61,6 +61,13 @@ const disableTooltip = () => (
 const enableTooltip = () => (
   <Tooltip id="assign_button">unlock this account</Tooltip>
 );
+const templateModeratorEnableTooltip = () => (
+  <Tooltip id="assign_button">enable TemplateModerator <br /> (set to true)</Tooltip>
+);
+const templateModeratorDisableTooltip = () => (
+  <Tooltip id="assign_button">disable TemplateModerator <br /> (set to false)</Tooltip>
+);
+
 export default class UserManagement extends React.Component {
   constructor(props) {
     super(props);
@@ -123,10 +130,20 @@ export default class UserManagement extends React.Component {
   }
 
   handleEnableDisableAccount(id, lockedAt) {
-    AdminFetcher.enableDisableAccount({ user_id: id, enable: lockedAt !== null })
+    AdminFetcher.updateAccount({ user_id: id, enable: lockedAt !== null })
       .then((result) => {
         this.handleFetchUsers();
         const message = lockedAt !== null ? 'Account unloacked!' : 'Account locked!'
+        alert(message);
+      });
+  }
+
+  handleTemplatesModerator(id, isTemplatesModerator) {
+    console.log(isTemplatesModerator);
+    AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
+      .then((result) => {
+        this.handleFetchUsers();
+        const message = isTemplatesModerator !== true ? 'Set isTemplatesModerator to true' : 'Set isTemplatesModerator to false'
         alert(message);
       });
   }
@@ -138,7 +155,7 @@ export default class UserManagement extends React.Component {
   }
 
   handleConfirmUserAccount(id) {
-    AdminFetcher.confirmUserAccount({ user_id: id })
+    AdminFetcher.updateAccount({ user_id: id, confirm_user: true })
       .then((result) => {
         if (result !== null) {
           this.handleFetchUsers();
@@ -448,7 +465,17 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          { renderConfirmButton(g.confirmed_at == null || g.confirmed_at.length <= 0, g.id) }
+          <OverlayTrigger placement="bottom" overlay={g.is_templates_moderator === false ? templateModeratorEnableTooltip() : templateModeratorDisableTooltip()} >
+            <Button
+              bsSize="xsmall"
+              bsStyle={g.is_templates_moderator === false ? 'warning' : 'light'}
+              onClick={() => this.handleTemplatesModerator(g.id, g.is_templates_moderator, false)}
+            >
+              <i className={g.is_templates_moderator === false ? 'fa fa-book' : 'fa fa-times'} />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          { renderConfirmButton(g.type !== 'Device' && (g.confirmed_at == null || g.confirmed_at.length <= 0), g.id) }
         </td>
         <td width="12%"> {g.name} </td>
         <td width="6%"> {g.initials} </td>
