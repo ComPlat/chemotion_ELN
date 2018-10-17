@@ -92,17 +92,6 @@ module Chemotion
         end
       end
 
-      namespace :confirmUser do
-        desc 'confirm user account'
-        params do
-          requires :user_id, type: Integer, desc: 'user id'
-        end
-        post do
-          user = User.find_by(id: params[:user_id]);
-          user.confirmed_at = DateTime.now
-          user.save!
-        end
-      end
 
       namespace :newUser do
         desc 'confirm user account'
@@ -125,16 +114,25 @@ module Chemotion
         end
       end
 
-      namespace :enableDisableAccount do
-        desc 'enable or diable account'
+
+      namespace :updateAccount do
+        desc 'update account'
         params do
           requires :user_id, type: Integer, desc: 'user id'
-          requires :enable, type: Boolean, desc: 'enable or disable account'
+          optional :enable, type: Boolean, desc: 'enable or disable account'
+          optional :is_templates_moderator, type: Boolean, desc: 'enable or disable account'
+          optional :confirm_user, type: Boolean, desc: 'confirm account'
         end
         post do
           user = User.find_by(id: params[:user_id]);
-          user.unlock_access!() if (params[:enable])
-          user.lock_access!(send_instructions: false) if (!params[:enable])
+          new_profile = {}
+          user.unlock_access!() if params[:enable] == true 
+          user.lock_access!(send_instructions: false) if params[:enable] == false
+          new_profile = { is_templates_moderator: params[:is_templates_moderator] } unless params[:is_templates_moderator].nil?
+          new_profile = { confirmed_at: DateTime.now } if params[:confirm_user] == true
+          new_profile = { confirmed_at: nil } if params[:confirm_user] == false
+          user.update!(new_profile) unless new_profile.empty?
+          user
         end
       end
 

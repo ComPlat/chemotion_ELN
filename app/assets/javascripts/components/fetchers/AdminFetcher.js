@@ -68,22 +68,7 @@ export default class AdminFetcher {
       });
     return promise;
   }
-  static confirmUserAccount(params) {
-    const promise = fetch('/api/v1/admin/confirmUser/', {
-      credentials: 'same-origin',
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
-  }
-
+  
   static createUserAccount(params) {
     const promise = fetch('/api/v1/admin/newUser/', {
       credentials: 'same-origin',
@@ -113,8 +98,8 @@ export default class AdminFetcher {
     return promise;
   }
 
-  static enableDisableAccount(params) {
-    const promise = fetch('/api/v1/admin/enableDisableAccount/', {
+  static updateAccount(params) {
+    const promise = fetch('/api/v1/admin/updateAccount/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {

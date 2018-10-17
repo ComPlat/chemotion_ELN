@@ -13,10 +13,11 @@ module Entities
     expose :confirmed_at, if: -> (obj, opts) { obj.respond_to? :confirmed_at}
     expose :current_sign_in_at, if: -> (obj, opts) { obj.respond_to? :current_sign_in_at}
     expose :locked_at, if: -> (obj, opts) { obj.respond_to? :locked_at}
+    expose :is_templates_moderator, if: -> (obj, opts) { obj.respond_to? :is_templates_moderator}
 
     def samples_count
       object.counters['samples'].to_i
-    end    
+    end
     def reactions_count
       object.counters['reactions'].to_i
     end
@@ -25,10 +26,5 @@ module Entities
       return nil unless obj.respond_to? :current_sign_in_at
       obj.current_sign_in_at.strftime('%d.%m.%Y, %H:%M') unless obj.current_sign_in_at.nil?
     end
-    expose :locked_at do |obj|
-      return nil unless obj.respond_to? :locked_at
-      obj.locked_at.strftime('%d.%m.%Y, %H:%M') unless obj.locked_at.nil?
-    end
   end
-
 end
