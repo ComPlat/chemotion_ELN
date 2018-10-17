@@ -261,19 +261,27 @@ module Reporter
         output
       end
 
+      def assigned_amount(s)
+        mass = s.real_amount_g == 0.0 ? s.amount_g : s.real_amount_g
+        vol = s.real_amount_ml == 0.0 ? s.amount_ml : s.real_amount_ml
+        mmol = s.real_amount_mmol == 0.0 ? s.amount_mmol : s.real_amount_mmol
+        return mass, vol, mmol
+      end
+
       def material_hash(material, is_product=false)
         s = OpenStruct.new(material)
         m = s.molecule
+        mass, vol, mmol = assigned_amount(s)
         sample_hash = {
           name: s.name,
           iupac_name: s.molecule_name_hash[:label].presence || m[:iupac_name],
           short_label: s.short_label,
           formular: m[:sum_formular],
           mol_w: valid_digit(m[:molecular_weight], digit),
-          mass: valid_digit(s.amount_g, digit),
-          vol: valid_digit(s.amount_ml, digit),
+          mass: valid_digit(mass, digit),
+          vol: valid_digit(vol, digit),
           density: valid_digit(s.density, digit),
-          mol: valid_digit(s.amount_mmol, digit),
+          mol: valid_digit(mmol, digit),
           equiv: valid_digit(s.equivalent, digit),
           molecule_name_hash: s[:molecule_name_hash]
         }
