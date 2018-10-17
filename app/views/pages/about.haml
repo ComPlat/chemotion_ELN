@@ -1,14 +1,13 @@
 .container
 
   %h2
-    Chemotion ELN:
-    = Chemotion::Application.config.version["version"]
+    Chemotion ELN
     %br/
-    %h2
-    = Chemotion::Application.config.version["revision"]
+    - Chemotion::Application.config.version.each do |k, v|
+      %h3= "#{k.humanize}: #{v}"
 
 
-  %br/
+
   %br/
 
   = link_to "Back", root_path

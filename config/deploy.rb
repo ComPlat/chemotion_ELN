@@ -16,6 +16,7 @@ set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
 set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v6.10.2'
+set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip  || '6.4.1'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
 # Default value for :format is :pretty
@@ -61,9 +62,16 @@ set :slackistrano, false
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
-#before 'deploy:migrate', 'deploy:backup'
+# before 'deploy:migrate', 'deploy:backup'
+
+## NMV and NPM tasks
+## Install node version if not installed
 before 'nvm:validate', 'deploy:nvm_check'
+## Install defined version of npm if not selected
+before 'nvm:validate', 'deploy:npm_install_npm'
+## Clear all npm packages
 before 'npm:install', 'deploy:clear_node_module'
+
 after 'deploy:publishing', 'deploy:restart'
 
 
@@ -100,13 +108,25 @@ namespace :deploy do
 
   task :nvm_check do
     on roles :app do
-      execute "source \"#{fetch(:nvm_path)}/nvm.sh\" && nvm install #{fetch(:nvm_node)} && nvm use #{fetch(:nvm_node)} && npm install -g npm"
+      execute <<~SH
+        source "#{fetch(:nvm_path)}/nvm.sh" && [[ $(nvm version #{fetch(:nvm_node)}) != "#{fetch(:nvm_node)}" ]] && nvm install #{fetch(:nvm_node)}; nvm use #{fetch(:nvm_node)}
+      SH
     end
   end
 
+  task :npm_install_npm do
+    on roles :app do
+      execute <<~SH
+       source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm
+      SH
+       # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
+    end
+  end
+
+
   task :clear_node_module do
     on roles :app do
-      execute "cd #{fetch(:deploy_to)}/shared/node_modules/ && rm -rf *"
+      execute "find  #{fetch(:deploy_to)}/shared/node_modules/. -name . -o -prune -exec rm -rf -- {} +"
     end
   end
 
