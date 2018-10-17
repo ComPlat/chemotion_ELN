@@ -37,7 +37,7 @@ export default class ElementCheckbox extends React.Component {
     return (
       <input  type="checkbox"
               onChange={this.toggleCheckbox.bind(this)}
-              checked={this.state.checked}
+              checked={this.props.checked}
               className="element-checkbox" />
     )
   }
