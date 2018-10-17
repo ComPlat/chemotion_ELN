@@ -24,7 +24,7 @@ export default class ElementCheckbox extends React.Component {
   }
 
   toggleCheckbox() {
-    let newChecked = !this.state.checked;
+    let newChecked = !this.props.checked;
 
     if(newChecked) {
       UIActions.checkElement(this.state.element);
