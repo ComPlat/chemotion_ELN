@@ -19,8 +19,15 @@ function ElementAnalyses({ element, idx }) {
     const header = `Analysis name: ${x.name} - ` +
                    `Type: ${x.extended_metadata.kind}`;
     return (
-      <Panel key={x.id} header={header}>
-        <QuillViewer value={tryParse(x.extended_metadata.content)} />
+      <Panel key={x.id}>
+        <Panel.Heading>
+          <Panel.Title>
+            {header}
+          </Panel.Title>
+        </Panel.Heading>
+        <Panel.Body>
+          <QuillViewer value={tryParse(x.extended_metadata.content)} />
+        </Panel.Body>
       </Panel>
     );
   });

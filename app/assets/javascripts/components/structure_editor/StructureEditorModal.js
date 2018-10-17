@@ -34,16 +34,25 @@ const EditorSelector = ({ value, updateEditorSelection }) => (
 
 const WarningBox = ({ handleCancelBtn, hideWarning, show }) => (show ?
   (
-    <Panel header="Parents/Descendants will not be changed!" bsStyle="info" width="100%" >
-      <p>This sample has parents or descendants, and they will not be changed.</p>
-      <p>Are you sure?</p>
-      <br />
-      <Button bsStyle="danger" onClick={handleCancelBtn} className="g-marginLeft--10" >
-        Cancel
-      </Button>
-      <Button bsStyle="warning" onClick={hideWarning} className="g-marginLeft--10" >
-        Continue Editing
-      </Button>
+    <Panel bsStyle="info">
+      <Panel.Heading>
+        <Panel.Title>
+          Parents/Descendants will not be changed!
+        </Panel.Title>
+      </Panel.Heading>
+      <Panel.Body>
+        <p>This sample has parents or descendants, and they will not be changed.</p>
+        <p>Are you sure?</p>
+        <br />
+        <Button bsStyle="danger" onClick={handleCancelBtn}
+          className="g-marginLeft--10">
+          Cancel
+        </Button>
+        <Button bsStyle="warning" onClick={hideWarning}
+          className="g-marginLeft--10">
+          Continue Editing
+        </Button>
+      </Panel.Body>
     </Panel>
   ) : null
 );

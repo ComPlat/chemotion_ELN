@@ -62,31 +62,33 @@ export default class MessagePublish extends React.Component {
     return (
       <div>
         <Panel style={{ height: 'calc(100vh - 20px)' }}>
-          <div className="col-md-3">
-            <ControlLabel>Channel</ControlLabel>
-            <Select
-              value={selectedChannel}
-              onChange={this.handleChannelChange}
-              options={channels}
-              placeholder="Select your channel"
-              autoFocus
-            />
-          </div>
-          <div className="col-md-9">
-            <form>
-              <FormGroup controlId="formControlsTextarea">
-                <ControlLabel>Message</ControlLabel>
-                <FormControl componentClass="textarea" placeholder="message..." rows="20" inputRef={(ref) => { this.myMessage = ref; }} />
-              </FormGroup>
-              <Button
-                bsStyle="primary"
-                onClick={() => this.messageSend()}
-              >
-                Publish&nbsp;
-                <i className="fa fa-paper-plane" />
-              </Button>
-            </form>
-          </div>
+          <Panel.Body>
+            <div className="col-md-3">
+              <ControlLabel>Channel</ControlLabel>
+              <Select
+                value={selectedChannel}
+                onChange={this.handleChannelChange}
+                options={channels}
+                placeholder="Select your channel"
+                autoFocus
+              />
+            </div>
+            <div className="col-md-9">
+              <form>
+                <FormGroup controlId="formControlsTextarea">
+                  <ControlLabel>Message</ControlLabel>
+                  <FormControl componentClass="textarea" placeholder="message..." rows="20" inputRef={(ref) => { this.myMessage = ref; }} />
+                </FormGroup>
+                <Button
+                  bsStyle="primary"
+                  onClick={() => this.messageSend()}
+                >
+                  Publish&nbsp;
+                  <i className="fa fa-paper-plane" />
+                </Button>
+              </form>
+            </div>
+          </Panel.Body>
         </Panel>
       </div>
     );

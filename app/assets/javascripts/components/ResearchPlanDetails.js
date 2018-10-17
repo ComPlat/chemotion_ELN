@@ -182,43 +182,45 @@ export default class ResearchPlanDetails extends Component {
     const submitLabel = research_plan.isNew ? "Create" : "Save";
 
     return (
-      <Panel header={this.researchPlanHeader(research_plan)}
-             bsStyle={research_plan.isPendingToSave ? 'info' : 'primary'}
+      <Panel bsStyle={research_plan.isPendingToSave ? 'info' : 'primary'}
              className="panel-detail">
-        <ListGroup fill>
-          <ListGroupItem>
-            {this.researchPlanInfo(research_plan)}
-            <Row>
-              <Col md={4}>
-                <FormGroup>
-                  <ControlLabel>Name</ControlLabel>
-                  <FormControl
-                    type="text"
-                    value={name || ''}
-                    onChange={event => this.handleInputChange('name', event)}
-                    disabled={research_plan.isMethodDisabled('name')}
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <FormGroup>
-                  <ControlLabel>Description</ControlLabel>
-                  <QuillEditor value={research_plan.description}
-                    onChange={event => this.handleInputChange('description', {target: {value: event}})}
-                    disabled={research_plan.isMethodDisabled('description')}
-                  />
-                </FormGroup>
-              </Col>
-            </Row>
-          </ListGroupItem>
-        </ListGroup>
-        {this.structureEditorModal(research_plan)}
-        <ButtonToolbar>
-          <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
-          <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
-        </ButtonToolbar>
+        <Panel.Heading>{this.researchPlanHeader(research_plan)}</Panel.Heading>
+        <Panel.Body>
+          <ListGroup fill>
+            <ListGroupItem>
+              {this.researchPlanInfo(research_plan)}
+              <Row>
+                <Col md={4}>
+                  <FormGroup>
+                    <ControlLabel>Name</ControlLabel>
+                    <FormControl
+                      type="text"
+                      value={name || ''}
+                      onChange={event => this.handleInputChange('name', event)}
+                      disabled={research_plan.isMethodDisabled('name')}
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={12}>
+                  <FormGroup>
+                    <ControlLabel>Description</ControlLabel>
+                    <QuillEditor value={research_plan.description}
+                      onChange={event => this.handleInputChange('description', {target: {value: event}})}
+                      disabled={research_plan.isMethodDisabled('description')}
+                    />
+                  </FormGroup>
+                </Col>
+              </Row>
+            </ListGroupItem>
+          </ListGroup>
+          {this.structureEditorModal(research_plan)}
+          <ButtonToolbar>
+            <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
+            <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
+          </ButtonToolbar>
+        </Panel.Body>
       </Panel>
     );
   }

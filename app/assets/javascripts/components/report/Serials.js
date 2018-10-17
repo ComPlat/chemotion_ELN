@@ -13,24 +13,26 @@ const Serial = ({ serial, counter }) => {
 
   return (
     <Panel eventKey={counter} key={counter} >
-      <div className="report-serial">
-        <div className={`order ${oddClass}`}>{counter + 1}</div>
-        <div className="svg">
-          <SVG src={mol.svgPath} key={mol.svgPath} />
+      <Panel.Body>
+        <div className="report-serial">
+          <div className={`order ${oddClass}`}>{counter + 1}</div>
+          <div className="svg">
+            <SVG src={mol.svgPath} key={mol.svgPath} />
+          </div>
+          <div className="info">
+            <p><Formula formula={mol.sumFormula} /></p>
+            <p>{mol.iupacName}</p>
+          </div>
+          <div className="input">
+            <CommonInput
+              value={serial.value}
+              key={mol.id}
+              placeholder="xx"
+              onCompleteEdit={onCompleteEdit}
+            />
+          </div>
         </div>
-        <div className="info">
-          <p><Formula formula={mol.sumFormula} /></p>
-          <p>{mol.iupacName}</p>
-        </div>
-        <div className="input">
-          <CommonInput
-            value={serial.value}
-            key={mol.id}
-            placeholder="xx"
-            onCompleteEdit={onCompleteEdit}
-          />
-        </div>
-      </div>
+      </Panel.Body>
     </Panel>
   );
 };

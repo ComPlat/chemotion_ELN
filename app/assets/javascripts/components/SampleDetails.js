@@ -909,17 +909,19 @@ export default class SampleDetails extends React.Component {
 
     return (
       <Panel className="panel-detail"
-             header={this.sampleHeader(sample)}
              bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
-        {this.sampleInfo(sample)}
-        <ListGroup>
-        <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-          {tabContents.map((e,i)=>e(i))}
-        </Tabs>
-        </ListGroup>
-        {this.sampleFooter()}
-        {this.structureEditorModal(sample)}
-        { this.renderMolfileModal()}
+        <Panel.Heading>{this.sampleHeader(sample)}</Panel.Heading>
+        <Panel.Body>
+          {this.sampleInfo(sample)}
+          <ListGroup>
+          <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
+            {tabContents.map((e,i)=>e(i))}
+          </Tabs>
+          </ListGroup>
+          {this.sampleFooter()}
+          {this.structureEditorModal(sample)}
+          {this.renderMolfileModal()}
+        </Panel.Body>
       </Panel>
     )
   }

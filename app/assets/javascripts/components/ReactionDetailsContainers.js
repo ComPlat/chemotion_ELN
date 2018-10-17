@@ -169,25 +169,28 @@ export default class ReactionDetailsContainers extends Component {
                 if (container.is_deleted) {
                   return (
                     <Panel
-                      header={containerHeaderDeleted(container)}
                       eventKey={key}
                       key={`reaction_container_deleted_${container.id}`}
-                    />
+                    >
+                      <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
+                    </Panel>
                   );
                 }
 
                 return (
                   <Panel
-                    header={containerHeader(container)}
                     eventKey={key}
                     key={`reaction_container_${container.id}`}
                     onClick={this.handleAccordionOpen.bind(this, key)}
                   >
-                    <ContainerComponent
-                      readOnly={readOnly}
-                      container={container}
-                      onChange={this.handleChange.bind(this, container)}
-                    />
+                    <Panel.Heading>{containerHeader(container)}</Panel.Heading>
+                    <Panel.Body>
+                      <ContainerComponent
+                        readOnly={readOnly}
+                        container={container}
+                        onChange={this.handleChange.bind(this, container)}
+                      />
+                    </Panel.Body>
                   </Panel>
                 );
               })}

@@ -107,19 +107,23 @@ export default class ScreenDetailsContainers extends Component {
           {analyses_container[0].children.map((container, key) => {
             if (container.is_deleted){
               return (
-                <Panel header={containerHeaderDeleted(container)} eventKey={key}
+                <Panel eventKey={key}
                     key={key} >
-                    </Panel>
+                    <Panel.Heading>{containerHeaderDeleted(container)}</Panel.Heading>
+                </Panel>
                   );
                 }else {
               return (
-                <Panel header={containerHeader(container)} eventKey={key}
+                <Panel eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
-                  <ContainerComponent
-                    readOnly={readOnly}
-                    container={container}
-                    onChange={container => this.handleChange(container)}
-                  />
+                  <Panel.Heading>{containerHeader(container)}</Panel.Heading>
+                  <Panel.Body>
+                    <ContainerComponent
+                      readOnly={readOnly}
+                      container={container}
+                      onChange={container => this.handleChange(container)}
+                    />
+                  </Panel.Body>
                 </Panel>
               );
             }

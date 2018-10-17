@@ -102,9 +102,9 @@ export default class ReportContainer extends Component {
 
     return (
       <Panel
-        header={this.panelHeader()}
         bsStyle="default"
       >
+        <Panel.Heading>{this.panelHeader()}</Panel.Heading>
         <Tabs
           activeKey={activeKey}
           onSelect={this.selectTab}
