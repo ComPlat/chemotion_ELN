@@ -175,9 +175,9 @@ GEM
       rack (>= 1.6.0)
       rack-test (>= 0.6.3)
       xpath (~> 3.0)
-    childprocess (0.8.0)
+    childprocess (0.9.0)
       ffi (~> 1.0, >= 1.0.11)
-    chromedriver-helper (1.2.0)
+    chromedriver-helper (2.1.0)
       archive-zip (~> 0.10)
       nokogiri (~> 1.8)
     chronic (0.10.2)
@@ -516,9 +516,9 @@ GEM
     sdoc (0.4.1)
       json (~> 1.7, >= 1.7.7)
       rdoc (~> 4.0)
-    selenium-webdriver (3.7.0)
+    selenium-webdriver (3.14.0)
       childprocess (~> 0.5)
-      rubyzip (~> 1.0)
+      rubyzip (~> 1.2)
     sexp_processor (4.11.0)
     simplecov (0.12.0)
       docile (~> 1.1.0)
@@ -628,7 +628,7 @@ DEPENDENCIES
   capistrano-rails
   capistrano-rvm
   capybara (~> 3.1.0)
-  chromedriver-helper (= 1.2.0)
+  chromedriver-helper (= 2.1.0)
   chronic_duration
   closure_tree
   countries
@@ -697,7 +697,7 @@ DEPENDENCIES
   scenic
   schmooze
   sdoc (~> 0.4.0)
-  selenium-webdriver (~> 3.7.0)
+  selenium-webdriver (~> 3.14.0)
   slackistrano
   spring
   stackprof

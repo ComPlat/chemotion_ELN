@@ -16,6 +16,7 @@ set :bundle_jobs, 4 # parallel bundler
 
 set :nvm_type, :user
 set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v6.10.2'
+set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip  || '6.4.1'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
 
 # Default value for :format is :pretty
@@ -33,7 +34,7 @@ set :log_file, 'log/capistrano.log'
 set :linked_files, fetch(:linked_files, []).push(
   'config/database.yml',
   'config/storage.yml',
-  #'config/datacollector.yml',
+  # 'config/datacollectors.yml',
   #'config/datamailcollector.yml',
   'config/secrets.yml',
   '.env'
@@ -51,7 +52,6 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
 
 version = File.readlines('.ruby-version')[0].strip if File.exist?('.ruby-version')
 gemset = File.readlines('.ruby-gemset')[0].strip if File.exist?('.ruby-gemset')
-  
 set(:rvm_ruby_version, "#{version}#{'@' if gemset}#{gemset}") if File.exist?('.ruby-version')
 
 set :slackistrano, false
@@ -62,7 +62,16 @@ set :slackistrano, false
 # Default value for keep_releases is 5
 # set :keep_releases, 5
 
-#before 'deploy:migrate', 'deploy:backup'
+# before 'deploy:migrate', 'deploy:backup'
+
+## NMV and NPM tasks
+## Install node version if not installed
+before 'nvm:validate', 'deploy:nvm_check'
+## Install defined version of npm if not selected
+before 'nvm:validate', 'deploy:npm_install_npm'
+## Clear all npm packages
+before 'npm:install', 'deploy:clear_node_module'
+
 after 'deploy:publishing', 'deploy:restart'
 
 
@@ -77,6 +86,7 @@ namespace :git do
 end
 
 namespace :deploy do
+
 
   task :backup do
     server_name = ""
@@ -93,6 +103,30 @@ namespace :deploy do
     backup_dir = "#{fetch(:user)}@#{server_name}:#{fetch(:deploy_to)}/shared/backup"
     unless system("rsync -r #{backup_dir}/deploy_backup backup")
       raise 'Error while sync backup folder'
+    end
+  end
+
+  task :nvm_check do
+    on roles :app do
+      execute <<~SH
+        source "#{fetch(:nvm_path)}/nvm.sh" && [[ $(nvm version #{fetch(:nvm_node)}) != "#{fetch(:nvm_node)}" ]] && nvm install #{fetch(:nvm_node)}; nvm use #{fetch(:nvm_node)}
+      SH
+    end
+  end
+
+  task :npm_install_npm do
+    on roles :app do
+      execute <<~SH
+       source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == "#{fetch(:npm_version)}" ]] && echo "npm already installed" || npm install -g npm
+      SH
+       # source "#{fetch(:nvm_path)}/nvm.sh" && nvm use #{fetch(:nvm_node)} && [[ $(npm -v npm) == $(cat .npm-version) ]] && echo "npm already installed" ||  npm install -g npm
+    end
+  end
+
+
+  task :clear_node_module do
+    on roles :app do
+      execute "find  #{fetch(:deploy_to)}/shared/node_modules/. -name . -o -prune -exec rm -rf -- {} +"
     end
   end
 
