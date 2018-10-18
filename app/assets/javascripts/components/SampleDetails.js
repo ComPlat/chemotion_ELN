@@ -178,8 +178,15 @@ export default class SampleDetails extends React.Component {
     sample.formulaChanged = true;
     // this.updateMolecule(molfile, svg_file, smiles);
     if (!smiles || smiles === '') {
-      ElementActions.fetchMoleculeByMolfile(molfile, svg_file);
-      this.setState({ sample, loadingMolecule: true, smileReadonly: true });
+      this.setState({ loadingMolecule: true });
+      MoleculesFetcher.fetchByMolfile(molfile, svg_file)
+        .then((result) => {
+          sample.molecule = result;
+          sample.molecule_id = result.id;
+          this.setState({ sample, smileReadonly: true, loadingMolecule: false });
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
     } else {
       this.setState({ loadingMolecule: true });
       MoleculesFetcher.fetchBySmi(smiles, svg_file, molfile)
