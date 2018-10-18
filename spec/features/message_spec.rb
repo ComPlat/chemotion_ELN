@@ -23,6 +23,7 @@ feature 'Message' do
     content: {
       data: 'Thanks for using ELN!\nHave a nice weekend.'
     }, created_by: u_admin.id) }
+  let(:wait_secs) { 10 }
 
   background do
     u2.confirmed_at = Time.now
@@ -43,29 +44,23 @@ feature 'Message' do
 
     scenario 'open message box and acknowledge all messages', js: true do
       # required: wait for fetching messages
-      sleep 10
-      find('button#notice-button').click
+      find_button('notice-button', wait: wait_secs).click
       # just for observation
-      sleep 4
-      find("button#notice-button-ack-all").click
-      sleep 2
+      find_button('notice-button-ack-all', wait: wait_secs).click
+
       expect(find("span.badge.badge-pill")).to have_content '0'
     end
 
     scenario 'open message box and acknowledge the message one by one', js: true do
       # required: wait for fetching messages
-      sleep 10
-      find('button#notice-button').click
+      find_button('notice-button', wait: wait_secs).click
       # just for observation
-      sleep 4
-      find("button#notice-button-ack-1").click
+      find_button('notice-button-ack-1', wait: wait_secs).click
       # just for observation
-      sleep 2
-      find("button#notice-button-ack-2").click
+      find_button('notice-button-ack-2', wait: wait_secs).click
       # just for observation
-      sleep 2
-      find("button#notice-button-ack-3").click
-      sleep 2
+      find_button('notice-button-ack-3', wait: wait_secs).click
+
       expect(find("span.badge.badge-pill")).to have_content '0'
     end
   end
@@ -73,8 +68,7 @@ feature 'Message' do
   describe 'Ack on pop up notification' do
     scenario 'ack on pop up notification', js: true do
       # required: wait for fetching messages
-      sleep 10
-      find('button.notification-action-button').click
+      find('button.notification-action-button', wait: wait_secs).click
       sleep 6
       expect(find("span.badge.badge-pill")).to have_content '0'
     end
