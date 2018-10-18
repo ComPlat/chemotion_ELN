@@ -16,7 +16,7 @@ export default class Search extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      elementType: 'All',
+      elementType: 'all',
       showStructureEditor: false,
       queryMolfile: null,
       searchType: 'similar',
@@ -196,7 +196,7 @@ export default class Search extends React.Component {
 
     const inputAttributes = {
       placeholder: 'IUPAC, InChI, SMILES, ...',
-      style: { width: 300 }
+      style: { minWidth: 200, maxWidth: 300 }
     };
 
     const suggestionsAttributes = {
@@ -211,7 +211,7 @@ export default class Search extends React.Component {
       <DropdownButton
         className={customClass}
         id="search-inner-dropdown"
-        title={this.state.elementType.toLowerCase() === 'all' ? 'All' :
+        title={this.state.elementType === 'all' ? 'All' :
         <i className={`icon-${this.state.elementType.toLowerCase().slice(0, -1)}`} />}
         style={{ width: '50px' }}
       >
