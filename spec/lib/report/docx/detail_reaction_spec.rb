@@ -38,7 +38,14 @@ describe 'Reporter::Docx::DetailReaction instance' do
                                   tlc_description: t_des,
                                   observation: obs,
                                   dangerous_products: dangerous) }
-  let!(:s1) { create(:sample, name: 'Sample 1') }
+  let!(:s1) {
+    create(
+      :sample,
+      name: 'Sample 1',
+      real_amount_value: 5.0,
+      real_amount_unit: 'g'
+    )
+  }
   let!(:s2) { create(:sample, name: 'Sample 2') }
   let!(:s3) { create(:sample, name: 'Sample 3') }
   let!(:s4) { create(:sample, name: 'Solvent') }
@@ -245,7 +252,7 @@ describe 'Reporter::Docx::DetailReaction instance' do
           {"attributes"=>{"bold"=>"true", "font-size"=>12}, "insert"=>serial},
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>"#{s1.molecule_name_hash[:label]}"},
-          {"insert"=>" (1.00 g, 55.5 mmol, 0.880 equiv); "},
+          {"insert"=>" (5.00 g, 278 mmol, 0.880 equiv); "},
           {"insert"=>"{S1"},
           {"insert"=>"} "},
           {"attributes"=>{"font-size"=>12}, "insert"=>s4.preferred_label},

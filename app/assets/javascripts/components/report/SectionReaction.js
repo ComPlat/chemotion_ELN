@@ -51,14 +51,18 @@ const SectionReaction = ({reaction, settings, configs}) => {
         show={showPuri}
         puri={purification}
       />
+      <br />
       <DangerourProductsContent
         show={showDang}
         dang={dangerousProducts}
       />
-      <TLCContent show={settings.tlc && tlc_description}
-                  tlc_description={tlc_description}
-                  tlc_solvents={tlc_solvents}
-                  rf_value={rf_value} />
+      <br />
+      <TLCContent
+        show={settings.tlc && tlc_description}
+        tlcDescription={tlc_description}
+        tlcSolvents={tlc_solvents}
+        rfValue={rf_value}
+      />
       <ObservationContent show={settings.observation && observation}
                           observation={observation} />
       <AnalysesContent show={settings.analysis && has_analyses}
@@ -203,52 +207,44 @@ const MaterialContent = ({show, starting_materials, reactants, products}) => {
   )
 }
 
-const SolventContent = ({show, solvents, solvent}) => {
+const SolventContent = ({ show, solvents, solvent }) => {
   const volume = (s) => {
-    if(s.real_amount_value) {
-      return " (" + s.real_amount_value + "ml)"
-    } else if(s.target_amount_value) {
-      return " (" + s.target_amount_value + "ml)"
-    } else {
-      return " (0.0ml)"
+    if (s.amount_l) {
+      return `(${s.amount_l * 1000}ml)`;
     }
-  }
+    return '(0.0ml)';
+  };
+
+  const separator = (idx, last) => (
+    idx === last ? '' : ', '
+  );
 
   const solventsData = () => {
-    return solvents.map( (s, i) => {
-      return (
-        <div key={i}>
-          <pre className="noBorder">{
-            s.preferred_label + volume(s)
-          }</pre>
-        </div>
-      )
-    })
-  }
+    const last = solvents.length - 1;
+    return solvents.map((s, i) => (
+      <pre key={i} className="noBorder display-inline no-padding">
+        {s.preferred_label + volume(s) + separator(i, last)}
+      </pre>
+    ));
+  };
 
-  const solventData = () => {
-    return (
-      <div>
-        <pre className="noBorder">{solvent}</pre>
-      </div>
-    )
-  }
+  const solventData = () => (
+    <pre className="noBorder display-inline no-padding">{solvent}</pre>
+  );
 
-  const displayContent = () => {
-    return (
-      solvents.length !== 0 ? solventsData() : solventData()
-    )
-  }
+  const displayContent = () => (
+    solvents.length !== 0 ? solventsData() : solventData()
+  );
 
   return (
     show
       ? <div>
-          <h4> Solvent </h4>
-          <div>{displayContent()}</div>
+          <h4 className="display-inline"> Solvent(s): </h4>
+          {displayContent()}
         </div>
       : null
-  )
-}
+  );
+};
 
 const DescriptionContent = ({show, description}) => {
   return show ? <QuillViewer value={description} /> : null;
@@ -259,8 +255,10 @@ const PurificationContent = ({ show, puri }) => {
   return (
     show
       ? <div>
-          <h4> Type of Purification </h4>
-          <pre className="noBorder">{puriText}</pre>
+          <h4 className="display-inline"> Type of Purification: </h4>
+          <pre className="noBorder display-inline no-padding">
+            {puriText}
+          </pre>
         </div>
       : null
   );
@@ -271,27 +269,28 @@ const DangerourProductsContent = ({ show, dang }) => {
   return (
     show
       ? <div>
-          <h4> Dangerous Products </h4>
-          <pre className="noBorder">{dangText}</pre>
+          <h4 className="display-inline"> Dangerous Products: </h4>
+          <pre className="noBorder display-inline no-padding">{dangText}</pre>
         </div>
       : null
   );
 };
 
-const TLCContent = ({show, tlc_description, tlc_solvents, rf_value}) => {
-  return (
-    show
-      ? <div>
-          <h4> TLC - Control </h4>
-          <pre className="noBorder">
-            <p> <b>rf_value:</b> {rf_value} </p>
-            <p> <b>TLC_solvents:</b> {tlc_solvents} </p>
-            {tlc_description}
+const TLCContent = ({show, tlcDescription, tlcSolvents, rfValue}) => (
+  show
+    ? <div>
+        <div>
+        <h4 className="display-inline"> TLC - Control </h4>
+          <pre className="noBorder display-inline no-padding">
+            Rf-value: {rfValue} (Solvent: {tlcSolvents})
           </pre>
         </div>
-      : null
-  )
-}
+        <div className="g-marginLeft--10">
+          {tlcDescription}
+        </div>
+      </div>
+    : null
+);
 
 const ObservationContent = ({show, observation}) => {
   return (
@@ -304,33 +303,29 @@ const ObservationContent = ({show, observation}) => {
   )
 }
 
-const AnalysesContent = ({show, products}) => {
-  const analyses = products.map((product, i) => {
-    return (
-      product.analyses.map((analysis, j) => {
-        const content = analysis && analysis.extended_metadata
-                          ? JSON.parse(analysis.extended_metadata.content)
-                          : {}
-        const kind = analysis.kind ? `(${analysis.kind})` : ""
-        return (
-          analysis
-            ? <div key={i*100+j}>
+const AnalysesContent = ({ show, products }) => {
+  const analyses = products.map((product, i) => (
+    product.analyses.map((analysis, j) => {
+      const content = analysis && analysis.extended_metadata
+        ? JSON.parse(analysis.extended_metadata.content)
+        : {};
+      const kind = analysis.kind ? `(${analysis.kind})` : '';
+      return (
+        analysis
+          ? <div key={i * 100 + j}>
+              <div className="noBorder g-marginLeft--20">
+                <p><u>{product.molecule.sum_formular}</u> ({kind})</p>
                 <div className="noBorder g-marginLeft--20">
-                  <p><b>{product.molecule.sum_formular}</b> {kind}</p>
-                  <div className="noBorder g-marginLeft--20">
-                    <u>Content:</u>
-                    <QuillViewer value={content} />
-                    <u>Description:</u>
-                    <p className="g-marginLeft--20">{analysis.description}</p>
-                  </div>
+                  <QuillViewer value={content} />
+                  <p className="g-marginLeft--20">{analysis.description}</p>
                 </div>
-                <br/>
               </div>
-            : null
-        )
-      })
-    )
-  })
+              <br/>
+            </div>
+          : null
+      );
+    })
+  ));
   return (
     show
       ? <div>
@@ -338,8 +333,8 @@ const AnalysesContent = ({show, products}) => {
           <div className="noBorder">{analyses}</div>
         </div>
       : null
-  )
-}
+  );
+};
 
 const LiteratureContent = ({show, literatures}) => {
   const rows = literatures.map((literature, i) => {
