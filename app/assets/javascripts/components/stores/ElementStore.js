@@ -32,6 +32,7 @@ import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 
 import Aviator from 'aviator';
+import _ from 'lodash';
 
 class ElementStore {
   constructor() {
@@ -1039,7 +1040,8 @@ class ElementStore {
 
   resetCurrentElement(newKey, newSelecteds) {
     const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey]
-    if(newSelecteds.length === 0) {
+
+    if (newSelecteds.length === 0) {
       this.state.currentElement = null;
     } else {
       this.state.currentElement = newCurrentElement;
@@ -1068,7 +1070,8 @@ class ElementStore {
     const newSelecteds = intersectionWith(this.state.selecteds, elements, SameEleTypId);
 
     if (currentNotDeleted) {
-      this.setState({ selecteds: newSelecteds });
+      const currentIdx = _.findIndex(newSelecteds, o => o.id === currentElement.id) || 0;
+      this.setState({ selecteds: newSelecteds, activeKey: currentIdx });
     } else {
       this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));
     }
