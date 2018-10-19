@@ -479,12 +479,6 @@ class ElementStore {
       currentCollection,
       selecteds
     });
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort);
-    ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
-    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
-    ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
-    ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
   }
 
   handleUpdateElementsCollection(params) {
@@ -1068,6 +1062,7 @@ class ElementStore {
     const { currentElement } = this.state;
     const currentNotDeleted = intersectionWith([currentElement], elements, SameEleTypId)[0];
     const newSelecteds = intersectionWith(this.state.selecteds, elements, SameEleTypId);
+    const ui_state = UIStore.getState();
 
     if (currentNotDeleted) {
       const currentIdx = _.findIndex(newSelecteds, o => o.id === currentElement.id) || 0;
@@ -1075,6 +1070,13 @@ class ElementStore {
     } else {
       this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));
     }
+
+    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
+      ui_state.isSync, this.state.moleculeSort);
+    ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
   }
   // End of DetailStore
   /////////////////////
