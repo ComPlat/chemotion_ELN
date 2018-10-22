@@ -122,10 +122,12 @@ class InboxStore {
   }
 
   getAttachments(containers, all_attachments) {
-    containers.forEach(container => {
-      all_attachments.push.apply(all_attachments, container.attachments)
-      this.getAttachments(container.children, all_attachments)
-    })
+    if (containers) {
+      containers.forEach(container => {
+        all_attachments.push.apply(all_attachments, container.attachments)
+        this.getAttachments(container.children, all_attachments)
+      })
+    }
     return all_attachments
   }
 
