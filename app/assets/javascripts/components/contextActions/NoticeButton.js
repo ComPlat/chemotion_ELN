@@ -253,12 +253,6 @@ export default class NoticeButton extends React.Component {
       bMessages = dbNotices.map((not, index) => (
         <Panel
           key={`panel-modal-body-${not.id}`}
-          header={
-            <i className="fa fa-commenting-o" aria-hidden="true">&nbsp;{not.subject}&nbsp;&nbsp;
-              <span><strong>From: </strong>{not.sender_name}</span>&nbsp;&nbsp;
-              <span><strong>Created On: </strong>{not.created_at}</span>
-            </i>
-          }
           eventKey={index}
           collapsible
           defaultExpanded
@@ -266,24 +260,34 @@ export default class NoticeButton extends React.Component {
             this[`myPl${index}`] = pl;
           }}
         >
-          <Table>
-            <tbody>
-              <tr>
-                <td width="10%">
-                  <Button
-                    id={`notice-button-ack-${not.id}`}
-                    key={`notice-button-ack-${not.id}`}
-                    onClick={() => this.messageAck(not.id, false)}
-                  >
-                    Got it!&nbsp;<i className="fa fa-paper-plane" />
-                  </Button>
-                </td>
-                <td width="90%">
-                  { not.content.data }
-                </td>
-              </tr>
-            </tbody>
-          </Table>
+          <Panel.Heading>
+            {
+              <i className="fa fa-commenting-o" aria-hidden="true">&nbsp;{not.subject}&nbsp;&nbsp;
+                <span><strong>From: </strong>{not.sender_name}</span>&nbsp;&nbsp;
+                <span><strong>Created On: </strong>{not.created_at}</span>
+              </i>
+            }
+          </Panel.Heading>
+          <Panel.Body>
+            <Table>
+              <tbody>
+                <tr>
+                  <td width="10%">
+                    <Button
+                      id={`notice-button-ack-${not.id}`}
+                      key={`notice-button-ack-${not.id}`}
+                      onClick={() => this.messageAck(not.id, false)}
+                    >
+                      Got it!&nbsp;<i className="fa fa-paper-plane" />
+                    </Button>
+                  </td>
+                  <td width="90%">
+                    { not.content.data }
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
+          </Panel.Body>
         </Panel>
       ));
     }

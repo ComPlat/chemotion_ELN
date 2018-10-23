@@ -5,7 +5,9 @@ module Entities
     expose :data, :name_abbreviation, :type
 
     def data
-      object.profile.data
+      if object.respond_to? :profile
+        object.profile.data  if object.profile.respond_to? :data
+      end
     end
   end
 end

@@ -77,25 +77,27 @@ function ChemRead({
       <PanelGroup defaultActiveKey="0" className="chemread-files-list">
         {files.map((x, index) => (
           <Panel
-            header={x.name}
             key={x.uid}
             eventKey={index}
             collapsible
             defaultExpanded
           >
-            <ListGroup>
-              {x.info.map((i, idx) => (
-                <RsmiItemContainer
-                  key={`${x.uid + idx}`}
-                  uid={x.uid}
-                  idx={idx}
-                  selectSmi={selectSmi}
-                  removeSmi={removeSmi}
-                  selected={selected}
-                  content={i}
-                />
-              ))}
-            </ListGroup>
+            <Panel.Heading>{x.name}</Panel.Heading>
+            <Panel.Body>
+              <ListGroup>
+                {x.info.map((i, idx) => (
+                  <RsmiItemContainer
+                    key={`${x.uid + idx}`}
+                    uid={x.uid}
+                    idx={idx}
+                    selectSmi={selectSmi}
+                    removeSmi={removeSmi}
+                    selected={selected}
+                    content={i}
+                  />
+                ))}
+              </ListGroup>
+            </Panel.Body>
           </Panel>
         ))}
       </PanelGroup>

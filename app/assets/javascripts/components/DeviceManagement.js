@@ -18,7 +18,7 @@ const DeviceManagement = ({devices, activeAccordionDevice}) => {
       Aviator.navigate(`/collection/${currentCollection.id}/${urlForCurrentElement()}`)
     }
   }
-  
+
   const urlForCurrentElement = () => {
     const {currentElement} = ElementStore.getState()
     if(currentElement) {
@@ -58,7 +58,7 @@ const DeviceManagement = ({devices, activeAccordionDevice}) => {
       />
     </div>
   )
-}  
+}
 
 DeviceManagement.getStores = () => {
   return [ElementStore]
@@ -73,7 +73,7 @@ export default connectToStores(DeviceManagement)
 const Devices = ({devices, activeAccordionDevice}) => {
   const styleByDeviceState = (device) => {
     return device.isNew || device.isEdited
-      ? "info" 
+      ? "info"
       : "default"
   }
   if(devices.length > 0) {
@@ -82,15 +82,17 @@ const Devices = ({devices, activeAccordionDevice}) => {
           {devices.map(
             (device, key) =>
               <Panel
-                header={<DeviceHeader device={device}/>}
                 eventKey={key}
                 key={key}
                 onClick={() => ElementActions.changeActiveAccordionDevice(key)}
                 bsStyle={styleByDeviceState(device)}
               >
-                <Device
-                  device={device}
-                />
+                <Panel.Heading>{<DeviceHeader device={device}/>}</Panel.Heading>
+                <Panel.Body>
+                  <Device
+                    device={device}
+                  />
+                </Panel.Body>
               </Panel>
           )}
         </PanelGroup>
@@ -106,7 +108,7 @@ const Devices = ({devices, activeAccordionDevice}) => {
 
 const Device = ({device}) => {
   const styleBySelectedType = (type) => {
-    return device.types.includes(type) 
+    return device.types.includes(type)
       ? "primary"
       : "default"
   }
@@ -200,7 +202,7 @@ const DeviceHeader = ({device, state, onChangeState}) => {
       cursor: "pointer"
     }}>
       {device.title}
-      <Button 
+      <Button
         bsSize="xsmall"
         bsStyle="danger"
         className="button-right"
@@ -222,4 +224,3 @@ const AddDeviceButton = () => {
     </p>
   )
 }
-

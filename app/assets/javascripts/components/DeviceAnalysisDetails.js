@@ -9,17 +9,21 @@ const DeviceAnalysisDetails = ({analysis, toggleFullScreen}) => {
   return (
     <Panel
       className='panel-detail'
-      header={
-        <Header
-          analysis={analysis}
-          toggleFullScreen={toggleFullScreen}
-        />
-      }
       bsStyle={analysis.isPendingToSave ? 'info' : 'primary'}
     >
-      <MainContent
-        analysis={analysis}
-      />
+      <Panel.Heading>
+        {
+          <Header
+            analysis={analysis}
+            toggleFullScreen={toggleFullScreen}
+          />
+        }
+      </Panel.Heading>
+      <Panel.Body>
+        <MainContent
+          analysis={analysis}
+        />
+      </Panel.Body>
     </Panel>
   )
 }
