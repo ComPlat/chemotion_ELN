@@ -1,0 +1,77 @@
+.spectra-viewer {
+  text-align: right;
+  padding-bottom: 10px;
+}
+
+.spectra-viewer-dialog {
+  display: block;
+  width: 70vw !important;
+  padding-left: 0px;
+}
+
+.d3-tip {
+  z-index: 1998;
+}
+
+.txt-sv-input-label {
+  font-size: 16px !important;
+}
+
+.txt-sv-tp {
+  font-size: 11px !important;
+  height: 30px;
+}
+
+.react-spectrum-viewer {
+  .txt-input-label {
+    font-size: 16px !important;
+  }
+
+  .txt-tp {
+    font-size: 11px !important;
+  }
+
+  .txt-input {
+    font-size: 14px !important;
+  }
+
+  .txt-percent {
+    font-size: 14px !important;
+  }
+
+  .txt-btn-write {
+    font-size: 14px !important;
+  }
+
+  .txt-btn-save {
+    font-size: 14px !important;
+  }
+
+  .txt-panel-header {
+    font-size: 14px !important;
+  }
+
+  .txt-panel-content {
+    font-size: 12px !important;
+  }
+
+  .txt-panel-badge {
+    span {
+      font-size: 11px !important;
+    }
+  }
+}
+
+.spectra-viewer-dialog {
+  .card-box {
+    display: -webkit-flex;
+    display:         flex;
+    -webkit-align-items: center;
+            align-items: center;
+    -webkit-justify-content: center;
+            justify-content: center;
+
+    height: 60vh;
+    text-align: center;
+  }
+}
