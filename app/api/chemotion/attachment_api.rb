@@ -74,7 +74,7 @@ module Chemotion
       desc "Delete container id of attachment"
       delete 'link/:attachment_id' do
         @attachment.attachable_id = nil
-        @attachment.attachable_type = nil
+        @attachment.attachable_type = 'Container'
         @attachment.save!
       end
 
