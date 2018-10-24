@@ -97,7 +97,7 @@ module ContainerHelpers
 
   def delete_containers_and_attachments(container)
     Attachment.where_container(container[:id]).destroy_all
-    if container[:children].length > 0
+    if container[:children] && container[:children].length > 0
       container[:children].each do |tmp|
         delete_containers_and_attachments(tmp)
       end
