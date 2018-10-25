@@ -102,6 +102,36 @@ module Chemotion
         true
       end
 
+      desc "Upload files to Inbox as unsorted"
+      post 'upload_to_inbox' do
+        attach_ary = Array.new
+        params.each do |file_id, file|
+          if tempfile = file[:tempfile]
+              attach = Attachment.new(
+                bucket: file[:container_id],
+                filename: file[:filename],
+                key: file[:name],
+                file_path: file[:tempfile],
+                created_by: current_user.id,
+                created_for: current_user.id,
+                content_type: file[:type],
+                attachable_type: 'Container'
+              )
+            begin
+              attach.save!
+              attach_ary.push(attach.id)
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
+          end
+        end
+        TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
+                       .perform_later(attach_ary)
+
+        true
+      end
+
       desc "Download the attachment file"
       get ':attachment_id' do
         content_type "application/octet-stream"

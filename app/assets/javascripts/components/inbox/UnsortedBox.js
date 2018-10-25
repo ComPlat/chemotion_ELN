@@ -1,45 +1,92 @@
 import React from 'react';
-import {Button} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 import AttachmentContainer from './AttachmentContainer';
 import DragDropItemTypes from '../DragDropItemTypes';
-import InboxActions from '../actions/InboxActions';
+
+import Container from '../models/Container';
+import UnsortedDatasetModal from './UnsortedDatasetModal';
 
 export default class UnsortedBox extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {
-      visible: false
-    }
+      visible: false,
+      modal: {
+        show: false,
+        datasetContainer: null
+      }
+    };
+  }
+
+  handleFileModalOpen(datasetContainer) {
+    const { modal } = this.state;
+    modal.datasetContainer = datasetContainer;
+    modal.show = true;
+    this.setState({ modal });
+  }
+
+  handleFileModalHide() {
+    const { modal } = this.state;
+    modal.datasetContainer = null;
+    modal.show = false;
+    this.setState({ modal });
+    document.body.className = document.body.className.replace('modal-open', '');
+  }
+
+  handleUploadButton() {
+    const datasetContainer = Container.buildEmpty();
+    datasetContainer.container_type = 'dataset';
+    this.handleFileModalOpen(datasetContainer);
   }
 
   render() {
-    let {unsorted_box} = this.props
-    let {visible} = this.state
+    const { unsorted_box } = this.props;
+    const { visible, modal } = this.state;
 
-    let attachments = unsorted_box.map(attachment => {
-      return(
-        <AttachmentContainer key={"attach_"+attachment.id}
+    const attachments = visible ? unsorted_box.map((attachment) => {
+      return (
+        <AttachmentContainer
+          key={`attach_${attachment.id}`}
           sourceType={DragDropItemTypes.UNLINKED_DATA}
-          attachment={attachment} />
-      )
+          attachment={attachment}
+        />
+      );
     })
+      :
+    <div />;
+
+    const folderClass = visible ? 'fa fa-folder-open' : 'fa fa-folder';
+
+    const uploadModal = (
+      <UnsortedDatasetModal
+        onHide={() => this.handleFileModalHide()}
+        show={modal.show}
+        datasetContainer={modal.datasetContainer}
+      />
+    );
+
+    const uploadButton = (
+      <Button style={{ position: 'absolute', right: 0 }} bsSize="xsmall" onClick={() => this.handleUploadButton()}>
+        <i className="fa fa-upload" aria-hidden="true" />
+      </Button>
+    );
 
     return (
-      visible
-          ?
-          <div className="tree-view">
-            <div className="title">
-              <i className="fa fa-folder-open" aria-hidden="true"
-                onClick={() => this.setState({visible: !visible})}> Unsorted
-                </i>
-            </div>
-            <div> {attachments} </div>
-          </div>
-          : <div className="tree-view"><div className="title"><i className="fa fa-folder" aria-hidden="true"
-          onClick={() => this.setState({visible: !visible})}> Unsorted</i></div></div>
-
-    )
+      <div className="tree-view">
+        <div className="title">
+          <i
+            className={folderClass}
+            aria-hidden="true"
+            onClick={() => this.setState({ visible: !visible })}
+          > Unsorted
+          </i>
+          {' '}
+          {uploadButton}
+        </div>
+        <div> {attachments} </div>
+        {uploadModal}
+      </div>
+    );
   }
 }

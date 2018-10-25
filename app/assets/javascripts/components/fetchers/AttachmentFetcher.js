@@ -1,5 +1,6 @@
 import 'whatwg-fetch';
 import Attachment from '../models/Attachment';
+import NotificationActions from '../actions/NotificationActions';
 
 const fileFromAttachment = (attachment, containerId) => {
   const { file } = attachment;
@@ -60,6 +61,33 @@ export default class AttachmentFetcher {
 
       if (container.children && container.children.length > 0) {
         this.filterAllAttachments(files, container.children);
+      }
+    });
+  }
+
+  static uploadToInbox(attachments) {
+    const data = new FormData();
+    const files = (attachments).filter(f => f.is_new)
+      .map(f => fileFromAttachment(f, null));
+    files.forEach((file) => {
+      data.append(file.id || file.name, file);
+    });
+    return () => fetch('/api/v1/attachments/upload_to_inbox', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: data
+    }).then((response) => {
+      if (response.ok === false) {
+        let msg = 'Files uploading to Inbox failed: ';
+        if (response.status === 413) {
+          msg += 'File size limit exceeded. Max size is 50MB';
+        } else {
+          msg += response.statusText;
+        }
+        NotificationActions.add({
+          message: msg,
+          level: 'error'
+        });
       }
     });
   }
