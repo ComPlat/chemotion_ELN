@@ -22,11 +22,20 @@ variables:
 
 test:
   # stage: rspec
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+    - node_modules/
+    - vendor/ruby
+
+  before_script:
+  - /bin/bash -l -c " source ~/.nvm/nvm.sh && nvm list"
+
   script:
     - cp config/database.yml.gitlab config/database.yml
     - cp -f config/storage.yml.example config/storage.yml
     - touch config/datacollectors.yml
-    - /bin/bash -l -c "gem install bundle && bundle install && source ~/.nvm/nvm.sh &&
+    - /bin/bash -l -c "gem install bundler  --no-ri --no-rdoc && bundle install -j 3 --path vendor && source ~/.nvm/nvm.sh &&
         npm install && bundle exec rake db:test:prepare && bundle exec rake && npm test"
 # npm:
 #   stage: npm
