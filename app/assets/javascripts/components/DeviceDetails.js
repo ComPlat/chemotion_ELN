@@ -10,17 +10,20 @@ const DeviceDetails = ({device, toggleFullScreen}) => {
   return (
     <Panel
       className='panel-detail'
-      header={<Header device={device} toggleFullScreen={toggleFullScreen}/>}
       bsStyle={device.isPendingToSave ? 'info' : 'primary'}
     >
+      <Panel.Heading>
+        {<Header device={device} toggleFullScreen={toggleFullScreen}/>}
+      </Panel.Heading>
+      <Panel.Body>
       <PanelGroup  defaultActiveKey="0" accordion>
         <Panel eventKey="1">
           <Panel.Heading>
-            <Panel.Title>
+            <Panel.Title toggle>
               Device Management
             </Panel.Title>
           </Panel.Heading>
-          <Panel.Body>
+          <Panel.Body collapsible>
             <DeviceManagement />
           </Panel.Body>
         </Panel>
@@ -34,6 +37,7 @@ const DeviceDetails = ({device, toggleFullScreen}) => {
           Save
         </Button>
       </ButtonToolbar>
+      </Panel.Body>
     </Panel>
   )
 }

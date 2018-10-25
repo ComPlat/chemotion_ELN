@@ -21,9 +21,7 @@ function ElementAnalyses({ element, idx }) {
     return (
       <Panel key={x.id}>
         <Panel.Heading>
-          <Panel.Title>
-            {header}
-          </Panel.Title>
+          {header}
         </Panel.Heading>
         <Panel.Body>
           <QuillViewer value={tryParse(x.extended_metadata.content)} />
@@ -41,11 +39,15 @@ function ElementAnalyses({ element, idx }) {
   return (
     <Panel
       key={element.id}
-      header={`${element.type}: ${element.short_label}`}
       eventKey={idx}
     >
+      <Panel.Heading>
+        {`${element.type}: ${element.short_label}`}
+      </Panel.Heading>
+      <Panel.Body>
       {children}
       {analyses}
+      </Panel.Body>
     </Panel>
   );
 }
@@ -105,11 +107,15 @@ function FormatComponent({
 
   return (
     <Panel
-      header={header}
       bsStyle={bsStyle}
       className="format-analysis-panel"
     >
-      <Accordion>{elements}</Accordion>
+      <Panel.Heading>
+        {header}
+      </Panel.Heading>
+      <Panel.Body>
+        <Accordion>{elements}</Accordion>
+      </Panel.Body>
     </Panel>
   );
 }

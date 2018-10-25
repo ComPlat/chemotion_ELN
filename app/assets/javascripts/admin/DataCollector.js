@@ -162,7 +162,12 @@ export default class DataCollector extends React.Component {
               <ControlLabel>Device Name</ControlLabel>
               <input className="form-control" type="text" readOnly defaultValue={`${selectedDevice.name}`} />
               <br />
-              <Panel header="Data Collector Method & Parameters">
+              <Panel>
+                <Panel.Heading>
+                  <Panel.Title>
+                    Data Collector Method & Parameters
+                  </Panel.Title>
+                </Panel.Heading>
                 <ControlLabel>Data Collector Method</ControlLabel>
                 <Select
                   value={selectedCollectMethod}
@@ -275,11 +280,11 @@ export default class DataCollector extends React.Component {
           </Button>
         </td>
         <td> {device.name} </td>
-        <td> {(device.data.method ? device.data.method : '')} </td>
-        <td> {(device.data.method_params ? device.data.method_params.dir : '')} </td>
-        <td> {(device.data.method_params ? device.data.method_params.host : '')} </td>
-        <td> {(device.data.method_params ? device.data.method_params.user : '')} </td>
-        <td> {(device.data.method_params && device.data.method_params.number_of_files ?
+        <td> {(device.data && device.data.method ? device.data.method : '')} </td>
+        <td> {(device.data && device.data.method_params ? device.data.method_params.dir : '')} </td>
+        <td> {(device.data && device.data.method_params ? device.data.method_params.host : '')} </td>
+        <td> {(device.data && device.data.method_params ? device.data.method_params.user : '')} </td>
+        <td> {(device.data && device.data.method_params && device.data.method_params.number_of_files ?
           device.data.method_params.number_of_files : 0)}
         </td>
         <td> {device.id} </td>
@@ -288,7 +293,12 @@ export default class DataCollector extends React.Component {
 
     return (
       <div>
-        <Panel header="Data Collector">
+        <Panel>
+          <Panel.Heading>
+            <Panel.Title>
+              Data Collector
+            </Panel.Title>
+          </Panel.Heading>
           <Table>
             <thead>
               { tcolumn }

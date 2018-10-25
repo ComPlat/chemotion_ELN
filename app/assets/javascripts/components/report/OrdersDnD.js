@@ -97,9 +97,9 @@ const ObjRow = ({ element, template, connectDragSource, connectDropTarget,
     <div>
       <Panel
         style={style}
-        header={headerTitle(element, icon)}
         bsStyle={bsStyle}
       >
+        <Panel.Heading>{headerTitle(element, icon)}</Panel.Heading>
         <div className="row">
           <div className="svg">
             <SVG src={element.svgPath} key={element.svgPath} />

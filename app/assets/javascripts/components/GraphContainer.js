@@ -86,8 +86,11 @@ export default class GraphContainer extends React.Component {
     return (
       <Panel
         bsStyle="primary"
-        header={header}
       >
+        <Panel.Heading>
+            {header}
+        </Panel.Heading>
+        <Panel.Body>
         <Accordion>
           <ComputedPropsGraphContainer
             show
@@ -95,6 +98,7 @@ export default class GraphContainer extends React.Component {
             graphData={selectedComputedProps}
           />
         </Accordion>
+        </Panel.Body>
       </Panel>
     );
   }

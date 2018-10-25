@@ -350,97 +350,119 @@ export default class LiteratureDetails extends Component {
     const label = currentCollection ? currentCollection.label : null
     return (
       <Panel
-        header={
-          <PanelHeader
-            title={`Literature Management for collection '${label}'`}
-            btns={[<CloseBtn key="close tab" onClose={this.onClose} />]}
-          />
-        }
         bsStyle="info"
         className="format-analysis-panel"
       >
-        <PanelGroup accordion defaultActiveKey="1">
-          <Panel
-            eventKey="2"
-            collapsible
-            header="References for Samples"
-          >
-            <Table>
-              <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
-              <tbody>
-                {sampleRefs.map(lit => (
-                  <tr key={`sampleRef-${lit.id}`}>
-                    <td><ElementTypeLink literature={lit} type="sample" /></td>
-                    <td className="padding-right">
-                      <Citation literature={lit} />
-                    </td>
-                    <td />
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Panel>
-          <Panel
-            eventKey="3"
-            collapsible
-            header="References for Reactions"
-          >
-            <Table>
-              <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
-              <tbody>
-                {reactionRefs.map(lit => (
-                  <tr key={`reactionRef-${lit.id}`}>
-                    <td><ElementTypeLink literature={lit} type="reaction" /></td>
-                    <td className="padding-right">
-                      <Citation literature={lit} />
-                    </td>
-                    <td/>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </Panel>
-          <Panel
-            eventKey="4"
-            collapsible
-            header="References for selected Elements"
-          >
-            <ListGroup>
-              <ListGroupItem>
-                <Row>
-                  <Col md={11} style={{ paddingRight: 0 }}>
-                    <DoiInput handleInputChange={this.handleInputChange} literature={literature} />
-                  </Col>
-                  <Col md={1} style={{ paddingRight: 0 }}>
-                    <Button
-                      onClick={this.fetchDOIMetadata}
-                      title="fetch metadata for this doi"
-                      disabled={!doiValid(literature.doi)}
-                    >
-                      <Glyphicon glyph="retweet" />
-                    </Button>
-                  </Col>
-                  <Col md={12} style={{ paddingRight: 0 }}>
-                    <Citation literature={literature} />
-                  </Col>
-                  <Col md={7} style={{ paddingRight: 0 }}>
-                    <TitleInput
-                      handleInputChange={this.handleInputChange}
-                      literature={literature}
-                    />
-                  </Col>
-                  <Col md={4} style={{ paddingRight: 0 }}>
-                    <UrlInput handleInputChange={this.handleInputChange} literature={literature} />
-                  </Col>
-                  <Col md={1}>
-                    <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection"/>
-                  </Col>
-                </Row>
-              </ListGroupItem>
-            </ListGroup>
-            <CitationTable rows={selectedRefs} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
-          </Panel>
-        </PanelGroup>
+        <Panel.Heading>
+          {
+            <PanelHeader
+              title={`Literature Management for collection '${label}'`}
+              btns={[<CloseBtn key="close tab" onClose={this.onClose} />]}
+            />
+          }
+        </Panel.Heading>
+        <Panel.Body>
+          <PanelGroup accordion defaultActiveKey="1">
+            <Panel
+              eventKey="2"
+              collapsible
+            >
+              <Panel.Heading>
+                <Panel.Title toggle>
+                  References for Samples
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body collapsible>
+                <Table>
+                  <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
+                  <tbody>
+                    {sampleRefs.map(lit => (
+                      <tr key={`sampleRef-${lit.id}`}>
+                        <td><ElementTypeLink literature={lit} type="sample" /></td>
+                        <td className="padding-right">
+                          <Citation literature={lit} />
+                        </td>
+                        <td />
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </Panel.Body>
+            </Panel>
+            <Panel
+              eventKey="3"
+              collapsible
+            >
+              <Panel.Heading>
+                <Panel.Title toggle>
+                  References for Reactions
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body collapsible>
+                <Table>
+                  <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
+                  <tbody>
+                    {reactionRefs.map(lit => (
+                      <tr key={`reactionRef-${lit.id}`}>
+                        <td><ElementTypeLink literature={lit} type="reaction" /></td>
+                        <td className="padding-right">
+                          <Citation literature={lit} />
+                        </td>
+                        <td />
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </Panel.Body>
+            </Panel>
+            <Panel
+              eventKey="4"
+              collapsible
+            >
+              <Panel.Heading>
+                <Panel.Title toggle>
+                  References for selected Elements
+                </Panel.Title>
+              </Panel.Heading>
+              <Panel.Body collapsible>
+                <ListGroup>
+                  <ListGroupItem>
+                    <Row>
+                      <Col md={11} style={{ paddingRight: 0 }}>
+                        <DoiInput handleInputChange={this.handleInputChange} literature={literature} />
+                      </Col>
+                      <Col md={1} style={{ paddingRight: 0 }}>
+                        <Button
+                          onClick={this.fetchDOIMetadata}
+                          title="fetch metadata for this doi"
+                          disabled={!doiValid(literature.doi)}
+                        >
+                          <Glyphicon glyph="retweet" />
+                        </Button>
+                      </Col>
+                      <Col md={12} style={{ paddingRight: 0 }}>
+                        <Citation literature={literature} />
+                      </Col>
+                      <Col md={7} style={{ paddingRight: 0 }}>
+                        <TitleInput
+                          handleInputChange={this.handleInputChange}
+                          literature={literature}
+                        />
+                      </Col>
+                      <Col md={4} style={{ paddingRight: 0 }}>
+                        <UrlInput handleInputChange={this.handleInputChange} literature={literature} />
+                      </Col>
+                      <Col md={1}>
+                        <AddButton onLiteratureAdd={this.handleLiteratureAdd} literature={literature} title="add citation to selection"/>
+                      </Col>
+                    </Row>
+                  </ListGroupItem>
+                </ListGroup>
+                <CitationTable rows={selectedRefs} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
+              </Panel.Body>
+            </Panel>
+          </PanelGroup>
+        </Panel.Body>
       </Panel>
 
 
