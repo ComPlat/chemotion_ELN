@@ -24,6 +24,19 @@ feature 'Message' do
       data: 'Thanks for using ELN!\nHave a nice weekend.'
     }, created_by: u_admin.id) }
 
+  # NB: workaround of dismissing notifs not working on CI: notification wrapper on right top corner still seems to overlap with notification button
+  # ended up doubling window width
+
+  let(:notification_pops) { ->() {
+    i = 0
+    bool = false
+    until bool
+      i += 1
+      sleep 1
+      bool = all('div.notification-message', wait: 0).size == 3 || i > 10
+    end
+  } }
+
   background do
     u2.confirmed_at = Time.now
     u2.save
@@ -36,47 +49,47 @@ feature 'Message' do
       Notification.create!(message: m3_sys, user: u2, is_ack: false)
     end
     scenario 'check message box number', js: true do
-      # required: wait for fetching messages
-      sleep 10
-      expect(find("span.badge.badge-pill")).to have_content '3'
+      expect(find('span.badge.badge-pill')).to have_content('3')
     end
 
     scenario 'open message box and acknowledge all messages', js: true do
       # required: wait for fetching messages
-      sleep 10
-      find('button#notice-button').click
-      # just for observation
-      sleep 4
-      find("button#notice-button-ack-all").click
+      notification_pops[]
       sleep 2
-      expect(find("span.badge.badge-pill")).to have_content '0'
+      #dismiss pop-up message that could hide the notice-button depending on the viewport size
+      all('div.notification-message').reverse_each { |message| message.click }
+      find_button('notice-button').click
+      # just for observation
+      find_button('notice-button-ack-all').click
+
+      expect(find('span.badge.badge-pill')).to have_content '0'
     end
 
     scenario 'open message box and acknowledge the message one by one', js: true do
       # required: wait for fetching messages
-      sleep 10
-      find('button#notice-button').click
-      # just for observation
-      sleep 4
-      find("button#notice-button-ack-1").click
-      # just for observation
+      notification_pops[]
       sleep 2
-      find("button#notice-button-ack-2").click
+      #dismiss pop-up message that could hide the notice-button depending on the viewport size
+      all('div.notification-message').reverse_each { |message| message.click }
+
+      find_button('notice-button', wait: 10).click
       # just for observation
-      sleep 2
-      find("button#notice-button-ack-3").click
-      sleep 2
-      expect(find("span.badge.badge-pill")).to have_content '0'
+      find_button('notice-button-ack-1').click
+      # just for observation
+      find_button('notice-button-ack-2').click
+      # just for observation
+      find_button('notice-button-ack-3').click
+
+      expect(find('span.badge.badge-pill')).to have_content '0'
     end
   end
 
   describe 'Ack on pop up notification' do
     scenario 'ack on pop up notification', js: true do
       # required: wait for fetching messages
-      sleep 10
+      # notification_pops[]
       find('button.notification-action-button').click
-      sleep 6
-      expect(find("span.badge.badge-pill")).to have_content '0'
+      expect(find('span.badge.badge-pill')).to have_content '0'
     end
   end
 
