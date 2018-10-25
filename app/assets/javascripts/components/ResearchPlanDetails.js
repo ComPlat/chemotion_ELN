@@ -1,49 +1,83 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import Dropzone from 'react-dropzone';
 import {
   FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Glyphicon, Row, Col
 } from 'react-bootstrap';
+import SVG from 'react-inlinesvg';
+import _ from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
-import SVG from 'react-inlinesvg';
 
 import ElementActions from './actions/ElementActions';
-import DetailActions from './actions/DetailActions'
-import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher'
-import QuillEditor from './QuillEditor'
+import DetailActions from './actions/DetailActions';
+import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
+import QuillEditor from './QuillEditor';
+import Attachment from './models/Attachment';
+import Utils from './utils/Functions';
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
     super(props);
-    const {research_plan} = props;
+    const { research_plan } = props;
     this.state = {
       research_plan,
+      files: [],
+      attachments: research_plan.attachments,
       showStructureEditor: false,
-      loadingMolecule: false
-    }
-  }
-
-  svgOrLoading(research_plan) {
-    let svgPath = "";
-    if (this.state.loadingMolecule) {
-      svgPath = "/images/wild_card/loading-bubbles.svg";
-    } else {
-      svgPath = research_plan.svgPath;
-    }
-    let className = svgPath ? 'svg-container' : 'svg-container-empty'
-    return (
-      <div className={className}
-           onClick={this.showStructureEditor.bind(this)}>
-        <Glyphicon className="pull-right" glyph='pencil'/>
-        <SVG key={svgPath} src={svgPath} className="molecule-mid"/>
-      </div>
-    );
+      loadingMolecule: false,
+      attachmentEditor: false,
+    };
   }
 
   componentWillReceiveProps(nextProps) {
     const {research_plan} = nextProps;
     this.setState({ research_plan });
+  }
+
+  svgOrLoading(research_plan) {
+    let svgPath = '';
+    if (this.state.loadingMolecule) {
+      svgPath = '/images/wild_card/loading-bubbles.svg';
+    } else {
+      svgPath = research_plan.svgPath;
+    }
+    const className = svgPath ? 'svg-container' : 'svg-container-empty';
+    const imageDefault = !_.includes(svgPath, 'no_image_180.svg');
+
+    return (
+      <div>
+        <Panel defaultExpanded={imageDefault} style={{ border: '0px', backgroundColor: 'white' }}>
+          <Panel.Heading style={{ border: '0px', backgroundColor: 'white' }}>
+            <Panel.Title toggle>
+              <OverlayTrigger
+                placement="bottom"
+                overlay={<Tooltip id="closeresearch_plan">Expand/Collapse Image</Tooltip>}
+              >
+                <Button
+                  bsSize="xsmall"
+                  className="button-right"
+                >
+                  <i className="fa fa-picture-o" />
+                </Button>
+              </OverlayTrigger>
+            </Panel.Title>
+          </Panel.Heading>
+          <Panel.Collapse style={{ border: '0px', backgroundColor: 'white' }}>
+            <Panel.Body>
+              <div
+                className={className}
+                onClick={this.showStructureEditor.bind(this)}
+              >
+                <Glyphicon className="pull-right" glyph="pencil" />
+                <SVG key={svgPath} src={svgPath} className="molecule-mid" />
+              </div>
+            </Panel.Body>
+          </Panel.Collapse>
+        </Panel>
+      </div>
+    );
   }
 
   handleStructureEditorSave(sdf_file, svg_file) {
@@ -86,14 +120,14 @@ export default class ResearchPlanDetails extends Component {
   }
 
   handleSubmit() {
-    const {research_plan} = this.state;
+    const { research_plan } = this.state;
 
-    if(research_plan.isNew) {
+    if (research_plan.isNew) {
       ElementActions.createResearchPlan(research_plan);
     } else {
       ElementActions.updateResearchPlan(research_plan);
     }
-    if(research_plan.is_new) {
+    if (research_plan.is_new) {
       const force = true;
       DetailActions.close(research_plan, force);
     }
@@ -118,13 +152,13 @@ export default class ResearchPlanDetails extends Component {
   showStructureEditor() {
     this.setState({
       showStructureEditor: true
-    })
+    });
   }
 
   hideStructureEditor() {
     this.setState({
       showStructureEditor: false
-    })
+    });
   }
 
   researchPlanHeader(research_plan) {
@@ -162,7 +196,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   researchPlanInfo(research_plan) {
-    const style = {height: '200px'};
+    const style = {height: 'auto'};
     return (
       <Row style={style}>
         <Col md={2}>
@@ -175,9 +209,151 @@ export default class ResearchPlanDetails extends Component {
     )
   }
 
+
+// http://localhost:3000/editor?fileName=sample.docx
+// <a href="/docx?fileName=CHI20180920.docx" target="_blank" class="try-editor document">Document</a>
+// <input type="file" id="fileupload" name="file" data-url="<%= upload_path %>" />
+// <a href="/sample?fileExt=docx" target="_blank" class="try-editor document">Document</a>
+  files() {
+    return (
+       <a href="/editor?fileName=sample.docx" target="_blank" class="try-editor document">Document</a>
+    )
+  }
+
+  dropzone() {
+    return (
+      <Dropzone
+        onDrop={files => this.handleFileDrop(files)}
+        style={{ height: 50, width: '100%', border: '3px dashed lightgray' }}
+      >
+        <div style={{ textAlign: 'center', paddingTop: 12, color: 'gray' }}>
+          Drop Files, or Click to Select.
+        </div>
+      </Dropzone>
+    );
+  }
+
+  handleFileDrop(files) {
+    const { research_plan } = this.state;
+    const attachments = files.map(f => Attachment.fromFile(f));
+    research_plan.attachments = research_plan.attachments.concat(attachments);
+    this.setState({ research_plan });
+  }
+
+  handleUndo(attachment) {
+    const { research_plan } = this.state;
+    const index = research_plan.attachments.indexOf(attachment);
+
+    research_plan.attachments[index].is_deleted = false;
+    this.setState({ research_plan });
+  }
+
+  handleEdit(attachment) {
+    const { research_plan } = this.state;
+
+    this.setState({ research_plan });
+  }
+
+  attachments() {
+    const { research_plan } = this.state;
+    if (research_plan.attachments && research_plan.attachments.length > 0) {
+      return (
+        <ListGroup>
+        {research_plan.attachments.map(attachment => {
+          return (
+            <ListGroupItem key={attachment.id}>
+              {this.listGroupItem(attachment)}
+            </ListGroupItem>
+          )
+        })}
+        </ListGroup>
+      );
+    }
+    return (
+      <div style={{ padding: 5 }}>
+        There are currently no Datasets.<br />
+      </div>
+    );
+  }
+
+  listGroupItem(attachment) {
+    const { attachmentEditor } = this.state;
+
+    if (attachment.is_deleted) {
+      return (
+        <div>
+          <Row>
+            <Col md={10}>
+              <strike>{attachment.filename}</strike>
+            </Col>
+            <Col md={2}>
+              <Button
+                style={{ display: 'none' }}
+                bsSize="xsmall"
+                bsStyle="success"
+                disabled
+              >
+                <i className="fa fa-pencil" />
+              </Button>{' '}
+              <Button
+                bsSize="xsmall"
+                bsStyle="danger"
+                onClick={() => this.handleUndo(attachment)}
+              >
+                <i className="fa fa-undo" />
+              </Button>
+            </Col>
+          </Row>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <Row>
+          <Col md={10}>
+            <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
+          </Col>
+          <Col md={2}>
+            <Button
+              style={{ display: 'none' }}
+              bsSize="xsmall"
+              bsStyle="success"
+              disabled={!attachmentEditor || attachment.is_new}
+              onClick={() => this.handleEdit(attachment)}
+            >
+              <i className="fa fa-pencil" />
+            </Button>{' '}
+            {this.removeAttachmentButton(attachment)}
+          </Col>
+        </Row>
+      </div>
+    );
+  }
+
+  handleAttachmentRemove(attachment) {
+    const { research_plan } = this.state;
+    const index = research_plan.attachments.indexOf(attachment);
+
+    research_plan.attachments[index].is_deleted = true;
+    this.setState({ research_plan });
+  }
+
+  removeAttachmentButton(attachment) {
+    return (
+      <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
+        <i className="fa fa-trash-o" />
+      </Button>
+    );
+  }
+
+  handleAttachmentDownload(attachment) {
+      Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
+  }
+
   render() {
-    const {research_plan} = this.state;
-    const {name, description} = research_plan;
+    const { research_plan } = this.state;
+    const { name, description } = research_plan;
 
     const submitLabel = research_plan.isNew ? "Create" : "Save";
 
@@ -186,9 +362,9 @@ export default class ResearchPlanDetails extends Component {
              className="panel-detail">
         <Panel.Heading>{this.researchPlanHeader(research_plan)}</Panel.Heading>
         <Panel.Body>
+          {this.researchPlanInfo(research_plan)}
           <ListGroup fill>
             <ListGroupItem>
-              {this.researchPlanInfo(research_plan)}
               <Row>
                 <Col md={4}>
                   <FormGroup>
@@ -210,6 +386,13 @@ export default class ResearchPlanDetails extends Component {
                       onChange={event => this.handleInputChange('description', {target: {value: event}})}
                       disabled={research_plan.isMethodDisabled('description')}
                     />
+                  </FormGroup>
+                </Col>
+                <Col md={12}>
+                  <FormGroup>
+                    <ControlLabel>Files</ControlLabel>
+                    {this.attachments()}
+                    {this.dropzone()}
                   </FormGroup>
                 </Col>
               </Row>

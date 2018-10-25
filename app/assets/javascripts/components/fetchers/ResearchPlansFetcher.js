@@ -1,6 +1,8 @@
 import 'whatwg-fetch';
-import ResearchPlan from '../models/ResearchPlan';
 import _ from 'lodash';
+import ResearchPlan from '../models/ResearchPlan';
+import AttachmentFetcher from './AttachmentFetcher';
+
 
 export default class ResearchPlansFetcher {
   static fetchById(id) {
@@ -53,19 +55,30 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
-  static update(research_plan) {
-    let promise = fetch('/api/v1/research_plans/' + research_plan.id, {
+  static update(researchPlan) {
+    const newFiles = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
+    const delFiles = (researchPlan.attachments || []).filter(a => !a.is_new && a.is_deleted);
+    const promise = fetch('/api/v1/research_plans/' + researchPlan.id, {
       credentials: 'same-origin',
       method: 'put',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(research_plan.serialize())
+      body: JSON.stringify(researchPlan.serialize())
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
-      return new ResearchPlan(json.research_plan);
+      if (newFiles.length <= 0 && delFiles.length <= 0) {
+        return new ResearchPlan(json.research_plan);
+      }
+      return AttachmentFetcher.updateAttachables(newFiles, 'ResearchPlan', json.research_plan.id, delFiles)()
+        .then(() => {
+          const result = _.differenceBy(json.research_plan.attachments, delFiles, 'id');
+          const newResearchPlan = new ResearchPlan(json.research_plan);
+          newResearchPlan.attachments = _.concat(result, newFiles);
+          return new ResearchPlan(newResearchPlan);
+        });
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -89,19 +102,24 @@ export default class ResearchPlansFetcher {
     return promise();
   }
 
-  static create(research_plan) {
-    let promise = fetch('/api/v1/research_plans/', {
+  static create(researchPlan) {
+    const files = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
+    const promise = fetch('/api/v1/research_plans/', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(research_plan.serialize())
+      body: JSON.stringify(researchPlan.serialize())
     }).then((response) => {
-      return response.json()
+      return response.json();
     }).then((json) => {
-      return new ResearchPlan(json.research_plan);
+      if (files.length <= 0) {
+        return new ResearchPlan(json.research_plan);
+      }
+      return AttachmentFetcher.updateAttachables(files, 'ResearchPlan', json.research_plan.id, [])()
+        .then(() => new ResearchPlan(json.research_plan));
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
