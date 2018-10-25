@@ -304,9 +304,9 @@ class ElementActions {
       });};
   }
 
-  importReactionsFromChemRead(params) {
+  importReactionsFromChemScanner(params) {
     return (dispatch) => {
-      ReactionsFetcher.importReactionsFromChemRead(params).then((result) => {
+      ReactionsFetcher.importReactionsFromChemScanner(params).then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);

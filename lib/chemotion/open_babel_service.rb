@@ -502,4 +502,21 @@ M  END
     svg.slice!(rect)
     svg
   end
+
+  def self.mdl_to_svg(mdl)
+    c = OpenBabel::OBConversion.new
+    m = OpenBabel::OBMol.new
+    c.set_in_and_out_formats('mdl', 'svg')
+    c.read_string(m, mdl)
+
+    c.write_string(m, true)
+  end
+
+  def self.mdl_to_trans_svg(mdl)
+    rect = '<rect x="0" y="0" width="100" '
+    rect += 'height="100" fill="white"/>'
+    svg = mdl_to_svg(mdl)
+    svg.slice!(rect)
+    svg
+  end
 end

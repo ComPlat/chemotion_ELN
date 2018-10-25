@@ -117,12 +117,12 @@ export default class ReactionsFetcher {
     }
   }
 
-  static importReactionsFromChemRead(reactionsList) {
-    const promise = fetch('/api/v1/reactions/import_chemread', {
+  static importReactionsFromChemScanner(reactionsList) {
+    const promise = fetch('/api/v1/reactions/import_chemscanner', {
       credentials: 'same-origin',
       method: 'post',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

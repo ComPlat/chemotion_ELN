@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, ControlLabel } from 'react-bootstrap';
+import _ from 'lodash';
 
 import { catalyst } from '../staticDropdownOptions/reagents/catalyst';
 import { chiralAuxiliaries } from '../staticDropdownOptions/reagents/chiral_auxiliaries';
@@ -25,7 +26,7 @@ function partitionSolventsReagents(value) {
   const selectedSolvents = [];
   const selectedReagents = [];
 
-  value.split(',').forEach((x) => {
+  value.forEach((x) => {
     if (Object.values(solvents).indexOf(x) > -1) {
       selectedSolvents.push(x);
     } else {
@@ -80,8 +81,8 @@ class SmilesEditing extends React.Component {
       selectedArr = selectedArr.concat(selectedSolvents);
     }
 
-    selectedArr = [...new Set(selectedArr.filter(x => x))];
-    editFunc(selectedArr.join(','));
+    selectedArr = _.uniq(selectedArr);
+    editFunc(selectedArr);
   }
 
   render() {
@@ -89,7 +90,7 @@ class SmilesEditing extends React.Component {
     const { selectedReagents, selectedSolvents } = this.state;
 
     return (
-      <div className="chemread-smiles-menu">
+      <div className="chemscanner-smiles-menu">
         <FormGroup>
           <ControlLabel>Solvents</ControlLabel>
           <SelectWrapper
@@ -118,12 +119,12 @@ class SmilesEditing extends React.Component {
 
 SmilesEditing.propTypes = {
   editFunc: PropTypes.func.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.arrayOf(PropTypes.string),
   disabled: PropTypes.bool
 };
 
 SmilesEditing.defaultProps = {
-  value: '',
+  value: [],
   disabled: true
 };
 
