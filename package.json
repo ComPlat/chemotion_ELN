@@ -95,7 +95,8 @@
     "babel-preset-react": "^6.11.1",
     "bundle-collapser": "^1.2.1",
     "envify": "^4.0.0",
-    "enzyme": "^2.4.1",
+    "enzyme": "^3.7.0",
+    "enzyme-adapter-react-16": "^1.6.0",
     "eslint": "^4.19.1",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.8.0",
@@ -104,14 +105,14 @@
     "expect": "^1.20.2",
     "expect-jsx": "^2.6.0",
     "jsdom-global": "2.1.0",
-    "mocha": "^3.0.1",
+    "mocha": "^5.2.0",
     "react-dom": "^16.5.2",
-    "sinon": "^1.17.5",
-    "sinon-spy-react": "^2.0.0",
+    "sinon": "^7.1.0",
+    "sinon-spy-react": "^2.0.1",
     "uglify-js": "~3.3.16"
   },
   "scripts": {
-    "test": "mocha --compilers js:babel-core/register --require 'jsdom-global/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
+    "test": "mocha --require 'babel-core/register' 'jsdom-global/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
   },
   "license": "MIT",
   "engines": {
