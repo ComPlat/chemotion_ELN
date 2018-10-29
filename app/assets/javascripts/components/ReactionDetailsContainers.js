@@ -184,7 +184,7 @@ export default class ReactionDetailsContainers extends Component {
                     onClick={this.handleAccordionOpen.bind(this, key)}
                   >
                     <Panel.Heading>{containerHeader(container)}</Panel.Heading>
-                    <Panel.Body>
+                    <Panel.Body collapsible>
                       <ContainerComponent
                         readOnly={readOnly}
                         container={container}
