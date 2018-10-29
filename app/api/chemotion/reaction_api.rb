@@ -195,7 +195,7 @@ module Chemotion
     helpers LiteratureHelpers
 
     resource :reactions do
-      namespace :import_chemread do
+      namespace :import_chemscanner do
         desc 'Import Reactions'
         params do
           requires :reaction_list, type: Array, desc: 'List of reactions to import'
@@ -209,7 +209,7 @@ module Chemotion
         end
 
         post do
-          Import::FromChemRead.from_list(
+          Import::FromChemScanner.from_list(
             params[:reaction_list],
             current_user.id,
             params[:collection_id]

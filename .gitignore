@@ -76,6 +76,8 @@
 
 /public/assets/*
 
+/public/cdjs/*
+
 /coverage/
 
 /uploadNew/

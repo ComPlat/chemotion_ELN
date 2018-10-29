@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import RsmiItem from './RsmiItem';
-import { renderSvg, extractDetails } from './ChemReadObjectHelper';
+import ScannedItem from './ScannedItem';
+import { renderSvg } from './ChemScannerObjectHelper';
 
-export default class RsmiItemContainer extends React.Component {
+export default class ScannedItemContainer extends React.Component {
   constructor() {
     super();
 
@@ -12,16 +12,16 @@ export default class RsmiItemContainer extends React.Component {
   }
 
   selectSmi() {
-    const { uid, idx } = this.props;
-    this.props.selectSmi(uid, idx);
+    const { uid, idx, selectSmi } = this.props;
+    selectSmi(uid, idx);
   }
 
   render() {
     const {
-      uid, idx, selected, content, removeSmi
+      uid, idx, selected, content, removeSmi, editComment
     } = this.props;
     const {
-      svg, smi, desc, editedSmi
+      svg, smi, editedSmi, description, details, comment
     } = content;
 
     const isSelected = selected.filter(x => (
@@ -37,12 +37,14 @@ export default class RsmiItemContainer extends React.Component {
     }
 
     return (
-      <RsmiItem
-        details={extractDetails(desc)}
-        desc={desc}
+      <ScannedItem
+        details={details}
+        description={description}
+        comment={comment}
         idx={idx}
         removeSmi={removeSmi}
         selectSmi={this.selectSmi}
+        editComment={editComment}
         svg={renderSvg(svg)}
         smi={displayedSmi}
         selected={isSelected}
@@ -52,9 +54,10 @@ export default class RsmiItemContainer extends React.Component {
   }
 }
 
-RsmiItemContainer.propTypes = {
+ScannedItemContainer.propTypes = {
   selectSmi: PropTypes.func.isRequired,
   removeSmi: PropTypes.func.isRequired,
+  editComment: PropTypes.func.isRequired,
   uid: PropTypes.string.isRequired,
   content: PropTypes.object.isRequired, // eslint-disable-line react/forbid-prop-types
   idx: PropTypes.number.isRequired,

@@ -41,53 +41,46 @@ module SVG
       true
     end
 
-    def self.cr_reaction_svg_from_rsmi(rsmi, solvents_smis, reagents_smis)
-      mol_arr = rsmi.split('>')
-      return nil if mol_arr.size.zero?
+    def self.cr_reaction_svg_from_mdl(rinfo, solvents_smis)
+      files = {
+        starting_materials: [],
+        products: [],
+        solvents: [],
+        reactants: []
+      }
 
-      @starting_materials = mol_arr[0].split('.')
+      @starting_materials = rinfo[:reactants_mdl]
+      @products = rinfo[:products_mdl]
 
-      @solvents = []
-      @reactants = []
-      rs = mol_arr[1]
+      %w[starting_materials products].each do |g|
+        svg_files = instance_variable_get("@#{g}").map { |r, _|
+          mol_svg = Chemotion::OpenBabelService.mdl_to_trans_svg(r)
+          tmp_file = Tempfile.new
+          tmp_file.write(mol_svg)
+          tmp_file.close
+          tmp_file
+        }
 
-      unless rs.empty?
-        rs_arr = rs.split('.')
-
-        solvents_smis.each do |target|
-          target_arr = target.split('.')
-          check = include_with_correct_order?(rs_arr, target_arr)
-          next unless check
-          rs_arr -= target_arr
-          @solvents.push(target_arr.join('.'))
-        end
-
-        reagents_smis.each do |target|
-          target_arr = target.split('.')
-          check = include_with_correct_order?(rs_arr, target_arr)
-          next unless check
-          rs_arr -= target_arr
-          @reactants.push(target_arr.join('.'))
-        end
-
-        @solvents.reject!(&:empty?)
-        @reactants.concat(rs_arr).reject!(&:empty?)
+        files[g.to_sym].concat(svg_files)
       end
 
-      @products = mol_arr[2].split('.')
-      name_arr = %w[starting_materials reactants solvents products]
-
-      files = {}
-      name_arr.each do |g|
-        files[g.to_sym] = instance_variable_get("@#{g}").map { |r, _|
+      @solvents = rinfo[:reagents_smiles] & solvents_smis
+      @reactants = rinfo[:reagents_smiles] - @solvents
+      smi_arr = %w[reactants solvents]
+      smi_arr.each do |g|
+        svg_files = instance_variable_get("@#{g}").map { |r, _|
           mol_svg = Chemotion::OpenBabelService.smi_to_trans_svg(r)
           tmp_file = Tempfile.new
           tmp_file.write(mol_svg)
           tmp_file.close
           tmp_file
         }
+
+        files[g.to_sym].concat(svg_files)
       end
+
       paths = {}
+      name_arr = %w[starting_materials reactants solvents products]
       name_arr.each do |g|
         paths[g.to_sym] = files[g.to_sym].map(&:to_path)
       end

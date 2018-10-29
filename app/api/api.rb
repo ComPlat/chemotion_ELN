@@ -83,7 +83,7 @@ class API < Grape::API
   mount Chemotion::DevicesAnalysisAPI
   mount Chemotion::GateAPI
   mount Chemotion::ElementAPI
-  mount Chemotion::ChemReadAPI
+  mount Chemotion::ChemScannerAPI
   mount Chemotion::InstrumentAPI
   mount Chemotion::MessageAPI
   mount Chemotion::AdminAPI

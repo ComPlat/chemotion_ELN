@@ -5,7 +5,7 @@ import { Dropdown, Button, MenuItem, Glyphicon } from 'react-bootstrap';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import ModalImport from './ModalImport';
-import ModalImportChemDraw from './ModalImportChemDraw';
+import ModalImportChemScanner from './ModalImportChemScanner';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
 
@@ -28,10 +28,10 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
         title='Import from spreadsheet or sdf'>
         Import samples to collection
       </MenuItem>
-      <MenuItem onSelect={() => importReactionFunction(updateModalProps)} disabled={isDisabled}
-        title='Import from Docs'>
-        Import reactions from Docs
-      </MenuItem>
+      {/* <MenuItem onSelect={() => importReactionFunction(updateModalProps)} disabled={isDisabled} */}
+      {/*   title='Import from Docs'> */}
+      {/*   Import reactions from Docs */}
+      {/* </MenuItem> */}
     </Dropdown.Menu>
   </Dropdown>
 );
@@ -63,7 +63,7 @@ const importSampleFunction = (updateModalProps) => {
 
 const importReactionFunction = (updateModalProps) => {
   const title = 'Import Reactions from Docs';
-  const component = ModalImportChemDraw;
+  const component = ModalImportChemScanner;
   const listSharedCollections = false;
   const modalProps = {
     show: true,

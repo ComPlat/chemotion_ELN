@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import ListProps from './ListProps';
 
-export default class XmlDetails extends React.Component {
+export default class PerkinElnDetails extends React.Component {
   constructor() {
     super();
     this.state = {
@@ -39,11 +39,12 @@ export default class XmlDetails extends React.Component {
 
     const detailsList = Object.keys(details).filter(x => x && details[x]).reduce((acc, k) => {
       const val = details[k];
+      if (Object.keys(val).length === 0) return acc;
+
       if (val instanceof Array) {
         const els = val.map((v, idx) => {
-          const label = `${k} ${idx + 1}`;
           return (
-            <ListProps key={label} label={label} listProps={v} />
+            <ListProps key={k} label={k} listProps={v} />
           );
         });
         return acc.concat(els);
@@ -56,13 +57,14 @@ export default class XmlDetails extends React.Component {
       acc.push(el);
       return acc;
     }, []);
+    if (detailsList.length === 0) return <span />;
 
     return (
-      <div className="xml-details-container">
-        <div className="xml-click">
+      <div className="perkin-eln-details-container">
+        <div className="eln-click">
           {expandBtn}
         </div>
-        <div className="xml-details">
+        <div className="perkin-eln-details">
           {expand ? detailsList : <span />}
         </div>
       </div>
@@ -70,6 +72,6 @@ export default class XmlDetails extends React.Component {
   }
 }
 
-XmlDetails.propTypes = {
+PerkinElnDetails.propTypes = {
   details: PropTypes.object.isRequired
 };

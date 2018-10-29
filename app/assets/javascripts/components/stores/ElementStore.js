@@ -144,7 +144,7 @@ class ElementStore {
       handleShowReactionMaterial: ElementActions.showReactionMaterial,
       handleImportSamplesFromFile: ElementActions.importSamplesFromFile,
       handleImportSamplesFromFileConfirm: ElementActions.importSamplesFromFileConfirm,
-      handleImportReactionsFromChemRead: ElementActions.importReactionsFromChemRead,
+      handleImportReactionsFromChemScanner: ElementActions.importReactionsFromChemScanner,
 
       handleSetCurrentElement: ElementActions.setCurrentElement,
       handleDeselectCurrentElement: ElementActions.deselectCurrentElement,
@@ -651,7 +651,7 @@ class ElementStore {
     }
   }
 
-  handleImportReactionsFromChemRead(data) {
+  handleImportReactionsFromChemScanner(data) {
     this.handleRefreshElements('sample');
     this.handleRefreshElements('reaction');
   }

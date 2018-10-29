@@ -55,6 +55,7 @@
     "react-select": "1.1.0",
     "react-virtualized-select": "3.0.1",
     "react-stickydiv": "^3.4.19",
+    "react-stickynode": "^2.0.1",
     "react-svg-file-zoom-pan": "0.1.4",
     "react-svg-inline": "^1.2.0",
     "react-treeview": "0.4.7",
