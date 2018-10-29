@@ -103,7 +103,7 @@ const RndEdit = ({ sample, mode, handleRemove, handleAccordionOpen,
               key={`${id}CRowEdit`}
             >
             <Panel.Heading>{headerNormalFunc(container, id)}</Panel.Heading>
-            <Panel.Body>
+            <Panel.Body collapsible>
               <ContainerComponent
                 readOnly={readOnly}
                 container={container}

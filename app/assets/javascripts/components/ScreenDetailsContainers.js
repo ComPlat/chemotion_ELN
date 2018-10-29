@@ -117,7 +117,7 @@ export default class ScreenDetailsContainers extends Component {
                 <Panel eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
                   <Panel.Heading>{containerHeader(container)}</Panel.Heading>
-                  <Panel.Body>
+                  <Panel.Body collapsible>
                     <ContainerComponent
                       readOnly={readOnly}
                       container={container}
