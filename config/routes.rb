@@ -18,9 +18,10 @@ Rails.application.routes.draw do
 
     get 'command_n_control', to: 'pages#cnc'
 
-    # Standalone page for ChemScanner
-    # get 'chemscanner', to: 'pages#chemscanner'
   end
+
+  # Standalone page for ChemScanner
+  get 'chemscanner', to: 'pages#chemscanner'
 
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'

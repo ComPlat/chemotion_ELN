@@ -254,4 +254,4 @@ ChemScanner.defaultProps = {
   modal: ''
 };
 
-export default scriptLoader('cdjs/chemdrawweb/chemdrawweb.js')(ChemScanner);
+export default scriptLoader('https://chemdrawdirect.perkinelmer.cloud/js/chemdrawweb/chemdrawweb.js')(ChemScanner);
