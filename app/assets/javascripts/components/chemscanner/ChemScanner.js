@@ -84,9 +84,6 @@ class ChemScanner extends React.Component {
       viewonly: true,
       licenseUrl: './cdjs/sample/ChemDraw-JS-License.xml',
       config: {
-        features: {
-          enabled: ['WebService'],
-        },
         properties: {
           StyleSheet: 'ACS Document 1996',
           chemservice: 'https://chemdrawdirect.perkinelmer.cloud/rest/'
@@ -254,4 +251,4 @@ ChemScanner.defaultProps = {
   modal: ''
 };
 
-export default scriptLoader('cdjs/chemdrawweb/chemdrawweb.js')(ChemScanner);
+export default scriptLoader('https://chemdrawdirect.perkinelmer.cloud/js/chemdrawweb/chemdrawweb.js')(ChemScanner);

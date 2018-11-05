@@ -108,6 +108,11 @@
   }
 
   .chemscanner-files-list {
+    .svg-file-container {
+      > svg {
+        min-height: 0;
+      }
+    }
   }
 
   .smi-text {
