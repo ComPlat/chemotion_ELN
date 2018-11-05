@@ -107,7 +107,9 @@ module Chemotion
         post do
           attributes = declared(params, include_missing: false)
           begin
-            User.create!(attributes)
+            new_obj = User.create!(attributes)
+            new_obj.profile.update!({data: {}})
+            status 201
           rescue Exception => e
             { error: e.message }
           end

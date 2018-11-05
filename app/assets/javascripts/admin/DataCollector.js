@@ -60,8 +60,11 @@ export default class DataCollector extends React.Component {
 
   handleCollectMethodChange(selectedCollectMethod) {
     const { selectedDevice } = this.state;
+    
     if (_.startsWith(selectedCollectMethod.value, 'file')) {
-      selectedDevice.data.method_params.number_of_files = 0;
+      if (selectedDevice.data.method_params && selectedDevice.data.method_params.number_of_files) {
+        selectedDevice.data.method_params.number_of_files = 0;
+      }
     }
 
     if (selectedCollectMethod) {
