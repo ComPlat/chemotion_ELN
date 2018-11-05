@@ -4,10 +4,10 @@ import PropTypes from 'prop-types';
 import {
   PanelGroup, Panel, ListGroup
 } from 'react-bootstrap';
-import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 import Sticky from 'react-stickynode';
 
 import ScannedItem from './ScannedItem';
+import PngFileZoomPan from './PngFileZoomPan';
 
 function ChemScannerCds({
   cds, uid, selectSmi, removeSmi, editComment, selected, modal
@@ -20,16 +20,17 @@ function ChemScannerCds({
         const csContent = `chemscanner-content-${uid}-${index}`;
 
         let cdSvg = <span />;
-        if (cd.svg) {
+        const { svg } = cd;
+        if (svg) {
           cdSvg = (
             <Sticky top={20} bottomBoundary={`#${csContent}`} innerZ={9}>
-              <SvgFileZoomPan svg={cd.svg} duration={200} />
+              <PngFileZoomPan png={svg} duration={200} />
             </Sticky>
           );
         }
         return (
           <div key={`${uid}_${index}`}>
-            { cdSvg }
+            <div> { cdSvg } </div>
             <ListGroup id={csContent}>
               {cd.info.map((i, idx) => (
                 <ScannedItem

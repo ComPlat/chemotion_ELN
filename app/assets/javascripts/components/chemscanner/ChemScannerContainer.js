@@ -40,22 +40,18 @@ export default class ChemScannerContainer extends React.Component {
   getSvg(uid, idx) {
     if (!this.cddInstance) return;
 
-    this.cddInstance.getSVG((svg, error) => {
-      if (error) {
-        console.log(error);
-      } else {
-        const { files } = this.state;
-        const cfiles = _.cloneDeep(files);
+    const { files } = this.state;
+    const cfiles = _.cloneDeep(files);
 
-        const file = cfiles.filter(x => x.uid === uid);
-        if (file.length === 0) return;
-        const cd = file[0].cds[idx];
-        if (cd) {
-          cd.svg = svg;
-          this.setState({ files: cfiles });
-        }
-      }
-    });
+    const file = cfiles.filter(x => x.uid === uid);
+    if (file.length === 0) return;
+
+    const cd = file[0].cds[idx];
+    if (!cd) return;
+
+    cd.svg = this.cddInstance.getImgUrl();
+    this.cddInstance.clear();
+    this.setState({ files: cfiles });
   }
 
   setCdd(cdd) {
