@@ -775,6 +775,14 @@ export default class Sample extends Element {
     return this._equivalent;
   }
 
+  set maxAmount(maxAmount) {
+    this._maxAmount = maxAmount;
+  }
+
+  get maxAmount() {
+    return this._maxAmount;
+  }
+
   serializeMaterial() {
     const params = this.serialize();
     const extra_params = {

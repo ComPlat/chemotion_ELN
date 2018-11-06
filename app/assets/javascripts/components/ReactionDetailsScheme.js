@@ -248,7 +248,6 @@ export default class ReactionDetailsScheme extends Component {
   updatedReactionForAmountUnitChange(changeEvent) {
     const { sampleID, amount } = changeEvent;
     const updatedSample = this.props.reaction.sampleById(sampleID);
-
     // normalize to milligram
     // updatedSample.setAmountAndNormalizeToGram(amount);
     updatedSample.setAmount(amount);
@@ -346,6 +345,8 @@ export default class ReactionDetailsScheme extends Component {
       }
     }
 
+    updatedS.maxAmount = mFull;
+
     if (errorMsg) {
       updatedS.error_mass = true;
       NotificationActions.add({
@@ -401,11 +402,18 @@ export default class ReactionDetailsScheme extends Component {
           }
         } else {
           // calculate equivalent, don't touch real amount
+
           sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
         }
 
         if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
           sample.equivalent = 1.0;
+        }
+      }
+
+      if (materialGroup === 'products') {
+        if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+          sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
         }
       }
       return sample;
@@ -429,7 +437,9 @@ export default class ReactionDetailsScheme extends Component {
           });
         }
       }
-
+      if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+        sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
+      }
       return sample;
     });
   }
@@ -497,6 +507,18 @@ export default class ReactionDetailsScheme extends Component {
         this.updatedSamplesForAmountChange(reaction.samples, reaction.editedSample);
       }
       reaction.editedSample = undefined;
+    } else {
+      const { referenceMaterial } = this.props.reaction;
+      reaction.products.map((sample) => {
+        if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+          if (sample.contains_residues) {
+            sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
+              * (sample.molecule.molecular_weight - referenceMaterial.molecule.molecular_weight));
+          } else {
+            sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
+          }
+        }
+      });
     }
 
     // if no reference material then mark first starting material
