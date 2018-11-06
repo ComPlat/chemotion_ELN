@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
 
-export default class PngFileZoomPan extends React.Component {
+export default class PngFileZoomPan extends React.PureComponent {
   constructor() {
     super();
 
@@ -26,18 +26,21 @@ export default class PngFileZoomPan extends React.Component {
     const svgEl = this.svgDiv.querySelector('#svg-file-container');
     const imgEl = svgEl.querySelector('#png-img-svg');
     const svgWidth = Math.floor(svgEl.getBoundingClientRect().width);
-    const imgBox = imgEl.getBoundingClientRect();
-    const imgWidth = Math.floor(imgBox.width);
+    const imgWidth = Math.floor(imgEl.getBoundingClientRect().width);
 
-    const xOffset = `${(svgWidth - imgWidth) / 2}`;
-    imgEl.setAttribute('x', xOffset);
+    if (svgWidth > imgWidth) {
+      const xOffset = `${(svgWidth - imgWidth) / 2}`;
+      imgEl.setAttribute('x', xOffset);
+    } else {
+      imgEl.setAttribute('width', svgWidth);
+    }
 
-    svgEl.style.height = `${Math.floor(imgBox.height) + 5}px`;
+    const imgHeight = Math.floor(imgEl.getBoundingClientRect().height);
+    svgEl.style.height = `${Math.floor(imgHeight) + 5}px`;
   }
 
   render() {
     const { png } = this.props;
-
     const svg = `
       <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
         <image id="png-img-svg" xlink:href="${png}"/>

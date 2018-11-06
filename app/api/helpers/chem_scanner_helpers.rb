@@ -11,17 +11,18 @@ module ChemScannerHelpers
     docx.read(path)
 
     info_arr = []
-    docx.cdx_map.each_value do |cdx|
+    docx.cdx_map.each_value do |info|
+      cdx = info[:cdx]
       cdx_info = info_from_parser(cdx, get_mol)
-      info_arr.push(
-        b64cdx: Base64.encode64(cdx.raw_data),
-        info: cdx_info
-      )
+      img_b64 = info[:img_b64]
+      img_ext = info[:img_ext]
+
+      info = { info: cdx_info }
+      info[:svg] = img_b64 if img_ext == '.png'
+      info_arr.push(info)
     end
 
-    {
-      cds: info_arr
-    }
+    { cds: info_arr }
   end
 
   def read_doc(path, get_mol)
