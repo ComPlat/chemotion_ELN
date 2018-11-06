@@ -192,7 +192,7 @@ group :test do
   gem 'database_cleaner'
   gem 'factory_bot_rails'
 
-  gem 'capybara', '~> 3.1.0'
+  gem 'capybara', '~> 3.10.0'
   gem 'chromedriver-helper', '2.1.0'
   gem 'faker', '~> 1.6.6'
   gem 'headless', '2.0.0'
