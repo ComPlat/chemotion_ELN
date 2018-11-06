@@ -3,6 +3,7 @@
 # Helpers function for CDX parser
 module ChemScannerHelpers
   require 'base64'
+  require 'open3'
 
   extend Grape::API::Helpers
 
@@ -11,17 +12,23 @@ module ChemScannerHelpers
     docx.read(path)
 
     info_arr = []
-    docx.cdx_map.each_value do |cdx|
+    docx.cdx_map.each_value do |info|
+      cdx = info[:cdx]
       cdx_info = info_from_parser(cdx, get_mol)
-      info_arr.push(
-        b64cdx: Base64.encode64(cdx.raw_data),
-        info: cdx_info
-      )
+      img_b64 = info[:img_b64]
+      img_ext = info[:img_ext]
+
+      info = { info: cdx_info }
+      if img_ext == '.png'
+        info[:svg] = "data:image/png;base64,#{img_b64}"
+      elsif img_ext == '.emf'
+        info[:svg] = "data:image/png;base64,#{b64emf_to_b64png(img_b64)}"
+      end
+
+      info_arr.push(info)
     end
 
-    {
-      cds: info_arr
-    }
+    { cds: info_arr }
   end
 
   def read_doc(path, get_mol)
@@ -201,5 +208,24 @@ module ChemScannerHelpers
     }
 
     res
+  end
+
+  def b64emf_to_b64png(b64emf)
+    emf_file = Tempfile.new(['chemscanner', '.emf'])
+    png_file = Tempfile.new(['chemscanner', '.png'])
+    IO.binwrite(emf_file.path, Base64.decode64(b64emf))
+
+    emf_file.close
+    png_file.close
+
+    cmd = "inkscape -e #{png_file.path} #{emf_file.path}"
+    Open3.popen3(cmd) { |_, _, _, wait_thr| wait_thr.value }
+
+    b64png = Base64.encode64(IO.binread(png_file.path))
+
+    emf_file.unlink
+    png_file.unlink
+
+    b64png
   end
 end
