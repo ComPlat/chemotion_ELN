@@ -22,7 +22,7 @@ module ChemScannerHelpers
       if img_ext == '.png'
         info[:svg] = "data:image/png;base64,#{img_b64}"
       elsif img_ext == '.emf'
-        info[:svg] = "data:image/png;base64,#{b64emf_to_b64png(img_b64)}"
+        info[:svg] = b64emf_to_svg(img_b64)
       end
 
       info_arr.push(info)
@@ -210,22 +210,22 @@ module ChemScannerHelpers
     res
   end
 
-  def b64emf_to_b64png(b64emf)
+  def b64emf_to_svg(b64emf)
     emf_file = Tempfile.new(['chemscanner', '.emf'])
-    png_file = Tempfile.new(['chemscanner', '.png'])
+    svg_file = Tempfile.new(['chemscanner', '.svg'])
     IO.binwrite(emf_file.path, Base64.decode64(b64emf))
 
     emf_file.close
-    png_file.close
+    svg_file.close
 
-    cmd = "inkscape -e #{png_file.path} #{emf_file.path}"
+    cmd = "inkscape -l #{svg_file.path} #{emf_file.path}"
     Open3.popen3(cmd) { |_, _, _, wait_thr| wait_thr.value }
 
-    b64png = Base64.encode64(IO.binread(png_file.path))
+    svg = File.read(svg_file.path)
 
     emf_file.unlink
-    png_file.unlink
+    svg_file.unlink
 
-    b64png
+    svg
   end
 end

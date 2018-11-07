@@ -2,15 +2,17 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
+import PngFileZoomPan from './PreviewFileZoomPan';
 
-export default class PngFileZoomPan extends React.PureComponent {
+export default class PreviewFileZoomPan extends React.PureComponent {
   constructor() {
     super();
 
-    this.setSvgRef = (el) => {
-      this.svgDiv = el;
+    this.setPreviewRef = (el) => {
+      this.previewDiv = el;
     };
 
+    this.isSvg = true;
     this.centeringImage = this.centeringImage.bind(this);
   }
 
@@ -23,8 +25,9 @@ export default class PngFileZoomPan extends React.PureComponent {
   }
 
   centeringImage() {
-    const svgEl = this.svgDiv.querySelector('#svg-file-container');
-    const imgEl = svgEl.querySelector('#png-img-svg');
+    const svgEl = this.previewDiv.querySelector('#svg-file-container');
+    const imgSelector = this.isSvg ? 'g > svg' : '#png-img-svg';
+    const imgEl = svgEl.querySelector(imgSelector);
     const svgWidth = Math.floor(svgEl.getBoundingClientRect().width);
     const imgWidth = Math.floor(imgEl.getBoundingClientRect().width);
 
@@ -40,21 +43,31 @@ export default class PngFileZoomPan extends React.PureComponent {
   }
 
   render() {
-    const { png } = this.props;
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-        <image id="png-img-svg" xlink:href="${png}"/>
-      </svg>
-    `;
+    const { image } = this.props;
+    if (!image) return <span />;
+
+    let svg = image;
+    if (image.startsWith('data:image/png;base64')) {
+      this.isSvg = false;
+      svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+          <image id="png-img-svg" xlink:href="${image}"/>
+        </svg>
+      `;
+    }
 
     return (
-      <div ref={this.setSvgRef}>
+      <div ref={this.setPreviewRef}>
         <SvgFileZoomPan svg={svg} duration={200} />
       </div>
     );
   }
 }
 
-PngFileZoomPan.propTypes = {
-  png: PropTypes.string.isRequired
+PreviewFileZoomPan.propTypes = {
+  image: PropTypes.string
+};
+
+PreviewFileZoomPan.defaultProps = {
+  image: ""
 };

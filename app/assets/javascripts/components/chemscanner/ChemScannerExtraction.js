@@ -7,7 +7,7 @@ import {
 import Sticky from 'react-stickynode';
 
 import ScannedItem from './ScannedItem';
-import PngFileZoomPan from './PngFileZoomPan';
+import PreviewFileZoomPan from './PreviewFileZoomPan';
 
 function ChemScannerCds({
   cds, uid, selectSmi, removeSmi, editComment, selected, modal
@@ -18,19 +18,13 @@ function ChemScannerCds({
     <div>
       {cds.map((cd, index) => {
         const csContent = `chemscanner-content-${uid}-${index}`;
-
-        let cdSvg = <span />;
         const { svg } = cd;
-        if (svg) {
-          cdSvg = (
-            <Sticky top={20} bottomBoundary={`#${csContent}`} innerZ={9}>
-              <PngFileZoomPan png={svg} duration={200} />
-            </Sticky>
-          );
-        }
+
         return (
           <div key={`${uid}_${index}`}>
-            <div> { cdSvg } </div>
+            <Sticky top={20} bottomBoundary={`#${csContent}`} innerZ={9}>
+              <PreviewFileZoomPan image={svg} duration={200} />
+            </Sticky>
             <ListGroup id={csContent}>
               {cd.info.map((i, idx) => (
                 <ScannedItem
