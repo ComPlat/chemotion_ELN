@@ -11,6 +11,9 @@ gem 'sass-rails', '~> 5.0', '>= 5.0.6'
 
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 4.0.0'
+
+gem 'turbo-sprockets-rails4'
+
 # Twitter bootstrap styles
 gem 'bootstrap-sass', '~> 3.3.5'
 # Use jquery as the JavaScript library
@@ -30,8 +33,8 @@ gem 'rinchi-gem', '1.0.1', git: 'https://git.scc.kit.edu/ComPlat/rinchi-gem.git'
 
 gem 'bibtex-ruby'
 
+
 group :development do
-  gem 'turbo-sprockets-rails4'
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
   gem 'better_errors' # allows to debug exception on backend from browser
@@ -172,9 +175,6 @@ group :development, :test do
 
   # RailsPanel Chrome extension
   gem 'meta_request'
-
-  # Remove all assets requests
-  gem 'quiet_assets'
 
   gem 'capistrano', '3.9.1'
   gem 'capistrano-bundler'

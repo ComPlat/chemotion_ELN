@@ -16,7 +16,7 @@ import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import QuillEditor from './QuillEditor';
 import Sample from './models/Sample';
-import StringTag from './StringTag.jsx';
+import StringTag from './StringTag';
 import { observationPurification, solventsTL } from './utils/reactionPredefined';
 
 function dummy() { return true; }
