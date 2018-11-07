@@ -23,7 +23,7 @@ module Chemotion
     config.version = File.exist?('VERSION') && YAML.load_file('VERSION') ||
       { 'version': 'v0', 'base_revision': '0', 'current_revision': '0' }
     config.version['current_revision'] = File.read('REVISION') if File.exist?('REVISION')
-    
+
     config.action_dispatch.perform_deep_munge = false
     # Grape API config
     config.paths.add File.join('app', 'api'), glob: File.join('**', '*.rb')
