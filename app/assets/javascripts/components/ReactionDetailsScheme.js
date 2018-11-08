@@ -398,7 +398,11 @@ export default class ReactionDetailsScheme extends Component {
             }
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
           } else {
-            sample.equivalent = 1.0;
+            if (materialGroup === 'products') {
+              sample.equivalent = 0.0;
+            }else {
+              sample.equivalent = 1.0;
+            }
           }
         } else {
           // calculate equivalent, don't touch real amount
@@ -408,6 +412,9 @@ export default class ReactionDetailsScheme extends Component {
 
         if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
           sample.equivalent = 1.0;
+        }
+        if (materialGroup === 'products' && (sample.amount_mol === 0 || referenceMaterial.amount_mol === 0)) {
+          sample.equivalent = 0.0;
         }
       }
 
