@@ -51,7 +51,7 @@ export default class ArrayUtils {
 
   static uniqSortById(items) {
     let ids = items.map(a => a.id);
-    ids = ids.unique().sort((a, b) => a - b);
+    ids = [...new Set(ids)].sort((a, b) => a - b);
     const output = ids.map(id => (
       items.find(item => item.id === id)
     )).filter(r => r);
