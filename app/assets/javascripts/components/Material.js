@@ -180,15 +180,34 @@ class Material extends Component {
 
   equivalentOrYield(material) {
     if (this.props.materialGroup === 'products') {
-      return (
-        <FormControl
-          type="text"
-          bsClass="bs-form--compact form-control"
-          bsSize="small"
-          value={`${((material.equivalent || 0) * 100).toFixed(0)}%`}
-          disabled
-        />
-      );
+      if (this.props.reaction.hasPolymers()){
+        return (
+          <FormControl
+            type="text"
+            bsClass="bs-form--compact form-control"
+            bsSize="small"
+            value={`${((material.equivalent || 0) * 100).toFixed(0)}%`}
+            disabled
+          />
+        );
+      }else{
+        return (
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="product-max-amount-info">max theoretical mass {Math.round(material.maxAmount * 10000)/10} mg</Tooltip>}
+          >
+            <div>
+              <FormControl
+                type="text"
+                bsClass="bs-form--compact form-control"
+                bsSize="small"
+                value={`${((material.equivalent || 0) * 100).toFixed(0)}%`}
+                disabled
+              />
+            </div>
+          </OverlayTrigger>
+        );
+      }
     }
     return (
       <NumeralInputWithUnitsCompo
@@ -354,6 +373,7 @@ class Material extends Component {
     const mol = material.amount_mol;
     const concn = mol / reaction.solventVolume;
     const mw = material.molecule && material.molecule.molecular_weight
+
     return (
       <tr className="general-material">
         {compose(connectDragSource, connectDropTarget)(
@@ -639,7 +659,6 @@ class Material extends Component {
     if (this.props.materialGroup === 'products') {
       material.amountType = 'real'; // always take real amount for product
     }
-
     const sp = materialGroup === 'solvents' || materialGroup === 'purification_solvents';
     const component = sp ?
           this.solventMaterial(this.props, style) :
