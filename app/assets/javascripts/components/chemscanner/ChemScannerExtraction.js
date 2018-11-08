@@ -49,13 +49,13 @@ function ChemScannerCds({
 }
 
 ChemScannerCds.propTypes = {
-  uid: React.PropTypes.string.isRequired,
-  cds: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  selected: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-  selectSmi: React.PropTypes.func.isRequired,
-  removeSmi: React.PropTypes.func.isRequired,
-  editComment: React.PropTypes.func.isRequired,
-  modal: React.PropTypes.string
+  uid: PropTypes.string.isRequired,
+  cds: PropTypes.arrayOf(PropTypes.object).isRequired,
+  selected: PropTypes.arrayOf(PropTypes.object).isRequired,
+  selectSmi: PropTypes.func.isRequired,
+  removeSmi: PropTypes.func.isRequired,
+  editComment: PropTypes.func.isRequired,
+  modal: PropTypes.string
 };
 
 ChemScannerCds.defaultProps = {

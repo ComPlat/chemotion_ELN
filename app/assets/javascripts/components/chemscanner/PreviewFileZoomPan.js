@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import SvgFileZoomPan from 'react-svg-file-zoom-pan';
-import PngFileZoomPan from './PreviewFileZoomPan';
 
 export default class PreviewFileZoomPan extends React.PureComponent {
   constructor() {
