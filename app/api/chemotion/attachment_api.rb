@@ -32,6 +32,53 @@ module Chemotion
       end
     end
 
+    resource :attachable do
+      before do
+        case params[:attachable_type]
+        when 'ResearchPlan'
+          error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: params[:attachable_id])).update?
+        end
+      end
+
+      desc "Update attachable records"
+      post "update_attachments_attachable" do
+        attachable_type = params[:attachable_type]
+        attachable_id = params[:attachable_id]
+        if params[:files] && params[:files].length > 0
+          attach_ary = Array.new
+          params[:files].each do |file|
+            if tempfile = file[:tempfile]
+                a = Attachment.new(
+                  bucket: file[:container_id],
+                  filename: file[:filename],
+                  file_path: file[:tempfile],
+                  created_by: current_user.id,
+                  created_for: current_user.id,
+                  content_type: file[:type],
+                  attachable_type: attachable_type,
+                  attachable_id: attachable_id
+                )
+                begin
+                  a.save!
+                  attach_ary.push(a.id)
+                ensure
+                  tempfile.close
+                  tempfile.unlink
+                end
+            end
+          end
+          if attach_ary.length > 0
+            TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
+                         .perform_later(attach_ary)
+          end
+        end
+        if params[:del_files] && params[:del_files].length > 0
+          Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil)
+        end
+        true
+      end
+    end
+
     resource :attachments do
       before do
         @attachment = Attachment.find_by(id: params[:attachment_id])

@@ -65,6 +65,37 @@ export default class AttachmentFetcher {
     });
   }
 
+  static updateAttachables(files, attachableType, attachableId, dels) {
+    const data = new FormData();
+    files.forEach((file) => {
+      data.append('files[]', file.file, file.name);
+    });
+    data.append('attachable_type', attachableType);
+    data.append('attachable_id', attachableId);
+    dels.forEach((f) => {
+      data.append('del_files[]', f.id);
+    });
+    return () => fetch('/api/v1/attachable/update_attachments_attachable', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: data
+    }).then((response) => {
+      if (response.ok === false) {
+        let msg = 'Files uploading failed: ';
+        if (response.status === 413) {
+          msg += 'File size limit exceeded.';
+        } else {
+          msg += response.statusText;
+        }
+        NotificationActions.add({
+          message: msg,
+          level: 'error',
+          position: 'tc'
+        });
+      }
+    });
+  }
+
   static uploadToInbox(attachments) {
     const data = new FormData();
     const files = (attachments).filter(f => f.is_new)
@@ -80,7 +111,7 @@ export default class AttachmentFetcher {
       if (response.ok === false) {
         let msg = 'Files uploading to Inbox failed: ';
         if (response.status === 413) {
-          msg += 'File size limit exceeded. Max size is 50MB';
+          msg += 'File size limit exceeded.';
         } else {
           msg += response.statusText;
         }
@@ -93,8 +124,8 @@ export default class AttachmentFetcher {
   }
 
   static uploadFiles(files) {
-    var data = new FormData()
-    files.forEach((file)=> {
+    const data = new FormData()
+    files.forEach((file) => {
       data.append(file.id || file.name, file);
     });
     return ()=>fetch('/api/v1/attachments/upload_dataset_attachments', {
@@ -105,7 +136,7 @@ export default class AttachmentFetcher {
       if(response.ok == false) {
         let msg = 'Files uploading failed: ';
         if(response.status == 413) {
-          msg += 'File size limit exceeded. Max size is 50MB'
+          msg += 'File size limit exceeded.'
         } else {
           msg += response.statusText;
         }

@@ -19,7 +19,7 @@ import DeviceSample from '../models/DeviceSample';
 import NotificationActions from '../actions/NotificationActions'
 import SamplesFetcher from '../fetchers/SamplesFetcher'
 import DeviceFetcher from '../fetchers/DeviceFetcher'
-
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
 import ModalImportConfirm from '../contextActions/ModalImportConfirm'
 
 import { extraThing } from '../utils/Functions';
@@ -942,6 +942,21 @@ class ElementStore {
     }
   }
 
+  UpdateResearchPlanAttaches(updatedResearchPlan) {
+    const { selecteds } = this.state;
+    ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
+      .then((result) => {
+        this.state.currentElement = result;
+        const index = this.elementIndex(selecteds, result);
+        const newSelecteds = this.updateElement(result, index);
+        this.setState({ selecteds: newSelecteds });
+      });
+  }
+
+  handleUpdateResearchPlanAttaches(updatedResearchPlan) {
+    this.UpdateResearchPlanAttaches(updatedResearchPlan);
+  }
+
   handleUpdateMoleculeNames(updatedSample) {
     this.UpdateMolecule(updatedSample);
   }
@@ -964,6 +979,7 @@ class ElementStore {
         break;
       case 'research_plan':
         this.handleRefreshElements('research_plan');
+        this.handleUpdateResearchPlanAttaches(updatedElement);
         break;
       case 'wellplate':
         this.handleRefreshElements('wellplate');

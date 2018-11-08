@@ -16,7 +16,8 @@ export default class ResearchPlan extends Element {
       name: 'New Research Plan',
       description: description_default,
       svg_file: '',
-      sdf_file: ''
+      sdf_file: '',
+      attachments: [],
     });
   }
 
@@ -25,7 +26,8 @@ export default class ResearchPlan extends Element {
       name: this.name,
       description: this.description,
       svg_file: this.svg_file,
-      sdf_file: this.sdf_file
+      sdf_file: this.sdf_file,
+      attachments: this.attachments
     });
   }
 
