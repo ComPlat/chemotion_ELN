@@ -21,8 +21,8 @@ module ChemScannerHelpers
       info = { info: cdx_info }
       if img_ext == '.png'
         info[:svg] = "data:image/png;base64,#{img_b64}"
-      elsif img_ext == '.emf'
-        info[:svg] = b64emf_to_svg(img_b64)
+      elsif %w[.emf .wmf].include?(img_ext)
+        info[:svg] = b64metafile_to_svg(img_b64, img_ext)
       end
 
       info_arr.push(info)
@@ -210,8 +210,8 @@ module ChemScannerHelpers
     res
   end
 
-  def b64emf_to_svg(b64emf)
-    emf_file = Tempfile.new(['chemscanner', '.emf'])
+  def b64metafile_to_svg(b64emf, extn)
+    emf_file = Tempfile.new(['chemscanner', extn])
     svg_file = Tempfile.new(['chemscanner', '.svg'])
     IO.binwrite(emf_file.path, Base64.decode64(b64emf))
 

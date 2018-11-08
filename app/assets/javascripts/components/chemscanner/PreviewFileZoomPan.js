@@ -51,7 +51,7 @@ export default class PreviewFileZoomPan extends React.PureComponent {
       this.isSvg = false;
       svg = `
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-          <image id="png-img-svg" xlink:href="${image}"/>
+          <image id="png-img-svg" xlink:href="${image}" width="100%" height="100%" />
         </svg>
       `;
     }
@@ -69,5 +69,5 @@ PreviewFileZoomPan.propTypes = {
 };
 
 PreviewFileZoomPan.defaultProps = {
-  image: ""
+  image: ''
 };

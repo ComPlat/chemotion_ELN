@@ -23,6 +23,7 @@ class API < Grape::API
     def is_public_request?
       request.path.start_with?(
         '/api/v1/public/',
+        '/api/v1/chemscanner/',
         '/api/v1/ketcher/layout',
         '/api/v1/gate/receiving',
         '/api/v1/gate/ping'
