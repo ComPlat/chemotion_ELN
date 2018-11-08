@@ -423,6 +423,12 @@ export default class ReactionDetailsScheme extends Component {
           sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
         }
       }
+
+      if (materialGroup === 'products') {
+        if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
+          sample.maxAmount = referenceMaterial.amount_mol * sample.molecule_molecular_weight;
+        }
+      }
       return sample;
     });
   }

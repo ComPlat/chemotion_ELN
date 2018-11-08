@@ -48,10 +48,14 @@ feature 'Reaction management' do
       first('i.icon-reaction').click
       find('span.isvg').click
       material_amount = 6800
-      sleep 2
-      material_table = find('th', text: 'Starting materials').find(:xpath, '../../../..')
-      material_field = material_table.first('tr.general-material').first("span.input-group").find('input')
+
+      pane = first('div#elements-tabs-pane-0', wait: 10).click
+      tab_pane = pane.find('div#reaction-detail-tab').click
+      #tab_pane = pane.first('div.panel-detail')
+      tab_scheme = tab_pane.first('div.tab-content').click
+      material_field = tab_scheme.first('span.input-group').find_all('input').first
       material_field.click
+
       material_field.set(material_amount)
       material_field.click
       maxAmount = material_amount / material.molecule.molecular_weight * product.molecule.molecular_weight
@@ -74,10 +78,13 @@ feature 'Reaction management' do
       first('i.icon-reaction').click
       find('span.isvg').click
       material_amount = 6800
-      sleep 2
-      material_table = find('th', text: 'Starting materials').find(:xpath, '../../../..')
-      material_field = material_table.first('tr.general-material').first("span.input-group").find('input')
+
+      pane = first('div#elements-tabs-pane-0', wait: 10).click
+      tab_pane = pane.find('div#reaction-detail-tab').click
+      tab_scheme = tab_pane.first('div.tab-content').click
+      material_field = tab_scheme.first('span.input-group').find_all('input').first
       material_field.click
+
       material_field.set(material_amount)
       material_field.click
       maxAmount = material_amount / material.molecule.molecular_weight * product.molecule.molecular_weight / 2
@@ -96,6 +103,7 @@ feature 'Reaction management' do
     end
 
   end
+
 
   describe 'reaction management contains residues' do
     before do
@@ -117,9 +125,11 @@ feature 'Reaction management' do
       first('i.icon-reaction').click
       find('span.isvg').click
       material_amount = 3780
-      sleep 2
-      material_table_r = find('th', text: 'Starting materials').find(:xpath, '../../../..')
-      material_field = material_table_r.first('tr.general-material').first("span.input-group").find('input')
+
+      pane = first('div#elements-tabs-pane-0', wait: 10).click
+      tab_pane = pane.find('div#reaction-detail-tab').click
+      tab_scheme = tab_pane.first('div.tab-content').click
+      material_field = tab_scheme.first('span.input-group').find_all('input').first
       material_field.click
       material_field.set(material_amount)
       material_field.click
@@ -135,4 +145,5 @@ feature 'Reaction management' do
       expect(page).not_to have_content('max theoretical mass')
     end
   end
+
 end
