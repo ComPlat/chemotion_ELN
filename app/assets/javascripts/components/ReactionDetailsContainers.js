@@ -8,6 +8,23 @@ import {
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
+import QuillViewer from './QuillViewer';
+
+const previewImage = (container) => {
+  const rawImg = container.preview_img;
+  const noAttSvg = '/images/wild_card/no_attachment.svg';
+  const noAvaSvg = '/images/wild_card/not_available.svg';
+  switch (rawImg) {
+    case null:
+    case undefined:
+      return noAttSvg;
+    case 'not available':
+      return noAvaSvg;
+    default:
+      return `data:image/png;base64,${rawImg}`;
+  }
+};
+
 
 export default class ReactionDetailsContainers extends Component {
   constructor(props) {
@@ -71,6 +88,24 @@ export default class ReactionDetailsContainers extends Component {
     }
   }
 
+  headerBtnGroup(container, reaction, readOnly) {
+    return (
+      <div className="upper-btn">
+        <Button
+          bsSize="xsmall"
+          bsStyle="danger"
+          className="button-right"
+          disabled={readOnly}
+          onClick={() => this.handleOnClickRemove(container)}
+        >
+          <i className="fa fa-trash" />
+        </Button>
+        <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
+      </div>
+    );
+  };
+
+
   handleRemove(container) {
     let { reaction } = this.state;
 
@@ -106,37 +141,51 @@ export default class ReactionDetailsContainers extends Component {
     const {readOnly} = this.props;
 
     let containerHeader = (container) => {
-      const kind = container.extended_metadata['kind'] && container.extended_metadata['kind'] != '';
-      const titleKind = kind ? (' - Type: ' + container.extended_metadata['kind']) : '';
-
-      const status = container.extended_metadata['status'] && container.extended_metadata['status'] != '';
-      const titleStatus = status ? (' - Status: ' + container.extended_metadata['status']) : '';
+      const kind = container.extended_metadata.kind || '';
+      const previewImg = previewImage(container);
+      const status = container.extended_metadata.status || '';
+      const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
+      const contentOneLine = {
+        ops: content.ops.map((x) => {
+          const c = Object.assign({}, x);
+          if (c.insert) c.insert = c.insert.replace(/\n/g, ' ');
+          return c;
+        }),
+      };
 
       return (
-        <div style={{width: '100%'}}>
-          {container.name}
-          {titleKind}
-          {titleStatus}
-          <Button
-            bsSize="xsmall"
-            bsStyle="danger"
-            className="button-right"
-            disabled={readOnly}
-            onClick={() => this.handleOnClickRemove(container)}
-          >
-            <i className="fa fa-trash" />
-          </Button>
-          <PrintCodeButton element={reaction} analyses={[container]} ident={container.id} />
+        <div className="analysis-header order" style={{ width: '100%' }}>
+          <div className="preview">
+            <img src={previewImg} alt="" />
+          </div>
+          <div className="abstract">
+            {
+              this.headerBtnGroup(container, reaction, readOnly)
+            }
+            <div className="lower-text">
+              <div className="main-title">{container.name}</div>
+              <div className="sub-title">Type: {kind}</div>
+              <div className="sub-title">Status: {status}</div>
+
+              <div className="desc sub-title">
+                <span style={{ float: 'left', marginRight: '5px' }}>
+                  Content:
+                </span>
+                <QuillViewer value={contentOneLine} preview />
+              </div>
+
+            </div>
+          </div>
         </div>
       )
     };
 
     let containerHeaderDeleted = (container) => {
-      const kind = container.extended_metadata['kind'] && container.extended_metadata['kind'] != '';
-      const titleKind = kind ? (' - Type: ' + container.extended_metadata['kind']) : '';
+      const kind = container.extended_metadata.kind && container.extended_metadata.kind != '';
+      const titleKind = kind ? (' - Type: ' + container.extended_metadata.kind) : '';
 
-      const status = container.extended_metadata['status'] && container.extended_metadata['status'] != '';
-      const titleStatus = status ? (' - Status: ' + container.extended_metadata['status']) : '';
+      const status = container.extended_metadata.status && container.extended_metadata.status != '';
+      const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
         <div style={{width: '100%'}}>
@@ -164,7 +213,7 @@ export default class ReactionDetailsContainers extends Component {
             <div style={{ marginBottom: '10px' }}>
               &nbsp;{this.addButton()}
             </div>
-            <PanelGroup defaultActiveKey={0} activeKey={activeContainer} accordion>
+            <PanelGroup defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
@@ -181,9 +230,12 @@ export default class ReactionDetailsContainers extends Component {
                   <Panel
                     eventKey={key}
                     key={`reaction_container_${container.id}`}
-                    onClick={this.handleAccordionOpen.bind(this, key)}
                   >
-                    <Panel.Heading>{containerHeader(container)}</Panel.Heading>
+                    <Panel.Heading>
+                      <Panel.Title toggle>
+                        {containerHeader(container)}
+                      </Panel.Title>
+                    </Panel.Heading>
                     <Panel.Body collapsible>
                       <ContainerComponent
                         readOnly={readOnly}
