@@ -200,7 +200,8 @@ const tlcContent = (el) => {
 
 const obsvTlcContent = (el) => {
   let content = [];
-  content = [...el.observation.ops, ...tlcContent(el)];
+  const ops = el.observation.ops || [];
+  content = [...ops, ...tlcContent(el)];
   content = rmOpsRedundantSpaceBreak(content);
   if (onlyBlank(content)) return [];
   return frontBreak(content);
