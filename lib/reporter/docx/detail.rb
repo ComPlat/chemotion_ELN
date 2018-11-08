@@ -83,6 +83,7 @@ module Reporter
       end
 
       def remove_redundant_space_break(ops) # ensure one line
+        return [{ 'insert' => '' }] unless ops
         ops.map.with_index do |op, i|
           if op["insert"]
             op["insert"] = op["insert"].gsub(/[\u00A0\s]{2,}/, " ")
