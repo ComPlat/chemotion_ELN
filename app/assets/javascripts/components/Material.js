@@ -213,7 +213,7 @@ class Material extends Component {
       <NumeralInputWithUnitsCompo
         precision={4}
         value={material.equivalent}
-        disabled={((material.reference || false) && material.equivalent) !== false}
+        disabled={(((material.reference || false) && material.equivalent) !== false) || this.props.lockEquivColumn}
         onChange={e => this.handleEquivalentChange(e)}
       />
     );
@@ -692,4 +692,5 @@ Material.propTypes = {
   isDragging: PropTypes.bool,
   canDrop: PropTypes.bool,
   isOver: PropTypes.bool,
+  lockEquivColumn: PropTypes.bool.isRequired
 };

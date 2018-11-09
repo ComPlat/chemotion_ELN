@@ -22,13 +22,14 @@ export default class ReactionDetailsScheme extends Component {
   constructor(props) {
     super(props);
     let { reaction } = props;
-    this.state = { reaction };
+    this.state = { reaction, lockEquivColumn: false };
 
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
     this.addSampleToDescription = this.addSampleToDescription.bind(this);
     this.dropMaterial = this.dropMaterial.bind(this);
     this.dropSample = this.dropSample.bind(this);
+    this.switchEquiv = this.switchEquiv.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -69,6 +70,11 @@ export default class ReactionDetailsScheme extends Component {
     const { onInputChange } = this.props;
     const value = e && e.value;
     onInputChange('role', value);
+  }
+
+  switchEquiv() {
+    const { lockEquivColumn } = this.state;
+    this.setState({ lockEquivColumn: !lockEquivColumn });
   }
 
   renderGPDnD() {
@@ -385,6 +391,7 @@ export default class ReactionDetailsScheme extends Component {
 
   updatedSamplesForAmountChange(samples, updatedSample, materialGroup) {
     const { referenceMaterial } = this.props.reaction;
+    const { lockEquivColumn } = this.state;
     return samples.map((sample) => {
       if (referenceMaterial) {
         if (sample.id === updatedSample.id) {
@@ -395,19 +402,45 @@ export default class ReactionDetailsScheme extends Component {
                 this.checkMassPolymer(referenceMaterial, updatedSample, massAnalyses);
                 return sample;
               }
+              sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+            } else {
+              if (!lockEquivColumn) {
+                sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+              } else {
+                if (referenceMaterial && referenceMaterial.amount_value) {
+                  sample.setAmountAndNormalizeToGram({
+                    value: sample.equivalent * referenceMaterial.amount_mol,
+                    unit: 'mol',
+                  });
+                } else if (sample.amount_value) {
+                  sample.setAmountAndNormalizeToGram({
+                    value: sample.equivalent * sample.amount_mol,
+                    unit: 'mol'
+                  });
+                }
+
+              }
             }
-            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
           } else {
             if (materialGroup === 'products') {
               sample.equivalent = 0.0;
-            }else {
-              sample.equivalent = 1.0;
+            } else {
+              sample.equivalent = 1.0;  // to be check (Paggy)
             }
           }
         } else {
-          // calculate equivalent, don't touch real amount
-
-          sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          if (!lockEquivColumn || materialGroup === 'products' ) {
+            // calculate equivalent, don't touch real amount
+            sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
+          } else {
+            //sample.amount_mol = sample.equivalent * referenceMaterial.amount_mol;
+            if (referenceMaterial && referenceMaterial.amount_value) {
+              sample.setAmountAndNormalizeToGram({
+                value: sample.equivalent * referenceMaterial.amount_mol,
+                unit: 'mol',
+              });
+            }
+          }
         }
 
         if (materialGroup === 'products' && (sample.equivalent < 0.0 || sample.equivalent > 1.0 || isNaN(sample.equivalent) || !isFinite(sample.equivalent))) {
@@ -511,7 +544,7 @@ export default class ReactionDetailsScheme extends Component {
   }
 
   render() {
-    const { reaction } = this.state;
+    const { reaction, lockEquivColumn } = this.state;
     const minPadding = { padding: '1px 2px 2px 0px' };
     if (reaction.editedSample !== undefined) {
       if (reaction.editedSample.amountType === 'target') {
@@ -556,6 +589,8 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              switchEquiv={this.switchEquiv}
+              lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
           </ListGroupItem>
@@ -570,6 +605,8 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              switchEquiv={this.toggleLockEquivColumn}
+              lockEquivColumn={lockEquivColumn}
               headIndex={headReactants}
             />
           </ListGroupItem>
@@ -584,6 +621,8 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+              switchEquiv={this.toggleLockEquivColumn}
+              lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
           </ListGroupItem>
@@ -600,6 +639,8 @@ export default class ReactionDetailsScheme extends Component {
                   dropSample={this.dropSample}
                   showLoadingColumn={!!reaction.hasPolymers()}
                   onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
+                  switchEquiv={this.toggleLockEquivColumn}
+                  lockEquivColumn={this.state.lockEquivColumn}
                   headIndex={0}
                 />
               </div>
