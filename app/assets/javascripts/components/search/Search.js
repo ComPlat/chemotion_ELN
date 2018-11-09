@@ -1,7 +1,8 @@
-import alt from 'alt';
 import React from 'react';
-import { Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
-  Form, FormControl, Radio, Grid, Row, Col } from 'react-bootstrap';
+import {
+  Glyphicon, ButtonGroup, Button, DropdownButton, MenuItem,
+  Form, FormControl, Radio, Grid, Row, Col
+} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import AutoCompleteInput from './AutoCompleteInput';
@@ -23,6 +24,7 @@ export default class Search extends React.Component {
       tanimotoThreshold: 0.7
     };
     this.handleClearSearchSelection = this.handleClearSearchSelection.bind(this);
+    this.handleStructureEditorCancel = this.handleStructureEditorCancel.bind(this);
   }
 
   handleSelectionChange(selection) {
@@ -225,7 +227,7 @@ export default class Search extends React.Component {
           <StructureEditorModal
             showModal={this.state.showStructureEditor}
             onSave={this.props.noSubmit ? null : this.handleStructureEditorSave.bind(this)}
-            onCancel={this.handleStructureEditorCancel.bind(this)}
+            onCancel={this.handleStructureEditorCancel}
             molfile={this.state.queryMolfile}
             submitBtnText="Search"
             submitAddons={submitAddons}

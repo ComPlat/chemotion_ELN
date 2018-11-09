@@ -121,8 +121,7 @@ export default class StructureEditorModal extends React.Component {
 
   render() {
     const handleSaveBtn = !this.props.onSave ? null : this.handleSaveBtn.bind(this);
-    const cancelBtnText = this.props.cancelBtnText ? this.props.cancelBtnText : 'Cancel';
-    const submitBtnText = this.props.submitBtnText ? this.props.submitBtnText : 'Save';
+    const { cancelBtnText, submitBtnText } = this.props;
     const submitAddons = this.props.submitAddons ? this.props.submitAddons : '';
     const { editor, showWarning } = this.state;
 
@@ -185,19 +184,23 @@ export default class StructureEditorModal extends React.Component {
 }
 
 StructureEditorModal.propTypes = {
-  editors: PropTypes.objectOf(StructureEditor),
+  editors: PropTypes.objectOf(PropTypes.instanceOf(StructureEditor)),
   molfile: PropTypes.string,
   showModal: PropTypes.bool,
   hasChildren: PropTypes.bool,
   hasParent: PropTypes.bool,
   onCancel: PropTypes.func,
   onSave: PropTypes.func,
+  submitBtnText: PropTypes.string,
+  cancelBtnText: PropTypes.string,
 };
 
 StructureEditorModal.defaultProps = {
   editors: EditorList,
-  molfile:  "\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n",
+  molfile: "\n  noname\n\n  0  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n",
   showModal: false,
   hasChildren: false,
   hasParent: false,
+  submitBtnText: 'Save',
+  cancelBtnText: 'Cancel',
 };
