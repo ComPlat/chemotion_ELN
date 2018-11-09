@@ -29,11 +29,18 @@ export default class PreviewFileZoomPan extends React.PureComponent {
     const imgEl = svgEl.querySelector(imgSelector);
     const svgWidth = Math.floor(svgEl.getBoundingClientRect().width);
 
-    const dummyImg = this.previewDiv.querySelector('#dummy-img');
-    dummyImg.style.display = 'block';
-    const imgWidth = window.getComputedStyle(dummyImg).getPropertyValue('width');
-    const imgHeight = window.getComputedStyle(dummyImg).getPropertyValue('height');
-    dummyImg.style.display = 'none';
+    let imgWidth;
+    let imgHeight;
+    if (this.isSvg) {
+      imgWidth = Math.floor(imgEl.getBoundingClientRect().width);
+      imgHeight = Math.floor(imgEl.getBoundingClientRect().height);
+    } else {
+      const dummyImg = this.previewDiv.querySelector('#dummy-img');
+      dummyImg.style.display = 'block';
+      imgWidth = window.getComputedStyle(dummyImg).getPropertyValue('width');
+      imgHeight = window.getComputedStyle(dummyImg).getPropertyValue('height');
+      dummyImg.style.display = 'none';
+    }
 
     if (svgWidth > imgWidth) {
       const xOffset = `${(svgWidth - imgWidth) / 2}`;
@@ -41,8 +48,13 @@ export default class PreviewFileZoomPan extends React.PureComponent {
     } else {
       imgEl.setAttribute('width', svgWidth);
     }
-    imgEl.setAttribute('height', imgHeight);
-    svgEl.style.height = `${imgHeight}`;
+
+    if (this.isSvg) {
+      svgEl.style.height = `${Math.floor(imgHeight) + 5}px`;
+    } else {
+      imgEl.setAttribute('height', imgHeight);
+      svgEl.style.height = `${imgHeight}`;
+    }
   }
 
   render() {
