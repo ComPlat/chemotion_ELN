@@ -87,11 +87,11 @@ class Report < ActiveRecord::Base
     when 'spectrum'
       Rails.root.join('lib', 'template', 'Spectra.docx')
     when 'single_reaction'
-      Rails.root.join('lib', 'template', 'ELN_Objs.docx')
+      Rails.root.join('lib', 'template', 'Standard.docx')
     when 'rxn_list_html'
       Rails.root.join('lib', 'template', 'rxn_list.html.erb')
     else
-      Rails.root.join('lib', 'template', 'ELN_Objs.docx')
+      Rails.root.join('lib', 'template', 'Standard.docx')
     end
   end
 
