@@ -28,7 +28,12 @@ export default class PreviewFileZoomPan extends React.PureComponent {
     const imgSelector = this.isSvg ? 'g > svg' : '#png-img-svg';
     const imgEl = svgEl.querySelector(imgSelector);
     const svgWidth = Math.floor(svgEl.getBoundingClientRect().width);
-    const imgWidth = Math.floor(imgEl.getBoundingClientRect().width);
+
+    const dummyImg = this.previewDiv.querySelector('#dummy-img');
+    dummyImg.style.display = 'block';
+    const imgWidth = window.getComputedStyle(dummyImg).getPropertyValue('width');
+    const imgHeight = window.getComputedStyle(dummyImg).getPropertyValue('height');
+    dummyImg.style.display = 'none';
 
     if (svgWidth > imgWidth) {
       const xOffset = `${(svgWidth - imgWidth) / 2}`;
@@ -36,9 +41,8 @@ export default class PreviewFileZoomPan extends React.PureComponent {
     } else {
       imgEl.setAttribute('width', svgWidth);
     }
-
-    const imgHeight = Math.floor(imgEl.getBoundingClientRect().height);
-    svgEl.style.height = `${Math.floor(imgHeight) + 5}px`;
+    imgEl.setAttribute('height', imgHeight);
+    svgEl.style.height = `${imgHeight}`;
   }
 
   render() {
@@ -56,7 +60,12 @@ export default class PreviewFileZoomPan extends React.PureComponent {
     }
 
     return (
-      <div ref={this.setPreviewRef}>
+      <div ref={this.setPreviewRef} style={{ background: 'white' }}>
+        <img
+          id="dummy-img"
+          alt=""
+          src={this.isSvg ? '' : image}
+        />
         <SvgFileZoomPan svg={svg} duration={200} />
       </div>
     );
@@ -64,9 +73,10 @@ export default class PreviewFileZoomPan extends React.PureComponent {
 }
 
 PreviewFileZoomPan.propTypes = {
-  image: PropTypes.string
+  image: PropTypes.string,
 };
 
 PreviewFileZoomPan.defaultProps = {
-  image: ''
+  image: '',
+  style: {}
 };
