@@ -151,13 +151,14 @@ export default class ElementsTable extends React.Component {
     let items = [];
     const minPage = Math.max(page - 2, 1);
     const maxPage = Math.min(minPage + 4, pages);
-    items.push(<Pagination.First onClick={() => this.handlePaginationSelect(1)} />);
+    items.push(<Pagination.First key="First" onClick={() => this.handlePaginationSelect(1)} />);
     if (page>1) {
-      items.push(<Pagination.Prev onClick={() => this.handlePaginationSelect(page - 1)} />);
+      items.push(<Pagination.Prev key="Prev" onClick={() => this.handlePaginationSelect(page - 1)} />);
     }
     for (let _page = minPage; _page <= maxPage; _page=_page+1) {
       items.push(
         <Pagination.Item
+          key={`eltPage${_page}`}
           active={_page === page}
           onClick={() => this.handlePaginationSelect(_page)}>
             {_page}
@@ -166,12 +167,12 @@ export default class ElementsTable extends React.Component {
     }
 
     if (pages > maxPage) {
-      items.push(<Pagination.Ellipsis />);
+      items.push(<Pagination.Ellipsis key="Ell" />);
     }
     if (page==pages) {
-      items.push(<Pagination.Next onClick={() => this.handlePaginationSelect(page+1)} />);
+      items.push(<Pagination.Next key="Next" onClick={() => this.handlePaginationSelect(page+1)} />);
     }
-    items.push(<Pagination.Last onClick={() => this.handlePaginationSelect(pages)} />);
+    items.push(<Pagination.Last key="Last" onClick={() => this.handlePaginationSelect(pages)} />);
 
     return (
       <div className="list-pagination">

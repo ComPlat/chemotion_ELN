@@ -521,7 +521,7 @@ export default class SampleDetails extends React.Component {
   const textAreaStyle = {
     height: '35px',
     overflow: 'auto',
-    'white-space': 'pre',
+    whiteSpace: 'pre',
   };
 
     return (
@@ -850,7 +850,7 @@ export default class SampleDetails extends React.Component {
       width: '500px',
       height: '640px',
       margin: '30px',
-      'white-space': 'pre-line',
+      whiteSpace: 'pre-line',
     };
     if (this.state.showMolfileModal) {
       let molfile = this.molfileInput.value;
