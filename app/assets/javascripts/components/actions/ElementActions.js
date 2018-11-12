@@ -243,12 +243,12 @@ class ElementActions {
       });};
   }
 
-  updateSampleForReaction(sample, reaction) {
+  updateSampleForReaction(sample, reaction, closeView = true) {
     return (dispatch) => { SamplesFetcher.update(sample)
       .then((newSample) => {
         reaction.updateMaterial(newSample);
         reaction.changed = true;
-        dispatch(reaction)
+        dispatch({ reaction, sample: newSample, closeView })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};

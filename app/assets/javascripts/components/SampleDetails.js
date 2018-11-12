@@ -206,29 +206,25 @@ export default class SampleDetails extends React.Component {
   handleSubmit(closeView = false) {
     const { sample } = this.state;
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
-      let reaction = sample.belongTo;
+      const reaction = sample.belongTo;
       reaction.editedSample = sample;
       const materialGroup = sample.matGroup;
-      if(sample.isNew) {
+      if (sample.isNew) {
         ElementActions.createSampleForReaction(sample, reaction, materialGroup);
       } else {
-        if(closeView) {
-          ElementActions.updateSampleForReaction(sample, reaction);
-        } else {
-          ElementActions.updateSample(new Sample(sample));
-        }
+        ElementActions.updateSampleForReaction(sample, reaction, closeView);
       }
-    } else if(sample.belongTo && sample.belongTo.type === 'wellplate') {
+    } else if (sample.belongTo && sample.belongTo.type === 'wellplate') {
       const wellplate = sample.belongTo;
       ElementActions.updateSampleForWellplate(sample, wellplate)
     } else {
-      if(sample.isNew) {
+      if (sample.isNew) {
         ElementActions.createSample(sample)
       } else {
         ElementActions.updateSample(new Sample(sample))
       }
     }
-    if(sample.is_new || closeView) {
+    if (sample.is_new || closeView) {
       DetailActions.close(sample, true);
     }
     sample.updateChecksum();
@@ -702,16 +698,18 @@ export default class SampleDetails extends React.Component {
     )
   }
 
-  sampleContainerTab(ind){
-    let sample = this.state.sample || {}
+  sampleContainerTab(ind) {
+    const { sample } = this.state;
     return(
       <Tab eventKey={ind} title={'Analyses'}
         key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
           <SampleDetailsContainers
-            sample={sample} setState={(sample) => {this.setState(sample)}}
+            sample={sample}
+            setState={(sample) => {this.setState(sample)}}
             handleSampleChanged={this.handleSampleChanged}
-            />
+            fromSample
+          />
         </ListGroupItem>
       </Tab>
     )

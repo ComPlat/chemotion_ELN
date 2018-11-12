@@ -522,18 +522,20 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    // workaround solution for 507:
-    // always reset currentElement and selecteds if currentElement.type is sample
-    // (because this is a listener for fetching Sample; and also checksum might not be changed under some conditions)
-    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum || this.state.currentElement.type === 'sample') {
+    // // workaround solution for 507:
+    // // always reset currentElement and selecteds if currentElement.type is sample
+    // // (because this is a listener for fetching Sample; and also checksum might not be changed under some conditions)
+    // if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum || this.state.currentElement.type === 'sample') {
+    //   this.state.currentElement = result;
+    //   if (this.state.currentElement.type === 'sample') {
+    //     const selecteds = this.state.selecteds;
+    //     const idx = findIndex(selecteds, function(o) { return o.id == result.id; });
+    //     if (idx === -1) {
+    //       this.state.selecteds.splice(selecteds.length, 1, result);
+    //     } else { this.state.selecteds.splice(idx, 1, result); }
+    //   }
+    if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
       this.state.currentElement = result;
-      if (this.state.currentElement.type === 'sample') {
-        const selecteds = this.state.selecteds;
-        const idx = findIndex(selecteds, function(o) { return o.id == result.id; });
-        if (idx === -1) {
-          this.state.selecteds.splice(selecteds.length, 1, result);
-        } else { this.state.selecteds.splice(idx, 1, result); }
-      }
     }
   }
 
@@ -570,10 +572,15 @@ class ElementStore {
     this.state.currentElement = sample;
   }
 
-  handleUpdateSampleForReaction(reaction) {
+  handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
-    this.state.currentElement = reaction;
-    this.handleRefreshElements('sample');
+
+    if (closeView) {
+      this.state.currentElement = reaction;
+    } else {
+      this.state.currentElement = sample;
+    }
+    this.handleUpdateElement(sample);
   }
 
   handleUpdateSampleForWellplate(wellplate) {
@@ -934,9 +941,8 @@ class ElementStore {
     const index = this.elementIndex(selecteds, nextEl);
     let activeKey = index;
     let newSelecteds = null;
-    const sync = this.synchronizeElements(oriEl, nextEl);
-    oriEl = sync.ori;
-    nextEl = sync.next;
+    oriEl = this.synchronizeElements(oriEl);
+
     if (index === -1) {
       activeKey = selecteds.length
       newSelecteds = this.addElement(nextEl)
@@ -1013,34 +1019,48 @@ class ElementStore {
     }
 
     this.state.selecteds = this.state.selecteds.map((e) => {
-      if (SameEleTypId(e, updatedElement)) { return updatedElement; }
+      if (SameEleTypId(e, updatedElement)) {
+        return updatedElement;
+      }
       return e;
     });
+
+    this.synchronizeElements(updatedElement);
+    return true;
   }
 
-  synchronizeElements(close, open) {
-    const associatedSampleFromReaction = (
-      close instanceof Reaction && open instanceof Sample &&
-      close.samples.map(s => s.id).includes(open.id)
-    );
+  synchronizeElements(previous) {
+    const { selecteds } = this.state;
 
-    const associatedReactionFromSample = (
-      close instanceof Sample && open instanceof Reaction &&
-      open.samples.map(s => s.id).includes(close.id)
-    );
-
-    if (associatedSampleFromReaction) {
-      const s = close.samples.filter(x => x.id == open.id)[0];
-
-      open.amount_value = s.amount_value;
-      open.amount_unit = s.amount_unit;
-      open.container = s.container;
-    } else if (associatedReactionFromSample) {
-      open.updateMaterial(close);
-      if (close.isPendingToSave) { open.changed = close.isPendingToSave; }
+    if (previous instanceof Sample) {
+      const rId = previous.tag && previous.tag.taggable_data
+        && previous.tag.taggable_data.reaction_id;
+      const openedReaction = selecteds.find(el => (el.type === 'reaction' && el.id === rId));
+      if (openedReaction) {
+        openedReaction.updateMaterial(previous);
+        if (previous.isPendingToSave) {
+          openedReaction.changed = previous.isPendingToSave;
+        }
+      }
     }
 
-    return { ori: close, next: open };
+    if (previous instanceof Reaction) {
+      const samples = previous.samples;
+      selecteds.map((nextSample) => {
+        const previousSample = samples.find(s => SameEleTypId(nextSample, s));
+        if (previousSample) {
+          nextSample.amount_value = previousSample.amount_value;
+          nextSample.amount_unit = previousSample.amount_unit;
+          nextSample.container = previousSample.container;
+          nextSample.density = previousSample.density;
+          nextSample._molarity_unit = previousSample._molarity_unit;
+          nextSample._molarity_value = previousSample._molarity_value;
+        }
+        return nextSample;
+      });
+    }
+
+    return previous;
   }
 
   addElement(addEl) {
@@ -1079,22 +1099,23 @@ class ElementStore {
     } else {
       this.state.currentElement = newCurrentElement;
     }
-    if (this.state.currentElement && this.state.currentElement.type === 'reaction') {
-      // workaround solution for 507:
-      // update samples data of Reaction
-      // this is executed when curretn element is set, but, for some cases it will not be called z.B. open window(Sample) from Reaction
-      const currentElementProducts = this.state.currentElement.products;
-      currentElementProducts.map((p) => {
-        SamplesFetcher.fetchById(p.id)
-          .then((newSample) => {
-            const idx = findIndex(this.state.currentElement.products, function(o) { return o.id == newSample.id; });
-            this.state.currentElement.products.splice(idx, 1, newSample);
-          }).catch((errorMessage) => {
-            console.log(errorMessage);
-          });
-      });
-    }
+    // if (this.state.currentElement && this.state.currentElement.type === 'reaction') {
+    //   // workaround solution for 507:
+    //   // update samples data of Reaction
+    //   // this is executed when curretn element is set, but, for some cases it will not be called z.B. open window(Sample) from Reaction
+    //   const currentElementProducts = this.state.currentElement.products;
+    //   currentElementProducts.map((p) => {
+    //     SamplesFetcher.fetchById(p.id)
+    //       .then((newSample) => {
+    //         const idx = findIndex(this.state.currentElement.products, function(o) { return o.id == newSample.id; });
+    //         this.state.currentElement.products.splice(idx, 1, newSample);
+    //       }).catch((errorMessage) => {
+    //         console.log(errorMessage);
+    //       });
+    //   });
+    // }
     UrlSilentNavigation(newCurrentElement)
+    return true
   }
 
   deleteCurrentElement(deleteEl) {
