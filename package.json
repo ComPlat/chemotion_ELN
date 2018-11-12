@@ -28,8 +28,8 @@
     "immutable": "~3.8.1",
     "jcampconverter": "^2.6.0",
     "jsdom": "^9.8.0",
-    "lodash": "^4.17.0",
-    "moment": "^2.14.1",
+    "lodash": "^4.17.11",
+    "moment": "^2.22.2",
     "moment-precise-range-plugin": "^1.2.4",
     "numeral": "^1.5.3",
     "path": "^0.12.7",
@@ -109,8 +109,7 @@
     "react-dom": "^15.3.2",
     "sinon": "^1.17.5",
     "sinon-spy-react": "^2.0.0",
-    "uglify-js": "~3.3.16",
-    "uglifyify": "~4.0.5"
+    "uglify-js": "~3.3.16"
   },
   "scripts": {
     "test": "mocha --compilers js:babel-core/register --require 'jsdom-global/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
