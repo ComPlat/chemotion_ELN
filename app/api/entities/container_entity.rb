@@ -42,7 +42,9 @@ module Entities
 
     private
     def preview_img(container_ids, attachments)
-      attachment = attachments.find { |a| a.thumb == true && container_ids.include?(a.id)}
+      attachment = attachments.find { |a|
+        a.thumb == true && a.attachable_type == 'Container' && container_ids.include?(a.attachable_id)
+      }
       preview = attachment.read_thumbnail if attachment
       preview && Base64.encode64(preview) || "not available"
     end
