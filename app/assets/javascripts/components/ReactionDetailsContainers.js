@@ -213,7 +213,7 @@ export default class ReactionDetailsContainers extends Component {
             <div style={{ marginBottom: '10px' }}>
               &nbsp;{this.addButton()}
             </div>
-            <PanelGroup defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
+            <PanelGroup id="reaction-analyses-panel" defaultActiveKey={0} activeKey={activeContainer} onSelect={this.handleAccordionOpen} accordion>
               {analyses_container[0].children.map((container, key) => {
                 if (container.is_deleted) {
                   return (
