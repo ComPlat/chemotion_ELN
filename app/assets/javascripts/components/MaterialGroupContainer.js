@@ -108,10 +108,12 @@ MaterialGroupContainer.propTypes = {
   isOver: PropTypes.bool.isRequired,
   canDrop: PropTypes.bool.isRequired,
   connectDropTarget: PropTypes.func.isRequired,
-  switchEquiv: PropTypes.func.isRequired,
-  lockEquivColumn: PropTypes.bool.isRequired
+  switchEquiv: PropTypes.func,
+  lockEquivColumn: PropTypes.bool
 };
 
 MaterialGroupContainer.defaultProps = {
   showLoadingColumn: false,
+  switchEquiv: () => null,
+  lockEquivColumn: false
 };

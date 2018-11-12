@@ -129,6 +129,7 @@ class Material extends Component {
               metricPrefix="milli"
               metricPrefixes={['milli', 'none', 'micro']}
               precision={3}
+              disabled={(this.props.materialGroup !== 'products' && this.props.materialGroup !== 'solvents') && !material.reference && this.props.lockEquivColumn}
               onChange={this.handleAmountUnitChange}
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
             />
@@ -155,7 +156,7 @@ class Material extends Component {
           metricPrefixes={['none']}
           bsStyle={material.error_loading ? 'error' : 'success'}
           precision={3}
-          disabled={this.props.materialGroup === 'products'}
+          disabled={this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn)}
           onChange={loading => this.handleLoadingChange(loading)}
         />
       </td>
@@ -403,6 +404,7 @@ class Material extends Component {
                 metricPrefix="milli"
                 metricPrefixes={['milli', 'none', 'micro']}
                 precision={4}
+                disabled={this.props.materialGroup !== 'products' && !material.reference && this.props.lockEquivColumn}
                 onChange={this.handleAmountUnitChange}
                 bsStyle={material.error_mass ? 'error' : massBsStyle}
               />
@@ -420,7 +422,7 @@ class Material extends Component {
             metricPrefix="milli"
             metricPrefixes={['milli', 'none']}
             precision={4}
-            disabled={this.props.materialGroup === 'products'}
+            disabled={this.props.materialGroup === 'products' || (!material.reference && this.props.lockEquivColumn)}
             onChange={this.handleAmountUnitChange}
             bsStyle={material.amount_unit === 'mol' ? 'success' : 'default'}
           />

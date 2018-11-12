@@ -404,7 +404,7 @@ export default class ReactionDetailsScheme extends Component {
               }
               sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
             } else {
-              if (!lockEquivColumn) {
+              if (!lockEquivColumn || materialGroup === 'solvents') {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
               } else {
                 if (referenceMaterial && referenceMaterial.amount_value) {
@@ -429,7 +429,7 @@ export default class ReactionDetailsScheme extends Component {
             }
           }
         } else {
-          if (!lockEquivColumn || materialGroup === 'products' ) {
+          if (!lockEquivColumn || materialGroup === 'products' || materialGroup === 'solvents') {
             // calculate equivalent, don't touch real amount
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
           } else {
@@ -605,7 +605,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.toggleLockEquivColumn}
+              switchEquiv={this.switchEquiv}
               lockEquivColumn={lockEquivColumn}
               headIndex={headReactants}
             />
@@ -621,7 +621,7 @@ export default class ReactionDetailsScheme extends Component {
               dropSample={this.dropSample}
               showLoadingColumn={!!reaction.hasPolymers()}
               onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-              switchEquiv={this.toggleLockEquivColumn}
+              switchEquiv={this.switchEquiv}
               lockEquivColumn={this.state.lockEquivColumn}
               headIndex={0}
             />
@@ -639,7 +639,7 @@ export default class ReactionDetailsScheme extends Component {
                   dropSample={this.dropSample}
                   showLoadingColumn={!!reaction.hasPolymers()}
                   onChange={changeEvent => this.handleMaterialsChange(changeEvent)}
-                  switchEquiv={this.toggleLockEquivColumn}
+                  switchEquiv={this.switchEquiv}
                   lockEquivColumn={this.state.lockEquivColumn}
                   headIndex={0}
                 />
