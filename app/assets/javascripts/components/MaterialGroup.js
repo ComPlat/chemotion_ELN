@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Glyphicon } from 'react-bootstrap';
+import { Button, Glyphicon, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import VirtualizedSelect from 'react-virtualized-select';
 import Material from './Material';
 import MaterialCalculations from './MaterialCalculations';
@@ -15,11 +15,10 @@ import { reagents_kombi } from './staticDropdownOptions/reagents_kombi';
 const MaterialGroup = ({
   materials, materialGroup, deleteMaterial, onChange,
   showLoadingColumn, reaction, addDefaultSolvent, headIndex,
-  dropMaterial, dropSample,
+  dropMaterial, dropSample, switchEquiv, lockEquivColumn
 }) => {
   const contents = [];
   let index = headIndex;
-
   materials.forEach((material) => {
     index += 1;
     contents.push((
@@ -34,6 +33,7 @@ const MaterialGroup = ({
         index={index}
         dropMaterial={dropMaterial}
         dropSample={dropSample}
+        lockEquivColumn={lockEquivColumn}
       />
     ));
 
@@ -69,12 +69,34 @@ const MaterialGroup = ({
       showLoadingColumn={showLoadingColumn}
       reaction={reaction}
       addDefaultSolvent={addDefaultSolvent}
+      switchEquiv={switchEquiv}
+      lockEquivColumn={lockEquivColumn}
     />
   );
 };
 
+const switchEquivTooltip = () => (
+  <Tooltip id="assign_button">Lock/unlock Equiv <br /> for target amounts</Tooltip>
+);
+
+const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
+  return (
+    <OverlayTrigger placement="top" overlay={switchEquivTooltip()} >
+      <Button
+        id="lock_equiv_column_btn"
+        bsSize="xsmall"
+        bsStyle={lockEquivColumn ? 'warning' : 'light'}
+        onClick={switchEquiv}
+      >
+        <i className={lockEquivColumn ? 'fa fa-lock' : 'fa fa-unlock'} />
+      </Button>
+    </OverlayTrigger>
+  );
+};
+
 const GeneralMaterialGroup = ({
-  contents, materialGroup, showLoadingColumn, reaction, addDefaultSolvent
+  contents, materialGroup, showLoadingColumn, reaction, addDefaultSolvent,
+  switchEquiv, lockEquivColumn
 }) => {
   const isReactants = materialGroup === 'reactants';
   let headers = {
@@ -171,8 +193,7 @@ const GeneralMaterialGroup = ({
             { !isReactants && <th /> }
             { showLoadingColumn && !isReactants && <th>{headers.loading}</th> }
             { !isReactants && <th>{headers.concn}</th> }
-            { !isReactants && <th>{headers.eq}</th> }
-            { !isReactants && <th /> }
+            { !isReactants && <th>{headers.eq} {!isReactants && materialGroup !== 'products' && SwitchEquivButton(lockEquivColumn, switchEquiv)}</th> }
           </tr>
         </thead>
         <tbody>
@@ -182,6 +203,7 @@ const GeneralMaterialGroup = ({
     </div>
   );
 };
+
 
 const SolventsMaterialGroup = ({
   contents, materialGroup, reaction, addDefaultSolvent
@@ -265,6 +287,8 @@ MaterialGroup.propTypes = {
   addDefaultSolvent: PropTypes.func.isRequired,
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
+  switchEquiv: PropTypes.func.isRequired,
+  lockEquivColumn: PropTypes.bool.isRequired
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -272,7 +296,9 @@ GeneralMaterialGroup.propTypes = {
   showLoadingColumn: PropTypes.bool,
   reaction: PropTypes.instanceOf(Reaction).isRequired,
   addDefaultSolvent: PropTypes.func.isRequired,
-  contents: PropTypes.arrayOf(PropTypes.shape).isRequired
+  contents: PropTypes.arrayOf(PropTypes.shape).isRequired,
+  switchEquiv: PropTypes.func.isRequired,
+  lockEquivColumn: PropTypes.bool.isRequired
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -282,13 +308,13 @@ SolventsMaterialGroup.propTypes = {
   contents: PropTypes.arrayOf(PropTypes.shape).isRequired
 };
 
-
 MaterialGroup.defaultProps = {
-  showLoadingColumn: false
+  showLoadingColumn: false,
 };
 
 GeneralMaterialGroup.defaultProps = {
-  showLoadingColumn: false
+  showLoadingColumn: false,
 };
+
 
 export { MaterialGroup, GeneralMaterialGroup, SolventsMaterialGroup };
