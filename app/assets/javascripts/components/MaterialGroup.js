@@ -85,7 +85,7 @@ const SwitchEquivButton = (lockEquivColumn, switchEquiv) => {
       <Button
         id="lock_equiv_column_btn"
         bsSize="xsmall"
-        bsStyle={lockEquivColumn ? 'warning' : 'light'}
+        bsStyle={lockEquivColumn ? 'warning' : 'default'}
         onClick={switchEquiv}
       >
         <i className={lockEquivColumn ? 'fa fa-lock' : 'fa fa-unlock'} />
@@ -178,8 +178,7 @@ const GeneralMaterialGroup = ({
           <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
           { showLoadingColumn && <col style={{ width: '11%' }} /> }
           <col style={{ width: showLoadingColumn ? '11%' : '12%' }} />
-          <col style={{ width: showLoadingColumn ? '8%' : '9%' }} />
-          <col style={{ width: '4%' }} />
+          <col style={{ width: showLoadingColumn ? '12%' : '13%' }} />
         </colgroup>
         <thead>
           <tr>
@@ -288,7 +287,7 @@ MaterialGroup.propTypes = {
   dropMaterial: PropTypes.func.isRequired,
   dropSample: PropTypes.func.isRequired,
   switchEquiv: PropTypes.func.isRequired,
-  lockEquivColumn: PropTypes.bool.isRequired
+  lockEquivColumn: PropTypes.bool
 };
 
 GeneralMaterialGroup.propTypes = {
@@ -298,7 +297,7 @@ GeneralMaterialGroup.propTypes = {
   addDefaultSolvent: PropTypes.func.isRequired,
   contents: PropTypes.arrayOf(PropTypes.shape).isRequired,
   switchEquiv: PropTypes.func.isRequired,
-  lockEquivColumn: PropTypes.bool.isRequired
+  lockEquivColumn: PropTypes.bool
 };
 
 SolventsMaterialGroup.propTypes = {
@@ -310,10 +309,12 @@ SolventsMaterialGroup.propTypes = {
 
 MaterialGroup.defaultProps = {
   showLoadingColumn: false,
+  lockEquivColumn: false
 };
 
 GeneralMaterialGroup.defaultProps = {
   showLoadingColumn: false,
+  lockEquivColumn: false
 };
 
 
