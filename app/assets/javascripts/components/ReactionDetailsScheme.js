@@ -404,7 +404,7 @@ export default class ReactionDetailsScheme extends Component {
               }
               sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
             } else {
-              if (!lockEquivColumn || materialGroup === 'solvents') {
+              if (!lockEquivColumn) {
                 sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
               } else {
                 if (referenceMaterial && referenceMaterial.amount_value) {
@@ -425,11 +425,11 @@ export default class ReactionDetailsScheme extends Component {
             if (materialGroup === 'products') {
               sample.equivalent = 0.0;
             } else {
-              sample.equivalent = 1.0;  // to be check (Paggy)
+              sample.equivalent = 1.0;
             }
           }
         } else {
-          if (!lockEquivColumn || materialGroup === 'products' || materialGroup === 'solvents') {
+          if (!lockEquivColumn || materialGroup === 'products') {
             // calculate equivalent, don't touch real amount
             sample.equivalent = sample.amount_mol / referenceMaterial.amount_mol;
           } else {
@@ -556,6 +556,7 @@ export default class ReactionDetailsScheme extends Component {
     } else {
       const { referenceMaterial } = this.props.reaction;
       reaction.products.map((sample) => {
+        sample.concn = sample.amount_mol / reaction.solventVolume;
         if (typeof (referenceMaterial) !== 'undefined' && referenceMaterial) {
           if (sample.contains_residues) {
             sample.maxAmount = referenceMaterial.amount_g + (referenceMaterial.amount_mol
@@ -566,6 +567,15 @@ export default class ReactionDetailsScheme extends Component {
         }
       });
     }
+
+if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.changed) {
+    reaction.starting_materials.map((sample) => {
+      sample.concn = sample.amount_mol / reaction.solventVolume;
+    });
+    reaction.reactants.map((sample) => {
+      sample.concn = sample.amount_mol / reaction.solventVolume;
+    });
+  }
 
     // if no reference material then mark first starting material
     const refM = this.props.reaction.starting_materials[0];

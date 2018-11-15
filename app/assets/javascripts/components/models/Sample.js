@@ -775,6 +775,14 @@ export default class Sample extends Element {
     return this._equivalent;
   }
 
+  set conc(conc) {
+    this._conc = conc;
+  }
+
+  get conc() {
+    return this._conc;
+  }
+
   set maxAmount(maxAmount) {
     this._maxAmount = maxAmount;
   }

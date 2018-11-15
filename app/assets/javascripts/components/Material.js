@@ -129,7 +129,7 @@ class Material extends Component {
               metricPrefix="milli"
               metricPrefixes={['milli', 'none', 'micro']}
               precision={3}
-              disabled={(this.props.materialGroup !== 'products' && this.props.materialGroup !== 'solvents') && !material.reference && this.props.lockEquivColumn}
+              disabled={(this.props.materialGroup !== 'products') && !material.reference && this.props.lockEquivColumn}
               onChange={this.handleAmountUnitChange}
               bsStyle={material.amount_unit === 'l' ? 'success' : 'default'}
             />
@@ -372,7 +372,7 @@ class Material extends Component {
     const isTarget = material.amountType === 'target';
     const massBsStyle = material.amount_unit === 'g' ? 'success' : 'default';
     const mol = material.amount_mol;
-    const concn = mol / reaction.solventVolume;
+    //const concn = mol / reaction.solventVolume;
     const mw = material.molecule && material.molecule.molecular_weight
 
     return (
@@ -433,7 +433,7 @@ class Material extends Component {
         <td>
           <NumeralInputWithUnitsCompo
             key={material.id}
-            value={concn}
+            value={material.concn}
             unit="mol/l"
             metricPrefix="milli"
             metricPrefixes={['milli', 'none']}
