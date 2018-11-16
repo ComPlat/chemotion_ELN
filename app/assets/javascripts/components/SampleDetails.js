@@ -16,7 +16,9 @@ import _ from 'lodash';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
+import SpectraActions from './actions/SpectraActions';
 
+import SpectraStore from './stores/SpectraStore';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
@@ -44,6 +46,7 @@ import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
+import ViewSpectra from './ViewSpectra';
 
 const MWPrecision = 6;
 
@@ -63,16 +66,20 @@ export default class SampleDetails extends React.Component {
       showMolfileModal: false,
       smileReadonly: true,
       quickCreator: false,
+      btnSpcDisabled: true,
     };
 
     const data = UserStore.getState().profile.data || {};
     this.enableComputedProps = _.get(data, 'computed_props.enable', false);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
+    this.onSpectraStoreChange = this.onSpectraStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
     this.addManualCas = this.addManualCas.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
+    this.handleSampleChanged = this.handleSampleChanged.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -89,12 +96,14 @@ export default class SampleDetails extends React.Component {
   }
 
   componentDidMount() {
-    UIStore.listen(this.onUIStoreChange)
+    UIStore.listen(this.onUIStoreChange);
+    SpectraStore.listen(this.onSpectraStoreChange);
   }
 
   componentWillUnmount() {
     this.clipboard.destroy();
-    UIStore.unlisten(this.onUIStoreChange)
+    UIStore.unlisten(this.onUIStoreChange);
+    SpectraStore.unlisten(this.onSpectraStoreChange);
   }
 
   onUIStoreChange(state) {
@@ -116,6 +125,12 @@ export default class SampleDetails extends React.Component {
       showMolfileModal: false
     });
   }
+
+  onSpectraStoreChange(state) {
+    const btnSpcDisabled = state.options.length === 0;
+    this.setState({ btnSpcDisabled });
+  }
+
   handleSampleChanged(sample) {
     this.setState({
       sample
@@ -342,8 +357,16 @@ export default class SampleDetails extends React.Component {
     }
   }
 
+  toggleSpectraModal(sample) {
+    SpectraActions.ToggleModal();
+    SpectraActions.LoadSpectra.defer(sample);
+  }
+
   sampleHeader(sample) {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
+    const { btnSpcDisabled } = this.state;
+    const onToggleSpectraModal = () => this.toggleSpectraModal(sample);
+
     return (
       <div>
         <i className="icon-sample" /> {sample.title()}
@@ -378,6 +401,20 @@ export default class SampleDetails extends React.Component {
           <Button bsStyle="info" bsSize="xsmall" className="button-right"
             onClick={() => this.props.toggleFullScreen()}>
             <i className="fa fa-expand"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={<Tooltip id="spectra">Spectra Viewer</Tooltip>}
+        >
+          <Button
+            bsStyle="info"
+            bsSize="xsmall"
+            className="button-right"
+            onClick={onToggleSpectraModal}
+            disabled={btnSpcDisabled}
+          >
+            <i className="fa fa-area-chart" />
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample}/>
@@ -704,6 +741,11 @@ export default class SampleDetails extends React.Component {
       <Tab eventKey={ind} title={'Analyses'}
         key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
+          <ViewSpectra
+            sample={sample}
+            handleSampleChanged={this.handleSampleChanged}
+            handleSubmit={this.handleSubmit}
+          />
           <SampleDetailsContainers
             sample={sample}
             setState={(sample) => {this.setState(sample)}}
@@ -712,7 +754,7 @@ export default class SampleDetails extends React.Component {
           />
         </ListGroupItem>
       </Tab>
-    )
+    );
   }
 
   sampleLiteratureTab(ind) {

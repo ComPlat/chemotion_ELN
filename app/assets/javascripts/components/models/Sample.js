@@ -816,6 +816,35 @@ export default class Sample extends Element {
       .children
       .filter(el => ~el.container_type.indexOf('analyses'));
   }
+
+  analysisContainers() {
+    let target = [];
+    this.analysesContainers().forEach((aec) => {
+      const aics = aec.children
+        .filter(el => ~el.container_type.indexOf('analysis'));
+      target = [...target, ...aics];
+    });
+    return target;
+  }
+
+  datasetContainers() {
+    let target = [];
+    this.analysisContainers().forEach((aic) => {
+      const dts = aic.children
+        .filter(el => ~el.container_type.indexOf('dataset'));
+      target = [...target, ...dts];
+    });
+    return target;
+  }
+
+  attachments() {
+    let target = [];
+    this.datasetContainers().forEach((dt) => {
+      const atts = dt.attachments;
+      target = [...target, ...atts];
+    });
+    return target;
+  }
 }
 
 Sample.counter = 0;
