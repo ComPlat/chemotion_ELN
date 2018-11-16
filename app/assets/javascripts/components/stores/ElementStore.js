@@ -204,6 +204,7 @@ class ElementStore {
       handleAssignElementsCollection: ElementActions.assignElementsCollection,
       handleRemoveElementsCollection: ElementActions.removeElementsCollection,
       handleSplitAsSubsamples: ElementActions.splitAsSubsamples,
+      handleSplitAsSubwellplates: ElementActions.splitAsSubwellplates,
       // formerly from DetailStore
       handleSelect: DetailActions.select,
       handleClose: DetailActions.close,
@@ -573,6 +574,14 @@ class ElementStore {
   handleSplitAsSubsamples(ui_state) {
     ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
       ui_state.isSync, this.state.moleculeSort);
+  }
+
+  handleSplitAsSubwellplates(ui_state) {
+    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
+    ElementActions.fetchSamplesByCollectionId(
+      ui_state.currentCollection.id, {},
+      ui_state.isSync, this.state.moleculeSort
+    );
   }
 
   // Molecules

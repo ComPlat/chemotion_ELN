@@ -73,7 +73,7 @@ export default class WellplateDetailsContainers extends Component {
     const {wellplate, activeContainer} = this.state;
     const {readOnly} = this.props;
 
-    let containerHeader = (container) => <p style={{width: '100%'}}>
+    let containerHeader = (container) => <div style={{width: '100%'}}>
         {container.name}
         {(container.extended_metadata['kind'] &&
            container.extended_metadata['kind'] != '')
@@ -89,7 +89,7 @@ export default class WellplateDetailsContainers extends Component {
         </Button>
         <PrintCodeButton element={wellplate} analyses={[container]}
           ident={container.id}/>
-      </p>
+      </div>
 
       let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
         {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}

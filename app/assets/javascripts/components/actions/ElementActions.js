@@ -394,6 +394,16 @@ class ElementActions {
   }
 
   // -- Wellplates --
+  splitAsSubwellplates(ui_state) {
+    return (dispatch) => {
+      WellplatesFetcher.splitAsSubwellplates(ui_state)
+      .then((result) => {
+        dispatch(ui_state);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
 
   bulkCreateWellplatesFromSamples(params) {
     let { collection_id, samples, wellplateCount } = params;

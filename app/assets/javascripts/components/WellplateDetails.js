@@ -93,7 +93,7 @@ export default class WellplateDetails extends Component {
 
     switch (type) {
       case 'name':
-        wellplate.name = value;
+        wellplate.name = value === '' ? 'New Wellplate' : value;
         break;
       case 'description':
         wellplate.description = value;
