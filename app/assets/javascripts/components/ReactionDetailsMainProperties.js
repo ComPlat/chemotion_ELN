@@ -5,11 +5,12 @@ import {
   FormGroup,
   FormControl,
   ControlLabel,
-  Table,
   OverlayTrigger,
   Button,
   Tooltip,
   InputGroup,
+  Grid,
+  Row
 } from 'react-bootstrap';
 import Select from 'react-select';
 
@@ -76,7 +77,7 @@ export default class ReactionDetailsMainProperties extends Component {
     let TempChartRow = <span />;
     if (showTemperatureChart) {
       TempChartRow = (
-        <div>
+        <Col md={12}>
           <div style={{ width: '74%', float: 'left' }}>
             <LineChartContainer
               data={temperature}
@@ -90,83 +91,81 @@ export default class ReactionDetailsMainProperties extends Component {
               updateTemperature={this.updateTemperature}
             />
           </div>
-        </div>
+        </Col>
       );
     }
 
     return (
-      <Table>
-        <tbody>
-          <tr>
-            <Col md={6}>
-              <FormGroup>
-                <ControlLabel>Name</ControlLabel>
+      <Grid fluid>
+        <Row>
+          <Col md={6}>
+            <FormGroup>
+              <ControlLabel>Name</ControlLabel>
+              <FormControl
+                type="text"
+                value={reaction.name || ''}
+                placeholder="Name..."
+                disabled={reaction.isMethodDisabled('name')}
+                onChange={event => onInputChange('name', event)}
+              />
+            </FormGroup>
+          </Col>
+          <Col md={3}>
+            <FormGroup>
+              <ControlLabel>Status</ControlLabel>
+              <Select
+                name="status"
+                multi={false}
+                options={statusOptions}
+                value={reaction.status}
+                disabled={reaction.isMethodDisabled('status')}
+                onChange={(event) => {
+                  const wrappedEvent = {
+                    target: { value: event && event.value },
+                  };
+                  onInputChange('status', wrappedEvent);
+                }}
+              />
+            </FormGroup>
+          </Col>
+          <Col md={3}>
+            <FormGroup>
+              <ControlLabel>Temperature</ControlLabel>
+              <InputGroup>
+                <InputGroup.Button>
+                  <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
+                    <Button
+                      active
+                      className="clipboardBtn"
+                      onClick={this.toggleTemperatureChart}
+                    >
+                      <i className="fa fa-area-chart" />
+                    </Button>
+                  </OverlayTrigger>
+                </InputGroup.Button>
                 <FormControl
                   type="text"
-                  value={reaction.name || ''}
-                  placeholder="Name..."
-                  disabled={reaction.isMethodDisabled('name')}
-                  onChange={event => onInputChange('name', event)}
+                  value={temperatureDisplay || ''}
+                  disabled={reaction.isMethodDisabled('temperature')}
+                  placeholder="Temperature..."
+                  onChange={event => onInputChange('temperature', event)}
                 />
-              </FormGroup>
-            </Col>
-            <Col md={3}>
-              <FormGroup>
-                <ControlLabel>Status</ControlLabel>
-                <Select
-                  name="status"
-                  multi={false}
-                  options={statusOptions}
-                  value={reaction.status}
-                  disabled={reaction.isMethodDisabled('status')}
-                  onChange={(event) => {
-                    const wrappedEvent = {
-                      target: { value: event && event.value },
-                    };
-                    onInputChange('status', wrappedEvent);
-                  }}
-                />
-              </FormGroup>
-            </Col>
-            <Col md={3}>
-              <FormGroup>
-                <ControlLabel>Temperature</ControlLabel>
-                <InputGroup>
-                  <InputGroup.Button>
-                    <OverlayTrigger placement="bottom" overlay={temperatureTooltip}>
-                      <Button
-                        active
-                        className="clipboardBtn"
-                        onClick={this.toggleTemperatureChart}
-                      >
-                        <i className="fa fa-area-chart" />
-                      </Button>
-                    </OverlayTrigger>
-                  </InputGroup.Button>
-                  <FormControl
-                    type="text"
-                    value={temperatureDisplay || ''}
-                    disabled={reaction.isMethodDisabled('temperature')}
-                    placeholder="Temperature..."
-                    onChange={event => onInputChange('temperature', event)}
-                  />
-                  <InputGroup.Button>
-                    <Button
-                      bsStyle="success"
-                      onClick={() => this.changeUnit()}
-                    >
-                      {this.temperatureUnit}
-                    </Button>
-                  </InputGroup.Button>
-                </InputGroup>
-              </FormGroup>
-            </Col>
-          </tr>
-          <tr>
-            {TempChartRow}
-          </tr>
-        </tbody>
-      </Table>
+                <InputGroup.Button>
+                  <Button
+                    bsStyle="success"
+                    onClick={() => this.changeUnit()}
+                  >
+                    {this.temperatureUnit}
+                  </Button>
+                </InputGroup.Button>
+              </InputGroup>
+            </FormGroup>
+          </Col>
+        </Row>
+        <Row>
+          {TempChartRow}
+        </Row>
+      </Grid>
     );
   }
 }
