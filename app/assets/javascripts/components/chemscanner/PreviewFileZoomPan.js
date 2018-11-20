@@ -34,13 +34,15 @@ export default class PreviewFileZoomPan extends React.PureComponent {
     if (this.isSvg) {
       imgWidth = Math.floor(imgEl.getBoundingClientRect().width);
       imgHeight = Math.floor(imgEl.getBoundingClientRect().height);
-    } else {
-      const dummyImg = this.previewDiv.querySelector('#dummy-img');
-      dummyImg.style.display = 'block';
-      imgWidth = window.getComputedStyle(dummyImg).getPropertyValue('width');
-      imgHeight = window.getComputedStyle(dummyImg).getPropertyValue('height');
-      dummyImg.style.display = 'none';
+      svgEl.setAttribute('viewBox', `0 0 ${imgWidth} ${imgHeight}`);
+      svgEl.setAttribute('height', '300px');
+      return;
     }
+    const dummyImg = this.previewDiv.querySelector('#dummy-img');
+    dummyImg.style.display = 'block';
+    imgWidth = window.getComputedStyle(dummyImg).getPropertyValue('width');
+    imgHeight = window.getComputedStyle(dummyImg).getPropertyValue('height');
+    dummyImg.style.display = 'none';
 
     if (svgWidth > imgWidth) {
       const xOffset = `${(svgWidth - imgWidth) / 2}`;
@@ -49,12 +51,8 @@ export default class PreviewFileZoomPan extends React.PureComponent {
       imgEl.setAttribute('width', svgWidth);
     }
 
-    if (this.isSvg) {
-      svgEl.style.height = `${Math.floor(imgHeight) + 5}px`;
-    } else {
-      imgEl.setAttribute('height', imgHeight);
-      svgEl.style.height = `${imgHeight}`;
-    }
+    imgEl.setAttribute('height', imgHeight);
+    svgEl.style.height = `${imgHeight}`;
   }
 
   render() {
@@ -71,13 +69,14 @@ export default class PreviewFileZoomPan extends React.PureComponent {
       `;
     }
 
+    let dummyImg = (<span />);
+    if (!this.isSvg) {
+      dummyImg = (<img id="dummy-img" alt="" src={image} />);
+    }
+
     return (
       <div ref={this.setPreviewRef} style={{ background: 'white' }}>
-        <img
-          id="dummy-img"
-          alt=""
-          src={this.isSvg ? '' : image}
-        />
+        {dummyImg}
         <SvgFileZoomPan svg={svg} duration={200} />
       </div>
     );
@@ -90,5 +89,4 @@ PreviewFileZoomPan.propTypes = {
 
 PreviewFileZoomPan.defaultProps = {
   image: '',
-  style: {}
 };
