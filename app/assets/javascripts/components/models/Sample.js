@@ -85,7 +85,7 @@ export default class Sample extends Element {
             residue_type: 'polymer',
             custom_info: {
               "formula": 'CH',
-              "loading": null,
+              "loading": (residue.custom_info ? residue.custom_info.loading : null),
               "polymer_type": "polystyrene",
               "loading_type": "external",
               "external_loading": 0.0,
