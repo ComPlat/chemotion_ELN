@@ -522,10 +522,9 @@ export default class UserAuth extends Component {
       <div>
         <Nav navbar pullRight>
           <NavDropdown title={`${this.state.currentUser.name}`} id="bg-nested-dropdown">
-            <MenuItem eventKey="1" href="pages/settings" >Account Settings</MenuItem>
+            <MenuItem eventKey="1" href="pages/settings" >Account &amp; Profile</MenuItem>
             {this.state.currentUser.is_templates_moderator ? templatesLink : null}
             <MenuItem eventKey="3" href="users/edit" >Change Password</MenuItem>
-            <MenuItem eventKey="4" href="pages/profiles" >Change Profile</MenuItem>
             <MenuItem eventKey="5" href="pages/affiliations" >My Affiliations</MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups</MenuItem>
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
