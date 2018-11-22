@@ -6,7 +6,7 @@ import {
   ButtonToolbar, Button, Tooltip, OverlayTrigger, Glyphicon, Row, Col, Tabs, Tab
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
-import _ from 'lodash';
+import { includes, last, findKey, values } from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
 import UIStore from './stores/UIStore';
@@ -19,6 +19,9 @@ import ResearchPlansLiteratures from './DetailsTabLiteratures';
 import QuillEditor from './QuillEditor';
 import Attachment from './models/Attachment';
 import Utils from './utils/Functions';
+import EditorFetcher from './fetchers/EditorFetcher'
+
+const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -26,18 +29,32 @@ export default class ResearchPlanDetails extends Component {
     const { research_plan } = props;
     this.state = {
       research_plan,
-      activeTab: UIStore.getState().screen.activeTab,
-      files: [],
-      attachments: research_plan.attachments,
       showStructureEditor: false,
       loadingMolecule: false,
       attachmentEditor: false,
+      extension: null
     };
+    this.editorInitial = this.editorInitial.bind(this);
+  }
+
+  componentDidMount() {
+    this.editorInitial();
+
   }
 
   componentWillReceiveProps(nextProps) {
     const {research_plan} = nextProps;
     this.setState({ research_plan });
+  }
+
+  editorInitial() {
+    EditorFetcher.initial()
+      .then((result) => {
+        this.setState({
+          attachmentEditor: result.installed,
+          extension: result.ext
+        });
+      });
   }
 
   svgOrLoading(research_plan) {
@@ -48,7 +65,7 @@ export default class ResearchPlanDetails extends Component {
       svgPath = research_plan.svgPath;
     }
     const className = svgPath ? 'svg-container' : 'svg-container-empty';
-    const imageDefault = !_.includes(svgPath, 'no_image_180.svg');
+    const imageDefault = !includes(svgPath, 'no_image_180.svg');
 
     return (
       <div>
@@ -137,6 +154,16 @@ export default class ResearchPlanDetails extends Component {
     }
   }
 
+  documentType(filename) {
+    const { extension } = this.state;
+    const ext = last(filename.split('.'));
+    const docType = findKey(extension, o => o.includes(ext));
+    if (typeof (docType) === 'undefined' || !docType) {
+      return null;
+    }
+    return docType;
+  }
+
   handleInputChange(type, event) {
     let {research_plan} = this.state;
     const value = event.target.value;
@@ -213,17 +240,6 @@ export default class ResearchPlanDetails extends Component {
     )
   }
 
-
-// http://localhost:3000/editor?fileName=sample.docx
-// <a href="/docx?fileName=CHI20180920.docx" target="_blank" class="try-editor document">Document</a>
-// <input type="file" id="fileupload" name="file" data-url="<%= upload_path %>" />
-// <a href="/sample?fileExt=docx" target="_blank" class="try-editor document">Document</a>
-  files() {
-    return (
-       <a href="/editor?fileName=sample.docx" target="_blank" class="try-editor document">Document</a>
-    )
-  }
-
   dropzone() {
     return (
       <Dropzone
@@ -255,7 +271,21 @@ export default class ResearchPlanDetails extends Component {
   handleEdit(attachment) {
     const { research_plan } = this.state;
 
+    const fileType = last(attachment.filename.split('.'));
+    const docType = this.documentType(attachment.filename);
+
+    EditorFetcher.startEditing({ attachment_id: attachment.id })
+      .then((result) => {
+        const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result}`;
+        window.open(url, '_blank');
+      });
+    attachment.aasm_state = 'oo_editing';
+    attachment.updated_at = new Date();
+    research_plan.attachments.map((a) => {
+      if (a.id == attachment.id) return attachment;
+    })
     this.setState({ research_plan });
+    this.forceUpdate();
   }
 
   attachments() {
@@ -281,7 +311,14 @@ export default class ResearchPlanDetails extends Component {
   }
 
   listGroupItem(attachment) {
+    const updateTime = new Date(attachment.updated_at);
+    updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
+
+    const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime
     const { attachmentEditor } = this.state;
+    const docType = this.documentType(attachment.filename);
+    const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null
+    const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : ''
 
     if (attachment.is_deleted) {
       return (
@@ -292,7 +329,6 @@ export default class ResearchPlanDetails extends Component {
             </Col>
             <Col md={2}>
               <Button
-                style={{ display: 'none' }}
                 bsSize="xsmall"
                 bsStyle="success"
                 disabled
@@ -319,20 +355,35 @@ export default class ResearchPlanDetails extends Component {
             <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
           </Col>
           <Col md={2}>
-            <Button
-              style={{ display: 'none' }}
-              bsSize="xsmall"
-              bsStyle="success"
-              disabled={!attachmentEditor || attachment.is_new}
-              onClick={() => this.handleEdit(attachment)}
-            >
-              <i className="fa fa-pencil" />
-            </Button>{' '}
             {this.removeAttachmentButton(attachment)}
+
+            <OverlayTrigger placement="left" overlay={editorTooltip(values(this.state.extension).join(','))} >
+              <Button
+                style={{ display: styleEditorBtn }}
+                bsSize="xsmall"
+                className="button-right"
+                bsStyle="success"
+                disabled={editDisable}
+                onClick={() => this.handleEdit(attachment)}
+              >
+                <i className="fa fa-pencil" />
+              </Button>
+            </OverlayTrigger>
           </Col>
         </Row>
       </div>
     );
+  }
+
+  handleAttachmentEdit(attachment) {
+    const docType = this.documentType(attachment.filename);
+    EditorFetcher.startEditing({ attachment_id: attachment.id })
+      .then((result) => {
+        const url = `/editor?fileName=${result}&key=${attachment.id}&docType=${docType}`;
+        window.open(url, '_blank');
+      });
+      attachment.aasm_state == 'oo_editing'
+    //this.setState({ });
   }
 
   handleAttachmentRemove(attachment) {
@@ -345,7 +396,7 @@ export default class ResearchPlanDetails extends Component {
 
   removeAttachmentButton(attachment) {
     return (
-      <Button bsSize="xsmall" bsStyle="danger" onClick={() => this.handleAttachmentRemove(attachment)}>
+      <Button bsSize="xsmall" bsStyle="danger" className="button-right" onClick={() => this.handleAttachmentRemove(attachment)}>
         <i className="fa fa-trash-o" />
       </Button>
     );
@@ -356,49 +407,47 @@ export default class ResearchPlanDetails extends Component {
   }
 
 
-    propertiesTab(research_plan){
-      const { name, description } = research_plan;
-      const submitLabel = research_plan.isNew ? "Create" : "Save";
-
-      return (
-
-            <ListGroup fill>
-              <ListGroupItem>
-                <Row>
-                  <Col md={4}>
-                    <FormGroup>
-                      <ControlLabel>Name</ControlLabel>
-                      <FormControl
-                        type="text"
-                        value={name || ''}
-                        onChange={event => this.handleInputChange('name', event)}
-                        disabled={research_plan.isMethodDisabled('name')}
-                      />
-                    </FormGroup>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={12}>
-                    <FormGroup>
-                      <ControlLabel>Description</ControlLabel>
-                      <QuillEditor value={research_plan.description}
-                        onChange={event => this.handleInputChange('description', {target: {value: event}})}
-                        disabled={research_plan.isMethodDisabled('description')}
-                      />
-                    </FormGroup>
-                  </Col>
-                  <Col md={12}>
-                    <FormGroup>
-                      <ControlLabel>Files</ControlLabel>
-                      {this.attachments()}
-                      {this.dropzone()}
-                    </FormGroup>
-                  </Col>
-                </Row>
-              </ListGroupItem>
-            </ListGroup>
-      );
-    }
+  propertiesTab(research_plan) {
+    const { name, description } = research_plan;
+    const submitLabel = research_plan.isNew ? "Create" : "Save";
+    return (
+      <ListGroup fill>
+        <ListGroupItem>
+          <Row>
+            <Col md={4}>
+              <FormGroup>
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  type="text"
+                  value={name || ''}
+                  onChange={event => this.handleInputChange('name', event)}
+                  disabled={research_plan.isMethodDisabled('name')}
+                />
+              </FormGroup>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              <FormGroup>
+                <ControlLabel>Description</ControlLabel>
+                <QuillEditor value={research_plan.description}
+                  onChange={event => this.handleInputChange('description', {target: {value: event}})}
+                  disabled={research_plan.isMethodDisabled('description')}
+                />
+              </FormGroup>
+            </Col>
+            <Col md={12}>
+              <FormGroup>
+                <ControlLabel>Files</ControlLabel>
+                {this.attachments()}
+                {this.dropzone()}
+              </FormGroup>
+            </Col>
+          </Row>
+        </ListGroupItem>
+      </ListGroup>
+    );
+  }
 
 
     literatureTab(research_plan){

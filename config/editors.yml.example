@@ -1,0 +1,51 @@
+development:
+  :docserver:
+    :enable: true
+    :protocol: 'http'
+    :host: 'document_server'
+    :port: '80'
+    :api: '/web-apps/apps/api/documents/api.js'
+    :ext:
+      :text:
+        - 'doc'
+        - 'docx'
+      :spreadsheet:
+        - 'xls'
+        - 'xlsx'
+      :presentation:
+        - 'ppt'
+        - 'pptx'
+  :info:
+    :address: 'Fritz-Haber-Weg 6, Geb. 30.42 76131 Karlsruhe Germany'
+    :title: 'Complat ELN'
+    :name: 'Complat ELN'
+    :logo: 'https://www.chemotion.net/images/repo/chemotion_full.svg'
+    :mail: 'eln_complat@kit.edu'
+    :website: 'https://www.chemotion.net/welcome#/about'
+    :feedbackurl: 'https://www.chemotion.net/'
+
+production:
+  :docserver:
+    :enable: true
+    :protocol: 'http'
+    :host: 'document_server'
+    :port: '80'
+    :api: '/web-apps/apps/api/documents/api.js'
+    :ext:
+      :text:
+        - 'doc'
+        - 'docx'
+      :spreadsheet:
+        - 'xls'
+        - 'xlsx'
+      :presentation:
+        - 'ppt'
+        - 'pptx'
+  :info:
+    :address: 'Fritz-Haber-Weg 6, Geb. 30.42 76131 Karlsruhe Germany'
+    :title: 'Complat ELN'
+    :name: 'Complat ELN'
+    :logo: 'https://www.chemotion.net/images/repo/chemotion_full.svg'
+    :mail: 'eln_complat@kit.edu'
+    :website: 'https://www.chemotion.net/welcome#/about'
+    :feedbackurl: 'https://www.chemotion.net/'

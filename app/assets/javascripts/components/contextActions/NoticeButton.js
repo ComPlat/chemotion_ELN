@@ -69,6 +69,11 @@ const handleNotification = (nots, act, needCallback = true) => {
           CollectionActions.fetchUnsharedCollectionRoots();
           CollectionActions.fetchSyncInCollectionRoots();
         }
+        if (n.content.action === 'ElementActions.fetchResearchPlanById') {
+          const id = parseInt(n.content.research_plan_id, 10);
+          console.log(id);
+          ElementActions.fetchResearchPlanById(id);
+        }
       }
     }
   });
