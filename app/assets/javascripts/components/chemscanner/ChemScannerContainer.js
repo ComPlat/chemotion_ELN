@@ -33,6 +33,8 @@ export default class ChemScannerContainer extends React.Component {
     this.changeType = this.changeType.bind(this);
     this.changeAbbManagement = this.changeAbbManagement.bind(this);
 
+    this.setResin = this.setResin.bind(this);
+
     this.setCdd = this.setCdd.bind(this);
     this.getSvg = this.getSvg.bind(this);
   }
@@ -102,9 +104,9 @@ export default class ChemScannerContainer extends React.Component {
   selectSmi(uid, cdIdx, smiIdx) {
     const { selected } = this.state;
     const newSelected = _.cloneDeep(selected);
-    const s = newSelected.findIndex(
-      x => x.uid === uid && x.cdIdx === cdIdx && x.smiIdx === smiIdx
-    );
+    const s = newSelected.findIndex(x => (
+      x.uid === uid && x.cdIdx === cdIdx && x.smiIdx === smiIdx
+    ));
 
     if (s >= 0) {
       newSelected.splice(s, 1);
@@ -359,6 +361,22 @@ export default class ChemScannerContainer extends React.Component {
     this.setState({ files: newFiles });
   }
 
+  setResin(uid, cdIdx, idx, descLabel, atomIdx) {
+    const { files } = this.state;
+    const newFiles = _.cloneDeep(files);
+    const file = newFiles.filter(x => x.uid === uid);
+    const info = file[0].cds[cdIdx].info[idx];
+    const desc = info.description[descLabel];
+    if (!desc) return;
+
+    const aliasIdx = desc.alias.findIndex(x => x.id === atomIdx);
+    if (aliasIdx < 0) return;
+
+    const { isResin } = desc.alias[aliasIdx];
+    desc.alias[aliasIdx].isResin = !(isResin || false);
+    this.setState({ files: newFiles });
+  }
+
   render() {
     const {
       files, selected, getMol, abbManagement
@@ -382,6 +400,7 @@ export default class ChemScannerContainer extends React.Component {
           editComment={this.editComment}
           changeType={this.changeType}
           changeAbbManagement={this.changeAbbManagement}
+          setResin={this.setResin}
           setCdd={this.setCdd}
         />
       </div>

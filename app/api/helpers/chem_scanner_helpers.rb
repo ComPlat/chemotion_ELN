@@ -152,10 +152,18 @@ module ChemScannerHelpers
       rgroup = reaction.send(group)
       rgroup.each_with_index do |mol, idx|
         mlabel = group.chomp('s') + " #{idx + 1}"
+
+        alias_info = (mol.atom_map || {}).each_with_object([]) do |(_, atom), arr|
+          next unless atom.is_alias || !atom.alias_text.empty?
+
+          arr.push(id: atom.idx, text: atom.alias_text)
+        end
+
         desc[mlabel] = {
           text: mol.text.strip,
           label: mol.label.strip,
-          mdl: mol.mdl
+          mdl: mol.mdl,
+          alias: alias_info
         }
 
         rdetails[mlabel] = mol.details.to_h
@@ -200,11 +208,18 @@ module ChemScannerHelpers
   def mol_info(mol)
     return if mol.nil?
 
+    alias_info = mol.atom_map.each_with_object([]) do |(key, atom), arr|
+      next unless atom.is_alias || atom.alias_text.empty?
+
+      arr.push(id: key, text: atom.alias_text)
+    end
+
     res = {
       description: mol.text,
       details: mol.details.to_h,
       smi: mol.cano_smiles,
-      mdl: mol.mdl
+      mdl: mol.mdl,
+      alias: alias_info
     }
 
     res

@@ -101,7 +101,7 @@ class ChemScanner extends React.Component {
     const {
       files, selected, getMol, abbManagement, addFile, removeFile,
       changeType, changeAbbManagement, selectSmi, removeSmi, editSmiles,
-      editComment, exportSmi, modal
+      editComment, exportSmi, modal, setResin
     } = this.props;
 
     let listItems = <span />;
@@ -126,6 +126,7 @@ class ChemScanner extends React.Component {
         removeSmi={removeSmi}
         editComment={editComment}
         selected={selected}
+        setResin={setResin}
       />
     );
 
@@ -242,6 +243,7 @@ ChemScanner.propTypes = {
   editSmiles: PropTypes.func.isRequired,
   exportSmi: PropTypes.func.isRequired,
   setCdd: PropTypes.func.isRequired,
+  setResin: PropTypes.func.isRequired,
   getMol: PropTypes.bool.isRequired,
   abbManagement: PropTypes.bool.isRequired,
   modal: PropTypes.string
@@ -251,4 +253,4 @@ ChemScanner.defaultProps = {
   modal: ''
 };
 
-export default scriptLoader('https://chemdrawdirect.perkinelmer.cloud/js/chemdrawweb/chemdrawweb.js')(ChemScanner);
+export default scriptLoader('cdjs/chemdrawweb/chemdrawweb.js')(ChemScanner);

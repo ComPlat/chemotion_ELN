@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'roo'
-
 # Import reactions
 module Import
   # Import reactions from ChemScanner UI
@@ -30,13 +28,38 @@ module Import
         )
         return if valid_check
 
+        success = 0
+        failed = 0
+
         valid_list = list.reject { |r| r.reactants.empty? || r.products.empty? }
         valid_list.each do |reaction|
-          import = new(creator_id, collection_id)
-          import.process_reaction(reaction)
-          import.reaction_save
+          begin
+            import = new(creator_id, collection_id)
+            import.process_reaction(reaction)
+            check = import.reaction_save
+            if check
+              success += 1
+            else
+              failed += 1
+            end
+          rescue
+            failed += 1
+          end
         end
+
+        channel = Channel.find_by(subject: Channel::SEND_IMPORT_NOTIFICATION)
+        return if channel.nil?
+
+        content = channel.msg_template
+        return if content.nil?
+
+        data = { success: success, failed: failed }
+        content['data'] = format(content['data'], data)
+        Message.create_msg_notification(
+          channel.id, content, creator_id, [creator_id]
+        )
       end
+      handle_asynchronously :from_list
     end
 
     def process_reaction(reaction)
@@ -125,6 +148,8 @@ module Import
 
       desc = {} if desc.nil?
       mdl = desc.dig(:mdl)
+      resin_info = (desc.dig(:alias) || []).select { |x| x[:isResin] }
+      mdl = convert_to_polymer(mdl, resin_info)
 
       molecule = if mdl.nil?
                    Molecule.find_or_create_by_cano_smiles(smiles)
@@ -142,6 +167,20 @@ module Import
       sample.collections << @collection
 
       assign_sample_attributes(sample, desc)
+
+      resin_info.each do |resin|
+        residue = Residue.new
+        residue.residue_type = 'polymer'
+        residue.custom_info = {
+          'formula': resin[:text],
+          'loading': nil,
+          'loading_type': 'external',
+          'polymer_type': 'polystyrene',
+          'external_loading': 0
+        }
+
+        sample.residues << residue
+      end
 
       sample
     end
@@ -191,15 +230,16 @@ module Import
     end
 
     def extract_sample_info(desc, details = nil)
-      if desc.nil?
-        info = {}
-      else
-        info = {
-          mdl: desc[:mdl],
-          label: desc[:label],
-          text: desc[:text]
-        }
-      end
+      info = if desc.nil?
+               {}
+             else
+               {
+                 mdl: desc[:mdl],
+                 label: desc[:label],
+                 text: desc[:text],
+                 alias: desc[:alias]
+               }
+             end
 
       return info if details.nil?
 
@@ -325,7 +365,7 @@ module Import
     end
 
     def reaction_save
-      return if @starting_materials.count.zero? || @products.count.zero?
+      return false if @starting_materials.count.zero? || @products.count.zero?
 
       CollectionsReaction.create(reaction: @reaction, collection: @collection)
       CollectionsReaction.create(
@@ -372,6 +412,50 @@ module Import
       )
       container.children.create(container_type: 'analyses')
       container
+    end
+
+    def convert_to_polymer(mdl, resin)
+      return mdl if resin.empty?
+
+      atom_idx = 0
+      resin_idx = resin.map { |r| r[:id] }
+      alias_idx = []
+      rgp_line_idx = -1
+
+      atoms = mdl.split("\n")
+      atoms.each_with_index do |line, index|
+        if line.match?(/^   /)
+          atom_idx += 1
+          line.gsub!(/(\*|[a-zA-Z])#?/, 'R#') if resin_idx.include?(atom_idx)
+          next
+        end
+
+        alias_match = line.match(/^A +(\d)+$/)
+        unless alias_match.nil?
+          alias_atom = alias_match.captures.first.to_i
+          alias_idx.push(index) if resin_idx.include?(alias_atom)
+          next
+        end
+
+        rgroup_match = line.match(/^M RGP$/)
+        rgp_line_idx = index unless rgroup_match.nil?
+      end
+
+      delete_idx = alias_idx.reduce([]) { |arr, idx| arr.concat([idx, idx + 1]) }
+      atoms.delete_if.with_index do |_, index| delete_idx.include?(index) end
+
+      new_rgp = resin_idx.map { |id| "#{id} 1" }.join(' ')
+      if rgp_line_idx.negative?
+        rgp = "M RGP #{resin.count} " + new_rgp
+        atoms.insert(atoms.size - 1, rgp)
+      else
+        atoms[rgp_line_idx] += new_rgp
+      end
+
+      polymer = "> <PolymersList>\n" + resin_idx.map { |id| id - 1 }.join(' ')
+      atoms.push(polymer)
+
+      atoms.join("\n")
     end
   end
 end

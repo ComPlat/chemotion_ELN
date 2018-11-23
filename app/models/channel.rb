@@ -11,4 +11,5 @@ class Channel < ActiveRecord::Base
   INBOX_ARRIVALS_TO_ME = 'Inbox Arrivals To Me'
   REPORT_GENERATOR_NOTIFICATION = 'Report Generator Notification'
   SEND_INDIVIDUAL_USERS = 'Send Individual Users'
+  SEND_IMPORT_NOTIFICATION = 'Import Notification'
 end
