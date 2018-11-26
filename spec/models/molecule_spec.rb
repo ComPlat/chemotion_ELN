@@ -48,5 +48,20 @@ RSpec.describe Molecule, type: :model do
         (Digest::SHA256.new << molecule.molfile).hexdigest
       expect(persisted_molfile_SHA).to be === (molfile_SHA)
     end
+
+    it 'should update LCSS when molecule.pubchem_lcss is requested' do
+      molecule.save!
+      persisted_molecule = Molecule.last
+
+      # lcss is updated as nil because cid 123456789 has no PubChem lcss
+      persisted_molecule.pubchem_lcss
+      expect(persisted_molecule.tag.taggable_data["pubchem_lcss"]).to be_nil
+
+      # lcss is updated with value because cid 643785 has PubChem lcss
+      persisted_molecule.tag.taggable_data["pubchem_cid"] = 643785
+      persisted_molecule.pubchem_lcss
+      expect(persisted_molecule.tag.taggable_data["pubchem_lcss"]).not_to be_nil
+    end
+
   end
 end

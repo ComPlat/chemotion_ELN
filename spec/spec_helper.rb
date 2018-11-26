@@ -84,7 +84,16 @@ RSpec.configure do |config|
     stub_request(:get, /http:\/\/pubchem.ncbi.nlm.nih.gov\/rest\/pug\/compound\/inchikey\/\S+\/cids\/TXT/).
       # with(:headers => {'Content-Type'=>'text/json'}).
       to_return(:status => 200, :body => '123456789', :headers => {})
-  end
+
+      # page = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
+    stub_request(:get, 'https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/643785/JSON?heading=GHS%20Classification').
+      with(:headers => {'Content-Type'=>'text/json'}).
+      to_return(
+        :status => 200,
+        :body => File.read(Rails.root + 'spec/fixtures/body_643785_LCSS.json'),
+        :headers => {"Content-Type"=> "application/json"}
+      )
+    end
 
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true

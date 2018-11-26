@@ -38,7 +38,12 @@ module Entities
       unless object.molecule
         nil
       else
-        object.molecule.tag ? object.molecule.tag.taggable_data : nil
+        if object.molecule.tag
+          object.molecule.pubchem_lcss unless object.molecule.tag.taggable_data['pubchem_lcss'] && object.molecule.tag.taggable_data['pubchem_lcss'].length > 0
+          object.molecule.tag.taggable_data
+        else
+          nil
+        end
       end
     end
 
