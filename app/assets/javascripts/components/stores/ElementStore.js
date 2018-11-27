@@ -218,9 +218,13 @@ class ElementStore {
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
       handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
       handleUpdateMoleculeCas: DetailActions.updateMoleculeCas,
-      handleUpdateElement: [
+      handleUpdateLinkedElement: [
         ElementActions.updateReaction,
         ElementActions.updateSample,
+      ],
+      handleUpdateElement: [
+        // ElementActions.updateReaction,
+        // ElementActions.updateSample,
         ElementActions.updateWellplate,
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan
@@ -571,6 +575,11 @@ class ElementStore {
     // TODO: check if this is needed with the new handling of changing CE
     // maybe this.handleRefreshElements is enough
     this.handleUpdateElement(sample);
+  }
+
+  handleUpdateLinkedElement(element) {
+    this.changeCurrentElement(element);
+    this.handleUpdateElement(element);
   }
 
   handleUpdateSampleForWellplate(wellplate) {
@@ -951,7 +960,7 @@ class ElementStore {
       this.state.activeKey = index;
       this.state.selecteds = this.updateElement(nextEl, index);
     }
-
+    // this.synchronizeElements(this.state.currentElement);
     this.state.currentElement = nextEl;
   }
 
@@ -1019,14 +1028,6 @@ class ElementStore {
         break;
     }
 
-    this.state.selecteds = this.state.selecteds.map((e) => {
-      if (SameEleTypId(e, updatedElement)) {
-        return updatedElement;
-      }
-      return e;
-    });
-
-    this.synchronizeElements(updatedElement);
     return true;
   }
 
@@ -1036,7 +1037,7 @@ class ElementStore {
     if (previous instanceof Sample) {
       const rId = previous.tag && previous.tag.taggable_data
         && previous.tag.taggable_data.reaction_id;
-      const openedReaction = selecteds.find(el => (el.type === 'reaction' && el.id === rId));
+      const openedReaction = selecteds.find(el => SameEleTypId(el, { type: 'reaction', id: rId }));
       if (openedReaction) {
         openedReaction.updateMaterial(previous);
         if (previous.isPendingToSave) {
