@@ -114,6 +114,7 @@ export default class ReactionDetailsMainProperties extends Component {
             <FormGroup>
               <ControlLabel>Status</ControlLabel>
               <Select
+                className="status-select"
                 name="status"
                 multi={false}
                 options={statusOptions}
