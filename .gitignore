@@ -29,6 +29,8 @@
 
 /config/database.yml
 /config/storage.yml
+/config/spectra.yml
+
 /node_modules
 
 /public/images/molecules/*
