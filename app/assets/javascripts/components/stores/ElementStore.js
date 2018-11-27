@@ -522,20 +522,8 @@ class ElementStore {
   // -- Samples --
 
   handleFetchSampleById(result) {
-    // // workaround solution for 507:
-    // // always reset currentElement and selecteds if currentElement.type is sample
-    // // (because this is a listener for fetching Sample; and also checksum might not be changed under some conditions)
-    // if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum || this.state.currentElement.type === 'sample') {
-    //   this.state.currentElement = result;
-    //   if (this.state.currentElement.type === 'sample') {
-    //     const selecteds = this.state.selecteds;
-    //     const idx = findIndex(selecteds, function(o) { return o.id == result.id; });
-    //     if (idx === -1) {
-    //       this.state.selecteds.splice(selecteds.length, 1, result);
-    //     } else { this.state.selecteds.splice(idx, 1, result); }
-    //   }
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.state.currentElement = result;
+      this.changeCurrentElement( result );
     }
   }
 
@@ -557,29 +545,31 @@ class ElementStore {
 
     this.handleRefreshElements('sample');
 
-    this.state.currentElement = reaction;
+    this.changeCurrentElement( reaction );
   }
 
-  handleEditReactionSample(result){
+  handleEditReactionSample(result) {
     const sample = result.sample;
     sample.belongTo = result.reaction;
-    this.state.currentElement = sample;
+    this.changeCurrentElement( sample );
   }
 
   handleEditWellplateSample(result){
     const sample = result.sample;
     sample.belongTo = result.wellplate;
-    this.state.currentElement = sample;
+    this.changeCurrentElement( sample );
   }
 
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
 
     if (closeView) {
-      this.state.currentElement = reaction;
+      this.changeCurrentElement( reaction );
     } else {
-      this.state.currentElement = sample;
+      this.changeCurrentElement( sample );
     }
+    // TODO: check if this is needed with the new handling of changing CE
+    // maybe this.handleRefreshElements is enough
     this.handleUpdateElement(sample);
   }
 
@@ -624,10 +614,7 @@ class ElementStore {
 
   handleCopySampleFromClipboard(collection_id) {
     const clipboardSamples = ClipboardStore.getState().samples;
-
-    this.state.currentElement =
-      Sample.copyFromSampleAndCollectionId(clipboardSamples[0],
-                                           collection_id, true)
+    this.changeCurrentElement(Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true));
   }
 
   /**
@@ -643,14 +630,15 @@ class ElementStore {
     sample.sample_svg_file = sample.sample_svg_file
     sample.belongTo = reaction;
     sample.matGroup = materialGroup;
-    reaction.changed = true
-    this.state.currentElement = sample;
+    reaction.changed = true;
+    this.changeCurrentElement(sample);
   }
 
   handleShowReactionMaterial(params) {
     const { reaction, sample } = params;
     sample.belongTo = reaction;
-    this.state.currentElement = sample;
+    this.changeCurrentElement(sample);
+    //this.state.currentElement = sample;
   }
 
   handleImportSamplesFromFile(data) {
@@ -694,7 +682,8 @@ class ElementStore {
   }
 
   handleFetchWellplateById(result) {
-    this.state.currentElement = result;
+    this.changeCurrentElement(result);
+    //this.state.currentElement = result;
   //  this.navigateToNewElement(result)
   }
 
@@ -710,14 +699,15 @@ class ElementStore {
   handleGenerateWellplateFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement =
-      Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
+    this.changeCurrentElement(Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id));
+    //this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
   // -- Screens --
 
   handleFetchScreenById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.state.currentElement = result;
+      this.changeCurrentElement(result);
+      //this.state.currentElement = result;
     }
   }
 
@@ -732,10 +722,7 @@ class ElementStore {
 
   handleGenerateScreenFromClipboard(collection_id) {
     let clipboardWellplates = ClipboardStore.getState().wellplates;
-
-    this.state.currentElement =
-      Screen.buildFromWellplatesAndCollectionId(clipboardWellplates,
-                                                collection_id);
+    this.changeCurrentElement(Screen.buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id));
   }
 
   // -- ResearchPlans --
@@ -744,7 +731,8 @@ class ElementStore {
   }
 
   handlefetchResearchPlanById(result) {
-    this.state.currentElement = result;
+    this.changeCurrentElement(result);
+    //this.state.currentElement = result;
   }
 
   handleCreateResearchPlan(research_plan) {
@@ -756,7 +744,7 @@ class ElementStore {
 
   handleFetchReactionById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.state.currentElement = result;
+      this.changeCurrentElement(result);
       this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
     //  this.navigateToNewElement(result);
     }
@@ -774,7 +762,8 @@ class ElementStore {
     if (result.hasOwnProperty("error")) {
       this.state.elementWarning = true
     } else {
-      this.state.currentElement = result
+      this.changeCurrentElement(result);
+      // this.state.currentElement = result
       this.navigateToNewElement(result)
     }
   }
@@ -796,13 +785,11 @@ class ElementStore {
   handleCopyReactionFromId(reaction) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
-    this.state.currentElement =
-      Reaction.copyFromReactionAndCollectionId(reaction,
-                                               uiState.currentCollection.id);
+    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id));
   }
 
   handleOpenReactionDetails(reaction) {
-    this.state.currentElement = reaction;
+    this.changeCurrentElement(reaction);
     this.handleRefreshElements('sample')
   }
 
@@ -845,7 +832,7 @@ class ElementStore {
       currentElement && currentElement.isNew && currentElement.type ==
       element.type;
     if(!newElementOfSameTypeIsPresent) {
-      this.state.currentElement = element;
+      this.changeCurrentElement(element);
     }
   }
 
@@ -899,11 +886,11 @@ class ElementStore {
 
   // CurrentElement
   handleSetCurrentElement(result) {
-    this.state.currentElement = result;
+    this.changeCurrentElement(result);
   }
 
   handleDeselectCurrentElement() {
-    this.state.currentElement = null;
+    this.changeCurrentElement(null);
   }
 
   handleChangeSorting(sort) {
@@ -937,23 +924,37 @@ class ElementStore {
   }
 
   handleChangeCurrentElement({ oriEl, nextEl }) {
-    const selecteds = this.state.selecteds;
+    const { selecteds } = this.state;
     const index = this.elementIndex(selecteds, nextEl);
-    let activeKey = index;
-    let newSelecteds = null;
-    oriEl = this.synchronizeElements(oriEl);
+    this.synchronizeElements(oriEl);
 
     if (index === -1) {
-      activeKey = selecteds.length
-      newSelecteds = this.addElement(nextEl)
+      this.state.activeKey = selecteds.length;
+      this.state.selecteds = this.addElement(nextEl);
     } else {
-      newSelecteds = this.updateElement(nextEl, index)
+      this.state.activeKey = index;
+      this.state.selecteds = this.updateElement(nextEl, index);
     }
 
-    this.state.selecteds = newSelecteds;
-    this.state.activeKey = activeKey;
     return true
   }
+
+  changeCurrentElement(nextEl) {
+    const { selecteds } = this.state;
+    const index = this.elementIndex(selecteds, nextEl);
+    this.synchronizeElements(this.state.currentElement);
+
+    if (index === -1) {
+      this.state.activeKey = selecteds.length;
+      this.state.selecteds = this.addElement(nextEl);
+    } else {
+      this.state.activeKey = index;
+      this.state.selecteds = this.updateElement(nextEl, index);
+    }
+
+    this.state.currentElement = nextEl;
+  }
+
 
   handleGetMoleculeCas(updatedSample) {
     const selecteds = this.state.selecteds
@@ -975,7 +976,7 @@ class ElementStore {
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
-        this.state.currentElement = result;
+        this.changeCurrentElement(result);
         const index = this.elementIndex(selecteds, result);
         const newSelecteds = this.updateElement(result, index);
         this.setState({ selecteds: newSelecteds });
@@ -1095,25 +1096,11 @@ class ElementStore {
     const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey]
 
     if (newSelecteds.length === 0) {
-      this.state.currentElement = null;
+      this.changeCurrentElement(null);
     } else {
-      this.state.currentElement = newCurrentElement;
+      this.changeCurrentElement(newCurrentElement);
     }
-    // if (this.state.currentElement && this.state.currentElement.type === 'reaction') {
-    //   // workaround solution for 507:
-    //   // update samples data of Reaction
-    //   // this is executed when curretn element is set, but, for some cases it will not be called z.B. open window(Sample) from Reaction
-    //   const currentElementProducts = this.state.currentElement.products;
-    //   currentElementProducts.map((p) => {
-    //     SamplesFetcher.fetchById(p.id)
-    //       .then((newSample) => {
-    //         const idx = findIndex(this.state.currentElement.products, function(o) { return o.id == newSample.id; });
-    //         this.state.currentElement.products.splice(idx, 1, newSample);
-    //       }).catch((errorMessage) => {
-    //         console.log(errorMessage);
-    //       });
-    //   });
-    // }
+
     UrlSilentNavigation(newCurrentElement)
     return true
   }
