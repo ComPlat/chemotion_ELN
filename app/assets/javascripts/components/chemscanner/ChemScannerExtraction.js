@@ -10,7 +10,7 @@ import ScannedItem from './ScannedItem';
 import PreviewFileZoomPan from './PreviewFileZoomPan';
 
 function ChemScannerCds({
-  cds, uid, selectSmi, removeSmi, editComment, selected, modal
+  cds, uid, selectSmi, removeSmi, editComment, selected, modal, setResin
 }) {
   if (!cds || cds.length === 0) return <span />;
 
@@ -36,6 +36,7 @@ function ChemScannerCds({
                   selectSmi={selectSmi}
                   removeSmi={removeSmi}
                   editComment={editComment}
+                  setResin={setResin}
                   selected={selected}
                   content={i}
                 />
@@ -55,6 +56,7 @@ ChemScannerCds.propTypes = {
   selectSmi: PropTypes.func.isRequired,
   removeSmi: PropTypes.func.isRequired,
   editComment: PropTypes.func.isRequired,
+  setResin: PropTypes.func.isRequired,
   modal: PropTypes.string
 };
 
@@ -63,7 +65,7 @@ ChemScannerCds.defaultProps = {
 };
 
 function ChemScannerExtraction({
-  files, selectSmi, removeSmi, editComment, selected, modal
+  files, selectSmi, removeSmi, editComment, selected, modal, setResin
 }) {
   if (files.length === 0) return <span />;
 
@@ -93,6 +95,7 @@ function ChemScannerExtraction({
                 selectSmi={selectSmi}
                 removeSmi={removeSmi}
                 editComment={editComment}
+                setResin={setResin}
                 selected={selected}
               />
             </Panel.Body>
@@ -109,6 +112,7 @@ ChemScannerExtraction.propTypes = {
   selectSmi: PropTypes.func.isRequired,
   removeSmi: PropTypes.func.isRequired,
   editComment: PropTypes.func.isRequired,
+  setResin: PropTypes.func.isRequired,
   modal: PropTypes.string
 };
 

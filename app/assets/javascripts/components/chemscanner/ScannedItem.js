@@ -13,7 +13,8 @@ import PerkinElnDetails from './PerkinElnDetails';
 import { renderSvg } from './ChemScannerObjectHelper';
 
 function ScannedItem({
-  uid, cdIdx, idx, removeSmi, editComment, selectSmi, selected, content, modal
+  uid, cdIdx, idx, removeSmi, editComment, selectSmi,
+  selected, content, modal, setResin
 }) {
   const {
     svg, smi, description, details, comment,
@@ -39,37 +40,45 @@ function ScannedItem({
   };
 
   if (description.reaction) {
-    descList.push(
-      <ListProps
-        key="reaction"
-        label="reaction"
-        listProps={description.reaction}
-        style={{ marginRight: '10px', display: 'flow-root' }}
-      />
-    );
+    descList.push(<ListProps
+      key="reaction"
+      label="reaction"
+      listProps={description.reaction}
+      style={{ marginRight: '10px', display: 'flow-root' }}
+    />);
 
     Object.keys(description).forEach((key) => {
       if (key === 'reaction') return;
 
       const obj = description[key];
-      descList.push(
+      const listProps = (
         <ListProps
           key={key}
           label={key}
           listProps={obj}
+          uid={uid}
+          idx={idx}
+          cdIdx={cdIdx}
+          setResin={setResin}
           style={descStyle}
         />
       );
+      descList.push(listProps);
     });
   } else {
-    descList.push(
+    const listProps = (
       <ListProps
         key="sample"
         label="Description"
         listProps={description}
+        uid={uid}
+        idx={idx}
+        cdIdx={cdIdx}
+        setResin={setResin}
         style={descStyle}
       />
     );
+    descList.push(listProps);
   }
 
   const container = document.getElementById(modal);
@@ -117,6 +126,7 @@ ScannedItem.propTypes = {
   selectSmi: PropTypes.func.isRequired,
   removeSmi: PropTypes.func.isRequired,
   editComment: PropTypes.func.isRequired,
+  setResin: PropTypes.func.isRequired,
   uid: PropTypes.string.isRequired,
   idx: PropTypes.number.isRequired,
   cdIdx: PropTypes.number.isRequired,

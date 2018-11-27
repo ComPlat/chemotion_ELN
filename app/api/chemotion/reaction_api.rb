@@ -214,6 +214,7 @@ module Chemotion
             current_user.id,
             params[:collection_id]
           )
+
           true
         end
       end
