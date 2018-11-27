@@ -4,6 +4,7 @@ module Chemotion
     helpers ContainerHelpers
     helpers ParamsHelpers
     helpers CollectionHelpers
+    helpers SampleHelpers
 
     resource :wellplates do
       namespace :bulk do
@@ -154,6 +155,21 @@ module Chemotion
 
         current_user.increment_counter 'wellplates'
         {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
+      end
+
+      namespace :subwellplates do
+        desc "Split Wellplates into Subwellplates"
+        params do
+          requires :ui_state, type: Hash, desc: "Selected wellplates from the UI"
+        end
+        post do
+          ui_state = params[:ui_state]
+          col_id = ui_state[:currentCollectionId]
+          wellplate_ids = Wellplate.for_user(current_user.id).for_ui_state_with_collection(ui_state[:wellplate], CollectionsWellplate, col_id)
+          Wellplate.where(id: wellplate_ids).each do |wellplate|
+            subwellplate = wellplate.create_subwellplate current_user, col_id, true
+          end
+        end
       end
     end
   end

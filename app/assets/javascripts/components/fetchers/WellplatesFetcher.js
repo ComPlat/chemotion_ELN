@@ -144,4 +144,33 @@ export default class WellplatesFetcher {
       console.log(errorMessage);
     });
   }
+
+  static splitAsSubwellplates(params) {
+    const promise = fetch('/api/v1/wellplates/subwellplates/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ui_state: {
+          wellplate: {
+            all: params.wellplate.checkedAll,
+            included_ids: params.wellplate.checkedIds,
+            excluded_ids: params.wellplate.uncheckedIds
+          },
+          currentCollectionId: params.currentCollection.id
+        }
+      })
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

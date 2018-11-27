@@ -199,6 +199,15 @@ export default class CreateButton extends React.Component {
     )
   }
 
+  noWellplateSelected() {
+    const { wellplate } = UIStore.getState();
+    return wellplate.checkedIds.size == 0 && wellplate.checkedAll == false;
+  }
+
+  splitSelectionAsSubwellplates() {
+    ElementActions.splitAsSubwellplates(UIStore.getState());
+  }
+
   render() {
     const { isDisabled, customClass } = this.props
     const type = UserStore.getState().currentType
@@ -229,6 +238,12 @@ export default class CreateButton extends React.Component {
           <MenuItem onSelect={() => this.splitSelectionAsSubsamples()}
                     disabled={this.noSampleSelected() || this.isAllCollection()}>
             Split Sample
+          </MenuItem>
+          <MenuItem
+            onSelect={() => this.splitSelectionAsSubwellplates()}
+            disabled={this.noWellplateSelected() || this.isAllCollection()}
+          >
+            Split Wellplate
           </MenuItem>
         </SplitButton>
     </div>

@@ -68,4 +68,45 @@ class Wellplate < ActiveRecord::Base
     self.container ? self.container.analyses : []
   end
 
+  def create_subwellplate user, collection_ids, copy_ea = false
+    # Split Wellplate, based on the code from SplitSample
+    subwellplate = self.dup
+    subwellplate.name = "#{self.name}-Split"
+    collections = (
+      Collection.where(id: collection_ids) | Collection.where(user_id: user, label: 'All', is_locked: true)
+    )
+    subwellplate.collections << collections
+    subwellplate.container = Container.create_root_container
+    subwellplate.save! && subwellplate
+
+    # Split Wells and Samples
+    wells = (
+      Well.where(wellplate_id: self.id).order('id')
+    )
+    subwell_ary = Array.new
+    wells.each { |w|
+      subsample_id = nil;
+      if w.sample
+        begin
+          # Call Sample.create_subsample to perform SampleSplit
+          subsample = Sample.find_by(id: w.sample.id).create_subsample user, collection_ids, true
+          subsample_id = subsample.id
+        end
+      end
+      subwell = Well.create!(
+          wellplate_id: subwellplate.id,
+          sample_id: subsample_id,
+          readout: w.readout,
+          additive: w.additive,
+          position_x: w.position_x,
+          position_y: w.position_y,
+        )
+      subwell_ary.push(subwell)
+    }
+    if subwell_ary.length > 0
+      subwellplate.update!(wells: subwell_ary)
+    end
+
+    subwellplate
+  end
 end
