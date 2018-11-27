@@ -108,7 +108,7 @@ const svgPreview = (showPreviews, sample) => (
   <div style={{ float: 'left' }} >
     {
       showPreviews
-        ? <SvgWithPopover element={sample} classNames='molecule' />
+        ? <SvgWithPopover objTitle={sample.molecule_iupac_name} objSrc={sample.svgPath} />
         : null
     }
   </div>

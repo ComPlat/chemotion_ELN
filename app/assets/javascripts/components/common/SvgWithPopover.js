@@ -9,64 +9,28 @@ export default class SvgWithPopover extends Component {
     this.renderPreview = this.renderPreview.bind(this);
   }
 
-  extractTitle(el) {
-    switch (el.type) {
-      case 'reaction':
-        return el.short_label;
-      case 'sample':
-        return el.molecule_iupac_name;
-      default:
-        return '';
-    }
-  }
-
-  popoverHoverFocus() {
-    const { element, classNames } = this.props;
-    const title = this.extractTitle(element);
-    const popoverClass = classNames === 'molecule' ? 'preview-popover-fixed' : 'preview-popover';
-
+  popHover() {
+    const { objTitle, objSrc } = this.props;
     return (
-      <div
-        style={{
-          position: 'absolute',
-          borderRadius: 3,
-          backgroundcolor: 'yellow',
-          marginLeft: -30,
-          marginTop: -150,
-          maxWidth: 'none',
-        }}
+      <Popover
+        id="popover-trigger-hover-focus"
+        title={objTitle}
+        style={{ maxWidth: 'none', maxHeight: 'none' }}
       >
-        <Popover
-          id="popover-trigger-hover-focus"
-          title={title}
-          arrowOffsetTop="120px"
-          style={{
-            marginLeft: '25px',
-            marginTop: '-1px',
-            visibility: 'visible',
-            maxWidth: 'none'
-          }}
-        >
-          <div className={popoverClass}>
-            <SVG
-              src={element.svgPath}
-              key={element.svgPath}
-            />
-          </div>
-        </Popover>
-      </div>
+        <img src={objSrc} style={{ height: '30vh', width: '50vw' }} alt="" />
+      </Popover>
     );
   }
 
   renderPreview() {
-    const { element, classNames } = this.props;
+    const { objSrc } = this.props;
 
     return (
       <div className="preview-table">
         <SVG
-          src={element.svgPath}
-          className={classNames}
-          key={element.svgPath}
+          src={objSrc}
+          className="molecule"
+          key={objSrc}
         />
       </div>
     );
@@ -80,7 +44,7 @@ export default class SvgWithPopover extends Component {
           placement="right"
           rootClose
           onHide={null}
-          overlay={this.popoverHoverFocus()}
+          overlay={this.popHover()}
         >
           {this.renderPreview()}
         </OverlayTrigger>
@@ -90,6 +54,6 @@ export default class SvgWithPopover extends Component {
 }
 
 SvgWithPopover.propTypes = {
-  element: PropTypes.object.isRequired,
-  classNames: PropTypes.string.isRequired,
+  objTitle: PropTypes.string.isRequired,
+  objSrc: PropTypes.string.isRequired,
 };
