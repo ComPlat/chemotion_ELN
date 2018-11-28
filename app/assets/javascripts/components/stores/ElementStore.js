@@ -1,5 +1,12 @@
+import {
+  last,
+  slice,
+  intersectionWith,
+  findIndex,
+} from 'lodash';
+import Aviator from 'aviator';
 import alt from '../alt';
-import { last, slice, intersectionWith } from 'lodash';
+
 import ElementActions from '../actions/ElementActions';
 import CollectionActions from '../actions/CollectionActions';
 import UIActions from '../actions/UIActions';
@@ -11,16 +18,15 @@ import Reaction from '../models/Reaction';
 import Wellplate from '../models/Wellplate';
 import Screen from '../models/Screen';
 
-import Device from '../models/Device'
-import Container from '../models/Container'
-import AnalysesExperiment from '../models/AnalysesExperiment'
-import DeviceAnalysis from '../models/DeviceAnalysis'
+import Device from '../models/Device';
+import Container from '../models/Container';
+import AnalysesExperiment from '../models/AnalysesExperiment';
+import DeviceAnalysis from '../models/DeviceAnalysis';
 import DeviceSample from '../models/DeviceSample';
-import NotificationActions from '../actions/NotificationActions'
-import SamplesFetcher from '../fetchers/SamplesFetcher'
-import DeviceFetcher from '../fetchers/DeviceFetcher'
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
-import ModalImportConfirm from '../contextActions/ModalImportConfirm'
+import SamplesFetcher from '../fetchers/SamplesFetcher';
+import DeviceFetcher from '../fetchers/DeviceFetcher';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
+import ModalImportConfirm from '../contextActions/ModalImportConfirm';
 
 import { extraThing } from '../utils/Functions';
 import Xlisteners from '../extra/ElementStoreXlisteners';
@@ -31,8 +37,6 @@ import { elementShowOrNew } from '../routesUtils';
 import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 
-import Aviator from 'aviator';
-import _ from 'lodash';
 
 class ElementStore {
   constructor() {
@@ -214,9 +218,13 @@ class ElementStore {
       handleGetMoleculeCas: DetailActions.getMoleculeCas,
       handleUpdateMoleculeNames: DetailActions.updateMoleculeNames,
       handleUpdateMoleculeCas: DetailActions.updateMoleculeCas,
-      handleUpdateElement: [
+      handleUpdateLinkedElement: [
         ElementActions.updateReaction,
         ElementActions.updateSample,
+      ],
+      handleUpdateElement: [
+        // ElementActions.updateReaction,
+        // ElementActions.updateSample,
         ElementActions.updateWellplate,
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan
@@ -519,7 +527,7 @@ class ElementStore {
 
   handleFetchSampleById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.state.currentElement = result;
+      this.changeCurrentElement( result );
     }
   }
 
@@ -541,25 +549,37 @@ class ElementStore {
 
     this.handleRefreshElements('sample');
 
-    this.state.currentElement = reaction;
+    this.changeCurrentElement( reaction );
   }
 
-  handleEditReactionSample(result){
+  handleEditReactionSample(result) {
     const sample = result.sample;
     sample.belongTo = result.reaction;
-    this.state.currentElement = sample;
+    this.changeCurrentElement( sample );
   }
 
   handleEditWellplateSample(result){
     const sample = result.sample;
     sample.belongTo = result.wellplate;
-    this.state.currentElement = sample;
+    this.changeCurrentElement( sample );
   }
 
-  handleUpdateSampleForReaction(reaction) {
+  handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
-    this.state.currentElement = reaction;
-    this.handleRefreshElements('sample');
+
+    if (closeView) {
+      this.changeCurrentElement( reaction );
+    } else {
+      this.changeCurrentElement( sample );
+    }
+    // TODO: check if this is needed with the new handling of changing CE
+    // maybe this.handleRefreshElements is enough
+    this.handleUpdateElement(sample);
+  }
+
+  handleUpdateLinkedElement(element) {
+    this.changeCurrentElement(element);
+    this.handleUpdateElement(element);
   }
 
   handleUpdateSampleForWellplate(wellplate) {
@@ -603,10 +623,7 @@ class ElementStore {
 
   handleCopySampleFromClipboard(collection_id) {
     const clipboardSamples = ClipboardStore.getState().samples;
-
-    this.state.currentElement =
-      Sample.copyFromSampleAndCollectionId(clipboardSamples[0],
-                                           collection_id, true)
+    this.changeCurrentElement(Sample.copyFromSampleAndCollectionId(clipboardSamples[0], collection_id, true));
   }
 
   /**
@@ -622,14 +639,15 @@ class ElementStore {
     sample.sample_svg_file = sample.sample_svg_file
     sample.belongTo = reaction;
     sample.matGroup = materialGroup;
-    reaction.changed = true
-    this.state.currentElement = sample;
+    reaction.changed = true;
+    this.changeCurrentElement(sample);
   }
 
   handleShowReactionMaterial(params) {
     const { reaction, sample } = params;
     sample.belongTo = reaction;
-    this.state.currentElement = sample;
+    this.changeCurrentElement(sample);
+    //this.state.currentElement = sample;
   }
 
   handleImportSamplesFromFile(data) {
@@ -673,7 +691,8 @@ class ElementStore {
   }
 
   handleFetchWellplateById(result) {
-    this.state.currentElement = result;
+    this.changeCurrentElement(result);
+    //this.state.currentElement = result;
   //  this.navigateToNewElement(result)
   }
 
@@ -689,14 +708,15 @@ class ElementStore {
   handleGenerateWellplateFromClipboard(collection_id) {
     let clipboardSamples = ClipboardStore.getState().samples;
 
-    this.state.currentElement =
-      Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
+    this.changeCurrentElement(Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id));
+    //this.state.currentElement = Wellplate.buildFromSamplesAndCollectionId(clipboardSamples, collection_id);
   }
   // -- Screens --
 
   handleFetchScreenById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.state.currentElement = result;
+      this.changeCurrentElement(result);
+      //this.state.currentElement = result;
     }
   }
 
@@ -711,10 +731,7 @@ class ElementStore {
 
   handleGenerateScreenFromClipboard(collection_id) {
     let clipboardWellplates = ClipboardStore.getState().wellplates;
-
-    this.state.currentElement =
-      Screen.buildFromWellplatesAndCollectionId(clipboardWellplates,
-                                                collection_id);
+    this.changeCurrentElement(Screen.buildFromWellplatesAndCollectionId(clipboardWellplates, collection_id));
   }
 
   // -- ResearchPlans --
@@ -723,7 +740,8 @@ class ElementStore {
   }
 
   handlefetchResearchPlanById(result) {
-    this.state.currentElement = result;
+    this.changeCurrentElement(result);
+    //this.state.currentElement = result;
   }
 
   handleCreateResearchPlan(research_plan) {
@@ -735,7 +753,7 @@ class ElementStore {
 
   handleFetchReactionById(result) {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
-      this.state.currentElement = result;
+      this.changeCurrentElement(result);
       this.state.elements.reactions.elements = this.refreshReactionsListForSpecificReaction(result);
     //  this.navigateToNewElement(result);
     }
@@ -753,7 +771,8 @@ class ElementStore {
     if (result.hasOwnProperty("error")) {
       this.state.elementWarning = true
     } else {
-      this.state.currentElement = result
+      this.changeCurrentElement(result);
+      // this.state.currentElement = result
       this.navigateToNewElement(result)
     }
   }
@@ -775,13 +794,11 @@ class ElementStore {
   handleCopyReactionFromId(reaction) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
-    this.state.currentElement =
-      Reaction.copyFromReactionAndCollectionId(reaction,
-                                               uiState.currentCollection.id);
+    this.changeCurrentElement(Reaction.copyFromReactionAndCollectionId(reaction, uiState.currentCollection.id));
   }
 
   handleOpenReactionDetails(reaction) {
-    this.state.currentElement = reaction;
+    this.changeCurrentElement(reaction);
     this.handleRefreshElements('sample')
   }
 
@@ -824,7 +841,7 @@ class ElementStore {
       currentElement && currentElement.isNew && currentElement.type ==
       element.type;
     if(!newElementOfSameTypeIsPresent) {
-      this.state.currentElement = element;
+      this.changeCurrentElement(element);
     }
   }
 
@@ -878,11 +895,11 @@ class ElementStore {
 
   // CurrentElement
   handleSetCurrentElement(result) {
-    this.state.currentElement = result;
+    this.changeCurrentElement(result);
   }
 
   handleDeselectCurrentElement() {
-    this.state.currentElement = null;
+    this.changeCurrentElement(null);
   }
 
   handleChangeSorting(sort) {
@@ -916,24 +933,37 @@ class ElementStore {
   }
 
   handleChangeCurrentElement({ oriEl, nextEl }) {
-    const selecteds = this.state.selecteds;
+    const { selecteds } = this.state;
     const index = this.elementIndex(selecteds, nextEl);
-    let activeKey = index;
-    let newSelecteds = null;
-    const sync = this.synchronizeElements(oriEl, nextEl);
-    oriEl = sync.ori;
-    nextEl = sync.next;
+    this.synchronizeElements(oriEl);
+
     if (index === -1) {
-      activeKey = selecteds.length
-      newSelecteds = this.addElement(nextEl)
+      this.state.activeKey = selecteds.length;
+      this.state.selecteds = this.addElement(nextEl);
     } else {
-      newSelecteds = this.updateElement(nextEl, index)
+      this.state.activeKey = index;
+      this.state.selecteds = this.updateElement(nextEl, index);
     }
 
-    this.state.selecteds = newSelecteds;
-    this.state.activeKey = activeKey;
     return true
   }
+
+  changeCurrentElement(nextEl) {
+    const { selecteds } = this.state;
+    const index = this.elementIndex(selecteds, nextEl);
+    this.synchronizeElements(this.state.currentElement);
+
+    if (index === -1) {
+      this.state.activeKey = selecteds.length;
+      this.state.selecteds = this.addElement(nextEl);
+    } else {
+      this.state.activeKey = index;
+      this.state.selecteds = this.updateElement(nextEl, index);
+    }
+    // this.synchronizeElements(this.state.currentElement);
+    this.state.currentElement = nextEl;
+  }
+
 
   handleGetMoleculeCas(updatedSample) {
     const selecteds = this.state.selecteds
@@ -955,7 +985,7 @@ class ElementStore {
     const { selecteds } = this.state;
     ResearchPlansFetcher.fetchById(updatedResearchPlan.id)
       .then((result) => {
-        this.state.currentElement = result;
+        this.changeCurrentElement(result);
         const index = this.elementIndex(selecteds, result);
         const newSelecteds = this.updateElement(result, index);
         this.setState({ selecteds: newSelecteds });
@@ -998,35 +1028,41 @@ class ElementStore {
         break;
     }
 
-    this.state.selecteds = this.state.selecteds.map((e) => {
-      if (SameEleTypId(e, updatedElement)) { return updatedElement; }
-      return e;
-    });
+    return true;
   }
 
-  synchronizeElements(close, open) {
-    const associatedSampleFromReaction = (
-      close instanceof Reaction && open instanceof Sample &&
-      close.samples.map(s => s.id).includes(open.id)
-    );
+  synchronizeElements(previous) {
+    const { selecteds } = this.state;
 
-    const associatedReactionFromSample = (
-      close instanceof Sample && open instanceof Reaction &&
-      open.samples.map(s => s.id).includes(close.id)
-    );
-
-    if (associatedSampleFromReaction) {
-      const s = close.samples.filter(x => x.id == open.id)[0];
-
-      open.amount_value = s.amount_value;
-      open.amount_unit = s.amount_unit;
-      open.container = s.container;
-    } else if (associatedReactionFromSample) {
-      open.updateMaterial(close);
-      if (close.isPendingToSave) { open.changed = close.isPendingToSave; }
+    if (previous instanceof Sample) {
+      const rId = previous.tag && previous.tag.taggable_data
+        && previous.tag.taggable_data.reaction_id;
+      const openedReaction = selecteds.find(el => SameEleTypId(el, { type: 'reaction', id: rId }));
+      if (openedReaction) {
+        openedReaction.updateMaterial(previous);
+        if (previous.isPendingToSave) {
+          openedReaction.changed = previous.isPendingToSave;
+        }
+      }
     }
 
-    return { ori: close, next: open };
+    if (previous instanceof Reaction) {
+      const samples = previous.samples;
+      selecteds.map((nextSample) => {
+        const previousSample = samples.find(s => SameEleTypId(nextSample, s));
+        if (previousSample) {
+          nextSample.amount_value = previousSample.amount_value;
+          nextSample.amount_unit = previousSample.amount_unit;
+          nextSample.container = previousSample.container;
+          nextSample.density = previousSample.density;
+          nextSample._molarity_unit = previousSample._molarity_unit;
+          nextSample._molarity_value = previousSample._molarity_value;
+        }
+        return nextSample;
+      });
+    }
+
+    return previous;
   }
 
   addElement(addEl) {
@@ -1061,12 +1097,13 @@ class ElementStore {
     const newCurrentElement = newKey < 0 ? newSelecteds[0] : newSelecteds[newKey]
 
     if (newSelecteds.length === 0) {
-      this.state.currentElement = null;
+      this.changeCurrentElement(null);
     } else {
-      this.state.currentElement = newCurrentElement;
+      this.changeCurrentElement(newCurrentElement);
     }
 
     UrlSilentNavigation(newCurrentElement)
+    return true
   }
 
   deleteCurrentElement(deleteEl) {
@@ -1090,7 +1127,7 @@ class ElementStore {
     const ui_state = UIStore.getState();
 
     if (currentNotDeleted) {
-      const currentIdx = _.findIndex(newSelecteds, o => o.id === currentElement.id) || 0;
+      const currentIdx = findIndex(newSelecteds, o => o.id === currentElement.id) || 0;
       this.setState({ selecteds: newSelecteds, activeKey: currentIdx });
     } else {
       this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));

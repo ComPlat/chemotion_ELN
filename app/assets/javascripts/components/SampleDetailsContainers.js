@@ -120,7 +120,7 @@ export default class SampleDetailsContainers extends Component {
   }
 
   handleUndo(container) {
-    const { sample } = this.state;
+    const { sample } = this.props;
     container.is_deleted = false;
 
     this.props.setState(prevState => ({ ...prevState, sample }));

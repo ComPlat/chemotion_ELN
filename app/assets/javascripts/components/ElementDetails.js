@@ -39,19 +39,18 @@ export default class ElementDetails extends Component {
     window.scrollTo(window.scrollX, window.scrollY + 1);
     // imitate scroll event to make StickyDiv element visible in current area
     ElementStore.listen(this.onDetailChange);
-    if (this.props.currentElement !== null) {
-      DetailActions.changeCurrentElement.defer(null, this.props.currentElement);
-    }
+    // if (this.props.currentElement !== null) {
+    //   // DetailActions.changeCurrentElement.defer(null, this.props.currentElement);
+    // }
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (!SameEleTypId(this.props.currentElement, nextProps.currentElement)) {
-      DetailActions.changeCurrentElement.defer(this.props.currentElement, nextProps.currentElement);
-    }
-  }
+  // componentWillReceiveProps(nextProps) {
+  //   if (!SameEleTypId(this.props.currentElement, nextProps.currentElement)) {
+  //     // DetailActions.changeCurrentElement.defer(this.props.currentElement, nextProps.currentElement);
+  //   }
+  // }
 
   shouldComponentUpdate(nextProps, nextState) {
-
     return true;
   }
 
