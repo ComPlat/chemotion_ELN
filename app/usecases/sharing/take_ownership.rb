@@ -8,40 +8,59 @@ module Usecases
       def execute!
         if @params[:is_sync]
           new_owner_id = @params[:current_user_id]
-          sc = SyncCollectionsUser.find(@params[:id])
+          rsc = SyncCollectionsUser.find(@params[:id])
+          o_owner_id = rsc.shared_by_id
           # if user already owns the (unshared) collection, there is nothing to do here
-          return if (sc.shared_by_id == new_owner_id)
-          c = Collection.find(sc.collection_id)
-          previous_owner_id = sc.shared_by_id
-          root_label = "with %s" % User.find(previous_owner_id).name_abbreviation
-          root_collection_attributes = {
-            label: root_label,
-            user_id: previous_owner_id,
-            shared_by_id: new_owner_id,
-            is_locked: true,
-            is_shared: true
-          }
+          return if (rsc.shared_by_id == new_owner_id)
 
-          sc_all = SyncCollectionsUser.where(collection_id: sc.collection_id, shared_by_id: sc.shared_by_id).where.not(user_id: @params[:current_user_id])
+          cols = Collection.where([" id = ? or ancestry = ?  or ancestry like ? or ancestry like ? or ancestry like ? ",
+            rsc.collection_id, rsc.collection_id.to_s, '%/' + rsc.collection_id.to_s, rsc.collection_id.to_s + '/%',
+            '%/' + rsc.collection_id.to_s + '/%'])
 
-          ActiveRecord::Base.transaction do
-            c.update(user_id: new_owner_id, ancestry: nil)
-            rc = Collection.find_or_create_by(root_collection_attributes)
-            sc.update(user_id: previous_owner_id , shared_by_id: new_owner_id,fake_ancestry: rc.id.to_s)
+          cols.each do |c|
+            previous_owner_id = rsc.shared_by_id
+            root_label = "with %s" % User.find(previous_owner_id).name_abbreviation
+            root_collection_attributes = {
+              label: root_label,
+              user_id: previous_owner_id,
+              shared_by_id: new_owner_id,
+              is_locked: true,
+              is_shared: true
+            }
 
-            sc_all.each do |sc|
-              ancestry_label = "with %s" % User.find(sc.user_id).name_abbreviation
-              root_collection_attrs = {
-                label: ancestry_label,
-                user_id: sc.user_id,
-                shared_by_id: new_owner_id,
-                is_locked: true,
-                is_shared: true
-              }
-              rca = Collection.find_or_create_by(root_collection_attrs)
-              sc.update(shared_by_id: new_owner_id,fake_ancestry: rca.id.to_s)
+            sc = SyncCollectionsUser.find_by(collection_id: c.id, user_id: @params[:current_user_id])
+            sc_all = SyncCollectionsUser.where(collection_id: c.id, shared_by_id: c.user_id)
+            ActiveRecord::Base.transaction do
+              if c.id == rsc.collection_id
+                c.update(user_id: new_owner_id, ancestry: nil)
+              else
+                c.update(user_id: new_owner_id)
+              end
+              rc = Collection.find_or_create_by(root_collection_attributes)
+              sc.update(user_id: previous_owner_id , shared_by_id: new_owner_id,fake_ancestry: rc.id.to_s) unless sc.nil?
+
+              sc_all.each do |sc|
+                next if sc.user_id == @params[:current_user_id]
+                ancestry_label = "with %s" % User.find(sc.user_id).name_abbreviation
+                root_collection_attrs = {
+                  label: ancestry_label,
+                  user_id: sc.user_id,
+                  shared_by_id: new_owner_id,
+                  is_locked: true,
+                  is_shared: true
+                }
+                rca = Collection.find_or_create_by(root_collection_attrs)
+                sc.update(shared_by_id: new_owner_id,fake_ancestry: rca.id.to_s)
+              end
             end
           end
+          channel = Channel.find_by(subject: Channel::COLLECTION_TAKE_OWNERSHIP)
+          return if channel.nil? || channel.msg_template.nil?
+          content = channel.msg_template
+          user = User.find_by(id: new_owner_id)
+          col = Collection.find_by(id: rsc.collection_id)
+          content['data'] = content['data'] % {:new_owner => user.name, :collection_name => col.label }
+          message = Message.create_msg_notification(channel.id,content,new_owner_id,[o_owner_id])
         else
           c = Collection.find(@params[:id])
           # if user already owns the (unshared) collection, there is nothing to do here

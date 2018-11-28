@@ -65,6 +65,10 @@ const handleNotification = (nots, act, needCallback = true) => {
         if (n.content.action === 'RefreshChemotionCollection') {
           CollectionActions.fetchUnsharedCollectionRoots();
         }
+        if (n.content.action === 'CollectionActions.fetchUnsharedCollectionRoots') {
+          CollectionActions.fetchUnsharedCollectionRoots();
+          CollectionActions.fetchSyncInCollectionRoots();
+        }
       }
     }
   });
