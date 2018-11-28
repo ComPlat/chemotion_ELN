@@ -13,7 +13,7 @@ class API < Grape::API
     end
 
     def user_ids
-      @user_ids ||= current_user.group_ids + [current_user.id]
+      @user_ids ||= current_user ? (current_user.group_ids + [current_user.id]) : [0]
     end
 
     def authenticate!

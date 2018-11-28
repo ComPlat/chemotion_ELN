@@ -34,7 +34,7 @@ module CollectionHelpers
       :sample_detail_level, :reaction_detail_level,
       :wellplate_detail_level, :screen_detail_level,
       :researchplan_detail_level
-    ).symbolize_keys
+    )&.symbolize_keys
     {
       permission_level: 0,
       sample_detail_level: 0,
@@ -72,7 +72,8 @@ module CollectionHelpers
   def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])
     @c_id = fetch_collection_id_w_current_user(c_id, is_sync)
     @c = Collection.find_by(id: @c_id)
-    @is_owned = (@c.user_id == current_user.id && !@c.is_shared) || @c.shared_by_id == current_user.id
+    cu_id = current_user&.id
+    @is_owned = cu_id && ((@c.user_id == cu_id && !@c.is_shared) || @c.shared_by_id == cu_id)
 
     @dl = {
       permission_level: 10,
