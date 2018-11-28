@@ -15,6 +15,7 @@ import DragDropItemTypes from './DragDropItemTypes';
 import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
+import SvgWithPopover from './common/SvgWithPopover';
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -294,53 +295,6 @@ export default class ElementsTableEntries extends Component {
     }
   }
 
-  extractTitle(el) {
-    switch (el.type) {
-      case 'reaction':
-        return el.short_label;
-      case 'sample':
-        return el.molecule_iupac_name;
-      default:
-        return '';
-    }
-  }
-
-  popoverHoverFocus(element) {
-    const title = this.extractTitle(element);
-
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          borderRadius: 3,
-          backgroundcolor: 'yellow',
-          marginLeft: -30,
-          marginTop: -120,
-          maxWidth: 'none',
-        }}
-      >
-        <Popover
-          id="popover-trigger-hover-focus"
-          title={title}
-          arrowOffsetTop="120px"
-          style={{
-            marginLeft: '25px',
-            marginTop: '-1px',
-            visibility: 'visible',
-            maxWidth: 'none'
-          }}
-        >
-          <div className='preview-popover'>
-            <SVG
-              src={element.svgPath}
-              key={element.svgPath}
-            />
-          </div>
-        </Popover>
-      </div>
-    );
-  }
-
   render() {
     const {elements} = this.props;
     let {keyboardElementIndex} = this.state
@@ -367,15 +321,10 @@ export default class ElementsTableEntries extends Component {
               </td>
               <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
                 <div>
-                  <OverlayTrigger
-                    trigger={['hover', 'focus']}
-                    placement="right"
-                    overlay={this.popoverHoverFocus(element)}
-                  >
-                    <div>
-                      {element.title()}&nbsp;
-                    </div>
-                  </OverlayTrigger>
+                  <SvgWithPopover
+                    objTitle={element.type === 'reaction' ? element.short_label : ''}
+                    objSrc={element.svgPath ? element.svgPath : ''}
+                  />
                   {this.reactionStatus(element)}
                   {' '}
                   {this.reactionRole(element)}

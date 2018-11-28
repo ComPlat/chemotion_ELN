@@ -14,11 +14,11 @@ feature 'Reaction management' do
   let(:reactant2) { create(:sample, name:'Reactant2', target_amount_value: 3.123, creator: user, collections: user.collections) }
   let(:solvent) { create(:sample, name:'Solvent',creator: user, collections: user.collections) }
   let(:product) { create(:sample, name:'Product',real_amount_value: 4.671, creator: user, collections: user.collections, molecule: m2) }
-  let(:reaction) { create(:reaction, short_label: 'Reaction 1', creator: user, collections: user.collections) }
+  let(:reaction) { create(:reaction, status: 'Successful', short_label: 'Reaction 1', creator: user, collections: user.collections) }
 
   let(:material_r) { create(:sample, name:'Material', target_amount_value: 4.000, creator: user, collections: user.collections, molecule: mr1, residues: [r1]) }
   let(:product_r) { create(:sample, name:'Product',real_amount_value: 3.600, creator: user, collections: user.collections, molecule: mr2, residues: [r2]) }
-  let(:reaction_r) { create(:reaction, short_label: 'Reaction 2', creator: user, collections: user.collections) }
+  let(:reaction_r) { create(:reaction, status: 'Successful', short_label: 'Reaction 2', creator: user, collections: user.collections) }
 
 
   background do
@@ -47,7 +47,7 @@ feature 'Reaction management' do
     scenario 'Yield 50%', js: true do
       find('.tree-view', text: 'chemotion.net').click
       first('i.icon-reaction').click
-      find('span.isvg').click
+      first('i.c-bs-success').click
       material_amount = 6800
 
       tab_pane = find('div#reaction-detail-tab', match: :first, wait: 10).click
@@ -74,7 +74,7 @@ feature 'Reaction management' do
 
   end
 
-  # 
+  #
   # describe 'reaction management contains residues' do
   #   before do
   #     user.collections.each { |c| CollectionsSample.find_or_create_by!(sample: material_r, collection: c) }
