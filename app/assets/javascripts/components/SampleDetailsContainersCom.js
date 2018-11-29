@@ -84,7 +84,7 @@ const RndEdit = ({ sample, mode, handleRemove, handleAccordionOpen,
   return (
     <div>
       <p>{AnalysisModeBtn(mode, toggleMode, isDisabled)}{addButton()}</p>
-      <PanelGroup defaultActiveKey={0} activeKey={activeAnalysis} accordion>
+      <PanelGroup id="editable-analysis-list" defaultActiveKey={0} activeKey={activeAnalysis} accordion>
         {orderContainers.map((container, i) => {
           const id = container.id || `fake_${i}`;
           if (container.is_deleted) {
