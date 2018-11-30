@@ -17,21 +17,24 @@ export default class SvgWithPopover extends Component {
         title={objTitle}
         style={{ maxWidth: 'none', maxHeight: 'none' }}
       >
-        <img src={objSrc} style={{ height: '30vh', width: '50vw' }} alt="" />
+        <img src={objSrc} style={{ height: '26vh', width: '52vw' }} alt="" />
       </Popover>
     );
   }
 
   renderPreview() {
-    const { objSrc } = this.props;
+    const { objSrc, objPreview } = this.props;
 
     return (
       <div className="preview-table">
-        <SVG
+        {
+        objPreview === '' ? <SVG
           src={objSrc}
           className="molecule"
           key={objSrc}
-        />
+        /> :
+        objPreview
+        }
       </div>
     );
   }
@@ -56,4 +59,5 @@ export default class SvgWithPopover extends Component {
 SvgWithPopover.propTypes = {
   objTitle: PropTypes.string.isRequired,
   objSrc: PropTypes.string.isRequired,
+  objPreview: PropTypes.string.isRequired
 };
