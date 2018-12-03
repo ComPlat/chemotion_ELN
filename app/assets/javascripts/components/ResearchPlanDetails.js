@@ -3,16 +3,19 @@ import PropTypes from 'prop-types';
 import Dropzone from 'react-dropzone';
 import {
   FormGroup, ControlLabel, FormControl, Panel, ListGroup, ListGroupItem,
-  ButtonToolbar, Button, Tooltip, OverlayTrigger, Glyphicon, Row, Col
+  ButtonToolbar, Button, Tooltip, OverlayTrigger, Glyphicon, Row, Col, Tabs, Tab
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import _ from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels';
 import StructureEditorModal from './structure_editor/StructureEditorModal';
+import UIStore from './stores/UIStore';
+import UIActions from './actions/UIActions';
 
 import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
 import ResearchPlansFetcher from './fetchers/ResearchPlansFetcher';
+import ResearchPlansLiteratures from './DetailsTabLiteratures';
 import QuillEditor from './QuillEditor';
 import Attachment from './models/Attachment';
 import Utils from './utils/Functions';
@@ -23,6 +26,7 @@ export default class ResearchPlanDetails extends Component {
     const { research_plan } = props;
     this.state = {
       research_plan,
+      activeTab: UIStore.getState().screen.activeTab,
       files: [],
       attachments: research_plan.attachments,
       showStructureEditor: false,
@@ -351,6 +355,70 @@ export default class ResearchPlanDetails extends Component {
       Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
   }
 
+
+    propertiesTab(research_plan){
+      const { name, description } = research_plan;
+      const submitLabel = research_plan.isNew ? "Create" : "Save";
+
+      return (
+
+            <ListGroup fill>
+              <ListGroupItem>
+                <Row>
+                  <Col md={4}>
+                    <FormGroup>
+                      <ControlLabel>Name</ControlLabel>
+                      <FormControl
+                        type="text"
+                        value={name || ''}
+                        onChange={event => this.handleInputChange('name', event)}
+                        disabled={research_plan.isMethodDisabled('name')}
+                      />
+                    </FormGroup>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <FormGroup>
+                      <ControlLabel>Description</ControlLabel>
+                      <QuillEditor value={research_plan.description}
+                        onChange={event => this.handleInputChange('description', {target: {value: event}})}
+                        disabled={research_plan.isMethodDisabled('description')}
+                      />
+                    </FormGroup>
+                  </Col>
+                  <Col md={12}>
+                    <FormGroup>
+                      <ControlLabel>Files</ControlLabel>
+                      {this.attachments()}
+                      {this.dropzone()}
+                    </FormGroup>
+                  </Col>
+                </Row>
+              </ListGroupItem>
+            </ListGroup>
+      );
+    }
+
+
+    literatureTab(research_plan){
+      const { name, description } = research_plan;
+      const submitLabel = research_plan.isNew ? "Create" : "Save";
+
+      return (
+        <ResearchPlansLiteratures
+          element={research_plan}
+        />
+      );
+    }
+
+    handleSelect(eventKey) {
+      UIActions.selectTab({tabKey: eventKey, type: 'screen'});
+      this.setState({
+        activeTab: eventKey
+      })
+    }
+
   render() {
     const { research_plan } = this.state;
     const { name, description } = research_plan;
@@ -362,42 +430,16 @@ export default class ResearchPlanDetails extends Component {
              className="panel-detail">
         <Panel.Heading>{this.researchPlanHeader(research_plan)}</Panel.Heading>
         <Panel.Body>
-          {this.researchPlanInfo(research_plan)}
-          <ListGroup fill>
-            <ListGroupItem>
-              <Row>
-                <Col md={4}>
-                  <FormGroup>
-                    <ControlLabel>Name</ControlLabel>
-                    <FormControl
-                      type="text"
-                      value={name || ''}
-                      onChange={event => this.handleInputChange('name', event)}
-                      disabled={research_plan.isMethodDisabled('name')}
-                    />
-                  </FormGroup>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={12}>
-                  <FormGroup>
-                    <ControlLabel>Description</ControlLabel>
-                    <QuillEditor value={research_plan.description}
-                      onChange={event => this.handleInputChange('description', {target: {value: event}})}
-                      disabled={research_plan.isMethodDisabled('description')}
-                    />
-                  </FormGroup>
-                </Col>
-                <Col md={12}>
-                  <FormGroup>
-                    <ControlLabel>Files</ControlLabel>
-                    {this.attachments()}
-                    {this.dropzone()}
-                  </FormGroup>
-                </Col>
-              </Row>
-            </ListGroupItem>
-          </ListGroup>
+        {this.researchPlanInfo(research_plan)}
+          <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
+             id="screen-detail-tab">
+            <Tab eventKey={0} title={'Properties'}>
+              {this.propertiesTab(research_plan)}
+            </Tab>
+            <Tab eventKey={1} title={'Literatures'}>
+              {this.literatureTab(research_plan)}
+            </Tab>
+          </Tabs>
           {this.structureEditorModal(research_plan)}
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
