@@ -47,6 +47,26 @@ export default class AttachmentFetcher {
     return promise;
   }
 
+  static fetchFiles(ids) {
+    let promise = fetch('/api/v1/attachments/files/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ids }),
+    }).then((response) => {
+      return response.json();
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
   static getFileListfrom(container) {
     const allFiles = [];
     this.filterAllAttachments(allFiles, container.children);
@@ -213,5 +233,28 @@ export default class AttachmentFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
+  }
+
+  static saveSpectraPeaks(peaks, attId) {
+    const promise = fetch(
+      '/api/v1/attachments/save_peaks/',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify({ peaks, attachment_id: attId }),
+      },
+    )
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
   }
 }
