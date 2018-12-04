@@ -535,11 +535,13 @@ class ElementStore {
     this.state.elements.samples = result;
   }
 
-  handleCreateSample(sample) {
+  handleCreateSample({ element, closeView }) {
     UserActions.fetchCurrentUser();
 
     this.handleRefreshElements('sample');
-    this.navigateToNewElement(sample);
+    if (!closeView) {
+      this.navigateToNewElement(element);
+    }
   }
 
   handleCreateSampleForReaction({newSample, reaction, materialGroup}) {
@@ -577,8 +579,12 @@ class ElementStore {
     this.handleUpdateElement(sample);
   }
 
-  handleUpdateLinkedElement(element) {
-    this.changeCurrentElement(element);
+  handleUpdateLinkedElement({ element, closeView }) {
+    if (closeView) {
+      this.deleteCurrentElement(element);
+    } else {
+      this.changeCurrentElement(element);
+    }
     this.handleUpdateElement(element);
   }
 

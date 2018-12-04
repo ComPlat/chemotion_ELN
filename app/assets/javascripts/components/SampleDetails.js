@@ -219,9 +219,9 @@ export default class SampleDetails extends React.Component {
       ElementActions.updateSampleForWellplate(sample, wellplate)
     } else {
       if (sample.isNew) {
-        ElementActions.createSample(sample)
+        ElementActions.createSample(sample, closeView)
       } else {
-        ElementActions.updateSample(new Sample(sample))
+        ElementActions.updateSample(new Sample(sample), closeView)
       }
     }
     if (sample.is_new || closeView) {
