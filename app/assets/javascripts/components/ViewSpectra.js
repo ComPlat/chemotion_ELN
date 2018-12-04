@@ -71,13 +71,14 @@ class ViewSpectra extends React.Component {
         target = spc;
       }
     });
+    if (!target) return { isExist: false };
     const sp = target && target.file.spectrum;
     const input = sp ? sp.data[0] : {};
     const xLabel = sp ? `X (${sp.xUnit})` : '';
     const yLabel = sp ? `Y (${sp.yUnit})` : '';
     const peakObjs = target && target.file.peakObjs;
     return {
-      input, xLabel, yLabel, peakObjs,
+      input, xLabel, yLabel, peakObjs, isExist: true,
     };
   }
 
@@ -163,12 +164,31 @@ class ViewSpectra extends React.Component {
     );
   }
 
+  renderInvalid() {
+    const { fetched } = this.state;
+    const content = fetched
+      ? (
+        <Well>
+          <i className="fa fa-chain-broken fa-3x" />
+          <h3>Invalid spectrum!</h3>
+          <h3>Please delete it and upload a valid file!</h3>
+        </Well>
+      )
+      : <i className="fa fa-refresh fa-spin fa-3x fa-fw" />;
+
+    return (
+      <div className="card-box">
+        { content }
+      </div>
+    );
+  }
+
   renderSpectraViewer() {
     const {
       selectedOpt, allSpectra, options,
     } = this.state;
     const {
-      input, xLabel, yLabel, peakObjs,
+      input, xLabel, yLabel, peakObjs, isExist,
     } = this.buildData(selectedOpt, allSpectra);
 
     return (
@@ -179,14 +199,18 @@ class ViewSpectra extends React.Component {
           options={options}
           clearable={false}
         />
-        <SpectraViewer
-          input={input}
-          xLabel={xLabel}
-          yLabel={yLabel}
-          peakObjs={peakObjs}
-          writePeaks={this.writePeaks}
-          savePeaks={this.savePeaks}
-        />
+        {
+          !isExist
+            ? this.renderInvalid()
+            : <SpectraViewer
+              input={input}
+              xLabel={xLabel}
+              yLabel={yLabel}
+              peakObjs={peakObjs}
+              writePeaks={this.writePeaks}
+              savePeaks={this.savePeaks}
+            />
+        }
       </Modal.Body>
     );
   }
