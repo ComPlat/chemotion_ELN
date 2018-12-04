@@ -220,10 +220,10 @@ class ElementActions {
       });};
   }
 
-  createSample(params) {
+  createSample(params, closeView = false) {
     return (dispatch) => { SamplesFetcher.create(params)
       .then((result) => {
-        dispatch(result)
+        dispatch({ element: result, closeView })
       });};
   }
 
@@ -254,10 +254,10 @@ class ElementActions {
       });};
   }
 
-  updateSample(params) {
+  updateSample(params, closeView = false) {
     return (dispatch) => { SamplesFetcher.update(params)
       .then((result) => {
-        dispatch(result)
+        dispatch({ element: result, closeView })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};
@@ -367,10 +367,10 @@ class ElementActions {
       });};
   }
 
-  updateReaction(params) {
+  updateReaction(params, closeView = false) {
     return (dispatch) => { ReactionsFetcher.update(params)
       .then((result) => {
-        dispatch(result)
+        dispatch({ element: result, closeView })
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });};

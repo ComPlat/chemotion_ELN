@@ -25,10 +25,12 @@ class InboxStore {
       handleBackToInbox: InboxActions.backToInbox,
       handleDeleteContainerLink: InboxActions.deleteContainerLink,
 
-      handleUpdateCreateElement: [
+      handleUpdateCreateElementDict: [
         ElementActions.createSample,
         ElementActions.updateSample,
         ElementActions.createReaction,
+      ],
+      handleUpdateCreateElement: [
         ElementActions.updateReaction,
         ElementActions.createWellplate,
         ElementActions.updateWellplate,
@@ -133,6 +135,10 @@ class InboxStore {
 
   updateCache(attachments) {
     this.state.cache = _.differenceBy(this.state.cache, attachments, 'id')
+  }
+
+  handleUpdateCreateElementDict({ element, closeView }) {
+    this.handleUpdateCreateElement(element);
   }
 
   handleUpdateCreateElement(element) {

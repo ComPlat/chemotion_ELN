@@ -121,7 +121,7 @@ export default class ReactionDetails extends Component {
     if(reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
-      ElementActions.updateReaction(reaction);
+      ElementActions.updateReaction(reaction, closeView);
     }
 
     if(reaction.is_new || closeView) {
