@@ -1,8 +1,14 @@
 import React from 'react'
 import expect from 'expect'
 import { mount } from 'enzyme'
+import Enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+
+
 import sinon from 'sinon'
 import CheckBoxs from '../../../app/assets/javascripts/components/common/CheckBoxs'
+
+Enzyme.configure({ adapter: new Adapter() });
 
 describe('CheckBoxs', () => {
   const items = [ {text: "formula", checked: true},
