@@ -7,7 +7,9 @@ import {
   Button,
   Row,
   Col,
-  Glyphicon
+  Glyphicon,
+  OverlayTrigger,
+  Tooltip
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
@@ -32,6 +34,11 @@ import UserStore from './stores/UserStore';
 
 
 
+const clipboardTooltip = () => {
+  return (
+    <Tooltip id="assign_button">copy to clipboard</Tooltip>
+  )
+}
 
 const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
   <Table>
@@ -44,6 +51,27 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
         const citation = rows.get(id)
         const prevCit = (k > 0) ? rows.get(ids[k-1]) : null
         const sameRef = prevCit && prevCit.id === citation.id
+        let content = "";
+        if (citation.refs.bibtex) {
+          const citationCite = new Cite(citation.refs.bibtex);
+          content = (
+            citationCite.format('bibliography', {
+                 format: 'text',
+                 template: 'apa',
+              })
+          );
+        } else if (citation.refs.citation) {
+          const citationCite = new Cite(citation.refs.citation);
+          content = (
+            citationCite.format('bibliography', {
+                 format: 'text',
+                 template: 'apa',
+              })
+          );
+        } else {
+          content = citation.title || " ";
+        }
+
         return sameRef ? (
           <tr key={`header-${id}-${citation.id}`} className={`collapse literature_id_${citation.id}`}>
             <td className="padding-right">
@@ -82,6 +110,11 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
                   }}
                 />
               </Button>
+              <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                <Button bsSize="small" active className="clipboardBtn" data-clipboard-text={content} >
+                  <i className="fa fa-clipboard"></i>
+                </Button>
+              </OverlayTrigger>
             </td>
           </tr>
         );
@@ -101,6 +134,8 @@ CitationTable.defaultProps = {
   sortedIds: [],
   userId: 0
 };
+
+
 
 const sameConseqLiteratureId = (citations, sortedIds, i) => {
   if (i === 0) { return false; }

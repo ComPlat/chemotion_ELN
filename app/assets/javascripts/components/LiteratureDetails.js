@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import Clipboard from 'clipboard';
 import PropTypes from 'prop-types';
 import {
   Table,
@@ -9,10 +10,15 @@ import {
   ListGroupItem,
   Row,
   Col,
-  Glyphicon
+  Glyphicon,
+  OverlayTrigger,
+  Tooltip
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
+import {
+  uniqBy
+} from 'lodash';
 
 import {
   Citation,
@@ -34,6 +40,7 @@ import UserStore from './stores/UserStore';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
 import PanelHeader from './common/PanelHeader';
+import { stopEvent } from './utils/DomHelper';
 
 const CloseBtn = ({ onClose }) => (
   <Button
@@ -50,6 +57,35 @@ const CloseBtn = ({ onClose }) => (
 CloseBtn.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
+
+const buildContent = (citation) => {
+  let content = '';
+  if (citation && citation.refs && citation.refs.bibtex) {
+    const citationCite = new Cite(citation.refs.bibtex);
+    content = (
+      citationCite.format('bibliography', {
+        format: 'text',
+        template: 'apa',
+      })
+    );
+  } else if (citation && citation.refs && citation.refs.citation) {
+    const citationCite = new Cite(citation.refs.citation);
+    content = (
+      citationCite.format('bibliography', {
+        format: 'text',
+        template: 'apa',
+      })
+    );
+  } else {
+    content = `${citation.title}\n`;
+  }
+  return content;
+};
+
+
+const clipboardTooltip = () => (
+  <Tooltip id="assign_button">copy to clipboard</Tooltip>
+);
 
 const ElementLink = ({ literature }) => {
   const {
@@ -173,7 +209,7 @@ export default class LiteratureDetails extends Component {
     };
     this.onClose = this.onClose.bind(this);
     this.handleUIStoreChange = this.handleUIStoreChange.bind(this);
-
+    this.clipboard = new Clipboard('.clipboardBtn');
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleLiteratureAdd = this.handleLiteratureAdd.bind(this);
     this.handleLiteratureRemove = this.handleLiteratureRemove.bind(this);
@@ -196,6 +232,7 @@ export default class LiteratureDetails extends Component {
   }
 
   componentWillUnmount() {
+    this.clipboard.destroy();
     UIStore.unlisten(this.handleUIStoreChange);
   }
   // shouldComponentUpdate(nextProps, nextState){
@@ -348,6 +385,26 @@ export default class LiteratureDetails extends Component {
     } = this.state;
     const { currentUser } = UserStore.getState();
     const label = currentCollection ? currentCollection.label : null
+    let contentSamples = '';
+    sampleRefs.forEach((citation) => {
+      contentSamples = `${contentSamples}\n${buildContent(citation)}`;
+    });
+    let contentReactions = '';
+    reactionRefs.forEach((citation) => {
+      contentReactions = `${contentReactions}\n${buildContent(citation)}`;
+    });
+
+    const elements = [];
+    let contentElements = '';
+
+    selectedRefs.forEach((citation) => {
+      elements.push(buildContent(citation));
+    });
+
+    uniqBy(elements).forEach((element) => {
+      contentElements = `${contentElements}\n${element}`;
+    });
+
     return (
       <Panel
         bsStyle="info"
@@ -370,6 +427,11 @@ export default class LiteratureDetails extends Component {
               <Panel.Heading>
                 <Panel.Title toggle>
                   References for Samples
+                  <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                    <Button bsSize="xsmall" active className="button-right clipboardBtn" onClick={stopEvent} data-clipboard-text={contentSamples} >
+                      <i className="fa fa-clipboard" />
+                    </Button>
+                  </OverlayTrigger>
                 </Panel.Title>
               </Panel.Heading>
               <Panel.Body collapsible>
@@ -396,6 +458,11 @@ export default class LiteratureDetails extends Component {
               <Panel.Heading>
                 <Panel.Title toggle>
                   References for Reactions
+                  <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                    <Button bsSize="xsmall" active className="button-right clipboardBtn" onClick={stopEvent} data-clipboard-text={contentReactions} >
+                      <i className="fa fa-clipboard" />
+                    </Button>
+                  </OverlayTrigger>
                 </Panel.Title>
               </Panel.Heading>
               <Panel.Body collapsible>
@@ -422,6 +489,11 @@ export default class LiteratureDetails extends Component {
               <Panel.Heading>
                 <Panel.Title toggle>
                   References for selected Elements
+                  <OverlayTrigger placement="bottom" overlay={clipboardTooltip()}>
+                    <Button bsSize="xsmall" active className="button-right clipboardBtn" onClick={stopEvent} data-clipboard-text={contentElements} >
+                      <i className="fa fa-clipboard" />
+                    </Button>
+                  </OverlayTrigger>
                 </Panel.Title>
               </Panel.Heading>
               <Panel.Body collapsible>
