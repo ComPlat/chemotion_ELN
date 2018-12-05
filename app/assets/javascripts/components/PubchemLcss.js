@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
 import PropTypes from 'prop-types';
-import _ from 'lodash';
+import { concat, uniqBy } from 'lodash';
 import PubchemSigns from './PubchemSigns';
 
 const PubchemLcss = ({
@@ -16,14 +16,14 @@ const PubchemLcss = ({
     const extract = [].slice.call(htmlDoc.querySelectorAll('img')).map((g) => {
       return { src: g.getAttribute('src'), title: g.title };
     });
-    imgs = _.concat(imgs, extract);
+    imgs = concat(imgs, extract);
     return true;
   });
-  imgs = _.uniqBy(imgs, 'src');
+  imgs = uniqBy(imgs, 'src');
   if (imgs.length < 5) {
     imgWH = 70 * (3 / 4);
   }
-  const signs = imgs.map((img, idx) => <PubchemSigns key={`pubchem_sign_${idx + 1}`} objPath={`${sourceRoot}${img.src}`} objTitle={img.title} objWidth={imgWH} objHeight={imgWH} />);
+  const signs = imgs.map((img, idx) => <PubchemSigns key={`pubchem_sign_${idx + 1}`} objPath={img.src} objTitle={img.title} objWidth={imgWH} objHeight={imgWH} />);
 
   return (
     <div>
