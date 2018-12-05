@@ -13,6 +13,18 @@ module Chemotion
       def thumbnail_obj(att)
         { id: att.id, thumbnail: thumbnail(att) }
       end
+
+      def raw_file(att)
+        begin
+          Base64.encode64(att.read_file)
+        rescue
+          nil
+        end
+      end
+
+      def raw_file_obj(att)
+        { id: att.id, file: raw_file(att) }
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |error|
@@ -233,6 +245,32 @@ module Chemotion
           can_dwnld ? thumbnail_obj(att) : nil
         end
         { thumbnails: thumbnails }
+      end
+
+      desc 'Return Base64 encoded files'
+      params do
+        requires :ids, type: Array[Integer]
+      end
+      post 'files' do
+        files = params[:ids].map do |a_id|
+          att = Attachment.find(a_id)
+          can_dwnld = if att
+            element = att.container.root.containable
+            can_read = ElementPolicy.new(current_user, element).read?
+            can_read && ElementPermissionProxy.new(current_user, element, user_ids).read_dataset?
+          end
+          can_dwnld ? raw_file_obj(att) : nil
+        end
+        { files: files }
+      end
+
+      desc 'Save spectra-peaks to file'
+      params do
+        requires :peaks, type: Array[Hash]
+        requires :attachment_id, type: Integer
+      end
+      post 'save_peaks' do
+        @attachment.edit_peaks_spectrum(params[:peaks])
       end
 
       namespace :svgs do

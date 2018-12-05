@@ -49,6 +49,7 @@ const RndOrder = ({ sample, mode, readOnly, isDisabled, handleRemove,
           );
         })
       }
+      <p>{addButton()}</p>
     </div>
   );
 };
@@ -115,6 +116,7 @@ const RndEdit = ({ sample, mode, handleRemove, handleAccordionOpen,
           );
         })}
       </PanelGroup>
+      <p>{addButton()}</p>
     </div>
   );
 };

@@ -222,6 +222,34 @@ const reactionToolbarSymbol = [
   },
 ];
 
+const ops1H = [
+  { attributes: { script: 'super' }, insert: '1' },
+  { insert: 'H NMR (400 MHz, CDCl' },
+  { attributes: { script: 'sub' }, insert: '3' },
+  { insert: '[MeOD/DMSO-d' },
+  { attributes: { script: 'sub' }, insert: '6' },
+  { insert: '], ppm) δ = ' },
+];
+
+const ops13C = [
+  { attributes: { script: 'super' }, insert: '13' },
+  { insert: 'C NMR (100 MHz, CDCl' },
+  { attributes: { script: 'sub' }, insert: '3' },
+  { insert: '[MeOD/DMSO-d' },
+  { attributes: { script: 'sub' }, insert: '6' },
+  { insert: '], ppm) δ = ' },
+];
+
+const opsIRHead = [
+  { insert: 'IR (ATR, ṽ) = ' },
+];
+
+const opsIRTail = [
+  { insert: ' cm' },
+  { attributes: { script: 'super' }, insert: '–1' },
+  { insert: '. ' },
+];
+
 const sampleAnalysesContentSymbol = [
   {
     name: 'ndash',
@@ -232,33 +260,15 @@ const sampleAnalysesContentSymbol = [
   },
   {
     name: 'h-nmr',
-    ops: [
-      { attributes: { script: 'super' }, insert: '1' },
-      { insert: 'H NMR (400 MHz, CDCl' },
-      { attributes: { script: 'sub' }, insert: '3' },
-      { insert: '[MeOD/DMSO-d' },
-      { attributes: { script: 'sub' }, insert: '6' },
-      { insert: '], ppm) δ =' },
-    ],
+    ops: ops1H,
   },
   {
     name: 'c-nmr',
-    ops: [
-      { attributes: { script: 'super' }, insert: '13' },
-      { insert: 'C NMR (100 MHz, CDCl' },
-      { attributes: { script: 'sub' }, insert: '3' },
-      { insert: '[MeOD/DMSO-d' },
-      { attributes: { script: 'sub' }, insert: '6' },
-      { insert: '], ppm) δ =' },
-    ],
+    ops: ops13C,
   },
   {
     name: 'ir',
-    ops: [
-      { insert: 'IR (ATR, ṽ) = cm' },
-      { attributes: { script: 'super' }, insert: '–1' },
-      { insert: '.' },
-    ],
+    ops: [...opsIRHead, ...opsIRTail],
   },
   {
     name: 'ei',
@@ -320,4 +330,13 @@ const sampleAnalysesContentSymbol = [
   },
 ];
 
-module.exports = { reactionToolbarSymbol, sampleAnalysesContentSymbol };
+const SpectraOps = {
+  PLAIN: [],
+  '1H': ops1H,
+  '13C': ops13C,
+  IR: { head: opsIRHead, tail: opsIRTail },
+};
+
+module.exports = {
+  reactionToolbarSymbol, sampleAnalysesContentSymbol, SpectraOps,
+};

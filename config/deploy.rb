@@ -37,6 +37,7 @@ set :linked_files, fetch(:linked_files, []).push(
   # 'config/datacollectors.yml',
   #'config/datamailcollector.yml',
   'config/secrets.yml',
+  # 'config/spectra.yml',
   '.env'
 )
 
@@ -52,6 +53,7 @@ set :linked_dirs, fetch(:linked_dirs, []).push(
 
 version = File.readlines('.ruby-version')[0].strip if File.exist?('.ruby-version')
 gemset = File.readlines('.ruby-gemset')[0].strip if File.exist?('.ruby-gemset')
+
 set(:rvm_ruby_version, "#{version}#{'@' if gemset}#{gemset}") if File.exist?('.ruby-version')
 
 set :slackistrano, false

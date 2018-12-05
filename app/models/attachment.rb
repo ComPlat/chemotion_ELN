@@ -1,5 +1,7 @@
 
 class Attachment < ActiveRecord::Base
+  include AttachmentJcampAasm
+  include AttachmentJcampProcess
 
   attr_accessor :file_data, :file_path, :thumb_path, :thumb_data, :duplicated
 

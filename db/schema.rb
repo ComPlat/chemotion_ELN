@@ -15,8 +15,8 @@ ActiveRecord::Schema.define(version: 20181009155001) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
+  enable_extension "hstore"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", force: :cascade do |t|
@@ -68,17 +68,18 @@ ActiveRecord::Schema.define(version: 20181009155001) do
     t.boolean  "thumb",                       default: false
     t.string   "folder"
     t.string   "attachable_type"
+    t.string   "aasm_state"
   end
 
-  add_index "attachments", ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id", using: :btree
+  add_index "attachments", ["attachable_id", "attachable_type"], name: "index_attachments_on_attachable_id_and_attachable_type", using: :btree
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
     t.string   "token",      null: false
     t.integer  "user_id"
     t.inet     "ip"
-    t.string   "fqdn"
     t.string   "role"
+    t.string   "fqdn"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
@@ -666,28 +667,6 @@ ActiveRecord::Schema.define(version: 20181009155001) do
   add_index "samples", ["molecule_name_id"], name: "index_samples_on_molecule_name_id", using: :btree
   add_index "samples", ["user_id"], name: "index_samples_on_user_id", using: :btree
 
-  create_table "scifinding_credentials", force: :cascade do |t|
-    t.string   "username"
-    t.string   "encrypted_password"
-    t.string   "encrypted_current_token"
-    t.string   "encrypted_refreshed_token"
-    t.datetime "token_expires_at"
-    t.datetime "token_requested_at"
-    t.datetime "created_at",                   null: false
-    t.datetime "updated_at",                   null: false
-    t.integer  "user_id"
-    t.string   "encrypted_password_iv"
-    t.string   "encrypted_current_token_iv"
-    t.string   "encrypted_refreshed_token_iv"
-  end
-
-  create_table "scifinding_tags", force: :cascade do |t|
-    t.integer  "molecule_id"
-    t.integer  "count"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
-  end
-
   create_table "screens", force: :cascade do |t|
     t.string   "description"
     t.string   "name"
@@ -771,14 +750,14 @@ ActiveRecord::Schema.define(version: 20181009155001) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "type",                             default: "Person"
+    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
-    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string   "unconfirmed_email"
+    t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false
     t.integer  "selected_device_id"
     t.integer  "failed_attempts",                  default: 0,                                                                                       null: false
     t.string   "unlock_token"
@@ -838,13 +817,6 @@ ActiveRecord::Schema.define(version: 20181009155001) do
   add_index "wells", ["deleted_at"], name: "index_wells_on_deleted_at", using: :btree
   add_index "wells", ["sample_id"], name: "index_wells_on_sample_id", using: :btree
   add_index "wells", ["wellplate_id"], name: "index_wells_on_wellplate_id", using: :btree
-
-  create_table "xvial_xvials", force: :cascade do |t|
-    t.integer  "sample_id"
-    t.jsonb    "data"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
 
   add_foreign_key "literals", "literatures"
 
@@ -908,101 +880,101 @@ ActiveRecord::Schema.define(version: 20181009155001) do
        RETURNS TABLE(instrument text)
        LANGUAGE sql
       AS $function$
-             select distinct extended_metadata -> 'instrument' as instrument from containers c
-             where c.container_type='dataset' and c.id in
-             (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
-             where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
-             and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
-             and upper(extended_metadata -> 'instrument') like upper($2 || '%')
-             order by extended_metadata -> 'instrument' limit 10
-           $function$
+         select distinct extended_metadata -> 'instrument' as instrument from containers c
+         where c.container_type='dataset' and c.id in
+         (select ch.descendant_id from containers sc,container_hierarchies ch, samples s, users u
+         where sc.containable_type in ('Sample','Reaction') and ch.ancestor_id=sc.id and sc.containable_id=s.id
+         and s.created_by = u.id and u.id = $1 and ch.generations=3 group by descendant_id)
+         and upper(extended_metadata -> 'instrument') like upper($2 || '%')
+         order by extended_metadata -> 'instrument' limit 10
+       $function$
   SQL
   create_function :collection_shared_names, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.collection_shared_names(user_id integer, collection_id integer)
        RETURNS json
        LANGUAGE sql
       AS $function$
-           select array_to_json(array_agg(row_to_json(result))) from (
-           SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
-           sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
-           FROM sync_collections_users
-           INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
-           WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
-           group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
-           ) as result
-           $function$
+       select array_to_json(array_agg(row_to_json(result))) from (
+       SELECT sync_collections_users.id, users.type,users.first_name || chr(32) || users.last_name as name,sync_collections_users.permission_level,
+       sync_collections_users.reaction_detail_level,sync_collections_users.sample_detail_level,sync_collections_users.screen_detail_level,sync_collections_users.wellplate_detail_level
+       FROM sync_collections_users
+       INNER JOIN users ON users.id = sync_collections_users.user_id AND users.deleted_at IS NULL
+       WHERE sync_collections_users.shared_by_id = $1 and sync_collections_users.collection_id = $2
+       group by  sync_collections_users.id,users.type,users.name_abbreviation,users.first_name,users.last_name,sync_collections_users.permission_level
+       ) as result
+       $function$
   SQL
   create_function :user_ids, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_ids(user_id integer)
        RETURNS TABLE(user_ids integer)
        LANGUAGE sql
       AS $function$
-             select $1 as id
-             union
-             (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
-             and users.type in ('Group') and users_groups.user_id = $1)
-           $function$
+          select $1 as id
+          union
+          (select users.id from users inner join users_groups ON users.id = users_groups.group_id WHERE users.deleted_at IS null
+         and users.type in ('Group') and users_groups.user_id = $1)
+        $function$
   SQL
   create_function :user_as_json, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_as_json(user_id integer)
        RETURNS json
        LANGUAGE sql
       AS $function$
-             select row_to_json(result) from (
-            	 select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-           	   from users where id = $1
-         	   ) as result
-           $function$
+         select row_to_json(result) from (
+           select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+           from users where id = $1
+         ) as result
+       $function$
   SQL
   create_function :shared_user_as_json, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
        RETURNS json
        LANGUAGE plpgsql
       AS $function$
-             begin
-             	if (in_user_id = in_current_user_id) then
-             		return null;
-             	else
-             		return (select row_to_json(result) from (
-             		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-             		from users where id = $1
-             		) as result);
-             	end if;
-              end;
-           $function$
+         begin
+          if (in_user_id = in_current_user_id) then
+            return null;
+          else
+            return (select row_to_json(result) from (
+            select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
+            from users where id = $1
+            ) as result);
+          end if;
+          end;
+       $function$
   SQL
   create_function :detail_level_for_sample, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.detail_level_for_sample(in_user_id integer, in_sample_id integer)
        RETURNS TABLE(detail_level_sample integer, detail_level_wellplate integer)
        LANGUAGE plpgsql
       AS $function$
-          declare
-          	i_detail_level_wellplate integer default 0;
-          	i_detail_level_sample integer default 0;
-          begin
-          	select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
-          	into i_detail_level_sample, i_detail_level_wellplate
-          	from
-          	(
-          		select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
-          			from v_samples_collections v_sams_cols
-          			where v_sams_cols.sams_id = in_sample_id
-          			and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
-          		union
-          		select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
-          			from sync_collections_users sync_cols
-          			inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
-          			where sync_cols.collection_id in
-          			(
-          				select v_sams_cols.cols_id
-          				from v_samples_collections v_sams_cols
-          				where v_sams_cols.sams_id = in_sample_id
-          			)
-          			and sync_cols.user_id in (select user_ids(in_user_id))
-          	) all_cols;
+      declare
+        i_detail_level_wellplate integer default 0;
+        i_detail_level_sample integer default 0;
+      begin
+        select max(all_cols.sample_detail_level), max(all_cols.wellplate_detail_level)
+        into i_detail_level_sample, i_detail_level_wellplate
+        from
+        (
+          select v_sams_cols.cols_sample_detail_level sample_detail_level, v_sams_cols.cols_wellplate_detail_level wellplate_detail_level
+            from v_samples_collections v_sams_cols
+            where v_sams_cols.sams_id = in_sample_id
+            and v_sams_cols.cols_user_id in (select user_ids(in_user_id))
+          union
+          select sync_cols.sample_detail_level sample_detail_level, sync_cols.wellplate_detail_level wellplate_detail_level
+            from sync_collections_users sync_cols
+            inner join collections cols on cols.id = sync_cols.collection_id and cols.deleted_at is null
+            where sync_cols.collection_id in
+            (
+              select v_sams_cols.cols_id
+              from v_samples_collections v_sams_cols
+              where v_sams_cols.sams_id = in_sample_id
+            )
+            and sync_cols.user_id in (select user_ids(in_user_id))
+        ) all_cols;
 
-              return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
-          end;$function$
+          return query select coalesce(i_detail_level_sample,0) detail_level_sample, coalesce(i_detail_level_wellplate,0) detail_level_wellplate;
+      end;$function$
   SQL
   create_function :group_user_ids, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.group_user_ids(group_id integer)
@@ -1059,27 +1031,6 @@ ActiveRecord::Schema.define(version: 20181009155001) do
        JOIN collections_samples col_samples ON (((col_samples.collection_id = cols.id) AND (col_samples.deleted_at IS NULL))))
        JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
     WHERE (cols.deleted_at IS NULL);
-  SQL
-
-  create_view "v_samples_collections_molecules",  sql_definition: <<-SQL
-      SELECT collections_samples.id,
-      collections_samples.collection_id,
-      collections_samples.sample_id,
-      samples.molecule_id,
-      samples.external_label,
-      samples.short_label,
-      samples.sample_svg_file,
-      samples.stereo,
-      samples.created_at AS sample_created_at,
-      samples.updated_at AS sample_updated_at,
-      molecules.created_at AS molecule_created_at,
-      molecules.updated_at AS molecule_updated_at,
-      molecules.iupac_name,
-      molecules.inchikey
-     FROM samples,
-      molecules,
-      collections_samples
-    WHERE ((samples.molecule_id = molecules.id) AND (samples.id = collections_samples.sample_id));
   SQL
 
   create_view "literal_groups",  sql_definition: <<-SQL
