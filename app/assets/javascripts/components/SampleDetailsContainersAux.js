@@ -3,6 +3,7 @@ import { Button, Checkbox } from 'react-bootstrap';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
+import SvgWithPopover from './common/SvgWithPopover';
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
@@ -165,7 +166,13 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
       onClick={clickToOpen}
     >
       <div className="preview">
-        <img src={previewImg} alt="" />
+        <SvgWithPopover
+          objTitle={container.name}
+          objSrc={previewImg}
+          settingPreviewPop={{
+            content: '', isSVG: false, height: '360px', width: '360px'
+          }}
+        />
       </div>
       <div className="abstract">
         {

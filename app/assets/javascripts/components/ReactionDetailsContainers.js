@@ -9,6 +9,7 @@ import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
 import QuillViewer from './QuillViewer';
+import SvgWithPopover from './common/SvgWithPopover';
 
 const previewImage = (container) => {
   const rawImg = container.preview_img;
@@ -156,7 +157,13 @@ export default class ReactionDetailsContainers extends Component {
       return (
         <div className="analysis-header order" style={{ width: '100%' }}>
           <div className="preview">
-            <img src={previewImg} alt="" />
+            <SvgWithPopover
+              objTitle={container.name}
+              objSrc={previewImg}
+              settingPreviewPop={{
+                content: '', isSVG: false, height: '360px', width: '360px'
+              }}
+            />
           </div>
           <div className="abstract">
             {
@@ -188,14 +195,14 @@ export default class ReactionDetailsContainers extends Component {
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
 
       return (
-        <div style={{width: '100%'}}>
+        <div style={{ width: '100%' }}>
           <strike>
             {container.name}
             {titleKind}
             {titleStatus}
           </strike>
           <Button className="pull-right" bsSize="xsmall" bsStyle="danger"
-                  onClick={() => this.handleUndo(container)}>
+            onClick={() => this.handleUndo(container)}>
             <i className="fa fa-undo"></i>
           </Button>
         </div>

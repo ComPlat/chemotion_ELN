@@ -325,11 +325,15 @@ export default class ElementsTableEntries extends Component {
                     ['reaction', 'research_plan'].includes(element.type) ? (
                       <SvgWithPopover
                         objTitle={(element.type === 'reaction' && element.short_label) ||
-                          (element.type === 'research_plan' && element.title()) || ''}
-                        objSrc={element.svgPath ? element.svgPath : ''}
-                        objPreview={element.title()}
+                        (element.type === 'research_plan' && element.title()) || ''}
+                        objSrc={element.svgPath}
+                        settingPreviewPop={{
+                          content: element.title(),
+                          isSVG: true,
+                          height: '26vh',
+                          width: '52vw' }}
                       />
-                    ) : element.title() 
+                    ) : element.title()
                   }
                   {this.reactionStatus(element)}
                   {' '}
