@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 const PubchemSigns = ({
   objPath, objWidth, objHeight, objTitle
 }) => {
-  const objScale = objWidth / 70;
+  const objScale = 1;
   return (
     <svg
       width={objWidth}
@@ -14,7 +14,7 @@ const PubchemSigns = ({
     >
       <title>{objTitle}</title>;
       <g transform={`scale(${objScale})`}>
-        <image xlinkHref={objPath} />
+        <image xlinkHref={objPath} width="100%" height="100%" />
       </g>
     </svg>
   );
