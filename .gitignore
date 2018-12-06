@@ -59,6 +59,7 @@
 
 /public/images/*
 !/public/images/wild_card/
+!/public/images/ghs/
 
 /uploads/*
 !/public/attachments/.keep

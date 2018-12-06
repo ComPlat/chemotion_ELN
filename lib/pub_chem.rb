@@ -95,6 +95,16 @@ module PubChem
     [cas]
   end
 
+  def self.get_lcss_from_cid(cid)
+    return nil unless cid
+    return nil unless cid.is_a? Integer
+    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}, :format => 'plain'  }
+    page = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
+    resp = HTTParty.get(page, options)
+    return nil unless resp.success?
+    JSON.parse resp, symbolize_names: true
+  end
+
   FTP_PATH = 'ftp.ncbi.nlm.nih.gov'
 
   # return list of week directory names

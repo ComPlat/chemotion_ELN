@@ -1,5 +1,9 @@
 module Chemotion::PubchemService
 
+  def self.lcss_from_cid cid
+    record = PubChem.get_lcss_from_cid(cid)
+  end
+
   def self.molecule_info_from_molfile molfile
     record = PubChem.get_record_from_molfile(molfile)
     interpret_record record

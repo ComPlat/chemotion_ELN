@@ -1,0 +1,43 @@
+{
+  "Record": {
+    "RecordType": "CID",
+    "RecordNumber": 643785,
+    "Section": [
+      {
+        "TOCHeading": "Safety and Hazards",
+        "Description": "Safety and hazards information, properties, management techniques, reactivities and incompatibilities, first aid treatments, and more.",
+        "Section": [
+          {
+            "TOCHeading": "Hazards Identification",
+            "Description": "Hazards Identification includes all hazards regarding the chemical; required label elements",
+            "Section": [
+              {
+                "TOCHeading": "GHS Classification",
+                "Description": "GHS (Globally Harmonized System of Classification and Labelling of Chemicals) is a United Nations system to identify hazardous chemicals and to inform users about these hazards. GHS has been adopted by many countries around the world and is now also used as the basis for international and national transport regulations for dangerous goods. The GHS hazard statements, class categories, pictograms, signal words, and the precautionary statements <a href=\"https://pubchem.ncbi.nlm.nih.gov/ghs/\">can be found here</a>.",
+                "HintShowAtMost": 1,
+                "HintSortByLength": true,
+                "Information": [
+                  {
+                    "ReferenceNumber": 3,
+                    "Name": "GHS Classification",
+                    "StringValue": "<div class=\"pc-thumbnail-container\"><img src=\"/images/ghs/GHS02.svg\" title=\"GHS02: Flammables\"><img src=\"/images/ghs/GHS07.svg\" title=\"GHS07: Irritant\"><img src=\"/images/ghs/GHS08.svg\" title=\"GHS08: Health Hazard, carcinogen, mutagenicity, reproductive toxicity, target organ toxicity, aspiration hazard\"></div><b>Signal:</b> <span class=\"fred\">Danger</span><br><div class=\"ghs-hazards\"><b>GHS Hazard Statements</b><br>Aggregated GHS information provided by 46 companies from  3  notifications to the ECHA C&L Inventory. Each notification may be associated with multiple companies.<br><br>H225 (100%): Highly Flammable liquid and vapor [<span class=\"fred\">Danger</span> Flammable liquids]<br>H304 (52.17%): May be fatal if swallowed and enters airways [<span class=\"fred\">Danger</span> Aspiration hazard]<br>H315 (39.13%): Causes skin irritation [<span class=\"fblue\">Warning</span> Skin corrosion/irritation]<br>H319 (39.13%): Causes serious eye irritation [<span class=\"fblue\">Warning</span> Serious eye damage/eye irritation]<br><br>Information may vary between notifications depending on impurities, additives, and other factors. The percentage value in parenthesis indicates the notified classification ratio from companies that provide hazard codes. Only hazard codes with percentage values above 10% are shown.<br></div><br><div class=\"ghs-precautionary\"><b>Precautionary Statement Codes</b><br>P210, P233, P240, P241, P242, P243, P264, P280, P301+P310, P302+P352, P303+P361+P353, P305+P351+P338, P321, P331, P332+P313, P337+P313, P362, P370+P378, P403+P235, P405, and P501<br>(The corresponding statement to each P-code can be found <a href=\"https://pubchem.ncbi.nlm.nih.gov/ghs/#_prec\">here</a>.)</div>"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "Reference": [
+      {
+        "ReferenceNumber": 3,
+        "SourceName": "European Chemicals Agency (ECHA)",
+        "SourceID": "11474",
+        "Name": "(Z)-penta-1,3-diene",
+        "Description": "The information provided here is aggregated from the \"Notified classification and labelling\" from ECHA's C&L Inventory. <a  href=\"https://echa.europa.eu/information-on-chemicals/cl-inventory-database\">Read more here.</a>",
+        "URL": "https://echa.europa.eu/information-on-chemicals/cl-inventory-database/-/discli/details/11474"
+      }
+    ]
+  }
+}

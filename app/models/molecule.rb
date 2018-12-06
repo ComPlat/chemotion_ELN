@@ -102,6 +102,21 @@ class Molecule < ActiveRecord::Base
     self.is_partial = babel_info[:is_partial]
   end
 
+  def pubchem_lcss
+    return unless cid.present?
+    # if pubchem_lcss of taggable does not exist, try PubChem API and then update DB and return
+    mol_tag = self.tag
+    mol_tag_data = mol_tag.taggable_data || {}
+    if mol_tag_data['pubchem_lcss'] && mol_tag_data['pubchem_lcss'].length > 0
+      mol_tag_data['pubchem_lcss'];
+    else
+      mol_tag_data['pubchem_lcss'] = Chemotion::PubchemService.lcss_from_cid(cid)
+      # updated_at of element_tags(not molecule) is updated
+      mol_tag.update_attributes taggable_data: mol_tag_data
+      mol_tag_data['pubchem_lcss'];
+    end
+  end
+
   def attach_svg svg_data
     return unless svg_data.match /\A<\?xml/
 

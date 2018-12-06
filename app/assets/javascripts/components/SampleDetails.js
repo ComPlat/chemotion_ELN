@@ -47,6 +47,7 @@ import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import ViewSpectra from './ViewSpectra';
+import PubchemLcss from './PubchemLcss';
 
 const MWPrecision = 6;
 
@@ -446,25 +447,27 @@ export default class SampleDetails extends React.Component {
   }
 
   sampleInfo(sample) {
-    const style = {height: '200px'};
+    const style = { height: '200px' };
+    const pubchemLcss = sample.pubchem_tag && sample.pubchem_tag.pubchem_lcss ?
+      sample.pubchem_tag.pubchem_lcss.Record.Section[0].Section[0].Section[0].Information : null;
+    const pubchemCid = sample.pubchem_tag && sample.pubchem_tag.pubchem_cid ?
+      sample.pubchem_tag.pubchem_cid : 0;
+    const lcssSign = pubchemLcss ?
+      <PubchemLcss cid={pubchemCid} informArray={pubchemLcss} /> : <div />;
+
     return (
       <Row style={style}>
         <Col md={4}>
           <h4><SampleName sample={sample}/></h4>
           <h5>{this.sampleAverageMW(sample)}</h5>
           <h5>{this.sampleExactMW(sample)}</h5>
-          <Col md={6}>
-            {this.sampleBarCode(sample)}
-          </Col>
-          <Col md={6}>
-            {this.sampleQrCode()}
-          </Col>
+          {lcssSign}
         </Col>
         <Col md={8}>
           {this.svgOrLoading(sample)}
         </Col>
       </Row>
-    )
+    );
   }
 
   moleculeInchi(sample) {
