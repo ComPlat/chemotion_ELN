@@ -359,7 +359,7 @@ module Reporter
             elsif s.real_amount_value
               " (#{valid_digit(s.amount_ml, digit)}ml)"
             end
-            s.preferred_label + volume if s.preferred_label
+            "#{s.preferred_label}#{volume}" if s.preferred_label
           end.join(", ")
         else
           solvent
