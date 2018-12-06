@@ -27,7 +27,11 @@ class SpectraActions {
               const fns = att.filename.split('.');
               const ext = fns[fns.length - 1];
               const isJcamp = ext === 'dx' || ext === 'jdx';
-              const isApp = ['done', 'non_jcamp', 'backup'].indexOf(att.aasm_state) < 0;
+              const isApp = [
+                'idle', 'queueing', 'done',
+                'backup', 'image',
+                'failure', 'non_jcamp',
+              ].indexOf(att.aasm_state) < 0;
               if (isJcamp && isApp) {
                 const file = Object.assign({}, att, {
                   idAe: ae.id, idAi: ai.id, idDt: dt.id,
