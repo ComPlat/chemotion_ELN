@@ -35,7 +35,13 @@ const PubchemLcss = ({
       <Row>
         <Col md={12}>
           <Button style={{ border: 'none' }} bsSize="xsmall" onClick={() => { window.open(`${sourceRoot}/compound/${cid}#datasheet=lcss&section=Top`, '_blank'); }}>
-            <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" />&nbsp;<i style={{ color: '#777777', fontSize: '10px', fontWeight: 'bold', textDecoration: 'underline' }}>Read more about Safty Summary...</i>
+            <img src="/images/wild_card/pubchem.svg" style={{ height: '1.5vh' }} alt="" />&nbsp;
+            <i style={{
+              color: '#777777', fontSize: '10px', fontWeight: 'bold', textDecoration: 'underline'
+              }}
+            >
+              Read more about Safety Summary...
+            </i>
           </Button>
         </Col>
       </Row>
