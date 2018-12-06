@@ -805,7 +805,7 @@ export default class SampleDetails extends React.Component {
 
   moleculeComputedProps(ind) {
     const { sample } = this.state;
-    if (!this.enableComputedProps) return <span />;
+    if (!this.enableComputedProps) return <span key={`computed_props${sample.id}`} />;
 
     return (
       <Tab

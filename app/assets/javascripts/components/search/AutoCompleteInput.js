@@ -28,6 +28,7 @@ export default class AutoCompleteInput extends React.Component {
     }
 
     this.onUIChange = this.onUIChange.bind(this)
+    this.overlayTarget = React.createRef();
 
     this.timeout = 6e2 // 600ms timeout for input typing
     this.doneTyping = this.doneTyping.bind(this)
@@ -60,7 +61,7 @@ export default class AutoCompleteInput extends React.Component {
   }
 
   initInputWidth() {
-    let input = ReactDOM.findDOMNode(this.refs.input)
+    const input = ReactDOM.findDOMNode(this.refs.input)
     if (input) {
       this.setState({ inputWidth: input.offsetWidth })
     }
@@ -92,7 +93,7 @@ export default class AutoCompleteInput extends React.Component {
 
     this.setState(newState)
 
-    let listSuggestions = this.listSuggestions;
+    const listSuggestions = this.listSuggestions;
 
     // Scroll to element
     if (listSuggestions &&
@@ -216,7 +217,7 @@ export default class AutoCompleteInput extends React.Component {
       valueBeforeFocus: null
     })
 
-    if (!value || value.trim() == '') {
+    if (!value || value.trim() === '') {
       this.setState({
         value: ''
       })
@@ -300,43 +301,44 @@ export default class AutoCompleteInput extends React.Component {
           })}
         </div>
       )
-    } else if(error) {
+    } else if (error) {
       return <ListGroupItem>{error}</ListGroupItem>
-    } else {
-      return (
-        <div></div>
-      )
     }
+    return <div />;
   }
 
   render() {
-    let {value, showSuggestions, inputWidth, suggestions} = this.state
-    if (suggestions && suggestions.length > 6)// show scroll after 6 results
-      this.props.suggestionsAttributes.className = 'scroll'
-    else
-      this.props.suggestionsAttributes.className = ''// hide scroll
-
-    let containerStyle = {
+    const {
+      value, showSuggestions, inputWidth, suggestions
+    } = this.state;
+    if (suggestions && suggestions.length > 6) { // show scroll after 6 results
+      this.props.suggestionsAttributes.className = 'scroll';
+    } else {
+      this.props.suggestionsAttributes.className = '';// hide scroll
+    }
+    const containerStyle = {
       position: 'absolute',
       width: inputWidth,
       marginTop: -15,
-      marginLeft: 0,
+      marginLeft: -15,
       zIndex: 2
-    }
+    };
 
     return (
-      <div>
-        <FormGroup>
-          <InputGroup>
-            <InputGroup.Button>
+      <div style={{ position: 'relative' }} >
+        <FormGroup ref={this.overlayTarget}
+        >
+          <InputGroup >
+            <InputGroup.Button >
               {this.props.buttonBefore}
             </InputGroup.Button>
-            <FormControl {...this.props.inputAttributes}
-              disabled = {this.state.inputDisabled}
-              type='text'
-              value={value || ''}
-              autoComplete='off'
-              ref='input'
+            <FormControl
+              {...this.props.inputAttributes}
+              disabled={this.state.inputDisabled || this.props.inputDisabled}
+              type="text"
+              value={this.props.defaultSearchValue || value || ''}
+              autoComplete="off"
+              ref="input"
               onFocus={() => this.handleFocus()}
               onBlur={() => this.handleBlur()}
               onChange={event => this.handleValueChange(event, this.doneTyping)}
@@ -346,23 +348,24 @@ export default class AutoCompleteInput extends React.Component {
               {this.props.buttonAfter}
             </InputGroup.Button>
           </InputGroup>
-          <Overlay
-            show={showSuggestions}
-            onHide={() => this.abortAutoSelection()}
-            placement='bottom'
-            container={this}
-            rootClose={true}
-          >
-            <div style={containerStyle}>
-              <ListGroup
-                {...this.props.suggestionsAttributes}
-                ref={(alist) => { this.listSuggestions = alist; }}
-              >
-                {this.renderSuggestions()}
-              </ListGroup>
-            </div>
-          </Overlay>
         </FormGroup>
+        <Overlay
+          show={showSuggestions}
+          onHide={() => this.abortAutoSelection()}
+          placement='bottom'
+          container={this}
+          rootClose={true}
+          target={this.overlayTarget.current}
+        >
+          <div style={{ ...containerStyle }} >
+            <ListGroup
+              {...this.props.suggestionsAttributes}
+              ref={(alist) => { this.listSuggestions = alist; }}
+            >
+              {this.renderSuggestions()}
+            </ListGroup>
+          </div>
+        </Overlay>
       </div>
     )
   }
