@@ -26,7 +26,7 @@ module AttachmentJcampAasm
       end
 
       event :set_backup do
-        transitions from: %i[peaked edited], to: :backup
+        transitions from: %i[peaked edited failure], to: :backup
       end
 
       event :set_non_jcamp do
@@ -105,7 +105,7 @@ module AttachmentJcampProcess
   end
 
   def edit_peaks_spectrum(peaks)
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Edit.spectrum_peaks_edit(peaks, self)
+    tmp_jcamp, tmp_img = Chemotion::Jcamp::Edit.spectrum_peaks_edit(abs_path, peaks)
     generate_jcamp_att(tmp_jcamp, 'edit', true)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup!
