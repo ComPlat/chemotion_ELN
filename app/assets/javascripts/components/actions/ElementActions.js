@@ -602,7 +602,6 @@ class ElementActions {
     return  type
   }
 
-
   deleteElements(options) {
     return  (dispatch)=> {
     dispatch(options);
@@ -677,9 +676,9 @@ class ElementActions {
     };
   }
 
-  computePropsFromSmiles(short_label, smiles) {
+  computePropsFromSmiles(sampleId) {
     return (dispatch) => {
-      MoleculesFetcher.computePropsFromSmiles(short_label, smiles)
+      MoleculesFetcher.computePropsFromSmiles(sampleId)
         .then((result) => {
           dispatch(result);
         }).catch((errorMessage) => {
@@ -688,6 +687,9 @@ class ElementActions {
     };
   }
 
+  refreshComputedProp(cprop) {
+    return cprop;
+  }
 }
 
 export default alt.createActions(ElementActions);

@@ -236,7 +236,7 @@ export default class ReactionDetailsContainers extends Component {
                         {containerHeader(container)}
                       </Panel.Title>
                     </Panel.Heading>
-                    <Panel.Body collapsible>
+                    <Panel.Body collapsible="true">
                       <ContainerComponent
                         readOnly={readOnly}
                         container={container}

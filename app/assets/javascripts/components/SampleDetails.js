@@ -43,6 +43,7 @@ import ToggleSection from './common/ToggleSection'
 import SampleName from './common/SampleName'
 import SampleForm from './SampleForm'
 import ComputedPropsContainer from './computed_props/ComputedPropsContainer';
+import ComputedPropLabel from './computed_props/ComputedPropLabel';
 import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
@@ -807,13 +808,21 @@ export default class SampleDetails extends React.Component {
 
   moleculeComputedProps(ind) {
     const { sample } = this.state;
-    if (!this.enableComputedProps) return <span key={`computed_props${sample.id}`} />;
+    const key = "computed_props_" + sample.id.toString();
+    if (!this.enableComputedProps) return <span key={key} />;
+
+    const title = (
+      <span>
+        <ComputedPropLabel cprops={sample.molecule_computed_props} />
+        &nbsp; Computed Properties
+      </span>
+    );
 
     return (
       <Tab
         eventKey={ind}
-        title="Computed Properties"
-        key={`computed_props${sample.id}`}
+        title={title}
+        key
       >
         <ListGroupItem style={{ paddingBottom: 20 }}>
           <ComputedPropsContainer sample={sample} />
@@ -967,7 +976,7 @@ export default class SampleDetails extends React.Component {
           {this.sampleInfo(sample)}
           <ListGroup>
           <Tabs activeKey={this.state.activeTab} onSelect={this.handleSelect} id="SampleDetailsXTab">
-            {tabContents.map((e,i)=>e(i))}
+            {tabContents.map((e, i) => e(i))}
           </Tabs>
           </ListGroup>
           {this.sampleFooter()}
@@ -978,6 +987,7 @@ export default class SampleDetails extends React.Component {
     )
   }
 }
+
 SampleDetails.propTypes = {
   sample: PropTypes.object,
   toggleFullScreen: PropTypes.func,

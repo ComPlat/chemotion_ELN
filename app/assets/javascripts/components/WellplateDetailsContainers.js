@@ -122,7 +122,7 @@ export default class WellplateDetailsContainers extends Component {
                 <Panel eventKey={key}
                     key={key} onClick={() => this.handleAccordionOpen(key)}>
                   <Panel.Heading>{containerHeader(container)}</Panel.Heading>
-                  <Panel.Body collapsible>
+                  <Panel.Body collapsible="true">
                     <ContainerComponent
                       readOnly={readOnly}
                       container={container}

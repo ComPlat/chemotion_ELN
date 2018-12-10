@@ -29,10 +29,7 @@ export default class ComputedPropsContainer extends React.Component {
   computePropsFromSmiles(shouldPerform) {
     if (shouldPerform) {
       const { sample } = this.props;
-      const sslabel = sample.short_label;
-      const ssmiles = sample.molecule.cano_smiles;
-
-      ElementActions.computePropsFromSmiles(sslabel, ssmiles);
+      ElementActions.computePropsFromSmiles(sample.id);
     }
 
     this.setState({ compute: false });
@@ -46,6 +43,7 @@ export default class ComputedPropsContainer extends React.Component {
     const { sample } = this.props;
     const cprops = sample.molecule_computed_props || [];
     let lastCProp = null;
+
     if (cprops && cprops.length > 0) {
       cprops.sort((a, b) => a.updated_at - b.updated_at);
       lastCProp = cprops[cprops.length - 1];

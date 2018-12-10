@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181009155001) do
+ActiveRecord::Schema.define(version: 20181207091112) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -71,7 +71,7 @@ ActiveRecord::Schema.define(version: 20181009155001) do
     t.string   "aasm_state"
   end
 
-  add_index "attachments", ["attachable_id", "attachable_type"], name: "index_attachments_on_attachable_id_and_attachable_type", using: :btree
+  add_index "attachments", ["attachable_type", "attachable_id"], name: "index_attachments_on_attachable_type_and_attachable_id", using: :btree
   add_index "attachments", ["identifier"], name: "index_attachments_on_identifier", unique: true, using: :btree
 
   create_table "authentication_keys", force: :cascade do |t|
@@ -198,6 +198,8 @@ ActiveRecord::Schema.define(version: 20181009155001) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.float    "mean_abs_potential", default: 0.0
+    t.integer  "creator",            default: 0
+    t.integer  "sample_id",          default: 0
   end
 
   create_table "container_hierarchies", id: false, force: :cascade do |t|
@@ -475,19 +477,6 @@ ActiveRecord::Schema.define(version: 20181009155001) do
   add_index "molecules", ["deleted_at"], name: "index_molecules_on_deleted_at", using: :btree
   add_index "molecules", ["inchikey", "is_partial"], name: "index_molecules_on_inchikey_and_is_partial", unique: true, using: :btree
 
-  create_table "nmr_sim_nmr_simulations", force: :cascade do |t|
-    t.integer  "molecule_id"
-    t.text     "path_1h"
-    t.text     "path_13c"
-    t.text     "source"
-    t.datetime "deleted_at"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
-  end
-
-  add_index "nmr_sim_nmr_simulations", ["deleted_at"], name: "index_nmr_sim_nmr_simulations_on_deleted_at", using: :btree
-  add_index "nmr_sim_nmr_simulations", ["molecule_id", "source"], name: "index_nmr_sim_nmr_simulations_on_molecule_id_and_source", unique: true, using: :btree
-
   create_table "notifications", force: :cascade do |t|
     t.integer  "message_id"
     t.integer  "user_id"
@@ -751,7 +740,6 @@ ActiveRecord::Schema.define(version: 20181009155001) do
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
     t.string   "type",                             default: "Person"
-    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
@@ -820,61 +808,6 @@ ActiveRecord::Schema.define(version: 20181009155001) do
 
   add_foreign_key "literals", "literatures"
 
-  create_function :collection_shared_to_user, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.collection_shared_to_user(collection_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-      	select row_to_json(result) from (
-      	select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name from collections
-      	inner join users on users.id = collections.user_id AND users.deleted_at IS null
-      	where collections.id = $1
-      	group by users.id, users.name_abbreviation,users.type,users.first_name,users.last_name
-      	) as result
-      	$function$
-  SQL
-  create_function :collection_shared_by_user, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.collection_shared_by_user(collection_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-      	select row_to_json(result) from (
-      	select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name from collections
-      	inner join users on users.id = collections.shared_by_id AND users.deleted_at IS null
-      	where collections.id = $1
-      	group by users.id, users.name_abbreviation,users.type,users.first_name,users.last_name
-      	) as result
-      	$function$
-  SQL
-  create_function :collection_shared_to_user, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.collection_shared_to_user(collection_id integer, user_id integer)
-       RETURNS json
-       LANGUAGE sql
-      AS $function$
-      	select row_to_json(result) from (
-      	select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name from collections
-      	inner join users on users.id = collections.user_id AND users.deleted_at IS null and users.id  <> $2
-      	where collections.id = $1
-      	group by users.id, users.name_abbreviation,users.type,users.first_name,users.last_name
-      	) as result
-      	$function$
-  SQL
-  create_function :user_as_json, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.user_as_json(in_user_id integer, in_current_user_id integer)
-       RETURNS json
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	if (in_user_id = in_current_user_id) then
-      		return null;
-      	else
-      		return (select row_to_json(result) from (
-      		select users.id, users.name_abbreviation as initials ,users.type,users.first_name || chr(32) || users.last_name as name
-      		from users where id = $1
-      		) as result);
-      	end if;
-       end; $function$
-  SQL
   create_function :user_instrument, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.user_instrument(user_id integer, sc text)
        RETURNS TABLE(instrument text)

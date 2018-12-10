@@ -23,7 +23,7 @@ const DeviceDetails = ({device, toggleFullScreen}) => {
               Device Management
             </Panel.Title>
           </Panel.Heading>
-          <Panel.Body collapsible>
+          <Panel.Body collapsible="true">
             <DeviceManagement />
           </Panel.Body>
         </Panel>
