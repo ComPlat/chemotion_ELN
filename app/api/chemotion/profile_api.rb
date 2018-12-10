@@ -30,15 +30,20 @@ module Chemotion
             optional :reaction, type: Array[Boolean]
             optional :wellplate, type: Array[Boolean]
           end
+          optional :computed_props, type: Hash do
+            optional :graph_templates, type: Array[Hash]
+            optional :cur_template_idx, type: Integer
+          end
         end
         optional :show_external_name, type: Boolean
       end
 
       put do
+         declared_params = declared(params, include_missing: false)
         data = current_user.profile.data || {}
         new_profile = {
-          data: data.merge(params[:data] || {}),
-          show_external_name: params[:show_external_name]
+          data: data.merge(declared_params[:data] || {}),
+          show_external_name: declared_params[:show_external_name]
         }
         current_user.profile.update!(**new_profile) &&
           new_profile || error!('profile update failed', 500)
