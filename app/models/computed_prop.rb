@@ -3,6 +3,7 @@
 # ComputedProp, Molecule computed properties via OpenMOPAC and TURBOMOLE
 class ComputedProp < ActiveRecord::Base
   belongs_to :molecule
+  belongs_to :user
 
   enum status: { not_computed: 0, in_progress: 1, completed: 2 }
 
@@ -14,12 +15,9 @@ class ComputedProp < ActiveRecord::Base
     matches.captures.first.to_f
   end
 
-  def self.from_raw(name, data)
-    sample = Sample.where(short_label: name).first
-    return if sample.nil?
-
-    mid = sample.molecule.id
-    cp = ComputedProp.where(molecule_id: mid, status: 1).first
+  def self.from_raw(compute_id, data)
+    cp = ComputedProp.find(compute_id)
+    return if cp.nil?
 
     data_arr = data.split("\n").map { |x|
       x.gsub('   ---   ', '').gsub('   ###   ', '')

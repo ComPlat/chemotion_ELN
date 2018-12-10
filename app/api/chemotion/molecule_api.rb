@@ -50,21 +50,23 @@ module Chemotion
       namespace :compute do
         desc 'Compute molecule by SMILES'
         params do
-          requires :smiles, type: String, desc: 'Input SMILES'
-          requires :short_label, type: String, desc: 'Sample Short Label'
+          requires :sampleId, type: Integer, desc: 'Sample ID'
         end
 
         post do
           cconfig = Rails.configuration.compute_config
+          uid = current_user.id
           error!('No computation configuration!') if cconfig.nil?
-          error!('Unauthorized') unless cconfig.allowed_uids.include?(current_user.id)
+          error!('Unauthorized') unless cconfig.allowed_uids.include?(uid)
 
-          sample = Sample.where(short_label: params[:short_label]).first
+          sample = Sample.find(params[:sampleId])
           error!(204) if sample.nil?
 
           cp = ComputedProp.new
           cp.status = 0
+          cp.sample_id = sample.id
           cp.molecule_id = sample.molecule.id
+          cp.creator = uid
           cp.save!
 
           if cp.status == 'not_computed'
@@ -73,8 +75,8 @@ module Chemotion
               headers: { 'Content-Type' => 'application/json' },
               body: {
                 hmac_secret: cconfig.hmac_secret,
-                smiles: params[:smiles],
-                name: params[:short_label]
+                smiles: sample.molecule_cano_smiles,
+                compute_id: cp.id
               }.to_json
             }
 
@@ -83,7 +85,17 @@ module Chemotion
           end
           cp.save!
 
-          status 200
+          channel = Channel.find_by(subject: Channel::COMPUTED_PROPS_NOTIFICATION)
+          return if channel.nil?
+
+          content = channel.msg_template
+          return if content.nil?
+
+          content['data'] = "Calculation for Sample #{sample.id} has started"
+          content['cprop'] = cp
+          Message.create_msg_notification(
+            channel.id, content, uid, [uid]
+          )
         end
       end
 

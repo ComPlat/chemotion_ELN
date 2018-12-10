@@ -229,6 +229,7 @@ class ElementStore {
         ElementActions.updateScreen,
         ElementActions.updateResearchPlan
       ],
+      handleRefreshComputedProp: ElementActions.refreshComputedProp,
     })
   }
 
@@ -1146,6 +1147,40 @@ class ElementStore {
     ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
     ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
   }
+
+  handleRefreshComputedProp(cprop) {
+    const { selecteds, currentElement } = this.state;
+    const samples = selecteds.concat([currentElement]).filter(x => (
+      x instanceof Sample && x.id == cprop.sample_id
+    ));
+    if (samples.length === 0) return this.handleRefreshElements('sample');
+
+    samples.forEach(el => {
+      const found = el.molecule_computed_props.find(x => x.id == cprop.id);
+      if (!found) {
+        el.molecule_computed_props.push(cprop);
+        return;
+      }
+
+      const foundDate = Date.parse(found.updated_at);
+      const propDate = Date.parse(cprop.updated_at);
+      if (propDate > foundDate) {
+        found.max_potential = cprop.max_potential;
+        found.min_potential = cprop.min_potential;
+        found.mean_potential = cprop.mean_potential;
+        found.lumo = cprop.lumo;
+        found.homo = cprop.homo;
+        found.ip = cprop.ip;
+        found.ea = cprop.ea;
+        found.dipol_debye = cprop.dipol_debye;
+        found.mean_abs_potential = cprop.mean_abs_potential;
+        found.status = cprop.status;
+      }
+    });
+
+    this.handleRefreshElements('sample');
+  }
+
   // End of DetailStore
   /////////////////////
 }

@@ -253,7 +253,7 @@ export default class DetailsTabLiteratures extends Component {
     const { literature, literatures, sortedIds } = this.state;
     const { currentUser } = UserStore.getState();
     return (
-      <ListGroup fill>
+      <ListGroup fill="true">
         <ListGroupItem>
           <CitationTable rows={literatures} sortedIds={sortedIds} removeCitation={this.handleLiteratureRemove} userId={currentUser.id} />
         </ListGroupItem>

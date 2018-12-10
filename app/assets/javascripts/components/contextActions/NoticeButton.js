@@ -8,6 +8,7 @@ import CollectionActions from '../actions/CollectionActions';
 import NotificationActions from '../actions/NotificationActions';
 import InboxActions from '../actions/InboxActions';
 import ReportActions from '../actions/ReportActions';
+import ElementActions from '../actions/ElementActions';
 
 const handleNotification = (nots, act, needCallback = true) => {
   nots.forEach((n) => {
@@ -41,6 +42,7 @@ const handleNotification = (nots, act, needCallback = true) => {
         }
       };
       NotificationActions.add(notification);
+
       if (n.content.action) {
         if (n.content.action === 'CollectionActions.fetchRemoteCollectionRoots') {
           CollectionActions.fetchRemoteCollectionRoots();
@@ -55,6 +57,10 @@ const handleNotification = (nots, act, needCallback = true) => {
           const ids = [];
           ids.push(parseInt(n.content.report_id, 10));
           ReportActions.updateProcessQueue(ids);
+        }
+        if (n.content.action === 'ElementActions.refreshComputedProp') {
+          const { cprop } = n.content;
+          ElementActions.refreshComputedProp(cprop);
         }
       }
     }
@@ -233,7 +239,7 @@ export default class NoticeButton extends React.Component {
         id="panel-modal-body-allread"
         key="panel-modal-body-allread"
         eventKey="0"
-        collapsible
+        collapsible="true"
         defaultExpanded
         style={{ border: '0px' }}
       >
@@ -254,7 +260,7 @@ export default class NoticeButton extends React.Component {
         <Panel
           key={`panel-modal-body-${not.id}`}
           eventKey={index}
-          collapsible
+          collapsible="true"
           defaultExpanded
           ref={(pl) => {
             this[`myPl${index}`] = pl;

@@ -10,6 +10,16 @@ function dateFormatter(params) {
 export default class SampleComputedProps extends React.Component {
   constructor(props) {
     super(props);
+
+    this.onGridReady = this.onGridReady.bind(this);
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (this.gridApi) this.gridApi.setRowData(nextProps.cprops);
+  }
+
+  onGridReady(params) {
+    this.gridApi = params.api;
   }
 
   render() {
@@ -82,6 +92,7 @@ export default class SampleComputedProps extends React.Component {
     return (
       <div className="ag-theme-balham">
         <AgGridReact
+          onGridReady={this.onGridReady}
           enableColResize
           suppressCellSelection
           columnDefs={columnDefs}

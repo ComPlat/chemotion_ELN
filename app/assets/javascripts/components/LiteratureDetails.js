@@ -422,7 +422,7 @@ export default class LiteratureDetails extends Component {
           <PanelGroup accordion defaultActiveKey="1">
             <Panel
               eventKey="2"
-              collapsible
+              collapsible="true"
             >
               <Panel.Heading>
                 <Panel.Title toggle>
@@ -434,7 +434,7 @@ export default class LiteratureDetails extends Component {
                   </OverlayTrigger>
                 </Panel.Title>
               </Panel.Heading>
-              <Panel.Body collapsible>
+              <Panel.Body collapsible="true">
                 <Table>
                   <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
                   <tbody>
@@ -453,7 +453,7 @@ export default class LiteratureDetails extends Component {
             </Panel>
             <Panel
               eventKey="3"
-              collapsible
+              collapsible="true"
             >
               <Panel.Heading>
                 <Panel.Title toggle>
@@ -465,7 +465,7 @@ export default class LiteratureDetails extends Component {
                   </OverlayTrigger>
                 </Panel.Title>
               </Panel.Heading>
-              <Panel.Body collapsible>
+              <Panel.Body collapsible="true">
                 <Table>
                   <thead><tr><th width="10%" /><th width="80%" /><th width="10%" /></tr></thead>
                   <tbody>
@@ -484,7 +484,7 @@ export default class LiteratureDetails extends Component {
             </Panel>
             <Panel
               eventKey="4"
-              collapsible
+              collapsible="true"
             >
               <Panel.Heading>
                 <Panel.Title toggle>
@@ -496,7 +496,7 @@ export default class LiteratureDetails extends Component {
                   </OverlayTrigger>
                 </Panel.Title>
               </Panel.Heading>
-              <Panel.Body collapsible>
+              <Panel.Body collapsible="true">
                 <ListGroup>
                   <ListGroupItem>
                     <Row>

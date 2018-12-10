@@ -9,7 +9,7 @@ module Chemotion
       resource :computed_props do
         params do
           requires :token, type: String
-          requires :name, type: String
+          requires :compute_id, type: Integer
 
           requires :data, type: String
         end
@@ -19,9 +19,22 @@ module Chemotion
           error!('No computation configuration!') if cconfig.nil?
           error!('Unauthorized') unless cconfig.receiving_secret == params[:token]
 
-          ComputedProp.from_raw(params[:name], params[:data])
+          cp = ComputedProp.find(params[:compute_id])
+          return if cp.nil?
 
-          status 200
+          ComputedProp.from_raw(cp.id, params[:data])
+
+          channel = Channel.find_by(subject: Channel::COMPUTED_PROPS_NOTIFICATION)
+          return if channel.nil?
+
+          content = channel.msg_template
+          return if content.nil?
+
+          content['data'] = "Calculation for Sample #{cp.sample_id} has finished"
+          content['cprop'] = ComputedProp.find(cp.id)
+          Message.create_msg_notification(
+            channel.id, content, cp.creator, [cp.creator]
+          )
         end
       end
 

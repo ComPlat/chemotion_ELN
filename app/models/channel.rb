@@ -12,4 +12,5 @@ class Channel < ActiveRecord::Base
   REPORT_GENERATOR_NOTIFICATION = 'Report Generator Notification'
   SEND_INDIVIDUAL_USERS = 'Send Individual Users'
   SEND_IMPORT_NOTIFICATION = 'Import Notification'
+  COMPUTED_PROPS_NOTIFICATION = 'Computed Prop Notification'
 end
