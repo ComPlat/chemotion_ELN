@@ -1,6 +1,7 @@
 import alt from '../alt';
 import LoadingActions from '../actions/LoadingActions';
 import ReportActions from '../actions/ReportActions';
+import ElementActions from '../actions/ElementActions';
 
 class LoadingStore {
   constructor() {
@@ -12,6 +13,11 @@ class LoadingStore {
         [
           LoadingActions.stop,
           ReportActions.clone,
+          ElementActions.createSampleForReaction,
+          ElementActions.updateSampleForReaction,
+          ElementActions.updateSampleForWellplate,
+          ElementActions.createSample,
+          ElementActions.updateSample,
         ],
     });
   }

@@ -141,7 +141,7 @@ class ViewSpectra extends React.Component {
     const { sample, handleSubmit } = this.props;
     const { selectedOpt } = this.state;
     SpectraActions.SavePeaksToFile(sample, peaks, selectedOpt);
-    handleSubmit();
+    setTimeout(() => handleSubmit(), 1000);
     SpectraActions.ToggleModal.defer();
   }
 
