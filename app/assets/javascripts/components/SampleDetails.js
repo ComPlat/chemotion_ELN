@@ -17,6 +17,7 @@ import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
 import SpectraActions from './actions/SpectraActions';
+import LoadingActions from './actions/LoadingActions';
 
 import SpectraStore from './stores/SpectraStore';
 import UIStore from './stores/UIStore';
@@ -220,6 +221,7 @@ export default class SampleDetails extends React.Component {
   }
 
   handleSubmit(closeView = false) {
+    LoadingActions.start();
     const { sample } = this.state;
     if (sample.belongTo && sample.belongTo.type === 'reaction') {
       const reaction = sample.belongTo;
