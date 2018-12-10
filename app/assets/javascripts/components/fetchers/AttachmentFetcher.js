@@ -12,6 +12,20 @@ const fileFromAttachment = (attachment, containerId) => {
 
 export default class AttachmentFetcher {
 
+  static fetchImageAttachment(params) {
+    const promise = fetch(`/api/v1/attachments/image/${params.id}`, {
+      credentials: 'same-origin',
+      method: 'GET'
+    }).then((response) => {
+      return response.blob();
+    }).then((blob) => {
+      return URL.createObjectURL(blob);
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise;
+  }
+
   static fetchThumbnail(params) {
     let promise = fetch(`/api/v1/attachments/thumbnail/${params.id}`, {
       credentials: 'same-origin',

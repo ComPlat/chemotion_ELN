@@ -5,11 +5,13 @@ import {
   Panel,
   Button,
 } from 'react-bootstrap';
+import { startsWith } from 'lodash';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
 import QuillViewer from './QuillViewer';
 import SvgWithPopover from './common/SvgWithPopover';
+import ImageModal from './common/ImageModal';
 
 const previewImage = (container) => {
   const rawImg = container.preview_img;
@@ -153,15 +155,31 @@ export default class ReactionDetailsContainers extends Component {
           return c;
         }),
       };
+      let hasPop = true;
+      let fetchNeeded = false;
+      let fetchId = 0;
+      if (container.preview_img && container.preview_img !== undefined && container.preview_img !== 'not available') {
+        fetchNeeded = startsWith(container.children[0].attachments[0].content_type, 'image/');
+        if (fetchNeeded) {
+          fetchId = container.children[0].attachments[0].id;
+        }
+      } else {
+        hasPop = false;
+      }
 
       return (
         <div className="analysis-header order" style={{ width: '100%' }}>
           <div className="preview">
-            <SvgWithPopover
-              objTitle={container.name}
-              objSrc={previewImg}
-              settingPreviewPop={{
-                content: '', isSVG: false, height: '360px', width: '360px'
+            <ImageModal
+              hasPop={hasPop}
+              preivewObject={{
+                src: previewImg
+              }}
+              popObject={{
+                title: container.name,
+                src: previewImg,
+                fetchNeeded,
+                fetchId
               }}
             />
           </div>

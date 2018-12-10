@@ -10,29 +10,28 @@ export default class SvgWithPopover extends Component {
   }
 
   popHover() {
-    const { objTitle, objSrc, settingPreviewPop } = this.props;
-    const preHeight = settingPreviewPop.height;
-    const preWidth = settingPreviewPop.width;
+    const { popObject } = this.props;
+
     return (
       <Popover
         id="popover-trigger-hover-focus"
-        title={objTitle}
+        title={popObject.title}
         style={{ maxWidth: 'none', maxHeight: 'none' }}
       >
-        <img src={objSrc} style={{ height: preHeight, width: preWidth }} alt="" />
+        <img src={popObject.src} style={{ height: popObject.height, width: popObject.width }} alt="" />
       </Popover>
     );
   }
 
   renderPreview() {
-    const { objSrc, settingPreviewPop } = this.props;
-    let previewObj = settingPreviewPop.content;
+    const { preivewObject } = this.props;
+    let previewObj = preivewObject.txtOnly;
     if (previewObj === '') {
       previewObj = (
-        settingPreviewPop.isSVG ?
-          <SVG src={objSrc} className="molecule" key={objSrc} />
+        preivewObject.isSVG ?
+          <SVG src={preivewObject.src} className="molecule" key={preivewObject.src} />
           :
-          <img src={objSrc} alt="" />
+          <img src={preivewObject.src} alt="" />
       );
     }
 
@@ -44,6 +43,12 @@ export default class SvgWithPopover extends Component {
   }
 
   render() {
+    const { hasPop } = this.props;
+
+    if (!hasPop) {
+      return this.renderPreview();
+    }
+
     return (
       <div>
         <OverlayTrigger
@@ -61,21 +66,16 @@ export default class SvgWithPopover extends Component {
 }
 
 SvgWithPopover.propTypes = {
-  objTitle: PropTypes.string.isRequired,
-  objSrc: PropTypes.string.isRequired,
-  settingPreviewPop: PropTypes.shape({
-    content: PropTypes.string,
+  hasPop: PropTypes.bool.isRequired,
+  preivewObject: PropTypes.shape({
+    txtOnly: PropTypes.string.isRequired,
     isSVG: PropTypes.bool,
+    src: PropTypes.string,
+  }).isRequired,
+  popObject: PropTypes.shape({
+    title: PropTypes.string,
+    src: PropTypes.string,
     height: PropTypes.string,
     width: PropTypes.string,
-  })
-};
-
-SvgWithPopover.defaultProps = {
-  settingPreviewPop: {
-    content: '',
-    isSVG: true,
-    height: '26vh',
-    width: '52vw',
-  }
+  }).isRequired,
 };

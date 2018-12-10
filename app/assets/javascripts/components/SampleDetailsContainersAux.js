@@ -1,9 +1,10 @@
 import React from 'react';
 import { Button, Checkbox } from 'react-bootstrap';
+import { startsWith } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
-import SvgWithPopover from './common/SvgWithPopover';
+import ImageModal from './common/ImageModal';
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
@@ -159,18 +160,33 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
       return c;
     }),
   };
-
+  let hasPop = true;
+  let fetchNeeded = false;
+  let fetchId = 0;
+  if (container.preview_img && container.preview_img !== undefined && container.preview_img !== 'not available') {
+    fetchNeeded = startsWith(container.children[0].attachments[0].content_type, 'image/');
+    if (fetchNeeded) {
+      fetchId = container.children[0].attachments[0].id;
+    }
+  } else {
+    hasPop = false;
+  }
   return (
     <div
       className={`analysis-header ${mode === 'edit' ? '' : 'order'}`}
       onClick={clickToOpen}
     >
       <div className="preview">
-        <SvgWithPopover
-          objTitle={container.name}
-          objSrc={previewImg}
-          settingPreviewPop={{
-            content: '', isSVG: false, height: '360px', width: '360px'
+        <ImageModal
+          hasPop={hasPop}
+          preivewObject={{
+            src: previewImg
+          }}
+          popObject={{
+            title: container.name,
+            src: previewImg,
+            fetchNeeded,
+            fetchId
           }}
         />
       </div>
