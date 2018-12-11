@@ -4,7 +4,8 @@ import { AgGridReact } from 'ag-grid-react';
 
 function dateFormatter(params) {
   const dateTime = new Date(params.value);
-  return `${dateTime.getDate()}/${dateTime.getMonth()}/${dateTime.getFullYear()}`;
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return dateTime.toLocaleDateString('en-GB', options);
 }
 
 export default class SampleComputedProps extends React.Component {
