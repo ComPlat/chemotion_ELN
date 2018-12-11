@@ -101,7 +101,8 @@ gem 'httparty'
 
 gem 'ketcherails', # git: 'https://git.scc.kit.edu/ComPlat/ketcher-rails.git', branch: 'coordination_bond_suppport'
     git: 'https://github.com/ComPlat/ketcher-rails',
-    ref: '091316b54199dbdb19216a5b7521b4f93eae91f4'
+    ref: '5a6fb4d2b39c62cc6a96d1586b31913b1213d568'
+    # path: '../ketcher-rails'
 
 # Free font icons
 gem 'font-awesome-rails'
