@@ -128,3 +128,36 @@ module Chemotion
     end
   end
 end
+
+# Chemotion module
+module Chemotion
+  # process Jcamp files
+  module Jcamp
+    # CreateImg module
+    module CreateImg
+      include HTTParty
+
+      def self.stub_peak_in_image(path)
+        response = nil
+        url = Rails.configuration.spectra.url
+        port = Rails.configuration.spectra.port
+        File.open(path, 'r') do |f|
+          response = HTTParty.post(
+            "http://#{url}:#{port}/peak_in_image",
+            body: {
+              multipart: true,
+              file: f
+            }
+          )
+        end
+        response
+      end
+
+      def self.spectrum_img_gene(path)
+        rsp = stub_peak_in_image(path)
+        rsp_io = StringIO.new(rsp.body.to_s)
+        Util.extract_zip(rsp_io)
+      end
+    end
+  end
+end
