@@ -6,15 +6,15 @@ class Profile < ActiveRecord::Base
   scope :novnc, -> { where("\"data\"->>'novnc' is distinct from null") }
 
   def computed_props
-    data&.dig(:computed_props)
+    data&.dig('computed_props')
   end
 
   def enable_computed_props
     if data.nil?
       self.data = { computed_props: { enable: true } }
     else
-      data[:computed_props] = {} if data[:computed_props].nil?
-      data[:computed_props][:enable] = true
+      data['computed_props'] = {} if data['computed_props'].nil?
+      data['computed_props']['enable'] = true
     end
 
     save!
@@ -24,8 +24,8 @@ class Profile < ActiveRecord::Base
     if data.nil?
       self.data = { computed_props: { enable: false } }
     else
-      data[:computed_props] = {} if data[:computed_props].nil?
-      data[:computed_props][:enable] = false
+      data['computed_props'] = {} if data['computed_props'].nil?
+      data['computed_props']['enable'] = false
     end
 
     save!

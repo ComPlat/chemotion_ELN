@@ -39,10 +39,10 @@ module Chemotion
       end
 
       put do
-         declared_params = declared(params, include_missing: false)
+        declared_params = declared(params, include_missing: false)
         data = current_user.profile.data || {}
         new_profile = {
-          data: data.merge(declared_params[:data] || {}),
+          data: data.deep_merge(declared_params[:data] || {}),
           show_external_name: declared_params[:show_external_name]
         }
         current_user.profile.update!(**new_profile) &&
