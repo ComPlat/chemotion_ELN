@@ -221,6 +221,16 @@ module Chemotion
         zip.read
       end
 
+      desc 'Return image attachment'
+      get 'image/:attachment_id' do
+        sfilename = @attachment.key + @attachment.extname
+        content_type @attachment.content_type
+        header['Content-Disposition'] = "attachment; filename=" + sfilename
+        header['Content-Transfer-Encoding'] = 'binary';
+        env['api.format'] = :binary
+        @attachment.read_file
+      end
+
       desc 'Return Base64 encoded thumbnail'
       get 'thumbnail/:attachment_id' do
         if @attachment.thumb

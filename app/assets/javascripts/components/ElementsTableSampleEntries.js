@@ -108,7 +108,20 @@ const svgPreview = (showPreviews, sample) => (
   <div style={{ float: 'left' }} >
     {
       showPreviews
-        ? <SvgWithPopover objTitle={sample.molecule_iupac_name} objSrc={sample.svgPath} objPreview="" />
+        ? <SvgWithPopover
+          hasPop
+          preivewObject={{
+            txtOnly: '',
+            isSVG: true,
+            src: sample.svgPath
+          }}
+          popObject={{
+            title: sample.molecule_iupac_name,
+            src: sample.svgPath,
+            height: '26vh',
+            width: '52vw',
+          }}
+        />
         : null
     }
   </div>

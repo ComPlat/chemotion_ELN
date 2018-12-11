@@ -322,14 +322,20 @@ export default class ElementsTableEntries extends Component {
               <td onClick={e => this.showDetails(element)} style={{cursor: 'pointer'}}>
                 <div>
                   {
-                    ['reaction', 'research_plan'].includes(element.type) ? (
                       <SvgWithPopover
-                        objTitle={(element.type === 'reaction' && element.short_label) ||
-                          (element.type === 'research_plan' && element.title()) || ''}
-                        objSrc={element.svgPath ? element.svgPath : ''}
-                        objPreview={element.title()}
+                        hasPop={['reaction', 'research_plan'].includes(element.type)}
+                        preivewObject={{
+                          txtOnly: element.title(),
+                          isSVG: true,
+                          src: element.svgPath
+                        }}
+                        popObject={{
+                          title: (element.type === 'reaction' && element.short_label) ||
+                                  (element.type === 'research_plan' && element.title()) || '',
+                          src: element.svgPath,
+                          height: '26vh',
+                          width: '52vw' }}
                       />
-                    ) : element.title() 
                   }
                   {this.reactionStatus(element)}
                   {' '}
