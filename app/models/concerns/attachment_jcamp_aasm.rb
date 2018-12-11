@@ -17,8 +17,8 @@ module AttachmentJcampAasm
       state :failure
       state :non_jcamp
 
-      event :set_peaked do
-        transitions from: :idle, to: :peaked
+      event :set_force_peaked do
+        transitions from: %i[queueing], to: :peaked
       end
 
       event :set_edited do
@@ -46,7 +46,7 @@ module AttachmentJcampAasm
       end
 
       event :set_failure do
-        transitions from: %i[idle queueing], to: :failure
+        transitions from: %i[idle queueing peaked edited failure], to: :failure
       end
     end
   end
@@ -61,12 +61,16 @@ module AttachmentJcampAasm
   end
 
   def init_aasm
-    typname, extname = extension_parts
-    return set_peaked if %w[meta peak].include?(typname)
+    _, extname = extension_parts
     %w[dx jdx].include?(extname) ? set_queue : set_non_jcamp
   end
 
-  def require_peaks_generation?
+  def require_peaks_generation? # rubocop:disable CyclomaticComplexity
+    typname, extname = extension_parts
+    return if peaked? || edited?
+    return unless %w[dx jdx].include?(extname)
+    is_peak_edit = %w[peak edit].include?(typname)
+    return generate_img_only(typname) if is_peak_edit
     generate_peaks_spectrum if queueing? && !new_upload
   end
 end
@@ -108,24 +112,25 @@ module AttachmentJcampProcess
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Edit.spectrum_peaks_edit(abs_path, peaks)
     generate_jcamp_att(tmp_jcamp, 'edit', true)
     img_att = generate_img_att(tmp_img, 'edit', true)
-    set_backup!
+    set_backup
     delete_tmps([tmp_jcamp, tmp_img])
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
   rescue
-    set_failure!
+    set_failure
     Rails.logger.info('**** Spectra edit peaks fails ***')
   end
 
   def generate_peaks_spectrum
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum_peaks_gene(abs_path)
     generate_jcamp_att(tmp_jcamp, 'peak')
-    generate_img_att(tmp_img, 'peak')
+    img_att = generate_img_att(tmp_img, 'peak')
     set_done
     delete_tmps([tmp_jcamp, tmp_img])
+    delete_related_imgs(img_att)
     delete_edit_peak_after_done
   rescue
-    set_failure!
+    set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
   end
 
@@ -142,7 +147,9 @@ module AttachmentJcampProcess
   end
 
   def fname_wo_ext(target)
-    target.filename_parts[0..-3].join('_')
+    parts = target.filename_parts
+    ending = parts.length == 2 ? -2 : -3
+    parts[0..ending].join('_')
   end
 
   def delete_related_imgs(img_att)
@@ -156,5 +163,16 @@ module AttachmentJcampProcess
       )
       att.delete if is_delete
     end
+  end
+
+  def generate_img_only(typname)
+    _, tmp_img = Chemotion::Jcamp::CreateImg.spectrum_img_gene(abs_path)
+    img_att = generate_img_att(tmp_img, typname)
+    typname == 'edit' ? set_edited : set_force_peaked
+    delete_related_imgs(img_att)
+    delete_tmps([tmp_img])
+  rescue
+    set_failure
+    Rails.logger.info('**** Jcamp Image Generation fails ***')
   end
 end
