@@ -111,7 +111,7 @@ class ViewSpectra extends React.Component {
     const layoutOps = SpectraOps[layout];
     const isArr = Array.isArray(layoutOps);
     if (isArr) {
-      return { head: layoutOps, tail: [{ insert: '; ' }] };
+      return { head: layoutOps, tail: [{ insert: '. ' }] };
     }
     return layoutOps;
   }
