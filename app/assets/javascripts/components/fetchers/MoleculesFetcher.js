@@ -63,7 +63,7 @@ export default class MoleculesFetcher {
 
   static updateNames(inchikey, newMolName = '') {
     const promise = fetch(`/api/v1/molecules/names?inchikey=${inchikey}` +
-      `&new_name=${newMolName}`, {
+      `&new_name=${escape(newMolName)}`, {
       credentials: 'same-origin',
     }).then(response => response.json())
       .then(json => json.molecules)
