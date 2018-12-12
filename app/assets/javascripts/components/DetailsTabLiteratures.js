@@ -13,7 +13,6 @@ import {
 } from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
-
 import {
   Citation,
   CitationUserRow,
@@ -23,7 +22,8 @@ import {
   AddButton,
   DoiInput,
   UrlInput,
-  TitleInput
+  TitleInput,
+  literatureContent
 } from './LiteratureCommon';
 import Sample from './models/Sample';
 import Reaction from './models/Reaction';
@@ -51,27 +51,7 @@ const CitationTable = ({ rows, sortedIds, userId, removeCitation }) => (
         const citation = rows.get(id)
         const prevCit = (k > 0) ? rows.get(ids[k-1]) : null
         const sameRef = prevCit && prevCit.id === citation.id
-        let content = "";
-        if (citation.refs.bibtex) {
-          const citationCite = new Cite(citation.refs.bibtex);
-          content = (
-            citationCite.format('bibliography', {
-                 format: 'text',
-                 template: 'apa',
-              })
-          );
-        } else if (citation.refs.citation) {
-          const citationCite = new Cite(citation.refs.citation);
-          content = (
-            citationCite.format('bibliography', {
-                 format: 'text',
-                 template: 'apa',
-              })
-          );
-        } else {
-          content = citation.title || " ";
-        }
-
+        const content = literatureContent(citation, true);
         return sameRef ? (
           <tr key={`header-${id}-${citation.id}`} className={`collapse literature_id_${citation.id}`}>
             <td className="padding-right">

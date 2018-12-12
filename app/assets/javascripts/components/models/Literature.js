@@ -6,16 +6,19 @@ export default class Literature extends Element {
       title: '',
       url: '',
       doi: '',
-      type: 'literature'
+      type: 'literature',
+      is_new: false,
+      refs: {}
     })
   }
 
   serialize() {
-    return({
+    return ({
       id: this.id,
       title: this.title,
       url: this.url,
       doi: this.doi,
+      type: this.type,
       is_new: this.isNew || false,
       refs: this.refs || {}
     });

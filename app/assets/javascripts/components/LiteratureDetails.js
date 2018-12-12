@@ -30,7 +30,8 @@ import {
   UrlInput,
   TitleInput,
   sortByElement,
-  sortByReference
+  sortByReference,
+  literatureContent
 } from './LiteratureCommon';
 import Literature from './models/Literature';
 import LiteratureMap from './models/LiteratureMap';
@@ -57,31 +58,6 @@ const CloseBtn = ({ onClose }) => (
 CloseBtn.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
-
-const buildContent = (citation) => {
-  let content = '';
-  if (citation && citation.refs && citation.refs.bibtex) {
-    const citationCite = new Cite(citation.refs.bibtex);
-    content = (
-      citationCite.format('bibliography', {
-        format: 'text',
-        template: 'apa',
-      })
-    );
-  } else if (citation && citation.refs && citation.refs.citation) {
-    const citationCite = new Cite(citation.refs.citation);
-    content = (
-      citationCite.format('bibliography', {
-        format: 'text',
-        template: 'apa',
-      })
-    );
-  } else {
-    content = `${citation.title}\n`;
-  }
-  return content;
-};
-
 
 const clipboardTooltip = () => (
   <Tooltip id="assign_button">copy to clipboard</Tooltip>
@@ -387,18 +363,17 @@ export default class LiteratureDetails extends Component {
     const label = currentCollection ? currentCollection.label : null
     let contentSamples = '';
     sampleRefs.forEach((citation) => {
-      contentSamples = `${contentSamples}\n${buildContent(citation)}`;
+      contentSamples = `${contentSamples}\n${literatureContent(citation, true)}`;
     });
     let contentReactions = '';
     reactionRefs.forEach((citation) => {
-      contentReactions = `${contentReactions}\n${buildContent(citation)}`;
+      contentReactions = `${contentReactions}\n${literatureContent(citation, true)}`;
     });
-
     const elements = [];
     let contentElements = '';
 
     selectedRefs.forEach((citation) => {
-      elements.push(buildContent(citation));
+      elements.push(literatureContent(citation, true));
     });
 
     uniqBy(elements).forEach((element) => {
