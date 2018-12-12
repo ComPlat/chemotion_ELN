@@ -5,12 +5,11 @@ import {
   Panel,
   Button,
 } from 'react-bootstrap';
-import { startsWith } from 'lodash';
+import { startsWith, filter, map, flatMap } from 'lodash';
 import Container from './models/Container';
 import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
 import QuillViewer from './QuillViewer';
-import SvgWithPopover from './common/SvgWithPopover';
 import ImageModal from './common/ImageModal';
 
 const previewImage = (container) => {
@@ -165,9 +164,12 @@ export default class ReactionDetailsContainers extends Component {
       let fetchNeeded = false;
       let fetchId = 0;
       if (container.preview_img && container.preview_img !== undefined && container.preview_img !== 'not available') {
-        fetchNeeded = startsWith(container.children[0].attachments[0].content_type, 'image/');
-        if (fetchNeeded) {
-          fetchId = container.children[0].attachments[0].id;
+        const containerAttachments = filter(container.children, o => o.attachments.length > 0);
+        const atts = flatMap(map(containerAttachments, 'attachments'));
+        const imageThumb = filter(atts, o => o.thumb === true && startsWith(o.content_type, 'image/'));
+        if (imageThumb && imageThumb.length > 0) {
+          fetchNeeded = true;
+          fetchId = imageThumb[0].id;
         }
       } else {
         hasPop = false;
