@@ -29,7 +29,7 @@ module Entities
       attachments = Attachment.where_container(dataset_ids.values.flatten).to_a
       code_logs =  CodeLog.where(source_id: dataset_ids.keys, source: 'container').to_a
 
-      bt.dig('children',0,'children').each do |analysis|
+      bt.dig('children',0,'children')&.each do |analysis|
         analysis['preview_img'] = preview_img(dataset_ids[analysis['id']], attachments)
         analysis['code_log'] = code_logs.find {|cl| cl.source_id == analysis['id']}.attributes
         analysis['children'].each do |dataset|

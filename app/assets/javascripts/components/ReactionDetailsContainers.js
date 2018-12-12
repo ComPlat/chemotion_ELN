@@ -72,6 +72,12 @@ export default class ReactionDetailsContainers extends Component {
     container.container_type = 'analysis';
     container.extended_metadata.content = { ops: [{ insert: '' }] };
 
+    if (reaction.container.children.length === 0) {
+      const analyses = Container.buildEmpty();
+      analyses.container_type = 'analyses';
+      reaction.container.children.push(analyses);
+    }
+
     reaction.container.children.filter(element => (
       ~element.container_type.indexOf('analyses')
     ))[0].children.push(container);
