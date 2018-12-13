@@ -294,27 +294,6 @@ export default class SampleDetails extends React.Component {
       return '';
   }
 
-  sampleQrCode() {
-    let uuid = this.state.sample.code_log && this.state.sample.code_log.id
-    return uuid
-     ? <SVG  src={`/images/qr/${uuid}.v1_l.svg`} className="qr-svg"/>
-     : null
-  }
-
-  sampleBarCode(sample) {
-    let barCode = sample.code_log && sample.code_log.value_sm
-    if(barCode != null)
-      return <Barcode
-                value={barCode}
-                width={1}
-                height={80}
-                fontSize={13}
-                margin={0}/>;
-    else
-      return '';
-  }
-
-
   initiateAnalysisButton(sample) {
     return (
       <div style={{display: "inline-block", marginLeft: "100px"}}>
