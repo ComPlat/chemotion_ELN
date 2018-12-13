@@ -1,4 +1,6 @@
 class AllElementSearch
+  PG_ELEMENTS = %w[Sample Reaction Screen Wellplate]
+
   def initialize(term)
     @term = term
   end
@@ -22,25 +24,26 @@ class AllElementSearch
       @results.empty?
     end
 
-    def by_collection_id(id)
-      if (@results.count > 0)
-        types = @results.map(&:searchable_type).uniq
-        first_type = types.first
-        query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
-                  "SELECT #{first_type}_id FROM collections_#{first_type}s "\
+    def by_collection_id(id, current_user)
+      types = if (prof = current_user&.profile&.data)
+                (prof.fetch('layout', {}).keys.map(&:capitalize)) & PG_ELEMENTS
+              else
+                PG_ELEMENTS
+              end
+      first_type = types.first
+      query = "(searchable_type = '#{first_type}' AND searchable_id IN (" \
+                "SELECT #{first_type}_id FROM collections_#{first_type}s "\
+                "WHERE collection_id = #{id} AND deleted_at IS NULL))"
+      if (types.count > 1)
+        types[1..-1].each { |type|
+          query = query +
+                  " OR (searchable_type = '#{type}' AND searchable_id IN (" \
+                  "SELECT #{type}_id FROM collections_#{type}s "\
                   "WHERE collection_id = #{id} AND deleted_at IS NULL))"
-        if (types.count > 1)
-          types[1..-1].each { |type|
-            query = query +
-                    " OR (searchable_type = '#{type}' AND searchable_id IN (" \
-                    "SELECT #{type}_id FROM collections_#{type}s "\
-                    "WHERE collection_id = #{id} AND deleted_at IS NULL))"
-          }
-        end
-
-        @results = @results.where(query)
+        }
       end
 
+      @results = @results.where(query)
       Results.new(@results)
     end
 
