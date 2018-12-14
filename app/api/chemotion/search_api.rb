@@ -315,7 +315,7 @@ module Chemotion
           # MW + external_label (dl_s = 0) and the other info only available
           # from dl_s > 0. For now one can use the suggested search instead.
           if dl_s > 0
-            AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id)
+            AllElementSearch.new(arg).search_by_substring.by_collection_id(c_id, current_user)
           else
             AllElementSearch::Results.new(Sample.none)
           end
@@ -345,8 +345,6 @@ module Chemotion
       end
 
       def elements_by_scope(scope, collection_id = @c_id)
-        return {} if scope.empty?
-
         elements = {}
 
         user_samples = Sample.by_collection_id(collection_id)
@@ -362,28 +360,28 @@ module Chemotion
           wells: :sample
         )
         user_screens = Screen.by_collection_id(collection_id)
-        case scope.first
+        case scope&.first
         when Sample
-          elements[:samples] = scope.pluck(:id)
+          elements[:samples] = scope&.pluck(:id)
           elements[:reactions] = (
-            user_reactions.by_sample_ids(scope.map(&:id)).pluck(:id)
+            user_reactions.by_sample_ids(scope&.map(&:id)).pluck(:id)
           ).uniq
-          elements[:wellplates] = user_wellplates.by_sample_ids(scope.map(&:id)).uniq.pluck(:id)
+          elements[:wellplates] = user_wellplates.by_sample_ids(scope&.map(&:id)).uniq.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
         when Reaction
-          elements[:reactions] = scope.pluck(:id)
-          elements[:samples] = user_samples.by_reaction_ids(scope.map(&:id)).pluck(:id).uniq
+          elements[:reactions] = scope&.pluck(:id)
+          elements[:samples] = user_samples.by_reaction_ids(scope&.map(&:id)).pluck(:id).uniq
           elements[:wellplates] = user_wellplates.by_sample_ids(elements[:samples]).uniq.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
         when Wellplate
-          elements[:wellplates] = scope.pluck(:id)
+          elements[:wellplates] = scope&.pluck(:id)
           elements[:screens] = user_screens.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
           elements[:samples] = user_samples.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
           elements[:reactions] = (
             user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq
         when Screen
-          elements[:screens] = scope.pluck(:id)
+          elements[:screens] = scope&.pluck(:id)
           elements[:wellplates] = user_wellplates.by_screen_ids(scope).uniq.pluck(:id)
           elements[:samples] = user_samples.by_wellplate_ids(elements[:wellplates]).uniq.pluck(:id)
           elements[:reactions] = (
@@ -391,20 +389,20 @@ module Chemotion
           ).uniq.pluck(:id)
         when AllElementSearch::Results
           # TODO check this samples_ids + molecules_ids ????
-          elements[:samples] = (scope.samples_ids + scope.molecules_ids)
+          elements[:samples] = (scope&.samples_ids + scope&.molecules_ids)
 
           elements[:reactions] = (
-            scope.reactions_ids +
+            scope&.reactions_ids +
             user_reactions.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq
 
           elements[:wellplates] = (
-            scope.wellplates_ids +
+            scope&.wellplates_ids +
             user_wellplates.by_sample_ids(elements[:samples]).pluck(:id)
           ).uniq
 
           elements[:screens] = (
-            scope.screens_ids +
+            scope&.screens_ids +
             user_screens.by_wellplate_ids(elements[:wellplates]).pluck(:id)
           ).uniq
         end
