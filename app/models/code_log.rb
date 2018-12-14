@@ -1,6 +1,6 @@
 class CodeLog < ActiveRecord::Base
   acts_as_paranoid
-  after_create  :set_digit_value, :create_qr_svgs
+  after_create  :set_digit_value
 
   def set_value_xs
     self.value_xs = Chemotion::CodeCreator.create_code_xs

@@ -145,28 +145,6 @@ export default class WellplateDetails extends Component {
     )
   }
 
-  wellplateQrCode() {
-    let uuid = this.state.wellplate.code_log && this.state.wellplate.code_log.id
-    return uuid
-     ? <SVG  src={`/images/qr/${uuid}.v1_l.svg`} className="qr-svg"/>
-     : null
-    }
-
-  wellplateBarCode(wellplate) {
-    let barCode = wellplate.code_log && wellplate.code_log.value_sm
-    if(barCode != null)
-      return <Barcode
-                value={barCode}
-                width={1}
-                height={80}
-                fontSize={13}
-                marginTop={10}
-                marginBottom={10}
-                margin={0}/>;
-    else
-      return '';
-  }
-
   render() {
     const {wellplate, activeTab, showWellplate} = this.state;
     const {wells, name, size, description} = wellplate;
@@ -197,10 +175,6 @@ export default class WellplateDetails extends Component {
                     width={60}
                     />
                 </Well>
-              </Col>
-              <Col md={2}>
-                {this.wellplateBarCode(wellplate)}
-                {this.wellplateQrCode()}
               </Col>
             </Row>
           </Tab>
