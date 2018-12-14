@@ -3,44 +3,81 @@
 # inchikey found in PC db
 class GateTransferJob < ActiveJob::Base
   # queue_as :gate_transfer
+  # job_options retry: false
+  SAMPLE = 'Sample'
+  REACTION = 'Reaction'
+  STATE_BEFORE_TRANSFER = 'before transfer'
+  STATE_TRANSFER = 'transferring'
+  STATE_TRANSFERRED = 'transferred'
 
-  def perform(id, url, req_headers, batch_size = 2)
+
+  def perform(id, url, req_headers)
     # ping remote
-    connection = Faraday.new(url: url) do |f|
+    @url = url
+    @req_headers = req_headers
+
+    connection = Faraday.new(url: @url) do |f|
       f.use FaradayMiddleware::FollowRedirects
-      f.headers = req_headers
+      f.headers = @req_headers
       f.adapter :net_http
     end
-    resp = connection.get { |req| req.url('/api/v1/gate/ping') }
-    raise resp.reason_phrase unless resp.success?
 
-    collection = Collection.find(id)
+    @resp = connection.get { |req| req.url('/api/v1/gate/ping') }
+    raise @resp.reason_phrase unless @resp.success?
 
-    reaction_ids = CollectionsReaction.select(:reaction_id)
+    @reactions = []
+    @samples = []
+
+    @collection = Collection.find(id)
+    all_reaction_ids = CollectionsReaction.select(:reaction_id)
                                       .where(collection_id: id)
-                                      .limit(batch_size).pluck(:reaction_id)
+                                      .pluck(:reaction_id)
 
-    # NB: process all reactions first by selecting no sample if reactions are present.
-    #     Export::ExportJson will automatically export reaction associated samples.
-    sample_ids = if reaction_ids.present?
-                   nil
-                 else
-                   CollectionsSample.select(:sample_id).where(collection_id: id)
-                                    .limit(batch_size).pluck(:sample_id)
-                 end
+    reaction_sample_ids = Reaction.get_associated_samples(all_reaction_ids)
+
+    all_sample_ids = CollectionsSample.select(:sample_id).where(collection_id: id)
+                                    .pluck(:sample_id) - reaction_sample_ids
+
+
+    return true if all_reaction_ids.nil? && all_sample_ids.nil?
+
+    if (all_reaction_ids&.count > 0 || all_sample_ids&.count > 0)
+
+      all_reaction_ids.each { |reaction_id|
+        transfer_data({type: GateTransferJob::REACTION, id: reaction_id, state:GateTransferJob::STATE_BEFORE_TRANSFER, msg:'' })
+      }
+
+      all_sample_ids.each { |sample_id|
+        transfer_data({type: GateTransferJob::SAMPLE, id: sample_id, state:GateTransferJob::STATE_BEFORE_TRANSFER, msg:'' })
+      }
+
+      if (@reactions.count > 0 || @samples.count > 0)
+        MoveToCollectionJob.set(queue: "move_to_collection_#{id}")
+                     .perform_later(id, @reactions, @samples)
+      end
+    end
+    true
+  end
+
+  def transfer_data(element)
     begin
+      sample_ids = [element[:id]] if element[:type] == GateTransferJob::SAMPLE
+      reaction_ids = [element[:id]] if element[:type] == GateTransferJob::REACTION
       exp = Export::ExportJson.new(
-        collection_id: collection.id, sample_ids: sample_ids, reaction_id: reaction_ids
+        collection_id: @collection.id, sample_ids: sample_ids, reaction_ids: reaction_ids
       ).export
       attachment_ids = exp.data.delete('attachments')
       attachments = Attachment.where(id: attachment_ids)
+
       data_file = Tempfile.new
       data_file.write(exp.to_json)
       data_file.rewind
+
       req_payload = {}
       req_payload[:data] = Faraday::UploadIO.new(
         data_file.path, 'application/json', 'data.json'
       )
+
       tmp_files = []
       attachments.each do |att|
         cont_type = att.content_type || MimeMagic.by_path(att.filename)&.type
@@ -52,42 +89,39 @@ class GateTransferJob < ActiveJob::Base
         )
       end
 
-      payload_connection = Faraday.new(url: url) { |f|
+      payload_connection = Faraday.new(url: @url) { |f|
         f.use FaradayMiddleware::FollowRedirects
         f.request :multipart
-        f.headers = req_headers.merge('Accept' => 'application/json')
+        f.headers = @req_headers.merge('Accept' => 'application/json')
         f.adapter :net_http
       }
-      resp = payload_connection.post { |req|
+
+      @resp = payload_connection.post { |req|
         req.url('/api/v1/gate/receiving')
         req.body = req_payload
       }
-      if resp.success?
-        tr_col = collection.children.find_or_create_by(
-          user_id: collection.user_id, label: 'transferred'
-        )
-        CollectionsSample.move_to_collection(
-          sample_ids, collection, tr_col.id
-        ) if sample_ids.present?
-        CollectionsReaction.move_to_collection(
-          reaction_ids, collection, tr_col.id
-        ) if reaction_ids.present?
+
+      if @resp.success?
+        element[:state] = GateTransferJob::STATE_TRANSFERRED
+      else
+        element[:state] = GateTransferJob::STATE_TRANSFER
+        element[:msg] = 'resp is not success'
       end
-      # status(resp.status)
+    rescue => e
+      Rails.logger.error element
+      element[:state] = GateTransferJob::STATE_TRANSFER
+      element[:msg] = e
     ensure
-      data_file.close
-      data_file.unlink
+      @samples.push(element) if element[:type] == GateTransferJob::SAMPLE
+      @reactions.push(element) if element[:type] == GateTransferJob::REACTION
+
+      data_file.close unless data_file.nil?
+      data_file.unlink unless data_file.nil?
       tmp_files.each do |tf|
         tf.close
         tf.unlink
       end
     end
-    no_sample_left = CollectionsSample.select(:sample_id).where(collection_id: id)
-                                      .limit(batch_size).pluck(:sample_id).empty?
-    unless no_sample_left
-      GateTransferJob.set(queue: "gate_transfer_#{collection.id}")
-                     .perform_later(id, url, req_headers, batch_size)
-    end
-    true
   end
+
 end

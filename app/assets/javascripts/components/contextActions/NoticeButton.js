@@ -62,6 +62,9 @@ const handleNotification = (nots, act, needCallback = true) => {
           const { cprop } = n.content;
           ElementActions.refreshComputedProp(cprop);
         }
+        if (n.content.action === 'RefreshChemotionCollection') {
+          CollectionActions.fetchUnsharedCollectionRoots();
+        }
       }
     }
   });
