@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, OverlayTrigger, Badge, Glyphicon} from 'react-bootstrap';
+import {Button, OverlayTrigger, Badge, Glyphicon, Tooltip } from 'react-bootstrap';
 import CollectionStore from './stores/CollectionStore';
 import CollectionActions from './actions/CollectionActions';
 import CollectionSubtree from './CollectionSubtree';
@@ -18,6 +18,8 @@ import UnsortedBox from './inbox/UnsortedBox';
 import {DragDropContext} from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 import DragDropItemTypes from './DragDropItemTypes';
+
+const colVisibleTooltip = <Tooltip id="col_visible_tooltip">Toggle own collections</Tooltip>;
 
 export default class CollectionTree extends React.Component {
   constructor(props) {
@@ -285,10 +287,12 @@ export default class CollectionTree extends React.Component {
       <div>
         <div className="tree-view">
           {this.collectionManagementButton()}
-          <div className="title" style={{backgroundColor:'white'}}
-               onClick={() => this.setState({ownCollectionVisible: !ownCollectionVisible})}>
-            <i className="fa fa-list" /> &nbsp;&nbsp; Collections
-          </div>
+          <OverlayTrigger placement="top" delayShow={1000} overlay={colVisibleTooltip}>
+            <div className="title" style={{backgroundColor:'white'}}
+                 onClick={() => this.setState({ownCollectionVisible: !ownCollectionVisible})}>
+              <i className="fa fa-list" /> &nbsp;&nbsp; Collections
+            </div>
+          </OverlayTrigger>
         </div>
         <div className="tree-wrapper" style={{display: ownCollectionDisplay}}>
           {this.lockedSubtrees()}

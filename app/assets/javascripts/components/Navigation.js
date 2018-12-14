@@ -1,5 +1,5 @@
 import React from 'react';
-import {Nav, Navbar} from 'react-bootstrap';
+import { Nav, Navbar, Tooltip, OverlayTrigger } from 'react-bootstrap';
 import UserAuth from './UserAuth';
 import Search from './search/Search';
 import ManagingActions from './managing_actions/ManagingActions';
@@ -14,6 +14,8 @@ import NavHead from '../libHome/NavHead'
 import DocumentHelper from '../components/utils/DocumentHelper';
 import NavigationModal from './NavigationModal';
 import SearchFilter from './search/SearchFilter.js'
+
+const colMenuTooltip = <Tooltip id="col_menu_tooltip">Toggle sidebar</Tooltip>;
 
 export default class Navigation extends React.Component {
   constructor(props) {
@@ -97,8 +99,10 @@ export default class Navigation extends React.Component {
     return (
       <Navbar.Header className="collec-tree">
         <Navbar.Text style={{cursor: "pointer"}}>
-          <i  className="fa fa-list" style={{fontStyle: "normal"}}
-              onClick={this.toggleCollectionTree} />
+          <OverlayTrigger placement="right" delayShow={1000} overlay={colMenuTooltip}>
+            <i  className="fa fa-list" style={{fontStyle: "normal"}}
+                onClick={this.toggleCollectionTree} />
+          </OverlayTrigger>
         </Navbar.Text>
         <Navbar.Text />
         <NavHead />
