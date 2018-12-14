@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Button, FormControl } from 'react-bootstrap';
 import Immutable from 'immutable';
 import Cite from 'citation-js';
-
 import Literature from './models/Literature';
 import LiteraturesFetcher from './fetchers/LiteraturesFetcher';
 
@@ -80,33 +79,55 @@ const doiValid = (doi) => {
   return sanitized && sanitized.match(/10.\w+\/\S+/) && true;
 };
 
+const literatureContent = (literature, onlyText) => {
+  let content;
+
+  if (literature.refs && literature.refs.citation) {
+    content = (
+      <div>
+        {literature.refs.citation.format('bibliography', {
+           format: 'text',
+           template: 'apa',
+        })}
+      </div>
+    );
+  } else if (literature.refs && literature.refs.bibtex) {
+    let litBibtex = literature.refs.bibtex;
+    if (litBibtex.split('{').length > 1) {
+      let indexData = litBibtex.split('{')[1];
+      indexData = indexData.substr(0, indexData.lastIndexOf(','));
+      litBibtex = litBibtex.replace(indexData, indexData.replace(/[^a-zA-Z0-9\-_]/g, ''));
+    }
+    const citation = new Cite(litBibtex);
+    if (onlyText) {
+      content = citation.format('bibliography', {
+        format: 'text',
+        template: 'apa',
+      });
+    } else {
+      content = (
+        <div>
+          {citation.format('bibliography', {
+             format: 'text',
+             template: 'apa',
+          })}
+        </div>
+      );
+    }
+  } else if (onlyText) {
+    content = literature.title || ' ';
+  } else {
+    content = <span>{literature.title}{literature.year ? `, ${literature.year}` : null}</span>;
+  }
+  return content;
+}
+
 const Citation = ({ literature }) => {
   const { title, year, doi, url, refs } = literature;
   const formatedDoi = doi ? `https://dx.doi.org/${sanitizeDoi(doi)}` : null;
   const link = formatedDoi || url;
-  let content;
-  if (refs && refs.citation) {
-    content = (
-      <div>
-        {refs.citation.format('bibliography', {
-           format: 'text',
-           template: 'apa',
-        })}
-      </div>
-    );
-  } else if (refs && refs.bibtex) {
-    const citation = new Cite(refs.bibtex);
-    content = (
-      <div>
-        {citation.format('bibliography', {
-           format: 'text',
-           template: 'apa',
-        })}
-      </div>
-    );
-  } else {
-    content = <span>{title}{year ? `, ${year}` : null}</span>;
-  }
+  const content = literatureContent(literature);
+
   return (
     <a
       href={link}
@@ -208,5 +229,6 @@ export {
   TitleInput,
   groupByCitation,
   sortByElement,
-  sortByReference
+  sortByReference,
+  literatureContent
 };
