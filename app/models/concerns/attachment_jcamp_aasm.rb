@@ -61,6 +61,7 @@ module AttachmentJcampAasm
   end
 
   def init_aasm
+    return unless idle?
     _, extname = extension_parts
     %w[dx jdx].include?(extname) ? set_queue : set_non_jcamp
   end
