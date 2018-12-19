@@ -311,12 +311,19 @@ module Chemotion
 
           @sample.update!(attributes)
 
-          serialized_sample = ElementPermissionProxy.new(
-                                current_user,
-                                @sample,
-                                user_ids,
-                                @element_policy,
-                              ).serialized
+          var_detail_level = db_exec_detail_level_for_sample(current_user.id, @sample.id)
+          nested_detail_levels = {}
+          nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
+          nested_detail_levels[:wellplate] = [var_detail_level[0]['detail_level_wellplate'].to_i]
+
+          klass = "Entities::SampleEntity::Level#{nested_detail_levels[:sample]}".constantize
+          opt = {
+            nested_dl: nested_detail_levels,
+            policy: @element_policy,
+            current_user: current_user, serializable: true
+          }
+          serialized_sample = klass.represent(@sample, opt)
+
           { sample: serialized_sample }
         end
       end
