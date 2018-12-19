@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import SpectraActions from './actions/SpectraActions';
 import SpectraStore from './stores/SpectraStore';
 import { SpectraOps } from './utils/quillToolbarSymbol';
+import { fixDigit } from './utils/MathUtils';
 
 class ViewSpectra extends React.Component {
   constructor(props) {
@@ -85,13 +86,13 @@ class ViewSpectra extends React.Component {
   spectraDigit(layout) {
     switch (layout) {
       case LIST_LAYOUT.C13:
-        return 10;
-      case LIST_LAYOUT.IR:
         return 1;
+      case LIST_LAYOUT.IR:
+        return 0;
       case LIST_LAYOUT.H1:
       case LIST_LAYOUT.PLAIN:
       default:
-        return 100;
+        return 2;
     }
   }
 
@@ -99,10 +100,7 @@ class ViewSpectra extends React.Component {
     const peaksXY = ToXY(peaks);
     const digit = this.spectraDigit(layout);
 
-    const result = peaksXY.map((p) => {
-      const valX = Math.round(parseFloat(p[0]) * digit) / digit;
-      return valX;
-    });
+    const result = peaksXY.map(p => fixDigit(parseFloat(p[0]), digit));
     const ordered = result.sort((a, b) => a - b).join(', ');
     return ordered;
   }
