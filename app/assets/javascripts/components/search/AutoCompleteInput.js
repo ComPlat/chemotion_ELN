@@ -265,6 +265,7 @@ export default class AutoCompleteInput extends React.Component {
       screen_name : {icon: 'icon-screen', label: 'Screen'},
       iupac_name : {icon: 'icon-sample', label: 'Molecule'},
       inchistring : {icon: 'icon-sample', label: 'InChI'},
+      inchikey: { icon: 'icon-sample', label: 'InChIKey'},
       cano_smiles : {icon: 'icon-sample', label: 'Canonical Smiles'},
       sum_formula : {icon: 'icon-sample', label: 'Sum Formula'},
       requirements : {icon: 'icon-screen', label: 'Requirement'},

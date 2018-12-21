@@ -29,6 +29,9 @@ class Molecule < ActiveRecord::Base
   scope :by_inchistring, -> (query) {
     where('inchistring ILIKE ?', "%#{query}%")
   }
+  scope :by_inchikey, -> (query) {
+    where('inchikey ILIKE ?', "%#{query}%")
+  }
   scope :by_cano_smiles, -> (query) {
     where('cano_smiles ILIKE ?', "%#{query}%")
   }

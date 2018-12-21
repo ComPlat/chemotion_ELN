@@ -53,6 +53,7 @@ module Chemotion
           sum_formula = dl_s > 0 && search_by_field.call(Molecule, :sum_formular, qry) || []
           iupac_name = dl_s > 0 && search_by_field.call(Molecule, :iupac_name, qry) || []
           inchistring = dl_s > 0 && search_by_field.call(Molecule, :inchistring, qry) || []
+          inchikey = dl_s > 0 && search_by_field.call(Molecule, :inchikey, qry) || []
           cano_smiles = dl_s > 0 && search_by_field.call(Molecule, :cano_smiles, qry) || []
           {
             sample_short_label: sample_short_label,
@@ -62,6 +63,7 @@ module Chemotion
             sum_formula: sum_formula,
             iupac_name: iupac_name,
             inchistring: inchistring,
+            inchikey: inchikey,
             cano_smiles: cano_smiles
           }
         when 'reactions'
@@ -113,6 +115,7 @@ module Chemotion
           sum_formula = dl_s > 0 && search_by_field.call(Molecule, :sum_formular, qry) || []
           iupac_name = dl_s > 0 && search_by_field.call(Molecule, :iupac_name, qry) || []
           inchistring = dl_s > 0 && search_by_field.call(Molecule, :inchistring, qry) || []
+          inchikey = dl_s > 0 && search_by_field.call(Molecule, :inchikey, qry) || []
           cano_smiles = dl_s > 0 && search_by_field.call(Molecule, :cano_smiles, qry) || []
           reaction_name = dl_r > -1 && search_by_field.call(Reaction, :name, qry) || []
           reaction_status = dl_r > -1 && search_by_field.call(Reaction, :status, qry) || []
@@ -129,6 +132,7 @@ module Chemotion
             sum_formula: sum_formula,
             iupac_name: iupac_name,
             inchistring: inchistring,
+            inchikey: inchikey,
             cano_smiles: cano_smiles,
             reaction_name: reaction_name,
             reaction_short_label: reaction_short_label,
