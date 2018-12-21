@@ -84,6 +84,7 @@ module Chemotion
           @url = @jwt.fqdn # fqdn should actually be eq to an orgin (proto/host/port)
           @req_headers = { 'Authorization' => "Bearer #{@jwt.token}", 'Origin' => request.headers['Referer'] }
           @queue = "gate_transfer_#{@collection.id}"
+          @move_queue = "move_to_collection_#{@collection.id}"
           # TODO: use persistent connection
           connection = Faraday.new(url: @url) do |f|
             f.use FaradayMiddleware::FollowRedirects
@@ -104,13 +105,14 @@ module Chemotion
 
           post do
             Delayed::Job.where(queue: @queue).destroy_all
+            Delayed::Job.where(queue: @move_queue).destroy_all
             GateTransferJob.set(queue: @queue)
                            .perform_later(@collection.id, @url, @req_headers)
-            status 204
+            status 202
           end
 
           delete do
-            Delayed::Job.where(queue: @queue).destroy_all && status(202)
+            Delayed::Job.where(queue: @queue).destroy_all && Delayed::Job.where(queue: @move_queue).destroy_all && status(202)
           end
         end
       end

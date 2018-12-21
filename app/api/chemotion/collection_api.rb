@@ -262,7 +262,7 @@ module Chemotion
             ).compact
             e[2].move_to_collection(ids, current_collection_id, collection_id)
           end
-          status 204
+          status 202
         end
 
         desc 'Assign a collection to a set of elements by UI state'

@@ -13,4 +13,5 @@ class Channel < ActiveRecord::Base
   SEND_INDIVIDUAL_USERS = 'Send Individual Users'
   SEND_IMPORT_NOTIFICATION = 'Import Notification'
   COMPUTED_PROPS_NOTIFICATION = 'Computed Prop Notification'
+  GATE_TRANSFER_NOTIFICATION = 'Gate Transfer Completed'
 end
