@@ -88,6 +88,14 @@ module Export
         %w(description observation).each do |column|
           el[column] = JSON.parse(YAML.load(el[column]).to_json) if el[column]
         end
+        svg_file = if !el['reaction_svg_file'].blank?
+                     File.join('reactions', el['reaction_svg_file'])
+                   end
+        svg_path = svg_file && Rails.root.join(
+          'public', 'images', svg_file
+        )
+        svg = File.read(svg_path) if File.exist?(svg_path)
+        el['reaction_svg_file'] = svg || nil
         # %w(dangerous_products purification).each do |column|
         #   el[column] = JSON.parse(el[column]) if el[column]
         # end
@@ -110,7 +118,7 @@ module Export
     def reaction_sql
       <<~SQL
       select json_object_agg(dump.uuid, row_to_json(dump)) as reactions from(
-      select r."name", r.created_at, r.updated_at, r.description, r."role"
+      select r."name", r.reaction_svg_file, r.created_at, r.updated_at, r.description, r."role"
         , r.timestamp_start, r.timestamp_stop, r.observation
         , array_to_json(r.purification) as purification
         , array_to_json(r.dangerous_products) as dangerous_products

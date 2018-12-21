@@ -247,8 +247,8 @@ class Import::ImportJson
         'is_top_secret', 'molecule_svg_file'
        ]
       attributes += ['residues_attributes', 'elemental_compositions_attributes', 'molecule_name_attributes']
-    when 'Reaction'
-      attributes -= ['reaction_svg_file']
+    # when 'Reaction'
+    #   attributes -= ['reaction_svg_file']
     end
     attributes
   end
