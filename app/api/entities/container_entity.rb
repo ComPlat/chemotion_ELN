@@ -42,11 +42,20 @@ module Entities
 
     private
     def preview_img(container_ids, attachments)
-      attachment = attachments.find { |a|
-        a.thumb == true && a.attachable_type == 'Container' && container_ids.include?(a.attachable_id)
+      attachments = attachments.select { |a|
+        a.thumb == true &&
+          a.attachable_type == 'Container' &&
+          container_ids.include?(a.attachable_id)
       }
+      attachment = attachments[0]
+      attachments.each do |a|
+        if a.non_jcamp?
+          attachment = a
+          break
+        end
+      end
       preview = attachment.read_thumbnail if attachment
-      preview && Base64.encode64(preview) || "not available"
+      preview && Base64.encode64(preview) || 'not available'
     end
 
     def get_extended_metadata(container)
