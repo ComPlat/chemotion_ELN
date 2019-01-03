@@ -67,7 +67,7 @@ export default class SampleDetails extends React.Component {
       qrCodeSVG: "",
       isCasLoading: false,
       showMolfileModal: false,
-      smileReadonly: true,
+      smileReadonly: !props.sample.isNew,
       quickCreator: false,
       btnSpcDisabled: true,
     };
@@ -86,9 +86,13 @@ export default class SampleDetails extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.sample.isNew && !nextProps.sample.molfile) {
+    if (nextProps.sample.isNew && (typeof (nextProps.sample.molfile) === 'undefined' || nextProps.sample.molfile.length === 0)) {
       this.setState({
         smileReadonly: false,
+      });
+    } else {
+      this.setState({
+        smileReadonly: true,
       });
     }
     this.setState({
