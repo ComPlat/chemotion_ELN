@@ -16,10 +16,8 @@ import _ from 'lodash';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
-import SpectraActions from './actions/SpectraActions';
 import LoadingActions from './actions/LoadingActions';
 
-import SpectraStore from './stores/SpectraStore';
 import UIStore from './stores/UIStore';
 import UserStore from './stores/UserStore';
 import UIActions from './actions/UIActions';
@@ -69,14 +67,12 @@ export default class SampleDetails extends React.Component {
       showMolfileModal: false,
       smileReadonly: !props.sample.isNew,
       quickCreator: false,
-      btnSpcDisabled: true,
     };
 
     const data = UserStore.getState().profile.data || {};
     this.enableComputedProps = _.get(data, 'computed_props.enable', false);
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
-    this.onSpectraStoreChange = this.onSpectraStoreChange.bind(this);
     this.clipboard = new Clipboard('.clipboardBtn');
     this.addManualCas = this.addManualCas.bind(this);
     this.handleMolfileShow = this.handleMolfileShow.bind(this);
@@ -104,13 +100,11 @@ export default class SampleDetails extends React.Component {
 
   componentDidMount() {
     UIStore.listen(this.onUIStoreChange);
-    SpectraStore.listen(this.onSpectraStoreChange);
   }
 
   componentWillUnmount() {
     this.clipboard.destroy();
     UIStore.unlisten(this.onUIStoreChange);
-    SpectraStore.unlisten(this.onSpectraStoreChange);
   }
 
   onUIStoreChange(state) {
@@ -131,11 +125,6 @@ export default class SampleDetails extends React.Component {
     this.setState({
       showMolfileModal: false
     });
-  }
-
-  onSpectraStoreChange(state) {
-    const btnSpcDisabled = state.options.length === 0;
-    this.setState({ btnSpcDisabled });
   }
 
   handleSampleChanged(sample) {
@@ -344,15 +333,8 @@ export default class SampleDetails extends React.Component {
     }
   }
 
-  toggleSpectraModal(sample) {
-    SpectraActions.ToggleModal();
-    SpectraActions.LoadSpectra.defer(sample);
-  }
-
   sampleHeader(sample) {
     let saveBtnDisplay = sample.isEdited ? '' : 'none'
-    const { btnSpcDisabled } = this.state;
-    const onToggleSpectraModal = () => this.toggleSpectraModal(sample);
 
     return (
       <div>
@@ -388,20 +370,6 @@ export default class SampleDetails extends React.Component {
           <Button bsStyle="info" bsSize="xsmall" className="button-right"
             onClick={() => this.props.toggleFullScreen()}>
             <i className="fa fa-expand"></i>
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger
-          placement="bottom"
-          overlay={<Tooltip id="spectra">Spectra Viewer</Tooltip>}
-        >
-          <Button
-            bsStyle="info"
-            bsSize="xsmall"
-            className="button-right"
-            onClick={onToggleSpectraModal}
-            disabled={btnSpcDisabled}
-          >
-            <i className="fa fa-area-chart" />
           </Button>
         </OverlayTrigger>
         <PrintCodeButton element={sample}/>

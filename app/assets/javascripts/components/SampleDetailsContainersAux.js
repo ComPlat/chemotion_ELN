@@ -1,10 +1,12 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import { Button, Checkbox, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { startsWith, filter, map, flatMap } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
+import SpectraActions from './actions/SpectraActions';
+import { BuildSpcInfo } from './utils/SpectraHelper';
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
@@ -96,8 +98,10 @@ const previewImage = (container) => {
   }
 };
 
-const headerBtnGroup = (container, sample, mode, handleRemove,
-  toggleAddToReport, isDisabled, readOnly) => {
+const headerBtnGroup = (
+  container, sample, mode, handleRemove,
+  toggleAddToReport, isDisabled, readOnly,
+) => {
   if (mode !== 'edit') {
     return null;
   }
@@ -112,6 +116,13 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
   const onToggleAddToReport = (e) => {
     e.stopPropagation();
     toggleAddToReport(container);
+  };
+
+  const spcInfo = BuildSpcInfo(sample, container);
+  const toggleSpectraModal = (e) => {
+    e.stopPropagation();
+    SpectraActions.ToggleModal();
+    SpectraActions.LoadSpectra.defer(spcInfo);
   };
 
   return (
@@ -130,6 +141,20 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
         analyses={[container]}
         ident={container.id}
       />
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="spectra">Spectra Viewer</Tooltip>}
+      >
+        <Button
+          bsStyle="info"
+          bsSize="xsmall"
+          className="button-right"
+          onClick={toggleSpectraModal}
+          disabled={!spcInfo}
+        >
+          <i className="fa fa-area-chart" />
+        </Button>
+      </OverlayTrigger>
       <span
         className="button-right add-to-report"
         onClick={stopBubble}

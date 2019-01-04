@@ -6,31 +6,18 @@ import SpectraActions from '../actions/SpectraActions';
 
 class SpectraStore {
   constructor() {
-    this.options = [];
-    this.allSpectra = [];
-    this.selectedOpt = null;
+    this.jcamp = null;
+    this.spcInfo = null;
     this.showModal = false;
     this.fetched = false;
 
     this.bindListeners({
-      handleInitOpts: SpectraActions.InitOpts,
-      handleSelect: SpectraActions.Select,
       handleToggleModal: SpectraActions.ToggleModal,
       handleLoadSpectra: SpectraActions.LoadSpectra,
     });
   }
 
-  handleInitOpts({ options }) {
-    const selectedOpt = options[0];
-    this.setState({
-      options,
-      selectedOpt,
-      fetched: false,
-      allSpectra: [],
-    });
-  }
-
-  buildAllSpectra(result) {
+  buildSpectrum(result) {
     const { files } = result;
     if (!files) return [];
     const decodedFiles = files.map((f) => {
@@ -43,25 +30,22 @@ class SpectraStore {
         return null;
       }
     }).filter(r => r != null);
-    return decodedFiles;
-  }
-
-  handleSelect(selectedOpt) {
-    this.setState({ selectedOpt });
+    if (!decodedFiles) return [];
+    return decodedFiles[0];
   }
 
   handleToggleModal() {
     this.setState({
+      jcamp: null,
+      spcInfo: null,
       showModal: !this.showModal,
       fetched: false,
-      allSpectra: [],
     });
   }
 
-  handleLoadSpectra(result) {
-    const selectedOpt = this.options[0];
-    const allSpectra = this.buildAllSpectra(result);
-    this.setState({ selectedOpt, allSpectra, fetched: true });
+  handleLoadSpectra({ rawJcamp, spcInfo }) {
+    const jcamp = this.buildSpectrum(rawJcamp);
+    this.setState({ spcInfo, jcamp, fetched: true });
   }
 }
 
