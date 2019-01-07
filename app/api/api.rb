@@ -46,6 +46,36 @@ class API < Grape::API
 
       return cache_key
     end
+
+    def to_snake_case_key(k)
+      k.to_s.underscore.to_sym
+    end
+
+    def to_rails_snake_case(val)
+      case val
+      when Array
+        val.map { |v| to_rails_snake_case(v) }
+      when Hash
+        Hash[val.map { |k, v| [to_snake_case_key(k), to_rails_snake_case(v)] }]
+      else
+        val
+      end
+    end
+
+    def to_camelcase_key(k)
+      k.to_s.camelcase(:lower).to_sym
+    end
+
+    def to_json_camel_case(val)
+      case val
+      when Array
+        val.map { |v| to_json_camel_case(v) }
+      when Hash
+        Hash[val.map { |k, v| [to_camelcase_key(k), to_json_camel_case(v)] }]
+      else
+        val
+      end
+    end
   end
 
   before do
