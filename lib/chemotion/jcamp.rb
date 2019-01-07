@@ -71,7 +71,7 @@ module Chemotion
         port = Rails.configuration.spectra.port
         File.open(path, 'r') do |f|
           response = HTTParty.post(
-            "http://#{url}:#{port}/peak_zip_jcamp_n_img",
+            "http://#{url}:#{port}/zip_peak_jcamp_n_img",
             body: {
               multipart: true,
               file: f
@@ -104,7 +104,7 @@ module Chemotion
         port = Rails.configuration.spectra.port
         File.open(path, 'r') do |f|
           response = HTTParty.post(
-            "http://#{url}:#{port}/edit_zip_jcamp_n_img",
+            "http://#{url}:#{port}/zip_edit_jcamp_n_img",
             body: {
               multipart: true,
               file: f,
@@ -143,7 +143,7 @@ module Chemotion
         port = Rails.configuration.spectra.port
         File.open(path, 'r') do |f|
           response = HTTParty.post(
-            "http://#{url}:#{port}/peak_in_image",
+            "http://#{url}:#{port}/zip_peak_in_image",
             body: {
               multipart: true,
               file: f
