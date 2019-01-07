@@ -15,7 +15,7 @@ class Sample < ActiveRecord::Base
 
   multisearchable against: [
     :name, :short_label, :external_label, :molecule_sum_formular,
-    :molecule_iupac_name, :molecule_inchistring, :molecule_cano_smiles
+    :molecule_iupac_name, :molecule_inchistring, :molecule_inchikey, :molecule_cano_smiles
   ]
 
   # search scopes for exact matching
@@ -31,6 +31,10 @@ class Sample < ActiveRecord::Base
     molecule: :inchistring
   }
 
+  pg_search_scope :search_by_inchikey, associated_against: {
+    molecule: :inchikey
+  }
+
   pg_search_scope :search_by_cano_smiles, associated_against: {
     molecule: :cano_smiles
   }
@@ -38,7 +42,7 @@ class Sample < ActiveRecord::Base
   pg_search_scope :search_by_substring, against: %i[
     name short_label external_label
   ], associated_against: {
-    molecule: %i[sum_formular iupac_name inchistring cano_smiles]
+    molecule: %i[sum_formular iupac_name inchistring inchikey cano_smiles]
   }, using: { trigram: { threshold: 0.0001 } }
 
   pg_search_scope :search_by_sample_name, against: :name
@@ -159,6 +163,10 @@ class Sample < ActiveRecord::Base
 
   def molecule_inchistring
     self.molecule ? self.molecule.inchistring : ""
+  end
+
+  def molecule_inchikey
+    self.molecule ? self.molecule.inchikey : ""
   end
 
   def molecule_cano_smiles

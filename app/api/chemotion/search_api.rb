@@ -296,7 +296,7 @@ module Chemotion
           else
             Sample.none
           end
-        when 'iupac_name', 'inchistring', 'cano_smiles',
+        when 'iupac_name', 'inchistring', 'inchikey', 'cano_smiles',
              'sample_name', 'sample_short_label'
           if dl_s > 0
             Sample.by_collection_id(c_id).order("samples.updated_at DESC")
