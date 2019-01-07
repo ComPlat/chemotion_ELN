@@ -274,13 +274,15 @@ module Chemotion
         { files: files }
       end
 
-      desc 'Save spectra-peaks to file'
+      desc 'Save spectra to file'
       params do
         requires :peaks, type: Array[Hash]
+        requires :shift, type: Hash
         requires :attachment_id, type: Integer
       end
       post 'save_peaks' do
-        @attachment.edit_peaks_spectrum(params[:peaks])
+        pm = to_rails_snake_case(params)
+        @attachment.edit_peaks_spectrum(pm[:peaks], pm[:shift])
       end
 
       namespace :svgs do

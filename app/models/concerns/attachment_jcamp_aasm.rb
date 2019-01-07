@@ -109,8 +109,10 @@ module AttachmentJcampProcess
     generate_att(jcamp_tmp, addon, toEdit, use_default_ext)
   end
 
-  def edit_peaks_spectrum(peaks)
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Edit.spectrum_peaks_edit(abs_path, peaks)
+  def edit_peaks_spectrum(peaks, shift)
+    tmp_jcamp, tmp_img = Chemotion::Jcamp::Edit.spectrum_peaks_edit(
+      abs_path, peaks, shift
+    )
     generate_jcamp_att(tmp_jcamp, 'edit', true)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup

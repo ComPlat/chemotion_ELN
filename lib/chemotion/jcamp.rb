@@ -98,7 +98,7 @@ module Chemotion
     module Edit
       include HTTParty
 
-      def self.stub_edit_zip_jcamp_n_img(path, peaks_str)
+      def self.stub_edit_zip_jcamp_n_img(path, peaks_str, shift)
         response = nil
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
@@ -108,7 +108,11 @@ module Chemotion
             body: {
               multipart: true,
               file: f,
-              peaks_str: peaks_str
+              peaks_str: peaks_str,
+              shift_select_x: shift[:select_x],
+              shift_ref_name: shift[:ref_name],
+              shift_ref_value: shift[:ref_value]
+
             }
           )
         end
@@ -116,12 +120,12 @@ module Chemotion
       end
 
       def self.to_coord_string(peaks)
-        peaks.map { |p| "#{p['x']},#{p['y']}" }.join('#')
+        peaks.map { |p| "#{p[:x]},#{p[:y]}" }.join('#')
       end
 
-      def self.spectrum_peaks_edit(path, peaks)
+      def self.spectrum_peaks_edit(path, peaks, shift)
         peaks_str = to_coord_string(peaks)
-        rsp = stub_edit_zip_jcamp_n_img(path, peaks_str)
+        rsp = stub_edit_zip_jcamp_n_img(path, peaks_str, shift)
         rsp_io = StringIO.new(rsp.body.to_s)
         Util.extract_zip(rsp_io)
       end
