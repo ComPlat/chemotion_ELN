@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.2.10'
+gem 'rails', '4.2.11'
 
 gem 'thor', '0.19.1'
 
@@ -23,7 +23,6 @@ gem 'jquery-rails'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 2.0'
 # bundle exec rake doc:rails generates the API under doc/api.
-gem 'sdoc', '~> 0.4.0', group: :doc
 
 gem 'schmooze'
 
@@ -37,6 +36,8 @@ gem 'bibtex-ruby'
 gem 'aasm'
 
 group :development do
+  gem 'sdoc', '~> 0.4.0', group: :doc
+
   gem 'rack-mini-profiler', git: 'https://github.com/MiniProfiler/rack-mini-profiler'
 
   gem 'better_errors' # allows to debug exception on backend from browser
@@ -49,6 +50,7 @@ group :development do
   gem 'stackprof'     # For Ruby MRI 2.1+
   gem 'web-console', '~> 2.0'
   gem 'immigrant'
+  gem 'brakeman'
 end
 
 gem 'pg', '~> 0.20.0'
