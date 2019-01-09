@@ -7,7 +7,7 @@ cache:
     - node_modules
     - tmp/cache/assets/test/sprockets
 rvm:
-  - 2.4.4
+  - 2.5.3
 before_install:
   - export CHROME_BIN=/usr/bin/google-chrome
   - export DISPLAY=:99.0

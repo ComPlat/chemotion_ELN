@@ -1,5 +1,5 @@
 # This Dockerfile is intended to build a production-ready app image
-FROM phusion/passenger-ruby24:0.9.30
+FROM phusion/passenger-ruby25:1.0.0
 
 # Add the app's binaries path to $PATH
 ENV PATH /usr/local/rvm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
