@@ -289,7 +289,7 @@ export default class ManagingModalSharing extends React.Component {
   }
 
   render() {
-
+    const displayWarning = (this.state.permissionLevel || '') === '5' ? 'inline-block' : 'none';
     return (
       <div>
         <FormGroup controlId="shortcutSelect">
@@ -316,8 +316,14 @@ export default class ManagingModalSharing extends React.Component {
             <option value='2'>Share</option>
             <option value='3'>Delete</option>
             <option value='4'>Import Elements</option>
-            <option value='5'>Take ownership</option>
+            <option value='5'>Pass ownership</option>
           </FormControl>
+          <div style={{
+            color: '#d9534f', fontSize: '12px', paddingLeft: '8px', paddingTop: '4px', display: displayWarning
+          }}
+          >
+            <i className="fa fa-exclamation-circle" aria-hidden="true" />&nbsp;Transfering ownership applies for all sub collections.
+          </div>
         </FormGroup>
         <FormGroup controlId="sampleDetailLevelSelect">
           <ControlLabel>Sample detail level</ControlLabel>
