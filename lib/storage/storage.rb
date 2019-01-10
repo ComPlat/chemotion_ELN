@@ -48,6 +48,8 @@ class Storage
 
   def regenerate_thumbnail
     return if (fn = attachment.filename).blank? || (fe = File.extname(fn)&.downcase).blank?
+    # wa for issue with 'jpeg' extension
+    fe = '.jpg' if fe == '.jpeg'
     tmp = Tempfile.new([fn, fe], encoding: 'ascii-8bit')
     tmp.write attachment.read_file
     tmp.rewind
