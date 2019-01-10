@@ -23,6 +23,8 @@ class Tmp < Local
            afp
          end
     return if fp.blank? || (fe = File.extname(fp)&.downcase).blank?
+    # wa for issue with 'jpeg' extension
+    fe = '.jpg' if fe == '.jpeg'
     tmp = Tempfile.new([File.basename(fp, '.*'), fe], encoding: 'ascii-8bit')
     tmp.write File.read(fp)
     tmp.rewind
