@@ -14,4 +14,5 @@ class Channel < ActiveRecord::Base
   SEND_IMPORT_NOTIFICATION = 'Import Notification'
   COMPUTED_PROPS_NOTIFICATION = 'Computed Prop Notification'
   GATE_TRANSFER_NOTIFICATION = 'Gate Transfer Completed'
+  COLLECTION_TAKE_OWNERSHIP = 'Collection Take Ownership'
 end
