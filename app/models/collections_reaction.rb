@@ -30,8 +30,8 @@ class CollectionsReaction < ActiveRecord::Base
   # Remove from collection and process associated elements
   def self.remove_in_collection(reaction_ids, collection_id)
     self.delete_in_collection(reaction_ids, collection_id)
-
     sample_ids = Reaction.get_associated_samples(reaction_ids)
+
     CollectionsSample.remove_in_collection(sample_ids, collection_id)
   end
 

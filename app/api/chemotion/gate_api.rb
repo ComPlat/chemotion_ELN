@@ -157,7 +157,7 @@ module Chemotion
           imp.import
           primary_store = Rails.configuration.storage.primary_store
           new_attachments = []
-          imp.new_attachments.each_pair do |key, att|
+          imp.new_attachments&.each_pair do |key, att|
             next unless (tmp = params[key]&.fetch('tempfile', nil))
             att.file_path = tmp.path
             att.created_by = @user.id
