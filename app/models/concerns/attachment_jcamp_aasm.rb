@@ -66,13 +66,20 @@ module AttachmentJcampAasm
     %w[dx jdx].include?(extname) ? set_queue : set_non_jcamp
   end
 
-  def require_peaks_generation? # rubocop:disable CyclomaticComplexity
+  def require_peaks_generation? # rubocop:disable all
+    return unless belong_to_analysis?
     typname, extname = extension_parts
     return if peaked? || edited?
     return unless %w[dx jdx].include?(extname)
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
     generate_peaks_spectrum if queueing? && !new_upload
+  end
+
+  def belong_to_analysis?
+    container &&
+      container.parent &&
+      container.parent.container_type == 'analysis'
   end
 end
 
