@@ -96,7 +96,7 @@ export default class ReactionDetailsMainProperties extends Component {
     }
 
     return (
-      <Grid fluid>
+      <Grid fluid style={{ paddingLeft: 'unset' }}>
         <Row>
           <Col md={6}>
             <FormGroup>
