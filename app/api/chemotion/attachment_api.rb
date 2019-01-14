@@ -25,6 +25,23 @@ module Chemotion
       def raw_file_obj(att)
         { id: att.id, file: raw_file(att) }
       end
+
+      def created_for_current_user(att)
+        att.container_id.nil? && att.created_for == current_user.id
+      end
+
+      def writable?(att)
+        return false unless att
+        can_write = created_for_current_user(att)
+        return can_write if can_write
+        el = att.container&.root&.containable
+        if el
+          own_by_current_user = el.is_a?(User) && (el == current_user)
+          policy_updatable = ElementPolicy.new(current_user, el).update?
+          can_write = own_by_current_user || policy_updatable
+        end
+        can_write
+      end
     end
 
     rescue_from ActiveRecord::RecordNotFound do |error|
@@ -97,11 +114,7 @@ module Chemotion
         case request.env['REQUEST_METHOD']
         when /delete/i
           error!('401 Unauthorized', 401) unless @attachment
-          can_delete = @attachment.container_id.nil? && @attachment.created_for == current_user.id
-          if !can_delete && (element = @attachment.container&.root&.containable)
-            can_delete = element.is_a?(User) && (element == current_user) ||
-                         ElementPolicy.new(current_user, element).update?
-          end
+          can_delete = writable?(@attachment)
           error!('401 Unauthorized', 401) unless can_delete
         # when /post/i
         when /get/i
@@ -272,6 +285,30 @@ module Chemotion
           can_dwnld ? raw_file_obj(att) : nil
         end
         { files: files }
+      end
+
+      desc 'Regenrate spectra'
+      params do
+        requires :original, type: Array[Integer]
+        requires :generated, type: Array[Integer]
+      end
+      post 'regenerate_spectrum' do
+        pm = to_rails_snake_case(params)
+        pm[:generated].each do |g_id|
+          att = Attachment.find(g_id)
+          next unless att
+          can_delete = writable?(att)
+          att.delete if can_delete
+        end
+        pm[:original].each do |o_id|
+          att = Attachment.find(o_id)
+          next unless att
+          can_write = writable?(att)
+          if can_write
+            att.set_queueing
+            att.save
+          end
+        end
       end
 
       desc 'Save spectra to file'

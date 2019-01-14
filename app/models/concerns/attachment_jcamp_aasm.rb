@@ -17,6 +17,10 @@ module AttachmentJcampAasm
       state :failure
       state :non_jcamp
 
+      event :set_queueing do
+        transitions from: %i[idle done backup failure non_jcamp], to: :queueing
+      end
+
       event :set_force_peaked do
         transitions from: %i[queueing], to: :peaked
       end
