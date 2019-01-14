@@ -279,4 +279,30 @@ export default class AttachmentFetcher {
 
     return promise;
   }
+
+  static regenerateSpectrum(jcampIds) {
+    const promise = fetch(
+      '/api/v1/attachments/regenerate_spectrum/',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify({
+          original: jcampIds.orig,
+          generated: jcampIds.gene,
+        }),
+      },
+    )
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
 }

@@ -22,11 +22,24 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(sample, spcInfo, peaks, shift) {
+  Regenerate(jcampIds, cb) {
+    return (dispatch) => {
+      AttachmentFetcher.regenerateSpectrum(jcampIds)
+        .then(() => {
+          dispatch();
+          cb();
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        });
+    };
+  }
+
+  SaveToFile(sample, spcInfo, peaks, shift, cb) {
     return (dispatch) => {
       AttachmentFetcher.saveSpectrum(peaks, shift, spcInfo.idx)
-        .then((rawJcamp) => {
-          dispatch({ rawJcamp, spcInfo, fetch: true });
+        .then(() => {
+          dispatch();
+          cb();
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });

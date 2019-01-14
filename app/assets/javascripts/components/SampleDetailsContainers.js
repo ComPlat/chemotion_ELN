@@ -171,7 +171,7 @@ export default class SampleDetailsContainers extends Component {
 
   render() {
     const { activeAnalysis, mode } = this.state;
-    const { readOnly, sample } = this.props;
+    const { readOnly, sample, handleSubmitSample } = this.props;
     const isDisabled = !sample.can_update;
 
     if (sample.container == null) return <RndNotAvailable />;
@@ -192,6 +192,7 @@ export default class SampleDetailsContainers extends Component {
               isDisabled={isDisabled}
               addButton={this.addButton}
               handleRemove={this.handleRemove}
+              handleSubmitSample={handleSubmitSample}
               handleMove={this.handleMove}
               handleAccordionOpen={this.handleAccordionOpen}
               handleUndo={this.handleUndo}
@@ -209,6 +210,7 @@ export default class SampleDetailsContainers extends Component {
               handleChange={this.handleChange}
               handleUndo={this.handleUndo}
               handleRemove={this.handleRemove}
+              handleSubmitSample={handleSubmitSample}
               handleAccordionOpen={this.handleAccordionOpen}
               toggleAddToReport={this.toggleAddToReport}
               readOnly={readOnly}
@@ -228,7 +230,7 @@ export default class SampleDetailsContainers extends Component {
 }
 
 SampleDetailsContainers.propTypes = {
-  readOnly: PropTypes.bool,
-  parent: PropTypes.object,
-  sample: PropTypes.object,
+  readOnly: PropTypes.bool.isRequired,
+  sample: PropTypes.object.isRequired,
+  handleSubmitSample: PropTypes.func.isRequired,
 };

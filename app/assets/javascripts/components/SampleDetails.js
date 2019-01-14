@@ -701,12 +701,13 @@ export default class SampleDetails extends React.Component {
           <ViewSpectra
             sample={sample}
             handleSampleChanged={this.handleSampleChanged}
-            handleSubmit={this.handleSubmit}
+            handleSubmitSample={this.handleSubmit}
           />
           <SampleDetailsContainers
             sample={sample}
             setState={(sample) => {this.setState(sample)}}
             handleSampleChanged={this.handleSampleChanged}
+            handleSubmitSample={this.handleSubmit}
             fromSample
           />
         </ListGroupItem>

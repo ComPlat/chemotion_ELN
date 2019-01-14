@@ -14,6 +14,8 @@ class SpectraStore {
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
       handleLoadSpectra: SpectraActions.LoadSpectra,
+      handleSaveToFile: SpectraActions.SaveToFile,
+      handleRegenerate: SpectraActions.Regenerate,
     });
   }
 
@@ -46,6 +48,14 @@ class SpectraStore {
   handleLoadSpectra({ rawJcamp, spcInfo }) {
     const jcamp = this.buildSpectrum(rawJcamp);
     this.setState({ spcInfo, jcamp, fetched: true });
+  }
+
+  handleSaveToFile() {
+    // no further process needed.
+  }
+
+  handleRegenerate() {
+    // no further process needed.
   }
 }
 

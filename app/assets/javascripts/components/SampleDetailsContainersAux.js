@@ -6,7 +6,7 @@ import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
-import { BuildSpcInfo } from './utils/SpectraHelper';
+import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
@@ -99,7 +99,7 @@ const previewImage = (container) => {
 };
 
 const headerBtnGroup = (
-  container, sample, mode, handleRemove,
+  container, sample, mode, handleRemove, handleSubmitSample,
   toggleAddToReport, isDisabled, readOnly,
 ) => {
   if (mode !== 'edit') {
@@ -125,6 +125,15 @@ const headerBtnGroup = (
     SpectraActions.LoadSpectra.defer(spcInfo);
   };
 
+  const jcampIds = JcampIds(container);
+  const hasJcamp = jcampIds.orig.length > 0;
+  const confirmRegenerate = (e) => {
+    e.stopPropagation();
+    if (confirm('Regenerate spectra?')) {
+      SpectraActions.Regenerate(jcampIds, handleSubmitSample);
+    }
+  };
+
   return (
     <div className="upper-btn">
       <Button
@@ -136,6 +145,20 @@ const headerBtnGroup = (
       >
         <i className="fa fa-trash" />
       </Button>
+      <OverlayTrigger
+        placement="bottom"
+        overlay={<Tooltip id="spectra">Regenerate Spectra</Tooltip>}
+      >
+        <Button
+          bsStyle="warning"
+          bsSize="xsmall"
+          className="button-right"
+          onClick={confirmRegenerate}
+          disabled={!hasJcamp}
+        >
+          <i className="fa fa-refresh" />
+        </Button>
+      </OverlayTrigger>
       <PrintCodeButton
         element={sample}
         analyses={[container]}
@@ -170,8 +193,10 @@ const headerBtnGroup = (
   );
 };
 
-const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
-  handleRemove, handleAccordionOpen, toggleAddToReport }) => {
+const HeaderNormal = ({
+  sample, container, mode, readOnly, isDisabled, serial,
+  handleRemove, handleSubmitSample, handleAccordionOpen, toggleAddToReport,
+}) => {
   const clickToOpen = () => handleAccordionOpen(serial);
 
   const kind = container.extended_metadata.kind || '';
@@ -220,8 +245,10 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
       </div>
       <div className="abstract">
         {
-          headerBtnGroup(container, sample, mode, handleRemove,
-            toggleAddToReport, isDisabled, readOnly)
+          headerBtnGroup(
+            container, sample, mode, handleRemove, handleSubmitSample,
+            toggleAddToReport, isDisabled, readOnly,
+          )
         }
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
