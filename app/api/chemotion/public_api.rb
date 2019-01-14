@@ -1,5 +1,18 @@
 module Chemotion
   class PublicAPI < Grape::API
+    helpers do
+      def send_notification(attachment, user, status, has_error = false)
+        channel = Channel.find_by(subject: Channel::EDITOR_CALLBACK)
+        content = channel.msg_template
+        content['research_plan_id'] = content['research_plan_id'] % {:research_plan_id => attachment.attachable_id }
+        content['attach_id'] = content['attach_id'] % {:attach_id => attachment.id }
+        content['data'] = content['data'] % {:filename => attachment.filename }
+        content['data'] = attachment.filename + ' error has occurred, the file is not changed.' if has_error
+        content['data'] = attachment.filename + ' file has not changed.' if status == 4
+        content['data'] = attachment.filename + ' error has occurred while force saving the document, please review your changes.' if @status == 7
+        message = Message.create_msg_notification(channel.id,content,user.id,[user.id])
+      end
+    end
 
     namespace :public do
       get 'ping' do
@@ -20,8 +33,6 @@ module Chemotion
           @attachment = Attachment.find_by(id: att_id)
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-          @attachment.set_oo_editing
-          @attachment.save!
 
           header['Content-Disposition'] = "attachment; filename=" + @attachment.filename
           env['api.format'] = :binary
@@ -50,8 +61,9 @@ module Chemotion
           @attachment = Attachment.find_by(id: attach_id, attachable_type: 'ResearchPlan')
           @user = User.find_by(id: user_id)
           error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-          @research_plan_id = @attachment.attachable_id
+          @research_plan = @attachment.attachable if @attachment.attachable_type == 'ResearchPlan'
         end
+
         params do
           optional :key, type: String, desc: 'token'
           optional :status, type: Integer, desc: 'status (see description)'
@@ -62,38 +74,29 @@ module Chemotion
           { error: 0 }
         end
 
-        send_notification = Proc.new do |attachment, user, status, has_error = false|
-          channel = Channel.find_by(subject: Channel::EDITOR_CALLBACK)
-          content = channel.msg_template
-          content['research_plan_id'] = content['research_plan_id'] % {:research_plan_id => attachment.attachable_id }
-          content['attach_id'] = content['attach_id'] % {:attach_id => attachment.id }
-
-          content['data'] = content['data'] % {:filename => attachment.filename }
-          content['data'] = attachment.filename + ' error has occurred, the file is not changed.' if has_error
-          content['data'] = attachment.filename + ' file has not changed.' if status == 4
-          content['data'] = attachment.filename + ' error has occurred while force saving the document, please review your changes.' if @status == 7
-          message = Message.create_msg_notification(channel.id,content,user.id,[user.id])
-        end
-
         post do
-          @attachment.set_oo_edited unless @status == 1
-          @attachment.save! unless @status == 1
+
+          # begin
           case @status
-          when 2..3, 6
-            begin
-              File.open(@attachment.store.path, 'wb') do |file|
-                file << open(@url).read
-              end
-              send_notification.call(@attachment, @user, @status, false)
-            rescue StandardError => err
-              Rails.logger.error '**** editor save error *****************'
-              Rails.logger.error params
-              Rails.logger.error err
-              send_notification.call(@attachment, @user, @status, true)
-            end
+          when 1
+          when 2
+            @attachment.file_data = open(@url).read
+            @attachment.rewrite_file_data!
+            @attachment.oo_editing_end!
           else
-            send_notification.call(@attachment, @user, @status, false) unless @status == 1
+            @attachment.oo_editing_end!
           end
+          send_notification(@attachment, @user, @status)
+          # rescue StandardError => err
+          # Rails.logger.error(
+          #   <<~LOG
+          #   **** OO editor error while saving *****************
+          #   #{params}
+          #   #{err}
+          #   LOG
+          # )
+          #   send_notification(@attachment, @user, @status, true)
+          # end
           status 200
           { error: 0 }
         end

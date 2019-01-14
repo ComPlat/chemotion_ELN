@@ -20,9 +20,9 @@ development:
     :title: 'Complat ELN'
     :name: 'Complat ELN'
     :logo: 'https://www.chemotion.net/images/repo/chemotion_full.svg'
-    :mail: 'eln_complat@kit.edu'
-    :website: 'https://www.chemotion.net/welcome#/about'
-    :feedbackurl: 'https://www.chemotion.net/'
+    :mail: 'chemotion@ioc.kit.edu'
+    :website: 'https://www.github.com/Complat'
+    :feedbackurl: 'https://github.com/ComPlat/chemotion_ELN/issues'
 
 production:
   :docserver:
@@ -46,6 +46,6 @@ production:
     :title: 'Complat ELN'
     :name: 'Complat ELN'
     :logo: 'https://www.chemotion.net/images/repo/chemotion_full.svg'
-    :mail: 'eln_complat@kit.edu'
-    :website: 'https://www.chemotion.net/welcome#/about'
-    :feedbackurl: 'https://www.chemotion.net/'
+    :mail: 'chemotion@ioc.kit.edu'
+    :website: 'www.chemotion.net'
+    :feedbackurl: 'https://git.scc.kit.edu/ComPlat/chemotion_ELN_support/boards'

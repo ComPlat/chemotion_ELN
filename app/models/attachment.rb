@@ -129,6 +129,13 @@ class Attachment < ActiveRecord::Base
     update!(attachable_id: r_id, attachable_type: 'Report')
   end
 
+  def rewrite_file_data!
+    return unless file_data.present?
+    store.destroy
+    store.store_file
+    self
+  end
+
   private
 
   def generate_key

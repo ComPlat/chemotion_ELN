@@ -18,11 +18,11 @@ module AttachmentJcampAasm
       state :non_jcamp
       state :oo_editing
 
-      event :set_oo_editing do
+      event :oo_editing_start do
         transitions from: %i[oo_editing non_jcamp idle], to: :oo_editing
       end
 
-      event :set_oo_edited do
+      event :oo_editing_end do
         transitions from: :oo_editing, to: :non_jcamp
       end
 
