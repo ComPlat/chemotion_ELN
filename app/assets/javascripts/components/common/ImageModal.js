@@ -71,8 +71,8 @@ export default class ImageModal extends Component {
               src={this.state.fetchSrc}
               style={{
                 display: 'block',
-                height: 'auto',
-                width: 'auto'
+                maxHeight: '100%',
+                maxWidth: '100%',
               }}
               alt=""
             />
