@@ -102,10 +102,7 @@ class Reaction < ActiveRecord::Base
   has_one :container, :as => :containable
 
   def self.get_associated_samples(reaction_ids)
-    ( ReactionsProductSample.get_samples(reaction_ids) +
-      ReactionsStartingMaterialSample.get_samples(reaction_ids) +
-      ReactionsReactantSample.get_samples(reaction_ids)
-    ).compact
+    ReactionsSample.where(reaction_id: reaction_ids).pluck(:sample_id)
   end
 
   def analyses
