@@ -1,6 +1,5 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
-import logger from 'redux-logger';
 
 import api from '../middleware/api';
 import chemdraw from '../middleware/chemdraw';
@@ -10,7 +9,7 @@ const configureStore = (preloadedState) => {
   const store = createStore(
     rootReducer,
     preloadedState,
-    applyMiddleware(thunk, chemdraw, api, logger)
+    applyMiddleware(thunk, chemdraw, api)
   );
 
   return store;
