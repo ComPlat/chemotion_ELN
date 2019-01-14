@@ -28,9 +28,9 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
         title='Import from spreadsheet or sdf'>
         Import samples to collection
       </MenuItem>
-      {/* <MenuItem onSelect={() => importReactionFunction(updateModalProps)} disabled={isDisabled} */}
+      {/* <MenuItem onSelect={() => importChemScannerFunction(updateModalProps)} disabled={isDisabled} */}
       {/*   title='Import from Docs'> */}
-      {/*   Import reactions from Docs */}
+      {/*   Import elements from Docs */}
       {/* </MenuItem> */}
     </Dropdown.Menu>
   </Dropdown>
@@ -61,8 +61,8 @@ const importSampleFunction = (updateModalProps) => {
   updateModalProps(modalProps);
 };
 
-const importReactionFunction = (updateModalProps) => {
-  const title = 'Import Reactions from Docs';
+const importChemScannerFunction = (updateModalProps) => {
+  const title = 'Import Elements from Docs';
   const component = ModalImportChemScanner;
   const listSharedCollections = false;
   const modalProps = {

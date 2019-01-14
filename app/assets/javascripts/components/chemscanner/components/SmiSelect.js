@@ -2,37 +2,32 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import VirtualizedSelect from 'react-virtualized-select';
 
-class SelectWrapper extends React.Component {
+export default class SmiSelect extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { value: props.value || '' };
 
     this.onSelect = this.onSelect.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
-    const { value } = nextProps;
-    this.setState({ value });
-  }
-
   onSelect(selected) {
-    const { onSelect, title } = this.props;
-    onSelect({ value: selected, type: title });
+    const { onSelect, type } = this.props;
+    onSelect({ value: selected, type });
   }
 
   render() {
-    const { obj, title, disabled } = this.props;
-    const { value } = this.state;
+    const {
+      obj, type, disabled, value
+    } = this.props;
     const options = [];
     const editedSmi = [];
 
     Object.keys(obj).forEach((k) => {
-      const opt = { label: k, value: obj[k] };
+      const smi = obj[k];
+      const opt = { label: k, value: smi };
       options.push(opt);
 
-      const valueArr = value.split(',');
-      if (valueArr.indexOf(obj[k]) > -1) {
-        editedSmi.push(obj[k]);
+      if (value.indexOf(smi) > -1) {
+        editedSmi.push(smi);
       }
     });
 
@@ -42,7 +37,7 @@ class SelectWrapper extends React.Component {
         disabled={disabled}
         onChange={this.onSelect}
         options={options}
-        placeholder={`Select ${title}`}
+        placeholder={`Add ${type}`}
         simpleValue
         {...this.props}
         value={editedSmi.join(',')}
@@ -51,17 +46,17 @@ class SelectWrapper extends React.Component {
   }
 }
 
-SelectWrapper.propTypes = {
+SmiSelect.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   obj: PropTypes.object.isRequired,
-  title: PropTypes.string,
-  value: PropTypes.string,
+  type: PropTypes.string,
+  value: PropTypes.arrayOf(PropTypes.string),
   disabled: PropTypes.bool,
   onSelect: PropTypes.func.isRequired
 };
 
-SelectWrapper.defaultProps = {
-  title: '',
+SmiSelect.defaultProps = {
+  type: '',
+  value: [],
   disabled: true
 };
-
-export default SelectWrapper;

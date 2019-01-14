@@ -1,14 +1,17 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
+// import { connect } from 'react-redux';
 import { Button } from 'react-bootstrap';
+import 'whatwg-fetch';
 
-import ChemScannerFetcher from './ChemScannerFetcher';
-import AbbreviationManagement from './AbbreviationManagement';
+// import * as types from '../actions/ActionTypes';
+// import { CALL_API } from '../middleware/api';
+import AbbreviationManagement from '../components/AbbreviationManagement';
 
 function RemoveRowBtn({ onClick, node }) {
   const col = node.columnApi.getColumn('abb');
-  const headerName = col.colDef.headerName;
-  const newAbb = headerName === 'Abbreviation' ? true : false;
+  const { headerName } = col.colDef;
+  const newAbb = headerName === 'Abbreviation';
 
   return (
     <Button
@@ -43,7 +46,21 @@ export default class AbbreviationManagementContainer extends React.Component {
   }
 
   componentDidMount() {
-    ChemScannerFetcher.fetchAbbreviations().then((res) => {
+    fetch('/api/v1/chemscanner/abbreviations/all', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'post',
+      body: JSON.stringify({ pageSize: 10, page: 1 })
+    }).then((response) => {
+      if (response.ok === false) {
+        return { abbreviations: [], superatoms: [] };
+      }
+
+      return response.json();
+    }).then((res) => {
       const { abbreviations, superatoms } = res;
 
       const abbData = Object.keys(abbreviations).map(k => (
@@ -78,7 +95,18 @@ export default class AbbreviationManagementContainer extends React.Component {
   removeRow(data, newAbb) {
     const gridApi = newAbb ? this.abbGridApi : this.superatomGridApi;
 
-    ChemScannerFetcher.removeAbbreviation(data, newAbb).then((res) => {
+    fetch('/api/v1/chemscanner/abbreviations/remove', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'post',
+      body: JSON.stringify({ data, newAbb })
+    }).then((response) => {
+      if (response.ok === false) return { abbreviations: [] };
+      return response.json();
+    }).then((res) => {
       if (!res) return;
 
       const { abbreviations } = res;
@@ -99,7 +127,18 @@ export default class AbbreviationManagementContainer extends React.Component {
     const gridApi = newAbb ? this.abbGridApi : this.superatomGridApi;
     if (!gridApi) return;
 
-    ChemScannerFetcher.addAbbreviation(abb, smiles, newAbb).then((res) => {
+    fetch('/api/v1/chemscanner/abbreviations/add', {
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      method: 'post',
+      body: JSON.stringify({ abb, smiles, newAbb })
+    }).then((response) => {
+      if (response.ok === false) return {};
+      return response.json();
+    }).then((res) => {
       if (!res) return;
 
       const keys = Object.keys(res);

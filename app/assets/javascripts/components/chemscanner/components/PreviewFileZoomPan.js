@@ -16,11 +16,11 @@ export default class PreviewFileZoomPan extends React.PureComponent {
   }
 
   componentDidMount() {
-    setTimeout(this.centeringImage, 1000);
+    setTimeout(this.centeringImage, 200);
   }
 
   componentDidUpdate() {
-    setTimeout(this.centeringImage, 1000);
+    setTimeout(this.centeringImage, 200);
   }
 
   centeringImage() {
@@ -56,37 +56,49 @@ export default class PreviewFileZoomPan extends React.PureComponent {
   }
 
   render() {
-    const { image } = this.props;
-    if (!image) return <span />;
+    const { content, duration } = this.props;
+    if (!content) return <span />;
 
-    let svg = image;
-    if (image.startsWith('data:image/png;base64')) {
+    let svg = content;
+    if (content.startsWith('data:image/png;base64')) {
       this.isSvg = false;
       svg = `
         <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-          <image id="png-img-svg" xlink:href="${image}" width="100%" height="100%" />
+          <image id="png-img-svg" xlink:href="${content}" width="100%" height="100%" />
         </svg>
       `;
+    } else {
+      svg = content;
     }
 
     let dummyImg = (<span />);
     if (!this.isSvg) {
-      dummyImg = (<img id="dummy-img" alt="" src={image} />);
+      dummyImg = (<img id="dummy-img" alt="" src={content} />);
     }
 
     return (
-      <div ref={this.setPreviewRef} style={{ background: 'white' }}>
+      <div
+        ref={this.setPreviewRef}
+        style={{
+          position: 'sticky',
+          top: '44px',
+          zIndex: 2,
+          background: 'white',
+        }}
+      >
         {dummyImg}
-        <SvgFileZoomPan svg={svg} duration={200} />
+        <SvgFileZoomPan svg={svg} duration={duration} />
       </div>
     );
   }
 }
 
 PreviewFileZoomPan.propTypes = {
-  image: PropTypes.string,
+  content: PropTypes.string,
+  duration: PropTypes.number,
 };
 
 PreviewFileZoomPan.defaultProps = {
-  image: '',
+  content: '',
+  duration: 200,
 };

@@ -8,8 +8,8 @@ export default class CopyClipboardBtn extends React.Component {
     super(props);
 
     const { identifier } = props;
-    const { uid, cdIdx, idx } = identifier;
-    this.ddId = `clipboard-dropdown-${uid}-${cdIdx}-${idx}`;
+    const { fileUid, cdUid, id } = identifier;
+    this.ddId = `clipboard-dropdown-${fileUid}-${cdUid}-${id}`;
   }
 
   componentDidMount() {
@@ -36,7 +36,7 @@ export default class CopyClipboardBtn extends React.Component {
       <DropdownButton
         pullRight
         title={clipboardIcon}
-        className="clipboard-btn remove-btn btn btn-xs"
+        className="clipboard-btn right-btn btn btn-xs"
         id={this.ddId}
       >
         <MenuItem eventKey="1" data-clipboard-text={smi}>SMILES</MenuItem>
@@ -49,7 +49,8 @@ export default class CopyClipboardBtn extends React.Component {
 CopyClipboardBtn.propTypes = {
   smi: PropTypes.string.isRequired,
   mdl: PropTypes.string.isRequired,
-  identifier: PropTypes.object,
+  // eslint-disable-next-line react/forbid-prop-types
+  identifier: PropTypes.object.isRequired,
   container: PropTypes.instanceOf(Element)
 };
 

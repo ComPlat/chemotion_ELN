@@ -306,7 +306,7 @@ class ElementActions {
 
   importReactionsFromChemScanner(params) {
     return (dispatch) => {
-      ReactionsFetcher.importReactionsFromChemScanner(params).then((result) => {
+      ReactionsFetcher.importFromChemScanner(params).then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {
         console.log(errorMessage);

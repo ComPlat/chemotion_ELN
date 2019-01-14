@@ -7,15 +7,17 @@ export default class DeleteBtn extends React.Component {
     this.onClick = this.onClick.bind(this);
   }
 
-  onClick() {
-    const { obj, onClick } = this.props;
-    onClick(obj);
+  onClick(e) {
+    const { param, onClick } = this.props;
+    e.stopPropagation();
+    e.preventDefault();
+    onClick(param);
   }
 
   render() {
     return (
       <button
-        className="remove-btn btn btn-xs"
+        className="right-btn btn btn-xs"
         onClick={this.onClick}
       >
         <i className="fa fa-times" />
@@ -26,5 +28,5 @@ export default class DeleteBtn extends React.Component {
 
 DeleteBtn.propTypes = {
   onClick: PropTypes.func.isRequired,
-  obj: PropTypes.object.isRequired
+  param: PropTypes.object.isRequired // eslint-disable-line react/forbid-prop-types
 };

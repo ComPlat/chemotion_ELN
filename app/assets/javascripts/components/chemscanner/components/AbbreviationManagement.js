@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
 import { AgGridReact } from 'ag-grid-react';
 
 import {
-  Form, FormGroup, ControlLabel, FormControl, Button, Radio
+  ControlLabel, Button, Radio,
+  Form, FormGroup, FormControl,
 } from 'react-bootstrap';
 
 function ManagementTable({
@@ -56,8 +56,8 @@ export default class AbbreviationManagement extends React.Component {
 
   createAbbreviation() {
     const { createAbbreviation, newAbb } = this.props;
-    const abb = ReactDOM.findDOMNode(this.abbRef).value;
-    const smiles = ReactDOM.findDOMNode(this.smilesRef).value;
+    const abb = this.abbRef.value;
+    const smiles = this.smilesRef.value;
 
     createAbbreviation(abb, smiles, newAbb);
   }
@@ -71,14 +71,14 @@ export default class AbbreviationManagement extends React.Component {
 
     return (
       <div>
-        <div className="chemscanner-header">
-          <Form inline style={{ marginBottom: '10px' }}>
+        <div className="chemscanner-abb-view-header">
+          <Form inline style={{ marginRight: '20px' }}>
             <FormGroup controlId="formInlineName" style={{ marginRight: '20px' }}>
               <ControlLabel>{newText}</ControlLabel>
               <FormControl
                 type="text"
                 placeholder={newText}
-                ref={(r) => { this.abbRef = r; }}
+                inputRef={(r) => { this.abbRef = r; }}
                 style={{ marginLeft: '10px', marginRight: '10px' }}
               />
             </FormGroup>
@@ -88,7 +88,7 @@ export default class AbbreviationManagement extends React.Component {
               <FormControl
                 type="text"
                 placeholder="SMILES"
-                ref={(r) => { this.smilesRef = r; }}
+                inputRef={(r) => { this.smilesRef = r; }}
               />
             </FormGroup>
           </Form>
