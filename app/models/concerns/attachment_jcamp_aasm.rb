@@ -18,7 +18,8 @@ module AttachmentJcampAasm
       state :non_jcamp
 
       event :set_queueing do
-        transitions from: %i[idle done backup failure non_jcamp], to: :queueing
+        transitions from: %i[idle done backup failure non_jcamp queueing],
+                    to: :queueing
       end
 
       event :set_force_peaked do
@@ -77,7 +78,7 @@ module AttachmentJcampAasm
     return unless %w[dx jdx].include?(extname)
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
-    generate_peaks_spectrum if queueing? && !new_upload
+    generate_spectrum(true) if queueing? && !new_upload
   end
 
   def belong_to_analysis?
@@ -120,8 +121,18 @@ module AttachmentJcampProcess
     generate_att(jcamp_tmp, addon, toEdit, use_default_ext)
   end
 
-  def edit_peaks_spectrum(peaks, shift)
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Edit.spectrum_peaks_edit(
+  def create_process
+    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(abs_path)
+    generate_jcamp_att(tmp_jcamp, 'peak')
+    img_att = generate_img_att(tmp_img, 'peak')
+    set_done
+    delete_tmps([tmp_jcamp, tmp_img])
+    delete_related_imgs(img_att)
+    delete_edit_peak_after_done
+  end
+
+  def edit_process(peaks, shift)
+    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
       abs_path, peaks, shift
     )
     generate_jcamp_att(tmp_jcamp, 'edit', true)
@@ -130,19 +141,10 @@ module AttachmentJcampProcess
     delete_tmps([tmp_jcamp, tmp_img])
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
-  rescue
-    set_failure
-    Rails.logger.info('**** Spectra edit peaks fails ***')
   end
 
-  def generate_peaks_spectrum
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum_peaks_gene(abs_path)
-    generate_jcamp_att(tmp_jcamp, 'peak')
-    img_att = generate_img_att(tmp_img, 'peak')
-    set_done
-    delete_tmps([tmp_jcamp, tmp_img])
-    delete_related_imgs(img_att)
-    delete_edit_peak_after_done
+  def generate_spectrum(is_create = false, peaks = false, shift = false)
+    is_create ? create_process : edit_process(peaks, shift)
   rescue
     set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')

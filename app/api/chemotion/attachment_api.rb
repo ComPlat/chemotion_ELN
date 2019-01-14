@@ -319,7 +319,7 @@ module Chemotion
       end
       post 'save_peaks' do
         pm = to_rails_snake_case(params)
-        @attachment.edit_peaks_spectrum(pm[:peaks], pm[:shift])
+        @attachment.generate_spectrum(false, pm[:peaks], pm[:shift])
       end
 
       namespace :svgs do

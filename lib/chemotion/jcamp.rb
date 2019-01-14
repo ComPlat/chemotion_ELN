@@ -65,55 +65,29 @@ module Chemotion
     module Create
       include HTTParty
 
-      def self.stub_peak_zip_jcamp_n_img(path)
-        response = nil
-        url = Rails.configuration.spectra.url
-        port = Rails.configuration.spectra.port
-        File.open(path, 'r') do |f|
-          response = HTTParty.post(
-            "http://#{url}:#{port}/zip_peak_jcamp_n_img",
-            body: {
-              multipart: true,
-              file: f
-            }
-          )
+      def self.build_body(f, peaks_str = false, shift = false)
+        body = {
+          multipart: true,
+          file: f
+        }
+        body[:peaks_str] = peaks_str if peaks_str
+        if shift
+          body[:shift_select_x] = shift[:select_x]
+          body[:shift_ref_name] = shift[:ref_name]
+          body[:shift_ref_value] = shift[:ref_value]
         end
-        response
+        body
       end
 
-      def self.spectrum_peaks_gene(path)
-        rsp = stub_peak_zip_jcamp_n_img(path)
-        rsp_io = StringIO.new(rsp.body.to_s)
-        Util.extract_zip(rsp_io)
-      end
-    end
-  end
-end
-
-# Chemotion module
-module Chemotion
-  # process Jcamp files
-  module Jcamp
-    # Create module
-    module Edit
-      include HTTParty
-
-      def self.stub_edit_zip_jcamp_n_img(path, peaks_str, shift)
+      def self.stub_http(path, peaks_str = false, shift = false)
         response = nil
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
         File.open(path, 'r') do |f|
+          body = build_body(f, peaks_str, shift)
           response = HTTParty.post(
-            "http://#{url}:#{port}/zip_edit_jcamp_n_img",
-            body: {
-              multipart: true,
-              file: f,
-              peaks_str: peaks_str,
-              shift_select_x: shift[:select_x],
-              shift_ref_name: shift[:ref_name],
-              shift_ref_value: shift[:ref_value]
-
-            }
+            "http://#{url}:#{port}/zip_jcamp_n_img",
+            body: body
           )
         end
         response
@@ -123,9 +97,9 @@ module Chemotion
         peaks.map { |p| "#{p[:x]},#{p[:y]}" }.join('#')
       end
 
-      def self.spectrum_peaks_edit(path, peaks, shift)
-        peaks_str = to_coord_string(peaks)
-        rsp = stub_edit_zip_jcamp_n_img(path, peaks_str, shift)
+      def self.spectrum(path, peaks = false, shift = false)
+        peaks_str = peaks ? to_coord_string(peaks) : false
+        rsp = stub_http(path, peaks_str, shift)
         rsp_io = StringIO.new(rsp.body.to_s)
         Util.extract_zip(rsp_io)
       end
@@ -147,7 +121,7 @@ module Chemotion
         port = Rails.configuration.spectra.port
         File.open(path, 'r') do |f|
           response = HTTParty.post(
-            "http://#{url}:#{port}/zip_peak_in_image",
+            "http://#{url}:#{port}/zip_image",
             body: {
               multipart: true,
               file: f
