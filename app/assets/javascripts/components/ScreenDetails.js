@@ -147,7 +147,7 @@ export default class ScreenDetails extends Component {
     const {wellplates, name, collaborator, result, conditions, requirements, description} = screen;
 
     return(
-      <ListGroup fill>
+      <ListGroup fill="true">
         <ListGroupItem>
           <table width="100%"><tbody>
             <tr>

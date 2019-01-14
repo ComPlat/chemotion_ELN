@@ -587,7 +587,7 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
 
     return (
       <div>
-        <ListGroup fill>
+        <ListGroup fill="true">
           <ListGroupItem style={minPadding}>
 
             <MaterialGroupContainer
