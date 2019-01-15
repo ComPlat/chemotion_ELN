@@ -225,10 +225,16 @@ module Chemotion
           end
           zip.put_next_entry "dataset_description.txt"
           zip.write <<~DESC
+          dataset name: #{@container.name}
           instrument: #{@container.extended_metadata.fetch('instrument', nil)}
-
+          description:
           #{@container.description}
+
+          Files:
           DESC
+          @container.attachments.each do |att|
+            zip.write "#{att.filename} #{att.checksum}\n"
+          end
         end
         zip.rewind
         zip.read
