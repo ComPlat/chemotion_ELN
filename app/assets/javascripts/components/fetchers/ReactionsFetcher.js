@@ -117,7 +117,7 @@ export default class ReactionsFetcher {
     }
   }
 
-  static importReactionsFromChemScanner(reactionsList) {
+  static importFromChemScanner({ reactions, molecules }) {
     const promise = fetch('/api/v1/reactions/import_chemscanner', {
       credentials: 'same-origin',
       method: 'post',
@@ -126,7 +126,8 @@ export default class ReactionsFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        reaction_list: reactionsList,
+        reactions,
+        molecules,
         collection_id: UIStore.getState().currentCollection.id,
       })
     }).then(response => response.json()).catch((errorMessage) => {

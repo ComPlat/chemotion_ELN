@@ -4,7 +4,7 @@ var React = require('react');
 var Home = require('./libHome/Home');
 var CnC = require('./libCnC/CnC');
 var AdminHome = require('./admin/AdminHome');
-var ChemScanner = require('./components/chemscanner/ChemScannerContainer');
+var ChemScanner = require('./components/chemscanner/ChemScanner');
 var App = require('./components/App');
 
 //= require_self

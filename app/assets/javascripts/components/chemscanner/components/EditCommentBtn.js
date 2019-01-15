@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
 import { OverlayTrigger, Popover, FormControl } from 'react-bootstrap';
 
 export default class EditCommentBtn extends React.Component {
@@ -11,23 +10,25 @@ export default class EditCommentBtn extends React.Component {
   }
 
   onChangeComment() {
-    const comment = ReactDOM.findDOMNode(this.commentRef).value;
+    const comment = this.commentRef.value;
 
-    const { onChangeComment, id } = this.props;
-    const { uid, cdIdx, idx } = id;
-    onChangeComment(uid, cdIdx, idx, comment);
+    const {
+      onChangeComment, cdUid, itemId
+    } = this.props;
+    onChangeComment(cdUid, itemId, comment);
   }
 
   render() {
-    const { comment, id } = this.props;
-    const { uid, cdIdx, idx } = id;
+    const {
+      comment, cdUid, itemId
+    } = this.props;
 
     const commentPopover = (
-      <Popover id={`${uid}-${cdIdx}-${idx}-comment`} title="Comment">
+      <Popover id={`${cdUid}-${itemId}-comment`} title="Comment">
         <FormControl
           componentClass="textarea"
           defaultValue={comment}
-          ref={(r) => { this.commentRef = r; }}
+          inputRef={(r) => { this.commentRef = r; }}
           rows={6}
         />
       </Popover>
@@ -43,7 +44,7 @@ export default class EditCommentBtn extends React.Component {
           overlay={commentPopover}
           container={this}
         >
-          <button type="button" className="clipboardBtn remove-btn btn btn-xs">
+          <button type="button" className="clipboardBtn right-btn btn btn-xs">
             <i className="fa fa-comment" />
           </button>
         </OverlayTrigger>
@@ -55,9 +56,6 @@ export default class EditCommentBtn extends React.Component {
 EditCommentBtn.propTypes = {
   onChangeComment: PropTypes.func.isRequired,
   comment: PropTypes.string.isRequired,
-  id: PropTypes.object.isRequired,
-};
-
-EditCommentBtn.defaultProps = {
-  comment: ""
+  itemId: PropTypes.number.isRequired,
+  cdUid: PropTypes.string.isRequired,
 };

@@ -41,7 +41,7 @@ module SVG
       true
     end
 
-    def self.cr_reaction_svg_from_mdl(rinfo, solvents_smis)
+    def self.cs_reaction_svg_from_mdl(rinfo, solvents_smis)
       files = {
         starting_materials: [],
         products: [],
@@ -51,6 +51,7 @@ module SVG
 
       @starting_materials = rinfo[:reactants_mdl]
       @products = rinfo[:products_mdl]
+      @reactants = rinfo[:reagents_mdl]
 
       %w[starting_materials products].each do |g|
         svg_files = instance_variable_get("@#{g}").map { |r, _|
@@ -63,6 +64,15 @@ module SVG
 
         files[g.to_sym].concat(svg_files)
       end
+
+      reactant_svg = @reactants.map { |mdl|
+        svg = Chemotion::OpenBabelService.mdl_to_trans_svg(mdl)
+        tmp_file = Tempfile.new
+        tmp_file.write(svg)
+        tmp_file.close
+        tmp_file
+      }
+      files[:reactants].concat(reactant_svg)
 
       @solvents = rinfo[:reagents_smiles] & solvents_smis
       @reactants = rinfo[:reagents_smiles] - @solvents
@@ -89,11 +99,12 @@ module SVG
         paths,
         rails_path: false,
         solvents: paths[:solvents]
-      ).compose_cr_reaction_svg
+      ).compose_cs_reaction_svg
 
       name_arr.each do |g|
         files[g.to_sym].map(&:unlink)
       end
+
       svg
     end
 
@@ -135,7 +146,7 @@ module SVG
       file_name
     end
 
-    def compose_cr_reaction_svg
+    def compose_cs_reaction_svg
       set_cr_global_view_box_height
 
       sections = {}

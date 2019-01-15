@@ -27,10 +27,10 @@ module Chemotion
             temp_file = file['tempfile']
 
             file_info = read_uploaded_file(temp_file, get_mol)
-            smi_obj = {
-              uid: uid, name: file['filename']
-            }.merge(file_info) unless file_info.nil?
-            smi_arr.push(smi_obj)
+            unless file_info.nil? || file_info.empty?
+              smi_obj = { uid: uid, name: file['filename'] }.merge(file_info)
+              smi_arr.push(smi_obj)
+            end
 
             temp_file.close
             temp_file.unlink
@@ -41,35 +41,39 @@ module Chemotion
       end
 
       resource :svg do
-        desc 'Convert svg from smi'
+        desc 'Convert svg from MDL and SMILES'
         params do
-          requires :smiArr, type: Array, desc: 'Files and uids'
+          requires :molecules, type: Array, desc: 'Array of molecules that need SVG'
+          requires :reactions, type: Array, desc: 'Array of reactions that need SVG'
         end
 
-        post 'smi' do
-          smi_arr = params[:smiArr]
-          res = []
-          smi_arr.each do |smi|
-            info = smi[:info]
-            rsmi = [
-              info[:reactants_smiles].join('.'),
-              info[:reagents_smiles].uniq.join('.'),
-              info[:products_smiles].join('.')
-            ].join('>')
+        post 'mdl' do
+          molecules = params[:molecules].map { |m|
+            {
+              mid: m[:mid],
+              svg: Chemotion::OpenBabelService.mdl_to_trans_svg(m[:mdl])
+            }
+          }
 
-            res.push(
-              uid: smi[:uid],
-              smiIdx: smi[:smiIdx],
-              cdIdx: smi[:cdIdx],
-              svg: SVG::ReactionComposer.cr_reaction_svg_from_mdl(
-                info,
-                ChemScanner.solvents.values
-              ),
-              smi: rsmi
+          reactions = params[:reactions].map { |r|
+            info = {
+              reactants_mdl: (r[:reactants] || []).map { |m| m[:mdl] },
+              reagents_mdl: (r[:reagents] || []).map { |m| m[:mdl] },
+              products_mdl: (r[:products] || []).map { |m| m[:mdl] },
+              reagents_smiles: r[:reagents_smiles] || []
+            }
+            r[:svg] = SVG::ReactionComposer.cs_reaction_svg_from_mdl(
+              info,
+              ChemScanner.solvents.values
             )
-          end
 
-          res
+            r
+          }
+
+          {
+            molecules: molecules,
+            reactions: reactions
+          }
         end
       end
 
@@ -112,31 +116,36 @@ module Chemotion
 
       resource :export do
         params do
-          requires :getMol, type: Boolean, desc: 'Export molecules or reactions'
-          requires :objects, type: Array, desc: 'Array of molecule(s)/reaction(s)'
+          requires :reactions, type: Array, desc: 'Array of reactions'
+          requires :molecules, type: Array, desc: 'Array of molecules'
         end
 
         post 'cml' do
-          objects = params[:objects].map do |obj|
-            next OpenStruct.new(obj) if params[:getMol]
-
-            oreactants = obj[:reactants].map { |r| OpenStruct.new(r) }
-            oproducts = obj[:products].map { |r| OpenStruct.new(r) }
+          reactions = params[:reactions].map { |reaction|
+            oreactants = reaction[:reactants].map { |r| OpenStruct.new(r) }
+            oproducts = reaction[:products].map { |r| OpenStruct.new(r) }
 
             OpenStruct.new(
+              id: reaction[:id],
               reactants: oreactants,
               products: oproducts,
               reagents: [],
-              reagent_smiles: obj[:reagents_smiles],
-              yield: obj[:yield],
-              time: obj[:time],
-              temperature: obj[:temperature],
-              description: obj[:description]
+              reagent_smiles: reaction[:reagents_smiles],
+              yield: reaction[:yield],
+              time: reaction[:time],
+              temperature: reaction[:temperature],
+              description: reaction[:description]
             )
-          end
+          }
 
-          cml = ChemScanner::Export::CML.new(objects, params[:getMol])
-          cml.process
+          rcml = ChemScanner::Export::CML.new(reactions, false).process
+          molecules = params[:molecules].map { |m| OpenStruct.new(m) }
+          mcml = ChemScanner::Export::CML.new(molecules, true).process
+
+          {
+            molecules: mcml,
+            reactions: rcml
+          }
         end
       end
     end

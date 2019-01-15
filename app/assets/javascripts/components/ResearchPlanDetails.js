@@ -411,7 +411,7 @@ export default class ResearchPlanDetails extends Component {
     const { name, description } = research_plan;
     const submitLabel = research_plan.isNew ? "Create" : "Save";
     return (
-      <ListGroup fill>
+      <ListGroup fill="true">
         <ListGroupItem>
           <Row>
             <Col md={4}>

@@ -136,8 +136,8 @@ M  END
     c.read_string m, cano_smiles
 
     c.set_out_format 'mol'
-    opts = OpenBabel::OBConversion::GENOPTIONS
-    c.add_option 'gen2D', opts
+    pop = OpenBabel::OBOp.find_type('gen2D')
+    pop.do(m)
     c.write_string(m, false).to_s
   end
 

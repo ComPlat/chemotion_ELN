@@ -18,7 +18,7 @@ module ChemScannerHelpers
       img_b64 = info[:img_b64]
       img_ext = info[:img_ext]
 
-      info = { info: cdx_info }
+      info = { info: cdx_info, cdUid: SecureRandom.hex(10) }
       if img_ext == '.png'
         info[:svg] = "data:image/png;base64,#{img_b64}"
       elsif %w[.emf .wmf].include?(img_ext)
@@ -40,13 +40,12 @@ module ChemScannerHelpers
       cdx_info = info_from_parser(cdx, get_mol)
       info_arr.push(
         b64cdx: Base64.encode64(cdx.raw_data),
-        info: cdx_info
+        info: cdx_info,
+        cdUid: SecureRandom.hex(10)
       )
     end
 
-    {
-      cds: info_arr
-    }
+    { cds: info_arr }
   end
 
   def read_cdx(path, get_mol)
@@ -57,7 +56,8 @@ module ChemScannerHelpers
       cds: [
         {
           b64cdx: Base64.encode64(cdx.raw_data),
-          info: info_from_parser(cdx, get_mol)
+          info: info_from_parser(cdx, get_mol),
+          cdUid: SecureRandom.hex(10)
         }
       ]
     }
@@ -71,13 +71,14 @@ module ChemScannerHelpers
       cds: [
         {
           cdxml: cdxml.raw_data,
-          info: info_from_parser(cdxml, get_mol)
+          info: info_from_parser(cdxml, get_mol),
+          cdUid: SecureRandom.hex(10)
         }
       ]
     }
   end
 
-  def read_perkin_eln(path, get_mol)
+  def read_xml(path, get_mol)
     eln = ChemScanner::PerkinEln.new
     eln.read(path)
 
@@ -86,13 +87,12 @@ module ChemScannerHelpers
       info = info_from_parser(scheme, get_mol)
       info_arr.push(
         cdxml: scheme.cdxml,
-        info: info
+        info: info,
+        cdUid: SecureRandom.hex(10)
       )
     end
 
-    {
-      cds: info_arr
-    }
+    { cds: info_arr }
   end
 
   def info_from_parser(parser, get_mol)
@@ -102,7 +102,7 @@ module ChemScannerHelpers
     infos = []
     objs.each do |obj|
       info = extract_info(obj, get_mol)
-      infos.push(info) unless info.nil?
+      infos.push(info) unless info.empty?
     end
 
     infos
@@ -111,116 +111,86 @@ module ChemScannerHelpers
   def read_uploaded_file(file, get_mol)
     filepath = file.to_path
     extn = File.extname(filepath).downcase
+    func_name = "read_#{extn[1..-1]}".to_sym
+    return {} unless respond_to?(func_name)
 
-    begin
-      return case extn
-             when '.docx' then read_docx(filepath, get_mol)
-             when '.doc' then read_doc(filepath, get_mol)
-             when '.cdx' then read_cdx(filepath, get_mol)
-             when '.xml' then read_perkin_eln(filepath, get_mol)
-             when '.cdxml' then read_cdxml(filepath, get_mol)
-             else raise 'Uploaded file type is not supported'
-             end
-    rescue StandardError => e
-      Rails.logger.error("Error while parsing: #{e}")
-      return {}
-    end
+    # begin
+      return send(func_name, filepath, get_mol)
+    # rescue StandardError => e
+    #   Rails.logger.error("Error while parsing: #{e}")
+    #   return {}
+    # end
   end
 
   def extract_info(obj, get_mol)
-    info = get_mol ? mol_info(obj) : reaction_info(obj)
-    return if info.nil?
-
-    svg = if get_mol
-            Chemotion::OpenBabelService.mdl_to_trans_svg(info[:mdl])
-          else
-            SVG::ReactionComposer.cr_reaction_svg_from_mdl(
-              info,
-              ChemScanner.solvents.values
-            )
-          end
-
-    info.merge(svg: svg)
+    get_mol ? mol_info(obj, true) : reaction_info(obj)
   end
 
   def reaction_info(reaction)
-    return nil if reaction.reactants.count.zero? || reaction.products.count.zero?
+    return {} if reaction.reactants.count.zero? || reaction.products.count.zero?
 
-    desc = {}
-    rdetails = reaction.details.to_h
-    %w[reactants reagents products].each do |group|
-      rgroup = reaction.send(group)
-      rgroup.each_with_index do |mol, idx|
-        mlabel = group.chomp('s') + " #{idx + 1}"
+    list_mol_info = ->(arr) { arr.map { |m| mol_info(m) } }
 
-        alias_info = (mol.atom_map || {}).each_with_object([]) do |(_, atom), arr|
-          next unless atom.is_alias || !atom.alias_text.empty?
-
-          arr.push(id: atom.idx, text: atom.alias_text)
-        end
-
-        desc[mlabel] = {
-          text: mol.text.strip,
-          label: mol.label.strip,
-          mdl: mol.mdl,
-          alias: alias_info
-        }
-
-        rdetails[mlabel] = mol.details.to_h
-      end
-    end
-    desc[:reaction] = {
+    {
+      id: reaction.arrow_id,
+      svg: build_reaction_svg(reaction),
+      smi: reaction.reaction_smiles,
       description: reaction.description,
+      details: reaction.details.to_h || {},
       status: reaction.status,
       temperature: reaction.temperature,
       time: reaction.time,
-      yield: reaction.yield
-    }
-
-    reagents_mdl = []
-    reagents_smiles = []
-
-    reaction.reagents.each do |reagent|
-      cano_smiles = reagent.cano_smiles
-      mdl = reagent.mdl
-
-      reagents_mdl.push(mdl)
-      reagents_smiles.push(cano_smiles)
-    end
-
-    reaction.reagent_smiles.each do |smi|
-      reagents_smiles.push(smi)
-    end
-
-    {
-      smi: reaction.reaction_smiles,
-      reactants_smiles: reaction.reactants.map(&:cano_smiles),
-      reactants_mdl: reaction.reactants.map(&:mdl),
-      reagents_smiles: reagents_smiles,
-      reagents_mdl: reagents_mdl,
-      products_smiles: reaction.products.map(&:cano_smiles),
-      products_mdl: reaction.products.map(&:mdl),
-      description: desc,
-      details: rdetails
+      yield: reaction.yield,
+      abbreviations: abbreviation_mdl(reaction.reagent_smiles),
+      reactants: list_mol_info.call(reaction.reactants),
+      reagents: list_mol_info.call(reaction.reagents),
+      products: list_mol_info.call(reaction.products)
     }
   end
 
-  def mol_info(mol)
-    return if mol.nil?
+  def abbreviation_mdl(abbs)
+    abbs.map { |s|
+      {
+        smi: s,
+        mdl: Chemotion::OpenBabelService.molfile_from_cano_smiles(s)
+      }
+    }
+  end
 
-    alias_info = mol.atom_map.each_with_object([]) do |(key, atom), arr|
-      next unless atom.is_alias || atom.alias_text.empty?
+  def build_reaction_svg(reaction)
+    mdl_info = {
+      reactants_mdl: reaction.reactants.map(&:mdl),
+      reagents_mdl: reaction.reagents.map(&:mdl),
+      reagents_smiles: reaction.reagent_smiles,
+      products_mdl: reaction.products.map(&:mdl)
+    }
+
+    SVG::ReactionComposer.cs_reaction_svg_from_mdl(
+      mdl_info,
+      ChemScanner.solvents.values
+    )
+  end
+
+  def mol_info(mol, getSvg = false)
+    return {} if mol.nil?
+
+    alias_info = (mol.atom_map || {}).each_with_object([]) do |(key, atom), arr|
+      next unless atom.is_alias || !atom.alias_text.empty?
 
       arr.push(id: key, text: atom.alias_text)
     end
 
     res = {
-      description: mol.text,
-      details: mol.details.to_h,
-      smi: mol.cano_smiles,
+      id: mol.id,
+      description: mol.text || '',
+      details: mol.details.to_h || {},
+      smi: mol.cano_smiles || '',
       mdl: mol.mdl,
-      alias: alias_info
+      label: mol.label,
+      alias: alias_info || []
     }
+
+    res[:svg] = Chemotion::OpenBabelService.mdl_to_trans_svg(mol.mdl) if getSvg
 
     res
   end
@@ -234,7 +204,7 @@ module ChemScannerHelpers
     svg_file.close
 
     cmd = "inkscape -l #{svg_file.path} #{emf_file.path}"
-    Open3.popen3(cmd) { |_, _, _, wait_thr| wait_thr.value }
+    Open3.popen3(cmd) do |_, _, _, wait_thr| wait_thr.value end
 
     svg = File.read(svg_file.path)
 

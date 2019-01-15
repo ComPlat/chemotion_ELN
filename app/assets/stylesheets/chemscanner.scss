@@ -1,116 +1,85 @@
 .chemscanner-grid {
-  margin-top: 10px;
+  margin: 10px 0px 0px 0px !important;
   padding-left: 0px !important;
   padding-right: 0px !important;
 
-  .chemscanner-round-border {
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+  .row {
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .chemscanner-export {
-    margin-right: 18px;
-
-    .chemscanner-export-menu button {
-      margin-bottom: 8px;
-      margin-top: 8px;
-      width: 130px;
-    }
+  .cdjs-row {
+    // z-index: -1;
+    width: 90%;
+    height: 500px;
+    position: absolute;
+    display: none;
   }
 
-  .chemscanner-header {
-    background-color: #f5f5f5;
-    border: 1px solid #ddd;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    display: block;
-    margin-bottom: -1px;
-    padding: 10px 15px;
-    position: relative;
-    text-align: center;
+  .chemscanner-menu {
+    border-radius: 3px;
+    background-color: #f5f6f7;
 
-    .chemscanner-type {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-bottom: 5px;
+    padding-top: 5px;
 
-      .radio {
-        margin-right: 10px;
-      }
-      .radio + .radio {
-        margin-top: 10px;
-      }
-    }
-  }
-
-  .chemscanner-dropzone {
-    line-height: 20px;
-    text-align: center;
-    width: 100%;
-  }
-
-  .chemscanner-categories {
-    padding: 0 !important;
-  }
-
-  .chemscanner-file-item {
-    .chemscanner-file-name {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .remove-btn {
-      background-color: white;
-      float: right;
-      &:hover {
-        background-color: #f5f5f5;
-      }
-    }
-  }
-
-  .chemscanner-smiles-menu {
     display: flex;
-    flex-wrap: wrap;
-    padding: 5px;
+    justify-content: center;
 
-    .form-group {
+    > div {
       margin: 5px;
-      width: 100%;
     }
-  }
 
-  .chemscanner-files {
-    padding-right: 10px !important;
-  }
+    .btn {
+      border: 1px solid #dddfe2;
+      border-radius: 8px;
+      font-weight: 600;
+      line-height: 22px;
+    }
 
-  .chemscanner-files-menu {
-    // max-height: calc(100vh - 375px);
-    // overflow-x: hidden;
-    // overflow-y: scroll;
-    // width: 16vw;
+    .dropdown-menu {
+      border-radius: 8px;
+    }
+
+    .chemscanner-menu-item {
+      .menuitem {
+        padding: 0px !important;
+      }
+
+      div {
+        width: auto !important;
+        height: auto !important;
+        border-style: none !important;
+        border-radius: 0px !important;
+        padding: 3px 20px !important;
+      }
+    }
   }
 
   .chemscanner-files-contents {
-    // max-height: calc(100vh - 25px);
-    // overflow-x: hidden;
-    // overflow-y: scroll;
-    padding-right: 10px !important;
-    padding-left: 0 !important;
-  }
-
-  .rsmi-svg {
-    align-items: center;
-    display: flex;
-    justify-content: center;
+    max-height: calc(100vh - 100px);
+    overflow: auto;
+    position: relative;
+    margin-top: 20px;
+    z-index: 1;
+    padding-right: 10px;
   }
 
   .chemscanner-files-list {
+    margin-left: 10px;
+
     .svg-file-container {
       > svg {
         min-height: 0;
+      }
+    }
+
+    .scanned-reaction-desc {
+      display: flex;
+      div {
+        margin: 10px;
       }
     }
   }
@@ -121,7 +90,15 @@
     word-break: break-all;
   }
 
-  .rsmi-item {
+  .right-btn {
+    float: right;
+  }
+
+  .selected-item {
+    background-color: #e8f0fe;
+  }
+
+  .scanned-item {
     border-radius: 4px;
     border: 1px solid black;
     display: flow-root;
@@ -135,14 +112,8 @@
       margin-bottom: 5px;
     }
 
-    .remove-btn {
-      float: right;
-    }
-
     .svg-file-container {
-      width: 60%;
-      float: left;
-      margin-right: 10px;
+      width: 100%;
 
       > svg {
         min-height: 0;
@@ -197,12 +168,18 @@
 
   .abbreviation-management {
     display: flex;
+    justify-content: center;
+  }
+
+  .chemscanner-abb-view-header {
+    display: flex;
+    justify-content: center;
   }
 
   ::-webkit-scrollbar {
     background: transparent;
     overflow: visible;
-    width: 17px;
+    width: 15px;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -216,12 +193,12 @@
 
   ::-webkit-scrollbar-thumb:horizontal {
     border-width: 4px 6px;
-    min-width: 40px;
+    min-width: 20px;
   }
 
   ::-webkit-scrollbar-thumb:vertical {
     border-width: 6px 4px;
-    min-height: 40px;
+    min-height: 20px;
   }
 
   ::-webkit-scrollbar-track-piece {

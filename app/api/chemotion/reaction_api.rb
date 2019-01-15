@@ -198,7 +198,8 @@ module Chemotion
       namespace :import_chemscanner do
         desc 'Import Reactions'
         params do
-          requires :reaction_list, type: Array, desc: 'List of reactions to import'
+          requires :reactions, type: Array, desc: 'List of reactions to import'
+          requires :molecules, type: Array, desc: 'List of molecules to import'
           requires :collection_id, type: Integer, desc: 'Collection id'
         end
 
@@ -210,7 +211,8 @@ module Chemotion
 
         post do
           Import::FromChemScanner.from_list(
-            params[:reaction_list],
+            params[:reactions],
+            params[:molecules],
             current_user.id,
             params[:collection_id]
           )
