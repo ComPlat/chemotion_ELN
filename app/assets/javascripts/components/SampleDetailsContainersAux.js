@@ -1,5 +1,9 @@
 import React from 'react';
-import { Button, Checkbox, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  Button, Checkbox, OverlayTrigger, Tooltip,
+  MenuItem, SplitButton, ButtonGroup
+} from 'react-bootstrap';
 import { startsWith, filter, map, flatMap } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
@@ -7,6 +11,64 @@ import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
+
+const SpectraViewerBtn = ({
+  spcInfo, hasJcamp,
+  toggleSpectraModal, confirmRegenerate
+}) => (
+  <OverlayTrigger
+    placement="bottom"
+    delayShow={500}
+    overlay={<Tooltip id="spectra">Spectra Viewer: {!spcInfo ? 'Reprocess jdx' : ''}</Tooltip>}
+  >{spcInfo ? (
+    <ButtonGroup className="button-right">
+      <SplitButton
+        // id={`spectra-viewer-split-button-${container.id}`}
+        pullRight
+        bsStyle="info"
+        bsSize="xsmall"
+        title={<i className="fa fa-area-chart" />}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={toggleSpectraModal}
+        disabled={!spcInfo}
+      >
+        <MenuItem
+          key="regenerate-spectra"
+          onSelect={(eventKey,event) => {
+            event.stopPropagation();
+            confirmRegenerate(event);
+          }}
+          disabled={!hasJcamp}
+        >
+          <i className="fa fa-refresh" /> Reprocess jdx
+        </MenuItem>
+      </SplitButton>
+    </ButtonGroup>
+  ) : (
+    <Button
+      bsStyle="warning"
+      bsSize="xsmall"
+      className="button-right"
+      onClick={confirmRegenerate}
+      disabled={!hasJcamp}
+    >
+      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+    </Button>
+  )}
+  </OverlayTrigger>
+);
+
+SpectraViewerBtn.propTypes = {
+  hasJcamp: PropTypes.bool,
+  spcInfo: PropTypes.bool,
+  toggleSpectraModal: PropTypes.func.isRequired,
+  confirmRegenerate: PropTypes.func.isRequired,
+};
+
+SpectraViewerBtn.defaultProps = {
+  hasJcamp: false,
+  spcInfo: false,
+};
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
@@ -145,39 +207,17 @@ const headerBtnGroup = (
       >
         <i className="fa fa-trash" />
       </Button>
-      <OverlayTrigger
-        placement="bottom"
-        overlay={<Tooltip id="spectra">Regenerate Spectra</Tooltip>}
-      >
-        <Button
-          bsStyle="warning"
-          bsSize="xsmall"
-          className="button-right"
-          onClick={confirmRegenerate}
-          disabled={!hasJcamp}
-        >
-          <i className="fa fa-refresh" />
-        </Button>
-      </OverlayTrigger>
       <PrintCodeButton
         element={sample}
         analyses={[container]}
         ident={container.id}
       />
-      <OverlayTrigger
-        placement="bottom"
-        overlay={<Tooltip id="spectra">Spectra Viewer</Tooltip>}
-      >
-        <Button
-          bsStyle="info"
-          bsSize="xsmall"
-          className="button-right"
-          onClick={toggleSpectraModal}
-          disabled={!spcInfo}
-        >
-          <i className="fa fa-area-chart" />
-        </Button>
-      </OverlayTrigger>
+      <SpectraViewerBtn
+        hasJcamp={hasJcamp}
+        spcInfo={spcInfo}
+        toggleSpectraModal={toggleSpectraModal}
+        confirmRegenerate={confirmRegenerate}
+      />
       <span
         className="button-right add-to-report"
         onClick={stopBubble}
