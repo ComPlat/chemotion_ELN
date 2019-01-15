@@ -30,6 +30,7 @@
 /config/database.yml
 /config/storage.yml
 /config/spectra.yml
+/config/editors.yml
 
 /node_modules
 

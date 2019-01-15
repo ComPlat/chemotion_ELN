@@ -1,0 +1,126 @@
+<div class="form">
+  <div id="iframeEditor">
+  </div>
+</div>
+
+<script src="<%= Rails.configuration.editors.docserver_api %>"></script>
+
+
+<script type="text/javascript" language="javascript">
+
+    var docEditor;
+
+    var info_address = "<%= Rails.configuration.editors.info[:address] %>";
+    var info_title = "<%= Rails.configuration.editors.info[:title] %>";
+    var info_name = "<%= Rails.configuration.editors.info[:name] %>";
+    var info_logo = "<%= Rails.configuration.editors.info[:logo] %>";
+    var info_mail = "<%= Rails.configuration.editors.info[:mail] %>";
+    var info_website = "<%= Rails.configuration.editors.info[:website] %>";
+    var feedbackurl = "<%= Rails.configuration.editors.info[:feedbackurl] %>";
+
+    var title = "<%= params[:title] %>";
+    var docType = "<%= params[:docType] %>";
+    var key = "<%= params[:key] %>";
+
+    var innerAlert = function (message) {
+        if (console && console.log)
+            console.log(message);
+    };
+
+    var onReady = function () {
+        innerAlert("Document editor ready");
+    };
+
+    var onDocumentStateChange = function (event) {
+        var title = document.title.replace(/\*$/g, "");
+        document.title = title + (event.data ? "*" : "");
+    };
+
+    var onRequestEditRights = function () {
+        location.href = location.href.replace(RegExp("action=view?&", "i"), "");
+    };
+
+    var onError = function (event) {
+        if (event)
+            innerAlert(event.data);
+    };
+
+    var onOutdatedVersion = function (event) {
+        //location.reload(true);
+    };
+
+    var сonnectEditor = function () {
+        docEditor = new DocsAPI.DocEditor("iframeEditor",
+                {
+                    width: "100%",
+                    height: "950px",
+                    type: "desktop",
+                    documentType: docType,
+                    document: {
+                        title: title,
+                        url: "<%= request.base_url + '/api/v1/public/download?token=' + params[:key] %>",
+                        fileType: "<%= params[:fileType] %>",
+                        key: "<%= params[:key] %>",
+                        info: {
+                            author: "<%= current_user.name %>",
+                            created: "<%= Time.now.to_s %>",
+                        },
+
+                        permissions: {
+                            edit: "true",
+                            download: true,
+                            fillForms: false,
+                            review: false
+                        },
+                    },
+                    editorConfig: {
+                        mode: "edit",
+                        lang: "en",
+                        callbackUrl: "<%= request.base_url + '/api/v1/public/callback' %>",
+                        user: {
+                            id: "<%= current_user.id %>",
+                            name: "<%= current_user.name %>",
+                        },
+                        userdata: title,
+                        customization: {
+                          chat: false,
+                          compactToolbar: false,
+                          customer: {
+                            address: info_address,
+                            info: info_title,
+                            logo: info_logo,
+                            mail: info_mail,
+                            name: info_name,
+                            www: info_website
+                          },
+                          feedback: {
+                            url: feedbackurl,
+                            visible: false
+                          },
+                          forcesave: false,
+                          help: false,
+                          logo: {
+                            image: info_logo,
+                            imageEmbedded: info_logo,
+                            url: info_website
+                          },
+                          showReviewChanges: false,
+                          zoom: 100
+                        }
+                    },
+                    events: {
+                        'onReady': onReady,
+                        'onDocumentStateChange': onDocumentStateChange,
+                        'onError': onError,
+                        'onOutdatedVersion': onOutdatedVersion,
+                    },
+                });
+    };
+
+    if (window.addEventListener) {
+        window.addEventListener("load", сonnectEditor);
+    } else if (window.attachEvent) {
+        window.attachEvent("load", сonnectEditor);
+    }
+
+</script>

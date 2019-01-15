@@ -22,6 +22,7 @@ Rails.application.routes.draw do
 
   # Standalone page for ChemScanner
   get 'chemscanner', to: 'pages#chemscanner'
+  get 'editor',      to: 'pages#editor'
 
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'

@@ -11,6 +11,8 @@ class PagesController < ApplicationController
 
   def welcome; end
 
+  def editor; end
+
   def update_user
     @user = current_user
     @user.counters['reactions'] = params[:reactions_count].to_i

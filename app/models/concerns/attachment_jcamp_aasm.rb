@@ -16,6 +16,15 @@ module AttachmentJcampAasm
       state :peaked, :edited, :backup, :image
       state :failure
       state :non_jcamp
+      state :oo_editing
+
+      event :oo_editing_start do
+        transitions from: %i[oo_editing non_jcamp idle], to: :oo_editing
+      end
+
+      event :oo_editing_end do
+        transitions from: :oo_editing, to: :non_jcamp
+      end
 
       event :set_force_peaked do
         transitions from: %i[queueing], to: :peaked

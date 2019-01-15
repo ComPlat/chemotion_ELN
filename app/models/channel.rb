@@ -15,4 +15,5 @@ class Channel < ActiveRecord::Base
   COMPUTED_PROPS_NOTIFICATION = 'Computed Prop Notification'
   GATE_TRANSFER_NOTIFICATION = 'Gate Transfer Completed'
   COLLECTION_TAKE_OWNERSHIP = 'Collection Take Ownership'
+  EDITOR_CALLBACK = 'EditorCallback'
 end
