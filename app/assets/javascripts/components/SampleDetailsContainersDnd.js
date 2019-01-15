@@ -33,9 +33,11 @@ const orderDropCollect = (connect, monitor) => ({
   canDrop: monitor.canDrop(),
 });
 
-const ContainerRow = ({ sample, container, mode, readOnly, isDisabled,
-  handleRemove, handleAccordionOpen, toggleAddToReport, handleUndo,
-  connectDragSource, connectDropTarget, isDragging, isOver, canDrop }) => {
+const ContainerRow = ({
+  sample, container, mode, readOnly, isDisabled, handleRemove,
+  handleSubmitSample, handleAccordionOpen, toggleAddToReport, handleUndo,
+  connectDragSource, connectDropTarget, isDragging, isOver, canDrop,
+}) => {
   const style = {};
   if (canDrop) {
     style.borderStyle = 'dashed';
@@ -70,6 +72,7 @@ const ContainerRow = ({ sample, container, mode, readOnly, isDisabled,
             readOnly={readOnly}
             isDisabled={isDisabled}
             handleRemove={handleRemove}
+            handleSubmitSample={handleSubmitSample}
             handleAccordionOpen={handleAccordionOpen}
             toggleAddToReport={toggleAddToReport}
           />

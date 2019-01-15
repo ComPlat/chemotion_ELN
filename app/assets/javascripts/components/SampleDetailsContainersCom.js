@@ -22,9 +22,11 @@ const RndNoAnalyses = ({ addButton }) => (
   </div>
 );
 
-const RndOrder = ({ sample, mode, readOnly, isDisabled, handleRemove,
+const RndOrder = ({
+  sample, mode, readOnly, isDisabled, handleRemove, handleSubmitSample,
   handleMove, handleUndo, handleAccordionOpen, toggleAddToReport, toggleMode,
-  orderContainers, addButton }) => {
+  orderContainers, addButton,
+}) => {
   return (
     <div>
       <p>{AnalysisModeBtn(mode, toggleMode, isDisabled)}{addButton()}</p>
@@ -42,6 +44,7 @@ const RndOrder = ({ sample, mode, readOnly, isDisabled, handleRemove,
               addButton={addButton}
               handleMove={handleMove}
               handleRemove={handleRemove}
+              handleSubmitSample={handleSubmitSample}
               handleAccordionOpen={handleAccordionOpen}
               handleUndo={handleUndo}
               toggleAddToReport={toggleAddToReport}
@@ -54,9 +57,11 @@ const RndOrder = ({ sample, mode, readOnly, isDisabled, handleRemove,
   );
 };
 
-const RndEdit = ({ sample, mode, handleRemove, handleAccordionOpen,
+const RndEdit = ({
+  sample, mode, handleRemove, handleSubmitSample, handleAccordionOpen,
   toggleAddToReport, toggleMode, activeAnalysis, orderContainers, readOnly,
-  isDisabled, addButton, handleChange, handleUndo }) => {
+  isDisabled, addButton, handleChange, handleUndo,
+}) => {
 
   const headerDeletedFunc = container => (
     <HeaderDeleted
@@ -76,6 +81,7 @@ const RndEdit = ({ sample, mode, handleRemove, handleAccordionOpen,
       readOnly={readOnly}
       isDisabled={isDisabled}
       handleRemove={handleRemove}
+      handleSubmitSample={handleSubmitSample}
       handleAccordionOpen={handleAccordionOpen}
       toggleAddToReport={toggleAddToReport}
     />

@@ -249,7 +249,7 @@ export default class AttachmentFetcher {
     });
   }
 
-  static saveSpectraPeaks(peaks, attId) {
+  static saveSpectrum(peaks, shift, attId) {
     const promise = fetch(
       '/api/v1/attachments/save_peaks/',
       {
@@ -260,7 +260,41 @@ export default class AttachmentFetcher {
             Accept: 'application/json',
             'Content-Type': 'application/json',
           },
-        body: JSON.stringify({ peaks, attachment_id: attId }),
+        body: JSON.stringify({
+          peaks,
+          attachment_id: attId,
+          shift: {
+            selectX: shift.peak.x,
+            refName: shift.ref.name,
+            refValue: shift.ref.value,
+          },
+        }),
+      },
+    )
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static regenerateSpectrum(jcampIds) {
+    const promise = fetch(
+      '/api/v1/attachments/regenerate_spectrum/',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify({
+          original: jcampIds.orig,
+          generated: jcampIds.gene,
+        }),
       },
     )
       .then(response => response.json())

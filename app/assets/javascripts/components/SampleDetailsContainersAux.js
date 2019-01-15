@@ -1,10 +1,74 @@
 import React from 'react';
-import { Button, Checkbox } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import {
+  Button, Checkbox, OverlayTrigger, Tooltip,
+  MenuItem, SplitButton, ButtonGroup
+} from 'react-bootstrap';
 import { startsWith, filter, map, flatMap } from 'lodash';
 import QuillViewer from './QuillViewer';
 import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
+import SpectraActions from './actions/SpectraActions';
+import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
+
+const SpectraViewerBtn = ({
+  spcInfo, hasJcamp,
+  toggleSpectraModal, confirmRegenerate
+}) => (
+  <OverlayTrigger
+    placement="bottom"
+    delayShow={500}
+    overlay={<Tooltip id="spectra">Spectra Viewer: {!spcInfo ? 'Reprocess jdx' : ''}</Tooltip>}
+  >{spcInfo ? (
+    <ButtonGroup className="button-right">
+      <SplitButton
+        // id={`spectra-viewer-split-button-${container.id}`}
+        pullRight
+        bsStyle="info"
+        bsSize="xsmall"
+        title={<i className="fa fa-area-chart" />}
+        onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
+        onClick={toggleSpectraModal}
+        disabled={!spcInfo}
+      >
+        <MenuItem
+          key="regenerate-spectra"
+          onSelect={(eventKey,event) => {
+            event.stopPropagation();
+            confirmRegenerate(event);
+          }}
+          disabled={!hasJcamp}
+        >
+          <i className="fa fa-refresh" /> Reprocess jdx
+        </MenuItem>
+      </SplitButton>
+    </ButtonGroup>
+  ) : (
+    <Button
+      bsStyle="warning"
+      bsSize="xsmall"
+      className="button-right"
+      onClick={confirmRegenerate}
+      disabled={!hasJcamp}
+    >
+      <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
+    </Button>
+  )}
+  </OverlayTrigger>
+);
+
+SpectraViewerBtn.propTypes = {
+  hasJcamp: PropTypes.bool,
+  spcInfo: PropTypes.bool,
+  toggleSpectraModal: PropTypes.func.isRequired,
+  confirmRegenerate: PropTypes.func.isRequired,
+};
+
+SpectraViewerBtn.defaultProps = {
+  hasJcamp: false,
+  spcInfo: false,
+};
 
 const editModeBtn = (toggleMode, isDisabled) => (
   <Button
@@ -96,8 +160,10 @@ const previewImage = (container) => {
   }
 };
 
-const headerBtnGroup = (container, sample, mode, handleRemove,
-  toggleAddToReport, isDisabled, readOnly) => {
+const headerBtnGroup = (
+  container, sample, mode, handleRemove, handleSubmitSample,
+  toggleAddToReport, isDisabled, readOnly,
+) => {
   if (mode !== 'edit') {
     return null;
   }
@@ -112,6 +178,22 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
   const onToggleAddToReport = (e) => {
     e.stopPropagation();
     toggleAddToReport(container);
+  };
+
+  const spcInfo = BuildSpcInfo(sample, container);
+  const toggleSpectraModal = (e) => {
+    e.stopPropagation();
+    SpectraActions.ToggleModal();
+    SpectraActions.LoadSpectra.defer(spcInfo);
+  };
+
+  const jcampIds = JcampIds(container);
+  const hasJcamp = jcampIds.orig.length > 0;
+  const confirmRegenerate = (e) => {
+    e.stopPropagation();
+    if (confirm('Regenerate spectra?')) {
+      SpectraActions.Regenerate(jcampIds, handleSubmitSample);
+    }
   };
 
   return (
@@ -130,6 +212,12 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
         analyses={[container]}
         ident={container.id}
       />
+      <SpectraViewerBtn
+        hasJcamp={hasJcamp}
+        spcInfo={spcInfo}
+        toggleSpectraModal={toggleSpectraModal}
+        confirmRegenerate={confirmRegenerate}
+      />
       <span
         className="button-right add-to-report"
         onClick={stopBubble}
@@ -145,8 +233,10 @@ const headerBtnGroup = (container, sample, mode, handleRemove,
   );
 };
 
-const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
-  handleRemove, handleAccordionOpen, toggleAddToReport }) => {
+const HeaderNormal = ({
+  sample, container, mode, readOnly, isDisabled, serial,
+  handleRemove, handleSubmitSample, handleAccordionOpen, toggleAddToReport,
+}) => {
   const clickToOpen = () => handleAccordionOpen(serial);
 
   const kind = container.extended_metadata.kind || '';
@@ -195,8 +285,10 @@ const HeaderNormal = ({ sample, container, mode, readOnly, isDisabled, serial,
       </div>
       <div className="abstract">
         {
-          headerBtnGroup(container, sample, mode, handleRemove,
-            toggleAddToReport, isDisabled, readOnly)
+          headerBtnGroup(
+            container, sample, mode, handleRemove, handleSubmitSample,
+            toggleAddToReport, isDisabled, readOnly,
+          )
         }
         <div className="lower-text">
           <div className="main-title">{container.name}</div>

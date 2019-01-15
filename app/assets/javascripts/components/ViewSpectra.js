@@ -1,5 +1,4 @@
 import React from 'react';
-import Select from 'react-select';
 import { SpectraViewer, ToXY, LIST_LAYOUT } from 'react-spectra-viewer';
 import { Modal, Well } from 'react-bootstrap';
 import PropTypes from 'prop-types';
@@ -18,7 +17,6 @@ class ViewSpectra extends React.Component {
     };
 
     this.onChange = this.onChange.bind(this);
-    this.onOpenModal = this.onOpenModal.bind(this);
     this.onCloseModal = this.onCloseModal.bind(this);
     this.writePeaks = this.writePeaks.bind(this);
     this.savePeaks = this.savePeaks.bind(this);
@@ -27,19 +25,7 @@ class ViewSpectra extends React.Component {
   }
 
   componentDidMount() {
-    const { sample } = this.props;
-    SpectraActions.InitOpts.defer(sample);
-
     SpectraStore.listen(this.onChange);
-  }
-
-  componentDidUpdate(prevProps) {
-    const oldCheckSum = prevProps.sample.checksum();
-    const { sample } = this.props;
-    const newCheckSum = sample.checksum();
-    if (oldCheckSum !== newCheckSum) {
-      SpectraActions.InitOpts.defer(sample);
-    }
   }
 
   componentWillUnmount() {
@@ -51,27 +37,11 @@ class ViewSpectra extends React.Component {
     this.setState({ ...origState, ...newState });
   }
 
-  onChangeSelect(opt) {
-    SpectraActions.Select(opt);
-  }
-
-  onOpenModal() {
-    const { sample } = this.props;
-    SpectraActions.ToggleModal();
-    SpectraActions.LoadSpectra.defer(sample);
-  }
-
   onCloseModal() {
     SpectraActions.ToggleModal();
   }
 
-  buildData(selectedOpt, allSpectra) {
-    let target = null;
-    allSpectra.forEach((spc) => {
-      if (selectedOpt && spc.id === selectedOpt.idx) {
-        target = spc;
-      }
-    });
+  buildData(target) {
     if (!target) return { isExist: false };
     const sp = target && target.file.spectrum;
     const input = sp ? sp.data[0] : {};
@@ -116,18 +86,18 @@ class ViewSpectra extends React.Component {
 
   writePeaks(peaks, layout) {
     const { sample, handleSampleChanged } = this.props;
-    const { selectedOpt } = this.state;
-    const result = this.convertPeaksToStr(peaks, layout);
+    const { spcInfo } = this.state;
+    const peaksStr = this.convertPeaksToStr(peaks, layout);
     const layoutOpsObj = this.spectraOps(layout);
 
     sample.analysesContainers().forEach((ae) => {
-      if (ae.id !== selectedOpt.idAe) return;
+      if (ae.id !== spcInfo.idAe) return;
       ae.children.forEach((ai) => {
-        if (ai.id !== selectedOpt.idAi) return;
+        if (ai.id !== spcInfo.idAi) return;
         ai.extended_metadata.content.ops = [ // eslint-disable-line
           ...ai.extended_metadata.content.ops,
           ...layoutOpsObj.head,
-          { insert: result },
+          { insert: peaksStr },
           ...layoutOpsObj.tail,
         ];
       });
@@ -135,11 +105,16 @@ class ViewSpectra extends React.Component {
     handleSampleChanged(sample);
   }
 
-  savePeaks(peaks) {
-    const { sample, handleSubmit } = this.props;
-    const { selectedOpt } = this.state;
-    SpectraActions.SavePeaksToFile(sample, peaks, selectedOpt);
-    setTimeout(() => handleSubmit(), 1000);
+  savePeaks(peaks, shift) {
+    const { sample, handleSubmitSample } = this.props;
+    const { spcInfo } = this.state;
+    SpectraActions.SaveToFile(
+      sample,
+      spcInfo,
+      peaks,
+      shift,
+      handleSubmitSample,
+    );
     SpectraActions.ToggleModal.defer();
   }
 
@@ -182,21 +157,13 @@ class ViewSpectra extends React.Component {
   }
 
   renderSpectraViewer() {
-    const {
-      selectedOpt, allSpectra, options,
-    } = this.state;
+    const { jcamp } = this.state;
     const {
       input, xLabel, yLabel, peakObjs, isExist,
-    } = this.buildData(selectedOpt, allSpectra);
+    } = this.buildData(jcamp);
 
     return (
       <Modal.Body>
-        <Select
-          value={selectedOpt}
-          onChange={this.onChangeSelect}
-          options={options}
-          clearable={false}
-        />
         {
           !isExist
             ? this.renderInvalid()
@@ -214,9 +181,8 @@ class ViewSpectra extends React.Component {
   }
 
   render() {
-    const { sample } = this.props;
-    const { showModal, allSpectra } = this.state;
-    const modalTitle = `Spectra Viewer - ${sample.short_label}`;
+    const { showModal, spcInfo, jcamp } = this.state;
+    const modalTitle = spcInfo ? `Spectra Viewer - ${spcInfo.title}` : '';
 
     return (
       <div className="spectra-viewer">
@@ -230,7 +196,7 @@ class ViewSpectra extends React.Component {
             <Modal.Title>{ modalTitle }</Modal.Title>
           </Modal.Header>
           {
-            showModal && allSpectra.length > 0
+            showModal && jcamp
               ? this.renderSpectraViewer()
               : this.renderEmpty()
           }
@@ -243,7 +209,7 @@ class ViewSpectra extends React.Component {
 ViewSpectra.propTypes = {
   sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
-  handleSubmit: PropTypes.func.isRequired,
+  handleSubmitSample: PropTypes.func.isRequired,
 };
 
 export default ViewSpectra;
