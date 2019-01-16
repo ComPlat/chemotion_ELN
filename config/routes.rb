@@ -24,6 +24,9 @@ Rails.application.routes.draw do
   get 'chemscanner', to: 'pages#chemscanner'
   get 'editor',      to: 'pages#editor'
 
+  # Standalone page for ChemSpectra
+  get 'chemspectra', to: 'pages#chemspectra'
+
   get 'home', to: 'pages#home'
   get 'about', to: 'pages#about'
   get 'command_n_control', to: 'pages#home'
