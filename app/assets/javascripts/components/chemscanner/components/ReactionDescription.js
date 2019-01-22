@@ -46,6 +46,9 @@ export default class ReactionDescription extends React.Component {
     }
     const statusLabel = <Label bsStyle={statusClass}>{status}</Label>;
 
+    const steps = reaction.get('steps').toJS();
+    const rId = reaction.get('id');
+
     return (
       <div className="scanned-reaction-desc">
         <div>
@@ -63,6 +66,33 @@ export default class ReactionDescription extends React.Component {
             ))}
           </ul>
         </div>
+        {steps.map(step => (
+          <div key={`reaction-${rId}-${step.number}`}>
+            <Label bsStyle="info">step {step.number}</Label>
+            <ul>
+              {
+                ['description', 'temperature', 'time'].map((prop) => {
+                  const val = step[prop];
+                  const key = `reaction-${rId}-step-${step.number}-${prop}`;
+                  if (!val || val === '\n') return <span key={key} />;
+
+                  return (
+                    <li key={key}>
+                      <b>{prop}: </b>
+                      {val}
+                    </li>
+                  );
+                })
+              }
+              <li key={`reaction-${rId}-step-${step.number}-reagents`}>
+                <b>reagents: </b>
+                <ul>
+                  {step.reagents.map(x => <li key={`${rId}-${step.number}-${x}`}>{x}</li>)}
+                </ul>
+              </li>
+            </ul>
+          </div>
+        ))}
         {['reactants', 'reagents', 'products'].reduce((arr, group) => {
           const groupMol = reaction.get(group);
           return arr.concat(groupMol.map((m, idx) => (

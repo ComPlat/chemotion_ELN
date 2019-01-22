@@ -21,12 +21,28 @@ export const generateExcelReactionRow = (reaction) => {
   const reactantsDesc = reaction.reactants.reduce(assembleDesc, []).join('\n');
   const productsDesc = reaction.products.reduce(assembleDesc, []).join('\n');
 
+  const reactionSteps = reaction.steps.reduce((arr, step) => {
+    const lines = ['description', 'temperature', 'time'].reduce((lineArr, prop) => {
+      const val = step[prop];
+      if (!val || val === '\n') return lineArr;
+      lineArr.push(`  ${prop}: ${val}`);
+
+      return lineArr;
+    }, []);
+
+    lines.unshift(`step ${step.number}`);
+    lines.push(`  reagents: ${step.reagents.join(',')}`);
+
+    return arr.concat(lines);
+  }, []).join('\n');
+
   return [
     reactionSmiles.map(smis => smis.join('.')).join('>'),
     reaction.temperature,
     reaction.yield,
     reaction.time,
     reaction.description,
+    reactionSteps,
     reactantsSdf,
     reagentsSdf,
     productsSdf,

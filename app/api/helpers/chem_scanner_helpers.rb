@@ -114,12 +114,12 @@ module ChemScannerHelpers
     func_name = "read_#{extn[1..-1]}".to_sym
     return {} unless respond_to?(func_name)
 
-    # begin
+    begin
       return send(func_name, filepath, get_mol)
-    # rescue StandardError => e
-    #   Rails.logger.error("Error while parsing: #{e}")
-    #   return {}
-    # end
+    rescue StandardError => e
+      Rails.logger.error("Error while parsing: #{e}")
+      return {}
+    end
   end
 
   def extract_info(obj, get_mol)
@@ -141,6 +141,7 @@ module ChemScannerHelpers
       temperature: reaction.temperature,
       time: reaction.time,
       yield: reaction.yield,
+      steps: reaction.steps,
       abbreviations: abbreviation_mdl(reaction.reagent_smiles),
       reactants: list_mol_info.call(reaction.reactants),
       reagents: list_mol_info.call(reaction.reagents),
