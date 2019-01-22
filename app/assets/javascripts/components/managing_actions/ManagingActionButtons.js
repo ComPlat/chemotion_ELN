@@ -42,10 +42,10 @@ const RemoveOrDeleteButton = ({ removeDisabled, deleteDisabled, onClick, customC
     disabled={removeDisabled && deleteDisabled}
   >
     <MenuItem onSelect={() => onClick('remove')} disabled={removeDisabled}>
-      Remove from Collection
+      Remove from current Collection
     </MenuItem>
     <MenuItem onSelect={() => onClick('delete')} disabled={deleteDisabled}>
-      Delete from all Collection
+      Remove from all Collections
     </MenuItem>
   </DropdownButton>
 );
