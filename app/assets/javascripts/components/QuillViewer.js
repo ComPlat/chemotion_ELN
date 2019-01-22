@@ -1,8 +1,9 @@
-import React from 'react'
+import React from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom'
-import Quill from 'quill'
+import Quill from 'quill';
 import _ from 'lodash';
+
+import { keepSupSub } from './utils/quillFormat';
 
 export default class QuillViewer extends React.Component {
   constructor (props) {
@@ -33,31 +34,9 @@ export default class QuillViewer extends React.Component {
 
       this.viewer = new Quill(quillViewer, defaultOptions);
       const oriValue = this.props.value;
-      const value = this.props.preview ? this.keepSupSub(oriValue) : oriValue;
+      const value = this.props.preview ? keepSupSub(oriValue) : oriValue;
       this.viewer.setContents(value);
     }
-  }
-
-  keepSupSub(value) {
-    let content = []
-    value.ops.forEach(op => {
-      if(typeof op.insert === 'string' && op.insert !== '\n') {
-        if (op.attributes
-              && op.attributes.script
-              && (op.attributes.script === 'super'
-                  || op.attributes.script === 'sub')) {
-          content.push({insert: op.insert,
-                        attributes: { script: op.attributes.script }});
-        } else {
-          content.push({insert: op.insert});
-        }
-      }
-    })
-    content.filter(op => op).push({insert: '\n'});
-    if(content.length === 1) {
-      content.unshift({insert: '-'})
-    }
-    return content;
   }
 
   render() {

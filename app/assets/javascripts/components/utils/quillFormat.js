@@ -1,5 +1,29 @@
-import Delta from 'quill-delta';
 import _ from 'lodash';
+
+const keepSupSub = (value) => {
+  const content = [];
+  value.ops.forEach((op) => {
+    if (typeof op.insert === 'string' && op.insert !== '\n') {
+      if (op.attributes
+            && op.attributes.script
+            && (op.attributes.script === 'super'
+                || op.attributes.script === 'sub')) {
+        content.push({
+          insert: op.insert,
+          attributes: { script: op.attributes.script }
+        });
+      } else {
+        content.push({ insert: op.insert });
+      }
+    }
+  });
+  content.filter(op => op).push({ insert: '\n' });
+  // NB: what is this for?
+  // if (content.length === 1) {
+  //   content.unshift({ insert: '-' });
+  // }
+  return content;
+};
 
 const rmRedundantSpaceBreak = (target) => {
   return target.replace(/\n/g, '').replace(/\s\s+/g, ' ');
@@ -39,6 +63,7 @@ const mapValueToGroupRegex = (content, matchedGroup) => {
 };
 
 module.exports = {
+  keepSupSub,
   rmDeltaRedundantSpaceBreak,
   rmOpsRedundantSpaceBreak,
   rmRedundantSpaceBreak,
