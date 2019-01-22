@@ -22,6 +22,5 @@ module Tagging
     end
     element && send(element)&.update_tag!(args)
   end
-
   # handle_asynchronously :update_tag
 end

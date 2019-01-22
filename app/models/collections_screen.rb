@@ -4,54 +4,40 @@ class CollectionsScreen < ActiveRecord::Base
   belongs_to :screen
 
   include Tagging
-
-  def self.move_to_collection(screen_ids, old_col_id, new_col_id)
-    # Get associated wellplates
-    wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
-
-    # Delete screens in old collection
-    self.delete_in_collection(screen_ids, old_col_id)
-
-    # Move associated wellplates in current collection
-    CollectionsWellplate.move_to_collection(wellplate_ids, old_col_id, new_col_id)
-
-    # Create new screens in target collection
-    self.static_create_in_collection(screen_ids, new_col_id)
-  end
-
-  # Static delete without checking associated
-  def self.delete_in_collection(screen_ids, collection_id)
-    self.where(
-      screen_id: screen_ids,
-      collection_id: collection_id
-    ).destroy_all
-  end
+  include Collecting
 
   # Remove from collection and process associated elements
-  def self.remove_in_collection(screen_ids, collection_id)
-    self.delete_in_collection(screen_ids, collection_id)
-  end
-
-  # Static create without checking associated
-  def self.static_create_in_collection(screen_ids, collection_id)
-    screen_ids.map { |id|
-      s = self.with_deleted.find_or_create_by(
-        screen_id: id,
-        collection_id: collection_id
-      )
-
-      s.restore! if s.deleted?
-      s
-    }
-  end
-
-  def self.create_in_collection(screen_ids, collection_id)
+  def self.remove_in_collection(screen_ids, from_col_ids)
     # Get associated wellplates
     wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
+    # Remove screens from collection
+    delete_in_collection(screen_ids, from_col_ids)
+    # Update element tag with collection info
+    update_tag_by_element_ids(screen_ids)
+    # Remove associated wellplates from collections
+    # this also remove associated samples from collections
+    CollectionsWellplate.remove_in_collection(wellplate_ids, from_col_ids)
+  end
 
-    # Create associated wellplates in collection
-    CollectionsWellplate.create_in_collection(wellplate_ids, collection_id)
-    # Create new screens in collection
-    self.static_create_in_collection(screen_ids, collection_id)
+  def self.move_to_collection(screen_ids, from_col_ids, to_col_ids)
+    # Get associated wellplates
+    wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
+    # Remove screens from collection
+    delete_in_collection(screen_ids, from_col_ids)
+    # Move associated wellplates to collection
+    # this also move associated samples to collection
+    CollectionsWellplate.move_to_collection(wellplate_ids, from_col_ids, to_col_ids)
+    # Associate screens to collection
+    static_create_in_collection(screen_ids, to_col_ids)
+  end
+
+  def self.create_in_collection(screen_ids, to_col_ids)
+    # Get associated wellplates
+    wellplate_ids = ScreensWellplate.get_wellplates(screen_ids)
+    # Associate wellplates to collection
+    # this also associate samples to collection
+    CollectionsWellplate.create_in_collection(wellplate_ids, to_col_ids)
+    # Associate screens to collection
+    static_create_in_collection(screen_ids, to_col_ids)
   end
 end

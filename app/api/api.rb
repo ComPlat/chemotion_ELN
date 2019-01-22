@@ -90,6 +90,8 @@ class API < Grape::API
   }
   TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
+  ELEMENTS = %w[research_plan screen wellplate reaction sample]
+
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
   mount Chemotion::MoleculeAPI

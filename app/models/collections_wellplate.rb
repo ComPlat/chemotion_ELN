@@ -4,57 +4,56 @@ class CollectionsWellplate < ActiveRecord::Base
   belongs_to :wellplate
 
   include Tagging
-
-  def self.move_to_collection(wellplate_ids, old_col_id, new_col_id)
-    # Get associated samples
-    sample_ids = Well.get_samples_in_wellplates(wellplate_ids)
-
-    # Delete wellplates in old collection
-    self.delete_in_collection(wellplate_ids, old_col_id)
-
-    # Move associated samples in current collection
-    CollectionsSample.move_to_collection(sample_ids, old_col_id, new_col_id)
-
-    # Create new wellplates in target collection
-    self.static_create_in_collection(wellplate_ids, new_col_id)
-  end
-
-  # Static delete without checking associated
-  def self.delete_in_collection(wellplate_ids, collection_id)
-    self.where(
-      wellplate_id: wellplate_ids,
-      collection_id: collection_id
-    ).destroy_all
-  end
+  include Collecting
 
   # Remove from collection and process associated elements
-  def self.remove_in_collection(wellplate_ids, collection_id)
-    self.delete_in_collection(wellplate_ids, collection_id)
-
-    sample_ids = Well.get_samples_in_wellplates(wellplate_ids)
-    CollectionsSample.remove_in_collection(sample_ids, collection_id)
-  end
-
-  # Static create without checking associated
-  def self.static_create_in_collection(wellplate_ids, collection_id)
-    wellplate_ids.map { |id|
-      w = self.with_deleted.find_or_create_by(
-        wellplate_id: id,
-        collection_id: collection_id
-      )
-
-      w.restore! if w.deleted?
-      w
-    }
-  end
-
-  def self.create_in_collection(wellplate_ids, collection_id)
+  def self.remove_in_collection(wellplate_ids, collection_ids)
     # Get associated samples
     sample_ids = Well.get_samples_in_wellplates(wellplate_ids)
+    # Delete in collection
+    delete_in_collection_with_filter(wellplate_ids, collection_ids)
+    # Update element tag with collection info
+    update_tag_by_element_ids(wellplate_ids)
+    # Delete associated in collection and update tag
+    CollectionsSample.remove_in_collection(sample_ids, collection_ids)
+  end
 
+  def self.delete_in_collection_with_filter(wellplate_ids, collection_ids)
+    [collection_ids].flatten.each do |cid|
+      next unless cid.is_a?(Integer)
+      # from a collection, select wellplate_ids not associated with a screen
+      ids = CollectionsWellplate.joins(
+        <<~SQL
+          left join screens_wellplates sw
+          on sw.wellplate_id = collections_wellplates.wellplate_id and sw.deleted_at isnull
+          left join collections_screens cs
+          on cs.collection_id = #{cid} and cs.screen_id = sw.screen_id and cs.deleted_at isnull
+        SQL
+      ).where(
+        "collections_wellplates.collection_id = #{cid} and collections_wellplates.wellplate_id in (?) and cs.id isnull",
+        wellplate_ids
+      ).pluck(:wellplate_id)
+      delete_in_collection(ids, cid)
+    end
+  end
+
+  def self.move_to_collection(wellplate_ids, from_col_ids, to_col_ids)
+    # Get associated samples
+    sample_ids = Well.get_samples_in_wellplates(wellplate_ids)
+    # Delete wellplates in old collection
+    delete_in_collection_with_filter(wellplate_ids, from_col_ids)
+    # Move associated samples in current collection
+    CollectionsSample.move_to_collection(sample_ids, from_col_ids, to_col_ids)
+    # Create new wellplates in target collection
+    static_create_in_collection(wellplate_ids, to_col_ids)
+  end
+
+  def self.create_in_collection(wellplate_ids, collection_ids)
+    # Get associated samples
+    sample_ids = Well.get_samples_in_wellplates(wellplate_ids)
     # Create associated samples in collection
-    CollectionsSample.create_in_collection(sample_ids, collection_id)
+    CollectionsSample.create_in_collection(sample_ids, collection_ids)
     # Create new wellplate in collection
-    self.static_create_in_collection(wellplate_ids, collection_id)
+    static_create_in_collection(wellplate_ids, collection_ids)
   end
 end

@@ -13,6 +13,28 @@ module ParamsHelpers
     optional :is_sync_to_me, type: Boolean, default: false
   end
 
+  params :main_ui_state_params do
+    requires :currentCollection, type: Hash do
+      requires :id, type: Integer
+      optional :is_sync_to_me, type: Boolean, default: false
+    end
+    optional :sample, type: Hash do
+      use :ui_state_params
+    end
+    optional :reaction, type: Hash do
+      use :ui_state_params
+    end
+    optional :wellplate, type: Hash do
+      use :ui_state_params
+    end
+    optional :screen, type: Hash do
+      use :ui_state_params
+    end
+    optional :research_plan, type: Hash do
+      use :ui_state_params
+    end
+  end
+
   params :common_container_params do
     optional :id, type: Integer
     optional :name, type: String
