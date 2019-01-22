@@ -31,6 +31,7 @@ class ContainerSerializer < ActiveModel::Serializer
   def json_tree(attachments, containers)
     containers.map do |container, subcontainers|
       current_attachments = attachments.select { |att|
+        att.content_type = att.content_type || MimeMagic.by_path(att.filename)&.type
         att.for_container? && att.attachable_id == container.id
       }
       {
