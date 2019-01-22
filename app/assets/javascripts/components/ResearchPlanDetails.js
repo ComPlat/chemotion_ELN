@@ -23,6 +23,8 @@ import EditorFetcher from './fetchers/EditorFetcher'
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
+const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
     super(props);
@@ -319,6 +321,7 @@ export default class ResearchPlanDetails extends Component {
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : ''
+    const spinnerIcon = !attachmentEditor || isEditing ? <span><i className="fa fa-spin fa-spinner" /><i className="fa fa-pencil" /></span> : <i className="fa fa-pencil" />
 
     if (attachment.is_deleted) {
       return (
@@ -333,7 +336,6 @@ export default class ResearchPlanDetails extends Component {
                 bsStyle="success"
                 disabled
               >
-                <i className="fa fa-pencil" />
               </Button>{' '}
               <Button
                 bsSize="xsmall"
@@ -352,11 +354,20 @@ export default class ResearchPlanDetails extends Component {
       <div>
         <Row>
           <Col md={10}>
-            <a onClick={() => this.handleAttachmentDownload(attachment)} style={{cursor: 'pointer'}}>{attachment.filename}</a>
+            {attachment.filename}
           </Col>
           <Col md={2}>
             {this.removeAttachmentButton(attachment)}
-
+            <OverlayTrigger placement="top" overlay={downloadTooltip} >
+            <Button
+              bsSize="xsmall"
+              className="button-right"
+              bsStyle="primary"
+              onClick={() => this.handleAttachmentDownload(attachment)}
+            >
+              <i className="fa fa-download" />
+            </Button>
+            </OverlayTrigger>
             <OverlayTrigger placement="left" overlay={editorTooltip(values(this.state.extension).join(','))} >
               <Button
                 style={{ display: styleEditorBtn }}
@@ -366,9 +377,10 @@ export default class ResearchPlanDetails extends Component {
                 disabled={editDisable}
                 onClick={() => this.handleEdit(attachment)}
               >
-                <i className="fa fa-pencil" />
+                {spinnerIcon}
               </Button>
             </OverlayTrigger>
+
           </Col>
         </Row>
       </div>

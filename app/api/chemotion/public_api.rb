@@ -86,7 +86,7 @@ module Chemotion
           else
             @attachment.oo_editing_end!
           end
-          send_notification(@attachment, @user, @status)
+          send_notification(@attachment, @user, @status) unless @status == 1
           # rescue StandardError => err
           # Rails.logger.error(
           #   <<~LOG
