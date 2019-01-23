@@ -137,7 +137,8 @@ export default class HeaderMenu extends Component {
       rows.push(generateExcelReactionRow(reaction));
       return rows;
     }, [[
-      'ReactionSmiles', 'Temperature', 'Yield', 'Time', 'Reaction Description',
+      'ReactionSmiles', 'Temperature', 'Yield', 'Time',
+      'Reaction Description', 'Reaction Steps',
       'Reactants SDF', 'Reagents SDF', 'Products SDF',
       'Reactants Description', 'Products Description',
     ]]);
