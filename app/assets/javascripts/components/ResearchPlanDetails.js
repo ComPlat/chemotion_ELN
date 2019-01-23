@@ -19,7 +19,8 @@ import ResearchPlansLiteratures from './DetailsTabLiteratures';
 import QuillEditor from './QuillEditor';
 import Attachment from './models/Attachment';
 import Utils from './utils/Functions';
-import EditorFetcher from './fetchers/EditorFetcher'
+import EditorFetcher from './fetchers/EditorFetcher';
+import SpinnerPencilIcon from './common/SpinnerPencilIcon';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -321,7 +322,6 @@ export default class ResearchPlanDetails extends Component {
     const docType = this.documentType(attachment.filename);
     const editDisable = !attachmentEditor || isEditing || attachment.is_new || docType === null
     const styleEditorBtn = !attachmentEditor || docType === null ? 'none' : ''
-    const spinnerIcon = !attachmentEditor || isEditing ? <span><i className="fa fa-spin fa-spinner" /><i className="fa fa-pencil" /></span> : <i className="fa fa-pencil" />
 
     if (attachment.is_deleted) {
       return (
@@ -377,7 +377,7 @@ export default class ResearchPlanDetails extends Component {
                 disabled={editDisable}
                 onClick={() => this.handleEdit(attachment)}
               >
-                {spinnerIcon}
+                <SpinnerPencilIcon spinningLock={!attachmentEditor || isEditing} />
               </Button>
             </OverlayTrigger>
 
