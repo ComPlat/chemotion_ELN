@@ -222,33 +222,43 @@ const reactionToolbarSymbol = [
   },
 ];
 
-const ops1H = [
-  { attributes: { script: 'super' }, insert: '1' },
-  { insert: 'H NMR (400 MHz, CDCl' },
-  { attributes: { script: 'sub' }, insert: '3' },
-  { insert: '[MeOD/DMSO-d' },
-  { attributes: { script: 'sub' }, insert: '6' },
-  { insert: '], ppm) δ = ' },
-];
+const ops1HHead = (solventOps = []) => (
+  [
+    { attributes: { script: 'super' }, insert: '1' },
+    { insert: 'H NMR (400 MHz, ' },
+    ...solventOps,
+    { insert: 'ppm) δ = ' },
+  ]
+);
 
-const ops13C = [
-  { attributes: { script: 'super' }, insert: '13' },
-  { insert: 'C NMR (100 MHz, CDCl' },
-  { attributes: { script: 'sub' }, insert: '3' },
-  { insert: '[MeOD/DMSO-d' },
-  { attributes: { script: 'sub' }, insert: '6' },
-  { insert: '], ppm) δ = ' },
-];
+const ops13CHead = (solventOps = []) => (
+  [
+    { attributes: { script: 'super' }, insert: '13' },
+    { insert: 'C NMR (100 MHz, ' },
+    ...solventOps,
+    { insert: 'ppm) δ = ' },
+  ]
+);
 
-const opsIRHead = [
-  { insert: 'IR (ATR, ṽ) = ' },
-];
+const opsCommonTail = () => (
+  [
+    { insert: '. ' },
+  ]
+);
 
-const opsIRTail = [
-  { insert: ' cm' },
-  { attributes: { script: 'super' }, insert: '–1' },
-  { insert: '. ' },
-];
+const opsIRHead = () => (
+  [
+    { insert: 'IR (ATR, ṽ) = ' },
+  ]
+);
+
+const opsIRTail = () => (
+  [
+    { insert: ' cm' },
+    { attributes: { script: 'super' }, insert: '–1' },
+    { insert: '. ' },
+  ]
+);
 
 const sampleAnalysesContentSymbol = [
   {
@@ -260,15 +270,15 @@ const sampleAnalysesContentSymbol = [
   },
   {
     name: 'h-nmr',
-    ops: ops1H,
+    ops: ops1HHead([]),
   },
   {
     name: 'c-nmr',
-    ops: ops13C,
+    ops: ops13CHead([]),
   },
   {
     name: 'ir',
-    ops: [...opsIRHead, ...opsIRTail],
+    ops: [...opsIRHead(), ...opsIRTail()],
   },
   {
     name: 'ei',
@@ -331,9 +341,9 @@ const sampleAnalysesContentSymbol = [
 ];
 
 const SpectraOps = {
-  PLAIN: [],
-  '1H': ops1H,
-  '13C': ops13C,
+  PLAIN: { head: [], tail: [] },
+  '1H': { head: ops1HHead, tail: opsCommonTail },
+  '13C': { head: ops13CHead, tail: opsCommonTail },
   IR: { head: opsIRHead, tail: opsIRTail },
 };
 
