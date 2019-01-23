@@ -108,8 +108,7 @@
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-jsx-a11y": "^6.0.2",
     "eslint-plugin-react": "^7.4.0",
-    "expect": "^1.20.2",
-    "expect-jsx": "^2.6.0",
+    "expect": "^23.6.0",
     "jsdom-global": "2.1.0",
     "mocha": "^5.2.0",
     "react-dom": "^16.5.2",
@@ -119,7 +118,7 @@
     "uglify-js": "~3.3.16"
   },
   "scripts": {
-    "test": "mocha --require 'babel-core/register' 'jsdom-global/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
+    "test": "mocha --require 'babel-core/register' './spec/javascripts/helper/setup.js' './spec/javascripts/**/*.spec.js'"
   },
   "license": "MIT",
   "engines": {
