@@ -24,6 +24,7 @@ export default class ManagingActions extends React.Component {
       currentCollection: { id: 0 },
       sharing_allowed: false,
       deletion_allowed: false,
+      remove_allowed: false,
       is_top_secret: false,
     };
 
@@ -123,6 +124,7 @@ export default class ManagingActions extends React.Component {
     this.setState({
       sharing_allowed: state.sharing_allowed,
       deletion_allowed: state.deletion_allowed,
+      remove_allowed: state.remove_allowed,
       is_top_secret: state.is_top_secret
     })
   }
@@ -198,7 +200,7 @@ export default class ManagingActions extends React.Component {
     if(this.state.currentCollection) {
       let currentCollection = this.state.currentCollection;
 
-      return !selection || currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
+      return !selection || !this.state.remove_allowed || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
     }
   }
 

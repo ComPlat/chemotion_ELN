@@ -23,6 +23,7 @@ class ElementsPolicy
       .where('collections.is_shared IS NOT true AND collections.user_id = ?',user.id)
       .distinct.pluck(:id)
     other_record_ids = records.distinct.pluck(:id) - owned_record_ids
+
     return true if other_record_ids.empty?
     user_ids = [user.id]+ user.group_ids
     return true unless records.where(id: other_record_ids).joins(:collections)

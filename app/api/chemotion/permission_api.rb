@@ -40,6 +40,7 @@ module Chemotion
 
         post do
           cid = fetch_collection_id_w_current_user(params[:currentCollection][:id], params[:currentCollection][:is_sync_to_me])
+          col = Collection.find(cid)
           samples = Sample.by_collection_id(cid).by_ui_state(params[:elements_filter][:sample]).for_user_n_groups(user_ids)
           reactions = Reaction.by_collection_id(cid).by_ui_state(params[:elements_filter][:reaction]).for_user_n_groups(user_ids)
           wellplates = Wellplate.by_collection_id(cid).by_ui_state(params[:elements_filter][:wellplate]).for_user_n_groups(user_ids)
@@ -58,11 +59,11 @@ module Chemotion
           is_top_secret = top_secret_screen
 
           deletion_allowed_sample = spl_exist ? ElementsPolicy.new(current_user, samples).destroy? : true
-          deletion_allowed_reaction = deletion_allowed_sample && rxn_exist ? ElementsPolicy.new(current_user, reactions).destroy? : true
-          deletion_allowed_wellplate = deletion_allowed_reaction && wlp_exist ? ElementsPolicy.new(current_user, wellplates).destroy? : true
-          deletion_allowed_screen = deletion_allowed_wellplate && scn_exist ? ElementsPolicy.new(current_user, screens).destroy? : true
+          deletion_allowed_reaction = rxn_exist ? ElementsPolicy.new(current_user, reactions).destroy? : true
+          deletion_allowed_wellplate = wlp_exist ? ElementsPolicy.new(current_user, wellplates).destroy? : true
+          deletion_allowed_screen = scn_exist ? ElementsPolicy.new(current_user, screens).destroy? : true
 
-          deletion_allowed = deletion_allowed_screen
+          deletion_allowed = deletion_allowed_sample && deletion_allowed_reaction && deletion_allowed_wellplate && deletion_allowed_screen
 
           if deletion_allowed
             sharing_allowed = true
