@@ -5,6 +5,7 @@ var Home = require('./libHome/Home');
 var CnC = require('./libCnC/CnC');
 var AdminHome = require('./admin/AdminHome');
 var ChemScanner = require('./components/chemscanner/ChemScanner');
+var ChemSpectra = require('./components/chemspectra/ChemSpectra');
 var App = require('./components/App');
 
 //= require_self

@@ -1,12 +1,11 @@
 import React from 'react';
-import { SpectraViewer, ToXY, LIST_LAYOUT } from 'react-spectra-viewer';
+import { SpectraViewer, FN } from 'react-spectra-viewer';
 import { Modal, Well } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
 import SpectraActions from './actions/SpectraActions';
 import SpectraStore from './stores/SpectraStore';
 import { SpectraOps } from './utils/quillToolbarSymbol';
-import { fixDigit } from './utils/MathUtils';
 
 class ViewSpectra extends React.Component {
   constructor(props) {
@@ -41,54 +40,53 @@ class ViewSpectra extends React.Component {
     SpectraActions.ToggleModal();
   }
 
-  buildData(target) {
-    if (!target) return { isExist: false };
-    const sp = target && target.file.spectrum;
-    const input = sp ? sp.data[0] : {};
-    const xLabel = sp ? `X (${sp.xUnit})` : '';
-    const yLabel = sp ? `Y (${sp.yUnit})` : '';
-    const peakObjs = target && target.file.peakObjs;
-    return {
-      input, xLabel, yLabel, peakObjs, isExist: true,
-    };
-  }
+  opsSolvent(shift) {
+    const { label } = shift.ref;
 
-  spectraDigit(layout) {
-    switch (layout) {
-      case LIST_LAYOUT.C13:
-        return 1;
-      case LIST_LAYOUT.IR:
-        return 0;
-      case LIST_LAYOUT.H1:
-      case LIST_LAYOUT.PLAIN:
+    switch (label) {
+      case false:
+        return [];
+      case 'CDCl$3':
+        return [
+          { insert: 'CDCl' },
+          { insert: '3', attributes: { script: 'sub' } },
+          { insert: ', ' },
+        ];
+      case 'C$6D$1$2':
+        return [
+          { insert: 'C' },
+          { insert: '6', attributes: { script: 'sub' } },
+          { insert: 'D' },
+          { insert: '12', attributes: { script: 'sub' } },
+          { insert: ', ' },
+        ];
+      case 'CD2Cl2':
+      case 'CD$2Cl$2':
+        return [
+          { insert: 'CD' },
+          { insert: '2', attributes: { script: 'sub' } },
+          { insert: 'Cl' },
+          { insert: '2', attributes: { script: 'sub' } },
+          { insert: ', ' },
+        ];
+      case 'D$2O':
+        return [
+          { insert: 'D' },
+          { insert: '2', attributes: { script: 'sub' } },
+          { insert: 'O' },
+          { insert: ', ' },
+        ];
       default:
-        return 2;
+        return [{ insert: `${label}, ` }];
     }
   }
 
-  convertPeaksToStr(peaks, layout) {
-    const peaksXY = ToXY(peaks);
-    const digit = this.spectraDigit(layout);
-
-    const result = peaksXY.map(p => fixDigit(parseFloat(p[0]), digit));
-    const ordered = result.sort((a, b) => a - b).join(', ');
-    return ordered;
-  }
-
-  spectraOps(layout) {
-    const layoutOps = SpectraOps[layout];
-    const isArr = Array.isArray(layoutOps);
-    if (isArr) {
-      return { head: layoutOps, tail: [{ insert: '. ' }] };
-    }
-    return layoutOps;
-  }
-
-  writePeaks(peaks, layout) {
+  writePeaks(peaks, layout, shift, isAscend) {
     const { sample, handleSampleChanged } = this.props;
     const { spcInfo } = this.state;
-    const peaksStr = this.convertPeaksToStr(peaks, layout);
-    const layoutOpsObj = this.spectraOps(layout);
+    const body = FN.peaksBody(peaks, layout, shift, isAscend);
+    const layoutOpsObj = SpectraOps[layout];
+    const solventOps = this.opsSolvent(shift);
 
     sample.analysesContainers().forEach((ae) => {
       if (ae.id !== spcInfo.idAe) return;
@@ -96,22 +94,24 @@ class ViewSpectra extends React.Component {
         if (ai.id !== spcInfo.idAi) return;
         ai.extended_metadata.content.ops = [ // eslint-disable-line
           ...ai.extended_metadata.content.ops,
-          ...layoutOpsObj.head,
-          { insert: peaksStr },
-          ...layoutOpsObj.tail,
+          ...layoutOpsObj.head(solventOps),
+          { insert: body },
+          ...layoutOpsObj.tail(),
         ];
       });
     });
     handleSampleChanged(sample);
   }
 
-  savePeaks(peaks, shift) {
+  savePeaks(peaks, layout, shift) {
     const { sample, handleSubmitSample } = this.props;
     const { spcInfo } = this.state;
+    const fPeaks = FN.rmRef(peaks, shift);
+
     SpectraActions.SaveToFile(
       sample,
       spcInfo,
-      peaks,
+      fPeaks,
       shift,
       handleSubmitSample,
     );
@@ -160,7 +160,7 @@ class ViewSpectra extends React.Component {
     const { jcamp } = this.state;
     const {
       input, xLabel, yLabel, peakObjs, isExist,
-    } = this.buildData(jcamp);
+    } = FN.buildData(jcamp.file);
 
     return (
       <Modal.Body>

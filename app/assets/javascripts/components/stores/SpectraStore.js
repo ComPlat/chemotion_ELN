@@ -1,5 +1,5 @@
 import base64 from 'base-64';
-import { ExtractJcamp } from 'react-spectra-viewer';
+import { FN } from 'react-spectra-viewer';
 
 import alt from '../alt';
 import SpectraActions from '../actions/SpectraActions';
@@ -25,7 +25,7 @@ class SpectraStore {
     const decodedFiles = files.map((f) => {
       try {
         const raw = base64.decode(f.file);
-        const file = ExtractJcamp(raw);
+        const file = FN.ExtractJcamp(raw);
         if (!file.spectrum) return null;
         return Object.assign({}, f, { file });
       } catch (err) {
