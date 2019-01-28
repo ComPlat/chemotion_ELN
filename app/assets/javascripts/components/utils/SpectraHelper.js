@@ -1,3 +1,5 @@
+const acceptables = ['jdx', 'JDX', 'dx', 'DX', 'JCAMP', 'jcamp'];
+
 const JcampIds = (container) => {
   let origJcampIds = [];
   let geneJcampIds = [];
@@ -7,7 +9,7 @@ const JcampIds = (container) => {
       try {
         const fns = att.filename.split('.');
         const ext = fns[fns.length - 1];
-        const isJcamp = ext === 'dx' || ext === 'jdx';
+        const isJcamp = acceptables.indexOf(ext) >= 0;
         const typ = fns.length > 1 ? fns[fns.length - 2] : false;
         const notOrig = typ === 'peak' || typ === 'edit';
         if (isJcamp) {
@@ -32,7 +34,7 @@ const extractJcampFile = (container) => {
       try {
         const fns = att.filename.split('.');
         const ext = fns[fns.length - 1];
-        const isJcamp = ext === 'dx' || ext === 'jdx';
+        const isJcamp = acceptables.indexOf(ext) >= 0;
         const isApp = [
           'idle', 'queueing', 'done',
           'backup', 'image',

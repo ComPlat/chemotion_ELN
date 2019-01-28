@@ -77,14 +77,14 @@ module AttachmentJcampAasm
   def init_aasm
     return unless idle?
     _, extname = extension_parts
-    %w[dx jdx].include?(extname) ? set_queue : set_non_jcamp
+    %w[dx DX jdx JDX jcamp JCAMP].include?(extname) ? set_queue : set_non_jcamp
   end
 
   def require_peaks_generation? # rubocop:disable all
     return unless belong_to_analysis?
     typname, extname = extension_parts
     return if peaked? || edited?
-    return unless %w[dx jdx].include?(extname)
+    return unless %w[dx DX jdx JDX jcamp JCAMP].include?(extname)
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
     generate_spectrum(true) if queueing? && !new_upload
