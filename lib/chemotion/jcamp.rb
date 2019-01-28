@@ -46,7 +46,7 @@ module Chemotion
             data = entry.get_input_stream.read.force_encoding('UTF-8')
             if %w[png].include?(ext)
               tmp_img = generate_tmp_file(data, ext)
-            elsif %w[jdx dx].include?(ext)
+            elsif %w[dx DX jdx JDX jcamp JCAMP].include?(ext)
               tmp_jcamp = generate_tmp_file(data, ext)
             end
           end
