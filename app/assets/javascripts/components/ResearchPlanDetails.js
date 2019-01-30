@@ -279,16 +279,21 @@ export default class ResearchPlanDetails extends Component {
 
     EditorFetcher.startEditing({ attachment_id: attachment.id })
       .then((result) => {
-        const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result}`;
-        window.open(url, '_blank');
+        if (result.token) {
+          const url = `/editor?id=${attachment.id}&docType=${docType}&fileType=${fileType}&title=${attachment.filename}&key=${result.token}`;
+          window.open(url, '_blank');
+          attachment.aasm_state = 'oo_editing';
+          attachment.updated_at = new Date();
+          research_plan.attachments.map((a) => {
+            if (a.id === attachment.id) return attachment;
+          })
+          this.setState({ research_plan });
+          this.forceUpdate();
+        } else {
+          alert('Unauthorized to edit this file.');
+        }
       });
-    attachment.aasm_state = 'oo_editing';
-    attachment.updated_at = new Date();
-    research_plan.attachments.map((a) => {
-      if (a.id == attachment.id) return attachment;
-    })
-    this.setState({ research_plan });
-    this.forceUpdate();
+
   }
 
   attachments() {
@@ -385,17 +390,6 @@ export default class ResearchPlanDetails extends Component {
         </Row>
       </div>
     );
-  }
-
-  handleAttachmentEdit(attachment) {
-    const docType = this.documentType(attachment.filename);
-    EditorFetcher.startEditing({ attachment_id: attachment.id })
-      .then((result) => {
-        const url = `/editor?fileName=${result}&key=${attachment.id}&docType=${docType}`;
-        window.open(url, '_blank');
-      });
-      attachment.aasm_state == 'oo_editing'
-    //this.setState({ });
   }
 
   handleAttachmentRemove(attachment) {
