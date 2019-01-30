@@ -51,17 +51,21 @@ module Chemotion
         # 6 - document is being edited, but the current document state is saved,
         # 7 - error has occurred while force saving the document.
         before do
+# byebug
           error!('401 Unauthorized', 401) if params[:key].nil?
           payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
           error!('401 Unauthorized', 401) if payload&.length == 0
-          attach_id = payload[0]['att_id']&.to_i
-          user_id = payload[0]['user_id']&.to_i
-          @status = params[:status]
-          @url = params[:url]
-          @attachment = Attachment.find_by(id: attach_id, attachable_type: 'ResearchPlan')
-          @user = User.find_by(id: user_id)
-          error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
-          @research_plan = @attachment.attachable if @attachment.attachable_type == 'ResearchPlan'
+          @status = params[:status].is_a?(Integer) ? params[:status] : 0
+
+          if @status > 1
+            attach_id = payload[0]['att_id']&.to_i
+            @url = params[:url]
+            @attachment = Attachment.find_by(id: attach_id, attachable_type: 'ResearchPlan')
+            user_id = payload[0]['user_id']&.to_i
+            @user = User.find_by(id: user_id)
+            error!('401 Unauthorized', 401) if @attachment.nil? || @user.nil?
+            @research_plan = @attachment.attachable if @attachment.attachable_type == 'ResearchPlan'
+          end
         end
 
         params do
@@ -86,7 +90,7 @@ module Chemotion
           else
             @attachment.oo_editing_end!
           end
-          send_notification(@attachment, @user, @status) unless @status == 1
+          send_notification(@attachment, @user, @status) unless @status <= 1
           # rescue StandardError => err
           # Rails.logger.error(
           #   <<~LOG
