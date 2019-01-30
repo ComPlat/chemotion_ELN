@@ -136,21 +136,31 @@ export default class ReactionDetailsScheme extends Component {
   deleteMaterial(material, materialGroup) {
     let { reaction } = this.state;
     reaction.deleteMaterial(material, materialGroup);
-    let refMaterialGroup = materialGroup;
-    if (reaction[materialGroup].length === 0) {
-      refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
-    }
 
-    if (reaction[materialGroup].length > 0) {
-      const refMaterial = reaction[materialGroup][0];
-
-      const event = {
-        type: 'referenceChanged',
-        materialGroup,
-        sampleID: refMaterial.id,
-        value: 'on'
-      };
-      this.updatedReactionForReferenceChange(event);
+    // only reference of 'starting_materials' or 'reactants' triggers updatedReactionForReferenceChange
+    // only when reaction.referenceMaterial not exist triggers updatedReactionForReferenceChange
+    const referenceRelatedGroup = ['starting_materials', 'reactants'];
+    if (referenceRelatedGroup.includes(materialGroup) && (!reaction.referenceMaterial)) {
+      if (reaction[materialGroup].length === 0) {
+        const refMaterialGroup = materialGroup === 'starting_materials' ? 'reactants' : 'starting_materials';
+        if (reaction[refMaterialGroup].length > 0) {
+          const event = {
+            type: 'referenceChanged',
+            refMaterialGroup,
+            sampleID: reaction[refMaterialGroup][0].id,
+            value: 'on'
+          };
+          this.updatedReactionForReferenceChange(event);
+        }
+      } else {
+        const event = {
+          type: 'referenceChanged',
+          materialGroup,
+          sampleID: reaction[materialGroup][0].id,
+          value: 'on'
+        };
+        this.updatedReactionForReferenceChange(event);
+      }
     }
 
     this.onReactionChange(reaction, { schemaChanged: true });

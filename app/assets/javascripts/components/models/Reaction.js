@@ -492,6 +492,10 @@ export default class Reaction extends Element {
         return referenceMaterial.id === m.id;
       })
 
+      // if referenceMaterial exists,
+      // referenceMaterialGroup must be either 'starting_materials' or 'reactants'
+      if (!reference) reference = this.reactants.find(m => m.id === referenceMaterial.id);
+
       if (!reference && this.starting_materials.length > 0) {
         this._setAsReferenceMaterial(this.starting_materials[0]);
       } else {
