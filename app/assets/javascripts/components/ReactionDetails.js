@@ -11,6 +11,8 @@ import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
+import LoadingActions from './actions/LoadingActions';
+
 import ReactionDetailsLiteratures from './DetailsTabLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
 import SampleDetailsContainers from './SampleDetailsContainers';
@@ -43,7 +45,7 @@ export default class ReactionDetails extends Component {
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
-
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   onUIStoreChange(state) {
@@ -116,15 +118,17 @@ export default class ReactionDetails extends Component {
   }
 
   handleSubmit(closeView = false) {
-    const {reaction} = this.state;
+    LoadingActions.start();
 
-    if(reaction && reaction.isNew) {
+    const { reaction } = this.state;
+
+    if (reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
       ElementActions.updateReaction(reaction, closeView);
     }
 
-    if(reaction.is_new || closeView) {
+    if (reaction.is_new || closeView) {
       DetailActions.close(reaction, true);
     }
   }
