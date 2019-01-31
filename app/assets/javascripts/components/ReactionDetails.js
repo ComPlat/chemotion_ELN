@@ -13,7 +13,7 @@ import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
 import ReactionDetailsLiteratures from './DetailsTabLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
-import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
+import SampleDetailsContainers from './SampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import GreenChemistry from './green_chem/GreenChemistry';
@@ -190,17 +190,29 @@ export default class ReactionDetails extends Component {
   }
 
   productData(reaction) {
-    const {products} = this.state.reaction;
+    const { products } = this.state.reaction;
 
-    let tabs = products.map((product, key) =>
-      <Tab key={product.id} eventKey={key}
-           title={this.productLink(product)}>
-        <ReactionSampleDetailsContainers sample={product}
-          setState={(product) => this.handleProductChange(product)}
-          handleSampleChanged={(product) => this.handleProductChange(product)}
-        />
-      </Tab>
-    );
+    const tabs = products.map((product, key) => {
+      const title = this.productLink(product);
+      const setState = () => this.handleProductChange(product);
+      const handleSampleChanged = () => this.handleProductChange(product);
+
+      return (
+        <Tab
+          key={product.id}
+          eventKey={key}
+          title={title}
+        >
+          <SampleDetailsContainers
+            sample={product}
+            setState={setState}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={this.handleSubmit}
+            style={{ marginTop: 10 }}
+          />
+        </Tab>
+      );
+    });
 
     return(
       <Tabs defaultActiveKey={4.1} id="data-detail-tab"
