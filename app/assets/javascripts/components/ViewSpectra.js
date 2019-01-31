@@ -104,7 +104,7 @@ class ViewSpectra extends React.Component {
   }
 
   savePeaks(peaks, layout, shift) {
-    const { sample, handleSubmitSample } = this.props;
+    const { sample, handleSubmit } = this.props;
     const { spcInfo } = this.state;
     const fPeaks = FN.rmRef(peaks, shift);
 
@@ -113,7 +113,7 @@ class ViewSpectra extends React.Component {
       spcInfo,
       fPeaks,
       shift,
-      handleSubmitSample,
+      handleSubmit,
     );
     SpectraActions.ToggleModal.defer();
   }
@@ -209,7 +209,7 @@ class ViewSpectra extends React.Component {
 ViewSpectra.propTypes = {
   sample: PropTypes.object.isRequired,
   handleSampleChanged: PropTypes.func.isRequired,
-  handleSubmitSample: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
 };
 
 export default ViewSpectra;

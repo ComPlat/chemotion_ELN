@@ -23,7 +23,7 @@ const RndNoAnalyses = ({ addButton }) => (
 );
 
 const RndOrder = ({
-  sample, mode, readOnly, isDisabled, handleRemove, handleSubmitSample,
+  sample, mode, readOnly, isDisabled, handleRemove, handleSubmit,
   handleMove, handleUndo, handleAccordionOpen, toggleAddToReport, toggleMode,
   orderContainers, addButton,
 }) => {
@@ -44,7 +44,7 @@ const RndOrder = ({
               addButton={addButton}
               handleMove={handleMove}
               handleRemove={handleRemove}
-              handleSubmitSample={handleSubmitSample}
+              handleSubmit={handleSubmit}
               handleAccordionOpen={handleAccordionOpen}
               handleUndo={handleUndo}
               toggleAddToReport={toggleAddToReport}
@@ -58,7 +58,7 @@ const RndOrder = ({
 };
 
 const RndEdit = ({
-  sample, mode, handleRemove, handleSubmitSample, handleAccordionOpen,
+  sample, mode, handleRemove, handleSubmit, handleAccordionOpen,
   toggleAddToReport, toggleMode, activeAnalysis, orderContainers, readOnly,
   isDisabled, addButton, handleChange, handleUndo,
 }) => {
@@ -81,7 +81,7 @@ const RndEdit = ({
       readOnly={readOnly}
       isDisabled={isDisabled}
       handleRemove={handleRemove}
-      handleSubmitSample={handleSubmitSample}
+      handleSubmit={handleSubmit}
       handleAccordionOpen={handleAccordionOpen}
       toggleAddToReport={toggleAddToReport}
     />

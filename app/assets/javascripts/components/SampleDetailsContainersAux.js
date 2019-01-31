@@ -161,7 +161,7 @@ const previewImage = (container) => {
 };
 
 const headerBtnGroup = (
-  container, sample, mode, handleRemove, handleSubmitSample,
+  container, sample, mode, handleRemove, handleSubmit,
   toggleAddToReport, isDisabled, readOnly,
 ) => {
   if (mode !== 'edit') {
@@ -192,7 +192,7 @@ const headerBtnGroup = (
   const confirmRegenerate = (e) => {
     e.stopPropagation();
     if (confirm('Regenerate spectra?')) {
-      SpectraActions.Regenerate(jcampIds, handleSubmitSample);
+      SpectraActions.Regenerate(jcampIds, handleSubmit);
     }
   };
 
@@ -235,7 +235,7 @@ const headerBtnGroup = (
 
 const HeaderNormal = ({
   sample, container, mode, readOnly, isDisabled, serial,
-  handleRemove, handleSubmitSample, handleAccordionOpen, toggleAddToReport,
+  handleRemove, handleSubmit, handleAccordionOpen, toggleAddToReport,
 }) => {
   const clickToOpen = () => handleAccordionOpen(serial);
 
@@ -286,7 +286,7 @@ const HeaderNormal = ({
       <div className="abstract">
         {
           headerBtnGroup(
-            container, sample, mode, handleRemove, handleSubmitSample,
+            container, sample, mode, handleRemove, handleSubmit,
             toggleAddToReport, isDisabled, readOnly,
           )
         }
