@@ -183,6 +183,8 @@ module Export
       table = type + 's'
       t = type[0]
       ids = ids_sql(send("#{type}_ids"), t)
+      col_el = "collections_#{table}"
+      col_el_field = "cs.#{type}_id"
 
       <<~SQL
       select json_object_agg(uuid, analyses) as #{type}_analyses from(
@@ -214,7 +216,7 @@ module Export
       ) as analyses
       from #{table} #{t}
       inner join code_logs cl on cl."source" = '#{cl_source}' and cl.source_id = #{t}.id
-      inner join collections_samples cs on cs.sample_id = #{t}.id and cs.deleted_at isnull
+      inner join #{col_el} cs on #{col_el_field} = #{t}.id and cs.deleted_at isnull
       where cs.collection_id = #{c_id} #{ids}) dump;
       SQL
     end
