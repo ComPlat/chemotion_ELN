@@ -18,6 +18,8 @@ class LoadingStore {
           ElementActions.updateSampleForWellplate,
           ElementActions.createSample,
           ElementActions.updateSample,
+          ElementActions.createReaction,
+          ElementActions.updateReaction,
         ],
     });
   }

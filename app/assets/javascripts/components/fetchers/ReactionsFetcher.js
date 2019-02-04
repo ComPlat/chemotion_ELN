@@ -64,7 +64,7 @@ export default class ReactionsFetcher {
     let productsFiles = []
     reaction.products.forEach((prod) => {
       let files = AttachmentFetcher.getFileListfrom(prod.container)
-      productsFiles = [].concat(files)
+      productsFiles = [...productsFiles, ...files];
     })
     let allFiles = reactionFiles.concat(productsFiles)
 

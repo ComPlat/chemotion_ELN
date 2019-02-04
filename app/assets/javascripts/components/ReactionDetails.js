@@ -11,9 +11,11 @@ import ElementAnalysesLabels from './ElementAnalysesLabels';
 import ElementActions from './actions/ElementActions';
 import DetailActions from './actions/DetailActions';
 import CollectionActions from './actions/CollectionActions';
+import LoadingActions from './actions/LoadingActions';
+
 import ReactionDetailsLiteratures from './DetailsTabLiteratures';
 import ReactionDetailsContainers from './ReactionDetailsContainers';
-import ReactionSampleDetailsContainers from './ReactionSampleDetailsContainers';
+import SampleDetailsContainers from './SampleDetailsContainers';
 import ReactionDetailsScheme from './ReactionDetailsScheme';
 import ReactionDetailsProperties from './ReactionDetailsProperties';
 import GreenChemistry from './green_chem/GreenChemistry';
@@ -43,7 +45,7 @@ export default class ReactionDetails extends Component {
 
     this.onUIStoreChange = this.onUIStoreChange.bind(this);
     this.handleReactionChange = this.handleReactionChange.bind(this);
-
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   onUIStoreChange(state) {
@@ -116,15 +118,17 @@ export default class ReactionDetails extends Component {
   }
 
   handleSubmit(closeView = false) {
-    const {reaction} = this.state;
+    LoadingActions.start();
 
-    if(reaction && reaction.isNew) {
+    const { reaction } = this.state;
+
+    if (reaction && reaction.isNew) {
       ElementActions.createReaction(reaction);
     } else {
       ElementActions.updateReaction(reaction, closeView);
     }
 
-    if(reaction.is_new || closeView) {
+    if (reaction.is_new || closeView) {
       DetailActions.close(reaction, true);
     }
   }
@@ -190,29 +194,45 @@ export default class ReactionDetails extends Component {
   }
 
   productData(reaction) {
-    const {products} = this.state.reaction;
+    const { products } = this.state.reaction;
 
-    let tabs = products.map((product, key) =>
-      <Tab key={product.id} eventKey={key}
-           title={this.productLink(product)}>
-        <ReactionSampleDetailsContainers sample={product}
-          setState={(product) => this.handleProductChange(product)}
-          handleSampleChanged={(product) => this.handleProductChange(product)}
-        />
-      </Tab>
-    );
+    const tabs = products.map((product, key) => {
+      const title = this.productLink(product);
+      const setState = () => this.handleProductChange(product);
+      const handleSampleChanged = () => this.handleProductChange(product);
 
-    return(
-      <Tabs defaultActiveKey={4.1} id="data-detail-tab"
-            style={{marginTop: "10px"}}>
+      return (
+        <Tab
+          key={product.id}
+          eventKey={key}
+          title={title}
+        >
+          <SampleDetailsContainers
+            sample={product}
+            setState={setState}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={this.handleSubmit}
+            style={{ marginTop: 10 }}
+          />
+        </Tab>
+      );
+    });
+
+    return (
+      <Tabs
+        defaultActiveKey={4.1}
+        id="data-detail-tab"
+        style={{ marginTop: '10px' }}
+        unmountOnExit
+      >
         <Tab eventKey={4.1} title={reaction.short_label}>
-          <ListGroupItem style={{paddingBottom: 20}}>
+          <ListGroupItem style={{ paddingBottom: 20 }}>
             <ReactionDetailsContainers reaction={reaction} parent={this} />
           </ListGroupItem>
         </Tab>
         {tabs}
       </Tabs>
-    )
+    );
   }
 
   extraTab(ind){

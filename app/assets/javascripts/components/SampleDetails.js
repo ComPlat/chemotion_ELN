@@ -46,7 +46,6 @@ import Utils from './utils/Functions';
 import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
-import ViewSpectra from './ViewSpectra';
 import PubchemLcss from './PubchemLcss';
 
 const MWPrecision = 6;
@@ -698,16 +697,11 @@ export default class SampleDetails extends React.Component {
       <Tab eventKey={ind} title={'Analyses'}
         key={'Container' + sample.id.toString()}>
         <ListGroupItem style={{paddingBottom: 20}}>
-          <ViewSpectra
-            sample={sample}
-            handleSampleChanged={this.handleSampleChanged}
-            handleSubmitSample={this.handleSubmit}
-          />
           <SampleDetailsContainers
             sample={sample}
             setState={(sample) => {this.setState(sample)}}
             handleSampleChanged={this.handleSampleChanged}
-            handleSubmitSample={this.handleSubmit}
+            handleSubmit={this.handleSubmit}
             fromSample
           />
         </ListGroupItem>

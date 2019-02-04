@@ -5,6 +5,7 @@ import Container from './models/Container';
 import UIStore from './stores/UIStore';
 import ArrayUtils from './utils/ArrayUtils';
 import { reOrderArr } from './utils/DndControl';
+import ViewSpectra from './ViewSpectra';
 import { RndNotAvailable, RndNoAnalyses, RndOrder,
   RndEdit } from './SampleDetailsContainersCom';
 
@@ -171,7 +172,9 @@ export default class SampleDetailsContainers extends Component {
 
   render() {
     const { activeAnalysis, mode } = this.state;
-    const { readOnly, sample, handleSubmitSample } = this.props;
+    const {
+      readOnly, sample, handleSubmit, handleSampleChanged,
+    } = this.props;
     const isDisabled = !sample.can_update;
 
     if (sample.container == null) return <RndNotAvailable />;
@@ -180,46 +183,57 @@ export default class SampleDetailsContainers extends Component {
 
     if (analyContainer.length === 1 && analyContainer[0].children.length > 0) {
       const orderContainers = ArrayUtils.sortArrByIndex(analyContainer[0].children);
+      let content = null;
 
-      switch (mode) {
-        case 'order':
-          return (
-            <RndOrder
-              sample={sample}
-              mode={mode}
-              orderContainers={orderContainers}
-              readOnly={readOnly}
-              isDisabled={isDisabled}
-              addButton={this.addButton}
-              handleRemove={this.handleRemove}
-              handleSubmitSample={handleSubmitSample}
-              handleMove={this.handleMove}
-              handleAccordionOpen={this.handleAccordionOpen}
-              handleUndo={this.handleUndo}
-              toggleAddToReport={this.toggleAddToReport}
-              toggleMode={this.toggleMode}
-            />
-          );
-        default:
-          return (
-            <RndEdit
-              sample={sample}
-              mode={mode}
-              orderContainers={orderContainers}
-              activeAnalysis={activeAnalysis}
-              handleChange={this.handleChange}
-              handleUndo={this.handleUndo}
-              handleRemove={this.handleRemove}
-              handleSubmitSample={handleSubmitSample}
-              handleAccordionOpen={this.handleAccordionOpen}
-              toggleAddToReport={this.toggleAddToReport}
-              readOnly={readOnly}
-              isDisabled={isDisabled}
-              addButton={this.addButton}
-              toggleMode={this.toggleMode}
-            />
-          );
+      if (mode === 'order') {
+        content = (
+          <RndOrder
+            sample={sample}
+            mode={mode}
+            orderContainers={orderContainers}
+            readOnly={readOnly}
+            isDisabled={isDisabled}
+            addButton={this.addButton}
+            handleRemove={this.handleRemove}
+            handleSubmit={handleSubmit}
+            handleMove={this.handleMove}
+            handleAccordionOpen={this.handleAccordionOpen}
+            handleUndo={this.handleUndo}
+            toggleAddToReport={this.toggleAddToReport}
+            toggleMode={this.toggleMode}
+          />
+        );
+      } else {
+        content = (
+          <RndEdit
+            sample={sample}
+            mode={mode}
+            orderContainers={orderContainers}
+            activeAnalysis={activeAnalysis}
+            handleChange={this.handleChange}
+            handleUndo={this.handleUndo}
+            handleRemove={this.handleRemove}
+            handleSubmit={handleSubmit}
+            handleAccordionOpen={this.handleAccordionOpen}
+            toggleAddToReport={this.toggleAddToReport}
+            readOnly={readOnly}
+            isDisabled={isDisabled}
+            addButton={this.addButton}
+            toggleMode={this.toggleMode}
+          />
+        );
       }
+
+      return (
+        <div>
+          { content }
+          <ViewSpectra
+            sample={sample}
+            handleSampleChanged={handleSampleChanged}
+            handleSubmit={handleSubmit}
+          />
+        </div>
+      );
     }
     return (
       <RndNoAnalyses
@@ -232,5 +246,6 @@ export default class SampleDetailsContainers extends Component {
 SampleDetailsContainers.propTypes = {
   readOnly: PropTypes.bool.isRequired,
   sample: PropTypes.object.isRequired,
-  handleSubmitSample: PropTypes.func.isRequired,
+  handleSampleChanged: PropTypes.func.isRequired,
+  handleSubmit: PropTypes.func.isRequired,
 };
