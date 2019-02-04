@@ -184,7 +184,7 @@ class Import::ImportJson
         @new_data[uuid] = {'id' => new_el.id, 'type' => source}
         @log[source + 's'][uuid]['created_at'] = new_el.created_at
         if !(new_el.container)
-          c = Container.create_root_container(
+          new_el.container = Container.create_root_container(
             containable_id: new_el.id,
             containable_type: klass.name,
           )
@@ -229,7 +229,7 @@ class Import::ImportJson
       a['attachments']&.each do |att|
         @new_attachments[att['identifier']] = Attachment.new(
           filename: att['filename'],
-          identifier: att['identifier'],
+          # identifier: att['identifier'],
           checksum: att['checksum'],
           attachable_id: new_a.id,
           attachable_type: 'Container'
