@@ -218,17 +218,21 @@ export default class ReactionDetails extends Component {
       );
     });
 
-    return(
-      <Tabs defaultActiveKey={4.1} id="data-detail-tab"
-            style={{marginTop: "10px"}}>
+    return (
+      <Tabs
+        defaultActiveKey={4.1}
+        id="data-detail-tab"
+        style={{ marginTop: '10px' }}
+        unmountOnExit
+      >
         <Tab eventKey={4.1} title={reaction.short_label}>
-          <ListGroupItem style={{paddingBottom: 20}}>
+          <ListGroupItem style={{ paddingBottom: 20 }}>
             <ReactionDetailsContainers reaction={reaction} parent={this} />
           </ListGroupItem>
         </Tab>
         {tabs}
       </Tabs>
-    )
+    );
   }
 
   extraTab(ind){
