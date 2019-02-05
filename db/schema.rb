@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20181207100526) do
+ActiveRecord::Schema.define(version: 20190204152500) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -535,6 +535,7 @@ ActiveRecord::Schema.define(version: 20181207100526) do
     t.text     "rinchi_long_key"
     t.string   "rinchi_short_key"
     t.string   "rinchi_web_key"
+    t.string   "duration"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree

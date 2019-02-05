@@ -334,6 +334,7 @@ module Chemotion
         optional :literatures, type: Array
 
         requires :container, type: Hash
+        optional :duration, type: String
       end
       route_param :id do
 
@@ -384,6 +385,7 @@ module Chemotion
         requires :materials, type: Hash
         optional :literatures, type: Array
         requires :container, type: Hash
+        optional :duration, type: String
       end
 
       post do
