@@ -85,7 +85,7 @@ export default class ResearchPlansFetcher {
     return promise;
   }
 
-  static updateSVGFile(svg_file) {
+  static updateSVGFile(svg_file, isChemdraw = false) {
     let promise = ()=> fetch('/api/v1/research_plans/svg', {
       credentials: 'same-origin',
       method: 'post',
@@ -93,7 +93,7 @@ export default class ResearchPlansFetcher {
         'Accept': 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ svg_file: svg_file})
+      body: JSON.stringify({ svg_file: svg_file, is_chemdraw: isChemdraw })
     }).then((response) => {
       return response.json()
     }).catch((errorMessage) => {
