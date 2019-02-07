@@ -47,6 +47,7 @@ module ReactionHelpers
         fixed_label = material_group =~ /solvents?|reactants?/ && $&
         reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
         samples.each do |sample|
+          sample.reference = false if material_group === 'solvent' && sample.reference == true
           #create new subsample
           if sample.is_new
             if sample.is_split && sample.parent_id

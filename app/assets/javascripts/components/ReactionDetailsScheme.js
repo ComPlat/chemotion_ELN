@@ -55,6 +55,10 @@ export default class ReactionDetailsScheme extends Component {
       }
     }
 
+    if (tagGroup == 'solvents') {
+      splitSample.reference = false;
+    }
+
     this.insertSolventExtLabel(splitSample, tagGroup, extLabel);
     reaction.addMaterialAt(splitSample, null, tagMaterial, tagGroup);
     this.onReactionChange(reaction, { schemaChanged: true });

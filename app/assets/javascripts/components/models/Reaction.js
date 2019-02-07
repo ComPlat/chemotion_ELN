@@ -408,6 +408,10 @@ export default class Reaction extends Element {
       newGroup === "reactants" || newGroup === "solvents" ||
       newGroup === "purification_solvents"
     ) {
+      if (newGroup === "solvents") {
+        material.reference = false;
+      }
+
       // Temporary set true, to fit with server side logical
       material.isSplit = true;
       material.reaction_product = false;
