@@ -104,20 +104,23 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  handleStructureEditorSave(sdf_file, svg_file) {
+  handleStructureEditorSave(sdf_file, svg_file, config = null) {
     let {research_plan} = this.state;
 
     research_plan.sdf_file = sdf_file;
+    const smiles = config ? config.smiles : null;
 
     this.setState({loadingMolecule: true});
-    ResearchPlansFetcher.updateSVGFile(svg_file).then((json) => {
+
+    const isChemdraw = smiles ? true : false
+
+    ResearchPlansFetcher.updateSVGFile(svg_file, isChemdraw).then((json) => {
       research_plan.svg_file = json.svg_path;
-
       this.setState({research_plan: research_plan, loadingMolecule: false});
-
       this.hideStructureEditor();
     });
   }
+
 
   handleStructureEditorCancel() {
     this.hideStructureEditor()

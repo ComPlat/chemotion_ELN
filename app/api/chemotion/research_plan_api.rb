@@ -45,10 +45,12 @@ module Chemotion
       desc "Save svg file to filesystem"
       params do
         requires :svg_file, type: String, desc: "SVG raw file"
+        requires :is_chemdraw, type: Boolean, desc: "is chemdraw file?"
       end
       post :svg do
         svg = params[:svg_file]
-        processor = Ketcherails::SVGProcessor.new svg
+        processor = Ketcherails::SVGProcessor.new svg if !params[:is_chemdraw]
+        processor = Chemotion::ChemdrawSvgProcessor.new svg if params[:is_chemdraw]
         svg = processor.centered_and_scaled_svg
 
         digest = Digest::SHA256.hexdigest svg
