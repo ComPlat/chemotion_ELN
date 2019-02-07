@@ -17,6 +17,7 @@
     var info_mail = "<%= Rails.configuration.editors.info[:mail] %>";
     var info_website = "<%= Rails.configuration.editors.info[:website] %>";
     var feedbackurl = "<%= Rails.configuration.editors.info[:feedbackurl] %>";
+    var callback_server = "<%= Rails.configuration.editors.docserver[:callback_server] %>";
 
     var title = "<%= params[:title] %>";
     var docType = "<%= params[:docType] %>";
@@ -58,7 +59,7 @@
                     documentType: docType,
                     document: {
                         title: title,
-                        url: "<%= request.base_url + '/api/v1/public/download?token=' + params[:key] %>",
+                        url: callback_server + '/api/v1/public/download?token=' + key ,
                         fileType: "<%= params[:fileType] %>",
                         key: "<%= params[:key] %>",
                         info: {
@@ -76,7 +77,7 @@
                     editorConfig: {
                         mode: "edit",
                         lang: "en",
-                        callbackUrl: "<%= request.base_url + '/api/v1/public/callback' %>",
+                        callbackUrl: callback_server + '/api/v1/public/callback',
                         user: {
                             id: "<%= current_user.id %>",
                             name: "<%= current_user.name %>",

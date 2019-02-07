@@ -5,6 +5,7 @@ development:
     :host: 'document_server'
     :port: '80'
     :api: '/web-apps/apps/api/documents/api.js'
+    :callback_server: 'http://localhost:3000'
     :ext:
       :text:
         - 'doc'
@@ -31,6 +32,7 @@ production:
     :host: 'document_server'
     :port: '80'
     :api: '/web-apps/apps/api/documents/api.js'
+    :callback_server: 'http://localhost:3000'
     :ext:
       :text:
         - 'doc'
