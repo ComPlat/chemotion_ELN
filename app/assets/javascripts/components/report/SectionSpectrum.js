@@ -26,8 +26,18 @@ const Thumbnail = ({ thumb }) => {
   return <img src={previewImg} alt="" className="spectrum-thumbnail" />;
 };
 
+const isImg = (att) => {
+  const imgExts = ['jpg', 'jpeg', 'png'];
+  const ext = att.filename.split('.').pop().toLowerCase();
+  const idx = imgExts.indexOf(ext);
+  return idx >= 0;
+};
+
 const ContentAtts = ({ prd, attThumbNails }) => {
   const contents = prd.atts.map((att, idx) => {
+    if (!isImg(att)) {
+      return null;
+    }
     const key = `${idx}-${att.identifier}`;
     const thumb = attThumbNails.map(tn => (
       tn.id === att.id ? tn.thumbnail : null
