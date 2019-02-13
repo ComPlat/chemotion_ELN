@@ -70,16 +70,16 @@ module Reporter
            'insert' => kind }]
       end
 
-      def img_ext?(target)
+      def img_ext?(file_ext)
         img_exts = %w[png jpeg]
-        file_ext = MimeMagic.by_path(target.filename)&.subtype
         img_exts.include?(file_ext)
       end
 
       def image(target)
-        return nil unless img_ext?(target)
+        file_ext = MimeMagic.by_path(target.filename)&.subtype
+        return nil unless img_ext?(file_ext)
         img = scale_img(target)
-        fname = target.filename.tr(' ', '_')
+        fname = "#{target.identifier}.#{file_ext}"
         Sablon::Image::Definition.new(
           fname, img.to_blob, img.columns, img.rows
         )
