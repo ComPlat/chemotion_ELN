@@ -88,7 +88,7 @@ class API < Grape::API
     'samples' => %w(name short_label external_label),
     'molecules' => %w(cas)
   }
-  TARGET = Rails.env.production? ? 'https://chemotion.net/' : 'http://localhost:3000/'
+  TARGET = Rails.env.production? ? 'https://www.chemotion-repository.net/' : 'http://localhost:3000/'
 
   mount Chemotion::LiteratureAPI
   mount Chemotion::ContainerAPI
