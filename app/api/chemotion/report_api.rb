@@ -50,11 +50,10 @@ module Chemotion
         end
         c_id = params[:uiState][:currentCollection]
         c_id = SyncCollectionsUser.find(c_id)&.collection_id if params[:uiState][:isSync]
-
         %i[sample reaction wellplate].each do |table|
           next unless (p_t = params[:uiState][table])
           ids = p_t[:checkedAll] ? p_t[:uncheckedIds] : p_t[:checkedIds]
-          next unless p_t[:checkedAll] || ids
+          next unless p_t[:checkedAll] || ids.present?
           column_query = build_column_query(filter_column_selection(table))
           sql_query = send("build_sql_#{table}_sample",  column_query, c_id, ids, p_t[:checkedAll])
           next unless sql_query

@@ -577,7 +577,11 @@ module ReportHelpers
     when :wellplate
       columns.slice(:sample, :molecule, :wellplate)
     when :sample_analyses
+    # FIXME: slice analyses + process properly
       columns.slice(:analysis).merge(sample_id: params[:columns][:sample])
+    # TODO: reaction analyses data
+    # when :reaction_analyses
+    #  columns.slice(:analysis).merge(reaction_id: params[:columns][:reaction])
     else
       {}
     end

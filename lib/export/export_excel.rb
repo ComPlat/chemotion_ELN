@@ -97,7 +97,8 @@ module Export
       # elsif sample['ts'] == 't' || sample['ts'].equal?(true)
       #   return Array.new(@headers.size)data = headers.map { |column| sample[column] }
       else
-        dl = sample['dl_wp'] || sample['dl_r'] || 0
+        dl = sample['dl_wp'] && sample['dl_wp'].to_i ||
+          sample['dl_r'] && sample['dl_r'].to_i || 0
         # NB: as of now , only dl 0 and 10 are implemented
         dl = 10 if dl.positive?
         headers = instance_variable_get("@headers#{sample['dl_s']}#{dl}")
