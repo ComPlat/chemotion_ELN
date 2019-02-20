@@ -26,6 +26,7 @@ class Import::ImportJson
   #         'tlc_description' => nil,
   #         'rf_value' => nil,
   #         'temperature' => nil,
+  #         'duration' => nil,
   #         'status' => nil,
   #         # 'reaction_svg_file' => nil, # to process
   #         'solvent' => nil,

@@ -124,6 +124,7 @@ module Export
         , array_to_json(r.dangerous_products) as dangerous_products
         , r.tlc_solvents, r.tlc_description
         , r.rf_value, r.temperature, r.status, r.solvent, r.short_label
+        , r.duration
         --, r.created_by, r.reaction_svg_file, r.deleted_at
         , cl.id as uuid, clo.id as origin_uuid --, r.origin
       from reactions r

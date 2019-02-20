@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import Delta from 'quill-delta';
+import moment from 'moment';
+import 'moment-precise-range-plugin';
 
 import Element from './Element';
 import Sample from './Sample';
@@ -9,7 +11,20 @@ import Container from './Container.js'
 import UserStore from '../stores/UserStore';
 
 const TemperatureUnit = ["°C", "°F", "K"]
-
+const MomentUnit = [
+  { key: 'Year(s)', val: 'years' },
+  { key: 'Month(s)', val: 'months' },
+  { key: 'Week(s)', val: 'weeks' },
+  { key: 'Day(s)', val: 'days' },
+  { key: 'Hour(s)', val: 'hours' },
+  { key: 'Minute(s)', val: 'minutes' },
+  { key: 'Second(s)', val: 'seconds' }
+];
+const DurationUnit = ['Year(s)', 'Month(s)', 'Week(s)', 'Day(s)', 'Hour(s)', 'Minute(s)', 'Second(s)'];
+const DurationDefault = {
+  valueUnit: 'Day(s)',
+  userText: ''
+};
 export default class Reaction extends Element {
 
   static buildEmpty(collection_id) {
@@ -28,7 +43,7 @@ export default class Reaction extends Element {
       description: Reaction.quillDefault(),
       timestamp_start: "",
       timestamp_stop: "",
-      duration: "",
+      durationCalc: "",
       observation: Reaction.quillDefault(),
       purification: "",
       dangerous_products: "",
@@ -44,6 +59,8 @@ export default class Reaction extends Element {
       literatures: [],
       solvent: '',
       container: Container.init(),
+      duration_display: DurationDefault,
+      duration: ''
     })
 
     reaction.short_label = this.buildReactionShortLabel()
@@ -59,6 +76,10 @@ export default class Reaction extends Element {
       let prefix = currentUser.reaction_name_prefix;
       return `${currentUser.initials}-${prefix}${number}`;
     }
+  }
+
+  static get duration_unit() {
+    return DurationUnit;
   }
 
   static get temperature_unit() {
@@ -81,7 +102,7 @@ export default class Reaction extends Element {
       description: this.description,
       timestamp_start: this.timestamp_start,
       timestamp_stop: this.timestamp_stop,
-      duration: this.duration,
+      durationCalc: this.durationCalc,
       observation: this.observation,
       purification: this.purification,
       dangerous_products: this.dangerous_products,
@@ -104,7 +125,9 @@ export default class Reaction extends Element {
       },
       literatures: this.literatures.map(literature => literature.serialize()),
       container: this.container,
-    })
+      duration: this.duration,
+      duration_display: this.duration_display,
+    });
   }
 
   get temperature_display() {
@@ -121,6 +144,22 @@ export default class Reaction extends Element {
       return minTemp
     else
       return minTemp + " ~ " + maxTemp
+  }
+
+  get duration_display() {
+    return this._duration_display;
+  }
+
+  set duration_display(duration_display) {
+    this._duration_display = duration_display;
+  }
+
+  get duration() {
+    return this._duration;
+  }
+
+  set duration(duration) {
+    this._duration = duration;
   }
 
   get temperature() {
@@ -144,6 +183,20 @@ export default class Reaction extends Element {
     const observationDelta = new Delta(this.observation);
     const composedDelta = observationDelta.concat(insertDelta);
     this.observation = composedDelta;
+  }
+
+  convertDuration(newUnit) {
+    let duration = this._duration_display;
+    const oldUnit = duration.valueUnit;
+    duration.valueUnit = newUnit;
+
+    if (duration.userText && !isNaN(duration.userText)) {
+      const durationMoment = moment.duration(Number.parseFloat(duration.userText), _.find(MomentUnit, m => m.key === oldUnit).val);
+      let v = durationMoment.as(_.find(MomentUnit, m => m.key === newUnit).val);
+      v = _.round(v, 1);
+      duration.userText = v.toString();
+    }
+    return duration;
   }
 
   convertTemperature(newUnit) {

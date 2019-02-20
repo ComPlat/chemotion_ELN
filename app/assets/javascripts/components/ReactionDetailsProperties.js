@@ -9,9 +9,10 @@ import Select from 'react-select';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
 import Clipboard from 'clipboard';
-
+import { round, find, indexOf, split, trim } from 'lodash';
 import { purificationOptions,
   dangerousProductsOptions } from './staticDropdownOptions/options';
+import Reaction from './models/Reaction';
 import ReactionDetailsMainProperties from './ReactionDetailsMainProperties';
 import MaterialGroupContainer from './MaterialGroupContainer';
 import QuillEditor from './QuillEditor';
@@ -26,9 +27,11 @@ export default class ReactionDetailsProperties extends Component {
     super(props);
     const { reaction } = props;
 
+    reaction.duration_display = this.convertDurationDisplay(reaction);
+
     this.state = {
       reaction,
-      durationButtonDisabled: false,
+      durationCalcButtonDisabled: false
     };
 
     this.clipboard = new Clipboard('.clipboardBtn');
@@ -40,19 +43,32 @@ export default class ReactionDetailsProperties extends Component {
     this.handlePSolventChange = this.handlePSolventChange.bind(this);
     this.deletePSolvent = this.deletePSolvent.bind(this);
     this.dropPSolvent = this.dropPSolvent.bind(this);
+
+    this.copyToDuration = this.copyToDuration.bind(this);
+    this.handleDurationChange = this.handleDurationChange.bind(this);
+    this.durationUnit = props.reaction.duration_display.valueUnit;
   }
 
   componentWillReceiveProps(nextProps) {
     const nextReaction = nextProps.reaction;
-    let durationButtonDisabled = false;
-    nextReaction.duration = this.calcDuration(nextReaction);
+    let durationCalcButtonDisabled = false;
+    nextReaction.durationCalc = this.calcDuration(nextReaction);
 
-    if (nextReaction.duration == null) {
-      nextReaction.duration = 'No time traveling here';
-      durationButtonDisabled = true;
+    if (nextReaction.durationCalc == null) {
+      nextReaction.durationCalc = 'No time traveling here';
+      durationCalcButtonDisabled = true;
     }
 
-    this.setState({ reaction: nextReaction, durationButtonDisabled });
+    if (nextReaction.duration_display.userText !== null || nextReaction.duration_display.userText !== '') {
+      nextReaction.duration = trim(`${nextReaction.duration_display.userText} ${nextReaction.duration_display.valueUnit}`);
+    }
+
+    this.setState({
+      reaction: nextReaction,
+      durationCalcButtonDisabled
+    });
+
+    this.durationUnit = nextProps.reaction.duration_display.valueUnit;
   }
 
   componentWillUnmount() {
@@ -149,17 +165,69 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   calcDuration(reaction) {
-    let duration = null;
+    let durationCalc = null;
 
     if (reaction.timestamp_start && reaction.timestamp_stop) {
       const start = moment(reaction.timestamp_start, 'DD-MM-YYYY HH:mm:ss')
       const stop = moment(reaction.timestamp_stop, 'DD-MM-YYYY HH:mm:ss')
       if (start < stop) {
-        duration = moment.preciseDiff(start, stop)
+        durationCalc = moment.preciseDiff(start, stop)
       }
     }
 
-    return duration;
+    return durationCalc;
+  }
+
+  convertDurationDisplay(reaction) {
+    if (indexOf(reaction.duration, ' ') > -1) {
+      const d = split(reaction.duration, ' ');
+      return {
+        valueUnit: d[1],
+        userText: d[0].toString()
+      };
+    }
+    return {
+      valueUnit: 'Day(s)',
+      userText: ''
+    };
+  }
+
+  changeDurationUnit() {
+    const index = Reaction.duration_unit.indexOf(this.durationUnit);
+    const unit = Reaction.duration_unit[(index + 1) % 7];
+    this.props.onInputChange('durationUnit', unit);
+  }
+
+  copyToDuration() {
+    const { reaction } = this.state;
+    if (reaction.timestamp_start && reaction.timestamp_stop) {
+      const start = moment(reaction.timestamp_start, 'DD-MM-YYYY HH:mm:ss');
+      const stop = moment(reaction.timestamp_stop, 'DD-MM-YYYY HH:mm:ss');
+      const MomentUnit = [
+        { key: 'Year(s)', val: 'years' },
+        { key: 'Month(s)', val: 'months' },
+        { key: 'Week(s)', val: 'weeks' },
+        { key: 'Day(s)', val: 'days' },
+        { key: 'Hour(s)', val: 'hours' },
+        { key: 'Minute(s)', val: 'minutes' },
+        { key: 'Second(s)', val: 'seconds' }
+      ];
+      let v = moment.duration(stop.diff(start))
+        .as(find(MomentUnit, m => m.key === this.durationUnit).val);
+      if (start < stop) {
+        v = round(v, 1).toString();
+      } else {
+        v = '0';
+      }
+      this.props.onInputChange('duration', v);
+    }
+  }
+
+  handleDurationChange(event) {
+    const value = event.target.value;
+    if (!isNaN(value)) {
+      this.props.onInputChange('duration', value);
+    }
   }
 
   clipboardTooltip() {
@@ -169,8 +237,9 @@ export default class ReactionDetailsProperties extends Component {
   }
 
   render() {
-    const { reaction } = this.state
-    const { durationButtonDisabled } = this.state
+    const { reaction, durationCalcButtonDisabled } = this.state;
+    let durationCalc = this.calcDuration(reaction);
+    durationCalc = durationCalc || '';
 
     const solventsItems = solventsTL.map((x, i) => {
       const val = Object.keys(x)[0];
@@ -198,7 +267,7 @@ export default class ReactionDetailsProperties extends Component {
               />
             </div>
             <Row className="small-padding">
-              <Col md={4}>
+              <Col md={3}>
                 <FormGroup>
                   <ControlLabel>Start</ControlLabel>
                   <InputGroup>
@@ -221,7 +290,7 @@ export default class ReactionDetailsProperties extends Component {
                   </InputGroup>
                 </FormGroup>
               </Col>
-              <Col md={4}>
+              <Col md={3}>
                 <FormGroup>
                   <ControlLabel>Stop</ControlLabel>
                   <InputGroup>
@@ -244,14 +313,14 @@ export default class ReactionDetailsProperties extends Component {
                   </InputGroup>
                 </FormGroup>
               </Col>
-              <Col md={4}>
+              <Col md={3}>
                 <FormGroup>
                   <ControlLabel>Duration</ControlLabel>
                   <InputGroup>
                     <FormControl
                       type="text"
-                      value={reaction.duration || ''}
-                      disabled="true"
+                      value={durationCalc || ''}
+                      disabled
                       placeholder="Duration"
                     />
                     <InputGroup.Button>
@@ -262,10 +331,49 @@ export default class ReactionDetailsProperties extends Component {
                         <Button
                           active
                           className="clipboardBtn"
-                          disabled={durationButtonDisabled}
-                          data-clipboard-text={reaction.duration || ' '}
+                          disabled={durationCalcButtonDisabled}
+                          data-clipboard-text={durationCalc || ' '}
                         >
                           <i className="fa fa-clipboard" />
+                        </Button>
+                      </OverlayTrigger>
+                      <OverlayTrigger
+                        placement="bottom"
+                        overlay={<Tooltip id="copy_durationCalc_to_duration">use this duration<br />(rounded to precision 1)</Tooltip>}
+                      >
+                        <Button
+                          active
+                          className="clipboardBtn"
+                          onClick={() => this.copyToDuration()}
+                        >
+                          <i className="fa fa-arrow-right" />
+                        </Button>
+                      </OverlayTrigger>
+                    </InputGroup.Button>
+                  </InputGroup>
+                </FormGroup>
+              </Col>
+              <Col md={3}>
+                <FormGroup>
+                  <ControlLabel>&nbsp;</ControlLabel>
+                  <InputGroup>
+                    <FormControl
+                      type="text"
+                      value={reaction.duration_display.userText || ''}
+                      inputRef={this.refDuration}
+                      placeholder="Input Duration..."
+                      onChange={event => this.handleDurationChange(event)}
+                    />
+                    <InputGroup.Button>
+                      <OverlayTrigger
+                        placement="bottom"
+                        overlay={<Tooltip id="switch_duration_unit">switch duration unit</Tooltip>}
+                      >
+                        <Button
+                          bsStyle="success"
+                          onClick={() => this.changeDurationUnit()}
+                        >
+                          {this.durationUnit}
                         </Button>
                       </OverlayTrigger>
                     </InputGroup.Button>

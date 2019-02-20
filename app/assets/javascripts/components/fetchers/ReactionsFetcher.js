@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import { indexOf, split } from 'lodash';
 import Reaction from '../models/Reaction';
 import UIStore from '../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
@@ -79,6 +80,15 @@ export default class ReactionsFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
+      const r = json.reaction;
+      r.duration_display = (indexOf(r.duration, ' ') > -1 ?
+        {
+          valueUnit: split(r.duration, ' ')[1],
+          userText: split(r.duration, ' ')[0].toString()
+        } : {
+          valueUnit: 'Day(s)',
+          userText: ''
+        });
       return new Reaction(json.reaction);
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -105,6 +115,15 @@ export default class ReactionsFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
+      const r = json.reaction;
+      r.duration_display = (indexOf(r.duration, ' ') > -1 ?
+        {
+          valueUnit: split(r.duration, ' ')[1],
+          userText: split(r.duration, ' ')[0].toString()
+        } : {
+          valueUnit: 'Day(s)',
+          userText: ''
+        });
       return new Reaction(json.reaction);
     }).catch((errorMessage) => {
       console.log(errorMessage);
