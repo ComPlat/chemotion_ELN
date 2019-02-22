@@ -28,7 +28,11 @@ class Tmp < Local
     tmp = Tempfile.new([File.basename(fp, '.*'), fe], encoding: 'ascii-8bit')
     tmp.write File.read(fp)
     tmp.rewind
-    tn = Thumbnailer.create(tmp.path)#, thumb_path)
+    tn = begin
+          Thumbnailer.create(tmp.path)#, thumb_path)
+         rescue
+           nil
+         end
     #NB issue with Thumbnailer.create(source, destination)
     if tn && tn != thumb_path
       dir = File.dirname(thumb_path)

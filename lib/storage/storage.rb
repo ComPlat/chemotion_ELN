@@ -53,7 +53,11 @@ class Storage
     tmp = Tempfile.new([fn, fe], encoding: 'ascii-8bit')
     tmp.write attachment.read_file
     tmp.rewind
-    attachment.thumb_path = Thumbnailer.create(tmp.path)
+    attachment.thumb_path = begin
+                              Thumbnailer.create(tmp.path)
+                            rescue
+                              nil
+                            end
     if attachment.thumb_path && File.exist?(attachment.thumb_path)
       attachment.thumb = true
       store_thumb
