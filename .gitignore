@@ -65,6 +65,8 @@
 /uploads/*
 !/public/attachments/.keep
 
+/public/json/*
+!/public/json/.keep
 
 /public/docx/*
 !/public/docx/.keep
