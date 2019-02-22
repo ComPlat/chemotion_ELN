@@ -1,7 +1,7 @@
 image: "complat/complat-ubuntu-runner"
 
 services:
-  - postgres:9.5-alpine
+  - postgres:10-alpine
 
 variables:
   POSTGRES_DB: chemotion_test

@@ -229,112 +229,108 @@ module Chemotion
       end
 
       namespace :elements do
-        desc 'Update the collection of a set of elements by UI state'
+        desc 'Move elements by UI state to another collection'
         params do
-          requires :ui_state, type: Hash, desc: 'Selected elements from the UI'
+          requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
+            use :main_ui_state_params
+          end
           optional :collection_id, type: Integer, desc: 'Destination collect id'
           optional :newCollection, type: String, desc: 'Label for a new collion'
+          optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
         put do
-          collection_id = fetch_collection_id_for_assign(params)
-          collection = Collection.find_by(id: collection_id)
-          # can only move to collection  owned or shared by current_user
-          if !collection || params[:is_sync_to_me] || collection.is_shared
-            error!('401 Unauthorized collection', 401)
+          to_collection_id = fetch_collection_id_for_assign(params, 4)
+          error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
+
+          from_collection = fetch_source_collection_for_removal
+          error!('401 Unauthorized removal from collection', 401) unless from_collection
+          if (from_collection.label == 'All' && from_collection.is_locked)
+            error!('401 Cannot remove elements from  \'All\' root collection', 401)
           end
-          ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollection][:id]
-          # cannot moved from 'All' collection
-          if Collection.get_all_collection_for_user(current_user)
-                       .id == current_collection_id
-            error!('401 Cannot move element out of root collection', 401)
+
+          API::ELEMENTS.each do |element|
+            ui_state = params[:ui_state][element]
+            next unless ui_state
+            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
+            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
+            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
+            collections_element_klass = ('collections_' + element).classify.constantize
+            element_klass = element.classify.constantize
+            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            collections_element_klass.move_to_collection(ids, from_collection.id, to_collection_id)
           end
-          [
-            [Sample, :sample, CollectionsSample],
-            [Reaction, :reaction, CollectionsReaction],
-            [Wellplate, :wellplate, CollectionsWellplate],
-            [Screen, :screen, CollectionsScreen],
-            [ResearchPlan, :research_plan, CollectionsResearchPlan]
-          ].each do |e|
-            ids = e[0].for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[e[1]], e[2], current_collection_id
-            ).compact
-            e[2].move_to_collection(ids, current_collection_id, collection_id)
-          end
-          status 202
+
+          status 204
         end
 
         desc 'Assign a collection to a set of elements by UI state'
         params do
-          requires :ui_state, type: Hash, desc: 'Selected elements from the UI'
+          requires :ui_state, type: Hash, desc: 'Selected elements from the UI' do
+            use :main_ui_state_params
+          end
           optional :collection_id, type: Integer, desc: 'Destination collection id'
           optional :newCollection, type: String, desc: 'Label for a new collection'
           optional :is_sync_to_me, type: Boolean, desc: 'Destination collection is_sync_to_me'
         end
 
         post do
-          collection_id = fetch_collection_id_for_assign(params)
-          error!('401 Unauthorized collection', 401) unless collection_id
-          ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollection][:id]
-          [
-            [Sample, :sample, CollectionsSample],
-            [Reaction, :reaction, CollectionsReaction],
-            [Wellplate, :wellplate, CollectionsWellplate],
-            [Screen, :screen, CollectionsScreen],
-            [ResearchPlan, :research_plan, CollectionsResearchPlan]
-          ].each do |e|
-            ids = e[0].for_user(current_user.id).for_ui_state_with_collection(
-              ui_state[e[1]], e[2], current_collection_id
-            )
-            e[2].create_in_collection(ids, collection_id)
+          from_collection = fetch_source_collection_for_assign
+          error!('401 Unauthorized import from current collection', 401) unless from_collection
+          to_collection_id = fetch_collection_id_for_assign(params, 4)
+
+          error!('401 Unauthorized assignment to collection', 401) unless to_collection_id
+
+          API::ELEMENTS.each do |element|
+            ui_state = params[:ui_state][element]
+            next unless ui_state
+            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
+            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
+            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+
+            collections_element_klass = ('collections_' + element).classify.constantize
+            element_klass = element.classify.constantize
+            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            collections_element_klass.create_in_collection(ids, to_collection_id)
           end
+
           status 204
         end
 
-        desc "Remove from a collection a set of elements by UI state"
+        desc "Remove from current collection a set of elements by UI state"
         params do
-          requires :ui_state, type: Hash, desc: "Selected elements from the UI"
+          requires :ui_state, type: Hash, desc: "Selected elements from the UI" do
+            use :main_ui_state_params
+          end
         end
+
         delete do
-          ui_state = params[:ui_state]
-          current_collection_id = ui_state[:currentCollection][:id]
+          # ui_state = params[:ui_state]
+          from_collection = fetch_source_collection_for_removal
+          error!('401 Unauthorized removal from collection', 401) unless from_collection
+          if (from_collection.label == 'All' && from_collection.is_locked)
+            error!('401 Cannot remove elements from  \'All\' root collection', 401)
+          end
 
-          # Remove Sample
-          sample_ids = Sample.for_ui_state_with_collection(
-            ui_state[:sample],
-            CollectionsSample,
-            current_collection_id
-          )
-          CollectionsSample.remove_in_collection(sample_ids, current_collection_id)
+          API::ELEMENTS.each do |element|
+            ui_state = params[:ui_state][element]
+            next unless ui_state
+            ui_state[:checkedAll] = ui_state[:checkedAll] || ui_state[:all]
+            ui_state[:checkedIds] = ui_state[:checkedIds].presence || ui_state[:included_ids]
+            ui_state[:uncheckedIds] = ui_state[:uncheckedIds].presence || ui_state[:excluded_ids]
+            ui_state[:collection_ids] = from_collection.id
+            next unless ui_state[:checkedAll] || ui_state[:checkedIds].present?
+            collections_element_klass = ('collections_' + element).classify.constantize
+            element_klass = element.classify.constantize
+            ids = element_klass.by_collection_id(from_collection.id).by_ui_state(ui_state).pluck(:id)
+            collections_element_klass.remove_in_collection(ids, from_collection.id)
+          end
 
-          # Remove Reaction
-          reaction_ids = Reaction.for_ui_state_with_collection(
-            ui_state[:reaction],
-            CollectionsReaction,
-            current_collection_id
-          )
-          CollectionsReaction.remove_in_collection(reaction_ids, current_collection_id)
-
-          # Remove Wellplate
-          wellplate_ids = Wellplate.for_ui_state_with_collection(
-            ui_state[:wellplate],
-            CollectionsWellplate,
-            current_collection_id
-          )
-          CollectionsWellplate.remove_in_collection(wellplate_ids, current_collection_id)
-
-          # Remove Screen
-          screen_ids = Screen.for_ui_state_with_collection(
-            ui_state[:screen],
-            CollectionsScreen,
-            current_collection_id
-          )
-          CollectionsScreen.remove_in_collection(screen_ids, current_collection_id)
           status 204
         end
-
       end
 
       namespace :unshared do

@@ -45,28 +45,60 @@ module CollectionHelpers
     }.merge(dl || {})
   end
 
+  # TODO: DRY fetch_collection_id_for_assign & fetch_collection_by_ui_state_params_and_pl
   # desc: return a collection id to which elements (eg samples) shld be assigned
   # if current user is entitled to write into the destination collection
-  def fetch_collection_id_for_assign(prms)
+  def fetch_collection_id_for_assign(prms = params, pl = 1)
     c_id = prms[:collection_id]
-    # create a new collection to assign to
     if !prms[:newCollection].blank?
-      Collection.create(
+      c = Collection.create(
         user_id: current_user.id, label: prms[:newCollection]
-      )&.id
-    # find a sync collection, check its permissions, find the asso collection
+      )
     elsif prms[:is_sync_to_me]
-      sync_coll_user = SyncCollectionsUser.find_by(id: c_id)
-      accessible = sync_coll_user && user_ids.include?(sync_coll_user.user_id)
-      writable = sync_coll_user && sync_coll_user.permission_level >= 1
-      accessible && writable && sync_coll_user.collection_id
-    # find a collec id either owned by or shared to (with pl >=1) current_user
-    elsif (col = Collection.find_by(id: c_id, user_id: user_ids))
-      (!col.is_shared || col.permission_level >= 1) && col.id
-    # find a collect id that is shared_by current_user
-    elsif (col = Collection.find_by(id: c_id, shared_by_id: current_user.id))
-      col.id
+      c = Collection.joins(:sync_collections_users).where(
+        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
+        c_id,
+        user_ids,
+        pl
+      ).first
+    elsif
+      c = Collection.where(id: c_id).where(
+        'shared_by_id = ? OR (user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?))',
+        current_user.id,
+        user_ids,
+        pl
+      ).first
     end
+    c&.id
+  end
+
+  def fetch_collection_by_ui_state_params_and_pl(pl = 2)
+    current_collection = params['ui_state']['currentCollection']
+    @collection = if current_collection['is_sync_to_me']
+      Collection.joins(:sync_collections_users).where(
+        'sync_collections_users.id = ? and sync_collections_users.user_id in (?) and sync_collections_users.permission_level >= ?',
+        current_collection['id'],
+        user_ids,
+        pl
+      ).first
+    else
+      Collection.where(
+        'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level >= ?)) OR shared_by_id = ?)',
+        current_collection['id'],
+        user_ids,
+        pl,
+        current_user
+      ).first
+    end
+    @collection
+  end
+
+  def fetch_source_collection_for_removal
+    fetch_collection_by_ui_state_params_and_pl(3)
+  end
+
+  def fetch_source_collection_for_assign
+    fetch_collection_by_ui_state_params_and_pl(2)
   end
 
   def set_var(c_id = params[:collection_id], is_sync = params[:is_sync])

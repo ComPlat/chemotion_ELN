@@ -49,8 +49,8 @@ group :development do
   gem 'flamegraph'
   gem 'stackprof'     # For Ruby MRI 2.1+
   gem 'web-console', '~> 2.0'
-  gem 'immigrant'
-  gem 'brakeman'
+  # gem 'immigrant'
+  # gem 'brakeman'
 end
 
 gem 'pg', '~> 0.20.0'

@@ -4,56 +4,37 @@ class CollectionsReaction < ActiveRecord::Base
   belongs_to :reaction
 
   include Tagging
+  include Collecting
 
-  def self.move_to_collection(reaction_ids, old_col_id, new_col_id)
-    # Get associated: starting_materials, reactants, and product samples
+  # Remove from collection and process associated elements (and update collection info tag)
+  def self.remove_in_collection(reaction_ids, collection_ids)
+    # Get associated samples
     sample_ids = Reaction.get_associated_samples(reaction_ids)
+    # Delete in collection
+    delete_in_collection(reaction_ids, collection_ids)
+    # Update element tag with collection info
+    update_tag_by_element_ids(reaction_ids)
+    # Delete associated in collection and update tag
+    CollectionsSample.remove_in_collection(sample_ids, collection_ids)
+  end
 
-    # Delete reactions in old collection
-    self.delete_in_collection(reaction_ids, old_col_id)
-
+  def self.move_to_collection(reaction_ids, from_col_ids, to_col_ids)
+    # Get associated samples
+    sample_ids = Reaction.get_associated_samples(reaction_ids)
+    # Delete reactions from collection
+    delete_in_collection(reaction_ids, from_col_ids)
     # Move associated samples in current collection
-    CollectionsSample.move_to_collection(sample_ids, old_col_id, new_col_id)
-
-    # Create new reations in target collection
-    self.static_create_in_collection(reaction_ids, new_col_id)
+    CollectionsSample.move_to_collection(sample_ids, from_col_ids, to_col_ids)
+    # Associate reactions to collections (and update collection info tag)
+    static_create_in_collection(reaction_ids, to_col_ids)
   end
 
-  # Static delete without checking associated
-  def self.delete_in_collection(reaction_ids, collection_id)
-    self.where(
-      reaction_id: reaction_ids,
-      collection_id: collection_id
-    ).destroy_all
-  end
-
-  # Remove from collection and process associated elements
-  def self.remove_in_collection(reaction_ids, collection_id)
-    self.delete_in_collection(reaction_ids, collection_id)
-    sample_ids = Reaction.get_associated_samples(reaction_ids)
-
-    CollectionsSample.remove_in_collection(sample_ids, collection_id)
-  end
-
-  # Static create without checking associated
-  def self.static_create_in_collection(reaction_ids, collection_id)
-    reaction_ids.map { |id|
-      r = self.with_deleted.find_or_create_by(
-        reaction_id: id,
-        collection_id: collection_id
-      )
-
-      r.restore! if r.deleted?
-      r
-    }
-  end
-
-  def self.create_in_collection(reaction_ids, collection_id)
+  def self.create_in_collection(reaction_ids, collection_ids)
     # Get associated: starting_materials, reactants, and product samples
     sample_ids = Reaction.get_associated_samples(reaction_ids)
     # Create associated samples in collection
-    CollectionsSample.create_in_collection(sample_ids, collection_id)
-    # Create new reaction in collection
-    self.static_create_in_collection(reaction_ids, collection_id)
+    CollectionsSample.create_in_collection(sample_ids, collection_ids)
+    # Associate reactions to collections
+    static_create_in_collection(reaction_ids, collection_ids)
   end
 end

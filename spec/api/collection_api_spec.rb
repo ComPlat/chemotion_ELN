@@ -14,15 +14,15 @@ describe Chemotion::CollectionAPI do
   }
 
   context 'authorized user logged in' do
-    let(:user)  { create(:person, first_name: 'Musashi', last_name: 'M') }
-    let(:u2)    { create(:person) }
+    let!(:user)  { create(:person, first_name: 'Musashi', last_name: 'M') }
+    let!(:u2)    { create(:person) }
     let(:group) { create(:group)}
     let!(:c1)   { create(:collection, user: user, is_shared: false) }
 
     let!(:root_u2) { create(:collection, user: user, shared_by_id: u2.id, is_shared: true, is_locked: true) }
     let!(:root_u) { create(:collection, user: u2, shared_by_id: user.id, is_shared: true, is_locked: true) }
 
-    let!(:c2)   { create(:collection, user: u2, shared_by_id: user.id, is_shared: true, permission_level: 1, ancestry: root_u.id.to_s)}
+    let!(:c2)   { create(:collection, user: u2, shared_by_id: user.id, is_shared: true, permission_level: 2, ancestry: root_u.id.to_s)}
     let!(:c3)   { create(:collection, user: user, is_shared: false) }
     let!(:c4)   { create(:collection, user: user, shared_by_id: u2.id, is_shared: true, ancestry: root_u2.id.to_s) }
     let!(:c5)   { create(:collection, shared_by_id: u2.id, is_shared: true) }
@@ -184,196 +184,227 @@ describe Chemotion::CollectionAPI do
     end
 
     describe 'elements' do
-      let(:s1) { create(:sample) }
-      let(:s2) { create(:sample) }
-      let(:r1) { create(:reaction) }
-      let(:r2) { create(:reaction) }
-      let(:w1) { create(:wellplate) }
-      let(:w2) { create(:wellplate) }
-      let(:sc1) { create(:screen) }
-      let(:rp1) { create(:research_plan) }
+      let!(:c_source) { create(:collection, user: user) }
+      let!(:c_target) { create(:collection, user_id: user.id) }
+      let!(:c2_source) { create(:collection, user: u2) }
+      let!(:c2_target) { create(:collection, user: u2) }
+      let!(:c3_target) { create(:collection, user: u2, is_shared: true, shared_by_id: user.id) }
+      let!(:c_shared_source_low) { create(:collection, user_id: user.id, shared_by_id: u2.id , is_shared: true, permission_level: 1) }
+      let!(:c_shared_source_high) { create(:collection, user_id: user.id, shared_by_id: u2.id , is_shared: true, permission_level: 3) }
+      let!(:c_shared_target) { create(:collection, user: user, shared_by_id: u2.id , is_shared: true) }
+      let!(:c_sync_source) { create(:sync_collections_user, user: user, shared_by_id: u2.id, collection_id: c2_source) }
+      let!(:c_sync_target) { create(:sync_collections_user, user: user, shared_by_id: u2.id, collection_id: c2_target) }
+      let(:s) { create(:sample) }
+      let(:s_r) { create(:sample) }
+      let(:s_w) { create(:sample) }
+      let(:s_w_s) { create(:sample) }
+      let(:r_s) { create(:reaction, samples: [s_r]) }
+      let(:w_s) { create(:wellplate, samples: [s_w]) }
+      let(:w_s_s) { create(:wellplate, samples: [s_w_s]) }
+      let(:sc) { create(:screen, wellplates: [w_s_s]) }
+      let(:rp) { create(:research_plan)}
 
       let!(:ui_state) {
-         {
-            sample: {
-              all: true,
-              included_ids: [],
-              excluded_ids: []
-            },
-            reaction: {
-              all: true,
-              included_ids: [],
-              excluded_ids: [r2.id]
-            },
-            wellplate: {
-              all: nil,
-              included_ids: [w1.id],
-              excluded_ids: []
-            },
-            screen: {
-              all: nil,
-              included_ids: [sc1.id],
-              excluded_ids: []
-            },
-            research_plan: {
-              all: nil,
-              included_ids: [rp1.id],
-              excluded_ids: []
-            },
-            currentCollection: {
-              id:c1.id
-            }
+        {
+          sample: { all: true },
+          reaction: { all: true },
+          wellplate: { all: true },
+          screen: { all: true },
+          research_plan: { all: true },
+          currentCollection: {
+            id: c_source.id,
+            "is_shared": false,
+            "is_synchronized": false,
           }
-      }
-
-      let!(:params) {
-        {
-          ui_state: ui_state,
-          collection_id: c3.id,
         }
       }
 
-      let!(:params_shared) {
+      let!(:ui_state_shared) {
         {
-          ui_state: ui_state,
-          collection_id: c2.id,
+          currentCollection: {
+            id: c3_target.id,
+            is_shared: true,
+          }
         }
       }
 
-      let!(:params_sync_read) {
+      let!(:ui_state_tweaked) {
         {
-          ui_state: ui_state,
-          collection_id: sc_r.id,
-          is_sync_to_me: true
+          currentCollection: {
+            id: c2_source.id,
+          }
         }
       }
 
-      let!(:params_sync_write) {
+      let!(:ui_state_shared_to_high) {
         {
-          ui_state: ui_state,
-          collection_id: sc_w.id,
-          is_sync_to_me: true
+          currentCollection: {
+            id: c_shared_source_high.id,
+            is_shared: true,
+          }
         }
       }
 
-      before do
-        CollectionsSample.create!(collection_id: c1.id, sample_id: s1.id)
-        CollectionsSample.create!(collection_id: c1.id, sample_id: s2.id)
-        CollectionsReaction.create!(collection_id: c1.id, reaction_id: r1.id)
-        CollectionsReaction.create!(collection_id: c1.id, reaction_id: r2.id)
-        CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w1.id)
-        CollectionsWellplate.create!(collection_id: c1.id, wellplate_id: w2.id)
-        CollectionsScreen.create!(collection_id: c1.id, screen_id: sc1.id)
-        CollectionsResearchPlan.create!(collection_id: c1.id, research_plan_id: rp1.id)
-        c1.reload
-        c2.reload
-      end
+      let!(:ui_state_shared_to_low) {
+        {
+          currentCollection: {
+            id: c_shared_source_low.id,
+            is_shared: true,
+          }
+        }
+      }
 
-      describe 'PUT /api/v1/collections/elements' do
-        it 'should be able to move elements between unshared collections' do
-          put '/api/v1/collections/elements', params
-          c1.reload
-          c3.reload
-          expect(c1.samples).to match_array []
-          expect(c1.reactions).to match_array [r2]
-          expect(c1.wellplates).to match_array [w2]
-          expect(c1.screens).to match_array []
-          expect(c3.samples).to match_array [s1, s2]
-          expect(c3.reactions).to match_array [r1]
-          expect(c3.wellplates).to match_array [w1]
-          expect(c3.screens).to match_array [sc1]
-          expect(c3.research_plans).to match_array [rp1]
+      describe '01 - from and to collections owned by user, ' do
+        # before do
+        #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s.id)
+        #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s_r.id)
+        #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s_w.id)
+        #   CollectionsSample.create!(collection_id: c_source.id, sample_id: s_w_s.id)
+        #   CollectionsReaction.create!(collection_id: c_source.id, reaction_id: r_s.id)
+        #   CollectionsWellplate.create!(collection_id: c_source.id, wellplate_id: w_s.id)
+        #   CollectionsWellplate.create!(collection_id: c_source.id, wellplate_id: w_s_s.id)
+        #   CollectionsScreen.create!(collection_id: c_source.id, screen_id: sc.id)
+        #   CollectionsResearchPlan.create!(collection_id: c_source.id, research_plan_id: rp.id)
+        #   CollectionsSample.create!(collection_id: c_target.id, sample_id: s.id, deleted_at: Time.now)
+        #   c_source.reload
+        #   c_target.reload2
+        # end
+        describe 'PUT /api/v1/collections/elements' do
+          it 'moves all elements and returns 204' do
+            put '/api/v1/collections/elements', { ui_state: ui_state, collection_id: c_target.id }
+            expect(response.status).to eq 204
+          end
         end
-        it 'should not be able to move elements to a shared collection' do
-          put '/api/v1/collections/elements', params_shared
-          c1.reload
-          c2.reload
-          expect(c2.samples).to match_array []
-          expect(c2.reactions).to match_array []
-          expect(c2.wellplates).to match_array []
-          expect(c2.screens).to match_array []
-          expect(c1.samples).to match_array [s1, s2]
-          expect(c1.reactions).to match_array [r1, r2]
-          expect(c1.wellplates).to match_array [w1, w2]
-          expect(c1.screens).to match_array [sc1]
+        describe 'POST /api/v1/collections/elements' do
+          it 'assigns elements to collection and returns 204' do
+            post '/api/v1/collections/elements', { ui_state: ui_state, collection_id: c_target.id }
+            expect(response.status).to eq 204
+           end
         end
-      end
-
-      describe 'POST /api/v1/collections/elements' do
-        it 'should be able to assign elements to an unshared collection' do
-          post '/api/v1/collections/elements', params
-          File.write('error.html', response.body)
-          c1.reload
-          c3.reload
-          expect(c1.samples).to match_array [s1, s2]
-          expect(c1.reactions).to match_array [r1, r2]
-          expect(c1.wellplates).to match_array [w1, w2]
-          expect(c1.screens).to match_array [sc1]
-          expect(c3.samples).to match_array [s1, s2]
-          expect(c3.reactions).to match_array [r1]
-          expect(c3.wellplates).to match_array [w1]
-          expect(c3.screens).to match_array [sc1]
-          expect(c3.research_plans).to match_array [rp1]
-        end
-        it 'should be able to assign elements to a shared collection' do
-          post('/api/v1/collections/elements', params_shared.to_json, 'CONTENT_TYPE' => 'application/json')
-          c1.reload
-          c2.reload
-          expect(c1.samples).to match_array [s1, s2]
-          expect(c1.reactions).to match_array [r1, r2]
-          expect(c1.wellplates).to match_array [w1, w2]
-          expect(c1.screens).to match_array [sc1]
-          expect(c1.research_plans).to match_array [rp1]
-          expect(c2.samples).to match_array [s1, s2]
-          expect(c2.reactions).to match_array [r1]
-          expect(c2.wellplates).to match_array [w1]
-          expect(c2.screens).to match_array [sc1]
-          expect(c2.research_plans).to match_array [rp1]
-        end
-        it 'assign elements to a `writable` sync collection' do
-          post '/api/v1/collections/elements', params_sync_write
-          c1.reload
-          c_sync_w.reload
-          expect(c1.samples).to match_array [s1, s2]
-          expect(c1.reactions).to match_array [r1, r2]
-          expect(c1.wellplates).to match_array [w1, w2]
-          expect(c1.screens).to match_array [sc1]
-          expect(c1.research_plans).to match_array [rp1]
-          expect(c_sync_w.samples).to match_array [s1, s2]
-          expect(c_sync_w.reactions).to match_array [r1]
-          expect(c_sync_w.wellplates).to match_array [w1]
-          expect(c_sync_w.screens).to match_array [sc1]
-          expect(c_sync_w.research_plans).to match_array [rp1]
-        end
-        it 'can not assign elements to a `readable` sync collection' do
-          post '/api/v1/collections/elements', params_sync_read
-          c1.reload
-          c_sync_r.reload
-          expect(c1.samples).to match_array [s1, s2]
-          expect(c1.reactions).to match_array [r1, r2]
-          expect(c1.wellplates).to match_array [w1, w2]
-          expect(c1.screens).to match_array [sc1]
-          expect(c1.research_plans).to match_array [rp1]
-          expect(c_sync_r.samples).to match_array []
-          expect(c_sync_r.reactions).to match_array []
-          expect(c_sync_r.wellplates).to match_array []
-          expect(c_sync_r.screens).to match_array []
-          expect(c_sync_r.research_plans).to match_array []
+        describe 'DELETE /api/v1/collections/elements' do
+          it 'removes elements from a collection and returns 204' do
+            delete '/api/v1/collections/elements', { ui_state: ui_state }
+            expect(response.status).to eq 204
+          end
         end
       end
 
-      describe 'DELETE /api/v1/collections/elements' do
-        it 'should be able to remove elements from a collection' do
-          delete '/api/v1/collections/elements', params
-          c1.reload
-          expect(c1.samples).to match_array []
-          expect(c1.reactions).to match_array [r2]
-          expect(c1.wellplates).to match_array [w2]
-          expect(c2.screens).to match_array []
-          expect(c2.research_plans).to match_array []
+      describe '02 - from collection owned by user to collection shared by user, ' do
+        describe 'PUT /api/v1/collections/elements to collection shared by user' do
+          it 'moves all elements and returns 204' do
+            put '/api/v1/collections/elements', { ui_state: ui_state, collection_id: c3_target.id }
+            expect(response.status).to eq 204
+          end
+        end
+        describe 'POST /api/v1/collections/elements to collection shared by user' do
+          it 'assigns elements to collection and returns 204' do
+            post '/api/v1/collections/elements', { ui_state: ui_state, collection_id: c3_target.id }
+            expect(response.status).to eq 204
+           end
         end
       end
 
+      describe '03 - from collection shared by user, to collection owned by user, ' do
+        describe 'PUT /api/v1/collections/elements from collection shared by user' do
+
+          it 'moves all elements and returns 204' do
+            put('/api/v1/collections/elements', { ui_state: ui_state_shared, collection_id: c_target.id })
+            expect(response.status).to eq 204
+          end
+        end
+        describe 'POST /api/v1/collections/elements from collection shared by user' do
+          it 'assigns elements to collection and returns 204' do
+            post '/api/v1/collections/elements', { ui_state: ui_state_shared, collection_id: c_target.id }
+            expect(response.status).to eq 204
+           end
+        end
+        describe 'DELETE /api/v1/collections/elements from collection shared by user' do
+          it 'removes elements from a collection and returns 204' do
+            delete '/api/v1/collections/elements', { ui_state: ui_state_shared }
+            expect(response.status).to eq 204
+          end
+        end
+      end
+
+      describe '04 - from collection shared to user with high permission level (>3), to collection owned by user, ' do
+        describe 'PUT /api/v1/collections/elements from collection shared by user' do
+          it 'moves all elements and returns 204' do
+            put '/api/v1/collections/elements', { ui_state: ui_state_shared_to_high, collection_id: c_target.id }
+            expect(response.status).to eq 204
+          end
+        end
+        describe 'POST /api/v1/collections/elements from collection shared by user' do
+          it 'assigns elements to collection and returns 204' do
+            post '/api/v1/collections/elements', { ui_state: ui_state_shared_to_high, collection_id: c_target.id }
+            expect(response.status).to eq 204
+           end
+        end
+        describe 'DELETE /api/v1/collections/elements from collection shared by user' do
+          it 'removes elements from a collection and returns 204' do
+            delete '/api/v1/collections/elements', { ui_state: ui_state_shared_to_high }
+            expect(response.status).to eq 204
+          end
+        end
+      end
+
+      describe '05 - from collection shared to user with low permission level, to collection owned by user, ' do
+        describe 'PUT /api/v1/collections/elements from collection shared by user' do
+          it 'refuses with 401' do
+            put '/api/v1/collections/elements', { ui_state: ui_state_shared_to_low, collection_id: c_target.id }
+            expect(response.status).to eq 401
+          end
+        end
+        describe 'POST /api/v1/collections/elements from collection shared by user' do
+          it 'refuses with 401' do
+            post '/api/v1/collections/elements', { ui_state: ui_state_shared_to_low, collection_id: c_target.id }
+            expect(response.status).to eq 401
+           end
+        end
+        describe 'DELETE /api/v1/collections/elements from collection shared by user' do
+          it 'refuses with 401' do
+            delete '/api/v1/collections/elements', { ui_state: ui_state_shared_to_low }
+            expect(response.status).to eq 401
+          end
+        end
+      end
+
+      describe '06 - from unauthorized collections ()' do
+        describe 'PUT /api/v1/collections/elements' do
+          it 'refuses with 401' do
+            put '/api/v1/collections/elements', { ui_state: ui_state_tweaked, collection_id: c_target.id }
+            expect(response.status).to eq 401
+          end
+        end
+        describe 'POST /api/v1/collections/elements' do
+          it 'refuses with 401' do
+            post '/api/v1/collections/elements', { ui_state: ui_state_tweaked, collection_id: c_target.id }
+            expect(response.status).to eq 401
+           end
+        end
+        describe 'DELETE /api/v1/collections/elements' do
+          it 'refuses with 401' do
+            delete '/api/v1/collections/elements', { ui_state: ui_state_tweaked }
+            expect(response.status).to eq 401
+          end
+        end
+      end
+
+      describe '07 - to unauthorized collections ()' do
+        describe 'PUT /api/v1/collections/elements' do
+          it 'refuses with 401' do
+            put '/api/v1/collections/elements', { ui_state: ui_state, collection_id: c2_target.id }
+            expect(response.status).to eq 401
+          end
+        end
+        describe 'POST /api/v1/collections/elements' do
+          it 'refuses with 401' do
+            post '/api/v1/collections/elements', { ui_state: ui_state, collection_id: c2_target.id }
+            expect(response.status).to eq 401
+           end
+        end
+      end
+      # TODO from/to authorized sync/shared collection
+      # TODO from All collection put and delete:   expect(response.status).to eq 401
     end
 
     describe 'PUT /api/v1/collections/shared/:id' do

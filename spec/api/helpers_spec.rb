@@ -115,12 +115,12 @@ describe Chemotion::CollectionAPI do
         subject.fetch_collection_id_for_assign(
           is_sync_to_me: true, collection_id: sync_0.id
         )
-      ).to be false
+      ).to be nil
       expect(
         subject.fetch_collection_id_for_assign(
           is_sync_to_me: true, collection_id: sync_g_0.id
         )
-      ).to be false
+      ).to be nil
     end
     it 'returns the coll id if the coll is owned by or shared (w perm level >=1) to current user ' do
       expect(
@@ -131,7 +131,7 @@ describe Chemotion::CollectionAPI do
       ).to eq(c_shared.id)
       expect(
         subject.fetch_collection_id_for_assign(collection_id: c_shared_0.id)
-      ).to be false
+      ).to be nil
       expect(
         subject.fetch_collection_id_for_assign(collection_id: c_group_shared.id)
       ).to eq(c_group_shared.id)
