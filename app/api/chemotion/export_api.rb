@@ -5,8 +5,12 @@ module Chemotion
       params do
         requires :collection_id, type: Integer, desc: 'collection id'
       end
+
       post do
-        ExportCollection.perform_later params
+        # TODO: validate collection_id
+        collections_ids = [params[:collection_id]]
+
+        ExportCollectionJob.perform_later collections_ids
       end
     end
   end
