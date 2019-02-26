@@ -46,7 +46,8 @@ module ReactionHelpers
       materials.each do |material_group, samples|
         fixed_label = material_group =~ /solvents?|reactants?/ && $&
         reactions_sample_klass = "Reactions#{material_group.to_s.camelize}Sample"
-        samples.each do |sample|
+        samples.each_with_index do |sample,idx|
+          sample.position = idx if sample.position.nil?
           sample.reference = false if material_group === 'solvent' && sample.reference == true
           #create new subsample
           if sample.is_new
