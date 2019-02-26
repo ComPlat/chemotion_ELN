@@ -169,13 +169,13 @@ export default class ReactionDetails extends Component {
     sampleShowOrNew({ params: { sampleID: product.id} });
   }
 
-  handleProductChange(product) {
+  handleProductChange(product, cb) {
     let {reaction} = this.state
 
     reaction.updateMaterial(product)
     reaction.changed = true
 
-    this.setState({ reaction })
+    this.setState({ reaction }, cb)
   }
 
   productLink(product) {
@@ -199,7 +199,7 @@ export default class ReactionDetails extends Component {
     const tabs = products.map((product, key) => {
       const title = this.productLink(product);
       const setState = () => this.handleProductChange(product);
-      const handleSampleChanged = () => this.handleProductChange(product);
+      const handleSampleChanged = (_, cb) => this.handleProductChange(product, cb);
 
       return (
         <Tab

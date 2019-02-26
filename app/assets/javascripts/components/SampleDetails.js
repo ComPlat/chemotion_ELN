@@ -126,10 +126,10 @@ export default class SampleDetails extends React.Component {
     });
   }
 
-  handleSampleChanged(sample) {
+  handleSampleChanged(sample, cb) {
     this.setState({
-      sample
-    });
+      sample,
+    }, cb);
   }
 
   handleAmountChanged(amount) {
