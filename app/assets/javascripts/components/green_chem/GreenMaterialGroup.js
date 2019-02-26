@@ -8,6 +8,9 @@ import Sample from '../models/Sample';
 import SampleName from '../common/SampleName';
 
 function floatFormatter(params) {
+  if (isNaN(params.value)) {
+    return 0;
+  }
   return (params.value || 0).toFixed(4);
 }
 
@@ -103,7 +106,7 @@ export default class GreenMaterialGroup extends React.Component {
     const {
       group, materials
     } = this.props;
-    if (materials.length === 0) return <span />;
+    if (materials && materials.length === 0) return <span />;
 
     const isProduct = group === 'products';
     const contents = [];

@@ -9,7 +9,7 @@ function getWaste(samples) {
 }
 
 function getNonWaste(samples) {
-  return samples.filter(s => s == null || !s.waste);
+  return (samples || []).filter(s => s == null || !s.waste);
 }
 
 function sumReducer(acc, cur) {
@@ -61,12 +61,12 @@ export default class GreenMetrics extends React.Component {
     const selectedSolventsAmount = getNonWaste(reaction.solvents)
       .map(x => x.amount_g).reduce(sumReducer, 0);
 
-    const pSolventsAmount = reaction.purification_solvents
+    const pSolventsAmount = (reaction.purification_solvents || [])
           .map(x => x.amount_g).reduce(sumReducer, 0);
     const selectedPSolventsAmount = getNonWaste(reaction.purification_solvents)
           .map(x => x.amount_g).reduce(sumReducer, 0);
 
-    const prodsAmount = reaction.products
+    const prodsAmount = (reaction.products || [])
       .map(x => x.amount_g).reduce(sumReducer, 0);
     const selectedProductsAmount = getNonWaste(reaction.products)
       .map(x => x.amount_g).reduce(sumReducer, 0);
