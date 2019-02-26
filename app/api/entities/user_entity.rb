@@ -2,6 +2,8 @@ module Entities
   class UserEntity < Grape::Entity
     expose :id, documentation: { type: "Integer", desc: "User's unique id"}
     expose :name, documentation: { type: "String", desc: "User's name" }
+    expose :first_name, documentation: { type: "String", desc: "User's name" }
+    expose :last_name, documentation: { type: "String", desc: "User's name" }
     expose :initials, documentation: { type: "String", desc: "initials" }
     expose :samples_count, documentation: { type: "Integer", desc: "Sample count"}
     expose :reactions_count, documentation: { type: "Integer", desc: "Reactions count"}

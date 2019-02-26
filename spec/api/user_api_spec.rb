@@ -4,7 +4,10 @@ require 'rails_helper'
 describe Chemotion::UserAPI do
   let(:json_options) {
     {
-      only: [:id, :is_templates_moderator, :type, :reaction_name_prefix],
+      only: [
+        :id, :is_templates_moderator, :type, :reaction_name_prefix, :email,
+        :last_name, :first_name
+      ],
       methods: [:name, :initials]
     }
   }
@@ -101,7 +104,7 @@ describe Chemotion::UserAPI do
         get '/api/v1/users/current'
       end
       it 'Returns current user' do
-        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'email','locked_at')).to(
+        expect(JSON.parse(response.body)['user'].except('confirmed_at', 'current_sign_in_at', 'locked_at')).to(
           eq p1.as_json(json_options).merge(srlzr).merge('layout' => layout)
         )
       end

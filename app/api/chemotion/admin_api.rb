@@ -92,30 +92,49 @@ module Chemotion
         end
       end
 
-
       namespace :newUser do
-        desc 'confirm user account'
+        desc 'crate new user account'
         params do
-          requires :email, type: String, desc: 'user first_name'
-          requires :password, type: String, desc: 'user first_name'
+          requires :email, type: String, desc: 'user email'
+          requires :password, type: String, desc: 'user password'
           requires :first_name, type: String, desc: 'user first_name'
           requires :last_name, type: String, desc: 'user last_name'
           requires :type, type: String, desc: 'user type'
-          requires :name_abbreviation, type: String, desc: 'user type'
-
+          requires :name_abbreviation, type: String, desc: 'user name abbr'
         end
         post do
-          attributes = declared(params, include_missing: false)
           begin
+            attributes = declared(params, include_missing: false)
             new_obj = User.create!(attributes)
             new_obj.profile.update!({data: {}})
             status 201
-          rescue Exception => e
-            { error: e.message }
+          rescue ActiveRecord::RecordInvalid => e
+            { error: e.message}
           end
         end
       end
 
+      namespace :updateUser do
+        desc 'update user account'
+        params do
+          requires :id, type: Integer, desc: 'user ID'
+          requires :email, type: String, desc: 'user email'
+          requires :first_name, type: String, desc: 'user first_name'
+          requires :last_name, type: String, desc: 'user last_name'
+          requires :type, type: String, desc: 'user type'
+        end
+        post do
+          attributes = declared(params, include_missing: false)
+          user = User.find_by(id: params[:id])
+          error!('401 Not found', 404) unless user
+          begin
+            user.update!(attributes) unless attributes.empty?
+            status 201
+          rescue ActiveRecord::RecordInvalid => e
+            { error: e.message}
+          end
+        end
+      end
 
       namespace :updateAccount do
         desc 'update account'
@@ -128,7 +147,7 @@ module Chemotion
         post do
           user = User.find_by(id: params[:user_id]);
           new_profile = {}
-          user.unlock_access!() if params[:enable] == true 
+          user.unlock_access!() if params[:enable] == true
           user.lock_access!(send_instructions: false) if params[:enable] == false
           new_profile = { is_templates_moderator: params[:is_templates_moderator] } unless params[:is_templates_moderator].nil?
           new_profile = { confirmed_at: DateTime.now } if params[:confirm_user] == true
