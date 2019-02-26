@@ -314,11 +314,11 @@ export default class Reaction extends Element {
 
   get samples() {
     return [
-      ...this.starting_materials,
-      ...this.reactants,
-      ...this.solvents,
-      ...this.purification_solvents,
-      ...this.products,
+      ...this.starting_materials || [],
+      ...this.reactants || [],
+      ...this.solvents || [],
+      ...this.purification_solvents || [],
+      ...this.products || [],
     ];
   }
 

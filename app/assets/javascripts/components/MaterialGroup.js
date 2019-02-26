@@ -19,36 +19,38 @@ const MaterialGroup = ({
 }) => {
   const contents = [];
   let index = headIndex;
-  materials.forEach((material) => {
-    index += 1;
-    contents.push((
-      <Material
-        reaction={reaction}
-        onChange={onChange}
-        key={material.id}
-        material={material}
-        materialGroup={materialGroup}
-        showLoadingColumn={showLoadingColumn}
-        deleteMaterial={m => deleteMaterial(m, materialGroup)}
-        index={index}
-        dropMaterial={dropMaterial}
-        dropSample={dropSample}
-        lockEquivColumn={lockEquivColumn}
-      />
-    ));
-
-    if (materialGroup === 'products' &&
-        material.adjusted_loading &&
-        material.error_mass) {
+  if (materials && materials.length > 0) {
+    materials.forEach((material) => {
+      index += 1;
       contents.push((
-        <MaterialCalculations
+        <Material
+          reaction={reaction}
+          onChange={onChange}
+          key={material.id}
           material={material}
           materialGroup={materialGroup}
+          showLoadingColumn={showLoadingColumn}
+          deleteMaterial={m => deleteMaterial(m, materialGroup)}
           index={index}
+          dropMaterial={dropMaterial}
+          dropSample={dropSample}
+          lockEquivColumn={lockEquivColumn}
         />
       ));
-    }
-  });
+
+      if (materialGroup === 'products' &&
+          material.adjusted_loading &&
+          material.error_mass) {
+        contents.push((
+          <MaterialCalculations
+            material={material}
+            materialGroup={materialGroup}
+            index={index}
+          />
+        ));
+      }
+    });
+  }
 
   if (materialGroup === 'solvents' ||
       materialGroup === 'purification_solvents') {
