@@ -435,8 +435,8 @@ export default class SampleDetails extends React.Component {
         && typeof (sample.molecule_inchistring) !== 'undefined' && sample.molecule_inchistring) {
       this.inchistringInput.value = sample.molecule_inchistring;
     }
-    const inchiLabel = this.state.showInchikey ? 'InChiKey' : 'InChI';
-    const inchiTooltip = <Tooltip id="inchi_tooltip">toogle InChI/InChiKey</Tooltip>;
+    const inchiLabel = this.state.showInchikey ? 'InChIKey' : 'InChI';
+    const inchiTooltip = <Tooltip id="inchi_tooltip">toggle InChI/InChIKey</Tooltip>;
 
     return (
       <InputGroup className='sample-molecule-identifier'>
