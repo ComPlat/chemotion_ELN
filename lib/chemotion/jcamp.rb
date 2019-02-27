@@ -139,3 +139,34 @@ module Chemotion
     end
   end
 end
+
+# Chemotion module
+module Chemotion
+  # process Jcamp files
+  module Jcamp
+    # CreateImg module
+    module Predict
+      include HTTParty
+
+      def self.stub_by_peaks(layout, peaks, molecule)
+        url = Rails.configuration.spectra.url
+        port = Rails.configuration.spectra.port
+        response = HTTParty.post(
+          "http://#{url}:#{port}/predict/by_peaks",
+          body: {
+            layout: layout,
+            peaks: peaks,
+            molecule: molecule
+          }.to_json,
+          headers: { 'Content-Type' => 'application/json' }
+        )
+        response
+      end
+
+      def self.by_peaks(layout, peaks, molecule)
+        rsp = stub_by_peaks(layout, peaks, molecule)
+        rsp.parsed_response
+      end
+    end
+  end
+end

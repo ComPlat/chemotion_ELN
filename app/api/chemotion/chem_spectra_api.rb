@@ -91,6 +91,23 @@ module Chemotion
           zip_io.read
         end
       end
+
+      resource :predict do
+        desc 'Predict by peaks'
+        params do
+          requires :layout, type: String
+          requires :peaks, type: Array
+          requires :molecule, type: String
+        end
+        post 'by_peaks' do
+          rsp = Chemotion::Jcamp::Predict.by_peaks(
+            params[:layout], params[:peaks], params[:molecule]
+          )
+
+          content_type('application/json')
+          rsp
+        end
+      end
     end
   end
 end

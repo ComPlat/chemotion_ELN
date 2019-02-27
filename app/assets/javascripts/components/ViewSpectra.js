@@ -100,7 +100,9 @@ class ViewSpectra extends React.Component {
         ];
       });
     });
-    handleSampleChanged(sample);
+
+    const cb = () => this.savePeaks(peaks, layout, shift);
+    handleSampleChanged(sample, cb);
   }
 
   savePeaks(peaks, layout, shift) {
@@ -162,6 +164,11 @@ class ViewSpectra extends React.Component {
       input, xLabel, yLabel, peakObjs, isExist,
     } = FN.buildData(jcamp.file);
 
+    const operations = [
+      { name: 'write & save', value: this.writePeaks },
+      { name: 'save only', value: this.savePeaks },
+    ].filter(r => r.value);
+
     return (
       <Modal.Body>
         {
@@ -172,8 +179,7 @@ class ViewSpectra extends React.Component {
               xLabel={xLabel}
               yLabel={yLabel}
               peakObjs={peakObjs}
-              writePeaks={this.writePeaks}
-              savePeaks={this.savePeaks}
+              operations={operations}
             />
         }
       </Modal.Body>
