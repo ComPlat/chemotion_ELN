@@ -59,13 +59,14 @@ feature 'Sample management' do
       molarity = sample.molarity_value
       expect(find_bs_field('Molarity').value.to_f).to eq(molarity)
 
+      expect(find('input#inchistringInput')[:disabled]).to eq('true')
+      expect(find('input#inchistringInput')[:readonly]).to eq('true')
+
       # test read-only molecule data
-      { inchistring: 'InChI', cano_smiles: 'Canonical Smiles' }.each do |f, v|
-        inchi_field = find_bs_field(v, 'span.input-group-addon')
-        expect(inchi_field.value.presence).to eq(sample.molecule[f].presence)
-        expect(inchi_field[:disabled]).to eq('true')
-        expect(inchi_field[:readonly]).to eq('true')
-      end
+      smile_field = find_bs_field('Canonical Smiles', 'span.input-group-addon')
+      expect(smile_field.value.presence).to eq(sample.molecule['cano_smiles'].presence)
+      expect(smile_field[:disabled]).to eq('true')
+      expect(smile_field[:readonly]).to eq('true')
 
       # click on EA/polymer section div
       find('div.polymer-section').click

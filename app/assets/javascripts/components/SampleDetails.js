@@ -66,6 +66,7 @@ export default class SampleDetails extends React.Component {
       showMolfileModal: false,
       smileReadonly: !props.sample.isNew,
       quickCreator: false,
+      showInchikey: false
     };
 
     const data = UserStore.getState().profile.data || {};
@@ -78,6 +79,7 @@ export default class SampleDetails extends React.Component {
     this.handleMolfileClose = this.handleMolfileClose.bind(this);
     this.handleSampleChanged = this.handleSampleChanged.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.toggleInchi = this.toggleInchi.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -156,6 +158,11 @@ export default class SampleDetails extends React.Component {
     this.setState({
       showStructureEditor: false
     })
+  }
+
+  toggleInchi() {
+    const { showInchikey } = this.state
+    this.setState({ showInchikey: !showInchikey })
   }
 
   handleMoleculeBySmile() {
@@ -428,21 +435,34 @@ export default class SampleDetails extends React.Component {
         && typeof (sample.molecule_inchistring) !== 'undefined' && sample.molecule_inchistring) {
       this.inchistringInput.value = sample.molecule_inchistring;
     }
+    const inchiLabel = this.state.showInchikey ? 'InChiKey' : 'InChI';
+    const inchiTooltip = <Tooltip id="inchi_tooltip">toogle InChI/InChiKey</Tooltip>;
+
     return (
       <InputGroup className='sample-molecule-identifier'>
-        <InputGroup.Addon>InChI</InputGroup.Addon>
+        <InputGroup.Button>
+          <OverlayTrigger placement="top" overlay={inchiTooltip}>
+            <Button
+              active
+              onClick={this.toggleInchi}
+            >
+              {inchiLabel}
+            </Button>
+          </OverlayTrigger>
+        </InputGroup.Button>
         <FormGroup controlId="inchistringInput">
           <FormControl type="text"
-             inputRef={(m) => { this.inchistringInput = m; }}
-             key={sample.id}
-             defaultValue={sample.molecule_inchistring || ''}
-             disabled
-             readOnly
+            inputRef={(m) => { this.inchistringInput = m; }}
+            key={sample.id}
+            value={(this.state.showInchikey ? sample.molecule_inchikey : sample.molecule_inchistring) || ''}
+            defaultValue={(this.state.showInchikey ? sample.molecule_inchikey : sample.molecule_inchistring) || ''}
+            disabled
+            readOnly
           />
         </FormGroup>
         <InputGroup.Button>
           <OverlayTrigger placement="bottom" overlay={this.clipboardTooltip()}>
-            <Button active className="clipboardBtn" data-clipboard-text={sample.molecule_inchistring || " "} >
+            <Button active className="clipboardBtn" data-clipboard-text={(this.state.showInchikey ? sample.molecule_inchikey : sample.molecule_inchistring) || " "} >
               <i className="fa fa-clipboard"></i>
             </Button>
           </OverlayTrigger>
