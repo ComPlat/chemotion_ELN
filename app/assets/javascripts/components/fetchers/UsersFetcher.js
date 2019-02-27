@@ -26,7 +26,7 @@ export default class UsersFetcher {
       }).then((json) => {
         return json;
       }).catch((errorMessage) => {
-        console.log(errorMessage);
+        // console.log(errorMessage);
       });
 
     return promise;

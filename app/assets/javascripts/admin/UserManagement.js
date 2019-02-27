@@ -43,40 +43,28 @@ const handleResetPassword = (id, random) => {
     });
 };
 
-
 const validateEmail = mail => (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(mail));
-
-const resetPasswordTooltip = () => (
-  <Tooltip id="assign_button">reset password</Tooltip>
-);
-const resetPasswordInstructionsTooltip = () => (
-  <Tooltip id="assign_button">send password instructions</Tooltip>
-);
-const confirmUserTooltip = () => (
-  <Tooltip id="assign_button">confirm this account</Tooltip>
-);
-const disableTooltip = () => (
-  <Tooltip id="assign_button">lock this account</Tooltip>
-);
-const enableTooltip = () => (
-  <Tooltip id="assign_button">unlock this account</Tooltip>
-);
-const templateModeratorEnableTooltip = () => (
-  <Tooltip id="assign_button">enable TemplateModerator <br /> (set to true)</Tooltip>
-);
-const templateModeratorDisableTooltip = () => (
-  <Tooltip id="assign_button">disable TemplateModerator <br /> (set to false)</Tooltip>
-);
+const editTooltip = <Tooltip id="inchi_tooltip">edit User Info</Tooltip>;
+const resetPasswordTooltip = <Tooltip id="assign_button">reset password</Tooltip>;
+const resetPasswordInstructionsTooltip = <Tooltip id="assign_button">send password instructions</Tooltip>;
+const confirmUserTooltip = <Tooltip id="assign_button">confirm this account</Tooltip>;
+const disableTooltip = <Tooltip id="assign_button">lock this account</Tooltip>;
+const enableTooltip = <Tooltip id="assign_button">unlock this account</Tooltip>;
+const templateModeratorEnableTooltip = <Tooltip id="assign_button">enable TemplateModerator <br /> (set to true)</Tooltip>;
+const templateModeratorDisableTooltip = <Tooltip id="assign_button">disable TemplateModerator <br /> (set to false)</Tooltip>;
 
 export default class UserManagement extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       users: [],
+      user: {},
       selectedUsers: null,
       showMsgModal: false,
       showNewUserModal: false,
-      createUserMessage: ''
+      createUserMessage: '',
+      editUserMessage: '',
+      showEditUserModal: false
     };
     this.handleFetchUsers = this.handleFetchUsers.bind(this);
     this.handleMsgShow = this.handleMsgShow.bind(this);
@@ -86,6 +74,9 @@ export default class UserManagement extends React.Component {
     this.handleSelectUser = this.handleSelectUser.bind(this);
     this.messageSend = this.messageSend.bind(this);
     this.handleCreateNewUser = this.handleCreateNewUser.bind(this);
+    this.handleEditUserShow = this.handleEditUserShow.bind(this);
+    this.handleEditUserClose = this.handleEditUserClose.bind(this);
+    this.handleUpdateUser = this.handleUpdateUser.bind(this);
   }
 
   componentDidMount() {
@@ -120,6 +111,22 @@ export default class UserManagement extends React.Component {
     });
   }
 
+  handleEditUserShow(user) {
+    this.setState({
+      showEditUserModal: true,
+      editUserMessage: '',
+      user
+    });
+  }
+
+  handleEditUserClose() {
+    this.setState({
+      showEditUserModal: false,
+      editUserMessage: '',
+      user: {}
+    });
+  }
+
   handleFetchUsers() {
     AdminFetcher.fetchUsers()
       .then((result) => {
@@ -139,7 +146,6 @@ export default class UserManagement extends React.Component {
   }
 
   handleTemplatesModerator(id, isTemplatesModerator) {
-    console.log(isTemplatesModerator);
     AdminFetcher.updateAccount({ user_id: id, is_templates_moderator: !isTemplatesModerator })
       .then((result) => {
         this.handleFetchUsers();
@@ -166,22 +172,22 @@ export default class UserManagement extends React.Component {
 
   validateUserInput() {
     if (this.email.value === '') {
-      this.setState({ createUserMessage: 'please input email.' });
+      this.setState({ createUserMessage: 'Please input email.' });
       return false;
     } else if (!validateEmail(this.email.value.trim())) {
       this.setState({ createUserMessage: 'You have entered an invalid email address!' });
       return false;
     } else if (this.password.value.trim() === '' || this.passwordConfirm.value.trim() === '') {
-      this.setState({ createUserMessage: 'please input password with correct format.' });
+      this.setState({ createUserMessage: 'Please input password with correct format.' });
       return false;
     } else if (this.password.value.trim() !== this.passwordConfirm.value.trim()) {
-      this.setState({ createUserMessage: 'password do not mach!' });
+      this.setState({ createUserMessage: 'passwords do not mach!' });
       return false;
     } else if (this.password.value.trim().length < 2) {
       this.setState({ createUserMessage: 'Password is too short (minimum is 8 characters)' });
       return false;
     } else if (this.firstname.value.trim() === '' || this.lastname.value.trim() === '' || this.nameAbbr.value.trim() === '') {
-      this.setState({ createUserMessage: 'please input First name, Last name and Name abbreviation' });
+      this.setState({ createUserMessage: 'Please input First name, Last name and Name abbreviation' });
       return false;
     }
     return true;
@@ -217,6 +223,35 @@ export default class UserManagement extends React.Component {
     return true;
   }
 
+  handleUpdateUser(user) {
+    if (!validateEmail(this.u_email.value.trim())) {
+      this.setState({ editUserMessage: 'You have entered an invalid email address!' });
+      return false;
+    } else if (this.u_firstname.value.trim() === '' || this.u_lastname.value.trim() === '') {
+      this.setState({ editUserMessage: 'please input first name and last name' });
+      return false;
+    }
+    AdminFetcher.updateUser({
+      id: user.id,
+      email: this.u_email.value.trim(),
+      first_name: this.u_firstname.value.trim(),
+      last_name: this.u_lastname.value.trim(),
+      type: this.u_type.value
+    })
+      .then((result) => {
+        if (result.error) {
+          this.setState({ editUserMessage: result.error });
+          return false;
+        }
+        this.setState({ showEditUserModal: false, editUserMessage: '' });
+        this.u_email.value = '';
+        this.u_firstname.value = '';
+        this.u_lastname.value = '';
+        this.handleFetchUsers();
+        return true;
+      });
+    return true;
+  }
   messageSend() {
     const { selectedUsers } = this.state;
     if (this.myMessage.value === '') {
@@ -396,11 +431,84 @@ export default class UserManagement extends React.Component {
     );
   }
 
+
+  renderEditUserModal() {
+    const { user } = this.state;
+    return (
+      <Modal
+        show={this.state.showEditUserModal}
+        onHide={this.handleEditUserClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>New User</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ overflow: 'auto' }}>
+          <div className="col-md-9">
+            <Form horizontal>
+              <FormGroup controlId="formControlEmail">
+                <Col componentClass={ControlLabel} sm={3}>
+                  Email:
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="email" name="u_email" defaultValue={user.email} inputRef={(ref) => { this.u_email = ref; }} />
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlFirstName">
+                <Col componentClass={ControlLabel} sm={3}>
+                  First name:
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="text" name="u_firstname" defaultValue={user.first_name} inputRef={(ref) => { this.u_firstname = ref; }} />
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlLastName">
+                <Col componentClass={ControlLabel} sm={3}>
+                  Last name:
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="text" name="u_lastname" defaultValue={user.last_name} inputRef={(ref) => { this.u_lastname = ref; }} />
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlsType">
+                <Col componentClass={ControlLabel} sm={3}>
+                  Type:
+                </Col>
+                <Col sm={9}>
+                  <FormControl componentClass="select" defaultValue={user.type} inputRef={(ref) => { this.u_type = ref; }} >
+                    <option value="Person">Person</option>
+                    <option value="Admin">Admin</option>
+                  </FormControl>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="formControlMessage">
+                <Col sm={12}>
+                  <FormControl type="text" readOnly name="editUserMessage" value={this.state.editUserMessage} />
+                </Col>
+              </FormGroup>
+              <FormGroup>
+                <Col smOffset={0} sm={10}>
+                  <Button bsStyle="primary" onClick={() => this.handleUpdateUser(user)} >
+                    Update&nbsp;
+                    <i className="fa fa-save" />
+                  </Button>
+                  &nbsp;
+                  <Button bsStyle="warning" onClick={() => this.handleEditUserClose()} >
+                    Cancel&nbsp;
+                  </Button>
+                </Col>
+              </FormGroup>
+            </Form>
+          </div>
+        </Modal.Body>
+      </Modal>
+    );
+  }
+
   render() {
     const renderConfirmButton = (show, userId) => {
       if (show) {
         return (
-          <OverlayTrigger placement="bottom" overlay={confirmUserTooltip()}>
+          <OverlayTrigger placement="bottom" overlay={confirmUserTooltip}>
             <Button
               bsSize="xsmall"
               bsStyle="info"
@@ -435,7 +543,17 @@ export default class UserManagement extends React.Component {
           {idx + 1}
         </td>
         <td width="12%">
-          <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip()} >
+          <OverlayTrigger placement="bottom" overlay={editTooltip} >
+            <Button
+              bsSize="xsmall"
+              bsStyle="info"
+              onClick={() => this.handleEditUserShow(g)}
+            >
+              <i className="fa fa-user" />
+            </Button>
+          </OverlayTrigger>
+          &nbsp;
+          <OverlayTrigger placement="bottom" overlay={resetPasswordTooltip} >
             <Button
               bsSize="xsmall"
               bsStyle="success"
@@ -445,7 +563,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip()} >
+          <OverlayTrigger placement="bottom" overlay={resetPasswordInstructionsTooltip} >
             <Button
               bsSize="xsmall"
               bsStyle="primary"
@@ -455,7 +573,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip() : enableTooltip()} >
+          <OverlayTrigger placement="bottom" overlay={g.locked_at === null ? disableTooltip : enableTooltip} >
             <Button
               bsSize="xsmall"
               bsStyle={g.locked_at === null ? 'light' : 'warning'}
@@ -465,7 +583,7 @@ export default class UserManagement extends React.Component {
             </Button>
           </OverlayTrigger>
           &nbsp;
-          <OverlayTrigger placement="bottom" overlay={g.is_templates_moderator === false ? templateModeratorEnableTooltip() : templateModeratorDisableTooltip()} >
+          <OverlayTrigger placement="bottom" overlay={g.is_templates_moderator === false ? templateModeratorEnableTooltip : templateModeratorDisableTooltip} >
             <Button
               bsSize="xsmall"
               bsStyle={g.is_templates_moderator === false ? 'warning' : 'light'}
@@ -509,6 +627,7 @@ export default class UserManagement extends React.Component {
         </Panel>
         { this.renderMessageModal() }
         { this.renderNewUserModal() }
+        { this.renderEditUserModal() }
       </div>
     );
   }
