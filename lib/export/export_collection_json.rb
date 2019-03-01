@@ -51,6 +51,14 @@ module Export
             :sample_id => 'samples',
           })
 
+          # fetch containers and attachments
+          fetch_one(sample.container, {
+            :containable_id => 'samples',
+          })
+          fetch_many(sample.container.attachments, {
+            :attachable_id => 'containers',
+          })
+
           # fetch literals
           # a manual query needed since there is no Active Record Associations available
           literals = Literal.where("element_id = ? AND element_type = 'Sample'", sample.id)
@@ -86,6 +94,14 @@ module Export
               :sample_id => 'samples',
             })
           end
+
+          # fetch containers and attachments
+          fetch_one(reaction.container, {
+            :containable_id => 'samples',
+          })
+          fetch_many(reaction.container.attachments, {
+            :attachable_id => 'containers',
+          })
 
           # fetch literals
           # a manual query needed since there is no Active Record Associations available
