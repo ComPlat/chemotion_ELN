@@ -51,24 +51,9 @@ module Export
             :sample_id => 'samples',
           })
 
-          # fetch containers and attachments
-          fetch_one(sample.container, {
-            :containable_id => 'samples',
-          })
-          fetch_many(sample.container.attachments, {
-            :attachable_id => 'containers',
-          })
-
-          # fetch literals
-          # a manual query needed since there is no Active Record Associations available
-          literals = Literal.where("element_id = ? AND element_type = 'Sample'", sample.id)
-          literals.each do |literal|
-            fetch_one(literal.literature)
-            fetch_one(literal, {
-              :literature_id => 'literatures',
-              :element_id => 'samples',
-            })
-          end
+          # fetch containers, attachments and literature
+          fetch_containers(sample)
+          fetch_literals(sample)
         end
 
         # fetch reactions
@@ -95,24 +80,9 @@ module Export
             })
           end
 
-          # fetch containers and attachments
-          fetch_one(reaction.container, {
-            :containable_id => 'samples',
-          })
-          fetch_many(reaction.container.attachments, {
-            :attachable_id => 'containers',
-          })
-
-          # fetch literals
-          # a manual query needed since there is no Active Record Associations available
-          literals = Literal.where("element_id = ? AND element_type = 'Reaction'", reaction.id)
-          literals.each do |literal|
-            fetch_one(literal.literature)
-            fetch_one(literal, {
-              :literature_id => 'literatures',
-              :element_id => 'reactions',
-            })
-          end
+          # fetch containers, attachments and literature
+          fetch_containers(reaction)
+          fetch_literals(reaction)
         end
 
         # fetch wellplates
@@ -121,6 +91,11 @@ module Export
           :collection_id => 'collections',
           :wellplate_id => 'wellplates',
         })
+
+        # fetch containers and attachments
+        collection.wellplates.each do |wellplate|
+          fetch_containers(wellplate)
+        end
 
         # fetch screens
         fetch_many(collection.screens)
@@ -136,6 +111,9 @@ module Export
             :screen_id => 'screens',
             :wellplate_id => 'wellplates',
           })
+
+          # fetch containers and attachments
+          fetch_containers(screen)
         end
 
         # fetch research_plans
@@ -147,16 +125,14 @@ module Export
 
         # loop over research plans and fetch research plan properties
         collection.research_plans.each do |research_plan|
-          # fetch literals
-          # a manual query needed since there is no Active Record Associations available
-          literals = Literal.where("element_id = ? AND element_type = 'ResearchPlan'", research_plan.id)
-          literals.each do |literal|
-            fetch_one(literal.literature)
-            fetch_one(literal, {
-              :literature_id => 'literatures',
-              :element_id => 'research_plans',
-            })
-          end
+          # fetch attachments
+          # attachments are directrly related to research plans so we don't need fetch_containers
+          fetch_many(research_plan.attachments, {
+            :attachable_id => 'research_plans',
+          })
+
+          # fetch literature
+          fetch_literals(research_plan)
         end
       end
       self
@@ -166,6 +142,60 @@ module Export
       collections = Collection.find(@collection_ids)
       fetch_many(collections)
       collections
+    end
+
+    def fetch_containers(containable)
+      containable_table = containable.class.table_name
+
+      # fetch root container
+      root_container = containable.container
+      fetch_one(containable.container, {
+        :containable_id => containable_table,
+        :parent_id => 'containers',
+      })
+
+      # fetch analyses container
+      analyses_container = root_container.children.where("container_type = 'analyses'").first()
+      fetch_one(analyses_container, {
+        :containable_id => containable_table,
+        :parent_id => 'containers',
+      })
+
+      # fetch analysis_containers
+      analysis_containers = analyses_container.children.where("container_type = 'analysis'")
+      analysis_containers.each do |analysis_container|
+        fetch_one(analysis_container, {
+          :containable_id => containable_table,
+          :parent_id => 'containers',
+        })
+
+        # fetch attachment containers and attachments
+        attachment_containers = analysis_container.children.where("container_type = 'dataset'")
+        attachment_containers.each do |attachment_container|
+          fetch_one(attachment_container, {
+            :containable_id => containable_table,
+            :parent_id => 'containers',
+          })
+          fetch_many(attachment_container.attachments, {
+            :attachable_id => 'containers',
+          })
+        end
+      end
+    end
+
+    def fetch_literals(element)
+      element_type = element.class.name
+      element_table = element.class.table_name
+
+      # a manual query needed since there is no Active Record Associations available
+      literals = Literal.where("element_id = ? AND element_type = ?", element.id, element_type)
+      literals.each do |literal|
+        fetch_one(literal.literature)
+        fetch_one(literal, {
+          :literature_id => 'literatures',
+          :element_id => element_table,
+        })
+      end
     end
 
     def fetch_many(instances, foreign_keys = {})
@@ -201,17 +231,21 @@ module Export
     end
 
     def uuid(table_name, id)
-      # create an empty hash for the table_name if it does not exist yet
-      unless @uuids.key?(table_name)
-        @uuids[table_name] = {}
-      end
+      unless id.nil?
+        # create an empty hash for the table_name if it does not exist yet
+        unless @uuids.key?(table_name)
+          @uuids[table_name] = {}
+        end
 
-      # create an uuid for the id if it does not exist yet
-      unless @uuids[table_name].key?(id)
-        @uuids[table_name][id] = SecureRandom.uuid
-      end
+        # create an uuid for the id if it does not exist yet
+        unless @uuids[table_name].key?(id)
+          @uuids[table_name][id] = SecureRandom.uuid
+        end
 
-      @uuids[table_name][id]
+        @uuids[table_name][id]
+      else
+        nil # return nil
+      end
     end
 
     def uuid?(table_name, id)

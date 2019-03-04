@@ -1,7 +1,7 @@
 class ExportCollectionJob < ActiveJob::Base
   queue_as :export_collection
 
-  rescue_from(ActiveRecord::RecordNotFound) do; end
+  # rescue_from(ActiveRecord::RecordNotFound) do; end
 
   def perform(collection_ids)
     export_file_name = "#{self.job_id}.json"
