@@ -1,30 +1,23 @@
 module Export
-  class ExportCollectionJson
+  class ExportCollection
 
-    def initialize(collection_ids)
-      @collection_ids = collection_ids
-      @uuids = {}
+    attr_reader :data
+    attr_reader :uuids
+    attr_reader :attachments
+
+    def initialize
       @data = []
+      @uuids = {}
+      @attachments = []
     end
 
     def to_json()
       @data.to_json()
     end
 
-    def to_file(file_name)
-      file_name += '.json' if File.extname(file_name) != '.json'
-      File.write(file_name, to_json)
-
-      # debug output
-      unless Rails.env.production?
-        File.write('public/json/data.json', @data.to_json())
-        File.write('public/json/uuid.json', @uuids.to_json())
-      end
-    end
-
-    def prepare_data
+    def prepare_data(collection_ids)
       # loop over all collections
-      fetch_collections.each do |collection|
+      fetch_collections(collection_ids).each do |collection|
 
         # fetch samples
         fetch_many(collection.samples, {
@@ -131,6 +124,9 @@ module Export
             :attachable_id => 'research_plans',
           })
 
+          # add attachments to the list of attachments
+          @attachments += research_plan.attachments
+
           # fetch literature
           fetch_literals(research_plan)
         end
@@ -138,8 +134,8 @@ module Export
       self
     end
 
-    def fetch_collections
-      collections = Collection.find(@collection_ids)
+    def fetch_collections(collection_ids)
+      collections = Collection.find(collection_ids)
       fetch_many(collections)
       collections
     end
@@ -179,6 +175,9 @@ module Export
           fetch_many(attachment_container.attachments, {
             :attachable_id => 'containers',
           })
+
+          # add attachments to the list of attachments
+          @attachments += attachment_container.attachments
         end
       end
     end

@@ -1,16 +1,27 @@
 module Chemotion
   class ExportAPI < Grape::API
     resource :exports do
-      desc "Get export json for a collection"
-      params do
-        requires :collection_id, type: Integer, desc: 'collection id'
+
+      before do
+        # TODO: validate collection_id, check permissions
+        # handle nested collections
+        @collection_ids = params[:collection_id]
       end
 
-      post do
-        # TODO: validate collection_id
-        collections_ids = [params[:collection_id]]
+      desc "Export collections as json"
+      params do
+        requires :collection_id, type: Array[Integer]
+      end
+      post 'json/' do
+        ExportCollectionsJob.perform_later('json', @collection_ids)
+      end
 
-        ExportCollectionJob.perform_later collections_ids
+      desc "Export collections as zip"
+      params do
+        requires :collection_id, type: Array[Integer]
+      end
+      post 'zip/' do
+        ExportCollectionsJob.perform_later('zip', @collection_ids)
       end
     end
   end

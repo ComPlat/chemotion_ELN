@@ -68,6 +68,9 @@
 /public/json/*
 !/public/json/.keep
 
+/public/zip/*
+!/public/zip/.keep
+
 /public/docx/*
 !/public/docx/.keep
 
