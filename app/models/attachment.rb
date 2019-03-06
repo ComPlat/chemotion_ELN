@@ -8,6 +8,7 @@ class Attachment < ActiveRecord::Base
   before_create :generate_key
   before_create :store_tmp_file_and_thumbnail, if: :new_upload
   before_create :add_checksum, if: :new_upload
+  before_create :add_content_type
 
   before_save  :move_from_store, if: :store_changed, on: :update
 
@@ -134,6 +135,15 @@ class Attachment < ActiveRecord::Base
     store.destroy
     store.store_file
     self
+  end
+
+  def add_content_type
+    return unless self.content_type.present?
+    self.content_type = begin
+                          MimeMagic.by_path(filename)&.type
+                        rescue
+                          nil
+                        end
   end
 
   private
