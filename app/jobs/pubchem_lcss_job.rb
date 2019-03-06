@@ -6,6 +6,7 @@ class PubchemLcssJob < ActiveJob::Base
   # NB: PC has request restriction policy and timeout , hence the sleep_time and batch_size params
   # see http://pubchemdocs.ncbi.nlm.nih.gov/programmatic-access$_RequestVolumeLimitations
   def perform(sleep_time: 10, batch_size: 50)
+    t_limit = Time.now + 2.hours
 
     mols = Molecule.select(:id).joins(:samples)
             .joins("inner join element_tags et on et.taggable_id = molecules.id and et.taggable_type = 'Molecule' ")
@@ -22,7 +23,7 @@ class PubchemLcssJob < ActiveJob::Base
         sleep 0.5
 
       end
-
+      return if Time.now > t_limit
       sleep sleep_time
     end
   end

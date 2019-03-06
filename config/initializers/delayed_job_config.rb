@@ -36,9 +36,13 @@ begin
       end
     end
     Delayed::Job.where("handler like ?", "%PubchemCidJob%").destroy_all
-    PubchemCidJob.set(cron: '15 1 * * 0').perform_later
+    cron_config = ENV['CRON_CONFIG_PC_CID'].presence
+    cron_config ||= "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}"
+    PubchemCidJob.set(cron: cron_config ).perform_later
     Delayed::Job.where("handler like ?", "%PubchemLcssJob%").destroy_all
-    PubchemLcssJob.set(cron: '3 2,14 * * 6').perform_later
+    cron_config = ENV['CRON_CONFIG_PC_LCSS'].presence
+    cron_config ||= "#{rand(0..59)} #{rand(0..23)} * * #{rand(6..7)}"
+    PubchemLcssJob.set(cron: cron_config).perform_later
   end
 rescue PG::ConnectionBad => e
   puts e.message

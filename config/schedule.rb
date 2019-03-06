@@ -8,5 +8,5 @@ every :sunday, at: '0am' do
 end
 
 every :sunday, at: '1am' do
-  runner "ReallyDestroyTask.execute!"
+  # runner "ReallyDestroyTask.execute!"
 end

@@ -1,85 +1,109 @@
-require 'net/http'
-require 'net/ftp'
-
-
 module PubChem
   include HTTParty
 
-
-  debug_output $stderr
+  #debug_output $stderr
+  PUBCHEM_HOST = 'pubchem.ncbi.nlm.nih.gov'
 
   def self.http_s
     Rails.env.test? && "http://" || "https://"
+  end
+
+  def self.faraday_conn
+    Faraday.new(:url => http_s + PUBCHEM_HOST) do |faraday|
+      # faraday.use FaradayMiddleware::FollowRedirects
+      # faraday.request  :url_encoded
+      # faraday.response :logger , ::Logger.new(STDOUT), bodies: true
+      faraday.adapter  :net_http
+    end
   end
 
   def self.get_record_from_molfile(molfile)
     @auth = {:username => '', :password => ''}
     options = { :timeout => 10,  :headers => {'Content-Type' => 'application/x-www-form-urlencoded'}, :body => { 'sdf' => molfile } }
 
-    HTTParty.post(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/sdf/record/JSON', options)
+    HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/sdf/record/JSON', options)
   end
 
   def self.get_record_from_inchikey(inchikey)
     @auth = {:username => '', :password => ''}
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
 
-    HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/record/JSON', options)
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/'+inchikey+'/record/JSON', options)
   end
 
   def self.get_cids_from_inchikeys(inchikeys)
-    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
-      faraday.request  :url_encoded             # form-encode POST params
-      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
-    end
+    # faraday_conn.post { |req|
+    #   req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    #   req.url('/rest/pug/compound/inchikey/property/InChIKey/JSON')
+    #   req.body = "inchikey=#{inchikeys.join(',')}"
+    # }.body
 
-    conn.post('/rest/pug/compound/inchikey/property/InChIKey/JSON',
-              {"inchikey"=>"#{inchikeys.join(',')}"}).body
+    options = {
+      :timeout => 10,
+      :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
+      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+    }
+    HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/property/InChIKey/JSON', options).body
   end
 
   def self.get_records_from_inchikeys(inchikeys)
-    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
-      faraday.request  :url_encoded             # form-encode POST params
-      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
-    end
-    conn.post('/rest/pug/compound/inchikey/record/JSON', {"inchikey"=>"#{inchikeys.join(',')}"}).body
+    # faraday_conn.post { |req|
+    #   req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    #   req.url('/rest/pug/compound/inchikey/record/JSON')
+    #   req.body = "inchikey=#{inchikeys.join(',')}"
+    # }.body
+
+    options = {
+      :timeout => 10,
+      :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
+      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+    }
+    HTTParty.post(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/record/JSON', options).body
   end
 
   def self.get_molfile_by_inchikey(inchikey)
     @auth = {:username => '', :password => ''}
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
 
-    HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/record/SDF', options).body
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/'+inchikey+'/record/SDF', options).body
   end
 
   def self.get_molfiles_by_inchikeys(inchikeys)
-    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
-      faraday.request  :url_encoded             # form-encode POST params
-      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
-    end
-    conn.post('/rest/pug/compound/inchikey/record/SDF', {"inchikey"=>"#{inchikeys.join(',')}"}).body
+    # faraday_conn.post { |req|
+    #   req.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    #   req.url('/rest/pug/compound/inchikey/record/SDF')
+    #   req.body = "inchikey=#{inchikeys.join(',')}"
+    # }.body
+
+    options = {
+      :timeout => 10,
+      :headers => {'Content-Type' => 'application/x-www-form-urlencoded'},
+      :body => { "inchikey"=>"#{inchikeys.join(',')}" },
+    }
+    HTTParty.post(http_s+'/rest/pug/compound/inchikey/record/SDF', options).body
   end
 
   def self.get_molfile_by_smiles(smiles)
     @auth = {:username => '', :password => ''}
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
     encoded_smiles = URI::encode(smiles, '[]/()+-.@#=\\')
-    HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/'+encoded_smiles+'/record/SDF', options).body
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/smiles/'+encoded_smiles+'/record/SDF', options).body
   end
 
   def self.get_xref_by_inchikey(inchikey)
     @auth = {:username => '', :password => ''}
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
 
-    HTTParty.get(http_s+'pubchem.ncbi.nlm.nih.gov/rest/pug/compound/inchikey/'+inchikey+'/xrefs/RN/JSON', options).body
+    HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/'+inchikey+'/xrefs/RN/JSON', options).body
   end
 
   def self.get_cid_from_inchikey(inchikey)
-    conn = Faraday.new(:url => http_s+'pubchem.ncbi.nlm.nih.gov') do |faraday|
-      faraday.adapter  Faraday.default_adapter  # make requests with Net::HTTP
-    end
+    # resp = faraday_conn.get('/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT')
+    # return nil unless resp.success?
 
-    resp = conn.get('/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT')
-    return nil unless resp.success?
+    options = { :timeout => 10,  :headers => {'Content-Type' => 'text/plain'}  }
+    resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)
+
     resp.body.presence&.strip
   end
 
@@ -87,7 +111,7 @@ module PubChem
     return [] unless cid
 
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}  }
-    page = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
+    page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/XML?heading=CAS"
     resp_xml = HTTParty.get(page, options).body
     resp_doc = Nokogiri::XML(resp_xml)
     cas_values = resp_doc.css('Name:contains("CAS")').map { |x| x.parent.css('StringValue').text }
@@ -99,7 +123,7 @@ module PubChem
     return nil unless cid
     return nil unless cid.is_a? Integer
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}, :format => 'plain'  }
-    page = "https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
+    page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
     resp = HTTParty.get(page, options)
     return nil unless resp.success?
     JSON.parse resp, symbolize_names: true
