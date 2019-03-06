@@ -8,6 +8,7 @@ import ModalImport from './ModalImport';
 import ModalImportChemScanner from './ModalImportChemScanner';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
+import ModalCollectionExport from './ModalCollectionExport';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
   <Dropdown id='export-dropdown'>
@@ -27,6 +28,11 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
       <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
         title='Import from spreadsheet or sdf'>
         Import samples to collection
+      </MenuItem>
+      <MenuItem divider />
+      <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)} disabled={isDisabled}
+        title='Export collections'>
+        Export collections
       </MenuItem>
       {/* <MenuItem onSelect={() => importChemScannerFunction(updateModalProps)} disabled={isDisabled} */}
       {/*   title='Import from Docs'> */}
@@ -93,6 +99,17 @@ const exportReactionFunction = (updateModalProps) => {
   const modalProps = {
     show: true,
     title: "Reaction Smiles Export",
+    component,
+    customModal: "exportModal"
+  };
+  updateModalProps(modalProps);
+}
+
+const exportCollectionFunction = (updateModalProps) => {
+  const component = ModalCollectionExport;
+  const modalProps = {
+    show: true,
+    title: "Collection Export",
     component,
     customModal: "exportModal"
   };

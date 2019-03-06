@@ -3,7 +3,10 @@ class ExportCollectionsJob < ActiveJob::Base
 
   # rescue_from(ActiveRecord::RecordNotFound) do; end
 
-  def perform(format, collection_ids)
+  before_enqueue do |job|
+    # create lock file
+    File.open(lock_file_name(job.arguments.first, job.job_id), "w") {}
+
     # remove debug output
     unless Rails.env.production?
       [
@@ -14,10 +17,12 @@ class ExportCollectionsJob < ActiveJob::Base
         File.delete(file_name) if File.exist?(file_name)
       end
     end
+  end
 
-    # prepare the collections for export
-    export = Export::ExportCollection.new
-    export.prepare_data collection_ids
+  after_perform do |job|
+    # remove lock file
+    lock_file_name = lock_file_name(job.arguments.first, job.job_id)
+    File.delete(lock_file_name) if File.exist?(lock_file_name)
 
     # debug output
     unless Rails.env.production?
@@ -25,12 +30,17 @@ class ExportCollectionsJob < ActiveJob::Base
       File.write('public/json/uuid.json', export.uuids.to_json())
       File.write('public/json/attachments.json', export.attachments.to_json())
     end
+  end
 
-    case format
+  def perform(fmt, collection_ids)
+    # prepare the collections for export
+    export = Export::ExportCollection.new
+    export.prepare_data collection_ids
+
+    case fmt
     when 'json'
       # write the json file public/json/
-      json_file = File.join('public', 'json', "#{self.job_id}.json")
-      File.write(json_file, export.to_json())
+      File.write(file_name(fmt, self.job_id), export.to_json())
     when 'zip'
       # create a zip buffer
       zip = Zip::OutputStream.write_buffer do |zip|
@@ -47,8 +57,17 @@ class ExportCollectionsJob < ActiveJob::Base
       zip.rewind
 
       # write the zip file to public/zip/
-      zip_file = File.join('public', 'zip', "#{self.job_id}.zip")
-      File.write(zip_file, zip.read)
+      File.write(file_name(fmt, self.job_id), zip.read)
     end
+  end
+
+  private
+
+  def file_name(fmt, job_id)
+    return File.join('public', fmt, "#{job_id}.#{fmt}")
+  end
+
+  def lock_file_name(fmt, job_id)
+    return file_name(fmt, job_id) + '.lock'
   end
 end

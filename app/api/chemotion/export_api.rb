@@ -5,24 +5,44 @@ module Chemotion
       before do
         # TODO: validate collection_id, check permissions
         # handle nested collections
-        @collection_ids = params[:collection_id]
+        @collection_ids = params[:collections]
+        @format = params[:format]
       end
 
-      desc "Export collections as json"
+      desc "Poll export job"
       params do
-        requires :collection_id, type: Array[Integer]
+        requires :id, type: String
       end
-      post 'json/' do
-        ExportCollectionsJob.perform_later('json', @collection_ids)
+      get '/:id' do
+        job_id = params[:id]
+
+        # look for the export file
+        ['json', 'zip'].each do |fmt|
+          file_name = File.join('public', fmt, "#{job_id}.#{fmt}")
+          lock_file_name = file_name + '.lock'
+
+          if File.exist?(file_name) and !File.exist?(lock_file_name)
+            return {
+              :status => 'COMPLETED',
+              :url => "/#{fmt}/#{job_id}.#{fmt}"
+            }
+          elsif File.exist?(lock_file_name)
+            return {:status => 'EXECUTING'}
+          end
+        end
+
+        error! :not_found, 404
       end
 
-      desc "Export collections as zip"
+      desc "Create export job"
       params do
-        requires :collection_id, type: Array[Integer]
+        requires :collections, type: Array[Integer]
+        requires :format, type: String
       end
-      post 'zip/' do
-        ExportCollectionsJob.perform_later('zip', @collection_ids)
+      post do
+        ExportCollectionsJob.perform_later(@format, @collection_ids)
       end
     end
+
   end
 end
