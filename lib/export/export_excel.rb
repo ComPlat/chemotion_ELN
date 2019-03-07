@@ -62,10 +62,10 @@ module Export
           analyses.each do |an|
             data = @headers.map { |column| an[column] }
             sheet.add_row(data, sz: 12)  if data.compact.present?
-            an['datasets'].map do |dataset|
+            (an['datasets'] || []).map do |dataset|
               data = @headers.map { |column| dataset[column] }
               sheet.add_row(data, sz: 12) if data.compact.present?
-              dataset['attachments'].map do |att|
+              (dataset['attachments'] || []).map do |att|
                 data = @headers.map { |column| att[column] }
                 sheet.add_row(data, sz: 12) if data.compact.present?
               end
