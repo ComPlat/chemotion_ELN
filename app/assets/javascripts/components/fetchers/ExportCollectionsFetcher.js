@@ -1,9 +1,8 @@
 import 'whatwg-fetch';
-import _ from 'lodash';
 
-export default class ExportFetcher {
+export default class ExportCollectionsFetcher {
 
-  static createDownloadJob(params) {
+  static createJob(params) {
 
     let promise = fetch('/api/v1/exports/', {
       credentials: 'same-origin',
@@ -18,7 +17,7 @@ export default class ExportFetcher {
     }).then((json) => {
       // after a short delay, start polling
       setTimeout(() => {
-        ExportFetcher.pollDownloadJob(json.job_id)
+        ExportCollectionsFetcher.pollJob(json.job_id)
       }, 1000);
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -27,7 +26,7 @@ export default class ExportFetcher {
     return promise;
   }
 
-  static pollDownloadJob(jobId) {
+  static pollJob(jobId) {
 
     let promise = fetch(`/api/v1/exports/${jobId}`, {
       credentials: 'same-origin',
@@ -42,7 +41,7 @@ export default class ExportFetcher {
       if (json.status == 'EXECUTING') {
         // continue polling
         setTimeout(() => {
-          ExportFetcher.pollDownloadJob(jobId);
+          ExportCollectionsFetcher.pollJob(jobId);
         }, 4000);
       } else if (json.status == 'COMPLETED') {
         // download the file, headers will prevent the browser from reloading the page

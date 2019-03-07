@@ -15,6 +15,8 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
+import ExportCollectionsFetcher from '../fetchers/ExportCollectionsFetcher';
+import ImportCollectionsFetcher from '../fetchers/ImportCollectionsFetcher';
 
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -197,6 +199,24 @@ class ElementActions {
       });};
   }
 
+  exportCollectionsToFile(params) {
+    return (dispatch) => { ExportCollectionsFetcher.createJob(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  importCollectionsFromFile(params) {
+    console.log(params);
+    return (dispatch) => { ImportCollectionsFetcher.createJob(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
 
   // -- Samples --
 

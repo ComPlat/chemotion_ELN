@@ -124,4 +124,5 @@ class API < Grape::API
   mount Chemotion::AdminAPI
   mount Chemotion::EditorAPI
   mount Chemotion::ExportAPI
+  mount Chemotion::ImportAPI
 end

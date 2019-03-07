@@ -1,5 +1,5 @@
 module Export
-  class ExportCollection
+  class ExportCollections
 
     attr_reader :data
     attr_reader :uuids

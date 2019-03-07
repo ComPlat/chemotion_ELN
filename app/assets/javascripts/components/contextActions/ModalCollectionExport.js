@@ -3,7 +3,6 @@ import {Button, ButtonToolbar, Radio, FormGroup} from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
-import ExportFetcher from './../fetchers/ExportFetcher';
 
 export default class ModalCollectionExport extends React.Component {
   constructor(props) {
@@ -31,10 +30,15 @@ export default class ModalCollectionExport extends React.Component {
 
   handleClick() {
     const uiState = UIStore.getState();
-    const userState = UserStore.getState();
-    const { onHide } = this.props;
+    const { onHide, action } = this.props;
+
+    let params = {
+      format: 'zip',
+      collections: [uiState.currentCollection.id],
+    }
+    action(params);
+
     onHide();
-    exportCollections(uiState, userState);
   }
 
   render() {
@@ -51,12 +55,4 @@ export default class ModalCollectionExport extends React.Component {
 
 ModalCollectionExport.propTypes = {
   onHide: PropTypes.func,
-}
-
-const exportCollections = (uiState, userState) => {
-  console.log('hey');
-  ExportFetcher.createDownloadJob({
-    collections: [uiState.currentCollection.id],
-    format: 'zip'
-  });
 }
