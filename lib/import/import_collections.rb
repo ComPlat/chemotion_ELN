@@ -3,16 +3,13 @@ require 'json'
 module Import
   class ImportCollections
 
-    def initialize(file_path, current_user_id)
-      @file_path = file_path
+    def initialize(directory, file_name, current_user_id)
+      @directory = directory
+      @file_name = file_name
       @current_user_id = current_user_id
 
-      @directory = File.join(
-        File.dirname(@file_path),
-        File.basename(file_path, File.extname(file_path))
-      )
       @data = nil
-      @uuids = {}
+      @instances = {}
       @attachments = []
     end
 
@@ -24,22 +21,16 @@ module Import
     end
 
     def extract()
-      # # make sure that no old directory exists
-      # FileUtils.remove_dir(@directory) if File.directory?(@directory)
-
-      destination = File.dirname(@file_path)
-      Zip::File.open(@file_path) do |zip_file|
+      file_path = File.join(@directory, @file_name)
+      Zip::File.open(file_path) do |zip_file|
         zip_file.each do |f|
-          fpath = File.join(destination, f.name)
+          fpath = File.join(@directory, f.name)
           fdir = File.dirname(fpath)
 
           FileUtils.mkdir_p(fdir) unless File.directory?(fdir)
           zip_file.extract(f, fpath) unless File.exist?(fpath)
         end
       end
-
-      # delete the zip file
-      # File.delete(file_path) if File.exist?(file_path)
     end
 
     def read
@@ -52,11 +43,70 @@ module Import
 
     def import
       ActiveRecord::Base.transaction do
-        @data.each do |item|
-          puts item
+        import_collections
+        import_samples
+        import_containers
+      end
+    end
+
+    def import_collections
+      @data['Collection'].each do |uuid, fields|
+        # create the collection
+        collection = Collection.new(fields)
+        collection.save!
+
+        # add sample to collection map
+        instances!(uuid, collection)
+      end
+    end
+
+    def import_samples
+      @data['Sample'].each do |uuid, fields|
+        # look for the collection for this sample
+        collections_sample = find_association('CollectionsSample', 'sample_id', uuid)
+        collection = instance('Collection', collections_sample['collection_id'])
+
+        # create the sample
+        sample = Sample.new(fields.except(
+          "molecule_id",
+          "sample_svg_file",
+          "user_id",
+          "fingerprint_id",
+          "molarity_value",
+          "molarity_unit",
+          "molecule_name_id",
+          "molfile_version"
+        ))
+        sample.collections = [collection]
+        sample.save!
+
+        # add sample to instances map
+        instances!(uuid, sample)
+      end
+    end
+
+    def instances!(uuid, instance)
+      class_name = instance.class.name
+
+      unless @instances.key?(class_name)
+        @instances[class_name] = {}
+      end
+
+      @instances[class_name][uuid] = instance
+    end
+
+    def find_association(association_model, id_field, id)
+      @data[association_model].each do |uuid, fields|
+        if fields[id_field] == id
+          return fields
         end
       end
     end
 
+    def instance(model, uuid)
+      if !uuid.nil? and @instances.key?(model) and @instances[model].key?(uuid)
+        return @instances[model][uuid]
+      end
+    end
   end
 end

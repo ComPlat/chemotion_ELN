@@ -27,12 +27,12 @@ class ExportCollectionsJob < ActiveJob::Base
       # create a zip buffer
       zip = Zip::OutputStream.write_buffer do |zip|
         # write the json file into the zip file
-        zip.put_next_entry File.join(self.job_id, 'data.json')
+        zip.put_next_entry File.join('data.json')
         zip.write export.to_json()
 
         # write all attachemnts into an attachments directory
         export.attachments.each do |attachment|
-          zip.put_next_entry File.join(self.job_id, 'attachments', attachment.filename)
+          zip.put_next_entry File.join('attachments', attachment.filename)
           zip.write attachment.read_file
         end
       end

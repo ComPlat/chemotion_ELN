@@ -6,7 +6,7 @@ module Export
     attr_reader :attachments
 
     def initialize
-      @data = []
+      @data = {}
       @uuids = {}
       @attachments = []
     end
@@ -214,17 +214,17 @@ module Export
         uuid = uuid(table_name, instance.id)
         unless uuid?(table_name, uuid)
           # replace id and foreign_keys with uuids
-          update = {:id => uuid}
+          update = {}
           foreign_keys.each do |foreign_key, foreign_table|
             update[foreign_key] = uuid(foreign_table, instance.send(foreign_key))
           end
 
           # append updated json to @data
-          @data << {
-            :class => class_name,
-            :table => table_name,
-            :fields => instance.as_json().merge(update),
-          }
+          unless @data.key?(class_name)
+            @data[class_name] = {}
+          end
+
+          @data[class_name][uuid] = instance.as_json().except('id').merge(update)
         end
       end
     end
