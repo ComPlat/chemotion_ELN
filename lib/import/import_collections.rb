@@ -48,6 +48,8 @@ module Import
 
         import_containers
         import_attachments
+
+        import_literature
       end
     end
 
@@ -76,7 +78,7 @@ module Import
 
     def import_samples
       @data['Sample'].each do |uuid, fields|
-        # look for the collection for this sample
+        # get the collection for this sample
         collections_sample = find_association('CollectionsSample', 'sample_id', uuid)
         collection = instance('Collection', collections_sample['collection_id'])
 
@@ -152,7 +154,7 @@ module Import
 
     def import_attachments
       @data['Attachment'].each do |uuid, fields|
-        # look for the attachable for this attachment
+        # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
@@ -177,7 +179,57 @@ module Import
         primary_store = Rails.configuration.storage.primary_store
         attachment.update!(storage: primary_store)
 
+        # add attachment to the @instances map
         instances!(uuid, attachment)
+      end
+    end
+
+    def import_literature
+      @data['Literal'].each do |uuid, fields|
+        # get the element for this literal
+        element_type = fields.fetch('element_type')
+        element_uuid = fields.fetch('element_id')
+        element = @instances.fetch(element_type).fetch(element_uuid)
+
+        # get the literature for this literal
+        literature_uuid = fields.fetch('literature_id')
+        literature_fields = @data.fetch('Literature').fetch(literature_uuid)
+
+        # create the literature if it was not imported before
+        literature = instance('Literature', literature_uuid)
+        unless literature
+          # create the literature
+          literature = Literature.new(literature_fields.slice(
+            "title",
+            "url",
+            "refs",
+            "doi",
+            "created_at",
+            "updated_at"
+          ))
+          literature.save!
+
+          # add literature to the @instances map
+          instances!(literature_uuid, literature)
+        end
+
+        # create the literal
+        literal = Literal.new(
+          fields.slice(
+            "element_type",
+            "category",
+            "created_at",
+            "updated_at"
+          ).merge({
+            :user_id => @current_user_id
+          })
+        )
+        literal.element = element
+        literal.literature = literature
+        literal.save!
+
+        # add literal to the @instances map
+        instances!(uuid, literal)
       end
     end
 
