@@ -45,6 +45,7 @@ module Import
       ActiveRecord::Base.transaction do
         import_collections
         import_samples
+        import_reactions
 
         import_containers
         import_attachments
@@ -56,8 +57,7 @@ module Import
     def import_collections
       @data['Collection'].each do |uuid, fields|
         # create the collection
-        collection = Collection.new(fields)
-        collection = Collection.new(fields.slice(
+        collection = Collection.create!(fields.slice(
           "label",
           "sample_detail_level",
           "reaction_detail_level",
@@ -69,10 +69,9 @@ module Import
         ).merge({
           :user_id => @current_user_id
         }))
-        collection.save!
 
         # add collection to @instances map
-        instances!(uuid, collection)
+        update_instances!(uuid, collection)
       end
     end
 
@@ -80,10 +79,11 @@ module Import
       @data['Sample'].each do |uuid, fields|
         # get the collection for this sample
         collections_sample = find_association('CollectionsSample', 'sample_id', uuid)
-        collection = instance('Collection', collections_sample['collection_id'])
+        collection_uuid = collections_sample.fetch('collection_id')
+        collection = @instances.fetch('Collection').fetch(collection_uuid)
 
         # create the sample
-        sample = Sample.new(fields.slice(
+        sample = Sample.create!(fields.slice(
           "name",
           "target_amount_value",
           "target_amount_unit",
@@ -108,13 +108,54 @@ module Import
           "created_at",
           "updated_at"
         ).merge({
-          :created_by => @current_user_id
+          :created_by => @current_user_id,
+          :collections => [collection]
         }))
-        sample.collections = [collection]
-        sample.save!
 
         # add sample to the @instances map
-        instances!(uuid, sample)
+        update_instances!(uuid, sample)
+      end
+    end
+
+    def import_reactions
+      @data['Reaction'].each do |uuid, fields|
+        # get the collection for this reaction
+        collections_reaction = find_association('CollectionsReaction', 'reaction_id', uuid)
+        collection_uuid = collections_reaction.fetch('collection_id')
+        collection = @instances.fetch('Collection').fetch(collection_uuid)
+
+        # create the sample
+        reaction = Reaction.create!(fields.slice(
+          "name",
+          "description",
+          "timestamp_start",
+          "timestamp_stop",
+          "observation",
+          "purification",
+          "dangerous_products",
+          "tlc_solvents",
+          "tlc_description",
+          "rf_value",
+          "temperature",
+          "status",
+          "solvent",
+          # "short_label",
+          "role",
+          "origin",
+          "duration",
+          "created_at",
+          "updated_at"
+        ).merge({
+          :created_by => @current_user_id,
+          :collections => [collection]
+        }))
+
+        # create the root container like with samples
+        reaction.container = Container.create_root_container
+        reaction.save!
+
+        # add reaction to the @instances map
+        update_instances!(uuid, reaction)
       end
     end
 
@@ -136,7 +177,7 @@ module Import
           parent = @instances.fetch('Container').fetch(fields.fetch('parent_id'))
 
           # create the container
-          container = parent.children.create(fields.slice(
+          container = parent.children.create!(fields.slice(
             "containable_type",
             "name",
             "container_type",
@@ -148,7 +189,7 @@ module Import
         end
 
         # in any case, add container to the @instances map
-        instances!(uuid, container)
+        update_instances!(uuid, container)
       end
     end
 
@@ -163,7 +204,7 @@ module Import
         file_path = File.join(@directory, 'attachments', fields.fetch('filename'))
 
         # create the attachment
-        attachment = attachable.attachments.create(
+        attachment = attachable.attachments.create!(
           file_path: file_path,
           created_by: @current_user_id,
           created_for: @current_user_id,
@@ -180,7 +221,7 @@ module Import
         attachment.update!(storage: primary_store)
 
         # add attachment to the @instances map
-        instances!(uuid, attachment)
+        update_instances!(uuid, attachment)
       end
     end
 
@@ -196,10 +237,11 @@ module Import
         literature_fields = @data.fetch('Literature').fetch(literature_uuid)
 
         # create the literature if it was not imported before
-        literature = instance('Literature', literature_uuid)
-        unless literature
+        begin
+          literature =  @instances.fetch('Literature').fetch(literature_uuid)
+        rescue KeyError => ex
           # create the literature
-          literature = Literature.new(literature_fields.slice(
+          literature = Literature.create!(literature_fields.slice(
             "title",
             "url",
             "refs",
@@ -207,10 +249,9 @@ module Import
             "created_at",
             "updated_at"
           ))
-          literature.save!
 
           # add literature to the @instances map
-          instances!(literature_uuid, literature)
+          update_instances!(literature_uuid, literature)
         end
 
         # create the literal
@@ -221,19 +262,18 @@ module Import
             "created_at",
             "updated_at"
           ).merge({
-            :user_id => @current_user_id
+            :user_id => @current_user_id,
+            :element => element,
+            :literature => literature
           })
         )
-        literal.element = element
-        literal.literature = literature
-        literal.save!
 
         # add literal to the @instances map
-        instances!(uuid, literal)
+        update_instances!(uuid, literal)
       end
     end
 
-    def instances!(uuid, instance)
+    def update_instances!(uuid, instance)
       class_name = instance.class.name
 
       unless @instances.key?(class_name)
@@ -251,10 +291,5 @@ module Import
       end
     end
 
-    def instance(model, uuid)
-      if !uuid.nil? and @instances.key?(model) and @instances[model].key?(uuid)
-        return @instances[model][uuid]
-      end
-    end
   end
 end
