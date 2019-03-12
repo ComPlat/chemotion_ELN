@@ -11,6 +11,18 @@ import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
+import { nmrCheckMsg } from './utils/ElementUtils';
+import { contentToText } from './utils/quillFormat';
+
+const nmrMsg = (sample, container) => {
+  if (sample.molecule && container.extended_metadata && container.extended_metadata.kind !== '1H NMR') {
+    return '';
+  }
+  const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
+  console.log(nmrStr);
+  const msg = nmrCheckMsg(sample.molecule.sum_formular, nmrStr);
+  return msg === '' ? '' : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
+};
 
 const SpectraViewerBtn = ({
   spcInfo, hasJcamp,
@@ -293,7 +305,7 @@ const HeaderNormal = ({
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
           <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">Status: {status}</div>
+          <div className="sub-title">Status: {status} {nmrMsg(sample, container)}</div>
 
           <div className="desc sub-title">
             <span style={{ float: 'left', marginRight: '5px' }}>
