@@ -46,6 +46,7 @@ module Import
         import_collections
         import_samples
         import_reactions
+        import_reactions_samples
 
         import_containers
         import_attachments
@@ -159,6 +160,41 @@ module Import
       end
     end
 
+    def import_reactions_samples
+      [
+        ReactionsStartingMaterialSample,
+        ReactionsSolventSample,
+        ReactionsPurificationSolventSample,
+        ReactionsReactantSample,
+        ReactionsProductSample
+      ].each do |model|
+        @data.fetch(model.name, []).each do |uuid, fields|
+          # get the reaction for this reactions_sample
+          reaction_uuid = fields.fetch('reaction_id')
+          reaction = @instances.fetch('Reaction').fetch(reaction_uuid)
+
+          # get the sample for this reactions_sample
+          sample_uuid = fields.fetch('sample_id')
+          sample = @instances.fetch('Sample').fetch(sample_uuid)
+
+          # create the reactions_sample
+          reactions_sample = model.create!(fields.slice(
+            'reference',
+            'equivalent',
+            'position',
+            'waste',
+            'coefficient'
+          ).merge({
+            :reaction => reaction,
+            :sample => sample
+          }))
+
+          # add reactions_sample to the @instances map
+          update_instances!(uuid, reactions_sample)
+        end
+      end
+    end
+
     def import_containers
       @data.fetch('Container', []).each do |uuid, fields|
         case fields.fetch('container_type')
@@ -255,7 +291,7 @@ module Import
         end
 
         # create the literal
-        literal = Literal.new(
+        literal = Literal.create!(
           fields.slice(
             'element_type',
             'category',
