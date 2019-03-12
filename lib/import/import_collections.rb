@@ -50,6 +50,7 @@ module Import
         import_wellplates
         import_wells
         import_screens
+        import_research_plans
         import_containers
         import_attachments
         import_literals
@@ -248,6 +249,27 @@ module Import
 
         # add reaction to the @instances map
         update_instances!(uuid, screen)
+      end
+    end
+
+    def import_research_plans
+      @data.fetch('ResearchPlan', []).each do |uuid, fields|
+        # create the screen
+        research_plan = ResearchPlan.create!(fields.slice(
+          'name',
+          'description',
+          'sdf_file',
+          'svg_file',
+          'created_at',
+          'updated_at'
+        ).merge({
+          :created_by => @current_user_id,
+          :collections => fetch_many(
+            'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid)
+        }))
+
+        # add reaction to the @instances map
+        update_instances!(uuid, research_plan)
       end
     end
 
