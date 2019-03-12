@@ -47,11 +47,12 @@ module Import
         import_samples
         import_reactions
         import_reactions_samples
-
+        import_wellplates
+        import_wells
+        import_screens
         import_containers
         import_attachments
-
-        import_literature
+        import_literals
       end
     end
 
@@ -78,11 +79,6 @@ module Import
 
     def import_samples
       @data.fetch('Sample', []).each do |uuid, fields|
-        # get the collection for this sample
-        collections_sample = fetch_association('CollectionsSample', 'sample_id', uuid)
-        collection_uuid = collections_sample.fetch('collection_id')
-        collection = @instances.fetch('Collection').fetch(collection_uuid)
-
         # create the sample
         sample = Sample.create!(fields.slice(
           'name',
@@ -110,7 +106,8 @@ module Import
           'updated_at'
         ).merge({
           :created_by => @current_user_id,
-          :collections => [collection]
+          :collections => fetch_many(
+            'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid)
         }))
 
         # add sample to the @instances map
@@ -120,11 +117,6 @@ module Import
 
     def import_reactions
       @data.fetch('Reaction', []).each do |uuid, fields|
-        # get the collection for this reaction
-        collections_reaction = fetch_association('CollectionsReaction', 'reaction_id', uuid)
-        collection_uuid = collections_reaction.fetch('collection_id')
-        collection = @instances.fetch('Collection').fetch(collection_uuid)
-
         # create the sample
         reaction = Reaction.create!(fields.slice(
           'name',
@@ -148,7 +140,8 @@ module Import
           'updated_at'
         ).merge({
           :created_by => @current_user_id,
-          :collections => [collection]
+          :collections => fetch_many(
+            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid)
         }))
 
         # create the root container like with samples
@@ -169,14 +162,6 @@ module Import
         ReactionsProductSample
       ].each do |model|
         @data.fetch(model.name, []).each do |uuid, fields|
-          # get the reaction for this reactions_sample
-          reaction_uuid = fields.fetch('reaction_id')
-          reaction = @instances.fetch('Reaction').fetch(reaction_uuid)
-
-          # get the sample for this reactions_sample
-          sample_uuid = fields.fetch('sample_id')
-          sample = @instances.fetch('Sample').fetch(sample_uuid)
-
           # create the reactions_sample
           reactions_sample = model.create!(fields.slice(
             'reference',
@@ -185,13 +170,84 @@ module Import
             'waste',
             'coefficient'
           ).merge({
-            :reaction => reaction,
-            :sample => sample
+            :reaction => @instances.fetch('Reaction').fetch(fields.fetch('reaction_id')),
+            :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
           }))
 
           # add reactions_sample to the @instances map
           update_instances!(uuid, reactions_sample)
         end
+      end
+    end
+
+    def import_wellplates
+      @data.fetch('Wellplate', []).each do |uuid, fields|
+        # create the wellplate
+        wellplate = Wellplate.create!(fields.slice(
+          'name',
+          'size',
+          'created_at',
+          'updated_at'
+        ).merge({
+          :collections => fetch_many(
+            'Collection', 'CollectionsWellplate', 'wellplate_id', 'collection_id', uuid)
+        }))
+
+        # create the root container like with samples
+        wellplate.container = Container.create_root_container
+        wellplate.save!
+
+        # add reaction to the @instances map
+        update_instances!(uuid, wellplate)
+      end
+    end
+
+    def import_wells
+      @data.fetch('Well', []).each do |uuid, fields|
+        # create the well
+        well = Well.create!(fields.slice(
+          'position_x',
+          'position_y',
+          'readout',
+          'additive',
+          'created_at',
+          'updated_at'
+        ).merge({
+          :wellplate => @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
+          :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+        }))
+
+        # add reaction to the @instances map
+        update_instances!(uuid, well)
+      end
+    end
+
+    def import_screens
+      @data.fetch('Screen', []).each do |uuid, fields|
+        # create the screen
+        screen = Screen.create!(fields.slice(
+          'description',
+          'ops',
+          'name',
+          'result',
+          'collaborator',
+          'conditions',
+          'requirements',
+          'created_at',
+          'updated_at'
+        ).merge({
+          :collections => fetch_many(
+            'Collection', 'CollectionsScreen', 'screen_id', 'collection_id', uuid),
+          :wellplates => fetch_many(
+            'Wellplate', 'ScreensWellplate', 'screen_id', 'wellplate_id', uuid)
+        }))
+
+        # create the root container like with samples
+        screen.container = Container.create_root_container
+        screen.save!
+
+        # add reaction to the @instances map
+        update_instances!(uuid, screen)
       end
     end
 
@@ -261,7 +317,7 @@ module Import
       end
     end
 
-    def import_literature
+    def import_literals
       @data.fetch('Literal', []).each do |uuid, fields|
         # get the element for this literal
         element_type = fields.fetch('element_type')
@@ -319,13 +375,16 @@ module Import
       @instances[type][uuid] = instance
     end
 
-    def fetch_association(association_type, foreign_key, id)
+    # Follows a has_many relation to `foreign_type` through `association_type`
+    def fetch_many(foreign_type, association_type, local_field, foreign_field, local_id)
+      associations = []
       @data.fetch(association_type).each do |uuid, fields|
-        if fields.fetch(foreign_key) == id
-          return fields
+        if fields.fetch(local_field) == local_id
+          foreign_id = fields.fetch(foreign_field)
+          associations << @instances.fetch(foreign_type).fetch(foreign_id)
         end
       end
+      return associations
     end
-
   end
 end
