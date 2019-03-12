@@ -55,17 +55,17 @@ module Import
     end
 
     def import_collections
-      @data['Collection'].each do |uuid, fields|
+      @data.fetch('Collection', []).each do |uuid, fields|
         # create the collection
         collection = Collection.create!(fields.slice(
-          "label",
-          "sample_detail_level",
-          "reaction_detail_level",
-          "wellplate_detail_level",
-          "screen_detail_level",
-          "researchplan_detail_level",
-          "created_at",
-          "updated_at"
+          'label',
+          'sample_detail_level',
+          'reaction_detail_level',
+          'wellplate_detail_level',
+          'screen_detail_level',
+          'researchplan_detail_level',
+          'created_at',
+          'updated_at'
         ).merge({
           :user_id => @current_user_id
         }))
@@ -76,37 +76,37 @@ module Import
     end
 
     def import_samples
-      @data['Sample'].each do |uuid, fields|
+      @data.fetch('Sample', []).each do |uuid, fields|
         # get the collection for this sample
-        collections_sample = find_association('CollectionsSample', 'sample_id', uuid)
+        collections_sample = fetch_association('CollectionsSample', 'sample_id', uuid)
         collection_uuid = collections_sample.fetch('collection_id')
         collection = @instances.fetch('Collection').fetch(collection_uuid)
 
         # create the sample
         sample = Sample.create!(fields.slice(
-          "name",
-          "target_amount_value",
-          "target_amount_unit",
-          "description",
-          "molfile",
-          "molfile_version",
-          "purity",
-          "solvent",
-          "impurities",
-          "location",
-          "is_top_secret",
-          "external_label",
-          "real_amount_value",
-          "real_amount_unit",
-          "imported_readout",
-          "identifier",
-          "density",
-          "melting_point",
-          "boiling_point",
-          "xref",
-          "stereo",
-          "created_at",
-          "updated_at"
+          'name',
+          'target_amount_value',
+          'target_amount_unit',
+          'description',
+          'molfile',
+          'molfile_version',
+          'purity',
+          'solvent',
+          'impurities',
+          'location',
+          'is_top_secret',
+          'external_label',
+          'real_amount_value',
+          'real_amount_unit',
+          'imported_readout',
+          'identifier',
+          'density',
+          'melting_point',
+          'boiling_point',
+          'xref',
+          'stereo',
+          'created_at',
+          'updated_at'
         ).merge({
           :created_by => @current_user_id,
           :collections => [collection]
@@ -118,33 +118,33 @@ module Import
     end
 
     def import_reactions
-      @data['Reaction'].each do |uuid, fields|
+      @data.fetch('Reaction', []).each do |uuid, fields|
         # get the collection for this reaction
-        collections_reaction = find_association('CollectionsReaction', 'reaction_id', uuid)
+        collections_reaction = fetch_association('CollectionsReaction', 'reaction_id', uuid)
         collection_uuid = collections_reaction.fetch('collection_id')
         collection = @instances.fetch('Collection').fetch(collection_uuid)
 
         # create the sample
         reaction = Reaction.create!(fields.slice(
-          "name",
-          "description",
-          "timestamp_start",
-          "timestamp_stop",
-          "observation",
-          "purification",
-          "dangerous_products",
-          "tlc_solvents",
-          "tlc_description",
-          "rf_value",
-          "temperature",
-          "status",
-          "solvent",
-          # "short_label",
-          "role",
-          "origin",
-          "duration",
-          "created_at",
-          "updated_at"
+          'name',
+          'description',
+          'timestamp_start',
+          'timestamp_stop',
+          'observation',
+          'purification',
+          'dangerous_products',
+          'tlc_solvents',
+          'tlc_description',
+          'rf_value',
+          'temperature',
+          'status',
+          'solvent',
+          # 'short_label',
+          'role',
+          'origin',
+          'duration',
+          'created_at',
+          'updated_at'
         ).merge({
           :created_by => @current_user_id,
           :collections => [collection]
@@ -160,7 +160,7 @@ module Import
     end
 
     def import_containers
-      @data['Container'].each do |uuid, fields|
+      @data.fetch('Container', []).each do |uuid, fields|
         case fields.fetch('container_type')
         when 'root', nil
           # the root container was created when the containable was imported
@@ -178,13 +178,13 @@ module Import
 
           # create the container
           container = parent.children.create!(fields.slice(
-            "containable_type",
-            "name",
-            "container_type",
-            "description",
-            "extended_metadata",
-            "created_at",
-            "updated_at"
+            'containable_type',
+            'name',
+            'container_type',
+            'description',
+            'extended_metadata',
+            'created_at',
+            'updated_at'
           ))
         end
 
@@ -194,7 +194,7 @@ module Import
     end
 
     def import_attachments
-      @data['Attachment'].each do |uuid, fields|
+      @data.fetch('Attachment', []).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
@@ -226,7 +226,7 @@ module Import
     end
 
     def import_literature
-      @data['Literal'].each do |uuid, fields|
+      @data.fetch('Literal', []).each do |uuid, fields|
         # get the element for this literal
         element_type = fields.fetch('element_type')
         element_uuid = fields.fetch('element_id')
@@ -242,12 +242,12 @@ module Import
         rescue KeyError => ex
           # create the literature
           literature = Literature.create!(literature_fields.slice(
-            "title",
-            "url",
-            "refs",
-            "doi",
-            "created_at",
-            "updated_at"
+            'title',
+            'url',
+            'refs',
+            'doi',
+            'created_at',
+            'updated_at'
           ))
 
           # add literature to the @instances map
@@ -257,10 +257,10 @@ module Import
         # create the literal
         literal = Literal.new(
           fields.slice(
-            "element_type",
-            "category",
-            "created_at",
-            "updated_at"
+            'element_type',
+            'category',
+            'created_at',
+            'updated_at'
           ).merge({
             :user_id => @current_user_id,
             :element => element,
@@ -274,18 +274,18 @@ module Import
     end
 
     def update_instances!(uuid, instance)
-      class_name = instance.class.name
+      type = instance.class.name
 
-      unless @instances.key?(class_name)
-        @instances[class_name] = {}
+      unless @instances.key?(type)
+        @instances[type] = {}
       end
 
-      @instances[class_name][uuid] = instance
+      @instances[type][uuid] = instance
     end
 
-    def find_association(association_model, id_field, id)
-      @data[association_model].each do |uuid, fields|
-        if fields[id_field] == id
+    def fetch_association(association_type, foreign_key, id)
+      @data.fetch(association_type).each do |uuid, fields|
+        if fields.fetch(foreign_key) == id
           return fields
         end
       end
