@@ -1,23 +1,74 @@
 module Export
   class ExportCollections
 
-    attr_reader :data
-    attr_reader :uuids
-    attr_reader :attachments
+    # static methods
+    class << self
+      def file_path(export_id, format)
+        File.join('public', format, "#{export_id}.#{format}")
+      end
+      def file_url(export_id, format)
+        "/#{format}/#{export_id}.#{format}"
+      end
+      def lock_file_path(export_id, format)
+        File.join('public', format, "#{export_id}.lock")
+      end
+    end
 
-    def initialize
+    def initialize(export_id, collection_ids, format, nested)
+      @export_id = export_id
+      @collection_ids = collection_ids
+      @format = format
+      @nested = nested
+
+      @file_path = ExportCollections.file_path(export_id, format)
+      @lock_file_path = ExportCollections.lock_file_path(export_id, format)
+
       @data = {}
       @uuids = {}
       @attachments = []
     end
 
-    def to_json()
+    def to_json
       @data.to_json()
     end
 
-    def prepare_data(collection_ids)
+    def to_file
+      case @format
+      when 'json'
+        # write the json file public/json/
+        File.write(@file_path, @data.to_json())
+
+      when 'zip'
+        # create a zip buffer
+        zip = Zip::OutputStream.write_buffer do |zip|
+          # write the json file into the zip file
+          zip.put_next_entry File.join('data.json')
+          zip.write @data.to_json()
+
+          # write all attachemnts into an attachments directory
+          @attachments.each do |attachment|
+            zip.put_next_entry File.join('attachments', attachment.filename)
+            zip.write attachment.read_file
+          end
+        end
+        zip.rewind
+
+        # write the zip file to public/zip/
+        File.write(@file_path, zip.read)
+      end
+    end
+
+    def prepare_data
+      # get the collections from the database
+      collections = Collection.find(@collection_ids)
+
+      # fetch collections for export
+      fetch_many(collections, {
+        :user_id => 'User'
+      })
+
       # loop over all collections
-      fetch_collections(collection_ids).each do |collection|
+      collections.each do |collection|
 
         # fetch samples
         fetch_many(collection.samples, {
@@ -131,14 +182,13 @@ module Export
           fetch_literals(research_plan)
         end
       end
-      self
     end
 
-    def fetch_collections(collection_ids)
-      collections = Collection.find(collection_ids)
-      fetch_many(collections)
-      collections
+    def cleanup
+      File.delete(@lock_file_path) if File.exist?(@lock_file_path)
     end
+
+    private
 
     def fetch_containers(containable)
       containable_type = containable.class.name

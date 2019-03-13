@@ -33,8 +33,9 @@ export default class ModalCollectionExport extends React.Component {
     const { onHide, action } = this.props;
 
     let params = {
-      format: 'zip',
       collections: [uiState.currentCollection.id],
+      format: 'zip',
+      nested: true
     }
     action(params);
 

@@ -1,11 +1,11 @@
 class ImportCollectionsJob < ActiveJob::Base
   queue_as :import_collections
 
-  def perform(directory, file_name, current_user_id)
-    import = Import::ImportCollections.new(directory, file_name, current_user_id)
-    import.process
-
-    # cleanup
-    FileUtils.remove_dir(directory) if File.exist?(directory)
+  def perform(import_id, current_user_id)
+    import = Import::ImportCollections.new(import_id, current_user_id)
+    import.extract
+    import.read
+    import.import
+    import.cleanup
   end
 end

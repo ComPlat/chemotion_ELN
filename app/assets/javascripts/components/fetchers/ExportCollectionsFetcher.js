@@ -15,9 +15,10 @@ export default class ExportCollectionsFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
+      console.log(json.export_id);
       // after a short delay, start polling
       setTimeout(() => {
-        ExportCollectionsFetcher.pollJob(json.job_id)
+        ExportCollectionsFetcher.pollJob(json.export_id)
       }, 1000);
     }).catch((errorMessage) => {
       console.log(errorMessage);
@@ -26,9 +27,9 @@ export default class ExportCollectionsFetcher {
     return promise;
   }
 
-  static pollJob(jobId) {
+  static pollJob(exportId) {
 
-    let promise = fetch(`/api/v1/exports/${jobId}`, {
+    let promise = fetch(`/api/v1/exports/${exportId}`, {
       credentials: 'same-origin',
       method: 'GET',
       headers: {
@@ -41,7 +42,7 @@ export default class ExportCollectionsFetcher {
       if (json.status == 'EXECUTING') {
         // continue polling
         setTimeout(() => {
-          ExportCollectionsFetcher.pollJob(jobId);
+          ExportCollectionsFetcher.pollJob(exportId);
         }, 4000);
       } else if (json.status == 'COMPLETED') {
         // download the file, headers will prevent the browser from reloading the page

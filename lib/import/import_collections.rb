@@ -3,26 +3,31 @@ require 'json'
 module Import
   class ImportCollections
 
-    def initialize(directory, file_name, current_user_id)
-      @directory = directory
-      @file_name = file_name
+    # static methods
+    class << self
+      def zip_file_path(import_id)
+        File.join('tmp', 'import', "#{import_id}.zip")
+      end
+
+      def directory_path(import_id)
+        File.join('tmp', 'import', import_id)
+      end
+    end
+
+    def initialize(import_id, current_user_id)
+      @import_id = import_id
       @current_user_id = current_user_id
+
+      @zip_file_path = ImportCollections.zip_file_path(import_id)
+      @directory = ImportCollections.directory_path(import_id)
 
       @data = nil
       @instances = {}
       @attachments = []
     end
 
-    def process
-      extract
-      read
-      import
-      self
-    end
-
     def extract()
-      file_path = File.join(@directory, @file_name)
-      Zip::File.open(file_path) do |zip_file|
+      Zip::File.open(@zip_file_path) do |zip_file|
         zip_file.each do |f|
           fpath = File.join(@directory, f.name)
           fdir = File.dirname(fpath)
@@ -56,6 +61,13 @@ module Import
         import_literals
       end
     end
+
+    def cleanup
+      File.delete(@zip_file_path) if File.exist?(@zip_file_path)
+      FileUtils.remove_dir(@directory) if File.exist?(@directory)
+    end
+
+    private
 
     def import_collections
       @data.fetch('Collection', []).each do |uuid, fields|
