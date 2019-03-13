@@ -71,6 +71,16 @@ module Import
 
     def import_collections
       @data.fetch('Collection', []).each do |uuid, fields|
+        # check the ancestry for parents
+        ancestry = fields.fetch('ancestry')
+        if ancestry
+          parents = ancestry.split('/')
+          parent_uuid = parents[-1]
+          parent = @instances.fetch('Collection').fetch(parent_uuid)
+        else
+          parent = nil
+        end
+
         # create the collection
         collection = Collection.create!(fields.slice(
           'label',
@@ -82,7 +92,8 @@ module Import
           'created_at',
           'updated_at'
         ).merge({
-          :user_id => @current_user_id
+          :user_id => @current_user_id,
+          :parent => parent
         }))
 
         # add collection to @instances map

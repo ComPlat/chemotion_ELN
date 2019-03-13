@@ -62,13 +62,21 @@ module Export
       # get the collections from the database
       collections = Collection.find(@collection_ids)
 
-      # fetch collections for export
-      fetch_many(collections, {
-        :user_id => 'User'
-      })
+      # add decendants for nested collections
+      if @nested
+        descendants = []
+        Collection.find(@collection_ids).each do |collection|
+          descendants += collection.descendants
+        end
+        collections += descendants
+      end
 
       # loop over all collections
       collections.each do |collection|
+        # fetch collection
+        fetch_one(collection, {
+          :user_id => 'User'
+        })
 
         # fetch samples
         fetch_many(collection.samples, {
@@ -270,6 +278,15 @@ module Export
           # append updated json to @data
           unless @data.key?(type)
             @data[type] = {}
+          end
+
+          # replace ids in the ancestry field
+          if instance.send('ancestry')
+            ancestor_uuids = []
+            instance.ancestor_ids.each do |ancestor_id|
+              ancestor_uuids << uuid(type, ancestor_id)
+            end
+            update['ancestry'] = ancestor_uuids.join('/')
           end
 
           # check if deleted_at is nil
