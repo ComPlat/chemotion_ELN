@@ -222,6 +222,11 @@ module Export
             @data[type] = {}
           end
 
+          # check if deleted_at is nil
+          if instance.respond_to?('deleted_at') and not instance.deleted_at.nil?
+            raise 'Instance with non nil deleted_at in export'
+          end
+
           @data[type][uuid] = instance.as_json().except('id').merge(update)
         end
       end
