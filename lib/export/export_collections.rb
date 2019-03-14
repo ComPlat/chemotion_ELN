@@ -26,6 +26,7 @@ module Export
       @data = {}
       @uuids = {}
       @attachments = []
+      @images = []
     end
 
     def to_json
@@ -49,6 +50,11 @@ module Export
           @attachments.each do |attachment|
             zip.put_next_entry File.join('attachments', attachment.filename)
             zip.write attachment.read_file
+          end
+
+          @images.each do |image|
+            zip.put_next_entry File.join('images', image[:file_name])
+            zip.write File.read(image[:file_path])
           end
         end
         zip.rewind
@@ -78,127 +84,11 @@ module Export
           :user_id => 'User'
         })
 
-        # fetch samples
-        fetch_many(collection.samples, {
-          :molecule_name_id => 'MoleculeName',
-          :molecule_id => 'Molecule',
-          :fingerprint_id => 'Fingerprint',
-          :created_by => 'User',
-          :user_id => 'User'
-        })
-        fetch_many(collection.collections_samples, {
-          :collection_id => 'Collection',
-          :sample_id => 'Sample'
-        })
-
-        # loop over samples and fetch sample properties
-        collection.samples.each do |sample|
-          fetch_one(sample.fingerprint)
-          fetch_one(sample.molecule)
-          fetch_one(sample.molecule_name, {
-            :molecule_id => 'Molecule',
-            :user_id => 'User'
-          })
-          fetch_one(sample.well, {
-            :sample_id => 'Sample',
-            :wellplate_id => 'Wellplate',
-          })
-          fetch_many(sample.residues, {
-            :sample_id => 'Sample',
-          })
-
-          # fetch containers, attachments and literature
-          fetch_containers(sample)
-          fetch_literals(sample)
-        end
-
-        # fetch reactions
-        fetch_many(collection.reactions, {
-          :created_by => 'User'
-        })
-        fetch_many(collection.collections_reactions, {
-          :collection_id => 'Collection',
-          :reaction_id => 'Reaction',
-        })
-
-        # loop over reactions and fetch reaction properties
-        collection.reactions.each do |reaction|
-          # fetch relations between reactions and samples
-          # this is one table but several models (Single Table Inheritance)
-          [
-            reaction.reactions_starting_material_samples,
-            reaction.reactions_solvent_samples,
-            reaction.reactions_purification_solvent_samples,
-            reaction.reactions_reactant_samples,
-            reaction.reactions_product_samples,
-          ].each do |instances|
-            fetch_many(instances, {
-              :reaction_id => 'Reaction',
-              :sample_id => 'Sample',
-            })
-          end
-
-          # fetch containers, attachments and literature
-          fetch_containers(reaction)
-          fetch_literals(reaction)
-        end
-
-        # fetch wellplates
-        fetch_many(collection.wellplates)
-        fetch_many(collection.collections_wellplates, {
-          :collection_id => 'Collection',
-          :wellplate_id => 'Wellplate',
-        })
-
-        # fetch containers and attachments
-        collection.wellplates.each do |wellplate|
-          fetch_containers(wellplate)
-        end
-
-        # fetch screens
-        fetch_many(collection.screens)
-        fetch_many(collection.collections_screens, {
-          :collection_id => 'Collection',
-          :screen_id => 'Screen',
-        })
-
-        # loop over screens and fetch screen properties
-        collection.screens.each do |screen|
-          # fetch relation between wellplates_screens and screen
-          fetch_many(screen.screens_wellplates, {
-            :screen_id => 'Screen',
-            :wellplate_id => 'Wellplate',
-          })
-
-          # fetch containers and attachments
-          fetch_containers(screen)
-        end
-
-        # fetch research_plans
-        fetch_many(collection.research_plans, {
-          :created_by => 'User'
-        })
-        fetch_many(collection.collections_research_plans, {
-          :collection_id => 'Collection',
-          :research_plan_id => 'ResearchPlan'
-        })
-
-        # loop over research plans and fetch research plan properties
-        collection.research_plans.each do |research_plan|
-          # fetch attachments
-          # attachments are directrly related to research plans so we don't need fetch_containers
-          fetch_many(research_plan.attachments, {
-            :attachable_id => 'ResearchPlan',
-            :created_by => 'User',
-            :created_for => 'User'
-          })
-
-          # add attachments to the list of attachments
-          @attachments += research_plan.attachments
-
-          # fetch literature
-          fetch_literals(research_plan)
-        end
+        fetch_samples collection
+        fetch_reactions collection
+        fetch_wellplates collection
+        fetch_screens collection
+        fetch_research_plans collection
       end
     end
 
@@ -207,6 +97,144 @@ module Export
     end
 
     private
+
+    def fetch_samples(collection)
+      # fetch samples
+      fetch_many(collection.samples, {
+        :molecule_name_id => 'MoleculeName',
+        :molecule_id => 'Molecule',
+        :fingerprint_id => 'Fingerprint',
+        :created_by => 'User',
+        :user_id => 'User'
+      })
+      fetch_many(collection.collections_samples, {
+        :collection_id => 'Collection',
+        :sample_id => 'Sample'
+      })
+
+      # loop over samples and fetch sample properties
+      collection.samples.each do |sample|
+        fetch_one(sample.fingerprint)
+        fetch_one(sample.molecule)
+        fetch_one(sample.molecule_name, {
+          :molecule_id => 'Molecule',
+          :user_id => 'User'
+        })
+        fetch_one(sample.well, {
+          :sample_id => 'Sample',
+          :wellplate_id => 'Wellplate',
+        })
+        fetch_many(sample.residues, {
+          :sample_id => 'Sample',
+        })
+
+        # fetch containers, attachments and literature
+        fetch_containers(sample)
+        fetch_literals(sample)
+
+        # collect the sample_svg_file and molecule_svg_file
+        fetch_image('samples', sample.sample_svg_file)
+        fetch_image('molecules', sample.molecule.molecule_svg_file)
+      end
+    end
+
+    def fetch_reactions(collection)
+      fetch_many(collection.reactions, {
+        :created_by => 'User'
+      })
+      fetch_many(collection.collections_reactions, {
+        :collection_id => 'Collection',
+        :reaction_id => 'Reaction',
+      })
+
+      # loop over reactions and fetch reaction properties
+      collection.reactions.each do |reaction|
+        # fetch relations between reactions and samples
+        # this is one table but several models (Single Table Inheritance)
+        [
+          reaction.reactions_starting_material_samples,
+          reaction.reactions_solvent_samples,
+          reaction.reactions_purification_solvent_samples,
+          reaction.reactions_reactant_samples,
+          reaction.reactions_product_samples,
+        ].each do |instances|
+          fetch_many(instances, {
+            :reaction_id => 'Reaction',
+            :sample_id => 'Sample',
+          })
+        end
+
+        # fetch containers, attachments and literature
+        fetch_containers(reaction)
+        fetch_literals(reaction)
+
+        # collect the reaction_svg_file
+        fetch_image('reactions', reaction.reaction_svg_file)
+      end
+    end
+
+    def fetch_wellplates(collection)
+      fetch_many(collection.wellplates)
+      fetch_many(collection.collections_wellplates, {
+        :collection_id => 'Collection',
+        :wellplate_id => 'Wellplate',
+      })
+
+      # fetch containers and attachments
+      collection.wellplates.each do |wellplate|
+        fetch_containers(wellplate)
+      end
+    end
+
+    def fetch_screens(collection)
+      fetch_many(collection.screens)
+      fetch_many(collection.collections_screens, {
+        :collection_id => 'Collection',
+        :screen_id => 'Screen',
+      })
+
+      # loop over screens and fetch screen properties
+      collection.screens.each do |screen|
+        # fetch relation between wellplates_screens and screen
+        fetch_many(screen.screens_wellplates, {
+          :screen_id => 'Screen',
+          :wellplate_id => 'Wellplate',
+        })
+
+        # fetch containers and attachments
+        fetch_containers(screen)
+      end
+    end
+
+    def fetch_research_plans(collection)
+      fetch_many(collection.research_plans, {
+        :created_by => 'User'
+      })
+      fetch_many(collection.collections_research_plans, {
+        :collection_id => 'Collection',
+        :research_plan_id => 'ResearchPlan'
+      })
+
+      # loop over research plans and fetch research plan properties
+      collection.research_plans.each do |research_plan|
+        # fetch attachments
+        # attachments are directrly related to research plans so we don't need fetch_containers
+        fetch_many(research_plan.attachments, {
+          :attachable_id => 'ResearchPlan',
+          :created_by => 'User',
+          :created_for => 'User'
+        })
+
+        # add attachments to the list of attachments
+        @attachments += research_plan.attachments
+
+        # fetch literature
+        fetch_literals(research_plan)
+
+        # collect the svg_file
+        fetch_image('research_plans', research_plan.svg_file)
+      end
+    end
 
     def fetch_containers(containable)
       containable_type = containable.class.name
@@ -264,6 +292,16 @@ module Export
           :element_id => element_type,
           :user_id => 'User'
         })
+      end
+    end
+
+    def fetch_image(image_path, image_file_name)
+      unless image_file_name.nil? or image_file_name.empty?
+        file_path = File.join('public', 'images', image_path, image_file_name)
+
+        if File.exist?(file_path)
+          @images << {:file_name => image_file_name, :file_path => file_path}
+        end
       end
     end
 
