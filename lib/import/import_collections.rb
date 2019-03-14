@@ -76,7 +76,7 @@ module Import
       @data.fetch('Collection', []).each do |uuid, fields|
         # check the ancestry for parents
         ancestry = fields.fetch('ancestry')
-        if ancestry
+        if not ancestry.empty?
           parents = ancestry.split('/')
           parent_uuid = parents[-1]
           parent = @instances.fetch('Collection').fetch(parent_uuid)
