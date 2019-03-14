@@ -82,10 +82,13 @@ module Export
         fetch_many(collection.samples, {
           :molecule_name_id => 'MoleculeName',
           :molecule_id => 'Molecule',
+          :fingerprint_id => 'Fingerprint',
+          :created_by => 'User',
+          :user_id => 'User'
         })
         fetch_many(collection.collections_samples, {
           :collection_id => 'Collection',
-          :sample_id => 'Sample',
+          :sample_id => 'Sample'
         })
 
         # loop over samples and fetch sample properties
@@ -94,6 +97,7 @@ module Export
           fetch_one(sample.molecule)
           fetch_one(sample.molecule_name, {
             :molecule_id => 'Molecule',
+            :user_id => 'User'
           })
           fetch_one(sample.well, {
             :sample_id => 'Sample',
@@ -109,7 +113,9 @@ module Export
         end
 
         # fetch reactions
-        fetch_many(collection.reactions)
+        fetch_many(collection.reactions, {
+          :created_by => 'User'
+        })
         fetch_many(collection.collections_reactions, {
           :collection_id => 'Collection',
           :reaction_id => 'Reaction',
@@ -169,10 +175,12 @@ module Export
         end
 
         # fetch research_plans
-        fetch_many(collection.research_plans)
+        fetch_many(collection.research_plans, {
+          :created_by => 'User'
+        })
         fetch_many(collection.collections_research_plans, {
           :collection_id => 'Collection',
-          :research_plan_id => 'ResearchPlan',
+          :research_plan_id => 'ResearchPlan'
         })
 
         # loop over research plans and fetch research plan properties
@@ -181,6 +189,8 @@ module Export
           # attachments are directrly related to research plans so we don't need fetch_containers
           fetch_many(research_plan.attachments, {
             :attachable_id => 'ResearchPlan',
+            :created_by => 'User',
+            :created_for => 'User'
           })
 
           # add attachments to the list of attachments
@@ -228,10 +238,12 @@ module Export
         attachment_containers.each do |attachment_container|
           fetch_one(attachment_container, {
             :containable_id => containable_type,
-            :parent_id => 'Container',
+            :parent_id => 'Container'
           })
           fetch_many(attachment_container.attachments, {
             :attachable_id => 'Container',
+            :created_by => 'User',
+            :created_for => 'User'
           })
 
           # add attachments to the list of attachments
@@ -250,6 +262,7 @@ module Export
         fetch_one(literal, {
           :literature_id => 'Literature',
           :element_id => element_type,
+          :user_id => 'User'
         })
       end
     end
@@ -281,7 +294,7 @@ module Export
           end
 
           # replace ids in the ancestry field
-          if instance.send('ancestry')
+          if instance.respond_to?('ancestry')
             ancestor_uuids = []
             instance.ancestor_ids.each do |ancestor_id|
               ancestor_uuids << uuid(type, ancestor_id)
