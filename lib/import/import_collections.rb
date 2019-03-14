@@ -134,7 +134,8 @@ module Import
         ).merge({
           :created_by => @current_user_id,
           :collections => fetch_many(
-            'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid)
+            'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid),
+          :sample_svg_file => fetch_image('samples', fields.fetch('sample_svg_file'))
         }))
 
         # add sample to the @instances map
@@ -168,7 +169,8 @@ module Import
         ).merge({
           :created_by => @current_user_id,
           :collections => fetch_many(
-            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid)
+            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid),
+          :reaction_svg_file => fetch_image('reactions', fields.fetch('reaction_svg_file'))
         }))
 
         # create the root container like with samples
@@ -280,7 +282,7 @@ module Import
 
     def import_research_plans
       @data.fetch('ResearchPlan', []).each do |uuid, fields|
-        # create the screen
+        # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
           'description',
@@ -291,7 +293,8 @@ module Import
         ).merge({
           :created_by => @current_user_id,
           :collections => fetch_many(
-            'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid)
+            'Collection', 'CollectionsResearchPlan', 'research_plan_id', 'collection_id', uuid),
+          :svg_file => fetch_image('research_plans', fields.fetch('svg_file'))
         }))
 
         # add reaction to the @instances map
@@ -410,6 +413,20 @@ module Import
 
         # add literal to the @instances map
         update_instances!(uuid, literal)
+      end
+    end
+
+    def fetch_image(image_path, image_file_name)
+      unless image_file_name.nil? or image_file_name.empty?
+        import_file_path = File.join(@directory, 'images', image_file_name)
+
+        if File.exists?(import_file_path)
+          # copy extracted file from the import
+          file_path = File.join('public', 'images', image_path, image_file_name)
+          FileUtils.cp(import_file_path, file_path) unless File.exists?(file_path)
+
+          return image_file_name
+        end
       end
     end
 
