@@ -65,8 +65,8 @@ module Export
     end
 
     def prepare_data
-      # get the collections from the database
-      collections = Collection.find(@collection_ids)
+      # get the collections from the database, in order of ancestry, but with empty ancestry first
+      collections = Collection.order("NULLIF(ancestry, '') ASC NULLS FIRST").find(@collection_ids)
 
       # add decendants for nested collections
       if @nested
@@ -99,8 +99,11 @@ module Export
     private
 
     def fetch_samples(collection)
+      # get samples in order of ancestry, but with empty ancestry first
+      samples = collection.samples.order("NULLIF(ancestry, '') ASC NULLS FIRST")
+
       # fetch samples
-      fetch_many(collection.samples, {
+      fetch_many(samples, {
         :molecule_name_id => 'MoleculeName',
         :molecule_id => 'Molecule',
         :fingerprint_id => 'Fingerprint',
@@ -113,7 +116,7 @@ module Export
       })
 
       # loop over samples and fetch sample properties
-      collection.samples.each do |sample|
+      samples.each do |sample|
         fetch_one(sample.fingerprint)
         fetch_one(sample.molecule)
         fetch_one(sample.molecule_name, {

@@ -73,17 +73,7 @@ module Import
     private
 
     def import_collections
-      @data.fetch('Collection', []).each do |uuid, fields|
-        # check the ancestry for parents
-        ancestry = fields.fetch('ancestry')
-        if not ancestry.empty?
-          parents = ancestry.split('/')
-          parent_uuid = parents[-1]
-          parent = @instances.fetch('Collection').fetch(parent_uuid)
-        else
-          parent = nil
-        end
-
+      @data.fetch('Collection', {}).each do |uuid, fields|
         # create the collection
         collection = Collection.create!(fields.slice(
           'label',
@@ -96,7 +86,7 @@ module Import
           'updated_at'
         ).merge({
           :user_id => @current_user_id,
-          :parent => parent
+          :parent => fetch_ancestry('Collection', fields.fetch('ancestry'))
         }))
 
         # add collection to @instances map
@@ -105,7 +95,7 @@ module Import
     end
 
     def import_samples
-      @data.fetch('Sample', []).each do |uuid, fields|
+      @data.fetch('Sample', {}).each do |uuid, fields|
         # create the sample
         sample = Sample.create!(fields.slice(
           'name',
@@ -120,6 +110,7 @@ module Import
           'location',
           'is_top_secret',
           'external_label',
+          'short_label',
           'real_amount_value',
           'real_amount_unit',
           'imported_readout',
@@ -135,7 +126,8 @@ module Import
           :created_by => @current_user_id,
           :collections => fetch_many(
             'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid),
-          :sample_svg_file => fetch_image('samples', fields.fetch('sample_svg_file'))
+          :sample_svg_file => fetch_image('samples', fields.fetch('sample_svg_file')),
+          :parent => fetch_ancestry('Sample', fields.fetch('ancestry'))
         }))
 
         # add sample to the @instances map
@@ -144,7 +136,7 @@ module Import
     end
 
     def import_reactions
-      @data.fetch('Reaction', []).each do |uuid, fields|
+      @data.fetch('Reaction', {}).each do |uuid, fields|
         # create the sample
         reaction = Reaction.create!(fields.slice(
           'name',
@@ -160,7 +152,7 @@ module Import
           'temperature',
           'status',
           'solvent',
-          # 'short_label',
+          'short_label',
           'role',
           'origin',
           'duration',
@@ -190,7 +182,7 @@ module Import
         ReactionsReactantSample,
         ReactionsProductSample
       ].each do |model|
-        @data.fetch(model.name, []).each do |uuid, fields|
+        @data.fetch(model.name, {}).each do |uuid, fields|
           # create the reactions_sample
           reactions_sample = model.create!(fields.slice(
             'reference',
@@ -210,7 +202,7 @@ module Import
     end
 
     def import_wellplates
-      @data.fetch('Wellplate', []).each do |uuid, fields|
+      @data.fetch('Wellplate', {}).each do |uuid, fields|
         # create the wellplate
         wellplate = Wellplate.create!(fields.slice(
           'name',
@@ -232,7 +224,7 @@ module Import
     end
 
     def import_wells
-      @data.fetch('Well', []).each do |uuid, fields|
+      @data.fetch('Well', {}).each do |uuid, fields|
         # create the well
         well = Well.create!(fields.slice(
           'position_x',
@@ -252,7 +244,7 @@ module Import
     end
 
     def import_screens
-      @data.fetch('Screen', []).each do |uuid, fields|
+      @data.fetch('Screen', {}).each do |uuid, fields|
         # create the screen
         screen = Screen.create!(fields.slice(
           'description',
@@ -281,7 +273,7 @@ module Import
     end
 
     def import_research_plans
-      @data.fetch('ResearchPlan', []).each do |uuid, fields|
+      @data.fetch('ResearchPlan', {}).each do |uuid, fields|
         # create the research_plan
         research_plan = ResearchPlan.create!(fields.slice(
           'name',
@@ -303,7 +295,7 @@ module Import
     end
 
     def import_containers
-      @data.fetch('Container', []).each do |uuid, fields|
+      @data.fetch('Container', {}).each do |uuid, fields|
         case fields.fetch('container_type')
         when 'root', nil
           # the root container was created when the containable was imported
@@ -337,7 +329,7 @@ module Import
     end
 
     def import_attachments
-      @data.fetch('Attachment', []).each do |uuid, fields|
+      @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
@@ -369,7 +361,7 @@ module Import
     end
 
     def import_literals
-      @data.fetch('Literal', []).each do |uuid, fields|
+      @data.fetch('Literal', {}).each do |uuid, fields|
         # get the element for this literal
         element_type = fields.fetch('element_type')
         element_uuid = fields.fetch('element_id')
@@ -416,6 +408,18 @@ module Import
       end
     end
 
+    def fetch_ancestry(type, ancestry)
+      unless ancestry.nil? or ancestry.empty?
+        parents = ancestry.split('/')
+        parent_uuid = parents[-1]
+        begin
+          @instances.fetch(type).fetch(parent_uuid)
+        rescue KeyError
+          nil
+        end
+      end
+    end
+
     def fetch_image(image_path, image_file_name)
       unless image_file_name.nil? or image_file_name.empty?
         import_file_path = File.join(@directory, 'images', image_file_name)
@@ -425,7 +429,7 @@ module Import
           file_path = File.join('public', 'images', image_path, image_file_name)
           FileUtils.cp(import_file_path, file_path) unless File.exists?(file_path)
 
-          return image_file_name
+          image_file_name
         end
       end
     end
