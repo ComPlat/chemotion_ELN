@@ -5,6 +5,9 @@ module Import
 
     # static methods
     class << self
+      def import_path
+        File.join('tmp', 'import')
+      end
       def zip_file_path(import_id)
         File.join('tmp', 'import', "#{import_id}.zip")
       end
