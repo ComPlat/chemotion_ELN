@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import NotificationActions from '../actions/NotificationActions';
 
 export default class ExportCollectionsFetcher {
 
@@ -15,11 +16,12 @@ export default class ExportCollectionsFetcher {
     }).then((response) => {
       return response.json()
     }).then((json) => {
-      console.log(json.export_id);
       // after a short delay, start polling
       setTimeout(() => {
         ExportCollectionsFetcher.pollJob(json.export_id)
       }, 1000);
+
+      return json;
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
@@ -45,6 +47,9 @@ export default class ExportCollectionsFetcher {
           ExportCollectionsFetcher.pollJob(exportId);
         }, 4000);
       } else if (json.status == 'COMPLETED') {
+        // remove the notification
+        NotificationActions.removeByUid('export_collections')
+
         // download the file, headers will prevent the browser from reloading the page
         window.location.href = json.url;
       }

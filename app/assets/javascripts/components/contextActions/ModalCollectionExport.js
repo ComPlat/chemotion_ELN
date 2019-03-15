@@ -4,6 +4,8 @@ import PropTypes from 'prop-types';
 import UIStore from './../stores/UIStore';
 import UserStore from './../stores/UserStore';
 
+import NotificationActions from '../actions/NotificationActions';
+
 export default class ModalCollectionExport extends React.Component {
   constructor(props) {
     super(props);
@@ -40,6 +42,18 @@ export default class ModalCollectionExport extends React.Component {
     action(params);
 
     onHide();
+
+    let notification = {
+      title: "Exporting",
+      message: "The export file is created on the server. This might take a while. The download will start automatically. Please don't close the window.",
+      level: "warning",
+      dismissible: false,
+      uid: "export_collections",
+      position: "bl",
+      autoDismiss: null
+    }
+
+    NotificationActions.add(notification);
   }
 
   render() {
