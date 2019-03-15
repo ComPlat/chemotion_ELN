@@ -102,9 +102,13 @@ module PubChem
     # return nil unless resp.success?
 
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/plain'}  }
-    resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)
-
-    resp.body.presence&.strip
+    begin
+      resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)
+      resp.body.presence&.strip
+    rescue => e
+      Rails.logger.error "[RESCUE EXCEPTION] of [get_cid_from_inchikey] with inchikey [#{inchikey}], exception [#{e.inspect}]"
+      return nil
+    end
   end
 
   def self.get_cas_from_cid(cid)
@@ -124,9 +128,14 @@ module PubChem
     return nil unless cid.is_a? Integer
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/json'}, :format => 'plain'  }
     page = "https://#{PUBCHEM_HOST}/rest/pug_view/data/compound/#{cid}/JSON?heading=GHS%20Classification"
-    resp = HTTParty.get(page, options)
-    return nil unless resp.success?
-    JSON.parse resp, symbolize_names: true
+    begin
+      resp = HTTParty.get(page, options)
+      return nil unless resp.success?
+      JSON.parse resp, symbolize_names: true
+    rescue => e
+      Rails.logger.error "[RESCUE EXCEPTION] of [get_lcss_from_cid] with cid [#{cid}], exception [#{e.inspect}]"
+      return nil
+    end
   end
 
   FTP_PATH = 'ftp.ncbi.nlm.nih.gov'
