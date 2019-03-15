@@ -115,7 +115,7 @@ module PubChem
     resp_xml = HTTParty.get(page, options).body
     resp_doc = Nokogiri::XML(resp_xml)
     cas_values = resp_doc.css('Name:contains("CAS")').map { |x| x.parent.css('StringValue').text }
-    cas = Utils.most_occurance(cas_values)
+    cas = most_occurance(cas_values)
     [cas]
   end
 
@@ -211,5 +211,11 @@ module PubChem
       results[ink] = { 'cid' => cid, 'names' => names }
     end
     results
+  end
+
+  private
+
+  def self.most_occurance(arr)
+    arr.group_by(&:to_s).values.max_by(&:size).try(:first)
   end
 end
