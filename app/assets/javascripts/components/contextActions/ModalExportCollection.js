@@ -1,9 +1,6 @@
 import React from 'react';
-import {Button, ButtonToolbar, Radio, FormGroup} from 'react-bootstrap';
-import PropTypes from 'prop-types';
+import {Button, ButtonToolbar} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
-import UserStore from './../stores/UserStore';
-
 import NotificationActions from '../actions/NotificationActions';
 
 export default class ModalCollectionExport extends React.Component {
@@ -44,7 +41,7 @@ export default class ModalCollectionExport extends React.Component {
     onHide();
 
     let notification = {
-      title: "Exporting",
+      title: "Export collections",
       message: "The export file is created on the server. This might take a while. The download will start automatically. Please don't close the window.",
       level: "warning",
       dismissible: false,
@@ -66,8 +63,4 @@ export default class ModalCollectionExport extends React.Component {
       </div>
     )
   }
-}
-
-ModalCollectionExport.propTypes = {
-  onHide: PropTypes.func,
 }

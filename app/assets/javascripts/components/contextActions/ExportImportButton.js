@@ -9,6 +9,7 @@ import ModalImportChemScanner from './ModalImportChemScanner';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
 import ModalCollectionExport from './ModalCollectionExport';
+import ModalImportCollection from './ModalImportCollection';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
   <Dropdown id='export-dropdown'>
@@ -128,7 +129,7 @@ const exportCollectionFunction = (updateModalProps) => {
 
 const importCollectionFunction = (updateModalProps) => {
   const title = "Import Collections from ZIP archive";
-  const component = ModalImport;
+  const component = ModalImportCollection;
   const action = ElementActions.importCollectionsFromFile;
   const listSharedCollections = false;
 

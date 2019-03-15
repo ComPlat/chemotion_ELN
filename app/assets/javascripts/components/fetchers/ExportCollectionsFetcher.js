@@ -45,7 +45,7 @@ export default class ExportCollectionsFetcher {
         // continue polling
         setTimeout(() => {
           ExportCollectionsFetcher.pollJob(exportId);
-        }, 4000);
+        }, 1000);
       } else if (json.status == 'COMPLETED') {
         // remove the notification
         NotificationActions.removeByUid('export_collections')

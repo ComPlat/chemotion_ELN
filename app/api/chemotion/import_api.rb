@@ -2,6 +2,10 @@ module Chemotion
   class ImportAPI < Grape::API
     resource :imports do
 
+        desc "Create export job"
+      params do
+        requires :file, type: File
+      end
       post do
         # create an id for the import
         import_id = SecureRandom.uuid
@@ -22,6 +26,26 @@ module Chemotion
         # return the import_id to the client
         return {:import_id => import_id}
       end
+
+      desc "Poll import job"
+      params do
+        requires :id, type: String
+      end
+      get '/:id' do
+        import_id = params[:id]
+
+        # look for the lock file file
+        file_path = Import::ImportCollections.zip_file_path(import_id)
+
+        if File.exist?(file_path)
+          return {
+            :status => 'EXECUTING',
+          }
+        end
+
+        error! :not_found, 404
+      end
+
     end
   end
 end

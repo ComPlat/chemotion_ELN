@@ -209,7 +209,6 @@ class ElementActions {
   }
 
   importCollectionsFromFile(params) {
-    console.log(params);
     return (dispatch) => { ImportCollectionsFetcher.createJob(params)
       .then((result) => {
         dispatch(result);
