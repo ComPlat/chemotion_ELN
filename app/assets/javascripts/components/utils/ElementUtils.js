@@ -7,6 +7,43 @@ import { searchAndReplace } from './markdownUtils';
 
 import UIStore from '../stores/UIStore';
 
+const atomCountInFormula = (formula) => {
+  if (typeof formula !== 'string') { return 0; }
+  const re = new RegExp('H\\d*');
+  const hForm = re.exec(formula);
+  if (!hForm) { return 0; }
+  const count = hForm[0].slice(1);
+  if (count.length === 0) { return 1; }
+  return parseInt(count, 10);
+};
+
+const atomCountInNMRDescription = (nmrStr) => {
+  const nmrCnt = [];
+  // /(\d*)H\s*\)/g
+  (nmrStr.match(/[^\(*]+[$\)]+/g) || []).map(ex => ex.trim().slice(0, -1))
+    .forEach((exp) => {
+      nmrCnt.push((
+        (
+          (exp.split(',') || []).filter(t => t.includes('H') && !isNaN(t.trim().slice(0, -1)) && t.trim().length > 1)
+        ) || []
+      ).map(tt => parseInt(tt.trim().slice(0, -1), 10)));
+    });
+  return _.flattenDeep(nmrCnt).reduce((a, b) => a + b, 0);
+};
+
+const nmrCheckMsg = (formula, nmrStr) => {
+  if (typeof (formula) !== 'string' || typeof (nmrStr) !== 'string') {
+    return '';
+  }
+  const countInFormula = atomCountInFormula(formula);
+  const countInDesc = atomCountInNMRDescription(nmrStr);
+
+  if (countInFormula !== countInDesc) {
+    return ` count: ${countInDesc}/${countInFormula}`;
+  }
+  return '';
+}
+
 const SameEleTypId = (orig, next) => {
   if (orig && next && orig.type === next.type && orig.id === next.id) {
     return true;
@@ -180,6 +217,7 @@ const SampleCode = (index, materialGp) => {
 };
 
 module.exports = {
+  nmrCheckMsg,
   SameEleTypId,
   UrlSilentNavigation,
   sampleAnalysesFormatPattern,
