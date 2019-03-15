@@ -322,7 +322,10 @@ class Material extends Component {
 
   createParagraph(m) {
     const { materialGroup } = this.props;
-    const molName = m.molecule.iupac_name;
+    let molName = m.molecule_name_hash.label;
+    if (!molName) { molName = m.molecule.iupac_name; }
+    if (!molName) { molName = m.molecule.sum_formular; }
+
     const gUnit = correctPrefix(m.amount_g, 3);
     const lUnit = correctPrefix(m.amount_l, 3);
     const molUnit = correctPrefix(m.amount_mol, 2);
