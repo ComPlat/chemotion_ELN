@@ -1,6 +1,9 @@
 import 'whatwg-fetch';
 import BaseFetcher from './BaseFetcher';
 
+import CollectionActions from '../actions/CollectionActions';
+import NotificationActions from '../actions/NotificationActions';
+
 export default class CollectionsFetcher {
   static takeOwnership(params) {
     let sync = params.isSync ? "syncC" : "c"
@@ -273,6 +276,119 @@ export default class CollectionsFetcher {
       return response.json()
     }).then((json) => {
       return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static createExportJob(params) {
+
+    let promise = fetch('/api/v1/collections/exports/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      // after a short delay, start polling
+      setTimeout(() => {
+        CollectionsFetcher.pollExportJob(json.export_id)
+      }, 1000);
+
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static pollExportJob(exportId) {
+
+    let promise = fetch(`/api/v1/collections/exports/${exportId}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      if (json.status == 'EXECUTING') {
+        // continue polling
+        setTimeout(() => {
+          CollectionsFetcher.pollExportJob(exportId);
+        }, 1000);
+      } else if (json.status == 'COMPLETED') {
+        // remove the notification
+        NotificationActions.removeByUid('export_collections')
+
+        // download the file, headers will prevent the browser from reloading the page
+        window.location.href = json.url;
+      }
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static createImportJob(params) {
+
+    var data = new FormData();
+    data.append("file", params.file);
+
+    let promise = fetch('/api/v1/collections/imports/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      body: data
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      // after a short delay, start polling
+      setTimeout(() => {
+        CollectionsFetcher.pollImportJob(json.import_id)
+      }, 1000);
+
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
+
+  static pollImportJob(importId) {
+
+    let promise = fetch(`/api/v1/collections/imports/${importId}`, {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      if (json.status == 'EXECUTING') {
+        // continue polling
+        setTimeout(() => {
+          CollectionsFetcher.pollImportJob(importId);
+        }, 1000);
+      } else {
+        // remove the notification
+        NotificationActions.removeByUid('import_collections')
+
+        // reload the unshared collections
+        CollectionActions.fetchUnsharedCollectionRoots()
+      }
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });

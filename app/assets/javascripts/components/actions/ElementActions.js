@@ -15,8 +15,6 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import SearchFetcher from '../fetchers/SearchFetcher';
 import DeviceFetcher from '../fetchers/DeviceFetcher';
 import ContainerFetcher from '../fetchers/ContainerFetcher';
-import ExportCollectionsFetcher from '../fetchers/ExportCollectionsFetcher';
-import ImportCollectionsFetcher from '../fetchers/ImportCollectionsFetcher';
 
 import Sample from '../models/Sample';
 import Reaction from '../models/Reaction';
@@ -192,24 +190,6 @@ class ElementActions {
 
   fetchReactionsByCollectionId(id, queryParams={}, collectionIsSync = false) {
     return (dispatch) => { ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  exportCollectionsToFile(params) {
-    return (dispatch) => { ExportCollectionsFetcher.createJob(params)
-      .then((result) => {
-        dispatch(result);
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });};
-  }
-
-  importCollectionsFromFile(params) {
-    return (dispatch) => { ImportCollectionsFetcher.createJob(params)
       .then((result) => {
         dispatch(result);
       }).catch((errorMessage) => {

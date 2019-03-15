@@ -154,6 +154,24 @@ class CollectionActions {
   downloadReportReaction(reactionId){
     Utils.downloadFile({contents: "api/v1/reports/excel_reaction?id=" + reactionId});
   }
+
+  exportCollectionsToFile(params) {
+    return (dispatch) => { CollectionsFetcher.createExportJob(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
+
+  importCollectionsFromFile(params) {
+    return (dispatch) => { CollectionsFetcher.createImportJob(params)
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });};
+  }
 }
 
 export default alt.createActions(CollectionActions);

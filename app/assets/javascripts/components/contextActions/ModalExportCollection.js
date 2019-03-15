@@ -3,7 +3,7 @@ import {Button, ButtonToolbar} from 'react-bootstrap';
 import UIStore from './../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
 
-export default class ModalCollectionExport extends React.Component {
+export default class ModalExportCollection extends React.Component {
   constructor(props) {
     super(props);
     this.state = {}

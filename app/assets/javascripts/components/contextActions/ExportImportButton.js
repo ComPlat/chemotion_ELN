@@ -2,13 +2,14 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown, Button, MenuItem, Glyphicon } from 'react-bootstrap';
 
+import CollectionActions from '../actions/CollectionActions';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import ModalImport from './ModalImport';
 import ModalImportChemScanner from './ModalImportChemScanner';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
-import ModalCollectionExport from './ModalCollectionExport';
+import ModalExportCollection from './ModalExportCollection';
 import ModalImportCollection from './ModalImportCollection';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
@@ -112,8 +113,8 @@ const exportReactionFunction = (updateModalProps) => {
 
 const exportCollectionFunction = (updateModalProps) => {
   const title = "Export Collections to ZIP archive";
-  const component = ModalCollectionExport;
-  const action = ElementActions.exportCollectionsToFile;
+  const component = ModalExportCollection;
+  const action = CollectionActions.exportCollectionsToFile;
   const listSharedCollections = false;
 
   const modalProps = {
@@ -130,7 +131,7 @@ const exportCollectionFunction = (updateModalProps) => {
 const importCollectionFunction = (updateModalProps) => {
   const title = "Import Collections from ZIP archive";
   const component = ModalImportCollection;
-  const action = ElementActions.importCollectionsFromFile;
+  const action = CollectionActions.importCollectionsFromFile;
   const listSharedCollections = false;
 
   const modalProps = {
