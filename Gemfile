@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.2.11'
+gem 'rails', '4.2.11.1'
 
 gem 'thor', '0.19.1'
 
@@ -195,7 +195,7 @@ end
 
 group :test do
   gem 'database_cleaner'
-  gem 'factory_bot_rails'
+  gem 'factory_bot_rails', '~>4.11'
 
   gem 'capybara', '~> 3.10.0'
   gem 'chromedriver-helper', '2.1.0'
