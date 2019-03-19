@@ -20,7 +20,7 @@ class MoveToCollectionJob < ActiveJob::Base
         begin
           reaction[:state] = MoveToCollectionJob::STATE_MOVING
           CollectionsReaction.move_to_collection(
-            [reaction[:id]], collection, tr_col.id
+            reaction[:id], collection.id, tr_col.id
           )
           reaction[:state] = MoveToCollectionJob::STATE_MOVED
         rescue StandardError => e
@@ -34,7 +34,7 @@ class MoveToCollectionJob < ActiveJob::Base
         begin
           sample[:state] = MoveToCollectionJob::STATE_MOVING
           CollectionsSample.move_to_collection(
-            [sample[:id]], collection, tr_col.id
+            sample[:id], collection.id, tr_col.id
           )
           sample[:state] = MoveToCollectionJob::STATE_MOVED
         rescue => e
