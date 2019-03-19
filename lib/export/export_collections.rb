@@ -12,6 +12,9 @@ module Export
       def lock_file_path(export_id, format)
         File.join('public', format, "#{export_id}.lock")
       end
+      def schema_file_path
+        File.join('public', 'json', 'schema.json')
+      end
     end
 
     def initialize(export_id, collection_ids, format, nested)
@@ -43,7 +46,7 @@ module Export
         # create a zip buffer
         zip = Zip::OutputStream.write_buffer do |zip|
           # write the json file into the zip file
-          zip.put_next_entry File.join('data.json')
+          zip.put_next_entry File.join('export.json')
           zip.write @data.to_json()
 
           # write all attachemnts into an attachments directory
@@ -52,10 +55,15 @@ module Export
             zip.write attachment.read_file
           end
 
+          # write all the images into an images directory
           @images.each do |image|
             zip.put_next_entry File.join('images', image[:file_name])
             zip.write File.read(image[:file_path])
           end
+
+          # write the json schema
+          zip.put_next_entry File.join('schema.json')
+          zip.write File.read(ExportCollections.schema_file_path)
         end
         zip.rewind
 

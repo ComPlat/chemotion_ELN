@@ -42,8 +42,8 @@ module Import
     end
 
     def read
-      # open and read the data.json
-      file_name = File.join(@directory, 'data.json')
+      # open and read the export.json
+      file_name = File.join(@directory, 'export.json')
       File.open(file_name) do |f|
         @data = JSON.parse(f.read())
       end
