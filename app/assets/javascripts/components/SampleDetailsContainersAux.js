@@ -21,7 +21,8 @@ const nmrMsg = (sample, container) => {
   const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
   console.log(nmrStr);
   const msg = nmrCheckMsg(sample.molecule.sum_formular, nmrStr);
-  return msg === '' ? '' : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
+  return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
+
 };
 
 const SpectraViewerBtn = ({
