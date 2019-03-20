@@ -104,6 +104,7 @@ module PubChem
     options = { :timeout => 10,  :headers => {'Content-Type' => 'text/plain'}  }
     begin
       resp = HTTParty.get(http_s + PUBCHEM_HOST + '/rest/pug/compound/inchikey/' + inchikey + '/cids/TXT', options)
+      return nil unless resp.success?
       resp.body.presence&.strip
     rescue => e
       Rails.logger.error "[RESCUE EXCEPTION] of [get_cid_from_inchikey] with inchikey [#{inchikey}], exception [#{e.inspect}]"
