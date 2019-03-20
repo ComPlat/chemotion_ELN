@@ -3,26 +3,12 @@ require 'json'
 module Import
   class ImportCollections
 
-    # static methods
-    class << self
-      def import_path
-        File.join('tmp', 'import')
-      end
-      def zip_file_path(import_id)
-        File.join('tmp', 'import', "#{import_id}.zip")
-      end
-
-      def directory_path(import_id)
-        File.join('tmp', 'import', import_id)
-      end
-    end
-
     def initialize(import_id, current_user_id)
       @import_id = import_id
       @current_user_id = current_user_id
 
-      @zip_file_path = ImportCollections.zip_file_path(import_id)
-      @directory = ImportCollections.directory_path(import_id)
+      @zip_file_path = File.join('tmp', 'import', '#{import_id}.zip')
+      @directory = File.join('tmp', 'import', import_id)
 
       @data = nil
       @instances = {}

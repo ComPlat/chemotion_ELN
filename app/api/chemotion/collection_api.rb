@@ -367,18 +367,8 @@ module Chemotion
             end
           end
 
-          # create an id for the export
-          export_id = SecureRandom.uuid
-
-          # create the lock file
-          lock_file_path = Export::ExportCollections.lock_file_path(export_id, format)
-          File.open(lock_file_path, 'w') {}
-
           # run the asyncronous export job and return its id to the client
-          ExportCollectionsJob.perform_later(export_id, collection_ids, format, nested)
-
-          # return the export_id to the client
-          return {:export_id => export_id}
+          ExportCollectionsJob.perform_later(collection_ids, format, nested).job_id
         end
 
         desc "Poll export job"
@@ -386,52 +376,33 @@ module Chemotion
           requires :id, type: String
         end
         get '/:id' do
-          export_id = params[:id]
-
-          # look for the lock file file
-          ['json', 'zip'].each do |format|
-            file_path = Export::ExportCollections.file_path(export_id, format)
-            lock_file_path = Export::ExportCollections.lock_file_path(export_id, format)
-
-            if File.exist?(file_path) and !File.exist?(lock_file_path)
-              return {
-                :status => 'COMPLETED',
-                :url => Export::ExportCollections.file_url(export_id, format)
-              }
-            elsif File.exist?(lock_file_path)
-              return {:status => 'EXECUTING'}
-            end
-          end
-
-          error! :not_found, 404
+          ActiveJob::Status.get(params[:id])
         end
       end
 
       namespace :imports do
 
-          desc "Create import job"
+        desc "Create import job"
         params do
           requires :file, type: File
         end
         post do
-          # create an id for the import
+          # create an id for the import,
+          # this is not the job_id, but will be used as file_name
           import_id = SecureRandom.uuid
 
           # create the `tmp/imports/` if it does not exist yet
-          import_path = Import::ImportCollections.import_path
+          import_path = File.join('tmp', 'import')
           FileUtils.mkdir_p(import_path) unless Dir.exist?(import_path)
 
           # store the file as `tmp/imports/<import_id>.zip`
-          file_path =  Import::ImportCollections.zip_file_path(import_id)
-          File.open(file_path, 'wb') do |file|
-              file.write(params[:file][:tempfile].read)
+          zip_file_path = File.join('tmp', 'import', '#{import_id}.zip')
+          File.open(zip_file_path, 'wb') do |file|
+            file.write(params[:file][:tempfile].read)
           end
 
-          # run the asyncronous import job
-          ImportCollectionsJob.perform_later(import_id, current_user.id)
-
-          # return the import_id to the client
-          return {:import_id => import_id}
+          # run the asyncronous import job and return its id to the client
+          ImportCollectionsJob.perform_later(import_id, current_user.id).job_id
         end
 
         desc "Poll import job"
@@ -439,18 +410,7 @@ module Chemotion
           requires :id, type: String
         end
         get '/:id' do
-          import_id = params[:id]
-
-          # look for the lock file file
-          file_path = Import::ImportCollections.zip_file_path(import_id)
-
-          if File.exist?(file_path)
-            return {
-              :status => 'EXECUTING',
-            }
-          end
-
-          error! :not_found, 404
+          ActiveJob::Status.get(params[:id])
         end
 
       end

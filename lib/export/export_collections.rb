@@ -1,30 +1,14 @@
 module Export
   class ExportCollections
 
-    # static methods
-    class << self
-      def file_path(export_id, format)
-        File.join('public', format, "#{export_id}.#{format}")
-      end
-      def file_url(export_id, format)
-        "/#{format}/#{export_id}.#{format}"
-      end
-      def lock_file_path(export_id, format)
-        File.join('public', format, "#{export_id}.lock")
-      end
-      def schema_file_path
-        File.join('public', 'json', 'schema.json')
-      end
-    end
-
     def initialize(export_id, collection_ids, format, nested)
       @export_id = export_id
       @collection_ids = collection_ids
       @format = format
       @nested = nested
 
-      @file_path = ExportCollections.file_path(export_id, format)
-      @lock_file_path = ExportCollections.lock_file_path(export_id, format)
+      @file_path = File.join('public', format, "#{export_id}.#{format}")
+      @schema_file_path = File.join('public', 'json', 'schema.json')
 
       @data = {}
       @uuids = {}
@@ -63,7 +47,7 @@ module Export
 
           # write the json schema
           zip.put_next_entry File.join('schema.json')
-          zip.write File.read(ExportCollections.schema_file_path)
+          zip.write File.read(@schema_file_path)
         end
         zip.rewind
 
@@ -98,10 +82,6 @@ module Export
         fetch_screens collection
         fetch_research_plans collection
       end
-    end
-
-    def cleanup
-      File.delete(@lock_file_path) if File.exist?(@lock_file_path)
     end
 
     private

@@ -283,6 +283,34 @@ export default class CollectionsFetcher {
     return promise;
   }
 
+  static showExportError() {
+    // TODO move to the right place
+    NotificationActions.removeByUid('export_collections')
+    NotificationActions.add({
+      title: "Error",
+      message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
+      level: "error",
+      dismissible: true,
+      uid: "export_collections_error",
+      position: "bl",
+      autoDismiss: null
+    });
+  }
+
+  static showImportError() {
+    // TODO move to the right place
+    NotificationActions.removeByUid('import_collections')
+    NotificationActions.add({
+      title: "Error",
+      message: "An error occured with your import, please contact the administrators of the site if the problem persists.",
+      level: "error",
+      dismissible: true,
+      uid: "import_collections_error",
+      position: "bl",
+      autoDismiss: null
+    });
+  }
+
   static createExportJob(params) {
 
     let promise = fetch('/api/v1/collections/exports/', {
@@ -299,23 +327,11 @@ export default class CollectionsFetcher {
       } else {
         throw new Error(response.status);
       }
-    }).then((json) => {
-      // after a short delay, start polling
-      setTimeout(() => {
-        CollectionsFetcher.pollExportJob(json.export_id)
-      }, 1000);
+    }).then((job_id) => {
+      // start polling
+      CollectionsFetcher.pollExportJob(job_id);
     }).catch((errorMessage) => {
-      // remove the export notification and add an error notififation
-      NotificationActions.removeByUid('export_collections')
-      NotificationActions.add({
-        title: "Error",
-        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
-        level: "error",
-        dismissible: true,
-        uid: "export_collections_error",
-        position: "bl",
-        autoDismiss: null
-      });
+      CollectionsFetcher.showExportError();
     });
 
     return promise;
@@ -337,30 +353,26 @@ export default class CollectionsFetcher {
         throw new Error(response.status);
       }
     }).then((json) => {
-      if (json.status == 'EXECUTING') {
-        // continue polling
-        setTimeout(() => {
-          CollectionsFetcher.pollExportJob(exportId);
-        }, 1000);
-      } else if (json.status == 'COMPLETED') {
-        // remove the notification
-        NotificationActions.removeByUid('export_collections')
+      if (json.error) {
+        CollectionsFetcher.showExportError();
+      } else {
+        if (json.status == 'completed') {
+          // remove the notification
+          NotificationActions.removeByUid('export_collections')
 
-        // download the file, headers will prevent the browser from reloading the page
-        window.location.href = json.url;
+          // download the file, headers will prevent the browser from reloading the page
+          window.location.href = `/zip/${exportId}.zip`;
+        } else if (json.status == 'queued' || json.status == 'working') {
+          // continue polling
+          setTimeout(() => {
+            CollectionsFetcher.pollExportJob(exportId);
+          }, 1000);
+        } else {
+          CollectionsFetcher.showExportError();
+        }
       }
     }).catch((errorMessage) => {
-      // create an error notififation
-      NotificationActions.removeByUid('export_collections')
-      NotificationActions.add({
-        title: "Error",
-        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
-        level: "error",
-        dismissible: true,
-        uid: "export_collections_error",
-        position: "bl",
-        autoDismiss: null
-      });
+      CollectionsFetcher.showExportError();
     });
 
     return promise;
@@ -381,25 +393,11 @@ export default class CollectionsFetcher {
       } else {
         throw new Error(response.status);
       }
-    }).then((json) => {
-      // after a short delay, start polling
-      setTimeout(() => {
-        CollectionsFetcher.pollImportJob(json.import_id)
-      }, 1000);
-
-      return json;
+    }).then((job_id) => {
+      // start polling
+      CollectionsFetcher.pollImportJob(job_id);
     }).catch((errorMessage) => {
-      // remove the export notification and add an error notififation
-      NotificationActions.removeByUid('import_collections')
-      NotificationActions.add({
-        title: "Error",
-        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
-        level: "error",
-        dismissible: true,
-        uid: "import_collections_error",
-        position: "bl",
-        autoDismiss: null
-      });
+      CollectionsFetcher.showImportError();
     });
 
     return promise;
@@ -421,30 +419,26 @@ export default class CollectionsFetcher {
         throw new Error(response.status);
       }
     }).then((json) => {
-      if (json.status == 'EXECUTING') {
-        // continue polling
-        setTimeout(() => {
-          CollectionsFetcher.pollImportJob(importId);
-        }, 1000);
+      if (json.error) {
+        CollectionsFetcher.showImportError();
       } else {
-        // remove the notification
-        NotificationActions.removeByUid('import_collections')
+        if (json.status == 'completed') {
+          // remove the notification
+          NotificationActions.removeByUid('import_collections')
 
-        // reload the unshared collections
-        CollectionActions.fetchUnsharedCollectionRoots()
+          // reload the unshared collections
+          CollectionActions.fetchUnsharedCollectionRoots()
+        } else if (json.status == 'queued' || json.status == 'working') {
+          // continue polling
+          setTimeout(() => {
+            CollectionsFetcher.pollImportJob(importId);
+          }, 1000);
+        } else {
+          CollectionsFetcher.showImportError();
+        }
       }
     }).catch((errorMessage) => {
-      // remove the export notification and add an error notififation
-      NotificationActions.removeByUid('import_collections')
-      NotificationActions.add({
-        title: "Error",
-        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
-        level: "error",
-        dismissible: true,
-        uid: "import_collections_error",
-        position: "bl",
-        autoDismiss: null
-      });
+      CollectionsFetcher.showImportError();
     });
 
     return promise;

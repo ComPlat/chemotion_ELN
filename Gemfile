@@ -149,6 +149,8 @@ gem 'gman'
 gem 'ruby-mailchecker'
 gem 'swot'
 
+gem 'activejob-status'
+
 group :development, :test do
   gem 'binding_of_caller'
 
