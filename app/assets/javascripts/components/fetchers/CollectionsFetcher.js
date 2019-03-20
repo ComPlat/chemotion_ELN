@@ -294,16 +294,28 @@ export default class CollectionsFetcher {
       },
       body: JSON.stringify(params)
     }).then((response) => {
-      return response.json()
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error(response.status);
+      }
     }).then((json) => {
       // after a short delay, start polling
       setTimeout(() => {
         CollectionsFetcher.pollExportJob(json.export_id)
       }, 1000);
-
-      return json;
     }).catch((errorMessage) => {
-      console.log(errorMessage);
+      // remove the export notification and add an error notififation
+      NotificationActions.removeByUid('export_collections')
+      NotificationActions.add({
+        title: "Error",
+        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
+        level: "error",
+        dismissible: true,
+        uid: "export_collections_error",
+        position: "bl",
+        autoDismiss: null
+      });
     });
 
     return promise;
@@ -319,7 +331,11 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       }
     }).then((response) => {
-      return response.json()
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error(response.status);
+      }
     }).then((json) => {
       if (json.status == 'EXECUTING') {
         // continue polling
@@ -334,7 +350,17 @@ export default class CollectionsFetcher {
         window.location.href = json.url;
       }
     }).catch((errorMessage) => {
-      console.log(errorMessage);
+      // create an error notififation
+      NotificationActions.removeByUid('export_collections')
+      NotificationActions.add({
+        title: "Error",
+        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
+        level: "error",
+        dismissible: true,
+        uid: "export_collections_error",
+        position: "bl",
+        autoDismiss: null
+      });
     });
 
     return promise;
@@ -350,7 +376,11 @@ export default class CollectionsFetcher {
       method: 'POST',
       body: data
     }).then((response) => {
-      return response.json()
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error(response.status);
+      }
     }).then((json) => {
       // after a short delay, start polling
       setTimeout(() => {
@@ -359,7 +389,17 @@ export default class CollectionsFetcher {
 
       return json;
     }).catch((errorMessage) => {
-      console.log(errorMessage);
+      // remove the export notification and add an error notififation
+      NotificationActions.removeByUid('import_collections')
+      NotificationActions.add({
+        title: "Error",
+        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
+        level: "error",
+        dismissible: true,
+        uid: "import_collections_error",
+        position: "bl",
+        autoDismiss: null
+      });
     });
 
     return promise;
@@ -375,7 +415,11 @@ export default class CollectionsFetcher {
         'Content-Type': 'application/json'
       }
     }).then((response) => {
-      return response.json()
+      if (response.ok) {
+        return response.json();
+      } else {
+        throw new Error(response.status);
+      }
     }).then((json) => {
       if (json.status == 'EXECUTING') {
         // continue polling
@@ -390,7 +434,17 @@ export default class CollectionsFetcher {
         CollectionActions.fetchUnsharedCollectionRoots()
       }
     }).catch((errorMessage) => {
-      console.log(errorMessage);
+      // remove the export notification and add an error notififation
+      NotificationActions.removeByUid('import_collections')
+      NotificationActions.add({
+        title: "Error",
+        message: "An error occured with your export, please contact the administrators of the site if the problem persists.",
+        level: "error",
+        dismissible: true,
+        uid: "import_collections_error",
+        position: "bl",
+        autoDismiss: null
+      });
     });
 
     return promise;

@@ -358,7 +358,6 @@ module Chemotion
           format = params[:format]
           nested = params[:nested] == true
 
-
           # check if the user is allowed to export these collections
           collection_ids.each do |collection_id|
             begin
@@ -410,7 +409,7 @@ module Chemotion
 
       namespace :imports do
 
-          desc "Create export job"
+          desc "Create import job"
         params do
           requires :file, type: File
         end
