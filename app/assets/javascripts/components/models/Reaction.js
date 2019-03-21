@@ -2,6 +2,7 @@ import _ from 'lodash';
 import Delta from 'quill-delta';
 import moment from 'moment';
 import 'moment-precise-range-plugin';
+import Immutable from 'immutable';
 
 import Element from './Element';
 import Sample from './Sample';
@@ -56,7 +57,7 @@ export default class Reaction extends Element {
       solvents: [],
       purification_solvents: [],
       products: [],
-      literatures: [],
+      literatures: {},
       solvent: '',
       container: Container.init(),
       duration_display: DurationDefault,
@@ -123,7 +124,7 @@ export default class Reaction extends Element {
         purification_solvents: this.purification_solvents.map(s=>s.serializeMaterial()),
         products: this.products.map(s=>s.serializeMaterial())
       },
-      literatures: this.literatures.map(literature => literature.serialize()),
+      literatures: this.literatures,
       container: this.container,
       duration: this.duration,
       duration_display: this.duration_display,
@@ -660,20 +661,11 @@ export default class Reaction extends Element {
   // literatures
 
   get literatures() {
-    return this._literatures || [];
+    return this._literatures || {};
   }
 
   set literatures(literatures) {
-    this._literatures = literatures.map(literature => new Literature(literature));
-  }
-
-  removeLiterature(literature) {
-    const literatureKey = this.literatures.indexOf(literature);
-    this._literatures.splice(literatureKey, 1);
-  }
-
-  addLiterature(literature) {
-    this._literatures.push(literature);
+    this._literatures = literatures;
   }
 
   get totalVolume() {

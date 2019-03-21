@@ -1,9 +1,11 @@
 import 'whatwg-fetch';
 import { indexOf, split } from 'lodash';
+import Immutable from 'immutable';
 import Reaction from '../models/Reaction';
 import UIStore from '../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
 import AttachmentFetcher from './AttachmentFetcher';
+import Literature from '../models/Literature';
 
 // TODO: Extract common base functionality into BaseFetcher
 export default class ReactionsFetcher {
@@ -15,7 +17,13 @@ export default class ReactionsFetcher {
         return response.json()
       }).then((json) => {
         if (json.hasOwnProperty("reaction")) {
-          return new Reaction(json.reaction)
+          const reaction = new Reaction(json.reaction);
+          if (json.literatures && json.literatures.length > 0) {
+            const tliteratures = json.literatures.map(literature => new Literature(literature));
+            const lits = tliteratures.reduce((acc, l) => acc.set(l.literal_id, l), new Immutable.Map());
+            reaction.literatures = lits;
+          }
+          return reaction;
         } else {
           return json
         }

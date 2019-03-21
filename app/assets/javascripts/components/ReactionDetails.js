@@ -35,6 +35,7 @@ export default class ReactionDetails extends Component {
     const { reaction } = props;
     this.state = {
       reaction: reaction,
+      literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
     };
 
@@ -381,6 +382,7 @@ export default class ReactionDetails extends Component {
             <Tab eventKey={2} title={'References'}>
               <ReactionDetailsLiteratures
                 element={reaction}
+                literatures={reaction.isNew === true ? reaction.literatures : null}
                 onElementChange={reaction => this.handleReactionChange(reaction)}
               />
             </Tab>

@@ -23,4 +23,10 @@ module LiteratureHelpers
   def update_literatures_for_reaction(reaction, literatures)
     update_literature(reaction, literatures)
   end
+
+  def citation_for_elements(id, type, cat = 'detail')
+    return Literature.none unless id.present?
+    Literature.by_element_attributes_and_cat(id, type, cat).add_user_info
+  end
+
 end #module

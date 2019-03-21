@@ -278,7 +278,7 @@ module Chemotion
 
         get do
           reaction = Reaction.find(params[:id])
-          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
+          {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized, literatures: citation_for_elements(params[:id],'Reaction')}
         end
       end
 
@@ -333,7 +333,7 @@ module Chemotion
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
-        optional :literatures, type: Array
+        optional :literatures, type: Hash
 
         requires :container, type: Hash
         optional :duration, type: String
@@ -385,13 +385,12 @@ module Chemotion
         optional :reaction_svg_file, type: String
 
         requires :materials, type: Hash
-        optional :literatures, type: Array
+        optional :literatures, type: Hash
         requires :container, type: Hash
         optional :duration, type: String
       end
 
       post do
-
         attributes = declared(params, include_missing: false).symbolize_keys
         materials = attributes.delete(:materials)
         literatures = attributes.delete(:literatures)
@@ -404,6 +403,30 @@ module Chemotion
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
 
+        if (literatures && literatures.length > 0)
+          literatures.each do |literature|
+            next unless literature&.length > 1
+            refs = literature[1].refs
+            doi = literature[1].doi
+            url = literature[1].url
+            title = literature[1].title
+
+            lit = Literature.find_or_create_by(doi: doi, url:url, title:title)
+            lit.update!(refs: (lit.refs || {}).merge(declared(refs))) if refs
+
+            attributes = {
+             literature_id: lit.id,
+             user_id: current_user.id,
+             element_type: 'Reaction',
+             element_id: reaction.id,
+             category: 'detail'
+           }
+           unless Literal.find_by(attributes)
+             Literal.create(attributes)
+             reaction.touch
+           end
+          end
+        end
         reaction.container = update_datamodel(container_info)
         reaction.save!
 
