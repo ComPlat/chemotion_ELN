@@ -111,10 +111,6 @@ module Export
           :molecule_id => 'Molecule',
           :user_id => 'User'
         })
-        fetch_one(sample.well, {
-          :sample_id => 'Sample',
-          :wellplate_id => 'Wellplate',
-        })
         fetch_many(sample.residues, {
           :sample_id => 'Sample',
         })
@@ -173,6 +169,11 @@ module Export
 
       # fetch containers and attachments
       collection.wellplates.each do |wellplate|
+        fetch_many(wellplate.wells, {
+          :sample_id => 'Sample',
+          :wellplate_id => 'Wellplate',
+        })
+
         fetch_containers(wellplate)
       end
     end

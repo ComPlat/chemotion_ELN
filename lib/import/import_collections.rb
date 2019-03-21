@@ -221,7 +221,7 @@ module Import
           'updated_at'
         ).merge({
           :wellplate => @instances.fetch('Wellplate').fetch(fields.fetch('wellplate_id')),
-          :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+          :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'), nil)
         }))
 
         # add reaction to the @instances map
@@ -433,10 +433,13 @@ module Import
     # Follows a has_many relation to `foreign_type` through `association_type`
     def fetch_many(foreign_type, association_type, local_field, foreign_field, local_id)
       associations = []
-      @data.fetch(association_type).each do |uuid, fields|
+      @data.fetch(association_type, {}).each do |uuid, fields|
         if fields.fetch(local_field) == local_id
           foreign_id = fields.fetch(foreign_field)
-          associations << @instances.fetch(foreign_type).fetch(foreign_id)
+          instance = @instances.fetch(foreign_type, {}).fetch(foreign_id, nil)
+          unless instance.nil?
+            associations << instance
+          end
         end
       end
       return associations
