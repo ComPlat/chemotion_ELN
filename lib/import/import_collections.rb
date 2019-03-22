@@ -82,7 +82,27 @@ module Import
     end
 
     def import_samples
+
+        # molecule_name_uuid = fields.fetch('molecule_name_id')
+        # molecule_name_fields = @data.fetch('MoleculeName').fetch(molecule_name_uuid)
+        # puts molecule_name_fields
+
+
       @data.fetch('Sample', {}).each do |uuid, fields|
+        # look for the molecule_name
+        molecule_name_uuid = fields.fetch('molecule_name_id')
+        molecule_name_name = @data.fetch('MoleculeName').fetch(molecule_name_uuid).fetch('name')
+
+        # look for the molecule for this sample and add the molecule name
+        # neither the Molecule or the MoleculeName are created if they already exist
+        molfile = fields.fetch('molfile')
+        molecule = Molecule.find_or_create_by_molfile(molfile)
+        molecule.create_molecule_name_by_user(molecule_name_name, @current_user_id)
+
+        # get the molecule_name from the list of molecule names in molecule
+        # this seems a bit cumbersome, but fits in with the methods of Molecule and MoleculeName
+        molecule_name = molecule.molecule_names.find_by(name: molecule_name_name)
+
         # create the sample
         sample = Sample.create!(fields.slice(
           'name',
@@ -113,6 +133,7 @@ module Import
           :created_by => @current_user_id,
           :collections => fetch_many(
             'Collection', 'CollectionsSample', 'sample_id', 'collection_id', uuid),
+          :molecule_name => molecule_name,
           :sample_svg_file => fetch_image('samples', fields.fetch('sample_svg_file')),
           :parent => fetch_ancestry('Sample', fields.fetch('ancestry'))
         }))
