@@ -23,6 +23,7 @@ export default class ReactionDetailsScheme extends Component {
     super(props);
     let { reaction } = props;
     this.state = { reaction, lockEquivColumn: false };
+    this.quillref = React.createRef();
 
     this.onChangeRole = this.onChangeRole.bind(this);
     this.renderRole = this.renderRole.bind(this);
@@ -229,9 +230,33 @@ export default class ReactionDetailsScheme extends Component {
 
   addSampleToDescription(e) {
     const { description } = this.state.reaction;
-    const newDesc = {
+    let newDesc = {
       ops: [...description.ops, { insert: e.paragraph }],
     };
+    const quillEditor = this.quillref.current.editor;
+    const range = quillEditor.getSelection();
+
+    if (range) {
+      let contents = quillEditor.getContents();
+      let insertOps = [{ insert: e.paragraph }];
+      const insertDelta = new Delta(insertOps);
+      if (range.index > 0) {
+        insertOps = [{ retain: range.index }].concat(insertOps);
+      }
+      const elementDelta = new Delta(insertOps);
+      contents = contents.compose(elementDelta);
+
+      quillEditor.setContents(contents);
+      range.length = 0;
+      range.index += insertDelta.length();
+      quillEditor.setSelection(range);
+
+      newDesc = contents;
+    } else {
+      newDesc = {
+        ops: [...description.ops, { insert: e.paragraph }],
+      };
+    }
     const newDescDelta = new Delta(newDesc);
     this.props.onInputChange('description', newDescDelta);
   }
@@ -686,6 +711,7 @@ if ((typeof (lockEquivColumn) !== 'undefined' && !lockEquivColumn) || !reaction.
                 <FormGroup>
                   <ControlLabel>Description</ControlLabel>
                   <QuillEditor
+                    ref={this.quillref}
                     value={reaction.description}
                     onChange={event => this.props.onInputChange('description', event)}
                     toolbarSymbol={reactionToolbarSymbol}
