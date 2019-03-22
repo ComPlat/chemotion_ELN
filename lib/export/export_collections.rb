@@ -27,27 +27,50 @@ module Export
         File.write(@file_path, @data.to_json())
 
       when 'zip'
+        # prepare the desription file
+        description = <<~DESC
+        file_name: #{@export_id}.zip
+
+        files:
+        DESC
+
         # create a zip buffer
         zip = Zip::OutputStream.write_buffer do |zip|
           # write the json file into the zip file
-          zip.put_next_entry File.join('export.json')
-          zip.write @data.to_json()
+          export_json = @data.to_json()
+          export_json_checksum = Digest::SHA256.hexdigest(export_json)
+          zip.put_next_entry 'export.json'
+          zip.write export_json
+          description += "#{export_json_checksum} export.json\n"
+
+          # write the json schema
+          schema_json = File.read(@schema_file_path)
+          schema_json_checksum = Digest::SHA256.hexdigest(schema_json)
+          zip.put_next_entry 'schema.json'
+          zip.write schema_json
+          description += "#{schema_json_checksum} schema.json\n"
 
           # write all attachemnts into an attachments directory
           @attachments.each do |attachment|
-            zip.put_next_entry File.join('attachments', attachment.filename)
+            attachment_path = File.join('attachments', attachment.filename)
+            zip.put_next_entry attachment_path
             zip.write attachment.read_file
+            description += "#{attachment.checksum} #{attachment_path}\n"
           end
 
           # write all the images into an images directory
           @images.each do |image|
-            zip.put_next_entry File.join('images', image[:file_name])
-            zip.write File.read(image[:file_path])
+            image_path = File.join('images', image[:file_name])
+            image_data = File.read(image[:file_path])
+            image_checksum = Digest::SHA256.hexdigest(image_data)
+            zip.put_next_entry image_path
+            zip.write image_data
+            description += "#{image_checksum} #{image_path}\n"
           end
 
-          # write the json schema
-          zip.put_next_entry File.join('schema.json')
-          zip.write File.read(@schema_file_path)
+          # write the description file
+          zip.put_next_entry 'description.txt'
+          zip.write description
         end
         zip.rewind
 
