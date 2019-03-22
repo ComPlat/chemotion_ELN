@@ -39,6 +39,7 @@ module Import
       ActiveRecord::Base.transaction do
         import_collections
         import_samples
+        import_residues
         import_reactions
         import_reactions_samples
         import_wellplates
@@ -118,6 +119,23 @@ module Import
 
         # add sample to the @instances map
         update_instances!(uuid, sample)
+      end
+    end
+
+    def import_residues
+      @data.fetch('Residue', {}).each do |uuid, fields|
+        # create the sample
+        residue = Residue.create!(fields.slice(
+          'residue_type',
+          'custom_info',
+          'created_at',
+          'updated_at'
+        ).merge({
+          :sample => @instances.fetch('Sample').fetch(fields.fetch('sample_id'))
+        }))
+
+        # add reaction to the @instances map
+        update_instances!(uuid, residue)
       end
     end
 
