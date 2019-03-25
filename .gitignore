@@ -71,6 +71,9 @@
 /public/zip/*
 !/public/zip/.keep
 
+/public/udm/*
+!/public/udm/.keep
+
 /public/docx/*
 !/public/docx/.keep
 

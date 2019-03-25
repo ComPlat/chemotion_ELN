@@ -20,11 +20,20 @@ module Export
       @data.to_json()
     end
 
+    def to_udm
+      builder = Export::ExportCollectionsUdmBuilder.new @data
+      builder.to_xml
+    end
+
     def to_file
       case @format
       when 'json'
         # write the json file public/json/
-        File.write(@file_path, @data.to_json())
+        File.write(@file_path, self.to_json)
+
+      when 'udm'
+        # write the json file public/udm/
+        File.write(@file_path, self.to_udm)
 
       when 'zip'
         # prepare the desription file
@@ -37,7 +46,7 @@ module Export
         # create a zip buffer
         zip = Zip::OutputStream.write_buffer do |zip|
           # write the json file into the zip file
-          export_json = @data.to_json()
+          export_json = self.to_json()
           export_json_checksum = Digest::SHA256.hexdigest(export_json)
           zip.put_next_entry 'export.json'
           zip.write export_json
