@@ -7,7 +7,7 @@ module Import
       @import_id = import_id
       @current_user_id = current_user_id
 
-      @zip_file_path = File.join('tmp', 'import', '#{import_id}.zip')
+      @zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
       @directory = File.join('tmp', 'import', import_id)
 
       @data = nil
