@@ -11,7 +11,11 @@ export default class ScreensFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new Screen(json.screen);
+        const rScreen = new Screen(json.screen);
+        if (json.error) {
+          rScreen.id = `${id}:error:Screen ${id} is not accessible!`;
+        }
+        return rScreen;
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });

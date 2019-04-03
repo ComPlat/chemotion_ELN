@@ -25,7 +25,11 @@ export default class ReactionsFetcher {
           }
           return reaction;
         } else {
-          return json
+          const rReaction = new Reaction(json.reaction);
+          if (json.error) {
+            rReaction.id = `${id}:error:Reaction ${id} is not accessible!`;
+          }
+          return rReaction;
         }
       }).catch((errorMessage) => {
         console.log(errorMessage);

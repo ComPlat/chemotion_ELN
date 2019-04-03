@@ -43,12 +43,14 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new Sample(json.sample);
-
+        const rSample = new Sample(json.sample);
+        if (json.error) {
+          rSample.id = `${id}:error:Sample ${id} is not accessible!`;
+        }
+        return rSample;
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
     return promise;
   }
 

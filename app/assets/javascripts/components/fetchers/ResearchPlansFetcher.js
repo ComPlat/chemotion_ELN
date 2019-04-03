@@ -12,7 +12,11 @@ export default class ResearchPlansFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new ResearchPlan(json.research_plan);
+        const rResearchPlan = new ResearchPlan(json.research_plan);
+        if (json.error) {
+          rResearchPlan.id = `${id}:error:ResearchPlan ${id} is not accessible!`;
+        }
+        return rResearchPlan;
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
