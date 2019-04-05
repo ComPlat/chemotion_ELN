@@ -6,8 +6,23 @@ import NotificationActions from '../actions/NotificationActions';
 export default class ModalExportCollection extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {}
+    this.state = {
+      nested: true
+    }
     this.handleClick = this.handleClick.bind(this)
+    this.toggleCheckbox = this.toggleCheckbox.bind(this)
+  }
+
+  checkbox() {
+    return (
+      <div>
+        <input type="checkbox"
+                 onChange={this.toggleCheckbox}
+                 checked={this.state.nested}
+                 className="common-checkbox" />
+        <span className="g-marginLeft--10"> Include nested collections </span>
+      </div>
+    )
   }
 
   buttonBar() {
@@ -34,7 +49,7 @@ export default class ModalExportCollection extends React.Component {
     let params = {
       collections: (full ? [] : [uiState.currentCollection.id]),
       format: 'zip',
-      nested: true
+      nested: this.state.nested
     }
     action(params);
 
@@ -53,12 +68,22 @@ export default class ModalExportCollection extends React.Component {
     NotificationActions.add(notification);
   }
 
+  toggleCheckbox() {
+    let newNested = !this.state.nested;
+
+    this.setState({
+      nested: newNested
+    })
+  }
+
   render() {
     const onChange = (v) => this.setState(
       previousState => {return { ...previousState, value: v }}
     )
+    const { full } = this.props;
     return (
       <div>
+        {!full && this.checkbox()}
         {this.buttonBar()}
       </div>
     )
