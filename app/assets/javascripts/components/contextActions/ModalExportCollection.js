@@ -29,10 +29,10 @@ export default class ModalExportCollection extends React.Component {
 
   handleClick() {
     const uiState = UIStore.getState();
-    const { onHide, action } = this.props;
+    const { onHide, action, full } = this.props;
 
     let params = {
-      collections: [uiState.currentCollection.id],
+      collections: (full ? [] : [uiState.currentCollection.id]),
       format: 'zip',
       nested: true
     }

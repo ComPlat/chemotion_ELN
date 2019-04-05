@@ -358,12 +358,17 @@ module Chemotion
           format = params[:format]
           nested = params[:nested] == true
 
-          # check if the user is allowed to export these collections
-          collection_ids.each do |collection_id|
-            begin
-              collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(collection_id)
-            rescue ActiveRecord::RecordNotFound
-              error!('401 Unauthorized', 401)
+          if collection_ids.empty?
+            # no collection was given, export all collections for this user
+            collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).pluck(:id)
+          else
+            # check if the user is allowed to export these collections
+            collection_ids.each do |collection_id|
+              begin
+                collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(collection_id)
+              rescue ActiveRecord::RecordNotFound
+                error!('401 Unauthorized', 401)
+              end
             end
           end
 
