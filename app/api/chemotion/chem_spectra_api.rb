@@ -95,17 +95,33 @@ module Chemotion
       resource :predict do
         desc 'Predict by peaks'
         params do
+          requires :molfile, type: Hash
           requires :layout, type: String
-          requires :peaks, type: Array
-          requires :molecule, type: String
+          requires :peaks, type: String
+          requires :shift, type: String
         end
-        post 'by_peaks' do
-          rsp = Chemotion::Jcamp::Predict.by_peaks(
-            params[:layout], params[:peaks], params[:molecule]
+        post 'by_peaks_form' do
+          molfile = params['molfile']['tempfile']
+          rsp = Chemotion::Jcamp::Predict::PeaksForm.exec(
+            molfile, params[:layout], params[:peaks], params[:shift]
           )
 
           content_type('application/json')
           rsp
+        end
+      end
+
+      resource :molfile do
+        desc 'convert molfile'
+        params do
+          requires :molfile, type: Hash
+        end
+        post 'convert' do
+          molfile = params['molfile']['tempfile'].read
+          m = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+
+          content_type('application/json')
+          { smi: m[:smiles], mass: m[:mass], status: true }
         end
       end
     end
