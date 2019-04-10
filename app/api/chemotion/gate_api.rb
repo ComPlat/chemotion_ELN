@@ -30,7 +30,7 @@ module Chemotion
         rescue JWT::VerificationError, JWT::DecodeError, JWT::ExpiredSignature => e
           error!("#{e}", 401)
         end
-        error!('host vs origin mismatch', 401) unless @auth_token[:origin] == request.headers['Origin']
+        error!('host vs origin mismatch', 401) unless request.headers['Origin'].start_with?(@auth_token[:origin])
         status 200
         { expire_at: Time.at(@auth_token[:exp]) }
       end

@@ -12,8 +12,8 @@ const PrintCodeButton = ({
   let tooltipText = 'Print bar/qr-code Label';
   const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
   const contentsUri = analyses.length > 0
-    ? `api/v1/code_logs/print_analyses_codes?element_type=${type}&id=${id}&analyses_ids[]=${ids}`
-    : `api/v1/code_logs/print_codes?element_type=${type}&ids[]=${id}`;
+    ? `/api/v1/code_logs/print_analyses_codes?element_type=${type}&id=${id}&analyses_ids[]=${ids}`
+    : `/api/v1/code_logs/print_codes?element_type=${type}&ids[]=${id}`;
   const menuItems = [
     {
       key: 'smallCode',

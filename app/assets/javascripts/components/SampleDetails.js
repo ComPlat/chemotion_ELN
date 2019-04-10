@@ -316,25 +316,25 @@ export default class SampleDetails extends React.Component {
       case "1H NMR": case "13C NMR":
         sample.addAnalysis(analysis);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
         break;
       case "Others":
         sample.addAnalysis(a1);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small"})
         break;
       case "Others2x":
         sample.addAnalysis(a1);
         sample.addAnalysis(a2);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
         break;
       case "Others3x":
         sample.addAnalysis(a1);
         sample.addAnalysis(a2);
         sample.addAnalysis(a3);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
         break;
     }
   }

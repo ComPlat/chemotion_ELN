@@ -399,7 +399,7 @@ class ReportStore {
     const target = `id=${JSON.stringify(id)}&ext=${ext}`;
     this.markReaded(id);
     Utils.downloadFile({
-      contents: `api/v1/download_report/file?${target}`,
+      contents: `/api/v1/download_report/file?${target}`,
     });
   }
 
