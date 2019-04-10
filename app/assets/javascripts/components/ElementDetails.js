@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import StickyDiv from 'react-stickydiv';
-import { Tabs, Tab, Label } from 'react-bootstrap';
+import { Tabs, Tab, Label, Button } from 'react-bootstrap';
 import SampleDetails from './SampleDetails';
 import DeviceDetails from './DeviceDetails';
 import ReactionDetails from './ReactionDetails';
@@ -134,7 +134,19 @@ export default class ElementDetails extends Component {
       case 'literature_map':
         return <LiteratureDetails literatureMap={el} />
       default:
-        return (<span />);
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <br />
+            <h1>{el.id.substring(el.id.indexOf('error:') + 6)}</h1>
+            <h3><i className="fa fa-eye-slash fa-5x" /></h3>
+            <Button
+              bsStyle="danger"
+              onClick={() => DetailActions.close(el, true)}
+            >
+              Close this window
+            </Button>
+          </div>
+        );
     }
   }
 

@@ -9,8 +9,11 @@ export default class WellplatesFetcher {
         credentials: 'same-origin'
       })
       .then((response) => {
-        return response.json()
+        return response.json();
       }).then((json) => {
+        if (json.error) {
+          return new Wellplate({ id: `${id}:error:Wellplate ${id} is not accessible!`, wells: [], is_new: true });
+        }
         return new Wellplate(json.wellplate);
       }).catch((errorMessage) => {
         console.log(errorMessage);
