@@ -13,6 +13,7 @@ import SpectraActions from './actions/SpectraActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
 import { nmrCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
+import UIStore from './stores/UIStore';
 
 const nmrMsg = (sample, container) => {
   if (sample.molecule && container.extended_metadata && container.extended_metadata.kind !== '1H NMR') {
@@ -26,8 +27,8 @@ const nmrMsg = (sample, container) => {
 };
 
 const SpectraViewerBtn = ({
-  spcInfo, hasJcamp,
-  toggleSpectraModal, confirmRegenerate
+  sample, spcInfo, hasJcamp, hasChemSpectra,
+  toggleSpectraModal, confirmRegenerate,
 }) => (
   <OverlayTrigger
     placement="bottom"
@@ -43,11 +44,11 @@ const SpectraViewerBtn = ({
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
-        disabled={!spcInfo}
+        disabled={!spcInfo || !sample.can_update || !hasChemSpectra}
       >
         <MenuItem
           key="regenerate-spectra"
-          onSelect={(eventKey,event) => {
+          onSelect={(eventKey, event) => {
             event.stopPropagation();
             confirmRegenerate(event);
           }}
@@ -63,7 +64,7 @@ const SpectraViewerBtn = ({
       bsSize="xsmall"
       className="button-right"
       onClick={confirmRegenerate}
-      disabled={!hasJcamp}
+      disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
@@ -72,8 +73,10 @@ const SpectraViewerBtn = ({
 );
 
 SpectraViewerBtn.propTypes = {
+  sample: PropTypes.object,
   hasJcamp: PropTypes.bool,
   spcInfo: PropTypes.bool,
+  hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
 };
@@ -81,6 +84,8 @@ SpectraViewerBtn.propTypes = {
 SpectraViewerBtn.defaultProps = {
   hasJcamp: false,
   spcInfo: false,
+  sample: {},
+  hasChemSpectra: false,
 };
 
 const editModeBtn = (toggleMode, isDisabled) => (
@@ -208,6 +213,7 @@ const headerBtnGroup = (
       SpectraActions.Regenerate(jcampIds, handleSubmit);
     }
   };
+  const { hasChemSpectra } = UIStore.getState();
 
   return (
     <div className="upper-btn">
@@ -226,8 +232,10 @@ const headerBtnGroup = (
         ident={container.id}
       />
       <SpectraViewerBtn
+        sample={sample}
         hasJcamp={hasJcamp}
         spcInfo={spcInfo}
+        hasChemSpectra={hasChemSpectra}
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}
       />

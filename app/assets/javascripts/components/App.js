@@ -13,6 +13,7 @@ import Elements from './Elements';
 import initRoutes from './routes';
 import Notifications from './Notifications';
 import LoadingModal from './common/LoadingModal';
+import UIActions from './actions/UIActions';
 import UserActions from './actions/UserActions';
 import KeyboardActions from './actions/KeyboardActions';
 import UIStore from './stores/UIStore';
@@ -35,6 +36,7 @@ class App extends Component {
   componentDidMount() {
     UIStore.listen(this.handleUiStoreChange);
     UserActions.fetchProfile();
+    UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);
   }
 
