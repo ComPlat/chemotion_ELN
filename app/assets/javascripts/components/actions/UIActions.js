@@ -1,7 +1,16 @@
 import alt from '../alt';
+import UIFetcher from '../fetchers/UIFetcher';
 
 // An element object has a type and an id, e.g., {type: 'sample', id: 1}
 class UIActions {
+  initialize() {
+    return (dispatch) => {
+      UIFetcher.initialize()
+        .then(json => dispatch(json))
+        .catch(err => console.log(err)); // eslint-disable-line
+    };
+  }
+
   showCollectionManagement() {
     return  null;
   }

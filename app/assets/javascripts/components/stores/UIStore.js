@@ -65,10 +65,11 @@ class UIStore {
       isSync: false,
       showModal: false,
       modalParams: {},
+      hasChemSpectra: false,
     };
 
     this.bindListeners({
-
+      handleInitialize: UIActions.initialize,
       handleSelectTab: UIActions.selectTab,
       handleSelectActiveAnalysis: UIActions.selectActiveAnalysis,
 
@@ -101,6 +102,10 @@ class UIStore {
       handleSetToDate: UIActions.setToDate,
       handleSetProductOnly: UIActions.setProductOnly,
     });
+  }
+
+  handleInitialize(result) {
+    this.setState(result);
   }
 
   handleToggleCollectionManagement() {
