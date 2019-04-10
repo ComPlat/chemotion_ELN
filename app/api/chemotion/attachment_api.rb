@@ -311,7 +311,7 @@ module Chemotion
           next unless att
           can_write = writable?(att)
           if can_write
-            att.set_queueing
+            att.set_regenerating
             att.save
           end
         end
@@ -325,7 +325,7 @@ module Chemotion
       end
       post 'save_peaks' do
         pm = to_rails_snake_case(params)
-        @attachment.generate_spectrum(false, pm[:peaks], pm[:shift])
+        @attachment.generate_spectrum(false, false, pm[:peaks], pm[:shift])
       end
 
       namespace :svgs do
