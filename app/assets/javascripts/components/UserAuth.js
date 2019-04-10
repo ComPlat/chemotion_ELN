@@ -515,21 +515,21 @@ export default class UserAuth extends Component {
 
   render() {
     const templatesLink = (
-      <MenuItem eventKey="2" href="ketcher/common_templates">Template Management</MenuItem>
+      <MenuItem eventKey="2" href="/ketcher/common_templates">Template Management</MenuItem>
     );
 
     return (
       <div>
         <Nav navbar pullRight>
           <NavDropdown title={`${this.state.currentUser.name}`} id="bg-nested-dropdown">
-            <MenuItem eventKey="1" href="pages/settings" >Account &amp; Profile</MenuItem>
+            <MenuItem eventKey="1" href="/pages/settings" >Account &amp; Profile</MenuItem>
             {this.state.currentUser.is_templates_moderator ? templatesLink : null}
-            <MenuItem eventKey="3" href="users/edit" >Change Password</MenuItem>
-            <MenuItem eventKey="5" href="pages/affiliations" >My Affiliations</MenuItem>
+            <MenuItem eventKey="3" href="/users/edit" >Change Password</MenuItem>
+            <MenuItem eventKey="5" href="/pages/affiliations" >My Affiliations</MenuItem>
             <MenuItem onClick={this.handleShow}>My Groups</MenuItem>
             {/* <MenuItem onClick={this.handleSubscriptionShow}>My Subscriptions</MenuItem>
                 Disable for now as there is no subsciption channel yet (Paggy) */}
-            {/* <MenuItem eventKey="7" href="command_n_control" >My Devices</MenuItem> */}
+            {/* <MenuItem eventKey="7" href="/command_n_control" >My Devices</MenuItem> */}
           </NavDropdown>
           <NavItem onClick={() => this.logout()} style={{ marginRight: '5px' }} className="" title="Log out">
             <Glyphicon glyph="log-out" />

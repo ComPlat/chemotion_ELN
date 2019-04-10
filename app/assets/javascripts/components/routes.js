@@ -100,7 +100,7 @@ const routes = {
 };
 
 export default function() {
-  Aviator.root = '/';
-  Aviator.pushStateEnabled = false;
+  Aviator.root = '/mydb';
+  Aviator.pushStateEnabled = true;
   Aviator.setRoutes( allRoutes(routes));
 }

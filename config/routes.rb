@@ -7,7 +7,10 @@ Rails.application.routes.draw do
   end
 
   authenticated :user do
-    root to: 'pages#welcome', as: :authenticated_root
+    root to: redirect('mydb'), as: :authenticated_root
+  end
+
+  authenticate :user do
     get 'pages/settings', to: 'pages#settings'
     get 'pages/profiles', to: 'pages#profiles'
     patch 'pages/update_profiles', to: 'pages#update_profiles'
@@ -17,7 +20,8 @@ Rails.application.routes.draw do
     patch 'pages/update_affiliations', to: 'pages#update_affiliations'
 
     get 'command_n_control', to: 'pages#cnc'
-
+    get 'mydb/*any', to: 'pages#welcome'
+    get 'mydb', to: 'pages#welcome'
   end
 
   # Standalone page for ChemScanner

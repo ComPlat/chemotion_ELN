@@ -325,7 +325,7 @@ export default class ReactionDetails extends Component {
               "Report can be generated after reaction is saved."
               : "Generate report for this reaction"}
             onClick={() => Utils.downloadFile({
-              contents: "api/v1/reports/docx?id=" + reaction.id,
+              contents: "/api/v1/reports/docx?id=" + reaction.id,
               name: reaction.name
             })}
           >
