@@ -12,7 +12,7 @@ module AttachmentJcampAasm
 
     aasm do # rubocop:disable BlockLength
       state :idle, initial: true
-      state :queueing, :done
+      state :queueing, :regenerating, :done
       state :peaked, :edited, :backup, :image
       state :failure
       state :non_jcamp
@@ -27,16 +27,21 @@ module AttachmentJcampAasm
       end
 
       event :set_queueing do
-        transitions from: %i[idle done backup failure non_jcamp queueing],
+        transitions from: %i[idle done backup failure non_jcamp queueing regenerating],
                     to: :queueing
       end
 
+      event :set_regenerating do
+        transitions from: %i[idle done backup failure non_jcamp queueing regenerating],
+                    to: :regenerating
+      end
+
       event :set_force_peaked do
-        transitions from: %i[queueing], to: :peaked
+        transitions from: %i[queueing regenerating], to: :peaked
       end
 
       event :set_edited do
-        transitions from: %i[peaked queueing], to: :edited
+        transitions from: %i[peaked queueing regenerating], to: :edited
       end
 
       event :set_backup do
@@ -47,12 +52,8 @@ module AttachmentJcampAasm
         transitions from: :idle, to: :non_jcamp
       end
 
-      event :set_queue do
-        transitions from: :idle, to: :queueing
-      end
-
       event :set_done do
-        transitions from: :queueing, to: :done
+        transitions from: %i[queueing regenerating], to: :done
       end
 
       event :set_image do
@@ -60,7 +61,7 @@ module AttachmentJcampAasm
       end
 
       event :set_failure do
-        transitions from: %i[idle queueing peaked edited failure], to: :failure
+        transitions from: %i[idle queueing regenerating peaked edited failure], to: :failure
       end
     end
   end
@@ -77,17 +78,18 @@ module AttachmentJcampAasm
   def init_aasm
     return unless idle?
     _, extname = extension_parts
-    %w[dx DX jdx JDX jcamp JCAMP].include?(extname) ? set_queue : set_non_jcamp
+    %w[dx jdx jcamp].include?(extname.downcase) ? set_queueing : set_non_jcamp
   end
 
   def require_peaks_generation? # rubocop:disable all
     return unless belong_to_analysis?
     typname, extname = extension_parts
     return if peaked? || edited?
-    return unless %w[dx DX jdx JDX jcamp JCAMP].include?(extname)
+    return unless %w[dx jdx jcamp].include?(extname.downcase)
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
-    generate_spectrum(true) if queueing? && !new_upload
+    generate_spectrum(true, false, false, false) if queueing? && !new_upload
+    generate_spectrum(true, true, false, false) if regenerating? && !new_upload
   end
 
   def belong_to_analysis?
@@ -130,8 +132,8 @@ module AttachmentJcampProcess
     generate_att(jcamp_tmp, addon, toEdit, use_default_ext)
   end
 
-  def create_process
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(abs_path)
+  def create_process(is_regen)
+    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(abs_path, is_regen)
     generate_jcamp_att(tmp_jcamp, 'peak')
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
@@ -140,9 +142,9 @@ module AttachmentJcampProcess
     delete_edit_peak_after_done
   end
 
-  def edit_process(peaks, shift)
+  def edit_process(is_regen, peaks, shift)
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
-      abs_path, peaks, shift
+      abs_path, is_regen, peaks, shift
     )
     generate_jcamp_att(tmp_jcamp, 'edit', true)
     img_att = generate_img_att(tmp_img, 'edit', true)
@@ -152,8 +154,10 @@ module AttachmentJcampProcess
     delete_edit_peak_after_done
   end
 
-  def generate_spectrum(is_create = false, peaks = false, shift = false)
-    is_create ? create_process : edit_process(peaks, shift)
+  def generate_spectrum(
+    is_create = false, is_regen = false, peaks = false, shift = false
+  )
+    is_create ? create_process(is_regen) : edit_process(is_regen, peaks, shift)
   rescue
     set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')

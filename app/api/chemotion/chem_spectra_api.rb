@@ -42,7 +42,7 @@ module Chemotion
       def conversion(params)
         file = decode_param(params)[0]
         tmp = file[:tempfile]
-        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(tmp.path) # abs_path, peaks, shift
+        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(tmp.path) # abs_path, is_regen, peaks, shift
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
@@ -54,7 +54,9 @@ module Chemotion
         file, peaks_str, shift = decode_param(params)
         peaks = str_to_peaks(peaks_str)
         tmp = file[:tempfile]
-        jcamp, img = Chemotion::Jcamp::Create.spectrum(tmp.path, peaks, shift)
+        jcamp, img = Chemotion::Jcamp::Create.spectrum(
+          tmp.path, false, peaks, shift
+        )
         to_zip_file(params[:filename], jcamp, img)
       rescue
         error!('Save files error!', 500)

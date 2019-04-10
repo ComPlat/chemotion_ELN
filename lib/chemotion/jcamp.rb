@@ -65,11 +65,12 @@ module Chemotion
     module Create
       include HTTParty
 
-      def self.build_body(file, peaks_str = false, shift = false)
+      def self.build_body(file, is_regen = false, peaks_str = false, shift = false)
         body = {
           multipart: true,
           file: file
         }
+        body[:clear] = true if is_regen
         body[:peaks_str] = peaks_str if peaks_str
         if shift
           body[:shift_select_x] = shift[:select_x]
@@ -79,12 +80,12 @@ module Chemotion
         body
       end
 
-      def self.stub_http(path, peaks_str = false, shift = false)
+      def self.stub_http(path, is_regen = false, peaks_str = false, shift = false)
         response = nil
         url = Rails.configuration.spectra.url
         port = Rails.configuration.spectra.port
         File.open(path, 'r') do |file|
-          body = build_body(file, peaks_str, shift)
+          body = build_body(file, is_regen, peaks_str, shift)
           response = HTTParty.post(
             "http://#{url}:#{port}/zip_jcamp_n_img",
             body: body
@@ -97,9 +98,9 @@ module Chemotion
         peaks.map { |p| "#{p[:x]},#{p[:y]}" }.join('#')
       end
 
-      def self.spectrum(path, peaks = false, shift = false)
+      def self.spectrum(path, is_regen = false, peaks = false, shift = false)
         peaks_str = peaks ? to_coord_string(peaks) : false
-        rsp = stub_http(path, peaks_str, shift)
+        rsp = stub_http(path, is_regen, peaks_str, shift)
         rsp_io = StringIO.new(rsp.body.to_s)
         Util.extract_zip(rsp_io)
       end
