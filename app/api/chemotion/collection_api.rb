@@ -401,7 +401,7 @@ module Chemotion
           FileUtils.mkdir_p(import_path) unless Dir.exist?(import_path)
 
           # store the file as `tmp/imports/<import_id>.zip`
-          zip_file_path = File.join('tmp', 'import', '#{import_id}.zip')
+          zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
           File.open(zip_file_path, 'wb') do |file|
             file.write(params[:file][:tempfile].read)
           end
