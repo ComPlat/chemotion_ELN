@@ -360,7 +360,7 @@ module Import
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
 
         # construct file path
-        file_path = File.join(@directory, 'attachments', fields.fetch('filename'))
+        file_path = File.join(@directory, 'attachments', fields.fetch('identifier'))
 
         # create the attachment
         attachment = attachable.attachments.create!(

@@ -61,7 +61,7 @@ module Export
 
           # write all attachemnts into an attachments directory
           @attachments.each do |attachment|
-            attachment_path = File.join('attachments', attachment.filename)
+            attachment_path = File.join('attachments', attachment.identifier)
             zip.put_next_entry attachment_path
             zip.write attachment.read_file
             description += "#{attachment.checksum} #{attachment_path}\n"
