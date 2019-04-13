@@ -446,7 +446,7 @@ module Import
 
     def fetch_image(image_path, image_file_name)
       unless image_file_name.nil? or image_file_name.empty?
-        import_file_path = File.join(@directory, 'images', image_file_name)
+        import_file_path = File.join(@directory, 'images', image_path, image_file_name)
 
         if File.exists?(import_file_path)
           # copy extracted file from the import
@@ -460,12 +460,10 @@ module Import
 
     def fetch_reaction_image(image_file_name)
       unless image_file_name.nil? or image_file_name.empty?
-        import_file_path = File.join(@directory, 'images', image_file_name)
+        import_file_path = File.join(@directory, 'images', 'reactions', image_file_name)
 
         if File.exists?(import_file_path)
-          File.open(import_file_path) do |f|
-            f.read()
-          end
+          File.read(import_file_path)
         end
       end
     end

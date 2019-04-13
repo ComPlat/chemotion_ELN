@@ -68,13 +68,12 @@ module Export
           end
 
           # write all the images into an images directory
-          @images.each do |image|
-            image_path = File.join('images', image[:file_name])
-            image_data = File.read(image[:file_path])
+          @images.each do |file_path|
+            image_data = File.read(File.join('public', file_path))
             image_checksum = Digest::SHA256.hexdigest(image_data)
-            zip.put_next_entry image_path
+            zip.put_next_entry file_path
             zip.write image_data
-            description += "#{image_checksum} #{image_path}\n"
+            description += "#{image_checksum} #{file_path}\n"
           end
 
           # write the description file
@@ -152,8 +151,8 @@ module Export
         fetch_literals(sample)
 
         # collect the sample_svg_file and molecule_svg_file
-        fetch_image('samples', sample.sample_svg_file)
-        fetch_image('molecules', sample.molecule.molecule_svg_file)
+        @images << File.join('images', 'samples', sample.sample_svg_file)
+        @images << File.join('images', 'molecules', sample.molecule.molecule_svg_file)
       end
     end
 
@@ -188,7 +187,7 @@ module Export
         fetch_literals(reaction)
 
         # collect the reaction_svg_file
-        fetch_image('reactions', reaction.reaction_svg_file)
+        @images << File.join('images', 'reactions', reaction.reaction_svg_file)
       end
     end
 
@@ -256,7 +255,7 @@ module Export
         fetch_literals(research_plan)
 
         # collect the svg_file
-        fetch_image('research_plans', research_plan.svg_file)
+        @images << File.join('images', 'research_plans', research_plan.svg_file)
       end
     end
 
@@ -316,16 +315,6 @@ module Export
           :element_id => element_type,
           :user_id => 'User'
         })
-      end
-    end
-
-    def fetch_image(image_path, image_file_name)
-      unless image_file_name.nil? or image_file_name.empty?
-        file_path = File.join('public', 'images', image_path, image_file_name)
-
-        if File.exist?(file_path)
-          @images << {:file_name => image_file_name, :file_path => file_path}
-        end
       end
     end
 
