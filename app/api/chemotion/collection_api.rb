@@ -350,12 +350,12 @@ module Chemotion
         desc "Create export job"
         params do
           requires :collections, type: Array[Integer]
-          requires :format, type: String
+          requires :format, type: Symbol, values: [:json, :zip, :udm]
           requires :nested, type: Boolean
         end
         post do
           collection_ids = params[:collections].uniq
-          format = params[:format]
+          format = params[:format].to_s
           nested = params[:nested] == true
 
           if collection_ids.empty?
