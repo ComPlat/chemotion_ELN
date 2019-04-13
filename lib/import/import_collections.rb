@@ -82,12 +82,6 @@ module Import
     end
 
     def import_samples
-
-        # molecule_name_uuid = fields.fetch('molecule_name_id')
-        # molecule_name_fields = @data.fetch('MoleculeName').fetch(molecule_name_uuid)
-        # puts molecule_name_fields
-
-
       @data.fetch('Sample', {}).each do |uuid, fields|
         # look for the molecule_name
         molecule_name_uuid = fields.fetch('molecule_name_id')
@@ -186,12 +180,17 @@ module Import
         ).merge({
           :created_by => @current_user_id,
           :collections => fetch_many(
-            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid),
-          :reaction_svg_file => fetch_image('reactions', fields.fetch('reaction_svg_file'))
+            'Collection', 'CollectionsReaction', 'reaction_id', 'collection_id', uuid)
         }))
 
         # create the root container like with samples
         reaction.container = Container.create_root_container
+
+        # overwrite with the image from the import, this needs to be at the end 
+        # because otherwise Reaction:update_svg_file! would create an empty image again
+        reaction.reaction_svg_file = fetch_reaction_image(fields.fetch('reaction_svg_file'))
+
+        # save the instance again
         reaction.save!
 
         # add reaction to the @instances map
@@ -455,6 +454,18 @@ module Import
           FileUtils.cp(import_file_path, file_path) unless File.exists?(file_path)
 
           image_file_name
+        end
+      end
+    end
+
+    def fetch_reaction_image(image_file_name)
+      unless image_file_name.nil? or image_file_name.empty?
+        import_file_path = File.join(@directory, 'images', image_file_name)
+
+        if File.exists?(import_file_path)
+          File.open(import_file_path) do |f|
+            f.read()
+          end
         end
       end
     end
