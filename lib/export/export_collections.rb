@@ -104,7 +104,7 @@ module Export
       collections.each do |collection|
         # fetch collection
         fetch_one(collection, {
-          :user_id => 'User'
+          'user_id' => 'User'
         })
 
         fetch_samples collection
@@ -123,15 +123,15 @@ module Export
 
       # fetch samples
       fetch_many(samples, {
-        :molecule_name_id => 'MoleculeName',
-        :molecule_id => 'Molecule',
-        :fingerprint_id => 'Fingerprint',
-        :created_by => 'User',
-        :user_id => 'User'
+        'molecule_name_id' => 'MoleculeName',
+        'molecule_id' => 'Molecule',
+        'fingerprint_id' => 'Fingerprint',
+        'created_by' => 'User',
+        'user_id' => 'User'
       })
       fetch_many(collection.collections_samples, {
-        :collection_id => 'Collection',
-        :sample_id => 'Sample'
+        'collection_id' => 'Collection',
+        'sample_id' => 'Sample'
       })
 
       # loop over samples and fetch sample properties
@@ -139,11 +139,11 @@ module Export
         fetch_one(sample.fingerprint)
         fetch_one(sample.molecule)
         fetch_one(sample.molecule_name, {
-          :molecule_id => 'Molecule',
-          :user_id => 'User'
+          'molecule_id' => 'Molecule',
+          'user_id' => 'User'
         })
         fetch_many(sample.residues, {
-          :sample_id => 'Sample',
+          'sample_id' => 'Sample',
         })
 
         # fetch containers, attachments and literature
@@ -158,11 +158,11 @@ module Export
 
     def fetch_reactions(collection)
       fetch_many(collection.reactions, {
-        :created_by => 'User'
+        'created_by' => 'User'
       })
       fetch_many(collection.collections_reactions, {
-        :collection_id => 'Collection',
-        :reaction_id => 'Reaction',
+        'collection_id' => 'Collection',
+        'reaction_id' => 'Reaction',
       })
 
       # loop over reactions and fetch reaction properties
@@ -177,8 +177,8 @@ module Export
           reaction.reactions_product_samples,
         ].each do |instances|
           fetch_many(instances, {
-            :reaction_id => 'Reaction',
-            :sample_id => 'Sample',
+            'reaction_id' => 'Reaction',
+            'sample_id' => 'Sample',
           })
         end
 
@@ -194,15 +194,15 @@ module Export
     def fetch_wellplates(collection)
       fetch_many(collection.wellplates)
       fetch_many(collection.collections_wellplates, {
-        :collection_id => 'Collection',
-        :wellplate_id => 'Wellplate',
+        'collection_id' => 'Collection',
+        'wellplate_id' => 'Wellplate',
       })
 
       # fetch containers and attachments
       collection.wellplates.each do |wellplate|
         fetch_many(wellplate.wells, {
-          :sample_id => 'Sample',
-          :wellplate_id => 'Wellplate',
+          'sample_id' => 'Sample',
+          'wellplate_id' => 'Wellplate',
         })
 
         fetch_containers(wellplate)
@@ -212,16 +212,16 @@ module Export
     def fetch_screens(collection)
       fetch_many(collection.screens)
       fetch_many(collection.collections_screens, {
-        :collection_id => 'Collection',
-        :screen_id => 'Screen',
+        'collection_id' => 'Collection',
+        'screen_id' => 'Screen',
       })
 
       # loop over screens and fetch screen properties
       collection.screens.each do |screen|
         # fetch relation between wellplates_screens and screen
         fetch_many(screen.screens_wellplates, {
-          :screen_id => 'Screen',
-          :wellplate_id => 'Wellplate',
+          'screen_id' => 'Screen',
+          'wellplate_id' => 'Wellplate',
         })
 
         # fetch containers and attachments
@@ -231,11 +231,11 @@ module Export
 
     def fetch_research_plans(collection)
       fetch_many(collection.research_plans, {
-        :created_by => 'User'
+        'created_by' => 'User'
       })
       fetch_many(collection.collections_research_plans, {
-        :collection_id => 'Collection',
-        :research_plan_id => 'ResearchPlan'
+        'collection_id' => 'Collection',
+        'research_plan_id' => 'ResearchPlan'
       })
 
       # loop over research plans and fetch research plan properties
@@ -243,9 +243,9 @@ module Export
         # fetch attachments
         # attachments are directrly related to research plans so we don't need fetch_containers
         fetch_many(research_plan.attachments, {
-          :attachable_id => 'ResearchPlan',
-          :created_by => 'User',
-          :created_for => 'User'
+          'attachable_id' => 'ResearchPlan',
+          'created_by' => 'User',
+          'created_for' => 'User'
         })
 
         # add attachments to the list of attachments
@@ -265,36 +265,36 @@ module Export
       # fetch root container
       root_container = containable.container
       fetch_one(containable.container, {
-        :containable_id => containable_type,
-        :parent_id => 'Container',
+        'containable_id' => containable_type,
+        'parent_id' => 'Container',
       })
 
       # fetch analyses container
       analyses_container = root_container.children.where("container_type = 'analyses'").first()
       fetch_one(analyses_container, {
-        :containable_id => containable_type,
-        :parent_id => 'Container',
+        'containable_id' => containable_type,
+        'parent_id' => 'Container',
       })
 
       # fetch analysis_containers
       analysis_containers = analyses_container.children.where("container_type = 'analysis'")
       analysis_containers.each do |analysis_container|
         fetch_one(analysis_container, {
-          :containable_id => containable_type,
-          :parent_id => 'Container',
+          'containable_id' => containable_type,
+          'parent_id' => 'Container',
         })
 
         # fetch attachment containers and attachments
         attachment_containers = analysis_container.children.where("container_type = 'dataset'")
         attachment_containers.each do |attachment_container|
           fetch_one(attachment_container, {
-            :containable_id => containable_type,
-            :parent_id => 'Container'
+            'containable_id' => containable_type,
+            'parent_id' => 'Container'
           })
           fetch_many(attachment_container.attachments, {
-            :attachable_id => 'Container',
-            :created_by => 'User',
-            :created_for => 'User'
+            'attachable_id' => 'Container',
+            'created_by' => 'User',
+            'created_for' => 'User'
           })
 
           # add attachments to the list of attachments
@@ -311,9 +311,9 @@ module Export
       literals.each do |literal|
         fetch_one(literal.literature)
         fetch_one(literal, {
-          :literature_id => 'Literature',
-          :element_id => element_type,
-          :user_id => 'User'
+          'literature_id' => 'Literature',
+          'element_id' => element_type,
+          'user_id' => 'User'
         })
       end
     end
