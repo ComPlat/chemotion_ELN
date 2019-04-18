@@ -7,9 +7,10 @@ import { searchAndReplace } from './markdownUtils';
 
 import UIStore from '../stores/UIStore';
 
-const atomCountInFormula = (formula) => {
+const atomCountInFormula = (formula, e = 'H') => {
   if (typeof formula !== 'string') { return 0; }
-  const re = new RegExp('H\\d*');
+  const regStr = `${e}\\d*`
+  const re = new RegExp(regStr);
   const hForm = re.exec(formula);
   if (!hForm) { return 0; }
   const count = hForm[0].slice(1);
@@ -31,18 +32,77 @@ const atomCountInNMRDescription = (nmrStr) => {
   return _.flattenDeep(nmrCnt).reduce((a, b) => a + b, 0);
 };
 
-const nmrCheckMsg = (formula, nmrStr) => {
+
+const reduceByPeak = (splitData) => {
+  let within = 0;
+  return splitData.split(/(\(|\)|,)/).reduce(
+    (acc, cv) => {
+      if (cv === ',' && within === 0) {
+        acc.push('');
+        return acc;
+      }
+      if (cv === '(') {
+        within += 1;
+      } else if (cv === ')') {
+        within -= 1;
+      }
+      acc[acc.length - 1] += cv;
+      return acc;
+    },
+    ['']
+  );
+};
+
+const atomCountCInNMRDescription = (cNmrStr) => {
+  const m = cNmrStr.match(/\s*(=|:|δ)(.*)\S/);
+  if (!m) { return 0; }
+
+  const mdata = reduceByPeak(m[2]);
+  let cCount = mdata.length;
+  mdata.forEach((peak) => {
+    if (!peak.match(/\d/)) {
+      cCount -= 1;
+    } else {
+      const bracket = peak.match(/\((.*\d+[^C]*C.*)\)/);
+      if (bracket) {
+        const simpleCount = bracket[1].match(/(^|[^\w])(\d+)\s*C/);
+        if (simpleCount) {
+          cCount += parseInt(simpleCount[2], 10) - 1;
+        } else {
+          const xCount = bracket[1].match(/(\d+)\s*(×|x)\s*./);
+          if (xCount) { cCount += parseInt(xCount[1], 10) - 1; }
+        }
+      }
+    }
+  });
+  return cCount;
+};
+
+const hNmrCheckMsg = (formula, nmrStr) => {
   if (typeof (formula) !== 'string' || typeof (nmrStr) !== 'string') {
     return '';
   }
-  const countInFormula = atomCountInFormula(formula);
+  const countInFormula = atomCountInFormula(formula, 'H');
   const countInDesc = atomCountInNMRDescription(nmrStr);
 
   if (countInFormula !== countInDesc) {
     return ` count: ${countInDesc}/${countInFormula}`;
   }
   return '';
-}
+};
+
+const cNmrCheckMsg = (formula, nmrStr) => {
+  if (typeof (formula) !== 'string' || typeof (nmrStr) !== 'string') {
+    return '';
+  }
+  const countInFormula = atomCountInFormula(formula, 'C');
+  const countInDesc = atomCountCInNMRDescription(nmrStr);
+
+  if (countInFormula !== countInDesc) {
+    return ` count: ${countInDesc}/${countInFormula}`;
+  }
+  return '';
+};
 
 const SameEleTypId = (orig, next) => {
   if (orig && next && orig.type === next.type && orig.id === next.id) {
@@ -185,10 +245,8 @@ const formatAnalysisContent = function autoFormatAnalysisContentByPattern(analys
   const kind = analysis.extended_metadata.kind || '';
   const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
   let md = deltaToMarkdown(content);
-  console.log(md);
   let formatPattern = (sampleAnalysesFormatPattern[type] || []);
   formatPattern = formatPattern.concat(commonFormatPattern);
-  console.log(formatPattern);
   formatPattern.forEach((patt) => {
     md = searchAndReplace(md, patt.pattern, patt.replace);
   });
@@ -217,7 +275,8 @@ const SampleCode = (index, materialGp) => {
 };
 
 module.exports = {
-  nmrCheckMsg,
+  hNmrCheckMsg,
+  cNmrCheckMsg,
   SameEleTypId,
   UrlSilentNavigation,
   sampleAnalysesFormatPattern,
