@@ -216,7 +216,10 @@ module Export
       # xml.LINKS
       # xml.GROUPS
       # xml.ANIMALS
-      # xml.CIT_ID
+
+      fetch_reaction_literature(uuid).each do |literature_uuid, _|
+        xml.CIT_ID literature_uuid
+      end
     end
 
     def build_reactants(xml, uuid, fields)
@@ -345,6 +348,23 @@ module Export
 
       # filter samples according to molecule uuids and return
       return @data.fetch('Molecule', {}).select do |uuid, _|
+        uuids.include? uuid
+      end
+    end
+
+    def fetch_reaction_literature(reaction_uuid)
+      # fetch literals for this reaction
+      literals = @data.fetch('Literal', {}).select do |uuid, fields|
+        fields.fetch('element_type') == "Reaction" && fields.fetch('element_id') == reaction_uuid
+      end
+
+      # create an array of the literature uuids
+      uuids = literals.values.map do |literal|
+        literal.fetch('literature_id')
+      end
+
+      # filter samples according to literature uuids and return
+      return @data.fetch('Literature', {}).select do |uuid, _|
         uuids.include? uuid
       end
     end
