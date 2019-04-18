@@ -11,19 +11,23 @@ import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
-import { nmrCheckMsg } from './utils/ElementUtils';
+import { hNmrCheckMsg, cNmrCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
 
 const nmrMsg = (sample, container) => {
-  if (sample.molecule && container.extended_metadata && container.extended_metadata.kind !== '1H NMR') {
+  if (sample.molecule && container.extended_metadata && container.extended_metadata.kind !== '1H NMR' && container.extended_metadata.kind !== '13C NMR') {
     return '';
   }
   const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
-  console.log(nmrStr);
-  const msg = nmrCheckMsg(sample.molecule.sum_formular, nmrStr);
-  return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
 
+  if (container.extended_metadata.kind === '1H NMR') {
+    const msg = hNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
+    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
+  } else if (container.extended_metadata.kind === '13C NMR') {
+    const msg = cNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
+    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>13</sup>C {msg})</div>)
+  }
 };
 
 const SpectraViewerBtn = ({
