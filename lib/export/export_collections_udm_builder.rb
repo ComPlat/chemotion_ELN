@@ -15,7 +15,7 @@ module Export
     private
 
     def build_xml(xml)
-      xml.UDM(DATABASE: '?', SEQUENCE: 0, TIMESTAMP: DateTime.now.to_s) {
+      xml.UDM(DATABASE: 'CHEMOTION', SEQUENCE: 1, TIMESTAMP: DateTime.now.to_s) {
         xml.UDM_VERSION_PA(:MAJOR => 4, :MINOR => 0, :REVISION => 0, :BUILD => 1, :VERSIONTEXT => '4.0.0.1')
         xml.CITATIONS {
           @data.fetch('Literature', {}).each do |uuid, fields|
@@ -112,14 +112,14 @@ module Export
         # xml.METABOLITE_ID
 
         # Identifier of a reactant in the reaction.
-        # @data.fetch('ReactionsReactantSample', {}).each do |product_uuid, _|
-        #   xml.REACTANT_ID(:id => product_uuid)
-        # end
+        fetch_reaction_molecules('ReactionsReactantSample', uuid).each do |molecule_uuid, molecule_fields|
+          xml.REACTANT_ID molecule_uuid
+        end
 
         # Identifier of a product in the reaction.
-        # @data.fetch('ReactionsProductSample', {}).each do |product_uuid, _|
-        #   xml.PRODUCT_ID(:id => product_uuid)
-        # end
+        fetch_reaction_molecules('ReactionsProductSample', uuid).each do |molecule_uuid, molecule_fields|
+          xml.PRODUCT_ID molecule_uuid
+        end
 
         # List of variations of a given reaction performed in different conditions.
         xml.VARIATIONS {
@@ -160,50 +160,24 @@ module Export
       # xml.RESP_SCIENTIST
       # xml.KEYWORDS
 
-      @data.fetch('ReactionsReactantSample', {}).each do |_uuid, _fields|
-        if _fields.fetch('reaction_id') == uuid
-          sample_uuid = _fields.fetch('sample_id')
-          sample_fields = @data.fetch('Sample', {}).fetch(sample_uuid)
-
-          build_reactants(xml, sample_uuid, sample_fields)
-        end
+      fetch_reaction_molecules('ReactionsReactantSample', uuid).each do |molecule_uuid, molecule_fields|
+        build_reactants(xml, molecule_uuid, molecule_fields)
       end
 
-
-      @data.fetch('ReactionsProductSample', {}).each do |_uuid, _fields|
-        if _fields.fetch('reaction_id') == uuid
-          sample_uuid = _fields.fetch('sample_id')
-          sample_fields = @data.fetch('Sample', {}).fetch(sample_uuid)
-
-          build_products(xml, sample_uuid, sample_fields)
-        end
+      fetch_reaction_molecules('ReactionsProductSample', uuid).each do |molecule_uuid, molecule_fields|
+        build_products(xml, molecule_uuid, molecule_fields)
       end
 
-      @data.fetch('ReactionsStartingMaterialSample', {}).each do |_uuid, _fields|
-        if _fields.fetch('reaction_id') == uuid
-          sample_uuid = _fields.fetch('sample_id')
-          sample_fields = @data.fetch('Sample', {}).fetch(sample_uuid)
-
-          build_reagents(xml, sample_uuid, sample_fields)
-        end
+      fetch_reaction_molecules('ReactionsStartingMaterialSample', uuid).each do |molecule_uuid, molecule_fields|
+        build_reagents(xml, molecule_uuid, molecule_fields)
       end
 
-      @data.fetch('?CATALYSTS?', {}).each do |_uuid, _fields|
-        if _fields.fetch('reaction_id') == uuid
-          sample_uuid = _fields.fetch('sample_id')
-          sample_fields = @data.fetch('Sample', {}).fetch(sample_uuid)
+      # fetch_reaction_molecules('?CATALYSTS?', uuid).each do |molecule_uuid, molecule_fields|
+      #   build_catalysts(xml, sample_uuid, sample_fields)
+      # end
 
-          build_catalysts(xml, sample_uuid, sample_fields)
-        end
-      end
-
-      @data.fetch('ReactionsSolventSample', {}).each do |_uuid, _fields|
-        if _fields.fetch('reaction_id') == uuid
-          sample_uuid = _fields.fetch('sample_id')
-          sample_fields = @data.fetch('Sample', {}).fetch(sample_uuid)
-
-          build_solvents(xml, sample_uuid, sample_fields)
-        end
+      fetch_reaction_molecules('ReactionsSolventSample', uuid).each do |molecule_uuid, molecule_fields|
+        build_solvents(xml, molecule_uuid, molecule_fields)
       end
 
       # build_conditions(xml, uuid, fields)
@@ -247,7 +221,7 @@ module Export
 
     def build_reactants(xml, uuid, fields)
       xml.REACTANTS('ID' => uuid) {
-        xml.NAME fields.fetch('name')
+        xml.NAME fields.fetch('iupac_name')
         # xml.AMOUNT
         # xml.FORM
         # xml.COLOR
@@ -262,7 +236,7 @@ module Export
 
     def build_products(xml, uuid, fields)
       xml.PRODUCTS('ID' => uuid) {
-        xml.NAME fields.fetch('name')
+        xml.NAME fields.fetch('iupac_name')
         # xml.AMOUNT
         # xml.FORM
         # xml.COLOR
@@ -280,7 +254,7 @@ module Export
 
     def build_reagents(xml, uuid, fields)
       xml.REAGENTS('ID' => uuid) {
-        xml.NAME fields.fetch('name')
+        xml.NAME fields.fetch('iupac_name')
         # xml.AMOUNT
         # xml.FORM
         # xml.COLOR
@@ -295,7 +269,7 @@ module Export
 
     def build_catalysts(xml, uuid, fields)
       xml.CATALYSTS('ID' => uuid) {
-        xml.NAME fields.fetch('name')
+        xml.NAME fields.fetch('iupac_name')
         # xml.AMOUNT
         # xml.FORM
         # xml.COLOR
@@ -309,7 +283,7 @@ module Export
 
     def build_solvents(xml, uuid, fields)
       xml.SOLVENTS('ID' => uuid) {
-        xml.NAME fields.fetch('name')
+        xml.NAME fields.fetch('iupac_name')
         # xml.AMOUNT
         # xml.FORM
         # xml.COLOR
@@ -343,5 +317,36 @@ module Export
       }
     end
 
+    def fetch_reaction_samples(type, reaction_uuid)
+      # filter reaction_samples for the current reaction and type
+      reaction_samples = @data.fetch(type, {}).select do |uuid, fields|
+        fields.fetch('reaction_id') == reaction_uuid
+      end
+
+      # create an array of the sample uuids
+      uuids = reaction_samples.values.map do |reaction_sample|
+        reaction_sample.fetch('sample_id')
+      end
+
+      # filter samples according to sample uuids and return
+      return @data.fetch('Sample', {}).select do |uuid, _|
+        uuids.include? uuid
+      end
+    end
+
+    def fetch_reaction_molecules(type, reaction_uuid)
+      # get the samples for this reaction and type
+      samples = fetch_reaction_samples(type, reaction_uuid)
+
+      # create an array of the molecule uuids
+      uuids = samples.values.map do |sample|
+        sample.fetch('molecule_id')
+      end
+
+      # filter samples according to molecule uuids and return
+      return @data.fetch('Molecule', {}).select do |uuid, _|
+        uuids.include? uuid
+      end
+    end
   end
 end
