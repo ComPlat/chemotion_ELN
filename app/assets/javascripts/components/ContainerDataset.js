@@ -80,8 +80,10 @@ export default class ContainerDataset extends Component {
       let attachment_list = dataset_container.attachments
       let attach_name = attachment_list[attachment_list.length - 1].filename
       let splitted = attach_name.split(".")
-      splitted.splice(-1, 1)
-      attach_name = splitted.join(".")
+      if (splitted.length>1) {
+        splitted.splice(-1, 1)
+        attach_name = splitted.join(".")
+      }
       dataset_container.name = attach_name
     }
 
