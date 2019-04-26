@@ -81,7 +81,9 @@ Rails.application.configure do
   config.active_support.deprecation = :notify
 
   # Use default logging formatter so that PID and timestamp are not suppressed.
-  config.log_formatter = ::Logger::Formatter.new
+  #config.log_formatter = ::Logger::Formatter.new
+  config.log_formatter = OnelineLogFormatter.new
+
 
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.delivery_method = :smtp
