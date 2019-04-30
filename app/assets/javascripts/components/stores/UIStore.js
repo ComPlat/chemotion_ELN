@@ -272,32 +272,39 @@ class UIStore {
       const per_page = state.number_of_results;
       const params = { per_page, fromDate, toDate, productOnly };
 
-      ElementActions.fetchSamplesByCollectionId(
-        collection.id,
-        Object.assign(params, { page: state.sample.page }),
-        isSync,
-        ElementStore.getState().moleculeSort
-      );
-      ElementActions.fetchReactionsByCollectionId(
-        collection.id,
-        Object.assign(params, { page: state.reaction.page }),
-        isSync
-      );
-      ElementActions.fetchWellplatesByCollectionId(
-        collection.id,
-        Object.assign(params, { page: state.wellplate.page }),
-        isSync
-      );
-      ElementActions.fetchScreensByCollectionId(
-        collection.id,
-        Object.assign(params, { page: state.screen.page }),
-        isSync
-      );
-      if (!isSync){
-        ElementActions.fetchResearchPlansByCollectionId(
-          collection.id,
-          Object.assign(params, { page: state.research_plan.page }),
-        );
+      const { profile } = UserStore.getState();
+      if (profile && profile.data && profile.data.layout) {
+        const { layout } = profile.data;
+        if (layout.sample && layout.sample > 0) {
+          ElementActions.fetchSamplesByCollectionId(
+            collection.id, Object.assign(params, { page: state.sample.page }),
+            isSync, ElementStore.getState().moleculeSort
+          );
+        }
+        if (layout.reaction && layout.reaction > 0) {
+          ElementActions.fetchReactionsByCollectionId(
+            collection.id, Object.assign(params, { page: state.reaction.page }),
+            isSync
+          );
+        }
+        if (layout.wellplate && layout.wellplate > 0) {
+          ElementActions.fetchWellplatesByCollectionId(
+            collection.id, Object.assign(params, { page: state.wellplate.page }),
+            isSync
+          );
+        }
+        if (layout.screen && layout.screen > 0) {
+          ElementActions.fetchScreensByCollectionId(
+            collection.id, Object.assign(params, { page: state.screen.page }),
+            isSync
+          );
+        }
+        if (!isSync && layout.research_plan && layout.research_plan > 0) {
+          ElementActions.fetchResearchPlansByCollectionId(
+            collection.id,
+            Object.assign(params, { page: state.research_plan.page }),
+          );
+        }
       }
     }
   }
