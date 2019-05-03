@@ -36,7 +36,8 @@ module Chemotion
           zip.write jcamp.read
           zip.put_next_entry "#{filename}.png"
           zip.write img.read
-          if predict.try(:[], 'result').try(:[], 0).try(:[], 'id')
+          unless predict.try(:[], 'output')
+                        .try(:[], 'result').try(:[], 0).try(:empty?)
             zip.put_next_entry "#{filename}.json"
             zip.write predict.to_json
           end
@@ -110,8 +111,24 @@ module Chemotion
         end
         post 'nmr_peaks_form' do
           molfile = params['molfile']['tempfile']
-          rsp = Chemotion::Jcamp::Predict::PeaksForm.exec(
+          rsp = Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
             molfile, params[:layout], params[:peaks], params[:shift]
+          )
+
+          content_type('application/json')
+          rsp
+        end
+
+        desc 'Predict IR'
+        params do
+          requires :molfile, type: Hash
+          requires :spectrum, type: Hash
+        end
+        post 'infrared' do
+          molfile = params['molfile']['tempfile']
+          spectrum = params['spectrum']['tempfile']
+          rsp = Chemotion::Jcamp::Predict::Ir.exec(
+            molfile, spectrum
           )
 
           content_type('application/json')

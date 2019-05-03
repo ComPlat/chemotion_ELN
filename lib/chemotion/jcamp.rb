@@ -147,8 +147,8 @@ module Chemotion
   module Jcamp
     # Predict module
     module Predict
-      # PeaksForm module
-      module PeaksForm
+      # NmrPeaksForm module
+      module NmrPeaksForm
         include HTTParty
 
         def self.build_body(molfile, layout, peaks, shift)
@@ -178,6 +178,41 @@ module Chemotion
 
         def self.exec(molfile, layout, peaks, shift)
           rsp = stub_request(molfile, layout, peaks, shift)
+          rsp.parsed_response
+        end
+      end
+
+      # Ir module
+      module Ir
+        include HTTParty
+
+        def self.build_body(molfile, spectrum)
+          body = {
+            multipart: true,
+            molfile: molfile,
+            spectrum: spectrum
+          }
+          body
+        end
+
+        def self.stub_request(molfile, spectrum)
+          response = nil
+          url = Rails.configuration.spectra.url
+          port = Rails.configuration.spectra.port
+          File.open(molfile.path, 'r') do |f_molfile|
+            File.open(spectrum.path, 'r') do |f_spectrum|
+              body = build_body(f_molfile, f_spectrum)
+              response = HTTParty.post(
+                "http://#{url}:#{port}/predict/infrared",
+                body: body
+              )
+            end
+          end
+          response
+        end
+
+        def self.exec(molfile, spectrum)
+          rsp = stub_request(molfile, spectrum)
           rsp.parsed_response
         end
       end
