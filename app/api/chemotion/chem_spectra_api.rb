@@ -30,12 +30,16 @@ module Chemotion
         }
       end
 
-      def to_zip_file(filename, jcamp, img)
+      def to_zip_file(filename, jcamp, img, predict)
         Zip::OutputStream.write_buffer do |zip|
           zip.put_next_entry "#{filename}.jdx"
           zip.write jcamp.read
           zip.put_next_entry "#{filename}.png"
           zip.write img.read
+          if predict.try(:[], 'result').try(:[], 0).try(:[], 'id')
+            zip.put_next_entry "#{filename}.json"
+            zip.write predict.to_json
+          end
         end
       end
 
@@ -57,7 +61,8 @@ module Chemotion
         jcamp, img = Chemotion::Jcamp::Create.spectrum(
           tmp.path, false, peaks, shift
         )
-        to_zip_file(params[:filename], jcamp, img)
+        predict = JSON.parse(params['predict'])
+        to_zip_file(params[:filename], jcamp, img, predict)
       rescue
         error!('Save files error!', 500)
       end
@@ -81,11 +86,12 @@ module Chemotion
           requires :shift_select_x, type: String
           requires :shift_ref_name, type: String
           requires :shift_ref_value, type: String
+          optional :predict, type: String
         end
         post 'save' do
           env['api.format'] = :binary
           content_type('application/zip, application/octet-stream')
-          filename = URI.escape("#{params[:filename]}.zip")
+          filename = CGI.escape("#{params[:filename]}.zip")
           header('Content-Disposition', "attachment; filename=\"#{filename}\"")
 
           zip_io = convert_to_zip(params)
@@ -95,14 +101,14 @@ module Chemotion
       end
 
       resource :predict do
-        desc 'Predict by peaks'
+        desc 'Predict NMR by peaks'
         params do
           requires :molfile, type: Hash
           requires :layout, type: String
           requires :peaks, type: String
           requires :shift, type: String
         end
-        post 'by_peaks_form' do
+        post 'nmr_peaks_form' do
           molfile = params['molfile']['tempfile']
           rsp = Chemotion::Jcamp::Predict::PeaksForm.exec(
             molfile, params[:layout], params[:peaks], params[:shift]
