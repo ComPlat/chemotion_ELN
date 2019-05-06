@@ -159,11 +159,11 @@ module Chemotion
             samplesGroup = sample_scope.select {|v| v.molecule_id == molecule.id}
             samplesGroup = samplesGroup.sort { |x, y| y.updated_at <=> x.updated_at }
             samplesGroup.each do |sample|
-            serialized_sample = sample_serializer_selector.call(molecule)
+            serialized_sample = sample_serializer_selector.call(sample)
             samplelist.push(serialized_sample)
             end
           end
-          return samplelist
+          samplelist
         else
           id_array = Kaminari.paginate_array(samples).page(page).per(page_size)
           ids = id_array.join(',')
@@ -204,7 +204,6 @@ module Chemotion
         reactions = elements.fetch(:reactions, [])
         wellplates = elements.fetch(:wellplates, [])
         screens = elements.fetch(:screens, [])
-
         samples_data = serialize_samples(samples, page, search_by_method, molecule_sort)
         serialized_samples = samples_data[:data]
         samples_size = samples_data[:size]
