@@ -65,6 +65,7 @@
 /uploads/*
 !/public/attachments/.keep
 
+!/public/apple-touch-icon.png
 
 /public/docx/*
 !/public/docx/.keep
