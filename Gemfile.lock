@@ -6,33 +6,34 @@ GIT
 
 GIT
   remote: https://github.com/ComPlat/ketcher-rails
-  revision: 5a6fb4d2b39c62cc6a96d1586b31913b1213d568
-  ref: 5a6fb4d2b39c62cc6a96d1586b31913b1213d568
+  revision: c8200cfce01f9c4a8d36d22d74964b818f02d6ef
+  ref: c8200cfce01f9c4a8d36d22d74964b818f02d6ef
   specs:
-    ketcherails (0.1.5)
+    ketcherails (0.1.6)
       active_model_serializers (< 0.10.0)
       bootstrap-kaminari-views (= 0.0.5)
-      bootstrap-sass (~> 3.3.5)
+      bootstrap-sass
       daemons
       delayed_job_active_record
-      grape (~> 1.0.3)
+      grape (< 2.0)
       grape-active_model_serializers (~> 1.3.2)
       haml-rails (= 0.9.0)
       httparty
       jquery-rails
       jquery-ui-rails (~> 5.0.5)
-      kaminari (= 0.16.3)
+      kaminari
       nokogiri (~> 1.8.2)
       openbabel
       paperclip (~> 5.2.0)
-      rails (~> 4.2.10)
+      rails (~> 4.2.11)
       sprite-factory (= 1.7.1)
 
 GIT
-  remote: https://github.com/ComPlat/openbabel-gem
-  revision: 34841ba87e7691d7062229087fff49cd1db3ec17
+  remote: https://github.com/ComPlat/openbabel-gem.git
+  revision: 3e25548fd95c2ac83c7fb5d9544ed2cf6ae1344b
+  branch: hot-fix-svg
   specs:
-    openbabel (2.4.90.1)
+    openbabel (2.4.90.3)
 
 GIT
   remote: https://github.com/ComPlat/sablon
@@ -45,7 +46,7 @@ GIT
 
 GIT
   remote: https://github.com/MiniProfiler/rack-mini-profiler
-  revision: 873add6242ab83de5289766ee2f4d855eff970f6
+  revision: 08ad0c798f40588586c5b841491481fefd847b1c
   specs:
     rack-mini-profiler (1.0.2)
       rack (>= 1.2.0)
@@ -77,7 +78,7 @@ GIT
 GEM
   remote: https://rubygems.org/
   specs:
-    aasm (5.0.2)
+    aasm (5.0.3)
       concurrent-ruby (~> 1.0)
     actionmailer (4.2.11.1)
       actionpack (= 4.2.11.1)
@@ -120,13 +121,14 @@ GEM
       public_suffix (>= 2.0.2, < 4.0)
     airbrussh (1.3.1)
       sshkit (>= 1.6.1, != 1.7.0)
-    ancestry (3.0.5)
+    ancestry (3.0.6)
       activerecord (>= 3.2.0)
+    api-pagination (4.8.2)
     archive-zip (0.12.0)
       io-like (~> 0.3.0)
     arel (6.0.4)
     ast (2.4.0)
-    autoprefixer-rails (9.5.0)
+    autoprefixer-rails (9.5.1.1)
       execjs
     awesome_print (1.8.0)
     axiom-types (0.1.1)
@@ -149,18 +151,18 @@ GEM
     bootstrap-kaminari-views (0.0.5)
       kaminari (>= 0.13)
       rails (>= 3.1)
-    bootstrap-sass (3.3.7)
+    bootstrap-sass (3.4.1)
       autoprefixer-rails (>= 5.2.1)
-      sass (>= 3.3.4)
+      sassc (>= 2.0.0)
     browserify-rails (4.2.0)
       addressable (>= 2.4.0)
       railties (>= 4.0.0, < 5.2)
       sprockets (>= 3.6.0)
     builder (3.2.3)
-    bullet (5.9.0)
+    bullet (6.0.0)
       activesupport (>= 3.0.0)
       uniform_notifier (~> 1.11)
-    byebug (11.0.0)
+    byebug (11.0.1)
     callsite (0.0.11)
     capistrano (3.9.1)
       airbrussh (>= 1.0.0)
@@ -234,7 +236,7 @@ GEM
       delayed_job (>= 3.0, < 5)
     descendants_tracker (0.0.4)
       thread_safe (~> 0.3, >= 0.3.1)
-    devise (4.6.1)
+    devise (4.6.2)
       bcrypt (~> 3.0)
       orm_adapter (~> 0.1)
       railties (>= 4.1.0, < 6.0)
@@ -242,9 +244,9 @@ GEM
       warden (~> 1.2.3)
     diff-lcs (1.3)
     docile (1.1.5)
-    dotenv (2.7.1)
-    dotenv-rails (2.7.1)
-      dotenv (= 2.7.1)
+    dotenv (2.7.2)
+    dotenv-rails (2.7.2)
+      dotenv (= 2.7.2)
       railties (>= 3.2, < 6.1)
     equalizer (0.0.11)
     erubi (1.8.0)
@@ -265,8 +267,8 @@ GEM
     fast_stack (0.2.0)
     ffi (1.10.0)
     flamegraph (0.9.5)
-    font-awesome-rails (4.7.0.4)
-      railties (>= 3.2, < 6.0)
+    font-awesome-rails (4.7.0.5)
+      railties (>= 3.2, < 6.1)
     fontcustom (2.0.0)
       json (~> 1.4)
       listen (>= 1.0, < 4.0)
@@ -281,7 +283,7 @@ GEM
       iso_country_codes (~> 0.6)
       naughty_or_nice (= 2.1.1)
       public_suffix (~> 3.0)
-    grape (1.0.3)
+    grape (1.2.3)
       activesupport
       builder
       mustermann-grape (~> 1.0.0)
@@ -305,7 +307,7 @@ GEM
       haml (>= 4.0.6, < 5.0)
       html2haml (>= 1.0.1)
       railties (>= 4.0.1)
-    hashdiff (0.3.8)
+    hashdiff (0.3.9)
     hashie (3.6.0)
     hashie-forbidden_attributes (0.1.1)
       hashie (>= 3.0)
@@ -316,7 +318,7 @@ GEM
       nokogiri (>= 1.6.0)
       ruby_parser (~> 3.5)
     htmlentities (4.3.4)
-    httparty (0.16.4)
+    httparty (0.17.0)
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
     i18n (0.9.5)
@@ -337,9 +339,21 @@ GEM
       railties (>= 3.2.16)
     json (1.8.6)
     jwt (2.1.0)
-    kaminari (0.16.3)
-      actionpack (>= 3.0.0)
-      activesupport (>= 3.0.0)
+    kaminari (1.1.1)
+      activesupport (>= 4.1.0)
+      kaminari-actionview (= 1.1.1)
+      kaminari-activerecord (= 1.1.1)
+      kaminari-core (= 1.1.1)
+    kaminari-actionview (1.1.1)
+      actionview
+      kaminari-core (= 1.1.1)
+    kaminari-activerecord (1.1.1)
+      activerecord
+      kaminari-core (= 1.1.1)
+    kaminari-core (1.1.1)
+    kaminari-grape (1.0.1)
+      grape
+      kaminari-core (~> 1.0)
     latex-decode (0.3.1)
     launchy (2.4.3)
       addressable (~> 2.3)
@@ -363,29 +377,29 @@ GEM
       sqlite3-ruby
       thin
     memoist (0.16.0)
-    memory_profiler (0.9.12)
-    meta_request (0.6.0)
+    memory_profiler (0.9.13)
+    meta_request (0.7.0)
       callsite (~> 0.0, >= 0.0.11)
       rack-contrib (>= 1.1, < 3)
-      railties (>= 3.0.0, < 6)
+      railties (>= 3.0.0, < 7)
     mime-types (3.2.2)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2018.0812)
+    mime-types-data (3.2019.0331)
     mimemagic (0.3.3)
     mini_mime (1.0.1)
     mini_portile2 (2.3.0)
     minitest (5.11.3)
     multi_json (1.13.1)
     multi_xml (0.6.0)
-    multipart-post (2.0.0)
+    multipart-post (2.1.0)
     mustermann (1.0.3)
     mustermann-grape (1.0.0)
       mustermann (~> 1.0.0)
     naughty_or_nice (2.1.1)
       addressable (~> 2.3)
       public_suffix (>= 2.0, < 4.0)
-    net-scp (1.2.1)
-      net-ssh (>= 2.6.5)
+    net-scp (2.0.0)
+      net-ssh (>= 2.6.5, < 6.0.0)
     net-sftp (2.1.2)
       net-ssh (>= 2.6.5)
     net-ssh (5.2.0)
@@ -400,24 +414,22 @@ GEM
       cocaine (~> 0.5.5)
       mime-types
       mimemagic (~> 0.3.0)
-    parallel (1.14.0)
-    paranoia (2.4.1)
-      activerecord (>= 4.0, < 5.3)
-    parser (2.6.0.0)
+    parallel (1.17.0)
+    paranoia (2.4.2)
+      activerecord (>= 4.0, < 6.1)
+    parser (2.6.3.0)
       ast (~> 2.4.0)
     pdf-core (0.7.0)
     pg (0.20.0)
-    pg_search (2.1.4)
+    pg_search (2.1.7)
       activerecord (>= 4.2)
       activesupport (>= 4.2)
-    powerpack (0.1.2)
     prawn (2.2.2)
       pdf-core (~> 0.7.0)
       ttfunk (~> 1.5)
     prawn-svg (0.29.1)
       css_parser (~> 1.6)
       prawn (>= 0.11.1, < 3)
-    psych (3.1.0)
     public_suffix (3.0.3)
     pundit (2.0.1)
       activesupport (>= 3.0.0)
@@ -461,11 +473,11 @@ GEM
       ffi (~> 1.0)
     rdoc (4.3.0)
     redcarpet (3.4.0)
-    regexp_parser (1.3.0)
+    regexp_parser (1.4.0)
     responders (2.4.1)
       actionpack (>= 4.2.0, < 6.0)
       railties (>= 4.2.0, < 6.0)
-    rmagick (3.0.0)
+    rmagick (3.1.0)
     roo (2.8.2)
       nokogiri (~> 1)
       rubyzip (>= 1.2.1, < 2.0.0)
@@ -473,7 +485,7 @@ GEM
       chunky_png (~> 1.0)
     rspec-core (3.8.0)
       rspec-support (~> 3.8.0)
-    rspec-expectations (3.8.2)
+    rspec-expectations (3.8.3)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.8.0)
     rspec-mocks (3.8.0)
@@ -489,40 +501,36 @@ GEM
       rspec-support (~> 3.8.0)
     rspec-support (3.8.0)
     rtf (0.3.3)
-    rubocop (0.65.0)
+    rubocop (0.68.1)
       jaro_winkler (~> 1.5.1)
       parallel (~> 1.10)
       parser (>= 2.5, != 2.5.1.1)
-      powerpack (~> 0.1)
-      psych (>= 3.1.0)
       rainbow (>= 2.2.2, < 4.0)
       ruby-progressbar (~> 1.7)
-      unicode-display_width (~> 1.4.0)
+      unicode-display_width (>= 1.4.0, < 1.6)
     ruby-geometry (0.0.6)
       activesupport
       memoist
-    ruby-mailchecker (3.2.23)
+    ruby-mailchecker (3.2.29)
     ruby-ole (1.2.12.2)
     ruby-progressbar (1.10.0)
     rubyXL (3.3.26)
       nokogiri (>= 1.4.4)
       rubyzip (>= 1.1.6)
     ruby_dep (1.5.0)
-    ruby_parser (3.13.0)
+    ruby_parser (3.13.1)
       sexp_processor (~> 4.9)
     rubyzip (1.2.2)
     safe_yaml (1.0.5)
-    sass (3.7.3)
-      sass-listen (~> 4.0.0)
-    sass-listen (4.0.0)
-      rb-fsevent (~> 0.9, >= 0.9.4)
-      rb-inotify (~> 0.9, >= 0.9.7)
-    sass-rails (5.0.7)
-      railties (>= 4.0.0, < 6)
-      sass (~> 3.1)
-      sprockets (>= 2.8, < 4.0)
-      sprockets-rails (>= 2.0, < 4.0)
-      tilt (>= 1.1, < 3)
+    sassc (2.0.1)
+      ffi (~> 1.9)
+      rake
+    sassc-rails (2.1.1)
+      railties (>= 4.0.0)
+      sassc (>= 2.0)
+      sprockets (> 3.0)
+      sprockets-rails
+      tilt
     scenic (1.5.1)
       activerecord (>= 4.0.0)
       railties (>= 4.0.0)
@@ -547,7 +555,7 @@ GEM
     skinny (0.2.2)
       eventmachine (~> 1.0)
       thin
-    slackistrano (3.8.3)
+    slackistrano (3.8.4)
       capistrano (>= 3.8.1)
     spring (2.0.2)
       activesupport (>= 4.2)
@@ -559,7 +567,7 @@ GEM
       actionpack (>= 4.0)
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
-    sqlite3 (1.4.0)
+    sqlite3 (1.4.1)
     sqlite3-ruby (1.3.3)
       sqlite3 (>= 1.3.3)
     sshkit (1.18.2)
@@ -590,7 +598,7 @@ GEM
       thread_safe (~> 0.1)
     uglifier (4.1.20)
       execjs (>= 0.3.0, < 3)
-    unicode-display_width (1.4.1)
+    unicode-display_width (1.5.0)
     unicode_utils (1.4.0)
     uniform_notifier (1.12.1)
     virtus (1.0.5)
@@ -609,7 +617,7 @@ GEM
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
       hashdiff
-    whenever (0.10.0)
+    whenever (0.11.0)
       chronic (>= 0.6.3)
     with_advisory_lock (4.0.0)
       activerecord (>= 4.2)
@@ -625,6 +633,7 @@ PLATFORMS
 DEPENDENCIES
   aasm
   ancestry
+  api-pagination
   awesome_print
   axlsx!
   backup
@@ -632,7 +641,7 @@ DEPENDENCIES
   better_errors
   bibtex-ruby
   binding_of_caller
-  bootstrap-sass (~> 3.3.5)
+  bootstrap-sass (~> 3.4.1)
   browserify-rails (~> 4.2.0)
   bullet
   byebug
@@ -665,7 +674,7 @@ DEPENDENCIES
   fun_sftp!
   fx
   gman
-  grape (~> 1.0.3)
+  grape (~> 1.2.3)
   grape-active_model_serializers
   grape-entity
   grape-kaminari
@@ -677,7 +686,8 @@ DEPENDENCIES
   jquery-rails
   jwt
   kaminari
-  ketcherails!
+  kaminari-grape
+  ketcherails (~> 0.1.6)!
   launchy (~> 2.4.3)
   mailcatcher
   memory_profiler
@@ -685,7 +695,7 @@ DEPENDENCIES
   net-sftp
   net-ssh
   nokogiri (~> 1.8.2)
-  openbabel (= 2.4.90.1)!
+  openbabel (= 2.4.90.3)!
   paranoia (~> 2.0)
   pg (~> 0.20.0)
   pg_search
@@ -706,7 +716,7 @@ DEPENDENCIES
   ruby-ole
   rubyXL (= 3.3.26)
   sablon!
-  sass-rails (~> 5.0, >= 5.0.6)
+  sassc-rails (~> 2.1)
   scenic
   schmooze
   sdoc (~> 0.4.0)
@@ -727,4 +737,4 @@ DEPENDENCIES
   yaml_db
 
 BUNDLED WITH
-   1.17.2
+   1.17.3

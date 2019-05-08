@@ -7,7 +7,7 @@ gem 'thor', '0.19.1'
 
 gem 'haml-rails', '~> 0.9'
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0', '>= 5.0.6'
+gem 'sassc-rails', '~> 2.1'
 
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 4.0.0'
@@ -15,7 +15,7 @@ gem 'uglifier', '>= 4.0.0'
 gem 'turbo-sprockets-rails4'
 
 # Twitter bootstrap styles
-gem 'bootstrap-sass', '~> 3.3.5'
+gem 'bootstrap-sass', '~> 3.4.1'
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
@@ -80,12 +80,15 @@ gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
                 branch: 'allow-port-option'
 
 # API
-gem 'grape', '~>1.0.3'
+gem 'grape', '~>1.2.3' 
 gem 'grape-active_model_serializers'
 gem 'grape-kaminari'
 gem 'grape-entity'
 gem 'hashie-forbidden_attributes'
 gem 'kaminari'
+gem 'kaminari-grape'
+
+gem 'api-pagination'
 
 gem 'pundit'
 
@@ -101,10 +104,9 @@ gem 'faraday', '~> 0.12.1'
 gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
-gem 'ketcherails', # git: 'https://git.scc.kit.edu/ComPlat/ketcher-rails.git', branch: 'coordination_bond_suppport'
-    git: 'https://github.com/ComPlat/ketcher-rails',
-    ref: '5a6fb4d2b39c62cc6a96d1586b31913b1213d568'
-    # path: '../ketcher-rails'
+gem 'ketcherails', '~> 0.1.6', git: 'https://github.com/ComPlat/ketcher-rails',
+     ref: 'c8200cfce01f9c4a8d36d22d74964b818f02d6ef'            
+     #path: '../ketcher-rails'
 
 # Free font icons
 gem 'font-awesome-rails'
@@ -137,7 +139,7 @@ gem 'coveralls', require: false
 # to compile from github/openbabel/openbabel master
 # gem 'openbabel', '2.4.1.2', git: 'https://github.com/ComPlat/openbabel-gem'
 # to compile from github/openbabel/openbabel branch openbabel-2-4-x
-gem 'openbabel', '2.4.90.1', git: 'https://github.com/ComPlat/openbabel-gem'
+gem 'openbabel', '2.4.90.3', git: 'https://github.com/ComPlat/openbabel-gem.git', branch: 'hot-fix-svg'
 
 gem 'barby'
 gem 'prawn'
