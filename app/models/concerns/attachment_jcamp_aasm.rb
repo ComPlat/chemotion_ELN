@@ -105,6 +105,8 @@ module AttachmentJcampProcess
   extend ActiveSupport::Concern
 
   def generate_att(meta_tmp, addon, toEdit = false, ext = nil) # rubocop:disable AbcSize
+    return unless meta_tmp
+
     meta_filename = Chemotion::Jcamp::Gen.filename(filename_parts, addon, ext)
     content_type = ext == 'png' ? 'image/png' : 'application/octet-stream'
     att = Attachment.new(
@@ -175,6 +177,7 @@ module AttachmentJcampProcess
 
   def delete_tmps(tmp_arr)
     tmp_arr.each do |tmp|
+      next unless tmp
       tmp.close
       tmp.unlink
     end
@@ -192,6 +195,8 @@ module AttachmentJcampProcess
   end
 
   def delete_related_imgs(img_att)
+    return unless img_att
+
     atts = Attachment.where(attachable_id: attachable_id)
     valid_name = fname_wo_ext(self)
     atts.each do |att|

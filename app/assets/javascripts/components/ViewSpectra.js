@@ -82,7 +82,7 @@ class ViewSpectra extends React.Component {
   }
 
   writeOp({
-    peaks, layout, shift, isAscend,
+    peaks, shift, scan, thres, analysis, layout, isAscend,
   }) {
     const { sample, handleSampleChanged } = this.props;
     const { spcInfo } = this.state;
@@ -103,21 +103,31 @@ class ViewSpectra extends React.Component {
       });
     });
 
-    const cb = () => this.saveOp({ peaks, shift });
+    const cb = () => (
+      this.saveOp({
+        peaks, shift, scan, thres, analysis,
+      })
+    );
     handleSampleChanged(sample, cb);
   }
 
-  saveOp({ peaks, shift }) { // TBD: scan, thres
+  saveOp({
+    peaks, shift, scan, thres, analysis,
+  }) {
     const { sample, handleSubmit } = this.props;
     const { spcInfo } = this.state;
     const fPeaks = FN.rmRef(peaks, shift);
     const peaksStr = FN.toPeakStr(fPeaks);
+    const predict = JSON.stringify({ result: [analysis] });
 
     SpectraActions.SaveToFile(
       sample,
       spcInfo,
       peaksStr,
       shift,
+      scan,
+      thres,
+      predict,
       handleSubmit,
     );
     SpectraActions.ToggleModal.defer();
@@ -168,7 +178,7 @@ class ViewSpectra extends React.Component {
     } = FN.buildData(jcamp.file);
 
     const operations = [
-      { name: 'write', value: this.writeOp },
+      { name: 'write & save', value: this.writeOp },
       { name: 'save', value: this.saveOp },
     ].filter(r => r.value);
 
