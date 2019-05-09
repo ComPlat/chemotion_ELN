@@ -19,7 +19,7 @@ module Chemotion
           zip.put_next_entry "#{filename}.png"
           zip.write img.read
           unless predict.try(:[], 'output')
-                        .try(:[], 'result').try(:[], 0).try(:empty?)
+                        .try(:[], 'result').try(:empty?)
             zip.put_next_entry "#{filename}.json"
             zip.write predict.to_json
           end

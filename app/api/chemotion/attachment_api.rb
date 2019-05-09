@@ -23,7 +23,11 @@ module Chemotion
       end
 
       def raw_file_obj(att)
-        { id: att.id, file: raw_file(att) }
+        {
+          id: att.id,
+          file: raw_file(att),
+          predictions: att.predictions[0].try(:decision) || {}
+        }
       end
 
       def created_for_current_user(att)
@@ -304,7 +308,7 @@ module Chemotion
           att = Attachment.find(g_id)
           next unless att
           can_delete = writable?(att)
-          att.delete if can_delete
+          att.destroy if can_delete
         end
         pm[:original].each do |o_id|
           att = Attachment.find(o_id)
@@ -319,7 +323,7 @@ module Chemotion
 
       desc 'Save spectra to file'
       params do
-        optional :attachment_id, type: Integer
+        requires :attachment_id, type: Integer
         optional :peaks_str, type: String
         optional :shift_select_x, type: String
         optional :shift_ref_name, type: String
@@ -333,6 +337,18 @@ module Chemotion
         @attachment.generate_spectrum(
           false, false, params
         )
+      end
+
+      desc 'Make spectra inference'
+      params do
+        requires :attachment_id, type: Integer
+        optional :peaks, type: String
+        optional :shift, type: String
+        optional :layout, type: String
+      end
+      post 'infer' do
+        content_type('application/json')
+        @attachment.infer_spectrum(params)
       end
 
       namespace :svgs do

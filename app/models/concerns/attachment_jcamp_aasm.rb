@@ -140,6 +140,11 @@ module AttachmentJcampProcess
     params
   end
 
+  def update_prediction(params)
+    predict = JSON.parse(params['predict'])
+    predictions.create(decision: predict)
+  end
+
   def create_process(is_regen)
     params = build_params
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
@@ -158,7 +163,8 @@ module AttachmentJcampProcess
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
       abs_path, is_regen, params
     )
-    generate_jcamp_att(tmp_jcamp, 'edit', true)
+    jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
+    jcamp_att.update_prediction(params)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup
     delete_tmps([tmp_jcamp, tmp_img])
@@ -185,7 +191,7 @@ module AttachmentJcampProcess
 
   def delete_edit_peak_after_done
     typname = extension_parts[0]
-    delete if %w[edit peak].include?(typname)
+    destroy if %w[edit peak].include?(typname)
   end
 
   def fname_wo_ext(target)
@@ -218,5 +224,39 @@ module AttachmentJcampProcess
   rescue
     set_failure
     Rails.logger.info('**** Jcamp Image Generation fails ***')
+  end
+
+  def infer_base_on_type(t_molfile, params)
+    if params[:layout] == 'IR'
+      spectrum = read_file
+      Tempfile.create('spectrum') do |t_spectrum|
+        t_spectrum.write(spectrum)
+        t_spectrum.rewind
+        Chemotion::Jcamp::Predict::Ir.exec(
+          t_molfile, t_spectrum
+        )
+      end
+    else
+      Chemotion::Jcamp::Predict::NmrPeaksForm.exec(
+        t_molfile, params[:layout], params[:peaks], params[:shift]
+      )
+    end
+  end
+
+  def infer_with_molfile(params)
+    molfile = attachable.root_element.molecule.molfile
+    Tempfile.create('molfile') do |t_molfile|
+      t_molfile.write(molfile)
+      t_molfile.rewind
+      infer_base_on_type(t_molfile, params)
+    end
+  end
+
+  def infer_spectrum(params)
+    target = infer_with_molfile(params)
+    return until target
+    predictions.destroy_all
+    predictions.create(decision: target)
+    target
   end
 end

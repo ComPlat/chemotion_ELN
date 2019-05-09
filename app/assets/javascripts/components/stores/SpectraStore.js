@@ -10,19 +10,24 @@ class SpectraStore {
     this.spcInfo = null;
     this.showModal = false;
     this.fetched = false;
+    this.predictions = {
+      outline: {},
+      output: { result: [] },
+    };
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
       handleLoadSpectra: SpectraActions.LoadSpectra,
       handleSaveToFile: SpectraActions.SaveToFile,
       handleRegenerate: SpectraActions.Regenerate,
+      handleInferSpectrum: SpectraActions.InferSpectrum,
     });
   }
 
-  buildSpectrum(result) {
-    const { files } = result;
+  decodeSpectrum(target) {
+    const { files } = target;
     if (!files) return [];
-    const decodedFiles = files.map((f) => {
+    const jcamps = files.map((f) => {
       try {
         const raw = base64.decode(f.file);
         const file = FN.ExtractJcamp(raw);
@@ -32,8 +37,18 @@ class SpectraStore {
         return null;
       }
     }).filter(r => r != null);
-    if (!decodedFiles) return [];
-    return decodedFiles[0];
+    if (!jcamps) return [];
+    const { predictions } = files[0];
+    if (predictions.outline && predictions.outline.code) {
+      return { jcamp: jcamps[0], predictions };
+    }
+    return {
+      jcamp: jcamps[0],
+      predictions: {
+        outline: {},
+        output: { result: [] },
+      },
+    };
   }
 
   handleToggleModal() {
@@ -45,9 +60,11 @@ class SpectraStore {
     });
   }
 
-  handleLoadSpectra({ rawJcamp, spcInfo }) {
-    const jcamp = this.buildSpectrum(rawJcamp);
-    this.setState({ spcInfo, jcamp, fetched: true });
+  handleLoadSpectra({ target, spcInfo }) {
+    const { jcamp, predictions } = this.decodeSpectrum(target);
+    this.setState({
+      spcInfo, jcamp, predictions, fetched: true,
+    });
   }
 
   handleSaveToFile() {
@@ -56,6 +73,10 @@ class SpectraStore {
 
   handleRegenerate() {
     // no further process needed.
+  }
+
+  handleInferSpectrum(predictions) {
+    this.setState({ predictions });
   }
 }
 

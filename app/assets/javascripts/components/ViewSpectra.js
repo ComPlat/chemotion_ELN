@@ -19,6 +19,8 @@ class ViewSpectra extends React.Component {
     this.onCloseModal = this.onCloseModal.bind(this);
     this.writeOp = this.writeOp.bind(this);
     this.saveOp = this.saveOp.bind(this);
+    this.predictOp = this.predictOp.bind(this);
+    this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
     this.renderSpectraViewer = this.renderSpectraViewer.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
   }
@@ -114,14 +116,13 @@ class ViewSpectra extends React.Component {
   saveOp({
     peaks, shift, scan, thres, analysis,
   }) {
-    const { sample, handleSubmit } = this.props;
+    const { handleSubmit } = this.props;
     const { spcInfo } = this.state;
     const fPeaks = FN.rmRef(peaks, shift);
     const peaksStr = FN.toPeakStr(fPeaks);
-    const predict = JSON.stringify({ result: [analysis] });
+    const predict = JSON.stringify(analysis);
 
     SpectraActions.SaveToFile(
-      sample,
       spcInfo,
       peaksStr,
       shift,
@@ -131,6 +132,32 @@ class ViewSpectra extends React.Component {
       handleSubmit,
     );
     SpectraActions.ToggleModal.defer();
+  }
+
+  predictOp({
+    peaks, layout, shift,
+  }) {
+    const { spcInfo } = this.state;
+
+    SpectraActions.InferSpectrum({
+      spcInfo, peaks, layout, shift,
+    });
+    alert('Server is making predictions...\nPlease check it later.'); // eslint-disable-line
+    SpectraActions.ToggleModal.defer();
+  }
+
+  buildOpsByLayout(et) {
+    if (et.spectrum.sTyp === 'MS') {
+      return [
+        { name: 'write', value: this.writeOp },
+        { name: 'save', value: this.saveOp },
+      ];
+    }
+    return [
+      { name: 'write', value: this.writeOp },
+      { name: 'save', value: this.saveOp },
+      { name: 'predict', value: this.predictOp },
+    ];
   }
 
   renderEmpty() {
@@ -172,21 +199,16 @@ class ViewSpectra extends React.Component {
   }
 
   renderSpectraViewer() {
-    const { jcamp } = this.state;
+    const { jcamp, predictions } = this.state;
     const {
       entity, isExist,
     } = FN.buildData(jcamp.file);
 
-    const operations = [
-      { name: 'write & save', value: this.writeOp },
-      { name: 'save', value: this.saveOp },
-    ].filter(r => r.value);
+    const operations = this.buildOpsByLayout(entity);
 
     const predictObj = {
-      btnCb: null,
-      inputCb: null,
-      molecule: null,
-      predictions: null,
+      molecule: 'molecule',
+      predictions,
     };
 
     return (

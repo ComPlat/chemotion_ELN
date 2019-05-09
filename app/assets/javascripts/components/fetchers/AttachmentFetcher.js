@@ -251,7 +251,7 @@ export default class AttachmentFetcher {
     });
   }
 
-  static saveSpectrum(peaksStr, shift, attId, scan, thres, predict) {
+  static saveSpectrum(attId, peaksStr, shift, scan, thres, predict) {
     const params = {
       attachmentId: attId,
       peaksStr,
@@ -265,6 +265,36 @@ export default class AttachmentFetcher {
 
     const promise = fetch(
       '/api/v1/attachments/save_peaks/',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        body: JSON.stringify(decamelizeKeys(params)),
+      },
+    )
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static inferSpectrum(attId, peaks, layout, shift) {
+    const params = {
+      attachmentId: attId,
+      peaks: JSON.stringify(peaks),
+      shift: JSON.stringify(shift),
+      layout,
+    };
+
+    const promise = fetch(
+      '/api/v1/attachments/infer/',
       {
         credentials: 'same-origin',
         method: 'POST',
