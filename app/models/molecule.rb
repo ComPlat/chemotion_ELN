@@ -1,7 +1,7 @@
 class Molecule < ActiveRecord::Base
   acts_as_paranoid
 
-  attr_accessor :pcid
+  attr_accessor :pcid, :ob_log
   include Collectable
   include Taggable
 
@@ -57,6 +57,7 @@ class Molecule < ActiveRecord::Base
       molecule.molfile = is_partial && partial_molfile || molfile
       molecule.assign_molecule_data(babel_info, pubchem_info)
     end
+    molecule.ob_log = babel_info[:ob_log]
     molecule
   end
 
