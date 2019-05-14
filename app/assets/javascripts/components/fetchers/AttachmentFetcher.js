@@ -1,4 +1,6 @@
 import 'whatwg-fetch';
+import { camelizeKeys, decamelizeKeys } from 'humps';
+
 import Attachment from '../models/Attachment';
 import NotificationActions from '../actions/NotificationActions';
 
@@ -249,7 +251,15 @@ export default class AttachmentFetcher {
     });
   }
 
-  static saveSpectrum(peaks, shift, attId) {
+  static saveSpectrum(peaksStr, shift, attId) {
+    const params = {
+      attachmentId: attId,
+      peaksStr,
+      shiftSelectX: shift.peak.x,
+      shiftRefName: shift.ref.name,
+      shiftRefValue: shift.ref.value,
+    };
+
     const promise = fetch(
       '/api/v1/attachments/save_peaks/',
       {
@@ -260,15 +270,7 @@ export default class AttachmentFetcher {
             Accept: 'application/json',
             'Content-Type': 'application/json',
           },
-        body: JSON.stringify({
-          peaks,
-          attachment_id: attId,
-          shift: {
-            selectX: shift.peak.x,
-            refName: shift.ref.name,
-            refValue: shift.ref.value,
-          },
-        }),
+        body: JSON.stringify(decamelizeKeys(params)),
       },
     )
       .then(response => response.json())

@@ -111,11 +111,12 @@ class ViewSpectra extends React.Component {
     const { sample, handleSubmit } = this.props;
     const { spcInfo } = this.state;
     const fPeaks = FN.rmRef(peaks, shift);
+    const peaksStr = FN.toPeakStr(fPeaks);
 
     SpectraActions.SaveToFile(
       sample,
       spcInfo,
-      fPeaks,
+      peaksStr,
       shift,
       handleSubmit,
     );
