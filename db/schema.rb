@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190204152500) do
+ActiveRecord::Schema.define(version: 20190514080856) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -497,6 +497,17 @@ ActiveRecord::Schema.define(version: 20190204152500) do
 
   add_index "pg_search_documents", ["searchable_type", "searchable_id"], name: "index_pg_search_documents_on_searchable_type_and_searchable_id", using: :btree
 
+  create_table "predictions", force: :cascade do |t|
+    t.integer  "predictable_id"
+    t.string   "predictable_type"
+    t.jsonb    "decision",         default: {}, null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "predictions", ["decision"], name: "index_predictions_on_decision", using: :gin
+  add_index "predictions", ["predictable_type", "predictable_id"], name: "index_predictions_on_predictable_type_and_predictable_id", using: :btree
+
   create_table "profiles", force: :cascade do |t|
     t.boolean  "show_external_name", default: false
     t.integer  "user_id",                            null: false
@@ -952,7 +963,7 @@ ActiveRecord::Schema.define(version: 20190204152500) do
       end;$function$
   SQL
 
-  create_view "v_samples_collections",  sql_definition: <<-SQL
+  create_view "v_samples_collections", sql_definition: <<-SQL
       SELECT cols.id AS cols_id,
       cols.user_id AS cols_user_id,
       cols.sample_detail_level AS cols_sample_detail_level,
@@ -966,8 +977,7 @@ ActiveRecord::Schema.define(version: 20190204152500) do
        JOIN samples ON (((samples.id = col_samples.sample_id) AND (samples.deleted_at IS NULL))))
     WHERE (cols.deleted_at IS NULL);
   SQL
-
-  create_view "literal_groups",  sql_definition: <<-SQL
+  create_view "literal_groups", sql_definition: <<-SQL
       SELECT lits.element_type,
       lits.element_id,
       lits.literature_id,
@@ -992,8 +1002,7 @@ ActiveRecord::Schema.define(version: 20190204152500) do
        LEFT JOIN samples ON ((((lits.element_type)::text = 'Sample'::text) AND (lits.element_id = samples.id))))
        LEFT JOIN reactions ON ((((lits.element_type)::text = 'Reaction'::text) AND (lits.element_id = reactions.id))));
   SQL
-
-  create_view "notify_messages",  sql_definition: <<-SQL
+  create_view "notify_messages", sql_definition: <<-SQL
       SELECT notifications.id,
       messages.id AS message_id,
       channels.subject,
@@ -1011,5 +1020,4 @@ ActiveRecord::Schema.define(version: 20190204152500) do
       users
     WHERE ((channels.id = messages.channel_id) AND (messages.id = notifications.message_id) AND (users.id = messages.created_by));
   SQL
-
 end
