@@ -319,13 +319,20 @@ module Chemotion
 
       desc 'Save spectra to file'
       params do
-        requires :peaks, type: Array[Hash]
-        requires :shift, type: Hash
-        requires :attachment_id, type: Integer
+        optional :attachment_id, type: Integer
+        optional :peaks_str, type: String
+        optional :shift_select_x, type: String
+        optional :shift_ref_name, type: String
+        optional :shift_ref_value, type: String
+        optional :mass, type: String
+        optional :scan, type: String
+        optional :thres, type: String
+        optional :predict, type: String
       end
       post 'save_peaks' do
-        pm = to_rails_snake_case(params)
-        @attachment.generate_spectrum(false, false, pm[:peaks], pm[:shift])
+        @attachment.generate_spectrum(
+          false, false, params
+        )
       end
 
       namespace :svgs do

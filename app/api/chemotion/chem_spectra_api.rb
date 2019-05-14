@@ -12,24 +12,6 @@ module Chemotion
         Base64.encode64(target)
       end
 
-      def decode_param(params)
-        file = params[:file]
-        peaks_str = params[:peaks_str]
-        shift = {
-          select_x: params[:shift_select_x],
-          ref_name: params[:shift_ref_name],
-          ref_value: params[:shift_ref_value]
-        }
-        [file, peaks_str, shift]
-      end
-
-      def str_to_peaks(str)
-        str.split('#').map { |s|
-          x, y = s.split(',')
-          { x: x.to_f, y: y.to_f }
-        }
-      end
-
       def to_zip_file(filename, jcamp, img, predict)
         Zip::OutputStream.write_buffer do |zip|
           zip.put_next_entry "#{filename}.jdx"
@@ -45,9 +27,10 @@ module Chemotion
       end
 
       def conversion(params)
-        file = decode_param(params)[0]
-        tmp = file[:tempfile]
-        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(tmp.path) # abs_path, is_regen, peaks, shift
+        file = params[:file][:tempfile]
+        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
+          file.path, false, params
+        ) # abs_path, is_regen, peaks, shift
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
@@ -56,11 +39,9 @@ module Chemotion
       end
 
       def convert_to_zip(params)
-        file, peaks_str, shift = decode_param(params)
-        peaks = str_to_peaks(peaks_str)
-        tmp = file[:tempfile]
+        file = params[:file][:tempfile]
         jcamp, img = Chemotion::Jcamp::Create.spectrum(
-          tmp.path, false, peaks, shift
+          file.path, false, params
         )
         predict = JSON.parse(params['predict'])
         to_zip_file(params[:filename], jcamp, img, predict)
@@ -74,6 +55,7 @@ module Chemotion
         desc 'Convert file'
         params do
           requires :file, type: Hash
+          requires :mass, type: String
         end
         post 'convert' do
           conversion(params)
@@ -87,6 +69,9 @@ module Chemotion
           requires :shift_select_x, type: String
           requires :shift_ref_name, type: String
           requires :shift_ref_value, type: String
+          optional :mass, type: String
+          optional :scan, type: String
+          optional :thres, type: String
           optional :predict, type: String
         end
         post 'save' do

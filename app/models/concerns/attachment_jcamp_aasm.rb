@@ -78,18 +78,18 @@ module AttachmentJcampAasm
   def init_aasm
     return unless idle?
     _, extname = extension_parts
-    %w[dx jdx jcamp].include?(extname.downcase) ? set_queueing : set_non_jcamp
+    %w[dx jdx jcamp mzml raw].include?(extname.downcase) ? set_queueing : set_non_jcamp
   end
 
   def require_peaks_generation? # rubocop:disable all
     return unless belong_to_analysis?
     typname, extname = extension_parts
     return if peaked? || edited?
-    return unless %w[dx jdx jcamp].include?(extname.downcase)
+    return unless %w[dx jdx jcamp mzml raw].include?(extname.downcase)
     is_peak_edit = %w[peak edit].include?(typname)
     return generate_img_only(typname) if is_peak_edit
-    generate_spectrum(true, false, false, false) if queueing? && !new_upload
-    generate_spectrum(true, true, false, false) if regenerating? && !new_upload
+    generate_spectrum(true, false) if queueing? && !new_upload
+    generate_spectrum(true, true) if regenerating? && !new_upload
   end
 
   def belong_to_analysis?
@@ -128,12 +128,21 @@ module AttachmentJcampProcess
   end
 
   def generate_jcamp_att(jcamp_tmp, addon, toEdit = false)
-    use_default_ext = nil
-    generate_att(jcamp_tmp, addon, toEdit, use_default_ext)
+    generate_att(jcamp_tmp, addon, toEdit, 'jdx')
+  end
+
+  def build_params(params = {})
+    _, extname = extension_parts
+    params[:mass] = attachable.root_element.molecule.exact_molecular_weight || 0.0
+    params[:ext] = extname.downcase
+    params
   end
 
   def create_process(is_regen)
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(abs_path, is_regen)
+    params = build_params
+    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
+      abs_path, is_regen, params
+    )
     generate_jcamp_att(tmp_jcamp, 'peak')
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
@@ -142,9 +151,10 @@ module AttachmentJcampProcess
     delete_edit_peak_after_done
   end
 
-  def edit_process(is_regen, peaks, shift)
+  def edit_process(is_regen, orig_params)
+    params = build_params(orig_params)
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
-      abs_path, is_regen, peaks, shift
+      abs_path, is_regen, params
     )
     generate_jcamp_att(tmp_jcamp, 'edit', true)
     img_att = generate_img_att(tmp_img, 'edit', true)
@@ -155,9 +165,9 @@ module AttachmentJcampProcess
   end
 
   def generate_spectrum(
-    is_create = false, is_regen = false, peaks = false, shift = false
+    is_create = false, is_regen = false, params = {}
   )
-    is_create ? create_process(is_regen) : edit_process(is_regen, peaks, shift)
+    is_create ? create_process(is_regen) : edit_process(is_regen, params)
   rescue
     set_failure
     Rails.logger.info('**** Jcamp Peaks Generation fails ***')
