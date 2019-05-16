@@ -8,6 +8,10 @@ class CollectionSerializer < ActiveModel::Serializer
   has_many :shared_users, :serializer => UserSimpleSerializer
   has_many :sync_collections_users
 
+  def sync_collections_users
+    object.sync_collections_users.includes(:user, :sharer, :collection)
+  end
+
   def children
     object.children.ordered
   end
