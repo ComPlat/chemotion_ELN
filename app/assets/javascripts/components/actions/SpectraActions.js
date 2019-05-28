@@ -37,8 +37,8 @@ class SpectraActions {
   SaveToFile(spcInfo, peaksStr, shift, scan, thres, predict, cb) {
     return (dispatch) => {
       AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, predict)
-        .then(() => {
-          dispatch();
+        .then((target) => {
+          dispatch({ target, spcInfo });
           cb();
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line

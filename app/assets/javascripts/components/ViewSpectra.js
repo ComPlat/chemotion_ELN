@@ -3,6 +3,7 @@ import { SpectraViewer, FN } from 'react-spectra-viewer';
 import { Modal, Well } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 
+import LoadingActions from './actions/LoadingActions';
 import SpectraActions from './actions/SpectraActions';
 import SpectraStore from './stores/SpectraStore';
 import { SpectraOps } from './utils/quillToolbarSymbol';
@@ -84,11 +85,11 @@ class ViewSpectra extends React.Component {
   }
 
   writeOp({
-    peaks, shift, scan, thres, analysis, layout, isAscend,
+    peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
   }) {
     const { sample, handleSampleChanged } = this.props;
     const { spcInfo } = this.state;
-    const body = FN.peaksBody(peaks, layout, shift, isAscend);
+    const body = FN.peaksBody(peaks, layout, decimal, shift, isAscend);
     const layoutOpsObj = SpectraOps[layout];
     const solventOps = this.opsSolvent(shift);
 
@@ -122,6 +123,7 @@ class ViewSpectra extends React.Component {
     const peaksStr = FN.toPeakStr(fPeaks);
     const predict = JSON.stringify(analysis);
 
+    LoadingActions.start();
     SpectraActions.SaveToFile(
       spcInfo,
       peaksStr,
@@ -131,7 +133,7 @@ class ViewSpectra extends React.Component {
       predict,
       handleSubmit,
     );
-    SpectraActions.ToggleModal.defer();
+    // SpectraActions.ToggleModal.defer();
   }
 
   predictOp({

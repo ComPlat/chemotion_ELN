@@ -264,7 +264,7 @@ export default class AttachmentFetcher {
     };
 
     const promise = fetch(
-      '/api/v1/attachments/save_peaks/',
+      '/api/v1/attachments/save_spectrum/',
       {
         credentials: 'same-origin',
         method: 'POST',

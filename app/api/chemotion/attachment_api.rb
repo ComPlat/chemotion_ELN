@@ -333,10 +333,11 @@ module Chemotion
         optional :thres, type: String
         optional :predict, type: String
       end
-      post 'save_peaks' do
-        @attachment.generate_spectrum(
+      post 'save_spectrum' do
+        jcamp_att = @attachment.generate_spectrum(
           false, false, params
         )
+        { files: [raw_file_obj(jcamp_att)] }
       end
 
       desc 'Make spectra inference'

@@ -67,8 +67,12 @@ class SpectraStore {
     });
   }
 
-  handleSaveToFile() {
-    // no further process needed.
+  handleSaveToFile({ target, spcInfo }) {
+    const { jcamp, predictions } = this.decodeSpectrum(target);
+    const newSpcInfo = Object.assign({}, spcInfo, { idx: target.files[0].id });
+    this.setState({
+      jcamp, predictions, fetched: true, spcInfo: newSpcInfo,
+    });
   }
 
   handleRegenerate() {

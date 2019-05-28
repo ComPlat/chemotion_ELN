@@ -150,12 +150,13 @@ module AttachmentJcampProcess
     tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
       abs_path, is_regen, params
     )
-    generate_jcamp_att(tmp_jcamp, 'peak')
+    jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
     delete_tmps([tmp_jcamp, tmp_img])
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
+    jcamp_att
   end
 
   def edit_process(is_regen, orig_params)
@@ -170,6 +171,7 @@ module AttachmentJcampProcess
     delete_tmps([tmp_jcamp, tmp_img])
     delete_related_imgs(img_att)
     delete_edit_peak_after_done
+    jcamp_att
   end
 
   def generate_spectrum(
