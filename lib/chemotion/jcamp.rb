@@ -105,7 +105,8 @@ module Chemotion
       )
         rsp = stub_http(path, is_regen, params)
         rsp_io = StringIO.new(rsp.body.to_s)
-        Util.extract_zip(rsp_io)
+        spc_type = JSON.parse(rsp.headers['x-extra-info-json'])['spc_type']
+        Util.extract_zip(rsp_io) << spc_type
       end
     end
   end

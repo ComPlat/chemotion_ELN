@@ -147,10 +147,11 @@ module AttachmentJcampProcess
 
   def create_process(is_regen)
     params = build_params
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
+    tmp_jcamp, tmp_img, spc_type = Chemotion::Jcamp::Create.spectrum(
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
+    jcamp_att.ir_auto_infer(spc_type)
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
     delete_tmps([tmp_jcamp, tmp_img])
@@ -161,7 +162,7 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(
+    tmp_jcamp, tmp_img, _ = Chemotion::Jcamp::Create.spectrum(
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
@@ -260,5 +261,11 @@ module AttachmentJcampProcess
     predictions.destroy_all
     predictions.create(decision: target)
     target
+  end
+
+  def ir_auto_infer(spc_type)
+    return unless spc_type == 'INFRARED'
+    params = { layout: 'IR' }
+    infer_spectrum(params)
   end
 end

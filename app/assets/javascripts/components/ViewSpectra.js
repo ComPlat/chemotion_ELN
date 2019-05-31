@@ -149,16 +149,17 @@ class ViewSpectra extends React.Component {
   }
 
   buildOpsByLayout(et) {
-    if (et.spectrum.sTyp === 'MS') {
+    const predictable = ['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
+    if (predictable) {
       return [
         { name: 'write', value: this.writeOp },
         { name: 'save', value: this.saveOp },
+        { name: 'predict', value: this.predictOp },
       ];
     }
     return [
       { name: 'write', value: this.writeOp },
       { name: 'save', value: this.saveOp },
-      { name: 'predict', value: this.predictOp },
     ];
   }
 
