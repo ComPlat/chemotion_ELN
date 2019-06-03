@@ -43,7 +43,7 @@ module Chemotion
             svg_file_src = File.join('public','images', 'molecules', molecule.molecule_svg_file)
             FileUtils.cp(svg_file_src, svg_file_path) if File.exist?(svg_file_src)
           end
-          molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name })
+          molecule.attributes.merge({ temp_svg: File.exist?(svg_file_path) && svg_file_name, ob_log: babel_info[:ob_log] })
         end
       end
 
@@ -123,8 +123,8 @@ module Chemotion
         svg_file.close
 
         molecule = Molecule.find_or_create_by_molfile(molfile)
-
-        molecule.attributes.merge({ temp_svg: svg_file_name })
+        ob = molecule.ob_log
+        molecule.attributes.merge({ temp_svg: svg_file_name, ob_log: ob })
       end
 
       desc "return CAS of the molecule"

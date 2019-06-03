@@ -64,6 +64,7 @@ M  END
         mf = molfile
       end
     end
+    OpenBabel.obErrorLog.clear_log
 
     c = OpenBabel::OBConversion.new
     c.set_in_format format
@@ -110,7 +111,11 @@ M  END
       is_partial: is_partial,
       # TODO we could return 'molfile' in any case
       # molfile: (format != 'mol' && molfile) || (is_partial && molfile)
-      molfile: molfile
+      molfile: molfile,
+      ob_log: {
+        error: OpenBabel.obErrorLog.get_messages_of_level(0),
+        warning: OpenBabel.obErrorLog.get_messages_of_level(1)
+      }
     }
 
   end
