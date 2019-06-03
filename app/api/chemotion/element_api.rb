@@ -49,12 +49,13 @@ module Chemotion
                 else 5
                 end
           if params[:currentCollection][:is_sync_to_me]
-            @collection = SyncCollectionsUser.where(
+            @s_collection = SyncCollectionsUser.where(
               'id = ? and user_id in (?) and permission_level > ?',
               params[:currentCollection][:id],
               user_ids,
               pl
             ).first
+            @collection = Collection.find(@s_collection.collection_id)
           else
             @collection = Collection.where(
               'id = ? AND ((user_id in (?) AND (is_shared IS NOT TRUE OR permission_level > ?)) OR shared_by_id = ?)',
