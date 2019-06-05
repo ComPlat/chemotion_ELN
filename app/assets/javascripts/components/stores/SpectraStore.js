@@ -21,6 +21,7 @@ class SpectraStore {
       handleSaveToFile: SpectraActions.SaveToFile,
       handleRegenerate: SpectraActions.Regenerate,
       handleInferSpectrum: SpectraActions.InferSpectrum,
+      handleInferRunning: SpectraActions.InferRunning,
     });
   }
 
@@ -80,6 +81,11 @@ class SpectraStore {
   }
 
   handleInferSpectrum(predictions) {
+    this.setState({ predictions });
+  }
+
+  handleInferRunning() {
+    const predictions = { running: true };
     this.setState({ predictions });
   }
 }

@@ -46,6 +46,10 @@ class SpectraActions {
     };
   }
 
+  InferRunning() {
+    return null;
+  }
+
   InferSpectrum({
     spcInfo, peaks, layout, shift,
   }) {

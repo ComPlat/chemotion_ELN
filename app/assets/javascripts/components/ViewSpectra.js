@@ -160,11 +160,10 @@ class ViewSpectra extends React.Component {
   }) {
     const { spcInfo } = this.state;
 
-    SpectraActions.InferSpectrum({
+    SpectraActions.InferRunning.defer();
+    SpectraActions.InferSpectrum.defer({
       spcInfo, peaks, layout, shift,
     });
-    alert('Server is making predictions...\nPlease check it later.'); // eslint-disable-line
-    SpectraActions.ToggleModal.defer();
   }
 
   buildOpsByLayout(et) {
