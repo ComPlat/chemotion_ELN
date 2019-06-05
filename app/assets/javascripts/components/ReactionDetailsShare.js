@@ -63,6 +63,9 @@ const setReactionByType = (reaction, type, value) => {
       reaction.duration_display = reaction.convertDuration(value);
       options = { schemaChanged: true }
       break;
+    case 'rxno':
+      reaction.rxno = value;
+      break;
   }
 
   return { newReaction: reaction, options: options }

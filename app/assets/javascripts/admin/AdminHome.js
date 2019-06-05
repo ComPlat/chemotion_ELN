@@ -7,6 +7,7 @@ import AdminDashboard from './AdminDashboard';
 import UserManagement from './UserManagement';
 import MessagePublish from './MessagePublish';
 import DataCollector from './DataCollector';
+import OlsTerms from './OlsTerms';
 
 class AdminHome extends React.Component {
   constructor(props) {
@@ -45,6 +46,8 @@ class AdminHome extends React.Component {
       return this.renderMessagePublish();
     } else if (pageIndex === 3) {
       return this.renderDataCollector();
+    } else if (pageIndex === 4) {
+      return this.renderOlsTerms();
     }
     return (<div />);
   }
@@ -69,6 +72,9 @@ class AdminHome extends React.Component {
             </NavItem>
             <NavItem eventKey={3}>
               Data Collector
+            </NavItem>
+            <NavItem eventKey={4}>
+              Load OLS Terms
             </NavItem>
           </Nav>
         </Col>
@@ -105,6 +111,14 @@ class AdminHome extends React.Component {
     return (
       <Col className={contentClassName} >
         <DataCollector />
+      </Col>
+    );
+  }
+  renderOlsTerms() {
+    const { contentClassName } = this.state;
+    return (
+      <Col className={contentClassName} >
+        <OlsTerms />
       </Col>
     );
   }

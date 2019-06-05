@@ -131,4 +131,23 @@ export default class AdminFetcher {
       });
     return promise;
   }
+
+  static importOlsTerms(file) {
+    var data = new FormData();
+    data.append("file", file);
+
+    let promise = fetch('/api/v1/admin/importOlsTerms/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      body: data
+    }).then((response) => {
+      return response.json()
+    }).then((json) => {
+      return json;
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+
+    return promise;
+  }
 }

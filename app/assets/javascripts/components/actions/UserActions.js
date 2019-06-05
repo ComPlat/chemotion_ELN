@@ -6,6 +6,28 @@ import DocumentHelper from '../utils/DocumentHelper';
 
 
 class UserActions {
+  fetchOlsRxno() {
+    return (dispatch) => {
+      UsersFetcher.fetchOls('rxno')
+        .then((result) => {
+          dispatch(result);
+        }).catch((errorMessage) => {
+          console.log(errorMessage);
+        });
+    };
+  }
+
+  fetchOlsChmo() {
+    return (dispatch) => {
+      UsersFetcher.fetchOls('chmo')
+      .then((result) => {
+        dispatch(result);
+      }).catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    };
+  }
+
   fetchCurrentUser() {
     return (dispatch) => { UsersFetcher.fetchCurrentUser()
       .then((result) => {
