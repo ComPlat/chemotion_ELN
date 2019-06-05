@@ -251,7 +251,7 @@ export default class AttachmentFetcher {
     });
   }
 
-  static saveSpectrum(attId, peaksStr, shift, scan, thres, predict) {
+  static saveSpectrum(attId, peaksStr, shift, scan, thres, predict, keepPred) {
     const params = {
       attachmentId: attId,
       peaksStr,
@@ -261,6 +261,7 @@ export default class AttachmentFetcher {
       scan,
       thres,
       predict,
+      keepPred,
     };
 
     const promise = fetch(

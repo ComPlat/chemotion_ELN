@@ -10,6 +10,7 @@ class SpectraStore {
     this.spcInfo = null;
     this.showModal = false;
     this.fetched = false;
+    this.writing = false;
     this.predictions = {
       outline: {},
       output: { result: [] },
@@ -22,6 +23,8 @@ class SpectraStore {
       handleRegenerate: SpectraActions.Regenerate,
       handleInferSpectrum: SpectraActions.InferSpectrum,
       handleInferRunning: SpectraActions.InferRunning,
+      handleWriteStart: SpectraActions.WriteStart,
+      handleWriteStop: SpectraActions.WriteStop,
     });
   }
 
@@ -80,12 +83,30 @@ class SpectraStore {
     // no further process needed.
   }
 
-  handleInferSpectrum(predictions) {
-    this.setState({ predictions });
+  handleWriteStart(payload) {
+    this.setState({
+      writing: payload,
+      predictions: {
+        outline: {},
+        output: { result: [] },
+      },
+    });
+  }
+
+  handleWriteStop() {
+    this.setState({ writing: false });
   }
 
   handleInferRunning() {
-    const predictions = { running: true };
+    const predictions = {
+      running: true,
+      outline: {},
+      output: { result: [] },
+    };
+    this.setState({ predictions });
+  }
+
+  handleInferSpectrum(predictions) {
     this.setState({ predictions });
   }
 }

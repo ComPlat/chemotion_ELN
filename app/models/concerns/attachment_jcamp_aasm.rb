@@ -140,9 +140,11 @@ module AttachmentJcampProcess
     params
   end
 
-  def update_prediction(params)
-    predict = JSON.parse(params['predict'])
-    predictions.create(decision: predict)
+  def update_prediction(params, ori_pred)
+    decision = params[:keep_pred] ?
+      ori_pred.decision :
+      JSON.parse(params['predict'])
+    predictions.create(decision: decision)
   end
 
   def create_process(is_regen)
@@ -166,7 +168,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    jcamp_att.update_prediction(params)
+    jcamp_att.update_prediction(params, predictions[0])
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup
     delete_tmps([tmp_jcamp, tmp_img])

@@ -332,6 +332,7 @@ module Chemotion
         optional :scan, type: String
         optional :thres, type: String
         optional :predict, type: String
+        optional :keep_pred, type: Boolean
       end
       post 'save_spectrum' do
         jcamp_att = @attachment.generate_spectrum(

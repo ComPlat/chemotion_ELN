@@ -19,10 +19,12 @@ class ViewSpectra extends React.Component {
     this.onChange = this.onChange.bind(this);
     this.writeOp = this.writeOp.bind(this);
     this.writeCloseOp = this.writeCloseOp.bind(this);
+    this.checkWriteOp = this.checkWriteOp.bind(this);
     this.saveOp = this.saveOp.bind(this);
     this.saveCloseOp = this.saveCloseOp.bind(this);
     this.closeOp = this.closeOp.bind(this);
     this.predictOp = this.predictOp.bind(this);
+    this.checkedToWrite = this.checkedToWrite.bind(this);
     this.buildOpsByLayout = this.buildOpsByLayout.bind(this);
     this.renderSpectraViewer = this.renderSpectraViewer.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
@@ -38,7 +40,10 @@ class ViewSpectra extends React.Component {
 
   onChange(newState) {
     const origState = this.state;
+    const { writing, predictions } = newState;
     this.setState({ ...origState, ...newState });
+
+    this.checkedToWrite(writing, predictions);
   }
 
   opsSolvent(shift) {
@@ -83,11 +88,12 @@ class ViewSpectra extends React.Component {
   }
 
   writeOp({
-    peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+    peaks, shift, scan, thres, analysis, layout, isAscend, decimal, body,
+    keepPred,
   }) {
     const { sample, handleSampleChanged } = this.props;
     const { spcInfo } = this.state;
-    const body = FN.peaksBody(peaks, layout, decimal, shift, isAscend);
+    const mBody = body || FN.peaksBody(peaks, layout, decimal, shift, isAscend);
     const layoutOpsObj = SpectraOps[layout];
     const solventOps = this.opsSolvent(shift);
 
@@ -98,7 +104,7 @@ class ViewSpectra extends React.Component {
         ai.extended_metadata.content.ops = [ // eslint-disable-line
           ...ai.extended_metadata.content.ops,
           ...layoutOpsObj.head(solventOps),
-          { insert: body },
+          { insert: mBody },
           ...layoutOpsObj.tail(),
         ];
       });
@@ -106,14 +112,39 @@ class ViewSpectra extends React.Component {
 
     const cb = () => (
       this.saveOp({
-        peaks, shift, scan, thres, analysis,
+        peaks, shift, scan, thres, analysis, keepPred,
       })
     );
     handleSampleChanged(sample, cb);
   }
 
+  checkedToWrite(writing, predictions) {
+    if (!writing || predictions.output.result.length === 0) return null;
+    const {
+      peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+    } = writing;
+
+    const data = predictions.output.result[0].shifts;
+    const body = FN.formatPeaksByPrediction(peaks, layout, isAscend, decimal, data);
+    this.writeOp({
+      peaks,
+      shift,
+      scan,
+      thres,
+      analysis,
+      layout,
+      isAscend,
+      decimal,
+      body,
+      keepPred: true,
+    });
+
+    SpectraActions.WriteStop.defer();
+    return null;
+  }
+
   saveOp({
-    peaks, shift, scan, thres, analysis,
+    peaks, shift, scan, thres, analysis, keepPred,
   }) {
     const { handleSubmit } = this.props;
     const { spcInfo } = this.state;
@@ -121,8 +152,8 @@ class ViewSpectra extends React.Component {
     const peaksStr = FN.toPeakStr(fPeaks);
     const predict = JSON.stringify(analysis);
 
-    LoadingActions.start();
-    SpectraActions.SaveToFile(
+    LoadingActions.start.defer();
+    SpectraActions.SaveToFile.defer(
       spcInfo,
       peaksStr,
       shift,
@@ -130,6 +161,7 @@ class ViewSpectra extends React.Component {
       thres,
       predict,
       handleSubmit,
+      keepPred,
     );
   }
 
@@ -166,17 +198,27 @@ class ViewSpectra extends React.Component {
     });
   }
 
+  checkWriteOp({
+    peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+  }) {
+    LoadingActions.start.defer();
+    SpectraActions.WriteStart.defer({
+      peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+    });
+    this.predictOp({ peaks, layout, shift });
+  }
+
   buildOpsByLayout(et) {
     const baseOps = [
       { name: 'write', value: this.writeOp },
       { name: 'write & close', value: this.writeCloseOp },
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
-      { name: 'close without save', value: this.closeOp },
     ];
     const predictable = ['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
     if (predictable) {
       return [
+        { name: 'check & write', value: this.checkWriteOp },
         ...baseOps,
         { name: 'predict', value: this.predictOp },
       ];
@@ -275,7 +317,7 @@ class ViewSpectra extends React.Component {
                 onClick={this.closeOp}
               >
                 <span>
-                  <i className="fa fa-trash" /> Close without Save
+                  <i className="fa fa-times" /> Close without Save
                 </span>
               </Button>
             </Modal.Title>

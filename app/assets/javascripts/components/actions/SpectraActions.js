@@ -34,9 +34,9 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(spcInfo, peaksStr, shift, scan, thres, predict, cb) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, predict, cb, keepPred = false) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, predict)
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, predict, keepPred)
         .then((target) => {
           dispatch({ target, spcInfo });
           cb();
@@ -44,6 +44,14 @@ class SpectraActions {
           console.log(errorMessage); // eslint-disable-line
         });
     };
+  }
+
+  WriteStart(payload) {
+    return payload;
+  }
+
+  WriteStop() {
+    return null;
   }
 
   InferRunning() {
