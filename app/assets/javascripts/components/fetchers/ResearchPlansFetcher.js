@@ -14,6 +14,7 @@ export default class ResearchPlansFetcher {
         return response.json()
       }).then((json) => {
         const rResearchPlan = new ResearchPlan(json.research_plan);
+        rResearchPlan.attachments = json.attachments;
         if (json.error) {
           rResearchPlan.id = `${id}:error:ResearchPlan ${id} is not accessible!`;
         }

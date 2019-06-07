@@ -75,6 +75,7 @@ module Chemotion
         attachable_id = params[:attachable_id]
         if params[:files] && params[:files].length > 0
           attach_ary = Array.new
+          rp_attach_ary = Array.new
           params[:files].each do |file|
             if tempfile = file[:tempfile]
                 a = Attachment.new(
@@ -90,11 +91,18 @@ module Chemotion
                 begin
                   a.save!
                   attach_ary.push(a.id)
+                  rp_attach_ary.push(a.id) if (a.attachable_type == 'ResearchPlan')
                 ensure
                   tempfile.close
                   tempfile.unlink
                 end
             end
+          end
+
+          if rp_attach_ary.length > 0
+            #TransferThumbnailToPublicJob.perform_now(rp_attach_ary)
+            TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}")
+                           .perform_later(rp_attach_ary)
           end
           if attach_ary.length > 0
             TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
