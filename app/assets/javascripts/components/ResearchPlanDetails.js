@@ -21,10 +21,27 @@ import Attachment from './models/Attachment';
 import Utils from './utils/Functions';
 import EditorFetcher from './fetchers/EditorFetcher';
 import SpinnerPencilIcon from './common/SpinnerPencilIcon';
+import ImageModal from './common/ImageModal';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
+
+const imageStyle = {
+  style: {
+    position: 'absolute',
+    width: 60,
+    height: 60
+  }
+};
+
+const previewImage = (attachment) => {
+  const noAttSvg = '/images/wild_card/no_attachment.svg';
+  if (attachment.thumb) {
+    return `/images/thumbnail/${attachment.identifier}`;
+  }
+  return noAttSvg;
+};
 
 export default class ResearchPlanDetails extends Component {
   constructor(props) {
@@ -325,6 +342,11 @@ export default class ResearchPlanDetails extends Component {
     const updateTime = new Date(attachment.updated_at);
     updateTime.setTime(updateTime.getTime() + (15 * 60 * 1000));
 
+    const hasPop = false;
+    const fetchNeeded = false;
+    const fetchId = attachment.id;
+
+    const previewImg = previewImage(attachment);
     const isEditing = attachment.aasm_state === 'oo_editing' && new Date().getTime() < updateTime
     const { attachmentEditor } = this.state;
     const docType = this.documentType(attachment.filename);
@@ -361,7 +383,26 @@ export default class ResearchPlanDetails extends Component {
     return (
       <div>
         <Row>
-          <Col md={10}>
+          <Col md={1}>
+            <div className="analysis-header order" style={{ width: '60px', height: '60px' }}>
+              <div className="preview" style={{ width: '60px', height: '60px' }} >
+                <ImageModal
+                  imageStyle={imageStyle}
+                  hasPop={hasPop}
+                  preivewObject={{
+                    src: previewImg
+                  }}
+                  popObject={{
+                    title: attachment.filename,
+                    src: previewImg,
+                    fetchNeeded,
+                    fetchId
+                  }}
+                />
+              </div>
+            </div>
+          </Col>
+          <Col md={9}>
             {attachment.filename}
           </Col>
           <Col md={2}>
@@ -494,7 +535,7 @@ export default class ResearchPlanDetails extends Component {
             <Tab eventKey={0} title={'Properties'}>
               {this.propertiesTab(research_plan)}
             </Tab>
-            <Tab eventKey={1} title={'Literatures'}>
+            <Tab eventKey={1} title={'Literature'}>
               {this.literatureTab(research_plan)}
             </Tab>
           </Tabs>

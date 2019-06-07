@@ -602,6 +602,7 @@ ActiveRecord::Schema.define(version: 20190204152500) do
     t.datetime "deleted_at"
     t.datetime "created_at",  null: false
     t.datetime "updated_at",  null: false
+    t.string   "thumb_svg"
   end
 
   create_table "residues", force: :cascade do |t|

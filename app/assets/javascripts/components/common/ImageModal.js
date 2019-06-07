@@ -4,6 +4,12 @@ import { Modal, Button } from 'react-bootstrap';
 import AttachmentFetcher from '../fetchers/AttachmentFetcher';
 import { stopEvent } from '../utils/DomHelper';
 
+const defaultImageStyle = {
+  style: {
+    cursor: 'default'
+  }
+};
+
 export default class ImageModal extends Component {
   constructor(props) {
     super(props);
@@ -53,7 +59,7 @@ export default class ImageModal extends Component {
     const { hasPop, preivewObject, popObject } = this.props;
 
     if (!hasPop) {
-      return (<div className="preview-table"><img src={preivewObject.src} alt="" style={{ cursor: 'default' }} /></div>);
+      return (<div className="preview-table"><img src={preivewObject.src} alt="" {...this.props.imageStyle || defaultImageStyle} /></div>);
     }
 
     return (
@@ -87,6 +93,7 @@ export default class ImageModal extends Component {
 }
 
 ImageModal.propTypes = {
+  imageStyle: PropTypes.object,
   hasPop: PropTypes.bool.isRequired,
   preivewObject: PropTypes.shape({
     src: PropTypes.string,

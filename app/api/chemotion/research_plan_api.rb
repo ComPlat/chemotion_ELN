@@ -104,10 +104,10 @@ module Chemotion
         before do
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find(params[:id])).read?
         end
-
         get do
           research_plan = ResearchPlan.find(params[:id])
-          {research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized}
+          {research_plan: ElementPermissionProxy.new(current_user, research_plan, user_ids).serialized, 
+          attachments: Entities::AttachmentEntity.represent(research_plan.attachments)}
         end
       end
 

@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import SVG from 'react-inlinesvg';
 import { Tooltip, OverlayTrigger, Table, Popover } from 'react-bootstrap';
+import { filter } from 'lodash';
 import ElementContainer from './ElementContainer'
 import ElementCheckbox from './ElementCheckbox';
 import ElementCollectionLabels from './ElementCollectionLabels';
@@ -16,6 +17,7 @@ import classnames from 'classnames';
 import XTdCont from './extra/ElementsTableEntriesXTdCont';
 import { elementShowOrNew } from './routesUtils';
 import SvgWithPopover from './common/SvgWithPopover';
+
 
 export default class ElementsTableEntries extends Component {
   constructor(props) {
@@ -179,16 +181,30 @@ export default class ElementsTableEntries extends Component {
     const {showPreviews} = UIStore.getState();
     const clickToShowDetails = e => this.showDetails(element);
 
-    if(showPreviews && (element.type == 'reaction' || element.type == 'research_plan')) {
+    if (showPreviews && (element.type == 'reaction')) {
       return (
         <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
           <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
           {tdExtraContents.map((e)=>{return e;})}
         </td>
       );
-    } else {
-      return <td style={{display:'none', cursor: 'pointer'}} onClick={e => this.showDetails(element)}/>;
+    } else if (element.type == 'research_plan') {
+      if (element.svg_file == '' && element.thumb_svg !== '') {
+        return (
+          <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
+            <img src={element.thumb_svg} alt="" style={{ cursor: 'pointer' }} />
+            {tdExtraContents.map((e)=>{return e;})}
+          </td>
+        );
+      }
+      return (
+        <td style={svgContainerStyle} onClick={e => this.showDetails(element)}>
+          <SVG src={element.svgPath} className={classNames} key={element.svgPath}/>
+          {tdExtraContents.map((e)=>{return e;})}
+        </td>
+      );
     }
+    return <td style={{display:'none', cursor: 'pointer'}} onClick={e => this.showDetails(element)}/>;
   }
 
   dragColumn(element) {
