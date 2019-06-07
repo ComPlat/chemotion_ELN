@@ -210,7 +210,7 @@ export default class CollectionsFetcher {
   }
 
   static updateElementsCollection(params) {
-    let promise = fetch('/api/v1/collections/elements/', {
+    return fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
@@ -220,21 +220,15 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
         collection_id: params.collection_id,
+        is_sync_to_me: params.is_sync_to_me,
         newCollection: params.newLabel,
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static assignElementsCollection(params) {
-    let promise = fetch('/api/v1/collections/elements/', {
+    return fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -247,19 +241,12 @@ export default class CollectionsFetcher {
         is_sync_to_me: params.is_sync_to_me,
         newCollection: params.newLabel,
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 
   static removeElementsCollection(params) {
-    let promise = fetch('/api/v1/collections/elements/', {
+    return fetch('/api/v1/collections/elements/', {
       credentials: 'same-origin',
       method: 'DELETE',
       headers: {
@@ -269,14 +256,7 @@ export default class CollectionsFetcher {
       body: JSON.stringify({
         ui_state: params.ui_state,
       })
-    }).then((response) => {
-      return response.json()
-    }).then((json) => {
-      return json;
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+    }).then(response => response)
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

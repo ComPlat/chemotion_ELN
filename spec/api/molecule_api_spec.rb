@@ -72,7 +72,7 @@ M  END"
     describe 'Get /api/v1/molecules/cas' do
       let!(:m) { create(:molecule) }
 
-      it 'returns a molecule with CAS number' do
+      skip 'returns a molecule with CAS number' do
         expect(m.cas).to eq([])
 
         get "/api/v1/molecules/cas?inchikey=#{m.inchikey}"

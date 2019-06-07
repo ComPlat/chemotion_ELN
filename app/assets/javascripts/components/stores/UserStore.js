@@ -8,6 +8,7 @@ class UserStore {
     this.state = {
       currentUser: null,
       profile: null,
+      // TODO: currentTab and currentType should be in UIStore
       currentTab: 0,
       currentType: '',
       devices: [],

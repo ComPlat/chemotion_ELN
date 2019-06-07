@@ -30,7 +30,7 @@ Rails.application.configure do
 
   # Turns off the Rails asset pipeline log (suppresses output of asset requests).
   config.assets.quiet = true
-  
+
   # Adds additional error checking when serving assets at runtime.
   # Checks for improperly declared sprockets dependencies.
   # Raises helpful error messages.
@@ -48,11 +48,11 @@ Rails.application.configure do
     config.precompiler.worker_count = 3
   end
   config.after_initialize do
-#    Bullet.enable = true
-#    Bullet.alert = true
-#    Bullet.bullet_logger = true
-#    Bullet.console = true
+    Bullet.enable = true
+    Bullet.alert = true
+    Bullet.bullet_logger = true
+    Bullet.console = true
 #    Bullet.rails_logger = true
-#    Bullet.add_footer = true
+    Bullet.add_footer = true
   end
 end

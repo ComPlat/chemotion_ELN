@@ -1,6 +1,8 @@
 import 'whatwg-fetch';
 import { indexOf, split } from 'lodash';
 import Immutable from 'immutable';
+
+import BaseFetcher from './BaseFetcher';
 import Reaction from '../models/Reaction';
 import UIStore from '../stores/UIStore';
 import NotificationActions from '../actions/NotificationActions';
@@ -38,38 +40,8 @@ export default class ReactionsFetcher {
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}, isSync=false) {
-    let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || UIStore.getState().number_of_results
-    let from_date = '';
-    if (queryParams.fromDate) {
-      from_date = `&from_date=${queryParams.fromDate.unix()}`
-    }
-    let to_date = '';
-    if (queryParams.toDate) {
-      to_date = `&to_date=${queryParams.toDate.unix()}`
-    }
-    let api = `/api/v1/reactions.json?${isSync ? "sync_" : ""}` +
-              `collection_id=${id}&page=${page}&per_page=${per_page}&` +
-              `${from_date}${to_date}`;
-    let promise = fetch(api, {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json().then((json) => {
-          return {
-            elements: json.reactions.map((r) => new Reaction(r)),
-            totalElements: parseInt(response.headers.get('X-Total')),
-            page: parseInt(response.headers.get('X-Page')),
-            pages: parseInt(response.headers.get('X-Total-Pages')),
-            perPage: parseInt(response.headers.get('X-Per-Page'))
-          }
-        })
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+  static fetchByCollectionId(id, queryParams = {}, isSync = false) {
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'reactions', Reaction);
   }
 
   static update(reaction) {

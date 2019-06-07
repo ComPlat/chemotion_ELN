@@ -81,60 +81,28 @@ export default class ManagingModalCollectionActions extends React.Component {
 
   handleSubmit() {
     const { selected, newLabel } = this.state;
-    let collection_id = selected && parseInt(selected.split("-")[0]);
-    let is_sync_to_me = selected && selected.split("-")[1] == "is_sync_to_me";
+    const collection_id = selected && parseInt(selected.split("-")[0]);
+    const is_sync_to_me = selected && selected.split("-")[1] == "is_sync_to_me";
+    const ui_state = UIStore.getState();
 
-    const uiStoreState = UIStore.getState();
-    const ui_state = {
-      sample: {
-        all: uiStoreState.sample.checkedAll,
-        included_ids: uiStoreState.sample.checkedIds,
-        excluded_ids: uiStoreState.sample.uncheckedIds
-      },
-      reaction: {
-        all: uiStoreState.reaction.checkedAll,
-        included_ids: uiStoreState.reaction.checkedIds,
-        excluded_ids: uiStoreState.reaction.uncheckedIds
-      },
-      wellplate: {
-        all: uiStoreState.wellplate.checkedAll,
-        included_ids: uiStoreState.wellplate.checkedIds,
-        excluded_ids: uiStoreState.wellplate.uncheckedIds
-      },
-      screen: {
-        all: uiStoreState.screen.checkedAll,
-        included_ids: uiStoreState.screen.checkedIds,
-        excluded_ids: uiStoreState.screen.uncheckedIds
-      },
-      research_plan: {
-        all: uiStoreState.research_plan.checkedAll,
-        included_ids: uiStoreState.research_plan.checkedIds,
-        excluded_ids: uiStoreState.research_plan.uncheckedIds
-      },
-      currentCollection: uiStoreState.currentCollection,
-      currentCollectionId: uiStoreState.currentCollection.id,
-      currentSearchSelection: uiStoreState.currentSearchSelection
-    }
-
-    this.props.action({ ui_state: ui_state,
-                        collection_id: collection_id,
-                        is_sync_to_me: is_sync_to_me,
-                        newLabel: newLabel
-                      });
+    this.props.action({
+      ui_state, collection_id, is_sync_to_me, newLabel
+    });
     this.props.onHide();
   }
 
-  submitButton(){
-    const {newLabel, selected} = this.state
+  submitButton() {
+    const { newLabel, selected } = this.state
     const l = newLabel && newLabel.length
-    return l && l > 0 ?
+    return l && l > 0 ? (
       <Button bsStyle="warning" onClick={this.handleSubmit}>
-        Create collection '{newLabel}' and Submit
+        Create collection &lsquo;{newLabel}&rsquo; and Submit
       </Button>
-      : <Button bsStyle="warning" onClick={this.handleSubmit}
-          disabled={!selected}>
+    ) : (
+      <Button bsStyle="warning" onClick={this.handleSubmit} disabled={!selected}>
           Submit
-        </Button>
+      </Button>
+    );
   }
 
   render() {

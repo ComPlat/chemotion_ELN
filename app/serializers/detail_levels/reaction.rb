@@ -22,7 +22,7 @@ class DetailLevels::Reaction
     [
       :description, :timestamp_start, :timestamp_stop, :dangerous_products,
       :observation, :purification, :solvent, :tlc_solvents, :tlc_description,
-      :rf_value, :temperature, :container, :code_log, :duration
+      :rf_value, :temperature, :container, :code_log, :duration, :purification_solvents
     ]
   end
 
