@@ -337,6 +337,7 @@ module Chemotion
 
         requires :container, type: Hash
         optional :duration, type: String
+        optional :rxno, type: String
       end
       route_param :id do
 
@@ -388,6 +389,7 @@ module Chemotion
         optional :literatures, type: Hash
         requires :container, type: Hash
         optional :duration, type: String
+        optional :rxno, type: String
       end
 
       post do

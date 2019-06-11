@@ -487,6 +487,23 @@ ActiveRecord::Schema.define(version: 20190204152500) do
 
   add_index "notifications", ["message_id", "user_id"], name: "index_notifications_on_message_id_and_user_id", unique: true, using: :btree
 
+  create_table "ols_terms", force: :cascade do |t|
+    t.string   "ols_name"
+    t.string   "term_id"
+    t.string   "ancestry"
+    t.string   "ancestry_term_id"
+    t.string   "label"
+    t.string   "synonym"
+    t.jsonb    "synonyms"
+    t.string   "desc"
+    t.jsonb    "metadata"
+    t.boolean  "is_enabled",       default: true
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+  end
+  add_index "ols_terms", ["ancestry"], name: "index_ols_terms_on_ancestry", using: :btree
+  add_index "ols_terms", ["ols_name", "term_id"], name: "index_ols_terms_on_ols_name_and_term_id", unique: true, using: :btree
+
   create_table "pg_search_documents", force: :cascade do |t|
     t.text     "content"
     t.integer  "searchable_id"
@@ -536,6 +553,7 @@ ActiveRecord::Schema.define(version: 20190204152500) do
     t.string   "rinchi_short_key"
     t.string   "rinchi_web_key"
     t.string   "duration"
+    t.string   "rxno"
   end
 
   add_index "reactions", ["deleted_at"], name: "index_reactions_on_deleted_at", using: :btree

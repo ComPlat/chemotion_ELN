@@ -35,6 +35,8 @@ class App extends Component {
 
   componentDidMount() {
     UIStore.listen(this.handleUiStoreChange);
+    UserActions.fetchOlsRxno();
+    UserActions.fetchOlsChmo();
     UserActions.fetchProfile();
     UIActions.initialize.defer();
     document.addEventListener('keydown', this.documentKeyDown);

@@ -65,6 +65,7 @@ export default class Reaction extends Element {
     })
 
     reaction.short_label = this.buildReactionShortLabel()
+    reaction.rxno = '';
     return reaction
   }
 
@@ -128,6 +129,7 @@ export default class Reaction extends Element {
       container: this.container,
       duration: this.duration,
       duration_display: this.duration_display,
+      rxno: this.rxno,
     });
   }
 
