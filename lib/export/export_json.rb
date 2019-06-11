@@ -209,7 +209,7 @@ module Export
           , (
               select array_to_json(array_agg(row_to_json(attachment)))
               from (
-                select att.filename, att.identifier, att.checksum
+                select att.filename, att.identifier, att.checksum, att.content_type
                 from attachments att
                 where att.attachable_id = datc.id and att.attachable_type = 'Container'
               ) attachment
