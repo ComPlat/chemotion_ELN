@@ -218,6 +218,40 @@ module Chemotion
           rsp.parsed_response
         end
       end
+
+      # MS module
+      module MS
+        include HTTParty
+
+        def self.build_body(molfile, spectrum)
+          {
+            multipart: true,
+            molfile: molfile,
+            spectrum: spectrum
+          }
+        end
+
+        def self.stub_request(molfile, spectrum)
+          response = nil
+          url = Rails.configuration.spectra.url
+          port = Rails.configuration.spectra.port
+          File.open(molfile.path, 'r') do |f_molfile|
+            File.open(spectrum.path, 'r') do |f_spectrum|
+              body = build_body(f_molfile, f_spectrum)
+              response = HTTParty.post(
+                "http://#{url}:#{port}/predict/ms",
+                body: body
+              )
+            end
+          end
+          response
+        end
+
+        def self.exec(molfile, spectrum)
+          rsp = stub_request(molfile, spectrum)
+          rsp.parsed_response
+        end
+      end
     end
   end
 end

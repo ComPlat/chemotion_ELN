@@ -140,7 +140,8 @@ module AttachmentJcampProcess
     params
   end
 
-  def update_prediction(params, ori_pred)
+  def update_prediction(params, ori_pred, spc_type)
+    return auto_infer(spc_type) if spc_type == 'MS'
     decision = params[:keep_pred] ?
       ori_pred.decision :
       JSON.parse(params['predict'])
@@ -153,7 +154,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
-    jcamp_att.ir_auto_infer(spc_type)
+    jcamp_att.auto_infer(spc_type)
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
     delete_tmps([tmp_jcamp, tmp_img])
@@ -164,11 +165,11 @@ module AttachmentJcampProcess
 
   def edit_process(is_regen, orig_params)
     params = build_params(orig_params)
-    tmp_jcamp, tmp_img, _ = Chemotion::Jcamp::Create.spectrum(
+    tmp_jcamp, tmp_img, spc_type = Chemotion::Jcamp::Create.spectrum(
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    jcamp_att.update_prediction(params, predictions[0])
+    jcamp_att.update_prediction(params, predictions[0], spc_type)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup
     delete_tmps([tmp_jcamp, tmp_img])
@@ -232,12 +233,22 @@ module AttachmentJcampProcess
   end
 
   def infer_base_on_type(t_molfile, params)
-    if params[:layout] == 'IR'
+    case params[:layout]
+    when 'IR'
       spectrum = read_file
       Tempfile.create('spectrum') do |t_spectrum|
         t_spectrum.write(spectrum)
         t_spectrum.rewind
         Chemotion::Jcamp::Predict::Ir.exec(
+          t_molfile, t_spectrum
+        )
+      end
+    when 'MS'
+      spectrum = read_file
+      Tempfile.create('spectrum') do |t_spectrum|
+        t_spectrum.write(spectrum)
+        t_spectrum.rewind
+        Chemotion::Jcamp::Predict::MS.exec(
           t_molfile, t_spectrum
         )
       end
@@ -265,9 +276,12 @@ module AttachmentJcampProcess
     target
   end
 
-  def ir_auto_infer(spc_type)
-    return unless spc_type == 'INFRARED'
-    params = { layout: 'IR' }
-    infer_spectrum(params)
+  def auto_infer(spc_type)
+    case spc_type
+    when 'INFRARED'
+      infer_spectrum({ layout: 'IR' })
+    when 'MS'
+      infer_spectrum({ layout: 'MS' })
+    end
   end
 end
