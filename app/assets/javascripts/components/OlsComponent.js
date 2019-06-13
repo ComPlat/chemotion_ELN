@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { TreeSelect } from 'antd';
+import TreeSelect from 'antd/lib/tree-select';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
 import UserStore from './stores/UserStore';
