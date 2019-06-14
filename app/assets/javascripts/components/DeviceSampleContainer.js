@@ -3,6 +3,7 @@ import {DropTarget} from 'react-dnd'
 import DragDropItemTypes from './DragDropItemTypes'
 import ElementActions from './actions/ElementActions'
 import {ButtonGroup, Button} from 'react-bootstrap';
+import { chmoConversions } from './OlsComponent';
 
 const target = {
   drop(props, monitor){
@@ -108,31 +109,38 @@ const TypeButtonsHeader = ({device, onTypeClick}) => {
       >
         <Button
           bsStyle={"primary"}
-          disabled={isDisabled(device, "NMR")}
-          onClick={() => onTypeClick("NMR")}
+          disabled={isDisabled(device, chmoConversions.nmr_1h.value)}
+          onClick={() => onTypeClick(chmoConversions.nmr_1h.value)}
         >
-          NMR
+          {chmoConversions.nmr_1h.label}
         </Button>
         <Button
           bsStyle={"primary"}
-          disabled={isDisabled(device, "EA")}
-          onClick={() => onTypeClick("EA")}
+          disabled={isDisabled(device, chmoConversions.nmr_13c.value)}
+          onClick={() => onTypeClick(chmoConversions.nmr_13c.value)}
         >
-          EA
+          {chmoConversions.nmr_13c.label}
         </Button>
         <Button
           bsStyle={"primary"}
-          disabled={isDisabled(device, "MS")}
-          onClick={() => onTypeClick("MS")}
+          disabled={isDisabled(device, chmoConversions.ea.value)}
+          onClick={() => onTypeClick(chmoConversions.ea.value)}
         >
-          MS
+          {chmoConversions.ea.label}
         </Button>
         <Button
           bsStyle={"primary"}
-          disabled={isDisabled(device, "IR")}
-          onClick={() => onTypeClick("IR")}
+          disabled={isDisabled(device, chmoConversions.mass.value)}
+          onClick={() => onTypeClick(chmoConversions.mass.value)}
         >
-          IR
+          {chmoConversions.mass.label}
+        </Button>
+        <Button
+          bsStyle={"primary"}
+          disabled={isDisabled(device, chmoConversions.ir.value)}
+          onClick={() => onTypeClick(chmoConversions.ir.value)}
+        >
+          {chmoConversions.ir.label}
         </Button>
       </ButtonGroup>
     </div>
@@ -141,8 +149,8 @@ const TypeButtonsHeader = ({device, onTypeClick}) => {
 
 const isDisabled = (device, type) => {
   // TODO remove this after implementing other Analysis-Type-UIs
-  if(type === "EA" || type === "MS" || type === "IR") {
-    return true
+  if (type === chmoConversions.ea.value || type === chmoConversions.mass.value || type === chmoConversions.ir.value) {
+    return true;
   } else {
     return !device.types.includes(type)
   }
@@ -157,32 +165,39 @@ const TypeButtons = ({device, sample, onTypeClick}) => {
   return (
     <ButtonGroup>
       <Button
-        onClick={() => onTypeClick("NMR")}
-        disabled={isDisabled(device, "NMR")}
+        onClick={() => onTypeClick(chmoConversions.nmr_1h.value)}
+        disabled={isDisabled(device, chmoConversions.nmr_1h.value)}
         style={{width: "57.91px"}}
       >
-        {labelBySampleType("NMR")}
+        {labelBySampleType(chmoConversions.nmr_1h.value)}
       </Button>
       <Button
-        onClick={() => onTypeClick("EA")}
-        disabled={isDisabled(device, "EA")}
+        onClick={() => onTypeClick(chmoConversions.nmr_13c.value)}
+        disabled={isDisabled(device, chmoConversions.nmr_13c.value)}
+        style={{ width: "57.91px" }}
+      >
+        {labelBySampleType(chmoConversions.nmr_13c.value)}
+      </Button>
+      <Button
+        onClick={() => onTypeClick(chmoConversions.ea.value)}
+        disabled={isDisabled(device, chmoConversions.ea.value)}
         style={{width: "43.64px"}}
       >
-        {labelBySampleType("EA")}
+        {labelBySampleType(chmoConversions.ea.value)}
       </Button>
       <Button
-        onClick={() => onTypeClick("MS")}
-        disabled={isDisabled(device, "MS")}
+        onClick={() => onTypeClick(chmoConversions.mass.value)}
+        disabled={isDisabled(device, chmoConversions.mass.value)}
         style={{width: "47.28px"}}
       >
-      {labelBySampleType("MS")}
+        {labelBySampleType(chmoConversions.mass.value)}
       </Button>
       <Button
-        onClick={() => onTypeClick("IR")}
-        disabled={isDisabled(device, "IR")}
+        onClick={() => onTypeClick(chmoConversions.ir.value)}
+        disabled={isDisabled(device, chmoConversions.ir.value)}
         style={{width: "39.22px"}}
       >
-        {labelBySampleType("IR")}
+        {labelBySampleType(chmoConversions.ir.value)}
       </Button>
     </ButtonGroup>
   )

@@ -8,6 +8,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers SampleHelpers
+    helpers ProfileHelpers
 
     resource :samples do
 
@@ -311,6 +312,10 @@ module Chemotion
 
           @sample.update!(attributes)
 
+          #save to profile
+          kinds = @sample.container&.analyses&.pluck("extended_metadata->'kind'")
+          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
           var_detail_level = db_exec_detail_level_for_sample(current_user.id, @sample.id)
           nested_detail_levels = {}
           nested_detail_levels[:sample] = var_detail_level[0]['detail_level_sample'].to_i
@@ -426,6 +431,10 @@ module Chemotion
         sample.container = update_datamodel(params[:container])
 
         sample.save!
+
+        #save to profile
+        kinds = sample.container&.analyses&.pluck("extended_metadata->'kind'")
+        recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         sample
       end

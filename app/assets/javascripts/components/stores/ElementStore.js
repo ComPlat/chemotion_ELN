@@ -37,7 +37,19 @@ import { elementShowOrNew } from '../routesUtils';
 
 import DetailActions from '../actions/DetailActions';
 import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
+import { chmoConversions } from '../OlsComponent';
 
+const fetchOls = (elementType) => {
+  switch (elementType) {
+    case 'reaction':
+      UserActions.fetchOlsRxno();
+      UserActions.fetchOlsChmo();
+      break;
+    default:
+      UserActions.fetchOlsChmo();
+      break;
+  }
+};
 
 class ElementStore {
   constructor() {
@@ -282,19 +294,23 @@ class ElementStore {
   }
 
   handleAddSampleWithAnalysisToDevice({sample, analysis, device}) {
-    switch (analysis.kind) {
-      case '1H NMR':
+    // Note: #735
+    // this handleAddSampleWithAnalysisToDevice is unused so far but we still update '1H NMR' to the new type from OLS-chmo
+    // and 'NMR'(type) of DeviceSample as well
+    const kind = (analysis.kind || '').split('|')[0].trim();
+    switch (kind) {
+      case chmoConversions.nmr_1h.termId:
         // add sample to device
         const deviceSample = DeviceSample.buildEmpty(device.id, {id: sample.id, short_label: sample.short_label})
-        deviceSample.types = ["NMR"]
+        deviceSample.types = [chmoConversions.nmr_1h.value]
         device.samples.push(deviceSample)
         DeviceFetcher.update(device)
         .then(device => {
           const savedDeviceSample = last(device.samples)
           // add sampleAnalysis to experiments
-          let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === "NMR")
+          let deviceAnalysis = device.devicesAnalyses.find(a => a.analysisType === chmoConversions.nmr_1h.value)
           if(!deviceAnalysis) {
-            deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, "NMR")
+            deviceAnalysis = DeviceAnalysis.buildEmpty(device.id, chmoConversions.nmr_1h.value)
           }
           const newExperiment = AnalysesExperiment.buildEmpty(sample.id, sample.short_label, analysis.id, savedDeviceSample.id)
           deviceAnalysis.experiments.push(newExperiment)
@@ -368,10 +384,10 @@ class ElementStore {
     return new Promise((resolve, reject) => {
       SamplesFetcher.fetchById(sampleId)
       .then(sample => {
-        let analysis = Container.buildAnalysis()
+        let analysis = Container.buildAnalysis(chmoConversions.others.value);
         switch (type) {
-          case 'NMR':
-            analysis =  Container.buildAnalysis("1H NMR")
+          case chmoConversions.nmr_1h.termId:
+            analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value)
             break
         }
         sample.addAnalysis(analysis)
@@ -554,7 +570,7 @@ class ElementStore {
 
   handleCreateSample({ element, closeView }) {
     UserActions.fetchCurrentUser();
-
+    fetchOls('sample');
     this.handleRefreshElements('sample');
     if (!closeView) {
       this.navigateToNewElement(element);
@@ -719,6 +735,7 @@ class ElementStore {
 
 
   handleCreateWellplate(wellplate) {
+    fetchOls('wellplate');
     this.handleRefreshElements('wellplate');
     this.navigateToNewElement(wellplate);
   }
@@ -739,6 +756,7 @@ class ElementStore {
   }
 
   handleCreateScreen(screen) {
+    fetchOls('screen');
     this.handleRefreshElements('screen');
     this.navigateToNewElement(screen);
   }
@@ -795,6 +813,7 @@ class ElementStore {
 
   handleCreateReaction(reaction) {
     UserActions.fetchCurrentUser();
+    fetchOls('reaction');
     this.handleRefreshElements('reaction');
     this.navigateToNewElement(reaction);
   }
@@ -1017,13 +1036,16 @@ class ElementStore {
   handleUpdateElement(updatedElement) {
     switch (updatedElement.type) {
       case 'sample':
+        fetchOls('sample');
         this.handleRefreshElements('sample');
         break;
       case 'reaction':
+        fetchOls('reaction');
         this.handleRefreshElements('reaction');
         this.handleRefreshElements('sample');
         break;
       case 'screen':
+        fetchOls('screen');
         this.handleRefreshElements('screen');
         break;
       case 'research_plan':
@@ -1031,6 +1053,7 @@ class ElementStore {
         this.handleUpdateResearchPlanAttaches(updatedElement);
         break;
       case 'wellplate':
+        fetchOls('wellplate');
         this.handleRefreshElements('wellplate');
         this.handleRefreshElements('sample');
         break;

@@ -1,18 +1,18 @@
 module Entities
   class OlsTermEntity < Grape::Entity
-    expose :key do |obj|
+    expose :search do |obj|
       if obj['ols_name'] == 'rxno' || obj['synonym'].nil?
-        obj['term_id'] + '|' + obj['label']
+        obj['term_id'] + ' | ' + obj['label']
       else
-        obj['term_id'] + '|' +  obj['label'] + '(' + obj['synonym'] + ')'
-      end      
-      
+        obj['term_id'] + ' | ' + obj['label'] + ' (' + obj['synonym'] + ')' + '|' + (obj['synonyms']||[]).join(',')
+      end
     end
+
     expose :title do |obj|
       if obj['ols_name'] == 'rxno' || obj['synonym'].nil?
         obj['label']
       else
-        obj['label'] + '(' + obj['synonym'] + ')'
+        obj['label'] + ' (' + obj['synonym'] + ')'
       end
     end
     expose :synonym do |obj|
@@ -20,12 +20,12 @@ module Entities
     end
     expose :value do |obj|
       if obj['ols_name'] == 'rxno' || obj['synonyms'].nil?
-        obj['term_id'] + '|' + obj['label']
+        obj['term_id'] + ' | ' + obj['label']
       else
-        obj['term_id'] + '|' + obj['label'] + ',' + obj['synonyms'].join(',')
-      end      
+        obj['term_id'] + ' | ' + obj['label'] + ' (' + obj['synonym'] + ')'
+      end
     end
-    
+
     expose :children do |obj|
       Entities::OlsTermEntity.represent obj['children']
     end

@@ -8,10 +8,10 @@ import _ from 'lodash';
 import ContainerDatasets from './ContainerDatasets';
 import QuillEditor from './QuillEditor';
 import QuillViewer from './QuillViewer';
-
+import OlsTreeSelect from './OlsComponent';
 import { sampleAnalysesContentSymbol } from './utils/quillToolbarSymbol';
 import { formatAnalysisContent } from './utils/ElementUtils';
-import { confirmOptions, kindOptions } from './staticDropdownOptions/options';
+import { confirmOptions } from './staticDropdownOptions/options';
 
 export default class ContainerComponent extends Component {
   constructor(props) {
@@ -39,7 +39,6 @@ export default class ContainerComponent extends Component {
   handleInputChange(type, ev) {
     const { container } = this.state;
     let isChanged = false;
-
     switch (type) {
       case 'name':
         container.name = ev.currentTarget.value;
@@ -49,10 +48,13 @@ export default class ContainerComponent extends Component {
         container.description = ev.currentTarget.value;
         isChanged = true;
         break;
-      case 'kind':
-        container.extended_metadata.kind = ev ? ev.value : undefined;
+      case 'kind': {
+        let kind = (ev || '');
+        kind = `${kind.split('|')[0].trim()} | ${(kind.split('|')[1] || '').trim()}`;
+        container.extended_metadata.kind = kind;
         isChanged = true;
         break;
+      }
       case 'status':
         container.extended_metadata.status = ev ? ev.value : undefined;
         isChanged = true;
@@ -105,7 +107,7 @@ export default class ContainerComponent extends Component {
 
     return (
       <div>
-        <Col md={4}>
+        <Col md={8}>
           <label>Name</label>
           <FormControl
             type="text"
@@ -113,19 +115,6 @@ export default class ContainerComponent extends Component {
             value={container.name || '***'}
             onChange={this.handleInputChange.bind(this, 'name')}
             disabled={disabled} />
-        </Col>
-        <Col md={4}>
-          <div style={{ marginBottom: 11 }}>
-            <label>Type</label>
-            <Select
-              name='kind'
-              multi={false}
-              options={kindOptions}
-              value={container.extended_metadata['kind']}
-              disabled={readOnly || disabled}
-              onChange={this.handleInputChange.bind(this, 'kind')}
-            />
-          </div>
         </Col>
         <Col md={4}>
           <div style={{ marginBottom: 11 }}>
@@ -137,6 +126,17 @@ export default class ContainerComponent extends Component {
               value={container.extended_metadata['status']}
               disabled={readOnly || disabled}
               onChange={this.handleInputChange.bind(this, 'status')}
+            />
+          </div>
+        </Col>
+        <Col md={12}>
+          <div style={{ marginBottom: 11 }}>
+            <ControlLabel>Type (Chemical Methods Ontology)</ControlLabel>
+            <OlsTreeSelect
+              selectName="chmo"
+              selectedValue={container.extended_metadata['kind'] || ''}
+              onSelectChange={event => this.handleInputChange('kind', event)}
+              selectedDisable={readOnly || disabled || false}
             />
           </div>
         </Col>

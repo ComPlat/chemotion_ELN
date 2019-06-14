@@ -173,7 +173,7 @@ export default class ReactionDetailsMainProperties extends Component {
               <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
               <OlsTreeSelect
                 selectName="rxno"
-                selectedValue={ (reaction.rxno && reaction.rxno.trim()) || ''}
+                selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
                 onSelectChange={event => onInputChange('rxno', event)}
                 selectedDisable={reaction.isMethodDisabled('rxno')}
               />

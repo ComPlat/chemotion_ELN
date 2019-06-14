@@ -44,6 +44,6 @@ module AnalysisCodes
     end
 
     def analysis_is_nmr?(a)
-      a["kind"].include?("NMR")
+      a["kind"].include?("NMR") || a["kind"].include?("CHMO:0000593") || a["kind"].include?("CHMO:0000595")
     end
 end

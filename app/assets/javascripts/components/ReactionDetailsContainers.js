@@ -149,7 +149,8 @@ export default class ReactionDetailsContainers extends Component {
     const {readOnly} = this.props;
 
     let containerHeader = (container) => {
-      const kind = container.extended_metadata.kind || '';
+      let kind = container.extended_metadata.kind || '';
+      kind = (kind.split('|')[1] || kind).trim();
       const previewImg = previewImage(container);
       const status = container.extended_metadata.status || '';
       const content = container.extended_metadata.content || { ops: [{ insert: '' }] };
@@ -214,8 +215,8 @@ export default class ReactionDetailsContainers extends Component {
     };
 
     let containerHeaderDeleted = (container) => {
-      const kind = container.extended_metadata.kind && container.extended_metadata.kind != '';
-      const titleKind = kind ? (' - Type: ' + container.extended_metadata.kind) : '';
+      const kind = container.extended_metadata.kind && container.extended_metadata.kind !== '';
+      const titleKind = kind ? (` - Type: ${(container.extended_metadata.kind.split('|')[1] || container.extended_metadata.kind).trim()}`) : '';
 
       const status = container.extended_metadata.status && container.extended_metadata.status != '';
       const titleStatus = status ? (' - Status: ' + container.extended_metadata.status) : '';
