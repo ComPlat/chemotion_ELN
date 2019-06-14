@@ -20,6 +20,8 @@ class LoadingStore {
           ElementActions.updateSample,
           ElementActions.createReaction,
           ElementActions.updateReaction,
+          ElementActions.createResearchPlan,
+          ElementActions.updateResearchPlan,
         ],
     });
   }
