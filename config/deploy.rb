@@ -18,7 +18,7 @@ set :nvm_type, :user
 set :nvm_node, File.exist?('.nvmrc') && File.read('.nvmrc').strip  || 'v10.15.3'
 set :npm_version, File.exist?('.npm-version') && File.read('.npm-version').strip  || '6.4.1'
 set :nvm_map_bins, fetch(:nvm_map_bins, []).push('rake')
-
+set :nvm_map_bins, fetch(:nvm_map_bins, []).push('bundle')
 # Default value for :format is :pretty
 # set :format, :pretty
 
