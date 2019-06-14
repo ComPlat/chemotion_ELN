@@ -139,15 +139,25 @@ export default class DetailsTabLiteratures extends Component {
   }
 
   componentDidMount() {
-    LiteraturesFetcher.fetchElementReferences(this.props.element).then((literatures) => {
-      const sortedIds = groupByCitation(literatures);
+    if (this.props.literatures && this.props.literatures.size > 0) {
+      const sortedIds = groupByCitation(this.props.literatures);
       this.setState(prevState => ({
         ...prevState,
-        literatures,
+        literatures: this.props.literatures,
         sortedIds,
         sorting: 'literature_id'
       }));
-    });
+    } else {
+      LiteraturesFetcher.fetchElementReferences(this.props.element).then((literatures) => {
+        const sortedIds = groupByCitation(literatures);
+        this.setState(prevState => ({
+          ...prevState,
+          literatures,
+          sortedIds,
+          sorting: 'literature_id'
+        }));
+      });
+    }
   }
 
   // shouldComponentUpdate(nextProps, nextState){
@@ -175,36 +185,67 @@ export default class DetailsTabLiteratures extends Component {
 
   handleLiteratureRemove(literature) {
     const { element } = this.props;
-    LiteraturesFetcher.deleteElementReference({ element, literature })
-      .then(() => {
-        this.setState(prevState => ({
-          ...prevState,
-          literatures: prevState.literatures.delete(literature.literal_id),
-          sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
-        }));
-      });
+    if (isNaN(element.id) && element.type === 'reaction') {
+      this.setState(prevState => ({
+        ...prevState,
+        literatures: prevState.literatures.delete(literature.literal_id),
+        sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
+      }));
+      if (element.type === 'reaction') {
+        element.literatures = element.literatures && element.literatures.delete(literature.literal_id);
+        this.setState({
+          reaction: element
+        })
+      }
+    } else {
+      LiteraturesFetcher.deleteElementReference({ element, literature })
+        .then(() => {
+          this.setState(prevState => ({
+            ...prevState,
+            literatures: prevState.literatures.delete(literature.literal_id),
+            sortedIds: groupByCitation(prevState.literatures.delete(literature.literal_id))
+          }));
+        });
+    }
   }
 
   handleLiteratureAdd(literature) {
     const { element } = this.props;
     const { doi, url, title } = literature;
-
-    LiteraturesFetcher.postElementReference({
-      element,
-      literature: {
+    if (element.isNew === true && element.type === 'reaction'
+    && element.literatures && element.literatures.size > 0) {
+      const newlit = {
         ...literature,
         doi: sanitizeDoi(doi),
         url: url.trim().replace(/ +/g, ' '),
         title: title.trim().replace(/ +/g, ' ')
-      },
-    }).then((literatures) => {
-      this.setState(() => ({
+      };
+      const objliterature = new Literature(newlit);
+      element.literatures = element.literatures.set(objliterature.id, objliterature);
+      this.setState(prevState => ({
+        ...prevState,
         literature: Literature.buildEmpty(),
-        literatures,
-        sortedIds: groupByCitation(literatures),
-        sorting: 'literature_id'
+        literatures: prevState.literatures.set(objliterature.id, objliterature),
+        sortedIds: groupByCitation(prevState.literatures.set(objliterature.id, objliterature))
       }));
-    });
+    } else {
+      LiteraturesFetcher.postElementReference({
+        element,
+        literature: {
+          ...literature,
+          doi: sanitizeDoi(doi),
+          url: url.trim().replace(/ +/g, ' '),
+          title: title.trim().replace(/ +/g, ' ')
+        },
+      }).then((literatures) => {
+        this.setState(() => ({
+          literature: Literature.buildEmpty(),
+          literatures,
+          sortedIds: groupByCitation(literatures),
+          sorting: 'literature_id'
+        }));
+      });
+    }
   }
 
   fetchDOIMetadata() {
@@ -277,4 +318,5 @@ DetailsTabLiteratures.propTypes = {
     PropTypes.instanceOf(Reaction),
     PropTypes.instanceOf(Sample)
   ]).isRequired,
+  literatures: PropTypes.array
 };

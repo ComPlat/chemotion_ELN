@@ -56,7 +56,9 @@ module Import
         molecules.each do |molecule|
           begin
             import = new(creator_id, collection_id)
-            check = import.process_molecule(molecule)
+            sample = import.process_molecule(molecule)
+            check = sample.save!
+
             if check
               msuccess += 1
             else

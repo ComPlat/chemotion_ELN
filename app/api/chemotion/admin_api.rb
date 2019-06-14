@@ -157,6 +157,63 @@ module Chemotion
         end
       end
 
+      namespace :importOlsTerms do
+        desc 'import OLS terms'
+        post do
+          extname = File.extname(params[:file][:filename])
+          if extname.match(/\.(owl?|xml)/i)
+            ols_name = params[:file][:filename].split('.').first
+            xml_doc = Nokogiri::XML(File.open(params[:file][:tempfile].path)).to_xml
+            json_doc = Hash.from_xml(xml_doc).as_json
+
+            all_terms = json_doc['RDF']['Class']
+
+            OlsTerm.where(ols_name: ols_name).destroy_all if all_terms.length > 0
+            version_info = json_doc['RDF']['Ontology']
+            all_terms.each do |node|
+              next if node['id'].nil?
+              next if node['deprecated'] == 'true'
+              unless node['subClassOf'].nil?
+                if (node['subClassOf'].length > 1)
+                  subClass = node['subClassOf'][0]["rdf:resource"]  
+                else
+                  subClass = node['subClassOf']["rdf:resource"]  
+                end
+              end
+              # if node['id'] == 'RXNO:0000024'
+              #   node
+              #   byebug
+              #   node['deprecated'] 
+              # end
+
+              ## special case: RXNO:0000024
+              if subClass.nil? && node['equivalentClass'] && node['equivalentClass']['Class'] && node['equivalentClass']['Class']['intersectionOf'] && node['equivalentClass']['Class']['intersectionOf']['Description']
+                subClass = node['equivalentClass']['Class']['intersectionOf']['Description']["rdf:about"]
+              end
+              subClassTermId = subClass.split('/').last.gsub('_',':') unless subClass.nil?
+
+              unless node['hasExactSynonym'].nil?
+                synonyms = node['hasExactSynonym']
+                if synonyms.class == String
+                  synonym = synonyms
+                  synonyms = [synonyms]
+                else
+                  synonym = synonyms.sort_by(&:length)[0]
+                end
+              end
+              OlsTerm.create!(ols_name:ols_name, term_id: node['id'], ancestry_term_id: subClassTermId, 
+                label: node['label'], synonym: synonym, synonyms: synonyms,
+                desc: node['IAO_0000115'], metadata: {klass: node, version: version_info})
+            end
+
+            OlsTerm.where(ols_name: ols_name).each do |ols|
+              next if ols.ancestry_term_id.nil?
+              ancestry = OlsTerm.find_by(ols_name: ols_name, term_id: ols.ancestry_term_id)
+              ols.update!(ancestry: ancestry.id) unless ancestry.nil?
+            end
+          end
+        end
+      end
     end
   end
 end

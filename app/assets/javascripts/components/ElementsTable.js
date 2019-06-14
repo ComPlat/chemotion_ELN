@@ -184,14 +184,16 @@ export default class ElementsTable extends React.Component {
   }
 
   handleNumberOfResultsChange(event) {
-    const value = event.target.value;
-    const {type} = this.props;
-    UIActions.changeNumberOfResultsShown(value);
-    ElementActions.refreshElements(type)
+    const { value } = event.target;
+    const { type } = this.props;
+    if (parseInt(value, 10) > 0) {
+      UIActions.changeNumberOfResultsShown(value);
+      ElementActions.refreshElements(type);
+    }
   }
 
   numberOfResultsInput() {
-    let {ui} = this.state
+    const { ui } = this.state
     return (
       <Form horizontal className='list-show-count'>
         <FormGroup>

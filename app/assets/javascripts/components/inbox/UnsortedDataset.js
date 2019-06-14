@@ -29,8 +29,10 @@ export default class UnsortedDataset extends React.Component {
       const attachmentList = datasetContainer.attachments;
       let attachName = attachmentList[attachmentList.length - 1].filename;
       const splitted = attachName.split('.');
-      splitted.splice(-1, 1);
-      attachName = splitted.join('.');
+      if (splitted.length > 1) {
+        splitted.splice(-1, 1);
+        attachName = splitted.join('.');
+      }
       datasetContainer.name = attachName;
     }
 

@@ -135,7 +135,7 @@ class Import::ImportJson
           {collection_id: all_collection.id}
         ]
       )
-      create_element(el['uuid'], attribs, Reaction, 'reaction')
+      create_element(el['uuid'], attribs, Reaction, 'reaction', el['literatures'])
     end
   end
 
@@ -155,7 +155,7 @@ class Import::ImportJson
         attribs['molecule_name_attributes']['user_id'] = user_id if attribs['molecule_name_attributes']['user_id']
       end
       attribs['residues_attributes'] ||=  []
-      new_el = create_element(el['uuid'], attribs, Sample, 'sample')
+      new_el = create_element(el['uuid'], attribs, Sample, 'sample', el['literatures'])
       next unless new_el
       klass = el['reaction_sample']&.constantize
       add_to_reaction(klass, el, new_el) if klass
@@ -170,7 +170,28 @@ class Import::ImportJson
     end
   end
 
-  def create_element(uuid, element, klass, source)
+  def create_literatures(new_el_id, literatures = [])
+    literatures&.each do |l|
+      lit = Literature.find_or_create_by(
+        doi: l['doi'],
+        url: l['url'],
+        title: l['title']
+      )
+      lit.update!(refs: (lit['refs'] || {}).merge(l['refs'])) if l['refs'].present? && !lit.refs.present?
+      attributes = {
+        literature_id: lit.id,
+        user_id: user_id,
+        element_type: l['element_type'],
+        element_id: new_el_id,
+        category: l['category']
+      }
+      unless Literal.find_by(attributes)
+        Literal.create(attributes)
+      end
+    end
+  end
+
+  def create_element(uuid, element, klass, source, literatures = [])
     #ActiveRecord::Base.transaction do
       if force_uuid && CodeLog.find_by(id: uuid)
         @log[source + 's'][uuid]['uuid'] = 'already attributed'
@@ -178,6 +199,7 @@ class Import::ImportJson
       end
       new_el = klass.new(element)
       if new_el.save!
+        create_literatures(new_el.id, literatures) unless literatures.nil? || literatures.length == 0
         if force_uuid
           new_el.code_log.really_destroy!
           CodeLog.create(id: uuid, source: source, source_id: new_el.id)
@@ -230,6 +252,7 @@ class Import::ImportJson
       a['attachments']&.each do |att|
         @new_attachments[att['identifier']] = Attachment.new(
           filename: att['filename'],
+          content_type: att['content_type'],
           # identifier: att['identifier'],
           checksum: att['checksum'],
           attachable_id: new_a.id,

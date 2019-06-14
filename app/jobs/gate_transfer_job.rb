@@ -68,7 +68,6 @@ class GateTransferJob < ActiveJob::Base
       ).export
       attachment_ids = exp.data.delete('attachments')
       attachments = Attachment.where(id: attachment_ids)
-
       data_file = Tempfile.new
       data_file.write(exp.to_json)
       data_file.rewind
@@ -104,11 +103,17 @@ class GateTransferJob < ActiveJob::Base
       if @resp.success?
         element[:state] = GateTransferJob::STATE_TRANSFERRED
       else
+        Delayed::Worker.logger.error <<~TXT
+          --------- gate transfer FAIL message.BEGIN ------------
+          resp status:  #{@resp.status}
+          #{element[:type]} - #{element[:id]}
+          --------- gate transfer FAIL message.END ---------------
+        TXT
+
         element[:state] = GateTransferJob::STATE_TRANSFER
-        element[:msg] = 'resp is not success'
+        element[:msg] = 'resp is not successful'
       end
     rescue => e
-      Rails.logger.error element
       element[:state] = GateTransferJob::STATE_TRANSFER
       element[:msg] = e
     ensure

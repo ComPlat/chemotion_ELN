@@ -440,8 +440,8 @@ export const kindOptions = [{
   label: "TLC",
   value: "TLC"
 },{
-  label: "Crystall-Structure",
-  value: "Crystall-Structure"
+  label: "Crystal-Structure",
+  value: "Crystal-Structure"
 },{
   label: "Others",
   value: "Others"

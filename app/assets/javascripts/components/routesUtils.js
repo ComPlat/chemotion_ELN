@@ -5,7 +5,7 @@ import UserActions from './actions/UserActions';
 import ElementActions from './actions/ElementActions';
 
 const collectionShow = (e) => {
-  UIActions.showElements();
+  UIActions.showElements.defer();
   UserActions.fetchCurrentUser();
   const uiState = UIStore.getState();
   const currentSearchSelection = uiState.currentSearchSelection;
@@ -84,7 +84,7 @@ const sampleShowOrNew = (e) => {
   if (sampleID === 'new') {
     ElementActions.generateEmptySample(collectionID);
   } else if (sampleID === 'copy') {
-    ElementActions.copySampleFromClipboard(collectionID);
+    ElementActions.copySampleFromClipboard.defer(collectionID);
   } else {
     ElementActions.fetchSampleById(sampleID);
   }
@@ -114,7 +114,7 @@ const wellplateShowOrNew = (e) => {
   if (wellplateID === 'new') {
     ElementActions.generateEmptyWellplate(collectionID);
   } else if (wellplateID === 'template') {
-    ElementActions.generateWellplateFromClipboard(collectionID);
+    ElementActions.generateWellplateFromClipboard.defer(collectionID);
   } else {
     ElementActions.fetchWellplateById(wellplateID);
   }
@@ -130,7 +130,7 @@ const screenShowOrNew = (e) => {
   if (screenID === 'new') {
     ElementActions.generateEmptyScreen(collectionID);
   } else if (screenID === 'template') {
-    ElementActions.generateScreenFromClipboard(collectionID);
+    ElementActions.generateScreenFromClipboard.defer(collectionID);
   } else {
     ElementActions.fetchScreenById(screenID);
   }

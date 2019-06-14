@@ -42,7 +42,7 @@ module Chemotion
       def conversion(params)
         file = decode_param(params)[0]
         tmp = file[:tempfile]
-        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(tmp.path) # abs_path, peaks, shift
+        tmp_jcamp, tmp_img = Chemotion::Jcamp::Create.spectrum(tmp.path) # abs_path, is_regen, peaks, shift
         jcamp = encode64(tmp_jcamp.path)
         img = encode64(tmp_img.path)
         { status: true, jcamp: jcamp, img: img }
@@ -54,7 +54,9 @@ module Chemotion
         file, peaks_str, shift = decode_param(params)
         peaks = str_to_peaks(peaks_str)
         tmp = file[:tempfile]
-        jcamp, img = Chemotion::Jcamp::Create.spectrum(tmp.path, peaks, shift)
+        jcamp, img = Chemotion::Jcamp::Create.spectrum(
+          tmp.path, false, peaks, shift
+        )
         to_zip_file(params[:filename], jcamp, img)
       rescue
         error!('Save files error!', 500)
@@ -95,17 +97,33 @@ module Chemotion
       resource :predict do
         desc 'Predict by peaks'
         params do
+          requires :molfile, type: Hash
           requires :layout, type: String
-          requires :peaks, type: Array
-          requires :molecule, type: String
+          requires :peaks, type: String
+          requires :shift, type: String
         end
-        post 'by_peaks' do
-          rsp = Chemotion::Jcamp::Predict.by_peaks(
-            params[:layout], params[:peaks], params[:molecule]
+        post 'by_peaks_form' do
+          molfile = params['molfile']['tempfile']
+          rsp = Chemotion::Jcamp::Predict::PeaksForm.exec(
+            molfile, params[:layout], params[:peaks], params[:shift]
           )
 
           content_type('application/json')
           rsp
+        end
+      end
+
+      resource :molfile do
+        desc 'convert molfile'
+        params do
+          requires :molfile, type: Hash
+        end
+        post 'convert' do
+          molfile = params['molfile']['tempfile'].read
+          m = Chemotion::OpenBabelService.molecule_info_from_molfile(molfile)
+
+          content_type('application/json')
+          { smi: m[:smiles], mass: m[:mass], status: true }
         end
       end
     end

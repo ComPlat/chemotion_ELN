@@ -5,14 +5,14 @@ import {
   InputGroup, FormGroup, FormControl,
   Panel, ListGroup, ListGroupItem, Glyphicon, Tabs, Tab, Row, Col,
   Tooltip, OverlayTrigger, DropdownButton, MenuItem,
-  ControlLabel, Modal,
+  ControlLabel, Modal, Alert
 } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import Clipboard from 'clipboard';
 import Barcode from 'react-barcode';
 import Select from 'react-select';
 import _ from 'lodash';
-
+import uuid from 'uuid';
 import ElementActions from './actions/ElementActions';
 import ElementStore from './stores/ElementStore';
 import DetailActions from './actions/DetailActions';
@@ -66,7 +66,8 @@ export default class SampleDetails extends React.Component {
       showMolfileModal: false,
       smileReadonly: !props.sample.isNew,
       quickCreator: false,
-      showInchikey: false
+      showInchikey: false,
+      pageMessage: null
     };
 
     const data = UserStore.getState().profile.data || {};
@@ -179,7 +180,12 @@ export default class SampleDetails extends React.Component {
           sample.molecule = result;
           this.molfileInput.value = result.molfile;
           this.inchistringInput.value = result.inchistring;
-          this.setState({ quickCreator: true, sample, smileReadonly: true });
+          this.setState({
+            quickCreator: true,
+            sample,
+            smileReadonly: true,
+            pageMessage: result.ob_log
+          });
           ElementActions.refreshElements('sample');
         }
       }).catch((errorMessage) => {
@@ -200,7 +206,12 @@ export default class SampleDetails extends React.Component {
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
-          this.setState({ sample, smileReadonly: true, loadingMolecule: false });
+          this.setState({
+            sample,
+            smileReadonly: true,
+            loadingMolecule: false,
+            pageMessage: result.ob_log
+          });
         }).catch((errorMessage) => {
           console.log(errorMessage);
         });
@@ -210,7 +221,12 @@ export default class SampleDetails extends React.Component {
         .then((result) => {
           sample.molecule = result;
           sample.molecule_id = result.id;
-          this.setState({ sample, smileReadonly: true, loadingMolecule: false });
+          this.setState({
+            sample,
+            smileReadonly: true,
+            loadingMolecule: false,
+            pageMessage: result.ob_log
+          });
         });
     }
     this.hideStructureEditor();
@@ -316,25 +332,25 @@ export default class SampleDetails extends React.Component {
       case "1H NMR": case "13C NMR":
         sample.addAnalysis(analysis);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
         break;
       case "Others":
         sample.addAnalysis(a1);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&type=analysis&size=small"})
         break;
       case "Others2x":
         sample.addAnalysis(a1);
         sample.addAnalysis(a2);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id  + "&type=analysis&size=small"})
         break;
       case "Others3x":
         sample.addAnalysis(a1);
         sample.addAnalysis(a2);
         sample.addAnalysis(a3);
         ElementActions.updateSample(sample);
-        Utils.downloadFile({contents: "api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
+        Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + a1.id + "&analyses_ids[]=" + a2.id + "&analyses_ids[]=" + a3.id + "&type=analysis&size=small"})
         break;
     }
   }
@@ -435,8 +451,8 @@ export default class SampleDetails extends React.Component {
         && typeof (sample.molecule_inchistring) !== 'undefined' && sample.molecule_inchistring) {
       this.inchistringInput.value = sample.molecule_inchistring;
     }
-    const inchiLabel = this.state.showInchikey ? 'InChiKey' : 'InChI';
-    const inchiTooltip = <Tooltip id="inchi_tooltip">toogle InChI/InChiKey</Tooltip>;
+    const inchiLabel = this.state.showInchikey ? 'InChIKey' : 'InChI';
+    const inchiTooltip = <Tooltip id="inchi_tooltip">toggle InChI/InChIKey</Tooltip>;
 
     return (
       <InputGroup className='sample-molecule-identifier'>
@@ -933,11 +949,32 @@ export default class SampleDetails extends React.Component {
         )));
       }
     }
+    const { pageMessage } = this.state;
+    const messageBlock = (pageMessage && (pageMessage.error.length > 0 || pageMessage.warning.length > 0)) ? (
+      <Alert bsStyle="warning" style={{ marginBottom: 'unset', padding: '5px', marginTop: '10px' }}>
+        <strong>Structure Alert</strong>&nbsp;
+        <Button bsSize="xsmall" bsStyle="warning" onClick={() => this.setState({ pageMessage: null })}>Close Alert</Button>
+        <br />
+        {
+          pageMessage.error.map(m => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+        {
+          pageMessage.warning.map(m => (
+            <div key={uuid.v1()}>{m}</div>
+          ))
+        }
+      </Alert>
+    ) : null;
+
 
     return (
-      <Panel className="panel-detail"
-             bsStyle={sample.isPendingToSave ? 'info' : 'primary'}>
-        <Panel.Heading>{this.sampleHeader(sample)}</Panel.Heading>
+      <Panel
+        className="panel-detail"
+        bsStyle={sample.isPendingToSave ? 'info' : 'primary'}
+      >
+        <Panel.Heading>{this.sampleHeader(sample)}{messageBlock}</Panel.Heading>
         <Panel.Body>
           {this.sampleInfo(sample)}
           <ListGroup>

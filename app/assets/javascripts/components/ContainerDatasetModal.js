@@ -15,7 +15,7 @@ export default class ContainerDatasetModal extends Component {
                 {dataset_container.name}
               </Modal.Title>
             </Modal.Header>
-            <Modal.Body>
+            <Modal.Body style={{ overflow: 'auto', maxHeight: 'calc(40vh)' }}>
               <ContainerDataset
                 readOnly={readOnly}
                 dataset_container={dataset_container}

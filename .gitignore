@@ -74,6 +74,8 @@
 /public/udm/*
 !/public/udm/.keep
 
+!/public/apple-touch-icon.png
+
 /public/docx/*
 !/public/docx/.keep
 

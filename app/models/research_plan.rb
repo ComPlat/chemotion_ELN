@@ -26,7 +26,6 @@ class ResearchPlan < ActiveRecord::Base
   end
 
   private
-
   def delete_attachment
     if Rails.env.production?
       attachments.each { |attachment|
@@ -36,4 +35,5 @@ class ResearchPlan < ActiveRecord::Base
       attachments.each(&:destroy!)
     end
   end
+
 end

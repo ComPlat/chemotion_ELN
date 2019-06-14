@@ -20,7 +20,7 @@ module Chemotion
       # @svg.at_css("svg")["width"] = viewBoxDim[2].to_f
       # @svg.at_css("svg")["height"] = viewBoxDim[3].to_f
       g_node = @svg.at_css("//g")
-      g_node["transform"] = 'translate(%f,%f)' % [viewBoxDim[0].to_f*-1,viewBoxDim[1].to_f*-1]
+      g_node["transform"] = 'translate(%f,%f)' % [viewBoxDim[0].to_f*-1,viewBoxDim[1].to_f*-1] unless g_node.nil?
       #@svg.to_xml
       File.write('output.svg',@svg.to_xml )
       @svg

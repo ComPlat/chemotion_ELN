@@ -6,9 +6,34 @@ import {
   searchAndReplace
 } from '../../../app/assets/javascripts/components/utils/markdownUtils';
 import {
-  sampleAnalysesFormatPattern, commonFormatPattern
+  sampleAnalysesFormatPattern, commonFormatPattern, hNmrCheckMsg, cNmrCheckMsg
 } from '../../../app/assets/javascripts/components/utils/ElementUtils';
+import { contentToText } from '../../../app/assets/javascripts/components/utils/quillFormat';
+import { nmrData1H } from '../fixture/nmr1H';
+import { nmrData13C } from '../fixture/nmr13C';
 
+
+describe('1HNMR H counting', () => {
+  Object.keys(nmrData1H).map(k => (
+    it(k, () => {
+      const fixture = nmrData1H[k];
+      const contentText = contentToText(fixture.content);
+      const result = hNmrCheckMsg(fixture.formula, contentText);
+      expect(result).toEqual(fixture.expected);
+    })
+  ));
+});
+
+describe('13CNMR C counting', () => {
+  Object.keys(nmrData13C).map(k => (
+    it(k, () => {
+      const fixture = nmrData13C[k];
+      const contentText = contentToText(fixture.content);
+      const result = cNmrCheckMsg(fixture.formula, contentText);
+      expect(result).toEqual(fixture.expected);
+    })
+  ));
+});
 
 describe('common format pattern', () => {
   it('can detect number of hydrogen and remove space', () => {
@@ -20,6 +45,7 @@ describe('common format pattern', () => {
     const expected = ' 1H NMR, (K = 7.4 Hz, 3H), 1.06 (t, K = 7.3 Hz, 3H)';
     expect(org).toEqual(expected);
   });
+
 
   it('can add subscript to CDCL', () => {
     let org = ' CDCL3, CDCl3,';

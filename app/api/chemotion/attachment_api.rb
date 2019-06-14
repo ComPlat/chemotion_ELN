@@ -75,6 +75,7 @@ module Chemotion
         attachable_id = params[:attachable_id]
         if params[:files] && params[:files].length > 0
           attach_ary = Array.new
+          rp_attach_ary = Array.new
           params[:files].each do |file|
             if tempfile = file[:tempfile]
                 a = Attachment.new(
@@ -90,11 +91,18 @@ module Chemotion
                 begin
                   a.save!
                   attach_ary.push(a.id)
+                  rp_attach_ary.push(a.id) if (a.attachable_type == 'ResearchPlan')
                 ensure
                   tempfile.close
                   tempfile.unlink
                 end
             end
+          end
+
+          if rp_attach_ary.length > 0
+            #TransferThumbnailToPublicJob.perform_now(rp_attach_ary)
+            TransferThumbnailToPublicJob.set(queue: "transfer_thumbnail_to_public_#{current_user.id}")
+                           .perform_later(rp_attach_ary)
           end
           if attach_ary.length > 0
             TransferFileFromTmpJob.set(queue: "transfer_file_from_tmp_#{current_user.id}")
@@ -311,7 +319,7 @@ module Chemotion
           next unless att
           can_write = writable?(att)
           if can_write
-            att.set_queueing
+            att.set_regenerating
             att.save
           end
         end
@@ -325,7 +333,7 @@ module Chemotion
       end
       post 'save_peaks' do
         pm = to_rails_snake_case(params)
-        @attachment.generate_spectrum(false, pm[:peaks], pm[:shift])
+        @attachment.generate_spectrum(false, false, pm[:peaks], pm[:shift])
       end
 
       namespace :svgs do

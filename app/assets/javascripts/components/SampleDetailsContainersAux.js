@@ -11,10 +11,28 @@ import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
+import { hNmrCheckMsg, cNmrCheckMsg } from './utils/ElementUtils';
+import { contentToText } from './utils/quillFormat';
+import UIStore from './stores/UIStore';
+
+const nmrMsg = (sample, container) => {
+  if (sample.molecule && container.extended_metadata && container.extended_metadata.kind !== '1H NMR' && container.extended_metadata.kind !== '13C NMR') {
+    return '';
+  }
+  const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
+
+  if (container.extended_metadata.kind === '1H NMR') {
+    const msg = hNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
+    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
+  } else if (container.extended_metadata.kind === '13C NMR') {
+    const msg = cNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
+    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>13</sup>C {msg})</div>)
+  }
+};
 
 const SpectraViewerBtn = ({
-  spcInfo, hasJcamp,
-  toggleSpectraModal, confirmRegenerate
+  sample, spcInfo, hasJcamp, hasChemSpectra,
+  toggleSpectraModal, confirmRegenerate,
 }) => (
   <OverlayTrigger
     placement="bottom"
@@ -30,11 +48,11 @@ const SpectraViewerBtn = ({
         title={<i className="fa fa-area-chart" />}
         onToggle={(open, event) => { if (event) { event.stopPropagation(); } }}
         onClick={toggleSpectraModal}
-        disabled={!spcInfo}
+        disabled={!spcInfo || !sample.can_update || !hasChemSpectra}
       >
         <MenuItem
           key="regenerate-spectra"
-          onSelect={(eventKey,event) => {
+          onSelect={(eventKey, event) => {
             event.stopPropagation();
             confirmRegenerate(event);
           }}
@@ -50,7 +68,7 @@ const SpectraViewerBtn = ({
       bsSize="xsmall"
       className="button-right"
       onClick={confirmRegenerate}
-      disabled={!hasJcamp}
+      disabled={!hasJcamp || !sample.can_update || !hasChemSpectra}
     >
       <i className="fa fa-area-chart" /><i className="fa fa-refresh " />
     </Button>
@@ -59,8 +77,10 @@ const SpectraViewerBtn = ({
 );
 
 SpectraViewerBtn.propTypes = {
+  sample: PropTypes.object,
   hasJcamp: PropTypes.bool,
   spcInfo: PropTypes.bool,
+  hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
 };
@@ -68,6 +88,8 @@ SpectraViewerBtn.propTypes = {
 SpectraViewerBtn.defaultProps = {
   hasJcamp: false,
   spcInfo: false,
+  sample: {},
+  hasChemSpectra: false,
 };
 
 const editModeBtn = (toggleMode, isDisabled) => (
@@ -195,6 +217,7 @@ const headerBtnGroup = (
       SpectraActions.Regenerate(jcampIds, handleSubmit);
     }
   };
+  const { hasChemSpectra } = UIStore.getState();
 
   return (
     <div className="upper-btn">
@@ -213,8 +236,10 @@ const headerBtnGroup = (
         ident={container.id}
       />
       <SpectraViewerBtn
+        sample={sample}
         hasJcamp={hasJcamp}
         spcInfo={spcInfo}
+        hasChemSpectra={hasChemSpectra}
         toggleSpectraModal={toggleSpectraModal}
         confirmRegenerate={confirmRegenerate}
       />
@@ -293,7 +318,7 @@ const HeaderNormal = ({
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
           <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">Status: {status}</div>
+          <div className="sub-title">Status: {status} {nmrMsg(sample, container)}</div>
 
           <div className="desc sub-title">
             <span style={{ float: 'left', marginRight: '5px' }}>

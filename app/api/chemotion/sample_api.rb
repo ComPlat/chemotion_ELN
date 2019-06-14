@@ -163,7 +163,7 @@ module Chemotion
           scope = Sample.for_user(current_user.id).uniq
         end
         scope = scope.includes(
-          :residues, :tag,
+          :residues, :tag, :molecule_name,
           collections: :sync_collections_users,
           molecule: :tag
         )

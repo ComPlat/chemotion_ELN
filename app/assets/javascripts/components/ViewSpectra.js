@@ -17,8 +17,8 @@ class ViewSpectra extends React.Component {
 
     this.onChange = this.onChange.bind(this);
     this.onCloseModal = this.onCloseModal.bind(this);
-    this.writePeaks = this.writePeaks.bind(this);
-    this.savePeaks = this.savePeaks.bind(this);
+    this.writeOp = this.writeOp.bind(this);
+    this.saveOp = this.saveOp.bind(this);
     this.renderSpectraViewer = this.renderSpectraViewer.bind(this);
     this.renderEmpty = this.renderEmpty.bind(this);
   }
@@ -81,7 +81,9 @@ class ViewSpectra extends React.Component {
     }
   }
 
-  writePeaks(peaks, layout, shift, isAscend) {
+  writeOp({
+    peaks, layout, shift, isAscend,
+  }) {
     const { sample, handleSampleChanged } = this.props;
     const { spcInfo } = this.state;
     const body = FN.peaksBody(peaks, layout, shift, isAscend);
@@ -101,11 +103,11 @@ class ViewSpectra extends React.Component {
       });
     });
 
-    const cb = () => this.savePeaks(peaks, layout, shift);
+    const cb = () => this.saveOp({ peaks, shift });
     handleSampleChanged(sample, cb);
   }
 
-  savePeaks(peaks, layout, shift) {
+  saveOp({ peaks, shift }) { // TBD: scan, thres
     const { sample, handleSubmit } = this.props;
     const { spcInfo } = this.state;
     const fPeaks = FN.rmRef(peaks, shift);
@@ -161,13 +163,20 @@ class ViewSpectra extends React.Component {
   renderSpectraViewer() {
     const { jcamp } = this.state;
     const {
-      input, xLabel, yLabel, peakObjs, isExist,
+      entity, isExist,
     } = FN.buildData(jcamp.file);
 
     const operations = [
-      { name: 'write & save', value: this.writePeaks },
-      { name: 'save only', value: this.savePeaks },
+      { name: 'write', value: this.writeOp },
+      { name: 'save', value: this.saveOp },
     ].filter(r => r.value);
+
+    const predictObj = {
+      btnCb: null,
+      inputCb: null,
+      molecule: null,
+      predictions: null,
+    };
 
     return (
       <Modal.Body>
@@ -175,11 +184,9 @@ class ViewSpectra extends React.Component {
           !isExist
             ? this.renderInvalid()
             : <SpectraViewer
-              input={input}
-              xLabel={xLabel}
-              yLabel={yLabel}
-              peakObjs={peakObjs}
+              entity={entity}
               operations={operations}
+              predictObj={predictObj}
             />
         }
       </Modal.Body>

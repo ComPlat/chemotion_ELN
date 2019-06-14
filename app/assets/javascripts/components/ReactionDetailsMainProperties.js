@@ -20,6 +20,7 @@ import { statusOptions } from './staticDropdownOptions/options'
 
 import LineChartContainer from './lineChart/LineChartContainer'
 import EditableTable from './lineChart/EditableTable'
+import OlsTreeSelect from './OlsComponent';
 
 export default class ReactionDetailsMainProperties extends Component {
   constructor(props) {
@@ -165,6 +166,19 @@ export default class ReactionDetailsMainProperties extends Component {
         </Row>
         <Row>
           {TempChartRow}
+        </Row>
+        <Row>
+          <Col md={12}>
+            <FormGroup>
+              <ControlLabel>Type (Name Reaction Ontology)</ControlLabel>
+              <OlsTreeSelect
+                selectName="rxno"
+                selectedValue={ (reaction.rxno && reaction.rxno.trim()) || ''}
+                onSelectChange={event => onInputChange('rxno', event)}
+                selectedDisable={reaction.isMethodDisabled('rxno')}
+              />
+            </FormGroup>
+          </Col>
         </Row>
       </Grid>
     );

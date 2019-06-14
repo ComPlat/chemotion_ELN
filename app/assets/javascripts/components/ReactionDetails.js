@@ -35,6 +35,7 @@ export default class ReactionDetails extends Component {
     const { reaction } = props;
     this.state = {
       reaction: reaction,
+      literatures: reaction.literatures,
       activeTab: UIStore.getState().reaction.activeTab,
     };
 
@@ -150,7 +151,7 @@ export default class ReactionDetails extends Component {
   handleInputChange(type, event) {
     let value;
     if (type === 'temperatureUnit' || type === 'temperatureData' ||
-      type === 'description' || type === 'role' || type === 'observation' || type === 'durationUnit' || type === 'duration') {
+      type === 'description' || type === 'role' || type === 'observation' || type === 'durationUnit' || type === 'duration' || type === 'rxno') {
       value = event;
     } else {
       value = event.target.value;
@@ -324,7 +325,7 @@ export default class ReactionDetails extends Component {
               "Report can be generated after reaction is saved."
               : "Generate report for this reaction"}
             onClick={() => Utils.downloadFile({
-              contents: "api/v1/reports/docx?id=" + reaction.id,
+              contents: "/api/v1/reports/docx?id=" + reaction.id,
               name: reaction.name
             })}
           >
@@ -381,6 +382,7 @@ export default class ReactionDetails extends Component {
             <Tab eventKey={2} title={'References'}>
               <ReactionDetailsLiteratures
                 element={reaction}
+                literatures={reaction.isNew === true ? reaction.literatures : null}
                 onElementChange={reaction => this.handleReactionChange(reaction)}
               />
             </Tab>

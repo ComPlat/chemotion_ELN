@@ -3,6 +3,7 @@ const stopBubble = (e) => {
 };
 
 const stopEvent = (e) => {
+  if (!e) return;
   e.stopPropagation();
   e.preventDefault();
 };

@@ -176,7 +176,7 @@ module ChemScannerHelpers
     return {} if mol.nil?
 
     alias_info = (mol.atom_map || {}).each_with_object([]) do |(key, atom), arr|
-      next unless atom.is_alias || !atom.alias_text.empty?
+      next unless atom.is_alias || atom.alias_text.empty?
 
       arr.push(id: key, text: atom.alias_text)
     end

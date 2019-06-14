@@ -7,6 +7,7 @@ import {
 import Aviator from 'aviator';
 import alt from '../alt';
 
+import UserStore from './UserStore';
 import ElementActions from '../actions/ElementActions';
 import CollectionActions from '../actions/CollectionActions';
 import UIActions from '../actions/UIActions';
@@ -40,11 +41,6 @@ import { SameEleTypId, UrlSilentNavigation } from '../utils/ElementUtils';
 
 class ElementStore {
   constructor() {
-    // formerly from DetailStore
-    // this.selecteds = [];
-    // this.activeKey = 0;
-    // this.deletingElement = null;
-    // //
     this.state = {
       elements: {
         samples: {
@@ -132,11 +128,15 @@ class ElementStore {
       handleDeleteAnalysisExperiment: ElementActions.deleteAnalysisExperiment,
       handleDuplicateAnalysisExperiment: ElementActions.duplicateAnalysisExperiment,
 
-      handleFetchBasedOnSearchSelection:
-        ElementActions.fetchBasedOnSearchSelectionAndCollection,
+      handleFetchBasedOnSearchSelection: ElementActions.fetchBasedOnSearchSelectionAndCollection,
+
+      handleFetchSamplesByCollectionId: ElementActions.fetchSamplesByCollectionId,
+      handleFetchReactionsByCollectionId: ElementActions.fetchReactionsByCollectionId,
+      handleFetchWellplatesByCollectionId: ElementActions.fetchWellplatesByCollectionId,
+      handleFetchScreensByCollectionId: ElementActions.fetchScreensByCollectionId,
+      handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
+
       handleFetchSampleById: ElementActions.fetchSampleById,
-      handleFetchSamplesByCollectionId:
-        ElementActions.fetchSamplesByCollectionId,
       handleCreateSample: ElementActions.createSample,
       handleCreateSampleForReaction: ElementActions.createSampleForReaction,
       handleEditReactionSample: ElementActions.editReactionSample,
@@ -157,8 +157,6 @@ class ElementStore {
       handleFetchReactionById: ElementActions.fetchReactionById,
       handleTryFetchReactionById: ElementActions.tryFetchReactionById,
       handleCloseWarning: ElementActions.closeWarning,
-      handleFetchReactionsByCollectionId:
-        ElementActions.fetchReactionsByCollectionId,
       handleCreateReaction: ElementActions.createReaction,
       handleCopyReactionFromId: ElementActions.copyReactionFromId,
       handleOpenReactionDetails: ElementActions.openReactionDetails,
@@ -166,8 +164,6 @@ class ElementStore {
       handleBulkCreateWellplatesFromSamples:
         ElementActions.bulkCreateWellplatesFromSamples,
       handleFetchWellplateById: ElementActions.fetchWellplateById,
-      handleFetchWellplatesByCollectionId:
-        ElementActions.fetchWellplatesByCollectionId,
       handleCreateWellplate: ElementActions.createWellplate,
       handleGenerateWellplateFromClipboard:
         ElementActions.generateWellplateFromClipboard,
@@ -175,11 +171,8 @@ class ElementStore {
         ElementActions.generateScreenFromClipboard,
 
       handleFetchScreenById: ElementActions.fetchScreenById,
-      handleFetchScreensByCollectionId:
-        ElementActions.fetchScreensByCollectionId,
       handleCreateScreen: ElementActions.createScreen,
 
-      handlefetchResearchPlansByCollectionId: ElementActions.fetchResearchPlansByCollectionId,
       handlefetchResearchPlanById: ElementActions.fetchResearchPlanById,
       handleCreateResearchPlan: ElementActions.createResearchPlan,
 
@@ -491,37 +484,64 @@ class ElementStore {
     });
   }
 
-  handleUpdateElementsCollection(params) {
+  handleUpdateElementsCollection() {
     CollectionActions.fetchUnsharedCollectionRoots();
-    let collection_id = params.ui_state.currentCollection.id
-    ElementActions.fetchSamplesByCollectionId(collection_id, {},
-      params.ui_state.isSync, this.state.moleculeSort);
-    ElementActions.fetchReactionsByCollectionId(collection_id);
-    ElementActions.fetchWellplatesByCollectionId(collection_id);
-    ElementActions.fetchResearchPlansByCollectionId(collection_id);
+    UIActions.uncheckWholeSelection.defer();
+    this.fetchElementsByCollectionIdandLayout();
   }
 
-  handleAssignElementsCollection(params) {
+  handleAssignElementsCollection() {
     CollectionActions.fetchUnsharedCollectionRoots();
-    let collection_id = params.ui_state.currentCollection.id
-    ElementActions.fetchSamplesByCollectionId(collection_id, {},
-      params.ui_state.isSync, this.state.moleculeSort);
-    ElementActions.fetchReactionsByCollectionId(collection_id);
-    ElementActions.fetchWellplatesByCollectionId(collection_id);
-    ElementActions.fetchResearchPlansByCollectionId(collection_id);
+    UIActions.uncheckWholeSelection.defer();
+    this.fetchElementsByCollectionIdandLayout();
   }
 
-  handleRemoveElementsCollection(params) {
-    let collection_id = params.ui_state.currentCollection.id
-
-    UIActions.clearSearchSelection.defer()
+  handleRemoveElementsCollection() {
+    // CollectionActions.fetchUnsharedCollectionRoots();
+    // UIActions.clearSearchSelection.defer()
+    UIActions.uncheckWholeSelection.defer();
     this.waitFor(UIStore.dispatchToken)
 
-    ElementActions.fetchSamplesByCollectionId(collection_id, {},
-      params.ui_state.isSync, this.state.moleculeSort);
-    ElementActions.fetchReactionsByCollectionId(collection_id);
-    ElementActions.fetchWellplatesByCollectionId(collection_id);
-    ElementActions.fetchResearchPlansByCollectionId(collection_id);
+    this.fetchElementsByCollectionIdandLayout();
+  }
+
+  fetchElementsByCollectionIdandLayout() {
+    const { currentSearchSelection, currentCollection } = UIStore.getState();
+    const isSync = !!(currentCollection && currentCollection.is_sync_to_me);
+    if (currentSearchSelection != null) {
+      const { currentType } = UserStore.getState();
+      this.handleRefreshElements(currentType);
+    } else {
+      const { profile } = UserStore.getState();
+      if (profile && profile.data && profile.data.layout) {
+        const { layout } = profile.data;
+        if (layout.sample && layout.sample > 0) { this.handleRefreshElements('sample'); }
+        if (layout.reaction && layout.reaction > 0) { this.handleRefreshElements('reaction'); }
+        if (layout.wellplate && layout.wellplate > 0) { this.handleRefreshElements('wellplate'); }
+        if (layout.screen && layout.screen > 0) { this.handleRefreshElements('screen'); }
+        if (!isSync && layout.research_plan && layout.research_plan > 0) { this.handleRefreshElements('research_plan'); }
+      }
+    }
+  }
+
+  handleFetchSamplesByCollectionId(result) {
+    this.state.elements.samples = result;
+  }
+
+  handleFetchReactionsByCollectionId(result) {
+    this.state.elements.reactions = result;
+  }
+
+  handleFetchWellplatesByCollectionId(result) {
+    this.state.elements.wellplates = result;
+  }
+
+  handleFetchScreensByCollectionId(result) {
+    this.state.elements.screens = result;
+  }
+
+  handlefetchResearchPlansByCollectionId(result) {
+    this.state.elements.research_plans = result;
   }
 
   // -- Samples --
@@ -530,10 +550,6 @@ class ElementStore {
     if (!this.state.currentElement || this.state.currentElement._checksum != result._checksum) {
       this.changeCurrentElement( result );
     }
-  }
-
-  handleFetchSamplesByCollectionId(result) {
-    this.state.elements.samples = result;
   }
 
   handleCreateSample({ element, closeView }) {
@@ -545,35 +561,31 @@ class ElementStore {
     }
   }
 
-  handleCreateSampleForReaction({newSample, reaction, materialGroup}) {
+  handleCreateSampleForReaction({ newSample, reaction, materialGroup }) {
     UserActions.fetchCurrentUser();
-
     reaction.addMaterial(newSample, materialGroup);
-
     this.handleRefreshElements('sample');
-
-    this.changeCurrentElement( reaction );
+    this.changeCurrentElement(reaction);
   }
 
   handleEditReactionSample(result) {
     const sample = result.sample;
     sample.belongTo = result.reaction;
-    this.changeCurrentElement( sample );
+    this.changeCurrentElement(sample);
   }
 
-  handleEditWellplateSample(result){
+  handleEditWellplateSample(result) {
     const sample = result.sample;
     sample.belongTo = result.wellplate;
-    this.changeCurrentElement( sample );
+    this.changeCurrentElement(sample);
   }
 
   handleUpdateSampleForReaction({ reaction, sample, closeView }) {
     // UserActions.fetchCurrentUser();
-
     if (closeView) {
-      this.changeCurrentElement( reaction );
+      this.changeCurrentElement(reaction);
     } else {
-      this.changeCurrentElement( sample );
+      this.changeCurrentElement(sample);
     }
     // TODO: check if this is needed with the new handling of changing CE
     // maybe this.handleRefreshElements is enough
@@ -592,15 +604,17 @@ class ElementStore {
   handleUpdateSampleForWellplate(wellplate) {
     // UserActions.fetchCurrentUser()
     this.state.currentElement = null;
-    this.handleRefreshElements('sample')
+    this.handleRefreshElements('sample');
 
     const wellplateID = wellplate.id;
-    ElementActions.fetchWellplateById(wellplateID)
+    ElementActions.fetchWellplateById(wellplateID);
   }
 
   handleSplitAsSubsamples(ui_state) {
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort);
+    ElementActions.fetchSamplesByCollectionId(
+      ui_state.currentCollection.id, {},
+      ui_state.isSync, this.state.moleculeSort
+    );
   }
 
   handleSplitAsSubwellplates(ui_state) {
@@ -703,9 +717,6 @@ class ElementStore {
   //  this.navigateToNewElement(result)
   }
 
-  handleFetchWellplatesByCollectionId(result) {
-    this.state.elements.wellplates = result;
-  }
 
   handleCreateWellplate(wellplate) {
     this.handleRefreshElements('wellplate');
@@ -727,10 +738,6 @@ class ElementStore {
     }
   }
 
-  handleFetchScreensByCollectionId(result) {
-    this.state.elements.screens = result;
-  }
-
   handleCreateScreen(screen) {
     this.handleRefreshElements('screen');
     this.navigateToNewElement(screen);
@@ -742,9 +749,6 @@ class ElementStore {
   }
 
   // -- ResearchPlans --
-  handlefetchResearchPlansByCollectionId(result) {
-    this.state.elements.research_plans = result;
-  }
 
   handlefetchResearchPlanById(result) {
     this.changeCurrentElement(result);
@@ -788,9 +792,6 @@ class ElementStore {
     this.state.elementWarning = false
   }
 
-  handleFetchReactionsByCollectionId(result) {
-    this.state.elements.reactions = result;
-  }
 
   handleCreateReaction(reaction) {
     UserActions.fetchCurrentUser();
@@ -858,24 +859,22 @@ class ElementStore {
 
   handleSetPagination(pagination) {
     this.waitFor(UIStore.dispatchToken);
-    this.handleRefreshElements(pagination.type, pagination.sortBy);
+    this.handleRefreshElements(pagination.type);
   }
 
   handleRefreshElements(type) {
     this.waitFor(UIStore.dispatchToken);
     const uiState = UIStore.getState();
-
     if (!uiState.currentCollection || !uiState.currentCollection.id) return;
 
-    const page = uiState[type].page;
-    const moleculeSort = this.state.moleculeSort;
-
+    const { page } = uiState[type];
+    const { moleculeSort } = this.state;
     this.state.elements[`${type}s`].page = page;
-    const currentSearchSelection = uiState.currentSearchSelection;
 
     // TODO if page changed -> fetch
     // if there is a currentSearchSelection
     //    we have to execute the respective action
+    const { currentSearchSelection } = uiState;
     if (currentSearchSelection != null) {
       currentSearchSelection.page_size = uiState.number_of_results;
       ElementActions.fetchBasedOnSearchSelectionAndCollection.defer({
@@ -891,12 +890,16 @@ class ElementStore {
       const params = { page, per_page, fromDate, toDate, productOnly };
       const fnName = type.split('_').map(x => x[0].toUpperCase() + x.slice(1)).join("") + 's';
       const fn = `fetch${fnName}ByCollectionId`;
-      ElementActions[fn](
-        uiState.currentCollection.id,
-        params,
-        uiState.isSync,
-        moleculeSort
-      );
+      const allowedActions = [
+        'fetchSamplesByCollectionId',
+        'fetchReactionsByCollectionId',
+        'fetchWellplatesByCollectionId',
+        'fetchScreensByCollectionId',
+        'fetchResearchPlansByCollectionId',
+      ];
+      if (allowedActions.includes(fn)) {
+        ElementActions[fn](uiState.currentCollection.id, params, uiState.isSync, moleculeSort);
+      }
     }
   }
 
@@ -1140,12 +1143,7 @@ class ElementStore {
       this.setState({ selecteds: newSelecteds }, this.resetCurrentElement(-1, newSelecteds));
     }
 
-    ElementActions.fetchSamplesByCollectionId(ui_state.currentCollection.id, {},
-      ui_state.isSync, this.state.moleculeSort);
-    ElementActions.fetchReactionsByCollectionId(ui_state.currentCollection.id);
-    ElementActions.fetchWellplatesByCollectionId(ui_state.currentCollection.id);
-    ElementActions.fetchScreensByCollectionId(ui_state.currentCollection.id);
-    ElementActions.fetchResearchPlansByCollectionId(ui_state.currentCollection.id);
+    this.fetchElementsByCollectionIdandLayout();
   }
 
   handleRefreshComputedProp(cprop) {

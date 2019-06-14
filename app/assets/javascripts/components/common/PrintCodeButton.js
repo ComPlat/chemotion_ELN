@@ -10,10 +10,10 @@ const PrintCodeButton = ({
 }) => {
   const { type, id } = element;
   let tooltipText = 'Print bar/qr-code Label';
-  const ids = analyses ? analyses.map(e => e.id) : [];
-  const contentsUri = analyses
-    ? `api/v1/code_logs/print_analyses_codes?element_type=${type}&id=${id}&analyses_ids[]=${ids}`
-    : `api/v1/code_logs/print_codes?element_type=${type}&ids[]=${id}`;
+  const ids = analyses.length > 0 ? analyses.map(e => e.id) : [];
+  const contentsUri = analyses.length > 0
+    ? `/api/v1/code_logs/print_analyses_codes?element_type=${type}&id=${id}&analyses_ids[]=${ids}`
+    : `/api/v1/code_logs/print_codes?element_type=${type}&ids[]=${id}`;
   const menuItems = [
     {
       key: 'smallCode',
@@ -27,8 +27,8 @@ const PrintCodeButton = ({
     },
   ];
 
-  if (analyses) { tooltipText = 'Print bar/qr-code Labels for this analysis'; }
-  if (allAnalyses && analyses) { tooltipText = 'Print bar/qr-code Labels for all analyses'; }
+  if (analyses.length > 0) { tooltipText = 'Print bar/qr-code Labels for this analysis'; }
+  if (allAnalyses && analyses.length > 0) { tooltipText = 'Print bar/qr-code Labels for all analyses'; }
 
   return (
     <OverlayTrigger

@@ -1,9 +1,11 @@
 import 'whatwg-fetch';
+
 import Sample from '../models/Sample';
-import UIStore from '../stores/UIStore'
-import NotificationActions from '../actions/NotificationActions'
-import AttachmentFetcher from './AttachmentFetcher'
-import _ from 'lodash';
+import UIStore from '../stores/UIStore';
+import NotificationActions from '../actions/NotificationActions';
+import AttachmentFetcher from './AttachmentFetcher';
+import BaseFetcher from './BaseFetcher';
+
 
 import Container from '../models/Container';
 
@@ -43,50 +45,20 @@ export default class SamplesFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new Sample(json.sample);
-
+        const rSample = new Sample(json.sample);
+        if (json.error) {
+          rSample.id = `${id}:error:Sample ${id} is not accessible!`;
+        }
+        return rSample;
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
-
     return promise;
   }
 
-  static fetchByCollectionId(id, queryParams={}, isSync = false, moleculeSort = false) {
-    let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || UIStore.getState().number_of_results;
-    let from_date = '';
-    if (queryParams.fromDate) {
-      from_date = `&from_date=${queryParams.fromDate.unix()}`
-    }
-    let to_date = '';
-    if (queryParams.toDate) {
-      to_date = `&to_date=${queryParams.toDate.unix()}`
-    }
-    const api = `/api/v1/samples.json?${isSync ? "sync_" : "" }` +
-          `collection_id=${id}&page=${page}&per_page=${per_page}&` +
-          `product_only=${queryParams.productOnly || false}` +
-          `${from_date}${to_date}&` +
-          `molecule_sort=${moleculeSort ? 1 : 0}`
-
-    const promise = fetch(
-      api,
-      { credentials: 'same-origin' }
-    ).then((response) => {
-      return response.json().then((json) => {
-        return {
-          elements: json.samples.map(s => new Sample(s)),
-          totalElements: parseInt(json.samples_count),
-          page: parseInt(response.headers.get('X-Page')),
-          pages: parseInt(response.headers.get('X-Total-Pages')),
-          perPage: parseInt(response.headers.get('X-Per-Page'))
-        }
-      })
-    }).catch((errorMessage) => {
-      console.log(errorMessage);
-    });
-
-    return promise;
+  static fetchByCollectionId(id, queryParams = {}, isSync = false, moleculeSort = false) {
+    queryParams.moleculeSort = moleculeSort;
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'samples', Sample);
   }
 
   static update(sample) {

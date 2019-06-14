@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import _ from 'lodash';
 import ResearchPlan from '../models/ResearchPlan';
 import AttachmentFetcher from './AttachmentFetcher';
+import BaseFetcher from './BaseFetcher';
 
 
 export default class ResearchPlansFetcher {
@@ -12,7 +13,12 @@ export default class ResearchPlansFetcher {
       .then((response) => {
         return response.json()
       }).then((json) => {
-        return new ResearchPlan(json.research_plan);
+        const rResearchPlan = new ResearchPlan(json.research_plan);
+        rResearchPlan.attachments = json.attachments;
+        if (json.error) {
+          rResearchPlan.id = `${id}:error:ResearchPlan ${id} is not accessible!`;
+        }
+        return rResearchPlan;
       }).catch((errorMessage) => {
         console.log(errorMessage);
       });
@@ -21,38 +27,7 @@ export default class ResearchPlansFetcher {
   }
 
   static fetchByCollectionId(id, queryParams={}, isSync = false) {
-    let page = queryParams.page || 1;
-    let per_page = queryParams.per_page || 7;
-    let from_date = '';
-    if (queryParams.fromDate) {
-      from_date = `&from_date=${queryParams.fromDate.unix()}`
-    }
-    let to_date = '';
-    if (queryParams.toDate) {
-      to_date = `&to_date=${queryParams.toDate.unix()}`
-    }
-    let api = `/api/v1/research_plans.json?${isSync ? "sync_" : "" }` +
-              `collection_id=${id}&page=${page}&per_page=${per_page}` +
-              `${from_date}${to_date}`;
-    let promise = fetch(api, {
-        credentials: 'same-origin'
-      })
-      .then((response) => {
-        return response.json().then((json) => {
-          return {
-            elements:
-              json.research_plans.map( s => new ResearchPlan(s) ),
-            totalElements: parseInt(response.headers.get('X-Total')),
-            page: parseInt(response.headers.get('X-Page')),
-            pages: parseInt(response.headers.get('X-Total-Pages')),
-            perPage: parseInt(response.headers.get('X-Per-Page'))
-          }
-        })
-      }).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-
-    return promise;
+    return BaseFetcher.fetchByCollectionId(id, queryParams, isSync, 'research_plans', ResearchPlan);
   }
 
   static update(researchPlan) {

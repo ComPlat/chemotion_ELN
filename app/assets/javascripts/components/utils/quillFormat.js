@@ -1,5 +1,16 @@
 import _ from 'lodash';
 
+const contentToText = (content) => {
+  if (typeof (content) === 'undefined' || !content ||
+    typeof (content.ops) === 'undefined' || !content.ops) {
+    return '';
+  }
+  return (content.ops || []).reduce((txt, operation) => {
+    if (typeof operation.insert !== 'string') { return txt + ' ' };
+    return txt + operation.insert;
+  }, '');
+};
+
 const keepSupSub = (value) => {
   const content = [];
   value.ops.forEach((op) => {
@@ -63,6 +74,7 @@ const mapValueToGroupRegex = (content, matchedGroup) => {
 };
 
 module.exports = {
+  contentToText,
   keepSupSub,
   rmDeltaRedundantSpaceBreak,
   rmOpsRedundantSpaceBreak,

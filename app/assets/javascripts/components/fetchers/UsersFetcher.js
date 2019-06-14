@@ -140,4 +140,16 @@ export default class UsersFetcher {
 
     return promise;
   }
+
+  static fetchOls(name) {
+    const promise = fetch(`/api/v1/ols_terms/list.json?name=${name}`, {
+      credentials: 'same-origin'
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
 }

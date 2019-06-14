@@ -112,10 +112,10 @@ export default class ContainerComponent extends Component {
             label="Name"
             value={container.name || '***'}
             onChange={this.handleInputChange.bind(this, 'name')}
-            disabled={disabled}/>
+            disabled={disabled} />
         </Col>
         <Col md={4}>
-          <div style={{marginBottom: 11}}>
+          <div style={{ marginBottom: 11 }}>
             <label>Type</label>
             <Select
               name='kind'
@@ -124,11 +124,11 @@ export default class ContainerComponent extends Component {
               value={container.extended_metadata['kind']}
               disabled={readOnly || disabled}
               onChange={this.handleInputChange.bind(this, 'kind')}
-              />
+            />
           </div>
         </Col>
         <Col md={4}>
-          <div style={{marginBottom: 11}}>
+          <div style={{ marginBottom: 11 }}>
             <label>Status</label>
             <Select
               name='status'
@@ -141,10 +141,10 @@ export default class ContainerComponent extends Component {
           </div>
         </Col>
         <Col md={12}>
-        <FormGroup>
-          <ControlLabel>Content</ControlLabel>
-          {quill}
-        </FormGroup>
+          <FormGroup>
+            <ControlLabel>Content</ControlLabel>
+            {quill}
+          </FormGroup>
           <FormGroup>
             <ControlLabel>Description</ControlLabel>
             <FormControl
@@ -153,7 +153,7 @@ export default class ContainerComponent extends Component {
               value={container.description || ''}
               disabled={readOnly || disabled}
               onChange={this.handleInputChange.bind(this, 'description')}
-              />
+            />
           </FormGroup>
         </Col>
         <Col md={12}>
@@ -163,7 +163,7 @@ export default class ContainerComponent extends Component {
             readOnly={readOnly}
             disabled={disabled}
             onChange={this.onChange}
-            />
+          />
         </Col>
       </div>
     );
