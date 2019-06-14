@@ -47,6 +47,7 @@ import PrintCodeButton from './common/PrintCodeButton'
 import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
+import QualityCheckMain from './qc/Main';
 
 const MWPrecision = 6;
 
@@ -797,6 +798,24 @@ export default class SampleDetails extends React.Component {
     );
   }
 
+  qualityCheckTab(ind) {
+    const { sample } = this.state;
+    if (!sample) { return null; }
+    return (
+      <Tab
+        eventKey={ind}
+        title="QC"
+        key={`QC_${sample.id}`}
+      >
+        <ListGroupItem style={{ paddingBottom: 20 }} >
+          <QualityCheckMain
+            sample={sample}
+          />
+        </ListGroupItem>
+      </Tab>
+    );
+  }
+
   extraLabels() {
     let labels = [];
     for (let j = 0; j < XLabels.count; j += 1) {
@@ -917,7 +936,8 @@ export default class SampleDetails extends React.Component {
       i => this.sampleContainerTab(i),
       i => this.sampleLiteratureTab(i),
       i => this.sampleImportReadoutTab(i),
-      i => this.moleculeComputedProps(i)
+      i => this.moleculeComputedProps(i),
+      i => this.qualityCheckTab(i),
     ];
 
     const offset = tabContents.length;
