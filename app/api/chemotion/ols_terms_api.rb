@@ -12,15 +12,20 @@ module Chemotion
         get 'list' do
           list = OlsTerm.where(ols_name: params[:name], is_enabled: true).arrange_serializable(:order => :label)
           result = present(list, with: Entities::OlsTermEntity)
-          #recent_term_ids = current_user.profile && current_user.profile.data && 
-          #current_user.profile.data['ols'] && current_user.profile.data['ols'][params[:name]]
-
-          # unless recent_term_ids.nil?
-          #   ols = OlsTerm.where(term_id: recent_term_ids).order("label").as_json          
-          #   entities = Entities::OlsTermEntity.represent(ols, serializable: true)
-          #   result.unshift({'key': params[:name], 'title': 'Recent', selectable: false, 'children': entities})
-          # end
-
+          
+          recent_term_ids = current_user.profile && current_user.profile.data && current_user.profile.data[params[:name]]
+          unless recent_term_ids.nil?
+            ols = OlsTerm.where(term_id: recent_term_ids)
+            .select(
+              <<~SQL
+              ols_name, term_id, ancestry,label || ' ' as label, synonym, synonyms
+              SQL
+              ).order("label").as_json 
+            unless ols.nil? || ols.length == 0
+              entities = Entities::OlsTermEntity.represent(ols, serializable: true)
+              result.unshift({'key': params[:name], 'title': 'Recent', selectable: false, 'children': entities})
+            end
+          end
           {ols_terms: result}
         end
       end

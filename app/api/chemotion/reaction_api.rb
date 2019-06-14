@@ -1,5 +1,4 @@
 class OSample < OpenStruct
-
   def initialize data
     # set nested attributes
     %i(residues elemental_compositions).each do |prop|
@@ -195,6 +194,7 @@ module Chemotion
     helpers ParamsHelpers
     helpers CollectionHelpers
     helpers LiteratureHelpers
+    helpers ProfileHelpers
 
     resource :reactions do
       namespace :import_chemscanner do
@@ -361,6 +361,8 @@ module Chemotion
           update_materials_for_reaction(reaction, materials, current_user)
           # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
+          recent_ols_term_update('rxno',params[:rxno]) if params[:rxno].present?
+
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
       end
@@ -404,6 +406,7 @@ module Chemotion
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
+        recent_ols_term_update('rxno',params[:rxno]) if params[:rxno].present?
 
         if (literatures && literatures.length > 0)
           literatures.each do |literature|
