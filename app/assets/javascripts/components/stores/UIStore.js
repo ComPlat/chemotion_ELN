@@ -1,19 +1,19 @@
+import { List, fromJS } from 'immutable';
 import alt from '../alt';
+
 import UIActions from '../actions/UIActions';
-import UserActions from '../actions/UserActions';
 import ElementActions from '../actions/ElementActions';
 import ElementStore from './ElementStore';
 import UserStore from './UserStore';
 import ArrayUtils from '../utils/ArrayUtils';
-import Immutable from 'immutable';
 
 class UIStore {
   constructor() {
     this.state = {
       sample: {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
         currentId: null,
         page: 1,
         activeTab: 0,
@@ -21,8 +21,8 @@ class UIStore {
       },
       reaction: {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
         currentId: null,
         page: 1,
         activeTab: 0,
@@ -30,24 +30,24 @@ class UIStore {
       },
       wellplate: {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
         currentId: null,
         page: 1,
         activeTab: 0,
       },
       screen: {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
         currentId: null,
         page: 1,
         activeTab: 0,
       },
       research_plan: {
         checkedAll: false,
-        checkedIds: Immutable.List(),
-        uncheckedIds: Immutable.List(),
+        checkedIds: List(),
+        uncheckedIds: List(),
         currentId: null,
         page: 1,
       },
@@ -148,19 +148,19 @@ class UIStore {
       if (this.state.currentSearchSelection && elements[type + "s"].ids) {
         let ids = elements[type + "s"].ids
         this.state[type].checkedAll = false
-        this.state[type].checkedIds = Immutable.List(ids)
-        this.state[type].uncheckedIds = Immutable.List()
+        this.state[type].checkedIds = List(ids)
+        this.state[type].uncheckedIds = List()
       } else {
         this.state[type].checkedAll = true;
-        this.state[type].checkedIds = Immutable.List();
-        this.state[type].uncheckedIds = Immutable.List();
+        this.state[type].checkedIds = List();
+        this.state[type].uncheckedIds = List();
       }
     } else if (range == 'current') {
       let curPageIds = elements[type + "s"].elements.reduce(
         function(a, b) { return a.concat(b); }, []
       ).map((e) => { return e.id });
       this.state[type].checkedAll = false;
-      this.state[type].uncheckedIds = Immutable.List();
+      this.state[type].uncheckedIds = List();
       let checked = this.state[type].checkedIds
       // Remove duplicates, conserve sorting
       if(checked.size > 0) {
@@ -172,7 +172,7 @@ class UIStore {
         }
         this.state[type].checkedIds = checked;
       } else {
-        this.state[type].checkedIds = Immutable.List(curPageIds);
+        this.state[type].checkedIds = List(curPageIds);
       }
     } else {
       this.handleUncheckAllElements(params)
@@ -193,8 +193,8 @@ class UIStore {
     let {type, range} = params;
 
     this.state[type].checkedAll = false;
-    this.state[type].checkedIds = Immutable.List();
-    this.state[type].uncheckedIds = Immutable.List();
+    this.state[type].checkedIds = List();
+    this.state[type].uncheckedIds = List();
   }
 
   handleUncheckWholeSelection() {

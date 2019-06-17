@@ -1,6 +1,7 @@
 import React from 'react';
 import { ButtonGroup } from 'react-bootstrap';
 import PropTypes from 'prop-types';
+import { List } from 'immutable';
 
 import { ShareButton, MoveOrAssignButton, RemoveOrDeleteButton } from './ManagingActionButtons';
 import UIStore from './../stores/UIStore';
@@ -15,6 +16,37 @@ import ManagingModalRemove from './ManagingModalRemove';
 import ManagingModalTopSecret from './ManagingModalTopSecret';
 import ElementActions from '../actions/ElementActions';
 
+const upState = (state) => {
+  const { sample, reaction, screen, wellplate, research_plan } = state;
+  return ({
+    sample: {
+      checkedAll: sample ? sample.checkedAll : false,
+      checkedIds: sample ? sample.checkedIds : List(),
+      uncheckedIds: sample ? sample.uncheckedIds : List(),
+    },
+    reaction: {
+      checkedAll: reaction ? reaction.checkedAll : false,
+      checkedIds: reaction ? reaction.checkedIds : List(),
+      uncheckedIds: reaction ? reaction.uncheckedIds : List(),
+    },
+    wellplate: {
+      checkedAll: wellplate ? wellplate.checkedAll : false,
+      checkedIds: wellplate ? wellplate.checkedIds : List(),
+      uncheckedIds: wellplate ? wellplate.uncheckedIds : List(),
+    },
+    screen: {
+      checkedAll: screen ? screen.checkedAll : false,
+      checkedIds: screen ? screen.checkedIds : List(),
+      uncheckedIds: screen ? screen.uncheckedIds : List(),
+    },
+    research_plan: {
+      checkedAll: research_plan ? research_plan.checkedAll : false,
+      checkedIds: research_plan ? research_plan.checkedIds : List(),
+      uncheckedIds: research_plan ? research_plan.uncheckedIds : List(),
+    },
+  });
+};
+
 export default class ManagingActions extends React.Component {
   constructor(props) {
     super(props);
@@ -26,6 +58,7 @@ export default class ManagingActions extends React.Component {
       deletion_allowed: false,
       remove_allowed: false,
       is_top_secret: false,
+      ...upState({})
     };
 
     this.handleButtonClick = this.handleButtonClick.bind(this);
@@ -38,7 +71,6 @@ export default class ManagingActions extends React.Component {
     UserStore.listen(this.onUserChange);
     UIStore.listen(this.onChange);
     PermissionStore.listen(this.onPermissionChange);
-
     UserActions.fetchCurrentUser();
   }
 
@@ -49,70 +81,32 @@ export default class ManagingActions extends React.Component {
   }
 
   onChange(state) {
-    if (this.checkUIState(state)) {
-      const elementsFilter = this.filterParamsFromUIState(state);
-      const params = {
-        elements_filter: elementsFilter,
-        currentCollection: state.currentCollection
-      };
-      PermissionActions.fetchPermissionStatus(params);
+    const {
+      sample, reaction, screen, wellplate, research_plan, currentCollection
+    } = state;
+    if (this.collectionChanged(state)) {
       this.setState({
-        currentCollection:          state.currentCollection,
-        sample_checkedAll:          state.sample.checkedAll,
-        sample_checkedIds:          state.sample.checkedIds,
-        sample_uncheckedIds:        state.sample.uncheckedIds,
-        reaction_checkedAll:        state.reaction.checkedAll,
-        reaction_checkedIds:        state.reaction.checkedIds,
-        reaction_uncheckedIds:      state.reaction.uncheckedIds,
-        wellplate_checkedAll:       state.wellplate.checkedAll,
-        wellplate_checkedIds:       state.wellplate.checkedIds,
-        wellplate_uncheckedIds:     state.wellplate.uncheckedIds,
-        screen_checkedAll:          state.screen.checkedAll,
-        screen_checkedIds:          state.screen.checkedIds,
-        screen_uncheckedIds:        state.screen.uncheckedIds,
-        research_plan_checkedAll:   state.research_plan.checkedAll,
-        research_plan_checkedIds:   state.research_plan.checkedIds,
-        research_plan_uncheckedIds: state.research_plan.uncheckedIds,
+        sharing_allowed: false,
+        deletion_allowed: false,
+        remove_allowed: false,
+        is_top_secret: false,
+        hasSel: false,
+        currentCollection
+      });
+    }
+    else if (this.checkUIState(state)) {
+      const hasSel = [sample, reaction, screen, wellplate, research_plan].find(el => (
+        el && (el.checkedIds.size > 0 || el.checkedAll)));
+      PermissionActions.fetchPermissionStatus(state);
+      this.setState({
+        ...upState(state), hasSel
       });
     }
   }
 
-  checkUIState(state){
-    return (
-      state.currentCollection          !== this.state.currentCollection       ||
-      state.sample.checkedAll          != this.state.sample_checkedAll        ||
-      state.sample.checkedIds          != this.state.sample_checkedIds        ||
-      state.sample.uncheckedIds        != this.state.sample_uncheckedIds      ||
-      state.reaction.checkedAll        != this.state.reaction_checkedAll      ||
-      state.reaction.checkedIds        != this.state.reaction_checkedIds      ||
-      state.reaction.uncheckedIds      != this.state.reaction_uncheckedIds    ||
-      state.wellplate.checkedAll       != this.state.wellplate_checkedAll     ||
-      state.wellplate.checkedIds       != this.state.wellplate_checkedIds     ||
-      state.wellplate.uncheckedIds     != this.state.wellplate_uncheckedIds   ||
-      state.screen.checkedAll          != this.state.screen_checkedAll        ||
-      state.screen.checkedIds          != this.state.screen_checkedIds        ||
-      state.screen.uncheckedIds        != this.state.screen_uncheckedIds      ||
-      state.research_plan.checkedAll   != this.state.research_plan_checkedAll ||
-      state.research_plan.checkedIds   != this.state.research_plan_checkedIds ||
-      state.research_plan.uncheckedIds != this.state.research_plan_uncheckedIds
-    )
-  }
-
-  hasSelection(){
-    const uiState = UIStore.getState();
-    let elementsFilter = this.filterParamsFromUIState(uiState);
-    let result = false;
-    ['sample', 'reaction', 'wellplate', 'screen', 'research_plan'].map(function(prop){
-      if(elementsFilter[prop].included_ids.size > 0 || elementsFilter[prop].all)
-        result = true;
-    });
-
-    return result;
-  }
-
   onUserChange(state) {
-    const newId = state.currentUser ? state.currentUser.id : null
-    const oldId = this.state.currentUser ? this.state.currentUser.id : null
+    const newId = state.currentUser ? state.currentUser.id : null;
+    const oldId = this.state.currentUser ? this.state.currentUser.id : null;
     if (newId !== oldId) {
       this.setState({
         currentUser: state.currentUser
@@ -121,154 +115,94 @@ export default class ManagingActions extends React.Component {
   }
 
   onPermissionChange(state) {
-    this.setState({
-      sharing_allowed: state.sharing_allowed,
-      deletion_allowed: state.deletion_allowed,
-      remove_allowed: state.remove_allowed,
-      is_top_secret: state.is_top_secret
-    })
+    this.setState({ ...state });
   }
 
-  filterParamsFromUIState(uiState) {
-    const collection_id = uiState.currentCollection && uiState.currentCollection.id;
-    const is_sync_to_me = uiState.currentCollection && uiState.currentCollection.is_sync_to_me;
-
-    return {
-      sample: {
-        all: uiState.sample.checkedAll,
-        included_ids: uiState.sample.checkedIds,
-        excluded_ids: uiState.sample.uncheckedIds,
-        collection_id,
-        is_sync_to_me
-      },
-      reaction: {
-        all: uiState.reaction.checkedAll,
-        included_ids: uiState.reaction.checkedIds,
-        excluded_ids: uiState.reaction.uncheckedIds,
-        collection_id,
-        is_sync_to_me
-      },
-      wellplate: {
-        all: uiState.wellplate.checkedAll,
-        included_ids: uiState.wellplate.checkedIds,
-        excluded_ids: uiState.wellplate.uncheckedIds,
-        collection_id,
-        is_sync_to_me
-      },
-      screen: {
-        all: uiState.screen.checkedAll,
-        included_ids: uiState.screen.checkedIds,
-        excluded_ids: uiState.screen.uncheckedIds,
-        collection_id,
-        is_sync_to_me
-      },
-      research_plan: {
-        all: uiState.research_plan.checkedAll,
-        included_ids: uiState.research_plan.checkedIds,
-        excluded_ids: uiState.research_plan.uncheckedIds,
-        collection_id,
-        is_sync_to_me
-      }
-    };
+  collectionChanged(state) {
+    const { currentCollection } = state;
+    const { id, is_sync_to_me } = currentCollection;
+    return this.state.currentCollection.id !== id ||
+      this.state.currentCollection.is_sync_to_me !== is_sync_to_me;
   }
 
-  isMoveDisabled() {
-    const {currentCollection} = this.state;
-    if(currentCollection) {
-      return currentCollection.label == 'All' || (currentCollection.is_shared == true && currentCollection.permission_level < 4)
-    }
-  }
-
-  isAssignDisabled(selection) {
-    const {currentCollection} = this.state;
-    if(currentCollection) {
-      return !selection || (currentCollection.is_shared == true && currentCollection.permission_level < 4);
-    }
-  }
-
-  isShareBtnDisabled(selection) {
-    const { currentCollection } = this.state;
-    let in_all_collection = (currentCollection) ? currentCollection.label == 'All' : false
-    return !selection || in_all_collection || this.state.sharing_allowed == false;
-  }
-
-  isDeleteDisabled(selection) {
-    return !selection || this.state.deletion_allowed == false;
-  }
-
-  isRemoveDisabled(selection) {
-    if(this.state.currentCollection) {
-      let currentCollection = this.state.currentCollection;
-
-      return !selection || !this.state.remove_allowed || (currentCollection.is_shared == true && currentCollection.shared_by_id != this.state.currentUser.id);
-    }
+  checkUIState(state) {
+    const result = ['sample', 'reaction', 'screen', 'wellplate', 'research_plan'].find(el => (
+      state[el].checkedIds !== this.state[el].checkedIds ||
+      state[el].checkedAll !== this.state[el].checkedAll ||
+      state[el].checkedIds !== this.state[el].checkedIds
+    ));
+    return result;
   }
 
   handleButtonClick(type) {
-    let title, component, action = "";
-    let listSharedCollections = false
+    const modalProps = { show: true, action: '', listSharedCollections: false };
     switch(type) {
       case 'share':
         if(!this.state.is_top_secret) {
-          title = "Sharing";
-          component = ManagingModalSharing;
+          modalProps.title = "Sharing";
+          modalProps.component = ManagingModalSharing;
         } else {
-          title = "Sharing not allowed";
-          component = ManagingModalTopSecret;
+          modalProps.title = "Sharing not allowed";
+          modalProps.component = ManagingModalTopSecret;
         }
         break;
       case 'move':
-        title = "Move to Collection";
-        component = ManagingModalCollectionActions;
-        action = ElementActions.updateElementsCollection;
+        modalProps.title = "Move to Collection";
+        modalProps.component = ManagingModalCollectionActions;
+        modalProps.action = ElementActions.updateElementsCollection;
         break;
       case 'remove':
-        title = "Remove selected elements from this Collection?";
-        component = ManagingModalRemove;
-        action = ElementActions.removeElementsCollection;
+        modalProps.title = "Remove selected elements from this Collection?";
+        modalProps.component = ManagingModalRemove;
+        modalProps.action = ElementActions.removeElementsCollection;
         break;
       case 'assign':
-        title = "Assign to Collection";
-        component = ManagingModalCollectionActions;
-        action = ElementActions.assignElementsCollection;
-        listSharedCollections = true;
+        modalProps.title = "Assign to Collection";
+        modalProps.component = ManagingModalCollectionActions;
+        modalProps.action = ElementActions.assignElementsCollection;
+        modalProps.listSharedCollections = true;
         break;
       case 'delete':
-        title = "Delete from all Collections?";
-        component = ManagingModalDelete;
-        action = ElementActions.deleteElements;
+        modalProps.title = "Delete from all Collections?";
+        modalProps.component = ManagingModalDelete;
+        modalProps.action = ElementActions.deleteElements;
         break;
-    }
-    const modalProps = {
-      show: true,
-      title,
-      component,
-      action,
-      listSharedCollections
     };
+
     this.props.updateModalProps(modalProps);
   }
 
   render() {
-    const sel = this.hasSelection();
+    const {
+      currentCollection, sharing_allowed, deletion_allowed, remove_allowed, is_top_secret, hasSel
+    } = this.state;
+    const { is_locked, is_shared, sharer, is_sync_to_me, label } = currentCollection;
+    const isAll = is_locked && label === 'All';
+    const noSel = !hasSel
+
+    const moveDisabled = noSel || isAll;
+    const assignDisabled = noSel;
+    const removeDisabled = noSel || isAll || !deletion_allowed; //!remove_allowed
+    const deleteDisabled = noSel || !deletion_allowed;
+    const shareDisabled = noSel || !sharing_allowed;
 
     return (
       <div style={{ display: 'inline', float: 'left', marginRight: 10 }}>
         <ButtonGroup>
           <MoveOrAssignButton
-            assignDisabled={this.isAssignDisabled(sel)}
-            moveDisabled={!sel || this.isMoveDisabled()}
+            assignDisabled={assignDisabled}
+            moveDisabled={moveDisabled}
             onClick={this.handleButtonClick}
             customClass={this.props.customClass}
           />
           <RemoveOrDeleteButton
-            removeDisabled={this.isRemoveDisabled(sel)}
-            deleteDisabled={this.isDeleteDisabled(sel)}
+            removeDisabled={removeDisabled}
+            deleteDisabled={deleteDisabled}
             onClick={this.handleButtonClick}
             customClass={this.props.customClass}
           />
           <ShareButton
-            isDisabled={this.isShareBtnDisabled(sel)}
+            isDisabled={shareDisabled}
             onClick={this.handleButtonClick}
             customClass={this.props.customClass}
           />

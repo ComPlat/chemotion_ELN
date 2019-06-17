@@ -6,7 +6,8 @@ class PermissionStore {
     this.state = {
       is_top_secret: false,
       sharing_allowed: false,
-      deletion_allowed: false
+      deletion_allowed: false,
+      remove_allowed: false,
     };
 
     this.bindListeners({
