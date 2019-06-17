@@ -215,7 +215,7 @@ class ViewSpectra extends React.Component {
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
     ];
-    const predictable = ['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
+    const predictable = false; //['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
     if (predictable) {
       return [
         { name: 'check & write', value: this.checkWriteOp },

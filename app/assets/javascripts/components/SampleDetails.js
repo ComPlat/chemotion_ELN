@@ -937,7 +937,6 @@ export default class SampleDetails extends React.Component {
       i => this.sampleLiteratureTab(i),
       i => this.sampleImportReadoutTab(i),
       i => this.moleculeComputedProps(i),
-      i => this.qualityCheckTab(i),
     ];
 
     const offset = tabContents.length;
