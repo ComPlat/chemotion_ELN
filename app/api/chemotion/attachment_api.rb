@@ -62,7 +62,13 @@ module Chemotion
     end
 
     resource :attachable do
-      before do
+      params do
+        optional :files, type: Array[File], desc: "files"
+        optional :attachable_type, type: String, desc: "attachable_type"
+        optional :attachable_id, type: Integer, desc: "attachable id"
+        optional :del_files, type: Array[Integer], desc: "del file id"
+      end
+      after_validation do
         case params[:attachable_type]
         when 'ResearchPlan'
           error!('401 Unauthorized', 401) unless ElementPolicy.new(current_user, ResearchPlan.find_by(id: params[:attachable_id])).update?
@@ -111,6 +117,11 @@ module Chemotion
         end
         if params[:del_files] && params[:del_files].length > 0
           Attachment.where('id IN (?) AND attachable_type = (?)', params[:del_files].map!(&:to_i), attachable_type).update_all(attachable_id: nil)
+          if params[:attachable_type] == 'ResearchPlan'
+            a = Attachment.find_by(attachable_type: 'ResearchPlan', attachable_id: params[:attachable_id])
+            rp = ResearchPlan.find(params[:attachable_id])
+            rp.update!(thumb_svg: a.nil?? nil : '/images/thumbnail/' + a.identifier)
+          end
         end
         true
       end

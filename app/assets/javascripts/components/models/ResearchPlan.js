@@ -1,4 +1,5 @@
 import Element from './Element';
+import { isEmpty } from 'lodash';
 
 export default class ResearchPlan extends Element {
   /*isMethodRestricted(m) {
@@ -37,5 +38,10 @@ export default class ResearchPlan extends Element {
     } else {
       return `/images/wild_card/no_image_180.svg`
     }
+  }
+
+  // overwrite isPendingToSave method in models/Element.js
+  get isPendingToSave() {
+    return !isEmpty(this) && (this.isNew || this.changed);
   }
 }

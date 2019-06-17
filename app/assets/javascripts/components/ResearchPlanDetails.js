@@ -22,6 +22,7 @@ import Utils from './utils/Functions';
 import EditorFetcher from './fetchers/EditorFetcher';
 import SpinnerPencilIcon from './common/SpinnerPencilIcon';
 import ImageModal from './common/ImageModal';
+import LoadingActions from './actions/LoadingActions';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -123,7 +124,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleStructureEditorSave(sdf_file, svg_file, config = null) {
     let {research_plan} = this.state;
-
+    research_plan.changed = true;
     research_plan.sdf_file = sdf_file;
     const smiles = config ? config.smiles : null;
 
@@ -165,7 +166,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleSubmit() {
     const { research_plan } = this.state;
-
+    LoadingActions.start();
     if (research_plan.isNew) {
       ElementActions.createResearchPlan(research_plan);
     } else {
@@ -189,6 +190,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleInputChange(type, event) {
     let {research_plan} = this.state;
+    research_plan.changed = true;
     const value = event.target.value;
     switch (type) {
       case 'name':
@@ -216,7 +218,7 @@ export default class ResearchPlanDetails extends Component {
   }
 
   researchPlanHeader(research_plan) {
-    let saveBtnDisplay = research_plan.isEdited ? '' : 'none'
+    let saveBtnDisplay = research_plan.changed ? '' : 'none';
 
     return (
       <div>
@@ -278,6 +280,7 @@ export default class ResearchPlanDetails extends Component {
 
   handleFileDrop(files) {
     const { research_plan } = this.state;
+    research_plan.changed = true;
     const attachments = files.map(f => Attachment.fromFile(f));
     research_plan.attachments = research_plan.attachments.concat(attachments);
     this.setState({ research_plan });
@@ -439,7 +442,7 @@ export default class ResearchPlanDetails extends Component {
   handleAttachmentRemove(attachment) {
     const { research_plan } = this.state;
     const index = research_plan.attachments.indexOf(attachment);
-
+    research_plan.changed = true;
     research_plan.attachments[index].is_deleted = true;
     this.setState({ research_plan });
   }
