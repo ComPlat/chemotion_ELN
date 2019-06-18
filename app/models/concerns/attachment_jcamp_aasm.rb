@@ -154,7 +154,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
-    jcamp_att.auto_infer(spc_type)
+    # jcamp_att.auto_infer(spc_type)
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
     delete_tmps([tmp_jcamp, tmp_img])
@@ -169,7 +169,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    jcamp_att.update_prediction(params, predictions[0], spc_type)
+    # jcamp_att.update_prediction(params, predictions[0], spc_type)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup
     delete_tmps([tmp_jcamp, tmp_img])
