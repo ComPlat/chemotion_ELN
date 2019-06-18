@@ -35,7 +35,7 @@ const handleNotification = (nots, act, needCallback = true) => {
               params.ids[0] = n.id;
               MessagesFetcher.acknowledgedMessage(params)
                 .then((result) => {
-                  console.log(JSON.stringify(result));
+                  //console.log(JSON.stringify(result));
                 });
             }
           }
@@ -71,7 +71,6 @@ const handleNotification = (nots, act, needCallback = true) => {
         }
         if (n.content.action === 'ElementActions.fetchResearchPlanById') {
           const id = parseInt(n.content.research_plan_id, 10);
-          console.log(id);
           ElementActions.fetchResearchPlanById(id);
         }
       }
@@ -102,6 +101,8 @@ const createUpgradeNotification = (serverVersion, localVersion) => {
   };
   handleNotification([not], 'add', false);
 };
+
+const reviewUrl = (url, url_title) => (url ? <a href={url} target="_blank">{url_title || url}</a> : <span/> )
 
 export default class NoticeButton extends React.Component {
   constructor(props) {
@@ -301,6 +302,8 @@ export default class NoticeButton extends React.Component {
                   </td>
                   <td width="90%">
                     { not.content.data }
+                    <br />
+                    {reviewUrl(not.content.url, not.content.url_title)}
                   </td>
                 </tr>
               </tbody>

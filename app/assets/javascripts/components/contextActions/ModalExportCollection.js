@@ -7,7 +7,8 @@ export default class ModalExportCollection extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      nested: true
+      nested: true,
+      processing: false
     }
     this.handleClick = this.handleClick.bind(this)
     this.toggleCheckbox = this.toggleCheckbox.bind(this)
@@ -27,14 +28,18 @@ export default class ModalExportCollection extends React.Component {
 
   buttonBar() {
     const { onHide } = this.props;
+    const { processing } = this.state;
+    const bStyle = processing === true ? 'danger' : 'warning';
+    const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
+    const bTitle = processing === true ? 'Exporting' : 'Export ZIP';
     return (
       <ButtonToolbar>
         <div className="pull-right">
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={onHide}>Cancel</Button>
-            <Button bsStyle="warning" id="md-export-dropdown"
+            <Button bsStyle={bStyle} id="md-export-dropdown" disabled={this.isDisabled()}
                 title="Export as ZIP file (incl. attachments)" onClick={this.handleClick}>
-                Export ZIP
+                <span><i  className={bClass} />{bTitle}</span>
             </Button>
           </ButtonToolbar>
         </div>
@@ -45,27 +50,17 @@ export default class ModalExportCollection extends React.Component {
   handleClick() {
     const uiState = UIStore.getState();
     const { onHide, action, full } = this.props;
-
-    let params = {
+    this.setState({ processing: true });
+    const params = {
       collections: (full ? [] : [uiState.currentCollection.id]),
       format: 'zip',
       nested: this.state.nested
-    }
+    };
     action(params);
-
-    onHide();
-
-    let notification = {
-      title: "Export collections",
-      message: "The export file is created on the server. This might take a while. The download will start automatically. Please don't close the window.",
-      level: "warning",
-      dismissible: false,
-      uid: "export_collections",
-      position: "bl",
-      autoDismiss: null
-    }
-
-    NotificationActions.add(notification);
+    setTimeout(() => {
+      this.setState({ processing: false });
+      onHide();
+    }, 1800);
   }
 
   toggleCheckbox() {
@@ -74,6 +69,11 @@ export default class ModalExportCollection extends React.Component {
     this.setState({
       nested: newNested
     })
+  }
+
+  isDisabled() {
+    const { processing } = this.state;
+    return processing === true;
   }
 
   render() {

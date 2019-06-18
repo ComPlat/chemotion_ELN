@@ -9,31 +9,24 @@ export default class ModalImportCollection extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      file: null
+      file: null,
+      processing: false
     };
   }
 
   handleClick() {
-    const {onHide, action} = this.props;
-    const {file} = this.state;
-    let ui_state = UIStore.getState();
+    const { onHide, action } = this.props;
+    const { file } = this.state;
+    const ui_state = UIStore.getState();
+    this.setState({ processing: true });
     let params = {
       file: file
     }
     action(params);
-    onHide();
-
-    let notification = {
-      title: "Import collections",
-      message: "The file is uploaded to the server and your collections are imported into the database. This might take a while. Please don't close the window as long as this notification is visible.",
-      level: "warning",
-      dismissible: false,
-      uid: "import_collections",
-      position: "bl",
-      autoDismiss: null
-    }
-
-    NotificationActions.add(notification);
+    setTimeout(() => {
+      this.setState({ processing: false });
+      onHide();
+    }, 1800);
   }
 
   handleFileDrop(attachment_file) {
@@ -70,19 +63,26 @@ export default class ModalImportCollection extends React.Component {
   }
 
   isDisabled() {
-    const {file} = this.state;
-    return file == null
+    const { file, processing } = this.state;
+    return file == null || processing === true;
   }
 
   render() {
     const {onHide} = this.props;
+    const { processing } = this.state;
+    const bStyle = processing === true ? 'danger' : 'warning';
+    const bClass = processing === true ? 'fa fa-spinner fa-pulse fa-fw' : 'fa fa-file-text-o';
+    const bTitle = processing === true ? 'Importing' : 'Import';
+
     return (
       <div>
         {this.dropzoneOrfilePreview()}
         &nbsp;
         <ButtonToolbar>
           <Button bsStyle="primary" onClick={() => onHide()}>Cancel</Button>
-          <Button bsStyle="warning" onClick={() => this.handleClick()} disabled={this.isDisabled()}>Import</Button>
+          <Button bsStyle={bStyle} onClick={() => this.handleClick()} disabled={this.isDisabled()}>
+            <span><i  className={bClass} />{bTitle}</span>
+          </Button>
         </ButtonToolbar>
       </div>
     )

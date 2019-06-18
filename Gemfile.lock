@@ -254,7 +254,7 @@ GEM
     equalizer (0.0.11)
     erubi (1.8.0)
     erubis (2.7.0)
-    eventmachine (1.2.7)
+    eventmachine (1.0.9.1)
     execjs (2.7.0)
     factory_bot (4.11.1)
       activesupport (>= 3.0.0)
@@ -369,16 +369,14 @@ GEM
       nokogiri (>= 1.5.9)
     mail (2.7.1)
       mini_mime (>= 0.1.1)
-    mailcatcher (0.2.4)
-      eventmachine
-      haml
-      i18n
-      json
-      mail
-      sinatra
-      skinny (>= 0.1.2)
-      sqlite3-ruby
-      thin
+    mailcatcher (0.7.1)
+      eventmachine (= 1.0.9.1)
+      mail (~> 2.3)
+      rack (~> 1.5)
+      sinatra (~> 1.2)
+      skinny (~> 0.2.3)
+      sqlite3 (~> 1.3)
+      thin (~> 1.5.0)
     memoist (0.16.0)
     memory_profiler (0.9.13)
     meta_request (0.7.0)
@@ -502,7 +500,7 @@ GEM
       rspec-expectations (~> 3.8.0)
       rspec-mocks (~> 3.8.0)
       rspec-support (~> 3.8.0)
-    rspec-support (3.8.0)
+    rspec-support (3.8.2)
     rtf (0.3.3)
     rubocop (0.68.1)
       jaro_winkler (~> 1.5.1)
@@ -555,9 +553,9 @@ GEM
       rack-protection (~> 1.4)
       tilt (>= 1.3, < 3)
     sixarm_ruby_unaccent (1.2.0)
-    skinny (0.2.2)
-      eventmachine (~> 1.0)
-      thin
+    skinny (0.2.4)
+      eventmachine (~> 1.0.0)
+      thin (>= 1.5, < 1.7)
     slackistrano (3.8.4)
       capistrano (>= 3.8.1)
     spring (2.0.2)
@@ -571,8 +569,6 @@ GEM
       activesupport (>= 4.0)
       sprockets (>= 3.0.0)
     sqlite3 (1.4.1)
-    sqlite3-ruby (1.3.3)
-      sqlite3 (>= 1.3.3)
     sshkit (1.18.2)
       net-scp (>= 1.1.2)
       net-ssh (>= 2.8.0)
@@ -584,10 +580,10 @@ GEM
       ffi
     term-ansicolor (1.7.1)
       tins (~> 1.0)
-    thin (1.7.2)
-      daemons (~> 1.0, >= 1.0.9)
-      eventmachine (~> 1.0, >= 1.0.4)
-      rack (>= 1, < 3)
+    thin (1.5.1)
+      daemons (>= 1.0.9)
+      eventmachine (>= 0.12.6)
+      rack (>= 1.0.0)
     thor (0.19.1)
     thread_safe (0.3.6)
     tilt (2.0.9)
@@ -619,7 +615,7 @@ GEM
     webmock (3.5.1)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
-      hashdiff
+      hashdiff (>= 0.4.0, < 2.0.0)
     whenever (0.11.0)
       chronic (>= 0.6.3)
     with_advisory_lock (4.0.0)
@@ -693,7 +689,7 @@ DEPENDENCIES
   kaminari-grape
   ketcherails (~> 0.1.6)!
   launchy (~> 2.4.3)
-  mailcatcher
+  mailcatcher (= 0.7.1)
   memory_profiler
   meta_request
   net-sftp

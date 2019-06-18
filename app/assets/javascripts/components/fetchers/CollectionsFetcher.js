@@ -308,10 +308,9 @@ export default class CollectionsFetcher {
         throw new Error(response.status);
       }
     }).then((job_id) => {
-      // start polling
-      CollectionsFetcher.pollExportJob(job_id);
+      return job_id;
     }).catch((errorMessage) => {
-      CollectionsFetcher.showExportError();
+       throw new Error(errorMessage);
     });
 
     return promise;
@@ -374,10 +373,9 @@ export default class CollectionsFetcher {
         throw new Error(response.status);
       }
     }).then((job_id) => {
-      // start polling
-      CollectionsFetcher.pollImportJob(job_id);
+      return job_id;
     }).catch((errorMessage) => {
-      CollectionsFetcher.showImportError();
+      throw new Error(errorMessage);
     });
 
     return promise;

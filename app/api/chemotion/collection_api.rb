@@ -372,8 +372,14 @@ module Chemotion
             end
           end
 
+          channel = Channel.find_by(subject: Channel::JOB_START_MSG)
+          content = channel.msg_template unless channel.nil?
+          return if content.nil?
+          content['data'] = format(content['data'], { job_name: 'The collection export job'})
+          Message.create_msg_notification(channel.id, content,  current_user.id, [current_user.id])
+
           # run the asyncronous export job and return its id to the client
-          ExportCollectionsJob.perform_later(collection_ids, format, nested).job_id
+          ExportCollectionsJob.perform_later(collection_ids, format, nested, current_user.id).job_id
         end
 
         desc "Poll export job"
@@ -399,15 +405,20 @@ module Chemotion
           # create the `tmp/imports/` if it does not exist yet
           import_path = File.join('tmp', 'import')
           FileUtils.mkdir_p(import_path) unless Dir.exist?(import_path)
-
           # store the file as `tmp/imports/<import_id>.zip`
           zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
           File.open(zip_file_path, 'wb') do |file|
             file.write(params[:file][:tempfile].read)
           end
+          filename = params[:file][:filename] unless params[:file].nil?
+          channel = Channel.find_by(subject: Channel::JOB_START_MSG)
+          content = channel.msg_template unless channel.nil?
+          return if content.nil?
+          content['data'] = format(content['data'], { job_name: 'The collection import job'})
+          Message.create_msg_notification(channel.id, content,  current_user.id, [current_user.id])
 
           # run the asyncronous import job and return its id to the client
-          ImportCollectionsJob.perform_later(import_id, current_user.id).job_id
+          ImportCollectionsJob.perform_later(import_id, filename, current_user.id).job_id
         end
 
         desc "Poll import job"

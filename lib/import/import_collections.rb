@@ -13,6 +13,7 @@ module Import
       @data = nil
       @instances = {}
       @attachments = []
+      @col_all = Collection.get_all_collection_for_user(current_user_id)
     end
 
     def extract()
@@ -186,7 +187,7 @@ module Import
         # create the root container like with samples
         reaction.container = Container.create_root_container
 
-        # overwrite with the image from the import, this needs to be at the end 
+        # overwrite with the image from the import, this needs to be at the end
         # because otherwise Reaction:update_svg_file! would create an empty image again
         reaction.reaction_svg_file = fetch_reaction_image(fields.fetch('reaction_svg_file'))
 
@@ -381,6 +382,7 @@ module Import
 
         # add attachment to the @instances map
         update_instances!(uuid, attachment)
+        attachment.regenerate_thumbnail
       end
     end
 
@@ -469,8 +471,12 @@ module Import
     end
 
     def update_instances!(uuid, instance)
-      type = instance.class.name
+      if instance.respond_to?(:collections)
+        instance.collections << @col_all unless @col_all.nil?
+        instance.save!
+      end
 
+      type = instance.class.name
       unless @instances.key?(type)
         @instances[type] = {}
       end

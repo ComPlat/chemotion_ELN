@@ -27,6 +27,11 @@ module Chemotion
         else
           cur = present(messages, with: Entities::MessageEntity, root: 'messages')
         end
+        if messages&.length > 0
+          job_msgs = messages.select { |hash| hash[:channel_type] == 5 }
+          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length == 0
+        end
+        cur
       end
 
       desc 'Return channels'

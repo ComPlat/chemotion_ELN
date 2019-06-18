@@ -16,4 +16,6 @@ class Channel < ActiveRecord::Base
   GATE_TRANSFER_NOTIFICATION = 'Gate Transfer Completed'
   COLLECTION_TAKE_OWNERSHIP = 'Collection Take Ownership'
   EDITOR_CALLBACK = 'EditorCallback'
+  COLLECTION_ZIP = 'Collection ZIP Import and Export'
+  JOB_START_MSG = 'Create Delayed Job Message'
 end

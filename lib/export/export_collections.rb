@@ -58,12 +58,11 @@ module Export
           zip.put_next_entry 'schema.json'
           zip.write schema_json
           description += "#{schema_json_checksum} schema.json\n"
-
           # write all attachemnts into an attachments directory
           @attachments.each do |attachment|
             attachment_path = File.join('attachments', attachment.identifier)
             zip.put_next_entry attachment_path
-            zip.write attachment.read_file
+            zip.write attachment.read_file if attachment.store.file_exist?
             description += "#{attachment.checksum} #{attachment_path}\n"
           end
 
@@ -83,6 +82,8 @@ module Export
         zip.rewind
 
         # write the zip file to public/zip/
+        zip_path = 'public/zip/'
+        FileUtils.mkdir_p(zip_path) unless Dir.exist?(zip_path)
         File.write(@file_path, zip.read)
       end
     end
