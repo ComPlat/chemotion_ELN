@@ -10,6 +10,7 @@ import PrintCodeButton from './common/PrintCodeButton';
 import { stopBubble } from './utils/DomHelper';
 import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
+import LoadingActions from './actions/LoadingActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
@@ -214,6 +215,7 @@ const headerBtnGroup = (
   const confirmRegenerate = (e) => {
     e.stopPropagation();
     if (confirm('Regenerate spectra?')) {
+      LoadingActions.start();
       SpectraActions.Regenerate(jcampIds, handleSubmit);
     }
   };

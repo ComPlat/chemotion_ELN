@@ -1,4 +1,6 @@
 import 'whatwg-fetch';
+import { camelizeKeys, decamelizeKeys } from 'humps';
+
 import Attachment from '../models/Attachment';
 import NotificationActions from '../actions/NotificationActions';
 
@@ -249,9 +251,21 @@ export default class AttachmentFetcher {
     });
   }
 
-  static saveSpectrum(peaks, shift, attId) {
+  static saveSpectrum(attId, peaksStr, shift, scan, thres, predict, keepPred) {
+    const params = {
+      attachmentId: attId,
+      peaksStr,
+      shiftSelectX: shift.peak.x,
+      shiftRefName: shift.ref.name,
+      shiftRefValue: shift.ref.value,
+      scan,
+      thres,
+      predict,
+      keepPred,
+    };
+
     const promise = fetch(
-      '/api/v1/attachments/save_peaks/',
+      '/api/v1/attachments/save_spectrum/',
       {
         credentials: 'same-origin',
         method: 'POST',
@@ -260,15 +274,37 @@ export default class AttachmentFetcher {
             Accept: 'application/json',
             'Content-Type': 'application/json',
           },
-        body: JSON.stringify({
-          peaks,
-          attachment_id: attId,
-          shift: {
-            selectX: shift.peak.x,
-            refName: shift.ref.name,
-            refValue: shift.ref.value,
+        body: JSON.stringify(decamelizeKeys(params)),
+      },
+    )
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+
+    return promise;
+  }
+
+  static inferSpectrum(attId, peaks, layout, shift) {
+    const params = {
+      attachmentId: attId,
+      peaks: JSON.stringify(peaks),
+      shift: JSON.stringify(shift),
+      layout,
+    };
+
+    const promise = fetch(
+      '/api/v1/attachments/infer/',
+      {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers:
+          {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
           },
-        }),
+        body: JSON.stringify(decamelizeKeys(params)),
       },
     )
       .then(response => response.json())

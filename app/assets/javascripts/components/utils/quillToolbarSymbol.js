@@ -340,11 +340,20 @@ const sampleAnalysesContentSymbol = [
   },
 ];
 
+const opsMSHead = (solventOps = []) => ( // eslint-disable-line
+  []
+);
+
+const opsMSTail = () => (
+  []
+);
+
 const SpectraOps = {
   PLAIN: { head: [], tail: [] },
   '1H': { head: ops1HHead, tail: opsCommonTail },
   '13C': { head: ops13CHead, tail: opsCommonTail },
   IR: { head: opsIRHead, tail: opsIRTail },
+  MS: { head: opsMSHead, tail: opsMSTail },
 };
 
 module.exports = {

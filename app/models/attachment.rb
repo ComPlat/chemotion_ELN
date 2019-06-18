@@ -18,6 +18,8 @@ class Attachment < ActiveRecord::Base
 
   after_destroy :delete_file_and_thumbnail
 
+  has_many :predictions, as: :predictable, dependent: :destroy
+
   belongs_to :attachable, polymorphic: true
 
   scope :where_research_plan, lambda { |c_id|

@@ -14,8 +14,8 @@ class SpectraActions {
 
     return (dispatch) => {
       AttachmentFetcher.fetchFiles([idx])
-        .then((rawJcamp) => {
-          dispatch({ rawJcamp, spcInfo });
+        .then((target) => {
+          dispatch({ target, spcInfo });
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
@@ -34,12 +34,37 @@ class SpectraActions {
     };
   }
 
-  SaveToFile(sample, spcInfo, peaks, shift, cb) {
+  SaveToFile(spcInfo, peaksStr, shift, scan, thres, predict, cb, keepPred = false) {
     return (dispatch) => {
-      AttachmentFetcher.saveSpectrum(peaks, shift, spcInfo.idx)
-        .then(() => {
-          dispatch();
+      AttachmentFetcher.saveSpectrum(spcInfo.idx, peaksStr, shift, scan, thres, predict, keepPred)
+        .then((target) => {
+          dispatch({ target, spcInfo });
           cb();
+        }).catch((errorMessage) => {
+          console.log(errorMessage); // eslint-disable-line
+        });
+    };
+  }
+
+  WriteStart(payload) {
+    return payload;
+  }
+
+  WriteStop() {
+    return null;
+  }
+
+  InferRunning() {
+    return null;
+  }
+
+  InferSpectrum({
+    spcInfo, peaks, layout, shift,
+  }) {
+    return (dispatch) => {
+      AttachmentFetcher.inferSpectrum(spcInfo.idx, peaks, layout, shift)
+        .then((json) => {
+          dispatch(json);
         }).catch((errorMessage) => {
           console.log(errorMessage); // eslint-disable-line
         });
