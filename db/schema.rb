@@ -15,9 +15,8 @@ ActiveRecord::Schema.define(version: 20190619135600) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-  enable_extension "hstore"
   enable_extension "pg_trgm"
-  enable_extension "rdkit"
+  enable_extension "hstore"
   enable_extension "uuid-ossp"
 
   create_table "affiliations", force: :cascade do |t|
@@ -921,24 +920,6 @@ ActiveRecord::Schema.define(version: 20190619135600) do
              select user_id from users_groups where group_id = $1
       $function$
   SQL
-  create_function :set_samples_mol_rdkit, sql_definition: <<-SQL
-      CREATE OR REPLACE FUNCTION public.set_samples_mol_rdkit()
-       RETURNS trigger
-       LANGUAGE plpgsql
-      AS $function$
-      begin
-      	if (TG_OP='INSERT') then
-      		new.mol_rdkit := mol_from_ctab(encode(new.molfile, 'escape')::cstring);
-      	end if;
-      	if (TG_OP='UPDATE') then
-      		if new.MOLFILE <> old.MOLFILE then
-      			new.mol_rdkit := mol_from_ctab(encode(new.molfile, 'escape')::cstring);
-      		end if;
-      	end if;
-      	return new;
-      end
-      $function$
-  SQL
   create_function :shared_user_as_json, sql_definition: <<-SQL
       CREATE OR REPLACE FUNCTION public.shared_user_as_json(in_user_id integer, in_current_user_id integer)
        RETURNS json
@@ -991,10 +972,6 @@ ActiveRecord::Schema.define(version: 20190619135600) do
              and upper(extended_metadata -> 'instrument') like upper($2 || '%')
              order by extended_metadata -> 'instrument' limit 10
            $function$
-  SQL
-
-  create_trigger :set_samples_mol_rdkit_trg, sql_definition: <<-SQL
-      CREATE TRIGGER set_samples_mol_rdkit_trg BEFORE INSERT OR UPDATE ON public.samples FOR EACH ROW EXECUTE PROCEDURE set_samples_mol_rdkit()
   SQL
 
   create_view "literal_groups", sql_definition: <<-SQL

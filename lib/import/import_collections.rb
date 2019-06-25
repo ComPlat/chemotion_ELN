@@ -3,36 +3,50 @@ require 'json'
 module Import
   class ImportCollections
 
-    def initialize(import_id, current_user_id)
-      @import_id = import_id
+    def initialize(att, current_user_id)
+      @att = att
       @current_user_id = current_user_id
-
-      @zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
-      @directory = File.join('tmp', 'import', import_id)
 
       @data = nil
       @instances = {}
       @attachments = []
       @col_all = Collection.get_all_collection_for_user(current_user_id)
+      @images = {}
     end
 
     def extract()
-      Zip::File.open(@zip_file_path) do |zip_file|
-        zip_file.each do |f|
-          fpath = File.join(@directory, f.name)
-          fdir = File.dirname(fpath)
-
-          FileUtils.mkdir_p(fdir) unless File.directory?(fdir)
-          zip_file.extract(f, fpath) unless File.exist?(fpath)
+      attachments = []
+      begin
+        @att.read_file
+        Zip::InputStream.open(StringIO.new(@att.read_file)) do |io|
+          while (entry = io.get_next_entry)
+            data = entry.get_input_stream.read #.force_encoding('UTF-8')
+            case entry.name
+            when 'export.json'
+              @data = JSON.parse(data)
+            when /attachments\/([0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12})/
+              attachment = Attachment.create!(
+                file_data: data,
+                created_by: @current_user_id,
+                created_for: @current_user_id,
+                filename: $1,
+              )
+              attachments << attachment
+            when /^images\/(samples|reactions|molecules|research_plans)\/(\w{1,128}\.\w{1,4})/
+              tmp_file = Tempfile.new
+              tmp_file.write(data)
+              tmp_file.rewind
+              @images["#{$1}/#{$2}"] = tmp_file
+            end
+          end
         end
-      end
-    end
-
-    def read
-      # open and read the export.json
-      file_name = File.join(@directory, 'export.json')
-      File.open(file_name) do |f|
-        @data = JSON.parse(f.read())
+        @attachments = attachments.map(&:id)
+        attachments = []
+      rescue StandardError => e
+        # destroy created attachments, uploaded zip and tmp files if extraction fails
+        attachments.map(&:destroy)
+        cleanup
+        raise e
       end
     end
 
@@ -53,9 +67,26 @@ module Import
       end
     end
 
+    def import!
+      begin
+        import
+      rescue StandardError => e
+        # destroy created attachments if import fails
+        Attachment.where(id: @attachments).destroy_all
+        raise e
+      ensure
+        # destroy created uploaded zip and tmp files if extraction fails
+        cleanup
+      end
+    end
+
+    # desc: to destroy uploaded zip and sweep image tmp files
     def cleanup
-      File.delete(@zip_file_path) if File.exist?(@zip_file_path)
-      FileUtils.remove_dir(@directory) if File.exist?(@directory)
+      # @att.destroy!
+      @images.each_value do |tmp_file|
+        tmp_file.close
+        tmp_file.unlink
+      end
     end
 
     private
@@ -189,7 +220,7 @@ module Import
 
         # overwrite with the image from the import, this needs to be at the end
         # because otherwise Reaction:update_svg_file! would create an empty image again
-        reaction.reaction_svg_file = fetch_reaction_image(fields.fetch('reaction_svg_file'))
+        reaction.reaction_svg_file = fetch_image('reactions', fields.fetch('reaction_svg_file'))
 
         # save the instance again
         reaction.save!
@@ -354,31 +385,25 @@ module Import
     end
 
     def import_attachments
+      primary_store = Rails.configuration.storage.primary_store
       @data.fetch('Attachment', {}).each do |uuid, fields|
         # get the attachable for this attachment
         attachable_type = fields.fetch('attachable_type')
         attachable_uuid = fields.fetch('attachable_id')
         attachable = @instances.fetch(attachable_type).fetch(attachable_uuid)
 
-        # construct file path
-        file_path = File.join(@directory, 'attachments', fields.fetch('identifier'))
+        attachment = Attachment.where(id: @attachments, filename: fields.fetch('identifier')).first
 
-        # create the attachment
-        attachment = attachable.attachments.create!(
-          file_path: file_path,
-          created_by: @current_user_id,
-          created_for: @current_user_id,
-          bucket: attachable.id,
+        attachment.update!(
+          attachable: attachable,
           filename: fields.fetch('filename'),
-          checksum: fields.fetch('checksum'),
           content_type: fields.fetch('content_type'),
-          created_at: fields.fetch('created_at'),
-          updated_at: fields.fetch('updated_at')
+          storage: primary_store
+          # checksum: fields.fetch('checksum'),
+          # created_at: fields.fetch('created_at'),
+          # updated_at: fields.fetch('updated_at')
         )
-
-        # move the attachment to the primary store
-        primary_store = Rails.configuration.storage.primary_store
-        attachment.update!(storage: primary_store)
+         # TODO: if attachment.checksum != fields.fetch('checksum')
 
         # add attachment to the @instances map
         update_instances!(uuid, attachment)
@@ -438,36 +463,18 @@ module Import
       unless ancestry.nil? or ancestry.empty?
         parents = ancestry.split('/')
         parent_uuid = parents[-1]
-        begin
-          @instances.fetch(type).fetch(parent_uuid)
-        rescue KeyError
-          nil
-        end
+        @instances.fetch(type, {}).fetch(parent_uuid, nil)
       end
     end
 
     def fetch_image(image_path, image_file_name)
-      unless image_file_name.nil? or image_file_name.empty?
-        import_file_path = File.join(@directory, 'images', image_path, image_file_name)
-
-        if File.exists?(import_file_path)
-          # copy extracted file from the import
-          file_path = File.join('public', 'images', image_path, image_file_name)
-          FileUtils.cp(import_file_path, file_path) unless File.exists?(file_path)
-
-          image_file_name
-        end
+      svg = nil
+      if image_file_name.present? && (tmp_file =  @images["#{image_path}/#{image_file_name}"])
+        svg = tmp_file.read
+        tmp_file.close
+        tmp_file.unlink
       end
-    end
-
-    def fetch_reaction_image(image_file_name)
-      unless image_file_name.nil? or image_file_name.empty?
-        import_file_path = File.join(@directory, 'images', 'reactions', image_file_name)
-
-        if File.exists?(import_file_path)
-          File.read(import_file_path)
-        end
-      end
+      svg
     end
 
     def update_instances!(uuid, instance)

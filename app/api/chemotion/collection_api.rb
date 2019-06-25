@@ -334,28 +334,26 @@ module Chemotion
       end
 
       namespace :unshared do
-
         desc "Create an unshared collection"
         params do
           requires :label, type: String, desc: "Collection label"
         end
+
         post do
           Collection.create(user_id: current_user.id, label: params[:label])
         end
-
       end
 
       namespace :exports do
-
         desc "Create export job"
         params do
           requires :collections, type: Array[Integer]
           requires :format, type: Symbol, values: [:json, :zip, :udm]
           requires :nested, type: Boolean
         end
+
         post do
           collection_ids = params[:collections].uniq
-          format = params[:format].to_s
           nested = params[:nested] == true
 
           if collection_ids.empty?
@@ -364,71 +362,52 @@ module Chemotion
           else
             # check if the user is allowed to export these collections
             collection_ids.each do |collection_id|
-              begin
-                collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find(collection_id)
-              rescue ActiveRecord::RecordNotFound
-                error!('401 Unauthorized', 401)
-              end
+              collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+              error!('401 Unauthorized', 401) unless collection
             end
           end
 
-          channel = Channel.find_by(subject: Channel::JOB_START_MSG)
-          content = channel.msg_template unless channel.nil?
-          return if content.nil?
-          content['data'] = format(content['data'], { job_name: 'The collection export job'})
-          Message.create_msg_notification(channel.id, content,  current_user.id, [current_user.id])
-
-          # run the asyncronous export job and return its id to the client
-          ExportCollectionsJob.perform_later(collection_ids, format, nested, current_user.id).job_id
-        end
-
-        desc "Poll export job"
-        params do
-          requires :id, type: String
-        end
-        get '/:id' do
-          ActiveJob::Status.get(params[:id])
+          ExportCollectionsJob.perform_later(collection_ids, params[:format].to_s, nested, current_user.id)
+          status 204
         end
       end
 
       namespace :imports do
-
         desc "Create import job"
         params do
           requires :file, type: File
         end
         post do
-          # create an id for the import,
-          # this is not the job_id, but will be used as file_name
-          import_id = SecureRandom.uuid
-
-          # create the `tmp/imports/` if it does not exist yet
-          import_path = File.join('tmp', 'import')
-          FileUtils.mkdir_p(import_path) unless Dir.exist?(import_path)
-          # store the file as `tmp/imports/<import_id>.zip`
-          zip_file_path = File.join('tmp', 'import', "#{import_id}.zip")
-          File.open(zip_file_path, 'wb') do |file|
-            file.write(params[:file][:tempfile].read)
+          file = params[:file]
+          if tempfile = file[:tempfile]
+            att = Attachment.new(
+              bucket: file[:container_id],
+              filename: file[:filename],
+              key: file[:name],
+              file_path: file[:tempfile],
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: file[:type]
+            )
+            begin
+              att.save!
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
+            # run the asyncronous import job and return its id to the client
+            ImportCollectionsJob.perform_later(att, current_user.id)
+            status 204
           end
-          filename = params[:file][:filename] unless params[:file].nil?
-          channel = Channel.find_by(subject: Channel::JOB_START_MSG)
-          content = channel.msg_template unless channel.nil?
-          return if content.nil?
-          content['data'] = format(content['data'], { job_name: 'The collection import job'})
-          Message.create_msg_notification(channel.id, content,  current_user.id, [current_user.id])
-
-          # run the asyncronous import job and return its id to the client
-          ImportCollectionsJob.perform_later(import_id, filename, current_user.id).job_id
         end
 
-        desc "Poll import job"
-        params do
-          requires :id, type: String
-        end
-        get '/:id' do
-          ActiveJob::Status.get(params[:id])
-        end
-
+        # desc "Poll import job"
+        # params do
+        #   requires :id, type: String
+        # end
+        # get '/:id' do
+        #   ActiveJob::Status.get(params[:id])
+        # end
       end
 
     end

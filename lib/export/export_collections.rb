@@ -7,8 +7,8 @@ module Export
       @format = format
       @nested = nested
 
-      @file_path = File.join('public', format, "#{export_id}.#{format}")
-      @schema_file_path = File.join('public', 'json', 'schema.json')
+      @file_path = Rails.public_path.join( format, "#{export_id}.#{format}")
+      @schema_file_path = Rails.public_path.join( 'json', 'schema.json')
 
       @data = {}
       @uuids = {}
@@ -68,7 +68,7 @@ module Export
 
           # write all the images into an images directory
           @images.each do |file_path|
-            image_data = File.read(File.join('public', file_path))
+            image_data = File.read(Rails.public_path.join( file_path))
             image_checksum = Digest::SHA256.hexdigest(image_data)
             zip.put_next_entry file_path
             zip.write image_data
@@ -82,8 +82,6 @@ module Export
         zip.rewind
 
         # write the zip file to public/zip/
-        zip_path = 'public/zip/'
-        FileUtils.mkdir_p(zip_path) unless Dir.exist?(zip_path)
         File.write(@file_path, zip.read)
       end
     end
@@ -366,7 +364,7 @@ module Export
 
     def fetch_image(image_path, image_file_name)
       unless image_file_name.nil? or image_file_name.empty?
-        if File.exist?(File.join('public', 'images', image_path, image_file_name))
+        if File.exist?(Rails.public_path.join( 'images', image_path, image_file_name))
           @images << File.join('images', image_path, image_file_name)
         end
       end
