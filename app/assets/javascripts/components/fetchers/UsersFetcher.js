@@ -141,8 +141,8 @@ export default class UsersFetcher {
     return promise;
   }
 
-  static fetchOls(name) {
-    const promise = fetch(`/api/v1/ols_terms/list.json?name=${name}`, {
+  static fetchOls(name, is_enabled=true) {
+    const promise = fetch(`/api/v1/ols_terms/list.json?name=${name}&is_enabled=${is_enabled}`, {
       credentials: 'same-origin'
     })
       .then(response => response.json())

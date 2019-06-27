@@ -26,6 +26,14 @@ module Entities
       end
     end
 
+    expose :is_enabled do |obj|
+      obj['is_enabled']
+    end
+
+    expose :id do |obj|
+      obj['id']
+    end
+
     expose :children do |obj|
       Entities::OlsTermEntity.represent obj['children']
     end

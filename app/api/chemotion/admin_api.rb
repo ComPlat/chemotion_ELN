@@ -157,6 +157,32 @@ module Chemotion
         end
       end
 
+      namespace :olsEnableDisable do
+        desc 'Ols Term Enable & Disable'
+        params do
+          requires :owl_name, type: String, desc: 'owl_name'
+          optional :enableIds, type: Array, desc: 'enable term_ids'
+          optional :disableIds, type: Array, desc: 'disable term_ids'
+        end
+        post do
+          if params[:enableIds].present? && params[:enableIds].length > 0
+            params[:enableIds].each do |idkey|
+              term_id = idkey.split('|').first
+              ols = OlsTerm.find_by(owl_name: params[:owl_name], term_id: term_id)
+              ols.update!(is_enabled: true)
+            end
+          end
+          if params[:disableIds].present? && params[:disableIds].length > 0
+            params[:disableIds].each do |idkey|
+              term_id = idkey.split('|').first
+              ols = OlsTerm.find_by(owl_name: params[:owl_name], term_id: term_id)
+              ols.update!(is_enabled: false)
+            end
+          end
+          true
+        end
+      end
+
       namespace :importOlsTerms do
         desc 'import OLS terms'
         params do
