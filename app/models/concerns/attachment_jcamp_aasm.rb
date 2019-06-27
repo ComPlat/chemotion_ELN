@@ -7,7 +7,7 @@ module AttachmentJcampAasm
 
   extend ActiveSupport::Concern
 
-  included do 
+  included do
     include AASM
     before_create :init_aasm
     before_update :require_peaks_generation?
@@ -15,7 +15,7 @@ module AttachmentJcampAasm
     aasm do
       state :idle, initial: true
       state :queueing, :regenerating, :done
-      state :peaked, :edited, :backup, :image
+      state :peaked, :edited, :backup, :image, :json
       state :failure
       state :non_jcamp
       state :oo_editing
@@ -60,6 +60,10 @@ module AttachmentJcampAasm
 
       event :set_image do
         transitions from: %i[idle peaked non_jcamp], to: :image
+      end
+
+      event :set_json do
+        transitions from: %i[idle peaked non_jcamp], to: :json
       end
 
       event :set_failure do
@@ -121,6 +125,7 @@ module AttachmentJcampProcess
     att.save!
     att.set_edited if ext != 'png' && toEdit
     att.set_image if ext == 'png'
+    att.set_json if ext == 'json'
     att.update!(attachable_id: attachable_id, attachable_type: 'Container')
     att.update!(storage: Rails.configuration.storage.primary_store)
     att
@@ -135,6 +140,10 @@ module AttachmentJcampProcess
     generate_att(jcamp_tmp, addon, toEdit, 'jdx')
   end
 
+  def generate_json_att(json_tmp, addon, toEdit = false)
+    generate_att(json_tmp, addon, toEdit, 'json')
+  end
+
   def build_params(params = {})
     _, extname = extension_parts
     params[:mass] = attachable.root_element.molecule.exact_molecular_weight || 0.0
@@ -142,12 +151,22 @@ module AttachmentJcampProcess
     params
   end
 
-  def update_prediction(params, ori_pred, spc_type)
+  def get_infer_json_content()
+    atts = Attachment.where(attachable_id: attachable_id)
+
+    infers = atts.map do |att|
+      keyword, extname = att.extension_parts
+      keep = att.json? && keyword == 'infer'
+      keep ? att : nil
+    end.select(&:present?)
+    infers.length > 0 ? infers[0].read_file : '{}'
+  end
+
+  def update_prediction(params, spc_type)
     return auto_infer(spc_type) if spc_type == 'MS'
-    decision = params[:keep_pred] ?
-      ori_pred.decision :
-      JSON.parse(params['predict'])
-    predictions.create(decision: decision)
+    ori_infer = get_infer_json_content()
+    decision = params[:keep_pred] ? ori_infer : params['predict']
+    write_infer_to_file(decision)
   end
 
   def create_process(is_regen)
@@ -171,7 +190,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    # jcamp_att.update_prediction(params, predictions[0], spc_type)
+    jcamp_att.update_prediction(params, spc_type)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup
     delete_tmps([tmp_jcamp, tmp_img])
@@ -270,12 +289,35 @@ module AttachmentJcampProcess
     end
   end
 
+  def delete_related_jsons(json_att)
+    return unless json_att
+
+    atts = Attachment.where(attachable_id: attachable_id)
+
+    atts.each do |att|
+      is_delete = (
+        att.json? &&
+          att.id != json_att.id &&
+          att.filename == json_att.filename
+      )
+      att.delete if is_delete
+    end
+  end
+
+  def write_infer_to_file(content)
+    Tempfile.create('json') do |t_json|
+      t_json.write(content)
+      t_json.rewind
+      json_att = generate_json_att(t_json, 'infer')
+      delete_related_jsons(json_att)
+    end
+  end
+
   def infer_spectrum(params)
-    target = infer_with_molfile(params)
-    return until target
-    predictions.destroy_all
-    predictions.create(decision: target)
-    target
+    decision = infer_with_molfile(params)
+    return until decision
+    write_infer_to_file(decision.to_json)
+    decision
   end
 
   def auto_infer(spc_type)
