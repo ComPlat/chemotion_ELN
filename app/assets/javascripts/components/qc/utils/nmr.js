@@ -35,8 +35,6 @@ const extractSignal = (shifts) => {
 
   const sigSent = sents.map(s => numFormat(s)).join(', ');
   const sigReal = reals.map(r => numFormat(r)).join(', ');
-  console.log(reals)
-  console.log(sigReal)
 
   return {
     sigSent, sigReal,
@@ -44,8 +42,9 @@ const extractSignal = (shifts) => {
 };
 
 const evaluateNmr = (nmrQc) => {
+  if (Object.keys(nmrQc).length === 0) return {};
   const { pred } = nmrQc;
-  const { shifts } = pred.decision.output.result[0];
+  const { shifts } = pred.output.result[0];
   const {
     sigSent, sigReal,
   } = extractSignal(shifts);

@@ -13,21 +13,23 @@ const tableNmr = shifts => (
         <th>Real (ppm)</th>
         <th>Diff (ppm)</th>
         <th>Machine</th>
-        <th>Own</th>
+        <th>Owner</th>
       </tr>
     </thead>
     <tbody>
       {
-        shifts.map(s => (
-          <tr>
-            <td>{ s.atom }</td>
-            <td>{ numFormat(s.prediction) }</td>
-            <td>{ realFormat(s.real, s.status) }</td>
-            <td>{ realFormat(s.diff, s.status) }</td>
-            <td>{ iconStatus(s.status) }</td>
-            <td>{ iconStatus(s.statusOwner) }</td>
-          </tr>
-        ))
+        shifts
+          .sort((a, b) => a.atom - b.atom)
+          .map((s, idx) => (
+            <tr key={`${s.atom}${idx}`}>
+              <td>{ s.atom }</td>
+              <td>{ numFormat(s.prediction) }</td>
+              <td>{ realFormat(s.real, s.status) }</td>
+              <td>{ realFormat(s.diff, s.status) }</td>
+              <td>{ iconStatus(s.status) }</td>
+              <td>{ iconStatus(s.statusOwner) }</td>
+            </tr>
+          ))
       }
     </tbody>
   </Table>

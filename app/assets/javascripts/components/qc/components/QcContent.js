@@ -1,23 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import BlockTitle from './components/BlockTitle';
-import BlockHnmr from './components/BlockHnmr';
-import BlockCnmr from './components/BlockCnmr';
-import BlockMS from './components/BlockMS';
-import BlockIr from './components/BlockIr';
-import BlockEa from './components/BlockEa';
-import BlockConclusion from './components/BlockConclusion';
+import BlockTitle from './BlockTitle';
+import BlockHnmr from './BlockHnmr';
+import BlockCnmr from './BlockCnmr';
+import BlockMS from './BlockMS';
+import BlockIr from './BlockIr';
+import BlockEa from './BlockEa';
+import BlockConclusion from './BlockConclusion';
 
-import { prismQcs } from './utils/qcs';
-import { evaluateMs } from './utils/ms';
-import { evaluateIr } from './utils/ir';
-import { evaluateNmr } from './utils/nmr';
+import { prismQcs } from '../utils/qcs';
+import { evaluateMs } from '../utils/ms';
+import { evaluateIr } from '../utils/ir';
+import { evaluateNmr } from '../utils/nmr';
 
-const QualityCheckMain = ({ sample }) => {
+const QcContent = ({ sample, infer }) => {
   const {
     irQc, msQc, hnmrQc, cnmrQc,
-  } = prismQcs(sample);
+  } = prismQcs(sample, infer);
 
   const ansHnmr = evaluateNmr(hnmrQc);
   const ansCnmr = evaluateNmr(cnmrQc);
@@ -55,8 +55,9 @@ const QualityCheckMain = ({ sample }) => {
   );
 };
 
-QualityCheckMain.propTypes = {
+QcContent.propTypes = {
   sample: PropTypes.object.isRequired,
+  infer: PropTypes.object.isRequired,
 };
 
-export default QualityCheckMain;
+export default QcContent;

@@ -1,5 +1,6 @@
 const evaluateIr = (irQc) => {
-  const qc = irQc.pred.decision.output.result[0];
+  if (Object.keys(irQc).length === 0) return {};
+  const qc = irQc.pred.output.result[0];
   let numFg = 0;
   let numFg80 = 0;
   let numFg90 = 0;
@@ -16,11 +17,15 @@ const evaluateIr = (irQc) => {
     if (fg.confidence >= 90.0) {
       numFg90 += 1;
       fg.status === 'accept' ? posMac90 += 1 : negMac90 += 1; // eslint-disable-line
-      fg.statusOwner === 'accept' ? posOwn90 += 1 : negOwn90 += 1; // eslint-disable-line
+      const ownAccept = (fg.statusOwner && fg.statusOwner === 'accept') ||
+        (!fg.statusOwner && fg.status === 'accept');
+      ownAccept ? posOwn90 += 1 : negOwn90 += 1; // eslint-disable-line
     } else if (fg.confidence >= 80.0) {
       numFg80 += 1;
       fg.status === 'accept' ? posMac80 += 1 : negMac80 += 1; // eslint-disable-line
-      fg.statusOwner === 'accept' ? posOwn80 += 1 : negOwn80 += 1; // eslint-disable-line
+      const ownAccept = (fg.statusOwner && fg.statusOwner === 'accept') ||
+        (!fg.statusOwner && fg.status === 'accept');
+      ownAccept ? posOwn80 += 1 : negOwn80 += 1; // eslint-disable-line
     }
   });
 
