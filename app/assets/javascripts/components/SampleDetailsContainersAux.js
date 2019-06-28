@@ -46,7 +46,7 @@ const SpectraViewerBtn = ({
   >{spcInfo ? (
     <ButtonGroup className="button-right">
       <SplitButton
-        // id={`spectra-viewer-split-button-${container.id}`}
+        id="spectra-viewer-split-button"
         pullRight
         bsStyle="info"
         bsSize="xsmall"
@@ -56,6 +56,7 @@ const SpectraViewerBtn = ({
         disabled={!spcInfo || !hasChemSpectra}
       >
         <MenuItem
+          id="regenerate-spectra"
           key="regenerate-spectra"
           onSelect={(eventKey, event) => {
             event.stopPropagation();
@@ -84,7 +85,10 @@ const SpectraViewerBtn = ({
 SpectraViewerBtn.propTypes = {
   sample: PropTypes.object,
   hasJcamp: PropTypes.bool,
-  spcInfo: PropTypes.bool,
+  spcInfo: PropTypes.oneOfType([
+    PropTypes.object,
+    PropTypes.bool,
+  ]),
   hasChemSpectra: PropTypes.bool,
   toggleSpectraModal: PropTypes.func.isRequired,
   confirmRegenerate: PropTypes.func.isRequired,
