@@ -15,19 +15,23 @@ import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
 import { hNmrCheckMsg, cNmrCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
+import { chmoConversions } from './OlsComponent';
 
 const nmrMsg = (sample, container) => {
-  if (sample.molecule && container.extended_metadata && container.extended_metadata.kind !== '1H NMR' && container.extended_metadata.kind !== '13C NMR') {
+  if (sample.molecule && container.extended_metadata &&
+      (typeof container.extended_metadata.kind === 'undefined' ||
+      (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
+      )) {
     return '';
   }
   const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
 
-  if (container.extended_metadata.kind === '1H NMR') {
+  if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
     const msg = hNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
-    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>)
-  } else if (container.extended_metadata.kind === '13C NMR') {
+    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>);
+  } else if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
     const msg = cNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
-    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>13</sup>C {msg})</div>)
+    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>13</sup>C {msg})</div>);
   }
 };
 
@@ -151,7 +155,7 @@ const undoBtn = (container, mode, handleUndo) => {
 const HeaderDeleted = ({ container, handleUndo, mode }) => {
   const mKind = container.extended_metadata.kind;
   const mStatus = container.extended_metadata.status;
-  const kind = (mKind && mKind !== '') ? ` - Type: ${mKind}` : '';
+  const kind = (mKind && mKind !== '') ? ` - Type: ${(mKind.split('|')[1] || mKind).trim()}` : '';
   const status = (mStatus && mStatus !== '') ? ` - Status: ${mStatus}` : '';
 
   return (
@@ -266,7 +270,8 @@ const HeaderNormal = ({
 }) => {
   const clickToOpen = () => handleAccordionOpen(serial);
 
-  const kind = container.extended_metadata.kind || '';
+  let kind = container.extended_metadata.kind || '';
+  kind = (kind.split('|')[1] || kind).trim();
   const status = container.extended_metadata.status || '';
   const previewImg = previewImage(container);
   const content = container.extended_metadata.content || { ops: [{ insert: '' }] };

@@ -77,7 +77,7 @@ export default class WellplateDetailsContainers extends Component {
         {container.name}
         {(container.extended_metadata['kind'] &&
            container.extended_metadata['kind'] != '')
-           ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+        ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
         {(container.extended_metadata['status'] &&
            container.extended_metadata['status'] != '')
            ? (' - Status: ' + container.extended_metadata['status']) :''}
@@ -92,7 +92,9 @@ export default class WellplateDetailsContainers extends Component {
       </div>
 
       let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+        {(container.extended_metadata['kind'] &&
+            container.extended_metadata['kind'] != '')
+          ? (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
         {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
         </strike>
         <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>

@@ -16,8 +16,9 @@ function ElementAnalyses({ element, idx }) {
   ));
 
   let analyses = element.analyses.map((x) => {
-    const header = `Analysis name: ${x.name} - ` +
-                   `Type: ${x.extended_metadata.kind}`;
+    let kind = x.extended_metadata.kind || '';
+    kind = (kind.split('|')[1] || kind).trim();
+    const header = `Analysis name: ${x.name} - Type: ${kind}`;
     return (
       <Panel key={x.id}>
         <Panel.Heading>

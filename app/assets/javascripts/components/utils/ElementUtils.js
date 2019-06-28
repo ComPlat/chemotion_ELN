@@ -168,6 +168,20 @@ const commonFormatPattern = [
 ];
 
 const sampleAnalysesFormatPattern = {
+  '_chmo:0000595': [
+    {
+      pattern: '(\\W|^)13 {0,1}C( |-)NMR',
+      replace: '$1<sup>13</sup>C NMR'
+    },
+    {
+      pattern: '<sup>13</sup>C-NMR',
+      replace: '<sup>13</sup>C NMR'
+    },
+    {
+      pattern: '(\\d+) C',
+      replace: '$1C'
+    },
+  ],
   _13cnmr: [
     {
       pattern: '(\\W|^)13 {0,1}C( |-)NMR',
@@ -182,6 +196,16 @@ const sampleAnalysesFormatPattern = {
       replace: '$1C'
     },
   ],
+  '_chmo:0000593': [
+    {
+      pattern: '(\\W|^)1 {0,1}H( |-)NMR',
+      replace: '$1<sup>1</sup>H NMR'
+    },
+    {
+      pattern: '<sup>1</sup>H-NMR',
+      replace: '<sup>1</sup>H NMR'
+    },
+  ],
   _1hnmr: [
     {
       pattern: '(\\W|^)1 {0,1}H( |-)NMR',
@@ -190,6 +214,16 @@ const sampleAnalysesFormatPattern = {
     {
       pattern: '<sup>1</sup>H-NMR',
       replace: '<sup>1</sup>H NMR'
+    },
+  ],
+  '_chmo:0001075': [
+    {
+      pattern: '(\\W|^)(C|H|O|N|S) (\\d{2})',
+      replace: '$1$2, $3'
+    },
+    {
+      pattern: '(\\d\\.\\d\\d) {0,1},',
+      replace: '$1;'
     },
   ],
   _ea: [
@@ -202,6 +236,16 @@ const sampleAnalysesFormatPattern = {
       replace: '$1;'
     },
   ],
+  '_chmo:0000630': [
+    {
+      pattern: '(\\W|^)cm-1',
+      replace: '$1cm<sup>–1</sup>'
+    },
+    {
+      pattern: '(\\W|^)cm<sup>-1</sup>',
+      replace: '$1cm<sup>–1</sup>'
+    },
+  ],
   _ir: [
     {
       pattern: '(\\W|^)cm-1',
@@ -210,6 +254,32 @@ const sampleAnalysesFormatPattern = {
     {
       pattern: '(\\W|^)cm<sup>-1</sup>',
       replace: '$1cm<sup>–1</sup>'
+    },
+  ],
+  'chmo:0000470': [
+    {
+      pattern: '(\\W)m/z(\\W|$)',
+      replace: '$1*m/z*$2'
+    },
+    {
+      pattern: '(\\W)calc\\.(\\W|$)',
+      replace: '$1calcd$2'
+    },
+    {
+      pattern: '(\\W)calcd(\\W|$)',
+      replace: '$1Calcd$2'
+    },
+    {
+      pattern: '\\. HRMS(\\W)',
+      replace: '; HRMS$1'
+    },
+    {
+      pattern: ', found',
+      replace: '. Found'
+    },
+    {
+      pattern: 'HRMS \\(((C|H|O|N|S)(\\d{1,2}))+\\)',
+      replace: markdownChemicalFormular
     },
   ],
   _mass: [
@@ -242,7 +312,8 @@ const sampleAnalysesFormatPattern = {
 
 const formatAnalysisContent = function autoFormatAnalysisContentByPattern(analysis) {
   const content = _.cloneDeep(analysis.extended_metadata.content);
-  const kind = analysis.extended_metadata.kind || '';
+  let kind = analysis.extended_metadata.kind || '';
+  kind = kind.split('|')[0] || kind;
   const type = `_${kind.toLowerCase().replace(/ /g, '')}`;
   let md = deltaToMarkdown(content);
   let formatPattern = (sampleAnalysesFormatPattern[type] || []);

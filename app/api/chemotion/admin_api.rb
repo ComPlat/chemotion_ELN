@@ -175,15 +175,15 @@ module Chemotion
               next if node['deprecated'] == 'true'
               unless node['subClassOf'].nil?
                 if (node['subClassOf'].length > 1)
-                  subClass = node['subClassOf'][0]["rdf:resource"]  
+                  subClass = node['subClassOf'][0]["rdf:resource"]
                 else
-                  subClass = node['subClassOf']["rdf:resource"]  
+                  subClass = node['subClassOf']["rdf:resource"]
                 end
               end
               # if node['id'] == 'RXNO:0000024'
               #   node
               #   byebug
-              #   node['deprecated'] 
+              #   node['deprecated']
               # end
 
               ## special case: RXNO:0000024
@@ -201,7 +201,7 @@ module Chemotion
                   synonym = synonyms.sort_by(&:length)[0]
                 end
               end
-              OlsTerm.create!(ols_name:ols_name, term_id: node['id'], ancestry_term_id: subClassTermId, 
+              OlsTerm.create!(ols_name:ols_name, term_id: node['id'], ancestry_term_id: subClassTermId,
                 label: node['label'], synonym: synonym, synonyms: synonyms,
                 desc: node['IAO_0000115'], metadata: {klass: node, version: version_info})
             end
@@ -211,6 +211,28 @@ module Chemotion
               ancestry = OlsTerm.find_by(ols_name: ols_name, term_id: ols.ancestry_term_id)
               ols.update!(ancestry: ancestry.id) unless ancestry.nil?
             end
+
+            OlsTerm.where(ols_name: 'chmo').each do |o|
+              ols = OlsTerm.find(o.id)
+              next if ols.ancestry_term_id.nil?
+              ancestry = OlsTerm.find_by(ols_name: 'chmo', term_id: ols.ancestry_term_id)
+              next if ancestry.nil?
+              if ancestry.ancestry.nil?
+                new_a = ancestry.id.to_s
+              else
+                new_a = ancestry.ancestry + '/' + ancestry.id.to_s
+              end
+              ols.update!(ancestry: new_a)
+            end
+
+            disable_root = OlsTerm.find_by(ols_name: 'chmo', term_id: 'BFO:0000002')
+            unless disable_root.nil?
+              disable_nodes = [disable_root] + disable_root.descendants
+              disable_nodes.each { |oo| oo.update!(is_enabled: false) }
+            end
+
+            nmr_13c = OlsTerm.find_by(ols_name: 'chmo', term_id: 'CHMO:0000595')
+            nmr_13c.update!(synonym: '13C NMR') unless nmr_13c.nil?
           end
         end
       end

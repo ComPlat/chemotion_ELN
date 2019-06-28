@@ -361,7 +361,10 @@ module Chemotion
           update_materials_for_reaction(reaction, materials, current_user)
           # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
-          recent_ols_term_update('rxno',params[:rxno]) if params[:rxno].present?
+          recent_ols_term_update('rxno',[params[:rxno]]) if params[:rxno].present?
+          #save to profile
+          kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
+          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
           {reaction: ElementPermissionProxy.new(current_user, reaction, user_ids).serialized}
         end
@@ -406,7 +409,7 @@ module Chemotion
         collection = Collection.find(collection_id)
         attributes.assign_property(:created_by, current_user.id)
         reaction = Reaction.create!(attributes)
-        recent_ols_term_update('rxno',params[:rxno]) if params[:rxno].present?
+        recent_ols_term_update('rxno',[params[:rxno]]) if params[:rxno].present?
 
         if (literatures && literatures.length > 0)
           literatures.each do |literature|
@@ -449,6 +452,11 @@ module Chemotion
           update_materials_for_reaction(reaction, materials, current_user)
           # update_literatures_for_reaction(reaction, literatures)
           reaction.reload
+
+          #save to profile
+          kinds = reaction.container&.analyses&.pluck("extended_metadata->'kind'")
+          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
           reaction
         end
       end

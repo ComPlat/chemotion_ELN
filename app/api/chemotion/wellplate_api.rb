@@ -130,7 +130,12 @@ module Chemotion
           params.delete(:container);
 
           wellplate = Usecases::Wellplates::Update.new(declared(params, include_missing: false)).execute!
-          {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
+
+          #save to profile
+          kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
+          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
+        {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
         end
       end
 
@@ -153,7 +158,11 @@ module Chemotion
 
         wellplate.save!
 
-        current_user.increment_counter 'wellplates'
+        #save to profile
+        kinds = wellplate.container&.analyses&.pluck("extended_metadata->'kind'")
+        recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
+          current_user.increment_counter 'wellplates'
         {wellplate: ElementPermissionProxy.new(current_user, wellplate, user_ids).serialized}
       end
 

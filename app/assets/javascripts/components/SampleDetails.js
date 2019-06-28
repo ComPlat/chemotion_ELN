@@ -48,6 +48,7 @@ import SampleDetailsLiteratures from './DetailsTabLiteratures';
 import MoleculesFetcher from './fetchers/MoleculesFetcher';
 import PubchemLcss from './PubchemLcss';
 import QualityCheckMain from './qc/Main';
+import { chmoConversions } from './OlsComponent';
 
 const MWPrecision = 6;
 
@@ -314,8 +315,8 @@ export default class SampleDetails extends React.Component {
     return (
       <div style={{display: "inline-block", marginLeft: "100px"}}>
         <DropdownButton id="InitiateAnalysis" bsStyle="info" bsSize="xsmall" title="Initiate Analysis">
-          <MenuItem eventKey="1" onClick={() => this.initiateAnalysisWithKind(sample, "1H NMR")}>1H NMR</MenuItem>
-          <MenuItem eventKey="2" onClick={() => this.initiateAnalysisWithKind(sample, "13C NMR")}>13C NMR</MenuItem>
+          <MenuItem eventKey="1" onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_1h.termId)}>{chmoConversions.nmr_1h.label}</MenuItem>
+          <MenuItem eventKey="2" onClick={() => this.initiateAnalysisWithKind(sample, chmoConversions.nmr_13c.termId)}>{chmoConversions.nmr_13c.label}</MenuItem>
           <MenuItem eventKey="3" onClick={() => this.initiateAnalysisWithKind(sample, "Others")}>others</MenuItem>
           <MenuItem eventKey="4" onClick={() => this.initiateAnalysisWithKind(sample, "Others2x")}>others 2x</MenuItem>
           <MenuItem eventKey="5" onClick={() => this.initiateAnalysisWithKind(sample, "Others3x")}>others 3x</MenuItem>
@@ -325,15 +326,22 @@ export default class SampleDetails extends React.Component {
   }
 
   initiateAnalysisWithKind(sample, kind) {
-    let analysis = Container.buildAnalysis(kind),
-              a1 = Container.buildAnalysis(),
-              a2 = Container.buildAnalysis(),
-              a3 = Container.buildAnalysis();
+    let analysis = '';
+    let a1 = Container.buildAnalysis(chmoConversions.others.value),
+        a2 = Container.buildAnalysis(chmoConversions.others.value),
+        a3 = Container.buildAnalysis(chmoConversions.others.value);
     switch(kind) {
-      case "1H NMR": case "13C NMR":
+      case chmoConversions.nmr_1h.termId:
+        analysis = Container.buildAnalysis(chmoConversions.nmr_1h.value);
         sample.addAnalysis(analysis);
         ElementActions.updateSample(sample);
         Utils.downloadFile({contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small"})
+        break;
+      case chmoConversions.nmr_13c.termId:
+        analysis = Container.buildAnalysis(chmoConversions.nmr_13c.value);
+        sample.addAnalysis(analysis);
+        ElementActions.updateSample(sample);
+        Utils.downloadFile({ contents: "/api/v1/code_logs/print_analyses_codes?sample_id=" + sample.id + "&analyses_ids[]=" + analysis.id + "&type=nmr_analysis&size=small" })
         break;
       case "Others":
         sample.addAnalysis(a1);

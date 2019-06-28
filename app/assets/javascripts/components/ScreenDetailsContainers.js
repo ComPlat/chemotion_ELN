@@ -76,7 +76,8 @@ export default class ScreenDetailsContainers extends Component {
 
     let containerHeader = (container) =>
       <p style={{width: '100%'}}>{container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ?
+          (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
         {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
         <Button bsSize="xsmall" bsStyle="danger"
            className="button-right" disabled={readOnly}
@@ -87,7 +88,8 @@ export default class ScreenDetailsContainers extends Component {
       </p>
 
       let containerHeaderDeleted = (container) => <p style={{width: '100%'}}><strike>{container.name}
-        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ? (' - Type: ' + container.extended_metadata['kind']) : ''}
+        {(container.extended_metadata['kind'] && container.extended_metadata['kind'] != '') ?
+          (` - Type: ${container.extended_metadata['kind'].split('|')[1] || container.extended_metadata['kind']}`) : ''}
         {(container.extended_metadata['status'] && container.extended_metadata['status'] != '') ? (' - Status: ' + container.extended_metadata['status']) :''}
         </strike>
         <Button className="pull-right" bsSize="xsmall" bsStyle="danger" onClick={() => this.handleUndo(container)}>

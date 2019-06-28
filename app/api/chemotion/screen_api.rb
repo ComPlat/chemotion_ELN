@@ -88,6 +88,10 @@ module Chemotion
           screen.update(attributes)
           old_wellplate_ids = screen.wellplates.pluck(:id)
 
+          #save to profile
+          kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
+          recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
+
           params[:wellplate_ids].each do |id|
             ScreensWellplate.find_or_create_by(wellplate_id: id, screen_id: params[:id])
           end
@@ -125,6 +129,10 @@ module Chemotion
 
         screen.container = update_datamodel(params[:container])
         screen.save!
+
+        #save to profile
+        kinds = screen.container&.analyses&.pluck("extended_metadata->'kind'")
+        recent_ols_term_update('chmo', kinds) if kinds&.length&.positive?
 
         collection = Collection.find(params[:collection_id])
         CollectionsScreen.create(screen: screen, collection: collection)
