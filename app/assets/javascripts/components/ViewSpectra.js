@@ -201,11 +201,12 @@ class ViewSpectra extends React.Component {
   checkWriteOp({
     peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
   }) {
+    const cleanPeaks = FN.rmShiftFromPeaks(peaks, shift);
     LoadingActions.start.defer();
     SpectraActions.WriteStart.defer({
-      peaks, shift, scan, thres, analysis, layout, isAscend, decimal,
+      shift, scan, thres, analysis, layout, isAscend, decimal, peaks: cleanPeaks,
     });
-    this.predictOp({ peaks, layout, shift });
+    this.predictOp({ layout, shift, peaks: cleanPeaks });
   }
 
   buildOpsByLayout(et) {
@@ -216,7 +217,7 @@ class ViewSpectra extends React.Component {
       { name: 'save', value: this.saveOp },
       { name: 'save & close', value: this.saveCloseOp },
     ] : [];
-    const predictable = false; //['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
+    const predictable = updatable && ['MS', 'INFRARED'].indexOf(et.spectrum.sTyp) < 0;
     if (predictable) {
       return [
         { name: 'check & write', value: this.checkWriteOp },
@@ -277,7 +278,7 @@ class ViewSpectra extends React.Component {
 
     const operations = this.buildOpsByLayout(entity);
 
-    const predictObj = {
+    const forecast = {
       molecule: 'molecule',
       predictions,
     };
@@ -290,7 +291,7 @@ class ViewSpectra extends React.Component {
             : <SpectraViewer
               entity={entity}
               operations={operations}
-              predictObj={predictObj}
+              forecast={forecast}
             />
         }
       </Modal.Body>
