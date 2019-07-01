@@ -9,9 +9,9 @@ const BlockTitle = () => (
       <span>Information</span>
     </h4>
     <div className="card-qc">
-      <p>Version ChemSpectra (1.0.1)</p>
-      <p>Version NMRShiftDB (2.0.2)</p>
-      <p>Version ChemSpectraDeepIr (3.0.3)</p>
+      <p>Version ChemSpectra (0.4.17)</p>
+      <p>Version NMRShiftDB (2.0.1)</p>
+      <p>Version ChemSpectraDeepIr (0.4.17)</p>
     </div>
     <h4>
       <span>Analysis</span>

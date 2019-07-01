@@ -371,5 +371,9 @@ module.exports = {
   commonFormatPattern,
   Alphabet,
   SampleCode,
-  formatAnalysisContent
+  formatAnalysisContent,
+  atomCountInFormula,
+  atomCountInNMRDescription,
+  atomCountCInNMRDescription,
+
 };

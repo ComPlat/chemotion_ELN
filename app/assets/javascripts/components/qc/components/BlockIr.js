@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Panel, Alert } from 'react-bootstrap';
 
 import QcMolView from './helper/qc_mol_view';
 import { iconByMargin } from './helper/icon';
@@ -11,9 +12,9 @@ const emptyBlock = () => (
       <span>4 Analysis of the provided digital IR data:</span>
     </h5>
     <div className="card-qc">
-      <p>
-        <span>- - -</span>
-      </p>
+      <Alert bsStyle="danger">
+        No Information. Please upload spectra to Spectra Viewer.
+      </Alert>
     </div>
   </div>
 );
@@ -64,8 +65,19 @@ const BlockIr = ({ irQc, ansIr }) => {
           { `${(negOwn90)}/${(posOwn90 + negOwn90)}` }
           { iconByMargin(ansOwnF90, 0) }
         </div>
-        <QcMolView svg={svgs[0]} />
-        { tableIr(irQc) }
+        <Panel id="qc-detail-panel-hnmr" defaultExpanded={false}>
+          <Panel.Heading>
+            <Panel.Title className="qc-detail-panel-title" toggle>
+              IR Prediction Detail
+            </Panel.Title>
+          </Panel.Heading>
+          <Panel.Collapse>
+            <Panel.Body>
+              <QcMolView svg={svgs[0]} />
+              { tableIr(irQc) }
+            </Panel.Body>
+          </Panel.Collapse>
+        </Panel>
       </div>
     </div>
   );

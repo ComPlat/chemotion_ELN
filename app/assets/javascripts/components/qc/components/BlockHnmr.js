@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Panel, Alert } from 'react-bootstrap';
 
 import QuillViewer from '../../QuillViewer';
 import QcMolView from './helper/qc_mol_view';
@@ -15,9 +16,9 @@ const emptyBlock = () => (
       <span>1. Analysis of the provided digital NMR spectroscopy data: 1H NMR:</span>
     </h5>
     <div className="card-qc">
-      <p>
-        <span>- - -</span>
-      </p>
+      <Alert bsStyle="danger">
+        No Information. Please upload spectrum & make predictions in Spectra Viewer.
+      </Alert>
     </div>
   </div>
 );
@@ -34,6 +35,8 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
     numAcpOwn,
     ansMac,
     ansOwn,
+    countExpAtoms,
+    countIdnAtoms,
   } = ansHnmr;
 
   return (
@@ -52,10 +55,10 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
         </div>
         <div>
           <span>
-            Amount of expected protons: xxx.
-            Amount of identified protons: xxx.
+            Amount of expected protons: {countExpAtoms}.
+            Amount of identified protons: {countIdnAtoms}.
           </span>
-          { iconByMargin(false, 0) }
+          { iconByMargin((countExpAtoms - countIdnAtoms) === 0, 0) }
         </div>
         <div>
           <p>
@@ -87,8 +90,19 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
             { iconByMargin(ansOwn, 0) }
           </span>
         </div>
-        <QcMolView svg={svgs[0]} />
-        { tableNmr(shifts, svgs[0]) }
+        <Panel id="qc-detail-panel-hnmr" defaultExpanded={false}>
+          <Panel.Heading>
+            <Panel.Title className="qc-detail-panel-title" toggle>
+              1H NMR Prediction Detail
+            </Panel.Title>
+          </Panel.Heading>
+          <Panel.Collapse>
+            <Panel.Body>
+              <QcMolView svg={svgs[0]} />
+              { tableNmr(shifts) }
+            </Panel.Body>
+          </Panel.Collapse>
+        </Panel>
       </div>
     </div>
   );

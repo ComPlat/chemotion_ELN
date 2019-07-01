@@ -1,5 +1,12 @@
 import { numFormat } from './common';
 
+import { contentToText } from '../../utils/quillFormat';
+import {
+  atomCountInFormula,
+  atomCountInNMRDescription,
+  atomCountCInNMRDescription,
+} from '../../utils/ElementUtils';
+
 const countSignal = (shifts) => {
   const numAll = shifts.length;
   let numAcpMac = 0;
@@ -41,9 +48,9 @@ const extractSignal = (shifts) => {
   };
 };
 
-const evaluateNmr = (nmrQc) => {
+const evaluateNmr = (typ, nmrQc, sumFormula) => {
   if (Object.keys(nmrQc).length === 0) return {};
-  const { pred } = nmrQc;
+  const { pred, ops } = nmrQc;
   const { shifts } = pred.output.result[0];
   const {
     sigSent, sigReal,
@@ -53,7 +60,15 @@ const evaluateNmr = (nmrQc) => {
   } = countSignal(shifts);
   const ansMac = numAll - numAcpMac <= 1;
   const ansOwn = numAll - numAcpOwn <= 0;
-  const conclusionNmr = ansMac && ansOwn;
+  const countExpAtoms = typ === '1H'
+    ? atomCountInFormula(sumFormula, 'H')
+    : atomCountInFormula(sumFormula, 'C');
+  const opStr = contentToText({ ops });
+  const countIdnAtoms = typ === '1H'
+    ? atomCountInNMRDescription(opStr)
+    : atomCountCInNMRDescription(opStr);
+  const ansDesc = (countExpAtoms - countIdnAtoms) === 0;
+  const conclusionNmr = ansMac && ansOwn && ansDesc;
 
   return {
     sigSent,
@@ -63,6 +78,8 @@ const evaluateNmr = (nmrQc) => {
     numAcpOwn,
     ansMac,
     ansOwn,
+    countExpAtoms,
+    countIdnAtoms,
     conclusionNmr,
   };
 };

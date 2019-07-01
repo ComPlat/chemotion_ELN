@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Alert } from 'react-bootstrap';
 
 import { iconMs } from './helper/icon';
 import { emm } from '../utils/ms';
@@ -10,9 +11,9 @@ const emptyBlock = () => (
       <span>3 Analysis of the provided digital mass spectrometry data:</span>
     </h5>
     <div className="card-qc">
-      <p>
-        <span>- - -</span>
-      </p>
+      <Alert bsStyle="danger">
+        No Information. Please upload spectra to Spectra Viewer.
+      </Alert>
     </div>
   </div>
 );

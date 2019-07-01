@@ -18,9 +18,10 @@ const QcContent = ({ sample, infer }) => {
   const {
     irQc, msQc, hnmrQc, cnmrQc,
   } = prismQcs(sample, infer);
+  const sumFormula = sample.molecule_formula;
 
-  const ansHnmr = evaluateNmr(hnmrQc);
-  const ansCnmr = evaluateNmr(cnmrQc);
+  const ansHnmr = evaluateNmr('1H', hnmrQc, sumFormula);
+  const ansCnmr = evaluateNmr('13C', cnmrQc, sumFormula);
   const ansMs = evaluateMs(msQc, sample);
   const ansIr = evaluateIr(irQc);
 
