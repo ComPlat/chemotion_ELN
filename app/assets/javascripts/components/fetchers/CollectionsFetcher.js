@@ -274,7 +274,7 @@ export default class CollectionsFetcher {
       body: JSON.stringify(params)
     }).then((response) => {
       NotificationActions.notifyExImportStatus('export', response.status);
-      if (response.ok) { return response.json(); }
+      if (response.ok) { return true; }
       throw new Error(response.status);
     }).catch((errorMessage) => { throw new Error(errorMessage); });
   }
@@ -289,8 +289,8 @@ export default class CollectionsFetcher {
       body: data
     }).then((response) => {
       NotificationActions.notifyExImportStatus('import', response.status);
-      if (response.ok) { return response.json(); }
+      if (response.ok) { return true; }
       throw new Error(response.status);
-    }).catch((errorMessage) => { throw new Error(errorMessage); });
+    }).catch((errorMessage) => { console.log(errorMessage); });
   }
 }

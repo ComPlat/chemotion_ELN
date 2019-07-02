@@ -69,22 +69,16 @@ module Import
           end
         end
 
-        channel = Channel.find_by(subject: Channel::SEND_IMPORT_NOTIFICATION)
-        return if channel.nil?
-
-        content = channel.msg_template
-        return if content.nil?
-
         data = ''
         if valid_reactions.count.positive? && !(rsuccess.zero? && rfailed.zero?)
-          data += "#{rsuccess} reactions successfully, #{rfailed} failed to import! "
+          data += " #{rsuccess} reactions processed, #{rfailed} failed to import! "
         end
         if molecules.count.positive? && !(msuccess.zero? && mfailed.zero?)
-          data += ". #{msuccess} molecules successfully, #{mfailed} failed to import! "
+          data += " #{msuccess} molecules processed, #{mfailed} failed to import! "
         end
-        content['data'] = format(content['data'], { data: data })
         Message.create_msg_notification(
-          channel.id, content, creator_id, [creator_id]
+          channel_subject: Channel::SEND_IMPORT_NOTIFICATION,
+          message_from: creator_id, data_args: { data: data }
         )
       end
       handle_asynchronously :from_list

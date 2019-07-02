@@ -536,7 +536,7 @@ describe Chemotion::CollectionAPI do
 
         it 'creates an export job' do
           post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
-          expect(response.status).to eq(201)
+          expect(response.status).to eq(204)
         end
       end
 
@@ -582,7 +582,7 @@ describe Chemotion::CollectionAPI do
 
         it 'creates an import job' do
           status = post '/api/v1/collections/imports', file_upload
-          expect(response.status).to eq(201)
+          expect(response.status).to eq(204)
         end
       end
     end

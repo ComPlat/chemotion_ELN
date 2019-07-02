@@ -2,15 +2,22 @@ module Chemotion
   class PublicAPI < Grape::API
     helpers do
       def send_notification(attachment, user, status, has_error = false)
-        channel = Channel.find_by(subject: Channel::EDITOR_CALLBACK)
-        content = channel.msg_template
-        content['research_plan_id'] = content['research_plan_id'] % {:research_plan_id => attachment.attachable_id }
-        content['attach_id'] = content['attach_id'] % {:attach_id => attachment.id }
-        content['data'] = content['data'] % {:filename => attachment.filename }
-        content['data'] = attachment.filename + ' error has occurred, the file is not changed.' if has_error
-        content['data'] = attachment.filename + ' file has not changed.' if status == 4
-        content['data'] = attachment.filename + ' error has occurred while force saving the document, please review your changes.' if @status == 7
-        message = Message.create_msg_notification(channel.id,content,user.id,[user.id])
+        data_args = { 'filename': attachment.filename, 'comment': 'the file has been updated' }
+        level = 'success'
+        if has_error
+          data_args['comment'] = ' an error has occurred, the file is not changed.'
+          level = 'error'
+        elsif status == 4
+          data_args['comment'] = ' file has not changed.'
+          level = 'info'
+        elsif @status == 7
+          data_args['comment'] = ' an error has occurred while force saving the document, please review your changes.'
+          level = 'error'
+        end
+        message = Message.create_msg_notification(
+          message_subject: Channel::EDITOR_CALLBACK, message_from: user.id,
+          data_args: data_args, attach_id: attachment.id, research_plan_id: attachment.attachable_id, level: level
+        )
       end
     end
 
@@ -124,16 +131,10 @@ module Chemotion
 
           ComputedProp.from_raw(cp.id, params[:data])
 
-          channel = Channel.find_by(subject: Channel::COMPUTED_PROPS_NOTIFICATION)
-          return if channel.nil?
-
-          content = channel.msg_template
-          return if content.nil?
-
-          content['data'] = "Calculation for Sample #{cp.sample_id} has finished"
-          content['cprop'] = ComputedProp.find(cp.id)
           Message.create_msg_notification(
-            channel.id, content, cp.creator, [cp.creator]
+            channel_subject: Channel::COMPUTED_PROPS_NOTIFICATION, message_from: cp.creator,
+            data_args: { sample_id: sample.id, status: 'finished'}, cprop: ComputedProp.find(cp.id),
+            level: 'success'
           )
         end
       end

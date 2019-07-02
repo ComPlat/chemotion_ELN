@@ -4,14 +4,15 @@ class ImportCollectionsJob < ActiveJob::Base
   queue_as :import_collections
 
   after_perform do |job|
-    if @success
-      channel = Channel.find_by(subject: Channel::COLLECTION_ZIP)
-      content = channel.msg_template unless channel.nil?
-      if content.present?
-        content['data'] = format(content['data'], { col_labels: '',  operation: 'import'})
-        content['data'] = content['data'] + ' File: ' + filename
-        Message.create_msg_notification(channel.id, content,  @user_id, [@user_id])
-      end
+    begin
+      Message.create_msg_notification(
+        channel_subject: Channel::COLLECTION_ZIP,
+        message_from: @user_id,
+        data_args: { col_labels: '',  operation: 'import', expires_at: nil },
+        autoDismiss: 5
+      ) if @success
+    rescue StandardError => e
+      Delayed::Worker.logger.error e
     end
   end
 
@@ -24,7 +25,12 @@ class ImportCollectionsJob < ActiveJob::Base
       import.import!
     rescue => e
       Delayed::Worker.logger.error e
-      # TODO: Message Error
+      Message.create_msg_notification(
+        channel_subject: Channel::COLLECTION_ZIP_FAIL,
+        message_from: @user_id,
+        data_args: { col_labels: '',  operation: 'import' },
+        autoDismiss: 5
+      )
       @success = false
     end
   end

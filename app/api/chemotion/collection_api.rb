@@ -219,12 +219,11 @@ module Chemotion
             collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
           ).execute!
 
-          channel = Channel.find_by(subject: Channel::SHARED_COLLECTION_WITH_ME)
-          return if channel.nil?
-          content = channel.msg_template
-          return if (content.nil?)
-          content['data'] = content['data'] % {:shared_by => current_user.name }
-          message = Message.create_msg_notification(channel.id,content,current_user.id,uids)
+          Message.create_msg_notification(
+            channel_subject: Channel::SHARED_COLLECTION_WITH_ME,
+            message_from: current_user.id, message_to: uids,
+            data_args: { 'shared_by': current_user.name }, level: 'info'
+          )
         end
       end
 
@@ -400,14 +399,6 @@ module Chemotion
             status 204
           end
         end
-
-        # desc "Poll import job"
-        # params do
-        #   requires :id, type: String
-        # end
-        # get '/:id' do
-        #   ActiveJob::Status.get(params[:id])
-        # end
       end
 
     end

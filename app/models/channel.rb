@@ -18,4 +18,21 @@ class Channel < ActiveRecord::Base
   EDITOR_CALLBACK = 'EditorCallback'
   COLLECTION_ZIP = 'Collection Import and Export'
   COLLECTION_ZIP_FAIL = 'Collection Import and Export Failure'
+
+  class << self
+    def build_message(**args)
+      channel_id = args[:channel_id] # args.delete(:channel_id)
+      channel_subject = args[:channel_subject] # args.delete(:channel_subject)
+      channel = channel_id ? find_by(id: channel_id) : find_by(subject: channel_subject)
+      return unless channel
+      data_args = args.delete(:data_args)
+      message = channel.msg_template
+      if message.present?
+        message['channel_id'] = channel.id
+        message['data'] = format(message['data'], data_args)
+        message = message.merge(args)
+      end
+      message
+    end
+  end
 end

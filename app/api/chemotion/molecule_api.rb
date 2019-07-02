@@ -85,16 +85,11 @@ module Chemotion
           end
           cp.save!
 
-          channel = Channel.find_by(subject: Channel::COMPUTED_PROPS_NOTIFICATION)
-          return if channel.nil?
-
-          content = channel.msg_template
-          return if content.nil?
-
-          content['data'] = "Calculation for Sample #{sample.id} has started"
-          content['cprop'] = cp
           Message.create_msg_notification(
-            channel.id, content, uid, [uid]
+            message_subject: Channel::COMPUTED_PROPS_NOTIFICATION,
+            message_from: uid,
+            data_args: { sample_id: sample.id, status: 'started' },
+            cprop: cp, level: 'info'
           )
         end
       end

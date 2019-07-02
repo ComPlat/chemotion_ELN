@@ -16,63 +16,57 @@ const handleNotification = (nots, act, needCallback = true) => {
       NotificationActions.removeByUid(n.id);
     }
     if (act === 'add') {
-      const newText = n.content.data.split('\n').map((i) => { return <p key={`${new Date().getTime() + i}`}>{i}</p> });
+      const newText = n.content.data.split('\n').map(i => <p key={`${new Date().getTime() + i}`}>{i}</p>);
       const notification = {
         title: `From ${n.sender_name} on ${n.updated_at}`,
         message: newText,
-        level: 'warning',
+        level: n.content.level || 'warning',
         dismissible: 'button',
-        autoDismiss: 0,
-        position: 'tr',
+        autoDismiss: n.content.autoDismiss || 0,
+        position: n.content.position || 'tr',
         uid: n.id,
         action: {
           label: 'Got it',
           callback() {
             if (needCallback) {
-              const params = {
-                ids: [],
-              };
+              const params = { ids: [] };
               params.ids[0] = n.id;
-              MessagesFetcher.acknowledgedMessage(params)
-                .then((result) => {
-                  //console.log(JSON.stringify(result));
-                });
+              MessagesFetcher.acknowledgedMessage(params);
+              // .then((result) => { console.log(JSON.stringify(result)); });
             }
           }
         }
       };
       NotificationActions.add(notification);
 
-      if (n.content.action) {
-        if (n.content.action === 'CollectionActions.fetchRemoteCollectionRoots') {
+      switch (n.content.action) {
+        case 'CollectionActions.fetchRemoteCollectionRoots':
           CollectionActions.fetchRemoteCollectionRoots();
-        }
-        if (n.content.action === 'CollectionActions.fetchSyncInCollectionRoots') {
+          break;
+        case 'CollectionActions.fetchSyncInCollectionRoots':
           CollectionActions.fetchSyncInCollectionRoots();
-        }
-        if (n.content.action === 'InboxActions.fetchInbox') {
+          break;
+        case 'InboxActions.fetchInbox':
           InboxActions.fetchInbox();
-        }
-        if (n.content.action === 'ReportActions.updateProcessQueue') {
-          const ids = [];
-          ids.push(parseInt(n.content.report_id, 10));
-          ReportActions.updateProcessQueue(ids);
-        }
-        if (n.content.action === 'ElementActions.refreshComputedProp') {
-          const { cprop } = n.content;
-          ElementActions.refreshComputedProp(cprop);
-        }
-        if (n.content.action === 'RefreshChemotionCollection') {
+          break;
+        case 'ReportActions.updateProcessQueue':
+          ReportActions.updateProcessQueue([parseInt(n.content.report_id, 10)]);
+          break;
+        case 'ElementActions.refreshComputedProp':
+          if (n.contentc.prop) { ElementActions.refreshComputedProp(n.content.cprop); }
+          break;
+        case 'RefreshChemotionCollection':
           CollectionActions.fetchUnsharedCollectionRoots();
-        }
-        if (n.content.action === 'CollectionActions.fetchUnsharedCollectionRoots') {
+          break;
+        case 'CollectionActions.fetchUnsharedCollectionRoots':
           CollectionActions.fetchUnsharedCollectionRoots();
           CollectionActions.fetchSyncInCollectionRoots();
-        }
-        if (n.content.action === 'ElementActions.fetchResearchPlanById') {
-          const id = parseInt(n.content.research_plan_id, 10);
-          ElementActions.fetchResearchPlanById(id);
-        }
+          break;
+        case 'ElementActions.fetchResearchPlanById':
+          ElementActions.fetchResearchPlanById(parseInt(n.content.research_plan_id, 10));
+          break;
+        default:
+          //
       }
     }
   });

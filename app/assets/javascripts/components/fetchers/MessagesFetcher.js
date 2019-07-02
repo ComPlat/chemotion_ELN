@@ -2,52 +2,47 @@ import 'whatwg-fetch';
 
 export default class MessagesFetcher {
   static configuration() {
-    const promise = fetch('/api/v1/messages/config.json', {
+    return fetch('/api/v1/messages/config.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
+
   static fetchMessages(isAck) {
-    const promise = fetch(`/api/v1/messages/list.json?is_ack=${isAck}`, {
+    return fetch(`/api/v1/messages/list.json?is_ack=${isAck}`, {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
+
   static fetchChannels(channelType) {
-    const promise = fetch(`/api/v1/messages/channels.json?channel_type=${channelType}`, {
+    return fetch(`/api/v1/messages/channels.json?channel_type=${channelType}`, {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
+
   static fetchChannelWithUser() {
-    const promise = fetch('/api/v1/messages/channels_user.json', {
+    return fetch('/api/v1/messages/channels_user.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
+
   static channelIndividualUsers() {
-    const promise = fetch('/api/v1/messages/channel_individual.json', {
+    return fetch('/api/v1/messages/channel_individual.json', {
       credentials: 'same-origin'
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
+
   static acknowledgedMessage(params) {
-    const promise = fetch('/api/v1/messages/ack/', {
+    return fetch('/api/v1/messages/ack/', {
       credentials: 'same-origin',
       method: 'PUT',
       headers: {
@@ -55,14 +50,13 @@ export default class MessagesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
+
   static subscribeChannel(params) {
-    const promise = fetch('/api/v1/messages/subscribe/', {
+    return fetch('/api/v1/messages/subscribe/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -70,15 +64,13 @@ export default class MessagesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 
   static createMessage(params) {
-    const promise = fetch('/api/v1/messages/new/', {
+    return fetch('/api/v1/messages/new/', {
       credentials: 'same-origin',
       method: 'POST',
       headers: {
@@ -86,10 +78,8 @@ export default class MessagesFetcher {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(params)
-    })
-      .then(response => response.json()).then(json => json).catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+    }).then(response => response.json()).then(json => json).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
   }
 }

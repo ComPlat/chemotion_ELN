@@ -43,7 +43,7 @@ class NotificationActions {
         params.message = `An issue occured with your ${type} (status ${status}); please contact the administrators of the site if the problem persists.`;
         params.level = 'error';
     }
-    this.add(params);
+    return this.add(params);
   }
 }
 
