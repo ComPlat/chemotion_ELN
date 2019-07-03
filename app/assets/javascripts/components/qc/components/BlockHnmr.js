@@ -38,6 +38,7 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
     countExpAtoms,
     countIdnAtoms,
   } = ansHnmr;
+  const mOps = [{ insert: 'According to user: ' }, ...ops];
 
   return (
     <div className="card-qc">
@@ -45,52 +46,49 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
         <span>1. Analysis of the provided digital NMR spectroscopy data: 1H NMR:</span>
       </h5>
       <div className="card-qc">
-        <div>
-          <span>Analysis according to user:</span>
-          <div className="card-qc">
-            <QuillViewer
-              value={formatQV(ops)}
-            />
-          </div>
+        <div
+          style={{ display: 'inline' }}
+        >
+          <QuillViewer
+            value={formatQV(mOps)}
+          />
         </div>
         <div>
           <span>
-            Amount of expected protons: {countExpAtoms}.
-            Amount of identified protons: {countIdnAtoms}.
+            Expected protons: {countExpAtoms}.
+            Identified protons: {countIdnAtoms}.
           </span>
           { iconByMargin((countExpAtoms - countIdnAtoms) === 0, 0) }
         </div>
         <div>
-          <p>
-            Amount of signals detected (signals sent to NMRShiftDB):
-          </p>
-          <p className="card-qc">
-            { sigSent }
-          </p>
-        </div>
-        <div>
-          <p>
-            Amount of signals detected (all entries listed in &lsquo;real&rsquo;):
-          </p>
-          <p className="card-qc">
-            { sigReal }
-          </p>
+          <span>
+            Signals detected: { sigSent }
+          </span>
         </div>
         <div>
           <span>
-            Number of correctly assigned signals according to machine:
+            Signals detected (NMRShiftDB): { sigReal }
+          </span>
+        </div>
+        <div>
+          <span>
+            Correctly assigned (machine):
             ({numAcpMac}/{numAll})
             { iconByMargin(ansMac, 1) }
           </span>
         </div>
         <div>
           <span>
-            Number of correctly assigned signals according to owner:
+            Correctly assigned (owner):
             ({numAcpOwn}/{numAll})
             { iconByMargin(ansOwn, 0) }
           </span>
         </div>
-        <Panel id="qc-detail-panel-hnmr" defaultExpanded={false}>
+        <Panel
+          className="qc-detail-panel"
+          id="qc-detail-panel-hnmr"
+          defaultExpanded={false}
+        >
           <Panel.Heading>
             <Panel.Title className="qc-detail-panel-title" toggle>
               1H NMR Prediction Detail

@@ -65,7 +65,11 @@ const BlockIr = ({ irQc, ansIr }) => {
           { `${(negOwn90)}/${(posOwn90 + negOwn90)}` }
           { iconByMargin(ansOwnF90, 0) }
         </div>
-        <Panel id="qc-detail-panel-hnmr" defaultExpanded={false}>
+        <Panel
+          className="qc-detail-panel"
+          id="qc-detail-panel-ir"
+          defaultExpanded={false}
+        >
           <Panel.Heading>
             <Panel.Title className="qc-detail-panel-title" toggle>
               IR Prediction Detail

@@ -3,6 +3,37 @@ import { Table } from 'react-bootstrap';
 
 import { iconStatus } from './icon';
 
+const colorStyles = [
+  { backgroundColor: '#FFFF00' },
+  { backgroundColor: '#87CEFA' },
+  { backgroundColor: '#FFB6C1' },
+  { backgroundColor: '#00FF00' },
+  { backgroundColor: '#E6E6FA' },
+  { backgroundColor: '#FFD700' },
+  { backgroundColor: '#F0FFFF' },
+  { backgroundColor: '#F5F5DC' },
+];
+
+const colorLabel = (idx) => {
+  const style = Object.assign(
+    {},
+    colorStyles[idx % 8],
+    { width: 20, borderRadius: 20, textAlign: 'center' },
+  );
+
+  return (
+    <div
+      style={style}
+    >
+      <span
+        className="txt-label"
+      >
+        { idx + 1 }
+      </span>
+    </div>
+  );
+};
+
 const tableIr = (irQc) => {
   const qc = irQc.pred.output.result[0];
 
@@ -23,7 +54,7 @@ const tableIr = (irQc) => {
             .sort((a, b) => b.confidence - a.confidence)
             .map((fg, idx) => (
               <tr key={`${fg}${idx}`}>
-                <td>{ idx + 1 }</td>
+                <td>{ colorLabel(idx)}</td>
                 <td>{ fg.sma }</td>
                 <td>{ fg.confidence } %</td>
                 <td>{ iconStatus(fg.status) }</td>
