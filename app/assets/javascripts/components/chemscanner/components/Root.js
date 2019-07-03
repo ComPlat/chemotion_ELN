@@ -7,6 +7,7 @@ import { Grid, Row, Col } from 'react-bootstrap';
 import AbbreviationContainer from '../containers/AbbreviationContainer';
 import HeaderMenuContainer from '../containers/HeaderMenuContainer';
 import MainContentContainer from '../containers/MainContentContainer';
+import LoadingModalContainer from '../containers/LoadingModalContainer';
 
 class Root extends Component {
   componentDidMount() {
@@ -55,6 +56,9 @@ class Root extends Component {
             }
           </Col>
         </Row>
+        <Row>
+          <LoadingModalContainer />
+        </Row>
       </Grid>
     );
   }
@@ -72,6 +76,6 @@ Root.defaultProps = {
   modal: ''
 };
 
-// const scriptUrl = 'cdjs/chemdrawweb/chemdrawweb.js';
+// const scriptUrl = '/cdjs/chemdrawweb/chemdrawweb.js';
 const scriptUrl = 'https://chemdrawdirect.perkinelmer.cloud/js/chemdrawweb/chemdrawweb.js';
 export default scriptLoader(scriptUrl)(Root);

@@ -15,7 +15,7 @@ const mapDispatchToProps = dispatch => ({
     const config = {
       id,
       viewonly: true,
-      licenseUrl: './cdjs/sample/ChemDraw-JS-License.xml',
+      licenseUrl: '/cdjs/sample/ChemDraw-JS-License.xml',
       config: {
         properties: {
           StyleSheet: 'ACS Document 1996',
