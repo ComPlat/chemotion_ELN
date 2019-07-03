@@ -1,3 +1,7 @@
+.chemscanner-body {
+  height: auto;
+}
+
 .chemscanner-grid {
   margin: 10px 0px 0px 0px !important;
   padding-left: 0px !important;
@@ -14,6 +18,17 @@
     height: 500px;
     position: absolute;
     display: none;
+  }
+
+  .chemscanner-alert-notification {
+    padding: 5px;
+    align-self: 'center';
+
+    button {
+      top: 0px;
+      right: 0px;
+      margin-left: 10px;
+    }
   }
 
   .chemscanner-menu {

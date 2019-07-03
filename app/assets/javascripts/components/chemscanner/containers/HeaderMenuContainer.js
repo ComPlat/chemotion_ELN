@@ -18,8 +18,26 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  scanFile: (files, getMol) => dispatch(scanFile(files, getMol)),
-  cleanUp: () => dispatch({ type: types.CLEAN_UP }),
+  scanFile: (files, getMol) => {
+    dispatch({ type: types.SET_LOADING });
+    dispatch(scanFile(files, getMol)).then(() => dispatch({
+      type: types.UNSET_LOADING
+    }));
+  },
+  cleanUp: () => (
+    new Promise((resolve) => {
+      dispatch({ type: types.SET_LOADING });
+      resolve();
+    }).then(() => dispatch({
+      type: types.CLEAN_UP
+    })).then(() => dispatch({
+      type: types.UNSET_LOADING
+    }))
+  ),
+  showNotification: notification => dispatch({
+    type: types.SET_NOTIFICATION, notification
+  }),
+  resetNotification: () => dispatch({ type: types.RESET_NOTIFICATION }),
   toggleAbbView: () => dispatch({ type: types.TOGGLE_ABB_VIEW }),
   addSmi: (reactions, smi, smiType) => {
     const type = `added${pascalize(smiType)}Smi`;

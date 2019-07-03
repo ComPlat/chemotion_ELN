@@ -8,7 +8,8 @@ import {
   ButtonGroup,
   Button,
   DropdownButton,
-  MenuItem
+  MenuItem,
+  OverlayTrigger
 } from 'react-bootstrap';
 
 import { catalyst } from '../../staticDropdownOptions/reagents/catalyst';
@@ -29,11 +30,17 @@ import { reducingReagents } from '../../staticDropdownOptions/reagents/reducing_
 import { solvents } from '../../staticDropdownOptions/reagents/solvents';
 
 import SmiSelect from './SmiSelect';
+import HelpPopover from './HelpPopover';
+
+import NotificationContainer from '../containers/NotificationContainer';
+
 import {
   extractReaction,
   generateExcelMoleculeRow,
   generateExcelReactionRow
 } from '../utils';
+
+const SUPPORTED_FILE_TYPES = ['cdx', 'cdxml', 'docx', 'doc', 'zip'];
 
 const allReagents = Object.assign(
   {}, ionicLiquids, catalyst, ligands,
@@ -41,6 +48,19 @@ const allReagents = Object.assign(
   orgBases, lewisAcids, organocatalysts, organoboron, metallorganics,
   oxidation, reducingReagents, phaseTransferReagents
 );
+
+const supportTypes = (files) => {
+  let support = true;
+
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    const extension = file.name.split('.').pop();
+
+    if (!SUPPORTED_FILE_TYPES.includes(extension)) support = false;
+  }
+
+  return support;
+};
 
 export default class HeaderMenu extends Component {
   constructor(props) {
@@ -150,17 +170,33 @@ export default class HeaderMenu extends Component {
   }
 
   scanFilesForMolecules() {
-    const { scanFile } = this.props;
+    const { showNotification, scanFile } = this.props;
     const { files } = this.molInput;
-    scanFile(Array.from(files), true);
+
+    if (supportTypes(files)) {
+      scanFile(Array.from(files), true);
+    } else {
+      const fileTypes = SUPPORTED_FILE_TYPES.join(', ').toUpperCase();
+      const notification = `Supported types: ${fileTypes}`;
+
+      showNotification(notification);
+    }
 
     this.molInput.value = '';
   }
 
   scanFilesForReactions() {
-    const { scanFile } = this.props;
+    const { showNotification, scanFile } = this.props;
     const { files } = this.reactionInput;
-    scanFile(Array.from(files), false);
+
+    if (supportTypes(files)) {
+      scanFile(Array.from(files), false);
+    } else {
+      const fileTypes = SUPPORTED_FILE_TYPES.join(', ').toUpperCase();
+      const notification = `Supported types: ${fileTypes}`;
+
+      showNotification(notification);
+    }
 
     this.reactionInput.value = '';
   }
@@ -197,8 +233,21 @@ export default class HeaderMenu extends Component {
       disabled ? [] : (selectedR.getIn([0, 'addedSolventsSmi']) || List()).toArray()
     );
 
+    const helpPopover = <HelpPopover />;
+
     return (
       <div className="chemscanner-menu">
+        <OverlayTrigger
+          trigger="click"
+          placement="left"
+          rootClose
+          overlay={helpPopover}
+        >
+          <Button style={{ position: 'absolute', right: '35px', top: '10px' }}>
+            <i className="fa fa-question-circle" />
+          </Button>
+        </OverlayTrigger>
+        <NotificationContainer />
         <input
           type="file"
           multiple="multiple"
@@ -269,6 +318,7 @@ HeaderMenu.propTypes = {
   reactions: PropTypes.instanceOf(List).isRequired,
   molecules: PropTypes.instanceOf(List).isRequired,
   scanFile: PropTypes.func.isRequired,
+  showNotification: PropTypes.func.isRequired,
   cleanUp: PropTypes.func.isRequired,
   toggleAbbView: PropTypes.func.isRequired,
   addSmi: PropTypes.func.isRequired,
