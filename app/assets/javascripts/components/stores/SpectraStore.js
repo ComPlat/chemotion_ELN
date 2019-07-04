@@ -4,6 +4,11 @@ import { FN } from 'react-spectra-viewer';
 import alt from '../alt';
 import SpectraActions from '../actions/SpectraActions';
 
+const defaultPred = {
+  outline: {},
+  output: { result: [] },
+};
+
 class SpectraStore {
   constructor() {
     this.jcamp = null;
@@ -11,10 +16,7 @@ class SpectraStore {
     this.showModal = false;
     this.fetched = false;
     this.writing = false;
-    this.predictions = {
-      outline: {},
-      output: { result: [] },
-    };
+    this.predictions = Object.assign({}, defaultPred);
 
     this.bindListeners({
       handleToggleModal: SpectraActions.ToggleModal,
@@ -48,10 +50,7 @@ class SpectraStore {
     }
     return {
       jcamp: jcamps[0],
-      predictions: {
-        outline: {},
-        output: { result: [] },
-      },
+      predictions: Object.assign({}, defaultPred),
     };
   }
 
@@ -86,10 +85,7 @@ class SpectraStore {
   handleWriteStart(payload) {
     this.setState({
       writing: payload,
-      predictions: {
-        outline: {},
-        output: { result: [] },
-      },
+      predictions: Object.assign({}, defaultPred),
     });
   }
 
@@ -98,16 +94,13 @@ class SpectraStore {
   }
 
   handleInferRunning() {
-    const predictions = {
-      running: true,
-      outline: {},
-      output: { result: [] },
-    };
+    const predictions = Object.assign({}, defaultPred, { running: true });
     this.setState({ predictions });
   }
 
   handleInferSpectrum(predictions) {
-    this.setState({ predictions });
+    const target = predictions || Object.assign({}, defaultPred);
+    this.setState({ predictions: target });
   }
 }
 

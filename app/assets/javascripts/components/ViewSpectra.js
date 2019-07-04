@@ -205,7 +205,7 @@ class ViewSpectra extends React.Component {
     LoadingActions.start.defer();
     SpectraActions.WriteStart.defer({
       shift, scan, thres, analysis, layout, isAscend, decimal, peaks: cleanPeaks,
-    });
+    }); // keep payload to state.writing & handle by onChange/checkedToWrite after predictOp
     this.predictOp({ layout, shift, peaks: cleanPeaks });
   }
 

@@ -9,7 +9,7 @@ const buildQcs = (sample, infer) => {
         const pred = files
           .map(f => (f.id === att.id ? f : null))
           .filter(r => r != null)[0];
-        if (!pred) return;
+        if (!pred || pred.predictions.outline.code >= 300) return;
         const { type } = pred.predictions.output.result[0];
         qcs = [...qcs, { ops, type, pred: pred.predictions }];
       });

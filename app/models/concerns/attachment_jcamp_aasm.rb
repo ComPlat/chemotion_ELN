@@ -163,7 +163,7 @@ module AttachmentJcampProcess
   end
 
   def update_prediction(params, spc_type)
-    return auto_infer(spc_type) if spc_type == 'MS'
+    return auto_infer_n_clear_json(spc_type) if spc_type == 'MS'
     ori_infer = get_infer_json_content()
     decision = params[:keep_pred] ? ori_infer : params['predict']
     write_infer_to_file(decision)
@@ -175,7 +175,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'peak')
-    # jcamp_att.auto_infer(spc_type)
+    jcamp_att.auto_infer_n_clear_json(spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'peak')
     set_done
     delete_tmps([tmp_jcamp, tmp_img])
@@ -289,16 +289,16 @@ module AttachmentJcampProcess
     end
   end
 
-  def delete_related_jsons(json_att)
-    return unless json_att
+  def delete_related_jsons(target, is_reg = false)
+    return unless target
 
     atts = Attachment.where(attachable_id: attachable_id)
 
     atts.each do |att|
       is_delete = (
         att.json? &&
-          att.id != json_att.id &&
-          att.filename == json_att.filename
+          att.id != target.id &&
+          (att.filename == target.filename || is_reg)
       )
       att.delete if is_delete
     end
@@ -320,12 +320,14 @@ module AttachmentJcampProcess
     decision
   end
 
-  def auto_infer(spc_type)
+  def auto_infer_n_clear_json(spc_type, is_regen)
     case spc_type
     when 'INFRARED'
       infer_spectrum({ layout: 'IR' })
     when 'MS'
       infer_spectrum({ layout: 'MS' })
+    else # NMR just clear when regenerating
+      delete_related_jsons(self, is_regen) if is_regen
     end
   end
 end

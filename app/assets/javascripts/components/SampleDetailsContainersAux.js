@@ -42,7 +42,7 @@ const SpectraViewerBtn = ({
   <OverlayTrigger
     placement="bottom"
     delayShow={500}
-    overlay={<Tooltip id="spectra">Spectra Viewer {!spcInfo ? ': Reprocess jdx' : ''}</Tooltip>}
+    overlay={<Tooltip id="spectra">Spectra Viewer {!spcInfo ? ': Reprocess' : ''}</Tooltip>}
   >{spcInfo ? (
     <ButtonGroup className="button-right">
       <SplitButton
@@ -64,7 +64,7 @@ const SpectraViewerBtn = ({
           }}
           disabled={!hasJcamp || !sample.can_update}
         >
-          <i className="fa fa-refresh" /> Reprocess jdx
+          <i className="fa fa-refresh" /> Reprocess
         </MenuItem>
       </SplitButton>
     </ButtonGroup>
