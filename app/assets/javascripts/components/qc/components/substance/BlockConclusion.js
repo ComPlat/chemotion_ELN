@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { iconByBool } from './helper/icon';
+import { iconByBool } from '../helper/icon';
 
 const BlockConclusion = ({
   ansHnmr, ansCnmr, ansMs, ansIr,
@@ -13,19 +13,19 @@ const BlockConclusion = ({
     <div className="card-qc">
       <p>
         <span>1H NMR</span>
-        { iconByBool(ansHnmr.conclusionNmr) }
+        { iconByBool(ansHnmr.conclusion) }
       </p>
       <p>
         <span>13C NMR</span>
-        { iconByBool(ansCnmr.conclusionNmr) }
+        { iconByBool(ansCnmr.conclusion) }
       </p>
       <p>
         <span>MS</span>
-        { iconByBool(ansMs.conclusionMs) }
+        { iconByBool(ansMs.conclusion) }
       </p>
       <p>
         <span>IR</span>
-        { iconByBool(ansIr.conclusionIr) }
+        { iconByBool(ansIr.conclusion) }
       </p>
     </div>
     <br />

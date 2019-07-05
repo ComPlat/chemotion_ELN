@@ -847,7 +847,7 @@ export default class SampleDetails extends React.Component {
     return (
       <Tab
         eventKey="qcMain"
-        title="QC"
+        title="QC & curation"
         key={`QC_${sample.id}_${ind}`}
       >
         <ListGroupItem style={{ paddingBottom: 20 }} >

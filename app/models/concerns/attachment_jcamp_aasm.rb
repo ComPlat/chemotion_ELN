@@ -162,8 +162,8 @@ module AttachmentJcampProcess
     infers.length > 0 ? infers[0].read_file : '{}'
   end
 
-  def update_prediction(params, spc_type)
-    return auto_infer_n_clear_json(spc_type) if spc_type == 'MS'
+  def update_prediction(params, spc_type, is_regen)
+    return auto_infer_n_clear_json(spc_type, is_regen) if spc_type == 'MS'
     ori_infer = get_infer_json_content()
     decision = params[:keep_pred] ? ori_infer : params['predict']
     write_infer_to_file(decision)
@@ -190,7 +190,7 @@ module AttachmentJcampProcess
       abs_path, is_regen, params
     )
     jcamp_att = generate_jcamp_att(tmp_jcamp, 'edit', true)
-    jcamp_att.update_prediction(params, spc_type)
+    jcamp_att.update_prediction(params, spc_type, is_regen)
     img_att = generate_img_att(tmp_img, 'edit', true)
     set_backup
     delete_tmps([tmp_jcamp, tmp_img])

@@ -2,18 +2,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Alert } from 'react-bootstrap';
 
-import QuillViewer from '../../QuillViewer';
-import QcMolView from './helper/qc_mol_view';
-import { iconByMargin } from './helper/icon';
+import QuillViewer from '../../../QuillViewer';
+import QcMolView from '../helper/qc_mol_view';
+import { iconByMargin } from '../helper/icon';
 import {
   tableNmr,
   formatQV,
-} from './helper/nmr';
+} from '../helper/nmr';
 
 const emptyBlock = () => (
   <div className="card-qc">
     <h5>
-      <span>1. Analysis of the provided digital NMR spectroscopy data: 1H NMR:</span>
+      <span>2 Analysis of the provided digital NMR spectroscopy data: 13C NMR:</span>
     </h5>
     <div className="card-qc">
       <Alert bsStyle="danger">
@@ -23,11 +23,13 @@ const emptyBlock = () => (
   </div>
 );
 
-const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
-  if (Object.keys(ansHnmr).length === 0) return emptyBlock();
-  const { pred, ops } = hnmrQc;
-  const { shifts, svgs } = pred.output.result[0];
+const BlockCnmr = ({ ansCnmr }) => {
+  if (!ansCnmr.exist) return emptyBlock();
+  const { qck, qcp } = ansCnmr;
   const {
+    shifts,
+    svg,
+    desc,
     sigSent,
     sigReal,
     numAll,
@@ -35,30 +37,32 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
     numAcpOwn,
     ansMac,
     ansOwn,
+  } = qcp;
+  const {
     countExpAtoms,
     countIdnAtoms,
-  } = ansHnmr;
-  const mOps = [{ insert: 'According to user: ' }, ...ops];
+    ansQck,
+  } = qck;
 
   return (
     <div className="card-qc">
       <h5>
-        <span>1. Analysis of the provided digital NMR spectroscopy data: 1H NMR:</span>
+        <span>2 Analysis of the provided digital NMR spectroscopy data: 13C NMR:</span>
       </h5>
       <div className="card-qc">
         <div
           style={{ display: 'inline' }}
         >
           <QuillViewer
-            value={formatQV(mOps)}
+            value={formatQV(desc)}
           />
         </div>
         <div>
           <span>
-            Expected protons: {countExpAtoms}.
-            Identified protons: {countIdnAtoms}.
+            Expected carbons: {countExpAtoms}.
+            Identified carbons: {countIdnAtoms}.
           </span>
-          { iconByMargin((countExpAtoms - countIdnAtoms) === 0, 0) }
+          { iconByMargin(ansQck, 0) }
         </div>
         <div>
           <span>
@@ -86,17 +90,17 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
         </div>
         <Panel
           className="qc-detail-panel"
-          id="qc-detail-panel-hnmr"
+          id="qc-detail-panel-cnmr"
           defaultExpanded={false}
         >
           <Panel.Heading>
             <Panel.Title className="qc-detail-panel-title" toggle>
-              1H NMR Prediction Detail
+              13C NMR Prediction Detail
             </Panel.Title>
           </Panel.Heading>
           <Panel.Collapse>
             <Panel.Body>
-              <QcMolView svg={svgs[0]} />
+              <QcMolView svg={svg} />
               { tableNmr(shifts) }
             </Panel.Body>
           </Panel.Collapse>
@@ -106,9 +110,8 @@ const BlockHnmr = ({ hnmrQc, ansHnmr }) => {
   );
 };
 
-BlockHnmr.propTypes = {
-  hnmrQc: PropTypes.object.isRequired,
-  ansHnmr: PropTypes.object.isRequired,
+BlockCnmr.propTypes = {
+  ansCnmr: PropTypes.object.isRequired,
 };
 
-export default BlockHnmr;
+export default BlockCnmr;

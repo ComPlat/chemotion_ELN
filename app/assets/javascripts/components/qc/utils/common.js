@@ -7,4 +7,9 @@ const realFormat = (val, status) => {
   return numFormat(val);
 };
 
-export { numFormat, realFormat };
+const makeDav = (hasFiles, hasValidFiles) => {
+  if (hasFiles) return hasValidFiles;
+  return undefined;
+};
+
+export { numFormat, realFormat, makeDav };

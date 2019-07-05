@@ -12,27 +12,46 @@ import ImageModal from './common/ImageModal';
 import SpectraActions from './actions/SpectraActions';
 import LoadingActions from './actions/LoadingActions';
 import { BuildSpcInfo, JcampIds } from './utils/SpectraHelper';
-import { hNmrCheckMsg, cNmrCheckMsg } from './utils/ElementUtils';
+import { hNmrCheckMsg, cNmrCheckMsg, msCheckMsg } from './utils/ElementUtils';
 import { contentToText } from './utils/quillFormat';
 import UIStore from './stores/UIStore';
 import { chmoConversions } from './OlsComponent';
 
-const nmrMsg = (sample, container) => {
-  if (sample.molecule && container.extended_metadata &&
-      (typeof container.extended_metadata.kind === 'undefined' ||
-      (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
-      )) {
+const qCheckPass = () => (
+  <div style={{ display: 'inline', color: 'green' }}>
+    &nbsp;
+    <i className="fa fa-check" />
+  </div>
+);
+
+const qCheckFail = (msg, kind, atomNum = '') => (
+  <div style={{ display: 'inline', color: 'red' }}>
+    &nbsp;
+    (<sup>{atomNum}</sup>{kind} {msg})
+  </div>
+);
+
+const qCheckMsg = (sample, container) => {
+  const availKinds = ['1H NMR', '13C NMR', 'Mass'];
+  if (sample.molecule
+      && container.extended_metadata
+      && availKinds.indexOf(container.extended_metadata.kind) < 0) {
     return '';
   }
-  const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
+  const { kind, content } = container.extended_metadata;
+  const str = contentToText(content);
 
-  if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
-    const msg = hNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
-    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>1</sup>H {msg})</div>);
-  } else if (container.extended_metadata.kind.split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
-    const msg = cNmrCheckMsg(sample.molecule.sum_formular, nmrStr);
-    return msg === '' ? (<div style={{ display: 'inline', color: 'green' }}>&nbsp;<i className="fa fa-check" /></div>) : (<div style={{ display: 'inline', color: 'red' }}>&nbsp;(<sup>13</sup>C {msg})</div>);
+  if (kind === '1H NMR') {
+    const msg = hNmrCheckMsg(sample.molecule.sum_formular, str);
+    return msg === '' ? qCheckPass() : qCheckFail(msg, 'H', '1');
+  } else if (kind === '13C NMR') {
+    const msg = cNmrCheckMsg(sample.molecule.sum_formular, str);
+    return msg === '' ? qCheckPass() : qCheckFail(msg, 'C', '13');
+  } else if (kind === 'Mass') {
+    const msg = msCheckMsg(sample.molecule.exact_molecular_weight, str);
+    return msg === '' ? qCheckPass() : qCheckFail(msg, 'MS', '');
   }
+  return '';
 };
 
 const SpectraViewerBtn = ({
@@ -329,8 +348,9 @@ const HeaderNormal = ({
         <div className="lower-text">
           <div className="main-title">{container.name}</div>
           <div className="sub-title">Type: {kind}</div>
-          <div className="sub-title">Status: {status} {nmrMsg(sample, container)}</div>
-
+          <div className="sub-title">
+            Status: {status} {qCheckMsg(sample, container)}
+          </div>
           <div className="desc sub-title">
             <span style={{ float: 'left', marginRight: '5px' }}>
               Content:

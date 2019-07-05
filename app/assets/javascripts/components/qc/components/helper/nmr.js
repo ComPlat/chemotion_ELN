@@ -4,7 +4,7 @@ import { Table } from 'react-bootstrap';
 import { iconStatus } from './icon';
 import { numFormat, realFormat } from '../../utils/common';
 
-const tableNmr = shifts => (
+const tableNmr = (shifts = []) => (
   <Table responsive striped condensed hover>
     <thead>
       <tr>

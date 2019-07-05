@@ -119,6 +119,34 @@ const cNmrCheckMsg = (formula, nmrStr) => {
   return '';
 };
 
+const isEmwInMargin = (diff) => {
+  const margin = 1.0;
+  return diff <= margin
+    || Math.abs(diff - 1) <= margin
+    || Math.abs(diff - 23) <= margin
+    || Math.abs(diff - 39) <= margin;
+};
+
+const emwInStr = (emw, msStr) => {
+  const peaks = msStr.split(', ').map(s => parseFloat(s.split(' ')[0]));
+  let detected = false;
+
+  peaks.forEach((p) => {
+    const diff = Math.abs(p - emw);
+    if (isEmwInMargin(diff)) detected = true;
+  });
+  return detected;
+};
+
+const msCheckMsg = (exactMolWeight, msStr) => {
+  if (typeof (exactMolWeight) !== 'number' || typeof (msStr) !== 'string') {
+    return '';
+  }
+
+  const detected = emwInStr(exactMolWeight, msStr);
+  return detected ? '' : ' exact weight not found';
+};
+
 const SameEleTypId = (orig, next) => {
   if (orig && next && orig.type === next.type && orig.id === next.id) {
     return true;
@@ -365,6 +393,7 @@ module.exports = {
   cNmrCheckMsg,
   hNmrCount,
   cNmrCount,
+  msCheckMsg,
   SameEleTypId,
   UrlSilentNavigation,
   sampleAnalysesFormatPattern,
@@ -375,5 +404,5 @@ module.exports = {
   atomCountInFormula,
   atomCountInNMRDescription,
   atomCountCInNMRDescription,
-
+  emwInStr,
 };

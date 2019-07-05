@@ -1,3 +1,33 @@
+// --- bootstrap color ---
+.bc-bs-primary {
+  background-color: #337ab7;
+}
+
+.bc-bs-success {
+  background-color: #5cb85c;
+}
+
+.bc-bs-info {
+  background-color: #5bc0de;
+}
+
+.bc-bs-warning {
+  background-color: #f0ad4e;
+}
+
+.bc-bs-danger {
+  background-color: #d9534f;
+}
+
+.bc-bs-gray {
+  background-color: #eee;
+}
+
+.bc-bs-dark {
+  background-color: #555;
+}
+
+// --- qc ---
 .card-qc {
   margin: 10px 0 10px 10px;
 
@@ -19,4 +49,91 @@
 
 .qv-qc {
   margin: 0 10px 0 10px;
+}
+
+.underline-qc {
+  text-decoration: underline;
+}
+
+.card-qcsum {
+  height: 30px;
+  line-height: 30px;
+
+  span {
+    float: left;
+    width: 40px;
+  }
+
+  .qc-title {
+    background-color: white;
+    float: left;
+    margin: 0;
+    padding: 0;
+    width: 120px;
+  }
+
+  .qc-placeholder {
+    color: white;
+  }
+
+  .qc-label {
+    border: 3px solid #888;
+    border-radius: 15px;
+    color: white;
+    height: 20px;
+    margin: 5px 0 5px 0;
+    width: 30px;
+  }
+
+  .qc-success {
+    @extend .qc-label;
+    @extend .bc-bs-success;
+  }
+
+  .qc-warning {
+    @extend .qc-label;
+    @extend .bc-bs-warning;
+  }
+
+  .qc-failure {
+    @extend .qc-label;
+    @extend .bc-bs-danger;
+  }
+
+  .qc-default {
+    @extend .qc-label;
+    @extend .bc-bs-gray;
+  }
+
+  .qc-dark {
+    @extend .qc-label;
+    @extend .bc-bs-dark;
+  }
+}
+
+.col-qcsum-l {
+  display: inline-block;
+  width: 400px;
+  vertical-align: top;
+}
+
+.col-qcsum-r {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.box-qcsum-score {
+  border: 5px solid #888;
+  border-radius: 40px;
+  display: inline-block;
+  height: 80px;
+  margin: 35px 0 0 20px;
+  text-align: center;
+  width: 80px;
+}
+
+.txt-qcsum-score {
+  color: white;
+  font-size: 32px;
+  line-height: 70px;
 }

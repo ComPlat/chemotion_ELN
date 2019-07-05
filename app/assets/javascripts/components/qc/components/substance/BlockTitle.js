@@ -12,7 +12,9 @@ const infoTp = (
 const BlockTitle = () => (
   <div>
     <h4>
-      <span>Analysis of digital research data for plausibility</span>
+      <span className="underline-qc">
+        Analysis of digital research data for plausibility and Quality Control - QC
+      </span>
     </h4>
     <h4>
       <span>Information </span>

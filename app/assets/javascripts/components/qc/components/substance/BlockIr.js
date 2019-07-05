@@ -2,9 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Panel, Alert } from 'react-bootstrap';
 
-import QcMolView from './helper/qc_mol_view';
-import { iconByMargin } from './helper/icon';
-import { tableIr } from './helper/ir';
+import QcMolView from '../helper/qc_mol_view';
+import { iconByMargin } from '../helper/icon';
+import { tableIr } from '../helper/ir';
 
 const emptyBlock = () => (
   <div className="card-qc">
@@ -19,16 +19,16 @@ const emptyBlock = () => (
   </div>
 );
 
-const BlockIr = ({ irQc, ansIr }) => {
-  if (Object.keys(ansIr).length === 0) return emptyBlock();
+const BlockIr = ({ ansIr }) => {
+  if (!ansIr.exist) return emptyBlock();
+  const { qcp } = ansIr;
   const {
-    numFg, numFg80, numFg90,
+    fgs, svg, numFg, numFg80, numFg90,
     posMac80, posOwn80, posMac90, posOwn90,
     negMac90, negOwn90,
     numMac, numOwn,
     ansMac80, ansOwn80, ansMacF90, ansOwnF90,
-  } = ansIr;
-  const { svgs } = irQc.pred.output.result[0];
+  } = qcp;
 
   return (
     <div className="card-qc">
@@ -77,8 +77,8 @@ const BlockIr = ({ irQc, ansIr }) => {
           </Panel.Heading>
           <Panel.Collapse>
             <Panel.Body>
-              <QcMolView svg={svgs[0]} />
-              { tableIr(irQc) }
+              <QcMolView svg={svg} />
+              { tableIr(fgs) }
             </Panel.Body>
           </Panel.Collapse>
         </Panel>
@@ -88,7 +88,6 @@ const BlockIr = ({ irQc, ansIr }) => {
 };
 
 BlockIr.propTypes = {
-  irQc: PropTypes.object.isRequired,
   ansIr: PropTypes.object.isRequired,
 };
 

@@ -34,8 +34,8 @@ const colorLabel = (idx) => {
   );
 };
 
-const tableIr = (irQc) => {
-  const qc = irQc.pred.output.result[0];
+const tableIr = (fgs) => {
+  if (!fgs) return null;
 
   return (
     <Table responsive striped condensed hover>
@@ -50,7 +50,7 @@ const tableIr = (irQc) => {
       </thead>
       <tbody>
         {
-          qc.fgs
+          fgs
             .sort((a, b) => b.confidence - a.confidence)
             .map((fg, idx) => (
               <tr key={`${fg}${idx}`}>

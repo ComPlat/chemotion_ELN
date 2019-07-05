@@ -21,7 +21,7 @@ const iconByMargin = (result, margin = 0) => (
 
 const iconTpMs = (
   <Tooltip id="ans-tp-ms">
-    No matching molecular mass in the scan.
+    Whether exact molecular mass is matched in the scan?
   </Tooltip>
 );
 

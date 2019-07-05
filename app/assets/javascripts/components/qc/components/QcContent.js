@@ -1,13 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import BlockTitle from './BlockTitle';
-import BlockHnmr from './BlockHnmr';
-import BlockCnmr from './BlockCnmr';
-import BlockMS from './BlockMS';
-import BlockIr from './BlockIr';
-import BlockEa from './BlockEa';
-import BlockConclusion from './BlockConclusion';
+import AreaTitle from './summary/AreaTitle';
+import AreaSummary from './summary/AreaSummary';
+
+import BlockTitle from './substance/BlockTitle';
+import BlockHnmr from './substance/BlockHnmr';
+import BlockCnmr from './substance/BlockCnmr';
+import BlockMS from './substance/BlockMS';
+import BlockIr from './substance/BlockIr';
+import BlockEa from './substance/BlockEa';
+import BlockConclusion from './substance/BlockConclusion';
 
 import { prismQcs } from '../utils/qcs';
 import { evaluateMs } from '../utils/ms';
@@ -20,38 +23,46 @@ const QcContent = ({ sample, infer }) => {
   } = prismQcs(sample, infer);
   const sumFormula = sample.molecule_formula;
 
-  const ansHnmr = evaluateNmr('1H', hnmrQc, sumFormula);
-  const ansCnmr = evaluateNmr('13C', cnmrQc, sumFormula);
+  const ansHnmr = evaluateNmr(hnmrQc, sumFormula);
+  const ansCnmr = evaluateNmr(cnmrQc, sumFormula);
   const ansMs = evaluateMs(msQc, sample);
   const ansIr = evaluateIr(irQc);
 
   return (
     <div>
-      <BlockTitle />
-      <BlockHnmr
-        hnmrQc={hnmrQc}
-        ansHnmr={ansHnmr}
-      />
-      <BlockCnmr
-        cnmrQc={cnmrQc}
-        ansCnmr={ansCnmr}
-      />
-      <BlockMS
-        msQc={msQc}
-        sample={sample}
-        ansMs={ansMs}
-      />
-      <BlockIr
-        irQc={irQc}
-        ansIr={ansIr}
-      />
-      <BlockEa />
-      <BlockConclusion
-        ansHnmr={ansHnmr}
-        ansCnmr={ansCnmr}
-        ansMs={ansMs}
-        ansIr={ansIr}
-      />
+      <div>
+        <AreaTitle />
+        <AreaSummary
+          ansHnmr={ansHnmr}
+          ansCnmr={ansCnmr}
+          ansMs={ansMs}
+          ansIr={ansIr}
+        />
+      </div>
+      <br />
+      <br />
+      <div>
+        <BlockTitle />
+        <BlockHnmr
+          ansHnmr={ansHnmr}
+        />
+        <BlockCnmr
+          ansCnmr={ansCnmr}
+        />
+        <BlockMS
+          ansMs={ansMs}
+        />
+        <BlockIr
+          ansIr={ansIr}
+        />
+        <BlockEa />
+        <BlockConclusion
+          ansHnmr={ansHnmr}
+          ansCnmr={ansCnmr}
+          ansMs={ansMs}
+          ansIr={ansIr}
+        />
+      </div>
     </div>
   );
 };

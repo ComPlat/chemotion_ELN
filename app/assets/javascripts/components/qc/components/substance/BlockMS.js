@@ -2,8 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Alert } from 'react-bootstrap';
 
-import { iconMs } from './helper/icon';
-import { emm } from '../utils/ms';
+import { iconMs } from '../helper/icon';
 
 const emptyBlock = () => (
   <div className="card-qc">
@@ -18,22 +17,14 @@ const emptyBlock = () => (
   </div>
 );
 
-const content = (msQc) => {
-  const qc = msQc.pred.output.result[0];
-  const maxY = Math.max(...qc.ys);
-  const signals = qc.xs.map((x, idx) => (
-    `${x.toFixed(2)} (${parseInt(((100 * qc.ys[idx]) / maxY), 10)}%)`
-  ));
-  return signals.join(', ');
-};
-
-const scan = (msQc) => {
-  const qc = msQc.pred.output.result[0];
-  return qc.scan;
-};
-
-const BlockMS = ({ msQc, sample, ansMs }) => {
-  if (Object.keys(ansMs).length === 0) return emptyBlock();
+const BlockMS = ({ ansMs }) => {
+  if (!ansMs.exist) return emptyBlock();
+  const { qcp, conclusion } = ansMs;
+  const {
+    emMass,
+    scan,
+    desc,
+  } = qcp;
 
   return (
     <div className="card-qc">
@@ -43,18 +34,18 @@ const BlockMS = ({ msQc, sample, ansMs }) => {
       <div className="card-qc">
         <div>
           <span>Identified Mass peaks (<i>m/z</i>) = </span>
-          { content(msQc) }
+          { desc }
         </div>
         <div>
-          <span>Selected scan: {scan(msQc)}.</span>
+          <span>Selected scan: { scan }.</span>
         </div>
         <div>
           <span>Exact molecular mass = </span>
-          { emm(sample) }
+          { emMass }
         </div>
         <div>
           <span>Conclusion: </span>
-          { iconMs(ansMs.conclusionMs) }
+          { iconMs(conclusion) }
         </div>
       </div>
     </div>
@@ -62,8 +53,6 @@ const BlockMS = ({ msQc, sample, ansMs }) => {
 };
 
 BlockMS.propTypes = {
-  msQc: PropTypes.object.isRequired,
-  sample: PropTypes.object.isRequired,
   ansMs: PropTypes.object.isRequired,
 };
 
