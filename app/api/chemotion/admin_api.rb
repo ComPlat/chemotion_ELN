@@ -159,80 +159,20 @@ module Chemotion
 
       namespace :importOlsTerms do
         desc 'import OLS terms'
+        params do
+          requires :file, type: File
+        end
         post do
           extname = File.extname(params[:file][:filename])
           if extname.match(/\.(owl?|xml)/i)
-            ols_name = params[:file][:filename].split('.').first
-            xml_doc = Nokogiri::XML(File.open(params[:file][:tempfile].path)).to_xml
-            json_doc = Hash.from_xml(xml_doc).as_json
-
-            all_terms = json_doc['RDF']['Class']
-
-            OlsTerm.where(ols_name: ols_name).destroy_all if all_terms.length > 0
-            version_info = json_doc['RDF']['Ontology']
-            all_terms.each do |node|
-              next if node['id'].nil?
-              next if node['deprecated'] == 'true'
-              unless node['subClassOf'].nil?
-                if (node['subClassOf'].length > 1)
-                  subClass = node['subClassOf'][0]["rdf:resource"]
-                else
-                  subClass = node['subClassOf']["rdf:resource"]
-                end
-              end
-              # if node['id'] == 'RXNO:0000024'
-              #   node
-              #   byebug
-              #   node['deprecated']
-              # end
-
-              ## special case: RXNO:0000024
-              if subClass.nil? && node['equivalentClass'] && node['equivalentClass']['Class'] && node['equivalentClass']['Class']['intersectionOf'] && node['equivalentClass']['Class']['intersectionOf']['Description']
-                subClass = node['equivalentClass']['Class']['intersectionOf']['Description']["rdf:about"]
-              end
-              subClassTermId = subClass.split('/').last.gsub('_',':') unless subClass.nil?
-
-              unless node['hasExactSynonym'].nil?
-                synonyms = node['hasExactSynonym']
-                if synonyms.class == String
-                  synonym = synonyms
-                  synonyms = [synonyms]
-                else
-                  synonym = synonyms.sort_by(&:length)[0]
-                end
-              end
-              OlsTerm.create!(ols_name:ols_name, term_id: node['id'], ancestry_term_id: subClassTermId,
-                label: node['label'], synonym: synonym, synonyms: synonyms,
-                desc: node['IAO_0000115'], metadata: {klass: node, version: version_info})
-            end
-
-            OlsTerm.where(ols_name: ols_name).each do |ols|
-              next if ols.ancestry_term_id.nil?
-              ancestry = OlsTerm.find_by(ols_name: ols_name, term_id: ols.ancestry_term_id)
-              ols.update!(ancestry: ancestry.id) unless ancestry.nil?
-            end
-
-            OlsTerm.where(ols_name: 'chmo').each do |o|
-              ols = OlsTerm.find(o.id)
-              next if ols.ancestry_term_id.nil?
-              ancestry = OlsTerm.find_by(ols_name: 'chmo', term_id: ols.ancestry_term_id)
-              next if ancestry.nil?
-              if ancestry.ancestry.nil?
-                new_a = ancestry.id.to_s
-              else
-                new_a = ancestry.ancestry + '/' + ancestry.id.to_s
-              end
-              ols.update!(ancestry: new_a)
-            end
-
-            disable_root = OlsTerm.find_by(ols_name: 'chmo', term_id: 'BFO:0000002')
-            unless disable_root.nil?
-              disable_nodes = [disable_root] + disable_root.descendants
-              disable_nodes.each { |oo| oo.update!(is_enabled: false) }
-            end
-
-            nmr_13c = OlsTerm.find_by(ols_name: 'chmo', term_id: 'CHMO:0000595')
-            nmr_13c.update!(synonym: '13C NMR') unless nmr_13c.nil?
+            owl_name = File.basename(params[:file][:filename], ".*")
+            file_path = params[:file][:tempfile].path
+            OlsTerm.delete_owl_by_name(owl_name)
+            OlsTerm.import_and_create_ols_from_file_path(owl_name,file_path)
+            OlsTerm.disable_branch_by(Ols_name: owl_name, term_id: 'BFO:0000002')
+            # discrete settings
+            nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')
+            nmr_13c.update!(synonym: '13C NMR') if nmr_13c
           end
         end
       end
