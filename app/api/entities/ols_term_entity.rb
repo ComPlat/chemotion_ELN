@@ -15,9 +15,11 @@ module Entities
         obj['label'] + ' (' + obj['synonym'] + ')'
       end
     end
+
     expose :synonym do |obj|
       obj['synonym']
     end
+    
     expose :value do |obj|
       if obj['owl_name'] == 'rxno' || obj['synonyms'].nil?
         obj['term_id'] + ' | ' + obj['label']

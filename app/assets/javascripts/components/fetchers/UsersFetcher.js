@@ -141,15 +141,11 @@ export default class UsersFetcher {
     return promise;
   }
 
-  static fetchOls(name, is_enabled=true) {
-    const promise = fetch(`/api/v1/ols_terms/list.json?name=${name}&is_enabled=${is_enabled}`, {
+  static fetchOls(name, edited = true) {
+    return fetch(`/api/v1/ols_terms/list.json?name=${name}&edited=${edited}`, {
       credentials: 'same-origin'
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
-      });
-    return promise;
+      .catch((errorMessage) => { console.log(errorMessage); });
   }
 }

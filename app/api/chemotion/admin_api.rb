@@ -165,21 +165,22 @@ module Chemotion
           optional :disableIds, type: Array, desc: 'disable term_ids'
         end
         post do
-          if params[:enableIds].present? && params[:enableIds].length > 0
-            params[:enableIds].each do |idkey|
-              term_id = idkey.split('|').first
-              ols = OlsTerm.find_by(owl_name: params[:owl_name], term_id: term_id)
-              ols.update!(is_enabled: true)
-            end
+          [:enableIds, :disableIds].each do |cat|
+            next unless params[cat].present?
+            term_ids = params[cat].map{|t| t.split('|').first.strip }
+            ids = OlsTerm.where(term_id: term_ids).pluck(:id)
+            OlsTerm.switch_by_ids(ids, cat == :enableIds)
           end
-          if params[:disableIds].present? && params[:disableIds].length > 0
-            params[:disableIds].each do |idkey|
-              term_id = idkey.split('|').first
-              ols = OlsTerm.find_by(owl_name: params[:owl_name], term_id: term_id)
-              ols.update!(is_enabled: false)
-            end
-          end
-          true
+
+          # rewrite edited json file
+          result = Entities::OlsTermEntity.represent(
+            OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(:order => :label),
+              serializable: true
+            ).unshift(
+              {'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []}
+            )
+          OlsTerm.write_public_file("#{owl_name}.edited", { ols_terms: result })
+          status 204
         end
       end
 
@@ -199,6 +200,24 @@ module Chemotion
             # discrete settings
             nmr_13c = OlsTerm.find_by(owl_name: 'chmo', term_id: 'CHMO:0000595')
             nmr_13c.update!(synonym: '13C NMR') if nmr_13c
+
+            # write original owl
+            result = Entities::OlsTermEntity.represent(
+              OlsTerm.where(owl_name: owl_name).arrange_serializable(:order => :label),
+              serializable: true
+            )
+            OlsTerm.write_public_file(owl_name, { ols_terms: result })
+
+            # write edited owl
+            result = Entities::OlsTermEntity.represent(
+              OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(:order => :label),
+              serializable: true
+            ).unshift(
+              {'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []}
+            )
+            OlsTerm.write_public_file("#{owl_name}.edited", { ols_terms: result })
+
+            status 204
           end
         end
       end

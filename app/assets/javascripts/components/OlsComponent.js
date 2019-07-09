@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import UserStore from './stores/UserStore';
 
 const filterTreeNode = (input, child) => {
-  return String(child.props.search).indexOf(input) !== -1;
+  return String(child.props.search && child.props.search.toLowerCase()).indexOf(input && input.toLowerCase()) !== -1;
 };
 export default class OlsTreeSelect extends Component {
   constructor(props) {

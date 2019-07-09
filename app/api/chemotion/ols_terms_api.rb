@@ -8,33 +8,18 @@ module Chemotion
         desc 'Get List'
         params do
           requires :name, type: String, desc: "OLS Name", values: %w[chmo rxno]
-          optional :is_enabled, type: Boolean, default: true, desc: 'Only list is_enabled ols terms'
+          optional :edited, type: Boolean, default: true, desc: 'Only list visible terms'
         end
 
         get 'list' do
-          unless params[:is_enabled]
-            list = OlsTerm.where(owl_name: params[:name]).arrange_serializable(:order => :label)
-            return { ols_terms: present(list, with: Entities::OlsTermEntity) }
-          end
-
-          list = OlsTerm.where(owl_name: params[:name], is_enabled: true)
-                        .arrange_serializable(:order => :label)
-          result = present(list, with: Entities::OlsTermEntity)
-          
+          file = Rails.public_path.join(
+            'ontologies',
+            "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}"
+          )
+          result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
           recent_term_ids = current_user.profile&.data&.fetch(params[:name], nil)
-          if recent_term_ids.present?
-            ols = OlsTerm.where(owl_name: params[:name], term_id: recent_term_ids)
-              .select(<<~SQL
-                        owl_name, ' ' || term_id as term_id, ancestry, label, synonym, synonyms
-                        -- owl_name, term_id, ancestry, label || ' ' as label, synonym, synonyms
-                      SQL
-              ).order("label").as_json
-            if ols.present?
-              entities = Entities::OlsTermEntity.represent(ols, serializable: true)
-              result.unshift({'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': entities})
-            end
-          end
-          { ols_terms: result }
+          result['ols_terms'][0]['children'] = recent_term_ids if recent_term_ids.present?
+          result
         end
 
         get 'root' do
