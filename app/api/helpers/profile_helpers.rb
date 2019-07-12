@@ -1,27 +1,33 @@
 module ProfileHelpers
     extend Grape::API::Helpers
     def recent_ols_term_update(name, ols_values, max=10)
-      return if ols_values.nil?
       return if ols_values&.length == 0
       return unless %w[chmo rxno].include?(name)
-
       ols_values.each do |ols_value|
         next if ols_value.nil?
-        term_id = ols_value.split('|').first.strip
-        next if term_id.nil? || term_id.length == 0
+        ols_value =~ /(\w+\:?\d+) \| ([^()]*) (\((.*)\))?/
+        term = {
+          'owl_name' => name,
+          'term_id' => $1,
+          'title' => $2,
+          'synonym' => $4,
+          'synonyms' => [$4],
+          'search' => ols_value,
+          'value' => ols_value
+        }
+
+        next unless term['term_id']
         profile = current_user.profile
         data = profile.data || {}
         list = data[name]
-        if list.nil?
-          data.merge!(rxno: [term_id]) if name == 'rxno'
-          data.merge!(chmo: [term_id]) if name == 'chmo'
+        if list.present?
+          return if (list.find{ |t|  t['term_id'] == term['term_id'] })
+          list.unshift(term)
+          data[name.to_sym] = list.first(max)
         else
-          return if (list.include?(term_id))
-          list.unshift(term_id).uniq
-          data.deep_merge!(rxno: list.first(max)) if name == 'rxno'
-          data.deep_merge!(chmo: list.first(max)) if name == 'chmo'
+          data[name.to_sym] =  [term_id]
         end
-        current_user.profile.update!(**{data: data})
+        current_user.profile.update!(**{ data: data })
       end
     end
   end

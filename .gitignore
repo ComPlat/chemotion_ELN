@@ -62,6 +62,9 @@
 !/public/images/wild_card/
 !/public/images/ghs/
 
+/public/ontologies/*
+!/public/ontologies/.keep
+
 /uploads/*
 !/public/attachments/.keep
 

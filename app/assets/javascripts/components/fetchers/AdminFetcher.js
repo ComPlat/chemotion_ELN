@@ -132,6 +132,25 @@ export default class AdminFetcher {
     return promise;
   }
 
+
+  static olsTermDisableEnable(params) {
+    const promise = fetch('/api/v1/admin/olsEnableDisable/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    })
+      .then(response => response.json())
+      .then(json => json)
+      .catch((errorMessage) => {
+        console.log(errorMessage);
+      });
+    return promise;
+  }
+
   static importOlsTerms(file) {
     var data = new FormData();
     data.append("file", file);
@@ -147,7 +166,6 @@ export default class AdminFetcher {
     }).catch((errorMessage) => {
       console.log(errorMessage);
     });
-
     return promise;
   }
 }

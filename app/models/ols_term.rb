@@ -19,6 +19,10 @@ class OlsTerm < ActiveRecord::Base
       INSERT  INTO ols_terms (#{COLUMNS.join(',')}) VALUES
     SQL
 
+    SQL_BULK_SWITCH = <<~SQL
+      UPDATE ols_terms SET is_enabled = ? WHERE id in (?)
+    SQL
+
     BULK_INSERT_STRING_SIZE = SQL_BULK_INSERT.size
 
     INSERT_VALUE_QUESTION_MARKS =  "(#{Array.new(COLUMNS.size){'?'}.join(',')})"
@@ -39,12 +43,13 @@ class OlsTerm < ActiveRecord::Base
       json_doc = Hash.from_xml(xml_doc).as_json
       all_terms = json_doc['RDF']['Class']
       version_info = json_doc['RDF']['Ontology']
-      all_terms.each_slice(50) do |nodes|
+      all_terms.each_slice(100) do |nodes|
         create_from_owl_nodes(nodes, owl_name, version_info: version_info)
       end
       rebuilt_ancestry_by_owl_name(owl_name)
     end
 
+    # bulk insert from a slice of owl nodes
     def create_from_owl_nodes(nodes, owl_name, version_info: {})
       values = []
       created_at = Time.now
@@ -54,29 +59,31 @@ class OlsTerm < ActiveRecord::Base
         subClassTermId = extract_subclass_term_id_from_node(node)
 
         if (synonyms = node['hasExactSynonym'].presence)
-          if synonyms.class == String
+          if synonyms.is_a?(String)
             synonym = synonyms
             synonyms = [synonyms]
-          else
+          else # synonyms.is_a?(Array)
             synonym = synonyms.sort_by(&:length)[0]
           end
         end
+        label = node['label'].is_a?(String)? node['label'] : node['label'][0]
         # to correspond in order to SQL_BULK_INSERT listed columns
         value = [
           owl_name,
           node['id'],
           subClassTermId,
-          node['label'],
+          node['label'].is_a?(String)? node['label'] : node['label'].join(' - '), #[0],
           synonym,
           synonyms.to_json,
-          node['IAO_0000115'],
+          node['IAO_0000115'].is_a?(Array)? node['IAO_0000115'].join(' - ') : node['IAO_0000115'],
           { "klass": node, "version": version_info }.to_json,
           created_at,
           created_at
         ]
+        next unless value.compact.present?
         values <<  sanitize_sql([SQL_BULK_INSERT_SANITIZE] + value)[BULK_INSERT_STRING_SIZE..-1]
       end
-      ActiveRecord::Base.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}")
+      ActiveRecord::Base.connection.exec_query("#{SQL_BULK_INSERT} #{values.join(',')}") if values.present?
     end
 
     def rebuilt_ancestry_by_owl_name(owl_name)
@@ -100,9 +107,28 @@ class OlsTerm < ActiveRecord::Base
       a = args.slice(:owl_name, :term_id)
       node = find_by(**a)
       return unless node
-      ([node] + node.descendants).each { |n| n.update!(is_enabled: false) }
+      node_ids = [node.id] + node.descendants.pluck(:id)
+      disable_by_ids(node_ids)
     end
 
+    def disable_by_ids(ids)
+      switch_by_ids(ids, false)
+    end
+
+    def enable_by_ids(ids)
+      switch_by_ids(ids, true)
+    end
+
+    def switch_by_ids(ids, bool = false)
+      ids = [ids].flatten
+      sanitized_sql = sanitize_sql([SQL_BULK_SWITCH, bool, ids])
+      ActiveRecord::Base.connection.exec_query(sanitized_sql)
+    end
+
+    def write_public_file(owl_name, owl)
+      file_path = Rails.public_path.join('ontologies', "#{owl_name}.json")
+      File.write(file_path, owl.to_json)
+    end
     private
 
     def build_direct_parent_ancestry(owl_name)

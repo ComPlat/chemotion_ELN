@@ -8,25 +8,23 @@ module Chemotion
         desc 'Get List'
         params do
           requires :name, type: String, desc: "OLS Name", values: %w[chmo rxno]
+          optional :edited, type: Boolean, default: true, desc: 'Only list visible terms'
         end
-        get 'list' do
-          list = OlsTerm.where(owl_name: params[:name], is_enabled: true).arrange_serializable(:order => :label)
-          result = present(list, with: Entities::OlsTermEntity)
 
-          recent_term_ids = current_user.profile && current_user.profile.data && current_user.profile.data[params[:name]]
-          unless recent_term_ids.nil?
-            ols = OlsTerm.where(owl_name: params[:name], term_id: recent_term_ids)
-            .select(
-              <<~SQL
-              owl_name, ' ' || term_id as term_id, ancestry, label, synonym, synonyms
-              SQL
-              ).order("label").as_json
-            unless ols.nil? || ols.length == 0
-              entities = Entities::OlsTermEntity.represent(ols, serializable: true)
-              result.unshift({'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': entities})
-            end
-          end
-          {ols_terms: result}
+        get 'list' do
+          file = Rails.public_path.join(
+            'ontologies',
+            "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}"
+          )
+          result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
+          recent_term_ids = current_user.profile&.data&.fetch(params[:name], nil)
+          result['ols_terms'][0]['children'] = recent_term_ids if recent_term_ids.present?
+          result
+        end
+
+        get 'root' do
+          list = OlsTerm.where(owl_name: params[:name], is_enabled: true, ancestry: nil)
+          { ols_terms: present(list, with: Entities::OlsTermEntity) }
         end
       end
     end
