@@ -520,6 +520,72 @@ describe Chemotion::CollectionAPI do
         end
       end
     end
+
+    describe 'POST /api/v1/collections/exports' do
+      let(:c1) { create(:collection, user: user) }
+      let(:c2) { create(:collection, user: u2) }
+
+      context 'with the correct collection' do
+        let(:params) {
+          {
+            collections: [c1.id],
+            format: 'zip',
+            nested: true
+          }
+        }
+
+        it 'creates an export job' do
+          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          expect(response.status).to eq(204)
+        end
+      end
+
+      context 'with the wrong collection' do
+        let(:params) {
+          {
+            collections: [c2.id],
+            format: 'zip',
+            nested: true
+          }
+        }
+
+        it 'returns 401 Unauthorized' do
+          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          expect(response.status).to eq(401)
+        end
+      end
+
+      context 'with a non existing collection' do
+        let(:params) {
+          {
+            collections: [666],
+            format: 'zip',
+            nested: true
+          }
+        }
+
+        it 'returns 401 Unauthorized' do
+          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          expect(response.status).to eq(401)
+        end
+      end
+    end
+
+    describe 'POST /api/v1/collections/imports,' do
+      context 'with a valid file,' do
+        let(:file_upload) {
+          {
+            file: fixture_file_upload(
+              Rails.root.join('spec/fixtures/import/2541a423-11d9-4c76-a7e1-0da470644012.zip'), 'application/gzip')
+          }
+        }
+
+        it 'creates an import job' do
+          status = post '/api/v1/collections/imports', file_upload
+          expect(response.status).to eq(204)
+        end
+      end
+    end
   end
 
   context 'no user logged in' do
@@ -559,5 +625,39 @@ describe Chemotion::CollectionAPI do
         expect(c).to be_nil
       end
     end
+
+    describe 'POST /api/v1/collections/exports' do
+      context 'with the correct collection' do
+        let(:params) {
+          {
+            collections: [1, 2, 3],
+            format: 'zip',
+            nested: true
+          }
+        }
+
+        it 'responds with 401 status code' do
+          post '/api/v1/collections/exports', params.to_json, 'CONTENT_TYPE' => 'application/json'
+          expect(response.status).to eq(401)
+        end
+      end
+    end
+
+    describe 'POST /api/v1/collections/imports' do
+      context 'with a valid file,' do
+        let(:file_upload) {
+          {
+            file: fixture_file_upload(
+              Rails.root.join('spec/fixtures/import/2541a423-11d9-4c76-a7e1-0da470644012.zip'), 'application/gzip')
+          }
+        }
+
+        it 'responds with 401 status code' do
+          status = post '/api/v1/collections/imports', file_upload
+          expect(response.status).to eq(401)
+        end
+      end
+    end
+
   end
 end

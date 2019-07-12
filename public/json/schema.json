@@ -1,0 +1,1105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://www.chemotion.net/schema.json",
+  "type": "object",
+  "definitions": {
+    "uuid": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "datetime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reaction_sample": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "reaction_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "sample_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "reference": {
+              "type": "boolean"
+            },
+            "equivalent": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "position": {
+              "type": "integer"
+            },
+            "waste": {
+              "type": "boolean"
+            },
+            "coefficient": {
+              "type": "number"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "properties": {
+    "Collection": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "ancestry": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "shared_by_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "is_shared": {
+              "type": "boolean"
+            },
+            "permission_level": {
+              "type": "integer"
+            },
+            "sample_detail_level": {
+              "type": "integer"
+            },
+            "reaction_detail_level": {
+              "type": "integer"
+            },
+            "wellplate_detail_level": {
+              "type": "integer"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "position": {
+              "type": "integer"
+            },
+            "screen_detail_level": {
+              "type": "integer"
+            },
+            "is_locked": {
+              "type": "boolean"
+            },
+            "deleted_at": {
+              "type": "null"
+            },
+            "is_synchronized": {
+              "type": "boolean"
+            },
+            "researchplan_detail_level": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Sample": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "target_amount_value": {
+              "type": "number"
+            },
+            "target_amount_unit": {
+              "type": "string"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "molecule_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "molfile": {
+              "type": "string"
+            },
+            "purity": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "solvent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "impurities": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "location": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "is_top_secret": {
+              "type": "boolean"
+            },
+            "ancestry": {
+              "type": "string"
+            },
+            "external_label": {
+              "type": "string"
+            },
+            "created_by": {
+              "$ref": "#/definitions/uuid"
+            },
+            "short_label": {
+              "type": "string"
+            },
+            "real_amount_value": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "real_amount_unit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "imported_readout": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "deleted_at": {
+              "type": "null"
+            },
+            "sample_svg_file": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "user_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "identifier": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "density": {
+              "type": "number"
+            },
+            "melting_point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "boiling_point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "fingerprint_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "xref": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "molarity_value": {
+              "type": "number"
+            },
+            "molarity_unit": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "molecule_name_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "molfile_version": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "stereo": {
+              "type": "object"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "CollectionsSample": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "collection_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "sample_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Fingerprint": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "fp0": {
+              "type": "string"
+            },
+            "fp1": {
+              "type": "string"
+            },
+            "fp2": {
+              "type": "string"
+            },
+            "fp3": {
+              "type": "string"
+            },
+            "fp4": {
+              "type": "string"
+            },
+            "fp5": {
+              "type": "string"
+            },
+            "fp6": {
+              "type": "string"
+            },
+            "fp7": {
+              "type": "string"
+            },
+            "fp8": {
+              "type": "string"
+            },
+            "fp9": {
+              "type": "string"
+            },
+            "fp10": {
+              "type": "string"
+            },
+            "fp11": {
+              "type": "string"
+            },
+            "fp12": {
+              "type": "string"
+            },
+            "fp13": {
+              "type": "string"
+            },
+            "fp14": {
+              "type": "string"
+            },
+            "fp15": {
+              "type": "string"
+            },
+            "num_set_bits": {
+              "type": "integer"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Molecule": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "inchikey": {
+              "type": "string"
+            },
+            "inchistring": {
+              "type": "string"
+            },
+            "density": {
+              "type": "number"
+            },
+            "molecular_weight": {
+              "type": "number"
+            },
+            "molfile": {
+              "type": "string"
+            },
+            "melting_point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "boiling_point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "sum_formular": {
+              "type": "string"
+            },
+            "names": {
+              "type": "array"
+            },
+            "iupac_name": {
+              "type": "string"
+            },
+            "molecule_svg_file": {
+              "type": "string"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "deleted_at": {
+              "type": "null"
+            },
+            "is_partial": {
+              "type": "boolean"
+            },
+            "exact_molecular_weight": {
+              "type": "number"
+            },
+            "cano_smiles": {
+              "type": "string"
+            },
+            "cas": {
+              "type": "array"
+            },
+            "molfile_version": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "MoleculeName": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "molecule_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "user_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "description": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Residue": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "sample_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "residue_type": {
+              "type": "string"
+            },
+            "custom_info": {
+              "type": "objecy"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Reaction": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "description": {
+              "type": "object",
+              "properties": {
+                "ops": {
+                  "type": "array",
+                  "properties": {
+                    "insert": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "timestamp_start": {
+              "type": "string"
+            },
+            "timestamp_stop": {
+              "type": "string"
+            },
+            "observation": {
+              "type": "object",
+              "properties": {
+                "ops": {
+                  "type": "array",
+                  "properties": {
+                    "insert": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "purification": {
+              "type": "array"
+            },
+            "dangerous_products": {
+              "type": "array"
+            },
+            "tlc_solvents": {
+              "type": "string"
+            },
+            "tlc_description": {
+              "type": "string"
+            },
+            "rf_value": {
+              "type": "string"
+            },
+            "temperature": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array"
+                },
+                "userText": {
+                  "type": "string"
+                },
+                "valueUnit": {
+                  "type": "string"
+                }
+              }
+            },
+            "status": {
+              "type": "string"
+            },
+            "reaction_svg_file": {
+              "type": "string"
+            },
+            "solvent": {
+              "type": "string"
+            },
+            "deleted_at": {
+              "type": "null"
+            },
+            "short_label": {
+              "type": "string"
+            },
+            "created_by": {
+              "$ref": "#/definitions/uuid"
+            },
+            "role": {
+              "type": "string"
+            },
+            "origin": {
+              "type": "object"
+            },
+            "rinchi_string": {
+              "type": "string"
+            },
+            "rinchi_long_key": {
+              "type": "string"
+            },
+            "rinchi_short_key": {
+              "type": "string"
+            },
+            "rinchi_web_key": {
+              "type": "string"
+            },
+            "duration": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "CollectionsReaction": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "collection_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "reaction_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "ReactionsStartingMaterialSample": {
+      "$ref": "#/definitions/reaction_sample"
+    },
+    "ReactionsSolventSample": {
+      "$ref": "#/definitions/reaction_sample"
+    },
+    "ReactionsPurificationSolventSample": {
+      "$ref": "#/definitions/reaction_sample"
+    },
+    "ReactionsReactantSample": {
+      "$ref": "#/definitions/reaction_sample"
+    },
+    "ReactionsProductSample": {
+      "$ref": "#/definitions/reaction_sample"
+    },
+    "Wellplate": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer"
+            },
+            "description": {
+              "type": "object",
+              "properties": {
+                "ops": {
+                  "type": "array",
+                  "properties": {
+                    "insert": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "CollectionsWellplate": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "collection_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "wellplate_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Well": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "sample_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "wellplate_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "position_x": {
+              "type": "integer"
+            },
+            "position_y": {
+              "type": "integer"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "readout": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "additive": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Screen": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "object",
+              "properties": {
+                "ops": {
+                  "type": "array",
+                  "properties": {
+                    "insert": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "name": {
+              "type": "string"
+            },
+            "result": {
+              "type": "string"
+            },
+            "collaborator": {
+              "type": "string"
+            },
+            "conditions": {
+              "type": "string"
+            },
+            "requirements": {
+              "type": "string"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "CollectionsScreen": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "collection_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "screen_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "ScreensWellplate": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "screen_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "wellplate_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "ResearchPlan": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "description": {
+              "type": "object",
+              "properties": {
+                "ops": {
+                  "type": "array",
+                  "properties": {
+                    "insert": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "sdf_file": {
+              "type": "string"
+            },
+            "svg_file": {
+              "type": "string"
+            },
+            "created_by": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "CollectionsResearchPlan": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "collection_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "research_plan_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "deleted_at": {
+              "type": "null"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Container": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "ancestry": {
+              "type": "string"
+            },
+            "containable_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "containable_type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "container_type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "extended_metadata": {
+              "type": "object"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "parent_id": {
+              "$ref": "#/definitions/uuid"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Attachment": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "attachable_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "filename": {
+              "type": "string"
+            },
+            "identifier": {
+              "$ref": "#/definitions/uuid"
+            },
+            "checksum": {
+              "type": "string"
+            },
+            "storage": {
+              "type": "string"
+            },
+            "created_by": {
+              "$ref": "#/definitions/uuid"
+            },
+            "created_for": {
+              "$ref": "#/definitions/uuid"
+            },
+            "version": {
+              "type": "integer"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "content_type": {
+              "type": "string"
+            },
+            "bucket": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            },
+            "thumb": {
+              "type": "boolean"
+            },
+            "folder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "attachable_type": {
+              "type": "string"
+            },
+            "aasm_state": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Literal": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "literature_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "element_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "element_type": {
+              "type": "string"
+            },
+            "category": {
+              "type": "string"
+            },
+            "user_id": {
+              "$ref": "#/definitions/uuid"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "Literature": {
+      "type": "object",
+      "patternProperties": {
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "created_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "updated_at": {
+              "$ref": "#/definitions/datetime"
+            },
+            "deleted_at": {
+              "type": "null"
+            },
+            "refs": {
+              "type": "object",
+              "properties": {
+                "bibtex": {
+                  "type": "string"
+                }
+              }
+            },
+            "doi": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

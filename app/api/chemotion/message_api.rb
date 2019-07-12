@@ -27,6 +27,11 @@ module Chemotion
         else
           cur = present(messages, with: Entities::MessageEntity, root: 'messages')
         end
+        if messages&.length > 0
+          job_msgs = messages.select { |hash| hash[:channel_type] == 5 }
+          job_msgs.each { |msg| Notification.find(msg.id).update!(is_ack: 1) } unless job_msgs&.length == 0
+        end
+        cur
       end
 
       desc 'Return channels'
@@ -102,12 +107,12 @@ module Chemotion
           optional :user_ids, type: Array, desc: 'notification user ids'
         end
         post do
-          content = {}
-          content['data'] = params[:content]
-          message = Message.create_msg_notification(params[:channel_id],
-                                                    content,
-                                                    current_user.id,
-                                                    params[:user_ids])
+          message = Message.create_msg_notification(
+            channel_id: params[:channel_id],
+            message_content: { 'data': params[:content] },
+            message_from: current_user.id,
+            message_to: params[:user_ids]
+          )
           { message: message }
         end
       end

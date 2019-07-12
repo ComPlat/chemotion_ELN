@@ -5,9 +5,9 @@ class ReportGeneratorNotification < ActiveRecord::Migration
      attributes = {
        subject: Channel::REPORT_GENERATOR_NOTIFICATION,
        channel_type: 8,
-       msg_template: '{"data": "%{report_name} is ready for downloaded!",
+       msg_template: '{"data": "%{report_name} is ready for download!",
                        "action":"ReportActions.updateProcessQueue",
-                       "report_id": "%{report_id}"
+                       "report_id": 0
                       }'
      }
      Channel.create(attributes)

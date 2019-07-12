@@ -10,7 +10,7 @@ class WellplateSerializer < ActiveModel::Serializer
   end 
 
   def wells
-    object.wells.order("id asc")
+    object.wells.order(position_y: :asc, position_x: :asc)
   end
 
   def created_at
@@ -26,7 +26,7 @@ class WellplateSerializer < ActiveModel::Serializer
     define_restricted_methods_for_level(0)
 
     def wells
-      object.wells.order("id asc").map{ |s| WellSerializer::Level0.new(s, @nested_dl).serializable_hash }
+      object.wells.order(position_y: :asc, position_x: :asc).map{ |s| WellSerializer::Level0.new(s, @nested_dl).serializable_hash }
     end
   end
 
@@ -35,7 +35,7 @@ class WellplateSerializer < ActiveModel::Serializer
     define_restricted_methods_for_level(1)
 
     def wells
-      object.wells.order("id asc").map{ |s| WellSerializer::Level1.new(s, @nested_dl).serializable_hash }
+      object.wells.order(position_y: :asc, position_x: :asc).map{ |s| WellSerializer::Level1.new(s, @nested_dl).serializable_hash }
     end
   end
 end
@@ -48,6 +48,6 @@ class WellplateSerializer::Level10 < WellplateSerializer
   end
 
   def wells
-    object.wells.order("id asc").map{ |s| WellSerializer::Level10.new(s, @nested_dl).serializable_hash }
+    object.wells.order(position_y: :asc, position_x: :asc).map{ |s| WellSerializer::Level10.new(s, @nested_dl).serializable_hash }
   end
 end

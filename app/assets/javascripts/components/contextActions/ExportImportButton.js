@@ -2,12 +2,15 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown, Button, MenuItem, Glyphicon } from 'react-bootstrap';
 
+import CollectionActions from '../actions/CollectionActions';
 import ElementActions from '../actions/ElementActions';
 import UIActions from '../actions/UIActions';
 import ModalImport from './ModalImport';
 import ModalImportChemScanner from './ModalImportChemScanner';
 import ModalExport from './ModalExport';
 import ModalReactionExport from './ModalReactionExport';
+import ModalExportCollection from './ModalExportCollection';
+import ModalImportCollection from './ModalImportCollection';
 
 const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
   <Dropdown id='export-dropdown'>
@@ -27,6 +30,20 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
       <MenuItem onSelect={() => importSampleFunction(updateModalProps)} disabled={isDisabled}
         title='Import from spreadsheet or sdf'>
         Import samples to collection
+      </MenuItem>
+      <MenuItem divider />
+      <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)}
+        title='Export collections as ZIP archive'>
+        Export selected collection
+      </MenuItem>
+      <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
+        title='Import collections from ZIP archive'>
+        Import collections
+      </MenuItem>
+      <MenuItem divider />
+      <MenuItem onSelect={() => exportCollectionFunctionFull(updateModalProps)}
+        title='Export all collections as one ZIP archive'>
+        Export all collections
       </MenuItem>
       {/* <MenuItem onSelect={() => importChemScannerFunction(updateModalProps)} disabled={isDisabled} */}
       {/*   title='Import from Docs'> */}
@@ -98,5 +115,60 @@ const exportReactionFunction = (updateModalProps) => {
   };
   updateModalProps(modalProps);
 }
+
+const exportCollectionFunction = (updateModalProps) => {
+  const title = "Export Collection as ZIP archive";
+  const component = ModalExportCollection;
+  const action = CollectionActions.exportCollectionsToFile;
+  const full = false;
+  const listSharedCollections = false;
+
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    action,
+    full,
+    listSharedCollections,
+  };
+
+  updateModalProps(modalProps);
+}
+
+const exportCollectionFunctionFull = (updateModalProps) => {
+  const title = "Export all collections as one ZIP archive";
+  const component = ModalExportCollection;
+  const action = CollectionActions.exportCollectionsToFile;
+  const full = true;
+  const listSharedCollections = false;
+
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    action,
+    full,
+    listSharedCollections,
+  };
+
+  updateModalProps(modalProps);
+}
+
+const importCollectionFunction = (updateModalProps) => {
+  const title = "Import Collections from ZIP archive";
+  const component = ModalImportCollection;
+  const action = CollectionActions.importCollectionsFromFile;
+  const listSharedCollections = false;
+
+  const modalProps = {
+    show: true,
+    title,
+    component,
+    action,
+    listSharedCollections,
+  };
+
+  updateModalProps(modalProps);
+};
 
 export default ExportImportButton

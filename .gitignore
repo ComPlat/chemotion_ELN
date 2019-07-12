@@ -65,6 +65,15 @@
 /uploads/*
 !/public/attachments/.keep
 
+/public/json/*
+!/public/json/schema.json
+
+/public/zip/*
+!/public/zip/.keep
+
+/public/udm/*
+!/public/udm/.keep
+
 !/public/apple-touch-icon.png
 
 /public/docx/*

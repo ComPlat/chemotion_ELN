@@ -14,7 +14,7 @@ begin
 	when 9 then
 	  insert into notifications (message_id, user_id, created_at,updated_at)
 	  (select in_message_id, id, now(),now() from users where deleted_at is null and type='Person');
-	when 8 then
+	when 5,8 then
 	  if (in_user_ids is not null) then
 	  a_userids = in_user_ids;
 	  end if;

@@ -80,7 +80,7 @@ gem 'fun_sftp', git: 'https://github.com/fl9/fun_sftp.git',
                 branch: 'allow-port-option'
 
 # API
-gem 'grape', '~>1.2.3' 
+gem 'grape', '~>1.2.3'
 gem 'grape-active_model_serializers'
 gem 'grape-kaminari'
 gem 'grape-entity'
@@ -105,7 +105,7 @@ gem 'faraday_middleware', '~> 0.12.1'
 gem 'httparty'
 
 gem 'ketcherails', '~> 0.1.6', git: 'https://github.com/ComPlat/ketcher-rails',
-     ref: 'c8200cfce01f9c4a8d36d22d74964b818f02d6ef'            
+     ref: 'c8200cfce01f9c4a8d36d22d74964b818f02d6ef'
      #path: '../ketcher-rails'
 
 # Free font icons
@@ -151,10 +151,12 @@ gem 'gman'
 gem 'ruby-mailchecker'
 gem 'swot'
 
+gem 'activejob-status'
+
 group :development, :test do
   gem 'binding_of_caller'
 
-  gem 'mailcatcher'
+  gem 'mailcatcher', '0.7.1'
 
   # Call 'byebug' anywhere in the code to stop execution
   # and get a debugger console

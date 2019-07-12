@@ -1,6 +1,9 @@
 import 'whatwg-fetch';
 import BaseFetcher from './BaseFetcher';
 
+import CollectionActions from '../actions/CollectionActions';
+import NotificationActions from '../actions/NotificationActions';
+
 export default class CollectionsFetcher {
   static takeOwnership(params) {
     let sync = params.isSync ? "syncC" : "c"
@@ -258,5 +261,36 @@ export default class CollectionsFetcher {
       })
     }).then(response => response)
       .catch((errorMessage) => { console.log(errorMessage); });
+  }
+
+  static createExportJob(params) {
+    return fetch('/api/v1/collections/exports/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params)
+    }).then((response) => {
+      NotificationActions.notifyExImportStatus('export', response.status);
+      if (response.ok) { return true; }
+      throw new Error(response.status);
+    }).catch((errorMessage) => { throw new Error(errorMessage); });
+  }
+
+  static createImportJob(params) {
+    const data = new FormData();
+    data.append('file', params.file);
+
+    return fetch('/api/v1/collections/imports/', {
+      credentials: 'same-origin',
+      method: 'POST',
+      body: data
+    }).then((response) => {
+      NotificationActions.notifyExImportStatus('import', response.status);
+      if (response.ok) { return true; }
+      throw new Error(response.status);
+    }).catch((errorMessage) => { console.log(errorMessage); });
   }
 }

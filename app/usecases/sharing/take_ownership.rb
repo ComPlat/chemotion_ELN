@@ -54,13 +54,14 @@ module Usecases
               end
             end
           end
-          channel = Channel.find_by(subject: Channel::COLLECTION_TAKE_OWNERSHIP)
-          return if channel.nil? || channel.msg_template.nil?
-          content = channel.msg_template
+
           user = User.find_by(id: new_owner_id)
           col = Collection.find_by(id: rsc.collection_id)
-          content['data'] = content['data'] % {:new_owner => user.name, :collection_name => col.label }
-          message = Message.create_msg_notification(channel.id,content,new_owner_id,[o_owner_id])
+          message = Message.create_msg_notification(
+            channel_subject: Channel::COLLECTION_TAKE_OWNERSHIP,
+            data_args: {new_owner: user.name, collection_name: col.label },
+            mesage_from: new_owner_id, message_to: [o_owner_id]
+          )
         else
           c = Collection.find(@params[:id])
           # if user already owns the (unshared) collection, there is nothing to do here

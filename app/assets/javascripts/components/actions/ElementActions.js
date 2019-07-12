@@ -187,7 +187,6 @@ class ElementActions {
 
   // -- Collections --
 
-
   fetchSamplesByCollectionId(id, queryParams = {}, collectionIsSync = false,
       moleculeSort = false) {
     return (dispatch) => {
@@ -198,8 +197,6 @@ class ElementActions {
         console.log(errorMessage);
       });};
   }
-
-
 
   fetchReactionsByCollectionId(id, queryParams={}, collectionIsSync = false) {
     return (dispatch) => { ReactionsFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)
@@ -218,7 +215,6 @@ class ElementActions {
         console.log(errorMessage);
       });};
   }
-
 
   fetchScreensByCollectionId(id, queryParams={}, collectionIsSync = false) {
     return (dispatch) => { ScreensFetcher.fetchByCollectionId(id, queryParams, collectionIsSync)

@@ -46,27 +46,21 @@ class MoveToCollectionJob < ActiveJob::Base
       moresamples = CollectionsSample.select(:sample_id).where(collection_id: id)
                                     .limit(1).pluck(:sample_id)
 
-      channel = Channel.find_by(subject: Channel::GATE_TRANSFER_NOTIFICATION)
-      return true if channel&.msg_template.nil?
-
       error_samples = samples.select{ |o| o[:state] != MoveToCollectionJob::STATE_MOVED }
       error_reactions = reactions.select{ |o| o[:state] != MoveToCollectionJob::STATE_MOVED }
 
-      raise "jobs are not completed!! " if error_samples&.count > 0 || error_reactions&.count > 0
-
-    rescue => e
-      Rails.logger.error moresamples if moresamples
-      Rails.logger.error error_samples   if error_samples&.count > 0
-      Rails.logger.error error_reactions if error_reactions&.count > 0
-      raise "Jobs are not completed!! " + error_reactions&.to_json + error_samples&.to_json
-
+      if error_samples&.count > 0 || error_reactions&.count > 0
+      raise "Jobs are not completed!! "+ moresamples.inspect + error_reactions&.to_json + error_samples&.to_json
     ensure
-      content = channel.msg_template
-      content['data'] = 'Still some samples are on the blanket, please sync. again.' if moresamples&.count > 0
-      content['data'] = 'Some samples/reaction are not completed....' if error_samples&.count > 0 || error_reactions&.count > 0
-      users = [collection.user_id]
-      users.push(101) if moresamples&.count > 0 || error_samples&.count > 0 || error_reactions&.count > 0
-      message = Message.create_msg_notification(channel.id,content,collection.user_id,users)
+      comment =  'operation completed'
+      comment =  'Some samples were not transferred, please sync. again.' if moresamples&.count > 0
+      comment = 'Some samples/reaction could not be transferred....' if error_samples&.count > 0 || error_reactions&.count > 0
+
+      Message.create_msg_notification(
+        channel_subject: Channel::GATE_TRANSFER_NOTIFICATION,
+        data_args: { comment: comment },
+        message_from: collection.user_id,
+      )
     end
     true
   end

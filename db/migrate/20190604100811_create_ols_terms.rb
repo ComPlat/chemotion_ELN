@@ -1,6 +1,7 @@
 class CreateOlsTerms < ActiveRecord::Migration
   def change
     #drop_table(:ols_terms, if_exists: true)
+    unless table_exists? :ols_terms
     create_table :ols_terms do |t|
       t.string :ols_name
       t.string :term_id
@@ -16,7 +17,7 @@ class CreateOlsTerms < ActiveRecord::Migration
     end
     add_index :ols_terms, [:ols_name, :term_id], unique: true
     add_index :ols_terms, :ancestry
-
-    add_column :reactions, :rxno, :string
+    end
+    add_column :reactions, :rxno, :string unless column_exists? :reactions, :rxno
   end
 end

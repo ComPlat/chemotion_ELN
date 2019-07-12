@@ -219,12 +219,11 @@ module Chemotion
             collection_attributes: params[:collection_attributes].merge(shared_by_id: current_user.id)
           ).execute!
 
-          channel = Channel.find_by(subject: Channel::SHARED_COLLECTION_WITH_ME)
-          return if channel.nil?
-          content = channel.msg_template
-          return if (content.nil?)
-          content['data'] = content['data'] % {:shared_by => current_user.name }
-          message = Message.create_msg_notification(channel.id,content,current_user.id,uids)
+          Message.create_msg_notification(
+            channel_subject: Channel::SHARED_COLLECTION_WITH_ME,
+            message_from: current_user.id, message_to: uids,
+            data_args: { 'shared_by': current_user.name }, level: 'info'
+          )
         end
       end
 
@@ -334,15 +333,72 @@ module Chemotion
       end
 
       namespace :unshared do
-
         desc "Create an unshared collection"
         params do
           requires :label, type: String, desc: "Collection label"
         end
+
         post do
           Collection.create(user_id: current_user.id, label: params[:label])
         end
+      end
 
+      namespace :exports do
+        desc "Create export job"
+        params do
+          requires :collections, type: Array[Integer]
+          requires :format, type: Symbol, values: [:json, :zip, :udm]
+          requires :nested, type: Boolean
+        end
+
+        post do
+          collection_ids = params[:collections].uniq
+          nested = params[:nested] == true
+
+          if collection_ids.empty?
+            # no collection was given, export all collections for this user
+            collection_ids = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).pluck(:id)
+          else
+            # check if the user is allowed to export these collections
+            collection_ids.each do |collection_id|
+              collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+              error!('401 Unauthorized', 401) unless collection
+            end
+          end
+
+          ExportCollectionsJob.perform_later(collection_ids, params[:format].to_s, nested, current_user.id)
+          status 204
+        end
+      end
+
+      namespace :imports do
+        desc "Create import job"
+        params do
+          requires :file, type: File
+        end
+        post do
+          file = params[:file]
+          if tempfile = file[:tempfile]
+            att = Attachment.new(
+              bucket: file[:container_id],
+              filename: file[:filename],
+              key: file[:name],
+              file_path: file[:tempfile],
+              created_by: current_user.id,
+              created_for: current_user.id,
+              content_type: file[:type]
+            )
+            begin
+              att.save!
+            ensure
+              tempfile.close
+              tempfile.unlink
+            end
+            # run the asyncronous import job and return its id to the client
+            ImportCollectionsJob.perform_later(att, current_user.id)
+            status 204
+          end
+        end
       end
 
     end
