@@ -60,7 +60,7 @@ module Reporter
 
       message = Message.create_msg_notification(
         channel_subject: Channel::REPORT_GENERATOR_NOTIFICATION,
-        data_args: { report_name: @full_filename}, message_to: @author.id,
+        data_args: { report_name: @full_filename}, message_from: @author.id,
         report_id: @report.id
       )
 

@@ -50,7 +50,8 @@ class MoveToCollectionJob < ActiveJob::Base
       error_reactions = reactions.select{ |o| o[:state] != MoveToCollectionJob::STATE_MOVED }
 
       if error_samples&.count > 0 || error_reactions&.count > 0
-      raise "Jobs are not completed!! "+ moresamples.inspect + error_reactions&.to_json + error_samples&.to_json
+        raise "Jobs are not completed!! "+ moresamples.inspect + error_reactions&.to_json + error_samples&.to_json
+      end
     ensure
       comment =  'operation completed'
       comment =  'Some samples were not transferred, please sync. again.' if moresamples&.count > 0

@@ -2,6 +2,7 @@ class CurateProfileRecentOwl < ActiveRecord::Migration
   def change
     Profile.find_each do |profile|
       data = profile.data
+      next unless data
       # break unless defined? OlsTerm
       %w[chmo rxno].each do |owl_name|
         next unless data[owl_name].present?
@@ -12,6 +13,7 @@ class CurateProfileRecentOwl < ActiveRecord::Migration
             next
           end
           t = OlsTerm.find_by(term_id: term)
+	  next unless t
           new_term = {
             'owl_name' => owl_name,
             'term_id' => term,
