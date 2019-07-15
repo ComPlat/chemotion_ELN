@@ -172,14 +172,20 @@ module Chemotion
             OlsTerm.switch_by_ids(ids, cat == :enableIds)
           end
 
+          result_all = Entities::OlsTermEntity.represent(
+            OlsTerm.where(owl_name: params[:owl_name]).arrange_serializable(:order => :label),
+            serializable: true
+          )
+          OlsTerm.write_public_file(params[:owl_name], { ols_terms: result_all })
+
           # rewrite edited json file
           result = Entities::OlsTermEntity.represent(
-            OlsTerm.where(owl_name: owl_name, is_enabled: true).arrange_serializable(:order => :label),
+            OlsTerm.where(owl_name: params[:owl_name], is_enabled: true).arrange_serializable(:order => :label),
               serializable: true
             ).unshift(
-              {'key': params[:name], 'title': '-- Recently selected --', selectable: false, 'children': []}
+              {'key': params[:owl_name], 'title': '-- Recently selected --', selectable: false, 'children': []}
             )
-          OlsTerm.write_public_file("#{owl_name}.edited", { ols_terms: result })
+          OlsTerm.write_public_file("#{params[:owl_name]}.edited", { ols_terms: result })
           status 204
         end
       end

@@ -1,6 +1,6 @@
-%p Export collection job is completed!
-%p Your Collection(s): [#{@col_labels}] has been exported.
+%p Export collection job completed!
+%p Your data has been packed.
+%p Collection#{@s}: #{@col_labels}.
 %p
-%p Download it at: (only available today!)
-%a{ href: "#{@url}"} #{@url}
-
+%p Download link (expires at #{@expires_at}):
+%a{ href: "#{@link}"} #{@link}
