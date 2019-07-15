@@ -43,7 +43,6 @@ export default class OlsTerms extends React.Component {
       orgCheckedKeys: [],
       enableIds: [],
       disableIds: [],
-
       list: []
     };
     this.initialOls = this.initialOls.bind(this);
@@ -93,25 +92,21 @@ export default class OlsTerms extends React.Component {
   }
 
   addToChecked(cks, parent) {
-    if (parent.is_enabled === true) { cks.push(parent.key); }
+    if (parent.is_enabled === true) { cks.push(parent.value); }
     (parent.children || []).map((node) => {
+      node.key = node.value;
       this.addToChecked(cks, node);
     });
     return cks;
   }
 
   initialOls(selectName) {
-    // let expandedKeys = [];
     let checkedKeys = [];
     if (selectName == null && selectName === '') { return; }
     UsersFetcher.fetchOls(selectName, false)
       .then((result) => {
-        // const expandedKeys = (result.ols_terms||[]).map(a => a.key);
-        // (result.ols_terms||[]).map(a => {
-        //   expandedKeys = this.addToChecked(expandedKeys, a);
-        // });
-
         (result.ols_terms || []).map((a) => {
+          a.key = a.value;
           checkedKeys = this.addToChecked(checkedKeys, a);
         });
         this.setState({
@@ -132,10 +127,7 @@ export default class OlsTerms extends React.Component {
 
   onCheck(checkedKeys, e) {
     const { checkStrictly, orgCheckedKeys } = this.state;
-    // console.log('checkedKeys typeof: '+ typeof checkedKeys);
-    // console.log('checkedKeys.size:' + checkedKeys['checked']);
-    const checkedObj = (this.state.checkStrictly === true) ? checkedKeys.checked : checkedKeys;
-
+    const checkedObj = (checkStrictly === true) ? checkedKeys.checked : checkedKeys;
     const disableIds = difference(orgCheckedKeys, checkedObj);
     const enableIds = difference(checkedObj, orgCheckedKeys);
 
@@ -154,9 +146,8 @@ export default class OlsTerms extends React.Component {
 
   handleSaveBtn() {
     const { enableIds, disableIds } = this.state;
-    AdminFetcher.olsTermDisableEnable({ ols_name: this.state.selectName, enableIds, disableIds })
+    AdminFetcher.olsTermDisableEnable({ owl_name: this.state.selectName, enableIds, disableIds })
       .then((result) => {
-        // console.log(result);
         if (result === true) {
           alert('update successfully!');
           this.setState({ enableIds: [], disableIds: [] });

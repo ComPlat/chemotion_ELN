@@ -86,7 +86,7 @@ module Chemotion
           cp.save!
 
           Message.create_msg_notification(
-            message_subject: Channel::COMPUTED_PROPS_NOTIFICATION,
+            channel_subject: Channel::COMPUTED_PROPS_NOTIFICATION,
             message_from: uid,
             data_args: { sample_id: sample.id, status: 'started' },
             cprop: cp, level: 'info'

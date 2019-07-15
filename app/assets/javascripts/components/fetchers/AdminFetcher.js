@@ -143,10 +143,10 @@ export default class AdminFetcher {
       },
       body: JSON.stringify(params)
     })
-      .then(response => response.json())
-      .then(json => json)
-      .catch((errorMessage) => {
-        console.log(errorMessage);
+      .then((response) => {
+        if (response.status === 204) {
+          return true;
+        }
       });
     return promise;
   }

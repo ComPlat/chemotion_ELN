@@ -15,7 +15,7 @@ module Chemotion
           level = 'error'
         end
         message = Message.create_msg_notification(
-          message_subject: Channel::EDITOR_CALLBACK, message_from: user.id,
+          channel_subject: Channel::EDITOR_CALLBACK, message_from: user.id,
           data_args: data_args, attach_id: attachment.id, research_plan_id: attachment.attachable_id, level: level
         )
       end
