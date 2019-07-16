@@ -1,33 +1,38 @@
 import Element from './Element';
 import { isEmpty } from 'lodash';
 
+const uuidv4 = require('uuid/v4');
+
 export default class ResearchPlan extends Element {
-  /*isMethodRestricted(m) {
-    return false;
-  }*/
 
   static buildEmpty(collection_id) {
-    let description_default = {
-      "ops": [{ "insert": "" }]
-    }
-
     return new ResearchPlan({
       collection_id: collection_id,
       type: 'research_plan',
       name: 'New Research Plan',
-      description: description_default,
-      svg_file: '',
-      sdf_file: '',
-      attachments: [],
+      body: [
+        {
+          id: uuidv4(),
+          type: 'ketcher',
+          value: {
+            svg_file: null,
+            svg_file: null,
+            thumb_svg: null
+          }
+        },
+        {
+          id: uuidv4(),
+          type: 'richtext',
+          value: null
+        }
+      ]
     });
   }
 
   serialize() {
     return super.serialize({
       name: this.name,
-      description: this.description,
-      svg_file: this.svg_file,
-      sdf_file: this.sdf_file,
+      body: this.body,
       attachments: this.attachments
     });
   }

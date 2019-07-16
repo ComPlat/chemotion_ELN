@@ -8,7 +8,6 @@ import {
 import SVG from 'react-inlinesvg';
 import { includes, last, findKey, values } from 'lodash';
 import ElementCollectionLabels from './ElementCollectionLabels';
-import StructureEditorModal from './structure_editor/StructureEditorModal';
 import UIStore from './stores/UIStore';
 import UIActions from './actions/UIActions';
 
@@ -24,6 +23,10 @@ import SpinnerPencilIcon from './common/SpinnerPencilIcon';
 import ImageModal from './common/ImageModal';
 import LoadingActions from './actions/LoadingActions';
 import ConfirmClose from './common/ConfirmClose';
+
+import RichTextField from './research_plan/RichTextField';
+import KetcherField from './research_plan/KetcherField';
+
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -79,100 +82,16 @@ export default class ResearchPlanDetails extends Component {
       });
   }
 
-  svgOrLoading(research_plan) {
-    let svgPath = '';
-    if (this.state.loadingMolecule) {
-      svgPath = '/images/wild_card/loading-bubbles.svg';
-    } else {
-      svgPath = research_plan.svgPath;
-    }
-    const className = svgPath ? 'svg-container' : 'svg-container-empty';
-    const imageDefault = !includes(svgPath, 'no_image_180.svg');
-
-    return (
-      <div>
-        <Panel defaultExpanded={imageDefault} style={{ border: '0px', backgroundColor: 'white' }}>
-          <Panel.Heading style={{ border: '0px', backgroundColor: 'white' }}>
-            <Panel.Title toggle>
-              <OverlayTrigger
-                placement="bottom"
-                overlay={<Tooltip id="closeresearch_plan">Expand/Collapse Image</Tooltip>}
-              >
-                <Button
-                  bsSize="xsmall"
-                  className="button-right"
-                >
-                  <i className="fa fa-picture-o" />
-                </Button>
-              </OverlayTrigger>
-            </Panel.Title>
-          </Panel.Heading>
-          <Panel.Collapse style={{ border: '0px', backgroundColor: 'white' }}>
-            <Panel.Body>
-              <div
-                className={className}
-                onClick={this.showStructureEditor.bind(this)}
-              >
-                <Glyphicon className="pull-right" glyph="pencil" />
-                <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-              </div>
-            </Panel.Body>
-          </Panel.Collapse>
-        </Panel>
-      </div>
-    );
-  }
-
-  handleStructureEditorSave(sdf_file, svg_file, config = null) {
-    let {research_plan} = this.state;
-    research_plan.changed = true;
-    research_plan.sdf_file = sdf_file;
-    const smiles = config ? config.smiles : null;
-
-    this.setState({loadingMolecule: true});
-
-    const isChemdraw = smiles ? true : false
-
-    ResearchPlansFetcher.updateSVGFile(svg_file, isChemdraw).then((json) => {
-      research_plan.svg_file = json.svg_path;
-      this.setState({research_plan: research_plan, loadingMolecule: false});
-      this.hideStructureEditor();
-    });
-  }
-
-
-  handleStructureEditorCancel() {
-    this.hideStructureEditor()
-  }
-
-  structureEditorButton(isDisabled) {
-    return (
-      <Button onClick={this.showStructureEditor.bind(this)} disabled={isDisabled}>
-        <Glyphicon glyph='pencil'/>
-      </Button>
-    )
-  }
-
-  structureEditorModal(research_plan) {
-    const molfile = research_plan.sdf_file;
-    return(
-      <StructureEditorModal
-        key={research_plan.id}
-        showModal={this.state.showStructureEditor}
-        onSave={this.handleStructureEditorSave.bind(this)}
-        onCancel={this.handleStructureEditorCancel.bind(this)}
-        molfile={molfile} />
-    )
-  }
-
   handleSubmit() {
     const { research_plan } = this.state;
     LoadingActions.start();
+
     if (research_plan.isNew) {
       ElementActions.createResearchPlan(research_plan);
     } else {
       ElementActions.updateResearchPlan(research_plan);
     }
+
     if (research_plan.is_new) {
       const force = true;
       DetailActions.close(research_plan, force);
@@ -197,24 +116,12 @@ export default class ResearchPlanDetails extends Component {
       case 'name':
         research_plan.name = value;
         break;
-      case 'description':
-        research_plan.description = value;
-        break;
+      // case 'description':
+      //   research_plan.description = value;
+      //   break;
     }
     this.setState({
       research_plan: research_plan
-    });
-  }
-
-  showStructureEditor() {
-    this.setState({
-      showStructureEditor: true
-    });
-  }
-
-  hideStructureEditor() {
-    this.setState({
-      showStructureEditor: false
     });
   }
 
@@ -257,9 +164,6 @@ export default class ResearchPlanDetails extends Component {
       <Row style={style}>
         <Col md={2}>
           <h4>{research_plan.name}</h4>
-        </Col>
-        <Col md={10}>
-          {this.svgOrLoading(research_plan)}
         </Col>
       </Row>
     )
@@ -459,10 +363,37 @@ export default class ResearchPlanDetails extends Component {
       Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
   }
 
+  handleChange(value, index) {
+    let {research_plan} = this.state
+    research_plan.changed = true
+    research_plan.body[index].value = value
+
+    this.setState({
+      research_plan: research_plan
+    });
+  }
 
   propertiesTab(research_plan) {
     const { name, description } = research_plan;
     const submitLabel = research_plan.isNew ? "Create" : "Save";
+
+    const disabled = research_plan.isMethodDisabled('body')
+
+    let bodyFields = research_plan.body.map((field, index) => {
+      switch (field.type) {
+        case 'richtext':
+          return <RichTextField key={field.id}
+                                field={field} index={index} disabled={disabled}
+                                onChange={this.handleChange.bind(this)} />
+          break;
+        case 'ketcher':
+          return <KetcherField key={field.id}
+                               field={field} index={index} disabled={disabled}
+                               onChange={this.handleChange.bind(this)} />
+          break;
+      }
+    })
+
     return (
       <ListGroup fill="true">
         <ListGroupItem>
@@ -479,16 +410,8 @@ export default class ResearchPlanDetails extends Component {
               </FormGroup>
             </Col>
           </Row>
+          {bodyFields}
           <Row>
-            <Col md={12}>
-              <FormGroup>
-                <ControlLabel>Description</ControlLabel>
-                <QuillEditor value={research_plan.description}
-                  onChange={event => this.handleInputChange('description', {target: {value: event}})}
-                  disabled={research_plan.isMethodDisabled('description')}
-                />
-              </FormGroup>
-            </Col>
             <Col md={12}>
               <FormGroup>
                 <ControlLabel>Files</ControlLabel>
@@ -502,24 +425,23 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
+  literatureTab(research_plan){
+    const { name, description } = research_plan;
+    const submitLabel = research_plan.isNew ? "Create" : "Save";
 
-    literatureTab(research_plan){
-      const { name, description } = research_plan;
-      const submitLabel = research_plan.isNew ? "Create" : "Save";
+    return (
+      <ResearchPlansLiteratures
+        element={research_plan}
+      />
+    );
+  }
 
-      return (
-        <ResearchPlansLiteratures
-          element={research_plan}
-        />
-      );
-    }
-
-    handleSelect(eventKey) {
-      UIActions.selectTab({tabKey: eventKey, type: 'screen'});
-      this.setState({
-        activeTab: eventKey
-      })
-    }
+  handleSelect(eventKey) {
+    UIActions.selectTab({tabKey: eventKey, type: 'screen'});
+    this.setState({
+      activeTab: eventKey
+    })
+  }
 
   render() {
     const { research_plan } = this.state;
@@ -542,7 +464,6 @@ export default class ResearchPlanDetails extends Component {
               {this.literatureTab(research_plan)}
             </Tab>
           </Tabs>
-          {this.structureEditorModal(research_plan)}
           <ButtonToolbar>
             <Button bsStyle="primary" onClick={() => DetailActions.close(research_plan)}>Close</Button>
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>

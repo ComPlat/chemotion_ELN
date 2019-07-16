@@ -119,9 +119,7 @@ module Chemotion
       params do
         requires :id, type: Integer, desc: "Research plan id"
         optional :name, type: String, desc: "Research plan name"
-        optional :description, type: Hash, desc: "Research plan description"
-        optional :svg_file, type: String, desc: "Research plan SVG file"
-        optional :sdf_file, type: String, desc: "Research plan SDF file"
+        optional :body, type: Array, desc: "Research plan body"
       end
       route_param :id do
         before do
