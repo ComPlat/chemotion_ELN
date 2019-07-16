@@ -13,15 +13,15 @@ class CurateProfileRecentOwl < ActiveRecord::Migration
             next
           end
           t = OlsTerm.find_by(term_id: term)
-	  next unless t
+	        next unless t
           new_term = {
             'owl_name' => owl_name,
             'term_id' => term,
             'title' => t.label,
             'synonym' => t.synonym,
             'synonyms' => t.synonyms,
-            'search' => "#{term} | #{t.label} (#{[t.synonyms].flatten.join(',')})",
-            'value' => "#{term} | #{t.label} (#{t.synonym})",
+            'search' => t.synonyms.nil? ? "#{term} | #{t.label}" : "#{term} | #{t.label} (#{[t.synonyms].flatten.join(',')})",
+            'value' => t.synonym.nil? ? " #{term} | #{t.label}" : " #{term} | #{t.label} (#{t.synonym})",
           }
           recent_terms << new_term
         end

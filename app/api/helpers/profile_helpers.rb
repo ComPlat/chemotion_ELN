@@ -5,17 +5,16 @@ module ProfileHelpers
       return unless %w[chmo rxno].include?(name)
       ols_values.each do |ols_value|
         next if ols_value.nil?
-        ols_value =~ /(\w+\:?\d+) \| ([^()]*) (\((.*)\))?/
+        ols_value =~ /(\w+\:?\d+) \| ([^()]*)(\((.*)\))?/
         term = {
           'owl_name' => name,
           'term_id' => $1,
-          'title' => $2,
+          'title' => $3.nil? ? $2 : $2 + $3,
           'synonym' => $4,
           'synonyms' => [$4],
           'search' => ols_value,
-          'value' => ols_value
+          'value' => ' ' + ols_value
         }
-
         next unless term['term_id']
         profile = current_user.profile
         data = profile.data || {}
@@ -25,7 +24,7 @@ module ProfileHelpers
           list.unshift(term)
           data[name.to_sym] = list.first(max)
         else
-          data[name.to_sym] =  [term_id]
+          data[name.to_sym] =  [term]
         end
         current_user.profile.update!(**{ data: data })
       end
