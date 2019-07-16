@@ -631,7 +631,7 @@ ActiveRecord::Schema.define(version: 20200117115709) do
     t.datetime "deleted_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text     "body"
+    t.jsonb    "body"
   end
 
   create_table "residues", force: :cascade do |t|

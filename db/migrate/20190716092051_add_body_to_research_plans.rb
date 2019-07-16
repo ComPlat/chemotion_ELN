@@ -1,11 +1,10 @@
 class AddBodyToResearchPlans < ActiveRecord::Migration
   class ResearchPlan < ActiveRecord::Base
     serialize :description, Hash
-    serialize :body, Array
   end
 
   def up
-    add_column :research_plans, :body, :text
+    add_column :research_plans, :body, :jsonb
 
     ResearchPlan.find_each do |rp|
       body = [
@@ -48,7 +47,7 @@ class AddBodyToResearchPlans < ActiveRecord::Migration
       rp.update_column(:description, rp.body[1]["value"])
     end
 
-    remove_column :research_plans, :body
+    remove_column :research_plans, :jsonb
 
     ResearchPlan.reset_column_information
   end

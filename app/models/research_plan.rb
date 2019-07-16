@@ -20,8 +20,6 @@ class ResearchPlan < ActiveRecord::Base
   include Collectable
   include Taggable
 
-  serialize :body, Array
-
   belongs_to :creator, foreign_key: :created_by, class_name: 'User'
   validates :creator, :name, presence: true
 
