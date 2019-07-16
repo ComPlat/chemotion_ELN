@@ -17,8 +17,10 @@ module Chemotion
             "#{params[:name]}#{params[:edited] ? '.edited.json' : '.json'}"
           )
           result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
-          recent_term_ids = current_user.profile&.data&.fetch(params[:name], nil)
-          result['ols_terms'][0]['children'] = recent_term_ids if recent_term_ids.present?
+          if params[:edited]
+            recent_term_ids = current_user.profile&.data&.fetch(params[:name], nil)
+            result['ols_terms'][0]['children'] = recent_term_ids if recent_term_ids.present?
+          end
           result
         end
 

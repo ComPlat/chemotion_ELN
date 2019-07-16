@@ -180,7 +180,17 @@ module Chemotion
 
           # rewrite edited json file
           result = Entities::OlsTermEntity.represent(
-            OlsTerm.where(owl_name: params[:owl_name], is_enabled: true).arrange_serializable(:order => :label),
+            OlsTerm.where(owl_name: params[:owl_name], is_enabled: true).select(
+              <<~SQL
+              id, owl_name, term_id, label, synonym, synonyms, 'desc' as desc,
+              case when (ancestry is null) then null else
+                (select array_to_string(array(
+                  select id from ols_terms sub join unnest(regexp_split_to_array(ols_terms.ancestry,'/')::int[])
+                  with ordinality t(id,ord) using(id) where is_enabled order by t.ord
+                ),'/'))
+              end as ancestry
+            SQL
+            ).arrange_serializable(:order => :label),
               serializable: true
             ).unshift(
               {'key': params[:owl_name], 'title': '-- Recently selected --', selectable: false, 'children': []}
