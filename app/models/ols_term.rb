@@ -74,7 +74,7 @@ class OlsTerm < ActiveRecord::Base
           subClassTermId,
           node['label'].is_a?(String)? node['label'] : node['label'].join(' - '), #[0],
           synonym,
-          synonyms.to_json,
+          synonyms.nil? ? nil : synonyms.to_json,
           node['IAO_0000115'].is_a?(Array)? node['IAO_0000115'].join(' - ') : node['IAO_0000115'],
           { "klass": node, "version": version_info }.to_json,
           created_at,

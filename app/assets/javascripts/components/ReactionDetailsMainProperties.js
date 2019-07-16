@@ -174,7 +174,7 @@ export default class ReactionDetailsMainProperties extends Component {
               <OlsTreeSelect
                 selectName="rxno"
                 selectedValue={(reaction.rxno && reaction.rxno.trim()) || ''}
-                onSelectChange={event => onInputChange('rxno', event)}
+                onSelectChange={event => onInputChange('rxno', event.trim())}
                 selectedDisable={reaction.isMethodDisabled('rxno')}
               />
             </FormGroup>
