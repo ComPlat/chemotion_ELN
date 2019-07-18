@@ -362,6 +362,10 @@ module Chemotion
             # check if the user is allowed to export these collections
             collection_ids.each do |collection_id|
               collection = Collection.belongs_to_or_shared_by(current_user.id, current_user.group_ids).find_by(id: collection_id)
+              unless collection
+                # case when collection purpose is to build the collection tree (empty and locked)
+                next if Collection.find_by(id: collection_id, is_locked: true, is_shared: true)
+              end
               error!('401 Unauthorized', 401) unless collection
             end
           end
