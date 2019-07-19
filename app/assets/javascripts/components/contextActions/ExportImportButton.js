@@ -33,17 +33,12 @@ const ExportImportButton = ({ isDisabled, updateModalProps, customClass }) => (
       </MenuItem>
       <MenuItem divider />
       <MenuItem onSelect={() => exportCollectionFunction(updateModalProps)}
-        title='Export collections as ZIP archive'>
-        Export selected collection
+        title='Export as ZIP archive'>
+        Export collections
       </MenuItem>
       <MenuItem onSelect={() => importCollectionFunction(updateModalProps)}
         title='Import collections from ZIP archive'>
         Import collections
-      </MenuItem>
-      <MenuItem divider />
-      <MenuItem onSelect={() => exportCollectionFunctionFull(updateModalProps)}
-        title='Export all collections as one ZIP archive'>
-        Export all collections
       </MenuItem>
       {/* <MenuItem onSelect={() => importChemScannerFunction(updateModalProps)} disabled={isDisabled} */}
       {/*   title='Import from Docs'> */}
@@ -117,29 +112,10 @@ const exportReactionFunction = (updateModalProps) => {
 }
 
 const exportCollectionFunction = (updateModalProps) => {
-  const title = "Export Collection as ZIP archive";
+  const title = "Export Collections as ZIP archive";
   const component = ModalExportCollection;
   const action = CollectionActions.exportCollectionsToFile;
   const full = false;
-  const listSharedCollections = false;
-
-  const modalProps = {
-    show: true,
-    title,
-    component,
-    action,
-    full,
-    listSharedCollections,
-  };
-
-  updateModalProps(modalProps);
-}
-
-const exportCollectionFunctionFull = (updateModalProps) => {
-  const title = "Export all collections as one ZIP archive";
-  const component = ModalExportCollection;
-  const action = CollectionActions.exportCollectionsToFile;
-  const full = true;
   const listSharedCollections = false;
 
   const modalProps = {

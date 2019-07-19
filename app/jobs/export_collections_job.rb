@@ -20,7 +20,8 @@ class ExportCollectionsJob < ActiveJob::Base
       Message.create_msg_notification(
         channel_subject: Channel::COLLECTION_ZIP,
         message_from: @user_id,
-        data_args: {expires_at: @expires_at, operation: 'Export', col_labels: @labels}
+        data_args: {expires_at: @expires_at, operation: 'Export', col_labels: @labels },
+        url: @link
       )
     rescue StandardError => e
       Delayed::Worker.logger.error e
