@@ -44,7 +44,7 @@ const SampleName = ({ sample }) => {
   return (
     <div>
       <p>{sumFormulaCom}</p>
-      <p>{moleculeName}</p>
+      <p style={{ wordBreak: 'break-all' }}>{moleculeName}</p>
     </div>
   );
 };
