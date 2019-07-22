@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, Row, Col, Glyphicon } from 'react-bootstrap';
+import { Glyphicon } from 'react-bootstrap';
 import SVG from 'react-inlinesvg';
 import { includes, last, findKey, values } from 'lodash';
 
@@ -8,7 +8,7 @@ import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
 import StructureEditorModal from '../structure_editor/StructureEditorModal';
 import QuillEditor from '../QuillEditor';
 
-export default class KetcherField extends Component {
+export default class ResearchPlanDetailsKetcherField extends Component {
 
   constructor(props) {
     super(props)
@@ -91,23 +91,17 @@ export default class KetcherField extends Component {
     const imageDefault = !includes(svgPath, 'no_image_180.svg');
 
     return (
-      <Row>
-        <Col md={12}>
-          <FormGroup>
-            <div className={className}
-                 onClick={this.showStructureEditor.bind(this)} >
-              <Glyphicon className="pull-right" glyph="pencil" />
-              <SVG key={svgPath} src={svgPath} className="molecule-mid" />
-            </div>
-          </FormGroup>
-        </Col>
+      <div className={className}
+           onClick={this.showStructureEditor.bind(this)} >
+        <Glyphicon className="pull-right" glyph="pencil" />
+        <SVG key={svgPath} src={svgPath} className="molecule-mid" />
         {this.renderStructureEditorModal(field)}
-      </Row>
+      </div>
     )
   }
 }
 
-KetcherField.propTypes = {
+ResearchPlanDetailsKetcherField.propTypes = {
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,

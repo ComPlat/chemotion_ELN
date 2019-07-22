@@ -24,9 +24,9 @@ import ImageModal from './common/ImageModal';
 import LoadingActions from './actions/LoadingActions';
 import ConfirmClose from './common/ConfirmClose';
 
-import NameField from './research_plan/NameField';
-import RichTextField from './research_plan/RichTextField';
-import KetcherField from './research_plan/KetcherField';
+import ResearchPlanDetailsNameField from './research_plan/ResearchPlanDetailsNameField';
+import ResearchPlanDetailsBody from './research_plan/ResearchPlanDetailsBody';
+
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -373,33 +373,28 @@ export default class ResearchPlanDetails extends Component {
     });
   }
 
+  handleBodyDrop(source, target) {
+    let {research_plan} = this.state
+
+    research_plan.body.splice(target, 0, research_plan.body.splice(source, 1)[0]);
+
+    this.setState({
+      research_plan: research_plan
+    });
+  }
+
   propertiesTab(research_plan) {
     const { name, body } = research_plan;
     const submitLabel = research_plan.isNew ? "Create" : "Save";
 
-    const disabled = research_plan.isMethodDisabled('body')
-
-    let bodyFields = body.map((field, index) => {
-      switch (field.type) {
-        case 'richtext':
-          return <RichTextField key={field.id}
-                                field={field} index={index} disabled={disabled}
-                                onChange={this.handleBodyChange.bind(this)} />
-          break;
-        case 'ketcher':
-          return <KetcherField key={field.id}
-                               field={field} index={index} disabled={disabled}
-                               onChange={this.handleBodyChange.bind(this)} />
-          break;
-      }
-    })
-
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <NameField value={name} disabled={research_plan.isMethodDisabled('name')}
+          <ResearchPlanDetailsNameField value={name} disabled={research_plan.isMethodDisabled('name')}
                      onChange={this.handleNameChange.bind(this)} />
-          {bodyFields}
+          <ResearchPlanDetailsBody body={body} disabled={research_plan.isMethodDisabled('body')}
+                onChange={this.handleBodyChange.bind(this)}
+                onDrop={this.handleBodyDrop.bind(this)} />
           <Row>
             <Col md={12}>
               <FormGroup>

@@ -1,0 +1,34 @@
+.research-plan-details-body {
+    .form-group {
+        position: relative;
+        margin-bottom: 0;
+    }
+
+    .drag-source {
+        float: right;
+        margin-top: 10px;
+        margin-bottom: 6px;
+    }
+
+    .drop-target {
+        height: 40px;
+
+        .indicator {
+            height: 24px;
+
+            margin-right: 35px;
+        }
+
+        &.can-drop {
+            .indicator {
+                border-bottom: 4px dashed lightgray;
+            }
+        }
+
+        &.is-over {
+            .indicator {
+                border-bottom: 4px solid lightgray;
+            }
+        }
+    }
+}

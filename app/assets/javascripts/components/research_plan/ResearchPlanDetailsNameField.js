@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap';
 
-export default class NameField extends Component {
+export default class ResearchPlanDetailsNameField extends Component {
 
   constructor(props) {
     super(props)
@@ -47,7 +47,7 @@ export default class NameField extends Component {
   }
 }
 
-NameField.propTypes = {
+ResearchPlanDetailsNameField.propTypes = {
   value: PropTypes.string,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,

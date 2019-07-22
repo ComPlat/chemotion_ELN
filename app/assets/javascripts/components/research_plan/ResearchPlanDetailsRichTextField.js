@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { FormGroup, Row, Col } from 'react-bootstrap';
 
 import QuillEditor from '../QuillEditor';
 
-export default class RichTextField extends Component {
+export default class ResearchPlanDetailsRichTextField extends Component {
 
   constructor(props) {
     super(props)
@@ -33,21 +32,15 @@ export default class RichTextField extends Component {
     let { field, disabled } = this.state
 
     return (
-      <Row>
-        <Col md={12}>
-          <FormGroup>
-            <QuillEditor value={field.value}
-              onChange={this.handleChange.bind(this)}
-              disabled={disabled}
-            />
-          </FormGroup>
-        </Col>
-      </Row>
+      <QuillEditor value={field.value}
+        onChange={this.handleChange.bind(this)}
+        disabled={disabled}
+      />
     )
   }
 }
 
-RichTextField.propTypes = {
+ResearchPlanDetailsRichTextField.propTypes = {
   field: PropTypes.object,
   index: PropTypes.number,
   disabled: PropTypes.bool,
