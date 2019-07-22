@@ -24,9 +24,9 @@ import ImageModal from './common/ImageModal';
 import LoadingActions from './actions/LoadingActions';
 import ConfirmClose from './common/ConfirmClose';
 
+import NameField from './research_plan/NameField';
 import RichTextField from './research_plan/RichTextField';
 import KetcherField from './research_plan/KetcherField';
-
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -106,23 +106,6 @@ export default class ResearchPlanDetails extends Component {
       return null;
     }
     return docType;
-  }
-
-  handleInputChange(type, event) {
-    let {research_plan} = this.state;
-    research_plan.changed = true;
-    const value = event.target.value;
-    switch (type) {
-      case 'name':
-        research_plan.name = value;
-        break;
-      // case 'description':
-      //   research_plan.description = value;
-      //   break;
-    }
-    this.setState({
-      research_plan: research_plan
-    });
   }
 
   researchPlanHeader(research_plan) {
@@ -363,7 +346,24 @@ export default class ResearchPlanDetails extends Component {
       Utils.downloadFile({contents: `/api/v1/attachments/${attachment.id}`, name: attachment.filename});
   }
 
-  handleChange(value, index) {
+  handleSelect(eventKey) {
+    UIActions.selectTab({tabKey: eventKey, type: 'screen'});
+    this.setState({
+      activeTab: eventKey
+    })
+  }
+
+  handleNameChange(value) {
+    let {research_plan} = this.state
+    research_plan.changed = true
+    research_plan.name = value
+
+    this.setState({
+      research_plan: research_plan
+    });
+  }
+
+  handleBodyChange(value, index) {
     let {research_plan} = this.state
     research_plan.changed = true
     research_plan.body[index].value = value
@@ -374,22 +374,22 @@ export default class ResearchPlanDetails extends Component {
   }
 
   propertiesTab(research_plan) {
-    const { name, description } = research_plan;
+    const { name, body } = research_plan;
     const submitLabel = research_plan.isNew ? "Create" : "Save";
 
     const disabled = research_plan.isMethodDisabled('body')
 
-    let bodyFields = research_plan.body.map((field, index) => {
+    let bodyFields = body.map((field, index) => {
       switch (field.type) {
         case 'richtext':
           return <RichTextField key={field.id}
                                 field={field} index={index} disabled={disabled}
-                                onChange={this.handleChange.bind(this)} />
+                                onChange={this.handleBodyChange.bind(this)} />
           break;
         case 'ketcher':
           return <KetcherField key={field.id}
                                field={field} index={index} disabled={disabled}
-                               onChange={this.handleChange.bind(this)} />
+                               onChange={this.handleBodyChange.bind(this)} />
           break;
       }
     })
@@ -397,19 +397,8 @@ export default class ResearchPlanDetails extends Component {
     return (
       <ListGroup fill="true">
         <ListGroupItem>
-          <Row>
-            <Col md={4}>
-              <FormGroup>
-                <ControlLabel>Name</ControlLabel>
-                <FormControl
-                  type="text"
-                  value={name || ''}
-                  onChange={event => this.handleInputChange('name', event)}
-                  disabled={research_plan.isMethodDisabled('name')}
-                />
-              </FormGroup>
-            </Col>
-          </Row>
+          <NameField value={name} disabled={research_plan.isMethodDisabled('name')}
+                     onChange={this.handleNameChange.bind(this)} />
           {bodyFields}
           <Row>
             <Col md={12}>
@@ -434,13 +423,6 @@ export default class ResearchPlanDetails extends Component {
         element={research_plan}
       />
     );
-  }
-
-  handleSelect(eventKey) {
-    UIActions.selectTab({tabKey: eventKey, type: 'screen'});
-    this.setState({
-      activeTab: eventKey
-    })
   }
 
   render() {

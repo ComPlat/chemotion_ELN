@@ -88,8 +88,6 @@ export default class KetcherField extends Component {
       svgPath = '/images/wild_card/loading-bubbles.svg'
     }
 
-    console.log(svgPath);
-
     const imageDefault = !includes(svgPath, 'no_image_180.svg');
 
     return (
