@@ -14,7 +14,8 @@ const extractInfer = (ai, files) => {
         .map(f => (f.id === att.id ? f : null))
         .filter(r => r != null)[0];
       if (!pred || pred.predictions.outline.code >= 300) return;
-      targetTyp = pred.predictions.output.result[0].type;
+      targetTyp = pred.predictions.output.result[0] &&
+        pred.predictions.output.result[0].type;
       targetPred = pred.predictions;
       hasInfer = true;
     });

@@ -17,7 +17,7 @@ import { evaluateMs } from '../utils/ms';
 import { evaluateIr } from '../utils/ir';
 import { evaluateNmr } from '../utils/nmr';
 
-const QcContent = ({ sample, infer }) => {
+const QcContent = ({ sample, infer, curation }) => {
   const {
     irQc, msQc, hnmrQc, cnmrQc,
   } = prismQcs(sample, infer);
@@ -31,8 +31,11 @@ const QcContent = ({ sample, infer }) => {
   return (
     <div>
       <div>
-        <AreaTitle />
+        <AreaTitle
+          curation={curation}
+        />
         <AreaSummary
+          curation={curation}
           ansHnmr={ansHnmr}
           ansCnmr={ansCnmr}
           ansMs={ansMs}
@@ -70,6 +73,7 @@ const QcContent = ({ sample, infer }) => {
 QcContent.propTypes = {
   sample: PropTypes.object.isRequired,
   infer: PropTypes.object.isRequired,
+  curation: PropTypes.number.isRequired,
 };
 
 export default QcContent;

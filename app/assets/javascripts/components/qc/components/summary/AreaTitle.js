@@ -1,6 +1,9 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-const AreaTitle = () => (
+import { evalCurTitle } from './eval';
+
+const AreaTitle = ({ curation }) => (
   <div>
     <h4>
       <span>
@@ -9,10 +12,14 @@ const AreaTitle = () => (
     </h4>
     <h4>
       <span className="underline-qc">
-        Standard: Curation standard I: experimental organic chemistry
+        {evalCurTitle(curation)}
       </span>
     </h4>
   </div>
 );
+
+AreaTitle.propTypes = {
+  curation: PropTypes.number.isRequired,
+};
 
 export default AreaTitle;

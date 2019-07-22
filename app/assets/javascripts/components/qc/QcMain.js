@@ -5,6 +5,7 @@ import { Button } from 'react-bootstrap';
 import QcContent from './components/QcContent';
 import QcActions from '../actions/QcActions';
 import QcStore from '../stores/QcStore';
+import UserStore from '../stores/UserStore';
 
 class QcMain extends Component {
   constructor(props) {
@@ -12,6 +13,7 @@ class QcMain extends Component {
 
     this.state = {
       ...QcStore.getState(),
+      profile: UserStore.getState().profile,
     };
 
     this.onChange = this.onChange.bind(this);
@@ -56,14 +58,19 @@ class QcMain extends Component {
   }
 
   renderQcContent() {
-    const { infers } = this.state;
+    const { infers, profile } = this.state;
     const { sample } = this.props;
     const infer = infers
       .map(i => (i.sId === sample.id ? i : null))
       .filter(r => r != null)[0];
     if (!infer) return null;
+    const { curation = 2 } = profile;
     return (
-      <QcContent sample={sample} infer={infer} />
+      <QcContent
+        sample={sample}
+        infer={infer}
+        curation={curation}
+      />
     );
   }
 

@@ -11,9 +11,9 @@ import {
 import { evalScore } from './eval';
 
 const AreaSummary = ({
-  ansHnmr, ansCnmr, ansMs, ansIr,
+  ansHnmr, ansCnmr, ansMs, ansIr, curation,
 }) => {
-  const score = evalScore(ansHnmr, ansCnmr, ansMs, ansIr);
+  const score = evalScore(ansHnmr, ansCnmr, ansMs, ansIr, curation);
   return (
     <div>
       <div className="col-qcsum-l">
@@ -48,6 +48,7 @@ AreaSummary.propTypes = {
   ansCnmr: PropTypes.object.isRequired,
   ansMs: PropTypes.object.isRequired,
   ansIr: PropTypes.object.isRequired,
+  curation: PropTypes.number.isRequired,
 };
 
 export default AreaSummary;
