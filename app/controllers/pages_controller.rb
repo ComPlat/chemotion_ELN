@@ -117,6 +117,6 @@ class PagesController < ApplicationController
   end
 
   def profile_params
-    params.require(:profile).permit(:show_external_name)
+    params.require(:profile).permit(:show_external_name, :curation)
   end
 end
