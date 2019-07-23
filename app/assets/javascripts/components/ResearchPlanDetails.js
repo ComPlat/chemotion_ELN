@@ -24,8 +24,9 @@ import ImageModal from './common/ImageModal';
 import LoadingActions from './actions/LoadingActions';
 import ConfirmClose from './common/ConfirmClose';
 
-import ResearchPlanDetailsNameField from './research_plan/ResearchPlanDetailsNameField';
 import ResearchPlanDetailsBody from './research_plan/ResearchPlanDetailsBody';
+import ResearchPlanDetailsNameField from './research_plan/ResearchPlanDetailsNameField';
+import ResearchPlanDetailsStatic from './research_plan/ResearchPlanDetailsStatic';
 
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
@@ -56,7 +57,8 @@ export default class ResearchPlanDetails extends Component {
       showStructureEditor: false,
       loadingMolecule: false,
       attachmentEditor: false,
-      extension: null
+      extension: null,
+      edit: false
     };
     this.editorInitial = this.editorInitial.bind(this);
   }
@@ -105,50 +107,6 @@ export default class ResearchPlanDetails extends Component {
       return null;
     }
     return docType;
-  }
-
-  researchPlanHeader(research_plan) {
-    let saveBtnDisplay = research_plan.changed ? '' : 'none';
-    const titleTooltip = `Created at: ${research_plan.created_at} \n Updated at: ${research_plan.updated_at}`;
-
-    return (
-      <div>
-        <OverlayTrigger placement="bottom" overlay={<Tooltip id="rpDates">{titleTooltip}</Tooltip>}>
-          <span>
-            <i className="fa fa-file-text-o" />
-            &nbsp; <span>{research_plan.name}</span> &nbsp;
-          </span>
-        </OverlayTrigger>
-        <ElementCollectionLabels element={research_plan} placement="right"/>
-        <ConfirmClose el={research_plan} />
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="saveresearch_plan">Save research_plan</Tooltip>}>
-          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
-                  onClick={() => this.handleSubmit()}
-                  style={{display: saveBtnDisplay}} >
-            <i className="fa fa-floppy-o "></i>
-          </Button>
-        </OverlayTrigger>
-        <OverlayTrigger placement="bottom"
-            overlay={<Tooltip id="fullSample">Fullresearch_plan</Tooltip>}>
-        <Button bsStyle="info" bsSize="xsmall" className="button-right"
-          onClick={() => this.props.toggleFullScreen()}>
-          <i className="fa fa-expand"></i>
-        </Button>
-        </OverlayTrigger>
-      </div>
-    )
-  }
-
-  researchPlanInfo(research_plan) {
-    const style = {height: 'auto'};
-    return (
-      <Row style={style}>
-        <Col md={2}>
-          <h4>{research_plan.name}</h4>
-        </Col>
-      </Row>
-    )
   }
 
   dropzone() {
@@ -408,7 +366,26 @@ export default class ResearchPlanDetails extends Component {
     });
   }
 
-  propertiesTab(research_plan) {
+  toggleEdit() {
+    let {edit} = this.state
+
+    this.setState({
+      edit: !edit
+    });
+  }
+
+  renderResearchPlanInfo(research_plan) {
+    const style = {height: 'auto'};
+    return (
+      <Row style={style}>
+        <Col md={6}>
+          <h4>{research_plan.name}</h4>
+        </Col>
+      </Row>
+    )
+  }
+
+  renderPropertiesTab(research_plan) {
     const { name, body } = research_plan;
     const submitLabel = research_plan.isNew ? "Create" : "Save";
 
@@ -417,7 +394,8 @@ export default class ResearchPlanDetails extends Component {
         <ListGroupItem>
           <ResearchPlanDetailsNameField value={name} disabled={research_plan.isMethodDisabled('name')}
                      onChange={this.handleNameChange.bind(this)} />
-          <ResearchPlanDetailsBody body={body} disabled={research_plan.isMethodDisabled('body')}
+          <ResearchPlanDetailsBody body={body}
+                disabled={research_plan.isMethodDisabled('body')}
                 onChange={this.handleBodyChange.bind(this)}
                 onDrop={this.handleBodyDrop.bind(this)}
                 onAdd={this.handleBodyAdd.bind(this)}
@@ -436,8 +414,7 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  literatureTab(research_plan){
-    const { name, description } = research_plan;
+  renderLiteratureTab(research_plan) {
     const submitLabel = research_plan.isNew ? "Create" : "Save";
 
     return (
@@ -447,25 +424,65 @@ export default class ResearchPlanDetails extends Component {
     );
   }
 
-  render() {
-    const { research_plan } = this.state;
-    const { name, description } = research_plan;
-
-    const submitLabel = research_plan.isNew ? "Create" : "Save";
+  renderPanelHeading(research_plan) {
+    let saveBtnDisplay = research_plan.changed ? '' : 'none'
 
     return (
-      <Panel bsStyle={research_plan.isPendingToSave ? 'info' : 'primary'}
-             className="panel-detail">
-        <Panel.Heading>{this.researchPlanHeader(research_plan)}</Panel.Heading>
+      <Panel.Heading>
+        <i className="fa fa-file-text-o" />
+        &nbsp; <span>{research_plan.name}</span> &nbsp;
+        <ElementCollectionLabels element={research_plan} placement="right"/>
+        <OverlayTrigger placement="bottom"
+                        overlay={<Tooltip id="closeresearch_plan">Close research_plan</Tooltip>}>
+
+          <Button bsStyle="danger" bsSize="xsmall" className="button-right"
+            onClick={() => DetailActions.close(research_plan)} >
+            <i className="fa fa-times"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+                        overlay={<Tooltip id="saveresearch_plan">Save research_plan</Tooltip>}>
+
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+                  onClick={() => this.handleSubmit()}
+                  style={{display: saveBtnDisplay}} >
+            <i className="fa fa-floppy-o "></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+                        overlay={<Tooltip id="saveresearch_plan">Toggle edit research_plan</Tooltip>}>
+
+          <Button bsStyle="warning" bsSize="xsmall" className="button-right"
+                  onClick={() => this.toggleEdit()}>
+            <i className="fa fa-pencil"></i>
+          </Button>
+        </OverlayTrigger>
+        <OverlayTrigger placement="bottom"
+                        overlay={<Tooltip id="fullSample">Fullresearch_plan</Tooltip>}>
+
+          <Button bsStyle="info" bsSize="xsmall" className="button-right"
+            onClick={() => this.props.toggleFullScreen()}>
+            <i className="fa fa-expand"></i>
+          </Button>
+        </OverlayTrigger>
+      </Panel.Heading>
+    )
+  }
+
+  renderPanelBody(research_plan, edit) {
+    if (edit) {
+      const submitLabel = research_plan.isNew ? "Create" : "Save"
+
+      return (
         <Panel.Body>
-        {this.researchPlanInfo(research_plan)}
+          {this.renderResearchPlanInfo(research_plan)}
           <Tabs activeKey={this.state.activeTab} onSelect={key => this.handleSelect(key)}
              id="screen-detail-tab">
             <Tab eventKey={0} title={'Properties'}>
-              {this.propertiesTab(research_plan)}
+              {this.renderPropertiesTab(research_plan)}
             </Tab>
             <Tab eventKey={1} title={'Literature'}>
-              {this.literatureTab(research_plan)}
+              {this.renderLiteratureTab(research_plan)}
             </Tab>
           </Tabs>
           <ButtonToolbar>
@@ -473,6 +490,26 @@ export default class ResearchPlanDetails extends Component {
             <Button bsStyle="warning" onClick={() => this.handleSubmit()}>{submitLabel}</Button>
           </ButtonToolbar>
         </Panel.Body>
+      )
+    } else {
+      const { name, body } = research_plan
+
+      return (
+        <Panel.Body>
+          <ResearchPlanDetailsStatic name={name} body={body} />
+        </Panel.Body>
+      )
+    }
+  }
+
+  render() {
+    const { research_plan, edit } = this.state;
+
+    return (
+      <Panel bsStyle={research_plan.isPendingToSave ? 'info' : 'primary'}
+             className="panel-detail">
+        {this.renderPanelHeading(research_plan)}
+        {this.renderPanelBody(research_plan, edit)}
       </Panel>
     );
   }

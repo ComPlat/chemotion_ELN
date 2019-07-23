@@ -1,5 +1,7 @@
-import Element from './Element';
+import React from 'react';
 import { isEmpty } from 'lodash';
+
+import Element from './Element';
 
 const uuidv4 = require('uuid/v4');
 
@@ -20,23 +22,6 @@ export default class ResearchPlan extends Element {
       body: this.body,
       attachments: this.attachments
     });
-  }
-
-  get svgPath() {
-    for (var i = 0; i < this.body.length; i++) {
-      if (this.body[i].type == 'ketcher') {
-        return `/images/research_plans/${this.body[i].value.svg_file}`
-      } else if (this.body[i].type == 'image') {
-
-      }
-    }
-
-    return `/images/wild_card/no_image_180.svg`
-  }
-
-  // overwrite isPendingToSave method in models/Element.js
-  get isPendingToSave() {
-    return !isEmpty(this) && (this.isNew || this.changed);
   }
 
   addBodyField(type) {
@@ -64,5 +49,22 @@ export default class ResearchPlan extends Element {
       case 'image':
         break;
     }
+  }
+
+  get svgPath() {
+    for (var i = 0; i < this.body.length; i++) {
+      if (this.body[i].type == 'ketcher') {
+        return `/images/research_plans/${this.body[i].value.svg_file}`
+      } else if (this.body[i].type == 'image') {
+
+      }
+    }
+
+    return `/images/wild_card/no_image_180.svg`
+  }
+
+  // overwrite isPendingToSave method in models/Element.js
+  get isPendingToSave() {
+    return !isEmpty(this) && (this.isNew || this.changed);
   }
 }
