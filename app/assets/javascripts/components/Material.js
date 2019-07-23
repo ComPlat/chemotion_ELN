@@ -80,7 +80,16 @@ const notApplicableInput = () => (
   </td>
 );
 
-const iupacNameTooltip = iupacName => <Tooltip id="iupac_name_tooltip">{iupacName}</Tooltip>;
+const iupacNameTooltip = material => (
+  <Tooltip id="iupac_name_tooltip" className="left_tooltip">
+    <table>
+      <tbody>
+        <tr><td>IUPAC&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.molecule.iupac_name || ''}</td></tr>
+        <tr><td>Name&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.name || ''}</td></tr>
+        <tr><td>Ext.Label&#58;&nbsp;</td><td style={{ wordBreak: 'break-all' }}>{material.external_label || ''}</td></tr>
+      </tbody>
+    </table>
+  </Tooltip>);
 
 const refreshSvgTooltip = <Tooltip id="refresh_svg_tooltip">Refresh reaction diagram</Tooltip>;
 
@@ -593,7 +602,7 @@ class Material extends Component {
             tabIndex={0}
             onClick={() => this.handleMaterialClick(material)}
             style={{ cursor: 'pointer' }}
-          >{materialDisplayName}</a>
+          ><span className="reaction-material-link">{materialDisplayName}</span></a>
         );
       } else {
         materialName = <span>{materialDisplayName}</span>;
@@ -609,7 +618,7 @@ class Material extends Component {
           tabIndex={0}
           onClick={() => this.handleMaterialClick(material)}
           style={{ cursor: 'pointer' }}
-        >{materialDisplayName}</a>
+        ><span className="reaction-material-link">{materialDisplayName}</span></a>
       );
 
       if (material.isNew) { materialName = materialDisplayName; }
@@ -627,7 +636,7 @@ class Material extends Component {
     };
 
     return (
-      <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material.molecule.iupac_name)} >
+      <OverlayTrigger placement="bottom" overlay={iupacNameTooltip(material)} >
         <div style={{ display: 'inline-block', maxWidth: '100%' }}>
           <div className="inline-inside">
             <OverlayTrigger placement="top" overlay={AddtoDescToolTip}>
