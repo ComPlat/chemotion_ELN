@@ -178,3 +178,18 @@
     padding-right: 2px;
   }
 }
+
+.left_tooltip {
+  .tooltip-inner {
+    text-align: left;
+  }
+}
+
+.reaction-material-link {
+  text-overflow: ellipsis;
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 80%;
+  vertical-align: middle;
+}
