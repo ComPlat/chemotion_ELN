@@ -1,22 +1,49 @@
 .research-plan-details-body {
-    .form-group {
+
+    margin-bottom: 20px;
+
+    .research-plan-details-body-seperator,
+    .research-plan-details-body-footer {
+        height: 40px;
         position: relative;
+    }
+
+    .research-plan-details-body-seperator {
+        button {
+            float: right;
+            margin-top: 10px;
+        }
+
+        .drag-source {
+            float: right;
+            margin-top: 14px;
+            margin-right: 5px;
+        }
+
+        .drop-target {
+            left: 0;
+            right: 50px;
+        }
+    }
+
+    .research-plan-details-body-footer {
+        .drop-target {
+            left: 280px;
+            right: 0;
+        }
+    }
+
+    .form-group {
         margin-bottom: 0;
     }
 
-    .drag-source {
-        float: right;
-        margin-top: 10px;
-        margin-bottom: 6px;
-    }
-
     .drop-target {
+        position: absolute;
         height: 40px;
+        padding-top: 10px;
 
         .indicator {
-            height: 24px;
-
-            margin-right: 35px;
+            height: 13px;
         }
 
         &.can-drop {
@@ -29,6 +56,17 @@
             .indicator {
                 border-bottom: 4px solid lightgray;
             }
+        }
+    }
+
+    .add-field {
+        float: left;
+        margin-top: 10px;
+
+        button {
+            height: 30px;
+            width: 60px;
+            margin-right: 10px;
         }
     }
 }

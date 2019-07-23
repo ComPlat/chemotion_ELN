@@ -1,33 +1,11 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap';
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+import { ControlLabel, FormControl, FormGroup, Row, Col } from 'react-bootstrap'
 
 export default class ResearchPlanDetailsNameField extends Component {
 
-  constructor(props) {
-    super(props)
-    const { value, disabled, onChange } = props
-    this.state = {
-      value,
-      disabled,
-      onChange
-    }
-  }
-
-  handleChange(event) {
-    let { value, onChange } = this.state
-
-    value = event.target.value
-
-    this.setState({
-      value: value
-    });
-
-    onChange(value)
-  }
-
   render() {
-    let { value, disabled } = this.state
+    let { value, disabled, onChange } = this.props
 
     return (
       <Row>
@@ -37,7 +15,7 @@ export default class ResearchPlanDetailsNameField extends Component {
             <FormControl
               type="text"
               value={value || ''}
-              onChange={this.handleChange.bind(this)}
+              onChange={(event) => onChange(event.target.value)}
               disabled={disabled}
             />
           </FormGroup>
@@ -45,6 +23,7 @@ export default class ResearchPlanDetailsNameField extends Component {
       </Row>
     )
   }
+
 }
 
 ResearchPlanDetailsNameField.propTypes = {

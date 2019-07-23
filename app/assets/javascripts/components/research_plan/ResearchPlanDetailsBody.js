@@ -1,36 +1,37 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { Row } from 'react-bootstrap';
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+import { ControlLabel, Row, Col } from 'react-bootstrap'
 
-import Field from './ResearchPlanDetailsField';
+import ResearchPlanDetailsAddField from './ResearchPlanDetailsAddField'
+import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget'
+import Field from './ResearchPlanDetailsField'
 
 export default class ResearchPlanDetailsBody extends Component {
 
-  constructor(props) {
-    super(props)
-    const { body, disabled, onChange, onDrop } = props
-    this.state = {
-      body,
-      disabled,
-      onChange,
-      onDrop
-    }
-  }
-
   render() {
-    let { body, disabled, onChange, onDrop } = this.state
+    let { body, disabled, onChange, onDrop, onAdd, onDelete } = this.props
 
     let fields = body.map((field, index) => {
         return <Field key={field.id}
                       field={field} index={index} disabled={disabled}
                       onChange={onChange.bind(this)}
-                      onDrop={onDrop.bind(this)} />
+                      onDrop={onDrop.bind(this)}
+                      onDelete={onDelete.bind(this)} />
     })
 
     return (
-      <Row className="research-plan-details-body">
+      <div className="research-plan-details-body">
+        <ControlLabel>Body</ControlLabel>
         {fields}
-      </Row>
+        <Row>
+          <Col md={12}>
+            <div className="research-plan-details-body-footer">
+              <ResearchPlanDetailsAddField onAdd={onAdd}/>
+              <ResearchPlanDetailsDropTarget index={fields.length}/>
+            </div>
+          </Col>
+        </Row>
+      </div>
     )
   }
 }

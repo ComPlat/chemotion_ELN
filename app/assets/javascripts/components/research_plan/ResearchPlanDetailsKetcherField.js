@@ -1,12 +1,12 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { Glyphicon } from 'react-bootstrap';
-import SVG from 'react-inlinesvg';
-import { includes, last, findKey, values } from 'lodash';
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+import { Glyphicon } from 'react-bootstrap'
+import SVG from 'react-inlinesvg'
+import { includes, last, findKey, values } from 'lodash'
 
-import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher';
-import StructureEditorModal from '../structure_editor/StructureEditorModal';
-import QuillEditor from '../QuillEditor';
+import ResearchPlansFetcher from '../fetchers/ResearchPlansFetcher'
+import StructureEditorModal from '../structure_editor/StructureEditorModal'
+import QuillEditor from '../QuillEditor'
 
 export default class ResearchPlanDetailsKetcherField extends Component {
 
@@ -55,7 +55,7 @@ export default class ResearchPlanDetailsKetcherField extends Component {
         field: field,
         loadingMolecule: false
       });
-      onChange(field.value, index)
+      onChange(field.value, field.id)
       this.hideStructureEditor();
     });
   }

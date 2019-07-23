@@ -10,22 +10,7 @@ export default class ResearchPlan extends Element {
       collection_id: collection_id,
       type: 'research_plan',
       name: 'New Research Plan',
-      body: [
-        {
-          id: uuidv4(),
-          type: 'ketcher',
-          value: {
-            svg_file: null,
-            svg_file: null,
-            thumb_svg: null
-          }
-        },
-        {
-          id: uuidv4(),
-          type: 'richtext',
-          value: null
-        }
-      ]
+      body: []
     });
   }
 
@@ -38,15 +23,46 @@ export default class ResearchPlan extends Element {
   }
 
   get svgPath() {
-    if (this.svg_file){
-      return `/images/research_plans/${this.svg_file}`;
-    } else {
-      return `/images/wild_card/no_image_180.svg`
+    for (var i = 0; i < this.body.length; i++) {
+      if (this.body[i].type == 'ketcher') {
+        return `/images/research_plans/${this.body[i].value.svg_file}`
+      } else if (this.body[i].type == 'image') {
+
+      }
     }
+
+    return `/images/wild_card/no_image_180.svg`
   }
 
   // overwrite isPendingToSave method in models/Element.js
   get isPendingToSave() {
     return !isEmpty(this) && (this.isNew || this.changed);
+  }
+
+  addBodyField(type) {
+    switch (type) {
+      case 'richtext':
+        this.body.push({
+          id: uuidv4(),
+          type: 'richtext',
+          value: null
+        })
+        break;
+      case 'ketcher':
+        this.body.push({
+          id: uuidv4(),
+          type: 'ketcher',
+          value: {
+            svg_file: null,
+            svg_file: null,
+            thumb_svg: null
+          }
+        })
+        break;
+      case 'table':
+        break;
+      case 'image':
+        break;
+    }
   }
 }

@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { DropTarget } from 'react-dnd';
-import DragDropItemTypes from '../DragDropItemTypes';
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+import { DropTarget } from 'react-dnd'
+import DragDropItemTypes from '../DragDropItemTypes'
 
 const spec = {
   drop(props) {
@@ -21,7 +21,7 @@ const collect = (connect, monitor) => ({
 class ResearchPlanDetailsDropTarget extends Component {
 
   render() {
-    const {index, connectDropTarget, isOver, canDrop} = this.props;
+    const {index, connectDropTarget, isOver, canDrop} = this.props
 
     let className = 'drop-target'
 

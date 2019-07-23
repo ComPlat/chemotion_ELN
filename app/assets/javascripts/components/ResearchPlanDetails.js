@@ -27,7 +27,6 @@ import ConfirmClose from './common/ConfirmClose';
 import ResearchPlanDetailsNameField from './research_plan/ResearchPlanDetailsNameField';
 import ResearchPlanDetailsBody from './research_plan/ResearchPlanDetailsBody';
 
-
 const editorTooltip = exts => <Tooltip id="editor_tooltip">Available extensions: {exts}</Tooltip>;
 
 const downloadTooltip = <Tooltip id="download_tooltip">Download attachment</Tooltip>;
@@ -363,10 +362,12 @@ export default class ResearchPlanDetails extends Component {
     });
   }
 
-  handleBodyChange(value, index) {
+  handleBodyChange(value, id) {
     let {research_plan} = this.state
-    research_plan.changed = true
+    let index = research_plan.body.findIndex(field => field.id == id)
+
     research_plan.body[index].value = value
+    research_plan.changed = true
 
     this.setState({
       research_plan: research_plan
@@ -377,6 +378,30 @@ export default class ResearchPlanDetails extends Component {
     let {research_plan} = this.state
 
     research_plan.body.splice(target, 0, research_plan.body.splice(source, 1)[0]);
+    research_plan.changed = true
+
+    this.setState({
+      research_plan: research_plan
+    });
+  }
+
+  handleBodyAdd(type) {
+    let {research_plan} = this.state
+
+    research_plan.addBodyField(type)
+    research_plan.changed = true
+
+    this.setState({
+      research_plan: research_plan
+    });
+  }
+
+  handleBodyDelete(id) {
+    let {research_plan} = this.state
+    let index = research_plan.body.findIndex(field => field.id == id)
+
+    research_plan.body.splice(index, 1)
+    research_plan.changed = true
 
     this.setState({
       research_plan: research_plan
@@ -394,7 +419,9 @@ export default class ResearchPlanDetails extends Component {
                      onChange={this.handleNameChange.bind(this)} />
           <ResearchPlanDetailsBody body={body} disabled={research_plan.isMethodDisabled('body')}
                 onChange={this.handleBodyChange.bind(this)}
-                onDrop={this.handleBodyDrop.bind(this)} />
+                onDrop={this.handleBodyDrop.bind(this)}
+                onAdd={this.handleBodyAdd.bind(this)}
+                onDelete={this.handleBodyDelete.bind(this)} />
           <Row>
             <Col md={12}>
               <FormGroup>
