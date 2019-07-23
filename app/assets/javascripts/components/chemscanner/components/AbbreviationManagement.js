@@ -16,7 +16,7 @@ function ManagementTable({
         floatingFilter
         enableColResize
         pagination
-        paginationPageSize={25}
+        suppressHorizontalScroll
         columnDefs={columnDefs}
         defaultColDef={defaultColDef || {}}
         rowData={data}
