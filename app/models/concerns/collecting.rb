@@ -53,6 +53,10 @@ module Collecting
 
       handle_asynchronously :update_tag_by_element_ids
 
+      def queue_name
+        "collecting"
+      end
+
       def delete_in_collection_by_ui_state(**args)
         sql = if args[:checkedAll]
                 sanitize_sql(["#{delete_sql} NOT IN (?)", args[:collection_ids], args[:uncheckedIds]])
