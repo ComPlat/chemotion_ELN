@@ -210,6 +210,7 @@ M  END
     c.write_string(m, false)
   end
 
+  # clear type 9 bonds from molfile; return false if no type 9 bonds found
   def self.mofile_clear_coord_bonds(molfile, version = nil)
     case version || molfile_version(molfile)
     when 'V2000'
@@ -475,7 +476,10 @@ M  END
     return sp.match(m)
   end
 
-  def self.get_cdxml_from_molfile(mol, shifter={}, output_path=nil)
+  def self.get_cdxml_from_molfile(molfile, shifter={}, output_path=nil)
+    # clear type 9 bonds for openbabel conv
+    mf = mofile_clear_coord_bonds(molfile)
+    mol = mf || molfile
     # `obabel -imol #{file_name} -ocdxml`
     input = Tempfile.new(["input", ".mol"]).path
     output = output_path || Tempfile.new(["output", ".mol"]).path
