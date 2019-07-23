@@ -3,7 +3,7 @@
   "repository": {},
   "dependencies": {
     "@novnc/noVNC": "novnc/noVNC#v1.0.0",
-    "ag-grid": "17.1.1",
+    "ag-grid": "^18.1.2",
     "ag-grid-react": "17.1.0",
     "alt": "0.18.6",
     "alt-utils": "2.0.0",
@@ -33,7 +33,7 @@
     "immutable": "^4.0.0-rc.12",
     "jcampconverter": "^2.11.0",
     "jsdom": "^9.8.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.15",
     "moment": "^2.22.2",
     "moment-precise-range-plugin": "^1.2.4",
     "normalizr": "^3.3.0",
