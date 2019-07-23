@@ -82,7 +82,12 @@ module Import
         )
       end
       handle_asynchronously :from_list
+
+      def queue_name
+        "chem_scanner"
+      end
     end
+
 
     def process_reaction(reaction)
       @reaction = Reaction.create

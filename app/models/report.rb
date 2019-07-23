@@ -16,6 +16,7 @@ class Report < ActiveRecord::Base
   default_scope { includes(:reports_users) }
 
   after_destroy :delete_archive
+  after_destroy :delete_job
 
   def create_docx
     template = self.template
@@ -48,6 +49,10 @@ class Report < ActiveRecord::Base
     end
   end
   handle_asynchronously :create_docx
+
+  def queue_name
+    "report_#{self.id}"
+  end
 
   def self.create_reaction_docx(current_user, user_ids, params)
     file_name = docx_file_name(params[:template])
@@ -139,5 +144,10 @@ class Report < ActiveRecord::Base
   def delete_archive
     full_file_path = File.join('public', 'docx', file_name + '.docx')
     FileUtils.rm(full_file_path, force: true) if File.exist?(full_file_path)
+  end
+
+  def delete_job
+    job = Delayed::Job.find_by(queue: "report_#{self.id}")
+    job.delete if job
   end
 end
