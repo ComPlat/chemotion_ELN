@@ -64,6 +64,11 @@
 
 /public/ontologies/*
 !/public/ontologies/.keep
+!/public/ontologies/chmo.default.edited.json
+!/public/ontologies/chmo.default.json
+!/public/ontologies/chmo.default.profile.json
+!/public/ontologies/rxno.default.json
+!/public/ontologies/rxno.default.edited.json
 
 /uploads/*
 !/public/attachments/.keep

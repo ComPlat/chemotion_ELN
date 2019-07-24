@@ -121,27 +121,14 @@ class User < ActiveRecord::Base
   def has_profile
     self.create_profile if !self.profile
     if self.type == 'Person'
-      owl_name = 'chmo'
-      chmos = ['CHMO:0000593', 'CHMO:0000595', 'CHMO:0000470', 'CHMO:0001075', 'CHMO:0000497', 'CHMO:0001009', 'CHMO:0000630', 'CHMO:0001007', 'CHMO:0000156', 'BFO:0000015']
       profile = self.profile
       data = profile.data || {}
-      recent_terms = []
-      chmos.each do |term|
-        t = OlsTerm.find_by(term_id: term, owl_name: owl_name)
-        next unless t
-        new_term = {
-          'owl_name' => owl_name,
-          'term_id' => term,
-          'title' => t.synonym.nil? ? "#{t.label}" : "#{t.label} (#{t.synonym})",
-          'synonym' => t.synonym,
-          'synonyms' => t.synonyms,
-          'search' => t.synonyms.nil? ? "#{term} | #{t.label}" : "#{term} | #{t.label} (#{[t.synonyms].flatten.join(',')})",
-          'value' => t.synonym.nil? ? " #{term} | #{t.label}" : " #{term} | #{t.label} (#{t.synonym})",
-        }
-        recent_terms << new_term
+      file = Rails.public_path.join('ontologies','chmo.default.profile.json')
+      result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
+      unless result.nil? || result['ols_terms'].nil?
+        data['chmo'] = result['ols_terms']
+        self.profile.update_columns(data: data)
       end
-      data[owl_name] = recent_terms
-      self.profile.update_columns(data: data)
    end
   end
 
