@@ -120,6 +120,16 @@ class User < ActiveRecord::Base
 
   def has_profile
     self.create_profile if !self.profile
+    if self.type == 'Person'
+      profile = self.profile
+      data = profile.data || {}
+      file = Rails.public_path.join('ontologies','chmo.default.profile.json')
+      result = JSON.parse(File.read(file, encoding:  'bom|utf-8')) if File.exist?(file)
+      unless result.nil? || result['ols_terms'].nil?
+        data['chmo'] = result['ols_terms']
+        self.profile.update_columns(data: data)
+      end
+   end
   end
 
   has_many :users_groups,  dependent: :destroy, foreign_key: :user_id
