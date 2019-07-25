@@ -9,16 +9,29 @@ const PubchemLcss = ({
 }) => {
   const sourceRoot = 'https://pubchem.ncbi.nlm.nih.gov';
   let imgWH = 70 * (4 / 9);
-
   let imgs = [];
-  informArray.map((inform) => {
-    const htmlDoc = new DOMParser().parseFromString(inform.StringValue, 'text/html');
-    const extract = [].slice.call(htmlDoc.querySelectorAll('img')).map((g) => {
-      return { src: g.getAttribute('src'), title: g.title };
+
+  const picArry = informArray.filter(info => info.Name === 'Pictogram(s)');
+
+  if (picArry.length > 0) {
+    picArry.map((p) => {
+      const makeups = p.Value.StringWithMarkup;
+      makeups.map((ms) => {
+        const extract = ms.Markup.map((m) => { return { src: m.URL.replace(sourceRoot, ''), title: m.Extra }; });
+        imgs = concat(imgs, extract);
+      });
     });
-    imgs = concat(imgs, extract);
-    return true;
-  });
+  } else {
+    informArray.map((inform) => {
+      const htmlDoc = new DOMParser().parseFromString(inform.StringValue, 'text/html');
+      const extract = [].slice.call(htmlDoc.querySelectorAll('img')).map((g) => {
+        return { src: g.getAttribute('src'), title: g.title };
+      });
+      imgs = concat(imgs, extract);
+      return true;
+    });
+  }
+
   imgs = uniqBy(imgs, 'src');
   if (imgs.length < 5) {
     imgWH = 70 * (3 / 4);
