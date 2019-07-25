@@ -11,6 +11,27 @@ import ContainerComponent from './ContainerComponent';
 import PrintCodeButton from './common/PrintCodeButton';
 import QuillViewer from './QuillViewer';
 import ImageModal from './common/ImageModal';
+import { hNmrCount, cNmrCount } from './utils/ElementUtils';
+import { contentToText } from './utils/quillFormat';
+import { chmoConversions } from './OlsComponent';
+
+const nmrMsg = (reaction, container) => {
+  if (container.extended_metadata &&
+      (typeof container.extended_metadata.kind === 'undefined' ||
+      (container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_1h.termId && container.extended_metadata.kind.split('|')[0].trim() !== chmoConversions.nmr_13c.termId)
+      )) {
+    return '';
+  }
+  const nmrStr = container.extended_metadata && contentToText(container.extended_metadata.content);
+
+  if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_1h.termId) {
+    const msg = hNmrCount(nmrStr);
+    return (<div style={{ display: 'inline', color: 'black' }}>&nbsp;(<sup>1</sup>H: {msg})</div>);
+  } else if ((container.extended_metadata.kind || '').split('|')[0].trim() === chmoConversions.nmr_13c.termId) {
+    const msg = cNmrCount(nmrStr);
+    return (<div style={{ display: 'inline', color: 'black' }}>&nbsp;(<sup>13</sup>C: {msg})</div>);
+  }
+};
 
 const previewImage = (container) => {
   const rawImg = container.preview_img;
@@ -199,7 +220,7 @@ export default class ReactionDetailsContainers extends Component {
             <div className="lower-text">
               <div className="main-title">{container.name}</div>
               <div className="sub-title">Type: {kind}</div>
-              <div className="sub-title">Status: {status}</div>
+              <div className="sub-title">Status: {status} {nmrMsg(reaction, container)}</div>
 
               <div className="desc sub-title">
                 <span style={{ float: 'left', marginRight: '5px' }}>

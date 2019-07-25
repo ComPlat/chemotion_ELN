@@ -78,6 +78,21 @@ const atomCountCInNMRDescription = (cNmrStr) => {
   return cCount;
 };
 
+
+const hNmrCount = (nmrStr) => {
+  if (typeof (nmrStr) !== 'string') {
+    return '';
+  }
+  return atomCountInNMRDescription(nmrStr);
+};
+
+const cNmrCount = (nmrStr) => {
+  if (typeof (nmrStr) !== 'string') {
+    return '';
+  }
+  return atomCountCInNMRDescription(nmrStr);
+};
+
 const hNmrCheckMsg = (formula, nmrStr) => {
   if (typeof (formula) !== 'string' || typeof (nmrStr) !== 'string') {
     return '';
@@ -348,6 +363,8 @@ const SampleCode = (index, materialGp) => {
 module.exports = {
   hNmrCheckMsg,
   cNmrCheckMsg,
+  hNmrCount,
+  cNmrCount,
   SameEleTypId,
   UrlSilentNavigation,
   sampleAnalysesFormatPattern,
