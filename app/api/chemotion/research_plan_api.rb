@@ -69,6 +69,32 @@ module Chemotion
         {svg_path: svg_file_name}
       end
 
+      desc "Save image file to filesystem"
+      params do
+        requires :file, type: File
+        optional :replace, type: String
+      end
+      post :image do
+        file_name = params[:file][:filename]
+        file_extname = File.extname(file_name)
+
+        public_name = "#{SecureRandom.uuid}#{file_extname}"
+        public_path = "public/images/research_plans/#{public_name}"
+
+        File.open(public_path, 'wb') do |file|
+          file.write(params[:file][:tempfile].read)
+        end
+
+        if params[:replace]
+          File.delete("public/images/research_plans/#{params[:replace]}")
+        end
+
+        {
+          file_name: file_name,
+          public_name: public_name
+        }
+      end
+
       desc "Create a research plan"
       params do
         requires :name, type: String, desc: "Research plan name"

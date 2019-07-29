@@ -194,22 +194,22 @@ export default class ResearchPlanDetails extends Component {
       <ListGroup fill="true">
         <ListGroupItem>
           <ResearchPlanDetailsNameField value={name}
-                                        disabled={research_plan.isMethodDisabled('name')}
-                                        onChange={this.handleNameChange.bind(this)} />
+              disabled={research_plan.isMethodDisabled('name')}
+              onChange={this.handleNameChange.bind(this)} />
 
           <ResearchPlanDetailsBody body={body}
-                                   disabled={research_plan.isMethodDisabled('body')}
-                                   onChange={this.handleBodyChange.bind(this)}
-                                   onDrop={this.handleBodyDrop.bind(this)}
-                                   onAdd={this.handleBodyAdd.bind(this)}
-                                   onDelete={this.handleBodyDelete.bind(this)} />
+              disabled={research_plan.isMethodDisabled('body')}
+              onChange={this.handleBodyChange.bind(this)}
+              onDrop={this.handleBodyDrop.bind(this)}
+              onAdd={this.handleBodyAdd.bind(this)}
+              onDelete={this.handleBodyDelete.bind(this)} />
 
           <ResearchPlanDetailsAttachments attachments={attachments}
-                                          onDrop={this.handleAttachmentDrop.bind(this)}
-                                          onDelete={this.handleAttachmentDelete.bind(this)}
-                                          onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
-                                          onDownload={this.handleAttachmentDownload.bind(this)}
-                                          onEdit={this.handleAttachmentEdit.bind(this)} />
+              onDrop={this.handleAttachmentDrop.bind(this)}
+              onDelete={this.handleAttachmentDelete.bind(this)}
+              onUndoDelete={this.handleAttachmentUndoDelete.bind(this)}
+              onDownload={this.handleAttachmentDownload.bind(this)}
+              onEdit={this.handleAttachmentEdit.bind(this)} />
         </ListGroupItem>
       </ListGroup>
     );
@@ -308,7 +308,7 @@ export default class ResearchPlanDetails extends Component {
 
     return (
       <Panel bsStyle={research_plan.isPendingToSave ? 'info' : 'primary'}
-             className="panel-detail">
+             className="panel-detail research-plan-details">
         {this.renderPanelHeading(research_plan)}
         {this.renderPanelBody(research_plan, edit)}
       </Panel>

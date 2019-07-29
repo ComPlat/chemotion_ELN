@@ -15,26 +15,34 @@ export default class ResearchPlanDetailsStatic extends Component {
     let { name, body } = this.props
 
     let fields = body.map((field) => {
-      let field_html
+      let html
       switch (field.type) {
         case 'richtext':
-          field_html = <QuillViewer value={field.value} />
+          html = <QuillViewer value={field.value} />
           break;
         case 'ketcher':
           let svgPath = '/images/research_plans/' + field.value.svg_file
 
-          field_html = (
+          html = (
             <div className="svg-container-static">
               <SVG src={svgPath} className="molecule-mid" />
             </div>
           )
           break;
+
+        case 'image':
+          let src = '/images/research_plans/' + field.value.public_name
+          html = (
+            <div className="image-container">
+              <img src={src} alt={field.value.file_name} />
+            </div>
+          )
       }
 
       return (
         <Row key={field.id}>
-          <Col>
-            {field_html}
+          <Col md={12}>
+            {html}
           </Col>
         </Row>
       )
@@ -44,7 +52,9 @@ export default class ResearchPlanDetailsStatic extends Component {
       <div>
         <h4>{name}</h4>
 
-        {fields}
+        <div className="research-plan-details-static">
+          {fields}
+        </div>
       </div>
     )
   }

@@ -65,10 +65,12 @@ export default class ResearchPlanDetailsKetcherField extends Component {
   }
 
   renderStructureEditorModal(field) {
+    const { showStructureEditor } = this.state
     const molfile = field.value.sdf_file;
+
     return(
       <StructureEditorModal key={field.id}
-                            showModal={this.state.showStructureEditor}
+                            showModal={showStructureEditor}
                             onSave={this.handleStructureEditorSave.bind(this)}
                             onCancel={this.handleStructureEditorCancel.bind(this)}
                             molfile={molfile} />

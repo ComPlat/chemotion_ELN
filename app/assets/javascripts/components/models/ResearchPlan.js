@@ -47,7 +47,14 @@ export default class ResearchPlan extends Element {
       case 'table':
         break;
       case 'image':
-        break;
+        this.body.push({
+          id: uuidv4(),
+          type: 'image',
+          value: {
+            file_name: null,
+            file_path: null,
+          }
+        })
     }
   }
 

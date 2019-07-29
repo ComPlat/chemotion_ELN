@@ -1,46 +1,53 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { FormGroup, Button, Row, Col } from 'react-bootstrap'
+import { FormGroup, Button, Row, Col, ControlLabel } from 'react-bootstrap'
 
 import ResearchPlanDetailsDragSource from './ResearchPlanDetailsDragSource'
 import ResearchPlanDetailsDropTarget from './ResearchPlanDetailsDropTarget'
-import RichTextField from './ResearchPlanDetailsRichTextField'
-import KetcherField from './ResearchPlanDetailsKetcherField'
+import ResearchPlanDetailsRichTextField from './ResearchPlanDetailsRichTextField'
+import ResearchPlanDetailsKetcherField from './ResearchPlanDetailsKetcherField'
+import ResearchPlanDetailsImageField from './ResearchPlanDetailsImageField'
 
 export default class ResearchPlanDetailsField extends Component {
 
   render() {
     let { field, index, disabled, onChange, onDrop, onDelete } = this.props
 
-    let field_component
+    let label, component
     switch (field.type) {
       case 'richtext':
-        field_component = <RichTextField key={field.id}
-                                         field={field} index={index} disabled={disabled}
-                                         onChange={onChange.bind(this)} />
+        label = 'Text'
+        component = <ResearchPlanDetailsRichTextField key={field.id}
+                              field={field} index={index} disabled={disabled}
+                              onChange={onChange.bind(this)} />
         break;
       case 'ketcher':
-        field_component = <KetcherField key={field.id}
-                                        field={field} index={index} disabled={disabled}
-                                        onChange={onChange.bind(this)} />
+        label = 'Schema'
+        component = <ResearchPlanDetailsKetcherField key={field.id}
+                              field={field} index={index} disabled={disabled}
+                              onChange={onChange.bind(this)} />
         break;
+      case 'image':
+        label = 'Image'
+        component = <ResearchPlanDetailsImageField key={field.id}
+                              field={field} index={index} disabled={disabled}
+                              onChange={onChange.bind(this)} />
     }
 
     return (
       <Row>
         <Col md={12}>
-          <div className="research-plan-details-body-seperator">
+          <ResearchPlanDetailsDropTarget index={index}/>
+        </Col>
+        <Col md={12}>
+          <div className="field">
             <Button bsStyle="danger" bsSize="xsmall" onClick={() => onDelete(field.id)} >
               <i className="fa fa-times"></i>
             </Button>
             <ResearchPlanDetailsDragSource index={index} onDrop={onDrop.bind(this)}/>
-            <ResearchPlanDetailsDropTarget index={index}/>
-          </div>
-        </Col>
-        <Col md={12}>
-          <div className="research-plan-details-body-field">
+            <ControlLabel>{label}</ControlLabel>
             <FormGroup>
-              {field_component}
+              {component}
             </FormGroup>
           </div>
         </Col>

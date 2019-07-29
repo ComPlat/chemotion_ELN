@@ -77,6 +77,26 @@ export default class ResearchPlansFetcher {
     return promise();
   }
 
+  static updateImageFile(image_file, replace) {
+    var data = new FormData();
+    data.append('file', image_file);
+
+    if (replace) {
+      data.append('replace', replace);
+    }
+
+    let promise = ()=> fetch('/api/v1/research_plans/image', {
+      credentials: 'same-origin',
+      method: 'post',
+      body: data
+    }).then((response) => {
+      return response.json()
+    }).catch((errorMessage) => {
+      console.log(errorMessage);
+    });
+    return promise();
+  }
+
   static create(researchPlan) {
     const files = (researchPlan.attachments || []).filter(a => a.is_new && !a.is_deleted);
     const promise = fetch('/api/v1/research_plans/', {

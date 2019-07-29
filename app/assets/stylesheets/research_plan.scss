@@ -1,35 +1,18 @@
-.research-plan-details-body {
+.research-plan-details {
 
-    margin-bottom: 20px;
+    .field {
+        label {
+            margin-top: 5px;
+        }
 
-    .research-plan-details-body-seperator,
-    .research-plan-details-body-footer {
-        height: 40px;
-        position: relative;
-    }
-
-    .research-plan-details-body-seperator {
         button {
             float: right;
-            margin-top: 10px;
         }
 
         .drag-source {
             float: right;
-            margin-top: 14px;
+            margin-top: 5px;
             margin-right: 5px;
-        }
-
-        .drop-target {
-            left: 0;
-            right: 50px;
-        }
-    }
-
-    .research-plan-details-body-footer {
-        .drop-target {
-            left: 280px;
-            right: 0;
         }
     }
 
@@ -38,12 +21,10 @@
     }
 
     .drop-target {
-        position: absolute;
-        height: 40px;
-        padding-top: 10px;
+        height: 20px;
 
         .indicator {
-            height: 13px;
+            height: 10px;
         }
 
         &.can-drop {
@@ -61,13 +42,42 @@
 
     .add-field {
         float: left;
-        margin-top: 10px;
+        margin-bottom: 20px;
 
         button {
             height: 30px;
             width: 60px;
             margin-right: 10px;
         }
+    }
+
+    .image-container {
+        text-align: center;
+        margin-bottom: 20px;
+
+        img {
+            max-width: 100%;
+        }
+    }
+
+    .dropzone {
+        min-height: 50px;
+        width: 100%;
+        border: 3px dashed lightgray;
+
+        .image-container {
+            margin: 15px;
+        }
+
+        p {
+            text-align: center;
+            padding-top: 12px;
+            color: grey;
+        }
+    }
+
+    .ql-hidden {
+        display: none;
     }
 }
 

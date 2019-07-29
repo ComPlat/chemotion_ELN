@@ -21,13 +21,15 @@ export default class ResearchPlanDetailsBody extends Component {
 
     return (
       <div className="research-plan-details-body">
-        <ControlLabel>Body</ControlLabel>
         {fields}
         <Row>
           <Col md={12}>
-            <div className="research-plan-details-body-footer">
-              <ResearchPlanDetailsAddField onAdd={onAdd}/>
-              <ResearchPlanDetailsDropTarget index={fields.length}/>
+            <ResearchPlanDetailsDropTarget index={fields.length}/>
+            <div>
+              <ControlLabel>Add field</ControlLabel>
+              <div>
+                <ResearchPlanDetailsAddField onAdd={onAdd}/>
+              </div>
             </div>
           </Col>
         </Row>
