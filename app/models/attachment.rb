@@ -124,10 +124,6 @@ class Attachment < ActiveRecord::Base
     update!(attachable_id: c_id, attachable_type: 'ResearchPlan')
   end
 
-  def update_container!(c_id)
-    update!(attachable_id: c_id, attachable_type: 'Container')
-  end
-
   def update_report!(r_id)
     update!(attachable_id: r_id, attachable_type: 'Report')
   end

@@ -85,7 +85,7 @@ class Mailcollector
         content_type: attachment.mime_type
         )
       a.save!
-      a.update_container!(dataset.id)
+      a.update!(attachable: dataset)
       primary_store = Rails.configuration.storage.primary_store
       a.update!(storage: primary_store)
     end

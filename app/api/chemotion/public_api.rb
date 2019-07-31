@@ -58,7 +58,6 @@ module Chemotion
         # 6 - document is being edited, but the current document state is saved,
         # 7 - error has occurred while force saving the document.
         before do
-# byebug
           error!('401 Unauthorized', 401) if params[:key].nil?
           payload = JWT.decode(params[:key], Rails.application.secrets.secret_key_base) unless params[:key].nil?
           error!('401 Unauthorized', 401) if payload&.length == 0
@@ -202,7 +201,7 @@ module Chemotion
                 )
                 begin
                   a.save!
-                  a.update_container!(dataset.id)
+                  a.update!(attachable: dataset)
                   primary_store = Rails.configuration.storage.primary_store
                   a.update!(storage: primary_store)
                 ensure
