@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20190712090136) do
+ActiveRecord::Schema.define(version: 20190731120000) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -772,7 +772,6 @@ ActiveRecord::Schema.define(version: 20190712090136) do
     t.datetime "deleted_at"
     t.hstore   "counters",                         default: {"samples"=>"0", "reactions"=>"0", "wellplates"=>"0"},                                   null: false
     t.string   "name_abbreviation",      limit: 5
-    t.boolean  "is_templates_moderator",           default: false,                                                                                   null: false
     t.string   "type",                             default: "Person"
     t.string   "reaction_name_prefix",   limit: 3, default: "R"
     t.hstore   "layout",                           default: {"sample"=>"1", "screen"=>"4", "reaction"=>"2", "wellplate"=>"3", "research_plan"=>"5"}, null: false

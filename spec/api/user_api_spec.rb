@@ -5,10 +5,10 @@ describe Chemotion::UserAPI do
   let(:json_options) {
     {
       only: [
-        :id, :is_templates_moderator, :type, :reaction_name_prefix, :email,
+        :id, :type, :reaction_name_prefix, :email,
         :last_name, :first_name
       ],
-      methods: [:name, :initials]
+      methods: [:name, :initials, :is_templates_moderator]
     }
   }
   let(:srlzr) {

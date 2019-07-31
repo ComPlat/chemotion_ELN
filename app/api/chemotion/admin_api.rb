@@ -141,18 +141,32 @@ module Chemotion
         params do
           requires :user_id, type: Integer, desc: 'user id'
           optional :enable, type: Boolean, desc: 'enable or disable account'
-          optional :is_templates_moderator, type: Boolean, desc: 'enable or disable account'
+          optional :is_templates_moderator, type: Boolean, desc: 'enable or disable ketcherails template moderation'
           optional :confirm_user, type: Boolean, desc: 'confirm account'
         end
+
         post do
           user = User.find_by(id: params[:user_id]);
-          new_profile = {}
-          user.unlock_access!() if params[:enable] == true
-          user.lock_access!(send_instructions: false) if params[:enable] == false
-          new_profile = { is_templates_moderator: params[:is_templates_moderator] } unless params[:is_templates_moderator].nil?
-          new_profile = { confirmed_at: DateTime.now } if params[:confirm_user] == true
-          new_profile = { confirmed_at: nil } if params[:confirm_user] == false
-          user.update!(new_profile) unless new_profile.empty?
+          case params[:enable]
+          when true
+            user.unlock_access!()
+          when false
+            user.lock_access!(send_instructions: false)
+          end
+
+          case params[:confirm_user]
+          when true
+            user.update!(confirmed_at: DateTime.now)
+          when false
+            user.update!(confirmed_at: nil)
+          end
+
+          case params[:is_templates_moderator]
+          when true, false
+            profile = user.profile
+            data = profile.data.merge({ 'is_templates_moderator' => params[:is_templates_moderator] })
+            profile.update!(data: data)
+          end
           user
         end
       end
